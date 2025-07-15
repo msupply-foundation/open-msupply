@@ -13,7 +13,6 @@ static PROGRESS_STEP_LEN: usize = 100;
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
     sync_buffer: &'a SyncBuffer<'a>,
-    source_site_id: Option<i32>,
 }
 
 #[derive(Default, Debug)]
@@ -29,12 +28,10 @@ impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(
         connection: &'a StorageConnection,
         sync_buffer: &'a SyncBuffer,
-        source_site_id: Option<i32>,
     ) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {
             connection,
             sync_buffer,
-            source_site_id,
         }
     }
 
@@ -91,29 +88,32 @@ impl<'a> TranslationAndIntegration<'a> {
         };
 
         for (number_of_records_integrated, sync_record) in sync_records.iter().enumerate() {
-            let pull_translation_results =
-                match self.translate_sync_record(sync_record, translators) {
-                    Ok(translation_result) => translation_result,
-                    // Record error in sync buffer and in result, continue to next sync_record
-                    Err(translation_error) => {
-                        self.sync_buffer
-                            .record_integration_error(sync_record, &translation_error)?;
-                        result.insert_error(&sync_record.table_name);
-                        warn!(
-                            "{:?} {:?} {:?}",
-                            translation_error, sync_record.record_id, sync_record.table_name
-                        );
-                        // Next sync_record
-                        continue;
-                    }
-                };
+            let translation_results = match self.translate_sync_record(sync_record, translators) {
+                Ok(translation_result) => translation_result,
+                // Record error in sync buffer and in result, continue to next sync_record
+                Err(translation_error) => {
+                    self.sync_buffer
+                        .record_integration_error(sync_record, &translation_error)?;
+                    result.insert_error(&sync_record.table_name);
+                    warn!(
+                        "{:?} {:?} {:?}",
+                        translation_error, sync_record.record_id, sync_record.table_name
+                    );
+                    // Next sync_record
+                    continue;
+                }
+            };
 
             let mut integration_records = Vec::new();
             let mut ignored = false;
-            for pull_translation_result in pull_translation_results {
-                match pull_translation_result {
-                    PullTranslateResult::IntegrationOperations(mut operations) => {
-                        integration_records.append(&mut operations)
+            for translation_result in translation_results {
+                match translation_result {
+                    PullTranslateResult::IntegrationOperations(operations) => {
+                        // Add source site id to each operations, based on sync buffer row
+                        let operations_with_source_site_id = operations
+                            .into_iter()
+                            .map(|operation| (sync_record.source_site_id, operation));
+                        integration_records.extend(operations_with_source_site_id)
                     }
                     PullTranslateResult::Ignored(ignore_message) => {
                         ignored = true;
@@ -152,8 +152,7 @@ impl<'a> TranslationAndIntegration<'a> {
             }
 
             // Integrate
-            let integration_result =
-                integrate(self.connection, &integration_records, self.source_site_id);
+            let integration_result = integrate(self.connection, &integration_records);
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
@@ -219,10 +218,9 @@ impl IntegrationOperation {
 
 pub(crate) fn integrate(
     connection: &StorageConnection,
-    integration_records: &[IntegrationOperation],
-    source_site_id: Option<i32>,
+    integration_records: &[(Option<i32>, IntegrationOperation)],
 ) -> Result<(), RepositoryError> {
-    for integration_record in integration_records.iter() {
+    for (source_site_id, integration_record) in integration_records.iter() {
         if cfg!(feature = "postgres") {
             // In Postgres the parent transaction fails when there is a DB error in any of the
             // statements executed in the transaction. Thus, integrate every record in a nested
@@ -230,14 +228,14 @@ pub(crate) fn integrate(
             // Note, this is not a problem in Sqlite.
             connection
                 .transaction_sync_etc(
-                    |sub_tx| integration_record.integrate(sub_tx, source_site_id),
+                    |sub_tx| integration_record.integrate(sub_tx, *source_site_id),
                     false,
                 )
                 .map_err(|e| e.to_inner_error())?;
         } else {
             // For Sqlite, integrating without nested transaction is faster, especially if there are
             // errors (see the bench_error_performance() test).
-            integration_record.integrate(connection, source_site_id)?;
+            integration_record.integrate(connection, *source_site_id)?;
         }
     }
 
@@ -259,7 +257,6 @@ impl TranslationAndIntegrationResults {
         entry.integrated_count += 1;
     }
 }
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -279,12 +276,12 @@ mod test {
                 // Doesn't fail
                 let result = integrate(
                     connection,
-                    &[IntegrationOperation::upsert(inline_init(
-                        |r: &mut UnitRow| {
+                    &[(
+                        None,
+                        IntegrationOperation::upsert(inline_init(|r: &mut UnitRow| {
                             r.id = "unit".to_string();
-                        },
-                    ))],
-                    None,
+                        })),
+                    )],
                 );
 
                 assert_eq!(result, Ok(()));
@@ -292,13 +289,13 @@ mod test {
                 // Fails due to referential constraint
                 let result = integrate(
                     connection,
-                    &[IntegrationOperation::upsert(inline_init(
-                        |r: &mut ItemRow| {
+                    &[(
+                        None,
+                        IntegrationOperation::upsert(inline_init(|r: &mut ItemRow| {
                             r.id = "item".to_string();
                             r.unit_id = Some("invalid".to_string());
-                        },
-                    ))],
-                    None,
+                        })),
+                    )],
                 );
 
                 assert_ne!(result, Ok(()));

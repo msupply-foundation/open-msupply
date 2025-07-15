@@ -8,7 +8,10 @@
         {
           "type": "Control",
           "scope": "#/properties/firstName",
-          "label": "label.first-name"
+          "label": "label.first-name",
+          "options": {
+            "autoFocus": true
+          }
         },
         {
           "type": "Control",

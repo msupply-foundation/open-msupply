@@ -8,6 +8,19 @@ use super::{DBType, DatetimeFilter, InvoiceStatus, StorageConnection};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 
+/*
+-- Item Ledger --
+
+View over all stock movements for an item in a store.
+
+This is a separate repository/view from stock_movement or ledger (stock ledger)
+as it calculates the running balance of total stock on hand for the ITEM in each store.
+
+A window function is used to calculated the running balance, which can be expensive to run.
+Therefore, we only use this repository when we need that item running balance, for the
+item ledger page, and potentially reports.
+ */
+
 table! {
     item_ledger (id) {
         id -> Text,
@@ -146,4 +159,66 @@ fn create_filtered_query(filter: Option<ItemLedgerFilter>) -> ItemLedgerQuery {
     }
 
     query
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        mock::{
+            ledger::{get_test_ledger_datetime, mock_ledger_data},
+            MockData, MockDataInserts,
+        },
+        test_db,
+    };
+
+    use super::*;
+
+    #[actix_rt::test]
+    async fn item_ledger_repository() {
+        // Insert invoice lines for each status to test the view
+        let (items, stock_lines, invoices, invoice_lines) = mock_ledger_data();
+        let (_, storage_connection, _, _) = test_db::setup_all_with_data(
+            "item_ledger_repository",
+            MockDataInserts::all(),
+            MockData {
+                items,
+                stock_lines,
+                invoices,
+                invoice_lines,
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repo = ItemLedgerRepository::new(&storage_connection);
+        let filter = ItemLedgerFilter::new().item_id(EqualFilter::equal_to("ledger_test_item"));
+
+        let result = repo.query(Pagination::all(), Some(filter)).unwrap();
+
+        // Validate the results based on the mock_ledger_data
+        // PICKED+ outbounds, RECEIVED+ inbounds, VERIFIED adjustments should be included
+
+        assert_eq!(result[0].id, "verified_inventory_adjustment_line");
+        assert_eq!(result[1].id, "picked_outbound_line_stock_line_b");
+        assert_eq!(result[2].id, "picked_outbound_line");
+        assert_eq!(result[3].id, "verified_inbound_line_stock_line_b");
+        assert_eq!(result[4].id, "received_inbound_line");
+
+        // There is a ledger entry for another item, check it is not included
+        assert_eq!(result.len(), 5);
+
+        // Check that the results are in the expected order (reverse chronological)
+        assert_eq!(result[0].datetime, get_test_ledger_datetime(5));
+        assert_eq!(result[1].datetime, get_test_ledger_datetime(4));
+        assert_eq!(result[2].datetime, get_test_ledger_datetime(4));
+        assert_eq!(result[3].datetime, get_test_ledger_datetime(3)); // the received time of the verified inbound
+        assert_eq!(result[4].datetime, get_test_ledger_datetime(2));
+
+        // Check the running balance (reverse chronological)
+        assert_eq!(result[4].running_balance, 50.0); // received first inbound
+        assert_eq!(result[3].running_balance, 100.0); // received another inbound
+        assert_eq!(result[2].running_balance, 50.0); // picked outbound
+        assert_eq!(result[1].running_balance, 0.0); // picked outbound second line
+        assert_eq!(result[0].running_balance, 50.0); // verified inventory addition
+    }
 }

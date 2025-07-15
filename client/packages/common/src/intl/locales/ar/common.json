@@ -1179,7 +1179,6 @@
   "messages.cannot-view-vaccine-card": "لا يمكنك عرض بطاقة التطعيم الخاصة بهذا المريض من هذا المتجر، لأنه تم تسجيله في {{ programName }}} من قبل متجر آخر",
   "messages.cant-delete-generic": "لا يمكنك حذف عنصر أو أكثر من العناصر المحددة",
   "messages.cant-delete-requisitions": "يمكن فقط حذف طلبات الشراء ذات الحالة ”مسودة\"",
-  "messages.cant-download-android": "يتعذر تنزيل الملف على هذا الجهاز",
   "messages.cant-return-shipment": "لا يمكن معالجة إرجاع الخطوط حتى يتم تعيين الحالة إلى ”تم التسليم\"",
   "messages.cant-return-shipment-replenishment": "لا يمكن إرجاع الأسطر حتى يتم تعيين الحالة إلى ”تم التسليم\"",
   "messages.cant-send-order": "لا يمكن إرسال الطلب الداخلي لأنه لا يوجد خطوط",

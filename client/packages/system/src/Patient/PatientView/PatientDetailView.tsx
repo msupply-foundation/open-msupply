@@ -4,16 +4,10 @@ import {
   Box,
   useTranslation,
   BasicSpinner,
-  FnUtils,
-  useNavigate,
-  RouteBuilder,
-  useUrlQuery,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
 import { useUpsertPatient } from '../EditPatientModal/useUpsertPatient';
-import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
 
 export const PatientDetailView = ({
   patientId,
@@ -23,13 +17,7 @@ export const PatientDetailView = ({
   onEdit: (isDirty: boolean) => void;
 }) => {
   const t = useTranslation();
-  const navigate = useNavigate();
-  const { urlQuery } = useUrlQuery();
-  const fromPrescription = urlQuery['previousPath'] === AppRoute.Prescription;
   const { documentName } = usePatientStore();
-  const {
-    create: { create: createPrescription },
-  } = usePrescription();
 
   const {
     JsonForm,
@@ -43,18 +31,6 @@ export const PatientDetailView = ({
 
   const handleSave = async () => {
     await save();
-    if (fromPrescription) {
-      const invoice = await createPrescription({
-        id: FnUtils.generateUUID(),
-        patientId,
-      });
-      navigate(
-        RouteBuilder.create(AppRoute.Dispensary)
-          .addPart(AppRoute.Prescription)
-          .addPart(invoice?.id ?? '')
-          .build()
-      );
-    }
   };
 
   useEffect(() => {

@@ -4,17 +4,25 @@ import {
   Box,
   EditIcon,
   IconButton,
+  useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
 import { NameSearchInputProps, SearchInputPatient } from '../../utils';
 import { getPatientOptionRenderer } from '../PatientOptionRenderer';
 import { useSearchPatient } from '../utils';
+import { CreatePatientSlider } from '../../CreatePatientModal/CreatePatientSlider';
+import { EditPatientModal } from '../../EditPatientModal';
+import {
+  CreateNewPatient,
+  usePatientStore,
+} from '@openmsupply-client/programs/src';
+import { PatientColumnData } from '../../CreatePatientModal/PatientResultsTab';
+import { CreatePatientModal } from '../../CreatePatientModal';
 
 interface PatientSearchInputProps extends NameSearchInputProps {
-  setCreatePatientModalOpen?: (open: boolean) => void;
-  setEditPatientModalOpen?: (open: boolean) => void;
   allowCreate?: boolean;
   allowEdit?: boolean;
+  mountSlidePanel?: boolean;
 }
 
 export const PatientSearchInput = ({
@@ -24,16 +32,19 @@ export const PatientSearchInput = ({
   value,
   disabled = false,
   sx,
-  setCreatePatientModalOpen,
-  setEditPatientModalOpen,
   allowCreate = false,
   allowEdit = false,
+  mountSlidePanel = false,
 }: PatientSearchInputProps) => {
   const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { isLoading, patients, search } = useSearchPatient();
+  const { createNewPatient } = usePatientStore();
+  const { getLocalisedFullName } = useIntlUtils();
 
   const [input, setInput] = useState('');
+  const [createPatientOpen, setCreatePatientOpen] = useState(false);
+  const [editPatientModalOpen, setEditPatientModalOpen] = useState(false);
 
   useEffect(() => {
     if (value) {
@@ -42,8 +53,31 @@ export const PatientSearchInput = ({
     }
   }, [value]);
 
+  const asOption = (
+    patient: CreateNewPatient | PatientColumnData
+  ): SearchInputPatient => ({
+    ...patient,
+    name: getLocalisedFullName(patient.firstName, patient.lastName),
+    code: patient.code ?? '',
+    isDeceased: patient.isDeceased ?? false,
+  });
+
+  const handlePatientClose = (selectedPatient?: PatientColumnData) => {
+    setCreatePatientOpen(false);
+    if (selectedPatient) {
+      onChange(asOption(selectedPatient));
+    } else if (createNewPatient) {
+      onChange(asOption(createNewPatient));
+    } else return;
+    setInput('');
+  };
+
   const showCreate =
     allowCreate && patients.length === 0 && input !== '' && !isLoading;
+
+  const CreatePatient = mountSlidePanel
+    ? CreatePatientSlider
+    : CreatePatientModal;
 
   const options = patients as SearchInputPatient[];
 
@@ -86,10 +120,12 @@ export const PatientSearchInput = ({
             : t('messages.type-to-search')
         }
         clickableOption={
-          showCreate && setCreatePatientModalOpen
+          showCreate && setCreatePatientOpen
             ? {
                 label: t('label.new-patient'),
-                onClick: () => setCreatePatientModalOpen(true),
+                onClick: () => {
+                  setCreatePatientOpen(true);
+                },
               }
             : undefined
         }
@@ -102,6 +138,27 @@ export const PatientSearchInput = ({
             onClick={() => setEditPatientModalOpen?.(true)}
           />
         </>
+      )}
+      {allowCreate && (
+        <CreatePatient
+          open={createPatientOpen}
+          onClose={() => setCreatePatientOpen(false)}
+          onCreate={() => {
+            handlePatientClose();
+          }}
+          onSelectPatient={patient => {
+            handlePatientClose(patient);
+          }}
+        />
+      )}
+      {value && editPatientModalOpen && (
+        <EditPatientModal
+          patientId={value.id}
+          onClose={() => {
+            setEditPatientModalOpen(false);
+          }}
+          isOpen={editPatientModalOpen}
+        />
       )}
     </Box>
   );

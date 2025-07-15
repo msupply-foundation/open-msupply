@@ -5,6 +5,12 @@ use repository::{
 };
 use util::inline_edit;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SyncBufferSource {
+    Central(i32), // Central site ID (Includes all records with no source site ID)
+    Remote(i32),  // Remote site ID
+}
+
 pub(crate) struct SyncBuffer<'a> {
     query_repository: SyncBufferRepository<'a>,
     row_repository: SyncBufferRowRepository<'a>,
@@ -45,7 +51,7 @@ impl<'a> SyncBuffer<'a> {
         &self,
         action: SyncAction,
         ordered_table_names: &[&str],
-        source_site_id: Option<i32>,
+        record_type: SyncBufferSource,
     ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
         let ordered_table_names = ordered_table_names.iter().copied();
         // Get ordered table names, for  upsert we sort in referential constraint order
@@ -64,9 +70,13 @@ impl<'a> SyncBuffer<'a> {
                     .table_name(EqualFilter::equal_to(legacy_table_name))
                     .action(action.equal_to())
                     .integration_datetime(DatetimeFilter::is_null(true))
-                    .source_site_id(match source_site_id {
-                        Some(site_id) => EqualFilter::equal_to_i32(site_id),
-                        None => EqualFilter::i32_is_null(true),
+                    .source_site_id(match record_type {
+                        SyncBufferSource::Central(source_site_id) => {
+                            EqualFilter::equal_any_or_null_i32(vec![source_site_id])
+                        } // Includes all records with no source site ID (OMS Cetntral) + the site passed in
+                        SyncBufferSource::Remote(source_site_id) => {
+                            EqualFilter::equal_to_i32(source_site_id)
+                        }
                     }),
             )?;
             result.append(&mut rows);
@@ -85,7 +95,10 @@ mod test {
     };
     use util::{inline_init, Defaults};
 
-    use crate::sync::translations::{all_translators, pull_integration_order};
+    use crate::sync::{
+        sync_buffer::SyncBufferSource,
+        translations::{all_translators, pull_integration_order},
+    };
 
     use super::SyncBuffer;
 
@@ -185,7 +198,11 @@ mod test {
 
         // ORDER/ACTION
         let in_referential_order = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order, None)
+            .get_ordered_sync_buffer_records(
+                repository::SyncAction::Upsert,
+                &table_order,
+                SyncBufferSource::Central(0),
+            )
             .unwrap();
 
         assert_eq!(
@@ -194,7 +211,11 @@ mod test {
         );
 
         let in_reverse_referential_order = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Delete, &table_order, None)
+            .get_ordered_sync_buffer_records(
+                repository::SyncAction::Delete,
+                &table_order,
+                SyncBufferSource::Central(0),
+            )
             .unwrap();
 
         assert_eq!(in_reverse_referential_order, vec![row_6(), row_5()]);
@@ -208,7 +229,11 @@ mod test {
             .unwrap();
 
         let result = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order, None)
+            .get_ordered_sync_buffer_records(
+                repository::SyncAction::Upsert,
+                &table_order,
+                SyncBufferSource::Central(0),
+            )
             .unwrap();
 
         assert_eq!(result, vec![row_4(), row_3()]);
@@ -224,7 +249,11 @@ mod test {
         buffer.record_successful_integration(&row_3()).unwrap();
 
         let result = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order, None)
+            .get_ordered_sync_buffer_records(
+                repository::SyncAction::Upsert,
+                &table_order,
+                SyncBufferSource::Central(0),
+            )
             .unwrap();
 
         assert_eq!(result, vec![row_4()]);
@@ -232,7 +261,11 @@ mod test {
         buffer.record_successful_integration(&row_4()).unwrap();
 
         let result = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order, None)
+            .get_ordered_sync_buffer_records(
+                repository::SyncAction::Upsert,
+                &table_order,
+                SyncBufferSource::Central(0),
+            )
             .unwrap();
 
         assert_eq!(result, vec![]);
@@ -243,7 +276,7 @@ mod test {
             .get_ordered_sync_buffer_records(
                 repository::SyncAction::Delete,
                 &table_order,
-                Some(remote_site_id),
+                SyncBufferSource::Remote(remote_site_id),
             )
             .unwrap();
 

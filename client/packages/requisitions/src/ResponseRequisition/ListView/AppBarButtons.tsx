@@ -5,16 +5,14 @@ import {
   useTranslation,
   AppBarButtonsPortal,
   Grid,
-  FileUtils,
   LoadingButton,
-  EnvUtils,
-  Platform,
   ToggleState,
   FnUtils,
   RouteBuilder,
   ButtonWithIcon,
   PlusCircleIcon,
   useNavigate,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { useResponse } from '../api';
 import { responsesToCsv } from '../../utils';
@@ -29,7 +27,9 @@ export const AppBarButtons = ({
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
+
+  const exportCSV = useExportCSV();
   const { mutateAsync: onCreate } = useResponse.document.insert();
   const { insert: onProgramCreate } = useResponse.document.insertProgram();
 
@@ -47,8 +47,7 @@ export const AppBarButtons = ({
     }
 
     const csv = responsesToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, 'requisitions');
-    success(t('success'))();
+    exportCSV(csv, 'requisitions');
   };
 
   return (
@@ -64,7 +63,6 @@ export const AppBarButtons = ({
           isLoading={isLoading}
           onClick={csvExport}
           variant="outlined"
-          disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
       </Grid>
@@ -77,7 +75,7 @@ export const AppBarButtons = ({
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequisition.name.id,
-              }).then((id) => {
+              }).then(id => {
                 modalController.toggleOff();
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)

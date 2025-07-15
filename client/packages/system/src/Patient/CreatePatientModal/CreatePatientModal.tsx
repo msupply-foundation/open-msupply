@@ -1,139 +1,99 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   DetailContainer,
-  DetailSection,
   Box,
-  FnUtils,
   TabContext,
-  useTabs,
   DialogButton,
   useDialog,
-  WizardStepper,
   useTranslation,
-  useDebounceCallback,
-  DocumentRegistryCategoryNode,
+  BasicSpinner,
+  DetailTab,
+  SaveIcon,
+  LoadingButton,
+  WizardStepper,
+  FnUtils,
 } from '@openmsupply-client/common';
-import { PatientFormTab } from './PatientFormTab';
-import { PatientResultsTab } from './PatientResultsTab';
-import {
-  CreateNewPatient,
-  DocumentRegistryFragment,
-  useDocumentRegistry,
-  usePatientStore,
-} from '@openmsupply-client/programs';
-
-enum Tabs {
-  Form = 'Form',
-  SearchResults = 'SearchResults',
-}
+import { PatientColumnData } from './PatientResultsTab';
+import { Tabs, useCreatePatientForm } from './useCreatePatientForm';
 
 interface CreatePatientModal {
+  open: boolean;
   onClose: () => void;
-  onCreatePatient: (newPatient: CreateNewPatient) => void;
-  onSelectPatient: (selectedPatient: string) => void;
+  onCreate: () => void;
+  onSelectPatient: (selectedPatient: PatientColumnData) => void;
 }
 
 export const CreatePatientModal = ({
+  open,
   onClose,
-  onCreatePatient: onCreate,
+  onCreate,
   onSelectPatient: onSelect,
 }: CreatePatientModal) => {
-  const { data: documentRegistryResponse, isLoading } =
-    useDocumentRegistry.get.documentRegistries({
-      filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
-    });
-  const [hasError, setHasError] = useState(false);
-  const [, setDocumentRegistry] = useState<
-    DocumentRegistryFragment | undefined
-  >();
-  const { currentTab, onChangeTab } = useTabs(Tabs.Form);
-  const { Modal, showDialog, hideDialog } = useDialog({
-    onClose,
-  });
   const t = useTranslation();
-  const { createNewPatient, setCreateNewPatient } = usePatientStore();
 
-  const onNext = useDebounceCallback(() => {
-    onChangeTab(Tabs.SearchResults);
-  }, []);
+  const { Modal } = useDialog({ isOpen: open, onClose });
 
-  const onOk = () => {
-    if (!createNewPatient) return;
-    onCreate(createNewPatient);
-  };
-
-  const patientSteps = [
-    {
-      description: '',
-      label: t('label.patient-details'),
-      tab: Tabs.Form,
-    },
-    {
-      description: '',
-      label: t('label.search-results'),
-      tab: Tabs.SearchResults,
-    },
-  ];
-
-  const getActiveStep = () => {
-    const step = patientSteps.find(step => step.tab === currentTab);
-    return step ? patientSteps.indexOf(step) : 0;
-  };
+  const {
+    onNext,
+    setCurrentTab,
+    setCreateNewPatient,
+    getActiveStep,
+    handleSave,
+    tabs,
+    currentTab,
+    patientSteps,
+    isSaving,
+    isLoading,
+    isDirty,
+    hasError,
+    validationError,
+  } = useCreatePatientForm(onSelect);
 
   useEffect(() => {
-    if (documentRegistryResponse?.nodes?.[0]) {
-      setDocumentRegistry(documentRegistryResponse.nodes?.[0]);
+    if (open) {
+      setCreateNewPatient({
+        id: FnUtils.generateUUID(),
+      });
     }
-  }, [documentRegistryResponse]);
+  }, [open, setCreateNewPatient]);
 
-  useEffect(() => {
-    // always show the dialog when we are mounted
-    showDialog();
-    // clean up when we are unmounting
-    return () => {
-      hideDialog();
-      onChangeTab(Tabs.Form);
-    };
-  }, [hideDialog, onChangeTab, showDialog]);
+  if (isLoading) return <BasicSpinner />;
 
-  useEffect(() => {
-    setCreateNewPatient({
-      id: FnUtils.generateUUID(),
-    });
-  }, [setCreateNewPatient]);
-
-  if (isLoading) {
-    return null;
-  }
   return (
     <Modal
       title=""
-      width={950}
+      width={1180}
       okButton={
-        currentTab === Tabs.SearchResults ? (
-          <DialogButton
-            variant="next"
+        currentTab === Tabs.Patient ? (
+          <LoadingButton
+            color="secondary"
+            label={t('button.save')}
+            startIcon={<SaveIcon />}
             onClick={() => {
-              onOk();
-              onClose();
+              handleSave();
+              onCreate();
             }}
-            customLabel={t('button.create-new-patient')}
+            isLoading={isSaving}
+            disabled={!isDirty || isSaving || !!validationError}
           />
-        ) : undefined
-      }
-      nextButton={
-        currentTab !== Tabs.SearchResults ? (
+        ) : (
           <DialogButton
             variant="next-and-ok"
-            onClick={onNext}
+            onClick={() => onNext(tabs)}
             disabled={hasError}
+            customLabel={
+              currentTab === Tabs.SearchResults
+                ? t('button.create-new-patient')
+                : t('messages.search')
+            }
           />
-        ) : undefined
+        )
       }
       cancelButton={
         <DialogButton
           variant="cancel"
           onClick={() => {
+            setCurrentTab(Tabs.Form);
             setCreateNewPatient(undefined);
             onClose();
           }}
@@ -149,21 +109,11 @@ export const CreatePatientModal = ({
             nowrap
           />
           <TabContext value={currentTab}>
-            <DetailSection title="">
-              <PatientFormTab
-                value={Tabs.Form}
-                patient={createNewPatient}
-                onChange={errors => {
-                  setHasError((errors.errors?.length ?? 0) > 0);
-                }}
-              />
-              <PatientResultsTab
-                value={Tabs.SearchResults}
-                patient={createNewPatient}
-                active={currentTab === Tabs.SearchResults}
-                onRowClick={selectedPatient => onSelect(selectedPatient)}
-              />
-            </DetailSection>
+            {tabs.map(({ Component, value }) => (
+              <DetailTab value={value} key={value}>
+                {Component}
+              </DetailTab>
+            ))}
           </TabContext>
         </Box>
       </DetailContainer>

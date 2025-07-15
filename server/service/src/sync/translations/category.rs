@@ -1,9 +1,9 @@
-use crate::sync::sync_serde::empty_str_as_option_string;
 use repository::{
     category_row::{CategoryRow, CategoryRowDelete},
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::empty_str_as_option_string;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -33,9 +33,12 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct CategoryTranslation;
 impl SyncTranslation for CategoryTranslation {
-    
     fn table_names(&self) -> Vec<&str> {
-        vec!["item_category", "item_category_level1", "item_category_level2"]
+        vec![
+            "item_category",
+            "item_category_level1",
+            "item_category_level2",
+        ]
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {

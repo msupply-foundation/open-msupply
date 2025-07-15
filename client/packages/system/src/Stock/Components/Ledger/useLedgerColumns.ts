@@ -20,6 +20,7 @@ export enum ColumnKey {
   'Type' = 'type',
   'Reason' = 'reason',
   'Number' = 'number',
+  'Balance' = 'runningBalance',
 }
 
 export const useLedgerColumns = (
@@ -56,6 +57,12 @@ export const useLedgerColumns = (
         accessor: ({ rowData }) => format(rowData.quantity),
         sortable: false,
         description: 'description.unit-quantity',
+      },
+      {
+        key: ColumnKey.Balance,
+        label: 'label.balance',
+        accessor: ({ rowData }) => format(rowData.runningBalance),
+        sortable: false,
       },
       {
         key: ColumnKey.Type,

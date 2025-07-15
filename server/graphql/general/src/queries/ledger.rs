@@ -1,15 +1,18 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    loader::StockLineByIdLoader,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 
-use graphql_types::types::InvoiceNodeType;
+use graphql_types::types::{InvoiceNodeType, StockLineNode};
 use repository::{
-    ledger::{LedgerFilter, LedgerRow, LedgerSort, LedgerSortField},
-    EqualFilter,
+    stock_line_ledger::{
+        StockLineLedgerFilter, StockLineLedgerRow, StockLineLedgerSort, StockLineLedgerSortField,
+    },
+    DatetimeFilter, EqualFilter,
 };
 
 use service::{
@@ -42,11 +45,13 @@ pub struct LedgerSortInput {
 pub struct LedgerFilterInput {
     pub stock_line_id: Option<EqualFilterStringInput>,
     pub item_id: Option<EqualFilterStringInput>,
+    pub datetime: Option<DatetimeFilterInput>,
+    pub master_list_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(PartialEq, Debug)]
 pub struct LedgerNode {
-    ledger: LedgerRow,
+    ledger: StockLineLedgerRow,
 }
 
 #[Object]
@@ -81,6 +86,23 @@ impl LedgerNode {
     pub async fn reason(&self) -> &Option<String> {
         &self.ledger.reason
     }
+    pub async fn running_balance(&self) -> &f64 {
+        &self.ledger.running_balance
+    }
+
+    pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
+        let stock_line_id = match &self.ledger.stock_line_id {
+            Some(id) => id.clone(),
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
+        let stock_line = loader
+            .load_one(stock_line_id)
+            .await?
+            .map(StockLineNode::from_domain);
+        Ok(stock_line)
+    }
 }
 
 #[derive(SimpleObject)]
@@ -113,7 +135,7 @@ pub fn ledger(
     let ledger = get_ledger(
         connection_manager,
         None,
-        filter.map(|filter| filter.to_domain()),
+        filter.map(|filter| filter.to_domain(&store_id)),
         // Currently only one sort option is supported, use the first from the list.
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
@@ -126,7 +148,7 @@ pub fn ledger(
 }
 
 impl LedgerConnector {
-    pub fn from_domain(rows: ListResult<LedgerRow>) -> LedgerConnector {
+    pub fn from_domain(rows: ListResult<StockLineLedgerRow>) -> LedgerConnector {
         LedgerConnector {
             total_count: rows.count,
             nodes: rows
@@ -138,25 +160,28 @@ impl LedgerConnector {
     }
 }
 impl LedgerFilterInput {
-    pub fn to_domain(self) -> LedgerFilter {
+    pub fn to_domain(self, store_id: &str) -> StockLineLedgerFilter {
         let LedgerFilterInput {
             stock_line_id,
             item_id,
+            datetime,
+            master_list_id,
         } = self;
 
-        LedgerFilter {
+        StockLineLedgerFilter {
             stock_line_id: stock_line_id.map(EqualFilter::from),
             item_id: item_id.map(EqualFilter::from),
-            store_id: None,
-            datetime: None,
+            store_id: Some(EqualFilter::equal_to(store_id)),
+            datetime: datetime.map(DatetimeFilter::from),
+            master_list_id: master_list_id.map(EqualFilter::from),
         }
     }
 }
 
 impl LedgerSortInput {
-    pub fn to_domain(self) -> LedgerSort {
-        use LedgerSortField as to;
+    pub fn to_domain(self) -> StockLineLedgerSort {
         use LedgerSortFieldInput as from;
+        use StockLineLedgerSortField as to;
         let key = match self.key {
             from::Datetime => to::Datetime,
             from::Name => to::Name,
@@ -166,7 +191,7 @@ impl LedgerSortInput {
             from::ItemId => to::ItemId,
         };
 
-        LedgerSort {
+        StockLineLedgerSort {
             key,
             desc: self.desc,
         }

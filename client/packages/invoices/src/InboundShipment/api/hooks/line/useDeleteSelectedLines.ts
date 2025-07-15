@@ -73,9 +73,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
     });
   };
 
-
-  const handleCantDelete = ({ isDisabled }: { isDisabled: boolean }
-  ) => {
+  const handleCantDelete = ({ isDisabled }: { isDisabled: boolean }) => {
     if (isDisabled) return t('label.cant-delete-disabled');
     return (err: Error) => err.message;
   };

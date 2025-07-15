@@ -7,22 +7,20 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
   SortBy,
   UserPermission,
   useCallbackWithPermission,
-  EnvUtils,
-  Platform,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
 import { CreatePatientModal } from '../CreatePatientModal';
-import { CreateNewPatient } from 'packages/programs/src';
+import { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
 
 interface AppBarButtonsComponentProps {
-  onCreatePatient: (newPatient: CreateNewPatient) => void;
-  onSelectPatient: (selectedPatient: string) => void;
+  onCreatePatient: () => void;
+  onSelectPatient: (selectedPatient: PatientColumnData) => void;
   sortBy: SortBy<PatientRowFragment>;
 }
 
@@ -31,10 +29,11 @@ export const AppBarButtons = ({
   onSelectPatient,
   sortBy,
 }: AppBarButtonsComponentProps) => {
-  const { success, error } = useNotification();
+  const { error } = useNotification();
   const t = useTranslation();
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const exportCSV = useExportCSV();
 
   const csvExport = async () => {
     const data = await mutateAsync();
@@ -44,8 +43,7 @@ export const AppBarButtons = ({
     }
 
     const csv = patientsToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.patients'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.patients'));
   };
 
   const handleClick = useCallbackWithPermission(
@@ -66,15 +64,15 @@ export const AppBarButtons = ({
           variant="outlined"
           onClick={csvExport}
           isLoading={isLoading}
-          disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
       </Grid>
 
       {createModalOpen ? (
         <CreatePatientModal
+          open={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
-          onCreatePatient={onCreatePatient}
+          onCreate={onCreatePatient}
           onSelectPatient={onSelectPatient}
         />
       ) : null}

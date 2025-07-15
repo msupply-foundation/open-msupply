@@ -70,6 +70,7 @@ pub fn patient_search(
         filter = filter.gender(EqualFilter {
             equal_to: Some(gender),
             not_equal_to: None,
+            not_equal_to_or_null: None,
             equal_any: None,
             not_equal_all: None,
             equal_any_or_null: None,
