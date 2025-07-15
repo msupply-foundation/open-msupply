@@ -123,6 +123,13 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         });
         return result?.stocktakes;
       },
+    hasStocktake: () => async () => {
+      const result = await sdk.stocktakes({
+        storeId,
+        page: { offset: 0, first: 1 },
+      });
+      return result?.stocktakes.nodes.length > 0;
+    },
     byId: async (id: string): Promise<StocktakeFragment> => {
       const result = await sdk.stocktake({ stocktakeId: id, storeId });
 
