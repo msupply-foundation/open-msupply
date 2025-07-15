@@ -1,15 +1,12 @@
-use crate::sync::{
-    sync_serde::{
-        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
-        zero_date_as_option,
-    },
-    translations::currency::CurrencyTranslation,
-};
+use crate::sync::translations::currency::CurrencyTranslation;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowRepository,
     NameRowType, StorageConnection, SyncBufferRow,
+};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
 };
 
 use serde::{Deserialize, Serialize};
