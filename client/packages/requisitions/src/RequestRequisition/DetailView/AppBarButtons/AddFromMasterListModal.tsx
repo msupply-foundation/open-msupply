@@ -3,7 +3,7 @@ import { useAuthContext } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 
-export const AddFromMasterListButtonComponent = ({
+export const AddFromMasterListModalComponent = ({
   isOn,
   toggleOff,
 }: {
@@ -15,20 +15,18 @@ export const AddFromMasterListButtonComponent = ({
   const filter = { isProgram: false, existsForStoreId: { equalTo: storeId } };
 
   return (
-    <>
-      <MasterListSearchModal
-        open={isOn}
-        onClose={toggleOff}
-        onChange={masterList => {
-          toggleOff();
-          addFromMasterList(masterList);
-        }}
-        filterBy={filter}
-      />
-    </>
+    <MasterListSearchModal
+      open={isOn}
+      onClose={toggleOff}
+      onChange={masterList => {
+        toggleOff();
+        addFromMasterList(masterList);
+      }}
+      filterBy={filter}
+    />
   );
 };
 
-export const AddFromMasterListButton = React.memo(
-  AddFromMasterListButtonComponent
+export const AddFromMasterListModal = React.memo(
+  AddFromMasterListModalComponent
 );

@@ -8,7 +8,7 @@ import {
   PlusCircleIcon,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import { AddFromMasterListButton } from './AddFromMasterListButton';
+import { AddFromMasterListModal } from './AddFromMasterListModal';
 
 interface AddButtonProps {
   status?: RequisitionNodeStatus;
@@ -78,7 +78,7 @@ export const AddButton = ({ status, onAddItem, disable }: AddButtonProps) => {
       />
 
       {masterListModalController.isOn && (
-        <AddFromMasterListButton
+        <AddFromMasterListModal
           isOn={masterListModalController.isOn}
           toggleOff={masterListModalController.toggleOff}
         />
