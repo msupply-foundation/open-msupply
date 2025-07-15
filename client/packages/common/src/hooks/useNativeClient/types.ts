@@ -22,6 +22,8 @@ export type ConnectionResult = {
 };
 export type FileInfo = {
   content: string;
+  // Whether to base64 decode content before saving
+  isBinaryData?: boolean;
   mimeType?: string;
   filename?: string;
   successMessage?: string;
