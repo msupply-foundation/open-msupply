@@ -74,6 +74,7 @@ fn map_return_reason_filter(filter: Option<ReturnReasonFilterInput>) -> ReasonOp
         r#type: Some(EqualFilter {
             equal_to: Some(ReasonOptionType::ReturnReason),
             not_equal_to: None,
+            not_equal_to_or_null: None,
             equal_any: None,
             equal_any_or_null: None,
             not_equal_all: None,

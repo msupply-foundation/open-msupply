@@ -1,9 +1,10 @@
 use chrono::Utc;
 use repository::{
     location::LocationFilter, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow,
-    ItemType, MasterListFilter, NumberRowType, ProgramRowRepository, RepositoryError, StockLine,
-    StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow, StocktakeRow,
-    StocktakeStatus, StorageConnection,
+    ItemRowRepository, ItemType, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+    NumberRowType, ProgramRowRepository, RepositoryError, StockLine, StockLineFilter,
+    StockLineRepository, StockLineRow, StocktakeLineRow, StocktakeRow, StocktakeStatus,
+    StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -66,6 +67,7 @@ fn generate_stocktake_lines(
         comment: _,
         description: _,
         create_blank_stocktake,
+        include_all_master_list_items,
     }: InsertStocktake,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     if let Some(true) = create_blank_stocktake {
@@ -74,6 +76,20 @@ fn generate_stocktake_lines(
 
     if let Some(true) = is_initial_stocktake {
         return generate_lines_initial_stocktake(connection, store_id, id);
+    }
+
+    if let Some(true) = include_all_master_list_items {
+        let master_list_id = match master_list_id {
+            Some(id) => id,
+            None => {
+                return Err(RepositoryError::DBError {
+                    msg: "Master list ID is required when including all master list items"
+                        .to_string(),
+                    extra: "include_all_master_list_items is true".to_string(),
+                });
+            }
+        };
+        return generate_lines_from_master_list(connection, store_id, &id, &master_list_id);
     }
 
     let mut stock_line_filter: StockLineFilter = StockLineFilter::new()
@@ -105,7 +121,6 @@ fn generate_stocktake_lines(
                  stock_line_row:
                      StockLineRow {
                          id: stock_line_id,
-                         item_link_id: _,
                          location_id,
                          batch,
                          pack_size,
@@ -114,15 +129,16 @@ fn generate_stocktake_lines(
                          total_number_of_packs,
                          expiry_date,
                          note,
+                         item_variant_id,
+                         donor_link_id,
+                         item_link_id: _,
                          supplier_link_id: _,
                          store_id: _,
                          on_hold: _,
                          available_number_of_packs: _,
                          barcode_id: _,
-                         item_variant_id,
-                         donor_link_id,
-                         vvm_status_id: _,
-                         campaign_id: _,
+                         vvm_status_id: _, // Todo?
+                         campaign_id: _,   // Todo?
                      },
                  item_row,
                  location_row: _,
@@ -137,7 +153,7 @@ fn generate_stocktake_lines(
                     snapshot_number_of_packs: total_number_of_packs,
                     item_link_id: item_row.id,
                     item_name: item_row.name,
-                    location_id: location_id,
+                    location_id,
                     batch,
                     expiry_date,
                     note,
@@ -145,10 +161,10 @@ fn generate_stocktake_lines(
                     pack_size: Some(pack_size),
                     cost_price_per_pack: Some(cost_price_per_pack),
                     sell_price_per_pack: Some(sell_price_per_pack),
-                    comment: None,
+                    item_variant_id,
+                    donor_link_id,
                     counted_number_of_packs: None,
-                    item_variant_id: item_variant_id,
-                    donor_link_id: donor_link_id,
+                    comment: None,
                     reason_option_id: None,
                 }
             },
@@ -198,6 +214,113 @@ fn generate_lines_initial_stocktake(
             reason_option_id: None,
         })
         .collect();
+
+    Ok(result)
+}
+
+pub fn generate_lines_from_master_list(
+    connection: &StorageConnection,
+    store_id: &str,
+    stocktake_id: &str,
+    master_list_id: &str,
+) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
+    let item_ids: Vec<String> = MasterListLineRepository::new(connection)
+        .query_by_filter(
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(master_list_id))
+                .item_type(ItemType::Stock.equal_to()),
+        )?
+        .into_iter()
+        .map(|r| r.item_id)
+        .collect();
+
+    let mut result = Vec::<StocktakeLineRow>::new();
+
+    item_ids.iter().for_each(|item_id| {
+        let stock_lines = StockLineRepository::new(connection)
+            .query_by_filter(
+                StockLineFilter::new()
+                    .item_id(EqualFilter::equal_to(item_id))
+                    .store_id(EqualFilter::equal_to(store_id))
+                    .has_packs_in_store(true),
+                Some(store_id.to_string()),
+            )
+            .unwrap();
+        let item_name = ItemRowRepository::new(connection)
+            .find_active_by_id(item_id)
+            .unwrap_or_default()
+            .unwrap_or_default()
+            .name;
+
+        if stock_lines.is_empty() {
+            result.push(StocktakeLineRow {
+                id: uuid(),
+                stocktake_id: stocktake_id.to_string(),
+                snapshot_number_of_packs: 0.0,
+                item_link_id: item_id.to_string(),
+                item_name,
+                location_id: None,
+                batch: None,
+                expiry_date: None,
+                note: None,
+                stock_line_id: None,
+                pack_size: None,
+                cost_price_per_pack: None,
+                sell_price_per_pack: None,
+                comment: None,
+                counted_number_of_packs: None,
+                reason_option_id: None,
+                item_variant_id: None,
+                donor_link_id: None,
+            });
+        } else {
+            stock_lines.into_iter().for_each(|line| {
+                let StockLineRow {
+                    id: stock_line_id,
+                    item_link_id: _,
+                    location_id,
+                    batch,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    total_number_of_packs,
+                    expiry_date,
+                    note,
+                    supplier_link_id: _,
+                    store_id: _,
+                    on_hold: _,
+                    available_number_of_packs: _,
+                    barcode_id: _,
+                    item_variant_id,
+                    donor_link_id,
+                    vvm_status_id: _, // Not currently included in stocktakes?
+                    campaign_id: _,   // Should this be included?
+                } = line.stock_line_row;
+
+                result.push(StocktakeLineRow {
+                    id: uuid(),
+                    stocktake_id: stocktake_id.to_string(),
+                    snapshot_number_of_packs: total_number_of_packs,
+                    item_link_id: line.item_row.id,
+                    item_name: line.item_row.name,
+                    location_id,
+                    batch,
+                    expiry_date,
+                    note,
+                    stock_line_id: Some(stock_line_id),
+                    pack_size: Some(pack_size),
+                    cost_price_per_pack: Some(cost_price_per_pack),
+                    sell_price_per_pack: Some(sell_price_per_pack),
+                    item_variant_id,
+                    donor_link_id,
+                    // campaign_id,
+                    comment: None,
+                    reason_option_id: None,
+                    counted_number_of_packs: None,
+                });
+            });
+        }
+    });
 
     Ok(result)
 }
