@@ -15,13 +15,13 @@ anyhow.workspace = true
 async-trait = { workspace = true }
 thiserror = { workspace = true }
 topological-sort = "0.2.2"
-bcrypt = "0.15.1"
+bcrypt = "0.17.0"
 chrono = { workspace = true }
 rand = { workspace = true }
 actix-web = { workspace = true }
 actix-files = { workspace = true }
 actix-multipart = { workspace = true }
-jsonschema = "0.28.1"
+jsonschema = "0.30.0"
 jsonwebtoken = "9.3.0"
 log = { workspace = true }
 reqwest = { workspace = true }
@@ -50,13 +50,13 @@ temperature-sensor = { git = "https://github.com/openmsupply/temperature-sensor.
 # plugin:
 hex = "0.4.3"
 pem = "3.0.4"
-rsa = { version = "0.9.7", features = ["sha2"] }
+rsa = { version = "0.9.8", features = ["sha2"] }
 sha2 = { workspace = true }
 walkdir = "2.5.0"
-x509-parser = { version = "0.16", features = ["verify"] }
+x509-parser = { version = "0.17", features = ["verify"] }
 telnet = "0.2.1"
 tempfile = "3.10.1"
-scraper = "0.22.0"
+scraper = "0.23.1"
 umya-spreadsheet = "2.3.0"
 qrcode = "0.14"
 rust-embed = { version = "8.4.0", features = ["include-exclude"] }
@@ -70,7 +70,7 @@ lettre = { version = "0.11.11", default-features = false, features = [
     "smtp-transport",
     "builder",
 ] }
-nanohtml2text = "0.1"
+nanohtml2text = "0.2.1"
 
 
 [dev-dependencies]
