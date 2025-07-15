@@ -176,9 +176,7 @@ export const SupplySelection = ({
             options={options}
             value={representation}
             onChange={e => {
-              setRepresentation(
-                (e.target.value as RepresentationValue) ?? Representation.UNITS
-              );
+              setRepresentation(e.target.value as RepresentationValue);
             }}
             sx={{
               boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),

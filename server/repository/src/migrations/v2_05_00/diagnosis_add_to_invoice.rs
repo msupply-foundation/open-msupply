@@ -14,15 +14,7 @@ impl MigrationFragment for Migrate {
             ALTER TABLE invoice ADD COLUMN diagnosis_id TEXT REFERENCES diagnosis(id);
         "#
         )?;
-
-        // Retranslate all invoices on the next sync, to make sure we capture the diagnosis_id if populated.
-        sql!(
-            connection,
-            r#"
-            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'invoice';
-        "#,
-        )?;
-
+// We don't re-translate existing invoices here, as they could have been changed since the sync buffer record and could be overwritten
         Ok(())
     }
 }
