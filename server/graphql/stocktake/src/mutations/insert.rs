@@ -16,6 +16,7 @@ use service::{
 pub struct InsertInput {
     pub id: String,
     pub master_list_id: Option<String>,
+    pub include_all_master_list_items: Option<bool>,
     pub location_id: Option<String>,
     pub expires_before: Option<NaiveDate>,
     pub is_initial_stocktake: Option<bool>,
@@ -92,6 +93,7 @@ impl InsertInput {
             id,
             location_id,
             master_list_id,
+            include_all_master_list_items,
             expires_before,
             create_blank_stocktake,
             is_initial_stocktake,
@@ -104,6 +106,7 @@ impl InsertInput {
             comment,
             location_id,
             master_list_id,
+            include_all_master_list_items,
             expires_before,
             is_initial_stocktake,
             description,

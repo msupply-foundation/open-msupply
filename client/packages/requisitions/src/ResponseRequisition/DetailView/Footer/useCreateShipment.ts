@@ -1,7 +1,4 @@
-import React from 'react';
 import {
-  ButtonWithIcon,
-  PlusCircleIcon,
   useTranslation,
   useConfirmationModal,
   useAlertModal,
@@ -13,14 +10,13 @@ import {
 import { useResponse } from '../../api';
 import { AppRoute } from '@openmsupply-client/config/src';
 
-export const CreateShipmentButtonComponent = () => {
+export const useCreateShipment = () => {
   const { lines, linesRemainingToSupply } = useResponse.document.fields([
     'lines',
     'linesRemainingToSupply',
   ]);
   const t = useTranslation();
   const { mutateAsync } = useResponse.utils.createOutbound();
-  const isDisabled = useResponse.utils.isDisabled();
   const navigate = useNavigate();
   const createOutbound = () => {
     mutateAsync().then(invoiceId => {
@@ -46,7 +42,7 @@ export const CreateShipmentButtonComponent = () => {
         ? 'message.all-lines-have-no-supply-quantity'
         : 'message.all-lines-have-been-fulfilled'
     ),
-    onOk: () => { },
+    onOk: () => {},
   });
 
   const onCreateShipment = () => {
@@ -63,15 +59,5 @@ export const CreateShipmentButtonComponent = () => {
     t('error.no-create-outbound-shipment-permission')
   );
 
-  return (
-    <ButtonWithIcon
-      Icon={<PlusCircleIcon />}
-      label={t('button.create-shipment')}
-      onClick={handleClick}
-      disabled={isDisabled}
-      color="secondary"
-    />
-  );
+  return { onCreateShipment: handleClick };
 };
-
-export const CreateShipmentButton = React.memo(CreateShipmentButtonComponent);

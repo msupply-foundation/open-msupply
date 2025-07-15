@@ -1,0 +1,76 @@
+name: Test DB Migrations against base branch views
+
+# Our automated tests confirm that database migrations between major versions work
+# and that the latest views can be dropped and rebuilt (i.e. when restarting service)
+
+# This workflow exists to ensure the previous views/schema can have the new changes
+# applied to them (i.e. ensure we don't miss a dependent DROP VIEW statement after a rename)
+
+on:
+  pull_request:
+    paths:
+      - "server/repository/src/migrations/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test-migration-sqlite:
+    name: Test Database Migration (SQLite)
+    runs-on: self-hosted
+    timeout-minutes: 25
+    env:
+      CARGO_TARGET_DIR: /tmp/target/sqlite
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check out base branch
+        run: |
+          git checkout ${{ github.base_ref }}
+          echo "Checked out base branch: ${{ github.base_ref }}"
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Initialize database with base branch code
+        working-directory: server
+        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli -- initialise-database
+      - name: Check out PR branch
+        run: |
+          git checkout ${{ github.head_ref }}
+          echo "Checked out PR branch: ${{ github.head_ref }}"
+      - name: Run migrations & drop/recreate views
+        working-directory: server
+        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli -- migrate
+
+  test-migration-pg:
+    name: Test Database Migration (Postgres)
+    runs-on: self-hosted
+    timeout-minutes: 25
+    env:
+      CARGO_TARGET_DIR: /tmp/target/postgres
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check out base branch
+        run: |
+          git checkout ${{ github.base_ref }}
+          echo "Checked out base branch: ${{ github.base_ref }}"
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Initialize database with base branch code
+        working-directory: server
+        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli --features postgres -- initialise-database
+      - name: Check out PR branch
+        run: |
+          git checkout ${{ github.head_ref }}
+          echo "Checked out PR branch: ${{ github.head_ref }}"
+      - name: Run migrations & drop/recreate views
+        working-directory: server
+        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli --features postgres -- migrate

@@ -13,7 +13,6 @@ pub mod settings;
 pub mod site_info;
 pub mod sync_buffer;
 pub mod sync_on_central;
-pub(crate) mod sync_serde;
 pub mod sync_status;
 pub mod sync_user;
 pub mod synchroniser;
@@ -64,7 +63,7 @@ pub(crate) fn get_sync_push_changelogs_filter(
             .ok_or(SyncChangelogError::CentralSiteIdNotSet)?;
 
         return Ok(Some(ChangelogFilter::new().source_site_id(
-            EqualFilter::not_equal_to_i32(msupply_central_server_id),
+            EqualFilter::not_equal_to_or_null_i32(msupply_central_server_id),
         )));
     }
 

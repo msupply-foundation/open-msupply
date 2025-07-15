@@ -599,6 +599,7 @@ mod test {
             stock_line.supplier_link_id.unwrap(),
             INVENTORY_ADJUSTMENT_NAME_CODE.to_string()
         );
+        assert_eq!(stock_line.donor_link_id, stocktake_line.donor_link_id);
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)

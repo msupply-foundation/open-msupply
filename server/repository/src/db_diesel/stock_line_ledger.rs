@@ -1,9 +1,10 @@
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
-    EqualFilter, InvoiceType, Pagination, RepositoryError, Sort,
+    EqualFilter, InvoiceType, MasterListLineFilter, MasterListLineRepository, Pagination,
+    RepositoryError, Sort,
 };
 
-use super::{DBType, DatetimeFilter, InvoiceStatus, StorageConnection};
+use super::{item_row::item, DBType, DatetimeFilter, InvoiceStatus, StorageConnection};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -77,6 +78,7 @@ pub struct StockLineLedgerFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
+    pub master_list_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -197,12 +199,23 @@ fn create_filtered_query(filter: Option<StockLineLedgerFilter>) -> BoxedLedgerQu
             item_id,
             store_id,
             datetime,
+            master_list_id,
         } = f;
 
         apply_equal_filter!(query, stock_line_id, stock_line_ledger::stock_line_id);
         apply_equal_filter!(query, item_id, stock_line_ledger::item_id);
         apply_equal_filter!(query, store_id, stock_line_ledger::store_id);
         apply_date_time_filter!(query, datetime, stock_line_ledger::datetime);
+
+        if let Some(master_list_id) = master_list_id {
+            let item_ids = MasterListLineRepository::create_filtered_query(Some(
+                MasterListLineFilter::new().master_list_id(master_list_id),
+            ))
+            .unwrap()
+            .select(item::id);
+
+            query = query.filter(stock_line_ledger::item_id.eq_any(item_ids));
+        }
     }
 
     query

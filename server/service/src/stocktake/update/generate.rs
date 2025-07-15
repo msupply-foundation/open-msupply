@@ -331,12 +331,12 @@ fn generate_new_stock_line(
         item_id,
         note: row.note,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
+        donor_id: stocktake_line.line.donor_link_id.clone(),
         // Default
         stock_on_hold: false,
         barcode: None,
         total_before_tax: None,
         tax_percentage: None,
-        donor_id: None,
         vvm_status_id: None,
         campaign_id: None,
         shipped_number_of_packs: None,
