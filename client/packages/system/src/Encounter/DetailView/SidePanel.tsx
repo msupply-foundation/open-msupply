@@ -26,6 +26,7 @@ import {
   useEncounter,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
+import { PatientTabValue } from '../../Patient/PatientView/PatientView';
 
 const NUM_RECENT_ENCOUNTERS = 5;
 
@@ -183,7 +184,7 @@ export const SidePanel: FC<SidePanelProps> = ({
                 to={RouteBuilder.create(AppRoute.Dispensary)
                   .addPart(AppRoute.Patients)
                   .addPart(encounter.patient.id)
-                  .addQuery({ tab: 'Encounters' })
+                  .addQuery({ tab: PatientTabValue.Encounters })
                   .build()}
               >
                 {t('label.more')}
