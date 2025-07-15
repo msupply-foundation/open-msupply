@@ -146,13 +146,8 @@ export const InsuranceModal = (): ReactElement => {
                   value={draft.policyNumberPerson ?? undefined}
                   required={!draft.policyNumberFamily}
                 >
-                  {({ value, required, errorMessage, setError }) => (
+                  {({ value, required, errorMessage }) => (
                     <BasicTextInput
-                      // {...getErrorProps({
-                      //   code: t('label.policy-number-person'),
-                      //   value: draft.policyNumberPerson,
-                      //   required: !draft.policyNumberFamily,
-                      // })}
                       disabled={haveInsuranceId}
                       onChange={event => {
                         updatePatch({
@@ -162,7 +157,6 @@ export const InsuranceModal = (): ReactElement => {
                       value={value}
                       required={required}
                       error={errorMessage != null}
-                      // setError={setError}
                     />
                   )}
                 </FieldErrorWrapper>
