@@ -24,13 +24,11 @@ jobs:
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
 
-      - name: Install deps
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: install
-          dir: "client"
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
+      - name: Install Dependencies
+        run: |
+          cd client
+          rm -rf node_modules
+          yarn install --frozen-lockfile
 
       - name: Get Properties
         id: properties
