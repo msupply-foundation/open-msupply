@@ -1,6 +1,6 @@
-use crate::sync::sync_serde::zero_date_as_option;
 use chrono::NaiveDate;
 use repository::{DiagnosisRow, StorageConnection, SyncBufferRow};
+use util::sync_serde::zero_date_as_option;
 
 use serde::Deserialize;
 

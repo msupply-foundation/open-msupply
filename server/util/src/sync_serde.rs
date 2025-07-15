@@ -1,10 +1,10 @@
+use crate::format_error;
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use serde::{
     de::{value::StrDeserializer, Error, IntoDeserializer},
     Deserialize, Deserializer, Serialize, Serializer,
 };
 use serde_yaml::Value;
-use util::format_error;
 
 pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
     d: D,
@@ -131,9 +131,8 @@ pub fn zero_f64_as_none<'de, D: Deserializer<'de>>(d: D) -> Result<Option<f64>, 
 #[cfg(test)]
 mod test {
 
+    use super::*;
     use serde::{Deserialize, Serialize};
-
-    use crate::sync::sync_serde::object_fields_as_option;
 
     #[allow(non_snake_case)]
     #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
