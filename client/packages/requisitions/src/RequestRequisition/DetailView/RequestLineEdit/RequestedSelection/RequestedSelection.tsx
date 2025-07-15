@@ -180,9 +180,7 @@ export const RequestedSelection = ({
             options={options}
             value={representation}
             onChange={e => {
-              setRepresentation(
-                (e.target.value as RepresentationValue) ?? Representation.UNITS
-              );
+              setRepresentation(e.target.value as RepresentationValue);
             }}
             sx={{
               '& .MuiInputBase-input': {
