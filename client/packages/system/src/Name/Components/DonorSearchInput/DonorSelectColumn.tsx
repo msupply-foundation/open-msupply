@@ -14,12 +14,13 @@ export const getDonorColumn = <T extends RecordWithId>(
     key: 'donorId',
     label: 'label.donor',
     width: 200,
-    Cell: ({ rowData, column }: CellProps<T>): JSX.Element => (
+    Cell: ({ rowData, column, isDisabled }: CellProps<T>): JSX.Element => (
       <DonorSearchInput
         donorId={column.accessor({ rowData }) as string | null}
         onChange={donor => update(rowData.id, donor)}
         width={200}
         clearable
+        disabled={isDisabled}
       />
     ),
   };

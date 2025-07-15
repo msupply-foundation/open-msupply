@@ -1,10 +1,9 @@
 use chrono::NaiveDate;
 use repository::{StorageConnection, StoreMode, StoreRow, StoreRowDelete, SyncBufferRow};
 
-use crate::sync::{
-    sync_serde::{empty_str_as_option_string, zero_date_as_option},
-    translations::name::NameTranslation,
-};
+use crate::sync::translations::name::NameTranslation;
+use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
+
 use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};

@@ -1,9 +1,6 @@
-use crate::sync::{
-    sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time},
-    translations::{
-        invoice_line::InvoiceLineTranslation, stock_line::StockLineTranslation,
-        store::StoreTranslation, user::UserTranslation, vvm_status::VVMStatusTranslation,
-    },
+use crate::sync::translations::{
+    invoice_line::InvoiceLineTranslation, stock_line::StockLineTranslation,
+    store::StoreTranslation, user::UserTranslation, vvm_status::VVMStatusTranslation,
 };
 use anyhow::Error;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -12,6 +9,7 @@ use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time};
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
