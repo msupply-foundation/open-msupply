@@ -560,7 +560,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     // Convert from base64 string to byte array
                     byte[] binaryData = android.util.Base64.decode(content, android.util.Base64.DEFAULT);
 
-                    mainActivity.SaveBinaryFile(filename, binaryData, mimeType, "Saved binary");
+                    mainActivity.SaveBinaryFile(filename, binaryData, mimeType, successMessage);
                     response.put("success", true);
                 } catch (Exception e) {
                     response.put("error", "Error processing binary data: " + e.getMessage());
