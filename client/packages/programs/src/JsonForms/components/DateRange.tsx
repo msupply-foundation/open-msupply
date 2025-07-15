@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -22,6 +22,8 @@ import { PickersActionBarAction } from '@mui/x-date-pickers';
 const Options = z
   .object({
     hideClear: z.boolean().optional(),
+    disableFuture: z.boolean().optional(),
+    requiredBothDates: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -35,6 +37,14 @@ const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
   const { options } = useZodOptionsValidation(Options, uischema.options);
 
+  const [dateRange, setDateRange] = useState<{
+    beforeOrEqualTo?: string;
+    afterOrEqualTo?: string;
+  }>({
+    beforeOrEqualTo: data?.beforeOrEqualTo,
+    afterOrEqualTo: data?.afterOrEqualTo,
+  });
+
   const actions: PickersActionBarAction[] = options?.hideClear
     ? ['accept']
     : ['clear', 'accept'];
@@ -43,10 +53,22 @@ const UIComponent = (props: ControlProps) => {
     range: 'beforeOrEqualTo' | 'afterOrEqualTo',
     date: Date | null
   ) => {
-    handleChange(path, {
-      ...(data || {}),
+    const updated = {
+      ...(dateRange ?? {}),
       [range]: date ? date.toISOString() : null,
-    });
+    };
+
+    setDateRange(updated);
+
+    if (
+      !options?.requiredBothDates ||
+      (updated.beforeOrEqualTo && updated.afterOrEqualTo)
+    ) {
+      handleChange(path, updated);
+    } else {
+      // If both dates are required but one is unset, clear the dateRange on the JSON Form
+      handleChange(path, null);
+    }
   };
 
   if (!props.visible) {
@@ -74,11 +96,14 @@ const UIComponent = (props: ControlProps) => {
         inputAlignment={'start'}
         Input={
           <DateTimePickerInput
-            value={DateUtils.getDateOrNull(data?.from)}
+            value={DateUtils.getDateOrNull(dateRange.afterOrEqualTo)}
             onChange={date => updateDate('afterOrEqualTo', date)}
             disabled={!props.enabled}
             actions={actions}
-            maxDate={DateUtils.getDateOrNull(data?.to) ?? undefined}
+            maxDate={
+              DateUtils.getDateOrNull(dateRange.beforeOrEqualTo) ?? undefined
+            }
+            disableFuture={options?.disableFuture}
           />
         }
       />
@@ -89,12 +114,15 @@ const UIComponent = (props: ControlProps) => {
         inputAlignment={'start'}
         Input={
           <DateTimePickerInput
-            value={DateUtils.getDateOrNull(data?.to)}
+            value={DateUtils.getDateOrNull(dateRange.beforeOrEqualTo)}
             onChange={date => updateDate('beforeOrEqualTo', date)}
             disabled={!props.enabled}
             actions={actions}
             dateAsEndOfDay
-            minDate={DateUtils.getDateOrNull(data?.from) ?? undefined}
+            minDate={
+              DateUtils.getDateOrNull(dateRange.afterOrEqualTo) ?? undefined
+            }
+            disableFuture={options?.disableFuture}
           />
         }
       />

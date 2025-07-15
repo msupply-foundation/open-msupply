@@ -26,6 +26,10 @@ macro_rules! apply_equal_filter {
                 $query = $query.filter($dsl_field.ne(value));
             }
 
+            if let Some(value) = equal_filter.not_equal_to_or_null {
+                $query = $query.filter($dsl_field.ne(value).or($dsl_field.is_null()));
+            }
+
             if let Some(value) = equal_filter.equal_any {
                 $query = $query.filter($dsl_field.eq_any(value));
             }

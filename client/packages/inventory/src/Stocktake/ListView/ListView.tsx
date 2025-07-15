@@ -44,6 +44,8 @@ export const StocktakeListView = () => {
   } = useUrlQueryParams();
   const pagination = { page, first, offset };
   const { data, isError, isLoading } = useStocktakeOld.document.list();
+  const { data: hasStocktake, isLoading: firstStocktakeLoading } =
+    useStocktakeOld.document.hasStocktake();
   const {
     create: { create, isCreating },
   } = useStocktake();
@@ -80,12 +82,14 @@ export const StocktakeListView = () => {
     [sortBy]
   );
 
-  const createInitialStocktake = () => {
-    const comment = t('stocktake.comment-initial-stocktake-template');
+  const createInitialStocktake = (hasStockTake: boolean) => {
+    const comment = hasStockTake
+      ? '' // No comment for subsequent stocktakes
+      : t('stocktake.comment-initial-stocktake-template');
     create({
       comment,
       description,
-      isInitialStocktake: true,
+      isInitialStocktake: !hasStockTake,
     }).then(id => {
       if (id) {
         navigate(String(id));
@@ -108,15 +112,19 @@ export const StocktakeListView = () => {
         columns={columns}
         data={data?.nodes ?? []}
         isError={isError}
-        isLoading={isLoading}
+        isLoading={isLoading || firstStocktakeLoading}
         onRowClick={row => {
           navigate(String(row.id));
         }}
         noDataElement={
           <NothingHere
             body={t('error.no-stocktakes')}
-            onCreate={createInitialStocktake}
-            buttonText={t('button.initial-stocktake')}
+            onCreate={() => createInitialStocktake(hasStocktake ?? false)}
+            buttonText={
+              hasStocktake
+                ? t('button.create-a-new-one')
+                : t('button.initial-stocktake')
+            }
           />
         }
       />

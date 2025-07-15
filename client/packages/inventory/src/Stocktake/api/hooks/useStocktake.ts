@@ -33,6 +33,7 @@ const useCreate = () => {
 
   const mutationFn = async ({
     masterListId,
+    includeAllMasterListItems,
     locationId,
     createBlankStocktake,
     expiresBefore,
@@ -45,6 +46,7 @@ const useCreate = () => {
       input: {
         id: FnUtils.generateUUID(),
         masterListId,
+        includeAllMasterListItems,
         locationId,
         createBlankStocktake,
         expiresBefore,
