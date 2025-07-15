@@ -14,6 +14,7 @@ pub struct UpsertPreferences {
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
+    pub use_campaigns: Option<bool>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
@@ -29,6 +30,7 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         gender_options: gender_options_input,
         show_contact_tracing: show_contact_tracing_input,
+        use_campaigns: use_campaigns_input,
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
@@ -42,6 +44,7 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor,
         gender_options,
         show_contact_tracing,
+        use_campaigns,
         // Store preferences
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
@@ -63,6 +66,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = show_contact_tracing_input {
                 show_contact_tracing.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = use_campaigns_input {
+                use_campaigns.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

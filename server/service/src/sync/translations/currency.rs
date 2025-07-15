@@ -4,9 +4,8 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::sync_serde::{date_option_to_isostring, zero_date_as_option};
-
 use super::{PullTranslateResult, SyncTranslation};
+use util::sync_serde::{date_option_to_isostring, zero_date_as_option};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
