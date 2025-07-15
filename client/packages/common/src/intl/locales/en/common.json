@@ -1883,6 +1883,7 @@
   "preference.genderOptions": "Gender options",
   "preference.manageVaccinesInDoses": "Manage vaccines in doses",
   "preference.manageVvmStatusForStock": "Manage VVM status for stock",
+  "preference.orderInPacks": "Order in packs",
   "preference.showContactTracing": "Show contact tracing",
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
   "preference.useCampaigns": "Use Campaigns",
