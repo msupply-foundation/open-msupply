@@ -176,17 +176,14 @@ mod test {
     #[test]
     fn test_handle_object_fields_translation() {
         // case with populated fields
-        const LEGACY_ROW_1: (&str, &str) = (
-            "LEGACY_ROW_1",
-            r#"{
+        const LEGACY_ROW_1: &str = r#"{
                 "ID": "LEGACY_ROW_1",
                 "oms_fields": {
                     "foreign_exchange_rate": 1.6,
                     "contract_signed_datetime": "2021-01-22T15:16:00"
                 }
-            }"#,
-        );
-        let a = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_1.1);
+            }"#;
+        let a = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_1);
         assert!(a.is_ok());
         let fields = a.unwrap().oms_fields.unwrap();
         assert_eq!(fields.foreign_exchange_rate, Some(1.6));
@@ -199,45 +196,33 @@ mod test {
         assert_eq!(fields.advance_paid_datetime, None);
 
         // case with empty object
-        const LEGACY_ROW_2: (&str, &str) = (
-            "LEGACY_ROW_2",
-            r#"{
+        const LEGACY_ROW_2: &str = r#"{
                 "ID": "LEGACY_ROW_2",
                 "oms_fields": {}
-            }"#,
-        );
-        let b = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_2.1);
+            }"#;
+        let b = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_2);
         assert!(b.is_ok());
 
         // case with empty string
-        const LEGACY_ROW_3: (&str, &str) = (
-            "LEGACY_ROW_3",
-            r#"{
+        const LEGACY_ROW_3: &str = r#"{
                 "ID": "LEGACY_ROW_3",
                 "oms_fields": ""
-            }"#,
-        );
-        let c = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_3.1).unwrap();
+            }"#;
+        let c = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_3).unwrap();
         assert_eq!(c.oms_fields, None);
 
         // case with null
-        const LEGACY_ROW_4: (&str, &str) = (
-            "LEGACY_ROW_4",
-            r#"{
+        const LEGACY_ROW_4: &str = r#"{
                 "ID": "LEGACY_ROW_4",
                 "oms_fields": null
-            }"#,
-        );
-        let d = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_4.1);
+            }"#;
+        let d = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_4);
         assert!(d.is_ok());
 
         // case with no value
-        const LEGACY_ROW_5: (&str, &str) = (
-            "LEGACY_ROW_5",
-            r#"{
-                "ID": "LEGACY_ROW_5"            }"#,
-        );
-        let e = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_5.1);
+        const LEGACY_ROW_5: &str = r#"{
+                "ID": "LEGACY_ROW_5"            }"#;
+        let e = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_5);
         assert!(e.is_ok());
     }
 
@@ -261,7 +246,6 @@ mod test {
                 }
             }"#;
         let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
-        dbg!(&row);
         assert!(row.is_ok(), "null to None is OK");
         let fields = row.unwrap().oms_fields.unwrap();
         assert_eq!(fields.some_enum_field, None);
