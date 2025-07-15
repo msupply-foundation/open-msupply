@@ -35,7 +35,7 @@ impl Jetdirect {
         mode: Mode,
         timeout: Duration,
     ) -> Result<String> {
-        log::debug!("Sending jetdirect command");
+        log::debug!("Sending jetdirect command |{}|", payload);
         handle.write(payload.as_bytes())?;
         log::debug!("Command sent, awaiting response...");
 
@@ -64,7 +64,7 @@ impl Jetdirect {
                     break;
                 }
                 _ => {
-                    println!("Got other jetdirect event: {:?}", event)
+                    log::info!("Got other jetdirect event: {:?}", event)
                 }
             }
         }
