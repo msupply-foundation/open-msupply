@@ -7,7 +7,7 @@ type FieldErrorWrapperProps = {
   label?: string;
   value: string | undefined;
   required?: boolean;
-  customValidation?: () => boolean;
+  customIsValid?: boolean;
   customErrorMessage?: string;
   children: (fieldProps: {
     value: string | undefined;
@@ -22,7 +22,7 @@ export const FieldErrorWrapper: React.FC<FieldErrorWrapperProps> = ({
   label,
   value,
   required,
-  customValidation,
+  customIsValid,
   customErrorMessage,
   children,
 }) => {
@@ -47,8 +47,10 @@ export const FieldErrorWrapper: React.FC<FieldErrorWrapperProps> = ({
   useEffect(() => {
     const { requiredError } = errorData;
 
-    if (customValidation && !customValidation()) {
+    if (customIsValid === false) {
       updateErrorData(code, { error: customErrorMessage ?? 'Invalid input' });
+    } else if (customIsValid === true) {
+      updateErrorData(code, { error: null });
     }
 
     if (required && !value) {
@@ -56,7 +58,7 @@ export const FieldErrorWrapper: React.FC<FieldErrorWrapperProps> = ({
     } else if (requiredError) {
       updateErrorData(code, { requiredError: null });
     }
-  }, [value, required, customValidation, customErrorMessage]);
+  }, [value, required, customIsValid, customErrorMessage]);
 
   const errorMessage =
     errorData.error || displayRequiredErrors ? errorData.requiredError : null;
