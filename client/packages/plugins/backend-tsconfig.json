@@ -12,5 +12,10 @@
                 "./backendCommon/*"
             ]
         }
-    }
+    },
+    "//": "If backend plugins have graphql files, they will be generated into ts files (when 'yarn generate' is run from client",
+    "//": "These generate files will have imports from frontend app and cause compilation errors",
+    "exclude": [
+        "**/*.generated.ts"
+    ]
 }

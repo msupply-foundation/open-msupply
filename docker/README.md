@@ -4,13 +4,11 @@ Dockerise github action is made to fire when a new tag is created, this tag need
 
 Dockerfile has two pre-requisites:
 
-`remote_server` and `remote_server` built in release mode, they should be built inside the rust:slim docker images: 
+`remote_server` and `remote_server_cli` built in release mode, they should be built inside the rust:slim docker image (after building client): 
 
 ```bash
 docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo build --release --bin remote_server --bin remote_server_cli
 ```
-
-And if building `--target dev`, a client.tar.gz with all dev dependencies already installed (with yarn) in the root folder.
 
 [docker-hub.md](./docker-hub.md) explains the feature set of the docker image.
 
@@ -20,33 +18,28 @@ And if building `--target dev`, a client.tar.gz with all dev dependencies alread
 
 Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DOCKER_TOKEN` (from docker hub)
 
-## Build steps
+## Build steps (as per dockerise.yaml github action workflow)
 
 * Build client
-* Build server in rust:slim image container (uses build client)
+* Build server in rust:slim image container (uses built client)
 * Build client in rust:slim image container with yarn pre installed 
-* Build docker
+* Build docker image
    * copy binaries
    * set hardware id
-   * copy client
    * copy entrypoint
    * in dev target add dependencies for yarn
+   * copy client and run yarn isntall
 * Tag docker images and push to dockerhub
 
 ## Building image locally
 
-This is needed when building build apple m chip version on y
+This is needed when building apple m chip version on your m chip mac.
 
 ```bash
 # Build client
 cd client && yarn && yarn build
 # Build server 
 cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo build --release --bin remote_server --bin remote_server_cli
-# Build dev-client inside rust:slim container with yarn pre installed
-find . -name "node_modules" -type d -prune -exec rm -rf '{}' + && \
-docker build docker/dev-client/. -t dev-client-build && \
-docker run --rm -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/client dev-client-build yarn install
-
 # Dockerise with tag
 docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64 --target base && \
 docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-dev --target dev
@@ -54,7 +47,4 @@ docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-dev --target dev
 docker login
 docker push msupplyfoundation/omsupply:v2.7.3-arm64 && \
 docker push msupplyfoundation/omsupply:v2.7.3-arm64-dev
-
-# Cleanup
-find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
 ```
