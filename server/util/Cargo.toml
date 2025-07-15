@@ -16,6 +16,9 @@ serde_json = { workspace = true }
 reqwest = { workspace = true }
 anyhow.workspace = true
 sanitize-filename = "0.6.0"
+log = { workspace = true }
+serde_yaml = { workspace = true }
+
 
 [dev-dependencies]
 thiserror = { workspace = true }
