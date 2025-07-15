@@ -71,7 +71,7 @@ export const PatientSearchInput = ({
     setInput(undefined);
   };
 
-  const showCreate = allowCreate && input !== '' && !isLoading;
+  const showCreate = allowCreate && !!input && !isLoading;
 
   const CreatePatient = mountSlidePanel
     ? CreatePatientSlider
@@ -80,7 +80,7 @@ export const PatientSearchInput = ({
   const options = patients as SearchInputPatient[];
 
   return (
-    <Box width={`${width}px`} display={'flex'} alignItems="center">
+    <Box width={`${width}px`} display="flex" alignItems="center">
       <Autocomplete
         autoFocus={autoFocus}
         options={options}
@@ -108,7 +108,7 @@ export const PatientSearchInput = ({
           },
           // reset input value to previous selected patient if user clicks away
           // without selecting a patient
-          onBlur: () => setInput(value?.name ?? ''),
+          onBlur: () => setInput(value?.name ?? undefined),
         }}
         filterOptions={options => options}
         sx={{ width: '100%', ...sx }}
