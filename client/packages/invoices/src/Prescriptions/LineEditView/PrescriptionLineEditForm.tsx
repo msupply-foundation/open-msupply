@@ -8,7 +8,6 @@ import {
   DropdownMenuItem,
   TextArea,
   InputWithLabelRow,
-  useIntlUtils,
   usePreference,
   PreferenceKey,
 } from '@openmsupply-client/common';
@@ -33,7 +32,6 @@ export const PrescriptionLineEditForm = ({
   isNew,
 }: PrescriptionLineEditFormProps) => {
   const t = useTranslation();
-  const { getPlural } = useIntlUtils();
   const { data: prefs } = usePreference(
     PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.SortByVvmStatusThenExpiry
@@ -84,12 +82,7 @@ export const PrescriptionLineEditForm = ({
           closedSummary={
             displayInDoses
               ? dosesSummary(t, draftLines)
-              : summarise(
-                  t,
-                  item.unitName ?? t('label.unit'),
-                  draftLines,
-                  getPlural
-                )
+              : summarise(t, item.unitName ?? t('label.unit'), draftLines)
           }
           defaultExpanded={isNew && !disabled}
         >

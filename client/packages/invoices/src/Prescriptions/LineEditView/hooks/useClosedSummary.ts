@@ -1,13 +1,27 @@
-import { LocaleKey, TypedTFunction } from '@common/intl';
+import {
+  LocaleKey,
+  TypedTFunction,
+  useFormatNumber,
+  useIntlUtils,
+} from '@common/intl';
 import { NumUtils } from '@common/utils';
 import { DraftStockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 export const useClosedSummary = () => {
+  const formatNumber = useFormatNumber();
+  const { getPlural } = useIntlUtils();
+
+  const getDisplayValue = (value: number) => {
+    const formatted = formatNumber.round(value, 2);
+    return NumUtils.hasMoreThanTwoDp(value)
+      ? `${formatted}... `
+      : `${formatted} `;
+  };
+
   const summarise = (
     t: TypedTFunction<LocaleKey>,
     unitName: string,
-    lines: DraftStockOutLineFragment[],
-    getPlural: (word: string, count: number) => string
+    lines: DraftStockOutLineFragment[]
   ) => {
     // Count how many of each pack size
     const counts: Record<number, { unitName: string; count: number }> = {};
@@ -24,11 +38,13 @@ export const useClosedSummary = () => {
     });
 
     // Summarise counts in words
-    const summary: { qty: number; text: string; tooltip: number }[] = [];
+    const summary: { displayValue: string; text: string; tooltip: string }[] =
+      [];
     Object.entries(counts).forEach(([size, { unitName, count: numUnits }]) => {
       const packSize = Number(size);
       if (packSize > 1) {
-        const numPacks = NumUtils.round(numUnits / packSize, 2);
+        const totalPacks = numUnits / packSize;
+        const numPacks = NumUtils.round(totalPacks, 2);
         const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
         const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
         const unitType = getPlural(unitName, packSize);
@@ -39,13 +55,16 @@ export const useClosedSummary = () => {
           packWord,
           unitWord,
         });
-        const tooltip = numUnits / packSize;
-        summary.push({ qty: numPacks, text, tooltip });
+        const tooltip = formatNumber.format(numUnits / packSize);
+        const displayValue = getDisplayValue(totalPacks);
+
+        summary.push({ displayValue, text, tooltip });
       } else {
         const unitType = getPlural(unitName, numUnits);
         const text = t('label.packs-of-1', { numUnits, unitType });
-        const tooltip = numUnits;
-        summary.push({ qty: numUnits, text, tooltip });
+        const tooltip = formatNumber.format(numUnits);
+        const displayValue = getDisplayValue(numUnits);
+        summary.push({ displayValue, text, tooltip });
       }
     });
     return summary;
@@ -61,14 +80,13 @@ export const useClosedSummary = () => {
       0
     );
 
-    const roundedDoses = NumUtils.round(totalDoses);
-
+    const displayValue = getDisplayValue(totalDoses);
     const unitWord = t('label.doses-plural', {
-      count: roundedDoses,
+      count: totalDoses,
     });
-    const text = `${roundedDoses} ${unitWord}`;
-    const tooltip = totalDoses;
-    return [{ text, tooltip }];
+    const tooltip = formatNumber.format(totalDoses);
+
+    return [{ displayValue, text: unitWord, tooltip }];
   };
 
   return { summarise, dosesSummary };

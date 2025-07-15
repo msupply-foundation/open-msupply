@@ -13,7 +13,6 @@ import {
   Typography,
 } from '@mui/material';
 import { ChevronDownIcon } from '@common/icons';
-import { NumUtils } from '@common/utils';
 
 const BORDER_RADIUS = 10;
 
@@ -43,7 +42,7 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
   height: 'fit-content',
 }));
 interface ClosedSummaryProps {
-  closedSummary?: { qty?: number; text: string; tooltip?: number }[];
+  closedSummary?: { displayValue?: string; text: string; tooltip?: string }[];
 }
 
 const ClosedSummary = ({ closedSummary }: ClosedSummaryProps) => {
@@ -53,9 +52,7 @@ const ClosedSummary = ({ closedSummary }: ClosedSummaryProps) => {
         <Box key={i} sx={{ display: 'flex', flexDirection: 'row' }}>
           <Tooltip title={summary?.tooltip}>
             <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-              {!!NumUtils.hasMoreThanTwoDp(summary?.tooltip ?? 0)
-                ? `${summary.qty}... `
-                : `${summary.qty} `}
+              {summary.displayValue}
             </Typography>
           </Tooltip>
           <Typography>{summary.text}</Typography>
@@ -68,7 +65,7 @@ const ClosedSummary = ({ closedSummary }: ClosedSummaryProps) => {
 export interface DetailPanelSectionProps {
   backgroundColor?: string;
   title?: string;
-  closedSummary?: { qty?: number; text: string; tooltip?: number }[];
+  closedSummary?: { displayValue?: string; text: string; tooltip?: string }[];
   defaultExpanded?: boolean;
 }
 
