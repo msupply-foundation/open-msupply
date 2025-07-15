@@ -107,6 +107,19 @@ export type MasterListLinesQuery = {
   };
 };
 
+export type MasterListLineCountQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  masterListId: Types.Scalars['String']['input'];
+}>;
+
+export type MasterListLineCountQuery = {
+  __typename: 'Queries';
+  masterListLines: {
+    __typename: 'MasterListLineConnector';
+    totalCount: number;
+  };
+};
+
 export const MasterListItemFragmentDoc = gql`
   fragment MasterListItem on ItemNode {
     __typename
@@ -202,6 +215,16 @@ export const MasterListLinesDocument = gql`
   }
   ${MasterListLineFragmentDoc}
 `;
+export const MasterListLineCountDocument = gql`
+  query masterListLineCount($storeId: String!, $masterListId: String!) {
+    masterListLines(storeId: $storeId, masterListId: $masterListId) {
+      ... on MasterListLineConnector {
+        __typename
+        totalCount
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -264,6 +287,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'masterListLines',
+        'query',
+        variables
+      );
+    },
+    masterListLineCount(
+      variables: MasterListLineCountQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<MasterListLineCountQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<MasterListLineCountQuery>(
+            MasterListLineCountDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'masterListLineCount',
         'query',
         variables
       );

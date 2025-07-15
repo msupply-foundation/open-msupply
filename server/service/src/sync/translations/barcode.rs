@@ -4,7 +4,8 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::{sync_serde::empty_str_as_option_string, translations::item::ItemTranslation};
+use crate::sync::translations::item::ItemTranslation;
+use util::sync_serde::empty_str_as_option_string;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
