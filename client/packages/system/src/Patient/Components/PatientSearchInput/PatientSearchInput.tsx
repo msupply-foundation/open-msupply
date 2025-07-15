@@ -51,7 +51,7 @@ export const PatientSearchInput = ({
       setInput(value.name);
       search(value.name);
     }
-  }, [search, value]);
+  }, [value]);
 
   const asOption = (
     patient: CreateNewPatient | PatientColumnData
@@ -69,6 +69,7 @@ export const PatientSearchInput = ({
       onChange(asOption(patientToSelect));
     }
     setInput(undefined);
+    search('');
   };
 
   const showCreate = allowCreate && !!input && !isLoading;
@@ -108,7 +109,14 @@ export const PatientSearchInput = ({
           },
           // reset input value to previous selected patient if user clicks away
           // without selecting a patient
-          onBlur: () => setInput(value?.name ?? undefined),
+          onBlur: () => {
+            if (value) {
+              setInput(value.name);
+            } else {
+              setInput(undefined);
+              search('');
+            }
+          },
         }}
         filterOptions={options => options}
         sx={{ width: '100%', ...sx }}
