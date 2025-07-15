@@ -5,7 +5,10 @@ use actix_web::{
 use repository::RepositoryError;
 use service::{
     auth_data::AuthData,
-    print::label::{host_status, print_asset_label, print_prescription_label, AssetLabelData, PrescriptionLabelData},
+    print::label::{
+        host_status, print_asset_label, print_prescription_label, AssetLabelData,
+        PrescriptionLabelData,
+    },
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
 };
@@ -50,6 +53,7 @@ pub async fn print_label_prescription(
     match auth_result {
         Ok(_) => (),
         Err(error) => {
+            log::error!("Authentication error printing prescription: {:?}", error);
             let formatted_error = format!("{:#?}", error);
             return HttpResponse::Unauthorized().body(formatted_error);
         }
@@ -58,14 +62,21 @@ pub async fn print_label_prescription(
     let settings = match get_printer_settings(service_provider) {
         Ok(settings) => settings,
         Err(error) => {
+            log::error!("Error getting printer settings: {}", error);
             return HttpResponse::InternalServerError()
                 .body(format!("Error getting printer settings: {}", error));
         }
     };
 
     match print_prescription_label(settings, data.into_inner()) {
-        Ok(_) => HttpResponse::Ok().body("Label printed"),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Ok(_) => {
+            log::info!("Label printed successfully");
+            HttpResponse::Ok().body("Label printed")
+        }
+        Err(err) => {
+            log::error!("Error printing label: {}", err);
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
