@@ -4,11 +4,11 @@ import type { SyncMessageRowType } from './SyncMessageRowType';
 
 export type SyncMessageRow = {
   id: string;
-  to_store_id: string | null;
-  from_store_id: string | null;
+  to_store_id?: string;
+  from_store_id?: string;
   body: string;
   created_datetime: string;
   status: SyncMessageRowStatus;
   type: SyncMessageRowType;
-  error_message: string | null;
+  error_message?: string;
 };
