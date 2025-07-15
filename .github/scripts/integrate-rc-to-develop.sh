@@ -31,9 +31,11 @@ create_merge_branch() {
         fi 
 
         if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
-            git commit -m "Merge develop into $MERGE_BRANCH (manual resolution needed)"
+            echo "There are unresolved conflicts that need manual resolution"
+            echo "Please resolve conflicts in $MERGE_BRANCH and commit manually"
+            git merge --abort
         else
-            git commit -m "Merge develop into $MERGE_BRANCH (auto-resolved)"
+            git commit -m "Merge develop into $MERGE_BRANCH"
         fi
     fi
 
