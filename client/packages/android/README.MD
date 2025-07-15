@@ -201,7 +201,7 @@ The ABI (application binary interface) refers to the CPU architecture that the a
 
 It's recommended to use Android Studio for debugging and running the Android app, because there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code, they are quite limited).
 
-Run `yarn android:build:debug` in the client folder and connect the tablet via USB (check USB debugging is enabled in the tablet settings).
+Run `yarn android:build:server` in the client folder and connect the tablet via USB (check USB debugging is enabled in the tablet settings).
 
 Open a new project in Android Studio with this directory (client/packages/android) - this will engage the gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix.
 Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `local.properties` file, and skd is usually located in `/Users/{user}/Library/Android/sdk/`. Pressing play (run) should restart sync process.
