@@ -20,9 +20,9 @@ import {
   RouteBuilder,
   useCallbackWithPermission,
   UserPermission,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
 import { ReportSelector, useActivityLog } from '@openmsupply-client/system';
 import { RepackFragment } from '../../api';

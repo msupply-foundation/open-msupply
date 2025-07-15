@@ -25,8 +25,9 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
-        synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
+        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_buffer::SyncBufferSource,
+        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
+        synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
 };
@@ -419,7 +420,11 @@ async fn main() -> anyhow::Result<()> {
             buffer_repo.upsert_many(&buffer_rows)?;
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
-            integrate_and_translate_sync_buffer(&ctx.connection, Some(&mut logger), None)?;
+            integrate_and_translate_sync_buffer(
+                &ctx.connection,
+                Some(&mut logger),
+                SyncBufferSource::Central(0),
+            )?;
 
             info!("Initialising users");
             for (input, user_info) in data.users {
@@ -554,6 +559,9 @@ async fn main() -> anyhow::Result<()> {
                 StandardReports::upsert_reports(reports_data, &con, overwrite)?;
             }
         }
+        // TODO fix these inputs. Should extract these fields from the report manifest
+        // also not necessarily custom / version 1.0 etc.
+        // Command currently unsafe.
         Action::UpsertReport {
             id,
             report_path,

@@ -121,6 +121,7 @@ fn map_inventory_adjustment_reason_filter(
                             }),
                             equal_any_or_null: None,
                             not_equal_all: None,
+                            not_equal_to_or_null: None,
                             is_null: None,
                         }
                     }),
