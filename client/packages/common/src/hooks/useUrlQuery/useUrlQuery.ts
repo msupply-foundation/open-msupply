@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { URLSearchParamsInit, useSearchParams } from 'react-router-dom';
 
 export interface UrlQueryObject {
   [key: string]: UrlQueryValue;
@@ -51,10 +51,15 @@ interface useUrlQueryProps {
   // - Numbers: any string that doesn't return NaN when cast to a number e.g. '24' => 24
   // Specify keys here if you wish to opt out of this
   skipParse?: string[];
+  initialParams?: URLSearchParamsInit; // Initial parameters to set in the URL
 }
 
-export const useUrlQuery = ({ skipParse }: useUrlQueryProps = {}) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+export const useUrlQuery = ({
+  skipParse,
+  initialParams,
+}: useUrlQueryProps = {}) => {
+  const [searchParams, setSearchParams] = useSearchParams(initialParams);
+
   return useMemo(() => {
     const updateQuery = (values: UrlQueryObject, overwrite = false) => {
       // We use this rather than searchParams as this function uses a stale
