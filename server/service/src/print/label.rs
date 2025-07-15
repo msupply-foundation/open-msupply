@@ -66,11 +66,29 @@ pub struct PrescriptionLabelData {
     details: String, // General details to include e.g. store name, prescriber name, date/time...
 }
 
+impl PrescriptionLabelData {
+    pub fn sanitise(&mut self) {
+        self.item_details = sanitise_fd_field(&self.item_details);
+        self.item_directions = sanitise_fd_field(&self.item_directions);
+        self.patient_details = sanitise_fd_field(&self.patient_details);
+        self.warning = self.warning.as_ref().map(|w| sanitise_fd_field(w));
+        self.details = sanitise_fd_field(&self.details);
+    }
+}
+
 pub fn print_prescription_label(
     settings: LabelPrinterSettingNode,
     label_data: Vec<PrescriptionLabelData>,
 ) -> Result<String> {
-    let payload = label_data
+    let sanitised_label_data: Vec<PrescriptionLabelData> = label_data
+        .into_iter()
+        .map(|mut d| {
+            d.sanitise();
+            d
+        })
+        .collect();
+
+    let payload = sanitised_label_data
         .into_iter()
         .map(|d| {
             let PrescriptionLabelData {
@@ -81,7 +99,8 @@ pub fn print_prescription_label(
                 details,
             } = d;
             let warning = warning.unwrap_or_default();
-            format!(
+
+            let label = format!(
                 r#"
                 ^XA
                 ^FX CI command parameters:
@@ -91,7 +110,7 @@ pub fn print_prescription_label(
                 ^A0,25
                 ^FO,10
                 ^FB575,3,0,C
-                ^FD{item_details}\&^FS
+                ^FD{item_details}^FS
 
                 ^FX Line
                 ^FO,65
@@ -100,7 +119,7 @@ pub fn print_prescription_label(
                 ^A0,25
                 ^FO10,75
                 ^FB580,5,0
-                ^FD{item_directions}\&{warning}\^FS
+                ^FD{item_directions}\&{warning}^FS
 
                 ^FX Line
                 ^FO,210
@@ -109,11 +128,18 @@ pub fn print_prescription_label(
                 ^A0,20
                 ^FO,220
                 ^FB575,3,0,C
-                ^FD{patient_details}\&{details}\&^FS
+                ^FD{patient_details}\&{details}^FS
 
                 ^XZ
                 "#
-            )
+            );
+
+            // Remove leading whitespaces from each line of the formatted label
+            label
+                .lines()
+                .map(|line| line.trim_start_matches(|c: char| c.is_whitespace()))
+                .collect::<Vec<&str>>()
+                .join("\n")
         })
         .collect::<Vec<String>>()
         .join("\n");
@@ -124,4 +150,32 @@ pub fn print_prescription_label(
 pub fn host_status(settings: LabelPrinterSettingNode) -> Result<String> {
     let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string("~HS".to_string(), Mode::Sgd)
+}
+
+// Format a field for the FD command in ZPL
+// https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf
+// Comments: The ^ and ~ characters can be printed by changing the prefix characters—see ^CD ~CD on
+// page 153 and ^CT ~CT on page 166. The new prefix characters cannot be printed.
+// We'll map them to a `-` so they can be printed as part of the field.
+// Any character codes > 127 will be replaced with a space, as they are not valid in ZPL.
+// ^CI13 must be selected to print a backslash (\).
+fn sanitise_fd_field(value: &str) -> String {
+    let mut fd: String = value
+        .replace('^', "-") // Control characters are replaced with -
+        .replace('~', "-") // Control characters are replaced with -
+        .replace('\n', "\\&") // Newline characters are replaced with \& in ZPL
+        .replace('\r', "\\&") // Carriage return characters are replaced with \&
+        .replace('\\', "-") // Backslashes are replaced with - can be \\\\ but apparently only works with CI13?
+        .chars()
+        .map(|c| if c.is_ascii() && c != '-' { c } else { ' ' }) // Non-ASCII characters are replaced with a space
+        .collect();
+
+    if fd.len() > 3072 {
+        log::warn!(
+            "ZPL FD field exceeds 3072 characters, truncating: {}",
+            fd.len()
+        );
+    }
+    fd.truncate(3072);
+    fd
 }
