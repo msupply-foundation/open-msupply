@@ -6,17 +6,16 @@ use repository::{
 };
 
 use crate::sync::{
-    sync_serde::{empty_str_as_option_string, object_fields_as_option, option_enum_invalid_none},
+    sync_serde::{empty_str_as_option_string, object_fields_as_option, ok_or_none},
     translations::store::StoreTranslation,
 };
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct ClinicianOmsFields {
     #[serde(default)]
-    #[serde(deserialize_with = "option_enum_invalid_none")]
+    #[serde(deserialize_with = "ok_or_none")]
     pub gender: Option<GenderType>,
 }
 
