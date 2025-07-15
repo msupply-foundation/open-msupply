@@ -26,6 +26,7 @@ interface RequestLineEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   manageVaccinesInDoses: boolean;
+  orderInPacks: boolean;
 }
 
 export const RequestLineEditModal = ({
@@ -36,6 +37,7 @@ export const RequestLineEditModal = ({
   isOpen,
   onClose,
   manageVaccinesInDoses,
+  orderInPacks,
 }: RequestLineEditModalProps) => {
   const { error } = useNotification();
   const deleteLine = useRequest.line.deleteLine();
@@ -52,9 +54,10 @@ export const RequestLineEditModal = ({
   const [currentItem, setCurrentItem] = useState(
     lines?.find(line => line.item.id === itemId)?.item
   );
-  const [representation, setRepresentation] = useState<RepresentationValue>(
-    Representation.UNITS
-  );
+  const rep = orderInPacks ? Representation.PACKS : Representation.UNITS;
+
+  const [representation, setRepresentation] =
+    useState<RepresentationValue>(rep);
 
   const { draft, save, update, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
@@ -93,7 +96,7 @@ export const RequestLineEditModal = ({
     if (mode === ModalMode.Create) {
       deletePreviousLine();
     }
-    setRepresentation(Representation.UNITS);
+    setRepresentation(rep);
     setCurrentItem(item);
   };
 

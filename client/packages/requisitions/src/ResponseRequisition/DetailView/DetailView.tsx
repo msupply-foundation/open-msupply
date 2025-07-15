@@ -35,8 +35,15 @@ export const DetailView = () => {
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { store } = useAuthContext();
-  const { data: { manageVaccinesInDoses } = { manageVaccinesInDoses: false } } =
-    usePreference(PreferenceKey.ManageVaccinesInDoses);
+  const {
+    data: { manageVaccinesInDoses, orderInPacks } = {
+      manageVaccinesInDoses: false,
+      orderInPacks: false,
+    },
+  } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.OrderInPacks
+  );
   const {
     onOpen,
     onClose,
@@ -158,6 +165,7 @@ export const DetailView = () => {
             isOpen={isOpen}
             onClose={onClose}
             manageVaccinesInDoses={manageVaccinesInDoses}
+            orderInPacks={orderInPacks}
           />
         )}
       </TableProvider>
