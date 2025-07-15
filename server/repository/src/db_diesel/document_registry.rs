@@ -203,6 +203,7 @@ impl DocumentRegistryCategory {
         EqualFilter {
             equal_to: Some(self.clone()),
             not_equal_to: None,
+            not_equal_to_or_null: None,
             equal_any: None,
             not_equal_all: None,
             equal_any_or_null: None,

@@ -60,6 +60,7 @@ where
             not_equal_to,
             equal_any_or_null,
             not_equal_all: None,
+            not_equal_to_or_null: None,
             is_null: None,
         }
     }

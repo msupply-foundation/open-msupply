@@ -103,7 +103,10 @@ export const PrescriptionLineEditForm = ({
             gap={5}
             paddingBottom={2}
           >
-            <AllocationSection disabled={disabled} />
+            <AllocationSection
+              disabled={disabled}
+              hasLines={draftLines.length > 0}
+            />
           </Grid>
         </AccordionPanelSection>
         <AccordionPanelSection

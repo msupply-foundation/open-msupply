@@ -26,7 +26,7 @@ jobs:
 
       - name: Create tags for target branches
         id: create_tags
-        run: bash .github/workflows/create-nightly-tags.sh
+        run: bash .github/scripts/create-nightly-tags.sh
 
   send-notifications:
     needs: create-tags
@@ -34,7 +34,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Send telegram notifications
         env:
           TELEGRAM_RELEASE_BOT_KEY: ${{ secrets.TELEGRAM_RELEASE_BOT_KEY }}
@@ -42,4 +41,4 @@ jobs:
           TELEGRAM_RC_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RC_RELEASE_CHAT_ID }}
           CREATED_TAGS: ${{ needs.create-tags.outputs.CREATED_TAGS }}
           AFFECTED_BRANCHES: ${{ needs.create-tags.outputs.AFFECTED_BRANCHES }}
-        run: bash .github/workflows/send-telegram-notification.sh
+        run: bash .github/scripts/send-telegram-notification.sh

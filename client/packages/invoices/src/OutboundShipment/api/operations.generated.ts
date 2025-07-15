@@ -948,6 +948,18 @@ export type UpsertOutboundShipmentMutation = {
             deletes: Array<{ __typename: 'DeleteResponse'; id: string }>;
             inserts: { __typename: 'InvoiceLineConnector'; totalCount: number };
             updates: { __typename: 'InvoiceLineConnector'; totalCount: number };
+            skippedExpiredStockLines: {
+              __typename: 'StockLineConnector';
+              totalCount: number;
+            };
+            skippedOnHoldStockLines: {
+              __typename: 'StockLineConnector';
+              totalCount: number;
+            };
+            skippedUnusableVvmStatusLines: {
+              __typename: 'StockLineConnector';
+              totalCount: number;
+            };
           };
     }> | null;
   };
@@ -1766,6 +1778,15 @@ export const UpsertOutboundShipmentDocument = gql`
               totalCount
             }
             updates {
+              totalCount
+            }
+            skippedExpiredStockLines {
+              totalCount
+            }
+            skippedOnHoldStockLines {
+              totalCount
+            }
+            skippedUnusableVvmStatusLines {
               totalCount
             }
           }
