@@ -100,7 +100,7 @@ for RC_BRANCH in $RC_BRANCHES; do
     
     MERGE_BRANCH="merge-${RC_BRANCH}-to-develop-${TODAY}"
 
-    if branch_exists "$MERGE_BRANCH" && [[ -z "$EXISTING_PR" ]]; then
+    if branch_exists "$MERGE_BRANCH" && [[ -z "$EXISTING_OPEN_PR" ]]; then 
         echo "Merge branch $MERGE_BRANCH already exists, but no PR found. Will create PR."
         git checkout "$MERGE_BRANCH"
     else
