@@ -104,65 +104,37 @@ pub fn print_prescription_label(
 
             let label = format!(
                 r#"
-                ^XA
-                ^FX CI command parameters:
-                ^FX - encoding (28 = UTF-8)
-                ^CI28
+                    ^XA
+                    ^FX CI command parameters:
+                    ^FX - encoding (28 = UTF-8)
+                    ^CI28
 
-                ^A0,25
-                ^FO,10
-                ^FB575,3,0,C
-                ^FD{item_details}^FS
-
-                ^FX Line
-                ^FO,65
-                ^GB575,2,2^FS
-
-                ^A0,25
-                ^FO10,75
-                ^FB580,5,0
-                ^FD{item_directions}\&{warning}^FS
-
-                ^FX Line
-                ^FO,210
-                ^GB575,2,2^FS
-
-                ^A0,20
-                ^FO,220
-                ^FB575,3,0,C
-                ^FD{patient_details}\&{details}^FS
-
-                ^XZ
-^XA
-^FX CI command parameters:
-^FX - encoding (28 = UTF-8)
-^CI28
-
-^A0,25
-^FO25,18
-^FB575,3,0,C
-^FD{item_details}^FS
+                    ^A0,25
+                    ^FO25,18
+                    ^FB575,3,0,C
+                    ^FD{item_details}^FS
 
 
-^FX Line
-^FO25,65
-^GB575,2,2^FS
+                    ^FX Line
+                    ^FO25,65
+                    ^GB575,2,2^FS
 
-^A0,25
-^FO35,75
-^FB555,5,0
-^FD{item_directions}\&{warning}^FS
+                    ^A0,25
+                    ^FO35,75
+                    ^FB555,5,0
+                    ^FD{item_directions}\&{warning}^FS
 
-^FX Line
-^FO25,210
-^GB575,2,2^FS
+                    ^FX Line
+                    ^FO25,210
+                    ^GB575,2,2^FS
 
-^A0,20
-^FO25,220
-^FB575,3,0,C
-^FD{patient_details}\&{details}^FS
+                    ^A0,20
+                    ^FO25,220
+                    ^FB575,3,0,C
+                    ^FD{patient_details}\&{details}^FS
 
-^XZ
+                    ^XZ
+            "#
             );
 
             // Remove leading whitespaces from each line of the formatted label
@@ -195,7 +167,7 @@ fn sanitise_fd_field(value: &str) -> String {
     let mut fd: String = value
         .replace('^', "-") // Control characters are replaced with -
         .replace('~', "-") // Control characters are replaced with -
-        .replace('\\', "/") // Backslashes are replaced with `/` could be \\\\ but apparently only works with CI13?
+        .replace('\\', ":") // Backslashes `\` are replaced with colon `:` TODO: Probably could be an escaped Forward slash, e.g. \\\\ but apparently only works with CI13 or printed correctly using `FH` command ?
         .replace('\n', "\\&") // Newline characters are replaced with \& in ZPL
         .replace('\r', "\\&") // Carriage return characters are replaced with \&
         .chars()
@@ -221,7 +193,7 @@ mod tests {
     #[test]
     fn test_sanitise_fd_field_replaces_control_chars() {
         let input = "^Hello~World\\";
-        let expected = "-Hello-World/";
+        let expected = "-Hello-World:";
         assert_eq!(sanitise_fd_field(input), expected);
     }
 
@@ -256,7 +228,7 @@ mod tests {
     #[test]
     fn test_sanitise_fd_field_mixed_input() {
         let input = "^Hello~\nWorld\\é";
-        let expected = "-Hello-\\&World/ ";
+        let expected = "-Hello-\\&World: ";
         assert_eq!(sanitise_fd_field(input), expected);
     }
 
@@ -270,7 +242,7 @@ mod tests {
     #[test]
     fn test_sanitise_fd_field_only_control_chars() {
         let input = "^^~~\\\\\n\r";
-        let expected = "----//\\&\\&";
+        let expected = "----::\\&\\&";
         assert_eq!(sanitise_fd_field(input), expected);
     }
 }
