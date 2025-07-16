@@ -45,10 +45,8 @@ export const QuantityToReturnTableComponent = ({
           description: 'description.pack-quantity',
           width: 100,
           setter: updateLine,
-          // getIsError: () => true,
           getIsDisabled: () => isDisabled,
           Cell: NumberOfPacksToReturnReturnInputCell,
-          // cellProps: { formErrors },
         },
       ],
     ];
@@ -69,16 +67,15 @@ export const QuantityToReturnTableComponent = ({
   );
 };
 
+// Input cells can't be defined inline, otherwise they lose focus on re-render
 const NumberOfPacksToReturnReturnInputCell: React.FC<
   CellProps<GenerateSupplierReturnLineFragment>
-> = ({ ...props }) => {
-  return (
-    <NumberInputCell
-      {...props}
-      isRequired
-      max={props.rowData.availableNumberOfPacks}
-    />
-  );
-};
+> = props => (
+  <NumberInputCell
+    {...props}
+    isRequired
+    max={Math.floor(props.rowData.availableNumberOfPacks)}
+  />
+);
 
 export const QuantityToReturnTable = React.memo(QuantityToReturnTableComponent);
