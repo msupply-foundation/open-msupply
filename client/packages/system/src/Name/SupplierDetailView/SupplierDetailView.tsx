@@ -32,7 +32,7 @@ export const SupplierDetailView = (): ReactElement => {
       value: SuppliersTabValue.PurchaseOrders,
     },
     {
-      Component: <Contacts />,
+      Component: <Contacts nameId={id ?? ''} />,
       value: SuppliersTabValue.Contacts,
     },
   ];
