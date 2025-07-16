@@ -16,6 +16,12 @@ import {
   ExpiryDateCell,
   usePluginProvider,
   useEditModal,
+  CellProps,
+  NumberCell,
+  Box,
+  Typography,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -58,6 +64,7 @@ const StockListComponent: FC = () => {
   const t = useTranslation();
   const { data, isLoading, isError } = useStockList(queryParams);
   const { plugins } = usePluginProvider();
+  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
 
   const { isOpen, onClose, onOpen } = useEditModal();
 
@@ -136,8 +143,12 @@ const StockListComponent: FC = () => {
         accessor: ({ rowData }) =>
           rowData.totalNumberOfPacks * rowData.packSize,
         sortable: false,
-        width: 125,
+        maxWidth: 'unset',
         defaultHideOnMobile: true,
+        Cell: UnitsAndMaybeDosesCell,
+        cellProps: {
+          displayDoses: prefs?.manageVaccinesInDoses,
+        },
       },
     ],
     [
@@ -148,8 +159,12 @@ const StockListComponent: FC = () => {
         accessor: ({ rowData }) =>
           rowData.availableNumberOfPacks * rowData.packSize,
         sortable: false,
-        width: 125,
+        maxWidth: 'unset',
         defaultHideOnMobile: true,
+        Cell: UnitsAndMaybeDosesCell,
+        cellProps: {
+          displayDoses: prefs?.manageVaccinesInDoses,
+        },
       },
     ],
     {
@@ -233,3 +248,38 @@ export const StockListView: FC = () => (
     <StockListComponent />
   </TableProvider>
 );
+
+const UnitsAndMaybeDosesCell = (
+  props: CellProps<StockLineRowFragment> & { displayDoses?: boolean }
+) => {
+  const { rowData, column } = props;
+  const t = useTranslation();
+  const units = Number(column.accessor({ rowData })) ?? 0;
+  const { isVaccine, doses } = rowData.item;
+
+  const doseCount = doses * units;
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        width: '100%',
+      }}
+    >
+      <NumberCell {...props} />
+      {props.displayDoses && isVaccine && (
+        <Typography
+          sx={{
+            fontSize: 'small',
+            fontStyle: 'italic',
+            color: 'text.secondary',
+            marginLeft: '-6px',
+          }}
+        >
+          ({doseCount} {t('label.doses-short')})
+        </Typography>
+      )}
+    </Box>
+  );
+};
