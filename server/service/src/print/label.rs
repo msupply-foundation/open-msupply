@@ -166,7 +166,14 @@ fn sanitise_fd_field(value: &str) -> String {
         .replace('\n', "\\&") // Newline characters are replaced with \& in ZPL
         .replace('\r', "\\&") // Carriage return characters are replaced with \&
         .chars()
-        .map(|c| if c.is_ascii() { c } else { ' ' }) // Non-ASCII characters are replaced with a space
+        .map(|c| {
+            if c.is_ascii() || c.is_alphabetic() {
+                // Even though the ZPL manual says that only ASCII characters are allowed, some alphabetic chars such as á print fine, so I think safer to keep them
+                c
+            } else {
+                ' '
+            }
+        }) // Non-ASCII characters are replaced with a space
         .collect();
 
     if fd.len() > 3072 {
@@ -201,8 +208,8 @@ mod tests {
 
     #[test]
     fn test_sanitise_fd_field_replaces_non_ascii() {
-        let input = "ASCII é ñ 漢字";
-        let expected = "ASCII       ";
+        let input = "ASCII é ñ 漢😀";
+        let expected = "ASCII é ñ 漢 ";
         assert_eq!(sanitise_fd_field(input), expected);
     }
 
@@ -223,7 +230,7 @@ mod tests {
     #[test]
     fn test_sanitise_fd_field_mixed_input() {
         let input = "^Hello~\nWorld\\é";
-        let expected = "-Hello-\\&World: ";
+        let expected = "-Hello-\\&World:é";
         assert_eq!(sanitise_fd_field(input), expected);
     }
 
