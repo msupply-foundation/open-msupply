@@ -7,8 +7,9 @@ import {
 } from '@openmsupply-client/common';
 import { Alert } from '@common/components';
 import { useDisplayRequiredErrors, useFormErrors } from './FormErrorStore';
+import { SxProps } from '@mui/material';
 
-export const ErrorDisplay = () => {
+export const ErrorDisplay = ({ sx = {} }: { sx?: SxProps }) => {
   const t = useTranslation();
   const errors = useFormErrors();
   const displayRequiredErrors = useDisplayRequiredErrors();
@@ -34,6 +35,7 @@ export const ErrorDisplay = () => {
       sx={{
         whiteSpace: 'pre-wrap',
         '& .MuiAlert-icon': { alignItems: 'center' },
+        ...sx,
       }}
       Icon={<AlertIcon fontSize="large" />}
     >

@@ -280,7 +280,7 @@ export const InsuranceModal = (): ReactElement => {
             />
           </Box>
         </Stack>
-        <ErrorDisplay />
+        <ErrorDisplay sx={{ marginTop: '1em' }} />
       </>
     </Modal>
   );

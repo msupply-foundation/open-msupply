@@ -66,7 +66,7 @@ export const FieldErrorWrapper = <T,>({
   }, [value, required, customIsValid, customErrorMessage]);
 
   const errorMessage =
-    errorData.error || displayRequiredErrors ? errorData.requiredError : null;
+    errorData.error ?? (displayRequiredErrors ? errorData.requiredError : null);
 
   return (
     <>
