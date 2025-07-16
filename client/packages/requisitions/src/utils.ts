@@ -20,8 +20,6 @@ export const requestStatuses = [
   RequisitionNodeStatus.Finalised,
 ];
 
-// TODO: When response requisitions can be manually created, the status of DRAFT
-// becomes possible and such will need to be handled.
 export const responseStatuses = [
   RequisitionNodeStatus.New,
   RequisitionNodeStatus.Finalised,

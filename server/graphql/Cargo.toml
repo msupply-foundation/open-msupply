@@ -43,14 +43,17 @@ graphql_plugin = { path = "plugin" }
 graphql_contact_form = { path = "contact_form" }
 graphql_preference = { path = "preference" }
 graphql_vvm = { path = "vvm" }
-graphql_purchase_order =  { path = "purchase_order" }
-graphql_purchase_order_line =  { path = "purchase_order_line" }
+graphql_purchase_order = { path = "purchase_order" }
+graphql_purchase_order_line = { path = "purchase_order_line" }
+graphql_contact = { path = "contact" }
 
 actix-web = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
+rand = { workspace = true }
+log = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 

@@ -21,12 +21,14 @@ import {
   CurrencyRowFragment,
   ItemRowFragment,
 } from '@openmsupply-client/system';
+import { PatchDraftLineInput } from '../../../api';
 
 interface TabLayoutProps {
   addDraftLine: () => void;
   draftLines: DraftInboundLine[];
   isDisabled: boolean;
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+  updateDraftLine: (patch: PatchDraftLineInput) => void;
+  removeDraftLine: (id: string) => void;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   item: ItemRowFragment | null;
@@ -45,6 +47,7 @@ export const TabLayout = ({
   draftLines,
   isDisabled,
   updateDraftLine,
+  removeDraftLine,
   currency,
   isExternalSupplier,
   hasItemVariantsEnabled,
@@ -132,6 +135,7 @@ export const TabLayout = ({
               isDisabled={isDisabled}
               lines={draftLines}
               updateDraftLine={updateDraftLine}
+              removeDraftLine={removeDraftLine}
               item={item}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
               hasVvmStatusesEnabled={hasVvmStatusesEnabled}

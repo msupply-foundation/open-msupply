@@ -230,6 +230,7 @@ fn generate_inbound_invoice(
         currency_rate: outbound_invoice_row.currency_rate,
         expected_delivery_date: outbound_invoice_row.expected_delivery_date,
         original_shipment_id,
+        program_id: outbound_invoice_row.program_id.clone(),
         // Default
         colour: None,
         user_id: None,
@@ -242,7 +243,6 @@ fn generate_inbound_invoice(
         clinician_link_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
-        program_id: None,
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,

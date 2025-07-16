@@ -1,18 +1,15 @@
 import React, { FC } from 'react';
 import {
   AppBarButtonsPortal,
-  ButtonWithIcon,
-  PlusCircleIcon,
   Grid,
   useDetailPanel,
-  useTranslation,
   ReportContext,
   useAuthContext,
 } from '@openmsupply-client/common';
 import { ReportSelector } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { UseSuggestedQuantityButton } from './UseSuggestedQuantityButton';
-import { AddFromMasterListButton } from './AddFromMasterListButton';
+import { AddButton } from './AddButton';
 
 interface AppBarButtonProps {
   isDisabled: boolean;
@@ -25,7 +22,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   isDisabled,
   showIndicators = false,
 }) => {
-  const t = useTranslation();
   const { store } = useAuthContext();
   const isProgram = useRequest.utils.isProgram();
   const { OpenButton } = useDetailPanel();
@@ -34,14 +30,12 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          disabled={isDisabled || isProgram}
-          label={t('button.add-item')}
-          Icon={<PlusCircleIcon />}
-          onClick={onAddItem}
+        <AddButton
+          onAddItem={onAddItem}
+          status={data?.status}
+          disable={isDisabled || isProgram}
         />
 
-        <AddFromMasterListButton />
         <UseSuggestedQuantityButton />
 
         <ReportSelector

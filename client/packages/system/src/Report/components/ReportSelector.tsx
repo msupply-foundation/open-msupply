@@ -81,13 +81,17 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     args: JsonData,
     format?: PrintFormat
   ) => {
-    await printAsync({
-      reportId: report.id,
-      dataId,
-      args,
-      sort,
-      format,
-    });
+    try {
+      await printAsync({
+        reportId: report.id,
+        dataId,
+        args,
+        sort,
+        format,
+      });
+    } catch (err) {
+      // Error is already displayed by global graphql error handler, we just need to catch
+    }
   };
 
   const options: ReportOption[] = useMemo(() => {

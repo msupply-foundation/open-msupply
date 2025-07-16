@@ -67,32 +67,24 @@ export const getBatchExpiryColumns = (
 
 const InboundLineItemVariantInputCell = ({
   rowData,
-  displayInDoses,
   ...props
-}: CellProps<DraftInboundLine> & {
-  displayInDoses?: boolean;
-}) => {
+}: CellProps<DraftInboundLine>) => {
   return (
     <ItemVariantInputCell
       {...props}
       rowData={rowData}
       itemId={rowData.item.id}
-      displayInDoses={displayInDoses ?? false}
     />
   );
 };
 
 export const itemVariantColumn = (
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
-  displayInDoses: boolean
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void
 ): ColumnDescription<DraftInboundLine> => ({
   key: 'itemVariantId',
   label: 'label.item-variant',
   width: 150,
   Cell: InboundLineItemVariantInputCell,
-  cellProps: {
-    displayInDoses,
-  },
   setter: updateDraftLine,
 });
 
@@ -107,18 +99,17 @@ export const vvmStatusesColumn = (
   setter: updateDraftLine,
 });
 
-export const getInboundDosesColumns =
-  (): ColumnDescription<DraftInboundLine>[] => [
-    {
-      key: 'doseQuantity',
-      label: 'label.doses-received',
-      align: ColumnAlign.Right,
-      width: 100,
-      accessor: ({ rowData }) => {
-        const total = rowData.numberOfPacks * rowData.packSize;
-        return (
-          total * (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses)
-        );
-      },
+export const getInboundDosesColumns = (
+  format: (value: number) => string
+): ColumnDescription<DraftInboundLine>[] => [
+  {
+    key: 'doseQuantity',
+    label: 'label.doses-received',
+    align: ColumnAlign.Right,
+    width: 100,
+    accessor: ({ rowData }) => {
+      const total = rowData.numberOfPacks * rowData.packSize;
+      return format(total * rowData.item.doses);
     },
-  ];
+  },
+];
