@@ -131,7 +131,36 @@ pub fn print_prescription_label(
                 ^FD{patient_details}\&{details}^FS
 
                 ^XZ
-                "#
+^XA
+^FX CI command parameters:
+^FX - encoding (28 = UTF-8)
+^CI28
+
+^A0,25
+^FO25,18
+^FB575,3,0,C
+^FD{item_details}^FS
+
+
+^FX Line
+^FO25,65
+^GB575,2,2^FS
+
+^A0,25
+^FO35,75
+^FB555,5,0
+^FD{item_directions}\&{warning}^FS
+
+^FX Line
+^FO25,210
+^GB575,2,2^FS
+
+^A0,20
+^FO25,220
+^FB575,3,0,C
+^FD{patient_details}\&{details}^FS
+
+^XZ
             );
 
             // Remove leading whitespaces from each line of the formatted label
