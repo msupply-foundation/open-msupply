@@ -82,13 +82,8 @@ pub fn print_prescription_label(
     settings: LabelPrinterSettingNode,
     label_data: Vec<PrescriptionLabelData>,
 ) -> Result<String> {
-    let sanitised_label_data: Vec<PrescriptionLabelData> = label_data
-        .into_iter()
-        .map(|d| {
-            d.sanitise();
-            d
-        })
-        .collect();
+    let sanitised_label_data: Vec<PrescriptionLabelData> =
+        label_data.into_iter().map(|d| d.sanitise()).collect();
 
     let payload = sanitised_label_data
         .into_iter()
