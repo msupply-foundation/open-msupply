@@ -9,7 +9,13 @@ import { SearchInputPatient } from '../../utils';
 
 export const getPatientOptionRenderer =
   (): AutocompleteOptionRenderer<SearchInputPatient> => (props, patient) => (
-    <DefaultAutocompleteItemOption {...props} key={patient.id}>
+    <DefaultAutocompleteItemOption
+      {...props}
+      key={patient.id}
+      sx={{
+        backgroundColor: 'white',
+      }}
+    >
       <Box display="flex" alignItems="flex-end" gap={1} height={25}>
         <Box display="flex" flexDirection="row" gap={1} width={110}>
           <Typography
@@ -24,7 +30,7 @@ export const getPatientOptionRenderer =
           </Typography>
         </Box>
         <Box display="flex" flexDirection="row" gap={1} width={100}>
-          <Typography whiteSpace={'nowrap'} color={'secondary'}>
+          <Typography whiteSpace="nowrap" color="secondary">
             {patient.dateOfBirth}
           </Typography>
         </Box>

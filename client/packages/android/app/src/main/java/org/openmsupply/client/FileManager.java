@@ -20,8 +20,11 @@ import java.util.zip.ZipOutputStream;
 public class FileManager {
     private static final int SAVE_FILE_REQUEST = 12321;
     private static final int SAVE_DATABASE_REQUEST = 12322;
+    private static final int SAVE_BINARY_FILE_REQUEST = 12323;
+
     private Activity activity;
     private String content;
+    private byte[] binaryData;
     private String successMessage;
     private File dbFile;
 
@@ -41,6 +44,19 @@ public class FileManager {
 
     }
 
+    public void SaveBinaryFile(String filename, byte[] data, String mimeType, String successMessage) {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType(mimeType);
+        intent.putExtra(Intent.EXTRA_TITLE, filename);
+        
+        // Store binary data and success message
+        this.binaryData = data;
+        this.successMessage = successMessage;
+
+        activity.startActivityForResult(intent, SAVE_BINARY_FILE_REQUEST);
+    }
+
     public void Save(String filename, String content, String mimeType, String successMessage) {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -56,10 +72,14 @@ public class FileManager {
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SAVE_FILE_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            Context context = activity.getApplicationContext();
+        if (resultCode != Activity.RESULT_OK || data == null) return;
 
+        Uri uri = data.getData();
+        Context context = activity.getApplicationContext();
+
+
+        // Saving a text based file
+        if (requestCode == SAVE_FILE_REQUEST) {
             try {
                 OutputStream outputStream = context.getContentResolver().openOutputStream(uri);
                 BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(outputStream));
@@ -73,11 +93,23 @@ public class FileManager {
             }
         }
 
-        if (requestCode == SAVE_DATABASE_REQUEST && resultCode == Activity.RESULT_OK && data != null
-                && dbFile != null) {
-            Uri uri = data.getData();
-            Context context = activity.getApplicationContext();
+        // Saving a binary file e.g. XLSX
+        if (requestCode == SAVE_BINARY_FILE_REQUEST) {
+            try {
+                OutputStream outputStream = context.getContentResolver().openOutputStream(uri);
+                BufferedOutputStream bos = new BufferedOutputStream(outputStream);
+                bos.write(binaryData);
+                bos.flush();
+                bos.close();
 
+                Toast.makeText(context, successMessage, Toast.LENGTH_LONG).show();
+            } catch (Exception e) {
+                Toast.makeText(context, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
+
+        // Saving the database file
+        if (requestCode == SAVE_DATABASE_REQUEST && dbFile != null) {
             // The db file name can be either `omsupply-database` or
             // `omsupply-database.sqlite`
             // The rust code automatically appends .sqlite to the file name if it doesn't
