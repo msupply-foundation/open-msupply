@@ -1,7 +1,7 @@
 use repository::{
     InvoiceRowRepository, InvoiceType, NumberRowRepository, NumberRowType,
-    PurchaseOrderRowRepository, RepositoryError, RequisitionRowRepository, RequisitionType,
-    StocktakeRowRepository, StorageConnection,
+    PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, RepositoryError,
+    RequisitionRowRepository, RequisitionType, StocktakeRowRepository, StorageConnection,
 };
 
 /// Get next number for record type and store
