@@ -124,6 +124,7 @@ export const PatientSearchInput = ({
         clickableOption={
           showCreate
             ? {
+                name: t('label.create-patient'),
                 label: t('label.new-patient'),
                 onClick: () => {
                   setCreatePatientOpen(true);
