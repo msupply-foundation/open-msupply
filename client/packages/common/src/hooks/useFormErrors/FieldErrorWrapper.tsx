@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from '@openmsupply-client/common';
-import { useFormErrorContext } from './FormErrorContext';
+import {
+  useDisplayRequiredErrors,
+  useFormErrorActions,
+} from './FormErrorStore';
 
 export type FieldErrorWrapperProps<T> = {
   code: string;
@@ -32,8 +35,9 @@ export const FieldErrorWrapper = <T,>({
     setError,
     getErrorData,
     updateErrorData,
-    displayRequiredErrors,
-  } = useFormErrorContext();
+  } = useFormErrorActions();
+
+  const displayRequiredErrors = useDisplayRequiredErrors();
 
   const t = useTranslation();
 

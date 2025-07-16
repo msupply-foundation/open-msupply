@@ -3,7 +3,7 @@ import {
   useNotification,
   ErrorDisplay,
   FieldErrorWrapper,
-  useFormErrorContext,
+  useFormErrorActions,
 } from '@common/hooks';
 import React, { ReactElement } from 'react';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
@@ -48,7 +48,7 @@ export const InsuranceModal = (): ReactElement => {
   } = useInsurancePolicies(nameId);
 
   const { showRequiredErrors, resetRequiredErrors, hasErrors } =
-    useFormErrorContext();
+    useFormErrorActions();
 
   const updatePatch: (newData: Partial<unknown>) => void = newData => {
     resetRequiredErrors();

@@ -6,11 +6,12 @@ import {
   AlertIcon,
 } from '@openmsupply-client/common';
 import { Alert } from '@common/components';
-import { useFormErrorContext } from './FormErrorContext';
+import { useDisplayRequiredErrors, useFormErrors } from './FormErrorStore';
 
 export const ErrorDisplay = () => {
   const t = useTranslation();
-  const { errors, displayRequiredErrors } = useFormErrorContext();
+  const errors = useFormErrors();
+  const displayRequiredErrors = useDisplayRequiredErrors();
 
   const errorList = Object.entries(errors)
     .filter(([_, value]) => {
