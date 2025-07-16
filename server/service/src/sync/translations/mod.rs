@@ -66,6 +66,7 @@ pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
+pub(crate) mod support_upload;
 pub(crate) mod sync_file_reference;
 pub(crate) mod sync_message;
 pub(crate) mod system_log;
@@ -202,6 +203,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         report::boxed(),
         preference::boxed(),
         sync_message::boxed(),
+        support_upload::boxed(),
     ]
 }
 
