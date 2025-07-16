@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 table! {
     support_upload(id) {
         id -> Text,
-        datetime -> Timestamp,
-        site_id -> Text,
+        created_datetime -> Timestamp,
+        store_id -> Text,
         title -> Text,
         status -> crate::db_diesel::support_upload_row::SupportUploadStatusMapping,
         upload_start_datetime -> Timestamp,
@@ -35,8 +35,8 @@ pub enum SupportUploadStatus {
 #[diesel(table_name = support_upload)]
 pub struct SupportUploadRow {
     pub id: String,
-    pub datetime: NaiveDateTime,
-    pub site_id: String,
+    pub created_datetime: NaiveDateTime,
+    pub store_id: String,
     pub title: String,
     pub status: SupportUploadStatus,
     pub upload_start_datetime: NaiveDateTime,
@@ -88,9 +88,9 @@ impl<'a> SupportUploadRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_by_site_id(&self, s_id: &str) -> Result<Vec<SupportUploadRow>, RepositoryError> {
+    pub fn find_by_store_id(&self, s_id: &str) -> Result<Vec<SupportUploadRow>, RepositoryError> {
         let result = support_upload::table
-            .filter(support_upload::site_id.eq(s_id))
+            .filter(support_upload::store_id.eq(s_id))
             .load::<SupportUploadRow>(self.connection.lock().connection())?;
         Ok(result)
     }
