@@ -56,7 +56,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   ];
 
   const [selected, setSelected] = useState<SplitButtonOption<string>>(
-    options[0]!
+    options[1]!
   );
 
   return (
