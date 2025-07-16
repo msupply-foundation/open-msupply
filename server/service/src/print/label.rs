@@ -67,12 +67,14 @@ pub struct PrescriptionLabelData {
 }
 
 impl PrescriptionLabelData {
-    pub fn sanitise(&mut self) {
-        self.item_details = sanitise_fd_field(&self.item_details);
-        self.item_directions = sanitise_fd_field(&self.item_directions);
-        self.patient_details = sanitise_fd_field(&self.patient_details);
-        self.warning = self.warning.as_ref().map(|w| sanitise_fd_field(w));
-        self.details = sanitise_fd_field(&self.details);
+    pub fn sanitise(&self) -> Self {
+        Self {
+            item_details: sanitise_fd_field(&self.item_details),
+            item_directions: sanitise_fd_field(&self.item_directions),
+            patient_details: sanitise_fd_field(&self.patient_details),
+            warning: self.warning.as_ref().map(|w| sanitise_fd_field(w)),
+            details: sanitise_fd_field(&self.details),
+        }
     }
 }
 
@@ -82,7 +84,7 @@ pub fn print_prescription_label(
 ) -> Result<String> {
     let sanitised_label_data: Vec<PrescriptionLabelData> = label_data
         .into_iter()
-        .map(|mut d| {
+        .map(|d| {
             d.sanitise();
             d
         })
@@ -188,18 +190,21 @@ pub fn host_status(settings: LabelPrinterSettingNode) -> Result<String> {
 // We'll map them to a `-` so they can be printed as part of the field.
 // Any character codes > 127 will be replaced with a space, as they are not valid in ZPL.
 // ^CI13 must be selected to print a backslash (\).
+
 fn sanitise_fd_field(value: &str) -> String {
     let mut fd: String = value
         .replace('^', "-") // Control characters are replaced with -
         .replace('~', "-") // Control characters are replaced with -
+        .replace('\\', "/") // Backslashes are replaced with `/` could be \\\\ but apparently only works with CI13?
         .replace('\n', "\\&") // Newline characters are replaced with \& in ZPL
         .replace('\r', "\\&") // Carriage return characters are replaced with \&
-        .replace('\\', "-") // Backslashes are replaced with - can be \\\\ but apparently only works with CI13?
         .chars()
-        .map(|c| if c.is_ascii() && c != '-' { c } else { ' ' }) // Non-ASCII characters are replaced with a space
+        .map(|c| if c.is_ascii() { c } else { ' ' }) // Non-ASCII characters are replaced with a space
         .collect();
 
     if fd.len() > 3072 {
+        // TODO: Should we actually limit this more, as the label probably won't fit?
+        // This is just the maximum length of a ZPL FD field.
         log::warn!(
             "ZPL FD field exceeds 3072 characters, truncating: {}",
             fd.len()
@@ -207,4 +212,65 @@ fn sanitise_fd_field(value: &str) -> String {
     }
     fd.truncate(3072);
     fd
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sanitise_fd_field_replaces_control_chars() {
+        let input = "^Hello~World\\";
+        let expected = "-Hello-World/";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_replaces_newlines_and_carriage_returns() {
+        let input = "Line1\nLine2\rLine3";
+        let expected = "Line1\\&Line2\\&Line3";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_replaces_non_ascii() {
+        let input = "ASCII é ñ 漢字";
+        let expected = "ASCII       ";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_preserves_dash() {
+        let input = "A-B-C";
+        let expected = "A-B-C";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_truncates_long_input() {
+        let input = "a".repeat(4000);
+        let output = sanitise_fd_field(&input);
+        assert_eq!(output.len(), 3072);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_mixed_input() {
+        let input = "^Hello~\nWorld\\é";
+        let expected = "-Hello-\\&World/ ";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_empty_string() {
+        let input = "";
+        let expected = "";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_only_control_chars() {
+        let input = "^^~~\\\\\n\r";
+        let expected = "----//\\&\\&";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
 }
