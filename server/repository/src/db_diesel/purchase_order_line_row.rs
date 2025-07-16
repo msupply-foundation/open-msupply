@@ -4,7 +4,7 @@ use crate::db_diesel::purchase_order_row::purchase_order;
 
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
-use diesel::prelude::*;
+use diesel::{dsl::max, prelude::*};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
