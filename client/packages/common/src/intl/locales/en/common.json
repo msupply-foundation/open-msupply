@@ -308,6 +308,7 @@
   "error.invalid-credentials": "Unable to fetch user details. Please re-login to update user details.",
   "error.invalid-field-value": "{{ value }} isn't a valid {{ field }}",
   "error.invalid-url": "Invalid url",
+  "error.invalid-input": "Invalid input",
   "error.is-locked": "Stocktake is locked.",
   "error.item-not-found": "Item not found",
   "error.json-bad-format-with-examples": "Incorrect format. Use: \"{{examples}}\"",

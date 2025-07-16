@@ -61,7 +61,7 @@ const createStoreConfig =
     unregisterField: (code: string) => {
       set((state: FormErrorStore) => {
         if (code in state.errors) {
-          const { [code]: removed, ...remainingErrors } = state.errors;
+          const { [code]: _, ...remainingErrors } = state.errors;
           return {
             errors: remainingErrors,
           };

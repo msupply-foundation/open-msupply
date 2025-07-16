@@ -112,16 +112,16 @@ export const InsuranceModal = (): ReactElement => {
       <>
         <Stack gap={8} flexDirection="row">
           <Box display="flex" flexDirection="column" gap={2}>
-            <InputWithLabelRow
+            <FieldErrorWrapper
+              code="policyNumberFamily"
               label={t('label.policy-number-family')}
-              Input={
-                <FieldErrorWrapper
-                  code="policyNumberFamily"
-                  label={t('label.policy-number-family')}
-                  value={draft.policyNumberFamily ?? undefined}
-                  required={!draft.policyNumberPerson}
-                >
-                  {({ value, required, error }) => (
+              value={draft.policyNumberFamily ?? undefined}
+              required={!draft.policyNumberPerson}
+            >
+              {({ label, value, required, error }) => (
+                <InputWithLabelRow
+                  label={label}
+                  Input={
                     <BasicTextInput
                       disabled={haveInsuranceId}
                       onChange={event => {
@@ -133,22 +133,22 @@ export const InsuranceModal = (): ReactElement => {
                       required={required}
                       error={error}
                     />
-                  )}
-                </FieldErrorWrapper>
-              }
-            />
-            <InputWithLabelRow
+                  }
+                />
+              )}
+            </FieldErrorWrapper>
+            <FieldErrorWrapper
+              code="policyNumberPerson"
               label={t('label.policy-number-person')}
-              Input={
-                <FieldErrorWrapper
-                  code="policyNumberPerson"
-                  label={t('label.policy-number-person')}
-                  value={draft.policyNumberPerson ?? undefined}
-                  required={!draft.policyNumberFamily}
-                  customIsValid={draft.policyNumberPerson === '666'}
-                  customErrorMessage="That is the devils number and is not allowed"
-                >
-                  {({ value, required, error }) => (
+              value={draft.policyNumberPerson ?? undefined}
+              required={!draft.policyNumberFamily}
+              customErrorState={draft.policyNumberPerson === '666'}
+              customErrorMessage="That is the devil's number and is forbidden 😈"
+            >
+              {({ label, value, required, error }) => (
+                <InputWithLabelRow
+                  label={label}
+                  Input={
                     <BasicTextInput
                       disabled={haveInsuranceId}
                       onChange={event => {
@@ -160,10 +160,10 @@ export const InsuranceModal = (): ReactElement => {
                       required={required}
                       error={error}
                     />
-                  )}
-                </FieldErrorWrapper>
-              }
-            />
+                  }
+                />
+              )}
+            </FieldErrorWrapper>
             <FieldErrorWrapper
               code="insurancePolicy"
               label={t('label.insurance-policy')}
@@ -197,16 +197,16 @@ export const InsuranceModal = (): ReactElement => {
             />
           </Box>
           <Box display="flex" flexDirection="column" gap={2}>
-            <InputWithLabelRow
-              label={t('label.insurance-expiry-date')}
-              Input={
-                <FieldErrorWrapper
-                  code="expDate"
-                  label={t('label.expiry-date')}
-                  required
-                  value={DateUtils.getNaiveDate(draft.expiryDate)}
-                >
-                  {({ value, required, error, setError }) => (
+            <FieldErrorWrapper
+              code="expDate"
+              label={t('label.expiry-date')}
+              required
+              value={DateUtils.getNaiveDate(draft.expiryDate)}
+            >
+              {({ label, value, required, error, setError }) => (
+                <InputWithLabelRow
+                  label={label}
+                  Input={
                     <DateTimePickerInput
                       value={value}
                       required={required}
@@ -222,10 +222,10 @@ export const InsuranceModal = (): ReactElement => {
                       error={error}
                       setError={setError}
                     />
-                  )}
-                </FieldErrorWrapper>
-              }
-            />
+                  }
+                />
+              )}
+            </FieldErrorWrapper>
             <FieldErrorWrapper
               code="providerName"
               label={t('label.provider-name')}
@@ -246,23 +246,20 @@ export const InsuranceModal = (): ReactElement => {
                 />
               )}
             </FieldErrorWrapper>
-            <InputWithLabelRow
+            <FieldErrorWrapper
+              code="discountPercentage"
               label={t('label.discount-rate')}
-              Input={
-                <FieldErrorWrapper
-                  code="discountPercentage"
-                  label={t('label.discount-rate')}
-                  value={draft.discountPercentage}
-                  required
-                  customIsValid={draft.discountPercentage >= 110}
-                  customErrorMessage="Waaaay too big!"
-                >
-                  {({ value, required, error, setError }) => (
+              value={draft.discountPercentage}
+              required
+              customErrorState={draft.discountPercentage >= 110}
+              customErrorMessage="Waaaay too big!"
+            >
+              {({ label, ...fieldProps }) => (
+                <InputWithLabelRow
+                  label={label}
+                  Input={
                     <NumericTextInput
-                      value={value}
-                      required={required}
-                      error={error}
-                      setError={setError}
+                      {...fieldProps}
                       min={0}
                       max={100}
                       decimalLimit={2}
@@ -274,10 +271,10 @@ export const InsuranceModal = (): ReactElement => {
                         }
                       }}
                     />
-                  )}
-                </FieldErrorWrapper>
-              }
-            />
+                  }
+                />
+              )}
+            </FieldErrorWrapper>
           </Box>
         </Stack>
         <ErrorDisplay sx={{ marginTop: '1em' }} />

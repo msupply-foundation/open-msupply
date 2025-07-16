@@ -10,9 +10,10 @@ export type FieldErrorWrapperProps<T> = {
   label?: string;
   value: T;
   required?: boolean;
-  customIsValid?: boolean;
+  customErrorState?: boolean;
   customErrorMessage?: string;
   children: (fieldProps: {
+    label: string;
     value: T;
     required?: boolean;
     error: boolean;
@@ -25,7 +26,7 @@ export const FieldErrorWrapper = <T,>({
   label,
   value,
   required,
-  customIsValid,
+  customErrorState,
   customErrorMessage,
   children,
 }: FieldErrorWrapperProps<T>) => {
@@ -51,10 +52,10 @@ export const FieldErrorWrapper = <T,>({
   useEffect(() => {
     const { requiredError } = errorData;
 
-    if (customIsValid === true) {
-      setError(code, customErrorMessage ?? 'Invalid input', true);
+    if (customErrorState === true) {
+      setError(code, customErrorMessage ?? t('error.invalid-input'), true);
       return;
-    } else if (customIsValid === false) {
+    } else if (customErrorState === false) {
       setError(code, null, true);
     }
 
@@ -63,7 +64,7 @@ export const FieldErrorWrapper = <T,>({
     } else if (requiredError) {
       updateErrorData(code, { requiredError: null });
     }
-  }, [value, required, customIsValid, customErrorMessage]);
+  }, [value, required, customErrorState, customErrorMessage]);
 
   const errorMessage =
     errorData.error ?? (displayRequiredErrors ? errorData.requiredError : null);
@@ -71,6 +72,7 @@ export const FieldErrorWrapper = <T,>({
   return (
     <>
       {children({
+        label: label ?? '',
         value,
         required,
         error: errorMessage != null,
