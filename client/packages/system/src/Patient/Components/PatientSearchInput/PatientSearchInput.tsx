@@ -42,7 +42,7 @@ export const PatientSearchInput = ({
   const { createNewPatient } = usePatientStore();
   const { getLocalisedFullName } = useIntlUtils();
 
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState<string>('');
   const [createPatientOpen, setCreatePatientOpen] = useState(false);
   const [editPatientModalOpen, setEditPatientModalOpen] = useState(false);
 
@@ -64,16 +64,15 @@ export const PatientSearchInput = ({
 
   const handlePatientClose = (selectedPatient?: PatientColumnData) => {
     setCreatePatientOpen(false);
-    if (selectedPatient) {
-      onChange(asOption(selectedPatient));
-    } else if (createNewPatient) {
-      onChange(asOption(createNewPatient));
-    } else return;
+    const patientToSelect = selectedPatient ?? createNewPatient;
+    if (patientToSelect) {
+      onChange(asOption(patientToSelect));
+    }
     setInput('');
+    search('');
   };
 
-  const showCreate =
-    allowCreate && patients.length === 0 && input !== '' && !isLoading;
+  const showCreate = allowCreate && !!input && !isLoading;
 
   const CreatePatient = mountSlidePanel
     ? CreatePatientSlider
@@ -82,7 +81,7 @@ export const PatientSearchInput = ({
   const options = patients as SearchInputPatient[];
 
   return (
-    <Box width={`${width}px`} display={'flex'} alignItems="center">
+    <Box width={`${width}px`} display="flex" alignItems="center">
       <Autocomplete
         autoFocus={autoFocus}
         options={options}
@@ -110,18 +109,22 @@ export const PatientSearchInput = ({
           },
           // reset input value to previous selected patient if user clicks away
           // without selecting a patient
-          onBlur: () => setInput(value?.name ?? ''),
+          onBlur: () => {
+            if (value) {
+              setInput(value.name);
+            } else {
+              setInput('');
+              search('');
+            }
+          },
         }}
         filterOptions={options => options}
         sx={{ width: '100%', ...sx }}
-        noOptionsText={
-          input.length > 0
-            ? t('messages.no-matching-patients')
-            : t('messages.type-to-search')
-        }
+        noOptionsText={t('messages.type-to-search')}
         clickableOption={
-          showCreate && setCreatePatientOpen
+          showCreate
             ? {
+                name: t('label.create-patient'),
                 label: t('label.new-patient'),
                 onClick: () => {
                   setCreatePatientOpen(true);

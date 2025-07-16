@@ -18,7 +18,6 @@ pub fn generate(
         cold_storage_type_id,
         manufacturer_id,
         packaging_variants: _, // Mapped separately
-        doses_per_unit,
         vvm_type,
     }: UpsertItemVariantWithPackaging,
 ) -> ItemVariantRow {
@@ -38,7 +37,6 @@ pub fn generate(
         manufacturer_link_id: manufacturer_id
             .map(|manufacturer_id| manufacturer_id.value)
             .unwrap_or_default(),
-        doses_per_unit,
         vvm_type: vvm_type.map(|vvm_type| vvm_type.value).unwrap_or_default(),
         created_datetime,
         created_by,
@@ -95,16 +93,6 @@ pub fn generate_logs(
                 Some(existing_item_variant.id.clone()),
                 existing_manufacturer_name,
                 updated_manufacturer_name,
-            )?;
-        }
-
-        if existing_item_variant.doses_per_unit != updated_item_variant.doses_per_unit {
-            activity_log_entry(
-                ctx,
-                ActivityLogType::ItemVariantUpdateDosePerUnit,
-                Some(existing_item_variant.id.clone()),
-                Some(existing_item_variant.doses_per_unit.to_string()),
-                Some(updated_item_variant.doses_per_unit.to_string()),
             )?;
         }
 

@@ -153,7 +153,9 @@ impl SyncTranslation for NameMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
+    use crate::sync::{
+        sync_buffer::SyncBufferSource, synchroniser::integrate_and_translate_sync_buffer,
+    };
 
     use super::*;
     use repository::{
@@ -211,7 +213,8 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+            .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -228,7 +231,8 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+            .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -309,7 +313,8 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+            .unwrap();
 
         assert_eq!(count_name_store_join("name_a"), 0);
         assert_eq!(count_name_store_join("name2"), 0);

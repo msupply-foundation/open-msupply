@@ -1,4 +1,4 @@
-import React, { FC, ReactElement, ReactNode } from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import {
   Stack,
   useTranslation,
@@ -13,6 +13,7 @@ export interface Action {
   icon: ReactNode;
   onClick: () => void;
   disabled?: boolean;
+  loading?: boolean;
   shouldShrink?: boolean;
 }
 
@@ -21,10 +22,10 @@ interface ActionsFooterProps {
   selectedRowCount: number;
 }
 
-export const ActionsFooter: FC<ActionsFooterProps> = ({
+export const ActionsFooter = ({
   actions,
   selectedRowCount,
-}): ReactElement => {
+}: ActionsFooterProps): ReactElement => {
   const t = useTranslation();
   const { clearSelected } = useTableStore();
 
@@ -50,17 +51,20 @@ export const ActionsFooter: FC<ActionsFooterProps> = ({
         >
           {selectedRowCount} {t('label.selected')}
         </Typography>
-        {actions.map(({ label, icon, onClick, disabled, shouldShrink }) => (
-          <FlatButton
-            key={label}
-            startIcon={icon}
-            label={label}
-            disabled={disabled}
-            onClick={onClick}
-            // Flatbutton doesn't shrink by default but we want it to in actions footer
-            shouldShrink={shouldShrink ?? true}
-          />
-        ))}
+        {actions.map(
+          ({ label, icon, onClick, disabled, shouldShrink, loading }) => (
+            <FlatButton
+              key={label}
+              startIcon={icon}
+              label={label}
+              disabled={disabled}
+              loading={loading}
+              onClick={onClick}
+              // Flatbutton doesn't shrink by default but we want it to in actions footer
+              shouldShrink={shouldShrink ?? true}
+            />
+          )
+        )}
       </Stack>
       <FlatButton
         startIcon={<MinusCircleIcon />}

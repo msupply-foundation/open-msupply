@@ -1,10 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     generic_inputs::NullableUpdateInput,
-    simple_generic_errors::{
-        DatabaseError, DoseConfigurationNotAllowed, InternalError, UniqueValueKey,
-        UniqueValueViolation,
-    },
+    simple_generic_errors::{DatabaseError, InternalError, UniqueValueKey, UniqueValueViolation},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -27,7 +24,6 @@ pub struct UpsertItemVariantInput {
     pub cold_storage_type_id: Option<NullableUpdateInput<String>>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub packaging_variants: Vec<PackagingVariantInput>,
-    pub doses_per_unit: i32,
     pub vvm_type: Option<NullableUpdateInput<String>>,
 }
 
@@ -55,7 +51,6 @@ pub enum UpsertItemVariantResponse {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpsertItemVariantErrorInterface {
     DuplicateName(UniqueValueViolation),
-    DoseConfigurationNotAllowed(DoseConfigurationNotAllowed),
     InternalError(InternalError),
     DatabaseError(DatabaseError),
 }
@@ -91,7 +86,6 @@ impl UpsertItemVariantInput {
             cold_storage_type_id,
             manufacturer_id,
             packaging_variants,
-            doses_per_unit,
             vvm_type,
         } = self;
 
@@ -109,7 +103,6 @@ impl UpsertItemVariantInput {
                 .into_iter()
                 .map(|v| PackagingVariantInput::to_domain(v, id.clone()))
                 .collect(),
-            doses_per_unit,
             vvm_type: vvm_type.map(|vvm_type| NullableUpdate {
                 value: vvm_type.value,
             }),
@@ -158,13 +151,6 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
             return Ok(UpsertItemVariantErrorInterface::DuplicateName(
                 UniqueValueViolation(UniqueValueKey::Name),
             ))
-        }
-        ServiceError::DoseConfigurationNotAllowed => {
-            return Ok(
-                UpsertItemVariantErrorInterface::DoseConfigurationNotAllowed(
-                    DoseConfigurationNotAllowed,
-                ),
-            )
         }
         // Generic errors
         ServiceError::ItemDoesNotExist

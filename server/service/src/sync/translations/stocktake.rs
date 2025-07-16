@@ -1,16 +1,14 @@
-use crate::sync::{
-    sync_serde::{
-        date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_string, naive_time, zero_date_as_option,
-    },
-    translations::{invoice::InvoiceTranslation, store::StoreTranslation},
-};
+use crate::sync::translations::{invoice::InvoiceTranslation, store::StoreTranslation};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
+    empty_str_as_option_string, naive_time, zero_date_as_option,
+};
 
 use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 

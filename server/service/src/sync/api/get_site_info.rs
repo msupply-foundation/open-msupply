@@ -12,6 +12,8 @@ pub struct SiteInfoV5 {
     pub(crate) central_server_url: String,
     #[serde(rename = "isOmSupplyCentralServer")]
     pub(crate) is_central_server: bool,
+    #[serde(rename = "mSupplyCentralSiteId")]
+    pub(crate) msupply_central_site_id: i32,
 }
 
 // See SITE_INITIALISATION_STATUS mSupply method
@@ -55,15 +57,14 @@ mod test {
                     "name": "Site 123",
                     "initialisationStatus": "new",
                     "isOmSupplyCentralServer": false,
-                    "omSupplyCentralServerUrl": "http://localhost:2000"
+                    "omSupplyCentralServerUrl": "http://localhost:2000",
+                    "mSupplyCentralSiteId": 1
                 }"#,
             );
         });
 
         let result = create_api(&url, "", "").get_site_info().await;
-
         mock.assert();
-
         assert!(result.is_ok());
 
         assert_eq!(
@@ -73,7 +74,8 @@ mod test {
                 site_id: 123,
                 initialisation_status: InitialisationStatus::New,
                 is_central_server: false,
-                central_server_url: "http://localhost:2000".to_string()
+                central_server_url: "http://localhost:2000".to_string(),
+                msupply_central_site_id: 1,
             }
         );
     }

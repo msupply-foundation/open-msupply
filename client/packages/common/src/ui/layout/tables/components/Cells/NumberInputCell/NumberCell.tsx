@@ -16,6 +16,7 @@ export const NumberCell = <T extends RecordWithId>({
   defaultValue?: string | number;
 }) => {
   const value = column.accessor({ rowData }) as number | undefined | null;
+  const tooltipValue = useFormatNumber().format(value ?? 0);
   const formattedValue = useFormatNumber().round(value ?? 0, 2);
 
   const displayValue =
@@ -27,7 +28,7 @@ export const NumberCell = <T extends RecordWithId>({
         padding: '4px 8px',
       }}
     >
-      <Tooltip title={value?.toString()}>
+      <Tooltip title={tooltipValue?.toString()}>
         <Typography
           style={{
             overflow: 'hidden',

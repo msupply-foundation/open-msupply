@@ -10,7 +10,7 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-    sync::{get_sync_push_changelogs_filter, GetActiveStoresOnSiteError},
+    sync::{get_sync_push_changelogs_filter, SyncChangelogError},
 };
 
 use super::SyncLogError;
@@ -298,7 +298,7 @@ fn get_latest_successful_sync_status(
 #[derive(Debug)]
 pub enum NumberOfRecordsInPushQueueError {
     DatabaseError(RepositoryError),
-    SiteIdNotSet,
+    SyncChangelogError(SyncChangelogError),
 }
 
 fn number_of_records_in_push_queue(
@@ -311,11 +311,8 @@ fn number_of_records_in_push_queue(
         .get(&ctx.connection)
         .map_err(Error::DatabaseError)?;
 
-    let changelog_filter =
-        get_sync_push_changelogs_filter(&ctx.connection).map_err(|error| match error {
-            GetActiveStoresOnSiteError::DatabaseError(error) => Error::DatabaseError(error),
-            GetActiveStoresOnSiteError::SiteIdNotSet => Error::SiteIdNotSet,
-        })?;
+    let changelog_filter = get_sync_push_changelogs_filter(&ctx.connection)
+        .map_err(NumberOfRecordsInPushQueueError::SyncChangelogError)?;
 
     let change_logs_total = changelog_repo
         .count(cursor, changelog_filter)
