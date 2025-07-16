@@ -309,7 +309,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     // Todo: once prescriptions refactored, see if we can streamline alerts?
     const alerts: StockOutAlert[] =
-      allocatedQuantity > quantity
+      allocatedQuantity !== quantity
         ? [
             {
               message: t('messages.over-allocated-line', {
