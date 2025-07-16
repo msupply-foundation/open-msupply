@@ -24,7 +24,7 @@ fn vaccine_course1() -> VaccineCourseRow {
         name: "test_course".to_string(),
         demographic_id: None,
         coverage_rate: 0.0,
-        is_active: false,
+        use_in_gaps_calculations: false,
         wastage_rate: 1.0,
         deleted_datetime: None,
     }

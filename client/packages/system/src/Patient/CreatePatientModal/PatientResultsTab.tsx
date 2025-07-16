@@ -6,27 +6,22 @@ import {
   DataTable,
   DotCell,
   DownloadIcon,
-  FnUtils,
   GenderType,
   HomeIcon,
   InfoTooltipIcon,
   LoadingButton,
-  Typography,
   noOtherVariants,
   useColumns,
   useFormatDateTime,
-  useLocation,
-  useNavigate,
   useTranslation,
+  getGenderTranslationKey,
+  Alert,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
 import { usePatient } from '../api';
 import { CentralPatientSearchResponse } from '../api/api';
-import { AppRoute } from '@openmsupply-client/config';
 import { Gender, usePatientStore } from '@openmsupply-client/programs';
-import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
-import { getGenderTranslationKey } from '../PatientView/utils';
 
 const genderToGenderType = (gender: Gender): GenderType => {
   switch (gender) {
@@ -54,7 +49,7 @@ export interface PatientColumnData {
   firstName?: string | null;
   lastName?: string | null;
   dateOfBirth?: string | null;
-  gender?: string | null;
+  gender?: GenderType | null;
   isDeceased?: boolean | null;
   isOnCentral?: boolean;
 }
@@ -74,11 +69,16 @@ const isConnectionError = (
   return false;
 };
 
-export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
-  patient,
-  value,
-  active,
-}) => {
+export const PatientResultsTab: FC<
+  PatientPanel & {
+    active: boolean;
+    onRowClick: (selectedPatient: PatientColumnData) => void;
+  }
+> = ({ patient, value, active, onRowClick }) => {
+  const t = useTranslation();
+  const { setCreateNewPatient } = usePatientStore();
+  const { localisedDate } = useFormatDateTime();
+
   const [data, setData] = useState<PatientColumnData[]>([]);
   const [fetchingPatient, setFetchingPatient] = useState<
     PatientColumnData | undefined
@@ -117,15 +117,6 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     [patient]
   );
 
-  const { setCreateNewPatient } = usePatientStore();
-  const t = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { localisedDate } = useFormatDateTime();
-  const {
-    create: { create: createPrescription },
-  } = usePrescription();
-
   const columns = useColumns<PatientColumnData>([
     {
       key: 'code',
@@ -152,7 +143,8 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     {
       key: 'gender',
       label: 'label.gender',
-      formatter: gender => t(getGenderTranslationKey(gender as GenderType)),
+      accessor: ({ rowData }) =>
+        rowData.gender ? t(getGenderTranslationKey(rowData.gender)) : '',
     },
     {
       key: 'isDeceased',
@@ -201,25 +193,12 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   }, [search, searchParams]);
 
   const handleRowClick = async (row: PatientColumnData): Promise<void> => {
-    const urlSegments = location.pathname.split('/');
-
     if (row.isOnCentral) {
       setFetchingPatient(row);
       return;
     }
-
     setCreateNewPatient(undefined);
-
-    if (urlSegments.includes(AppRoute.Prescription)) {
-      const invoice = await createPrescription({
-        id: FnUtils.generateUUID(),
-        patientId: String(row.id),
-      });
-      navigate(invoice.id ?? "");
-      return;
-    }
-
-    navigate(String(row.id));
+    onRowClick(row);
   };
 
   if (!active) {
@@ -243,13 +222,9 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
           marginBottom={0.5}
         >
           {count > 0 && (
-            <Typography
-              component="div"
-              style={{ fontWeight: 700 }}
-              alignSelf="center"
-            >
+            <Alert severity="success">
               {t('messages.patients-found', { count })}
-            </Typography>
+            </Alert>
           )}
           <Box display="flex" flexDirection="row" marginLeft="auto">
             {isCentralConnectionFailure ? (
@@ -269,9 +244,9 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
         </Box>
       </>
 
-      <Typography component="div" fontSize={12}>
+      <Alert severity="info" style={{ marginBottom: 2 }}>
         {t('messages.patients-create', { count })}
-      </Typography>
+      </Alert>
       <DataTable
         dense
         id="create-patient-duplicates"

@@ -1,13 +1,11 @@
-use crate::sync::{
-    sync_serde::{
-        date_from_date_time, date_option_to_isostring, empty_str_as_option,
-        empty_str_as_option_string, naive_time, zero_date_as_option,
-    },
-    translations::{
-        location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
-    },
+use crate::sync::translations::{
+    location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use util::sync_serde::{
+    date_from_date_time, date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
+    naive_time, zero_date_as_option,
+};
 
 use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachRow,
@@ -15,7 +13,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -179,10 +177,10 @@ impl SyncTranslation for TemperatureBreachTranslation {
             location_id,
             store_id,
             start_date: Some(start_datetime.date()),
-            start_time: start_datetime.time(),
+            start_time: to_legacy_time(start_datetime),
             end_date: end_datetime.map(|end_datetime| date_from_date_time(&end_datetime)),
             end_time: end_datetime
-                .map(|datetime| datetime.time())
+                .map(to_legacy_time)
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
             acknowledged: !unacknowledged,
             threshold_minimum,

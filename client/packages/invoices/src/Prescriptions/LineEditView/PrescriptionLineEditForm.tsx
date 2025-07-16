@@ -103,7 +103,10 @@ export const PrescriptionLineEditForm = ({
             gap={5}
             paddingBottom={2}
           >
-            <AllocationSection disabled={disabled} />
+            <AllocationSection
+              disabled={disabled}
+              hasLines={draftLines.length > 0}
+            />
           </Grid>
         </AccordionPanelSection>
         <AccordionPanelSection
@@ -246,17 +249,16 @@ const dosesSummary = (
   lines: DraftStockOutLineFragment[]
 ) => {
   const totalDoses = lines.reduce(
-    (sum, { packSize, numberOfPacks, defaultDosesPerUnit, itemVariant }) =>
-      sum +
-      packSize *
-        numberOfPacks *
-        (itemVariant?.dosesPerUnit ?? defaultDosesPerUnit),
+    (sum, { packSize, numberOfPacks, dosesPerUnit }) =>
+      sum + packSize * numberOfPacks * dosesPerUnit,
     0
   );
 
+  const roundedDoses = NumUtils.round(totalDoses);
+
   const unitWord = t('label.doses-plural', {
-    count: NumUtils.round(totalDoses),
+    count: roundedDoses,
   });
 
-  return `${totalDoses} ${unitWord}`;
+  return `${roundedDoses} ${unitWord}`;
 };

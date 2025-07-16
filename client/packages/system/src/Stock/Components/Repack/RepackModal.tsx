@@ -20,16 +20,11 @@ import {
   RouteBuilder,
   useCallbackWithPermission,
   UserPermission,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  useActivityLog,
-  usePrintReport,
-} from '@openmsupply-client/system';
+import { ReportSelector, useActivityLog } from '@openmsupply-client/system';
 import { RepackFragment } from '../../api';
 import { useRepackColumns } from './column';
 import { useRepack } from '../../api/hooks';
@@ -73,13 +68,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const displayMessage = invoiceId == undefined && !isNew && !!repacks?.length;
   const showRepackDetail = invoiceId || isNew;
   const showLogEvent = !!logData?.nodes.length;
-
-  const { print, isPrinting } = usePrintReport();
-
-  const printReport = (report: ReportRowFragment) => {
-    if (!repacks) return;
-    print({ reportId: report.id, dataId: invoiceId || '' });
-  };
 
   const onRowClick = (rowData: RepackFragment) => {
     setInvoiceId(rowData.id);
@@ -192,10 +180,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       reportSelector={
         <ReportSelector
           context={ReportContext.Repack}
-          onPrint={printReport}
+          dataId={invoiceId || ''}
           disabled={reportDisabled || !invoiceId}
-          isPrinting={isPrinting}
-          buttonLabel={t('button.print')}
         />
       }
     >

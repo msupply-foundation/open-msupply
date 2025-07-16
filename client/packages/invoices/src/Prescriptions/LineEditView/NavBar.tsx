@@ -20,12 +20,12 @@ interface NavBarProps {
   scrollIntoView: () => void;
 }
 
-export const NavBar: React.FC<NavBarProps> = ({
+export const NavBar = ({
   items,
   currentItem,
   setItem,
   scrollIntoView,
-}) => {
+}: NavBarProps) => {
   const t = useTranslation();
   const currentIndex = items.findIndex(item => item === currentItem);
   const hasPrevious = currentIndex > 0;

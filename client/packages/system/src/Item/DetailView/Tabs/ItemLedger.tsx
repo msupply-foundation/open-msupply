@@ -5,40 +5,61 @@ import {
   ItemLedgerFragment,
   useItemLedger,
 } from '@openmsupply-client/system';
-import { BasicSpinner, NothingHere } from '@common/components';
+import {
+  BasicSpinner,
+  FilterDefinition,
+  FilterMenu,
+  GroupFilterDefinition,
+  NothingHere,
+} from '@common/components';
 import {
   DataTable,
   TableProvider,
   useColumns,
   createTableStore,
   Box,
-  createQueryParamsStore,
   useTranslation,
   useUrlQueryParams,
   useFormatDateTime,
   ColumnFormat,
   CurrencyCell,
   NumUtils,
+  InvoiceNodeType,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { getStatusTranslation } from '@openmsupply-client/invoices/src/utils';
 
-const ItemLedgerTable = ({
-  itemId,
-  onRowClick,
-}: {
-  itemId: string;
+interface ItemLedgerTableProps {
+  itemLedgers: {
+    ledgers: ItemLedgerFragment[];
+    totalCount: number;
+  };
+  isLoading: boolean;
   onRowClick: (ledger: ItemLedgerFragment) => void;
-}) => {
-  const t = useTranslation();
-  const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  const pagination = { page, first, offset };
+  queryParams: {
+    page: number;
+    first: number;
+    offset: number;
+  };
+  updateSortQuery: (sortBy: string, dir: 'asc' | 'desc') => void;
+  updatePaginationQuery: (page: number) => void;
+}
 
-  const { data, isLoading } = useItemLedger(itemId);
+const ItemLedgerTable = ({
+  onRowClick,
+  itemLedgers: { ledgers, totalCount },
+  isLoading,
+  queryParams: { page, first, offset },
+  updateSortQuery,
+  updatePaginationQuery,
+}: ItemLedgerTableProps) => {
+  const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
+  const pagination = {
+    page,
+    first,
+    offset,
+  };
 
   const columns = useColumns<ItemLedgerFragment>(
     [
@@ -101,11 +122,11 @@ const ItemLedgerTable = ({
         label: 'label.num-packs',
       },
       {
-        key: 'quantity',
-        label: 'label.unit-quantity',
+        key: 'movementInUnits',
+        label: 'label.change',
         sortable: false,
         description: 'description.unit-quantity',
-        accessor: ({ rowData }) => NumUtils.round(rowData.quantity, 2),
+        accessor: ({ rowData }) => NumUtils.round(rowData.movementInUnits, 2),
       },
 
       {
@@ -143,9 +164,8 @@ const ItemLedgerTable = ({
     ],
     {
       onChangeSortBy: updateSortQuery,
-      sortBy,
     },
-    [updateSortQuery, sortBy]
+    [updateSortQuery]
   );
 
   if (isLoading) return <BasicSpinner />;
@@ -153,13 +173,13 @@ const ItemLedgerTable = ({
   return (
     <DataTable
       id="item-ledger-table"
-      data={data?.nodes}
+      data={ledgers}
       columns={columns}
-      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+      pagination={{ ...pagination, total: totalCount }}
       onChangePage={updatePaginationQuery}
       isLoading={isLoading}
       onRowClick={onRowClick}
-      noDataElement={<NothingHere body={t('messages.no-ledger')} />}
+      noDataElement={<NothingHere body={t('messages.no-item-ledger')} />}
     />
   );
 };
@@ -170,17 +190,99 @@ export const ItemLedgerTab = ({
 }: {
   itemId: string;
   onRowClick: (ledger: ItemLedgerFragment) => void;
-}) => (
-  <Box justifyContent="center" display="flex" flex={1}>
-    <Box flex={1} display="flex">
-      <TableProvider
-        createStore={createTableStore}
-        queryParamsStore={createQueryParamsStore({
-          initialSortBy: { key: 'datetime' },
-        })}
+}) => {
+  const t = useTranslation();
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { page, first, offset, filterBy },
+  } = useUrlQueryParams({
+    filters: [
+      { key: 'datetime', condition: 'between' },
+      { key: 'invoiceType', condition: 'equalTo' },
+      { key: 'invoiceStatus', condition: 'equalTo' },
+    ],
+  });
+  const { data, isLoading } = useItemLedger(itemId, {
+    first,
+    offset,
+    filterBy,
+  });
+
+  const filters: (FilterDefinition | GroupFilterDefinition)[] = [
+    {
+      type: 'group',
+      name: t('label.datetime'),
+      elements: [
+        {
+          type: 'date',
+          name: t('label.from-datetime'),
+          urlParameter: 'datetime',
+          range: 'from',
+          isDefault: true,
+        },
+        {
+          type: 'date',
+          name: t('label.to-datetime'),
+          urlParameter: 'datetime',
+          range: 'to',
+          isDefault: true,
+        },
+      ],
+    },
+    {
+      type: 'enum',
+      name: t('label.type'),
+      urlParameter: 'invoiceType',
+      options: [
+        ...Object.values(InvoiceNodeType).map(type => ({
+          label: t(getInvoiceLocalisationKey(type)),
+          value: type,
+        })),
+      ],
+    },
+    {
+      type: 'enum',
+      name: t('label.status'),
+      urlParameter: 'invoiceStatus',
+      options: [
+        ...Object.values(InvoiceNodeStatus)
+          .filter(
+            status =>
+              status !== InvoiceNodeStatus.New &&
+              status !== InvoiceNodeStatus.Allocated
+          )
+          .map(status => ({
+            label: t(getStatusTranslation(status)),
+            value: status,
+          })),
+      ],
+    },
+  ];
+
+  return (
+    <Box display="flex" flexDirection="column" flex={1} mt={1}>
+      <Box display="flex" ml={2} mb={1}>
+        <FilterMenu filters={filters} />
+      </Box>
+      <Box
+        display="flex"
+        flex={1}
+        sx={{
+          boxShadow: theme => theme.shadows[4],
+        }}
       >
-        <ItemLedgerTable itemId={itemId} onRowClick={onRowClick} />
-      </TableProvider>
+        <TableProvider createStore={createTableStore}>
+          <ItemLedgerTable
+            itemLedgers={data ?? { ledgers: [], totalCount: 0 }}
+            isLoading={isLoading}
+            onRowClick={onRowClick}
+            queryParams={{ page, first, offset }}
+            updateSortQuery={updateSortQuery}
+            updatePaginationQuery={updatePaginationQuery}
+          />
+        </TableProvider>
+      </Box>
     </Box>
-  </Box>
-);
+  );
+};

@@ -1,18 +1,16 @@
-use crate::sync::{
-    sync_serde::{
-        date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_string, naive_time, zero_date_as_option,
-    },
-    translations::{invoice::InvoiceTranslation, store::StoreTranslation},
-};
+use crate::sync::translations::{invoice::InvoiceTranslation, store::StoreTranslation};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
+    empty_str_as_option_string, naive_time, zero_date_as_option,
+};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum LegacyStocktakeStatus {
@@ -200,7 +198,7 @@ impl SyncTranslation for StocktakeTranslation {
             inventory_reduction_id,
             serial_number: stocktake_number,
             stock_take_created_date: date_from_date_time(&created_datetime),
-            stock_take_time: created_datetime.time(),
+            stock_take_time: to_legacy_time(created_datetime),
             created_datetime: Some(created_datetime),
             finalised_datetime,
             program_id,

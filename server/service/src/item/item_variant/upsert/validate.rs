@@ -18,7 +18,7 @@ pub fn validate(
 ) -> Result<Option<ItemVariant>, UpsertItemVariantError> {
     use UpsertItemVariantError::*;
 
-    let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemDoesNotExist)?;
+    check_item_exists(connection, &input.item_id)?.ok_or(ItemDoesNotExist)?;
 
     let existing_item_variant = ItemVariantRepository::new(connection)
         .query_one(ItemVariantFilter::new().id(EqualFilter::equal_to(&input.id)))?;
@@ -79,10 +79,6 @@ pub fn validate(
         .any(|v| v.item_variant_row.id != input.id)
     {
         return Err(DuplicateName);
-    }
-
-    if !item.is_vaccine && input.doses_per_unit > 0 {
-        return Err(DoseConfigurationNotAllowed);
     }
 
     Ok(existing_item_variant)

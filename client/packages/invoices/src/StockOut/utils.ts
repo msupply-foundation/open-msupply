@@ -77,11 +77,7 @@ export const packsToDoses = (
   numPacks: number,
   line: DraftStockOutLineFragment
 ) => {
-  return NumUtils.round(
-    numPacks *
-      line.packSize *
-      ((line.itemVariant?.dosesPerUnit ?? line.defaultDosesPerUnit) || 1)
-  );
+  return NumUtils.round(numPacks * line.packSize * (line.dosesPerUnit || 1));
 };
 
 /** Converts a dose quantity to number of packs */
@@ -89,11 +85,7 @@ export const dosesToPacks = (
   doses: number,
   line: DraftStockOutLineFragment
 ) => {
-  return (
-    doses /
-    line.packSize /
-    ((line.itemVariant?.dosesPerUnit ?? line.defaultDosesPerUnit) || 1)
-  );
+  return doses / line.packSize / (line.dosesPerUnit || 1);
 };
 
 /** Converts a number of packs to quantity based on allocation unit of measure */
@@ -188,13 +180,32 @@ export const scannedBatchFilter = (
   return selectedLine.batch === scannedBatch;
 };
 
+export const normaliseToUnits = (
+  quantity: number,
+  allocateIn: AllocateInOption,
+  dosesPerUnit: number
+) => {
+  switch (allocateIn.type) {
+    case AllocateInType.Doses:
+      return quantity / (dosesPerUnit || 1);
+
+    case AllocateInType.Units:
+      return quantity;
+
+    case AllocateInType.Packs:
+      // If working in packs, should be whole units
+      return NumUtils.round(quantity * allocateIn.packSize);
+  }
+};
+
 export const getAllocationAlerts = (
   requestedQuantity: number,
   allocatedQuantity: number,
-  placeholderQuantity: number,
+  placeholderUnits: number,
   hasOnHold: boolean,
   allocateIn: AllocateInOption,
   draftLines: DraftStockOutLineFragment[],
+  dosesPerUnit: number,
   format: (value: number, options?: Intl.NumberFormatOptions) => string,
   t: TypedTFunction<LocaleKey>
 ) => {
@@ -229,12 +240,23 @@ export const getAllocationAlerts = (
     return alerts;
   }
 
+  const isDoses = allocateIn.type === AllocateInType.Doses;
+
   // If we didn't have enough stock to meet the requested quantity
   if (allocatedQuantity < requestedQuantity) {
     // If we were able to create a placeholder, let the user know
-    if (placeholderQuantity > 0) {
+    if (placeholderUnits > 0) {
       alerts.push({
-        message: t('messages.placeholder-allocated', { placeholderQuantity }),
+        message: t(
+          // When issuing in packs, placeholder quantity is in units
+          `messages.placeholder-allocated-${isDoses ? 'doses' : 'units'}`,
+          {
+            requestedQuantity: format(requestedQuantity),
+            placeholderQuantity: format(
+              isDoses ? placeholderUnits * dosesPerUnit : placeholderUnits
+            ),
+          }
+        ),
         severity: 'info',
       });
     } else {
@@ -275,14 +297,11 @@ export const getAllocationAlerts = (
   });
 
   if (wholePackQuantity > allocatedQuantity) {
-    const messageKey =
-      allocateIn.type === AllocateInType.Doses
-        ? 'messages.partial-pack-warning-doses'
-        : 'messages.partial-pack-warning-units';
     alerts.push({
-      message: t(messageKey, {
-        nearestAbove: wholePackQuantity,
-      }),
+      message: t(
+        `messages.partial-pack-warning-${isDoses ? 'doses' : 'units'}`,
+        { nearestAbove: wholePackQuantity }
+      ),
       severity: 'warning',
     });
   }

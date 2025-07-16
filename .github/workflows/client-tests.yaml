@@ -6,6 +6,10 @@ on:
       - "client/**"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test
@@ -28,8 +32,6 @@ jobs:
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Run tests
         run: cd ./client && yarn test

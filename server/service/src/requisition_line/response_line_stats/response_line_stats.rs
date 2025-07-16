@@ -91,7 +91,7 @@ pub fn response_store_stats(
             .status(RequisitionStatus::Finalised.not_equal_to()),
     )?;
 
-    let prefs = get_store_preferences(connection, &store_id)?;
+    let prefs = get_store_preferences(connection, store_id)?;
 
     // For current line check prefs, then calculate the quantity based on approved status
     let calculate_line_quantity = |line: &RequisitionLine| -> f64 {
@@ -125,7 +125,6 @@ pub fn response_store_stats(
             .iter()
             .map(|line| {
                 let line_quantity = calculate_line_quantity(line);
-                println!("Line quantity: {}", line_quantity);
                 line_quantity
             })
             .sum::<f64>();

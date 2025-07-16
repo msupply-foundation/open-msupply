@@ -53,6 +53,7 @@ pub fn generate_create_prescription(
         expiry_date: None,
         cost_price_per_pack: None,
         sell_price_per_pack: None,
+        campaign_id: None,
     };
 
     let finalise_prescription = UpdatePrescription {

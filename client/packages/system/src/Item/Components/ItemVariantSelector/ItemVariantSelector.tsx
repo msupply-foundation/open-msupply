@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import {
   PaperPopoverSection,
   useTranslation,
@@ -6,7 +6,6 @@ import {
   createTableStore,
   DataTable,
   NothingHere,
-  EditIcon,
   PersistentPaperPopover,
 } from '@openmsupply-client/common';
 import { useItemVariantSelectorColumns } from './columns';
@@ -14,27 +13,28 @@ import { ItemVariantFragment } from '../../api';
 
 interface ItemVariantSelectorProps {
   selectedId: string | null;
-  variants?: ItemVariantFragment[];
+  variants: ItemVariantFragment[];
   isLoading?: boolean;
   onVariantSelected: (itemVariantId: string | null) => void;
-  displayInDoses: boolean;
+  disabled?: boolean;
+  isVaccine?: boolean;
 }
 
 export const ItemVariantSelector = ({
+  children,
   selectedId,
   variants,
   isLoading = false,
+  disabled = false,
   onVariantSelected,
-  displayInDoses,
-}: ItemVariantSelectorProps) => {
+  isVaccine,
+}: ItemVariantSelectorProps & PropsWithChildren) => {
   const t = useTranslation();
   const columns = useItemVariantSelectorColumns({
     selectedId,
     onVariantSelected,
-    displayInDoses,
+    isVaccine,
   });
-
-  if (!variants) return null;
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -47,6 +47,7 @@ export const ItemVariantSelector = ({
               id="item-variant-selector"
               columns={columns}
               data={variants ?? []}
+              isDisabled={disabled}
               isLoading={isLoading}
               noDataElement={
                 <NothingHere body={t('messages.no-item-variants')} />
@@ -55,7 +56,7 @@ export const ItemVariantSelector = ({
           </PaperPopoverSection>
         }
       >
-        <EditIcon style={{ fontSize: 16, fill: 'none' }} />
+        {children}
       </PersistentPaperPopover>
     </TableProvider>
   );

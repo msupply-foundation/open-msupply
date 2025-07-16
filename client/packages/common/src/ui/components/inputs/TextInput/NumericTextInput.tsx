@@ -279,7 +279,12 @@ export const NumericTextInput = React.forwardRef<
           {
             input: {
               endAdornment: endAdornment ? (
-                <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>
+                <InputAdornment
+                  position="end"
+                  sx={{
+                    p: 0.5,
+                  }}
+                >
                   {endAdornment}
                 </InputAdornment>
               ) : undefined,

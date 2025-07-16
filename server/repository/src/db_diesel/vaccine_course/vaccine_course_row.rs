@@ -17,7 +17,7 @@ table! {
         program_id -> Text,
         demographic_id -> Nullable<Text>,
         coverage_rate -> Double,
-        is_active -> Bool,
+        use_in_gaps_calculations -> Bool,
         wastage_rate -> Double,
         deleted_datetime -> Nullable<Timestamp>,
     }
@@ -34,7 +34,8 @@ pub struct VaccineCourseRow {
     pub program_id: String,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
-    pub is_active: bool,
+    #[serde(rename = "is_active")] // To prevent breaking change in v6 sync API
+    pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }

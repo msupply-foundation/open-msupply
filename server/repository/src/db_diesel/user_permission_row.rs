@@ -16,13 +16,15 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum PermissionType {
     ServerAdmin,
 
     /// User has access to the store this permission is associated with.
     /// This acts like a master switch to enable/disable all user's permissions associated with a store.
+    #[default]
     StoreAccess,
     // location,
     LocationMutate,
@@ -63,6 +65,7 @@ pub enum PermissionType {
     // Prescription
     PrescriptionQuery,
     PrescriptionMutate,
+    CancelFinalisedInvoices,
     // reporting
     Report,
     // log
@@ -86,9 +89,11 @@ pub enum PermissionType {
     // Central Server
     EditCentralData,
     ViewAndEditVvmStatus,
+    // clinician
+    MutateClinician,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = user_permission)]
 pub struct UserPermissionRow {
@@ -169,5 +174,40 @@ impl Upsert for UserPermissionRow {
             UserPermissionRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, PermissionType, UserPermissionRow,
+        UserPermissionRowRepository,
+    };
+    use strum::IntoEnumIterator;
+
+    #[actix_rt::test]
+    async fn user_permission_row_type_enum() {
+        let (_, connection, _, _) = setup_all(
+            "user_permission_row_type_enum",
+            MockDataInserts::none().stores(),
+        )
+        .await;
+
+        let repo = UserPermissionRowRepository::new(&connection);
+        // Try upsert all variants of PermissionType, confirm that diesel enums match postgres
+        for permission in PermissionType::iter() {
+            let row_id = format!("{:?}", permission);
+
+            let result = repo.upsert_one(&UserPermissionRow {
+                id: row_id.clone(),
+                permission: permission.clone(),
+                store_id: Some("store_a".to_string()),
+                ..Default::default()
+            });
+            assert_eq!(result, Ok(()), "\n \n HINT: Failed to insert permission for type {:?}. Have you created a migration to add this type to the postgres database enum? \n", row_id);
+
+            let found = repo.find_one_by_id(&row_id).unwrap().unwrap();
+            assert_eq!(found.permission, permission);
+        }
     }
 }

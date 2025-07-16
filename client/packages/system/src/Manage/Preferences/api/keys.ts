@@ -1,1 +1,1 @@
-export const PREFERENCE_DESCRIPTIONS = 'pref-descriptions';
+export const PREFERENCES = 'preferences';

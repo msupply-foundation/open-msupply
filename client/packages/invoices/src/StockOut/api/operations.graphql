@@ -16,6 +16,7 @@ fragment StockOutLine on InvoiceLineNode {
   taxPercentage
   note
   itemName
+  itemVariantId
 
   item {
     __typename
@@ -68,7 +69,8 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
   inStorePacks
   availablePacks
   stockLineOnHold
-  defaultDosesPerUnit
+  dosesPerUnit
+  itemVariantId
   location {
     __typename
     id
@@ -83,12 +85,13 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
     unusable
     description
   }
-  itemVariant {
-    dosesPerUnit
-  }
   donor(storeId: $storeId) {
     id
     name
+  }
+  campaign {
+    name
+    id
   }
 }
 
@@ -110,6 +113,7 @@ query getOutboundEditLines(
         unitName
         name
         isVaccine
+        doses
         itemDirections {
           ...ItemDirection
         }

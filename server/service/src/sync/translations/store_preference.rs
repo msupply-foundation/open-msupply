@@ -2,7 +2,7 @@ use repository::{StorageConnection, StorePreferenceRow, StorePreferenceType, Syn
 use serde::{Deserialize, Serialize};
 use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
-use crate::sync::sync_serde::string_to_f64;
+use util::sync_serde::string_to_f64;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -72,7 +72,7 @@ pub struct LegacyPrefData {
     #[serde(rename = "useConsumptionAndStockFromCustomersForInternalOrders")]
     pub use_consumption_and_stock_from_customers_for_internal_orders: bool,
     #[serde(default)]
-    #[serde(rename = "canLinkRequistionToSupplierInvoice")]
+    #[serde(rename = "canLinkRequisitionToSupplierInvoice")]
     pub manually_link_internal_order_to_inbound_shipment: bool,
     #[serde(default)]
     #[serde(rename = "editPrescribedQuantityOnPrescription")]

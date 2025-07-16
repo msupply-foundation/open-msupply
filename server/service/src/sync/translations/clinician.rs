@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository, GenderType,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository,
+    ClinicianRowRepositoryTrait, GenderType, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::sync_serde::empty_str_as_option_string;
-
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use crate::sync::translations::store::StoreTranslation;
+use util::sync_serde::empty_str_as_option_string;
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyClinicianRow {
@@ -39,6 +39,9 @@ pub struct LegacyClinicianRow {
     pub is_female: bool,
     #[serde(rename = "active")]
     pub is_active: bool,
+
+    #[serde(deserialize_with = "empty_str_as_option_string", rename = "store_ID")]
+    pub store_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -54,7 +57,7 @@ impl SyncTranslation for ClinicianTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
+        vec![StoreTranslation.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -79,6 +82,7 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
+            store_id,
         } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
 
         let result = ClinicianRow {
@@ -98,6 +102,7 @@ impl SyncTranslation for ClinicianTranslation {
                 Some(GenderType::Male)
             },
             is_active,
+            store_id,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -120,8 +125,9 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             gender,
             is_active,
+            store_id,
         } = ClinicianRowRepository::new(connection)
-            .find_one_by_id_option(&changelog.record_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Clinician row ({}) not found",
                 changelog.record_id
@@ -144,6 +150,7 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
+            store_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -151,14 +158,28 @@ impl SyncTranslation for ClinicianTranslation {
             serde_json::to_value(legacy_row)?,
         ))
     }
+}
 
-    // TODO should not be deleting clinicians
-    // TODO soft delete
-    fn try_translate_to_delete_sync_record(
-        &self,
-        _: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        Ok(PushTranslateResult::delete(changelog, self.table_name()))
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_clinician_translation() {
+        use crate::sync::test::test_data::clinician as test_data;
+        let translator = ClinicianTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_clinician_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }

@@ -66,9 +66,9 @@ pub fn generate(
         created_datetime: current_datetime,
         status: InvoiceStatus::New,
         original_shipment_id: None,
+        currency_rate: 1.0,
         // Default
         currency_id: None,
-        currency_rate: 1.0,
         on_hold: false,
         colour: None,
         comment: None,
@@ -80,6 +80,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        received_datetime: None,
         verified_datetime: None,
         cancelled_datetime: None,
         linked_invoice_id: None,
@@ -108,6 +109,7 @@ pub fn generate(
         item_variant_id,
         donor_link_id,
         vvm_status_id,
+        campaign_id,
         ..
     } = stock_line.stock_line_row.clone();
 
@@ -135,11 +137,12 @@ pub fn generate(
             item_variant_id,
             donor_id: donor_link_id,
             vvm_status_id,
+            campaign_id,
             // Default
             barcode: None,
             total_before_tax: None,
             tax_percentage: None,
-            campaign_id: None,
+            shipped_number_of_packs: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,
@@ -148,6 +151,7 @@ pub fn generate(
             stock_line_id,
             note,
             number_of_packs: adjustment,
+            campaign_id,
             // Default
             prescribed_quantity: None,
             total_before_tax: None,

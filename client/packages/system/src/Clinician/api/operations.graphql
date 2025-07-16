@@ -1,0 +1,5 @@
+mutation insertClinician($storeId: String!, $input: InsertClinicianInput!) {
+  insertClinician(storeId: $storeId, input: $input) {
+    id
+  }
+}

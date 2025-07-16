@@ -14,16 +14,21 @@ import {
   useTableStore,
   useDeleteConfirmation,
   useNotification,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { Footer } from './Footer';
 import { CampaignEditModal } from './CampaignEditModal';
 import { AppBarButtons } from './AppBarButtons';
-import { CampaignRowFragment, DraftCampaign, useCampaigns } from '../api';
+import {
+  CampaignRowFragment,
+  defaultDraftCampaign,
+  DraftCampaign,
+  useCampaigns,
+} from '../api';
 
 const CampaignsComponent = () => {
   const t = useTranslation();
   const {
-    // filter,
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
@@ -53,12 +58,25 @@ const CampaignsComponent = () => {
 
   const save = async () => {
     const result = await upsert();
-    if (result?.__typename === 'CampaignNode')
+
+    // Closes on success and resets the draft
+    if (result?.__typename === 'CampaignNode') {
       success(t('messages.campaign-saved'))();
-    else if ('error' in result)
-      error(
-        `${t('messages.error-saving-campaign')} — ${result?.error?.description ?? ''}`
-      )();
+      onClose();
+      updateDraft(defaultDraftCampaign);
+      return;
+    }
+
+    if (result?.__typename === 'UpsertCampaignError') {
+      const isUniqueValidation =
+        '__typename' in result.error &&
+        result.error.__typename === 'UniqueValueViolation';
+
+      const errorMessage = isUniqueValidation
+        ? t('messages.error-campaign-name-already-exists')
+        : `${t('messages.error-saving-campaign')} — ${result.error.description ?? ''}`;
+      error(errorMessage)();
+    }
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -103,6 +121,7 @@ const CampaignsComponent = () => {
         width: 150,
         format: ColumnFormat.Date,
         sortable: false,
+        accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.startDate),
       },
       {
         key: 'endDate',
@@ -110,6 +129,7 @@ const CampaignsComponent = () => {
         width: 150,
         format: ColumnFormat.Date,
         sortable: false,
+        accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.endDate),
       },
     ],
     {
@@ -122,15 +142,6 @@ const CampaignsComponent = () => {
   return (
     <>
       <AppBarButtons onOpen={onOpen} />
-      {isOpen && (
-        <CampaignEditModal
-          isOpen={isOpen}
-          campaign={draft}
-          onClose={onClose}
-          upsert={save}
-          updateDraft={updateDraft}
-        />
-      )}
       <DataTable
         id="campaign-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -146,6 +157,15 @@ const CampaignsComponent = () => {
         selectedRowCount={selectedRows.length}
         deleteRows={confirmAndDelete}
       />
+      {isOpen && (
+        <CampaignEditModal
+          isOpen={isOpen}
+          campaign={draft}
+          onClose={onClose}
+          upsert={save}
+          updateDraft={updateDraft}
+        />
+      )}
     </>
   );
 };

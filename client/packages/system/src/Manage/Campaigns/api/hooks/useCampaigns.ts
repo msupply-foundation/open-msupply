@@ -90,7 +90,7 @@ const useGetList = (queryParams?: ListParams) => {
       filter: filterBy,
       storeId,
     });
-    const { nodes, totalCount } = query?.centralServer.campaign.campaigns;
+    const { nodes, totalCount } = query?.campaigns;
     return { nodes, totalCount };
   };
 
@@ -103,7 +103,7 @@ const useGetList = (queryParams?: ListParams) => {
 
 const toSortInput = (sortBy?: SortBy<CampaignRowFragment>) => ({
   desc: sortBy?.isDesc,
-  key: sortBy?.key as CampaignSortFieldInput,
+  key: (sortBy?.key as CampaignSortFieldInput) ?? CampaignSortFieldInput.Name,
 });
 
 const useUpsertCampaign = () => {

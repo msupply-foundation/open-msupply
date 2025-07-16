@@ -12,6 +12,8 @@ import {
   useAuthContext,
   useBreadcrumbs,
   useEditModal,
+  PreferenceKey,
+  usePreference,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
@@ -31,6 +33,15 @@ export const DetailView = () => {
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { store } = useAuthContext();
+  const {
+    data: { manageVaccinesInDoses, orderInPacks } = {
+      manageVaccinesInDoses: false,
+      orderInPacks: false,
+    },
+  } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.OrderInPacks
+  );
   const {
     onOpen,
     onClose,
@@ -87,7 +98,13 @@ export const DetailView = () => {
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: (
+        <ContentArea
+          onRowClick={onRowClick}
+          onAddItem={onAddItem}
+          manageVaccinesInDoses={manageVaccinesInDoses}
+        />
+      ),
       value: 'Details',
     },
     {
@@ -143,6 +160,8 @@ export const DetailView = () => {
             onClose={onClose}
             mode={mode}
             store={store}
+            manageVaccinesInDoses={manageVaccinesInDoses}
+            orderInPacks={orderInPacks}
           />
         )}
       </TableProvider>

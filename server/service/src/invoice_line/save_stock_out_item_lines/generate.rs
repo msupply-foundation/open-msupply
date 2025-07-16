@@ -77,6 +77,7 @@ pub fn generate(
                  id,
                  number_of_packs,
                  stock_line_id,
+                 campaign_id,
              }| InsertStockOutLine {
                 id,
                 invoice_id: invoice_id.clone(),
@@ -94,6 +95,7 @@ pub fn generate(
                 location_id: None,
                 cost_price_per_pack: None,
                 sell_price_per_pack: None,
+                campaign_id,
             },
         )
         .collect();
@@ -107,11 +109,13 @@ pub fn generate(
                  id,
                  number_of_packs,
                  stock_line_id,
+                 campaign_id,
              }| UpdateStockOutLine {
                 id,
                 stock_line_id: Some(stock_line_id),
                 number_of_packs: Some(number_of_packs),
                 r#type: Some(stock_out_type.clone()),
+                campaign_id,
                 // Default
                 prescribed_quantity: None,
                 total_before_tax: None,
@@ -208,11 +212,13 @@ mod tests {
                 id: "newA".to_string(),
                 number_of_packs: 1.0,
                 stock_line_id: "A".to_string(),
+                campaign_id: None,
             },
             SaveStockOutInvoiceLine {
                 id: "newB".to_string(),
                 number_of_packs: 2.0,
                 stock_line_id: "B".to_string(),
+                campaign_id: None,
             },
         ];
 

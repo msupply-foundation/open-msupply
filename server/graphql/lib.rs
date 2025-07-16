@@ -3,6 +3,9 @@
 #[cfg(test)]
 mod tests;
 
+mod logger;
+use logger::{GraphQLRequestLogger, QueryLogInfo};
+
 use std::sync::Mutex;
 
 use actix_web::web::{self, Data};
@@ -14,7 +17,7 @@ use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_asset::property::AssetPropertiesQueries;
 use graphql_batch_mutations::BatchMutations;
-use graphql_clinician::ClinicianQueries;
+use graphql_clinician::{ClinicianMutations, ClinicianQueries};
 use graphql_contact_form::ContactFormMutations;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
@@ -46,8 +49,10 @@ use graphql_plugin::{
 use graphql_preference::{PreferenceMutations, PreferenceQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
+use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
+use graphql_purchase_order_line::PurchaseOrderLineQueries;
 use graphql_repack::{RepackMutations, RepackQueries};
-use graphql_reports::ReportQueries;
+use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
@@ -58,6 +63,7 @@ use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
+use service::boajs::utils::{ExecuteGraphQlError, ExecuteGraphql};
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
@@ -109,6 +115,10 @@ impl CentralServerMutationNode {
     async fn campaign(&self) -> CampaignMutations {
         CampaignMutations
     }
+
+    async fn reports(&self) -> CentralReportMutations {
+        CentralReportMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -117,10 +127,6 @@ pub struct CentralServerQueryNode;
 impl CentralServerQueryNode {
     async fn plugin(&self) -> CentralPluginQueries {
         CentralPluginQueries
-    }
-
-    async fn campaign(&self) -> CampaignQueries {
-        CampaignQueries
     }
 }
 
@@ -178,6 +184,9 @@ pub struct Queries(
     pub PreferenceQueries,
     pub CentralServerQueries,
     pub VVMQueries,
+    pub CampaignQueries,
+    pub PurchaseOrderQueries,
+    pub PurchaseOrderLineQueries,
 );
 
 impl Queries {
@@ -210,6 +219,9 @@ impl Queries {
             PreferenceQueries,
             CentralServerQueries,
             VVMQueries,
+            CampaignQueries,
+            PurchaseOrderQueries,
+            PurchaseOrderLineQueries,
         )
     }
 }
@@ -238,6 +250,8 @@ pub struct Mutations(
     pub InventoryAdjustmentMutations,
     pub ContactFormMutations,
     pub VVMMutations,
+    pub ClinicianMutations,
+    pub PurchaseOrderMutations,
 );
 
 impl Mutations {
@@ -265,6 +279,8 @@ impl Mutations {
             InventoryAdjustmentMutations,
             ContactFormMutations,
             VVMMutations,
+            ClinicianMutations,
+            PurchaseOrderMutations,
         )
     }
 }
@@ -273,7 +289,7 @@ impl Mutations {
 /// this is done to avoid validations check in operational mode where
 /// data for validation is not available, this struct helps achieve this
 pub struct GraphqlSchema {
-    operational: OperationalSchema,
+    pub(crate) operational: OperationalSchema,
     initialisation: InitialisationSchema,
     /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
     is_operational: RwLock<bool>,
@@ -309,6 +325,7 @@ impl GraphqlSchema {
                 .data(auth.clone())
                 .data(settings.clone())
                 .data(validated_plugins.clone())
+                .extension(GraphQLRequestLogger)
                 .finish();
         // Self requester does not need loggers
 
@@ -322,7 +339,8 @@ impl GraphqlSchema {
                 .data(settings.clone())
                 .data(validated_plugins.clone())
                 // Add self requester to operational
-                .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)));
+                .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
+                .extension(GraphQLRequestLogger);
 
         // Initialisation schema should ony need service_provider
         let initialisation_builder = InitialisationSchema::build(
@@ -330,7 +348,8 @@ impl GraphqlSchema {
             InitialisationMutations,
             EmptySubscription,
         )
-        .data(service_provider.clone());
+        .data(service_provider.clone())
+        .extension(GraphQLRequestLogger);
 
         GraphqlSchema {
             operational: operational_builder.finish(),
@@ -344,7 +363,9 @@ impl GraphqlSchema {
     }
 
     async fn execute(&self, http_req: HttpRequest, req: GraphQLRequest) -> Response {
-        let req = req.into_inner();
+        let mut req = req.into_inner();
+        req = req.data(QueryLogInfo::new());
+
         if *self.is_operational.read().await {
             // auth_data is only available in schema in operational mode
             let user_data = auth_data_from_request(&http_req);
@@ -438,4 +459,33 @@ pub fn attach_discovery_graphql_schema(
 
 async fn discovery_index(schema: Data<DiscoverySchema>, req: GraphQLRequest) -> GraphQLResponse {
     schema.execute(req.into_inner()).await.into()
+}
+
+pub struct PluginExecuteGraphql(pub Data<GraphqlSchema>);
+
+#[async_trait::async_trait]
+impl ExecuteGraphql for PluginExecuteGraphql {
+    async fn execute_graphql(
+        &self,
+        override_user_id: &str,
+        query: &str,
+        variables: serde_json::Value,
+    ) -> Result<serde_json::Value, ExecuteGraphQlError> {
+        let request = async_graphql::Request::new(query)
+            .variables(serde_json::from_value(variables)?)
+            .data(RequestUserData {
+                override_user_id: Some(override_user_id.to_string()),
+                auth_token: None,
+                refresh_token: None,
+            });
+        let response = self.0.operational.execute(request).await;
+        // Response is either success with data field populated or error with errors field populated
+        if response.is_err() {
+            return Err(ExecuteGraphQlError::Graphql(serde_json::to_string(
+                &response.errors,
+            )?));
+        }
+
+        Ok(serde_json::to_value(response.data)?)
+    }
 }

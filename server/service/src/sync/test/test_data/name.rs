@@ -102,7 +102,9 @@ const NAME_1: (&str, &str) = (
     "isDeceased": false,
     "om_created_datetime": "",
     "om_gender": "FEMALE",
-    "om_date_of_death": ""
+    "om_date_of_death": "", 
+    "HSH_code": "HSH001",
+    "HSH_name": "HSH Name"
 }"#,
 );
 
@@ -147,6 +149,11 @@ fn name_1() -> TestSyncIncomingRecord {
             date_of_death: None,
             custom_data_string: None,
             deleted_datetime: None,
+            hsh_code: Some("HSH001".to_string()),
+            hsh_name: Some("HSH Name".to_string()),
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
+            currency_id: None,
         },
     )
 }
@@ -165,7 +172,7 @@ const NAME_2: (&str, &str) = (
     "charge code": "SNA",
     "margin": 0,
     "comment": "",
-    "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+    "currency_ID": "NEW_ZEALAND_DOLLARS",
     "country": "",
     "freightfac": 1,
     "email": "",
@@ -245,7 +252,9 @@ const NAME_2: (&str, &str) = (
     "national_health_number": "",
     "om_created_datetime": "",
     "om_gender": "",
-    "om_date_of_death": ""
+    "om_date_of_death": "",
+    "HSH_code": "",
+    "HSH_name": ""
 }"#,
 );
 
@@ -284,6 +293,11 @@ fn name_2() -> TestSyncIncomingRecord {
             date_of_death: None,
             custom_data_string: None,
             deleted_datetime: None,
+            hsh_code: None,
+            hsh_name: None,
+            margin: Some(0.0),
+            freight_factor: Some(1.0),
+            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
         },
     )
 }
@@ -302,7 +316,7 @@ const NAME_3: (&str, &str) = (
     "charge code": "SNA",
     "margin": 0,
     "comment": "",
-    "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+    "currency_ID": "NEW_ZEALAND_DOLLARS",
     "country": "",
     "freightfac": 1,
     "email": "",
@@ -382,7 +396,9 @@ const NAME_3: (&str, &str) = (
     "isDeceased": false,
     "om_created_datetime": "",
     "om_gender": "",
-    "om_date_of_death": ""
+    "om_date_of_death": "",
+    "HSH_code": "",
+    "HSH_name": ""
 }"#,
 );
 
@@ -421,6 +437,11 @@ fn name_3() -> TestSyncIncomingRecord {
             date_of_death: None,
             custom_data_string: Some(r#"{"check":"check"}"#.to_string()),
             deleted_datetime: None,
+            hsh_code: None,
+            hsh_name: None,
+            margin: Some(0.0),
+            freight_factor: Some(1.0),
+            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
         },
     )
 }
@@ -439,7 +460,7 @@ const NAME_4: (&str, &str) = (
       "charge code": "00102/19/01",
       "margin": 0,
       "comment": "name comment 1",
-      "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+      "currency_ID": "NEW_ZEALAND_DOLLARS",
       "country": "NZ",
       "freightfac": 0,
       "email": "email@some.com",
@@ -520,7 +541,9 @@ const NAME_4: (&str, &str) = (
       "isDeceased": true,
       "om_created_datetime": "",
       "om_gender": "FEMALE",
-      "om_date_of_death": ""
+      "om_date_of_death": "",
+      "HSH_code": "",
+      "HSH_name": ""
   }"#,
 );
 
@@ -564,6 +587,11 @@ fn name_4() -> TestSyncIncomingRecord {
             date_of_death: None,
             custom_data_string: None,
             deleted_datetime: None,
+            hsh_code: None,
+            hsh_name: None,
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
+            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
         },
     )
 }
@@ -608,7 +636,12 @@ fn name_push_record_1() -> TestSyncOutgoingRecord {
             ),
             gender: Some(GenderType::Female),
             date_of_death: None,
-            custom_data: None
+            custom_data: None,
+            hsh_code: Some("HSH001".to_string()),
+            hsh_name: Some("HSH Name".to_string()),
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
+            currency_id: None,
         }),
     }
 }
@@ -653,7 +686,12 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
             ),
             gender: Some(GenderType::Female),
             date_of_death: None,
-            custom_data: None
+            custom_data: None,
+            hsh_code: None,
+            hsh_name: None,
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
+            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
         }),
     }
 }

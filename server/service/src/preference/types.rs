@@ -14,11 +14,13 @@ use super::{
 pub enum PrefKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    ManageVaccinesInDoses,
+    GenderOptions,
     ShowContactTracing,
+    UseCampaigns,
     // Store preferences
-    DisplayPopulationBasedForecasting,
+    ManageVaccinesInDoses,
     ManageVvmStatusForStock,
+    OrderInPacks,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
 }
@@ -34,6 +36,7 @@ pub enum PreferenceType {
 pub enum PreferenceValueType {
     Boolean,
     Integer,
+    MultiChoice,
     // String,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers

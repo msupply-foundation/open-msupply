@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   ArrowRightIcon,
   Box,
@@ -6,11 +7,11 @@ import {
   NumericTextInput,
   TextWithLabelRow,
   UNDEFINED_STRING_VALUE,
+  useFormatNumber,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, RepackDraft } from '@openmsupply-client/system';
 import { LocationSearchInput } from '../../..';
-import React, { FC, useState } from 'react';
 
 const INPUT_WIDTH = 100;
 
@@ -21,13 +22,15 @@ interface RepackEditFormProps {
   availableNumberOfPacks: number;
 }
 
-export const RepackEditForm: FC<RepackEditFormProps> = ({
+export const RepackEditForm = ({
   onChange,
   data,
   isNew,
   availableNumberOfPacks,
-}) => {
+}: RepackEditFormProps) => {
   const t = useTranslation();
+  const { round } = useFormatNumber();
+
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
   const textProps = { textAlign: 'end' as 'end' | 'start' };
   const labelProps = { sx: { width: 0 } };
@@ -40,7 +43,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           {isNew && (
             <TextWithLabelRow
               label={t('label.packs-available')}
-              text={String(availableNumberOfPacks ?? '')}
+              text={round(availableNumberOfPacks, 2)}
               textProps={textProps}
               labelProps={labelProps}
             />
@@ -114,6 +117,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
                 width={INPUT_WIDTH}
                 value={data.newPackSize}
                 disabled={!isNew}
+                max={data?.numberOfPacks * (data?.packSize ?? 1)}
               />
             }
           />

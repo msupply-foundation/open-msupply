@@ -8,7 +8,10 @@ import {
   RequisitionNodeApprovalStatus,
   noOtherVariants,
 } from '@openmsupply-client/common';
-import { ResponseRowFragment } from './ResponseRequisition/api';
+import {
+  ResponseLineFragment,
+  ResponseRowFragment,
+} from './ResponseRequisition/api';
 import { RequestLineFragment } from './RequestRequisition/api';
 
 export const requestStatuses = [
@@ -17,8 +20,6 @@ export const requestStatuses = [
   RequisitionNodeStatus.Finalised,
 ];
 
-// TODO: When response requisitions can be manually created, the status of DRAFT
-// becomes possible and such will need to be handled.
 export const responseStatuses = [
   RequisitionNodeStatus.New,
   RequisitionNodeStatus.Finalised,
@@ -128,6 +129,10 @@ export const responsesToCsv = (
 export const isRequestLinePlaceholderRow = (
   row: RequestLineFragment
 ): boolean => row.requestedQuantity === 0;
+
+export const isResponseLinePlaceholderRow = (
+  row: ResponseLineFragment
+): boolean => row.supplyQuantity === 0;
 
 export const getApprovalStatusKey = (
   approvalStatus?: RequisitionNodeApprovalStatus

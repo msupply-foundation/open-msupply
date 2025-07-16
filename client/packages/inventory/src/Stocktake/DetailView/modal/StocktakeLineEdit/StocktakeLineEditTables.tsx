@@ -20,12 +20,14 @@ import {
   NumberCell,
   getReasonOptionType,
   ReasonOptionNode,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
   getDonorColumn,
   getLocationInputColumn,
-  ItemVariantInputCellOld,
+  ItemVariantInputCell,
   PackSizeEntryCell,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
@@ -144,15 +146,17 @@ const getInventoryAdjustmentReasonInputColumn = (
             isInventoryReduction,
             rowData.item.isVaccine
           )}
-          isError={isAdjustmentReasonError}
-          isDisabled={
+          inputProps={{
+            error: isAdjustmentReasonError,
+          }}
+          disabled={
             typeof rowData.countedNumberOfPacks !== 'number' ||
             !rowData.countThisLine ||
             rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks
           }
           initialStocktake={initialStocktake}
           reasonOptions={reasonOptions}
-          isLoading={isLoading}
+          loading={isLoading}
         />
       );
     },
@@ -168,10 +172,14 @@ export const BatchTable = ({
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses
+  );
   useDisableStocktakeRows(batches);
   const { data: reasonOptions, isLoading } = useReasonOptions();
-
   const errorsContext = useStocktakeLineErrorContext();
+
+  const displayInDoses = !!preferences?.manageVaccinesInDoses;
 
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -180,7 +188,7 @@ export const BatchTable = ({
       [
         expiryDateColumn,
         {
-          width: 150,
+          width: 160,
           setter: patch => update({ ...patch, countThisLine: true }),
         },
       ],
@@ -191,7 +199,7 @@ export const BatchTable = ({
         label: 'label.item-variant',
         width: 170,
         Cell: props => (
-          <ItemVariantInputCellOld {...props} itemId={props.rowData.item.id} />
+          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
         setter: patch => update({ ...patch }),
       });
@@ -204,6 +212,7 @@ export const BatchTable = ({
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
         },
+        align: ColumnAlign.Left,
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
         defaultHideOnMobile: true,
@@ -222,7 +231,7 @@ export const BatchTable = ({
       },
       {
         key: 'countedNumberOfPacks',
-        label: 'description.counted-num-of-packs',
+        label: 'label.counted-num-of-packs',
         width: 100,
         getIsError: rowData =>
           errorsContext.getError(rowData)?.__typename ===
@@ -252,7 +261,14 @@ export const BatchTable = ({
     );
 
     return columnDefinitions;
-  }, [itemVariantsEnabled]);
+  }, [
+    itemVariantsEnabled,
+    errorsContext,
+    reasonOptions,
+    isLoading,
+    isInitialStocktake,
+    displayInDoses,
+  ]);
 
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
     columnDefinitions,

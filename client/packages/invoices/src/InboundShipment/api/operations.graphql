@@ -7,6 +7,7 @@ fragment InboundLine on InvoiceLineNode {
   sellPricePerPack
   expiryDate
   numberOfPacks
+  shippedNumberOfPacks
   packSize
   note
   type
@@ -18,6 +19,7 @@ fragment InboundLine on InvoiceLineNode {
   itemName
   itemVariantId
   vvmStatusId
+  linkedInvoiceId
   donor(storeId: $storeId) {
     id
     name
@@ -26,11 +28,6 @@ fragment InboundLine on InvoiceLineNode {
   campaign {
     id
     name
-  }
-
-  itemVariant {
-    id
-    dosesPerUnit
   }
 
   item {
@@ -77,6 +74,7 @@ fragment Inbound on InvoiceNode {
   createdDatetime
   allocatedDatetime
   deliveredDatetime
+  receivedDatetime
   pickedDatetime
   shippedDatetime
   verifiedDatetime
@@ -168,6 +166,7 @@ fragment InboundRow on InvoiceNode {
   comment
   createdDatetime
   deliveredDatetime
+  receivedDatetime
   id
   invoiceNumber
   otherPartyName

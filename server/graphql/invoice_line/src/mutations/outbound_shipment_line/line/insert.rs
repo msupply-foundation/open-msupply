@@ -109,6 +109,7 @@ impl InsertInput {
             expiry_date: None,
             cost_price_per_pack: None,
             sell_price_per_pack: None,
+            campaign_id: None,
         }
     }
 }
@@ -116,6 +117,10 @@ impl InsertInput {
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!(
+        "Error inserting outbound shipment line: {}",
+        formatted_error
+    );
 
     let graphql_error = match error {
         // Structured Errors
@@ -167,8 +172,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
         | NumberOfPacksBelowZero => StandardGraphqlError::BadUserInput(formatted_error),
-        DatabaseError(_) => StandardGraphqlError::InternalError(formatted_error),
-        NewlyCreatedLineDoesNotExist => StandardGraphqlError::InternalError(formatted_error),
+        AutoPickFailed(_) | DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
+            StandardGraphqlError::InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -544,7 +550,8 @@ mod test {
                     pack_size: None,
                     expiry_date: None,
                     cost_price_per_pack: None,
-                    sell_price_per_pack: None
+                    sell_price_per_pack: None,
+                    campaign_id: None
                 }
             );
             Ok(InvoiceLine {

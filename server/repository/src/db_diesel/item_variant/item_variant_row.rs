@@ -1,5 +1,8 @@
 use crate::{
-    db_diesel::{cold_storage_type_row::cold_storage_type, item_row::item, name_row::name},
+    db_diesel::{
+        barcode_row::barcode, cold_storage_type_row::cold_storage_type, item_row::item,
+        location_row::location, name_row::name,
+    },
     item_link, name_link, user_account, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
@@ -16,7 +19,6 @@ table! {
         cold_storage_type_id -> Nullable<Text>,
         manufacturer_link_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
-        doses_per_unit -> Integer,
         vvm_type -> Nullable<Text>,
         created_datetime -> Timestamp,
         created_by -> Nullable<Text>,
@@ -32,6 +34,8 @@ allow_tables_to_appear_in_same_query!(item_variant, user_account);
 allow_tables_to_appear_in_same_query!(item_variant, name_link);
 allow_tables_to_appear_in_same_query!(item_variant, name);
 allow_tables_to_appear_in_same_query!(item_variant, cold_storage_type);
+allow_tables_to_appear_in_same_query!(item_variant, barcode);
+allow_tables_to_appear_in_same_query!(item_variant, location);
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
@@ -45,8 +49,6 @@ pub struct ItemVariantRow {
     pub cold_storage_type_id: Option<String>,
     pub manufacturer_link_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
-    #[serde(default)]
-    pub doses_per_unit: i32,
     pub vvm_type: Option<String>,
     pub created_datetime: NaiveDateTime,
     #[serde(default)]

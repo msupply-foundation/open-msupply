@@ -12,7 +12,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                 js_string!("sqlite")
             };
 
-            Ok(JsValue::String(result))
+            Ok(result.into())
         }),
     )?;
 

@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_types::types::patient::GenderType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{StorePrefUpdate, UpsertPreferences},
@@ -14,11 +15,13 @@ pub struct BoolStorePrefInput {
 pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub display_population_based_forecasting: Option<bool>,
+    pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
+    pub use_campaigns: Option<bool>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
+    pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
 }
@@ -50,25 +53,33 @@ impl UpsertPreferencesInput {
         let UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
+            gender_options,
             show_contact_tracing,
-            display_population_based_forecasting,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
+            order_in_packs,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
+            use_campaigns,
         } = self;
 
         UpsertPreferences {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
-            display_population_based_forecasting: *display_population_based_forecasting,
+            gender_options: gender_options
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             show_contact_tracing: *show_contact_tracing,
+            use_campaigns: *use_campaigns,
             // Global preferences*show_contact_tracing
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             manage_vvm_status_for_stock: manage_vvm_status_for_stock
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            order_in_packs: order_in_packs
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry

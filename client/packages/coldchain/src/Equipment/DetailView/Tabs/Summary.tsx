@@ -257,7 +257,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               onChange={date =>
                 onChange({ installationDate: Formatter.naiveDate(date) })
               }
-              textFieldProps={{ fullWidth: true }}
+              width={'100%'}
             />
           </Row>
           <Row isGaps={isGaps} label={t('label.replacement-date')}>
@@ -267,7 +267,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               onChange={date =>
                 onChange({ replacementDate: Formatter.naiveDate(date) })
               }
-              textFieldProps={{ fullWidth: true }}
+              width={'100%'}
             />
           </Row>
           <Row
@@ -286,7 +286,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               onChange={date =>
                 onChange({ warrantyStart: Formatter.naiveDate(date) })
               }
-              textFieldProps={{ fullWidth: true }}
+              width={'100%'}
             />
           </Row>
           <Row
@@ -305,7 +305,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               onChange={date =>
                 onChange({ warrantyEnd: Formatter.naiveDate(date) })
               }
-              textFieldProps={{ fullWidth: true }}
+              width={'100%'}
             />
           </Row>
         </Section>

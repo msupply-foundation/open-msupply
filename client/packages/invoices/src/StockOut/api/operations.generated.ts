@@ -21,6 +21,7 @@ export type StockOutLineFragment = {
   totalAfterTax: number;
   taxPercentage?: number | null;
   itemName: string;
+  itemVariantId?: string | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -71,7 +72,8 @@ export type DraftStockOutLineFragment = {
   inStorePacks: number;
   availablePacks: number;
   stockLineOnHold: boolean;
-  defaultDosesPerUnit: number;
+  dosesPerUnit: number;
+  itemVariantId?: string | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -86,8 +88,8 @@ export type DraftStockOutLineFragment = {
     unusable: boolean;
     description: string;
   } | null;
-  itemVariant?: { __typename: 'ItemVariantNode'; dosesPerUnit: number } | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  campaign?: { __typename: 'CampaignNode'; name: string; id: string } | null;
 };
 
 export type GetOutboundEditLinesQueryVariables = Types.Exact<{
@@ -106,6 +108,7 @@ export type GetOutboundEditLinesQuery = {
       unitName?: string | null;
       name: string;
       isVaccine: boolean;
+      doses: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -132,7 +135,8 @@ export type GetOutboundEditLinesQuery = {
       inStorePacks: number;
       availablePacks: number;
       stockLineOnHold: boolean;
-      defaultDosesPerUnit: number;
+      dosesPerUnit: number;
+      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -147,11 +151,12 @@ export type GetOutboundEditLinesQuery = {
         unusable: boolean;
         description: string;
       } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        dosesPerUnit: number;
-      } | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        name: string;
+        id: string;
+      } | null;
     }>;
   };
 };
@@ -175,6 +180,7 @@ export const StockOutLineFragmentDoc = gql`
     taxPercentage
     note
     itemName
+    itemVariantId
     item {
       __typename
       id
@@ -225,7 +231,8 @@ export const DraftStockOutLineFragmentDoc = gql`
     inStorePacks
     availablePacks
     stockLineOnHold
-    defaultDosesPerUnit
+    dosesPerUnit
+    itemVariantId
     location {
       __typename
       id
@@ -240,12 +247,13 @@ export const DraftStockOutLineFragmentDoc = gql`
       unusable
       description
     }
-    itemVariant {
-      dosesPerUnit
-    }
     donor(storeId: $storeId) {
       id
       name
+    }
+    campaign {
+      name
+      id
     }
   }
 `;
@@ -267,6 +275,7 @@ export const GetOutboundEditLinesDocument = gql`
           unitName
           name
           isVaccine
+          doses
           itemDirections {
             ...ItemDirection
           }

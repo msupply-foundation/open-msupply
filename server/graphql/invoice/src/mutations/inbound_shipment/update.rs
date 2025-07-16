@@ -52,6 +52,7 @@ pub struct UpdateInput {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum UpdateInboundShipmentStatusInput {
     Delivered,
+    Received,
     Verified,
 }
 
@@ -206,6 +207,7 @@ impl UpdateInboundShipmentStatusInput {
         use UpdateInboundShipmentStatus::*;
         match self {
             UpdateInboundShipmentStatusInput::Delivered => Delivered,
+            UpdateInboundShipmentStatusInput::Received => Received,
             UpdateInboundShipmentStatusInput::Verified => Verified,
         }
     }

@@ -26,7 +26,10 @@ export type Plugins = {
       requestLines: RequestLineFragment[];
     }>[];
     tableColumn: ColumnDefinition<RequestLineFragment>[];
-    editViewField: React.ComponentType<{ line: RequestLineFragment }>[];
+    editViewField: React.ComponentType<{
+      line: RequestLineFragment;
+      unitName?: string;
+    }>[];
     editViewInfo: React.ComponentType<{
       line: RequestLineFragment;
       requisition: RequestFragment;

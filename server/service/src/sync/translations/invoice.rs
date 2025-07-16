@@ -1,14 +1,14 @@
-use crate::sync::{
-    sync_serde::{
-        date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_string, naive_time, zero_date_as_option, zero_f64_as_none,
-    },
-    translations::{
-        clinician::ClinicianTranslation, currency::CurrencyTranslation,
-        diagnosis::DiagnosisTranslation, name::NameTranslation,
-        name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation,
-    },
+use crate::sync::translations::{
+    clinician::ClinicianTranslation, currency::CurrencyTranslation,
+    diagnosis::DiagnosisTranslation, name::NameTranslation,
+    name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation, to_legacy_time,
 };
+
+use util::sync_serde::{
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
+    empty_str_as_option_string, naive_time, zero_date_as_option, zero_f64_as_none,
+};
+
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
@@ -20,6 +20,48 @@ use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum LegacyOmStatus {
+    New,
+    Allocated,
+    Picked,
+    Shipped,
+    DeliveredNoStock,
+    Delivered,
+    Verified,
+    Cancelled,
+}
+
+// Mapping between invoice row  status and legacy OmStatus
+
+impl LegacyOmStatus {
+    pub fn from_invoice_status(status: &InvoiceStatus) -> Self {
+        match status {
+            InvoiceStatus::New => LegacyOmStatus::New,
+            InvoiceStatus::Allocated => LegacyOmStatus::Allocated,
+            InvoiceStatus::Picked => LegacyOmStatus::Picked,
+            InvoiceStatus::Shipped => LegacyOmStatus::Shipped,
+            InvoiceStatus::Delivered => LegacyOmStatus::DeliveredNoStock, // Delivered used to include stock validation but it now doesn't
+            InvoiceStatus::Received => LegacyOmStatus::Delivered, // Delivered was re-named to received in 2.8.3, but kept the translation as Delivered for backwards compatibility
+            InvoiceStatus::Verified => LegacyOmStatus::Verified,
+            InvoiceStatus::Cancelled => LegacyOmStatus::Cancelled,
+        }
+    }
+    pub fn to_invoice_status(&self) -> InvoiceStatus {
+        match self {
+            LegacyOmStatus::New => InvoiceStatus::New,
+            LegacyOmStatus::Allocated => InvoiceStatus::Allocated,
+            LegacyOmStatus::Picked => InvoiceStatus::Picked,
+            LegacyOmStatus::Shipped => InvoiceStatus::Shipped,
+            LegacyOmStatus::DeliveredNoStock => InvoiceStatus::Delivered, // Delivered used to include stock validation but it now doesn't
+            LegacyOmStatus::Delivered => InvoiceStatus::Received, // Delivered was re-named to received in 2.8.3, but kept the translation as Delivered for backwards compatibility
+            LegacyOmStatus::Verified => InvoiceStatus::Verified,
+            LegacyOmStatus::Cancelled => InvoiceStatus::Cancelled,
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyTransactType {
@@ -174,6 +216,11 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub delivered_datetime: Option<NaiveDateTime>,
 
+    // To be added when available in mSupply
+    // #[serde(default)]
+    // #[serde(rename = "om_received_datetime")]
+    // #[serde(deserialize_with = "empty_str_as_option")]
+    // pub received_datetime: Option<NaiveDateTime>,
     #[serde(default)]
     #[serde(rename = "om_verified_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -186,7 +233,7 @@ pub struct LegacyTransactRow {
 
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(default)]
-    pub om_status: Option<InvoiceStatus>,
+    pub om_status: Option<LegacyOmStatus>,
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(default)]
     pub om_type: Option<InvoiceType>,
@@ -309,6 +356,8 @@ impl SyncTranslation for InvoiceTranslation {
             .pop()
             .map(|store| store.store_row.id);
 
+        let is_transfer = name_store_id.is_some();
+
         let invoice_type = match invoice_type(&data, &name) {
             Some(invoice_type) => invoice_type,
             None => {
@@ -318,7 +367,7 @@ impl SyncTranslation for InvoiceTranslation {
                 )))
             }
         };
-        let invoice_status = match invoice_status(&invoice_type, &data) {
+        let invoice_status = match invoice_status(&invoice_type, &data, is_transfer) {
             Some(invoice_status) => invoice_status,
             None => {
                 return Ok(PullTranslateResult::Ignored(format!(
@@ -328,7 +377,7 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
-        let mapping = map_legacy(&invoice_type, &data);
+        let mapping = map_legacy(&invoice_type, &data, is_transfer);
 
         let currency_id = match data.currency_id {
             Some(currency_id) => Some(currency_id),
@@ -343,6 +392,11 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
+        let status = match data.om_status {
+            Some(legacy_om_status) => legacy_om_status.to_invoice_status(),
+            None => invoice_status,
+        };
+
         let result = InvoiceRow {
             id: data.ID,
             user_id: data.user_id,
@@ -351,7 +405,7 @@ impl SyncTranslation for InvoiceTranslation {
             name_store_id,
             invoice_number: data.invoice_num,
             r#type: data.om_type.unwrap_or(invoice_type),
-            status: data.om_status.unwrap_or(invoice_status),
+            status,
             on_hold: data.hold,
             comment: data.comment,
             their_reference: data.their_ref,
@@ -365,6 +419,7 @@ impl SyncTranslation for InvoiceTranslation {
             allocated_datetime: mapping.allocated_datetime,
             picked_datetime: mapping.picked_datetime,
             shipped_datetime: mapping.shipped_datetime,
+            received_datetime: mapping.received_datetime,
             delivered_datetime: mapping.delivered_datetime,
             verified_datetime: mapping.verified_datetime,
             // Cancelled datetime handled in processor (To-DO)
@@ -448,6 +503,7 @@ impl SyncTranslation for InvoiceTranslation {
                     allocated_datetime,
                     picked_datetime,
                     shipped_datetime,
+                    received_datetime,
                     delivered_datetime,
                     verified_datetime,
                     cancelled_datetime,
@@ -509,7 +565,7 @@ impl SyncTranslation for InvoiceTranslation {
             requisition_ID: requisition_id,
             linked_transaction_id: linked_invoice_id,
             entry_date: created_datetime.date(),
-            entry_time: created_datetime.time(),
+            entry_time: to_legacy_time(created_datetime),
             ship_date: shipped_datetime
                 .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
             arrival_date_actual: delivered_datetime
@@ -527,10 +583,10 @@ impl SyncTranslation for InvoiceTranslation {
             allocated_datetime,
             picked_datetime,
             shipped_datetime,
-            delivered_datetime,
+            delivered_datetime: received_datetime.or(delivered_datetime), // If we have a received_datetime, this is what we use as delivered in mSupply until field is added TODO
             verified_datetime,
             cancelled_datetime,
-            om_status: Some(status),
+            om_status: Some(LegacyOmStatus::from_invoice_status(&status)),
             om_type: Some(r#type),
             om_colour: colour,
             currency_id,
@@ -610,6 +666,7 @@ struct LegacyMapping {
     created_datetime: NaiveDateTime,
     picked_datetime: Option<NaiveDateTime>,
     delivered_datetime: Option<NaiveDateTime>,
+    received_datetime: Option<NaiveDateTime>,
     allocated_datetime: Option<NaiveDateTime>,
     shipped_datetime: Option<NaiveDateTime>,
     verified_datetime: Option<NaiveDateTime>,
@@ -617,13 +674,26 @@ struct LegacyMapping {
     colour: Option<String>,
 }
 /// Either make use of om_* fields, if present, or do a best afford mapping
-fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMapping {
+fn map_legacy(
+    invoice_type: &InvoiceType,
+    data: &LegacyTransactRow,
+    is_transfer: bool,
+) -> LegacyMapping {
     // If created_datetime (om_created_datetime) exists then the record was created in omSupply and
     // omSupply fields are used
+
     if let Some(created_datetime) = data.created_datetime {
+        let received_datetime = match data.om_status {
+            Some(LegacyOmStatus::DeliveredNoStock) => None, // DeliveredNoStock status means we haven't updated stock and therefore haven't got a received_datetime
+            Some(LegacyOmStatus::Delivered) | Some(LegacyOmStatus::Verified) => {
+                data.delivered_datetime
+            }
+            _ => data.delivered_datetime,
+        };
         return LegacyMapping {
             created_datetime,
             picked_datetime: data.picked_datetime,
+            received_datetime,
             delivered_datetime: data.delivered_datetime,
             allocated_datetime: data.allocated_datetime,
             shipped_datetime: data.shipped_datetime,
@@ -636,6 +706,7 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         };
     }
 
+    // Mapping legacy fields to om_fields
     let mut mapping = LegacyMapping {
         created_datetime: NaiveDateTime::new(data.entry_date, data.entry_time),
         picked_datetime: None,
@@ -645,6 +716,7 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         verified_datetime: None,
         backdated_datetime: None,
         colour: None,
+        received_datetime: None,
     };
 
     let confirm_datetime = data
@@ -671,13 +743,18 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
             _ => {}
         },
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
+            mapping.received_datetime = confirm_datetime;
             mapping.delivered_datetime = confirm_datetime;
-
             match data.status {
+                LegacyTransactStatus::Nw if is_transfer => {
+                    mapping.shipped_datetime = Some(mapping.created_datetime);
+                }
                 LegacyTransactStatus::Cn => {
+                    mapping.received_datetime = confirm_datetime;
                     mapping.delivered_datetime = confirm_datetime;
                 }
                 LegacyTransactStatus::Fn => {
+                    mapping.received_datetime = confirm_datetime;
                     mapping.delivered_datetime = confirm_datetime;
                     mapping.verified_datetime = confirm_datetime;
                 }
@@ -716,7 +793,7 @@ fn to_legacy_confirm_time(
     InvoiceRow {
         r#type,
         picked_datetime,
-        delivered_datetime,
+        received_datetime: delivered_datetime,
         verified_datetime,
         ..
     }: &InvoiceRow,
@@ -735,12 +812,16 @@ fn to_legacy_confirm_time(
 
     let date = datetime.map(|datetime| datetime.date());
     let time = datetime
-        .map(|datetime| datetime.time())
+        .map(to_legacy_time)
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
     (date, time)
 }
 
-fn invoice_status(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> Option<InvoiceStatus> {
+fn invoice_status(
+    invoice_type: &InvoiceType,
+    data: &LegacyTransactRow,
+    is_transfer: bool,
+) -> Option<InvoiceStatus> {
     let status = match invoice_type {
         // prescription
         InvoiceType::Prescription => match data.status {
@@ -760,9 +841,12 @@ fn invoice_status(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> Optio
         },
         // inbound
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match data.status {
+            // sg status is only for manually created supplier invoice in OG
             LegacyTransactStatus::Sg => InvoiceStatus::New,
-            LegacyTransactStatus::Nw => InvoiceStatus::New,
-            LegacyTransactStatus::Cn => InvoiceStatus::Delivered,
+            // Transferred new invoices, when migrated from mSupply should be converted to shipped status
+            LegacyTransactStatus::Nw if is_transfer => InvoiceStatus::Shipped,
+            LegacyTransactStatus::Nw if !is_transfer => InvoiceStatus::New,
+            LegacyTransactStatus::Cn => InvoiceStatus::Received,
             LegacyTransactStatus::Fn => InvoiceStatus::Verified,
             _ => return None,
         },
@@ -799,6 +883,7 @@ fn legacy_invoice_type(_type: &InvoiceType) -> Option<LegacyTransactType> {
 }
 
 fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<LegacyTransactStatus> {
+    // TODO: Should we return none if it's an invalid status? E.g. Shipped for a Prescription?
     let status = match t {
         InvoiceType::OutboundShipment | InvoiceType::SupplierReturn => match status {
             InvoiceStatus::New => LegacyTransactStatus::Sg,
@@ -806,24 +891,27 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
             InvoiceStatus::Picked => LegacyTransactStatus::Cn,
             InvoiceStatus::Shipped => LegacyTransactStatus::Fn,
             InvoiceStatus::Delivered => LegacyTransactStatus::Fn,
+            InvoiceStatus::Received => LegacyTransactStatus::Fn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
-            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
+            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn,
         },
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match status {
             InvoiceStatus::New => LegacyTransactStatus::Nw,
             InvoiceStatus::Allocated => LegacyTransactStatus::Nw,
             InvoiceStatus::Picked => LegacyTransactStatus::Nw,
             InvoiceStatus::Shipped => LegacyTransactStatus::Nw,
-            InvoiceStatus::Delivered => LegacyTransactStatus::Cn,
+            InvoiceStatus::Delivered => LegacyTransactStatus::Nw,
+            InvoiceStatus::Received => LegacyTransactStatus::Cn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
-            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
+            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn,
         },
         InvoiceType::Prescription => match status {
             InvoiceStatus::New => LegacyTransactStatus::Nw,
             InvoiceStatus::Allocated => LegacyTransactStatus::Cn,
             InvoiceStatus::Picked => LegacyTransactStatus::Cn,
             InvoiceStatus::Shipped => LegacyTransactStatus::Fn,
-            InvoiceStatus::Delivered => LegacyTransactStatus::Fn,
+            InvoiceStatus::Delivered => LegacyTransactStatus::Sg,
+            InvoiceStatus::Received => LegacyTransactStatus::Fn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
             InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
         },
@@ -834,8 +922,9 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
                 InvoiceStatus::Picked => LegacyTransactStatus::Nw,
                 InvoiceStatus::Shipped => LegacyTransactStatus::Nw,
                 InvoiceStatus::Delivered => LegacyTransactStatus::Nw,
+                InvoiceStatus::Received => LegacyTransactStatus::Nw,
                 InvoiceStatus::Verified => LegacyTransactStatus::Fn,
-                InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
+                InvoiceStatus::Cancelled => LegacyTransactStatus::Fn,
             }
         }
     };

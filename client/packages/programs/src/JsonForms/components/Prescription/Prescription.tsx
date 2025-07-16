@@ -22,10 +22,10 @@ import {
   usePrescription,
   usePrescriptionLines,
 } from '@openmsupply-client/invoices/src/Prescriptions';
-import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/hooks';
 import { StockLineTable } from './StockLineTable';
 import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
 import { PrescriptionInfo } from './PrescriptionInfo';
+import { useDraftLines } from './useDraftLines';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
 
@@ -75,15 +75,7 @@ const UIComponent = (props: ControlProps) => {
       formActions.getState(`${path}_item`) ?? null
     );
 
-  const [draftPrescriptionLines, setDraftPrescriptionLines] = useState<
-    DraftPrescriptionLine[]
-  >([]);
-
-  useDraftPrescriptionLines(
-    selectedItem ? { ...selectedItem, itemDirections: [] } : null,
-    draftPrescriptionLines,
-    setDraftPrescriptionLines
-  );
+  const { draftLines, setDraftLines } = useDraftLines(selectedItem?.id ?? null);
 
   const { success } = useNotification();
 
@@ -102,7 +94,7 @@ const UIComponent = (props: ControlProps) => {
       `${path}_stockline`
     );
     if (existing && existing[0]?.item.id === selectedItem?.id)
-      setDraftPrescriptionLines(existing);
+      setDraftLines(existing);
   }, []);
 
   useEffect(() => {
@@ -129,9 +121,12 @@ const UIComponent = (props: ControlProps) => {
       handleChange(prescriptionIdPath, FnUtils.generateUUID());
   };
 
-  const handleStockLineUpdate = (draftLines: DraftPrescriptionLine[]) => {
-    setDraftPrescriptionLines(draftLines);
-    formActions.setState(`${path}_stockline`, draftLines);
+  const handleUpdateQuantity = (stocklineId: string, numberOfPacks: number) => {
+    const newDraftLines = draftLines.map(line =>
+      line.id === stocklineId ? { ...line, numberOfPacks } : line
+    );
+    setDraftLines(newDraftLines);
+    formActions.setState(`${path}_stockline`, newDraftLines);
     formActions.register(
       prescriptionIdPath,
       async (formActionState: Record<string, unknown>) => {
@@ -211,8 +206,8 @@ const UIComponent = (props: ControlProps) => {
             />
 
             <StockLineTable
-              stocklines={draftPrescriptionLines}
-              handleStockLineUpdate={handleStockLineUpdate}
+              stocklines={draftLines}
+              updateQuantity={handleUpdateQuantity}
             />
           </Box>
         )}

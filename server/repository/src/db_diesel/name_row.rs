@@ -1,7 +1,8 @@
 use super::{
-    cold_storage_type_row::cold_storage_type, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, name_store_join::name_store_join, program_row::program,
-    store_row::store, NameType, StorageConnection,
+    cold_storage_type_row::cold_storage_type, currency_row::currency,
+    master_list_name_join::master_list_name_join, master_list_row::master_list,
+    name_store_join::name_store_join, program_row::program, store_row::store, NameType,
+    StorageConnection,
 };
 use crate::{
     item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
@@ -13,6 +14,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 table! {
     #[sql_name = "name"]
@@ -25,7 +27,6 @@ table! {
         type_ -> crate::db_diesel::name_row::NameRowTypeMapping,
         is_customer -> Bool,
         is_supplier -> Bool,
-
         supplying_store_id -> Nullable<Text>,
         first_name -> Nullable<Text>,
         last_name -> Nullable<Text>,
@@ -49,8 +50,12 @@ table! {
         national_health_number -> Nullable<Text>,
         date_of_death -> Nullable<Date>,
         custom_data -> Nullable<Text>,
-
         deleted_datetime -> Nullable<Timestamp>,
+        hsh_code -> Nullable<Text>,
+        hsh_name -> Nullable<Text>,
+        margin -> Nullable<Double>,
+        freight_factor -> Nullable<Double>,
+        currency_id -> Nullable<Text>
     }
 }
 
@@ -65,10 +70,12 @@ table! {
 alias!(name_oms_fields as name_oms_fields_alias: NameOmsFields);
 
 joinable!(name_oms_fields -> name (id));
+joinable!(name -> currency (currency_id));
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
 allow_tables_to_appear_in_same_query!(name, name_oms_fields);
 allow_tables_to_appear_in_same_query!(name, cold_storage_type);
+allow_tables_to_appear_in_same_query!(name, currency);
 // for names query
 allow_tables_to_appear_in_same_query!(name_oms_fields, item_link);
 allow_tables_to_appear_in_same_query!(name_oms_fields, name_link);
@@ -79,7 +86,7 @@ allow_tables_to_appear_in_same_query!(name_oms_fields, master_list_name_join);
 allow_tables_to_appear_in_same_query!(name_oms_fields, master_list);
 allow_tables_to_appear_in_same_query!(name_oms_fields, program);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum GenderType {
@@ -101,6 +108,7 @@ impl GenderType {
         EqualFilter {
             equal_to: Some(self.clone()),
             not_equal_to: None,
+            not_equal_to_or_null: None,
             equal_any: None,
             not_equal_all: None,
             equal_any_or_null: None,
@@ -109,7 +117,7 @@ impl GenderType {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, TS)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[PgType = "name_type"]
@@ -121,7 +129,8 @@ pub enum NameRowType {
     Repack,
     #[default]
     Store,
-
+    // TS complains about serde other, other was a capture for unknown types, it's safe to ignore it in type definition
+    #[ts(skip)]
     #[serde(other)]
     Others,
 }
@@ -132,7 +141,9 @@ impl NameRowType {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, TS,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = name)]
 pub struct NameRow {
@@ -181,6 +192,12 @@ pub struct NameRow {
 
     // Acts as a flag for soft deletion
     pub deleted_datetime: Option<NaiveDateTime>,
+
+    pub hsh_code: Option<String>,
+    pub hsh_name: Option<String>,
+    pub margin: Option<f64>,
+    pub freight_factor: Option<f64>,
+    pub currency_id: Option<String>,
 }
 
 #[derive(

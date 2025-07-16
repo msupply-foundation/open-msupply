@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   Grid,
   SxProps,
@@ -9,9 +9,10 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import {
-  getValueInUnitsOrPacks,
-  Representation,
+  useEndAdornment,
+  useValueInUnitsOrPacks,
   RepresentationValue,
+  calculateValueInDoses,
 } from './utils';
 
 interface LayoutProps {
@@ -19,6 +20,7 @@ interface LayoutProps {
   Left: React.ReactElement | null;
   Middle: React.ReactElement | null;
   Right: React.ReactElement | null;
+  showExtraFields?: boolean;
 }
 
 export const ModalContentLayout = ({
@@ -26,6 +28,7 @@ export const ModalContentLayout = ({
   Left,
   Middle,
   Right,
+  showExtraFields = false,
 }: LayoutProps) => {
   return (
     <Grid
@@ -35,26 +38,14 @@ export const ModalContentLayout = ({
       bgcolor="background.toolbar"
       padding={2}
       paddingBottom={1}
-      borderRadius={2}
-      boxShadow={theme => theme.shadows[2]}
     >
       <Grid size={12} sx={{ mb: 2 }}>
         {Top}
       </Grid>
       <Grid size={12} container spacing={2}>
-        <Grid size={4}>{Left}</Grid>
-        <Grid size={4}>{Middle}</Grid>
-        <Grid
-          size={4}
-          sx={{
-            background: theme => theme.palette.background.group,
-            padding: '0px 8px',
-            borderRadius: 2,
-            paddingBottom: 1,
-          }}
-        >
-          {Right}
-        </Grid>
+        <Grid size={showExtraFields ? 4 : 6}>{Left}</Grid>
+        <Grid size={showExtraFields ? 4 : 6}>{Middle}</Grid>
+        {showExtraFields && <Grid size={4}>{Right}</Grid>}
       </Grid>
     </Grid>
   );
@@ -65,6 +56,9 @@ interface InfoRowProps {
   value?: number | string;
   packagingDisplay?: string;
   sx?: SxProps<Theme>;
+  displayVaccinesInDoses?: boolean;
+  doses?: number | string;
+  dosesLabel?: string;
 }
 
 export const InfoRow = ({
@@ -72,6 +66,9 @@ export const InfoRow = ({
   value,
   packagingDisplay,
   sx,
+  displayVaccinesInDoses = false,
+  doses,
+  dosesLabel,
 }: InfoRowProps) => {
   return (
     <Grid
@@ -82,15 +79,20 @@ export const InfoRow = ({
       borderRadius={2}
       sx={sx}
     >
-      <Grid size={6}>
+      <Grid size={8}>
         <Typography variant="body1" fontWeight={700}>
           {label}:
         </Typography>
       </Grid>
-      <Grid size={6} textAlign="right">
+      <Grid size={4} textAlign="right">
         <Typography variant="body1">
           {value} {packagingDisplay}
         </Typography>
+        {displayVaccinesInDoses && (
+          <Typography variant="caption" color="text.secondary">
+            {doses ? `(${doses} ${dosesLabel?.toLowerCase()})` : ''}
+          </Typography>
+        )}
       </Grid>
     </Grid>
   );
@@ -101,7 +103,20 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   representation: RepresentationValue;
   defaultPackSize: number;
   unitName: string;
+  nullDisplay?: string;
+  endAdornmentOverride?: string;
+  displayVaccinesInDoses?: boolean;
+  dosesPerUnit?: number;
 }
+
+export type ValueInfo = {
+  label: string;
+  endAdornmentOverride?: string;
+  value?: number | null;
+  sx?: SxProps<Theme>;
+  displayVaccinesInDoses?: boolean;
+  dosesPerUnit?: number;
+};
 
 export const ValueInfoRow = ({
   label,
@@ -110,28 +125,62 @@ export const ValueInfoRow = ({
   defaultPackSize,
   unitName,
   sx,
+  endAdornmentOverride,
+  displayVaccinesInDoses = false,
+  dosesPerUnit = 1,
+  nullDisplay,
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { round } = useFormatNumber();
-  const valueInUnitsOrPacks = getValueInUnitsOrPacks(
+  const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     value
   );
-  const packagingDisplay = useMemo(() => {
-    if (representation === Representation.PACKS) {
-      return getPlural(t('label.pack').toLowerCase(), valueInUnitsOrPacks);
-    }
-    return getPlural(unitName.toLowerCase(), valueInUnitsOrPacks);
-  }, [representation, unitName]);
+  const valueInDoses = React.useMemo(
+    () =>
+      displayVaccinesInDoses
+        ? calculateValueInDoses(
+            representation,
+            defaultPackSize,
+            dosesPerUnit,
+            valueInUnitsOrPacks
+          )
+        : undefined,
+    [
+      displayVaccinesInDoses,
+      representation,
+      defaultPackSize,
+      dosesPerUnit,
+      valueInUnitsOrPacks,
+    ]
+  );
+
+  const endAdornment = useEndAdornment(
+    t,
+    getPlural,
+    unitName,
+    representation,
+    valueInUnitsOrPacks,
+    endAdornmentOverride
+  );
+
+  const treatAsNull = value === null && nullDisplay;
+
+  const displayValue = treatAsNull
+    ? nullDisplay
+    : round(valueInUnitsOrPacks, 2);
 
   return (
     <InfoRow
       label={label}
-      value={round(valueInUnitsOrPacks, 2)}
-      packagingDisplay={packagingDisplay}
+      value={displayValue}
+      packagingDisplay={treatAsNull ? '' : endAdornment}
       sx={sx}
+      displayVaccinesInDoses={displayVaccinesInDoses && !!valueInUnitsOrPacks}
+      doses={round(valueInDoses, 2)}
+      dosesLabel={t('label.doses')}
     />
   );
 };

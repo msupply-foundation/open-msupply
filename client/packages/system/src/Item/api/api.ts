@@ -3,13 +3,8 @@ import {
   SortBy,
   ItemSortFieldInput,
   FilterByWithStringAndBool,
-  LedgerSortFieldInput,
 } from '@openmsupply-client/common';
-import {
-  Sdk,
-  ItemRowFragment,
-  ItemLedgerFragment,
-} from './operations.generated';
+import { Sdk, ItemRowFragment } from './operations.generated';
 
 export type ListParams<T> = {
   first: number;
@@ -27,16 +22,6 @@ const itemParsers = {
     };
 
     return fields[sortBy.key] ?? ItemSortFieldInput.Name;
-  },
-  toLedgerSortKey: (sortBy: SortBy<ItemLedgerFragment>) => {
-    const fields: Record<string, LedgerSortFieldInput> = {
-      name: LedgerSortFieldInput.Name,
-      datetime: LedgerSortFieldInput.Datetime,
-      quantity: LedgerSortFieldInput.Quantity,
-      invoiceType: LedgerSortFieldInput.InvoiceType,
-    };
-
-    return fields[sortBy.key] ?? LedgerSortFieldInput.Datetime;
   },
 };
 
@@ -207,28 +192,5 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
-  },
-  itemLedger: async (
-    itemId: string,
-    queryParams: ListParams<ItemLedgerFragment>
-  ) => {
-    const filter = { itemId: { equalTo: itemId } };
-
-    const result = await sdk.itemLedger({
-      storeId,
-      first: queryParams.first,
-      offset: queryParams.offset,
-      key: itemParsers.toLedgerSortKey(queryParams.sortBy),
-      desc: queryParams.sortBy.isDesc,
-      filter,
-    });
-
-    const { itemLedger } = result;
-
-    if (itemLedger.__typename === 'ItemLedgerConnector') {
-      return itemLedger;
-    }
-
-    throw new Error('Could not fetch item ledger');
   },
 });

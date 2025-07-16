@@ -8,7 +8,6 @@ import {
 import {
   ListView as ResponseRequisitionListView,
   DetailView as ResponseRequisitionDetailView,
-  ResponseLineEditPage,
   IndicatorEditPage as ResponseRequisitionIndicatorEditPage,
 } from './ResponseRequisition';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
@@ -21,25 +20,18 @@ const customerRequisitionsRoute = RouteBuilder.create(
 const customerRequisitionRoute = RouteBuilder.create(
   AppRoute.CustomerRequisition
 )
-  .addPart(':requisitionId')
-  .build();
-
-const customerRequisitionLineRoute = RouteBuilder.create(
-  AppRoute.CustomerRequisition
-)
-  .addPart(':requisitionId')
-  .addPart(':itemId')
+  .addPart(':id')
   .build();
 
 const indicatorLineRoute = RouteBuilder.create(AppRoute.CustomerRequisition)
-  .addPart(':requisitionId')
+  .addPart(':id')
   .addPart(AppRoute.Indicators)
   .addPart(':programIndicatorCode')
   .addPart(':programIndicatorLineId')
   .build();
 
 const requestIndicatorLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
-  .addPart(':requisitionId')
+  .addPart(':id')
   .addPart(AppRoute.Indicators)
   .addPart(':programIndicatorCode')
   .addPart(':programIndicatorLineId')
@@ -66,10 +58,6 @@ export const RequisitionService: FC = () => {
       <Route
         path={customerRequisitionRoute}
         element={<ResponseRequisitionDetailView />}
-      />
-      <Route
-        path={customerRequisitionLineRoute}
-        element={<ResponseLineEditPage />}
       />
       <Route
         path={indicatorLineRoute}

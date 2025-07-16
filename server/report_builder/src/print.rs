@@ -24,8 +24,8 @@ query AuthToken($username: String!, $password: String) {
 "#;
 
 const PRINT_QUERY: &str = r#"
-query GenerateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON, $format: PrintFormat) {
-  generateReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments, format: $format) {
+query GenerateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON, $format: PrintFormat, $excelTemplate: [Int]) {
+  generateReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments, format: $format, excelTemplateBuffer: $excelTemplate) {
     ... on PrintReportNode {
       __typename
       fileId
@@ -135,6 +135,7 @@ fn generate_request(
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
     format: Format,
+    excel_template_buffer: Option<Vec<u8>>,
 ) -> anyhow::Result<String> {
     let body = serde_json::json!({
       "query": PRINT_QUERY,
@@ -144,7 +145,8 @@ fn generate_request(
         "name": name,
         "report": report,
         "arguments": arguments,
-        "format": format
+        "format": format,
+        "excelTemplate": excel_template_buffer
       }
     });
     let response = reqwest::blocking::Client::new()
@@ -219,6 +221,7 @@ pub struct ReportGenerateData {
     pub format: Format,
     pub data_id: Option<String>,
     pub arguments: Option<serde_json::Value>,
+    pub excel_template_buffer: Option<Vec<u8>>,
 }
 
 pub fn generate_report(
@@ -230,6 +233,7 @@ pub fn generate_report(
     data_id: Option<String>,
     arguments_file: Option<String>,
     format: Format,
+    excel_template_file: Option<String>,
 ) -> anyhow::Result<()> {
     let arguments = if let Some(arguments_file) = arguments_file {
         println!("> Load arguments from: {}", arguments_file);
@@ -254,6 +258,8 @@ pub fn generate_report(
     let config: Config = serde_yaml::from_str(&config_data)
         .map_err(|err| anyhow::Error::msg(format!("Failed to parse config file: {}", err)))?;
 
+    let excel_template_buffer = excel_template_file.map(|path| fs::read(path)).transpose()?;
+
     let inner_data = ReportGenerateData {
         report,
         config,
@@ -263,6 +269,7 @@ pub fn generate_report(
         format,
         data_id,
         arguments,
+        excel_template_buffer,
     };
 
     generate_report_inner(inner_data)?;
@@ -280,6 +287,7 @@ pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
         format,
         data_id,
         arguments,
+        excel_template_buffer,
     } = input;
 
     let base_url = Url::parse(&config.url)
@@ -323,6 +331,7 @@ pub fn generate_report_inner(input: ReportGenerateData) -> anyhow::Result<()> {
         data_id,
         arguments,
         format,
+        excel_template_buffer,
     )
     .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {}", err)))?;
 

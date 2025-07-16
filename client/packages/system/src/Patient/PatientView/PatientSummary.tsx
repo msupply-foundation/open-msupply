@@ -10,9 +10,9 @@ import {
   DateUtils,
   useBreadcrumbs,
   useIntlUtils,
+  getGenderTranslationKey,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
-import { getGenderTranslationKey } from './utils';
 
 const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
   const t = useTranslation();

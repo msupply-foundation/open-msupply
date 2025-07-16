@@ -16,7 +16,7 @@ import {
   useItemById,
   useItemStockOnHandInfinite,
 } from '../../api';
-import { StockItemSearchInputProps } from '../../utils';
+import { getOptionLabel, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 const DEBOUNCE_TIMEOUT = 300;
@@ -166,8 +166,4 @@ function filterByNameAndCode(selectedCode: string) {
         )
       );
     });
-}
-
-function getOptionLabel(option: ItemStockOnHandFragment): string {
-  return `${option.code} ${option.name}`;
 }

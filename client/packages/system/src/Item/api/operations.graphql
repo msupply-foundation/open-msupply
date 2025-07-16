@@ -43,11 +43,6 @@ fragment StockLine on StockLineNode {
   totalNumberOfPacks
   itemVariantId
 
-  itemVariant {
-    id
-    dosesPerUnit
-  }
-
   donor(storeId: $storeId) {
     id
   }
@@ -179,7 +174,6 @@ fragment ItemVariant on ItemVariantNode {
   bundlesWith {
     ...BundledItem
   }
-  dosesPerUnit
   vvmType
 }
 
@@ -387,6 +381,7 @@ query itemVariants($storeId: String!, $itemId: String!) {
       __typename
       nodes {
         __typename
+        isVaccine
         variants {
           ...ItemVariant
         }
@@ -430,9 +425,6 @@ mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
               description
               field
             }
-            ... on DoseConfigurationNotAllowed {
-              description
-            }
           }
         }
       }
@@ -455,7 +447,10 @@ mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
 }
 
 query coldStorageTypes($storeId: String!) {
-  coldStorageTypes(storeId: $storeId) {
+  coldStorageTypes(
+    storeId: $storeId
+    sort: { key: minTemperature, desc: true }
+  ) {
     ... on ColdStorageTypeConnector {
       nodes {
         ...ColdStorageType
@@ -504,7 +499,7 @@ fragment ItemLedger on ItemLedgerNode {
   invoiceType
   name
   packSize
-  quantity
+  movementInUnits
   reason
   sellPricePerPack
   totalBeforeTax
@@ -512,18 +507,15 @@ fragment ItemLedger on ItemLedgerNode {
 }
 
 query itemLedger(
-  $key: LedgerSortFieldInput!
   $first: Int
   $offset: Int
-  $desc: Boolean
-  $filter: LedgerFilterInput
+  $filter: ItemLedgerFilterInput
   $storeId: String!
 ) {
   itemLedger(
     storeId: $storeId
     filter: $filter
     page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
   ) {
     ... on ItemLedgerConnector {
       __typename

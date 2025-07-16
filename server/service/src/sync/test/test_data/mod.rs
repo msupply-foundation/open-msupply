@@ -15,6 +15,8 @@ pub(crate) mod asset_type;
 pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
 pub(crate) mod campaign;
+pub(crate) mod clinician;
+pub(crate) mod clinician_store_join;
 pub(crate) mod cold_storage_type;
 pub(crate) mod contact_form;
 pub(crate) mod currency;
@@ -67,6 +69,7 @@ pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod support_upload;
 pub(crate) mod sync_file_reference;
+pub(crate) mod sync_message;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
@@ -104,10 +107,12 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut insurance_provider::test_pull_upsert_records());
     test_records.append(&mut warning::test_pull_upsert_records());
     test_records.append(&mut item_warning_join::test_pull_upsert_records());
+    test_records.append(&mut clinician::test_pull_upsert_records());
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
     test_records.append(&mut barcode::test_pull_upsert_records());
+    test_records.append(&mut clinician_store_join::test_pull_upsert_records());
     // Open mSupply Central
     test_records.append(&mut name_oms_fields::test_pull_upsert_records());
     test_records.append(&mut asset_class::test_pull_upsert_records());
@@ -166,6 +171,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut indicator_value::test_pull_upsert_records());
     test_records.append(&mut name_insurance_join::test_pull_upsert_records());
     test_records.append(&mut vvm_status_log::test_pull_upsert_records());
+    test_records.append(&mut sync_message::test_pull_upsert_records());
 
     // Open mSupply central
     test_records.append(&mut rnr_form::test_pull_upsert_records());
@@ -189,6 +195,7 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
 
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_delete_records());
+    test_records.append(&mut clinician_store_join::test_pull_delete_records());
 
     test_records
 }
@@ -227,6 +234,9 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut name_to_name_store_join::test_push_records());
     test_records.append(&mut name_insurance_join::test_push_records());
     test_records.append(&mut vvm_status_log::test_push_records());
+    test_records.append(&mut sync_message::test_push_records());
+    test_records.append(&mut clinician::test_push_records());
+    test_records.append(&mut clinician_store_join::test_push_records());
 
     test_records
 }

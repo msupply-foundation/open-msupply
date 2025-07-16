@@ -5,9 +5,9 @@ use repository::{
         },
         vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
     },
-    ClinicianRowRepository, EncounterRow, EncounterRowRepository, EqualFilter, ProgramEnrolment,
-    ProgramEnrolmentFilter, ProgramEnrolmentRepository, RepositoryError, StorageConnection,
-    Vaccination, VaccinationFilter, VaccinationRepository,
+    ClinicianRowRepository, ClinicianRowRepositoryTrait, EncounterRow, EncounterRowRepository,
+    EqualFilter, ProgramEnrolment, ProgramEnrolmentFilter, ProgramEnrolmentRepository,
+    RepositoryError, StorageConnection, Vaccination, VaccinationFilter, VaccinationRepository,
 };
 
 pub fn check_vaccination_exists(
@@ -83,7 +83,7 @@ pub fn check_clinician_exists(
     clinician_id: &str,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-    let result = ClinicianRowRepository::new(connection).find_one_by_id_option(clinician_id)?;
+    let result = ClinicianRowRepository::new(connection).find_one_by_id(clinician_id)?;
 
     Ok(result.is_some())
 }

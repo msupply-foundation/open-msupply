@@ -5,6 +5,7 @@ use crate::{
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
         invoice_backdated_date,
+        stock_out_line::adjust_for_residual_packs,
         validate::{check_line_exists, check_number_of_packs},
         LocationIsOnHoldError,
     },
@@ -15,9 +16,9 @@ use super::{InsertStockOutLine, InsertStockOutLineError};
 
 pub fn validate(
     connection: &StorageConnection,
-    input: &InsertStockOutLine,
+    input: InsertStockOutLine,
     store_id: &str,
-) -> Result<(ItemRow, InvoiceRow, StockLine), InsertStockOutLineError> {
+) -> Result<(ItemRow, InvoiceRow, StockLine, InsertStockOutLine), InsertStockOutLineError> {
     use InsertStockOutLineError::*;
 
     if (check_line_exists(connection, &input.id)?).is_some() {
@@ -74,11 +75,20 @@ pub fn validate(
         )?
     }
 
-    if available_packs < input.number_of_packs {
+    // If there's only a tiny bit left in stock after this, we'll adjust the invoice to take the last of the stock
+    // Likewise, if there's almost enough for what the request asks for, we'll allocate the last of the stock and let the transaction continue
+    let adjusted_requested_number_of_packs =
+        adjust_for_residual_packs(available_packs, input.number_of_packs);
+    let adjusted_input = InsertStockOutLine {
+        number_of_packs: adjusted_requested_number_of_packs,
+        ..input
+    };
+
+    if available_packs < adjusted_input.number_of_packs {
         return Err(InsertStockOutLineError::ReductionBelowZero {
             stock_line_id: batch.stock_line_row.id.clone(),
         });
     }
 
-    Ok((item, invoice, batch))
+    Ok((item, invoice, batch, adjusted_input))
 }

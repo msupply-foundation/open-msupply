@@ -7,15 +7,9 @@ import {
   usePluginProvider,
   useAuthContext,
   ReportContext,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  usePrintReport,
-} from '@openmsupply-client/system';
-import { JsonData } from '@openmsupply-client/programs';
+import { ReportSelector } from '@openmsupply-client/system';
 import { AddButton } from './AddButton';
 
 interface AppBarButtonProps {
@@ -27,12 +21,10 @@ export const AppBarButtonsComponent = ({
   onAddItem,
   simplifiedTabletView,
 }: AppBarButtonProps) => {
-  const t = useTranslation();
   const { store } = useAuthContext();
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.document.get();
   const { OpenButton } = useDetailPanel();
-  const { print, isPrinting } = usePrintReport();
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
@@ -41,19 +33,6 @@ export const AppBarButtonsComponent = ({
     !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
     !!data?.linkedShipment ||
     !data?.requisition;
-
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    if (!data) return;
-    print({
-      reportId: report.id,
-      dataId: data?.id,
-      args,
-      sort: { key: sortBy.key, desc: sortBy.isDesc },
-    });
-  };
 
   return (
     <AppBarButtonsPortal>
@@ -66,16 +45,18 @@ export const AppBarButtonsComponent = ({
           disableAddFromMasterListButton={!!data?.linkedShipment}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
         />
-        {data &&
-          plugins.inboundShipmentAppBar?.map((Plugin, index) => (
-            <Plugin key={index} shipment={data} />
-          ))}
-        <ReportSelector
-          context={ReportContext.InboundShipment}
-          onPrint={printReport}
-          isPrinting={isPrinting}
-          buttonLabel={t('button.print')}
-        />
+        {data && (
+          <>
+            {plugins.inboundShipmentAppBar?.map((Plugin, index) => (
+              <Plugin key={index} shipment={data} />
+            ))}
+            <ReportSelector
+              context={ReportContext.InboundShipment}
+              dataId={data.id}
+              sort={{ key: sortBy.key, desc: sortBy.isDesc }}
+            />
+          </>
+        )}
         {!simplifiedTabletView && OpenButton}
       </Grid>
     </AppBarButtonsPortal>

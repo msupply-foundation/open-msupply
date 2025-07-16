@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
@@ -12,25 +12,28 @@ import {
   Box,
   ReasonOptionNodeType,
   usePluginProvider,
-  useWindowDimensions,
   Typography,
   BufferedTextArea,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
 import { RequestedSelection } from './RequestedSelection';
-import { RepresentationValue } from '../../../common';
 import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import {
-  getLeftPanel,
-  getMiddlePanel,
   InfoRow,
   ModalContentLayout,
-  ValueInfo,
   ValueInfoRow,
+  ValueInfo,
+  RepresentationValue,
 } from '../../../common';
+import {
+  getLeftPanel,
+  getExtraMiddlePanels,
+  getSuggestedRow,
+} from './ModalContentPanels';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -45,6 +48,9 @@ interface RequestLineEditProps {
   disabled?: boolean;
   isUpdateMode?: boolean;
   showExtraFields?: boolean;
+  manageVaccinesInDoses?: boolean;
+  isReasonsError: boolean;
+  setIsEditingRequested: (isEditingRequested: boolean) => void;
 }
 
 export const RequestLineEdit = ({
@@ -60,14 +66,23 @@ export const RequestLineEdit = ({
   disabled,
   isUpdateMode,
   showExtraFields,
+  manageVaccinesInDoses = false,
+  isReasonsError,
+  setIsEditingRequested,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { width } = useWindowDimensions();
+  const { round } = useFormatNumber();
+  const { data: reasonOptions, isLoading } = useReasonOptions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
+
+  const showContent = !!draft && !!currentItem;
+  const displayVaccinesInDoses =
+    manageVaccinesInDoses && currentItem?.isVaccine;
   const disableItemSelection = disabled || isUpdateMode;
-  const { data: reasonOptions, isLoading } = useReasonOptions();
+  const disableReasons =
+    draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -78,27 +93,126 @@ export const RequestLineEdit = ({
     [lines, currentItem?.id]
   );
 
-  const renderValueInfoRows = useMemo(() => {
-    return (info: ValueInfo[]) => (
+  const renderValueInfoRows = useCallback(
+    (info: ValueInfo[]) => (
       <>
-        {info.map(({ label, value, sx }) => (
+        {info.map(({ label, value, sx, endAdornmentOverride }) => (
           <ValueInfoRow
             key={label}
             label={label}
             value={value}
+            endAdornmentOverride={endAdornmentOverride}
             defaultPackSize={defaultPackSize}
             representation={representation}
             unitName={unitName}
             sx={sx}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses}
           />
         ))}
       </>
+    ),
+    [
+      defaultPackSize,
+      representation,
+      unitName,
+      displayVaccinesInDoses,
+      currentItem?.doses,
+    ]
+  );
+
+  const getMiddlePanelContent = () => {
+    if (!showContent) return null;
+
+    return renderValueInfoRows(getExtraMiddlePanels(t, draft));
+  };
+
+  const getRightPanelContent = () => {
+    if (!showContent) return null;
+
+    return (
+      <>
+        <Box
+          sx={{
+            background: theme => theme.palette.background.group,
+            padding: '0px 8px',
+            borderRadius: 2,
+            pb: 1,
+          }}
+        >
+          {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
+          <RequestedSelection
+            disabled={disabled}
+            defaultPackSize={defaultPackSize}
+            isPacksEnabled={isPacksEnabled}
+            draft={draft}
+            update={update}
+            representation={representation}
+            setRepresentation={setRepresentation}
+            unitName={unitName}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses}
+            setIsEditingRequested={setIsEditingRequested}
+          />
+          {showExtraFields && (
+            <Typography variant="body1" fontWeight="bold">
+              {t('label.reason')}:
+              <ReasonOptionsSearchInput
+                value={draft?.reason}
+                onChange={value => {
+                  update({ reason: value });
+                }}
+                fullWidth
+                type={ReasonOptionNodeType.RequisitionLineVariance}
+                disabled={disableReasons}
+                reasonOptions={reasonOptions?.nodes ?? []}
+                loading={isLoading}
+                textSx={
+                  disableReasons
+                    ? {
+                        backgroundColor: theme =>
+                          theme.palette.background.toolbar,
+                      }
+                    : {
+                        backgroundColor: theme =>
+                          theme.palette.background.white,
+                      }
+                }
+                inputProps={{
+                  error: isReasonsError,
+                }}
+              />
+            </Typography>
+          )}
+          <Typography variant="body1" fontWeight="bold" pb={0.5}>
+            {t('heading.comment')}:
+          </Typography>
+          <BufferedTextArea
+            value={draft?.comment ?? ''}
+            onChange={e => update({ comment: e.target.value })}
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: theme =>
+                    disabled
+                      ? theme.palette.background.toolbar
+                      : theme.palette.background.white,
+                },
+              },
+            }}
+            disabled={disabled}
+            minRows={3}
+            maxRows={3}
+          />
+        </Box>
+      </>
     );
-  }, [defaultPackSize, representation, unitName]);
+  };
 
   return (
     <>
       <ModalContentLayout
+        showExtraFields={showExtraFields}
         Top={
           <>
             {(disableItemSelection && (
@@ -124,7 +238,7 @@ export const RequestLineEdit = ({
           </>
         }
         Left={
-          draft ? (
+          showContent ? (
             <>
               {currentItem?.unitName && (
                 <InfoRow label={t('label.unit')} value={unitName} />
@@ -132,110 +246,74 @@ export const RequestLineEdit = ({
               {isPacksEnabled && (
                 <InfoRow
                   label={t('label.default-pack-size')}
-                  value={String(currentItem?.defaultPackSize)}
+                  value={round(currentItem?.defaultPackSize)}
                 />
               )}
+              {displayVaccinesInDoses && currentItem?.doses ? (
+                <InfoRow
+                  label={t('label.doses-per-unit')}
+                  value={round(currentItem?.doses)}
+                />
+              ) : null}
               {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {line &&
+                plugins.requestRequisitionLine?.editViewField?.map(
+                  (Field, index) => (
+                    <Field key={index} line={line} unitName={unitName} />
+                  )
+                )}
             </>
           ) : null
         }
         Middle={
-          draft ? (
-            <>
-              {renderValueInfoRows(getMiddlePanel(t, draft, showExtraFields))}
-            </>
-          ) : null
+          showExtraFields ? getMiddlePanelContent() : getRightPanelContent()
         }
-        Right={
-          draft ? (
-            <>
-              <RequestedSelection
-                disabled={disabled}
-                defaultPackSize={defaultPackSize}
-                isPacksEnabled={isPacksEnabled}
-                draft={draft}
-                update={update}
-                representation={representation}
-                setRepresentation={setRepresentation}
-                unitName={unitName}
-              />
-              {showExtraFields && (
-                <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
-                  {t('label.reason')}:
-                  <ReasonOptionsSearchInput
-                    value={draft?.reason}
-                    onChange={value => {
-                      update({ reason: value });
-                    }}
-                    width={360}
-                    type={ReasonOptionNodeType.RequisitionLineVariance}
-                    isDisabled={
-                      draft?.requestedQuantity === draft?.suggestedQuantity ||
-                      disabled
-                    }
-                    reasonOptions={reasonOptions?.nodes ?? []}
-                    isLoading={isLoading}
-                  />
-                </Typography>
-              )}
-              <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
-                {t('heading.comment')}:
-              </Typography>
-              <BufferedTextArea
-                value={draft?.comment ?? ''}
-                onChange={e => update({ comment: e.target.value })}
-                slotProps={{
-                  input: {
-                    sx: {
-                      backgroundColor: theme =>
-                        disabled
-                          ? theme.palette.background.toolbar
-                          : theme.palette.background.white,
-                    },
-                  },
-                }}
-                disabled={disabled}
-                minRows={2}
-                maxRows={2}
-              />
-            </>
-          ) : null
-        }
+        Right={showExtraFields ? getRightPanelContent() : null}
       />
-      <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
-        {line &&
-          plugins.requestRequisitionLine?.editViewField?.map((Field, index) => (
-            <Field key={index} line={line} />
-          ))}
-      </Box>
 
-      {!!draft && (
+      {line &&
+        plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
+          <Info key={index} line={line} requisition={requisition} />
+        ))}
+
+      {showContent && line && (
         <Box
-          display="flex"
-          flexDirection="column"
-          justifySelf="center"
-          width={900}
+          sx={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
         >
-          <StockDistribution
-            availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-            averageMonthlyConsumption={
-              draft?.itemStats?.averageMonthlyConsumption
-            }
-            suggestedQuantity={draft?.suggestedQuantity}
-          />
-        </Box>
-      )}
-
-      {line && (
-        <Box>
-          <Box padding={'2px 16px 0 16px'}>
-            {plugins.requestRequisitionLine?.editViewInfo?.map(
-              (Info, index) => (
-                <Info key={index} line={line} requisition={requisition} />
-              )
-            )}
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 900,
+              mx: 'auto',
+              p: '8px 16px',
+            }}
+          >
+            <StockDistribution
+              availableStockOnHand={line.itemStats?.availableStockOnHand}
+              averageMonthlyConsumption={
+                line.itemStats?.averageMonthlyConsumption
+              }
+              suggestedQuantity={line.suggestedQuantity}
+            />
           </Box>
-          <Box display="flex" sx={{ padding: 2 }} justifyContent="center">
+          <Box
+            display="flex"
+            justifyContent="center"
+            gap={2}
+            sx={{
+              padding: 2,
+              flexDirection: {
+                xs: 'column',
+                md: 'row',
+              },
+              alignItems: 'center',
+            }}
+          >
             <ConsumptionHistory id={line.id} />
             <StockEvolution id={line.id} />
           </Box>

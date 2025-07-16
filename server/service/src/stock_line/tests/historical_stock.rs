@@ -82,7 +82,7 @@ mod query {
             store_id: STORE_ID.to_string(),
             created_datetime: datetime.clone(),
             picked_datetime: Some(datetime.clone()),
-            delivered_datetime: Some(datetime.clone()),
+            received_datetime: Some(datetime.clone()),
             verified_datetime: Some(datetime.clone()),
             status: InvoiceStatus::Verified,
             ..Default::default()

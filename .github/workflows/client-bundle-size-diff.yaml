@@ -5,6 +5,10 @@ on:
     paths:
       - "client/**"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   build-base:
     name: Build base
@@ -27,8 +31,6 @@ jobs:
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
         run: cd ./client && yarn build-stats
@@ -59,8 +61,6 @@ jobs:
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
         run: cd ./client && yarn build-stats

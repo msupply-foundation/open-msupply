@@ -54,6 +54,7 @@ pub fn insert_demographic_indicator(
                     let new_demographic = DemographicRow {
                         id: uuid(),
                         name: demographic_name.clone(),
+                        population_percentage: input.population_percentage.unwrap_or_default(),
                     };
                     new_demographic.upsert(connection)?;
                     // TODO add activity log entry

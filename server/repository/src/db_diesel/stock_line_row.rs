@@ -1,6 +1,6 @@
 use super::{
-    campaign_row::campaign, item_link_row::item_link, location_row::location,
-    name_link_row::name_link, store_row::store, StorageConnection,
+    campaign_row::campaign, item_link_row::item_link, item_variant::item_variant_row::item_variant,
+    location_row::location, name_link_row::name_link, store_row::store, StorageConnection,
 };
 
 use crate::{
@@ -38,6 +38,7 @@ table! {
 }
 
 joinable!(stock_line -> item_link (item_link_id));
+joinable!(stock_line -> item_variant (item_variant_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
 joinable!(stock_line -> barcode (barcode_id));
@@ -47,6 +48,7 @@ allow_tables_to_appear_in_same_query!(stock_line, item_link);
 // NOTE: both supplier_link_id and donor_link_id are foreign keys to name_link
 // so not defining a default joinable here, so as not to accidentally join on the wrong one
 allow_tables_to_appear_in_same_query!(stock_line, name_link);
+allow_tables_to_appear_in_same_query!(stock_line, item_variant);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]

@@ -34,6 +34,7 @@ table! {
         picked_datetime -> Nullable<Timestamp>,
         shipped_datetime -> Nullable<Timestamp>,
         delivered_datetime -> Nullable<Timestamp>,
+        received_datetime -> Nullable<Timestamp>,
         verified_datetime -> Nullable<Timestamp>,
         cancelled_datetime -> Nullable<Timestamp>,
         colour -> Nullable<Text>,
@@ -64,7 +65,7 @@ joinable!(invoice -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
 allow_tables_to_appear_in_same_query!(invoice, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, PartialOrd, Ord)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceType {
@@ -93,6 +94,7 @@ pub enum InvoiceStatus {
     Allocated,
     Picked,
     Shipped,
+    Received,
     Delivered,
     Verified,
     Cancelled,
@@ -120,6 +122,7 @@ pub struct InvoiceRow {
     pub picked_datetime: Option<NaiveDateTime>,
     pub shipped_datetime: Option<NaiveDateTime>,
     pub delivered_datetime: Option<NaiveDateTime>,
+    pub received_datetime: Option<NaiveDateTime>,
     pub verified_datetime: Option<NaiveDateTime>,
     pub cancelled_datetime: Option<NaiveDateTime>,
     pub colour: Option<String>,

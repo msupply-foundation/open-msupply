@@ -46,8 +46,9 @@ pub(crate) fn generate_inbound_lines(
                  linked_invoice_id: _,
                  donor_link_id,
                  vvm_status_id,
+                 campaign_id,
                  reason_option_id: _,
-                 campaign_id: _,
+                 shipped_number_of_packs,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
 
@@ -82,12 +83,13 @@ pub(crate) fn generate_inbound_lines(
                     item_variant_id,
                     linked_invoice_id: Some(source_invoice.invoice_row.id.to_string()),
                     vvm_status_id,
+                    donor_link_id,
+                    campaign_id,
+                    shipped_number_of_packs,
                     // Default
                     stock_line_id: None,
                     location_id: None,
-                    donor_link_id,
                     reason_option_id: None,
-                    campaign_id: None,
                 }
             },
         )
@@ -110,6 +112,7 @@ pub(crate) fn convert_invoice_line_to_single_pack(
             line.number_of_packs *= line.pack_size;
             line.cost_price_per_pack /= line.pack_size;
             line.pack_size = 1.0;
+            line.shipped_number_of_packs = Some(line.number_of_packs);
             line
         })
         .collect()

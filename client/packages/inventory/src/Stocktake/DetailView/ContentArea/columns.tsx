@@ -191,7 +191,7 @@ export const useStocktakeColumns = ({
 
   columns.push(
     {
-      key: 'snapshotNumPacks',
+      key: 'snapshotNumberOfPacks',
       label: 'label.snapshot-num-of-packs',
       description: 'description.snapshot-num-of-packs',
       align: ColumnAlign.Right,
@@ -201,7 +201,7 @@ export const useStocktakeColumns = ({
           r =>
             getError(r)?.__typename === 'SnapshotCountCurrentCountMismatchLine'
         ),
-      sortable: false,
+      sortable: true,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
@@ -217,7 +217,7 @@ export const useStocktakeColumns = ({
       },
     },
     {
-      key: 'countedNumPacks',
+      key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       description: 'description.counted-num-of-packs',
       align: ColumnAlign.Right,
@@ -228,7 +228,7 @@ export const useStocktakeColumns = ({
         getLinesFromRow(row).some(
           r => getError(r)?.__typename === 'StockLineReducedBelowZero'
         ),
-      sortable: false,
+      sortable: true,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
@@ -267,7 +267,7 @@ export const useStocktakeColumns = ({
             ? (lines.reduce(
                 (total, line) =>
                   total +
-                  (line.itemVariant?.dosesPerUnit ?? line.item.doses) *
+                  (line.item?.doses ?? 1) *
                     (line?.packSize ?? 1) *
                     (line.snapshotNumberOfPacks -
                       (line.countedNumberOfPacks ??
@@ -297,11 +297,11 @@ export const useStocktakeColumns = ({
             rowData.snapshotNumberOfPacks;
           const totalRounded = Math.round(total * 100) / 100;
 
-          const totalInDoses = displayDoses
-            ? total *
-              (rowData.packSize ?? 1) *
-              (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses)
-            : null;
+          const totalInDoses =
+            displayDoses && rowData?.item?.doses
+              ? total * (rowData?.packSize ?? 1) * rowData?.item?.doses
+              : null;
+
           const totalInDosesRounded = totalInDoses
             ? Math.round(totalInDoses * 100) / 100
             : null;
@@ -314,10 +314,10 @@ export const useStocktakeColumns = ({
       },
     },
     {
-      key: 'inventoryAdjustmentReason',
+      key: 'reasonOption',
       label: 'label.reason',
       accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
-      sortable: false,
+      sortable: true,
     }
   );
   if (preferences?.allowTrackingOfStockByDonor) {
@@ -352,7 +352,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
     ],
     'packSize',
     {
-      key: 'snapshotNumPacks',
+      key: 'snapshotNumberOfPacks',
       width: 150,
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
@@ -362,7 +362,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
     },
     {
-      key: 'countedNumPacks',
+      key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 150,
       align: ColumnAlign.Right,
@@ -372,7 +372,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
     },
     'comment',
     {
-      key: 'inventoryAdjustmentReason',
+      key: 'reasonOption',
       label: 'label.reason',
       accessor: ({ rowData }) => rowData.reasonOption?.reason || '',
     },

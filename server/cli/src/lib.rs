@@ -12,5 +12,10 @@ pub use helpers::*;
 mod plugins;
 pub use plugins::*;
 
-mod generate_typescript_types;
-pub use generate_typescript_types::*;
+mod generate_plugin_typescript_types;
+pub use generate_plugin_typescript_types::*;
+
+#[cfg(feature = "integration_test")]
+mod load_test;
+#[cfg(feature = "integration_test")]
+pub use load_test::*;

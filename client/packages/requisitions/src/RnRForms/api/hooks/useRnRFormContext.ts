@@ -8,6 +8,7 @@ import {
 import keyBy from 'lodash/keyBy';
 import mapValues from 'lodash/mapValues';
 import { itemMatchesSearch } from '../../utils';
+import { isLineError } from '../../DetailView/helpers';
 
 type SetLine = (line: RecordWithId & Partial<RnRFormLineFragment>) => void;
 interface RnRFormContext {
@@ -83,10 +84,7 @@ export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
   getAllDirtyLines: (ignoreError = true) => {
     const { baseLines, draftLines } = get();
     return Object.values(draftLines).flatMap(draftLine => {
-      if (
-        !draftLine.isDirty ||
-        (ignoreError && (draftLine?.finalBalance || 0) < 0)
-      )
+      if (!draftLine.isDirty || (ignoreError && isLineError(draftLine)))
         return [];
       const baseLine = baseLines[draftLine.id];
       if (!baseLine) return [];
@@ -167,9 +165,15 @@ export function useOneTime<S, U>(selector: (state: S) => U): (state: S) => U {
 }
 
 export const useErrorLineIndex = (state: RnRFormContext) => {
-  const firstErrorLine = Object.values(state.draftLines).find(
-    draftLine => (draftLine?.finalBalance || 0) < 0
-  );
+  const firstErrorLine = Object.values(state.baseLines).find(line => {
+    const draftLine = state.draftLines[line.id];
+
+    return draftLine
+      ? // If there is draft line, that's the latest state, check if that has an error
+        isLineError(draftLine)
+      : // otherwise check the base line wasn't in error state to start with
+        isLineError(line);
+  });
 
   if (!firstErrorLine) return -1;
   return state.baseLineIndexes[firstErrorLine.id] || -1;

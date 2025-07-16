@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   Grid,
@@ -7,22 +7,15 @@ import {
   ModalRow,
   ModalLabel,
   Divider,
-  Box,
   useNotification,
   useNavigate,
   RouteBuilder,
   usePluginEvents,
   noOtherVariants,
-  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
-import {
-  ReasonOptionsSearchInput,
-  StockItemSearchInput,
-  useReasonOptions,
-} from '../..';
-import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
+import { StockItemSearchInput, useReasonOptions } from '../..';
 import { AppRoute } from '@openmsupply-client/config';
 
 interface NewStockLineModalProps {
@@ -30,10 +23,10 @@ interface NewStockLineModalProps {
   onClose: () => void;
 }
 
-export const NewStockLineModal: FC<NewStockLineModalProps> = ({
+export const NewStockLineModal = ({
   isOpen,
   onClose,
-}) => {
+}: NewStockLineModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
@@ -42,7 +35,11 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   });
   const { data: reasonOptions } = useReasonOptions();
 
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({
+    isOpen,
+    onClose,
+    disableMobileFullScreen: true,
+  });
 
   const {
     query: { isLoading },
@@ -145,26 +142,10 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
               loading={isLoading}
               onUpdate={updatePatch}
               packEditable
-              isInModal
+              isNewModal
               pluginEvents={pluginEvents}
+              reasonOptions={reasonOptions?.nodes}
             />
-            <Grid width={'50%'}>
-              <StyledInputRow
-                label={t('label.reason')}
-                Input={
-                  <Box display="flex" width={INPUT_WIDTH}>
-                    <ReasonOptionsSearchInput
-                      width={INPUT_WIDTH}
-                      type={ReasonOptionNodeType.PositiveInventoryAdjustment}
-                      value={draft.reasonOption}
-                      onChange={reason => updatePatch({ reasonOption: reason })}
-                      reasonOptions={reasonOptions?.nodes ?? []}
-                      isLoading={isLoading}
-                    />
-                  </Box>
-                }
-              />
-            </Grid>
           </Grid>
         )}
       </Grid>

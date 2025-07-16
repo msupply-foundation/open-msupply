@@ -40,6 +40,7 @@ pub fn generate(
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,
+        shipped_number_of_packs: None,
     };
 
     Ok(invoice_line)

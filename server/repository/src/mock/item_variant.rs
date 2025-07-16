@@ -10,7 +10,6 @@ pub fn mock_item_a_variant_1() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
-        doses_per_unit: 0,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()
@@ -28,7 +27,6 @@ pub fn mock_item_a_variant_2() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
-        doses_per_unit: 0,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()
@@ -46,7 +44,6 @@ pub fn mock_item_b_variant_1() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
-        doses_per_unit: 0,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()
@@ -64,7 +61,6 @@ pub fn mock_item_b_variant_2() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
-        doses_per_unit: 0,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()
@@ -82,7 +78,24 @@ pub fn mock_item_c_variant_1() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
-        doses_per_unit: 0,
+        vvm_type: None,
+        created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        created_by: None,
+    }
+}
+
+pub fn mock_vaccine_item_a_variant_1() -> ItemVariantRow {
+    ItemVariantRow {
+        id: "vaccine_item_a_variant_1".to_string(),
+        name: "Vaccine Item A Variant 1".to_string(),
+        item_link_id: mock_vaccine_item_a().id,
+        cold_storage_type_id: None,
+        manufacturer_link_id: None,
+        deleted_datetime: None,
+
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()
@@ -99,5 +112,6 @@ pub fn mock_item_variants() -> Vec<ItemVariantRow> {
         mock_item_b_variant_1(),
         mock_item_b_variant_2(),
         mock_item_c_variant_1(),
+        mock_vaccine_item_a_variant_1(),
     ]
 }

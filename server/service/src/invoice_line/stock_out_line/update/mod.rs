@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    invoice::update_picked_date::update_picked_date,
+    invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
 };
@@ -26,6 +26,7 @@ pub struct UpdateStockOutLine {
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -48,6 +49,7 @@ pub enum UpdateStockOutLineError {
     BatchIsOnHold,
     UpdatedLineDoesNotExist,
     StockLineAlreadyExistsInInvoice(String),
+    AutoPickFailed(String),
     ReductionBelowZero {
         stock_line_id: String,
         line_id: String,
@@ -63,10 +65,11 @@ pub fn update_stock_out_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, batch_pair, invoice) = validate(ctx, &input, &ctx.store_id)?;
+            let (line, item, batch_pair, invoice, adjusted_input) =
+                validate(ctx, input, &ctx.store_id)?;
 
             let (update_line, batch_pair) =
-                generate(input, line, item, batch_pair, invoice.clone())?;
+                generate(adjusted_input, line, item, batch_pair, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&update_line)?;
 
             let stock_line_repo = StockLineRowRepository::new(connection);
@@ -75,7 +78,12 @@ pub fn update_stock_out_line(
                 stock_line_repo.upsert_one(&previous_batch.stock_line_row)?;
             }
 
-            update_picked_date(connection, &invoice)?;
+            update_picked_date(ctx, &invoice).map_err(|e| match e {
+                UpdatePickedDateError::AutoPickFailed(msg) => OutError::AutoPickFailed(msg),
+                UpdatePickedDateError::RepositoryError(repo_error) => {
+                    OutError::DatabaseError(repo_error)
+                }
+            })?;
 
             get_invoice_line(ctx, &update_line.id)
                 .map_err(OutError::DatabaseError)?
@@ -409,6 +417,7 @@ mod test {
                 u.total_before_tax = 18.00;
                 u.total_after_tax = 18.00;
                 u.note = Some("new note".to_string());
+                u.shipped_number_of_packs = Some(2.0);
                 u
             })
         );
@@ -548,7 +557,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime,
             picked_datetime: Some(datetime),
-            delivered_datetime: Some(datetime),
+            received_datetime: Some(datetime),
             verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
@@ -566,7 +575,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime,
             picked_datetime: Some(datetime),
-            delivered_datetime: Some(datetime),
+            received_datetime: Some(datetime),
             verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
@@ -632,7 +641,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
             picked_datetime: Some(datetime),
-            delivered_datetime: None,
+            received_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,
             backdated_datetime: Some(datetime), // Backdated to 2 days ago

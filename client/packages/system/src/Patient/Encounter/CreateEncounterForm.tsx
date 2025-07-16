@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   InputWithLabelRow,
   useAuthContext,
@@ -22,8 +22,8 @@ import Badge from '@mui/material/Badge';
 const LABEL_FLEX = '0 0 100px';
 
 type HighlightedDay = { datetime: Date; label?: string | null };
-type BadgePickersDayProps = PickersDayProps<Date> & {
-  highlightedDays: HighlightedDay[];
+type BadgePickersDayProps = PickersDayProps & {
+  highlightedDays?: HighlightedDay[];
 };
 const BadgePickersDay = (props: BadgePickersDayProps) => {
   const { highlightedDays = [], day, outsideCurrentMonth, ...other } = props;
@@ -53,12 +53,17 @@ const BadgePickersDay = (props: BadgePickersDayProps) => {
   );
 };
 
-export const CreateEncounterForm: FC<{
+export const CreateEncounterForm = ({
+  draft,
+  setDraft,
+  setHasFormError,
+  highlightedDays = [],
+}: {
   draft: EncounterSchema;
   setDraft: (draft: EncounterSchema) => void;
   setHasFormError: (invalid: boolean) => void;
   highlightedDays?: HighlightedDay[];
-}> = ({ draft, setDraft, setHasFormError, highlightedDays = [] }) => {
+}) => {
   const { user } = useAuthContext();
   const t = useTranslation();
   const [startDateTimeError, setStartDateTimeError] = useState<string>();
@@ -106,15 +111,12 @@ export const CreateEncounterForm: FC<{
             }}
             error={startDateTimeError}
             slots={{
-              day: BadgePickersDay as React.FC<PickersDayProps<Date>>,
+              day: BadgePickersDay,
             }}
             slotProps={{
               day: {
                 highlightedDays,
               } as BadgePickersDayProps,
-              tabs: {
-                hidden: true,
-              },
             }}
           />
         }

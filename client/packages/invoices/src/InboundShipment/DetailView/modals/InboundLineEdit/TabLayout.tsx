@@ -12,6 +12,7 @@ import {
   ButtonWithIcon,
   useAppTheme,
   useMediaQuery,
+  Alert,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
@@ -20,12 +21,14 @@ import {
   CurrencyRowFragment,
   ItemRowFragment,
 } from '@openmsupply-client/system';
+import { PatchDraftLineInput } from '../../../api';
 
 interface TabLayoutProps {
   addDraftLine: () => void;
   draftLines: DraftInboundLine[];
   isDisabled: boolean;
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+  updateDraftLine: (patch: PatchDraftLineInput) => void;
+  removeDraftLine: (id: string) => void;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   item: ItemRowFragment | null;
@@ -44,6 +47,7 @@ export const TabLayout = ({
   draftLines,
   isDisabled,
   updateDraftLine,
+  removeDraftLine,
   currency,
   isExternalSupplier,
   hasItemVariantsEnabled,
@@ -54,6 +58,9 @@ export const TabLayout = ({
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
+  const [packRoundingMessage, setPackRoundingMessage] = useState<string>(
+    () => ''
+  );
 
   if (draftLines.length === 0)
     return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;
@@ -97,7 +104,10 @@ export const TabLayout = ({
             disabled={isDisabled}
             color="primary"
             variant="outlined"
-            onClick={addDraftLine}
+            onClick={() => {
+              addDraftLine();
+              setPackRoundingMessage?.('');
+            }}
             label={`${t('label.add-batch')} (+)`}
             Icon={<PlusCircleIcon />}
           />
@@ -114,14 +124,23 @@ export const TabLayout = ({
         }}
       >
         <InboundLineEditPanel value={Tabs.Batch}>
-          <QuantityTable
-            isDisabled={isDisabled}
-            lines={draftLines}
-            updateDraftLine={updateDraftLine}
-            item={item}
-            hasItemVariantsEnabled={hasItemVariantsEnabled}
-            hasVvmStatusesEnabled={hasVvmStatusesEnabled}
-          />
+          <Box width={'100%'}>
+            {packRoundingMessage && (
+              <Alert severity="warning" style={{ marginBottom: 2 }}>
+                {packRoundingMessage}
+              </Alert>
+            )}
+            <QuantityTable
+              setPackRoundingMessage={setPackRoundingMessage}
+              isDisabled={isDisabled}
+              lines={draftLines}
+              updateDraftLine={updateDraftLine}
+              removeDraftLine={removeDraftLine}
+              item={item}
+              hasItemVariantsEnabled={hasItemVariantsEnabled}
+              hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+            />
+          </Box>
         </InboundLineEditPanel>
 
         <InboundLineEditPanel value={Tabs.Pricing}>

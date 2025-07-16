@@ -10,6 +10,7 @@ import {
   Button,
   DetailInputWithLabelRow,
   LocaleKey,
+  TypedTFunction,
 } from '@openmsupply-client/common';
 import {
   DefaultFormRowSx,
@@ -168,7 +169,8 @@ const GeneratorOptions: z.ZodType<GeneratorOptions> = z
 
 const validateFields = (
   options: GeneratorOptions,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  t: TypedTFunction<LocaleKey>
 ): string | undefined => {
   for (const part of options.parts ?? []) {
     if (part.type !== 'Field') {
@@ -178,7 +180,7 @@ const validateFields = (
     const fieldName =
       typeof part.field === 'string' ? part.field : part.field.join('.');
     if (field === undefined || field === '') {
-      return `Missing required field: ${fieldName}`;
+      return t('error.missing-required-field', { fieldName });
     }
   }
 };
@@ -254,6 +256,7 @@ const generateId = async (input: GenerateIdInput): Promise<string> => {
 };
 
 const useUniqueProgramEnrolmentIdValidation = () => {
+  const t = useTranslation();
   const { mutateAsync: fetchProgramEnrolments } =
     useProgramEnrolments.document.programEnrolmentsPromise();
 
@@ -274,11 +277,12 @@ const useUniqueProgramEnrolmentIdValidation = () => {
     if (result?.programs.nodes[0]?.name === documentName) {
       return undefined;
     }
-    return `Duplicated id: ${id}`;
+    return t('error.duplicated-id', { id });
   };
 };
 
 const useUniqueProgramPatientCodeValidation = () => {
+  const t = useTranslation();
   const { mutateAsync: fetchPatients } =
     usePatient.document.usePatientsPromise();
 
@@ -293,42 +297,36 @@ const useUniqueProgramPatientCodeValidation = () => {
       return undefined;
     }
 
-    return `Duplicated code: ${code}`;
+    return t('error.duplicated-code', { code });
   };
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { label, errors, path, data, visible, handleChange, uischema } = props;
-  const config: JsonFormsConfig = props.config;
   const t = useTranslation();
   const { core } = useJsonForms();
+
+  const { label, errors, path, data, visible, handleChange, uischema } = props;
+  const config: JsonFormsConfig = props.config;
+
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)
   );
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
-  const validateUniqueProgramEnrolmentId =
-    useUniqueProgramEnrolmentIdValidation();
-  const validateUniquePatientCode = useUniqueProgramPatientCodeValidation();
+
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,
     'UIGenerator'
   );
-
   const { errors: zErrors, options } = useZodOptionsValidation(
     GeneratorOptions,
     uischema.options
   );
 
-  const savedDataField = extractProperty(config.initialData ?? {}, path);
-  const requireConfirmation = !options?.confirmRegenerate
-    ? false
-    : !!savedDataField;
-
   const validationError = useMemo(() => {
     if (!options || !core?.data) {
       return;
     }
-    return validateFields(options, core?.data);
+    return validateFields(options, core?.data, t);
   }, [options, core?.data]);
   const error = !!validationError || !!zErrors;
 
@@ -346,6 +344,11 @@ const UIComponent = (props: ControlProps) => {
   );
 
   const { text, onChange } = useDebouncedTextInput(data, manualUpdate);
+  const requireConfirmation = !options?.confirmRegenerate ? false : !!text;
+
+  const validateUniqueProgramEnrolmentId =
+    useUniqueProgramEnrolmentIdValidation();
+  const validateUniquePatientCode = useUniqueProgramPatientCodeValidation();
 
   const validateId = async (
     options: GeneratorOptions,
