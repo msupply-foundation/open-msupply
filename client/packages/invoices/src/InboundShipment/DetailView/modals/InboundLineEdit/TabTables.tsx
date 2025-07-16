@@ -194,7 +194,7 @@ export const QuantityTableComponent = ({
   });
 
   if (displayInDoses) {
-    columnDefinitions.push(...getInboundDosesColumns());
+    columnDefinitions.push(...getInboundDosesColumns(format));
   }
 
   columnDefinitions.push({
