@@ -202,12 +202,12 @@ describe('issue = doses', () => {
 
     const draftLines = [line1, line2];
 
-    const result = issue(draftLines, '2', 18, AllocateInType.Doses);
+    const result = issue(draftLines, '2', 16, AllocateInType.Doses);
     expect(result).toEqual([
       line1,
       // 16 doses / 2 units per pack / 5 doses per unit = 1.6
-      // should round to 2, but can't, so go to max
-      { ...line2, numberOfPacks: 1.8 },
+      // should round to 2, but can't, so round down
+      { ...line2, numberOfPacks: 1 },
     ]);
   });
 });

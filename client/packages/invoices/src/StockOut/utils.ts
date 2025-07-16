@@ -154,7 +154,7 @@ export const issue = (
     ...foundRow,
     numberOfPacks:
       numberOfPacks > foundRow.availablePacks
-        ? foundRow.availablePacks
+        ? Math.floor(foundRow.availablePacks)
         : numberOfPacks,
   };
   return newDraftLines;
