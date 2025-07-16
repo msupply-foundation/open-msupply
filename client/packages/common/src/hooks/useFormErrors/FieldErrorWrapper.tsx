@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useTranslation } from '@openmsupply-client/common';
 import { useFormErrorContext } from './FormErrorContext';
 
-type FieldErrorWrapperProps<T> = {
+export type FieldErrorWrapperProps<T> = {
   code: string;
   label?: string;
   value: T;
