@@ -144,11 +144,18 @@ export const issue = (
   if (!foundRow) return draftLines;
   const newDraftLines = [...draftLines];
 
-  const numberOfPacks = quantityToPacks(allocateIn, quantity, foundRow);
+  const enteredPacks = quantityToPacks(allocateIn, quantity, foundRow);
+
+  const numberOfPacks = allowPartialPacks
+    ? enteredPacks
+    : Math.ceil(enteredPacks);
 
   newDraftLines[foundRowIdx] = {
     ...foundRow,
-    numberOfPacks: allowPartialPacks ? numberOfPacks : Math.ceil(numberOfPacks),
+    numberOfPacks:
+      numberOfPacks > foundRow.availablePacks
+        ? foundRow.availablePacks
+        : numberOfPacks,
   };
   return newDraftLines;
 };
