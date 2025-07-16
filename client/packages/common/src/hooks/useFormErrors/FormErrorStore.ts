@@ -11,7 +11,7 @@ type Listener = () => void;
 type Code = string;
 
 class FormErrorStore {
-  private snapshot: Record<string, FieldErrorEntry> = {};
+  private snapshot: Record<Code, FieldErrorEntry> = {};
   private errors: Record<Code, FieldErrorEntry> = {};
   private listeners = new Set<Listener>();
 
@@ -65,7 +65,6 @@ class FormErrorStore {
     code: string,
     errorData: Partial<FieldErrorEntry>
   ) => {
-    console.log('Setting', code, errorData);
     const existing = this.errors[code];
     if (existing) {
       this.errors[code] = {

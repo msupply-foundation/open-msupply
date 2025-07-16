@@ -2,22 +2,22 @@ import React, { useEffect } from 'react';
 import { useTranslation } from '@openmsupply-client/common';
 import { useFormErrorContext } from './FormErrorContext';
 
-type FieldErrorWrapperProps = {
+type FieldErrorWrapperProps<T> = {
   code: string;
   label?: string;
-  value: string | undefined;
+  value: T;
   required?: boolean;
   customIsValid?: boolean;
   customErrorMessage?: string;
   children: (fieldProps: {
-    value: string | undefined;
+    value: T;
     required?: boolean;
     errorMessage?: string | null;
     setError: (errorMessage: string | null) => void;
   }) => React.ReactNode;
 };
 
-export const FieldErrorWrapper = ({
+export const FieldErrorWrapper = <T,>({
   code,
   label,
   value,
@@ -25,7 +25,7 @@ export const FieldErrorWrapper = ({
   customIsValid,
   customErrorMessage,
   children,
-}: FieldErrorWrapperProps) => {
+}: FieldErrorWrapperProps<T>) => {
   const {
     registerField,
     unregisterField,
@@ -51,7 +51,6 @@ export const FieldErrorWrapper = ({
       setError(code, customErrorMessage ?? 'Invalid input', true);
       return;
     } else if (customIsValid === false) {
-      console.log('Removing custom error');
       setError(code, null, true);
     }
 

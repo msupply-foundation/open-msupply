@@ -172,13 +172,12 @@ export const InsuranceModal = (): ReactElement => {
             >
               {({ value, required, errorMessage, setError }) => (
                 <InsurancePolicySelect
-                  policyType={draft.policyType}
+                  policyType={value}
                   onChange={value =>
                     updatePatch({
                       policyType: value,
                     })
                   }
-                  value={value}
                   required={required}
                   error={errorMessage != null}
                   setError={setError}
