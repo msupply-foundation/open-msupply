@@ -36,7 +36,6 @@ impl Migration for V2_09_00 {
             Box::new(resync_existing_vaccination_records::Migrate),
             Box::new(remove_item_variant_doses_column::Migrate),
             Box::new(reintegrate_clinician_gender::Migrate),
-            Box::new(add_purchase_order_to_number_type::Migrate),
         ]
     }
 }
