@@ -42,7 +42,7 @@ export const PatientSearchInput = ({
   const { createNewPatient } = usePatientStore();
   const { getLocalisedFullName } = useIntlUtils();
 
-  const [input, setInput] = useState<string | undefined>(undefined);
+  const [input, setInput] = useState<string>('');
   const [createPatientOpen, setCreatePatientOpen] = useState(false);
   const [editPatientModalOpen, setEditPatientModalOpen] = useState(false);
 
@@ -68,7 +68,7 @@ export const PatientSearchInput = ({
     if (patientToSelect) {
       onChange(asOption(patientToSelect));
     }
-    setInput(undefined);
+    setInput('');
     search('');
   };
 
@@ -113,7 +113,7 @@ export const PatientSearchInput = ({
             if (value) {
               setInput(value.name);
             } else {
-              setInput(undefined);
+              setInput('');
               search('');
             }
           },
