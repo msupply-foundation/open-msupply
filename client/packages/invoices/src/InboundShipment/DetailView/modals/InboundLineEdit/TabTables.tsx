@@ -22,6 +22,8 @@ import {
   useFormatNumber,
   NumUtils,
   TextInputCell,
+  IconButton,
+  DeleteIcon,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -40,10 +42,11 @@ import {
   NumberOfPacksCell,
   vvmStatusesColumn,
 } from './utils';
+import { PatchDraftLineInput } from '../../../api';
 
 interface TableProps {
   lines: DraftInboundLine[];
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+  updateDraftLine: (patch: PatchDraftLineInput) => void;
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
@@ -53,15 +56,20 @@ interface TableProps {
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
 }
 
+interface QuantityTableProps extends TableProps {
+  removeDraftLine: (id: string) => void;
+}
+
 export const QuantityTableComponent = ({
   lines,
   updateDraftLine,
+  removeDraftLine,
   isDisabled = false,
   hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
   item,
   setPackRoundingMessage,
-}: TableProps) => {
+}: QuantityTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const { getPlural } = useIntlUtils();
@@ -82,7 +90,7 @@ export const QuantityTableComponent = ({
   ];
 
   if (hasItemVariantsEnabled) {
-    columnDefinitions.push(itemVariantColumn(updateDraftLine, displayInDoses));
+    columnDefinitions.push(itemVariantColumn(updateDraftLine));
   }
 
   if (displayInDoses) {
@@ -186,8 +194,20 @@ export const QuantityTableComponent = ({
   });
 
   if (displayInDoses) {
-    columnDefinitions.push(...getInboundDosesColumns());
+    columnDefinitions.push(...getInboundDosesColumns(format));
   }
+
+  columnDefinitions.push({
+    key: 'delete',
+    width: 50,
+    Cell: ({ rowData }) => (
+      <IconButton
+        label="Delete"
+        onClick={() => removeDraftLine(rowData.id)}
+        icon={<DeleteIcon fontSize="small" />}
+      />
+    ),
+  });
 
   const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
     updateDraftLine,
@@ -341,7 +361,8 @@ export const LocationTableComponent = ({
   isDisabled,
 }: TableProps) => {
   const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.UseCampaigns
   );
 
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
@@ -372,7 +393,9 @@ export const LocationTableComponent = ({
     ] as ColumnDescription<DraftInboundLine>);
   }
 
-  columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+  if (preferences?.useCampaigns) {
+    columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+  }
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 

@@ -13,6 +13,8 @@ import {
   InvoiceNodeStatus,
   useConfirmationModal,
   MinusCircleIcon,
+  UserPermission,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
@@ -61,8 +63,14 @@ export const SidePanelComponent = () => {
     },
   });
 
+  const handleCancelUpdate = useCallbackWithPermission(
+    UserPermission.CancelFinalisedInvoices,
+    () => update({ status: InvoiceNodeStatus.Cancelled }),
+    t('messages.cancel-prescription-not-allowed')
+  );
+
   const onCancel = useConfirmationModal({
-    onConfirm: () => update({ status: InvoiceNodeStatus.Cancelled }),
+    onConfirm: handleCancelUpdate,
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-cancel-prescription'),
   });

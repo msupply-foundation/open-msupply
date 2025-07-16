@@ -1,10 +1,10 @@
+use crate::format_error;
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use serde::{
-    de::{Error, IntoDeserializer},
+    de::{value::StrDeserializer, Error, IntoDeserializer},
     Deserialize, Deserializer, Serialize, Serializer,
 };
 use serde_yaml::Value;
-use util::format_error;
 
 pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
     d: D,
@@ -16,22 +16,18 @@ pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
 pub fn empty_str_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     d: D,
 ) -> Result<Option<T>, D::Error> {
-    let value: Value = Value::deserialize(d)?;
-    match value {
-        Value::String(ref s) if s.is_empty() => Ok(None),
-        Value::Null => Ok(None),
-        _ => {
-            let value_str = format!("{:?}", value);
-            let t: T = T::deserialize(value).map_err(|e| {
-                Error::custom(format!(
-                    "Failed to deserialize value: {}. Error: {}",
-                    value_str,
-                    format_error(&e)
-                ))
-            })?;
-            Ok(Some(t))
-        }
-    }
+    let s: Option<String> = empty_str_as_option_string(d)?;
+
+    let Some(s) = s else { return Ok(None) };
+
+    let str_d: StrDeserializer<D::Error> = s.as_str().into_deserializer();
+    Ok(Some(T::deserialize(str_d)?))
+}
+
+pub fn ok_or_none<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<T>, D::Error> {
+    Ok(empty_str_as_option(d).map_or(None, |v| v))
 }
 
 pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
@@ -43,7 +39,7 @@ pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Nai
 pub fn object_fields_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     d: D,
 ) -> Result<Option<T>, D::Error> {
-    // error if cannot deserialise into a Value (which includes null, empty string or empty object)
+    // error if cannot deserialize into a Value (which includes null, empty string or empty object)
     let value: Value = Value::deserialize(d)?;
     return match value {
         Value::Null => Ok(None),
@@ -52,16 +48,11 @@ pub fn object_fields_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
         Value::Sequence(ref map) if map.is_empty() => Ok(None),
         Value::Mapping(ref map) if map.is_empty() => Ok(None),
         _ => {
-            let value_str = format!("{:?}", value);
             // if value is not null, empty string or empty object, extract struct T from value
-            let result: T = T::deserialize(value.into_deserializer()).map_err(|e| {
-                Error::custom(format!(
-                    "Failed to deserialize value: {}. Error: {}",
-                    value_str,
-                    format_error(&e)
-                ))
-            })?;
-            Ok(Some(result))
+            let result: Result<Option<T>, D::Error> = T::deserialize(value.into_deserializer())
+                .map(Some)
+                .map_err(Error::custom);
+            result
         }
     };
 }
@@ -146,8 +137,15 @@ pub fn zero_f64_as_none<'de, D: Deserializer<'de>>(d: D) -> Result<Option<f64>, 
 #[cfg(test)]
 mod test {
 
-    use crate::sync::sync_serde::{empty_str_as_option, object_fields_as_option};
+    use super::*;
     use serde::{Deserialize, Serialize};
+
+    #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+    #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+    pub enum Status {
+        New,
+        Finalised,
+    }
 
     #[allow(non_snake_case)]
     #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
@@ -158,6 +156,9 @@ mod test {
         pub contract_signed_datetime: Option<NaiveDateTime>,
         #[serde(default)]
         pub advance_paid_datetime: Option<NaiveDateTime>,
+        #[serde(default)]
+        #[serde(deserialize_with = "ok_or_none")]
+        pub some_enum_field: Option<Status>,
     }
 
     #[allow(non_snake_case)]
@@ -174,17 +175,14 @@ mod test {
     #[test]
     fn test_handle_object_fields_translation() {
         // case with populated fields
-        const LEGACY_ROW_1: (&str, &str) = (
-            "LEGACY_ROW_1",
-            r#"{
+        const LEGACY_ROW_1: &str = r#"{
                 "ID": "LEGACY_ROW_1",
                 "oms_fields": {
                     "foreign_exchange_rate": 1.6,
                     "contract_signed_datetime": "2021-01-22T15:16:00"
                 }
-            }"#,
-        );
-        let a = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_1.1);
+            }"#;
+        let a = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_1);
         assert!(a.is_ok());
         let fields = a.unwrap().oms_fields.unwrap();
         assert_eq!(fields.foreign_exchange_rate, Some(1.6));
@@ -197,105 +195,80 @@ mod test {
         assert_eq!(fields.advance_paid_datetime, None);
 
         // case with empty object
-        const LEGACY_ROW_2: (&str, &str) = (
-            "LEGACY_ROW_2",
-            r#"{
+        const LEGACY_ROW_2: &str = r#"{
                 "ID": "LEGACY_ROW_2",
                 "oms_fields": {}
-            }"#,
-        );
-        let b = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_2.1);
+            }"#;
+        let b = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_2);
         assert!(b.is_ok());
 
         // case with empty string
-        const LEGACY_ROW_3: (&str, &str) = (
-            "LEGACY_ROW_3",
-            r#"{
+        const LEGACY_ROW_3: &str = r#"{
                 "ID": "LEGACY_ROW_3",
                 "oms_fields": ""
-            }"#,
-        );
-        let c = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_3.1).unwrap();
+            }"#;
+        let c = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_3).unwrap();
         assert_eq!(c.oms_fields, None);
 
         // case with null
-        const LEGACY_ROW_4: (&str, &str) = (
-            "LEGACY_ROW_4",
-            r#"{
+        const LEGACY_ROW_4: &str = r#"{
                 "ID": "LEGACY_ROW_4",
                 "oms_fields": null
-            }"#,
-        );
-        let d = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_4.1);
+            }"#;
+        let d = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_4);
         assert!(d.is_ok());
 
         // case with no value
-        const LEGACY_ROW_5: (&str, &str) = (
-            "LEGACY_ROW_5",
-            r#"{
-                "ID": "LEGACY_ROW_5"            }"#,
-        );
-        let e = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_5.1);
+        const LEGACY_ROW_5: &str = r#"{
+                "ID": "LEGACY_ROW_5"            }"#;
+        let e = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_5);
         assert!(e.is_ok());
     }
 
-    #[allow(non_snake_case)]
-    #[derive(Deserialize, Serialize, Debug, PartialEq)]
-    pub struct LegcacyRowWithOptionNonString {
-        #[serde(rename = "ID")]
-        pub id: String,
-        #[serde(default)]
-        #[serde(deserialize_with = "empty_str_as_option")]
-        pub option_t: Option<i64>,
-    }
-
     #[test]
-    fn test_handle_some_translation() {
-        // case with populated fields
-        const LEGACY_ROW_1: (&str, &str) = (
-            "LEGACY_ROW_1",
-            r#"{
-                "ID": "LEGACY_ROW_1",
-                "option_t": 12
-            }"#,
-        );
-        let a = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_1.1);
-        assert!(a.is_ok());
-        assert_eq!(a.unwrap().option_t, Some(12));
+    fn test_ok_or_none() {
+        let raw_json = r#"{
+                "ID": "LEGACY_ROW",
+                "oms_fields": {
+                    "some_enum_field": ""
+                }
+            }"#;
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        assert!(row.is_ok(), "Empty string to None is OK");
+        let fields = row.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.some_enum_field, None);
 
-        // case with empty string
-        const LEGACY_ROW_2: (&str, &str) = (
-            "LEGACY_ROW_2",
-            r#"{
-                "ID": "LEGACY_ROW_2",
-                "option_t": ""
-            }"#,
-        );
-        let b = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_2.1);
-        assert!(b.is_ok());
-        assert_eq!(b.unwrap().option_t, None);
+        let raw_json = r#"{
+                "ID": "LEGACY_ROW",
+                "oms_fields": {
+                    "some_enum_field": null
+                }
+            }"#;
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        assert!(row.is_ok(), "null to None is OK");
+        let fields = row.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.some_enum_field, None);
 
-        // case with null
-        const LEGACY_ROW_3: (&str, &str) = (
-            "LEGACY_ROW_3",
-            r#"{
-                "ID": "LEGACY_ROW_3",
-                "option_t": null
-            }"#,
-        );
-        let c = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_3.1);
-        assert!(c.is_ok());
-        assert_eq!(c.unwrap().option_t, None);
+        let raw_json = r#"{
+                "ID": "LEGACY_ROW",
+                "oms_fields": {
+                    "some_enum_field": "FINALISED"
+                }
+            }"#;
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        assert!(row.is_ok(), "Valid enum variant is OK");
+        let fields = row.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.some_enum_field, Some(Status::Finalised));
 
-        // case with no value
-        const LEGACY_ROW_4: (&str, &str) = (
-            "LEGACY_ROW_4",
-            r#"{
-                "ID": "LEGACY_ROW_4"            
-            }"#,
-        );
-        let d = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_4.1);
-        assert!(d.is_ok());
-        assert_eq!(d.unwrap().option_t, None);
+        let raw_json = r#"{
+                "ID": "LEGACY_ROW",
+                "oms_fields": {
+                    "some_enum_field": "not valid variant"
+                }
+            }"#;
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        assert!(row.is_ok(), "Invalid enum to None is OK");
+        let fields = row.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.some_enum_field, None);
     }
 }

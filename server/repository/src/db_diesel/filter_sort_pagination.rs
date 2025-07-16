@@ -74,6 +74,8 @@ where
     #[ts(optional)]
     pub equal_to: Option<T>,
     #[ts(optional)]
+    pub not_equal_to_or_null: Option<T>,
+    #[ts(optional)]
     pub not_equal_to: Option<T>,
     #[ts(optional)]
     pub equal_any: Option<Vec<T>>,
@@ -90,6 +92,7 @@ impl<T> Default for EqualFilter<T> {
         Self {
             equal_to: Default::default(),
             not_equal_to: Default::default(),
+            not_equal_to_or_null: Default::default(),
             equal_any: Default::default(),
             equal_any_or_null: Default::default(),
             not_equal_all: Default::default(),
@@ -107,6 +110,7 @@ impl<F> EqualFilter<F> {
             equal_to,
             equal_any,
             not_equal_to,
+            not_equal_to_or_null,
             equal_any_or_null,
             not_equal_all,
             is_null,
@@ -116,6 +120,7 @@ impl<F> EqualFilter<F> {
             equal_to: equal_to.map(T::from),
             equal_any: equal_any.map(|r| r.into_iter().map(T::from).collect()),
             not_equal_to: not_equal_to.map(T::from),
+            not_equal_to_or_null: not_equal_to_or_null.map(T::from),
             equal_any_or_null: equal_any_or_null.map(|r| r.into_iter().map(T::from).collect()),
             not_equal_all: not_equal_all.map(|r| r.into_iter().map(T::from).collect()),
             is_null,
@@ -156,9 +161,22 @@ impl EqualFilter<i32> {
         }
     }
 
+    pub fn not_equal_to_or_null_i32(value: i32) -> Self {
+        Self {
+            not_equal_to_or_null: Some(value),
+            ..Default::default()
+        }
+    }
+
     pub fn i32_is_null(value: bool) -> Self {
         Self {
             is_null: Some(value),
+            ..Default::default()
+        }
+    }
+    pub fn equal_any_or_null_i32(value: Vec<i32>) -> Self {
+        Self {
+            equal_any_or_null: Some(value),
             ..Default::default()
         }
     }

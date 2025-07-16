@@ -1,0 +1,26 @@
+fragment Contact on ContactNode {
+  address1
+  address2
+  category1
+  category2
+  category3
+  comment
+  country
+  email
+  firstName
+  id
+  lastName
+  phone
+  position
+}
+
+query contacts($nameId: String!, $storeId: String!) {
+  contacts(nameId: $nameId, storeId: $storeId) {
+    ... on ContactConnector {
+      __typename
+      nodes {
+        ...Contact
+      }
+    }
+  }
+}

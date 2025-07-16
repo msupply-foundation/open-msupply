@@ -32,6 +32,7 @@ export const CreateClinicianForm = ({
             onChange={event => {
               updateDraft({ code: event.target.value.toUpperCase() });
             }}
+            autoFocus
             required
           />
         }

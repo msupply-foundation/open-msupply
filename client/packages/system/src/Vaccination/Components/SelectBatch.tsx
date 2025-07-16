@@ -134,9 +134,5 @@ const BatchTable = ({
 };
 
 const getRemainingDoses = (rowData: StockLineFragment) => {
-  return (
-    (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses) *
-    rowData.availableNumberOfPacks *
-    rowData.packSize
-  );
+  return rowData.item.doses * rowData.availableNumberOfPacks * rowData.packSize;
 };

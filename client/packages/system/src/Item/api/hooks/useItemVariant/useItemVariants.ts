@@ -13,7 +13,7 @@ export function useItemVariants(itemId: string) {
         storeId,
       });
 
-      return result.items.nodes?.[0]?.variants;
+      return result.items.nodes?.[0];
     },
   });
 }

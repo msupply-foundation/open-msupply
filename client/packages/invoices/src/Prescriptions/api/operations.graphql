@@ -128,10 +128,6 @@ fragment PrescriptionLine on InvoiceLineNode {
     }
     isVaccine
   }
-  itemVariant {
-    id
-    dosesPerUnit
-  }
 
   location {
     __typename
@@ -215,10 +211,6 @@ fragment PartialPrescriptionLine on StockLineNode {
       ...Warning
     }
     isVaccine
-  }
-  itemVariant {
-    id
-    dosesPerUnit
   }
   location {
     __typename

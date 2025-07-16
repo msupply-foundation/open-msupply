@@ -31,9 +31,9 @@ export type StocktakeLineFragment = {
   sellPricePerPack?: number | null;
   costPricePerPack?: number | null;
   comment?: string | null;
-  itemVariantId?: string | null;
   donorId?: string | null;
   donorName?: string | null;
+  itemVariantId?: string | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -52,11 +52,6 @@ export type StocktakeLineFragment = {
     doses: number;
     defaultPackSize: number;
   };
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   reasonOption?: {
     __typename: 'ReasonOptionNode';
     reason: string;
@@ -102,9 +97,9 @@ export type StocktakeFragment = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
-      itemVariantId?: string | null;
       donorId?: string | null;
       donorName?: string | null;
+      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -123,11 +118,6 @@ export type StocktakeFragment = {
         doses: number;
         defaultPackSize: number;
       };
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
-      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -214,9 +204,9 @@ export type StocktakeQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
-            itemVariantId?: string | null;
             donorId?: string | null;
             donorName?: string | null;
+            itemVariantId?: string | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -235,11 +225,6 @@ export type StocktakeQuery = {
               doses: number;
               defaultPackSize: number;
             };
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
-            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -297,9 +282,9 @@ export type StocktakeByNumberQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
-            itemVariantId?: string | null;
             donorId?: string | null;
             donorName?: string | null;
+            itemVariantId?: string | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -318,11 +303,6 @@ export type StocktakeByNumberQuery = {
               doses: number;
               defaultPackSize: number;
             };
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
-            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -364,9 +344,9 @@ export type StocktakeLinesQuery = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
-      itemVariantId?: string | null;
       donorId?: string | null;
       donorName?: string | null;
+      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -385,11 +365,6 @@ export type StocktakeLinesQuery = {
         doses: number;
         defaultPackSize: number;
       };
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
-      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -644,7 +619,6 @@ export const StocktakeLineFragmentDoc = gql`
     sellPricePerPack
     costPricePerPack
     comment
-    itemVariantId
     donorId
     donorName
     location {
@@ -668,10 +642,7 @@ export const StocktakeLineFragmentDoc = gql`
       doses
       defaultPackSize
     }
-    itemVariant {
-      id
-      dosesPerUnit
-    }
+    itemVariantId
     reasonOption {
       reason
       type

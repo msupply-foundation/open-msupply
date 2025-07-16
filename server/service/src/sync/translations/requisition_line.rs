@@ -1,7 +1,7 @@
-use crate::sync::{
-    sync_serde::{empty_str_as_option, empty_str_as_option_string},
-    translations::{item::ItemTranslation, requisition::RequisitionTranslation},
-};
+use crate::sync::translations::{item::ItemTranslation, requisition::RequisitionTranslation};
+
+use util::sync_serde::{empty_str_as_option, empty_str_as_option_string};
+
 use chrono::NaiveDateTime;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,

@@ -161,7 +161,6 @@ mod tests {
                 cold_storage_type_id: None,
                 manufacturer_link_id: None,
                 deleted_datetime: None,
-                doses_per_unit: 0,
                 vvm_type: None,
                 created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
                     .unwrap()

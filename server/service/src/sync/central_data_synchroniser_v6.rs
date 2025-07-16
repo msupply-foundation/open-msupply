@@ -16,7 +16,7 @@ use super::{
     translations::{
         translate_changelogs_to_sync_records, PushTranslationError, ToSyncRecordTranslationType,
     },
-    GetActiveStoresOnSiteError,
+    SyncChangelogError,
 };
 
 use repository::{
@@ -44,8 +44,8 @@ pub(crate) enum RemotePushErrorV6 {
     DatabaseError(#[from] RepositoryError),
     #[error(transparent)]
     PushTranslationError(#[from] PushTranslationError),
-    #[error("Problem getting active stores on site during remote push")]
-    GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
+    #[error("Problem getting changelog during remote pull")]
+    SyncChangelogError(#[from] SyncChangelogError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
 }

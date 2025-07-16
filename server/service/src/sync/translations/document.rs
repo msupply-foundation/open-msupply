@@ -9,12 +9,13 @@ use serde_json::Value;
 
 use crate::sync::{
     integrate_document::DocumentUpsert,
-    sync_serde::empty_str_as_option_string,
     translations::{
         document_registry::DocumentRegistryTranslation, form_schema::FormSchemaTranslation,
         name::NameTranslation,
     },
 };
+
+use util::sync_serde::empty_str_as_option_string;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 

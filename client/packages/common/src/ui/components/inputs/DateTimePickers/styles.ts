@@ -3,7 +3,9 @@ import { SxProps, Theme } from '@mui/material';
 export const getTextFieldSx = (
   theme: Theme,
   hasLabel: boolean,
-  inputSx?: SxProps
+  dateOnly: boolean,
+  inputSx?: SxProps,
+  width?: number | string
 ) => ({
   border: 'none',
   color: 'gray',
@@ -44,6 +46,10 @@ export const getTextFieldSx = (
     '&.Mui-focused': {
       color: 'gray.main',
     },
+  },
+  '& .MuiFormHelperText-root': {
+    whiteSpace: 'normal',
+    width: dateOnly ? '200px' : width,
   },
 });
 

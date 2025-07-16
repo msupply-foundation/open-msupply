@@ -46,6 +46,7 @@ pub struct InvoiceLineFilterInput {
     #[graphql(deprecation = "Since 2.8.0. Use reason_option")]
     pub inventory_adjustment_reason: Option<EqualFilterStringInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
+    pub program_id: Option<EqualFilterStringInput>,
 }
 
 impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
@@ -73,6 +74,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .reason_option
                 .map(EqualFilter::from)
                 .or(f.inventory_adjustment_reason.map(EqualFilter::from)),
+            program_id: f.program_id.map(EqualFilter::from),
             picked_datetime: None,
             delivered_datetime: None,
             has_prescribed_quantity: None,

@@ -1,12 +1,13 @@
 import React from 'react';
 import { rankWith, ControlProps, isDateTimeControl } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   DateUtils,
   DateTimePickerInput,
   LocaleKey,
   useTranslation,
+  extractProperty,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -21,6 +22,9 @@ const Options = z
     monthOnly: z.boolean().optional(),
     dateAsEndOfDay: z.boolean().optional(),
     disableFuture: z.boolean().optional(),
+    // Max and min are paths to the data object
+    max: z.string().optional(),
+    min: z.string().optional(),
   })
   .strict()
   .optional();
@@ -31,6 +35,7 @@ export const datetimeTester = rankWith(5, isDateTimeControl);
 
 const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
+  const { core } = useJsonForms();
   const [error, setError] = React.useState<string | undefined>(undefined);
   const { data, handleChange, label, path, uischema } = props;
   const { errors: zErrors, options } = useZodOptionsValidation(
@@ -48,11 +53,16 @@ const UIComponent = (props: ControlProps) => {
   }
 
   const dateOnly = options?.dateOnly ?? false;
-
   const inputFormat = !dateOnly ? 'P p' : 'P';
+  const max = options?.max
+    ? extractProperty(core?.data, options.max.split('/').pop() ?? '')
+    : undefined;
+  const min = options?.min
+    ? extractProperty(core?.data, options.min.split('/').pop() ?? '')
+    : undefined;
 
   const onChange = (e: Date | null) => {
-    if (!e) handleChange(path, null);
+    if (!e) handleChange(path, undefined);
     setCustomError(undefined);
 
     try {
@@ -83,6 +93,8 @@ const UIComponent = (props: ControlProps) => {
           actions: ['clear', 'accept'] as PickersActionBarAction[],
         }
       : {}),
+    minDate: DateUtils.getDateOrNull(min) ?? undefined,
+    maxDate: DateUtils.getDateOrNull(max) ?? undefined,
   };
 
   return (
