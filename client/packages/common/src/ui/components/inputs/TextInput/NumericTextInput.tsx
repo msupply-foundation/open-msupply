@@ -276,8 +276,9 @@ export const NumericTextInput = React.forwardRef<
       if (
         parse(textValue ?? '') !== value &&
         !isInputIncomplete(textValue ?? '')
-      )
+      ) {
         setTextValue(formatValue(value));
+      }
       checkError(value);
     }, [
       value,
