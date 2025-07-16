@@ -1,0 +1,143 @@
+.header_image_section,
+.header_supplied_section {
+  margin-left: 8px;
+  width: 100%;
+  font-family: Tahoma;
+  font-size: 8pt;
+  border-bottom: 0.5px solid black;
+  padding-top: 1pt;
+}
+
+.logo {
+  display: block;
+  height: 96px;
+}
+
+body {
+  margin: 10px 5% 10px 5%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+  width: 98%;
+  border-collapse: collapse; 
+  font-size: 12px;
+
+}
+
+td.borderline {
+  border-bottom: 1px solid black;
+  
+}
+
+td {
+  vertical-align: top;
+  padding: 2px;
+}
+
+th {
+  padding: 2px;
+}
+
+tr.borderline {
+  border-bottom: 1px solid black;
+
+}
+
+td.borderlineTopBottom {
+  border-bottom: 1px solid black;
+  border-top: 1px solid black;
+  
+}
+
+.Report_title {
+  text-align: center;
+  padding-top: 8px;
+  font-weight: bold; 
+  font-size: 12pt; 
+}
+
+.name_centre {
+  text-align: center;
+  font-weight: bold; 
+  font-size: 14pt; 
+}
+.name_address {
+  text-align: center;
+  font-weight: normal; 
+  font-size: 10pt; 
+}
+
+.name_right {
+  text-align: right;
+  font-weight: normal; 
+  font-size: 10pt; 
+}
+
+.col-item-code {
+  width: 6%;
+  text-align: left;  
+}
+
+.col-item-name {
+  text-align: left;  
+}
+
+.col-batch {
+  width: 5%;
+  text-align: left;  
+}
+
+.col-expiry-date {
+  width: 7.5%;
+  text-align: right;
+}
+
+.col-packsize {
+  width: 5%;
+  text-align: right;
+}
+
+.col-cost-price {
+  width: 8%;
+  text-align: right;
+}
+
+.col-snapshot-packs {
+  width: 6%;
+  text-align: right;
+}
+
+.col-counted-packs {
+  width: 6%;
+  text-align: right;
+}
+
+.col-variance-packs {
+  width: 6%;
+  text-align: right;
+}
+
+.col-variance-values {
+  width: 6%;
+  text-align: right;
+}
+
+.col-reason {
+  width: 10%;
+  text-align: right;
+}
+
+.col-comment {
+  width: 12%;
+  text-align: right;
+}
+
+.batch-wrap {
+  word-break: break-word;
+}
+
+
+@media print{@page {size: landscape}}

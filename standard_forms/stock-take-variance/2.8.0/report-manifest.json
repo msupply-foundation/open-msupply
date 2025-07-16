@@ -1,0 +1,12 @@
+{
+  "is_custom": false,
+  "version": "2.8.0",
+  "code": "stock-take-variance",
+  "context": "STOCKTAKE",
+  "sub_context": "",
+  "name": "Stocktake Variance",
+  "queries": {
+    "gql": "stocktake.graphql"
+  },
+  "header": "header.html"
+}
