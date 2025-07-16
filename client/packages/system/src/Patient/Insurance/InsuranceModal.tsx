@@ -178,6 +178,7 @@ export const InsuranceModal = (): ReactElement => {
                 min={0}
                 decimalLimit={2}
                 value={draft.discountPercentage ?? 0}
+                endAdornment="%"
                 onChange={value => {
                   if (value) {
                     updatePatch({
