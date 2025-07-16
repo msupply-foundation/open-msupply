@@ -37,7 +37,7 @@ export const FormErrorProvider: React.FC<{ children: React.ReactNode }> = ({
   );
   const [displayRequiredErrors, setDisplayRequiredErrors] = useState(false);
 
-  console.log('errors', errors);
+  // console.log('errors', errors);
 
   const hasErrors = () => {
     return Object.values(errors).some(

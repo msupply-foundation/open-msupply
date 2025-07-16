@@ -85,7 +85,7 @@ class FormErrorStore {
 
   clearAllErrors = () => {
     let changed = false;
-    for (const key in this.errors) {
+    Object.keys(this.errors).forEach(key => {
       const entry = this.errors[key];
       if (entry?.error !== null) {
         this.errors[key] = {
@@ -94,7 +94,7 @@ class FormErrorStore {
         };
         changed = true;
       }
-    }
+    });
     if (changed) {
       this.notify();
     }

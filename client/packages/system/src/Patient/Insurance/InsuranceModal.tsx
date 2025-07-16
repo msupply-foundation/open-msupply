@@ -219,6 +219,8 @@ export const InsuranceModal = (): ReactElement => {
                             ),
                           });
                       }}
+                      error={errorMessage !== null}
+                      setError={setError}
                     />
                   )}
                 </FieldErrorWrapper>
@@ -232,13 +234,12 @@ export const InsuranceModal = (): ReactElement => {
             >
               {({ value, required, errorMessage, setError }) => (
                 <InsuranceProvidersSelect
-                  insuranceProviderId={draft.insuranceProviderId}
+                  insuranceProviderId={value}
                   onChange={value => {
                     updatePatch({
                       insuranceProviderId: value,
                     });
                   }}
-                  value={value}
                   required={required}
                   error={errorMessage != null}
                   setError={setError}
