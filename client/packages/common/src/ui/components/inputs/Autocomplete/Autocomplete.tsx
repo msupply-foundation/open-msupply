@@ -29,6 +29,7 @@ export interface ClickableOptionConfig {
   label: string;
   onClick: () => void;
   icon?: React.ReactNode;
+  [extraField: string]: unknown;
 }
 
 export interface AutocompleteProps<T>

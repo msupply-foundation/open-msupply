@@ -656,3 +656,29 @@ CREATE VIEW vaccination_course AS
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use crate::test_db::{setup_test, SetupOption, SetupResult};
+
+    use super::{drop_views, rebuild_views};
+
+    #[actix_rt::test]
+    async fn drop_and_rebuild_views() {
+        // Setup will run initial migrations, which will create the views
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: "drop_and_rebuild_views",
+            ..Default::default()
+        })
+        .await;
+
+        // Ensure views can be dropped and recreated without error
+        drop_views(&connection).unwrap();
+        // Rebuild should be fine, this already happens in our setup_test, but just to be sure :)
+        rebuild_views(&connection).unwrap();
+
+        // Note: what this test does not capture is whether previous views can be dropped
+        // successfully (as we only have current state of the views)
+        // This is handled in CI, the validate-db-migration-with-views workflow
+    }
+}
