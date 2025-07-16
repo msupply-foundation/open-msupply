@@ -62,7 +62,6 @@ export interface AutocompleteProps<T>
   popperMinWidth?: number;
   inputProps?: BasicTextInputProps;
   error?: boolean;
-  setError?: (error: string) => void;
   required?: boolean;
   textSx?: SxProps<Theme>;
   clickableOption?: ClickableOptionConfig;
@@ -93,7 +92,6 @@ export function Autocomplete<T>({
   popperMinWidth,
   inputProps,
   error,
-  // setError,
   required,
   textSx,
   clickableOption,
