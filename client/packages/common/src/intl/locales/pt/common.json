@@ -249,7 +249,7 @@
   "error.asset-not-found": "Ativo não foi encontrado",
   "error.authentication-error": "O servidor retornou um erro",
   "error.batch-is-reserved": "Este lote está reservado/enviado",
-  "error.cannot-add-from-masterlist-if-not-new": "Só é possível adicionar a partir da lista principal em uma fatura 'Nova'",
+  "error.cannot-add-from-masterlist": "Só é possível adicionar a partir da lista principal em uma fatura 'Nova'",
   "error.cannot-add-pack-size-of-zero": "Não é possível adicionar uma variante com o tamanho de pacote igual a zero",
   "error.cannot-add-with-no-abbreviation-and-name": "Não é possível adicionar uma variante sem abreviação e nome",
   "error.cannot-backdate-prescription": "Stock não está disponível na data especificada",
