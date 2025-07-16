@@ -6,7 +6,7 @@ import {
   AlertIcon,
 } from '@openmsupply-client/common';
 import { Alert } from '@common/components';
-import { useFormErrorContext } from './NewFormErrorContext';
+import { useFormErrorContext } from './FormErrorContext';
 
 export const ErrorDisplay = () => {
   const t = useTranslation();

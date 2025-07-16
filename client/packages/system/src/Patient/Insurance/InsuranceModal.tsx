@@ -145,7 +145,7 @@ export const InsuranceModal = (): ReactElement => {
                   label={t('label.policy-number-person')}
                   value={draft.policyNumberPerson ?? undefined}
                   required={!draft.policyNumberFamily}
-                  customIsValid={draft.policyNumberPerson !== '666'}
+                  customIsValid={draft.policyNumberPerson === '666'}
                   customErrorMessage="That is the devils number and is not allowed"
                 >
                   {({ value, required, errorMessage }) => (
@@ -254,6 +254,8 @@ export const InsuranceModal = (): ReactElement => {
                   label={t('label.discount-rate')}
                   value={draft.discountPercentage}
                   required
+                  customIsValid={draft.discountPercentage >= 110}
+                  customErrorMessage="Waaaay too big!"
                 >
                   {({ value, required, errorMessage, setError }) => (
                     <NumericTextInput

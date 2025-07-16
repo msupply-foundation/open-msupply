@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from '@openmsupply-client/common';
-import { useFormErrorContext } from './NewFormErrorContext';
+import { useFormErrorContext } from './FormErrorContext';
 
 type FieldErrorWrapperProps = {
   code: string;
@@ -17,7 +17,7 @@ type FieldErrorWrapperProps = {
   }) => React.ReactNode;
 };
 
-export const FieldErrorWrapper: React.FC<FieldErrorWrapperProps> = ({
+export const FieldErrorWrapper = ({
   code,
   label,
   value,
@@ -25,7 +25,7 @@ export const FieldErrorWrapper: React.FC<FieldErrorWrapperProps> = ({
   customIsValid,
   customErrorMessage,
   children,
-}) => {
+}: FieldErrorWrapperProps) => {
   const {
     registerField,
     unregisterField,
@@ -47,10 +47,12 @@ export const FieldErrorWrapper: React.FC<FieldErrorWrapperProps> = ({
   useEffect(() => {
     const { requiredError } = errorData;
 
-    if (customIsValid === false) {
-      updateErrorData(code, { error: customErrorMessage ?? 'Invalid input' });
-    } else if (customIsValid === true) {
-      updateErrorData(code, { error: null });
+    if (customIsValid === true) {
+      setError(code, customErrorMessage ?? 'Invalid input', true);
+      return;
+    } else if (customIsValid === false) {
+      console.log('Removing custom error');
+      setError(code, null, true);
     }
 
     if (required && !value) {

@@ -1,5 +1,6 @@
 export type FieldErrorEntry = {
   error: string | null;
+  isCustomError?: boolean;
   label?: string;
   required?: boolean;
   requiredError?: string | null;
@@ -45,12 +46,16 @@ class FormErrorStore {
     }
   };
 
-  setError = (code: string, error: string | null) => {
+  setError = (code: string, error: string | null, isCustomError?: boolean) => {
     const existing = this.errors[code];
     if (existing?.error !== error) {
+      // This ensures that Custom Errors will take priority over component's
+      // internal errors
+      if (existing?.isCustomError && !isCustomError) return;
       this.errors[code] = {
         ...existing,
         error,
+        isCustomError: error ? isCustomError : false,
       };
       this.notify();
     }
