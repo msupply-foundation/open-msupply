@@ -12,7 +12,7 @@ type FieldErrorWrapperProps<T> = {
   children: (fieldProps: {
     value: T;
     required?: boolean;
-    errorMessage?: string | null;
+    error: boolean;
     setError: (errorMessage: string | null) => void;
   }) => React.ReactNode;
 };
@@ -69,7 +69,7 @@ export const FieldErrorWrapper = <T,>({
       {children({
         value,
         required,
-        errorMessage,
+        error: errorMessage != null,
         setError: (errorMessage: string | null) => setError(code, errorMessage),
       })}
     </>

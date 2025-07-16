@@ -121,7 +121,7 @@ export const InsuranceModal = (): ReactElement => {
                   value={draft.policyNumberFamily ?? undefined}
                   required={!draft.policyNumberPerson}
                 >
-                  {({ value, required, errorMessage }) => (
+                  {({ value, required, error }) => (
                     <BasicTextInput
                       disabled={haveInsuranceId}
                       onChange={event => {
@@ -131,7 +131,7 @@ export const InsuranceModal = (): ReactElement => {
                       }}
                       value={value}
                       required={required}
-                      error={errorMessage != null}
+                      error={error}
                     />
                   )}
                 </FieldErrorWrapper>
@@ -148,7 +148,7 @@ export const InsuranceModal = (): ReactElement => {
                   customIsValid={draft.policyNumberPerson === '666'}
                   customErrorMessage="That is the devils number and is not allowed"
                 >
-                  {({ value, required, errorMessage }) => (
+                  {({ value, required, error }) => (
                     <BasicTextInput
                       disabled={haveInsuranceId}
                       onChange={event => {
@@ -158,7 +158,7 @@ export const InsuranceModal = (): ReactElement => {
                       }}
                       value={value}
                       required={required}
-                      error={errorMessage != null}
+                      error={error}
                     />
                   )}
                 </FieldErrorWrapper>
@@ -170,7 +170,7 @@ export const InsuranceModal = (): ReactElement => {
               required
               value={draft.policyType}
             >
-              {({ value, required, errorMessage, setError }) => (
+              {({ value, required, error, setError }) => (
                 <InsurancePolicySelect
                   policyType={value}
                   onChange={value =>
@@ -179,7 +179,7 @@ export const InsuranceModal = (): ReactElement => {
                     })
                   }
                   required={required}
-                  error={errorMessage != null}
+                  error={error}
                   setError={setError}
                 />
               )}
@@ -206,7 +206,7 @@ export const InsuranceModal = (): ReactElement => {
                   required
                   value={DateUtils.getNaiveDate(draft.expiryDate)}
                 >
-                  {({ value, required, errorMessage, setError }) => (
+                  {({ value, required, error, setError }) => (
                     <DateTimePickerInput
                       value={value}
                       required={required}
@@ -219,7 +219,7 @@ export const InsuranceModal = (): ReactElement => {
                             ),
                           });
                       }}
-                      error={errorMessage !== null}
+                      error={error}
                       setError={setError}
                     />
                   )}
@@ -232,7 +232,7 @@ export const InsuranceModal = (): ReactElement => {
               value={draft.insuranceProviderId}
               required
             >
-              {({ value, required, errorMessage, setError }) => (
+              {({ value, required, error, setError }) => (
                 <InsuranceProvidersSelect
                   insuranceProviderId={value}
                   onChange={value => {
@@ -241,7 +241,7 @@ export const InsuranceModal = (): ReactElement => {
                     });
                   }}
                   required={required}
-                  error={errorMessage != null}
+                  error={error}
                   setError={setError}
                 />
               )}
@@ -257,11 +257,11 @@ export const InsuranceModal = (): ReactElement => {
                   customIsValid={draft.discountPercentage >= 110}
                   customErrorMessage="Waaaay too big!"
                 >
-                  {({ value, required, errorMessage, setError }) => (
+                  {({ value, required, error, setError }) => (
                     <NumericTextInput
                       value={value}
                       required={required}
-                      error={errorMessage != null}
+                      error={error}
                       setError={setError}
                       min={0}
                       max={100}
