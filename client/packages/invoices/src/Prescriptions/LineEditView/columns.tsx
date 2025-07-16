@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import {
   CellProps,
   ColumnAlign,
@@ -8,13 +8,11 @@ import {
   NumberCell,
   NumberInputCell,
   PreferenceKey,
-  RecordWithId,
-  Typography,
   useColumns,
   useIntlUtils,
   usePreference,
   useTranslation,
-  VvmstatusNode,
+  VvmStatusCell,
 } from '@openmsupply-client/common';
 import { getPrescriptionLineDosesColumns } from './columnsDoses';
 import {
@@ -155,15 +153,3 @@ const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
     slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}
   />
 );
-
-const VvmStatusCell = <T extends RecordWithId>({
-  column,
-  rowData,
-}: CellProps<T>): ReactElement => {
-  const vvmStatus = column.accessor({ rowData }) as VvmstatusNode;
-  return (
-    <Typography sx={{ color: vvmStatus?.unusable ? 'error.main' : 'inherit' }}>
-      {vvmStatus?.description}
-    </Typography>
-  );
-};

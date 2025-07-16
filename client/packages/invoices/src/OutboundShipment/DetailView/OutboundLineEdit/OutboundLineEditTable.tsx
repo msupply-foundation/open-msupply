@@ -22,6 +22,7 @@ import {
   getAllocatedQuantity,
 } from '../../../StockOut';
 import { min } from 'lodash';
+import { useDisableVvmRows } from '../../../useDisableVvmRows';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -187,6 +188,8 @@ export const OutboundLineEditTable = ({
     tableStore.setDisabledRows(nonAllocatableLines.map(({ id }) => id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useDisableVvmRows(lines);
 
   // Null means we aren't using placeholder
   if (!lines.length && placeholderQuantity === null)
