@@ -28,6 +28,7 @@ interface ResponseLineEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   manageVaccinesInDoses: boolean;
+  orderInPacks: boolean;
 }
 
 export const ResponseLineEditModal = ({
@@ -38,6 +39,7 @@ export const ResponseLineEditModal = ({
   isOpen,
   onClose,
   manageVaccinesInDoses,
+  orderInPacks,
 }: ResponseLineEditModalProps) => {
   const { error } = useNotification();
   const deleteLine = useResponse.line.deleteLine();
@@ -53,9 +55,10 @@ export const ResponseLineEditModal = ({
   const [currentItem, setCurrentItem] = useState(
     lines.find(line => line.item.id === itemId)?.item
   );
-  const [representation, setRepresentation] = useState<RepresentationValue>(
-    Representation.UNITS
-  );
+  const rep = orderInPacks ? Representation.PACKS : Representation.UNITS;
+
+  const [representation, setRepresentation] =
+    useState<RepresentationValue>(rep);
   const [isEditingSupply, setIsEditingSupply] = useState(false);
 
   const { draft, update, save, isLoading, isReasonsError } =
@@ -89,7 +92,7 @@ export const ResponseLineEditModal = ({
     if (mode === ModalMode.Create) {
       deletePreviousLine();
     }
-    setRepresentation(Representation.UNITS);
+    setRepresentation(rep);
     setCurrentItem(item);
   };
 

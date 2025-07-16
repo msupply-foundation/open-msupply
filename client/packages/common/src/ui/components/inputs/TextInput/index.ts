@@ -7,4 +7,3 @@ export * from './BufferedTextInput';
 export * from './NumericTextInput';
 export * from './PasswordTextInput';
 export * from './TaxEdit';
-export * from './DeprecatedBasicTextInput';
