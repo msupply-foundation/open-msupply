@@ -102,7 +102,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
         <CustomButton onPrint={modalOpen.toggleOn} />
       ) : (
         <LoadingButton
-          disabled={initialLoading}
+          disabled={initialLoading || !dataId}
           isLoading={isPrinting}
           startIcon={<PrinterIcon />}
           onClick={modalOpen.toggleOn}
