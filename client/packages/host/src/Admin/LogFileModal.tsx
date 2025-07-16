@@ -142,7 +142,10 @@ export const LogFileModal = ({
               </DropdownMenuItem>
             )}
             {data?.fileNames
-              ?.filter(fileName => fileName !== logToRender)
+              ?.filter(
+                fileName =>
+                  fileName !== logToRender && fileName.includes('.log')
+              )
               .sort()
               .map((fileName, i) => (
                 <DropdownMenuItem
