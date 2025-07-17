@@ -4,13 +4,11 @@ use repository::{
     PurchaseOrderRow, PurchaseOrderStatus, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{empty_str_as_option, object_fields_as_option};
 
-use crate::sync::{
-    sync_serde::{empty_str_as_option, object_fields_as_option},
-    translations::{
-        master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
-        store::StoreTranslation, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    },
+use crate::sync::translations::{
+    master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
+    store::StoreTranslation, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]

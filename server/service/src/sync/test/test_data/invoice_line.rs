@@ -366,7 +366,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: Some("campaign_a".to_string()),
-            shipped_number_of_packs: None,
+            shipped_number_of_packs: Some(0.0),
         },
     )
 }
@@ -400,10 +400,10 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             linked_invoice_id: None,
             donor_id: None,
             vvm_status_id: None,
-            shipped_number_of_packs: None,
             oms_fields: Some(TransLineRowOmsFields {
                 campaign_id: Some("campaign_a".to_string()),
             }),
+            shipped_number_of_packs: Some(0.0),
         }),
     }
 }
