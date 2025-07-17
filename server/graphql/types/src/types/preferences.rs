@@ -104,6 +104,7 @@ pub enum PreferenceKey {
     GenderOptions,
     ShowContactTracing,
     UseCampaigns,
+    CustomTranslations,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -120,6 +121,7 @@ impl PreferenceKey {
             PrefKey::GenderOptions => PreferenceKey::GenderOptions,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
+            PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
@@ -150,6 +152,7 @@ pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
     MultiChoice,
+    CustomTranslations, // Specific type for CustomTranslations preference
 }
 
 impl PreferenceValueNodeType {
@@ -158,6 +161,7 @@ impl PreferenceValueNodeType {
             PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
             PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
             PreferenceValueType::MultiChoice => PreferenceValueNodeType::MultiChoice,
+            PreferenceValueType::CustomTranslations => PreferenceValueNodeType::CustomTranslations,
         }
     }
 }
