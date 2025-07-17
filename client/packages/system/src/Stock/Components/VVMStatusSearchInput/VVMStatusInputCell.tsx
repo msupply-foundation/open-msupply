@@ -6,6 +6,7 @@ export const VVMStatusInputCell = <T extends RecordWithId>({
   rowData,
   column,
   isDisabled,
+  useDefault = false,
 }: CellProps<T>) => {
   const selectedId = column.accessor({
     rowData,
@@ -20,6 +21,7 @@ export const VVMStatusInputCell = <T extends RecordWithId>({
       disabled={!!isDisabled}
       selectedId={selectedId}
       onChange={onChange}
+      useDefault={useDefault}
     />
   );
 };

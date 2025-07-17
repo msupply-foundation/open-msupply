@@ -11,6 +11,7 @@ interface VVMStatusSearchInputProps {
   onChange: (variantId: string | null) => void;
   disabled?: boolean;
   width?: number | string;
+  useDefault?: boolean;
 }
 
 export const VVMStatusSearchInput = ({
@@ -18,6 +19,7 @@ export const VVMStatusSearchInput = ({
   width,
   onChange,
   disabled,
+  useDefault = false,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useVvmStatusesEnabled();
@@ -28,9 +30,13 @@ export const VVMStatusSearchInput = ({
     id: status?.id,
     code: status?.code,
     description: status?.description,
+    level: status?.level,
   }));
 
   const selected = options.find(option => option.id === selectedId) ?? null;
+  const defaultOption = useDefault
+    ? (options.find(option => option.level === 1) ?? null)
+    : null;
 
   return (
     <Tooltip title={selected?.description ?? ''} placement="top">
@@ -38,7 +44,7 @@ export const VVMStatusSearchInput = ({
         disabled={disabled}
         width="100%"
         popperMinWidth={Math.min(Number(width), 200)}
-        value={selected ?? null}
+        value={selected ?? defaultOption}
         loading={isLoading}
         onChange={(_, option) => onChange(option?.id ?? null)}
         options={options}
