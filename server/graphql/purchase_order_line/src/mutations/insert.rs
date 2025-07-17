@@ -2,6 +2,7 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
 use graphql_types::types::IdResponse;
+use repository::PurchaseOrderLineRow;
 use service::purchase_order_line::insert::{
     InsertPurchaseOrderLineError as ServiceError, InsertPurchaseOrderLineInput as ServiceInput,
 };
@@ -52,7 +53,7 @@ pub fn insert_purchase_order_line(
     )
 }
 
-fn map_response(from: Result<PurchaseOrderRow, ServiceError>) -> Result<InsertResponse> {
+fn map_response(from: Result<PurchaseOrderLineRow, ServiceError>) -> Result<InsertResponse> {
     match from {
         Ok(purchase_order) => Ok(InsertResponse::Response(IdResponse(purchase_order.id))),
         Err(error) => map_error(error),

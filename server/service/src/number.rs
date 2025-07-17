@@ -48,6 +48,10 @@ pub fn next_number(
                 .find_max_invoice_number(InvoiceType::SupplierReturn, store_id)?,
             NumberRowType::PurchaseOrder => PurchaseOrderRowRepository::new(connection_tx)
                 .find_max_purchase_order_number(store_id)?,
+            NumberRowType::PurchaseOrderLine(purchase_order_id) => {
+                PurchaseOrderLineRowRepository::new(connection_tx)
+                    .find_max_purchase_order_line_number(purchase_order_id)?
+            }
             NumberRowType::Program(_) => {
                 let next_number =
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;

@@ -16,7 +16,7 @@ table! {
     purchase_order_line (id) {
         id ->  Text,
         purchase_order_id -> Text,
-        line_number -> Integer,
+        line_number -> BigInt,
         item_link_id -> Nullable<Text>,
         number_of_packs ->  Nullable<Double>,
         pack_size ->  Nullable<Double>,
@@ -42,7 +42,7 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 pub struct PurchaseOrderLineRow {
     pub id: String,
     pub purchase_order_id: String,
-    pub line_number: i32,
+    pub line_number: i64,
     pub item_link_id: Option<String>,
     pub number_of_packs: Option<f64>,
     pub pack_size: Option<f64>,
@@ -125,6 +125,17 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         let result = purchase_order_line::table
             .filter(purchase_order_line::purchase_order_id.eq_any(purchase_order_ids))
             .load::<PurchaseOrderLineRow>(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_max_purchase_order_line_number(
+        &self,
+        purchase_order_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = purchase_order_line::table
+            .filter(purchase_order_line::purchase_order_id.eq(purchase_order_id))
+            .select(max(purchase_order_line::line_number))
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 }
