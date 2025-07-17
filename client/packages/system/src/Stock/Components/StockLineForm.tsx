@@ -107,6 +107,21 @@ export const StockLineForm = ({
 
   if (loading) return null;
 
+  const getDosesProps = (numPacks: number) => {
+    if (!preferences?.manageVaccinesInDoses || !draft.item.isVaccine) return {};
+
+    const doses = numPacks * draft.packSize * (draft.item.doses ?? 1);
+
+    return {
+      helperText: `${doses} ${t('label.doses').toLowerCase()}`,
+      sx: {
+        '& .MuiFormHelperText-root': {
+          textAlign: 'right',
+        },
+      },
+    };
+  };
+
   return (
     <DetailContainer>
       <Grid
@@ -134,24 +149,28 @@ export const StockLineForm = ({
                 onChange={totalNumberOfPacks =>
                   onUpdate({ totalNumberOfPacks })
                 }
+                {...getDosesProps(draft.totalNumberOfPacks)}
               />
             }
           />
           {!packEditable && (
-            <StyledInputRow
-              label={t('label.available-packs')}
-              Input={
-                <NumericTextInput
-                  autoFocus
-                  disabled={!packEditable}
-                  width={160}
-                  value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
-                  onChange={availableNumberOfPacks =>
-                    onUpdate({ availableNumberOfPacks })
-                  }
-                />
-              }
-            />
+            <>
+              <StyledInputRow
+                label={t('label.available-packs')}
+                Input={
+                  <NumericTextInput
+                    autoFocus
+                    disabled={!packEditable}
+                    width={160}
+                    value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
+                    onChange={availableNumberOfPacks =>
+                      onUpdate({ availableNumberOfPacks })
+                    }
+                    {...getDosesProps(draft.availableNumberOfPacks)}
+                  />
+                }
+              />
+            </>
           )}
           <StyledInputRow
             label={t('label.cost-price')}
