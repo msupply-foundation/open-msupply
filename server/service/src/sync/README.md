@@ -92,7 +92,7 @@ In google drive, under `Knowledge Base > Sync System > How to add v6 sync for ce
 
 [Add om report translations](https://github.com/msupply-foundation/open-msupply/commit/bd73a2be5cf33670635e55709a120d2145a98731)
 
-[Add tests](https://github.com/msupply-foundation/open-msupply/commit/6ef0d9952ac89d3eb31fa5ac1893e154ad8319ee) 
+[Add tests](https://github.com/msupply-foundation/open-msupply/commit/6ef0d9952ac89d3eb31fa5ac1893e154ad8319ee)
 
 ## Central Servers
 
@@ -117,8 +117,6 @@ Open mSupply's central server uses ChangeLog to keep track of which records have
 In Original mSupply central server, remote/transfer/shared records are added to a sync queue for the related remote site. This queue is used to figure out what should go to what site when there are sync API requests from remote sites.
 
 In Open mSupply, ChangeLog is used for this. The logic, of determining which records should go to which site, happens in one sql statement on the `ChangeLog` table, which would look something like this:
-
-
 
 ```SQL
 SELECT * FROM changelog_dedup
@@ -174,3 +172,10 @@ When change allows for previous version to still work without logical or syntax 
 ### V6 Versioning
 
 The same versioning pattern also applies to the V6 sync (syncing with Open mSupply Central). The V6 sync version of the remote site is set in [settings.rs](./settings.rs), and checked in [sync_on_central](./sync_on_central/mod.rs)
+
+## Debugging sync::test::pull_and_push::test_sync_pull_and_push
+
+This test is a little tricky to debug when it fails, as the error messages are not very specific. While we're improving that, here are two strategies that can help isolate the root cause:
+
+1. Find the functions that may be being called by that test, and put in a println! statement to each one, then run the test again - that will show you which functions are called, how many times, and in what sequence.
+2. Search the error message displayed in the console for SQL errors. For example, 'FOREIGN KEY CONSTRAINT FAILED' and similar. If you find one, then the root cause of the trouble is almost certainly that a bit of your mock data fails to fulfil one of the constraints of the table you're testing. To check out the constraints, open the database in a database browser (we often use DBeaver) and generate the table's DDL (Data Description Language).
