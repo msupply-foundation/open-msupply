@@ -18,7 +18,7 @@ pub fn generate(
     Ok(PurchaseOrderLineRow {
         id: input.id,
         purchase_order_id: input.purchase_order_id,
-        line_number,
+        line_number: Some(line_number),
         item_link_id: Some(input.item_id),
         ..Default::default()
     })
