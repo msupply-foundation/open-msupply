@@ -327,6 +327,8 @@ fn apply_known_styles(cell: &mut Cell, cell_type: &str) {
 
 #[cfg(test)]
 mod report_to_excel_test {
+    use std::time::Duration;
+
     use super::*;
     use scraper::Html;
 
@@ -554,8 +556,8 @@ mod report_to_excel_test {
         );
     }
 
-    #[test]
-    fn test_generate_excel_perf() {
+    #[tokio::test]
+    async fn test_generate_excel_perf() {
         // We want to ensure that excel export takes a sensible amount of time.
         // Many reports may have several thousand rows with dozens of columns
 
@@ -602,16 +604,25 @@ mod report_to_excel_test {
 
         let mut book = umya_spreadsheet::new_file();
         book.set_sheet_name(0, "test").unwrap();
-        let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        let start = std::time::Instant::now();
-        apply_report(sheet, report);
-        let duration_secs = start.elapsed().as_millis();
-        dbg!(&duration_secs);
+        let handle = tokio::spawn(async move {
+            let sheet = book.get_sheet_by_name_mut("test").unwrap();
+            let start = std::time::Instant::now();
+            apply_report(sheet, report);
+            let duration_millisec = start.elapsed().as_millis();
+            dbg!(&duration_millisec);
+            duration_millisec
+        });
+
+        let duration_millisec = tokio::time::timeout(Duration::from_secs(10), handle)
+            .await
+            .unwrap()
+            .unwrap();
+
         assert!(
-            duration_secs < 5000,
+            duration_millisec < 5000,
             "Generate to excel should be FAST. Took: {}ms",
-            duration_secs
+            duration_millisec
         );
     }
 
