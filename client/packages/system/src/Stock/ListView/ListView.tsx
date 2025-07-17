@@ -17,12 +17,9 @@ import {
   usePluginProvider,
   useEditModal,
   CellProps,
-  NumberCell,
-  Box,
-  Typography,
   usePreference,
   PreferenceKey,
-  NumUtils,
+  UnitsAndMaybeDoses,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -163,9 +160,7 @@ const StockListComponent: FC = () => {
         maxWidth: 'unset',
         defaultHideOnMobile: true,
         Cell: UnitsAndMaybeDosesCell,
-        cellProps: {
-          displayDoses: prefs?.manageVaccinesInDoses,
-        },
+        cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
       },
     ],
     {
@@ -254,33 +249,16 @@ const UnitsAndMaybeDosesCell = (
   props: CellProps<StockLineRowFragment> & { displayDoses?: boolean }
 ) => {
   const { rowData, column } = props;
-  const t = useTranslation();
   const units = Number(column.accessor({ rowData })) ?? 0;
   const { isVaccine, dosesPerUnit } = rowData.item;
 
-  // Doses should always be a whole number, round if fractional packs are giving us funky decimals
-  const doseCount = NumUtils.round(dosesPerUnit * units);
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        width: '100%',
-      }}
-    >
-      <NumberCell {...props} />
-      {props.displayDoses && isVaccine && (
-        <Typography
-          sx={{
-            fontSize: 'small',
-            color: 'text.secondary',
-            marginLeft: '-6px',
-          }}
-        >
-          ({doseCount} {t('label.doses-short')})
-        </Typography>
-      )}
-    </Box>
+    <UnitsAndMaybeDoses
+      numberCellProps={props}
+      units={units}
+      isVaccine={isVaccine}
+      dosesPerUnit={dosesPerUnit}
+      displayDoses={props.displayDoses}
+    />
   );
 };

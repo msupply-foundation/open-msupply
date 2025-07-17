@@ -10,10 +10,13 @@ import {
   useUrlQueryParams,
   ColumnAlign,
   TooltipTextCell,
+  CellProps,
+  usePreference,
+  PreferenceKey,
+  UnitsAndMaybeDoses,
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
-import { PackQuantityCell } from '../Components';
 
 const ItemListComponent = () => {
   const t = useTranslation();
@@ -28,6 +31,7 @@ const ItemListComponent = () => {
     filters: [{ key: 'codeOrName' }],
   });
   const { data, isError, isLoading } = useItems();
+  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
   const pagination = { page, first, offset };
 
   const columns = useColumns<ItemsWithStatsFragment>(
@@ -52,30 +56,34 @@ const ItemListComponent = () => {
         'stockOnHand',
         {
           accessor: ({ rowData }) => rowData.stats.stockOnHand,
-          Cell: PackQuantityCell,
+          Cell: UnitsAndMaybeDosesCell,
           sortable: false,
+          maxWidth: 'unset',
+          cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
         },
       ],
       [
         'monthlyConsumption',
         {
-          Cell: PackQuantityCell,
+          Cell: UnitsAndMaybeDosesCell,
           accessor: ({ rowData }) => rowData.stats.averageMonthlyConsumption,
 
           align: ColumnAlign.Right,
           sortable: false,
-          width: 100,
+          maxWidth: 'unset',
+          cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
         },
       ],
       {
-        Cell: PackQuantityCell,
+        Cell: UnitsAndMaybeDosesCell,
         accessor: ({ rowData }) => rowData.stats.monthsOfStockOnHand ?? 0,
         align: ColumnAlign.Right,
         description: 'description.months-of-stock',
         key: 'monthsOfStockOnHand',
         label: 'label.months-of-stock',
         sortable: false,
-        width: 100,
+        maxWidth: 200,
+        cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
       },
     ],
     {
@@ -110,3 +118,21 @@ export const ItemListView = () => (
     <ItemListComponent />
   </TableProvider>
 );
+
+const UnitsAndMaybeDosesCell = (
+  props: CellProps<ItemsWithStatsFragment> & { displayDoses?: boolean }
+) => {
+  const { rowData, column } = props;
+  const units = Number(column.accessor({ rowData })) ?? 0;
+  const { isVaccine, doses } = rowData;
+
+  return (
+    <UnitsAndMaybeDoses
+      numberCellProps={props}
+      units={units}
+      isVaccine={isVaccine}
+      dosesPerUnit={doses}
+      displayDoses={props.displayDoses}
+    />
+  );
+};
