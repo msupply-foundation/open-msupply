@@ -107,7 +107,9 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
-      {current === PatientModal.Program ? <ProgramDetailModal /> : null}
+      {current === PatientModal.Program ? (
+        <ProgramDetailModal patientId={patient?.id} />
+      ) : null}
       <Grid
         container
         flexDirection="row"
