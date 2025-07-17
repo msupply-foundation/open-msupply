@@ -43,6 +43,16 @@ export const useFormatNumber = () => {
       });
       return intl.format(value ?? 0);
     },
+    tooltip: (value?: number, dp?: number): string => {
+      const intl = intlNumberFormat(currentLanguage, {
+        // round number tooltips to 10dp by default
+        maximumFractionDigits: Math.max(
+          0,
+          Math.min(dp ?? 10, MAX_FRACTION_DIGITS)
+        ),
+      });
+      return intl.format(value ?? 0);
+    },
     parse: (numberString: string, decimalChar: string = decimal) => {
       const negative = numberString.startsWith('-') ? -1 : 1;
 

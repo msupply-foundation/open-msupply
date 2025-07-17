@@ -18,11 +18,12 @@ export const PackQuantityCell = <T extends RecordWithId>({
   const quantity = column.accessor({ rowData });
   const packQuantity = Number(quantity ?? 0);
   const roundedPackQuantity = formatNumber.round(packQuantity, 2);
+  const tooltip = formatNumber.tooltip(packQuantity);
 
   return (
     <BasicCellLayout isError={isError}>
-      <Tooltip title={String(packQuantity)}>
-        <Typography>
+      <Tooltip title={tooltip}>
+        <Typography style={{ color: 'red' }}>
           {!!NumUtils.hasMoreThanTwoDp(packQuantity)
             ? `${roundedPackQuantity}...`
             : roundedPackQuantity}

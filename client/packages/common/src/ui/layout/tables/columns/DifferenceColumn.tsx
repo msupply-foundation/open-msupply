@@ -69,7 +69,7 @@ export const getDifferenceColumn = (
     );
     const formatNumber = useFormatNumber();
     const doses = formatNumber.round(totalInDoses ?? undefined, 2);
-    const tooltipDoses = formatNumber.format(totalInDoses ?? undefined);
+    const tooltip = formatNumber.tooltip(totalInDoses ?? undefined);
 
     return (
       <Box
@@ -84,7 +84,7 @@ export const getDifferenceColumn = (
         {displayDoses && !!totalInDoses && (
           <Typography>
             {`(`}
-            <Tooltip title={tooltipDoses}>
+            <Tooltip title={tooltip}>
               <span>
                 {!!NumUtils.hasMoreThanTwoDp(totalInDoses ?? 0)
                   ? `${doses}...`
