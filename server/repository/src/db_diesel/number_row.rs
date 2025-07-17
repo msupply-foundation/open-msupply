@@ -60,7 +60,9 @@ impl fmt::Display for NumberRowType {
             NumberRowType::CustomerReturn => write!(f, "CUSTOMER_RETURN"),
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
             NumberRowType::PurchaseOrder => write!(f, "PURCHASE_ORDER"),
-            NumberRowType::PurchaseOrderLine(_) => write!(f, "PURCHASE_ORDER_LINE"),
+            NumberRowType::PurchaseOrderLine(custom_string) => {
+                write!(f, "PURCHASE_ORDER_LINE_{}", custom_string)
+            }
         }
     }
 }
@@ -82,13 +84,13 @@ impl TryFrom<String> for NumberRowType {
             "CUSTOMER_RETURN" => Ok(NumberRowType::CustomerReturn),
             "PURCHASE_ORDER_LINE" => Ok(NumberRowType::PurchaseOrderLine(String::new())),
             _ => match s.split_once('_') {
-                Some((prefix, custom_string)) => {
-                    if prefix == "PROGRAM" {
-                        Ok(NumberRowType::Program(custom_string.to_string()))
-                    } else {
-                        Err(NumberRowTypeError::UnknownTypePrefix(prefix.to_string()))
+                Some((prefix, custom_string)) => match prefix {
+                    "PROGRAM" => Ok(NumberRowType::Program(custom_string.to_string())),
+                    "PURCHASE_ORDER_LINE" => {
+                        Ok(NumberRowType::PurchaseOrderLine(custom_string.to_string()))
                     }
-                }
+                    _ => Err(NumberRowTypeError::UnknownTypePrefix(prefix.to_string())),
+                },
                 None => Err(NumberRowTypeError::MissingTypePrefix),
             },
         }
