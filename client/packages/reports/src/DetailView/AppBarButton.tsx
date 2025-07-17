@@ -6,6 +6,7 @@ import {
   EnvUtils,
   FilterIcon,
   Grid,
+  LoadingButton,
   Platform,
   PrinterIcon,
   SwipeIcon,
@@ -54,16 +55,18 @@ export const AppBarButtonsComponent = ({
           Icon={<FilterIcon />}
           onClick={() => onFilterOpen()}
         />
-        <ButtonWithIcon
+        <LoadingButton
+          isLoading={isPrinting}
           disabled={isPrinting}
           label={t('button.print')}
-          Icon={<PrinterIcon />}
+          startIcon={<PrinterIcon />}
           onClick={() => printReport()}
         />
-        <ButtonWithIcon
+        <LoadingButton
+          isLoading={isPrinting}
           disabled={isPrinting}
           label={t('button.export')}
-          Icon={<DownloadIcon />}
+          startIcon={<DownloadIcon />}
           onClick={() => exportReport()}
         />
       </Grid>
