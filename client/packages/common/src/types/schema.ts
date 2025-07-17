@@ -2419,6 +2419,7 @@ export type DraftStockOutLineNode = {
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
 
 export type DraftStockOutLineNodeDonorArgs = {
@@ -3347,6 +3348,7 @@ export type InsertOutboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertOutboundShipmentLineResponse =
@@ -5945,6 +5947,7 @@ export type OutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type PackagingVariantInput = {
@@ -9512,6 +9515,7 @@ export type UpdateOutboundShipmentLineInput = {
   prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOutboundShipmentLineResponse =
