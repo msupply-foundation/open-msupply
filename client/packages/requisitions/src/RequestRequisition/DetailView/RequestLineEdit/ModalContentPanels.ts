@@ -20,6 +20,7 @@ export const getLeftPanel = (
       label: t('label.months-of-stock'),
       value: draft?.itemStats.availableMonthsOfStockOnHand,
       endAdornmentOverride: t('label.months'),
+      displayVaccinesInDoses: false,
     },
   ];
 
@@ -67,6 +68,7 @@ export const getExtraMiddlePanels = (
       label: t('label.days-out-of-stock'),
       value: draft?.daysOutOfStock,
       endAdornmentOverride: t('label.days'),
+      displayVaccinesInDoses: false,
     },
   ];
 };
