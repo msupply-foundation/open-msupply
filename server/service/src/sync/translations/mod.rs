@@ -15,6 +15,7 @@ pub(crate) mod category;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod cold_storage_type;
+pub(crate) mod contact;
 pub(crate) mod contact_form;
 pub(crate) mod currency;
 pub(crate) mod demographic;
@@ -53,6 +54,8 @@ pub(crate) mod preference;
 pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
+pub(crate) mod purchase_order;
+pub(crate) mod purchase_order_line;
 pub(crate) mod reason;
 pub(crate) mod report;
 pub(crate) mod requisition;
@@ -128,6 +131,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_property::boxed(),
         cold_storage_type::boxed(),
         campaign::boxed(),
+        contact::boxed(),
         // Remote
         location::boxed(),
         location_movement::boxed(),
@@ -202,6 +206,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         report::boxed(),
         preference::boxed(),
         sync_message::boxed(),
+        // Purchase Order
+        purchase_order::boxed(),
+        purchase_order_line::boxed(),
     ]
 }
 

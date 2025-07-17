@@ -11,6 +11,7 @@ mod add_shipped_number_of_packs_to_invoice_line;
 mod add_store_id_to_clinician;
 mod extend_name_table_fields;
 mod process_clinician_store_join_deletes;
+mod reintegrate_clinician_gender;
 mod remove_item_variant_doses_column;
 mod resync_existing_vaccination_records;
 mod resync_existing_vaccine_course_dose_and_item;
@@ -43,6 +44,7 @@ impl Migration for V2_09_00 {
             Box::new(resync_existing_vaccination_records::Migrate),
             Box::new(add_can_cancel_finalised_invoices_user_permission::Migrate),
             Box::new(remove_item_variant_doses_column::Migrate),
+            Box::new(reintegrate_clinician_gender::Migrate),
         ]
     }
 }

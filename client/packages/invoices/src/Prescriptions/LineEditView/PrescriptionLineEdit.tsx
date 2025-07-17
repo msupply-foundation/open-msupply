@@ -94,7 +94,7 @@ export const PrescriptionLineEdit = ({
     >
       <AccordionPanelSection
         title={t('label.item', { count: 1 })}
-        closedSummary={item?.name}
+        closedSummary={item?.name ? [{ text: item.name }] : []}
         defaultExpanded={isNew && !isDisabled}
       >
         <Grid flex={1}>

@@ -76,16 +76,16 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE purchase_order_line (
                     id TEXT NOT NULL PRIMARY KEY,
                     purchase_order_id TEXT REFERENCES purchase_order(id) NOT NULL,
-                    line_number INTEGER,
+                    line_number BIGINT,
                     item_link_id TEXT REFERENCES item_link(id),
-                    item_code TEXT NOT NULL,
                     item_name TEXT,
                     number_of_packs {DOUBLE},
                     pack_size {DOUBLE},
-                    -- corresponds to OG "original_quantity"
+                    -- corresponds to OG "original_quantity" (quan_original_order)?
                     requested_quantity {DOUBLE},
-                    -- corresponds to OG "adjusted_quantity"
+                    -- corresponds to OG "adjusted_quantity" (quan_adjusted_order)?
                     authorised_quantity {DOUBLE},
+                    -- I believe this corresponds to OG "quan_rec_to_date"
                     total_received {DOUBLE},
                     requested_delivery_date {DATE},
                     expected_delivery_date {DATE}

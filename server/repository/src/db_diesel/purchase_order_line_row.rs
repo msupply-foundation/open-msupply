@@ -1,12 +1,11 @@
-use crate::db_diesel::item_link_row::item_link;
 use crate::db_diesel::item_row::item;
 use crate::db_diesel::purchase_order_row::purchase_order;
+use crate::{db_diesel::item_link_row::item_link, Upsert};
 
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 use diesel::{dsl::max, prelude::*};
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
@@ -16,8 +15,9 @@ table! {
     purchase_order_line (id) {
         id ->  Text,
         purchase_order_id -> Text,
-        line_number -> BigInt,
+        line_number -> Nullable<BigInt>,
         item_link_id -> Nullable<Text>,
+        item_name ->  Nullable<Text>,
         number_of_packs ->  Nullable<Double>,
         pack_size ->  Nullable<Double>,
         requested_quantity ->  Nullable<Double>,
@@ -35,15 +35,16 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 
 #[derive(
-    TS, Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = purchase_order_line)]
 pub struct PurchaseOrderLineRow {
     pub id: String,
     pub purchase_order_id: String,
-    pub line_number: i64,
+    pub line_number: Option<i64>,
     pub item_link_id: Option<String>,
+    pub item_name: Option<String>,
     pub number_of_packs: Option<f64>,
     pub pack_size: Option<f64>,
     pub requested_quantity: Option<f64>,
@@ -137,5 +138,20 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             .select(max(purchase_order_line::line_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
+    }
+}
+
+impl Upsert for PurchaseOrderLineRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = PurchaseOrderLineRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PurchaseOrderLineRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
