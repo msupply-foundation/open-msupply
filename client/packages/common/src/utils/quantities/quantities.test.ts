@@ -49,6 +49,12 @@ describe('QuantityUtils', () => {
       const line = { packSize: 10 };
       expect(QuantityUtils.packsToDoses(5, line)).toBe(50);
     });
+
+    it('rounds to nearest whole dose', () => {
+      const numberOfPacks = 0.9166667; //  emulate if 1 of 12 doses has been dispensed
+      const line = { packSize: 1, dosesPerUnit: 12 };
+      expect(QuantityUtils.packsToDoses(numberOfPacks, line)).toBe(11);
+    });
   });
 
   describe('dosesToPacks', () => {

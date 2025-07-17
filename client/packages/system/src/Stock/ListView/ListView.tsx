@@ -22,6 +22,7 @@ import {
   Typography,
   usePreference,
   PreferenceKey,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -257,7 +258,8 @@ const UnitsAndMaybeDosesCell = (
   const units = Number(column.accessor({ rowData })) ?? 0;
   const { isVaccine, dosesPerUnit } = rowData.item;
 
-  const doseCount = dosesPerUnit * units;
+  // Doses should always be a whole number, round if fractional packs are giving us funky decimals
+  const doseCount = NumUtils.round(dosesPerUnit * units);
   return (
     <Box
       sx={{
