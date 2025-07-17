@@ -14,6 +14,7 @@ impl MigrationFragment for Migrate {
                 r#"
                     ALTER TYPE number_type ADD VALUE 'PURCHASE_ORDER';
                     ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'purchase_order';
+                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'purchase_order_line';
                 "#
             )?;
         }

@@ -9,6 +9,7 @@ import {
   AccordionSummary,
   Box,
   styled,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { ChevronDownIcon } from '@common/icons';
@@ -40,11 +41,31 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
   },
   height: 'fit-content',
 }));
+interface ClosedSummaryProps {
+  closedSummary?: { displayValue?: string; text: string; tooltip?: string }[];
+}
+
+const ClosedSummary = ({ closedSummary }: ClosedSummaryProps) => {
+  return (
+    <Box>
+      {closedSummary?.map((summary, i) => (
+        <Box key={i} sx={{ display: 'flex', flexDirection: 'row' }}>
+          <Tooltip title={summary?.tooltip}>
+            <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+              {summary.displayValue}
+            </Typography>
+          </Tooltip>
+          <Typography>{summary.text}</Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+};
 
 export interface DetailPanelSectionProps {
   backgroundColor?: string;
   title?: string;
-  closedSummary?: string;
+  closedSummary?: { displayValue?: string; text: string; tooltip?: string }[];
   defaultExpanded?: boolean;
 }
 
@@ -69,11 +90,7 @@ export const AccordionPanelSection: React.FC<
           <Typography>
             <strong>{title}</strong>
           </Typography>
-          {!open && (
-            <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-              {closedSummary}
-            </Typography>
-          )}
+          {!open && <ClosedSummary closedSummary={closedSummary} />}
         </Box>
       </AccordionSummary>
       <AccordionDetails>{children}</AccordionDetails>

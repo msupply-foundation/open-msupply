@@ -30,7 +30,7 @@ async-graphql = { workspace = true }
 thiserror = { workspace = true }
 clap = { workspace = true }
 chrono = { workspace = true }
-diesel = { version = "2.2.1", default-features = false, features = ["chrono"] }
+diesel = { version = "2.2.12", default-features = false, features = ["chrono"] }
 log = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
