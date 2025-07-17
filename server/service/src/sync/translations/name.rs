@@ -1,4 +1,3 @@
-use crate::sync::translations::currency::CurrencyTranslation;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
@@ -10,6 +9,8 @@ use util::sync_serde::{
 };
 
 use serde::{Deserialize, Serialize};
+
+use crate::sync::translations::currency::CurrencyTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
