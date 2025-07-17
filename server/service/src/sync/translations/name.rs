@@ -1,7 +1,3 @@
-use crate::sync::sync_serde::{
-    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
-     zero_date_as_option,
-};
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
@@ -13,6 +9,8 @@ use util::sync_serde::{
 };
 
 use serde::{Deserialize, Serialize};
+
+use crate::sync::translations::currency::CurrencyTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
