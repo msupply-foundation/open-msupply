@@ -48,7 +48,6 @@ export const VVMStatusSearchInput = ({
     <Tooltip title={selected?.description ?? ''} placement="top">
       <Autocomplete
         disabled={disabled}
-        width="100%"
         popperMinWidth={Math.min(Number(width), 200)}
         value={selected ?? defaultOption}
         loading={isLoading}
@@ -57,7 +56,10 @@ export const VVMStatusSearchInput = ({
         getOptionLabel={option => option.description ?? ''}
         noOptionsText={t('messages.no-vvm-statuses')}
         isOptionEqualToValue={(option, value) => option.id === value?.id}
-        clearable={false} // VVM status shouldn't be cleared once set
+        clearable={false}
+        sx={{
+          width: '100%',
+        }}
       />
     </Tooltip>
   );
