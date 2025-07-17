@@ -12,6 +12,7 @@ interface VVMStatusSearchInputProps {
   disabled?: boolean;
   width?: number | string;
   useDefault?: boolean;
+  setDefaultVal: (defaultValue: string) => void;
 }
 
 export const VVMStatusSearchInput = ({
@@ -19,6 +20,7 @@ export const VVMStatusSearchInput = ({
   width,
   onChange,
   disabled,
+  setDefaultVal,
   useDefault = false,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
@@ -37,6 +39,10 @@ export const VVMStatusSearchInput = ({
   const defaultOption = useDefault
     ? options.find(option => option.level === 1)
     : null;
+
+  if (useDefault && defaultOption) {
+    setDefaultVal(defaultOption.id);
+  }
 
   return (
     <Tooltip title={selected?.description ?? ''} placement="top">
