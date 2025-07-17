@@ -27,7 +27,7 @@ export const PrescriptionLineEditTable = ({
     })
   );
 
-  useDisableVvmRows(draftLines);
+  useDisableVvmRows({ rows: draftLines, isVaccine: item?.isVaccine });
 
   const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;

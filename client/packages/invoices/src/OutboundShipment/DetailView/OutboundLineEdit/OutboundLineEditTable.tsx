@@ -189,7 +189,7 @@ export const OutboundLineEditTable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useDisableVvmRows(lines);
+  useDisableVvmRows({ rows: lines, isVaccine: item?.isVaccine });
 
   // Null means we aren't using placeholder
   if (!lines.length && placeholderQuantity === null)

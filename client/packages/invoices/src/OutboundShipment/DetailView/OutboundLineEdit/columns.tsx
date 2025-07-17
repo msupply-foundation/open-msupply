@@ -125,10 +125,7 @@ export const useOutboundLineEditColumns = ({
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => {
-        if (!rowData.vvmStatus) return '';
-        return rowData.vvmStatus;
-      },
+      accessor: ({ rowData }) => rowData?.vvmStatus,
       width: 85,
       Cell: VvmStatusCell,
       defaultHideOnMobile: true,
