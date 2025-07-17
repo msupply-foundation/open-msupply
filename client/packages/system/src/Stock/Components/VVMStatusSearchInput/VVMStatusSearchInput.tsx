@@ -35,7 +35,7 @@ export const VVMStatusSearchInput = ({
 
   const selected = options.find(option => option.id === selectedId) ?? null;
   const defaultOption = useDefault
-    ? (options.find(option => option.level === 1) ?? null)
+    ? options.find(option => option.level === 1)
     : null;
 
   return (
