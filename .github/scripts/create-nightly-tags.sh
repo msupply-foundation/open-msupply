@@ -29,7 +29,7 @@ create_tag_for_branch() {
     fi
 
     PKG_VERSION=$(cat ./package.json | grep 'version":' | sed 's/.*"version":[ \t]*"\([^"]*\)".*/\1/')
-    CLEAN_VERSION=$(echo "$PKG_VERSION" | sed -E 's/-(develop|rc|RC|rC|Rc)$//')
+    CLEAN_VERSION=$(echo "$PKG_VERSION" | sed -E 's/-(develop|rc)$//i')
     COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
     
     if [[ -n "$CLEAN_VERSION" && -n "$COMMIT_DATE" ]]; then
