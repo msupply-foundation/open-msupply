@@ -619,6 +619,9 @@ mod report_to_excel_test {
             .unwrap()
             .unwrap();
 
+        // Note: this was tested on a M3 Macbook Pro and took around 1.6s. If your testing environment
+        // is significantly slower it may fail this assertion! Just make it bigger... for lack of an
+        // elegant way of scaling based on hardware info ;)
         assert!(
             duration_millisec < 5000,
             "Generate to excel should be FAST. Took: {}ms",
