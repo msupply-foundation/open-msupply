@@ -9,7 +9,6 @@ use crate::purchase_order_line::insert::{
 
 pub fn validate(
     input: &InsertPurchaseOrderLineInput,
-    store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(), InsertPurchaseOrderLineError> {
     if let Some(_) = PurchaseOrderLineRowRepository::new(connection).find_one_by_id(&input.id)? {

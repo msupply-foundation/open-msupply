@@ -32,7 +32,7 @@ pub fn insert_purchase_order_line(
     let purchase_order_line = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, store_id, connection)?;
+            validate(&input, connection)?;
 
             let new_purchase_order_line = generate(connection, store_id, input.clone())?;
             PurchaseOrderLineRowRepository::new(connection).upsert_one(&new_purchase_order_line)?;
