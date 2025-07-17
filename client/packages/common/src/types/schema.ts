@@ -6247,6 +6247,7 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  customTranslations: Scalars['JSON']['output'];
   genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];

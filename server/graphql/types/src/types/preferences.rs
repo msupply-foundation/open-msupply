@@ -33,6 +33,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.use_campaigns)
     }
 
+    pub async fn custom_translations(&self) -> Result<serde_json::Value> {
+        self.load_preference(&self.preferences.custom_translations)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
