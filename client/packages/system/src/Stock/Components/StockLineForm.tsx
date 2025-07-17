@@ -24,6 +24,7 @@ import {
   usePreference,
   PreferenceKey,
   ReasonOptionNodeType,
+  QuantityUtils,
 } from '@openmsupply-client/common';
 import { DraftStockLine } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -110,7 +111,7 @@ export const StockLineForm = ({
   const getDosesProps = (numPacks: number) => {
     if (!preferences?.manageVaccinesInDoses || !draft.item.isVaccine) return {};
 
-    const doses = numPacks * draft.packSize * (draft.item.doses ?? 1);
+    const doses = QuantityUtils.packsToDoses(numPacks, draft);
 
     return {
       helperText: `${doses} ${t('label.doses').toLowerCase()}`,

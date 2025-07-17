@@ -255,9 +255,9 @@ const UnitsAndMaybeDosesCell = (
   const { rowData, column } = props;
   const t = useTranslation();
   const units = Number(column.accessor({ rowData })) ?? 0;
-  const { isVaccine, doses } = rowData.item;
+  const { isVaccine, dosesPerUnit } = rowData.item;
 
-  const doseCount = doses * units;
+  const doseCount = dosesPerUnit * units;
   return (
     <Box
       sx={{
