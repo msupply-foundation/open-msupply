@@ -6,6 +6,14 @@ import {
 } from '@openmsupply-client/common';
 import { useVvmStatusesEnabled, VvmStatusFragment } from '../../api';
 
+type VvmStatusOption = {
+  id: string;
+  code: string;
+  description: string;
+  level: number;
+  unusable: boolean;
+};
+
 interface VVMStatusSearchInputProps {
   selectedId: string | null;
   onChange: (variantId: string | null) => void;
@@ -28,17 +36,16 @@ export const VVMStatusSearchInput = ({
 
   if (!data) return null;
 
-  const options = data.map((status: VvmStatusFragment) => ({
+  const options: VvmStatusOption[] = data.map((status: VvmStatusFragment) => ({
     id: status?.id,
     code: status?.code,
     description: status?.description,
     level: status?.level,
+    unusable: status?.unusable,
   }));
 
   const selected = options.find(option => option.id === selectedId) ?? null;
-  const defaultOption = useDefault
-    ? options.find(option => option.level === 1)
-    : null;
+  const defaultOption = useDefault ? getHighestVvmStatusLevel(options) : null;
 
   if (useDefault && defaultOption && setDefaultVal) {
     setDefaultVal(defaultOption.id);
@@ -63,4 +70,10 @@ export const VVMStatusSearchInput = ({
       />
     </Tooltip>
   );
+};
+
+const getHighestVvmStatusLevel = (statuses: VvmStatusOption[]) => {
+  const usableStatuses = statuses.filter(status => !status.unusable);
+  usableStatuses.sort((a, b) => b.level - a.level);
+  return usableStatuses[usableStatuses.length - 1];
 };
