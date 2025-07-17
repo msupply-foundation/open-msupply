@@ -53,6 +53,7 @@ fn generate_batch_update(
     if adjust_total_number_of_packs {
         update_batch.stock_line_row.total_number_of_packs -= reduction;
     }
+    update_batch.stock_line_row.vvm_status_id = input.vvm_status_id.clone();
 
     update_batch
 }
@@ -138,7 +139,7 @@ fn generate_line(
         note,
         foreign_currency_price_before_tax,
         item_variant_id,
-        vvm_status_id,
+        vvm_status_id: input.vvm_status_id.or(vvm_status_id),
         donor_link_id,
         campaign_id,
         shipped_number_of_packs,

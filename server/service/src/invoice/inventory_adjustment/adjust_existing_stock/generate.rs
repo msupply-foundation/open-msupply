@@ -151,6 +151,7 @@ pub fn generate(
             stock_line_id,
             note,
             number_of_packs: adjustment,
+            vvm_status_id,
             campaign_id,
             // Default
             prescribed_quantity: None,

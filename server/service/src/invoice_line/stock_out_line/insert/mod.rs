@@ -1,3 +1,4 @@
+use super::StockOutType;
 use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
     invoice_line::query::get_invoice_line,
@@ -11,8 +12,6 @@ mod generate;
 use generate::generate;
 mod validate;
 use validate::validate;
-
-use super::StockOutType;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct InsertStockOutLine {
@@ -32,6 +31,7 @@ pub struct InsertStockOutLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub campaign_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -51,6 +51,7 @@ pub enum InsertStockOutLineError {
     NewlyCreatedLineDoesNotExist,
     BatchIsOnHold,
     ReductionBelowZero { stock_line_id: String },
+    VVMStatusDoesNotExist,
 }
 
 impl From<RepositoryError> for InsertStockOutLineError {

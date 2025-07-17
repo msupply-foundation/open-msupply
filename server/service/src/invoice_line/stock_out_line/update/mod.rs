@@ -1,20 +1,18 @@
-use repository::{
-    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLine,
-    StockLineRowRepository,
-};
-
+use super::StockOutType;
 use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
+};
+use repository::{
+    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLine,
+    StockLineRowRepository,
 };
 
 mod generate;
 use generate::generate;
 mod validate;
 use validate::validate;
-
-use super::StockOutType;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateStockOutLine {
@@ -27,6 +25,7 @@ pub struct UpdateStockOutLine {
     pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
     pub campaign_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -54,6 +53,7 @@ pub enum UpdateStockOutLineError {
         stock_line_id: String,
         line_id: String,
     },
+    VVMStatusDoesNotExist,
 }
 
 type OutError = UpdateStockOutLineError;

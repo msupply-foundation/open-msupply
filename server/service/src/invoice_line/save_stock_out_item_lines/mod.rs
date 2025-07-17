@@ -38,6 +38,7 @@ pub struct SaveStockOutInvoiceLine {
     pub number_of_packs: f64,
     pub stock_line_id: String,
     pub campaign_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -325,7 +326,8 @@ mod test {
                             id: "new_line".to_string(),
                             number_of_packs: 1000.0,
                             stock_line_id: mock_stock_line_vaccine_item_a().id,
-                            campaign_id: None
+                            campaign_id: None,
+                            vvm_status_id: None,
                         }],
                         ..Default::default()
                     }
@@ -402,12 +404,14 @@ mod test {
                             number_of_packs: 1.0,
                             stock_line_id: mock_stock_line_b().id,
                             campaign_id: None,
+                            vvm_status_id: None,
                         },
                         SaveStockOutInvoiceLine {
                             id: line_to_update().id,
                             number_of_packs: 2.0,
                             stock_line_id: mock_stock_line_a().id,
                             campaign_id: None,
+                            vvm_status_id: None,
                         },
                         SaveStockOutInvoiceLine {
                             id: line_to_delete().id,

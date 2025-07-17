@@ -1,8 +1,4 @@
-use repository::{
-    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError,
-    StockLine, StockLineRow, StorageConnection,
-};
-
+use super::{InsertStockOutLine, InsertStockOutLineError};
 use crate::{
     invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax},
     invoice_line::StockOutType,
@@ -12,8 +8,10 @@ use crate::{
     },
     service_provider::ServiceContext,
 };
-
-use super::{InsertStockOutLine, InsertStockOutLineError};
+use repository::{
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError,
+    StockLine, StockLineRow, StorageConnection,
+};
 
 pub fn generate(
     ctx: &ServiceContext,
@@ -60,6 +58,7 @@ fn generate_batch_update(
         cost_price_per_pack,
         sell_price_per_pack,
         number_of_packs,
+        vvm_status_id,
         prescribed_quantity: _,
         note: _,
         id: _,
@@ -89,6 +88,7 @@ fn generate_batch_update(
         pack_size: pack_size.unwrap_or(batch.pack_size),
         cost_price_per_pack: cost_price_per_pack.unwrap_or(batch.cost_price_per_pack),
         sell_price_per_pack: sell_price_per_pack.unwrap_or(batch.sell_price_per_pack),
+        vvm_status_id: vvm_status_id.or(batch.vvm_status_id),
         ..batch
     }
 }
@@ -112,6 +112,7 @@ fn generate_line(
         expiry_date: _,
         cost_price_per_pack: _,
         sell_price_per_pack: _,
+        vvm_status_id: input_vvm_status_id,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -177,12 +178,12 @@ fn generate_line(
         note,
         foreign_currency_price_before_tax,
         item_variant_id,
-        vvm_status_id,
+        vvm_status_id: input_vvm_status_id.or(vvm_status_id),
         campaign_id,
-        linked_invoice_id: None,
-        reason_option_id: None,
         shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
             .then_some(number_of_packs),
+        linked_invoice_id: None,
+        reason_option_id: None,
     })
 }
 
