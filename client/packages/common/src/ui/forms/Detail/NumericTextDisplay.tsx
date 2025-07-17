@@ -1,5 +1,7 @@
 import React, { FC } from 'react';
-import { Typography } from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
+import { useFormatNumber } from '@common/intl';
+import { NumUtils } from '@common/utils';
 
 /*
 Simple component for displaying numbers as text in a "form-like" layout
@@ -9,17 +11,43 @@ or in "shorthand" style <NumberTextDislay value={value} />
 */
 
 interface NumericTextDisplayProps {
-  value?: string | number;
+  value?: number;
   children?: React.ReactElement;
   width?: number;
 }
 
 export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   value,
-  children,
   width = 30,
-}) => (
-  <Typography style={{ width, textAlign: 'right' }}>
-    {(children ?? value != null) ? value : ''}
-  </Typography>
-);
+}) => {
+  const format = useFormatNumber();
+  const tooltip = format.tooltip(value ?? 0);
+  const formattedValue = format.round(value ?? 0, 2);
+
+  const displayValue =
+    value === undefined || value === null ? null : formattedValue;
+
+  return (
+    <Box
+      sx={{
+        padding: '4px 8px',
+      }}
+    >
+      <Tooltip title={tooltip}>
+        <Typography
+          style={{
+            width: width,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            textAlign: 'right',
+            fontSize: 'inherit',
+          }}
+        >
+          {!!NumUtils.hasMoreThanTwoDp(value ?? 0)
+            ? `${displayValue}...`
+            : displayValue}
+        </Typography>
+      </Tooltip>
+    </Box>
+  );
+};
