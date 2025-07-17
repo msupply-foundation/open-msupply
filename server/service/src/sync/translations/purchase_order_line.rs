@@ -4,14 +4,12 @@ use repository::{
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
 
-use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option},
-    translations::{
-        master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
-        purchase_order::PurchaseOrderTranslation, store::StoreTranslation, PullTranslateResult,
-        PushTranslateResult, SyncTranslation,
-    },
+use crate::sync::translations::{
+    master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
+    purchase_order::PurchaseOrderTranslation, store::StoreTranslation, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
 };
 
 #[allow(non_snake_case)]
