@@ -122,6 +122,8 @@ impl StockLineNode {
                 ItemVariantNode::from_domain(ItemVariant {
                     item_variant_row: item_variant_row.clone(),
                     item_row: self.stock_line.item_row.clone(),
+                    // These two fields below are required by from_domain(), but are not returned in ItemVariantNode
+                    // therefore it is simplest to pass them to from_domain() with a value of None.
                     manufacturer_row: None,
                     cold_storage_type_row: None,
                 })
