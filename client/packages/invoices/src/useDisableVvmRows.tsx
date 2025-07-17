@@ -18,14 +18,10 @@ export const useDisableVvmRows = ({
   isVaccine,
 }: UseDisableVvmRowsProps): void => {
   const { setDisabledRows } = useTableStore();
-  const { data: prefs } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock
-  );
+  const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatusForStock);
 
   const shouldDisableVvmRows =
-    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) &&
-    isVaccine === true;
+    prefs?.manageVvmStatusForStock && isVaccine === true;
 
   useEffect(() => {
     if (shouldDisableVvmRows) {
