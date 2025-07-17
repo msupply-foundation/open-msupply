@@ -37,11 +37,11 @@ export const VVMStatusSearchInput = ({
   if (!data) return null;
 
   const options: VvmStatusOption[] = data.map((status: VvmStatusFragment) => ({
-    id: status?.id,
-    code: status?.code,
-    description: status?.description,
-    level: status?.level,
-    unusable: status?.unusable,
+    id: status.id,
+    code: status.code,
+    description: status.description,
+    level: status.level,
+    unusable: status.unusable,
   }));
 
   const selected = options.find(option => option.id === selectedId) ?? null;
