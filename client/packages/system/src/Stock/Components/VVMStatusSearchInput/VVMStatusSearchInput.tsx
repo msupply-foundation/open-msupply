@@ -74,6 +74,6 @@ export const VVMStatusSearchInput = ({
 
 const getHighestVvmStatusLevel = (statuses: VvmStatusOption[]) => {
   const usableStatuses = statuses.filter(status => !status.unusable);
-  usableStatuses.sort((a, b) => b.level - a.level);
+  usableStatuses.sort((a, b) => a.level - b.level);
   return usableStatuses[usableStatuses.length - 1];
 };
