@@ -138,6 +138,7 @@ export const OutboundLineEditTable = ({
     allocatedQuantity,
     item,
     manualAllocate,
+    setVvmStatus,
   } = useAllocationContext(state => {
     const { placeholderUnits, item, allocateIn } = state;
 
@@ -175,6 +176,7 @@ export const OutboundLineEditTable = ({
     currency,
     isExternalSupplier,
     allocateIn: allocateIn,
+    setVvmStatus,
   });
 
   // Display all stock lines to user, including non-allocatable ones at the bottom

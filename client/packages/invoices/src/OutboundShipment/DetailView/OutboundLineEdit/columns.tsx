@@ -27,6 +27,7 @@ import {
 import {
   CurrencyRowFragment,
   ItemVariantInfoIcon,
+  VVMStatusInputCell,
 } from '@openmsupply-client/system';
 import { getStockOutQuantityCellId } from '../../../utils';
 import {
@@ -54,12 +55,14 @@ export const useOutboundLineEditColumns = ({
   currency,
   isExternalSupplier,
   allocateIn,
+  setVvmStatus,
 }: {
   allocate: AllocateFn;
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
   allocateIn: AllocateInOption;
+  setVvmStatus: (id: string, vvmStatusId?: string | null) => void;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
@@ -117,20 +120,14 @@ export const useOutboundLineEditColumns = ({
     ],
   ];
   // If we have use VVM status, we need to show the VVM status column
-  if (
-    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) &&
-    item?.isVaccine
-  ) {
+  if (prefs?.manageVvmStatusForStock && item?.isVaccine) {
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => {
-        if (!rowData.vvmStatus) return '';
-        // TODO: Show unusable VVM status somehow?
-        return rowData.vvmStatus?.description;
-      },
       width: 85,
-      Cell: TooltipTextCell,
+      Cell: VVMStatusInputCell,
+      accessor: ({ rowData }) => rowData.vvmStatusId,
+      setter: ({ id, vvmStatusId }) => setVvmStatus(id, vvmStatusId),
       defaultHideOnMobile: true,
     });
   }
