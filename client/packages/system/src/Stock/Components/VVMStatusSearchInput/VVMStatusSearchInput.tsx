@@ -12,7 +12,7 @@ interface VVMStatusSearchInputProps {
   disabled?: boolean;
   width?: number | string;
   useDefault?: boolean;
-  setDefaultVal: (defaultValue: string) => void;
+  setDefaultVal?: (defaultValue: string) => void;
 }
 
 export const VVMStatusSearchInput = ({
@@ -40,7 +40,7 @@ export const VVMStatusSearchInput = ({
     ? options.find(option => option.level === 1)
     : null;
 
-  if (useDefault && defaultOption) {
+  if (useDefault && defaultOption && setDefaultVal) {
     setDefaultVal(defaultOption.id);
   }
 
