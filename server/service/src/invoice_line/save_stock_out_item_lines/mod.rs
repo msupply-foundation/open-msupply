@@ -153,7 +153,7 @@ pub fn save_stock_out_item_lines(
                         prescribed_quantity,
                     },
                 )
-                .map_err(|error| SaveStockOutItemLinesError::PrescribedQuantityError(error))?;
+                .map_err(SaveStockOutItemLinesError::PrescribedQuantityError)?;
             }
 
             if let Some(note) = input.note {

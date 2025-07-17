@@ -1,6 +1,9 @@
 use super::{InsertStockOutLine, InsertStockOutLineError};
 use crate::{
-    invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax},
+    invoice::common::{
+        calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
+        GenerateVVMStatusLogInput,
+    },
     invoice_line::StockOutType,
     pricing::{
         calculate_sell_price::calculate_sell_price,
@@ -9,9 +12,16 @@ use crate::{
     service_provider::ServiceContext,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError,
-    StockLine, StockLineRow, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLineRow, InvoiceLineType, InvoiceRow,
+    InvoiceStatus, ItemRow, RepositoryError, StockLine, StockLineRow, StorageConnection,
 };
+use util::uuid::uuid;
+
+pub struct GenerateResult {
+    pub new_line: InvoiceLineRow,
+    pub update_batch: StockLineRow,
+    pub vvm_status_log_option: Option<VVMStatusLogRow>,
+}
 
 pub fn generate(
     ctx: &ServiceContext,
@@ -19,7 +29,7 @@ pub fn generate(
     item_row: ItemRow,
     batch: StockLine,
     invoice: InvoiceRow,
-) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
+) -> Result<GenerateResult, InsertStockOutLineError> {
     let adjust_total_number_of_packs =
         should_adjust_total_number_of_packs(invoice.status.clone(), &input.r#type);
 
@@ -39,14 +49,31 @@ pub fn generate(
     )?;
     let new_line = generate_line(
         &ctx.connection,
-        input,
+        input.clone(),
         item_row,
         update_batch.clone(),
-        invoice,
+        invoice.clone(),
         pricing,
     )?;
 
-    Ok((new_line, update_batch))
+    let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
+        Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+            id: Some(uuid()),
+            store_id: invoice.store_id.clone(),
+            created_by: ctx.user_id.clone(),
+            vvm_status_id,
+            stock_line_id: update_batch.id.clone(),
+            invoice_line_id: new_line.id.clone(),
+        }))
+    } else {
+        None
+    };
+
+    Ok(GenerateResult {
+        new_line,
+        update_batch,
+        vvm_status_log_option,
+    })
 }
 
 fn generate_batch_update(

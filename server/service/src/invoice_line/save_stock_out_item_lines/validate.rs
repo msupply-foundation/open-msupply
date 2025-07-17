@@ -6,12 +6,10 @@ use crate::{
 };
 
 fn is_stock_out_invoice(invoice: &InvoiceRow) -> bool {
-    match invoice.r#type {
-        InvoiceType::OutboundShipment | InvoiceType::Prescription | InvoiceType::SupplierReturn => {
-            true
-        }
-        _ => false,
-    }
+    matches!(
+        invoice.r#type,
+        InvoiceType::OutboundShipment | InvoiceType::Prescription | InvoiceType::SupplierReturn
+    )
 }
 
 pub fn validate(
