@@ -48,6 +48,40 @@ export type ContactsQuery = {
   };
 };
 
+export type PurchaseOrdersFragment = {
+  __typename: 'PurchaseOrderNode';
+  number: number;
+  createdDatetime: string;
+  status: Types.PurchaseOrderNodeStatus;
+  targetMonths?: number | null;
+  expectedDeliveryDatetime?: string | null;
+  comment?: string | null;
+  supplier?: { __typename: 'NameNode'; name: string } | null;
+  lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+};
+
+export type PurchaseOrdersQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PurchaseOrdersQuery = {
+  __typename: 'Queries';
+  purchaseOrders: {
+    __typename: 'PurchaseOrderConnector';
+    nodes: Array<{
+      __typename: 'PurchaseOrderNode';
+      number: number;
+      createdDatetime: string;
+      status: Types.PurchaseOrderNodeStatus;
+      targetMonths?: number | null;
+      expectedDeliveryDatetime?: string | null;
+      comment?: string | null;
+      supplier?: { __typename: 'NameNode'; name: string } | null;
+      lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+    }>;
+  };
+};
+
 export const ContactFragmentDoc = gql`
   fragment Contact on ContactNode {
     address1
@@ -65,6 +99,22 @@ export const ContactFragmentDoc = gql`
     position
   }
 `;
+export const PurchaseOrdersFragmentDoc = gql`
+  fragment PurchaseOrders on PurchaseOrderNode {
+    supplier {
+      name
+    }
+    number
+    createdDatetime
+    status
+    targetMonths
+    expectedDeliveryDatetime
+    lines {
+      totalCount
+    }
+    comment
+  }
+`;
 export const ContactsDocument = gql`
   query contacts($nameId: String!, $storeId: String!) {
     contacts(nameId: $nameId, storeId: $storeId) {
@@ -77,6 +127,19 @@ export const ContactsDocument = gql`
     }
   }
   ${ContactFragmentDoc}
+`;
+export const PurchaseOrdersDocument = gql`
+  query purchaseOrders($storeId: String!) {
+    purchaseOrders(storeId: $storeId) {
+      ... on PurchaseOrderConnector {
+        __typename
+        nodes {
+          ...PurchaseOrders
+        }
+      }
+    }
+  }
+  ${PurchaseOrdersFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -109,6 +172,22 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'contacts',
+        'query',
+        variables
+      );
+    },
+    purchaseOrders(
+      variables: PurchaseOrdersQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<PurchaseOrdersQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PurchaseOrdersQuery>(
+            PurchaseOrdersDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'purchaseOrders',
         'query',
         variables
       );

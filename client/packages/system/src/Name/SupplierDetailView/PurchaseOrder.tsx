@@ -21,7 +21,7 @@ export const PurchaseOrder = (): ReactElement => {
     [
       {
         key: 'orderNumber',
-        label: 'Order Number',
+        label: 'Number',
       },
       {
         key: 'status',
@@ -29,7 +29,7 @@ export const PurchaseOrder = (): ReactElement => {
       },
       {
         key: 'date',
-        label: 'Date',
+        label: 'Date Created',
       },
       {
         key: 'lock',
