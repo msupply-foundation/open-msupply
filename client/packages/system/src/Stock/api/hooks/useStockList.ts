@@ -37,10 +37,6 @@ export const useStockList = (queryParams: StockListParams) => {
     const filter = {
       ...filterBy,
       hasPacksInStore: true,
-      masterList: {
-        existsForStoreId: { equalTo: storeId },
-        ...filterBy?.masterList,
-      },
     };
     const query = await stockApi.stockLines({
       storeId,

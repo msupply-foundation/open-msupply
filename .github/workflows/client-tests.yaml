@@ -32,8 +32,6 @@ jobs:
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Run tests
         run: cd ./client && yarn test
