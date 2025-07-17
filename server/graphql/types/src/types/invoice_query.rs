@@ -334,7 +334,7 @@ impl InvoiceNode {
         )
     }
 
-    pub async fn clinician(&self, _ctx: &Context<'_>) -> Option<ClinicianNode> {
+    pub async fn clinician(&self) -> Option<ClinicianNode> {
         self.clinician_row()
             .as_ref()
             .map(|row| ClinicianNode::from_domain(row.clone()))
@@ -443,7 +443,7 @@ impl InvoiceNode {
         Ok(result)
     }
 
-    pub async fn store(&self, _ctx: &Context<'_>) -> StoreNode {
+    pub async fn store(&self) -> StoreNode {
         StoreNode::from_domain(Store {
             store_row: self.store_row().clone(),
             name_row: self.name_row().clone(),

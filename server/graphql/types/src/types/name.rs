@@ -73,7 +73,7 @@ impl NameNode {
         self.name.is_system_name()
     }
 
-    pub async fn store(&self, _ctx: &Context<'_>) -> Option<StoreNode> {
+    pub async fn store(&self) -> Option<StoreNode> {
         self.store_row().as_ref().map(|store_row| {
             StoreNode::from_domain(Store {
                 store_row: store_row.clone(),

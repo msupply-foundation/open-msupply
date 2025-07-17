@@ -86,7 +86,7 @@ impl StockLineNode {
         self.stock_line.location_name()
     }
 
-    pub async fn location(&self, _ctx: &Context<'_>) -> Option<LocationNode> {
+    pub async fn location(&self) -> Option<LocationNode> {
         self.stock_line.location_row.as_ref().map(|row| {
             LocationNode::from_domain(Location {
                 location_row: row.clone(),
@@ -114,7 +114,7 @@ impl StockLineNode {
         self.stock_line.barcode()
     }
 
-    pub async fn item_variant(&self, _ctx: &Context<'_>) -> Option<ItemVariantNode> {
+    pub async fn item_variant(&self) -> Option<ItemVariantNode> {
         self.stock_line
             .item_variant_row
             .as_ref()
@@ -128,7 +128,7 @@ impl StockLineNode {
             })
     }
 
-    pub async fn vvm_status(&self, _ctx: &Context<'_>) -> Option<VVMStatusNode> {
+    pub async fn vvm_status(&self) -> Option<VVMStatusNode> {
         self.stock_line
             .vvm_status_row
             .as_ref()

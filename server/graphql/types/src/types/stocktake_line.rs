@@ -45,7 +45,7 @@ impl StocktakeLineNode {
         }
     }
 
-    pub async fn location(&self, _ctx: &Context<'_>) -> Option<LocationNode> {
+    pub async fn location(&self) -> Option<LocationNode> {
         self.line.location.as_ref().map(|row| {
             LocationNode::from_domain(Location {
                 location_row: row.clone(),

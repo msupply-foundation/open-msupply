@@ -163,7 +163,7 @@ impl InvoiceLineNode {
         &self.row().location_id
     }
 
-    pub async fn location(&self, _ctx: &Context<'_>) -> Option<LocationNode> {
+    pub async fn location(&self) -> Option<LocationNode> {
         self.invoice_line.location_row_option.as_ref().map(|row| {
             LocationNode::from_domain(Location {
                 location_row: row.clone(),
