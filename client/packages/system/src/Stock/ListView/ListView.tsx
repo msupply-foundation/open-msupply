@@ -274,7 +274,6 @@ const UnitsAndMaybeDosesCell = (
         <Typography
           sx={{
             fontSize: 'small',
-            fontStyle: 'italic',
             color: 'text.secondary',
             marginLeft: '-6px',
           }}
