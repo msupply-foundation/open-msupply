@@ -83,7 +83,6 @@ mod test {
             p.id = po_line_id.to_string();
             p.purchase_order_id = purchase_order_id.to_string();
             p.line_number = 1;
-            p.item_code = "test_code".to_string();
             p.item_link_id = "item_a".to_string();
         });
         let result = repo.upsert_one(&po_line);

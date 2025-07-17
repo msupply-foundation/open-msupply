@@ -18,7 +18,6 @@ table! {
         purchase_order_id -> Text,
         line_number -> BigInt,
         item_link_id -> Text,
-        item_code -> Text,
         item_name -> Nullable<Text>,
         number_of_packs ->  Nullable<Double>,
         pack_size ->  Nullable<Double>,
@@ -46,7 +45,6 @@ pub struct PurchaseOrderLineRow {
     pub purchase_order_id: String,
     pub line_number: i64,
     pub item_link_id: String,
-    pub item_code: String,
     pub item_name: Option<String>,
     pub number_of_packs: Option<f64>,
     pub pack_size: Option<f64>,
@@ -165,7 +163,6 @@ mod tests {
             l.id = "test-line-1".to_string();
             l.purchase_order_id = purchase_order_id.to_string();
             l.line_number = 1;
-            l.item_code = "test-item-1".to_string();
             l.item_link_id = "item_a".to_string();
         });
 
