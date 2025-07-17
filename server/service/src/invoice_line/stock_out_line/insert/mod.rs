@@ -1,12 +1,15 @@
 use super::StockOutType;
 use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
-    invoice_line::query::get_invoice_line,
+    invoice_line::{query::get_invoice_line, stock_out_line::insert::generate::GenerateResult},
     service_provider::ServiceContext,
     WithDBError,
 };
 use chrono::NaiveDate;
-use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
+use repository::{
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
+    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
+};
 
 mod generate;
 use generate::generate;
@@ -83,10 +86,17 @@ pub fn insert_stock_out_line(
         .transaction_sync(|connection| {
             let (item, invoice, batch, adjusted_input) =
                 validate(connection, input, &ctx.store_id)?;
-            let (new_line, update_batch) =
-                generate(ctx, adjusted_input, item, batch, invoice.clone())?;
+            let GenerateResult {
+                new_line,
+                update_batch,
+                vvm_status_log_option,
+            } = generate(ctx, adjusted_input, item, batch, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(connection).upsert_one(&update_batch)?;
+
+            if let Some(vvm_status_log) = vvm_status_log_option {
+                VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
+            }
 
             update_picked_date(ctx, &invoice).map_err(|e| match e {
                 UpdatePickedDateError::AutoPickFailed(msg) => OutError::AutoPickFailed(msg),
