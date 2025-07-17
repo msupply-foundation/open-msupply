@@ -551,4 +551,65 @@ mod report_to_excel_test {
             ]
         );
     }
+
+    #[test]
+    fn test_generate_excel_perf() {
+        // We want to ensure that excel export takes a sensible amount of time.
+        // Many reports may have several thousand rows with dozens of columns
+
+        const NUM_COLUMNS: u32 = 12;
+        const NUM_ROWS: u32 = 10000;
+
+        let mut headers = String::new();
+        for i in 1..=NUM_COLUMNS {
+            headers += &format!("<th>colHeader{}</th>\n", i);
+        }
+
+        let mut rows = String::new();
+        for row_num in 1..=NUM_ROWS {
+            rows += "<tr>\n";
+            for col_num in 1..=NUM_COLUMNS {
+                rows += &format!("<td>{row_num}.{col_num}</td>\n");
+            }
+            rows += "</tr>\n";
+        }
+
+        let document = format!(
+            r#"<table>
+<thead>
+    <tr>
+        {headers}
+    </tr>
+</thead>
+<tbody>
+    {rows}
+</tbody>
+</table>"#
+        );
+
+        let report: GeneratedReport = GeneratedReport {
+            document,
+            header: Some(
+                r#"
+                <div>Something here but with no excel-cell attribute</div>
+            "#
+                .to_string(),
+            ),
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        let start = std::time::Instant::now();
+        apply_report(sheet, report);
+        let duration_secs = start.elapsed().as_secs();
+
+        assert!(
+            duration_secs < 5,
+            "Generate to excel should be FAST. Took: {}",
+            duration_secs
+        );
+    }
 }
