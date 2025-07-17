@@ -9,8 +9,12 @@ import {
   useConfirmationModal,
   useDisabledNotificationToast,
 } from '@openmsupply-client/common';
-import { getStatusTranslation, getNextInboundStatus } from '../../../utils';
-import { useInbound } from '../../api';
+import {
+  getStatusTranslation,
+  getNextInboundStatus,
+  isInboundPlaceholderRow,
+} from '../../../utils';
+import { InboundLineFragment, useInbound } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -216,17 +220,15 @@ const useStatusChangeButton = () => {
     getConfirmation,
     onHold,
     lines,
-    status,
   };
 };
 
-export const validateEmptyInvoice = (
-  status: InvoiceNodeStatus,
-  lines: { totalCount: number; nodes: { numberOfPacks: number }[] }
-): boolean => {
-  if (status !== InvoiceNodeStatus.New) return true;
-  // If status is New, shipment was manually created - should only proceed if there are lines with packs
-  if (lines.totalCount === 0 || lines.nodes.every(l => l.numberOfPacks === 0))
+export const validateEmptyInvoice = (lines: {
+  totalCount: number;
+  nodes: InboundLineFragment[];
+}): boolean => {
+  // Should only proceed if there is at least one line, with received or shipped packs defined
+  if (lines.totalCount === 0 || lines.nodes.every(isInboundPlaceholderRow))
     return false;
   return true;
 };
@@ -239,7 +241,6 @@ export const StatusChangeButton = () => {
     getConfirmation,
     onHold,
     lines,
-    status,
   } = useStatusChangeButton();
   const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
   const t = useTranslation();
@@ -256,7 +257,7 @@ export const StatusChangeButton = () => {
   if (isStatusChangeDisabled) return null;
 
   const onStatusClick = () => {
-    if (!validateEmptyInvoice(status, lines)) return noLinesNotification();
+    if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
     return getConfirmation();
   };

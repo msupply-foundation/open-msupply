@@ -1,21 +1,45 @@
-import { InvoiceNodeStatus } from '@common/types';
 import { validateEmptyInvoice } from './StatusChangeButton';
+import { InboundLineFragment } from '../../api';
+import { InvoiceLineNodeType } from '@common/types';
 
 describe('validateEmptyInvoice', () => {
-  it('should allow status change for non-New status', () => {
+  it('should not allow status change when no lines', () => {
     const lines = { totalCount: 0, nodes: [] };
-    expect(validateEmptyInvoice(InvoiceNodeStatus.Shipped, lines)).toBe(true);
+    expect(validateEmptyInvoice(lines)).toBe(false);
   });
-  it('should allow status change for New status when has lines', () => {
-    const lines = { totalCount: 1, nodes: [{ numberOfPacks: 4 }] };
-    expect(validateEmptyInvoice(InvoiceNodeStatus.Shipped, lines)).toBe(true);
+
+  it('should not allow status change when lines have no packs', () => {
+    const lines = {
+      totalCount: 1,
+      nodes: [makeLine({ numberOfPacks: 0 })],
+    };
+    expect(validateEmptyInvoice(lines)).toBe(false);
   });
-  it('should not allow status change for New status with no lines', () => {
-    const lines = { totalCount: 0, nodes: [] };
-    expect(validateEmptyInvoice(InvoiceNodeStatus.New, lines)).toBe(false);
+  it('should allow status change when has lines with received packs', () => {
+    const lines = {
+      totalCount: 1,
+      nodes: [makeLine({ numberOfPacks: 4 })],
+    };
+    expect(validateEmptyInvoice(lines)).toBe(true);
   });
-  it('should not allow status change for New status with lines but no packs', () => {
-    const lines = { totalCount: 1, nodes: [{ numberOfPacks: 0 }] };
-    expect(validateEmptyInvoice(InvoiceNodeStatus.New, lines)).toBe(false);
+  it('should allow status change when has lines with shipped packs', () => {
+    const lines = {
+      totalCount: 1,
+      nodes: [makeLine({ numberOfPacks: 0, shippedNumberOfPacks: 3 })],
+    };
+    expect(validateEmptyInvoice(lines)).toBe(true);
   });
 });
+
+const makeLine = ({
+  numberOfPacks,
+  shippedNumberOfPacks,
+}: {
+  numberOfPacks: number;
+  shippedNumberOfPacks?: number;
+}) =>
+  ({
+    type: InvoiceLineNodeType.StockIn,
+    numberOfPacks,
+    shippedNumberOfPacks,
+  }) as InboundLineFragment;
