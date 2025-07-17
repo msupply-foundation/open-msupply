@@ -26,7 +26,7 @@ impl PurchaseOrderLineNode {
     pub async fn purchase_order_id(&self) -> &str {
         &self.row().purchase_order_id
     }
-    pub async fn line_number(&self) -> &i32 {
+    pub async fn line_number(&self) -> &i64 {
         &self.row().line_number
     }
     // TODO should item be optional?

@@ -16,7 +16,7 @@ table! {
     purchase_order_line (id) {
         id ->  Text,
         purchase_order_id -> Text,
-        line_number -> Integer,
+        line_number -> BigInt,
         item_link_id -> Text,
         item_code -> Text,
         item_name -> Nullable<Text>,
@@ -44,7 +44,7 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 pub struct PurchaseOrderLineRow {
     pub id: String,
     pub purchase_order_id: String,
-    pub line_number: i32,
+    pub line_number: i64,
     pub item_link_id: String,
     pub item_code: String,
     pub item_name: Option<String>,
