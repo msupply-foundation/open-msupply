@@ -50,14 +50,16 @@ export type ContactsQuery = {
 
 export type PurchaseOrdersFragment = {
   __typename: 'PurchaseOrderNode';
+  id: string;
   number: number;
   createdDatetime: string;
+  confirmedDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
   expectedDeliveryDatetime?: string | null;
   comment?: string | null;
-  supplier?: { __typename: 'NameNode'; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+  supplier?: { __typename: 'NameNode'; name: string } | null;
 };
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
@@ -70,14 +72,16 @@ export type PurchaseOrdersQuery = {
     __typename: 'PurchaseOrderConnector';
     nodes: Array<{
       __typename: 'PurchaseOrderNode';
+      id: string;
       number: number;
       createdDatetime: string;
+      confirmedDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
       expectedDeliveryDatetime?: string | null;
       comment?: string | null;
-      supplier?: { __typename: 'NameNode'; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+      supplier?: { __typename: 'NameNode'; name: string } | null;
     }>;
   };
 };
@@ -101,18 +105,20 @@ export const ContactFragmentDoc = gql`
 `;
 export const PurchaseOrdersFragmentDoc = gql`
   fragment PurchaseOrders on PurchaseOrderNode {
-    supplier {
-      name
-    }
+    id
     number
     createdDatetime
+    confirmedDatetime
     status
     targetMonths
     expectedDeliveryDatetime
+    comment
     lines {
       totalCount
     }
-    comment
+    supplier {
+      name
+    }
   }
 `;
 export const ContactsDocument = gql`

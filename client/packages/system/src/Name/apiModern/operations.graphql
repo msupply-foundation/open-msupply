@@ -26,18 +26,20 @@ query contacts($nameId: String!, $storeId: String!) {
 }
 
 fragment PurchaseOrders on PurchaseOrderNode {
-  supplier {
-    name
-  }
+  id
   number
   createdDatetime
+  confirmedDatetime
   status
   targetMonths
   expectedDeliveryDatetime
+  comment
   lines {
     totalCount
   }
-  comment
+  supplier {
+    name
+  }
 }
 
 query purchaseOrders($storeId: String!) {

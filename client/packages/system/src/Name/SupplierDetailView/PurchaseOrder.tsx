@@ -1,6 +1,8 @@
 import React, { ReactElement } from 'react';
 import {
   Box,
+  ColumnDefinition,
+  ColumnFormat,
   createTableStore,
   DataTable,
   NothingHere,
@@ -8,50 +10,64 @@ import {
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
-
-// TODO:
-// This is still to be connected to the backend
-// Column definitions and data are placeholders
-// Labels are placeholders and should be replaced with actual translations
+import { PurchaseOrdersFragment } from '../apiModern/operations.generated';
+import { usePurchaseOrders } from '../apiModern';
 
 export const PurchaseOrder = (): ReactElement => {
   const t = useTranslation();
+  const { data } = usePurchaseOrders();
 
-  const columns = useColumns(
-    [
-      {
-        key: 'orderNumber',
-        label: 'Number',
-      },
-      {
-        key: 'status',
-        label: 'Status',
-      },
-      {
-        key: 'date',
-        label: 'Date Created',
-      },
-      {
-        key: 'lock',
-        label: 'Lock',
-      },
-      {
-        key: 'targetDays',
-        label: 'Target Days',
-      },
-      {
-        key: 'lines',
-        label: 'Lines',
-      },
-      {
-        key: 'comment',
-        label: 'Comment',
-      },
-    ],
+  const columnDefinitions: ColumnDefinition<PurchaseOrdersFragment>[] = [
     {
-      sortBy: { key: 'orderDate', direction: 'desc' },
-    }
-  );
+      key: 'supplier',
+      label: 'label.supplier',
+      accessor: ({ rowData }) => rowData.supplier?.name ?? '',
+    },
+    {
+      key: 'orderNumber',
+      label: 'label.number',
+      accessor: ({ rowData }) => rowData.number ?? '',
+    },
+    {
+      key: 'createdDatetime',
+      label: 'label.created',
+      format: ColumnFormat.Date,
+      accessor: ({ rowData }) => rowData.createdDatetime ?? '',
+    },
+    {
+      key: 'confirmationDate',
+      label: 'label.confirmed',
+      format: ColumnFormat.Date,
+      accessor: ({ rowData }) => rowData.confirmedDatetime ?? '',
+    },
+    {
+      key: 'status',
+      label: 'label.status',
+      accessor: ({ rowData }) => rowData.status ?? '',
+    },
+    {
+      key: 'targetMonths',
+      label: 'heading.target-months',
+      accessor: ({ rowData }) => rowData.targetMonths ?? '',
+    },
+    {
+      key: 'expectedDeliveryDate',
+      label: 'label.expected-delivery-date',
+      accessor: ({ rowData }) => rowData.expectedDeliveryDatetime ?? '',
+    },
+    {
+      key: 'numberOfLines',
+      label: 'label.lines',
+      accessor: ({ rowData }) => rowData.lines.totalCount ?? '',
+    },
+    {
+      key: 'comment',
+      label: 'label.comment',
+      accessor: ({ rowData }) => rowData.comment ?? '',
+    },
+  ];
+
+  const columns = useColumns(columnDefinitions);
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -65,7 +81,7 @@ export const PurchaseOrder = (): ReactElement => {
         <DataTable
           id="supplier-purchase-order"
           columns={columns}
-          data={[]}
+          data={data}
           noDataElement={<NothingHere body={t('error.no-purchase-orders')} />}
         />
       </Box>
