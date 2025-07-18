@@ -1,12 +1,11 @@
-use crate::db_diesel::item_link_row::item_link;
 use crate::db_diesel::item_row::item;
 use crate::db_diesel::purchase_order_row::purchase_order;
+use crate::{db_diesel::item_link_row::item_link, Upsert};
 
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
-use diesel::prelude::*;
+use diesel::{dsl::max, prelude::*};
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
@@ -36,7 +35,7 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 
 #[derive(
-    TS, Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = purchase_order_line)]
@@ -128,6 +127,32 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             .filter(purchase_order_line::purchase_order_id.eq_any(purchase_order_ids))
             .load::<PurchaseOrderLineRow>(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_max_purchase_order_line_number(
+        &self,
+        purchase_order_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = purchase_order_line::table
+            .filter(purchase_order_line::purchase_order_id.eq(purchase_order_id))
+            .select(max(purchase_order_line::line_number))
+            .first(self.connection.lock().connection())?;
+        Ok(result)
+    }
+}
+
+impl Upsert for PurchaseOrderLineRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = PurchaseOrderLineRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PurchaseOrderLineRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

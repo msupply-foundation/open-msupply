@@ -49,15 +49,6 @@ impl InvoiceQueries {
     ) -> Result<InvoicesResponse> {
         get_invoices(ctx, store_id, page, filter, sort)
     }
-
-    async fn insert_prescription(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: prescription::insert::InsertInput,
-    ) -> Result<prescription::insert::InsertResponse> {
-        prescription::insert::insert(ctx, &store_id, input)
-    }
 }
 
 #[derive(Default, Clone)]

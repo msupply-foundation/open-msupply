@@ -7,6 +7,8 @@ mod add_purchase_order_report_context;
 mod add_purchase_order_tables;
 mod add_purchase_order_to_number_type;
 
+mod add_purchase_order_line_to_number_type;
+
 pub(crate) struct V2_10_00;
 
 impl Migration for V2_10_00 {
@@ -20,7 +22,10 @@ impl Migration for V2_10_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
+
+            Box::new(add_purchase_order_line_to_number_type::Migrate),
             Box::new(add_contact_table::Migrate),
+        ,
             Box::new(add_purchase_order_tables::Migrate),
             Box::new(add_purchase_order_to_number_type::Migrate),
             Box::new(add_purchase_order_report_context::Migrate),
