@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   useTranslation,
-  NumUtils,
   CellProps,
   Box,
   NumberCell,
   Typography,
   RecordWithId,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 
 export const UnitsAndMaybeDoses = <T extends RecordWithId>({
@@ -23,9 +23,10 @@ export const UnitsAndMaybeDoses = <T extends RecordWithId>({
   displayDoses?: boolean;
 }) => {
   const t = useTranslation();
+  const { format } = useFormatNumber();
 
   // Doses should always be a whole number, round if fractional packs are giving us funky decimals
-  const doseCount = NumUtils.round(dosesPerUnit * units);
+  const doseCount = format(dosesPerUnit * units, { maximumFractionDigits: 0 });
 
   return (
     <Box
