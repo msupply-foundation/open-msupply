@@ -421,6 +421,27 @@ mod test {
                 r.r#type = InvoiceLineType::StockIn;
             })
         }
+        fn invoice_line_only_shipped_packs_for_test() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line_only_shipped_packs_for_test".to_string();
+                r.invoice_id = "invoice_test".to_string();
+                r.item_link_id = "item_a".to_string();
+                r.pack_size = 1.0;
+                r.number_of_packs = 0.0;
+                r.shipped_number_of_packs = Some(5.0);
+                r.r#type = InvoiceLineType::StockIn;
+            })
+        }
+        fn invoice_line_placeholder_line_for_test() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line_placeholder_line_for_test".to_string();
+                r.invoice_id = "invoice_test".to_string();
+                r.item_link_id = "item_a".to_string();
+                r.pack_size = 1.0;
+                r.number_of_packs = 0.0;
+                r.r#type = InvoiceLineType::StockIn;
+            })
+        }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_success",
@@ -429,7 +450,11 @@ mod test {
                 r.names = vec![supplier()];
                 r.name_store_joins = vec![supplier_join()];
                 r.invoices = vec![invoice_test()];
-                r.invoice_lines = vec![invoice_line_for_test()];
+                r.invoice_lines = vec![
+                    invoice_line_for_test(),
+                    invoice_line_only_shipped_packs_for_test(),
+                    invoice_line_placeholder_line_for_test(),
+                ];
             }),
         )
         .await;
@@ -550,9 +575,23 @@ mod test {
         .unwrap();
 
         // There shouldn't be any stock lines saved yet As just in delivered status
-        for line in invoice_lines.rows {
+        for line in &invoice_lines.rows {
             assert_eq!(line.stock_line_option, None)
         }
+        let invoice_line_ids = invoice_lines
+            .rows
+            .iter()
+            .map(|l| l.invoice_line_row.id.clone())
+            .collect::<Vec<_>>();
+
+        // Placeholder line should have been removed
+        assert_eq!(
+            invoice_line_ids,
+            vec![
+                invoice_line_for_test().id,
+                invoice_line_only_shipped_packs_for_test().id,
+            ]
+        );
 
         // NEXT: Test updating to received status, and make sure we update stock at this stage
         service
@@ -594,14 +633,18 @@ mod test {
         let mut stock_lines_received = Vec::new();
 
         for lines in invoice_lines.rows {
-            let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
-            let stock_line = StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
-                .unwrap()
-                .unwrap();
-            stock_lines_received.push(stock_line.clone());
-            assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
+            if let Some(stock_line_id) = lines.invoice_line_row.stock_line_id.clone() {
+                let stock_line = StockLineRowRepository::new(&connection)
+                    .find_one_by_id(&stock_line_id)
+                    .unwrap()
+                    .unwrap();
+                stock_lines_received.push(stock_line.clone());
+                assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
+            }
         }
+
+        // Ensure the line with only shipped packs does not create a stock line
+        assert_eq!(stock_lines_received.len(), 1);
 
         // Test verified status change with tax
         service
@@ -634,12 +677,13 @@ mod test {
         let mut stock_lines_verified = Vec::new();
 
         for lines in invoice_lines.rows {
-            let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
-            let stock_line = StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
-                .unwrap()
-                .unwrap();
-            stock_lines_verified.push(stock_line.clone());
+            if let Some(stock_line_id) = lines.invoice_line_row.stock_line_id.clone() {
+                let stock_line = StockLineRowRepository::new(&connection)
+                    .find_one_by_id(&stock_line_id)
+                    .unwrap()
+                    .unwrap();
+                stock_lines_verified.push(stock_line.clone());
+            }
         }
 
         assert_eq!(stock_lines_received, stock_lines_verified);

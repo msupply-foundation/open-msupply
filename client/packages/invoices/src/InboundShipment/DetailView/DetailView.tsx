@@ -55,7 +55,7 @@ const DetailViewInner = () => {
     mode: returnModalMode,
     setMode: setReturnMode,
   } = useEditModal<string[]>();
-  const { info, error } = useNotification();
+  const { info } = useNotification();
   const { clearSelected } = useTableStore();
   const { data: preference } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
@@ -85,8 +85,9 @@ const DetailViewInner = () => {
       return;
     }
     if (selectedLines.some(line => !line.stockLine)) {
-      const errMsg = 'No stock line associated with the selected line(s).';
-      const selectLinesSnack = error(`${t('error.something-wrong')} ${errMsg}`);
+      const selectLinesSnack = info(
+        t('messages.cant-return-lines-with-no-received-stock')
+      );
       selectLinesSnack();
       return;
     }
