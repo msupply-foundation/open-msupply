@@ -14,6 +14,7 @@ import {
   usePreference,
   PreferenceKey,
   UnitsAndMaybeDoses,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
@@ -57,8 +58,8 @@ const ItemListComponent = () => {
         {
           accessor: ({ rowData }) => rowData.stats.stockOnHand,
           Cell: UnitsAndMaybeDosesCell,
+          width: 180,
           sortable: false,
-          maxWidth: 'unset',
           cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
         },
       ],
@@ -69,21 +70,20 @@ const ItemListComponent = () => {
           accessor: ({ rowData }) => rowData.stats.averageMonthlyConsumption,
 
           align: ColumnAlign.Right,
+          width: 180,
           sortable: false,
-          maxWidth: 'unset',
           cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
         },
       ],
       {
-        Cell: UnitsAndMaybeDosesCell,
+        Cell: NumberCell,
         accessor: ({ rowData }) => rowData.stats.monthsOfStockOnHand ?? 0,
         align: ColumnAlign.Right,
         description: 'description.months-of-stock',
         key: 'monthsOfStockOnHand',
         label: 'label.months-of-stock',
         sortable: false,
-        maxWidth: 200,
-        cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
+        width: 120,
       },
     ],
     {
