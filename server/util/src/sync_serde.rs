@@ -271,4 +271,51 @@ mod test {
         let fields = row.unwrap().oms_fields.unwrap();
         assert_eq!(fields.some_enum_field, None);
     }
+
+    #[allow(non_snake_case)]
+    #[derive(Deserialize, Serialize, Debug, PartialEq)]
+    pub struct LegcacyRowWithOptionNonString {
+        #[serde(rename = "ID")]
+        pub id: String,
+        #[serde(default)]
+        pub option_t: Option<i64>,
+    }
+
+    #[test]
+    fn test_handle_some_translation() {
+        // case with populated fields
+        const LEGACY_ROW_1: (&str, &str) = (
+            "LEGACY_ROW_1",
+            r#"{
+                "ID": "LEGACY_ROW_1",
+                "option_t": 12
+            }"#,
+        );
+        let a = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_1.1);
+        assert!(a.is_ok());
+        assert_eq!(a.unwrap().option_t, Some(12));
+
+        // case with null
+        const LEGACY_ROW_3: (&str, &str) = (
+            "LEGACY_ROW_3",
+            r#"{
+                "ID": "LEGACY_ROW_3",
+                "option_t": null
+            }"#,
+        );
+        let c = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_3.1);
+        assert!(c.is_ok());
+        assert_eq!(c.unwrap().option_t, None);
+
+        // case with no value
+        const LEGACY_ROW_4: (&str, &str) = (
+            "LEGACY_ROW_4",
+            r#"{
+                "ID": "LEGACY_ROW_4"            
+            }"#,
+        );
+        let d = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_4.1);
+        assert!(d.is_ok());
+        assert_eq!(d.unwrap().option_t, None);
+    }
 }

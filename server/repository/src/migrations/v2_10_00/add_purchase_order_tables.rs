@@ -81,10 +81,11 @@ impl MigrationFragment for Migrate {
                     item_name TEXT,
                     number_of_packs {DOUBLE},
                     pack_size {DOUBLE},
-                    -- corresponds to OG "original_quantity"
+                    -- corresponds to OG "original_quantity" (quan_original_order)?
                     requested_quantity {DOUBLE},
-                    -- corresponds to OG "adjusted_quantity"
+                    -- corresponds to OG "adjusted_quantity" (quan_adjusted_order)?
                     authorised_quantity {DOUBLE},
+                    -- I believe this corresponds to OG "quan_rec_to_date"
                     total_received {DOUBLE},
                     requested_delivery_date {DATE},
                     expected_delivery_date {DATE}
