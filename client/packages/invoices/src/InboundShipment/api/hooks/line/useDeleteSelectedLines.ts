@@ -2,12 +2,12 @@ import {
   useTableStore,
   useTranslation,
   useDeleteConfirmation,
-  noOtherVariants,
 } from '@openmsupply-client/common';
 import { useIsInboundDisabled } from '../utils/useIsInboundDisabled';
 import { useDeleteInboundLines } from './useDeleteInboundLines';
 import { useInboundRows } from './useInboundRows';
 import { useInboundShipmentLineErrorContext } from '../../../context/inboundShipmentLineError';
+import { mapErrorToMessageAndSetContext } from '../mapErrorToMessageAndSetContext';
 
 export const useDeleteSelectedLines = (): (() => void) => {
   const t = useTranslation();
@@ -49,26 +49,14 @@ export const useDeleteSelectedLines = (): (() => void) => {
     errorsContext.unsetAll();
 
     deletedLines?.forEach(line => {
-      if (line.response.__typename === 'DeleteResponse') return;
-      const { error } = line.response;
-      switch (error.__typename) {
-        case 'BatchIsReserved':
-          const row = selectedRows.find(it => it.id === line.id);
-          throw Error(
-            t('label.inbound-shipment-cant-delete-reserved-line', {
-              batch: row?.batch ?? '',
-              itemCode: row?.item.code ?? '?',
-            })
-          );
-        case 'LineLinkedToTransferredInvoice':
-          errorsContext.setError(line.id, error);
-          throw Error(t('messages.cant-delete-transferred'));
-        case 'CannotEditInvoice':
-        case 'ForeignKeyError':
-        case 'RecordNotFound':
-          throw Error(t('error.database-error'));
-        default:
-          noOtherVariants(error);
+      const errMessage = mapErrorToMessageAndSetContext(
+        line,
+        selectedRows,
+        t,
+        errorsContext.setError
+      );
+      if (errMessage) {
+        throw new Error(errMessage);
       }
     });
   };

@@ -33,6 +33,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.use_campaigns)
     }
 
+    pub async fn custom_translations(&self) -> Result<serde_json::Value> {
+        self.load_preference(&self.preferences.custom_translations)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -104,6 +108,7 @@ pub enum PreferenceKey {
     GenderOptions,
     ShowContactTracing,
     UseCampaigns,
+    CustomTranslations,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -120,6 +125,7 @@ impl PreferenceKey {
             PrefKey::GenderOptions => PreferenceKey::GenderOptions,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
+            PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
@@ -150,6 +156,7 @@ pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
     MultiChoice,
+    CustomTranslations, // Specific type for CustomTranslations preference
 }
 
 impl PreferenceValueNodeType {
@@ -158,6 +165,7 @@ impl PreferenceValueNodeType {
             PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
             PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
             PreferenceValueType::MultiChoice => PreferenceValueNodeType::MultiChoice,
+            PreferenceValueType::CustomTranslations => PreferenceValueNodeType::CustomTranslations,
         }
     }
 }
