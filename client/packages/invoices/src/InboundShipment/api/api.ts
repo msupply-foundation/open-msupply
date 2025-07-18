@@ -23,7 +23,7 @@ import {
   UpdateDonorInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
-import { isA } from '../../utils';
+import { isA, isInboundPlaceholderRow } from '../../utils';
 import {
   Sdk,
   InboundFragment,
@@ -372,12 +372,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   updateLines: async (draftInboundLine: DraftInboundLine[]) => {
     const input = {
       insertInboundShipmentLines: draftInboundLine
-        .filter(
-          ({ type, isCreated, numberOfPacks }) =>
-            isCreated &&
-            type === InvoiceLineNodeType.StockIn &&
-            numberOfPacks > 0
-        )
+        .filter(line => line.isCreated && !isInboundPlaceholderRow(line))
         .map(inboundParsers.toInsertLine),
       updateInboundShipmentLines: draftInboundLine
         .filter(

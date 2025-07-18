@@ -25,6 +25,7 @@ import {
 import { TabLayout } from './TabLayout';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { QuantityTable } from './TabTables';
+import { isInboundPlaceholderRow } from '../../../../utils';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -68,7 +69,7 @@ export const InboundLineEdit = ({
   } = useDraftInboundLines(currentItem);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
-  const zeroNumberOfPacks = draftLines.some(line => line.numberOfPacks === 0);
+  const zeroNumberOfPacks = draftLines.some(isInboundPlaceholderRow);
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   useEffect(() => {
