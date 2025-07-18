@@ -12,14 +12,20 @@ pub mod use_simplified_mobile_ui;
 pub use use_simplified_mobile_ui::*;
 pub mod gender_options;
 pub use gender_options::*;
+pub mod use_campaigns;
+pub use use_campaigns::*;
 pub mod order_in_packs;
 pub use order_in_packs::*;
+pub mod custom_translations;
+pub use custom_translations::*;
 
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
     pub gender_options: GenderOptions,
     pub show_contact_tracing: ShowContactTracing,
+    pub use_campaigns: UseCampaigns,
+    pub custom_translations: CustomTranslations,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -34,6 +40,8 @@ pub fn get_preference_provider() -> PreferenceProvider {
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
         gender_options: GenderOptions,
         show_contact_tracing: ShowContactTracing,
+        use_campaigns: UseCampaigns,
+        custom_translations: CustomTranslations,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,

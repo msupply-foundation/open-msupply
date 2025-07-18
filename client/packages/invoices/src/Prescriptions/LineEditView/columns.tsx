@@ -12,6 +12,7 @@ import {
   useIntlUtils,
   usePreference,
   useTranslation,
+  VvmStatusCell,
 } from '@openmsupply-client/common';
 import { getPrescriptionLineDosesColumns } from './columnsDoses';
 import {
@@ -72,11 +73,8 @@ export const usePrescriptionLineEditColumns = ({
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => {
-        if (!rowData.vvmStatus) return '';
-        // TODO: Show unusable VVM status somehow?
-        return rowData.vvmStatus?.description;
-      },
+      Cell: VvmStatusCell,
+      accessor: ({ rowData }) => rowData?.vvmStatus,
       width: 85,
     });
   }

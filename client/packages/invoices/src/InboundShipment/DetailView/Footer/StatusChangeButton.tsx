@@ -9,8 +9,12 @@ import {
   useConfirmationModal,
   useDisabledNotificationToast,
 } from '@openmsupply-client/common';
-import { getStatusTranslation, getNextInboundStatus } from '../../../utils';
-import { useInbound } from '../../api';
+import {
+  getStatusTranslation,
+  getNextInboundStatus,
+  isInboundPlaceholderRow,
+} from '../../../utils';
+import { InboundLineFragment, useInbound } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -219,6 +223,16 @@ const useStatusChangeButton = () => {
   };
 };
 
+export const validateEmptyInvoice = (lines: {
+  totalCount: number;
+  nodes: InboundLineFragment[];
+}): boolean => {
+  // Should only proceed if there is at least one line, with received or shipped packs defined
+  if (lines.totalCount === 0 || lines.nodes.every(isInboundPlaceholderRow))
+    return false;
+  return true;
+};
+
 export const StatusChangeButton = () => {
   const {
     options,
@@ -229,8 +243,6 @@ export const StatusChangeButton = () => {
     lines,
   } = useStatusChangeButton();
   const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
-  const noLines =
-    lines?.totalCount === 0 || lines?.nodes?.every(l => l.numberOfPacks === 0);
   const t = useTranslation();
 
   const noLinesNotification = useDisabledNotificationToast(
@@ -245,14 +257,13 @@ export const StatusChangeButton = () => {
   if (isStatusChangeDisabled) return null;
 
   const onStatusClick = () => {
-    if (noLines) return noLinesNotification();
+    if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
     return getConfirmation();
   };
 
   return (
     <SplitButton
-      label={noLines ? t('messages.no-lines') : ''}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
