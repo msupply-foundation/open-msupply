@@ -198,7 +198,7 @@ export const normaliseToUnits = (
   }
 };
 
-export const getAllocationAlerts = (
+export const getAutoAllocationAlerts = (
   requestedQuantity: number,
   allocatedQuantity: number,
   placeholderUnits: number,
@@ -301,6 +301,44 @@ export const getAllocationAlerts = (
       message: t(
         `messages.partial-pack-warning-${isDoses ? 'doses' : 'units'}`,
         { nearestAbove: wholePackQuantity }
+      ),
+      severity: 'warning',
+    });
+  }
+
+  return alerts;
+};
+
+export const getManualAllocationAlerts = (
+  requestedQuantity: number,
+  allocatedQuantity: number,
+  line: DraftStockOutLineFragment,
+  allocateIn: AllocateInOption,
+  format: (value: number, options?: Intl.NumberFormatOptions) => string,
+  t: TypedTFunction<LocaleKey>
+): StockOutAlert[] => {
+  const alerts: StockOutAlert[] = [];
+
+  if (allocatedQuantity > requestedQuantity)
+    alerts.push({
+      message: t('messages.over-allocated-line', {
+        quantity: format(allocatedQuantity),
+        issueQuantity: format(requestedQuantity),
+      }),
+      severity: 'warning',
+    });
+
+  const nearestWholePack = packsToQuantity(
+    allocateIn.type,
+    Math.ceil(line.numberOfPacks),
+    line
+  );
+
+  if (nearestWholePack > allocatedQuantity) {
+    alerts.push({
+      message: t(
+        `messages.partial-pack-warning-${allocateIn.type === AllocateInType.Doses ? 'doses' : 'units'}`,
+        { nearestAbove: nearestWholePack }
       ),
       severity: 'warning',
     });
