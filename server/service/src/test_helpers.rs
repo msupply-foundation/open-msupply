@@ -70,6 +70,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
 
     let service_provider = Arc::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
+        &connection,
         processors_trigger,
         sync_trigger,
         site_is_initialise_trigger,

@@ -22,4 +22,6 @@ impl Preference for CustomTranslations {
     fn default_value(&self) -> Self::Value {
         serde_json::json!({})
     }
+
+    // TODO: Implement custom upsert validation - and see about passing around a more explicit type that JSON Value?
 }

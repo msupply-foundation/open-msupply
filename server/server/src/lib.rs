@@ -115,8 +115,10 @@ pub async fn start_server(
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();
 
+    let db_connection = &connection_manager.connection().unwrap();
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
+        db_connection,
         processors_trigger,
         sync_trigger,
         site_is_initialise_trigger,

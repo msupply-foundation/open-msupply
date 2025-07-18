@@ -1,9 +1,11 @@
-use serde_yaml::Value;
+use repository::StorageConnection;
 use std::collections::HashMap;
 use tera::{Error as TeraError, Function};
 use thiserror::Error;
 
 use rust_embed::RustEmbed;
+
+use crate::preference::{CustomTranslations, Preference, PreferenceError};
 
 #[derive(RustEmbed)]
 #[include = "*.json"]
@@ -18,24 +20,29 @@ pub struct TranslationError(String);
 #[derive(Clone)]
 pub struct Localisations {
     pub translations: HashMap<String, HashMap<String, HashMap<String, String>>>,
-}
-
-pub struct TranslationStrings {
-    pub translations: HashMap<String, Value>,
-}
-
-impl Default for Localisations {
-    fn default() -> Self {
-        Self::new()
-    }
+    pub custom_translations: HashMap<String, String>,
 }
 
 impl Localisations {
     // Creates a new Localisations struct
-    pub fn new() -> Self {
+    pub fn new(connection: &StorageConnection) -> Self {
         let mut localisations = Localisations {
             translations: HashMap::new(),
+            custom_translations: HashMap::new(),
         };
+        // TODO add error logging
+        let _ = localisations.load_translations();
+        let _ = localisations.load_custom_translations(connection);
+        localisations
+    }
+
+    // Creates a new Localisations struct
+    pub fn new_defaults_only() -> Self {
+        let mut localisations = Localisations {
+            translations: HashMap::new(),
+            custom_translations: HashMap::new(),
+        };
+        // TODO add error logging
         let _ = localisations.load_translations();
         localisations
     }
@@ -59,8 +66,31 @@ impl Localisations {
                     .insert(file_namespace, translations);
             }
         }
+        Ok(())
+    }
 
-        // get custom translations pref & merge
+    pub fn load_custom_translations(
+        &mut self,
+        connection: &StorageConnection,
+    ) -> Result<(), PreferenceError> {
+        let translations = match CustomTranslations.load(connection, None)? {
+            serde_json::Value::Object(translations) => translations,
+            _ => {
+                return Err(PreferenceError::ConversionError(
+                    "custom translations".to_string(),
+                    "loaded preference not an object".to_string(),
+                ))
+            }
+        };
+        for (key, value) in translations {
+            match value {
+                serde_json::Value::String(translated) => {
+                    self.custom_translations.insert(key, translated);
+                }
+                _ => {} // preference custom translations should all be strings
+            }
+        }
+
         Ok(())
     }
 
@@ -75,6 +105,11 @@ impl Localisations {
         }: GetTranslation,
         language: &str,
     ) -> Result<String, TranslationError> {
+        // use the custom translation key if it exists
+        if let Some(value) = self.custom_translations.get(&key) {
+            return Ok(value.clone());
+        }
+        // otherwise use default oms translations
         let default_namespace = "common".to_string();
         let default_language = "en".to_string();
 
@@ -171,7 +206,7 @@ mod test {
 
     #[test]
     fn test_translations() {
-        let localisations = Localisations::new();
+        let localisations = Localisations::new_defaults_only();
         // test loading localisations
         // note these translations might change if translations change in the front end. In this case, these will need to be updated.
         let lang = "fr";
