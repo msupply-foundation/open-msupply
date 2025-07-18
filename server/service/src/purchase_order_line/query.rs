@@ -40,3 +40,104 @@ pub fn get_purchase_order_line(
 
     Ok(repository.query_by_filter(filter)?.pop())
 }
+
+#[cfg(test)]
+mod test {
+    use crate::service_provider::ServiceProvider;
+    use repository::mock::mock_store_a;
+    use repository::{db_diesel::PurchaseOrderLineRow, mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRowRepository, PurchaseOrderRow,
+        PurchaseOrderRowRepository,
+    };
+    use util::inline_init;
+    #[actix_rt::test]
+    async fn purchase_order_service_queries() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "purchase order line service queries",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.purchase_order_line_service;
+        let repo = PurchaseOrderLineRowRepository::new(&connection);
+
+        // add purchase order
+        let purchase_order_repo = PurchaseOrderRowRepository::new(&connection);
+        let purchase_order_id = "test_po_1";
+        let po = inline_init(|p: &mut PurchaseOrderRow| {
+            p.id = purchase_order_id.to_string();
+            p.store_id = mock_store_a().id;
+            p.created_datetime = chrono::Utc::now().naive_utc();
+            p.status = repository::PurchaseOrderStatus::New;
+            p.purchase_order_number = 1;
+        });
+        purchase_order_repo.upsert_one(&po).unwrap();
+
+        let result = purchase_order_repo.find_all().unwrap();
+        assert_eq!(result.len(), 1);
+        let po_line_id = "test_po_line_1";
+        let po_line = inline_init(|p: &mut PurchaseOrderLineRow| {
+            p.id = po_line_id.to_string();
+            p.purchase_order_id = purchase_order_id.to_string();
+            p.line_number = 1;
+            p.item_link_id = "item_a".to_string();
+        });
+        let result = repo.upsert_one(&po_line);
+        assert!(result.is_ok());
+
+        // Test querying by ID
+        let result = service
+            .get_purchase_order_line(&context, Some("wrong_store_id"), &po_line.id)
+            .unwrap();
+        assert!(result.is_none());
+
+        let result = service
+            .get_purchase_order_line(&context, Some(&mock_store_a().id), "wrong_line_id")
+            .unwrap();
+        assert!(result.is_none());
+
+        let result = service
+            .get_purchase_order_line(&context, Some(&mock_store_a().id), po_line_id)
+            .unwrap();
+        assert!(result.is_some());
+
+        // Test querying with wrong store id
+        let result =
+            service.get_purchase_order_lines(&context, Some("wrong_store_id"), None, None, None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().count, 0);
+
+        let result =
+            service.get_purchase_order_lines(&context, Some(&mock_store_a().id), None, None, None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().count, 1);
+
+        // Test querying with filter
+        let filter =
+            PurchaseOrderLineFilter::new().purchase_order_id(EqualFilter::equal_to("wrong_po_id"));
+        let result = service.get_purchase_order_lines(
+            &context,
+            Some(&mock_store_a().id),
+            None,
+            Some(filter),
+            None,
+        );
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().count, 0);
+
+        let filter = PurchaseOrderLineFilter::new()
+            .purchase_order_id(EqualFilter::equal_to(&purchase_order_id));
+        let result = service.get_purchase_order_lines(
+            &context,
+            Some(&mock_store_a().id),
+            None,
+            Some(filter),
+            None,
+        );
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().count, 1);
+    }
+}

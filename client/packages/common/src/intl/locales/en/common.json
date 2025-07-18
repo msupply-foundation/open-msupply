@@ -1884,6 +1884,7 @@
   "policyType.PERSONAL": "Personal",
   "preference.allowTrackingOfReceivedStockByDonor": "Allow tracking of received stock by donor",
   "preference.allowTrackingOfStockByDonor": "Allow tracking of stock by donor",
+  "preference.customTranslations": "Custom translations",
   "preference.genderOptions": "Gender options",
   "preference.manageVaccinesInDoses": "Manage vaccines in doses",
   "preference.manageVvmStatusForStock": "Manage VVM status for stock",
