@@ -3,7 +3,8 @@ extern crate machine_uid;
 
 use crate::{
     central::config_central, certs::Certificates, cold_chain::config_cold_chain,
-    configuration::get_or_create_token_secret, cors::cors_policy, middleware::central_server_only,
+    configuration::get_or_create_token_secret, cors::cors_policy,
+    custom_translations::config_custom_translations, middleware::central_server_only,
     print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
     support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
@@ -54,6 +55,7 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+mod custom_translations;
 mod serve_frontend_plugins;
 mod upload;
 
@@ -351,6 +353,7 @@ pub async fn start_server(
             .configure(config_central)
             .configure(config_support)
             .configure(config_print)
+            .configure(config_custom_translations)
             .configure(config_upload)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
