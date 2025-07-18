@@ -60,6 +60,10 @@ pub fn generate(
             vvm_status_id,
             stock_line_id,
             invoice_line_id: new_line.id.clone(),
+            comment: Some(format!(
+                "Updated from Outbound Shipment #{}",
+                invoice.invoice_number
+            )),
         }))
     } else {
         None

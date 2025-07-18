@@ -64,6 +64,7 @@ pub fn generate(
             vvm_status_id,
             stock_line_id: update_batch.id.clone(),
             invoice_line_id: new_line.id.clone(),
+            comment: None,
         }))
     } else {
         None
