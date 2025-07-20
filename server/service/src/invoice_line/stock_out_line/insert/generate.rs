@@ -57,18 +57,22 @@ pub fn generate(
     )?;
 
     let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
-        Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
-            id: Some(uuid()),
-            store_id: invoice.store_id.clone(),
-            created_by: ctx.user_id.clone(),
-            vvm_status_id,
-            stock_line_id: update_batch.id.clone(),
-            invoice_line_id: new_line.id.clone(),
-            comment: Some(format!(
-                "Updated from Outbound Shipment #{}",
-                invoice.invoice_number
-            )),
-        }))
+        if batch.stock_line_row.vvm_status_id != Some(vvm_status_id.clone()) {
+            Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+                id: Some(uuid()),
+                store_id: invoice.store_id.clone(),
+                created_by: ctx.user_id.clone(),
+                vvm_status_id,
+                stock_line_id: update_batch.id.clone(),
+                invoice_line_id: new_line.id.clone(),
+                comment: Some(format!(
+                    "Updated from Outbound Shipment #{}",
+                    invoice.invoice_number
+                )),
+            }))
+        } else {
+            None
+        }
     } else {
         None
     };

@@ -26,6 +26,8 @@ pub fn generate(
     invoice: InvoiceRow,
 ) -> Result<GenerateResult, UpdateStockOutLineError> {
     let adjust_total_number_of_packs = invoice.status == InvoiceStatus::Picked;
+    let vvm_status_changed = input.vvm_status_id.is_some()
+        && batch_pair.main_batch.stock_line_row.vvm_status_id != input.vvm_status_id;
 
     let batch_pair = BatchPair {
         main_batch: generate_batch_update(
@@ -49,22 +51,26 @@ pub fn generate(
     );
 
     let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
-        let stock_line_id = batch_pair.main_batch.stock_line_row.id.clone();
-        let existing_log_id =
-            get_existing_vvm_status_log_id(&ctx.connection, &stock_line_id, &new_line.id)?;
+        if vvm_status_changed {
+            let stock_line_id = batch_pair.main_batch.stock_line_row.id.clone();
+            let existing_log_id =
+                get_existing_vvm_status_log_id(&ctx.connection, &stock_line_id, &new_line.id)?;
 
-        Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
-            id: existing_log_id,
-            store_id: invoice.store_id.clone(),
-            created_by: ctx.user_id.to_string(),
-            vvm_status_id,
-            stock_line_id,
-            invoice_line_id: new_line.id.clone(),
-            comment: Some(format!(
-                "Updated from Outbound Shipment #{}",
-                invoice.invoice_number
-            )),
-        }))
+            Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+                id: existing_log_id,
+                store_id: invoice.store_id.clone(),
+                created_by: ctx.user_id.to_string(),
+                vvm_status_id,
+                stock_line_id,
+                invoice_line_id: new_line.id.clone(),
+                comment: Some(format!(
+                    "Updated from Outbound Shipment #{}",
+                    invoice.invoice_number
+                )),
+            }))
+        } else {
+            None
+        }
     } else {
         None
     };
