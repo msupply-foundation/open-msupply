@@ -8,7 +8,6 @@ import { useVvmStatusesEnabled, VvmStatusFragment } from '../../api';
 
 type VvmStatusOption = {
   id: string;
-  code: string;
   description: string;
   level: number;
   unusable: boolean;
@@ -38,7 +37,6 @@ export const VVMStatusSearchInput = ({
 
   const options: VvmStatusOption[] = data.map((status: VvmStatusFragment) => ({
     id: status.id,
-    code: status.code,
     description: status.description,
     level: status.level,
     unusable: status.unusable,

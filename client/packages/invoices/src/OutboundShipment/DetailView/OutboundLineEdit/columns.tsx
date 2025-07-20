@@ -24,7 +24,6 @@ import {
   TooltipTextCell,
   useSimplifiedTabletUI,
   QuantityUtils,
-  VvmStatusCell,
 } from '@openmsupply-client/common';
 import {
   CurrencyRowFragment,
