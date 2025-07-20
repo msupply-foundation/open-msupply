@@ -189,11 +189,13 @@ fn apply_data_rows(
     index_to_column_index_map: &HashMap<u32, u32>,
 ) -> u32 {
     let mut row_idx = row_index;
+    let body_rows = body.rows_and_cells();
+    let rows_len = body_rows.len() as u32;
 
-    for row in body.rows_and_cells().into_iter() {
-        // Insert new row below (leave any footer from the excel template in place)
-        sheet.insert_new_row(&(row_idx + 1), &1);
+    // Insert new rows below (leave any footer from the excel template in place)
+    sheet.insert_new_row(&(row_idx + 1), &rows_len);
 
+    for row in body_rows.into_iter() {
         // Duplicate any formulae/formatting to the next row before populating
         for col in 0..sheet.get_highest_column() {
             let col = col + 1;
@@ -325,6 +327,8 @@ fn apply_known_styles(cell: &mut Cell, cell_type: &str) {
 
 #[cfg(test)]
 mod report_to_excel_test {
+    use std::time::Duration;
+
     use super::*;
     use scraper::Html;
 
@@ -550,5 +554,230 @@ mod report_to_excel_test {
                 vec!["Row Two Cell One", "Row Two Cell Two"]
             ]
         );
+    }
+
+    #[tokio::test]
+    async fn test_generate_excel_perf() {
+        // We want to ensure that excel export takes a sensible amount of time.
+        // Many reports may have several thousand rows with dozens of columns
+
+        const NUM_COLUMNS: u32 = 12;
+        const NUM_ROWS: u32 = 10000;
+
+        let mut headers = String::new();
+        for i in 1..=NUM_COLUMNS {
+            headers += &format!("<th>colHeader{}</th>\n", i);
+        }
+
+        let mut rows = String::new();
+        for row_num in 1..=NUM_ROWS {
+            rows += "<tr>\n";
+            for col_num in 1..=NUM_COLUMNS {
+                rows += &format!("<td>{row_num}.{col_num}</td>\n");
+            }
+            rows += "</tr>\n";
+        }
+
+        let document = format!(
+            r#"<table>
+<thead>
+    <tr>
+        {headers}
+    </tr>
+</thead>
+<tbody>
+    {rows}
+</tbody>
+</table>"#
+        );
+
+        let report: GeneratedReport = GeneratedReport {
+            document,
+            header: Some(
+                r#"
+                <div>Something here but with no excel-cell attribute</div>
+            "#
+                .to_string(),
+            ),
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+
+        let handle = tokio::spawn(async move {
+            let sheet = book.get_sheet_by_name_mut("test").unwrap();
+            let start = std::time::Instant::now();
+            apply_report(sheet, report);
+            let duration_millisec = start.elapsed().as_millis();
+            dbg!(&duration_millisec);
+            duration_millisec
+        });
+
+        let duration_millisec = tokio::time::timeout(Duration::from_secs(10), handle)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Note: this was tested on a M3 Macbook Pro and took around 1.6s. If your testing environment
+        // is significantly slower it may fail this assertion! Just make it bigger... for lack of an
+        // elegant way of scaling based on hardware info ;)
+        assert!(
+            duration_millisec < 5000,
+            "Generate to excel should be FAST. Took: {}ms",
+            duration_millisec
+        );
+    }
+
+    #[test]
+    fn test_generate_excel_with_template() {
+        // Create a template Excel file with header and footer
+        let mut template_book = umya_spreadsheet::new_file();
+        template_book.set_sheet_name(0, "Report Template").unwrap();
+        let template_sheet = template_book
+            .get_sheet_by_name_mut("Report Template")
+            .unwrap();
+
+        // Add template header content
+        template_sheet
+            .get_cell_mut("A1")
+            .set_value("Company Report")
+            .get_style_mut()
+            .get_font_mut()
+            .set_bold(true);
+
+        template_sheet
+            .get_cell_mut("A2")
+            .set_value("Generated on: [Date]");
+
+        // Add template footer content (assume data ends around row 20, footer starts at row 22)
+        template_sheet
+            .get_cell_mut("A10")
+            .set_value("End of Report")
+            .get_style_mut()
+            .get_font_mut()
+            .set_bold(true);
+
+        template_sheet
+            .get_cell_mut("A11")
+            .set_value("Company Footer Info");
+
+        // Convert template to bytes (simulate how it would come from file storage)
+        let temp_path = "/tmp/test_template.xlsx";
+        umya_spreadsheet::writer::xlsx::write(&template_book, temp_path).unwrap();
+        let template_bytes = std::fs::read(temp_path).unwrap();
+
+        // Create HTML report with 10 rows of data
+        let mut data_rows = String::new();
+        for i in 1..=10 {
+            data_rows += &format!(
+                r#"<tr>
+                    <td>Item {}</td>
+                    <td>Unit {}</td>
+                    <td>{}.00</td>
+                </tr>"#,
+                i,
+                i,
+                i * 10
+            );
+        }
+
+        let report = GeneratedReport {
+            document: format!(
+                r#"<table excel-table-start-row="5">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Unit</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {}
+                        <tr excel-type="total-row">
+                            <td></td>
+                            <td>Total:</td>
+                            <td>550.00</td>
+                        </tr>
+                    </tbody>
+                </table>"#,
+                data_rows
+            ),
+            header: Some(r#"<div excel-cell="C2">Report Date: 2025-07-17</div>"#.to_string()),
+            footer: None,
+        };
+
+        // Test the full export function with template
+        let result = export_html_report_to_excel(
+            &None, // base_dir
+            report,
+            "test_with_template".to_string(),
+            &Some(template_bytes),
+        );
+
+        assert!(result.is_ok(), "Export should succeed with template");
+        let file_id = result.unwrap();
+
+        // Read back the generated file to verify content
+        let file_service = StaticFileService::new(&None).unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        let generated_book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+        let sheet = generated_book.get_sheet(&0).unwrap();
+
+        let get_value = |coord: &str| {
+            sheet
+                .get_cell(coord)
+                .map(|c| c.get_raw_value().to_string())
+                .unwrap_or_default()
+        };
+
+        let is_bold = |coord: &str| {
+            sheet
+                .get_cell(coord)
+                .and_then(|c| c.get_style().get_font())
+                .map(|f| *f.get_bold())
+                .unwrap_or(false)
+        };
+
+        // Verify original template header is preserved
+        assert_eq!(get_value("A1"), "Company Report");
+        assert!(is_bold("A1"), "Template header should remain bold");
+        assert_eq!(get_value("A2"), "Generated on: [Date]");
+
+        // Verify custom header from HTML was inserted
+        assert_eq!(get_value("C2"), "Report Date: 2025-07-17");
+
+        // Verify data table headers start at the specified row (5)
+        assert_eq!(get_value("A5"), "Product");
+        assert_eq!(get_value("B5"), "Unit");
+        assert_eq!(get_value("C5"), "Price");
+        assert!(is_bold("A5"), "Data headers should be bold");
+
+        // Verify first few data rows
+        assert_eq!(get_value("A6"), "Item 1");
+        assert_eq!(get_value("B6"), "Unit 1");
+        assert_eq!(get_value("C6"), "10"); // Note: Excel may strip trailing zeros
+
+        assert_eq!(get_value("A10"), "Item 5");
+
+        // Item 9 should be at row 14 (5 + 1 header + 8 data rows)
+        assert_eq!(get_value("A14"), "Item 9");
+        assert_eq!(get_value("C14"), "90"); // Item 9
+
+        // Verify total row (should be at row 17: 5 + 1 header + 10 data + 1 blank)
+        assert_eq!(get_value("B17"), "Total:");
+        assert_eq!(get_value("C17"), "550"); // Note: Excel may strip trailing zeros
+        assert!(is_bold("B17"), "Total row should be bold");
+
+        // Verify template footer is preserved
+        assert_eq!(get_value("A20"), "End of Report");
+        assert!(is_bold("A20"), "Template footer should remain bold");
+        assert_eq!(get_value("A21"), "Company Footer Info");
+
+        // Clean up temp file
+        std::fs::remove_file(temp_path).ok();
     }
 }
