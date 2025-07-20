@@ -197,21 +197,20 @@ abiFilters "armeabi-v7a", "arm64-v8a"
 
 The ABI (application binary interface) refers to the CPU architecture that the application is built to run on. Each product flavor specifies the target ABI in the ndk configuration. This allows us to build the apk for different device types.
 
-## Debugging
-
-To make the an apk that you can install on a device for testing, run `yarn android:build:debug` in the client directory.
-You can then transfer it to the tablet and install it. This can be done by uploading the apk file via the android studio device manager, then clicking the apk file from the device itself. Or using [adb](https://developer.android.com/tools/adb)
+## Debugging with Android Studio
 
 It's recommended to use Android Studio for debugging and running the Android app, because there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code, they are quite limited).
 
-Open this directory (client/packages/android) in Android Studio - this will engage the gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix.
+Run `yarn android:build:server` in the client folder and connect the tablet via USB (check USB debugging is enabled in the tablet settings).
+
+Open a new project in Android Studio with this directory (client/packages/android) - this will engage the gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix.
 Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `local.properties` file, and skd is usually located in `/Users/{user}/Library/Android/sdk/`. Pressing play (run) should restart sync process.
 
 Debugging native Java code is straight forward, breakpoint in Android Studio and press debug.
 
-Debugging web app code is done by opening `chrome://inspect`, you should see the Web View when the app is running in emulator.
+Debugging web app code is done by opening `chrome://inspect/#devices`, you should see the Web View when the app is running in emulator - select inspect.
 When bundle is served from rust server (default setup), the js bundle is minimised and this makes debugging very hard (and doesn't allow for hot reload),
-however we can serve the bundle from the webpack server on your pc by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`.
+however we can serve the bundle from the webpack server on your pc by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config` from the android directory.
 Please make sure that you start front end server with `yarn start` from 'client' directory for this to work.
 For examples: `yarn && yarn start -- -- --env API_HOST='http://192.168.1.205:8000` <- your local server will also need to be running.
 
@@ -220,6 +219,11 @@ Please note that when debugging with live reload, connections to a discovered se
 It's also a good idea to connect your local chrome browser to emulator or device, by going to chrome://inspect, this is especially helpful when needing to refresh the app, read consoles or inspect network traffic
 
 When running the Android app in an emulator the service discovery will not work outside of the emulator network, to test discovery you will need to run the app on a physical device.
+
+## Testing on Tablet (APK)
+
+To make the an apk that you can install on a device for testing, run `yarn android:build:debug` in the client directory.
+You can then transfer it to the tablet and install it. This can be done by uploading the apk file via the android studio device manager, then clicking the apk file from the device itself. Or using [adb](https://developer.android.com/tools/adb)
 
 ## Release build
 
