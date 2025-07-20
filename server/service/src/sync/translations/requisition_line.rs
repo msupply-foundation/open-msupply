@@ -199,7 +199,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         };
 
         let legacy_row = LegacyRequisitionLineRow {
-            ID: id.clone(),
+            ID: id,
             requisition_ID: requisition_id,
             item_ID: item_id,
             Cust_stock_order: requested_quantity,
