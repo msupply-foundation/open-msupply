@@ -4023,6 +4023,7 @@ dependencies = [
  "graphql_types",
  "log",
  "repository",
+ "serde_json",
  "service",
  "util",
 ]
