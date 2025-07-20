@@ -104,8 +104,10 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
         let result = PurchaseOrderLineRow {
             id,
             purchase_order_id,
-            line_number,
-            item_link_id,
+            line_number: line_number
+                .ok_or_else(|| anyhow::anyhow!("line_number must be present"))?,
+            item_link_id: item_link_id
+                .ok_or_else(|| anyhow::anyhow!("item_link_id must be present"))?,
             item_name,
             number_of_packs,
             pack_size,
