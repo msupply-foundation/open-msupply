@@ -58,16 +58,16 @@ impl PurchaseOrderNode {
         }
         return Ok(None);
     }
-    pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
+    pub async fn created_date(&self) -> NaiveDate {
+        self.row().created_date
     }
     pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .delivered_datetime
             .map(|dt| DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
     }
-    pub async fn confirmed_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().confirmed_datetime
+    pub async fn confirmed_date(&self) -> &Option<NaiveDate> {
+        &self.row().confirmed_date
     }
     pub async fn status(&self) -> PurchaseOrderNodeStatus {
         PurchaseOrderNodeStatus::from_domain(self.row().status.clone())
@@ -115,11 +115,11 @@ impl PurchaseOrderNode {
     pub async fn advance_paid_datetime(&self) -> &Option<NaiveDateTime> {
         &self.row().advance_paid_datetime
     }
-    pub async fn received_at_port_datetime(&self) -> &Option<NaiveDate> {
-        &self.row().received_at_port_datetime
+    pub async fn received_at_port_date(&self) -> &Option<NaiveDate> {
+        &self.row().received_at_port_date
     }
-    pub async fn expected_delivery_datetime(&self) -> &Option<NaiveDate> {
-        &self.row().expected_delivery_datetime
+    pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
+        &self.row().expected_delivery_date
     }
     pub async fn supplier_agent(&self) -> &Option<String> {
         &self.row().supplier_agent

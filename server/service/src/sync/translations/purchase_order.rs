@@ -4,7 +4,9 @@ use repository::{
     PurchaseOrderRow, PurchaseOrderStatus, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::{empty_str_as_option, object_fields_as_option};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option, object_fields_as_option, zero_date_as_option,
+};
 
 use crate::sync::translations::{
     master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
@@ -35,11 +37,9 @@ pub struct PurchaseOrderOmsFields {
     #[serde(default)]
     pub delivered_datetime: Option<NaiveDateTime>,
     #[serde(default)]
-    pub received_at_port_datetime: Option<NaiveDate>,
+    pub received_at_port_date: Option<NaiveDate>,
     #[serde(default)]
-    pub expected_delivery_datetime: Option<NaiveDate>,
-    #[serde(default)]
-    pub heading_message: Option<String>,
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -52,7 +52,7 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(rename = "ID")]
     pub id: String,
     #[serde(rename = "creation_date")]
-    pub created_datetime: NaiveDateTime,
+    pub created_date: NaiveDate,
     #[serde(default)]
     pub target_months: Option<f64>,
     pub status: LegacyPurchaseOrderStatus,
@@ -66,10 +66,10 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub reference: Option<String>,
-    #[serde(default)]
-    #[serde(rename = "confirmed_date")]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub confirmed_datetime: Option<NaiveDateTime>,
+    #[serde(rename = "confirm_date")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub confirmed_date: Option<NaiveDate>,
     // assume this is user_id - though does not reference user id in OG
     #[serde(default)]
     #[serde(rename = "created_by")]
@@ -116,6 +116,9 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(rename = "serial_number")]
     pub purchase_order_number: i64,
     #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub heading_message: Option<String>,
+    #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<PurchaseOrderOmsFields>,
 }
@@ -157,8 +160,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             store_id,
             supplier_name_link_id,
             status,
-            created_datetime,
-            confirmed_datetime,
+            created_date,
+            confirmed_date,
             target_months,
             comment,
             supplier_discount_percentage,
@@ -176,6 +179,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
+            heading_message,
             oms_fields,
         } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
 
@@ -186,8 +190,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             store_id,
             supplier_name_link_id,
             status: from_legacy_status(&status),
-            created_datetime,
-            confirmed_datetime,
+            created_date,
+            confirmed_date,
             delivered_datetime: oms_fields.clone().and_then(|o| o.delivered_datetime),
             target_months,
             comment,
@@ -201,15 +205,13 @@ impl SyncTranslation for PurchaseOrderTranslation {
             sent_datetime: oms_fields.clone().and_then(|o| o.sent_datetime),
             contract_signed_datetime: oms_fields.clone().and_then(|o| o.contract_signed_datetime),
             advance_paid_datetime: oms_fields.clone().and_then(|o| o.advance_paid_datetime),
-            received_at_port_datetime: oms_fields.clone().and_then(|o| o.received_at_port_datetime),
-            expected_delivery_datetime: oms_fields
-                .clone()
-                .and_then(|o| o.expected_delivery_datetime),
+            received_at_port_date: oms_fields.clone().and_then(|o| o.received_at_port_date),
+            expected_delivery_date: oms_fields.clone().and_then(|o| o.expected_delivery_date),
             supplier_agent,
             authorising_officer_1,
             authorising_officer_2,
             additional_instructions,
-            heading_message: oms_fields.and_then(|o| o.heading_message),
+            heading_message,
             agent_commission,
             document_charge,
             communications_charge,
@@ -234,8 +236,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             supplier_name_link_id,
             purchase_order_number,
             status,
-            created_datetime,
-            confirmed_datetime,
+            created_date,
+            confirmed_date,
             delivered_datetime,
             target_months,
             comment,
@@ -249,8 +251,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             sent_datetime,
             contract_signed_datetime,
             advance_paid_datetime,
-            received_at_port_datetime,
-            expected_delivery_datetime,
+            received_at_port_date,
+            expected_delivery_date,
             supplier_agent,
             authorising_officer_1,
             authorising_officer_2,
@@ -274,9 +276,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             || sent_datetime.is_some()
             || contract_signed_datetime.is_some()
             || advance_paid_datetime.is_some()
-            || received_at_port_datetime.is_some()
-            || expected_delivery_datetime.is_some()
-            || heading_message.is_some()
+            || received_at_port_date.is_some()
+            || expected_delivery_date.is_some()
             || delivered_datetime.is_some()
         {
             Some(PurchaseOrderOmsFields {
@@ -285,9 +286,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
                 sent_datetime,
                 contract_signed_datetime,
                 advance_paid_datetime,
-                received_at_port_datetime,
-                expected_delivery_datetime,
-                heading_message,
+                received_at_port_date,
+                expected_delivery_date,
                 delivered_datetime,
             })
         } else {
@@ -296,13 +296,13 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
         let legacy_row = LegacyPurchaseOrderRow {
             id,
-            created_datetime,
+            created_date,
             target_months,
             status: to_legacy_status(&status),
             comment,
             currency_id,
             reference,
-            confirmed_datetime,
+            confirmed_date,
             user_id,
             store_id,
             supplier_agent,
@@ -320,6 +320,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             donor_link_id,
             purchase_order_number,
             supplier_name_link_id,
+            heading_message,
             oms_fields,
         };
 

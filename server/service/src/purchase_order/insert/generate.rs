@@ -14,7 +14,7 @@ pub fn generate(
     input: InsertPurchaseOrderInput,
 ) -> Result<PurchaseOrderRow, RepositoryError> {
     let purchase_order_number = next_number(connection, &NumberRowType::PurchaseOrder, store_id)?;
-    let created_datetime = Utc::now().naive_utc();
+    let created_date = Utc::now().naive_utc().into();
 
     Ok(PurchaseOrderRow {
         id: input.id,
@@ -22,7 +22,7 @@ pub fn generate(
         user_id: Some(user_id.to_string()),
         supplier_name_link_id: Some(input.supplier_id),
         purchase_order_number,
-        created_datetime,
+        created_date,
         status: PurchaseOrderStatus::New,
         ..Default::default()
     })

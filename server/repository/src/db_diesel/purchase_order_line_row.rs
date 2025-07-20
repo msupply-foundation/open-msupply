@@ -167,7 +167,7 @@ mod tests {
             p.id = purchase_order_id.to_string();
             p.status = PurchaseOrderStatus::New;
             p.store_id = mock_store_a().id.clone();
-            p.created_datetime = chrono::Utc::now().naive_utc();
+            p.created_date = chrono::Utc::now().naive_utc().into();
             p.purchase_order_number = 1;
         });
 
