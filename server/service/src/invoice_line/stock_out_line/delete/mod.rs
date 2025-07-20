@@ -1,3 +1,4 @@
+use super::StockOutType;
 use crate::{
     invoice_line::stock_in_line::get_existing_vvm_status_log_id, service_provider::ServiceContext,
 };
@@ -7,10 +8,8 @@ use repository::{
 };
 
 mod validate;
-
 use validate::validate;
 
-use super::StockOutType;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteStockOutLine {
     pub id: String,
