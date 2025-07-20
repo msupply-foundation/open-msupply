@@ -23,6 +23,8 @@ import {
   UNDEFINED_STRING_VALUE,
   TooltipTextCell,
   useSimplifiedTabletUI,
+  QuantityUtils,
+  VvmStatusCell,
 } from '@openmsupply-client/common';
 import {
   CurrencyRowFragment,
@@ -33,7 +35,6 @@ import { getStockOutQuantityCellId } from '../../../utils';
 import {
   canAutoAllocate,
   getDoseQuantity,
-  packsToDoses,
   DraftStockOutLineFragment,
   DraftItem,
   AllocateInOption,
@@ -287,7 +288,10 @@ const getAllocateInUnitsColumns = (
 const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
-    max={packsToDoses(props.rowData.availablePacks, props.rowData)}
+    max={QuantityUtils.packsToDoses(
+      props.rowData.availablePacks,
+      props.rowData
+    )}
     id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={0}
     min={0}
@@ -320,7 +324,8 @@ const getAllocateInDosesColumns = (
       key: 'inStorePacks',
       align: ColumnAlign.Right,
       width: 80,
-      accessor: ({ rowData }) => packsToDoses(rowData.inStorePacks, rowData),
+      accessor: ({ rowData }) =>
+        QuantityUtils.packsToDoses(rowData.inStorePacks, rowData),
       defaultHideOnMobile: true,
     },
     {
@@ -332,7 +337,7 @@ const getAllocateInDosesColumns = (
       accessor: ({ rowData }) =>
         rowData.location?.onHold || rowData.stockLineOnHold
           ? 0
-          : packsToDoses(rowData.availablePacks, rowData),
+          : QuantityUtils.packsToDoses(rowData.availablePacks, rowData),
     },
     {
       key: 'dosesIssued',

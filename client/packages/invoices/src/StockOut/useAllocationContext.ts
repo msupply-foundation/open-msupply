@@ -12,11 +12,12 @@ import {
   issue,
   packsToQuantity,
   scannedBatchFilter,
-  getAllocationAlerts,
+  getAutoAllocationAlerts,
   OutboundLineEditData,
   DraftItem,
   DraftStockOutLineFragment,
   normaliseToUnits,
+  getManualAllocationAlerts,
 } from '.';
 import { allocateQuantities } from './allocateQuantities';
 
@@ -279,7 +280,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       ? remainingAsUnits
       : Math.ceil(remainingAsUnits);
 
-    const alerts = getAllocationAlerts(
+    const alerts = getAutoAllocationAlerts(
       quantity,
       allocatedQuantity,
       placeholderInUnits,
@@ -316,24 +317,20 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     // Now check if we need to show any alerts
     const updatedLine = updatedLines.find(line => line.id === lineId);
-
     const allocatedQuantity = updatedLine
-      ? packsToQuantity(allocateInType, updatedLine.numberOfPacks, updatedLine)
+      ? packsToQuantity(allocateIn.type, updatedLine.numberOfPacks, updatedLine)
       : 0;
 
-    // Todo: once prescriptions refactored, see if we can streamline alerts?
-    const alerts: StockOutAlert[] =
-      allocatedQuantity > quantity
-        ? [
-            {
-              message: t('messages.over-allocated-line', {
-                quantity: format(allocatedQuantity),
-                issueQuantity: format(quantity),
-              }),
-              severity: 'warning',
-            },
-          ]
-        : [];
+    const alerts = updatedLine
+      ? getManualAllocationAlerts(
+          quantity,
+          allocatedQuantity,
+          updatedLine,
+          allocateIn,
+          format,
+          t
+        )
+      : [];
 
     set(state => ({
       ...state,

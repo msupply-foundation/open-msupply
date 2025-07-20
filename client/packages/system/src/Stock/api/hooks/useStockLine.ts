@@ -29,6 +29,7 @@ const defaultDraftStockLine: DraftStockLine = {
     code: '',
     name: '',
     isVaccine: false,
+    dosesPerUnit: 0,
   },
   reasonOption: null,
   vvmStatusLogs: {

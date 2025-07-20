@@ -7,15 +7,14 @@ use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader,
-        NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, ReasonOptionLoader,
-        StockLineByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByNameLinkIdLoader,
+        NameByNameLinkIdLoaderInput, ReasonOptionLoader, StockLineByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineType, ItemRow};
+use repository::{location::Location, InvoiceLine, InvoiceLineRow, InvoiceLineType, ItemRow};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -163,17 +162,13 @@ impl InvoiceLineNode {
     pub async fn location_id(&self) -> &Option<String> {
         &self.row().location_id
     }
-    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
-        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
-        let location_id = match &self.row().location_id {
-            None => return Ok(None),
-            Some(location_id) => location_id,
-        };
-
-        let result = loader.load_one(location_id.clone()).await?;
-
-        Ok(result.map(LocationNode::from_domain))
+    pub async fn location(&self) -> Option<LocationNode> {
+        self.invoice_line.location_row_option.as_ref().map(|row| {
+            LocationNode::from_domain(Location {
+                location_row: row.clone(),
+            })
+        })
     }
 
     // Other
