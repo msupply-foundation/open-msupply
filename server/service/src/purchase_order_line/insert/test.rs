@@ -201,12 +201,12 @@ mod insert {
             .unwrap();
 
         // Assert that the line numbers are set correctly for purchase order id 1
-        assert_eq!(purchase_order_lines_1_1.line_number, Some(1));
-        assert_eq!(purchase_order_lines_1_2.line_number, Some(2));
+        assert_eq!(purchase_order_lines_1_1.line_number, 1);
+        assert_eq!(purchase_order_lines_1_2.line_number, 2);
 
         // Assert that the line numbers are set correctly for purchase order id 2
-        assert_eq!(purchase_order_lines_2_1.line_number, Some(1));
-        assert_eq!(purchase_order_lines_2_2.line_number, Some(2));
+        assert_eq!(purchase_order_lines_2_1.line_number, 1);
+        assert_eq!(purchase_order_lines_2_2.line_number, 2);
 
         // Assert that the results match the expected IDs
         assert_eq!(result_1_1.id, purchase_order_lines_1_1.id);
