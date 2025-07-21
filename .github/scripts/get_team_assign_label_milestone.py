@@ -14,24 +14,17 @@ class TeamLabelAndMilestone:
             label.name: label for label in self.repo.get_labels() if 'team' in label.name
         }
 
-    def get_user_teams(self) -> Set[str]:
-        teams = set()
+    def get_user_team_label(self) -> str:
         user = self.github.get_user()
+        user_teams = set()
         for team in user.get_teams():
             if team.organization == self.org:
-                teams.add(team.slug)
-        return teams
-    
-    def get_user_team_label(self) -> str:
-        user_teams = self.get_user_teams()
+                user_teams.add(team.slug)
 
         for l in self.team_labels:
             if any(word in l for word in user_teams):
-                label = self.team_labels[l].name
-                break
-        else:
-            label = ''
-        return label
+                return self.team_labels[l].name
+        return ''
     
     def get_team_labels_not_belonging_to_user(self) -> List[str]:
         team_label = self.get_user_team_label()
@@ -46,17 +39,26 @@ class TeamLabelAndMilestone:
         issue_labels = self.get_issue_labels()
         user_team_label = self.get_user_team_label()
         not_user_team_labels = self.get_team_labels_not_belonging_to_user()
+
         issue = self.repo.get_issue(self.issue_number)
+        assignees = [a.login for a in issue.assignees]
+
+        if not assignees:
+            for label in self.team_labels:
+                if label in issue_labels:
+                    print(f"Removing team label: {label}")
+                    issue.remove_from_labels(label)
+            return
 
         if user_team_label and user_team_label not in issue_labels:
-            print(f"Adding label: {user_team_label}")
+            print(f"Adding team label: {user_team_label}")
             issue.add_to_labels(user_team_label)
         else:
             print(f"🎉🎉🎉")
 
         for label in not_user_team_labels:
             if label in issue_labels:
-                print(f"Removing label: {label}")
+                print(f"Removing other team label: {label}")
                 issue.remove_from_labels(label)
             else:
                 print(f"💃💃💃")
