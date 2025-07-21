@@ -36,17 +36,6 @@ impl Localisations {
         localisations
     }
 
-    // Creates a new Localisations struct
-    pub fn new_defaults_only() -> Self {
-        let mut localisations = Localisations {
-            translations: HashMap::new(),
-            custom_translations: HashMap::new(),
-        };
-        // TODO add error logging
-        let _ = localisations.load_translations();
-        localisations
-    }
-
     // Load translations from embedded files
     pub fn load_translations(&mut self) -> Result<(), std::io::Error> {
         // add read all namespace file names within locales
@@ -176,6 +165,7 @@ impl Localisations {
     }
 }
 
+#[derive(Clone)]
 pub struct GetTranslation {
     pub(crate) namespace: Option<String>,
     pub(crate) fallback: Option<String>,
@@ -185,13 +175,23 @@ pub struct GetTranslation {
 #[cfg(test)]
 mod test {
 
-    use crate::localisations::GetTranslation;
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, PreferenceRow, PreferenceRowRepository,
+    };
+
+    use crate::{
+        localisations::GetTranslation,
+        preference::{CustomTranslations, Preference},
+    };
 
     use super::Localisations;
 
-    #[test]
-    fn test_translations() {
-        let localisations = Localisations::new_defaults_only();
+    #[actix_rt::test]
+    async fn test_translations() {
+        let (_, storage_connection, _, _) =
+            setup_all("get_translations", MockDataInserts::none()).await;
+
+        let localisations = Localisations::new(&storage_connection);
         // test loading localisations
         // note these translations might change if translations change in the front end. In this case, these will need to be updated.
         let lang = "fr";
@@ -200,6 +200,7 @@ mod test {
             fallback: Some("fallback".to_string()),
             key: "button.close".to_string(),
         };
+
         // test correct translation
         let translated_value = localisations.get_translation(args, lang).unwrap();
         assert_eq!("Fermer", translated_value);
@@ -245,8 +246,23 @@ mod test {
             fallback: Some("fallback".to_string()),
             key: "button.close".to_string(),
         };
-        let translated_value = localisations.get_translation(args, lang).unwrap();
+        let translated_value = localisations.get_translation(args.clone(), lang).unwrap();
         assert_eq!("Cerrar", translated_value);
+
+        // test custom translations take precedence
+        PreferenceRowRepository::new(&storage_connection)
+            .upsert_one(&PreferenceRow {
+                id: "custom_translation".to_string(),
+                store_id: None,
+                key: CustomTranslations.key().to_string(),
+                value: r#"{"button.close":"Custom Button"}"#.to_string(),
+            })
+            .unwrap();
+        // reinitialise localisations with pref in place
+        let localisations = Localisations::new(&storage_connection);
+        let translated_value = localisations.get_translation(args, lang).unwrap();
+        assert_eq!("Custom Button", translated_value);
+
         // test no translation and no fallback results in panic
         let lang = "fr";
         let args = GetTranslation {

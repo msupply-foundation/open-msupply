@@ -24,6 +24,4 @@ impl Preference for CustomTranslations {
     fn default_value(&self) -> Self::Value {
         HashMap::new()
     }
-
-    // TODO: Implement custom upsert validation - and see about passing around a more explicit type that JSON Value?
 }
