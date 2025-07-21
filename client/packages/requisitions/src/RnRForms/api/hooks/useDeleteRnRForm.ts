@@ -1,4 +1,4 @@
-import { useMutation, useTableStore } from '@openmsupply-client/common';
+import { useMutation } from '@openmsupply-client/common';
 import { useRnRGraphQL } from '../useRnRGraphQL';
 import { LIST, RNR_FORM } from './keys';
 
@@ -17,19 +17,12 @@ export const useDeleteRnRForm = () => {
     },
   });
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => selectedId),
-  }));
-
   const deleteRnRForms = async (ids: string[]) => {
     await Promise.all(ids.map(id => mutateAsync(id)));
   };
 
   return {
     deleteRnRForms,
-    selectedRows,
     isLoading,
     error,
   };

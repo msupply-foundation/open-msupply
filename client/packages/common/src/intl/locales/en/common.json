@@ -1559,6 +1559,8 @@
   "messages.confirm-delete-returns_one": "This will permanently remove 1 return",
   "messages.confirm-delete-returns_other": "This will permanently remove {{count}} returns",
   "messages.confirm-delete-rnr-form": "This will permanently remove R&R Form for {{programName}} - {{period}} ",
+  "messages.confirm-delete-rnr-forms_one": "This will permanently remove {{count}} R&R Form",
+  "messages.confirm-delete-rnr-forms_other": "This will permanently remove {{count}} R&R Forms",
   "messages.confirm-delete-shipment": "This will permanently remove Shipment #{{number}}",
   "messages.confirm-delete-shipment-lines_few": "This will permanently remove {{count}} shipment lines",
   "messages.confirm-delete-shipment-lines_many": "This will permanently remove {{count}} shipment lines",

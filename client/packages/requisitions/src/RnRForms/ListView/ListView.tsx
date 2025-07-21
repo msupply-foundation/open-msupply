@@ -12,6 +12,7 @@ import {
   useEditModal,
   useTableStore,
   RnRFormNodeStatus,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -19,8 +20,12 @@ import { useRnRFormList } from '../api';
 import { RnRFormFragment } from '../api/operations.generated';
 import { RnRFormCreateModal } from './RnRFormCreateModal';
 import { getStatusTranslator, isRnRFormDisabled } from '../utils';
+import { Footer } from './Footer';
 
 const RnRFormListComponent = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { isOpen, onClose, onOpen } = useEditModal();
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -30,10 +35,7 @@ const RnRFormListComponent = () => {
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const { setDisabledRows } = useTableStore();
-
   const pagination = { page, first, offset };
-  const navigate = useNavigate();
-  const t = useTranslation();
 
   const queryParams = {
     filterBy,
@@ -43,10 +45,9 @@ const RnRFormListComponent = () => {
   };
   const { data, isLoading, isError } = useRnRFormList(queryParams);
 
-  const { isOpen, onClose, onOpen } = useEditModal();
-
   const columns = useColumns<RnRFormFragment>(
     [
+      GenericColumnKey.Selection,
       {
         key: 'periodName',
         label: 'label.period',
@@ -104,6 +105,7 @@ const RnRFormListComponent = () => {
           <NothingHere body={t('error.no-rnr-forms')} onCreate={onOpen} />
         }
       />
+      <Footer />
     </>
   );
 };
