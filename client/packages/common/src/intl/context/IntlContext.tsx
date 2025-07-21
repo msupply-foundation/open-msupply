@@ -14,6 +14,7 @@ const appVersion = require('../../../../../../package.json').version; // eslint-
 // Only for web, otherwise default to app version
 declare const LANG_VERSION: string;
 
+export const CUSTOM_TRANSLATIONS_NAMESPACE = 'custom-translations';
 const defaultNS = 'common';
 const minuteInMilliseconds = 60 * 1000;
 const isDevelopment = process.env['NODE_ENV'] === 'development';
@@ -63,9 +64,6 @@ export function initialiseI18n({
           {
             /* options for translation overrides backend (http api request) */
             loadPath: customTranslationsLoadPath,
-            queryStringParams: {
-              v: languageVersion,
-            },
           },
         ],
       },

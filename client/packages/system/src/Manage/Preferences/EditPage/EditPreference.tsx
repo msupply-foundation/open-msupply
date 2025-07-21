@@ -10,6 +10,8 @@ import {
   useTranslation,
   useNotification,
   TextArea,
+  useIntl,
+  CUSTOM_TRANSLATIONS_NAMESPACE,
 } from '@openmsupply-client/common';
 import {
   EnumOptions,
@@ -22,11 +24,14 @@ export const EditPreference = ({
   disabled = false,
 }: {
   preference: PreferenceDescriptionNode;
-  update: (input: UpsertPreferencesInput[keyof UpsertPreferencesInput]) => void;
+  update: (
+    input: UpsertPreferencesInput[keyof UpsertPreferencesInput]
+  ) => Promise<void>;
   disabled?: boolean;
 }) => {
   const t = useTranslation();
   const { error } = useNotification();
+  const { i18n } = useIntl();
 
   // The preference.value only updates after mutation completes and cache
   // is invalidated - use local state for fast UI change
@@ -77,10 +82,14 @@ export const EditPreference = ({
     case PreferenceValueNodeType.CustomTranslations:
       return (
         <TextArea
-          onChange={e => {
+          onChange={async e => {
             const newValue = JSON.parse(e.target.value); // Validate JSON format
             setValue(newValue);
-            update(newValue);
+            await update(newValue);
+            // Note - this is still requires the component in question to
+            // re-render to pick up the new translations
+            // TODO: Could trigger full refresh on modal save?
+            i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
           }}
           value={JSON.stringify(value)}
           maxRows={10}
