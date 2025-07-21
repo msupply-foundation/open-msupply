@@ -17,6 +17,7 @@ pub enum PrefKey {
     GenderOptions,
     ShowContactTracing,
     UseCampaigns,
+    CustomTranslations,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -37,6 +38,8 @@ pub enum PreferenceValueType {
     Boolean,
     Integer,
     MultiChoice,
+    // specific type to CustomTranslations preference
+    CustomTranslations,
     // String,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
