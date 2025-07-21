@@ -27,7 +27,7 @@ query StocktakeQuery(
     reportSort: $sort
     # Current limit for stocktake lines in one request is 1000
     # Very possible for larger stocktakes to exist, meaning not all pages available in report
-    first: { page: 1000 }
+    page: { first: 1000 }
   ) {
     ... on StocktakeLineConnector {
       nodes {
