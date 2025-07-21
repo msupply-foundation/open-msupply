@@ -16,6 +16,39 @@ pub struct EmbeddedLocalisations;
 #[derive(Debug, Error)]
 #[error("No translation found and fallback is missing for key {0}")]
 pub struct TranslationError(String);
+
+pub struct LocalisationsService {
+    /// Private field, can only be accessed via get_localisations so custom translations are initialised
+    localisations: Localisations,
+}
+
+impl LocalisationsService {
+    pub fn new() -> Self {
+        let mut localisations = Localisations {
+            translations: HashMap::new(),
+            custom_translations: HashMap::new(),
+        };
+
+        // Initialise localisations with OMS default translations
+        localisations.load_translations();
+
+        Self { localisations }
+    }
+
+    /// Each time localisations is consumed, we should reload custom translations from the preference
+    /// as they may have changed
+    pub fn get_localisations(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<Localisations, PreferenceError> {
+        let mut localisations = self.localisations.clone();
+
+        localisations.load_custom_translations(connection)?;
+
+        Ok(localisations)
+    }
+}
+
 // struct to manage translations
 #[derive(Clone)]
 pub struct Localisations {
@@ -24,20 +57,8 @@ pub struct Localisations {
 }
 
 impl Localisations {
-    // Creates a new Localisations struct
-    pub fn new(connection: &StorageConnection) -> Self {
-        let mut localisations = Localisations {
-            translations: HashMap::new(),
-            custom_translations: HashMap::new(),
-        };
-        // TODO add error logging
-        let _ = localisations.load_translations();
-        let _ = localisations.load_custom_translations(connection);
-        localisations
-    }
-
     // Load translations from embedded files
-    pub fn load_translations(&mut self) -> Result<(), std::io::Error> {
+    pub fn load_translations(&mut self) {
         // add read all namespace file names within locales
         for file in EmbeddedLocalisations::iter() {
             let file_namespace = file.split('/').nth(1).unwrap_or_default().to_string();
@@ -46,7 +67,11 @@ impl Localisations {
                 let json_data = content.data;
                 let translations: HashMap<String, String> = serde_json::from_slice(&json_data)
                     .unwrap_or_else(|e| {
-                        log::error!("Failed to parse JSON file {:?}: {:?}", file, e);
+                        log::error!(
+                            "Failed to parse JSON localisations file {:?}. Backend/report translations will be unavailable due to: {:?}",
+                            file,
+                            e
+                        );
                         HashMap::new()
                     });
                 self.translations
@@ -55,7 +80,6 @@ impl Localisations {
                     .insert(file_namespace, translations);
             }
         }
-        Ok(())
     }
 
     pub fn load_custom_translations(
@@ -180,18 +204,17 @@ mod test {
     };
 
     use crate::{
-        localisations::GetTranslation,
+        localisations::{GetTranslation, LocalisationsService},
         preference::{CustomTranslations, Preference},
     };
-
-    use super::Localisations;
 
     #[actix_rt::test]
     async fn test_translations() {
         let (_, storage_connection, _, _) =
             setup_all("get_translations", MockDataInserts::none()).await;
 
-        let localisations = Localisations::new(&storage_connection);
+        let service = LocalisationsService::new();
+        let localisations = service.get_localisations(&storage_connection).unwrap();
         // test loading localisations
         // note these translations might change if translations change in the front end. In this case, these will need to be updated.
         let lang = "fr";
@@ -259,7 +282,7 @@ mod test {
             })
             .unwrap();
         // reinitialise localisations with pref in place
-        let localisations = Localisations::new(&storage_connection);
+        let localisations = service.get_localisations(&storage_connection).unwrap();
         let translated_value = localisations.get_translation(args, lang).unwrap();
         assert_eq!("Custom Button", translated_value);
 

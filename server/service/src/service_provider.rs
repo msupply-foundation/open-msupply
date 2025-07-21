@@ -31,7 +31,7 @@ use crate::{
     item::ItemServiceTrait,
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
-    localisations::Localisations,
+    localisations::LocalisationsService,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
@@ -173,7 +173,7 @@ pub struct ServiceProvider {
     pub program_service: Box<dyn ProgramServiceTrait>,
     pub pricing_service: Box<dyn PricingServiceTrait>,
     // Translations
-    pub translations_service: Box<Localisations>,
+    pub localisations_service: Box<LocalisationsService>,
     // Standard Reports
     pub standard_reports: Box<StandardReports>,
     // Emails
@@ -210,10 +210,8 @@ impl ServiceProvider {
 
     // Used in tests, and for the CLI & test_connection tool
     pub fn new(connection_manager: StorageConnectionManager) -> Self {
-        let connection = &connection_manager.connection().unwrap(); // okay to unwrap as only used for tests
         ServiceProvider::new_with_triggers(
             connection_manager,
-            connection,
             ProcessorsTrigger::new_void(),
             SyncTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
@@ -223,7 +221,6 @@ impl ServiceProvider {
 
     pub fn new_with_triggers(
         connection_manager: StorageConnectionManager,
-        db_connection: &StorageConnection,
         processors_trigger: ProcessorsTrigger,
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
@@ -288,7 +285,7 @@ impl ServiceProvider {
             pricing_service: Box::new(PricingService {}),
             rnr_form_service: Box::new(RnRFormService {}),
             vaccination_service: Box::new(VaccinationService {}),
-            translations_service: Box::new(Localisations::new(db_connection)),
+            localisations_service: Box::new(LocalisationsService::new()),
             standard_reports: Box::new(StandardReports {}),
             email_service: Box::new(EmailService::new(mail_settings.clone())),
             contact_form_service: Box::new(ContactFormService {}),
