@@ -1,0 +1,137 @@
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    StorageConnection, Upsert,
+};
+
+use chrono::{NaiveDate, NaiveDateTime};
+use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+
+table! {
+    goods_receiving (id) {
+        id -> Text,
+        store_id -> Text,
+        purchase_order_id -> Nullable<Text>,
+        inbound_shipment_id -> Nullable<Text>,
+        goods_receiving_number -> BigInt,
+        status -> crate::db_diesel::goods_receiving_row::GoodsReceivingStatusMapping,
+        received_date -> Nullable<Date>,
+        comment -> Nullable<Text>,
+        supplier_reference -> Nullable<Text>,
+        donor_link_id -> Nullable<Text>,
+        created_datetime -> Timestamp,
+        modified_datetime -> Timestamp,
+        finalised_datetime -> Nullable<Timestamp>,
+        created_by -> Nullable<Text>,
+        modified_by -> Nullable<Text>,
+    }
+}
+
+#[derive(
+    Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
+)]
+#[diesel(table_name = goods_receiving)]
+#[diesel(treat_none_as_null = true)]
+pub struct GoodsReceivingRow {
+    pub id: String,
+    pub store_id: String,
+    pub purchase_order_id: Option<String>,
+    pub inbound_shipment_id: Option<String>,
+    pub goods_receiving_number: i64,
+    pub status: GoodsReceivingStatus,
+    pub received_date: Option<NaiveDate>,
+    pub comment: Option<String>,
+    pub supplier_reference: Option<String>,
+    pub donor_link_id: Option<String>,
+    pub created_datetime: NaiveDateTime,
+    pub modified_datetime: NaiveDateTime,
+    pub finalised_datetime: Option<NaiveDateTime>,
+    pub created_by: Option<String>,
+    pub modified_by: Option<String>,
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[cfg_attr(test, derive(strum::EnumIter))]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum GoodsReceivingStatus {
+    #[default]
+    New,
+    Finalised,
+}
+
+pub struct GoodsReceivingRowRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> GoodsReceivingRowRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        GoodsReceivingRowRepository { connection }
+    }
+
+    pub fn _upsert_one(&self, row: &GoodsReceivingRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(goods_receiving::table)
+            .values(row)
+            .on_conflict(goods_receiving::id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &GoodsReceivingRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        self.insert_changelog(row.to_owned(), RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: GoodsReceivingRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::GoodsReceiving,
+            record_id: row.id,
+            row_action: action,
+            store_id: Some(row.store_id),
+            name_link_id: None,
+        };
+        ChangelogRepository::new(self.connection).insert(&row)
+    }
+
+    pub fn find_all(&self) -> Result<Vec<GoodsReceivingRow>, RepositoryError> {
+        let result = goods_receiving::table.load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<GoodsReceivingRow>, RepositoryError> {
+        let result = goods_receiving::table
+            .filter(goods_receiving::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(goods_receiving::table)
+            .filter(goods_receiving::id.eq(id))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+}
+
+impl Upsert for GoodsReceivingRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = GoodsReceivingRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            GoodsReceivingRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}

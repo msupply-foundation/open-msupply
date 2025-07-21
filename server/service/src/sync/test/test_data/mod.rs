@@ -1,3 +1,4 @@
+pub(crate) mod goods_receiving;
 use self::special::name_to_name_store_join;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
