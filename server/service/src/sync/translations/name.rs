@@ -1,6 +1,9 @@
-use crate::sync::sync_serde::{
-    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
-     zero_date_as_option,
+use crate::sync::{
+    sync_serde::{
+        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
+        zero_date_as_option,
+    },
+    translations::currency::CurrencyTranslation,
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
@@ -138,6 +141,18 @@ pub struct LegacyNameRow {
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_death: Option<NaiveDate>,
     pub custom_data: Option<serde_json::Value>,
+    #[serde(rename = "HSH_code")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub hsh_code: Option<String>,
+    #[serde(rename = "HSH_name")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub hsh_name: Option<String>,
+    pub margin: Option<f64>,
+    #[serde(rename = "freightfac")]
+    pub freight_factor: Option<f64>,
+    #[serde(rename = "currency_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub currency_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -152,7 +167,7 @@ impl SyncTranslation for NameTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
+        vec![CurrencyTranslation.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -214,6 +229,11 @@ impl SyncTranslation for NameTranslation {
             gender,
             date_of_death,
             custom_data,
+            hsh_code,
+            hsh_name,
+            margin,
+            freight_factor,
+            currency_id,
         } = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
 
         // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
@@ -264,6 +284,11 @@ impl SyncTranslation for NameTranslation {
                 .or(created_date.map(|date| date.and_hms_opt(0, 0, 0).unwrap())),
             date_of_death,
             custom_data_string,
+            hsh_code,
+            hsh_name,
+            margin,
+            freight_factor,
+            currency_id,
             deleted_datetime: None,
         };
 
@@ -314,9 +339,14 @@ impl SyncTranslation for NameTranslation {
             is_deceased,
             date_of_death,
             national_health_number,
+            deleted_datetime,
+            hsh_code,
+            hsh_name,
+            margin,
+            freight_factor,
+            currency_id,
             // See comment in pull translation
             custom_data_string: _,
-            deleted_datetime,
         } = NameRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -372,6 +402,11 @@ impl SyncTranslation for NameTranslation {
             created_datetime,
             gender,
             date_of_death,
+            hsh_code,
+            hsh_name,
+            margin,
+            freight_factor,
+            currency_id,
             custom_data: None,
         };
 

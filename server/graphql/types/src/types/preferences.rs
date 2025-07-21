@@ -1,3 +1,4 @@
+use crate::types::patient::GenderType;
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
@@ -18,6 +19,12 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
+    pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
+        let domain_genders = self.load_preference(&self.preferences.gender_options)?;
+        let genders = domain_genders.iter().map(GenderType::from_domain).collect();
+        Ok(genders)
+    }
+
     pub async fn show_contact_tracing(&self) -> Result<bool> {
         self.load_preference(&self.preferences.show_contact_tracing)
     }
@@ -29,6 +36,10 @@ impl PreferencesNode {
 
     pub async fn manage_vvm_status_for_stock(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vvm_status_for_stock)
+    }
+
+    pub async fn order_in_packs(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.order_in_packs)
     }
 
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
@@ -86,10 +97,12 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
+    GenderOptions,
     ShowContactTracing,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
+    OrderInPacks,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
 }
@@ -99,10 +112,12 @@ impl PreferenceKey {
         match pref_key {
             // Global preferences
             PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
+            PrefKey::GenderOptions => PreferenceKey::GenderOptions,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
+            PrefKey::OrderInPacks => PreferenceKey::OrderInPacks,
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
             PrefKey::UseSimplifiedMobileUi => PreferenceKey::UseSimplifiedMobileUi,
         }
@@ -128,6 +143,7 @@ impl PreferenceNodeType {
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
+    MultiChoice,
 }
 
 impl PreferenceValueNodeType {
@@ -135,6 +151,7 @@ impl PreferenceValueNodeType {
         match domain_type {
             PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
             PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
+            PreferenceValueType::MultiChoice => PreferenceValueNodeType::MultiChoice,
         }
     }
 }

@@ -1,8 +1,15 @@
 import { useCallback, useContext, useState } from 'react';
-import { EnvUtils, Formatter } from '@common/utils';
+import { EnvUtils, Formatter, noOtherVariants } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
 import { LocaleKey, useTranslation, IntlContext } from '@common/intl';
+import {
+  frFR,
+  ptPT,
+  esES,
+  ruRU,
+  enUS as muiEnUS,
+} from '@mui/x-date-pickers/locales';
 
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -32,6 +39,36 @@ export const getLocale = (language: SupportedLocales) => {
       return pt;
     default:
       return getLocaleObj[language];
+  }
+};
+
+const getLocalisations = (locale: typeof frFR) =>
+  locale.components.MuiLocalizationProvider.defaultProps.localeText;
+
+const getDateLocalisations = (language: SupportedLocales) => {
+  switch (language) {
+    case 'fr':
+    case 'fr-DJ':
+      return getLocalisations(frFR);
+
+    case 'es':
+      return getLocalisations(esES);
+
+    case 'ru':
+      return getLocalisations(ruRU);
+
+    case 'pt':
+      return getLocalisations(ptPT);
+
+    // Not every language is supported by MUI, and some dialects may want
+    // overrides. If/when needed - pass in t() here and set required fields,
+    // or define full localeText object for the required language
+    case 'en':
+    case 'ar':
+    case 'tet':
+      return getLocalisations(muiEnUS);
+    default:
+      noOtherVariants(language);
   }
 };
 
@@ -142,6 +179,7 @@ export const useIntlUtils = () => {
     changeLanguage,
     getLocaleCode,
     getLocale: () => getLocale(currentLanguage),
+    getDateLocalisations: () => getDateLocalisations(currentLanguage),
     getUserLocale,
     setUserLocale,
     getLocalisedFullName,

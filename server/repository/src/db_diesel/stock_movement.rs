@@ -8,6 +8,18 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use util::Defaults;
 
+/*
+-- Stock movement --
+
+View over all stock movements in a store.
+
+This is a separate repository/view from the item and stock ledgers,
+as it does not include a running balance.
+
+This makes it a less expensive repository to query, when the balance
+is not needed or is calculated elsewhere.
+ */
+
 table! {
     stock_movement (id) {
         id -> Text,

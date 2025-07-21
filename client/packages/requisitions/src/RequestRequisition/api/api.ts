@@ -239,10 +239,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         input,
       });
 
-      const { updateRequestRequisitionLine } = result || {};
-      if (updateRequestRequisitionLine?.__typename === 'RequisitionLineNode') {
-        return updateRequestRequisitionLine;
-      }
+      return result.updateRequestRequisitionLine;
     }
 
     throw new Error('Unable to update requisition');

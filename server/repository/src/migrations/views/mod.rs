@@ -4,11 +4,15 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
     log::info!("Dropping database views...");
     sql!(
         connection,
+        // Drop order is important here, as some views depend on others. Please
+        // check when adding new views.
         r#"
       DROP VIEW IF EXISTS invoice_stats;
       DROP VIEW IF EXISTS consumption;
       DROP VIEW IF EXISTS replenishment;
       DROP VIEW IF EXISTS adjustments;
+      DROP VIEW IF EXISTS item_ledger;
+      DROP VIEW IF EXISTS stock_line_ledger;
       DROP VIEW IF EXISTS stock_movement;
       DROP VIEW IF EXISTS outbound_shipment_stock_movement;
       DROP VIEW IF EXISTS inbound_shipment_stock_movement;
@@ -164,6 +168,84 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     )
     SELECT * FROM all_movements
     WHERE datetime IS NOT NULL;
+
+
+  -- Separate views for stock & item ledger, so the running balance window functions are only executed when required
+
+  CREATE VIEW stock_line_ledger AS
+    WITH movements_with_precedence AS (
+      SELECT *,
+        CASE
+          WHEN invoice_type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
+          WHEN invoice_type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
+          ELSE 3
+        END AS type_precedence
+      FROM stock_movement
+      WHERE stock_line_id IS NOT NULL
+    )
+    SELECT *,
+      SUM(quantity) OVER (
+        PARTITION BY store_id, stock_line_id
+        ORDER BY datetime, type_precedence
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+      ) AS running_balance
+    FROM movements_with_precedence
+    ORDER BY datetime, type_precedence;
+
+  CREATE VIEW item_ledger AS
+    WITH all_movements AS (
+      SELECT
+        invoice_line_stock_movement.id AS id,
+        quantity_movement AS movement_in_units,
+        invoice_line_stock_movement.item_link_id AS item_id,
+        invoice.store_id as store_id,
+        CASE WHEN invoice.type IN (
+          'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION'
+        ) THEN picked_datetime
+          WHEN invoice.type IN (
+            'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
+        ) THEN received_datetime
+          WHEN invoice.type IN (
+            'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
+        ) THEN verified_datetime
+        ELSE NULL
+        END AS datetime,
+        name,
+        invoice.type AS invoice_type,
+        invoice.invoice_number AS invoice_number,
+        invoice.id AS invoice_id,
+        reason_option.reason AS reason,
+        stock_line_id,
+        invoice_line_stock_movement.expiry_date AS expiry_date,
+        invoice_line_stock_movement.batch AS batch,
+        invoice_line_stock_movement.cost_price_per_pack AS cost_price_per_pack,
+        invoice_line_stock_movement.sell_price_per_pack AS sell_price_per_pack,
+        invoice.status AS invoice_status,
+        invoice_line_stock_movement.total_before_tax AS total_before_tax,
+        invoice_line_stock_movement.pack_size as pack_size,
+        invoice_line_stock_movement.number_of_packs as number_of_packs,
+        CASE
+          WHEN invoice.type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
+          WHEN invoice.type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
+          ELSE 3
+        END AS type_precedence
+    FROM
+        invoice_line_stock_movement
+        LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
+        LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
+        JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
+        JOIN name_link ON invoice.name_link_id = name_link.id
+        JOIN name ON name_link.name_id = name.id
+    )
+    SELECT *,
+      SUM(movement_in_units) OVER (
+        PARTITION BY store_id, item_id
+        ORDER BY datetime, id, type_precedence
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+      ) AS running_balance
+    FROM all_movements
+    WHERE datetime IS NOT NULL  
+    ORDER BY datetime, id, type_precedence;
 
   CREATE VIEW replenishment AS
     SELECT

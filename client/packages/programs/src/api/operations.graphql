@@ -485,11 +485,13 @@ query clinicians(
   $key: ClinicianSortFieldInput!
   $desc: Boolean
   $filter: ClinicianFilterInput
+  $page: PaginationInput
 ) {
   clinicians(
     storeId: $storeId
     sort: { key: $key, desc: $desc }
     filter: $filter
+    page: $page
   ) {
     ... on ClinicianConnector {
       __typename

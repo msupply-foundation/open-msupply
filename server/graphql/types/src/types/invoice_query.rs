@@ -82,6 +82,20 @@ pub enum InvoiceNodeStatus {
     Cancelled,
 }
 
+#[derive(InputObject, Clone)]
+pub struct EqualFilterInvoiceTypeInput {
+    pub equal_to: Option<InvoiceNodeType>,
+    pub equal_any: Option<Vec<InvoiceNodeType>>,
+    pub not_equal_to: Option<InvoiceNodeType>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterInvoiceStatusInput {
+    pub equal_to: Option<InvoiceNodeStatus>,
+    pub equal_any: Option<Vec<InvoiceNodeStatus>>,
+    pub not_equal_to: Option<InvoiceNodeStatus>,
+}
+
 pub struct InvoiceNode {
     pub invoice: Invoice,
 }

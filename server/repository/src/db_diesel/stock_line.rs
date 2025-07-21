@@ -359,6 +359,11 @@ impl StockLineFilter {
         self.location = Some(filter);
         self
     }
+
+    pub fn master_list(mut self, filter: MasterListFilter) -> Self {
+        self.master_list = Some(filter);
+        self
+    }
 }
 
 impl StockLine {

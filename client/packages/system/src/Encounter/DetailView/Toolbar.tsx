@@ -9,7 +9,6 @@ import {
   DateUtils,
   UserIcon,
   useFormatDateTime,
-  ClinicianNode,
   useIntlUtils,
   DocumentRegistryCategoryNode,
   SxProps,
@@ -24,7 +23,6 @@ import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
 } from '../../Clinician';
-import { Clinician } from '../../Clinician/utils';
 import { DateTimePickerInput } from '@common/components';
 
 const Row = ({
@@ -83,13 +81,16 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   useEffect(() => {
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
-    setClinician({
-      label: getLocalisedFullName(
-        encounter.clinician?.firstName,
-        encounter.clinician?.lastName
-      ),
-      value: encounter.clinician as Clinician,
-    });
+    if (encounter.clinician) {
+      setClinician({
+        id: encounter.clinician.id,
+        label: getLocalisedFullName(
+          encounter.clinician.firstName,
+          encounter.clinician.lastName
+        ),
+        value: encounter.clinician,
+      });
+    }
   }, [encounter, getLocalisedFullName]);
 
   const { patient } = encounter;
@@ -170,9 +171,20 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                     <ClinicianSearchInput
                       onChange={clinician => {
                         setClinician(clinician);
-                        onChange({
-                          clinician: clinician?.value as ClinicianNode,
-                        });
+                        if (!!clinician) {
+                          const { id, lastName, firstName } = clinician.value;
+                          onChange({
+                            clinician: {
+                              __typename: 'ClinicianNode',
+                              id,
+                              lastName,
+                              // JSON schema doesn't support first name as null, map to undefined
+                              firstName: firstName ?? undefined,
+                            },
+                          });
+                        } else {
+                          onChange({ clinician: undefined });
+                        }
                       }}
                       clinicianValue={clinician?.value}
                     />

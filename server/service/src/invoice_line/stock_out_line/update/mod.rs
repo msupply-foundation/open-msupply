@@ -417,6 +417,7 @@ mod test {
                 u.total_before_tax = 18.00;
                 u.total_after_tax = 18.00;
                 u.note = Some("new note".to_string());
+                u.shipped_number_of_packs = Some(2.0);
                 u
             })
         );

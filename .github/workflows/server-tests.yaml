@@ -6,6 +6,10 @@ on:
 
 name: Backend Tests
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   build_and_test:
     name: Remote Server Tests (sqlite)

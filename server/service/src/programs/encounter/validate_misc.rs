@@ -1,5 +1,8 @@
 use chrono::{DateTime, NaiveDateTime};
-use repository::{ClinicianRow, ClinicianRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    ClinicianRow, ClinicianRowRepository, ClinicianRowRepositoryTrait, RepositoryError,
+    StorageConnection,
+};
 use serde_json::Value;
 
 use super::encounter_schema::SchemaEncounter;
@@ -8,7 +11,7 @@ pub fn validate_clinician_exists(
     connection: &StorageConnection,
     clinician_id: &str,
 ) -> Result<Option<ClinicianRow>, RepositoryError> {
-    let result = ClinicianRowRepository::new(connection).find_one_by_id_option(clinician_id)?;
+    let result = ClinicianRowRepository::new(connection).find_one_by_id(clinician_id)?;
     Ok(result)
 }
 

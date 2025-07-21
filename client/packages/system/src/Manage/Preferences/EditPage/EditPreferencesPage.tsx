@@ -26,7 +26,6 @@ export const EditPreferencesPage = () => {
           return (
             <InputWithLabelRow
               key={pref.key}
-              labelRight
               labelWidth={'100%'}
               label={t(`preference.${pref.key}` as LocaleKey)}
               Input={

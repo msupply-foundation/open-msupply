@@ -56,6 +56,7 @@ export interface DialogProps {
   disableBackdrop?: boolean;
   disableEscapeKey?: boolean;
   disableMobileFullScreen?: boolean;
+  isSidePanelModal?: boolean;
 }
 
 interface DialogState {

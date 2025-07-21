@@ -1,109 +1,104 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 
-use graphql_types::types::{InvoiceNodeStatus, InvoiceNodeType};
-use repository::{ledger::LedgerRow, PaginationOption};
+use graphql_types::types::{
+    EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceNodeStatus, InvoiceNodeType,
+};
+use repository::{DatetimeFilter, EqualFilter, ItemLedgerFilter, ItemLedgerRow, PaginationOption};
 
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    ledger::{get_item_ledger, ItemLedger},
+    ledger::get_item_ledger,
     ListResult,
 };
 
-use super::{LedgerFilterInput, LedgerSortInput};
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(rename_items = "camelCase")]
-pub enum LedgerSortFieldInput {
-    Datetime,
-    Name,
-    InvoiceType,
-    Quantity,
-    ItemId,
-    StockLineId,
+#[derive(InputObject, Clone)]
+pub struct ItemLedgerFilterInput {
+    pub item_id: Option<EqualFilterStringInput>,
+    pub datetime: Option<DatetimeFilterInput>,
+    pub invoice_type: Option<EqualFilterInvoiceTypeInput>,
+    pub invoice_status: Option<EqualFilterInvoiceStatusInput>,
 }
 
 #[derive(PartialEq, Debug)]
 pub struct ItemLedgerNode {
-    ledger: LedgerRow,
-    balance: f64,
+    item_ledger: ItemLedgerRow,
 }
 
 #[Object]
 impl ItemLedgerNode {
     pub async fn id(&self) -> &String {
-        &self.ledger.id
-    }
-    pub async fn stock_line_id(&self) -> &Option<String> {
-        &self.ledger.stock_line_id
+        &self.item_ledger.id
     }
     pub async fn item_id(&self) -> &String {
-        &self.ledger.item_id
+        &self.item_ledger.item_id
     }
     pub async fn store_id(&self) -> &String {
-        &self.ledger.store_id
+        &self.item_ledger.store_id
     }
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.ledger.datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.item_ledger.datetime, Utc)
     }
     pub async fn name(&self) -> &String {
-        &self.ledger.name
+        &self.item_ledger.name
     }
-    pub async fn quantity(&self) -> &f64 {
-        &self.ledger.quantity
+    pub async fn movement_in_units(&self) -> &f64 {
+        &self.item_ledger.movement_in_units
     }
     pub async fn invoice_type(&self) -> InvoiceNodeType {
-        InvoiceNodeType::from_domain(&self.ledger.invoice_type)
+        InvoiceNodeType::from_domain(&self.item_ledger.invoice_type)
     }
     pub async fn invoice_number(&self) -> &i64 {
-        &self.ledger.invoice_number
+        &self.item_ledger.invoice_number
     }
     pub async fn invoice_id(&self) -> &String {
-        &self.ledger.invoice_id
+        &self.item_ledger.invoice_id
     }
     pub async fn reason(&self) -> &Option<String> {
-        &self.ledger.reason
+        &self.item_ledger.reason
     }
 
     pub async fn invoice_status(&self) -> InvoiceNodeStatus {
-        InvoiceNodeStatus::from_domain(&self.ledger.invoice_status)
+        InvoiceNodeStatus::from_domain(&self.item_ledger.invoice_status)
     }
 
     pub async fn pack_size(&self) -> &f64 {
-        &self.ledger.pack_size
+        &self.item_ledger.pack_size
     }
 
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {
-        &self.ledger.expiry_date
+        &self.item_ledger.expiry_date
     }
 
     pub async fn batch(&self) -> &Option<String> {
-        &self.ledger.batch
+        &self.item_ledger.batch
     }
 
     pub async fn cost_price_per_pack(&self) -> &f64 {
-        &self.ledger.cost_price_per_pack
+        &self.item_ledger.cost_price_per_pack
     }
 
     pub async fn sell_price_per_pack(&self) -> &f64 {
-        &self.ledger.sell_price_per_pack
+        &self.item_ledger.sell_price_per_pack
     }
 
     pub async fn total_before_tax(&self) -> &Option<f64> {
-        &self.ledger.total_before_tax
+        &self.item_ledger.total_before_tax
     }
 
     pub async fn balance(&self) -> &f64 {
-        &self.balance
+        &self.item_ledger.running_balance
     }
 
     pub async fn number_of_packs(&self) -> &f64 {
-        &self.ledger.number_of_packs
+        &self.item_ledger.number_of_packs
     }
 }
 
@@ -122,8 +117,7 @@ pub fn item_ledger(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
-    filter: Option<LedgerFilterInput>,
-    sort: Option<Vec<LedgerSortInput>>,
+    filter: Option<ItemLedgerFilterInput>,
 ) -> Result<ItemLedgerResponse> {
     validate_auth(
         ctx,
@@ -138,9 +132,6 @@ pub fn item_ledger(
         &store_id,
         page.map(PaginationOption::from),
         filter.map(|filter| filter.to_domain()),
-        // Currently only one sort option is supported, use the first from the list.
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
     )
     .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -150,17 +141,33 @@ pub fn item_ledger(
 }
 
 impl ItemLedgerConnector {
-    pub fn from_domain(rows: ListResult<ItemLedger>) -> ItemLedgerConnector {
+    pub fn from_domain(rows: ListResult<ItemLedgerRow>) -> ItemLedgerConnector {
         ItemLedgerConnector {
             total_count: rows.count,
             nodes: rows
                 .rows
                 .into_iter()
-                .map(|ledger| ItemLedgerNode {
-                    ledger: ledger.ledger,
-                    balance: ledger.balance,
-                })
+                .map(|item_ledger| ItemLedgerNode { item_ledger })
                 .collect(),
+        }
+    }
+}
+
+impl ItemLedgerFilterInput {
+    pub fn to_domain(self) -> ItemLedgerFilter {
+        let ItemLedgerFilterInput {
+            datetime,
+            item_id,
+            invoice_type,
+            invoice_status,
+        } = self;
+
+        ItemLedgerFilter {
+            item_id: item_id.map(EqualFilter::from),
+            datetime: datetime.map(DatetimeFilter::from),
+            invoice_type: invoice_type.map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
+            invoice_status: invoice_status.map(|s| map_filter!(s, InvoiceNodeStatus::to_domain)),
+            store_id: None,
         }
     }
 }

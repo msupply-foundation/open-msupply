@@ -48,7 +48,7 @@ const StockListComponent: FC = () => {
   });
   const navigate = useNavigate();
   const queryParams = {
-    filterBy: filterBy ?? undefined,
+    filterBy: { ...filterBy },
     offset,
     sortBy,
     first,
@@ -126,7 +126,7 @@ const StockListComponent: FC = () => {
     [
       'numberOfPacks',
       {
-        accessor: ({ rowData }) => rowData.totalNumberOfPacks.toFixed(2),
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
         width: 125,
       },
     ],
@@ -134,7 +134,7 @@ const StockListComponent: FC = () => {
       'stockOnHand',
       {
         accessor: ({ rowData }) =>
-          (rowData.totalNumberOfPacks * rowData.packSize).toFixed(2),
+          rowData.totalNumberOfPacks * rowData.packSize,
         sortable: false,
         width: 125,
         defaultHideOnMobile: true,
@@ -146,7 +146,7 @@ const StockListComponent: FC = () => {
         label: 'label.available-soh',
         description: 'description.available-soh',
         accessor: ({ rowData }) =>
-          (rowData.availableNumberOfPacks * rowData.packSize).toFixed(2),
+          rowData.availableNumberOfPacks * rowData.packSize,
         sortable: false,
         width: 125,
         defaultHideOnMobile: true,

@@ -39,6 +39,7 @@ export const Environment = {
   PRINT_LABEL_TEST: `${apiHost}/print/label-test`,
   PRINT_LABEL_PRESCRIPTION: `${apiHost}/print/label-prescription`,
   ANDROID_DATA_FILES_PATH: `static_files/sync_files`,
+  REPORT_UPLOAD_URL: `${apiHost}/upload`, 
 
   // -- Feature Flags --
   // To add a new feature flag:
