@@ -148,7 +148,7 @@ pub fn migrate(
         Box::new(v2_08_03::V2_08_03),
         Box::new(v2_09_00::V2_09_00),
         Box::new(v2_09_01::V2_09_01),
-        Box::new(v2_10_00::V2_10_00),
+        // Box::new(v2_10_00::V2_10_00),
     ];
 
     // Historic diesel migrations
