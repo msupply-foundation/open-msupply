@@ -78,7 +78,7 @@ impl<'a> PurchaseOrderRepository<'a> {
                     apply_sort!(query, sort, purchase_order::target_months)
                 }
                 PurchaseOrderSortField::DeliveryDate => {
-                    apply_sort!(query, sort, purchase_order::delivered_datetime)
+                    apply_sort!(query, sort, purchase_order::received_at_port_date)
                 }
             }
         }

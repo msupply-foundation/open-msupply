@@ -4,7 +4,7 @@ use crate::{
     StorageConnection, Upsert,
 };
 
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDate;
 use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -19,7 +19,6 @@ table! {
         status -> crate::db_diesel::purchase_order_row::PurchaseOrderStatusMapping,
         created_date -> Date,
         confirmed_date ->  Nullable<Date>,
-        delivered_datetime ->  Nullable<Timestamp>,
         target_months->  Nullable<Double>,
         comment->  Nullable<Text>,
         supplier_discount_percentage ->  Nullable<Double>,
@@ -29,9 +28,9 @@ table! {
         currency_id -> Nullable<Text>,
         foreign_exchange_rate -> Nullable<Double>,
         shipping_method->  Nullable<Text>,
-        sent_datetime -> Nullable<Timestamp>,
-        contract_signed_datetime -> Nullable<Timestamp>,
-        advance_paid_datetime ->  Nullable<Timestamp>,
+        sent_date -> Nullable<Date>,
+        contract_signed_date -> Nullable<Date>,
+        advance_paid_date ->  Nullable<Date>,
         received_at_port_date ->   Nullable<Date>,
         expected_delivery_date -> Nullable<Date>,
         supplier_agent ->  Nullable<Text>,
@@ -65,7 +64,6 @@ pub struct PurchaseOrderRow {
     pub status: PurchaseOrderStatus,
     pub created_date: NaiveDate,
     pub confirmed_date: Option<NaiveDate>,
-    pub delivered_datetime: Option<NaiveDateTime>,
     pub target_months: Option<f64>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
@@ -75,9 +73,9 @@ pub struct PurchaseOrderRow {
     pub currency_id: Option<String>,
     pub foreign_exchange_rate: Option<f64>,
     pub shipping_method: Option<String>,
-    pub sent_datetime: Option<NaiveDateTime>,
-    pub contract_signed_datetime: Option<NaiveDateTime>,
-    pub advance_paid_datetime: Option<NaiveDateTime>,
+    pub sent_date: Option<NaiveDate>,
+    pub contract_signed_date: Option<NaiveDate>,
+    pub advance_paid_date: Option<NaiveDate>,
     pub received_at_port_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
     pub supplier_agent: Option<String>,
@@ -188,6 +186,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
 
 impl Upsert for PurchaseOrderRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        println!("upserting PO line {:?}", self.id);
         let change_log_id = PurchaseOrderRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
