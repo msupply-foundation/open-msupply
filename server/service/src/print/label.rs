@@ -66,11 +66,26 @@ pub struct PrescriptionLabelData {
     details: String, // General details to include e.g. store name, prescriber name, date/time...
 }
 
+impl PrescriptionLabelData {
+    pub fn sanitise(&self) -> Self {
+        Self {
+            item_details: sanitise_fd_field(&self.item_details),
+            item_directions: sanitise_fd_field(&self.item_directions),
+            patient_details: sanitise_fd_field(&self.patient_details),
+            warning: self.warning.as_ref().map(|w| sanitise_fd_field(w)),
+            details: sanitise_fd_field(&self.details),
+        }
+    }
+}
+
 pub fn print_prescription_label(
     settings: LabelPrinterSettingNode,
     label_data: Vec<PrescriptionLabelData>,
 ) -> Result<String> {
-    let payload = label_data
+    let sanitised_label_data: Vec<PrescriptionLabelData> =
+        label_data.into_iter().map(|d| d.sanitise()).collect();
+
+    let payload = sanitised_label_data
         .into_iter()
         .map(|d| {
             let PrescriptionLabelData {
@@ -81,7 +96,8 @@ pub fn print_prescription_label(
                 details,
             } = d;
             let warning = warning.unwrap_or_default();
-            format!(
+
+            let label = format!(
                 r#"
                 ^XA
                 ^FX CI command parameters:
@@ -89,31 +105,39 @@ pub fn print_prescription_label(
                 ^CI28
 
                 ^A0,25
-                ^FO,10
+                ^FO25,18
                 ^FB575,3,0,C
-                ^FD{item_details}\&^FS
+                ^FD{item_details}^FS
+
 
                 ^FX Line
-                ^FO,65
+                ^FO25,65
                 ^GB575,2,2^FS
 
                 ^A0,25
-                ^FO10,75
-                ^FB580,5,0
-                ^FD{item_directions}\&{warning}\^FS
+                ^FO35,75
+                ^FB555,5,0
+                ^FD{item_directions}\&{warning}^FS
 
                 ^FX Line
-                ^FO,210
+                ^FO25,210
                 ^GB575,2,2^FS
 
                 ^A0,20
-                ^FO,220
+                ^FO25,220
                 ^FB575,3,0,C
-                ^FD{patient_details}\&{details}\&^FS
+                ^FD{patient_details}\&{details}^FS
 
                 ^XZ
-                "#
-            )
+            "#
+            );
+
+            // Remove leading whitespaces from each line of the formatted label
+            label
+                .lines()
+                .map(|line| line.trim_start_matches(|c: char| c.is_whitespace()))
+                .collect::<Vec<&str>>()
+                .join("\n")
         })
         .collect::<Vec<String>>()
         .join("\n");
@@ -124,4 +148,103 @@ pub fn print_prescription_label(
 pub fn host_status(settings: LabelPrinterSettingNode) -> Result<String> {
     let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string("~HS".to_string(), Mode::Sgd)
+}
+
+// Format a field for the FD command in ZPL
+// https://www.zebra.com/content/dam/support-dam/en/documentation/unrestricted/guide/software/zpl-zbi2-pg-en.pdf
+// Comments: The ^ and ~ characters can be printed by changing the prefix characters—see ^CD ~CD on
+// page 153 and ^CT ~CT on page 166. The new prefix characters cannot be printed.
+// We'll map them to a `-` so they can be printed as part of the field.
+// Any character codes > 127 will be replaced with a space, as they are not valid in ZPL.
+// ^CI13 must be selected to print a backslash (\).
+
+fn sanitise_fd_field(value: &str) -> String {
+    let mut fd: String = value
+        .replace('^', "-") // Control characters are replaced with -
+        .replace('~', "-") // Control characters are replaced with -
+        .replace('\\', ":") // Backslashes `\` are replaced with colon `:` TODO: Probably could be an escaped Forward slash, e.g. \\\\ but apparently only works with CI13 or printed correctly using `FH` command ?
+        .replace('\n', "\\&") // Newline characters are replaced with \& in ZPL
+        .replace('\r', "\\&") // Carriage return characters are replaced with \&
+        .chars()
+        .map(|c| {
+            if c.is_ascii() || c.is_alphabetic() {
+                // Even though the ZPL manual says that only ASCII characters are allowed, some alphabetic chars such as á print fine, so I think safer to keep them
+                c
+            } else {
+                ' '
+            }
+        }) // Non-ASCII characters are replaced with a space
+        .collect();
+
+    if fd.len() > 3072 {
+        // TODO: Should we actually limit this more, as the label probably won't fit?
+        // This is just the maximum length of a ZPL FD field.
+        log::warn!(
+            "ZPL FD field exceeds 3072 characters, truncating: {}",
+            fd.len()
+        );
+    }
+    fd.truncate(3072);
+    fd
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sanitise_fd_field_replaces_control_chars() {
+        let input = "^Hello~World\\";
+        let expected = "-Hello-World:";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_replaces_newlines_and_carriage_returns() {
+        let input = "Line1\nLine2\rLine3";
+        let expected = "Line1\\&Line2\\&Line3";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_replaces_non_ascii() {
+        let input = "ASCII é ñ 漢😀";
+        let expected = "ASCII é ñ 漢 ";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_preserves_dash() {
+        let input = "A-B-C";
+        let expected = "A-B-C";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_truncates_long_input() {
+        let input = "a".repeat(4000);
+        let output = sanitise_fd_field(&input);
+        assert_eq!(output.len(), 3072);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_mixed_input() {
+        let input = "^Hello~\nWorld\\é";
+        let expected = "-Hello-\\&World:é";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_empty_string() {
+        let input = "";
+        let expected = "";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_only_control_chars() {
+        let input = "^^~~\\\\\n\r";
+        let expected = "----::\\&\\&";
+        assert_eq!(sanitise_fd_field(input), expected);
+    }
 }
