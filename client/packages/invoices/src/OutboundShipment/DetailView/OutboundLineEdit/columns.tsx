@@ -23,6 +23,7 @@ import {
   UNDEFINED_STRING_VALUE,
   TooltipTextCell,
   useSimplifiedTabletUI,
+  VvmStatusCell,
 } from '@openmsupply-client/common';
 import {
   CurrencyRowFragment,
@@ -124,13 +125,9 @@ export const useOutboundLineEditColumns = ({
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => {
-        if (!rowData.vvmStatus) return '';
-        // TODO: Show unusable VVM status somehow?
-        return rowData.vvmStatus?.description;
-      },
+      accessor: ({ rowData }) => rowData?.vvmStatus,
       width: 85,
-      Cell: TooltipTextCell,
+      Cell: VvmStatusCell,
       defaultHideOnMobile: true,
     });
   }
