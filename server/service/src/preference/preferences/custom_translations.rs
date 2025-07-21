@@ -1,9 +1,11 @@
+use std::collections::HashMap;
+
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
 pub struct CustomTranslations;
 
 impl Preference for CustomTranslations {
-    type Value = serde_json::Value;
+    type Value = HashMap<String, String>;
 
     fn key(&self) -> PrefKey {
         PrefKey::CustomTranslations
@@ -20,7 +22,7 @@ impl Preference for CustomTranslations {
     }
 
     fn default_value(&self) -> Self::Value {
-        serde_json::json!({})
+        HashMap::new()
     }
 
     // TODO: Implement custom upsert validation - and see about passing around a more explicit type that JSON Value?

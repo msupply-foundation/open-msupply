@@ -73,23 +73,8 @@ impl Localisations {
         &mut self,
         connection: &StorageConnection,
     ) -> Result<(), PreferenceError> {
-        let translations = match CustomTranslations.load(connection, None)? {
-            serde_json::Value::Object(translations) => translations,
-            _ => {
-                return Err(PreferenceError::ConversionError(
-                    "custom translations".to_string(),
-                    "loaded preference not an object".to_string(),
-                ))
-            }
-        };
-        for (key, value) in translations {
-            match value {
-                serde_json::Value::String(translated) => {
-                    self.custom_translations.insert(key, translated);
-                }
-                _ => {} // preference custom translations should all be strings
-            }
-        }
+        let translations = CustomTranslations.load(connection, None)?;
+        self.custom_translations = translations;
 
         Ok(())
     }
