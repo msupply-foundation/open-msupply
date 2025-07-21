@@ -132,6 +132,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
 
 impl Upsert for PurchaseOrderLineRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        println!("upserting PO line {:?}", self.id);
         let change_log_id = PurchaseOrderLineRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
