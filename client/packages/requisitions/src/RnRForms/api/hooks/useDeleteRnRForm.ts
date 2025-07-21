@@ -1,8 +1,9 @@
-import { useMutation } from '@openmsupply-client/common';
+import { useMutation, useTableStore } from '@openmsupply-client/common';
 import { useRnRGraphQL } from '../useRnRGraphQL';
+import { LIST, RNR_FORM } from './keys';
 
 export const useDeleteRnRForm = () => {
-  const { api, storeId } = useRnRGraphQL();
+  const { api, storeId, queryClient } = useRnRGraphQL();
   const { mutateAsync, isLoading, error } = useMutation({
     mutationFn: async (id: string) => {
       const response = await api.deleteRnRForm({
@@ -11,7 +12,16 @@ export const useDeleteRnRForm = () => {
       });
       return response;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries([RNR_FORM, LIST]);
+    },
   });
+
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
+      .map(selectedId => selectedId),
+  }));
 
   const deleteRnRForms = async (ids: string[]) => {
     await Promise.all(ids.map(id => mutateAsync(id)));
@@ -19,6 +29,7 @@ export const useDeleteRnRForm = () => {
 
   return {
     deleteRnRForms,
+    selectedRows,
     isLoading,
     error,
   };
