@@ -1,7 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_can_cancel_finalised_invoices_user_permission;
 mod add_excel_template_to_report;
 mod add_mutate_clinician_permission;
 mod add_shipped_number_of_packs_to_invoice_line;
@@ -27,7 +26,6 @@ impl Migration for V2_09_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(process_clinician_store_join_deletes::Migrate),
-            Box::new(process_clinician_store_join_deletes::Migrate),
             Box::new(add_mutate_clinician_permission::Migrate),
             Box::new(add_store_id_to_clinician::Migrate),
             Box::new(extend_name_table_fields::Migrate),
@@ -36,7 +34,6 @@ impl Migration for V2_09_00 {
             Box::new(add_shipped_number_of_packs_to_invoice_line::Migrate),
             Box::new(add_excel_template_to_report::Migrate),
             Box::new(resync_existing_vaccination_records::Migrate),
-            Box::new(add_can_cancel_finalised_invoices_user_permission::Migrate),
             Box::new(remove_item_variant_doses_column::Migrate),
             Box::new(reintegrate_clinician_gender::Migrate),
         ]
