@@ -105,7 +105,7 @@ const RnRFormListComponent = () => {
           <NothingHere body={t('error.no-rnr-forms')} onCreate={onOpen} />
         }
       />
-      <Footer />
+      <Footer rnrForms={data?.nodes} />
     </>
   );
 };

@@ -1470,6 +1470,7 @@
   "messages.cannot-delete-linked-requisition": "Cannot delete linked requisition",
   "messages.cannot-delete-multiple-lines": "One or more lines cannot be deleted",
   "messages.cannot-delete-requisition-with-shipment": "Cannot delete requisition linked to a shipment",
+  "messages.cannot-delete-rnr-form": "Cannot delete finalised R&R Form",
   "messages.cannot-delete-stocktake-on-hold": "Cannot delete stocktake that is 'On Hold'",
   "messages.cannot-delete-transfer-requisition": "Cannot delete transfer requisition",
   "messages.cannot-perform-action": "This action cannot be performed on one or more lines",

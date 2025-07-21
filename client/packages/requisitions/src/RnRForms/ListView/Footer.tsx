@@ -5,36 +5,50 @@ import {
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
-  useConfirmationModal,
   useTableStore,
+  useDeleteConfirmation,
+  RnRFormNodeStatus,
 } from '@openmsupply-client/common';
 import { useDeleteRnRForm } from '../api/hooks/useDeleteRnRForm';
+import { RnRFormFragment } from '../api';
 
-export const FooterComponent = () => {
+export const FooterComponent = ({
+  rnrForms,
+}: {
+  rnrForms?: RnRFormFragment[];
+}) => {
   const t = useTranslation();
   const { deleteRnRForms } = useDeleteRnRForm();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => selectedId),
+      .map(selectedId => rnrForms?.find(({ id }) => selectedId === id))
+      .filter(Boolean) as RnRFormFragment[],
   }));
 
   const deleteAction = async () => {
     if (selectedRows.length > 0) {
-      try {
-        await deleteRnRForms(selectedRows);
-      } catch (err) {
-        console.error(err);
-      }
+      await deleteRnRForms(selectedRows.map(({ id }) => id)).catch(err => {
+        throw err;
+      });
     }
   };
-  const showDeleteConfirmation = useConfirmationModal({
-    onConfirm: deleteAction,
-    message: t('messages.confirm-delete-rnr-forms', {
-      count: selectedRows.length,
-    }),
-    title: t('heading.are-you-sure'),
+  const showDeleteConfirmation = useDeleteConfirmation({
+    selectedRows,
+    deleteAction,
+    canDelete: selectedRows.every(
+      ({ status }) => status === RnRFormNodeStatus.Draft
+    ),
+    messages: {
+      confirmMessage: t('messages.confirm-delete-rnr-forms', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-rnr-form', {
+        count: selectedRows.length,
+      }),
+      cantDelete: t('messages.cannot-delete-rnr-form'),
+    },
   });
 
   const actions: Action[] = [
