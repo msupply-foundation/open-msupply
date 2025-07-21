@@ -52,8 +52,8 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
         PurchaseOrderLineRow {
             id: PURCHASE_ORDER_LINE_1.0.to_string(),
             purchase_order_id: "test_purchase_order_a".to_string(),
-            line_number: Some(1),
-            item_link_id: None,
+            line_number: 1,
+            item_link_id: "item_a".to_string(),
             item_name: None,
             number_of_packs: None,
             pack_size: None,
