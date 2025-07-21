@@ -8,6 +8,8 @@ import {
   UpsertPreferencesInput,
   PreferenceDescriptionNode,
   useTranslation,
+  useNotification,
+  TextArea,
 } from '@openmsupply-client/common';
 import {
   EnumOptions,
@@ -24,6 +26,7 @@ export const EditPreference = ({
   disabled?: boolean;
 }) => {
   const t = useTranslation();
+  const { error } = useNotification();
 
   // The preference.value only updates after mutation completes and cache
   // is invalidated - use local state for fast UI change
@@ -71,7 +74,35 @@ export const EditPreference = ({
         />
       );
 
+    case PreferenceValueNodeType.CustomTranslations:
+      return (
+        <TextArea
+          onChange={e => {
+            const newValue = JSON.parse(e.target.value); // Validate JSON format
+            setValue(newValue);
+            update(newValue);
+          }}
+          value={JSON.stringify(value)}
+          maxRows={10}
+          minRows={10}
+          style={{ padding: '0 0 0 50px' }}
+          slotProps={{
+            input: {
+              sx: {
+                border: theme => `1px solid ${theme.palette.gray.main}`,
+                borderRadius: '5px',
+                padding: '3px',
+              },
+            },
+          }}
+        />
+      );
+
     default:
-      noOtherVariants(preference.valueType);
+      try {
+        noOtherVariants(preference.valueType);
+      } catch (e) {
+        error((e as Error).message)();
+      }
   }
 };

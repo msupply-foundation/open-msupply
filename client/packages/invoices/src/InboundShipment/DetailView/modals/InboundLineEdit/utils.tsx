@@ -95,20 +95,24 @@ export const vvmStatusesColumn = (
   label: 'label.vvm-status',
   width: 170,
   Cell: VVMStatusInputCell,
+  cellProps: {
+    useDefault: true,
+  },
   accessor: ({ rowData }) => rowData.vvmStatusId,
   setter: updateDraftLine,
 });
 
-export const getInboundDosesColumns =
-  (): ColumnDescription<DraftInboundLine>[] => [
-    {
-      key: 'doseQuantity',
-      label: 'label.doses-received',
-      align: ColumnAlign.Right,
-      width: 100,
-      accessor: ({ rowData }) => {
-        const total = rowData.numberOfPacks * rowData.packSize;
-        return total * rowData.item.doses;
-      },
+export const getInboundDosesColumns = (
+  format: (value: number) => string
+): ColumnDescription<DraftInboundLine>[] => [
+  {
+    key: 'doseQuantity',
+    label: 'label.doses-received',
+    align: ColumnAlign.Right,
+    width: 100,
+    accessor: ({ rowData }) => {
+      const total = rowData.numberOfPacks * rowData.packSize;
+      return format(total * rowData.item.doses);
     },
-  ];
+  },
+];
