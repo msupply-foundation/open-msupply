@@ -3,6 +3,7 @@ import { TOptions } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { LocaleKey } from '../locales';
 import { useIntl } from '../utils';
+import { CUSTOM_TRANSLATIONS_NAMESPACE } from '../context';
 
 export { UseTranslationResponse } from 'react-i18next';
 
@@ -15,7 +16,7 @@ export const useTranslation = (): TypedTFunction<LocaleKey> => {
   const { i18n } = useIntl();
   // Use custom namespace to apply Global Preference translation overrides.
   // Otherwise defaults to values in "common.json"
-  const { t } = useTranslationNext('custom_preference_overrides', { i18n });
+  const { t } = useTranslationNext(CUSTOM_TRANSLATIONS_NAMESPACE, { i18n });
 
   return useCallback(
     (key, opts) => {

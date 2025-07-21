@@ -20,4 +20,4 @@ Colocation of all helpers for working with translations & all localisation files
 
 Custom translations can be configured via a Global preference on OMS Central. These are then exposed via the rest endpoint `YOUR_SERVER_URL/custom-translations`. IntlContext has this endpoint configured as one of it's 'backends'.
 
-IntlStrings uses them via the `custom_preference_overrides` namespace which means custom translations take precedence over our defaults.
+IntlStrings uses them via the `CUSTOM_TRANSLATIONS_NAMESPACE` which means custom translations take precedence over our defaults.
