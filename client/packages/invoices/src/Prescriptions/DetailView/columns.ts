@@ -12,7 +12,6 @@ import {
   NumberCell,
   CurrencyCell,
   ColumnDescription,
-  NumUtils,
   useAuthContext,
   usePreference,
   PreferenceKey,
@@ -51,10 +50,7 @@ export const useExpansionColumns = (
       'unitQuantity',
       {
         accessor: ({ rowData }) =>
-          NumUtils.round(
-            (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
-            3
-          ),
+          (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
       },
     ],
   ];
