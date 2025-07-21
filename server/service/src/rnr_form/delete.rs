@@ -81,3 +81,87 @@ impl From<RepositoryError> for DeleteRnRFormError {
         DeleteRnRFormError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod test_delete {
+    use crate::{
+        rnr_form::delete::{DeleteRnRForm, DeleteRnRFormError as ServiceError},
+        service_provider::ServiceProvider,
+    };
+    use repository::{
+        mock::{mock_rnr_form_a, mock_rnr_form_b, mock_store_a, mock_store_b, MockDataInserts},
+        test_db::setup_all,
+        RequisitionRowRepository,
+    };
+
+    #[actix_rt::test]
+    async fn delete_rnr_form_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("delete_rnr_form_errors", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.rnr_form_service;
+
+        assert_eq!(
+            service.delete_rnr_form(
+                &context,
+                DeleteRnRForm {
+                    id: "invalid".to_owned(),
+                },
+            ),
+            Err(ServiceError::RnRFormDoesNotExist)
+        );
+
+        assert_eq!(
+            service.delete_rnr_form(
+                &context,
+                DeleteRnRForm {
+                    id: mock_rnr_form_a().id,
+                },
+            ),
+            Err(ServiceError::CannotEditRnRForm)
+        );
+
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.delete_rnr_form(
+                &context,
+                DeleteRnRForm {
+                    id: mock_rnr_form_b().id,
+                },
+            ),
+            Err(ServiceError::NotThisStoreRnRForm)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn delete_rnr_form_success() {
+        let (_, connection, connection_manager, _) =
+            setup_all("delete_rnr_form_success", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.rnr_form_service;
+
+        let result = service
+            .delete_rnr_form(
+                &context,
+                DeleteRnRForm {
+                    id: mock_rnr_form_b().id,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            RequisitionRowRepository::new(&connection)
+                .find_one_by_id(&result)
+                .unwrap(),
+            None
+        )
+    }
+}

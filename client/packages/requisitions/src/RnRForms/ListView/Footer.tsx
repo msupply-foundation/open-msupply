@@ -9,7 +9,6 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { useDeleteRnRForm } from '../api/hooks/useDeleteRnRForm';
-import { RnRFormFragment } from '../api';
 
 export const FooterComponent = () => {
   const t = useTranslation();
