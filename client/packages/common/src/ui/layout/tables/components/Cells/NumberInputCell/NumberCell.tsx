@@ -2,9 +2,9 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { RecordWithId } from '@common/types';
 import { CellProps } from '../../../columns/types';
-import { NumericTextDisplay } from 'packages/common/src/ui/forms/Detail/NumericTextDisplay';
+import { NumericTextDisplay } from '@openmsupply-client/common';
 
-// Non interactive number cell
+// Display numbers in a table, formatted by NumericTextDisplay
 export const NumberCell = <T extends RecordWithId>({
   column,
   rowData,
