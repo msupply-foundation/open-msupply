@@ -129,7 +129,7 @@ export const StockLineForm = ({
               />
             }
           />
-          {
+          {!packEditable && (
             <StyledInputRow
               label={t('label.available-packs')}
               Input={
@@ -144,7 +144,7 @@ export const StockLineForm = ({
                 />
               }
             />
-          }
+          )}
           <StyledInputRow
             label={t('label.cost-price')}
             Input={

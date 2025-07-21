@@ -151,7 +151,6 @@ export const InventoryAdjustmentModal = ({
               <NumericTextInput
                 width={INPUT_WIDTH}
                 disabled={true}
-                // decimalLimit={5}
                 value={
                   stockLine.totalNumberOfPacks +
                   (draft.adjustmentType === AdjustmentTypeInput.Addition
