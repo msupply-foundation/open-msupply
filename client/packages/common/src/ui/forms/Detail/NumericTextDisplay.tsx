@@ -11,21 +11,23 @@ or in "shorthand" style <NumberTextDislay value={value} />
 */
 
 interface NumericTextDisplayProps {
-  value?: number;
+  value?: number | null | undefined;
+  defaultValue?: string | number;
   children?: React.ReactElement;
-  width?: number;
+  width?: number | string;
 }
 
 export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   value,
-  width = 30,
+  defaultValue = '',
+  width = 50,
 }) => {
   const format = useFormatNumber();
-  const tooltip = format.tooltip(value ?? 0);
+  const tooltip = value ? format.tooltip(value ?? undefined) : null;
   const formattedValue = format.round(value ?? 0, 2);
 
   const displayValue =
-    value === undefined || value === null ? null : formattedValue;
+    value === undefined || value === null ? defaultValue : formattedValue;
 
   return (
     <Box
@@ -36,7 +38,7 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
       <Tooltip title={tooltip}>
         <Typography
           style={{
-            width: width,
+            minWidth: width,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             textAlign: 'right',

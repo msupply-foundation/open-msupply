@@ -1,13 +1,10 @@
 import React from 'react';
-import { Box, Tooltip, Typography } from '@mui/material';
-import { useFormatNumber } from '@common/intl';
+import { Box } from '@mui/material';
 import { RecordWithId } from '@common/types';
 import { CellProps } from '../../../columns/types';
-import { NumUtils } from '@common/utils';
+import { NumericTextDisplay } from 'packages/common/src/ui/forms/Detail/NumericTextDisplay';
 
-// A non-interactive version of NumberInputCell. Basically the same as a plain
-// text display, but it formats the number nicely.
-
+// Non interactive number cell
 export const NumberCell = <T extends RecordWithId>({
   column,
   rowData,
@@ -16,11 +13,6 @@ export const NumberCell = <T extends RecordWithId>({
   defaultValue?: string | number;
 }) => {
   const value = column.accessor({ rowData }) as number | undefined | null;
-  const tooltip = useFormatNumber().tooltip(value ?? 0);
-  const formattedValue = useFormatNumber().round(value ?? 0, 2);
-
-  const displayValue =
-    value === undefined || value === null ? defaultValue : formattedValue;
 
   return (
     <Box
@@ -28,20 +20,7 @@ export const NumberCell = <T extends RecordWithId>({
         padding: '4px 8px',
       }}
     >
-      <Tooltip title={tooltip}>
-        <Typography
-          style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            textAlign: 'right',
-            fontSize: 'inherit',
-          }}
-        >
-          {!!NumUtils.hasMoreThanTwoDp(value ?? 0)
-            ? `${displayValue}...`
-            : displayValue}
-        </Typography>
-      </Tooltip>
+      <NumericTextDisplay value={value} defaultValue={defaultValue} />
     </Box>
   );
 };
