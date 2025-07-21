@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Grid,
+  NumericTextDisplay,
   SxProps,
   Theme,
   Typography,
@@ -84,10 +85,19 @@ export const InfoRow = ({
           {label}:
         </Typography>
       </Grid>
-      <Grid size={4} textAlign="right">
-        <Typography variant="body1">
-          {value} {packagingDisplay}
-        </Typography>
+      <Grid
+        size={4}
+        display="flex"
+        flexDirection="column"
+        alignItems="flex-end"
+      >
+        {typeof value === 'number' ? (
+          <NumericTextDisplay value={value} />
+        ) : (
+          <Typography variant="body1">
+            {value} {packagingDisplay}
+          </Typography>
+        )}
         {displayVaccinesInDoses && (
           <Typography variant="caption" color="text.secondary">
             {doses ? `(${doses} ${dosesLabel?.toLowerCase()})` : ''}
@@ -168,9 +178,7 @@ export const ValueInfoRow = ({
 
   const treatAsNull = value === null && nullDisplay;
 
-  const displayValue = treatAsNull
-    ? nullDisplay
-    : round(valueInUnitsOrPacks, 2);
+  const displayValue = treatAsNull ? nullDisplay : valueInUnitsOrPacks;
 
   return (
     <InfoRow
