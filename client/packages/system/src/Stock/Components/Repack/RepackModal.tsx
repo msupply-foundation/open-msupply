@@ -50,7 +50,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
-  const [reportDisabled, setReportDisabled] = useState<boolean>(false);
   const [isNew, setIsNew] = useState<boolean>(false);
 
   const { data: logData } = useActivityLog(stockLine?.id ?? '');
@@ -71,7 +70,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const onRowClick = (rowData: RepackFragment) => {
     setInvoiceId(rowData.id);
-    setReportDisabled(false);
     setIsNew(false);
   };
 
@@ -181,7 +179,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         <ReportSelector
           context={ReportContext.Repack}
           dataId={invoiceId || ''}
-          disabled={reportDisabled || !invoiceId}
         />
       }
     >
