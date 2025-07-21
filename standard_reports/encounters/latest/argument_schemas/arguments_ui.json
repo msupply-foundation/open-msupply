@@ -7,20 +7,11 @@
       "label": "T#label.program"
     },
     {
-      "type": "Control",
-      "scope": "#/properties/after",
-      "label": "T#label.from-date",
+      "label": "",
+      "type": "DateRange",
+      "scope": "#/properties/startDatetime",
       "options": {
         "dateOnly": true
-      }
-    },
-    {
-      "type": "Control",
-      "scope": "#/properties/before",
-      "label": "T#label.to-date",
-      "options": {
-        "dateOnly": true,
-        "dateAsEndOfDay": true
       }
     }
   ]

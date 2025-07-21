@@ -758,7 +758,7 @@ mod test {
 
     use crate::{
         mock::MockDataInserts, test_db::setup_all, ChangelogRepository, ClinicianRow,
-        ClinicianRowRepository, RepositoryError, TransactionError,
+        ClinicianRowRepository, ClinicianRowRepositoryTrait, RepositoryError, TransactionError,
     };
 
     /// Example from with_locked_changelog_table() comment

@@ -9,15 +9,13 @@ import {
   useTranslation,
   LoadingButton,
   ToggleState,
-  EnvUtils,
-  Platform,
   useNotification,
-  FileUtils,
   FnUtils,
   UserPermission,
   useCallbackWithPermission,
   RouteBuilder,
   useNavigate,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
@@ -27,7 +25,8 @@ export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
   const t = useTranslation();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
+  const exportCSV = useExportCSV();
   const navigate = useNavigate();
   const { mutateAsync: onCreate } = useReturns.document.insertSupplierReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllSupplier({
@@ -43,8 +42,7 @@ export const AppBarButtonsComponent: FC<{
       return;
     }
     const csv = supplierReturnsToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.supplier-returns'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.supplier-returns'));
   };
 
   const openModal = useCallbackWithPermission(
@@ -91,7 +89,6 @@ export const AppBarButtonsComponent: FC<{
           isLoading={isLoading}
           variant="outlined"
           onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
       </Grid>

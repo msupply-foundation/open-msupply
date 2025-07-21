@@ -5,7 +5,6 @@ import {
   Stack,
   Link,
   FnUtils,
-  FileUtils,
   AssetClassNode,
   AssetCategoryNode,
   AssetTypeNode,
@@ -15,6 +14,7 @@ import {
   Typography,
   useNotification,
   UploadFile,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
 import { ImportPanel } from './ImportPanel';
@@ -72,6 +72,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const AssetItemBuffer: AssetItemImportModal.ImportRow[] = [];
   const { data: properties } = useAssetProperties();
+  const exportCSV = useExportCSV();
 
   const csvExample = async () => {
     const exampleRows: ImportRow[] = [
@@ -94,7 +95,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
       false, // exclude errors
       properties ? ArrayUtils.dedupe(properties.map(p => p.key)) : []
     );
-    FileUtils.exportCSV(csv, t('filename.asset-import-example'));
+    exportCSV(csv, t('filename.asset-import-example'));
   };
 
   const csvImport = <T extends File>(files: T[]) => {

@@ -34,6 +34,8 @@ pub enum ReportError {
     CannotGenerateSchemaFile(PathBuf, #[source] RepositoryError),
     #[error("Failed to argument schema file {0}")]
     CannotReadSchemaFile(PathBuf, #[source] std::io::Error),
+    #[error("Failed to read excel template file {0}")]
+    CannotReadExcelTemplateFile(PathBuf, #[source] std::io::Error),
     #[error("Failure to generate argument schema {0}")]
     FailedToGenerateArgumentSchema(PathBuf),
     #[error("Failed to write reports json {0}")]
@@ -157,6 +159,15 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         (None, None) => None,
     };
 
+    let excel_template_buffer = manifest
+        .excel_template
+        .as_ref()
+        .map(|excel_template_path| {
+            let file_path = path.join(excel_template_path);
+            fs::read(&file_path).map_err(|err| Error::CannotReadExcelTemplateFile(file_path, err))
+        })
+        .transpose()?;
+
     Ok(ReportData {
         id,
         name: report_name,
@@ -169,6 +180,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         version: version.to_string(),
         code,
         form_schema: form_schema_json,
+        excel_template_buffer,
     })
 }
 
@@ -217,6 +229,7 @@ pub struct Manifest {
     #[serde(default)]
     pub convert_data_type: ConvertDataType,
     pub query_default: Option<String>,
+    pub excel_template: Option<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]

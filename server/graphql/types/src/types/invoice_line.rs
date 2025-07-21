@@ -109,6 +109,9 @@ impl InvoiceLineNode {
     pub async fn prescribed_quantity(&self) -> Option<f64> {
         self.row().prescribed_quantity
     }
+    pub async fn shipped_number_of_packs(&self) -> Option<f64> {
+        self.row().shipped_number_of_packs
+    }
     // Batch
     pub async fn batch(&self) -> &Option<String> {
         &self.row().batch
@@ -262,6 +265,10 @@ impl InvoiceLineNode {
 
         let result = loader.load_one(campaign_id.clone()).await?;
         Ok(result.map(CampaignNode::from_domain))
+    }
+
+    pub async fn linked_invoice_id(&self) -> &Option<String> {
+        &self.row().linked_invoice_id
     }
 }
 

@@ -1,10 +1,10 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: ''
+title: ""
 labels: enhancement, needs triage
-assignees: ''
-
+type: feature
+assignees: ""
 ---
 
 <!-- NOTE: before adding something to your issue name or description, check that there does not already exist a label for it! -->
@@ -15,13 +15,15 @@ assignees: ''
 
 ## Describe the solution you'd like 🎁
 
-
 ### Describe alternatives you've considered 💭
-
 
 ### Additional context 💌
 
 <!-- Add any other context or screenshots about the feature request here. -->
+
+### Acceptance Criteria ✅
+
+<!-- Describe the criteria that must be met for this feature to be considered complete. -->
 
 ### Moneyworks Jobcode 🧰
 

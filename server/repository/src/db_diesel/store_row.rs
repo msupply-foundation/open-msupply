@@ -63,6 +63,17 @@ pub struct StoreRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+pub trait StoreRowRepositoryTrait<'a> {
+    fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError>;
+    // expose methods here as needed for test mocks
+}
+
+impl<'a> StoreRowRepositoryTrait<'a> for StoreRowRepository<'a> {
+    fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        self.find_one_by_id(store_id)
+    }
+}
+
 impl<'a> StoreRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         StoreRowRepository { connection }
@@ -100,7 +111,7 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn all(&mut self) -> Result<Vec<StoreRow>, RepositoryError> {
+    pub fn all(&self) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store::table.load(self.connection.lock().connection())?;
         Ok(result)
     }
@@ -141,5 +152,21 @@ impl Upsert for StoreRow {
             StoreRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[derive(Default)]
+pub struct MockStoreRowRepository {
+    pub find_one_by_id_result: Option<StoreRow>,
+}
+impl MockStoreRowRepository {
+    pub fn boxed() -> Box<dyn StoreRowRepositoryTrait<'static>> {
+        Box::new(MockStoreRowRepository::default())
+    }
+}
+
+impl<'a> StoreRowRepositoryTrait<'a> for MockStoreRowRepository {
+    fn find_one_by_id(&self, _row_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        Ok(self.find_one_by_id_result.clone())
     }
 }

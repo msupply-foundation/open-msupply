@@ -53,7 +53,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                 backgroundColor: props.disabled
                   ? 'background.toolbar'
                   : 'background.menu',
-                borderRadius: 1,
+                borderRadius: 2,
                 padding: '4px 8px',
               },
             },

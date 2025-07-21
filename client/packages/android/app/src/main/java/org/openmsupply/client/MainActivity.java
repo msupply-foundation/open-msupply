@@ -66,10 +66,12 @@ public class MainActivity extends BridgeActivity {
     }
 
     // Implementing here, so that we can use the FileManager instance
-    public void SaveFile(String filename, String content) {
-        fileManager.Save(filename, content);
+    public void SaveFile(String filename, String content, String mimeType, String successMessage) {
+        fileManager.Save(filename, content, mimeType, successMessage);
     }
-
+    public void SaveBinaryFile(String filename, byte[] data, String mimeType, String successMessage) {
+        fileManager.SaveBinaryFile(filename, data, mimeType, successMessage);
+    }
     public void SaveDatabase(File file) {
         fileManager.SaveDatabase(file);
     }

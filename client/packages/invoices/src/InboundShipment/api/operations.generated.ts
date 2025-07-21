@@ -12,6 +12,7 @@ export type InboundLineFragment = {
   sellPricePerPack: number;
   expiryDate?: string | null;
   numberOfPacks: number;
+  shippedNumberOfPacks?: number | null;
   packSize: number;
   note?: string | null;
   invoiceId: string;
@@ -22,13 +23,9 @@ export type InboundLineFragment = {
   itemName: string;
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
+  linkedInvoiceId?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -113,6 +110,7 @@ export type InboundFragment = {
       sellPricePerPack: number;
       expiryDate?: string | null;
       numberOfPacks: number;
+      shippedNumberOfPacks?: number | null;
       packSize: number;
       note?: string | null;
       invoiceId: string;
@@ -123,16 +121,12 @@ export type InboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
+      linkedInvoiceId?: string | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
         name: string;
-      } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -338,6 +332,7 @@ export type InvoiceQuery = {
             sellPricePerPack: number;
             expiryDate?: string | null;
             numberOfPacks: number;
+            shippedNumberOfPacks?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -348,16 +343,12 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            linkedInvoiceId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
               name: string;
-            } | null;
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
             } | null;
             item: {
               __typename: 'ItemNode';
@@ -496,6 +487,7 @@ export type InboundByNumberQuery = {
             sellPricePerPack: number;
             expiryDate?: string | null;
             numberOfPacks: number;
+            shippedNumberOfPacks?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -506,16 +498,12 @@ export type InboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            linkedInvoiceId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
               name: string;
-            } | null;
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
             } | null;
             item: {
               __typename: 'ItemNode';
@@ -1027,6 +1015,7 @@ export const InboundLineFragmentDoc = gql`
     sellPricePerPack
     expiryDate
     numberOfPacks
+    shippedNumberOfPacks
     packSize
     note
     type
@@ -1038,6 +1027,7 @@ export const InboundLineFragmentDoc = gql`
     itemName
     itemVariantId
     vvmStatusId
+    linkedInvoiceId
     donor(storeId: $storeId) {
       id
       name
@@ -1045,10 +1035,6 @@ export const InboundLineFragmentDoc = gql`
     campaign {
       id
       name
-    }
-    itemVariant {
-      id
-      dosesPerUnit
     }
     item {
       __typename

@@ -7,6 +7,7 @@
 #   # discovery: Enabled # Enabled, Disabled, or Auto
 #   # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
 #   # danger_allow_http: true # allow http in production mode
+#   # override_is_central_server: true # set server mode as central server, should only be used in testing, demo and development, sync calls can override this back to normal
 #   cors_origins: [
 #       http://localhost:3003,
 #       https://demo-open.msupply.org,

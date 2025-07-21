@@ -193,7 +193,9 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_item_a, mock_location_1, mock_stock_line_a, MockDataInserts},
+        mock::{
+            mock_item_a, mock_location_1, mock_reason_option, mock_stock_line_a, MockDataInserts,
+        },
         StocktakeLine, StocktakeLineRow, StorageConnectionManager,
     };
     use serde_json::json;
@@ -308,6 +310,7 @@ mod test {
                 location: Some(mock_location_1()),
                 item: mock_item_a(),
                 donor: None,
+                reason_option: Some(mock_reason_option()),
             })
         }));
 

@@ -12,6 +12,19 @@ import {
 } from '../../context';
 import { Fade, Tooltip } from '@mui/material';
 import { TypedTFunction, LocaleKey } from '@common/intl';
+import { CellContentWrapper } from './CellContentWrapper';
+
+const Animation: FC<PropsWithChildren<{ isAnimated: boolean }>> = ({
+  children,
+  isAnimated,
+}) =>
+  isAnimated ? (
+    <Fade in={true} timeout={500}>
+      {children as ReactElement}
+    </Fade>
+  ) : (
+    <>{children}</>
+  );
 
 interface DataRowProps<T extends RecordWithId> {
   columns: Column<T>[];
@@ -26,18 +39,9 @@ interface DataRowProps<T extends RecordWithId> {
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
   isAnimated: boolean;
+  /** will ignore onClick if defined. Allows opening in new tab */
+  rowLinkBuilder?: (rowData: T) => string;
 }
-const Animation: FC<PropsWithChildren<{ isAnimated: boolean }>> = ({
-  children,
-  isAnimated,
-}) =>
-  isAnimated ? (
-    <Fade in={true} timeout={500}>
-      {children as ReactElement}
-    </Fade>
-  ) : (
-    <>{children}</>
-  );
 
 const DataRowComponent = <T extends RecordWithId>({
   columns,
@@ -52,20 +56,26 @@ const DataRowComponent = <T extends RecordWithId>({
   localisedText,
   localisedDate,
   isAnimated,
+  rowLinkBuilder,
 }: DataRowProps<T>): JSX.Element => {
-  const hasOnClick = !!onClick;
+  const hasOnClick = !!onClick || !!rowLinkBuilder;
   const { isExpanded } = useExpanded(rowData.id);
   const { isDisabled } = useIsDisabled(rowData.id);
   const { isFocused } = useIsFocused(rowData.id);
   const { rowStyle } = useRowStyle(rowData.id);
 
-  const onRowClick = () => onClick && onClick(rowData);
   const paddingX = dense ? '12px' : '16px';
   const paddingY = dense ? '4px' : 0;
   const rowTitle = generateRowTooltip?.(rowData) ?? '';
 
+  const handleRowClick = () => {
+    if (rowLinkBuilder) rowLinkBuilder(rowData);
+    else if (onClick) onClick(rowData);
+  };
+
   useEffect(() => {
-    if (isFocused) onRowClick();
+    if (isFocused) handleRowClick();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyboardActivated]);
 
   return (
@@ -98,7 +108,7 @@ const DataRowComponent = <T extends RecordWithId>({
                     `inset 0 0.5px 0 0 ${alpha(theme.palette.gray.main, 0.5)}`,
               ...rowStyle,
             }}
-            onClick={onRowClick}
+            onClick={handleRowClick}
           >
             {columns.map((column, columnIndex) => {
               const isError = column.getIsError?.(rowData);
@@ -132,7 +142,11 @@ const DataRowComponent = <T extends RecordWithId>({
                       : {}),
                   }}
                 >
-                  {
+                  <CellContentWrapper
+                    column={column}
+                    rowData={rowData}
+                    rowLinkBuilder={rowLinkBuilder}
+                  >
                     <column.Cell
                       isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
                       rowData={rowData}
@@ -146,9 +160,10 @@ const DataRowComponent = <T extends RecordWithId>({
                       localisedText={localisedText}
                       localisedDate={localisedDate}
                       dense={dense}
+                      rowLinkBuilder={rowLinkBuilder}
                       {...column.cellProps}
                     />
-                  }
+                  </CellContentWrapper>
                 </TableCell>
               );
             })}

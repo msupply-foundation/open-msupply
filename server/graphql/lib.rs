@@ -14,7 +14,7 @@ use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_asset::property::AssetPropertiesQueries;
 use graphql_batch_mutations::BatchMutations;
-use graphql_clinician::ClinicianQueries;
+use graphql_clinician::{ClinicianMutations, ClinicianQueries};
 use graphql_contact_form::ContactFormMutations;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
@@ -47,7 +47,7 @@ use graphql_preference::{PreferenceMutations, PreferenceQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
-use graphql_reports::ReportQueries;
+use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
@@ -109,6 +109,10 @@ impl CentralServerMutationNode {
 
     async fn campaign(&self) -> CampaignMutations {
         CampaignMutations
+    }
+
+    async fn reports(&self) -> CentralReportMutations {
+        CentralReportMutations
     }
 }
 
@@ -237,6 +241,7 @@ pub struct Mutations(
     pub InventoryAdjustmentMutations,
     pub ContactFormMutations,
     pub VVMMutations,
+    pub ClinicianMutations,
 );
 
 impl Mutations {
@@ -264,6 +269,7 @@ impl Mutations {
             InventoryAdjustmentMutations,
             ContactFormMutations,
             VVMMutations,
+            ClinicianMutations,
         )
     }
 }

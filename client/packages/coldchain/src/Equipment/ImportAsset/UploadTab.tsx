@@ -5,11 +5,8 @@ import {
   Stack,
   Link,
   FnUtils,
-  FileUtils,
   Formatter,
   useIsCentralServerApi,
-  EnvUtils,
-  Platform,
   StatusType,
   DateUtils,
   LocaleKey,
@@ -19,6 +16,7 @@ import {
   Typography,
   useNotification,
   UploadFile,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { ImportPanel } from './ImportPanel';
 import * as EquipmentImportModal from './EquipmentImportModal';
@@ -207,17 +205,14 @@ export const EquipmentUploadTab = ({
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { data: stores } = useStore.document.list();
-  const { error, info } = useNotification();
+  const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
+
+  const exportCSV = useExportCSV();
   const { data: properties } = useAssetProperties();
 
   const csvExample = async () => {
-    if (EnvUtils.platform === Platform.Android) {
-      info(t('messages.cant-download-android'))();
-      return;
-    }
-
     const exampleRows: Partial<ImportRow>[] = [
       {
         assetNumber: t('label.asset-number').toUpperCase(),
@@ -239,7 +234,7 @@ export const EquipmentUploadTab = ({
       isCentralServer,
       properties ? properties.map(p => p.key) : []
     );
-    FileUtils.exportCSV(csv, t('filename.cce'));
+    exportCSV(csv, t('filename.cce'));
   };
 
   const csvImport = <T extends File>(files: T[]) => {

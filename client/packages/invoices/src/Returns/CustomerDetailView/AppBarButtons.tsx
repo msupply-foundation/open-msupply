@@ -10,12 +10,7 @@ import {
   ReportContext,
 } from '@openmsupply-client/common';
 import { useReturns } from '../api';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  usePrintReport,
-} from '@openmsupply-client/system';
-import { JsonData } from '@openmsupply-client/programs';
+import { ReportSelector } from '@openmsupply-client/system';
 
 interface AppBarButtonProps {
   onAddItem: () => void;
@@ -28,23 +23,9 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { data } = useReturns.document.customerReturn();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation();
-  const { print, isPrinting } = usePrintReport();
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
-
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    if (!data) return;
-    print({
-      reportId: report.id,
-      dataId: data?.id,
-      args,
-      sort: { key: sortBy.key, desc: sortBy.isDesc },
-    });
-  };
 
   return (
     <AppBarButtonsPortal>
@@ -58,9 +39,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <ReportSelector
           context={ReportContext.InboundShipment}
           subContext="CustomerReturn"
-          onPrint={printReport}
-          isPrinting={isPrinting}
-          buttonLabel={t('button.print')}
+          sort={{ key: sortBy.key, desc: sortBy.isDesc }}
+          dataId={data?.id ?? ''}
         />
 
         {OpenButton}

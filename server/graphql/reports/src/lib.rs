@@ -1,9 +1,13 @@
 use async_graphql::*;
-use graphql_core::generic_inputs::PrintReportSortInput;
+mod mutations;
+use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use mutations::install::install_uploaded_reports;
 use print::{generate_report, generate_report_definition, PrintReportResponse};
 use reports::{
-    report, reports, ReportFilterInput, ReportResponse, ReportSortInput, ReportsResponse,
+    all_report_versions, report, reports, ReportFilterInput, ReportResponse, ReportSortInput,
+    ReportsResponse,
 };
+use repository::PaginationOption;
 use service::report::report_service::PrintFormat as ServicePrintFormat;
 
 mod print;
@@ -41,6 +45,26 @@ impl ReportQueries {
         sort: Option<Vec<ReportSortInput>>,
     ) -> Result<ReportsResponse> {
         reports(ctx, store_id, user_language, filter, sort)
+    }
+
+    /// Queries all reports and their respective versions
+    pub async fn all_report_versions(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        user_language: String,
+        filter: Option<ReportFilterInput>,
+        page: Option<PaginationInput>,
+        sort: Option<Vec<ReportSortInput>>,
+    ) -> Result<ReportsResponse> {
+        all_report_versions(
+            ctx,
+            store_id,
+            user_language,
+            filter,
+            sort,
+            page.map(PaginationOption::from),
+        )
     }
 
     /// Creates a generated report.
@@ -88,6 +112,7 @@ impl ReportQueries {
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
         current_language: Option<String>,
+        excel_template_buffer: Option<Vec<u8>>,
     ) -> Result<PrintReportResponse> {
         generate_report_definition(
             ctx,
@@ -98,6 +123,7 @@ impl ReportQueries {
             arguments,
             format,
             current_language,
+            excel_template_buffer,
         )
         .await
     }
@@ -110,5 +136,20 @@ impl PrintFormat {
             PrintFormat::Html => ServicePrintFormat::Html,
             PrintFormat::Excel => ServicePrintFormat::Excel,
         }
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct CentralReportMutations;
+
+#[Object]
+impl CentralReportMutations {
+    pub async fn install_uploaded_reports(
+        &self,
+        ctx: &Context<'_>,
+        file_id: String,
+    ) -> Result<Vec<String>> {
+        let ids = install_uploaded_reports(ctx, file_id)?;
+        Ok(ids)
     }
 }

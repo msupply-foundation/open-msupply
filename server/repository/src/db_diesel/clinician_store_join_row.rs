@@ -1,6 +1,6 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RowActionType};
 use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
@@ -34,30 +34,15 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         ClinicianStoreJoinRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician_store_join::dsl::clinician_store_join)
             .values(row)
             .on_conflict(clinician_store_join::dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(row, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &ClinicianStoreJoinRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::ClinicianStoreJoin,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_link_id: None,
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+        self.insert_changelog(row, RowActionType::Upsert)?;
+        Ok(())
     }
 
     pub fn find_one_by_id(
@@ -79,12 +64,28 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    fn insert_changelog(
+        &self,
+        row: &ClinicianStoreJoinRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::ClinicianStoreJoin,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
+    }
 }
 
 impl Upsert for ClinicianStoreJoinRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = ClinicianStoreJoinRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+        ClinicianStoreJoinRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Clinician store joins not in Changelog/not synced out
     }
 
     // Test only
@@ -93,5 +94,21 @@ impl Upsert for ClinicianStoreJoinRow {
             ClinicianStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ClinicianStoreJoinRowDelete(pub String);
+impl Delete for ClinicianStoreJoinRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ClinicianStoreJoinRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Clinician store joins not in Changelog/not synced out
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert!(matches!(
+            ClinicianStoreJoinRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        ));
     }
 }

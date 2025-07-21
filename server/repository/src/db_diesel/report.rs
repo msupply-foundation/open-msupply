@@ -1,7 +1,7 @@
 use super::{
     form_schema_row::{self, form_schema},
     report_row::report,
-    ContextType, ReportMetaDataRow, ReportRow, StorageConnection,
+    ContextType, Pagination, ReportMetaDataRow, ReportRow, StorageConnection,
 };
 
 use crate::{
@@ -57,6 +57,8 @@ pub struct ReportFilter {
 pub enum ReportSortField {
     Id,
     Name,
+    Code,
+    Version,
 }
 
 pub type ReportSort = Sort<ReportSortField>;
@@ -116,11 +118,12 @@ impl<'a> ReportRepository<'a> {
     }
 
     pub fn query_by_filter(&self, filter: ReportFilter) -> Result<Vec<Report>, RepositoryError> {
-        self.query(Some(filter), None)
+        self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
         &self,
+        pagination: Pagination,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
     ) -> Result<Vec<Report>, RepositoryError> {
@@ -133,9 +136,20 @@ impl<'a> ReportRepository<'a> {
                 ReportSortField::Name => {
                     apply_sort_no_case!(query, sort, report::name);
                 }
+                ReportSortField::Code => {
+                    apply_sort_no_case!(query, sort, report::code);
+                }
+                ReportSortField::Version => {
+                    apply_sort_no_case!(query, sort, report::version);
+                }
             }
         }
-        let result = query.load::<ReportJoin>(self.connection.lock().connection())?;
+
+        let final_query = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64);
+
+        let result = final_query.load::<ReportJoin>(self.connection.lock().connection())?;
 
         result
             .into_iter()
@@ -156,6 +170,12 @@ impl<'a> ReportRepository<'a> {
                 }
                 ReportSortField::Name => {
                     apply_sort_no_case!(query, sort, report::name);
+                }
+                ReportSortField::Code => {
+                    apply_sort_no_case!(query, sort, report::code);
+                }
+                ReportSortField::Version => {
+                    apply_sort_no_case!(query, sort, report::version);
                 }
             }
         }

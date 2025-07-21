@@ -20,8 +20,7 @@ export const useDeleteResponseLines = () => {
   const { lines } = useResponseLines();
   const isDisabled = useResponse.utils.isDisabled();
   const { mutateAsync } = useMutation(api.deleteLines, {
-    onSettled: () =>
-      queryClient.invalidateQueries(api.keys.detail(responseId)),
+    onSettled: () => queryClient.invalidateQueries(api.keys.detail(responseId)),
   });
   const errorsContext = useResponseRequisitionLineErrorContext();
   const { linkedRequisition } = useResponse.document.fields([
@@ -47,7 +46,7 @@ export const useDeleteResponseLines = () => {
         case 'RecordNotFound':
           throw Error(t('messages.record-not-found'));
         case 'CannotEditRequisition':
-          throw Error(t('messages.cannot-edit-requisition'));
+          throw Error(t('error.cannot-edit-requisition'));
         case 'CannotDeleteLineLinkedToShipment': {
           errorsContext.setError(line.id, error);
           throw Error(t('message.cannot-delete-line-linked-to-shipment'));

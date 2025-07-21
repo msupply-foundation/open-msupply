@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   Autocomplete,
   AutocompleteOptionRenderer,
   AutocompleteProps,
@@ -209,6 +210,13 @@ export const ProgramRequisitionOptions = ({
   return (
     <Grid container paddingTop={2} direction="column">
       <LabelAndOptions {...customers} optionKey="name" />
+      {customer?.store && (
+        <Box sx={{ pb: 2, display: 'flex', justifyContent: 'center' }}>
+          <Alert severity="warning" style={{ marginBottom: 2 }}>
+            {t('warning.manual-store-requisition')}
+          </Alert>
+        </Box>
+      )}
       <LabelAndOptions
         {...programs}
         renderOption={ProgramOptionRenderer}

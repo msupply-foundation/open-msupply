@@ -7,6 +7,7 @@ import {
   PrintFormat,
   TypedTFunction,
   useBreadcrumbs,
+  useDownloadFile,
   useIntlUtils,
   useParams,
   useTranslation,
@@ -62,10 +63,11 @@ const DetailViewInner = ({
     | { s: 'error'; errorMessage: string }
     | { s: 'loaded'; fileId: string }
   >({ s: 'loading' });
-  const { mutateAsync } = useGenerateReport();
+  const { mutateAsync, isLoading } = useGenerateReport();
 
   const { print, isPrinting } = usePrintReport();
   const { updateQuery } = useUrlQuery();
+  const downloadFile = useDownloadFile();
 
   // When reportWithArgs is undefined, args modal is closed
   const [reportWithArgs, setReportWithArgs] = useState<
@@ -164,8 +166,7 @@ const DetailViewInner = ({
         format: PrintFormat.Excel,
       });
       if (result?.__typename === 'PrintReportNode') {
-        // Setting iframe url with response != html disposition, causes iframe to 'download' this file
-        setState({ s: 'loaded', fileId: result.fileId });
+        downloadFile(`${Environment.FILE_URL}${result.fileId}`);
       }
 
       if (result?.__typename === 'PrintReportError') {
@@ -206,7 +207,7 @@ const DetailViewInner = ({
         onFilterOpen={openReportArgumentsModal}
         printReport={printReport}
         exportReport={exportExcelReport}
-        isPrinting={isPrinting}
+        isPrinting={isPrinting || isLoading}
       />
       <ReportArgumentsModal
         key={report.id}
@@ -214,7 +215,7 @@ const DetailViewInner = ({
         onReset={() => {
           setReportWithArgs(undefined);
         }}
-        onArgumentsSelected={generateReport}
+        onArgumentsSelected={(report, args) => generateReport(report, args)}
       />
       {state.s === 'loading' && (
         <BasicSpinner messageKey="messages.loading-report"></BasicSpinner>

@@ -5,7 +5,10 @@ import {
   Autocomplete,
   DetailInputWithLabelRow,
   LocaleKey,
+  PreferenceKey,
+  PreferencesNode,
   TypedTFunction,
+  usePreference,
   useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
@@ -13,7 +16,7 @@ import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
-import { extractProperty } from '@common/utils';
+import { extractProperty, getGenderTranslationKey } from '@common/utils';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 export const selectTester = rankWith(4, isEnumControl);
@@ -69,6 +72,7 @@ const Options = z
         mapping: z.record(z.array(z.string())),
       })
       .optional(),
+    preferenceKey: z.nativeEnum(PreferenceKey).optional(),
   })
   .strict()
   .optional();
@@ -82,17 +86,34 @@ type DisplayOption = {
   right?: string;
 };
 
-const getDisplayOptions = (
+export const getDisplayOptions = (
   t: TypedTFunction<LocaleKey>,
   schemaEnum: string[],
-  options?: Options
+  options?: Options,
+  prefOptions?: Pick<PreferencesNode, PreferenceKey>
 ): DisplayOption[] => {
-  if (!options?.show) {
+  if (options?.preferenceKey) {
+    switch (options?.preferenceKey) {
+      case PreferenceKey.GenderOptions:
+        return (
+          prefOptions?.genderOptions?.map(option => ({
+            label: t(getGenderTranslationKey(option)),
+            value: option,
+          })) ?? []
+        );
+      default:
+        console.warn(
+          `Unknown preference key: ${options?.preferenceKey}. Returning empty options.`
+        );
+        return [];
+    }
+  }
+
+  if (!options?.show)
     return schemaEnum.map((option: string) => ({
       label: option,
       value: option,
     }));
-  }
 
   return options.show.reduce<DisplayOption[]>(
     (prev, [key, value, description, right]) => {
@@ -200,7 +221,6 @@ const getHighlightParts = (
  * filtered list the currentSelection item is added to the returned list and an
  * error message is returned.
  */
-
 const useFilteredItems = (
   allItems: string[] | undefined,
   currentSelection: string | undefined,
@@ -238,8 +258,8 @@ const useFilteredItems = (
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, schema, path, uischema, enabled } = props;
   const t = useTranslation();
+  const { data, handleChange, label, schema, path, uischema, enabled } = props;
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -253,6 +273,9 @@ const UIComponent = (props: ControlProps) => {
     path,
     'Select'
   );
+  const { data: preference } = usePreference(
+    schemaOptions?.preferenceKey ?? PreferenceKey.GenderOptions
+  );
   useEffect(() => {
     setCustomError(validationError);
   }, [validationError]);
@@ -265,7 +288,7 @@ const UIComponent = (props: ControlProps) => {
     value: DisplayOption | null
   ) => handleChange(path, value?.value);
 
-  const options = getDisplayOptions(t, items, schemaOptions);
+  const options = getDisplayOptions(t, items, schemaOptions, preference);
 
   const value = data ? options.find(o => o.value === data) : null;
 

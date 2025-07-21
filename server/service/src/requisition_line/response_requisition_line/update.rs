@@ -4,12 +4,13 @@ use crate::{
     },
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
+    store_preference::get_store_preferences,
 };
 
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRowRepository, StorageConnection,
+    ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -41,6 +42,7 @@ pub enum UpdateResponseRequisitionLineError {
     NotAResponseRequisition,
     UpdatedRequisitionLineDoesNotExist,
     RequisitionDoesNotExist,
+    ReasonNotProvided(RequisitionLine),
     DatabaseError(RepositoryError),
 }
 
@@ -78,9 +80,10 @@ fn validate(
     store_id: &str,
     input: &UpdateResponseRequisitionLine,
 ) -> Result<(RequisitionRow, RequisitionLineRow), OutError> {
-    let requisition_line_row = check_requisition_line_exists(connection, &input.id)?
-        .ok_or(OutError::RequisitionLineDoesNotExist)?
-        .requisition_line_row;
+    let requisition_line = check_requisition_line_exists(connection, &input.id)?
+        .ok_or(OutError::RequisitionLineDoesNotExist)?;
+    let requisition_line_row = requisition_line.clone().requisition_line_row;
+    let store_preference = get_store_preferences(connection, store_id)?;
 
     let requisition_row =
         check_requisition_row_exists(connection, &requisition_line_row.requisition_id)?
@@ -100,6 +103,25 @@ fn validate(
 
     if requisition_row.status != RequisitionStatus::New {
         return Err(OutError::CannotEditRequisition);
+    }
+
+    if store_preference.extra_fields_in_requisition && requisition_row.program_id.is_some() {
+        let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
+            ReasonOptionFilter::new()
+                .r#type(ReasonOptionType::equal_to(
+                    &ReasonOptionType::RequisitionLineVariance,
+                ))
+                .is_active(true),
+        )?;
+
+        if !reason_options.is_empty()
+            && input
+                .requested_quantity
+                .is_some_and(|requested| requested != requisition_line_row.suggested_quantity)
+            && input.option_id.is_none()
+        {
+            return Err(OutError::ReasonNotProvided(requisition_line));
+        }
     }
 
     Ok((requisition_row, requisition_line_row))
@@ -130,7 +152,7 @@ fn generate(
         u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity);
         u.comment = updated_comment.or(u.comment);
         if existing_requisition_row.linked_requisition_id.is_none() {
-            u.available_stock_on_hand = updated_stock_on_hand.unwrap_or(0.0);
+            u.available_stock_on_hand = updated_stock_on_hand.unwrap_or(u.available_stock_on_hand);
             u.average_monthly_consumption =
                 updated_average_monthly_consumption.unwrap_or(u.average_monthly_consumption);
         }
@@ -163,28 +185,28 @@ impl From<RepositoryError> for UpdateResponseRequisitionLineError {
 
 #[cfg(test)]
 mod test {
-    use repository::{
-        mock::{
-            mock_finalised_request_requisition_line, mock_new_response_program_requisition,
-            mock_new_response_requisition_test, mock_reason_option,
-            mock_response_program_requisition, mock_sent_request_requisition_line, mock_store_a,
-            mock_store_b, mock_user_account_b, MockDataInserts,
-        },
-        test_db::setup_all,
-        RequisitionLineRowRepository, RequisitionRowRepository,
-    };
-    use util::{inline_edit, inline_init};
-
     use crate::{
         requisition_line::response_requisition_line::{
             UpdateResponseRequisitionLine, UpdateResponseRequisitionLineError as ServiceError,
         },
         service_provider::ServiceProvider,
     };
+    use repository::{
+        mock::{
+            mock_finalised_request_requisition_line, mock_new_response_program_requisition,
+            mock_new_response_requisition_test, mock_requisition_variance_reason_option,
+            mock_response_program_requisition, mock_sent_request_requisition_line, mock_store_a,
+            mock_store_b, mock_user_account_b, MockDataInserts,
+        },
+        test_db::setup_all,
+        EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
+        RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorePreferenceRow,
+        StorePreferenceRowRepository,
+    };
 
     #[actix_rt::test]
     async fn update_response_requisition_line_errors() {
-        let (_, _, connection_manager, _) = setup_all(
+        let (_, connection, connection_manager, _) = setup_all(
             "update_response_requisition_line_errors",
             MockDataInserts::all(),
         )
@@ -200,9 +222,10 @@ mod test {
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = "invalid".to_string();
-                }),
+                UpdateResponseRequisitionLine {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
         );
@@ -211,9 +234,10 @@ mod test {
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_finalised_request_requisition_line().id;
-                }),
+                UpdateResponseRequisitionLine {
+                    id: mock_finalised_request_requisition_line().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditRequisition)
         );
@@ -222,9 +246,10 @@ mod test {
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_sent_request_requisition_line().id;
-                }),
+                UpdateResponseRequisitionLine {
+                    id: mock_sent_request_requisition_line().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAResponseRequisition)
         );
@@ -234,23 +259,55 @@ mod test {
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id.clone_from(&mock_new_response_requisition_test().lines[0].id);
-                }),
+                UpdateResponseRequisitionLine {
+                    id: mock_new_response_requisition_test().lines[0].id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
 
-        // CannotEditRequisition (for program requisitions)
+        // CannotEditRequisition (for pending auth requisitions)
         context.store_id = mock_store_a().id;
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id.clone_from(&mock_response_program_requisition().lines[0].id);
-                }),
+                UpdateResponseRequisitionLine {
+                    id: mock_response_program_requisition().lines[0].id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditRequisition)
+        );
+
+        // ReasonNotProvided
+        let store_pref = StorePreferenceRow {
+            id: mock_store_a().id.clone(),
+            extra_fields_in_requisition: true,
+            ..Default::default()
+        };
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&store_pref)
+            .unwrap();
+        let requisition_lines =
+            RequisitionLineRepository::new(&connection)
+                .query_by_filter(RequisitionLineFilter::new().requisition_id(
+                    EqualFilter::equal_to(&mock_new_response_program_requisition().requisition.id),
+                ))
+                .unwrap();
+
+        assert_eq!(
+            service.update_response_requisition_line(
+                &context,
+                UpdateResponseRequisitionLine {
+                    id: mock_new_response_program_requisition().lines[0].id.clone(),
+                    requested_quantity: Some(15.0),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::ReasonNotProvided(
+                requisition_lines[0].clone()
+            ))
         );
     }
 
@@ -291,14 +348,13 @@ mod test {
 
         assert_eq!(
             line,
-            inline_edit(&test_line, |mut u| {
-                u.supply_quantity = 99.0;
-                u.comment = Some("comment".to_string());
-                u.requested_quantity = 5.0;
-                u.initial_stock_on_hand_units = 0.0;
-                u.available_stock_on_hand = 99.0;
-                u
-            })
+            RequisitionLineRow {
+                supply_quantity: 99.0,
+                comment: Some("comment".to_string()),
+                requested_quantity: 5.0,
+                available_stock_on_hand: 99.0,
+                ..test_line
+            }
         );
 
         let requisition = RequisitionRowRepository::new(&connection)
@@ -308,27 +364,47 @@ mod test {
 
         assert_eq!(
             requisition,
-            inline_edit(&requisition, |mut u| {
-                u.user_id = Some(mock_user_account_b().id);
-                u
-            })
+            RequisitionRow {
+                user_id: Some(mock_user_account_b().id.clone()),
+                ..requisition.clone()
+            }
         );
 
-        // requested differs from suggested success if reason added
-        let test_line_2 = mock_new_response_program_requisition().lines[0].clone();
+        // Success suggested != requested with reason provided
+        let store_pref = StorePreferenceRow {
+            id: mock_store_a().id.clone(),
+            extra_fields_in_requisition: true,
+            ..Default::default()
+        };
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&store_pref)
+            .unwrap();
+
+        let program_test_line_id = mock_new_response_program_requisition().lines[0].id.clone();
         service
             .update_response_requisition_line(
                 &context,
                 UpdateResponseRequisitionLine {
-                    id: test_line_2.id.clone(),
-                    supply_quantity: Some(99.0),
-                    comment: Some("comment".to_string()),
+                    id: program_test_line_id.clone(),
                     requested_quantity: Some(99.0),
-                    stock_on_hand: Some(99.0),
-                    option_id: Some(mock_reason_option().id),
+                    option_id: Some(mock_requisition_variance_reason_option().id),
                     ..Default::default()
                 },
             )
             .unwrap();
+
+        let program_line = RequisitionLineRowRepository::new(&connection)
+            .find_one_by_id(&program_test_line_id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            program_line,
+            RequisitionLineRow {
+                requested_quantity: 99.0,
+                option_id: Some(mock_requisition_variance_reason_option().id.clone()),
+                ..mock_new_response_program_requisition().lines[0].clone()
+            }
+        )
     }
 }

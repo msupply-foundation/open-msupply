@@ -42,13 +42,9 @@ export const TransportSectionComponent: FC = () => {
             sx={{
               flex: 2,
             }}
-            textFieldProps={{
-              InputProps: {
-                style: {
-                  backgroundColor: 'white',
-                  width: 170,
-                },
-              },
+            textFieldSx={{
+              backgroundColor: 'white',
+              width: 170,
             }}
             actions={['cancel', 'accept', 'clear']}
           />

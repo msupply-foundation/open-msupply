@@ -26,6 +26,7 @@ pub struct ColdStorageTypeFilter {
 pub enum ColdStorageTypeSortField {
     Id,
     Name,
+    MinTemperature,
 }
 
 pub type ColdStorageTypeSort = Sort<ColdStorageTypeSortField>;
@@ -67,6 +68,9 @@ impl<'a> ColdStorageTypeRepository<'a> {
                 }
                 ColdStorageTypeSortField::Name => {
                     apply_sort!(query, sort, cold_storage_type::name)
+                }
+                ColdStorageTypeSortField::MinTemperature => {
+                    apply_sort!(query, sort, cold_storage_type::min_temperature)
                 }
             }
         } else {

@@ -9,6 +9,10 @@ import {
   PreferenceDescriptionNode,
   useTranslation,
 } from '@openmsupply-client/common';
+import {
+  EnumOptions,
+  getEnumPreferenceOptions,
+} from '../Components/EnumOptions';
 
 export const EditPreference = ({
   preference,
@@ -48,6 +52,24 @@ export const EditPreference = ({
       // Adding NumericTextInput here would currently get a type error,
       // because there are no editPreference inputs that accept a number
       return <>To be implemented</>;
+
+    case PreferenceValueNodeType.MultiChoice:
+      if (!Array.isArray(value)) {
+        return t('error.something-wrong');
+      }
+      const options = getEnumPreferenceOptions(t, preference.key);
+
+      return (
+        <EnumOptions
+          disabled={disabled}
+          options={options}
+          value={value}
+          onChange={newValue => {
+            setValue(newValue);
+            update(newValue);
+          }}
+        />
+      );
 
     default:
       noOtherVariants(preference.valueType);

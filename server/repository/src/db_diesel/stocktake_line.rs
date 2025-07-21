@@ -1,7 +1,8 @@
 use super::{
     item_link_row::item_link, item_row::item, location_row::location, name_link_row::name_link,
-    name_row::name, stock_line_row::stock_line, stocktake_line_row::stocktake_line, LocationRow,
-    NameLinkRow, NameRow, StockLineRow, StocktakeLineRow, StorageConnection,
+    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
+    stocktake_line_row::stocktake_line, LocationRow, NameLinkRow, NameRow, ReasonOptionRow,
+    StockLineRow, StocktakeLineRow, StorageConnection,
 };
 
 use diesel::{
@@ -55,14 +56,13 @@ impl StocktakeLineFilter {
 pub enum StocktakeLineSortField {
     ItemCode,
     ItemName,
-    /// Stocktake line batch
     Batch,
-    /// Stocktake line expiry date
     ExpiryDate,
-    /// Stocktake line pack size
     PackSize,
-    /// Stocktake line item stock location code
     LocationCode,
+    SnapshotNumberOfPacks,
+    CountedNumberOfPacks,
+    ReasonOption,
 }
 
 pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
@@ -73,6 +73,7 @@ type StocktakeLineJoin = (
     Option<StockLineRow>,
     Option<LocationRow>,
     Option<(NameLinkRow, NameRow)>,
+    Option<ReasonOptionRow>,
 );
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -82,6 +83,7 @@ pub struct StocktakeLine {
     pub stock_line: Option<StockLineRow>,
     pub location: Option<LocationRow>,
     pub donor: Option<NameRow>,
+    pub reason_option: Option<ReasonOptionRow>,
 }
 
 pub struct StocktakeLineRepository<'a> {
@@ -145,6 +147,15 @@ impl<'a> StocktakeLineRepository<'a> {
                 StocktakeLineSortField::LocationCode => {
                     apply_sort_no_case!(query, sort, location::code);
                 }
+                StocktakeLineSortField::SnapshotNumberOfPacks => {
+                    apply_sort!(query, sort, stocktake_line::snapshot_number_of_packs);
+                }
+                StocktakeLineSortField::CountedNumberOfPacks => {
+                    apply_sort!(query, sort, stocktake_line::counted_number_of_packs);
+                }
+                StocktakeLineSortField::ReasonOption => {
+                    apply_sort_no_case!(query, sort, reason_option::reason);
+                }
             };
         } else {
             query = query.order_by(stocktake_line::id.asc());
@@ -164,12 +175,15 @@ type BoxedStocktakeLineQuery = IntoBoxed<
     LeftJoin<
         LeftJoin<
             LeftJoin<
-                InnerJoin<stocktake_line::table, InnerJoin<item_link::table, item::table>>,
-                stock_line::table,
+                LeftJoin<
+                    InnerJoin<stocktake_line::table, InnerJoin<item_link::table, item::table>>,
+                    stock_line::table,
+                >,
+                location::table,
             >,
-            location::table,
+            InnerJoin<name_link::table, name::table>,
         >,
-        InnerJoin<name_link::table, name::table>,
+        reason_option::table,
     >,
     DBType,
 >;
@@ -180,6 +194,7 @@ fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeL
         .left_join(stock_line::table)
         .left_join(location::table)
         .left_join(name_link::table.inner_join(name::table))
+        .left_join(reason_option::table)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -193,7 +208,7 @@ fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeL
 }
 
 fn to_domain(
-    (line, (_, item), stock_line, location, name_link): StocktakeLineJoin,
+    (line, (_, item), stock_line, location, name_link, reason_option): StocktakeLineJoin,
 ) -> StocktakeLine {
     StocktakeLine {
         line,
@@ -201,6 +216,7 @@ fn to_domain(
         stock_line,
         location,
         donor: name_link.map(|(_, name_row)| name_row),
+        reason_option,
     }
 }
 

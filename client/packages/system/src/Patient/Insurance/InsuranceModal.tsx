@@ -1,9 +1,9 @@
-import React, { FC, ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import { useDialog, useNotification } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
-  BaseDatePickerInput,
   BasicTextInput,
+  DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
   NumericTextInput,
@@ -19,7 +19,7 @@ import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
-export const InsuranceModal: FC = (): ReactElement => {
+export const InsuranceModal = (): ReactElement => {
   const t = useTranslation();
   const formatDateTime = useFormatDateTime();
   const { success, error } = useNotification();
@@ -146,7 +146,7 @@ export const InsuranceModal: FC = (): ReactElement => {
           <InputWithLabelRow
             label={t('label.insurance-expiry-date')}
             Input={
-              <BaseDatePickerInput
+              <DateTimePickerInput
                 required
                 value={DateUtils.getNaiveDate(draft.expiryDate)}
                 onChange={date => {

@@ -3,8 +3,7 @@ pub mod graphql_query;
 pub mod processor;
 pub mod transform_request_requisition_lines;
 
-#[cfg(test)]
-mod generate_typescript_types {
+pub mod generate_typescript_types {
     use crate::{
         boajs::methods::{
             use_graphql::UseGraphqlInput,
@@ -12,6 +11,7 @@ mod generate_typescript_types {
         },
         sync::ActiveStoresOnSite,
     };
+    use std::path::PathBuf;
 
     use super::*;
     use repository::{PluginDataFilter, PluginDataRow, StorePreferenceRow};
@@ -43,11 +43,8 @@ mod generate_typescript_types {
         use_graphql: Function<UseGraphqlInput, serde_json::Value>,
         get_active_stores_on_site: Function<(), ActiveStoresOnSite>,
     }
-
-    #[test]
-    #[ignore]
-    fn export_plugin_typescript() {
-        PluginTypes::export_all_to("../../client/packages/plugins/backendCommon/generated")
-            .unwrap();
+    // Runs in CLI
+    pub fn export_plugin_typescript(path: PathBuf) {
+        PluginTypes::export_all_to(path).unwrap();
     }
 }

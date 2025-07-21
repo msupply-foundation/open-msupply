@@ -7,7 +7,6 @@ import {
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
-  BaseDatePickerInput,
   DateUtils,
   useFormatDateTime,
   useTranslation,
@@ -17,6 +16,7 @@ import {
   NumericTextInput,
   Typography,
   LocaleKey,
+  DateTimePickerInput,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
 
@@ -41,7 +41,7 @@ type Options = z.input<typeof Options>;
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, uischema } = props;
+  const { data, handleChange, label, path, uischema, errors } = props;
   const [age, setAge] = React.useState<number | undefined>();
   const [dob, setDoB] = React.useState<Date | null>(null);
   const t = useTranslation();
@@ -52,9 +52,9 @@ const UIComponent = (props: ControlProps) => {
     'Date of Birth'
   );
 
-  const actions = options?.hideClear
-    ? ([] as PickersActionBarAction[])
-    : (['clear'] as PickersActionBarAction[]);
+  const actions: PickersActionBarAction[] = options?.hideClear
+    ? ['accept']
+    : ['clear', 'accept'];
 
   const dobPath = composePaths(path, 'dateOfBirth');
   const estimatedPath = composePaths(path, 'dateOfBirthIsEstimated');
@@ -112,21 +112,19 @@ const UIComponent = (props: ControlProps) => {
           width="100%"
           flexWrap="wrap"
         >
-          <BaseDatePickerInput
+          <DateTimePickerInput
             // undefined is displayed as "now" and null as unset
             value={dob}
             onChange={onChangeDoB}
             format="P"
-            sx={{ width: 145 }}
+            width={145}
             disableFuture
             disabled={!props.enabled}
-            onError={validationError => setCustomError(validationError)}
-            error={customError}
-            slotProps={{
-              actionBar: {
-                actions: actions,
-              },
-            }}
+            onError={validationError =>
+              setCustomError(validationError ?? undefined)
+            }
+            error={customError || errors}
+            actions={actions}
           />
 
           <Box display="flex" gap={1}>

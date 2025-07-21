@@ -461,7 +461,7 @@ function configureMenus(
 
   const fileMenu: MenuItemConstructorOptions = {
     label: t('file'),
-    submenu: [{ role: 'quit' }],
+    submenu: [{ role: 'quit', label: t('quit') }],
   };
 
   const helpMenu: MenuItemConstructorOptions = {

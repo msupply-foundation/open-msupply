@@ -60,11 +60,6 @@ export type StockLineFragment = {
       code: string;
     }>;
   };
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
   vvmStatus?: {
     __typename: 'VvmstatusNode';
@@ -216,7 +211,6 @@ export type ItemVariantFragment = {
   itemId: string;
   manufacturerId?: string | null;
   coldStorageTypeId?: string | null;
-  dosesPerUnit: number;
   vvmType?: string | null;
   item?: {
     __typename: 'ItemNode';
@@ -359,11 +353,6 @@ export type ItemFragment = {
           code: string;
         }>;
       };
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
-      } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
@@ -390,7 +379,6 @@ export type ItemFragment = {
     itemId: string;
     manufacturerId?: string | null;
     coldStorageTypeId?: string | null;
-    dosesPerUnit: number;
     vvmType?: string | null;
     item?: {
       __typename: 'ItemNode';
@@ -555,11 +543,6 @@ export type ItemsWithStockLinesQuery = {
               code: string;
             }>;
           };
-          itemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            dosesPerUnit: number;
-          } | null;
           donor?: { __typename: 'NameNode'; id: string } | null;
           vvmStatus?: {
             __typename: 'VvmstatusNode';
@@ -586,7 +569,6 @@ export type ItemsWithStockLinesQuery = {
         itemId: string;
         manufacturerId?: string | null;
         coldStorageTypeId?: string | null;
-        dosesPerUnit: number;
         vvmType?: string | null;
         item?: {
           __typename: 'ItemNode';
@@ -870,11 +852,6 @@ export type ItemByIdQuery = {
               code: string;
             }>;
           };
-          itemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            dosesPerUnit: number;
-          } | null;
           donor?: { __typename: 'NameNode'; id: string } | null;
           vvmStatus?: {
             __typename: 'VvmstatusNode';
@@ -892,7 +869,6 @@ export type ItemByIdQuery = {
         itemId: string;
         manufacturerId?: string | null;
         coldStorageTypeId?: string | null;
-        dosesPerUnit: number;
         vvmType?: string | null;
         item?: {
           __typename: 'ItemNode';
@@ -995,6 +971,7 @@ export type ItemVariantsQuery = {
     __typename: 'ItemConnector';
     nodes: Array<{
       __typename: 'ItemNode';
+      isVaccine: boolean;
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
@@ -1002,7 +979,6 @@ export type ItemVariantsQuery = {
         itemId: string;
         manufacturerId?: string | null;
         coldStorageTypeId?: string | null;
-        dosesPerUnit: number;
         vvmType?: string | null;
         item?: {
           __typename: 'ItemNode';
@@ -1134,11 +1110,6 @@ export type GetHistoricalStockLinesQuery = {
           code: string;
         }>;
       };
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
-      } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
@@ -1170,7 +1141,6 @@ export type UpsertItemVariantMutation = {
             itemId: string;
             manufacturerId?: string | null;
             coldStorageTypeId?: string | null;
-            dosesPerUnit: number;
             vvmType?: string | null;
             item?: {
               __typename: 'ItemNode';
@@ -1250,10 +1220,6 @@ export type UpsertItemVariantMutation = {
             __typename: 'UpsertItemVariantError';
             error:
               | { __typename: 'DatabaseError'; description: string }
-              | {
-                  __typename: 'DoseConfigurationNotAllowed';
-                  description: string;
-                }
               | { __typename: 'InternalError'; description: string }
               | {
                   __typename: 'UniqueValueViolation';
@@ -1365,7 +1331,7 @@ export type ItemLedgerFragment = {
   invoiceType: Types.InvoiceNodeType;
   name: string;
   packSize: number;
-  quantity: number;
+  movementInUnits: number;
   reason?: string | null;
   sellPricePerPack: number;
   totalBeforeTax?: number | null;
@@ -1373,11 +1339,9 @@ export type ItemLedgerFragment = {
 };
 
 export type ItemLedgerQueryVariables = Types.Exact<{
-  key: Types.LedgerSortFieldInput;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.LedgerFilterInput>;
+  filter?: Types.InputMaybe<Types.ItemLedgerFilterInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -1400,7 +1364,7 @@ export type ItemLedgerQuery = {
       invoiceType: Types.InvoiceNodeType;
       name: string;
       packSize: number;
-      quantity: number;
+      movementInUnits: number;
       reason?: string | null;
       sellPricePerPack: number;
       totalBeforeTax?: number | null;
@@ -1526,10 +1490,6 @@ export const StockLineFragmentDoc = gql`
     storeId
     totalNumberOfPacks
     itemVariantId
-    itemVariant {
-      id
-      dosesPerUnit
-    }
     donor(storeId: $storeId) {
       id
     }
@@ -1613,7 +1573,6 @@ export const ItemVariantFragmentDoc = gql`
     bundlesWith {
       ...BundledItem
     }
-    dosesPerUnit
     vvmType
   }
   ${NameRowFragmentDoc}
@@ -1707,7 +1666,7 @@ export const ItemLedgerFragmentDoc = gql`
     invoiceType
     name
     packSize
-    quantity
+    movementInUnits
     reason
     sellPricePerPack
     totalBeforeTax
@@ -1864,6 +1823,7 @@ export const ItemVariantsDocument = gql`
         __typename
         nodes {
           __typename
+          isVaccine
           variants {
             ...ItemVariant
           }
@@ -1914,9 +1874,6 @@ export const UpsertItemVariantDocument = gql`
                 description
                 field
               }
-              ... on DoseConfigurationNotAllowed {
-                description
-              }
             }
           }
         }
@@ -1945,7 +1902,10 @@ export const DeleteItemVariantDocument = gql`
 `;
 export const ColdStorageTypesDocument = gql`
   query coldStorageTypes($storeId: String!) {
-    coldStorageTypes(storeId: $storeId) {
+    coldStorageTypes(
+      storeId: $storeId
+      sort: { key: minTemperature, desc: true }
+    ) {
       ... on ColdStorageTypeConnector {
         nodes {
           ...ColdStorageType
@@ -1993,18 +1953,15 @@ export const DeleteBundledItemDocument = gql`
 `;
 export const ItemLedgerDocument = gql`
   query itemLedger(
-    $key: LedgerSortFieldInput!
     $first: Int
     $offset: Int
-    $desc: Boolean
-    $filter: LedgerFilterInput
+    $filter: ItemLedgerFilterInput
     $storeId: String!
   ) {
     itemLedger(
       storeId: $storeId
       filter: $filter
       page: { first: $first, offset: $offset }
-      sort: { key: $key, desc: $desc }
     ) {
       ... on ItemLedgerConnector {
         __typename

@@ -21,6 +21,9 @@ import {
   getDosesPerUnitColumn,
   useFormatNumber,
   NumUtils,
+  TextInputCell,
+  IconButton,
+  DeleteIcon,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -39,10 +42,11 @@ import {
   NumberOfPacksCell,
   vvmStatusesColumn,
 } from './utils';
+import { PatchDraftLineInput } from '../../../api';
 
 interface TableProps {
   lines: DraftInboundLine[];
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+  updateDraftLine: (patch: PatchDraftLineInput) => void;
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
@@ -52,30 +56,33 @@ interface TableProps {
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
 }
 
+interface QuantityTableProps extends TableProps {
+  removeDraftLine: (id: string) => void;
+}
+
 export const QuantityTableComponent = ({
   lines,
   updateDraftLine,
+  removeDraftLine,
   isDisabled = false,
   hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
   item,
   setPackRoundingMessage,
-}: TableProps) => {
+}: QuantityTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const { getPlural } = useIntlUtils();
+  const { format } = useFormatNumber();
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
-  const { format } = useFormatNumber();
 
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
-
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
-
   const pluralisedUnitName = getPlural(unitName, 2);
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
@@ -83,7 +90,7 @@ export const QuantityTableComponent = ({
   ];
 
   if (hasItemVariantsEnabled) {
-    columnDefinitions.push(itemVariantColumn(updateDraftLine, displayInDoses));
+    columnDefinitions.push(itemVariantColumn(updateDraftLine));
   }
 
   if (displayInDoses) {
@@ -127,7 +134,19 @@ export const QuantityTableComponent = ({
           }
         },
       },
-    ]
+    ],
+    {
+      key: 'shippedNumberOfPacks',
+      label: 'label.shipped-number-of-packs',
+      Cell: NumberOfPacksCell,
+      cellProps: {
+        decimalLimit: 0,
+      },
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
+      width: 100,
+      align: ColumnAlign.Left,
+      setter: patch => updateDraftLine(patch),
+    }
   );
 
   columnDefinitions.push({
@@ -177,6 +196,18 @@ export const QuantityTableComponent = ({
   if (displayInDoses) {
     columnDefinitions.push(...getInboundDosesColumns());
   }
+
+  columnDefinitions.push({
+    key: 'delete',
+    width: 50,
+    Cell: ({ rowData }) => (
+      <IconButton
+        label="Delete"
+        onClick={() => removeDraftLine(rowData.id)}
+        icon={<DeleteIcon fontSize="small" />}
+      />
+    ),
+  });
 
   const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
     updateDraftLine,
@@ -340,7 +371,18 @@ export const LocationTableComponent = ({
         accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
-    [getLocationInputColumn(), { setter: updateDraftLine, width: 550 }],
+    [getLocationInputColumn(), { setter: updateDraftLine, width: 530 }],
+    [
+      'note',
+      {
+        Cell: TextInputCell,
+        setter: patch => {
+          const note = patch.note === '' ? null : patch.note;
+          updateDraftLine({ ...patch, note });
+        },
+        accessor: ({ rowData }) => rowData.note,
+      },
+    ],
   ];
 
   if (preferences?.allowTrackingOfStockByDonor) {

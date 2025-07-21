@@ -1064,6 +1064,7 @@ export type CliniciansQueryVariables = Types.Exact<{
   key: Types.ClinicianSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ClinicianFilterInput>;
+  page?: Types.InputMaybe<Types.PaginationInput>;
 }>;
 
 export type CliniciansQuery = {
@@ -2237,11 +2238,13 @@ export const CliniciansDocument = gql`
     $key: ClinicianSortFieldInput!
     $desc: Boolean
     $filter: ClinicianFilterInput
+    $page: PaginationInput
   ) {
     clinicians(
       storeId: $storeId
       sort: { key: $key, desc: $desc }
       filter: $filter
+      page: $page
     ) {
       ... on ClinicianConnector {
         __typename

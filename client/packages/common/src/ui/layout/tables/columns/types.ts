@@ -16,6 +16,8 @@ export interface CellProps<T extends RecordWithId> {
   isAutoFocus?: boolean;
   // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
+  // Build a link on the row to allow context menu in browser
+  rowLinkBuilder?: (rowData: T) => string;
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
   debounceTime?: number;
@@ -90,6 +92,7 @@ export interface Column<T extends RecordWithId> {
   maxWidth?: number | string;
   maxLength?: number;
   backgroundColor?: string;
+  customLinkRendering?: boolean;
 
   defaultHideOnMobile?: boolean;
 

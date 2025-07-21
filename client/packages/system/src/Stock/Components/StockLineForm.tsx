@@ -180,6 +180,7 @@ export const StockLineForm = ({
                 onChange={date =>
                   onUpdate({ expiryDate: Formatter.naiveDate(date) })
                 }
+                width={160}
               />
             }
           />
@@ -201,11 +202,6 @@ export const StockLineForm = ({
                   selectedId={draft.itemVariantId ?? null}
                   width={160}
                   onChange={variant => onUpdate({ itemVariantId: variant?.id })}
-                  displayDoseColumns={
-                    (draft.item.isVaccine &&
-                      preferences?.manageVaccinesInDoses) ??
-                    false
-                  }
                 />
               }
             />

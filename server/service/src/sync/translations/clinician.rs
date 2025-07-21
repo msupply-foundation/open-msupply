@@ -1,13 +1,23 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository, GenderType,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository,
+    ClinicianRowRepositoryTrait, GenderType, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::sync_serde::empty_str_as_option_string;
+use crate::sync::{
+    sync_serde::{empty_str_as_option_string, object_fields_as_option, ok_or_none},
+    translations::store::StoreTranslation,
+};
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+#[derive(Deserialize, Serialize)]
+pub struct ClinicianOmsFields {
+    #[serde(default)]
+    #[serde(deserialize_with = "ok_or_none")]
+    pub gender: Option<GenderType>,
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyClinicianRow {
@@ -39,6 +49,13 @@ pub struct LegacyClinicianRow {
     pub is_female: bool,
     #[serde(rename = "active")]
     pub is_active: bool,
+
+    #[serde(deserialize_with = "empty_str_as_option_string", rename = "store_ID")]
+    pub store_id: Option<String>,
+
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<ClinicianOmsFields>,
 }
 
 // Needs to be added to all_translators()
@@ -54,7 +71,7 @@ impl SyncTranslation for ClinicianTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
+        vec![StoreTranslation.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -79,7 +96,17 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
+            store_id,
+            oms_fields,
         } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
+
+        let gender = if let Some(fields) = oms_fields {
+            fields.gender
+        } else {
+            is_female
+                .then_some(GenderType::Female)
+                .or(Some(GenderType::Male))
+        };
 
         let result = ClinicianRow {
             id,
@@ -92,12 +119,9 @@ impl SyncTranslation for ClinicianTranslation {
             phone,
             mobile,
             email,
-            gender: if is_female {
-                Some(GenderType::Female)
-            } else {
-                Some(GenderType::Male)
-            },
+            gender,
             is_active,
+            store_id,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -120,16 +144,20 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             gender,
             is_active,
+            store_id,
         } = ClinicianRowRepository::new(connection)
-            .find_one_by_id_option(&changelog.record_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Clinician row ({}) not found",
                 changelog.record_id
             )))?;
 
         let is_female = gender
-            .map(|gender| matches!(gender, GenderType::Female))
+            .as_ref()
+            .map(|g| *g == GenderType::Female)
             .unwrap_or(false);
+
+        let oms_fields = Some(ClinicianOmsFields { gender });
 
         let legacy_row = LegacyClinicianRow {
             id,
@@ -144,6 +172,8 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
+            store_id,
+            oms_fields,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -151,14 +181,34 @@ impl SyncTranslation for ClinicianTranslation {
             serde_json::to_value(legacy_row)?,
         ))
     }
+}
 
-    // TODO should not be deleting clinicians
-    // TODO soft delete
-    fn try_translate_to_delete_sync_record(
-        &self,
-        _: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        Ok(PushTranslateResult::delete(changelog, self.table_name()))
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_clinician_translation() {
+        use crate::sync::test::test_data::clinician as test_data;
+        let translator = ClinicianTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_clinician_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .expect(
+                    format!(
+                        "try_translate_from_upsert_sync_record error {:?}",
+                        record.sync_buffer_row.record_id
+                    )
+                    .as_str(),
+                );
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }

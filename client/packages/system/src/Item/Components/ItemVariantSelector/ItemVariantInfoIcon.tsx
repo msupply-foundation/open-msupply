@@ -10,7 +10,6 @@ interface ItemVariantInfoIconProps {
 }
 
 export const ItemVariantInfoIcon = ({
-  includeDoseColumns,
   itemId,
   itemVariantId,
 }: ItemVariantInfoIconProps) => {
@@ -19,8 +18,7 @@ export const ItemVariantInfoIcon = ({
   return (
     <ItemVariantSelector
       selectedId={itemVariantId}
-      displayInDoses={includeDoseColumns}
-      variants={data ?? []}
+      variants={data?.variants ?? []}
       disabled
       onVariantSelected={() => {}}
     >

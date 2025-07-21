@@ -1,5 +1,4 @@
 import React from 'react';
-import { usePatient } from '../api';
 import { useInsuranceColumns } from './columns';
 import {
   createQueryParamsStore,
@@ -18,9 +17,14 @@ import {
 } from '@openmsupply-client/programs';
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
-export const InsuranceListView = () => {
+export const InsuranceListView = ({
+  patientId,
+  readOnly = false,
+}: {
+  readOnly?: boolean;
+  patientId: string;
+}) => {
   const t = useTranslation();
-  const nameId = usePatient.utils.id();
   const { updateQuery } = useUrlQuery();
   const { setModal } = usePatientModalStore();
   const { setModal: selectModal } = usePatientModalStore();
@@ -39,7 +43,7 @@ export const InsuranceListView = () => {
 
   const {
     query: { data, isLoading },
-  } = useInsurancePolicies(nameId);
+  } = useInsurancePolicies(patientId);
 
   return (
     <TableProvider
@@ -53,13 +57,19 @@ export const InsuranceListView = () => {
         columns={columns}
         data={data}
         isLoading={isLoading}
-        onRowClick={row => {
-          updateQuery({ insuranceId: row.id });
-          setModal(PatientModal.Insurance);
-        }}
+        onRowClick={
+          readOnly
+            ? undefined
+            : row => {
+                updateQuery({ insuranceId: row.id });
+                setModal(PatientModal.Insurance);
+              }
+        }
         noDataElement={
           <NothingHere
-            onCreate={() => selectModal(PatientModal.Insurance)}
+            onCreate={
+              readOnly ? undefined : () => selectModal(PatientModal.Insurance)
+            }
             body={t('messages.no-insurance')}
             buttonText={t('button.add-insurance')}
           />

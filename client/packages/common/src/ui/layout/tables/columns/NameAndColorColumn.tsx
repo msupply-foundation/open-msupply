@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
 import { ColorSelectButton } from '@common/components';
+import { Link } from 'react-router-dom';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
   colour?: string | null;
@@ -26,24 +27,40 @@ export const getNameAndColorColumn = <
   },
   accessor: ({ rowData }) => rowData.otherPartyName,
   key: 'otherPartyName',
-  Cell: ({ rowData, column, isDisabled }) => (
+  Cell: ({ rowData, column, isDisabled, rowLinkBuilder }) => (
     <Box
       sx={{
         flexDirection: 'row',
         borderBottom: 'none',
         alignItems: 'center',
         display: 'flex',
+        width: '100%',
       }}
     >
-      <>
-        <ColorSelectButton
-          disabled={isDisabled}
-          onChange={color => column.setter({ ...rowData, colour: color.hex })}
-          color={rowData.colour}
-        />
-        <Box ml={1} />
-        {column.accessor({ rowData })}
-      </>
+      <ColorSelectButton
+        disabled={isDisabled}
+        onChange={color => column.setter({ ...rowData, colour: color.hex })}
+        color={rowData.colour}
+      />
+      <Box ml={1} />
+      {rowLinkBuilder ? (
+        <Link
+          to={rowLinkBuilder(rowData)}
+          style={{
+            display: 'flex',
+            width: '100%',
+            height: '40px',
+            textDecoration: 'none',
+            alignItems: 'center',
+            justifyContent: `${column.align}`,
+            color: 'inherit',
+          }}
+        >
+          {String(column.accessor({ rowData }))}
+        </Link>
+      ) : (
+        <Box>{String(column.accessor({ rowData }))}</Box>
+      )}
     </Box>
   ),
   minWidth: 400,

@@ -130,7 +130,7 @@ export const useOutboundLineEditColumns = ({
       accessor: ({ rowData }) => {
         if (!rowData.vvmStatus) return '';
         // TODO: Show unusable VVM status somehow?
-        return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
+        return rowData.vvmStatus?.description;
       },
       width: 85,
       Cell: TooltipTextCell,
@@ -316,8 +316,7 @@ const getAllocateInDosesColumns = (
         : 'label.doses-per-unit',
       width: 80,
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) =>
-        rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit,
+      accessor: ({ rowData }) => rowData.dosesPerUnit,
       defaultHideOnMobile: true,
     },
     {
@@ -383,11 +382,11 @@ const getBatchWithVariantCell =
     return (
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {rowData.batch}
-        {rowData.itemVariant && (
+        {rowData.itemVariantId && (
           <ItemVariantInfoIcon
             includeDoseColumns={includeDoseColumns}
             itemId={itemId}
-            itemVariantId={rowData.itemVariant.id}
+            itemVariantId={rowData.itemVariantId}
           />
         )}
       </div>

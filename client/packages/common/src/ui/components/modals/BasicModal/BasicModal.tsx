@@ -7,6 +7,7 @@ interface DialogProps extends MuiDialogProps {
   height?: number;
   width?: number;
   sx?: SxProps<Theme>;
+  alignModal?: 'center' | 'start' | 'end';
 }
 
 export const BasicModal = ({
@@ -15,6 +16,7 @@ export const BasicModal = ({
   height = 400,
   sx,
   fullScreen,
+  alignModal,
   ...dialogProps
 }: DialogProps) => {
   const { isRtl } = useIntlUtils();
@@ -30,6 +32,11 @@ export const BasicModal = ({
           ...sx,
         },
         ...PaperProps,
+      }}
+      sx={{
+        '& .MuiDialog-container': {
+          justifyContent: alignModal,
+        },
       }}
       {...dialogProps}
     >

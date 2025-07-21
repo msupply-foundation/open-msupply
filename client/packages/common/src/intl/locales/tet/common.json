@@ -493,8 +493,6 @@
   "messages.confirm-status-as": "Konfirma estatus hanesan $t({{status}})?",
   "messages.could-not-save": "Labele atu salva",
   "messages.create-outbound-from-requisition": "Ita certeja hakarak kria remessa Sasan Sai husi konsumidor nia requizisaun?",
-  "messages.create-stocktake-1": "Ita bele kria stocktake bazeia ba items ne'ebe atualmente aloka ona ba lokalizasaun ou items ne'ebe aloka ona ba iha master list.",
-  "messages.create-stocktake-2": "Atu kria stocktake ne'ebe mamuk, simplesmente klik OK atu kontinua.",
   "messages.customer-requisition-created-on": "Requizisaun konsumidor nian kria iha {{date}}",
   "messages.delete-this-line": "Hamos lina ida ne'e",
   "messages.deleted-generic_one": "Registu {{count}} hamos tiha ona",

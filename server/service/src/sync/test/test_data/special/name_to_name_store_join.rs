@@ -23,7 +23,7 @@ const NAME_1: (&str, &str) = (
         "charge code": "GEN",
         "margin": 0,
         "comment": "",
-        "currency_ID": "72C3E81AEF1F460686C31B1A1151E8C0",
+        "currency_ID": "NEW_ZEALAND_DOLLARS",
         "country": "",
         "freightfac": 0,
         "email": "",
@@ -105,7 +105,9 @@ const NAME_1: (&str, &str) = (
         "is_deleted": false,
         "om_created_datetime": "",
         "om_gender": "",
-        "om_date_of_death": ""
+        "om_date_of_death": "",
+        "HSH_code": "",
+        "HSH_name": ""
     }"#,
 );
 

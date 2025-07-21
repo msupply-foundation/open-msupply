@@ -62,6 +62,8 @@ Creating a new patient on OMS remote site will create new name and name_store_jo
 
 Central only processor will see the new name record, and check if the patient is visible on the Central site. If not, it will call Legacy mSupply to add name_store_join between OMS Central and the patient. This ensures patient data is all synced correctly to OMS Central going forward.
 
+> WARNING: As of v2.7, patients created on OMS remote sites may not have all their data visible on OMS Central, due to a race condition as described in [this issue](https://github.com/msupply-foundation/open-msupply/issues/7686#issuecomment-2896499858). Should be resolved once sync v7 is introduced. In the meantime, we mandate that OMS Central is NOT used as a dispensary.
+
 ## Re-initialising a site
 
 After above migrations, patient `name` and `name_link` records should exist on OMS Central server, vaccination changelogs should have correct `name_link_id` set, and `name_store_join` record for remote store to patient should exist. When site re-initialises, vaccination records should be included via name_store_join.

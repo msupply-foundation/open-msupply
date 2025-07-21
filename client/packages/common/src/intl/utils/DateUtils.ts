@@ -41,6 +41,7 @@ import {
   Locale,
   FirstWeekContainsDate,
   ParseOptions,
+  startOfMonth,
 } from 'date-fns';
 import { getTimezoneOffset } from 'date-fns-tz';
 
@@ -185,6 +186,7 @@ export const DateUtils = {
     return isValid(d) ? endOfDay(d) : null;
   },
   endOfDay,
+  startOfMonth,
   startOfYear,
   previousMonday,
   endOfWeek,
