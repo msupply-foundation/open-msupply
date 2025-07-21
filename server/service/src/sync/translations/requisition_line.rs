@@ -202,7 +202,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             available_stock_on_hand
         };
 
-        let requisition_line_expiry_date = RnRFormLineRepository::new(connection)
+        let rnr_form_line_expiry_date = RnRFormLineRepository::new(connection)
             .query_one(RnRFormLineFilter::new().requisition_line_id(EqualFilter::equal_to(&id)))?
             .map(|line| line.rnr_form_line_row.expiry_date);
 
@@ -229,7 +229,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             days_out_of_stock,
             option_id,
             stock_adjustment_in_units: addition_in_units - loss_in_units,
-            oms_fields: requisition_line_expiry_date.map(|expiry_date| {
+            oms_fields: rnr_form_line_expiry_date.map(|expiry_date| {
                 serde_json::json!({
                     "expiry_date": expiry_date.map(|d| d.format("%Y-%m-%d").to_string())
                 })
