@@ -76,7 +76,7 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             line_number: Some(1),
             item_link_id: None,
             item_name: None,
-            number_of_packs: None,
+            snapshot_soh: None,
             pack_size: None,
             requested_quantity: None,
             authorised_quantity: None,

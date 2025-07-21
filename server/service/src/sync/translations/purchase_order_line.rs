@@ -20,17 +20,17 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(rename = "purchase_order_ID")]
     pub purchase_order_id: String,
     #[serde(default)]
-    pub line_number: Option<i64>,
+    pub line_number: i64,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "item_ID")]
-    pub item_link_id: Option<String>,
+    pub item_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub item_name: Option<String>,
     #[serde(default)]
     #[serde(rename = "snapshotQuantity")]
-    pub number_of_packs: Option<f64>,
+    pub snapshot_soh: Option<f64>,
     #[serde(default)]
     #[serde(rename = "packsize_ordered")]
     pub pack_size: Option<f64>,
@@ -90,9 +90,9 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             id,
             purchase_order_id,
             line_number,
-            item_link_id,
+            item_id,
             item_name,
-            number_of_packs,
+            snapshot_soh: number_of_packs,
             pack_size,
             requested_quantity,
             authorised_quantity,
@@ -101,11 +101,20 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             expected_delivery_date,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
+        let item_id = match item_id {
+            Some(id) if !id.is_empty() => id,
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "Item ID is required for purchase order line in Open mSupply"
+                ))
+            }
+        };
+
         let result = PurchaseOrderLineRow {
             id,
             purchase_order_id,
             line_number,
-            item_link_id,
+            item_link_id: item_id,
             item_name,
             number_of_packs,
             pack_size,
@@ -140,13 +149,15 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
 
+        // TODO: look up item_link_id and translate to item_id
+
         let legacy_row = LegacyPurchaseOrderLineRow {
             id: id,
             purchase_order_id: purchase_order_id,
             line_number,
-            item_link_id,
+            item_id: Some(item_link_id),
             item_name,
-            number_of_packs,
+            snapshot_soh: number_of_packs,
             pack_size,
             requested_quantity,
             authorised_quantity,
