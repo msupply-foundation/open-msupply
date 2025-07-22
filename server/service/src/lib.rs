@@ -71,8 +71,6 @@ pub mod printer;
 pub mod processors;
 pub mod program;
 pub mod programs;
-pub mod purchase_order;
-pub mod purchase_order_line;
 pub mod reason_option;
 pub mod repack;
 pub mod report;
