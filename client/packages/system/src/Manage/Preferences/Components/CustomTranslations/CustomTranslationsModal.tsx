@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ButtonWithIcon, DialogButton } from '@common/components';
-import { EditIcon, PlusCircleIcon } from '@common/icons';
+import { EditIcon } from '@common/icons';
 import {
   CUSTOM_TRANSLATIONS_NAMESPACE,
   useIntl,
@@ -21,6 +21,10 @@ import {
   mapTranslationsToObject,
   Translation,
 } from './helpers';
+import {
+  TranslationOption,
+  TranslationSearchInput,
+} from './TranslationSearchInput';
 
 export const CustomTranslationsModal = ({
   value,
@@ -57,7 +61,7 @@ export const CustomTranslationsModal = ({
       />
       <Modal
         title={t('label.edit-custom-translations')}
-        width={900}
+        width={1200}
         cancelButton={
           <DialogButton variant="cancel" onClick={isOpen.toggleOff} />
         }
@@ -77,7 +81,7 @@ const TranslationsTable = ({
   setTranslations,
 }: {
   translations: Translation[];
-  setTranslations: (translations: Translation[]) => void;
+  setTranslations: React.Dispatch<React.SetStateAction<Translation[]>>;
 }) => {
   const t = useTranslation();
 
@@ -92,21 +96,28 @@ const TranslationsTable = ({
       key: 'key',
       Cell: TooltipTextCell,
       label: 'label.key',
+      width: 200,
     },
     {
       key: 'default',
       Cell: TooltipTextCell,
       label: 'label.default',
+      width: 300,
     },
     {
       key: 'custom',
       Cell: TextInputCell,
       label: 'label.custom',
+      cellProps: {
+        fullWidth: true,
+      },
       setter: input => {
-        const updatedTranslations = translations.map(tr =>
-          tr.id === input.id ? { ...tr, ...input } : tr
-        );
-        setTranslations(updatedTranslations);
+        setTranslations(translations => {
+          const updatedTranslations = translations.map(tr =>
+            tr.id === input.id ? { ...tr, ...input } : tr
+          );
+          return updatedTranslations;
+        });
       },
     },
 
@@ -122,15 +133,19 @@ const TranslationsTable = ({
     //   },
   ]);
 
+  const onAdd = (option: TranslationOption | null) => {
+    if (!option) return;
+    const newLine = {
+      id: option.key,
+      key: option.key,
+      default: option.default,
+      custom: '',
+    };
+    setTranslations(translations => [...translations, newLine]);
+  };
+
   return (
     <>
-      <Box display="flex" justifyContent="flex-end" marginBottom="8px">
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('label.translation')}
-          onClick={() => {}}
-        />
-      </Box>
       <TableProvider createStore={createTableStore}>
         <DataTable
           id={'translations-list'}
@@ -140,6 +155,9 @@ const TranslationsTable = ({
           dense
         />
       </TableProvider>
+      <Box display="flex" justifyContent="flex-start" marginBottom="8px">
+        <TranslationSearchInput onChange={onAdd} />
+      </Box>
     </>
   );
 };
