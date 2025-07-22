@@ -22,28 +22,34 @@ export const TranslationSearchInput = ({
   onChange,
   existingKeys,
 }: TranslationSearchInputProps) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
+  const defaultT = useTranslation('common');
   const theme = useTheme();
   const { i18n } = useIntl();
 
-  const defaultTranslation = useMemo(() => {
+  const nonTranslatedOptions = useMemo(() => {
+    // English common is the base for translations, will always be available and have all keys
     const baseOptions = i18n?.store?.data['en']?.['common'] ?? {};
     const keys = Object.keys(baseOptions);
 
-    return keys
-      .filter(k => !existingKeys.includes(k))
-      .map(k => ({
-        key: k,
-        default: t(k as LocaleKey),
-      }));
-  }, [i18n, t, existingKeys]);
+    return (
+      keys
+        // Autocomplete should only show keys that are don't already have translations
+        .filter(k => !existingKeys.includes(k))
+        .map(k => ({
+          key: k,
+          // Use defaultT rather than direct from baseOption, so shows in users language
+          default: defaultT(k as LocaleKey),
+        }))
+    );
+  }, [i18n, defaultT, existingKeys]);
 
   return (
     <Autocomplete
       onChange={(_, option) => {
         onChange(option);
       }}
-      options={defaultTranslation}
+      options={nonTranslatedOptions}
       sx={{ width: '100%' }}
       renderOption={(props, option) => (
         <li {...props} key={option.key} style={{ display: 'flex', gap: '8px' }}>
@@ -55,6 +61,7 @@ export const TranslationSearchInput = ({
         options.filter(o => {
           const caseInsensitive = new RegExp(inputValue, 'i');
           return (
+            // Search by key or default translation
             o.key.match(caseInsensitive) || o.default.match(caseInsensitive)
           );
         })
