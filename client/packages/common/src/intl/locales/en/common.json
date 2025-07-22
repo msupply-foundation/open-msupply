@@ -809,6 +809,7 @@
   "label.default-pack-size": "Default pack size",
   "label.delete": "Delete",
   "label.delivered": "Delivered",
+  "label.delivery-status": "Delivery Status",
   "label.demographic-group": "Demographic Group",
   "label.description": "Description",
   "label.details": "Details",
@@ -909,6 +910,7 @@
   "label.from-shipped-datetime": "From shipped date",
   "label.from-start-datetime": "From start date / time",
   "label.full-screen": "Full screen",
+  "label.fully-delivered": "Fully delivered",
   "label.functional-status": "Functional status",
   "label.gender": "Gender",
   "label.general": "General",
@@ -1061,6 +1063,7 @@
   "label.no-unallocated-rows-selected": "All of the selected rows are already allocated",
   "label.non-catalogue": "Non-catalogue",
   "label.none": "None",
+  "label.not-delivered": "Not delivered",
   "label.not-insured": "Not insured",
   "label.not-sent": "Not sent",
   "label.not-set": "Not set",
@@ -1110,6 +1113,7 @@
   "label.packs-received": "Packs Received",
   "label.packs-to-repack": "Number of packs to repack",
   "label.paid-by-insurance": "Paid By Insurance",
+  "label.partially-delivered": "Partially delivered",
   "label.past": "Past",
   "label.patient": "Patient",
   "label.patient-details": "Patient Details",
@@ -2155,9 +2159,5 @@
   "warning.check-before-vaccinating": "Vaccination records from other stores may not be up to date. Ensure you have synced recently, and always confirm against the patient's physical vaccination card first.",
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
-  "warning.nothing-to-supply": "Nothing left to supply!",
-  "label.not-delivered": "Not delivered",
-  "label.partially-delivered": "Partially delivered",
-  "label.fully-delivered": "Fully delivered",
-  "label.delivery-status": "Delivery Status"
+  "warning.nothing-to-supply": "Nothing left to supply!"
 }
