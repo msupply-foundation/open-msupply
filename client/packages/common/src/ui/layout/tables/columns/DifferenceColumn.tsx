@@ -69,7 +69,7 @@ export const getDifferenceColumn = (
     );
     const formatNumber = useFormatNumber();
     const doses = formatNumber.round(totalInDoses ?? undefined, 2);
-    const tooltip = formatNumber.tooltip(totalInDoses ?? undefined);
+    const tooltip = formatNumber.round(totalInDoses ?? undefined, 10);
 
     return (
       <Box

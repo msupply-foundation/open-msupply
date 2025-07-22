@@ -56,7 +56,7 @@ const PlaceholderRow = ({
   const t = useTranslation();
 
   const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
-  const tooltip = useFormatNumber().tooltip(quantity ?? 0);
+  const tooltip = useFormatNumber().round(quantity ?? 0, 10);
 
   // TODO - maybe should be editable? Can't clear when manually allocating..
   return quantity === null ? null : (
@@ -96,7 +96,7 @@ const TotalRow = ({
 }) => {
   const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
-  const tooltip = useFormatNumber().tooltip(allocatedQuantity);
+  const tooltip = useFormatNumber().round(allocatedQuantity, 10);
 
   return (
     <tr>

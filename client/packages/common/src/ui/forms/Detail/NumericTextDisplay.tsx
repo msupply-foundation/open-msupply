@@ -23,7 +23,7 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   width = 50,
 }) => {
   const format = useFormatNumber();
-  const tooltip = value ? format.tooltip(value ?? undefined) : null;
+  const tooltip = value ? format.round(value ?? undefined, 10) : null;
   const formattedValue = format.round(value ?? 0, 2);
 
   const displayValue =

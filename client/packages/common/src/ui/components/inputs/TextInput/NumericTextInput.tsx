@@ -205,7 +205,7 @@ export const NumericTextInput = React.forwardRef<
     },
     ref
   ) => {
-    const { format, parse, tooltip, round } = useFormatNumber();
+    const { format, parse, round } = useFormatNumber();
     const {
       options: { separator, decimal },
     } = useCurrency();
@@ -276,7 +276,7 @@ export const NumericTextInput = React.forwardRef<
       ? `${rounded}...`
       : rounded;
     const tooltipDisplay =
-      value && props.disabled ? tooltip(value ?? undefined) : null;
+      value && props.disabled ? round(value ?? undefined, 10) : null;
 
     return (
       <Tooltip title={tooltipDisplay}>

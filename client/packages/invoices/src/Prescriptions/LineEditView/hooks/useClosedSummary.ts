@@ -55,14 +55,14 @@ export const useClosedSummary = () => {
           packWord,
           unitWord,
         });
-        const tooltip = formatNumber.tooltip(numUnits / packSize);
+        const tooltip = formatNumber.round(numUnits / packSize, 10);
         const displayValue = getDisplayValue(totalPacks);
 
         summary.push({ displayValue, text, tooltip });
       } else {
         const unitType = getPlural(unitName, numUnits);
         const text = t('label.packs-of-1', { numUnits, unitType });
-        const tooltip = formatNumber.tooltip(numUnits);
+        const tooltip = formatNumber.round(numUnits, 10);
         const displayValue = getDisplayValue(numUnits);
         summary.push({ displayValue, text, tooltip });
       }
@@ -84,7 +84,7 @@ export const useClosedSummary = () => {
     const unitWord = t('label.doses-plural', {
       count: totalDoses,
     });
-    const tooltip = formatNumber.tooltip(totalDoses);
+    const tooltip = formatNumber.round(totalDoses, 10);
 
     return [{ displayValue, text: unitWord, tooltip }];
   };
