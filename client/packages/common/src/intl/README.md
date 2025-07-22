@@ -15,3 +15,9 @@ Colocation of all helpers for working with translations & all localisation files
 - Translations are lazily loaded
 - Translations are cached in local storage of the user. If you find your strings aren't being translated, try clearing your local storage.
 - We are using weblate to allow collaborative translation, if you are adding entries it is probably easier to use that
+
+## Custom Translation Overrides
+
+Custom translations can be configured via a Global preference on OMS Central. These are then exposed via the REST endpoint `YOUR_SERVER_URL/custom-translations`. IntlContext has this endpoint configured as one of it's 'backends'.
+
+IntlStrings uses them via the `CUSTOM_TRANSLATIONS_NAMESPACE` which means custom translations take precedence over our defaults.
