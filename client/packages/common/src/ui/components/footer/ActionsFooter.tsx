@@ -1,4 +1,4 @@
-import React, { FC, ReactElement, ReactNode } from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import {
   Stack,
   useTranslation,
@@ -22,10 +22,10 @@ interface ActionsFooterProps {
   selectedRowCount: number;
 }
 
-export const ActionsFooter: FC<ActionsFooterProps> = ({
+export const ActionsFooter = ({
   actions,
   selectedRowCount,
-}): ReactElement => {
+}: ActionsFooterProps): ReactElement => {
   const t = useTranslation();
   const { clearSelected } = useTableStore();
 

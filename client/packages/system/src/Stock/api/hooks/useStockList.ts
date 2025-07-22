@@ -1,7 +1,6 @@
 import {
   SortBy,
   StockLineFilterInput,
-  StockLineNode,
   StockLineSortFieldInput,
   useQuery,
 } from '@openmsupply-client/common';
@@ -37,10 +36,6 @@ export const useStockList = (queryParams: StockListParams) => {
     const filter = {
       ...filterBy,
       hasPacksInStore: true,
-      masterList: {
-        existsForStoreId: { equalTo: storeId },
-        ...filterBy?.masterList,
-      },
     };
     const query = await stockApi.stockLines({
       storeId,
@@ -59,7 +54,7 @@ export const useStockList = (queryParams: StockListParams) => {
 };
 
 const toSortField = (
-  sortBy: SortBy<StockLineNode>
+  sortBy: SortBy<StockLineRowFragment>
 ): StockLineSortFieldInput => {
   switch (sortBy.key) {
     case 'batch':

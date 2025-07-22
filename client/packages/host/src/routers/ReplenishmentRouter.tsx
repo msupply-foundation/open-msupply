@@ -14,6 +14,10 @@ const RequisitionService = React.lazy(
   () => import('@openmsupply-client/requisitions/src/RequisitionService')
 );
 
+const PurchaseOrderService = React.lazy(
+  () => import('@openmsupply-client/purchase_orders/src/PurchaseOrderService')
+);
+
 const fullInboundShipmentPath = RouteBuilder.create(AppRoute.Replenishment)
   .addPart(AppRoute.InboundShipment)
   .addWildCard()
@@ -39,12 +43,18 @@ const fullSuppliersPath = RouteBuilder.create(AppRoute.Replenishment)
   .addWildCard()
   .build();
 
+const fullPurchaseOrdersPath = RouteBuilder.create(AppRoute.Replenishment)
+  .addPart(AppRoute.PurchaseOrder)
+  .addWildCard()
+  .build();
+
 export const ReplenishmentRouter: FC = () => {
   const goToRnr = useMatch(fullRnRPath);
   const gotoRequisition = useMatch(fullInternalOrderPath);
   const gotoSuppliers = useMatch(fullSuppliersPath);
   const gotoInboundShipment = useMatch(fullInboundShipmentPath);
   const gotoReturns = useMatch(fullSupplierReturnsPath);
+  const gotoPurchaseOrders = useMatch(fullPurchaseOrdersPath);
 
   if (gotoRequisition || goToRnr) {
     return <RequisitionService />;
@@ -56,6 +66,10 @@ export const ReplenishmentRouter: FC = () => {
 
   if (gotoInboundShipment || gotoReturns) {
     return <InvoiceService />;
+  }
+
+  if (gotoPurchaseOrders) {
+    return <PurchaseOrderService />;
   }
 
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();

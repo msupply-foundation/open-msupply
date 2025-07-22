@@ -1,14 +1,9 @@
-use crate::sync::{
-    sync_serde::{
-        date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
-        zero_date_as_option,
-    },
-    translations::{
-        currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
-        item_variant::ItemVariantTranslation, location::LocationTranslation,
-        reason::ReasonTranslation, stock_line::StockLineTranslation,
-    },
+use crate::sync::translations::{
+    currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
+    item_variant::ItemVariantTranslation, location::LocationTranslation, reason::ReasonTranslation,
+    stock_line::StockLineTranslation,
 };
+
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
@@ -17,6 +12,10 @@ use repository::{
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
+    zero_date_as_option,
+};
 
 use super::{
     is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck,

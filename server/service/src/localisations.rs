@@ -1,9 +1,11 @@
-use serde_yaml::Value;
+use repository::StorageConnection;
 use std::collections::HashMap;
 use tera::{Error as TeraError, Function};
 use thiserror::Error;
 
 use rust_embed::RustEmbed;
+
+use crate::preference::{CustomTranslations, Preference, PreferenceError};
 
 #[derive(RustEmbed)]
 #[include = "*.json"]
@@ -14,34 +16,49 @@ pub struct EmbeddedLocalisations;
 #[derive(Debug, Error)]
 #[error("No translation found and fallback is missing for key {0}")]
 pub struct TranslationError(String);
+
+pub struct LocalisationsService {
+    /// Private field, can only be accessed via get_localisations so custom translations are initialised
+    localisations: Localisations,
+}
+
+impl LocalisationsService {
+    pub fn new() -> Self {
+        let mut localisations = Localisations {
+            translations: HashMap::new(),
+            custom_translations: HashMap::new(),
+        };
+
+        // Initialise localisations with OMS default translations
+        localisations.load_translations();
+
+        Self { localisations }
+    }
+
+    /// Each time localisations is consumed, we should reload custom translations from the preference
+    /// as they may have changed
+    pub fn get_localisations(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<Localisations, PreferenceError> {
+        let mut localisations = self.localisations.clone();
+
+        localisations.load_custom_translations(connection)?;
+
+        Ok(localisations)
+    }
+}
+
 // struct to manage translations
 #[derive(Clone)]
 pub struct Localisations {
     pub translations: HashMap<String, HashMap<String, HashMap<String, String>>>,
-}
-
-pub struct TranslationStrings {
-    pub translations: HashMap<String, Value>,
-}
-
-impl Default for Localisations {
-    fn default() -> Self {
-        Self::new()
-    }
+    pub custom_translations: HashMap<String, String>,
 }
 
 impl Localisations {
-    // Creates a new Localisations struct
-    pub fn new() -> Self {
-        let mut localisations = Localisations {
-            translations: HashMap::new(),
-        };
-        let _ = localisations.load_translations();
-        localisations
-    }
-
     // Load translations from embedded files
-    pub fn load_translations(&mut self) -> Result<(), std::io::Error> {
+    pub fn load_translations(&mut self) {
         // add read all namespace file names within locales
         for file in EmbeddedLocalisations::iter() {
             let file_namespace = file.split('/').nth(1).unwrap_or_default().to_string();
@@ -50,7 +67,11 @@ impl Localisations {
                 let json_data = content.data;
                 let translations: HashMap<String, String> = serde_json::from_slice(&json_data)
                     .unwrap_or_else(|e| {
-                        log::error!("Failed to parse JSON file {:?}: {:?}", file, e);
+                        log::error!(
+                            "Failed to parse JSON localisations file {:?}. Backend/report translations will be unavailable due to: {:?}",
+                            file,
+                            e
+                        );
                         HashMap::new()
                     });
                 self.translations
@@ -59,6 +80,15 @@ impl Localisations {
                     .insert(file_namespace, translations);
             }
         }
+    }
+
+    pub fn load_custom_translations(
+        &mut self,
+        connection: &StorageConnection,
+    ) -> Result<(), PreferenceError> {
+        let translations = CustomTranslations.load(connection, None)?;
+        self.custom_translations = translations;
+
         Ok(())
     }
 
@@ -73,6 +103,11 @@ impl Localisations {
         }: GetTranslation,
         language: &str,
     ) -> Result<String, TranslationError> {
+        // use the custom translation key if it exists
+        if let Some(value) = self.custom_translations.get(&key) {
+            return Ok(value.clone());
+        }
+        // otherwise use default oms translations
         let default_namespace = "common".to_string();
         let default_language = "en".to_string();
 
@@ -154,6 +189,7 @@ impl Localisations {
     }
 }
 
+#[derive(Clone)]
 pub struct GetTranslation {
     pub(crate) namespace: Option<String>,
     pub(crate) fallback: Option<String>,
@@ -163,13 +199,22 @@ pub struct GetTranslation {
 #[cfg(test)]
 mod test {
 
-    use crate::localisations::GetTranslation;
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, PreferenceRow, PreferenceRowRepository,
+    };
 
-    use super::Localisations;
+    use crate::{
+        localisations::{GetTranslation, LocalisationsService},
+        preference::{CustomTranslations, Preference},
+    };
 
-    #[test]
-    fn test_translations() {
-        let localisations = Localisations::new();
+    #[actix_rt::test]
+    async fn test_translations() {
+        let (_, storage_connection, _, _) =
+            setup_all("get_translations", MockDataInserts::none()).await;
+
+        let service = LocalisationsService::new();
+        let localisations = service.get_localisations(&storage_connection).unwrap();
         // test loading localisations
         // note these translations might change if translations change in the front end. In this case, these will need to be updated.
         let lang = "fr";
@@ -178,6 +223,7 @@ mod test {
             fallback: Some("fallback".to_string()),
             key: "button.close".to_string(),
         };
+
         // test correct translation
         let translated_value = localisations.get_translation(args, lang).unwrap();
         assert_eq!("Fermer", translated_value);
@@ -223,8 +269,23 @@ mod test {
             fallback: Some("fallback".to_string()),
             key: "button.close".to_string(),
         };
-        let translated_value = localisations.get_translation(args, lang).unwrap();
+        let translated_value = localisations.get_translation(args.clone(), lang).unwrap();
         assert_eq!("Cerrar", translated_value);
+
+        // test custom translations take precedence
+        PreferenceRowRepository::new(&storage_connection)
+            .upsert_one(&PreferenceRow {
+                id: "custom_translation".to_string(),
+                store_id: None,
+                key: CustomTranslations.key().to_string(),
+                value: r#"{"button.close":"Custom Button"}"#.to_string(),
+            })
+            .unwrap();
+        // reinitialise localisations with pref in place
+        let localisations = service.get_localisations(&storage_connection).unwrap();
+        let translated_value = localisations.get_translation(args, lang).unwrap();
+        assert_eq!("Custom Button", translated_value);
+
         // test no translation and no fallback results in panic
         let lang = "fr";
         let args = GetTranslation {
