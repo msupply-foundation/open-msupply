@@ -15,7 +15,7 @@ class TeamLabelAndMilestone:
         }
         self.opened_milestones = self.repo.get_milestones(state='open')
 
-    def get_assignees_team_label(self) -> List[str]:
+    def get_assignees_team_labels(self) -> List[str]:
         issue = self.repo.get_issue(self.issue_number)
         assignees = [a for a in issue.assignees]
 
@@ -29,9 +29,8 @@ class TeamLabelAndMilestone:
         return [label for label in self.team_labels if any(word in label for word in assignee_teams)]
     
     def get_team_labels_not_belonging_to_assignees(self) -> List[str]:
-        team_label = self.get_assignees_team_label()
-        not_team_labels = [l for l in self.team_labels if l != team_label]
-        return not_team_labels
+        team_label = self.get_assignees_team_labels()
+        return [label for label in self.team_labels if label not in team_label]
     
     def get_issue_labels(self) -> List[str]:
         issue = self.repo.get_issue(self.issue_number)
@@ -39,7 +38,7 @@ class TeamLabelAndMilestone:
     
     def add_and_remove_labels(self) -> None:
         issue_labels = self.get_issue_labels()
-        user_team_label = self.get_assignees_team_label()
+        user_team_label = self.get_assignees_team_labels()
         not_user_team_labels = self.get_team_labels_not_belonging_to_assignees()
 
         issue = self.repo.get_issue(self.issue_number)
