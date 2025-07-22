@@ -7,7 +7,7 @@ import {
 import { useVvmStatusesEnabled, VvmStatusFragment } from '../../api';
 interface VVMStatusSearchInputProps {
   selected: VvmStatusFragment | null;
-  onChange: (vvmStatus?: VvmStatusFragment) => void;
+  onChange: (vvmStatus?: VvmStatusFragment | null) => void;
   disabled?: boolean;
   width?: number | string;
   useDefault?: boolean;
@@ -41,10 +41,7 @@ export const VVMStatusSearchInput = ({
         value={selected ?? defaultOption}
         loading={isLoading}
         onChange={(_, option) => {
-          const vvmStatus = option
-            ? data.find(status => status.id === option.id)
-            : undefined;
-          onChange(vvmStatus);
+          onChange(option);
         }}
         options={data}
         getOptionLabel={option => option.description ?? ''}

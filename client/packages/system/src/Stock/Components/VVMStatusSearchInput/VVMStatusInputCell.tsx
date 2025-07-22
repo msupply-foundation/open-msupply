@@ -16,7 +16,7 @@ export const VVMStatusInputCell = <T extends RecordWithId>({
     rowData,
   }) as VvmStatusFragment | null;
 
-  const onChange = (vvmStatus?: VvmStatusFragment) => {
+  const onChange = (vvmStatus?: VvmStatusFragment | null) => {
     column.setter({ ...rowData, vvmStatus });
   };
 
