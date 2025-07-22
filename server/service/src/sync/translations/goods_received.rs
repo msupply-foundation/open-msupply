@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    goods_receiving_row::{GoodsReceivingRow, GoodsReceivingRowRepository, GoodsReceivingStatus},
+    goods_received_row::{GoodsReceivedRow, GoodsReceivedRowRepository, GoodsReceivedStatus},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ use util::sync_serde::empty_str_as_option;
 use crate::sync::translations::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
-pub enum LegacyGoodsReceivingStatus {
+pub enum LegacyGoodsReceivedStatus {
     #[serde(alias = "fn")]
     Finalised,
     #[serde(alias = "nw")]
@@ -18,7 +18,7 @@ pub enum LegacyGoodsReceivingStatus {
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct LegacyGoodsReceiving {
+pub struct LegacyGoodsReceived {
     #[serde(rename = "ID")]
     pub id: String,
     #[serde(rename = "store_ID")]
@@ -32,8 +32,8 @@ pub struct LegacyGoodsReceiving {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub inbound_shipment_id: Option<String>,
     #[serde(rename = "serial_number")]
-    pub goods_receiving_number: i64,
-    pub status: LegacyGoodsReceivingStatus,
+    pub goods_received_number: i64,
+    pub status: LegacyGoodsReceivedStatus,
     #[serde(rename = "entry_date")]
     pub created_datetime: NaiveDate,
     #[serde(rename = "received_date")]
@@ -61,14 +61,14 @@ pub struct LegacyGoodsReceiving {
 
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(GoodsReceivingTranslation)
+    Box::new(GoodsReceivedTranslation)
 }
 
-pub(super) struct GoodsReceivingTranslation;
+pub(super) struct GoodsReceivedTranslation;
 
-impl SyncTranslation for GoodsReceivingTranslation {
+impl SyncTranslation for GoodsReceivedTranslation {
     fn table_name(&self) -> &str {
-        "goods_receiving"
+        "goods_received"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
@@ -76,7 +76,7 @@ impl SyncTranslation for GoodsReceivingTranslation {
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::GoodsReceiving)
+        Some(ChangelogTableName::GoodsReceived)
     }
 
     fn try_translate_from_upsert_sync_record(
@@ -84,16 +84,16 @@ impl SyncTranslation for GoodsReceivingTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let legacy: LegacyGoodsReceiving = serde_json::from_str(&sync_record.data)?;
-        let result = GoodsReceivingRow {
+        let legacy: LegacyGoodsReceived = serde_json::from_str(&sync_record.data)?;
+        let result = GoodsReceivedRow {
             id: legacy.id,
             store_id: legacy.store_id,
             purchase_order_id: legacy.purchase_order_id,
             inbound_shipment_id: legacy.inbound_shipment_id,
-            goods_receiving_number: legacy.goods_receiving_number,
+            goods_received_number: legacy.goods_received_number,
             status: match legacy.status {
-                LegacyGoodsReceivingStatus::Finalised => GoodsReceivingStatus::Finalised,
-                LegacyGoodsReceivingStatus::New => GoodsReceivingStatus::New,
+                LegacyGoodsReceivedStatus::Finalised => GoodsReceivedStatus::Finalised,
+                LegacyGoodsReceivedStatus::New => GoodsReceivedStatus::New,
             },
             received_date: legacy.received_date,
             comment: legacy.comment,
@@ -113,18 +113,18 @@ impl SyncTranslation for GoodsReceivingTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = GoodsReceivingRowRepository::new(connection)
+        let row = GoodsReceivedRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| anyhow::anyhow!("GoodsReceiving not found"))?;
-        let legacy = LegacyGoodsReceiving {
+            .ok_or_else(|| anyhow::anyhow!("GoodsReceived not found"))?;
+        let legacy = LegacyGoodsReceived {
             id: row.id,
             store_id: row.store_id,
             purchase_order_id: row.purchase_order_id,
             inbound_shipment_id: row.inbound_shipment_id,
-            goods_receiving_number: row.goods_receiving_number,
+            goods_received_number: row.goods_received_number,
             status: match row.status {
-                GoodsReceivingStatus::New => LegacyGoodsReceivingStatus::New,
-                GoodsReceivingStatus::Finalised => LegacyGoodsReceivingStatus::Finalised,
+                GoodsReceivedStatus::New => LegacyGoodsReceivedStatus::New,
+                GoodsReceivedStatus::Finalised => LegacyGoodsReceivedStatus::Finalised,
             },
             created_datetime: row.created_datetime.date(),
             received_date: row.received_date,
