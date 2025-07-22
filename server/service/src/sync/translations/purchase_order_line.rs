@@ -19,12 +19,9 @@ pub struct LegacyPurchaseOrderLineRow {
     pub id: String,
     #[serde(rename = "purchase_order_ID")]
     pub purchase_order_id: String,
-    #[serde(default)]
     pub line_number: i64,
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "item_ID")]
-    pub item_id: Option<String>,
+    pub item_link_id: String,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub item_name: Option<String>,
