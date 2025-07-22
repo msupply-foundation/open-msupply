@@ -1,4 +1,4 @@
-pub mod goods_receiving_row;
+pub mod goods_received_row;
 use crate::repository_error::RepositoryError;
 
 pub mod abbreviation;
