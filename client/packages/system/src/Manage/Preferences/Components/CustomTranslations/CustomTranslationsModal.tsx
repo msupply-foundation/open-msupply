@@ -48,6 +48,7 @@ export const CustomTranslationsModal = ({
       <Modal
         title={t('label.edit-custom-translations')}
         width={1200}
+        height={700}
         cancelButton={
           <DialogButton variant="cancel" onClick={isOpen.toggleOff} />
         }
