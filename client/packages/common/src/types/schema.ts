@@ -4222,7 +4222,7 @@ export type InvoiceNode = {
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']['output']>;
   status: InvoiceNodeStatus;
-  store?: Maybe<StoreNode>;
+  store: StoreNode;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   theirReference?: Maybe<Scalars['String']['output']>;
   transportReference?: Maybe<Scalars['String']['output']>;

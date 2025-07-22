@@ -42,8 +42,11 @@ fragment PurchaseOrders on PurchaseOrderNode {
   }
 }
 
-query purchaseOrders($storeId: String!) {
-  purchaseOrders(storeId: $storeId) {
+query purchaseOrders($storeId: String!, $supplierName: String!) {
+  purchaseOrders(
+    storeId: $storeId
+    filter: { supplier: { equalTo: $supplierName } }
+  ) {
     ... on PurchaseOrderConnector {
       __typename
       nodes {

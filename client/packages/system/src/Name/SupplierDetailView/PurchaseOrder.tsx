@@ -13,9 +13,15 @@ import {
 import { PurchaseOrdersFragment } from '../apiModern/operations.generated';
 import { usePurchaseOrders } from '../apiModern';
 
-export const PurchaseOrder = (): ReactElement => {
+interface PurchaseOrderProps {
+  supplierName: string;
+}
+
+export const PurchaseOrder = ({
+  supplierName,
+}: PurchaseOrderProps): ReactElement => {
   const t = useTranslation();
-  const { data } = usePurchaseOrders();
+  const { data } = usePurchaseOrders(supplierName);
 
   const columnDefinitions: ColumnDefinition<PurchaseOrdersFragment>[] = [
     {

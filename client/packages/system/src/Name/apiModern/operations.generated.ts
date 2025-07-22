@@ -64,6 +64,7 @@ export type PurchaseOrdersFragment = {
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
+  supplierName: Types.Scalars['String']['input'];
 }>;
 
 export type PurchaseOrdersQuery = {
@@ -135,8 +136,11 @@ export const ContactsDocument = gql`
   ${ContactFragmentDoc}
 `;
 export const PurchaseOrdersDocument = gql`
-  query purchaseOrders($storeId: String!) {
-    purchaseOrders(storeId: $storeId) {
+  query purchaseOrders($storeId: String!, $supplierName: String!) {
+    purchaseOrders(
+      storeId: $storeId
+      filter: { supplier: { equalTo: $supplierName } }
+    ) {
       ... on PurchaseOrderConnector {
         __typename
         nodes {
