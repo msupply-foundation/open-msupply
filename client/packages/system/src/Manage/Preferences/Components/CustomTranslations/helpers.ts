@@ -24,10 +24,14 @@ export const mapTranslationsToArray = (
 export const mapTranslationsToObject = (
   translations: Translation[]
 ): Record<string, string> => {
-  const asObject = translations.reduce<Record<string, string>>((acc, tr) => {
-    if (tr.custom === tr.default || tr.custom === '') return acc;
-    acc[tr.key] = tr.custom;
-    return acc;
-  }, {});
+  const asObject = translations
+    // Sort alphabetically by key on save
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .reduce<Record<string, string>>((acc, tr) => {
+      // Remove entries where no custom translation is set
+      if (tr.custom === tr.default || tr.custom === '') return acc;
+      acc[tr.key] = tr.custom;
+      return acc;
+    }, {});
   return asObject;
 };

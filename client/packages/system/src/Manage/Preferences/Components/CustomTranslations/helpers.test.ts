@@ -44,7 +44,6 @@ describe('mapTranslationsToArray', () => {
       { id: 'button.ok', key: 'button.ok', default: 'OK', custom: 'Okay' },
     ]);
   });
-  // TODO: test to filter out empty
 });
 
 describe('mapTranslationsToObject', () => {
@@ -67,6 +66,17 @@ describe('mapTranslationsToObject', () => {
     expect(result).toEqual({
       'button.ok': 'Okay',
       'button.ok-and-next': 'Onwards!',
+    });
+  });
+  it('sorts translations alphabetically by key', () => {
+    const translations = [
+      { id: 'label.def', key: 'label.def', default: 'def', custom: 'DEF' },
+      { id: 'label.abc', key: 'label.abc', default: 'abc', custom: 'ABC' },
+    ];
+    const result = mapTranslationsToObject(translations);
+    expect(result).toEqual({
+      'label.abc': 'ABC',
+      'label.def': 'DEF',
     });
   });
   it('excludes entries that match default translations', () => {
