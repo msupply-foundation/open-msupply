@@ -10,9 +10,9 @@ use report_builder::{
     Format,
 };
 use repository::{
-    get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
-    FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
-    ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
+    get_storage_connection_manager, migrations::migrate, schema_from_row, test_db, ContextType,
+    EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
+    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -76,6 +76,8 @@ enum Action {
     },
     /// Initialise empty database (existing database will be dropped, and new one created and migrated)
     InitialiseDatabase,
+    /// Apply any pending migrations to the database, drop and build views
+    Migrate,
     /// Initialise from running mSupply server (uses configuration/.*yaml for sync credentials), drops existing database, creates new database with latest schema and initialises (syncs) initial data from central server (including users)
     /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli initialise-from-central -u "user1:user1password,user2:user2password" -p "sync_site_password"
     InitialiseFromCentral {
@@ -333,6 +335,17 @@ async fn main() -> anyhow::Result<()> {
             test_db::setup(&settings.database).await;
             info!("Finished database reset");
         }
+        Action::Migrate => {
+            info!("Applying database migrations");
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            if let Some(init_sql) = &settings.database.full_init_sql() {
+                connection_manager.execute(init_sql).unwrap();
+            }
+            migrate(&connection_manager.connection().unwrap(), None)
+                .expect("Failed to run DB migrations");
+
+            info!("Finished applying database migrations");
+        }
         Action::InitialiseFromCentral { users } => {
             initialise_from_central(settings, &users).await?;
         }
@@ -559,6 +572,9 @@ async fn main() -> anyhow::Result<()> {
                 StandardReports::upsert_reports(reports_data, &con, overwrite)?;
             }
         }
+        // TODO fix these inputs. Should extract these fields from the report manifest
+        // also not necessarily custom / version 1.0 etc.
+        // Command currently unsafe.
         Action::UpsertReport {
             id,
             report_path,

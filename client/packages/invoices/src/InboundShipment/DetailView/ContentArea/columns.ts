@@ -21,7 +21,7 @@ import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
 import { useInboundShipmentLineErrorContext } from '../../context/inboundShipmentLineError';
-import { getDosesQuantityColumn } from 'packages/invoices/src/DoseQtyColumn';
+import { getDosesQuantityColumn } from '../../../DoseQtyColumn';
 
 const getUnitQuantity = (row: InboundLineFragment) =>
   row.packSize * row.numberOfPacks;
@@ -52,7 +52,8 @@ export const useInboundShipmentColumns = ({
   const t = useTranslation();
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.UseCampaigns
   );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { getError } = useInboundShipmentLineErrorContext();
@@ -300,16 +301,18 @@ export const useInboundShipmentColumns = ({
     });
   }
 
-  columns.push({
-    key: 'campaign',
-    label: 'label.campaign',
-    accessor: ({ rowData }) =>
-      getColumnProperty(rowData, [
-        { path: ['lines', 'campaign', 'name'] },
-        { path: ['campaign', 'name'], default: '' },
-      ]),
-    defaultHideOnMobile: true,
-  });
+  if (preferences?.useCampaigns) {
+    columns.push({
+      key: 'campaign',
+      label: 'label.campaign',
+      accessor: ({ rowData }) =>
+        getColumnProperty(rowData, [
+          { path: ['lines', 'campaign', 'name'] },
+          { path: ['campaign', 'name'], default: '' },
+        ]),
+      defaultHideOnMobile: true,
+    });
+  }
 
   columns.push(getRowExpandColumn());
 
@@ -323,7 +326,8 @@ export const useExpansionColumns = (
   withDoseColumns?: boolean
 ): Column<InboundLineFragment>[] => {
   const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.UseCampaigns
   );
 
   const columns: ColumnDescription<InboundLineFragment>[] = [
@@ -372,13 +376,15 @@ export const useExpansionColumns = (
     });
   }
 
-  columns.push({
-    key: 'campaign',
-    label: 'label.campaign',
-    width: 100,
-    accessor: ({ rowData }) => rowData.campaign?.name,
-    defaultHideOnMobile: true,
-  });
+  if (preferences?.useCampaigns) {
+    columns.push({
+      key: 'campaign',
+      label: 'label.campaign',
+      width: 100,
+      accessor: ({ rowData }) => rowData.campaign?.name,
+      defaultHideOnMobile: true,
+    });
+  }
 
   return useColumns(columns, {}, []);
 };
