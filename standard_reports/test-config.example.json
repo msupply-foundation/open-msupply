@@ -1,0 +1,22 @@
+{
+  "//": "data_id is used for forms, the record ID to generate the form for",
+  "data_id": "some-uuid",
+  "store_id": "your-store-id",
+
+  "//": "Server login details",
+  "url": "http://localhost:8000",
+  "username": "admin",
+  "password": "pass",
+
+  "//": "Arguments for standard reports",
+  "arguments": {
+    "monthlyConsumptionLookBackPeriod": 3,
+    "monthsOverstock": 6,
+    "monthsUnderstock": 3,
+    "monthsItemsExpire": 3,
+    "timezone": "Pacific/Auckland"
+  },
+
+  "//": "Output file name",
+  "output_filename": "report_to_show"
+}
