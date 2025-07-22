@@ -9,6 +9,7 @@ import {
 
 import { usePrescriptionLineEditColumns } from './columns';
 import { getAllocatedQuantity, useAllocationContext } from '../../StockOut';
+import { useDisableVvmRows } from '../../useDisableVvmRows';
 
 export interface PrescriptionLineEditTableProps {
   disabled?: boolean;
@@ -25,6 +26,8 @@ export const PrescriptionLineEditTable = ({
       allocatedQuantity: getAllocatedQuantity(state),
     })
   );
+
+  useDisableVvmRows({ rows: draftLines, isVaccine: item?.isVaccine });
 
   const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
