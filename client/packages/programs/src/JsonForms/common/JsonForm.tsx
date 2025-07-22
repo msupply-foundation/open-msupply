@@ -65,6 +65,7 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
 } from './styleConstants';
 import { FormActionStructure } from '../useFormActions';
+import { PreviousData } from '../usePreviousEncounter';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -103,7 +104,7 @@ interface JsonFormsComponentProps {
 }
 
 export interface PreviousDocument {
-  getPrevious?: (path: string) => Promise<JsonData | undefined>;
+  getPrevious?: (path: string) => Promise<PreviousData | undefined>;
 }
 
 // Prevents Form window being loaded with the same scroll position as its parent
@@ -124,6 +125,9 @@ export type JsonFormsConfig = {
     id: string;
     name: string;
   };
+  /** Previous event document of the same type. Currently only implemented for
+   * Encounters (via `usePreviousEncounter`)
+   */
   previous?: PreviousDocument;
   /**
    * The initial data of the form before doing any modifications.
