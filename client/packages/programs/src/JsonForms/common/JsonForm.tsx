@@ -1,5 +1,6 @@
 import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
 import {
+  EncounterNode,
   LocaleKey,
   Typography,
   UnhappyMan,
@@ -101,6 +102,10 @@ interface JsonFormsComponentProps {
   };
 }
 
+export interface PreviousDocument {
+  getPrevious?: (path: string) => Promise<JsonData | undefined>;
+}
+
 // Prevents Form window being loaded with the same scroll position as its parent
 const ScrollFix = () => {
   useEffect(() => {
@@ -119,6 +124,7 @@ export type JsonFormsConfig = {
     id: string;
     name: string;
   };
+  previous?: PreviousDocument;
   /**
    * The initial data of the form before doing any modifications.
    */

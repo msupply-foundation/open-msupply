@@ -18,6 +18,7 @@ import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
 import { extractProperty, getGenderTranslationKey } from '@common/utils';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
+import { usePrevious } from '../hooks/usePrevious';
 
 export const selectTester = rankWith(4, isEnumControl);
 
@@ -73,6 +74,11 @@ const Options = z
       })
       .optional(),
     preferenceKey: z.nativeEnum(PreferenceKey).optional(),
+    /**
+     * If true, the value will be pre-populated with the previous value (if
+     * available)
+     */
+    defaultToPrevious: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -259,7 +265,8 @@ const useFilteredItems = (
 
 const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
-  const { data, handleChange, label, schema, path, uischema, enabled } = props;
+  const { data, handleChange, label, schema, path, uischema, enabled, config } =
+    props;
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -279,6 +286,15 @@ const UIComponent = (props: ControlProps) => {
   useEffect(() => {
     setCustomError(validationError);
   }, [validationError]);
+
+  const previousValue = usePrevious(
+    path,
+    data,
+    schemaOptions,
+    (value: string) => handleChange(path, value)
+  );
+
+  console.log('previousValue', previousValue);
 
   if (!props.visible) {
     return null;
