@@ -1,4 +1,6 @@
 {
+  "//": "Copy to test-config.json and edit as needed",
+
   "//": "data_id is used for forms, the record ID to generate the form for",
   "data_id": "some-uuid",
   "store_id": "your-store-id",
