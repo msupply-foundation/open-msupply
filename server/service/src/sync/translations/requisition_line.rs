@@ -212,8 +212,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             .query_one(RnRFormLineFilter::new().requisition_line_id(EqualFilter::equal_to(&id)))?
             .map(|line| line.rnr_form_line_row.expiry_date);
 
-        let oms_fields =
-            rnr_form_line_expiry_date.map(|expiry_date| RequisitionLineOmsFields { expiry_date });
+        let oms_fields = Some(RequisitionLineOmsFields {
+            expiry_date: rnr_form_line_expiry_date.flatten(),
+        });
 
         let legacy_row = LegacyRequisitionLineRow {
             ID: id,
