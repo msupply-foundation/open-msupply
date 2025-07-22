@@ -325,7 +325,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     // Now check if we need to show any alerts
     const updatedLine = updatedLines.find(line => line.id === lineId);
     const allocatedQuantity = updatedLine
-      ? packsToQuantity(allocateIn.type, updatedLine.numberOfPacks, updatedLine)
+      ? packsToQuantity(allocateInType, updatedLine.numberOfPacks, updatedLine)
       : 0;
 
     const alerts = updatedLine
@@ -333,7 +333,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
           quantity,
           allocatedQuantity,
           updatedLine,
-          allocateIn,
+          allocateInType,
           format,
           t
         )
