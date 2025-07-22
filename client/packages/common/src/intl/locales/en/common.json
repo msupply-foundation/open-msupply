@@ -172,6 +172,7 @@
   "control.search.no-results-label": "No results",
   "control.search.reset-button": "Unlink matched patient",
   "control.search.searching-label": "Searching...",
+  "control.from-previous-encounter": "{{label}} from last encounter on {{date}}:",
   "customer-requisition": "Requisitions",
   "customer-return": "Customer Return",
   "customer-returns": "Customer Returns",

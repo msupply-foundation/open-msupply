@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
-import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   LocaleKey,
@@ -12,6 +12,7 @@ import { useDebouncedTextInput } from '../hooks/useDebouncedTextInput';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 import { usePrevious } from '../hooks/usePrevious';
+import { PreviousValueDisplay } from '../utilityComponents';
 
 const Options = z
   .object({
@@ -133,9 +134,12 @@ const UIComponent = (props: ControlProps) => {
   );
   const t = useTranslation();
 
-  const previousValue = usePrevious(path, data, schemaOptions ?? {}, onChange);
-
-  console.log('Previous', previousValue);
+  const previousEncounterData = usePrevious(
+    path,
+    data,
+    schemaOptions ?? {},
+    onChange
+  );
 
   const examples =
     (props.schema as Record<string, string[]>)['examples'] ??
@@ -186,7 +190,13 @@ const UIComponent = (props: ControlProps) => {
         labelWidthPercentage={FORM_LABEL_WIDTH}
         inputAlignment={'start'}
       />
-      {previousValue && <p>Previous value: {previousValue as string}</p>}
+      {previousEncounterData && (
+        <PreviousValueDisplay
+          date={previousEncounterData.startDatetime}
+          value={previousEncounterData.previousValue}
+          label={label}
+        />
+      )}
     </>
   );
 };
