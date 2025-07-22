@@ -81,6 +81,9 @@ impl<'a> PurchaseOrderRepository<'a> {
                     apply_sort!(query, sort, purchase_order::delivered_datetime)
                 }
             }
+        } else {
+            query = query.order(purchase_order::created_datetime.desc())
+            // apply_sort!(query, sort, purchase_order::created_datetime)
         }
 
         // Debug diesel query
