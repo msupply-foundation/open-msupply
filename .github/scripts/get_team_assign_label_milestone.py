@@ -1,6 +1,6 @@
 import sys
 import os
-from typing import List, Set
+from typing import List
 from github import Github
 from datetime import datetime, timezone
 
