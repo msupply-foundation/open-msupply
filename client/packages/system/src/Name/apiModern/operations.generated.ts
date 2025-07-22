@@ -59,7 +59,6 @@ export type PurchaseOrdersFragment = {
   expectedDeliveryDatetime?: string | null;
   comment?: string | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
-  supplier?: { __typename: 'NameNode'; name: string } | null;
 };
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
@@ -82,7 +81,6 @@ export type PurchaseOrdersQuery = {
       expectedDeliveryDatetime?: string | null;
       comment?: string | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
-      supplier?: { __typename: 'NameNode'; name: string } | null;
     }>;
   };
 };
@@ -116,9 +114,6 @@ export const PurchaseOrdersFragmentDoc = gql`
     comment
     lines {
       totalCount
-    }
-    supplier {
-      name
     }
   }
 `;

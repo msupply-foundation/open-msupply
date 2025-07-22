@@ -29,7 +29,7 @@ export const PurchaseOrder = ({
     {
       key: 'supplier',
       label: 'label.supplier',
-      accessor: ({ rowData }) => rowData.supplier?.name ?? '',
+      accessor: () => supplierName,
     },
     {
       key: 'orderNumber',

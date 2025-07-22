@@ -37,9 +37,6 @@ fragment PurchaseOrders on PurchaseOrderNode {
   lines {
     totalCount
   }
-  supplier {
-    name
-  }
 }
 
 query purchaseOrders($storeId: String!, $supplierName: String!) {
