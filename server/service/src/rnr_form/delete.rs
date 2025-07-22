@@ -39,18 +39,20 @@ pub fn delete_rnr_form(ctx: &ServiceContext, input: DeleteRnRForm) -> Result<Str
                     .map_err(OutError::DatabaseError)?;
             }
 
+            let delete_line_id = match RnRFormRowRepository::new(connection).delete(&input.id) {
+                Ok(_) => input.id.clone(),
+                Err(error) => return Err(OutError::DatabaseError(error)),
+            };
+
             activity_log_entry(
                 ctx,
                 ActivityLogType::RnrFormDeleted,
-                Some(input.id.to_owned()),
+                Some(delete_line_id.clone()),
                 None,
                 None,
             )?;
 
-            match RnRFormRowRepository::new(connection).delete(&input.id) {
-                Ok(_) => Ok(input.id.clone()),
-                Err(error) => Err(OutError::DatabaseError(error)),
-            }
+            Ok(delete_line_id)
         })
         .map_err(|error| error.to_inner_error())?;
 
