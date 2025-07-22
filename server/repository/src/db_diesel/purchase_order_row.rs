@@ -5,6 +5,7 @@ use crate::{
 };
 
 use chrono::NaiveDate;
+use chrono::NaiveDateTime;
 use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -14,10 +15,10 @@ table! {
         id ->  Text,
         store_id -> Text,
         user_id -> Nullable<Text>,
-        supplier_name_link_id ->  Nullable<Text>,
+        supplier_name_link_id ->  Text,
         purchase_order_number -> BigInt,
         status -> crate::db_diesel::purchase_order_row::PurchaseOrderStatusMapping,
-        created_date -> Date,
+        created_datetime -> Timestamp,
         confirmed_date ->  Nullable<Date>,
         target_months->  Nullable<Double>,
         comment->  Nullable<Text>,
@@ -59,11 +60,11 @@ pub struct PurchaseOrderRow {
     pub id: String,
     pub store_id: String,
     pub user_id: Option<String>,
-    pub supplier_name_link_id: Option<String>,
+    pub supplier_name_link_id: String,
     pub purchase_order_number: i64,
     pub status: PurchaseOrderStatus,
-    pub created_date: NaiveDate,
-    pub confirmed_date: Option<NaiveDate>,
+    pub created_datetime: NaiveDateTime,
+    pub confirmed_date: Option<NaiveDate>, // TODO: Change to NaiveDateTime
     pub target_months: Option<f64>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
@@ -206,7 +207,6 @@ mod test {
         test_db::setup_all, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
     use strum::IntoEnumIterator;
-    use util::inline_init;
     use util::uuid::uuid;
 
     #[actix_rt::test]
@@ -217,19 +217,19 @@ mod test {
         let repo = PurchaseOrderRowRepository::new(&connection);
         // Try upsert all variants of PurchaseOrderStatus, confirm that diesel enums match postgres
         let mut po_number = 1;
-        for variant in PurchaseOrderStatus::iter() {
+        for status in PurchaseOrderStatus::iter() {
             let id = uuid();
-            let row = inline_init(|p: &mut PurchaseOrderRow| {
-                p.id = id.clone();
-                p.status = variant;
-                p.store_id = mock_store_a().id.clone();
-                p.created_date = chrono::Utc::now().naive_utc().into();
-                p.purchase_order_number = po_number;
-            });
-
+            let row = PurchaseOrderRow {
+                id: id.clone(),
+                status: status,
+                store_id: mock_store_a().id.clone(),
+                created_datetime: chrono::Utc::now().naive_utc().into(),
+                purchase_order_number: po_number,
+                ..Default::default()
+            };
             po_number += 1;
 
-            let _ = repo.upsert_one(&row);
+            let _ = repo.upsert_one(&row).unwrap();
 
             let result = repo.find_one_by_id(&id).unwrap().unwrap();
             assert_eq!(result.status, row.status);
