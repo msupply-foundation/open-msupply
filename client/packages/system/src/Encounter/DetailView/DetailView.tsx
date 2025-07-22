@@ -16,6 +16,7 @@ import {
   useConfirmationModal,
   useEditModal,
   isEmpty,
+  EncounterNode,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -38,6 +39,7 @@ import { ScheduleNextEncounterModal } from './ScheduleNextEncounterModal';
 import { usePatientVaccineCard } from '../../Vaccination/api/usePatientVaccineCard';
 import { getNextVaccinationEncounterDate } from './helpers';
 import { useSaveWithStatusChange } from './useSaveWithStatusChange';
+import { usePreviousEncounter } from 'packages/programs/src/JsonForms/usePreviousEncounter';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -93,6 +95,11 @@ export const DetailView: FC = () => {
     encounter?.type ?? ''
   );
 
+  const previous = usePreviousEncounter(
+    encounter?.patient?.id,
+    encounter?.startDatetime
+  );
+
   const dataAccessor = useDocumentDataAccessor(
     encounter?.document?.name,
     undefined,
@@ -111,6 +118,7 @@ export const DetailView: FC = () => {
     {
       documentName: encounter?.document?.name,
       patientId: encounter?.patient?.id,
+      previous,
     },
     dataAccessor
   );
