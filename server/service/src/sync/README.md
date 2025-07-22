@@ -175,7 +175,7 @@ The same versioning pattern also applies to the V6 sync (syncing with Open mSupp
 
 ## Debugging sync::test::pull_and_push::test_sync_pull_and_push
 
-This test is a little tricky to debug when it fails, as the error messages are not very specific. While we're improving that, here are two strategies that can help isolate the root cause:
+This test is a little tricky to debug when it fails, as the error messages are not very specific. Here are two strategies that can help isolate the root cause:
 
 1. Find the functions that may be being called by that test, and put in a println! statement to each one, then run the test again - that will show you which functions are called, how many times, and in what sequence.
 2. Search the error message displayed in the console for SQL errors. For example, 'FOREIGN KEY CONSTRAINT FAILED' and similar. If you find one, this means some of the data our tests cases are inserting don't fulfil one of the constraints of the table you're testing. To check out the constraints, open the database in a database browser (we often use [DBeaver](https://dbeaver.io/), or [DB Browser for SQLite](https://sqlitebrowser.org/)) and generate the table's DDL (Data Description Language).
