@@ -286,9 +286,7 @@ const UIComponent = (props: ControlProps) => {
     setCustomError(validationError);
   }, [validationError]);
 
-  usePrevious(path, data, schemaOptions, (value: string) =>
-    handleChange(path, value)
-  );
+  usePrevious(path, data, schemaOptions, value => handleChange(path, value));
 
   if (!props.visible) {
     return null;
