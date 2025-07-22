@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ButtonWithIcon, DialogButton } from '@common/components';
-import { EditIcon } from '@common/icons';
+import { ButtonWithIcon, DialogButton, IconButton } from '@common/components';
+import { DeleteIcon, EditIcon } from '@common/icons';
 import {
   CUSTOM_TRANSLATIONS_NAMESPACE,
   useIntl,
@@ -42,14 +42,16 @@ export const CustomTranslationsModal = ({
   );
   const { i18n } = useIntl();
 
-  const save = async () => {
+  const saveAndClose = async () => {
     const asObject = mapTranslationsToObject(translations);
 
     await update(asObject);
-    //     // Note - this is still requires the component in question to
-    //     // re-render to pick up the new translations
-    //     // TODO: Could trigger full refresh on modal save?
+
+    // Note - this is still requires the component in question to
+    // re-render to pick up the new translations (i.e. navigate away)
     i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
+
+    isOpen.toggleOff();
   };
 
   return (
@@ -65,7 +67,7 @@ export const CustomTranslationsModal = ({
         cancelButton={
           <DialogButton variant="cancel" onClick={isOpen.toggleOff} />
         }
-        okButton={<DialogButton variant="ok" onClick={save} />}
+        okButton={<DialogButton variant="ok" onClick={saveAndClose} />}
       >
         <TranslationsTable
           translations={translations}
@@ -84,12 +86,6 @@ const TranslationsTable = ({
   setTranslations: React.Dispatch<React.SetStateAction<Translation[]>>;
 }) => {
   const t = useTranslation();
-
-  //   const deleteDose = (id: string) => {
-  //     updatePatch({
-  //       vaccineCourseDoses: doses.filter(dose => dose.id !== id),
-  //     });
-  //   };
 
   const columns = useColumns<Translation>([
     {
@@ -120,17 +116,24 @@ const TranslationsTable = ({
         });
       },
     },
-
-    //   {
-    //     key: 'delete',
-    //     Cell: ({ rowData }) => (
-    //       <IconButton
-    //         icon={<DeleteIcon sx={{ height: '0.9em' }} />}
-    //         label={t('label.delete')}
-    //         onClick={() => deleteDose(rowData.id)}
-    //       />
-    //     ),
-    //   },
+    {
+      key: 'delete',
+      width: 50,
+      Cell: ({ rowData }) => (
+        <IconButton
+          icon={<DeleteIcon sx={{ height: '0.9em' }} />}
+          label={t('label.delete')}
+          onClick={() =>
+            setTranslations(translations => {
+              const updatedTranslations = translations.filter(
+                tr => tr.id !== rowData.id
+              );
+              return updatedTranslations;
+            })
+          }
+        />
+      ),
+    },
   ]);
 
   const onAdd = (option: TranslationOption | null) => {
@@ -156,7 +159,10 @@ const TranslationsTable = ({
         />
       </TableProvider>
       <Box display="flex" justifyContent="flex-start" marginBottom="8px">
-        <TranslationSearchInput onChange={onAdd} />
+        <TranslationSearchInput
+          onChange={onAdd}
+          existingKeys={translations.map(t => t.key)}
+        />
       </Box>
     </>
   );

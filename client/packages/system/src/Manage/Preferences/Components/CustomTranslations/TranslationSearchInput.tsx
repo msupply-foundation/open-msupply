@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Autocomplete,
-  Box,
   LocaleKey,
   Typography,
   useIntl,
@@ -11,8 +10,7 @@ import {
 
 interface TranslationSearchInputProps {
   onChange: (option: TranslationOption | null) => void;
-  width?: number;
-  fullWidth?: boolean;
+  existingKeys: string[];
 }
 
 export interface TranslationOption {
@@ -22,43 +20,48 @@ export interface TranslationOption {
 
 export const TranslationSearchInput = ({
   onChange,
-  fullWidth,
+  existingKeys,
 }: TranslationSearchInputProps) => {
-  const t = useTranslation();
+  const t = useTranslation('common');
   const theme = useTheme();
   const { i18n } = useIntl();
 
-  // const { data, refetch } = useClinicians.document.list({});
+  const defaultTranslation = useMemo(() => {
+    const baseOptions = i18n?.store?.data['en']?.['common'] ?? {};
+    const keys = Object.keys(baseOptions);
 
-  // const clinicians: ClinicianFragment[] = data?.nodes ?? [];
-
-  const options = i18n?.store?.data['en']?.['common'] ?? {};
-  const keys = Object.keys(options);
-
-  const defaultTranslation = keys.map(k => ({
-    key: k,
-    default: t(k as LocaleKey),
-  }));
+    return keys
+      .filter(k => !existingKeys.includes(k))
+      .map(k => ({
+        key: k,
+        default: t(k as LocaleKey),
+      }));
+  }, [i18n, t, existingKeys]);
 
   return (
     <Autocomplete
-      value={null}
-      // isOptionEqualToValue={(option, value) =>
-      //   option.value.id === value.value?.id
-      // }
       onChange={(_, option) => {
         onChange(option);
       }}
       options={defaultTranslation}
       sx={{ width: '100%' }}
       renderOption={(props, option) => (
-        <li {...props} key={option.key}>
-          <Typography>{option.key}</Typography>
+        <li {...props} key={option.key} style={{ display: 'flex', gap: '8px' }}>
+          <Typography sx={{ color: 'grey' }}>{option.key}</Typography>
           <Typography>{option.default}</Typography>
         </li>
       )}
+      filterOptions={(options, { inputValue }) =>
+        options.filter(o => {
+          const caseInsensitive = new RegExp(inputValue, 'i');
+          return (
+            o.key.match(caseInsensitive) || o.default.match(caseInsensitive)
+          );
+        })
+      }
       textSx={{ backgroundColor: theme.palette.background.drawer }}
       fullWidth
+      placeholder={`${t('messages.search')}...`}
     />
   );
 };
