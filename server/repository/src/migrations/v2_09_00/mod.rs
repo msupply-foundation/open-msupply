@@ -29,7 +29,6 @@ impl Migration for V2_09_00 {
             Box::new(process_clinician_store_join_deletes::Migrate),
             Box::new(add_mutate_clinician_permission::Migrate),
             Box::new(add_store_id_to_clinician::Migrate),
-            Box::new(add_purchase_order_tables::Migrate),
             Box::new(extend_name_table_fields::Migrate),
             Box::new(resync_existing_vaccine_course_records::Migrate),
             Box::new(resync_existing_vaccine_course_dose_and_item::Migrate),

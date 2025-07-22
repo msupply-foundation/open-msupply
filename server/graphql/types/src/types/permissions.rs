@@ -45,11 +45,6 @@ pub enum UserPermission {
     PrescriptionMutate,
     PurchaseOrderQuery,
     PurchaseOrderMutate,
-    PurchaseOrderCreate,
-    PurchaseOrderConfirm,
-    PurchaseOrdrFinalise,
-    PurchaseOrderDelete,
-    PurchaseOrderPricingMutate,
     PurchaseOrderAuthorise,
     Report,
     LogQuery,
@@ -164,13 +159,6 @@ impl UserPermission {
             PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
             PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
             PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,
-            PermissionType::PurchaseOrderCreate => UserPermission::PurchaseOrderCreate,
-            PermissionType::PurchaseOrderConfirm => UserPermission::PurchaseOrderConfirm,
-            PermissionType::PurchaseOrdrFinalise => UserPermission::PurchaseOrdrFinalise,
-            PermissionType::PurchaseOrderDelete => UserPermission::PurchaseOrderDelete,
-            PermissionType::PurchaseOrderPricingMutate => {
-                UserPermission::PurchaseOrderPricingMutate
-            }
             PermissionType::PurchaseOrderAuthorise => UserPermission::PurchaseOrderAuthorise,
             PermissionType::MutateClinician => UserPermission::MutateClinician,
             PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
@@ -230,12 +218,6 @@ impl UserPermission {
             UserPermission::ViewAndEditVvmStatus => PermissionType::ViewAndEditVvmStatus,
             UserPermission::PurchaseOrderQuery => PermissionType::PurchaseOrderQuery,
             UserPermission::PurchaseOrderMutate => PermissionType::PurchaseOrderMutate,
-            UserPermission::PurchaseOrderConfirm => PermissionType::PurchaseOrderConfirm,
-            UserPermission::PurchaseOrdrFinalise => PermissionType::PurchaseOrdrFinalise,
-            UserPermission::PurchaseOrderDelete => PermissionType::PurchaseOrderDelete,
-            UserPermission::PurchaseOrderPricingMutate => {
-                PermissionType::PurchaseOrderPricingMutate
-            }
             UserPermission::PurchaseOrderAuthorise => PermissionType::PurchaseOrderAuthorise,
             UserPermission::MutateClinician => PermissionType::MutateClinician,
             UserPermission::CancelFinalisedInvoices => PermissionType::CancelFinalisedInvoices,

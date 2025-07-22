@@ -69,11 +69,6 @@ pub enum PermissionType {
     // purchase orders
     PurchaseOrderQuery,
     PurchaseOrderMutate,
-    PurchaseOrderCreate,
-    PurchaseOrderConfirm,
-    PurchaseOrdrFinalise,
-    PurchaseOrderDelete,
-    PurchaseOrderPricingMutate,
     PurchaseOrderAuthorise,
     // reporting
     Report,
