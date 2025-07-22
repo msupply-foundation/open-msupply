@@ -2,7 +2,7 @@ use crate::sync::translations::{item::ItemTranslation, requisition::RequisitionT
 
 use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_fields_as_option};
 
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
     RequisitionLineRow, RequisitionLineRowDelete, RequisitionLineRowRepository,
@@ -13,6 +13,12 @@ use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+#[derive(Deserialize, Serialize, PartialEq)]
+pub struct RequisitionLineOmsFields {
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub expiry_date: Option<NaiveDate>,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, PartialEq)]
@@ -76,7 +82,7 @@ pub struct LegacyRequisitionLineRow {
     pub stock_adjustment_in_units: f64,
 
     #[serde(default, deserialize_with = "object_fields_as_option")]
-    pub oms_fields: Option<serde_json::Value>,
+    pub oms_fields: Option<RequisitionLineOmsFields>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -206,6 +212,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             .query_one(RnRFormLineFilter::new().requisition_line_id(EqualFilter::equal_to(&id)))?
             .map(|line| line.rnr_form_line_row.expiry_date);
 
+        let oms_fields =
+            rnr_form_line_expiry_date.map(|expiry_date| RequisitionLineOmsFields { expiry_date });
+
         let legacy_row = LegacyRequisitionLineRow {
             ID: id,
             requisition_ID: requisition_id,
@@ -229,11 +238,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             days_out_of_stock,
             option_id,
             stock_adjustment_in_units: addition_in_units - loss_in_units,
-            oms_fields: rnr_form_line_expiry_date.map(|expiry_date| {
-                serde_json::json!({
-                    "expiry_date": expiry_date.map(|d| d.format("%Y-%m-%d").to_string())
-                })
-            }),
+            oms_fields,
         };
 
         Ok(PushTranslateResult::upsert(
