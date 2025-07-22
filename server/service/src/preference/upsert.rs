@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 use crate::service_provider::ServiceContext;
 use repository::{GenderType, TransactionError};
@@ -15,6 +17,7 @@ pub struct UpsertPreferences {
     pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
     pub use_campaigns: Option<bool>,
+    pub custom_translations: Option<HashMap<String, String>>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
@@ -31,6 +34,7 @@ pub fn upsert_preferences(
         gender_options: gender_options_input,
         show_contact_tracing: show_contact_tracing_input,
         use_campaigns: use_campaigns_input,
+        custom_translations: custom_translations_input,
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
@@ -45,6 +49,7 @@ pub fn upsert_preferences(
         gender_options,
         show_contact_tracing,
         use_campaigns,
+        custom_translations,
         // Store preferences
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
@@ -70,6 +75,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = use_campaigns_input {
                 use_campaigns.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = custom_translations_input {
+                custom_translations.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
