@@ -39,6 +39,7 @@ import {
   AllocateInOption,
   AllocateInType,
 } from '../../../StockOut';
+import { VvmStatusFragment } from 'packages/system/src/Stock/api';
 
 type AllocateFn = (
   key: string,
@@ -62,7 +63,7 @@ export const useOutboundLineEditColumns = ({
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
   allocateIn: AllocateInOption;
-  setVvmStatus: (id: string, vvmStatusId?: string | null) => void;
+  setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
@@ -129,8 +130,8 @@ export const useOutboundLineEditColumns = ({
       label: 'label.vvm-status',
       width: 85,
       Cell: VVMStatusInputCell,
-      accessor: ({ rowData }) => rowData.vvmStatusId,
-      setter: ({ id, vvmStatusId }) => setVvmStatus(id, vvmStatusId),
+      accessor: ({ rowData }) => rowData.vvmStatus,
+      setter: ({ id, vvmStatus }) => setVvmStatus(id, vvmStatus),
       defaultHideOnMobile: true,
     });
   }

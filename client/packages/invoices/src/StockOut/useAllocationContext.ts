@@ -20,6 +20,7 @@ import {
   getManualAllocationAlerts,
 } from '.';
 import { allocateQuantities } from './allocateQuantities';
+import { VvmStatusFragment } from 'packages/system/src/Stock/api';
 
 /**
  * Allocation can be in units, doses, or packs of a specific size.
@@ -75,7 +76,7 @@ interface AllocationContext {
   setAlerts: (alerts: StockOutAlert[]) => void;
   setPrescribedQuantity: (quantity: number) => void;
   setNote: (note: string | null) => void;
-  setVvmStatus: (id: string, vvmStatusId?: string | null) => void;
+  setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
   setAllocateIn: (
     allocateIn: AllocateInOption,
     // TODO: these are passed into a few functions, can we intialise with them instead?
@@ -226,11 +227,16 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     }));
   },
 
-  setVvmStatus: (id: string, vvmStatusId?: string | null) => {
+  setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => {
     const { draftLines } = get();
 
     const updatedLines = draftLines.map(line =>
-      line.id === id ? { ...line, vvmStatusId: vvmStatusId ?? null } : line
+      line.id === id
+        ? {
+            ...line,
+            vvmStatus,
+          }
+        : line
     );
     set(state => ({
       ...state,

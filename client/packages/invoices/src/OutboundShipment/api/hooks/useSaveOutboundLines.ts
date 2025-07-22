@@ -26,7 +26,7 @@ export const useSaveOutboundLines = (outboundId: string) => {
             numberOfPacks: line.numberOfPacks,
             stockLineId: line.stockLineId,
             campaignId: line.campaign?.id,
-            vvmStatusId: line.vvmStatusId,
+            vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : null,
           })),
           placeholderQuantity,
         },
