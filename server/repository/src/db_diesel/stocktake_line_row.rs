@@ -47,6 +47,7 @@ joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> reason_option (reason_option_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
 allow_tables_to_appear_in_same_query!(stocktake_line, name_link);
+allow_tables_to_appear_in_same_query!(stocktake_line, reason_option);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]

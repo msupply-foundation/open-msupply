@@ -18,6 +18,7 @@ use crate::{
     sync::{
         api::{validate_site_auth, CommonSyncRecord},
         api_v6::SiteStatusV6,
+        sync_buffer::SyncBufferSource,
         synchroniser::integrate_and_translate_sync_buffer,
         translations::ToSyncRecordTranslationType,
         CentralServerConfig,
@@ -317,7 +318,11 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
 
         set_integrating(site_id, true);
 
-        match integrate_and_translate_sync_buffer(&ctx.connection, None, Some(site_id)) {
+        match integrate_and_translate_sync_buffer(
+            &ctx.connection,
+            None,
+            SyncBufferSource::Remote(site_id),
+        ) {
             Ok(_) => {
                 log::info!("Integration complete for site {}", site_id);
             }

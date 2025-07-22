@@ -43,6 +43,7 @@ export type StockLineRowFragment = {
     name: string;
     unitName?: string | null;
     isVaccine: boolean;
+    dosesPerUnit: number;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
   vvmStatusLogs?: {
@@ -169,6 +170,7 @@ export type LedgerRowFragment = {
   reason?: string | null;
   stockLineId?: string | null;
   storeId: string;
+  runningBalance: number;
 };
 
 export type VvmStatusLogRowFragment = {
@@ -244,6 +246,7 @@ export type StockLinesQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -335,6 +338,7 @@ export type StockLineQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -377,6 +381,16 @@ export type StockLineQuery = {
   };
 };
 
+export type StockLinesCountQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.StockLineFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type StockLinesCountQuery = {
+  __typename: 'Queries';
+  stockLines: { __typename: 'StockLineConnector'; totalCount: number };
+};
+
 export type LedgerQueryVariables = Types.Exact<{
   key: Types.LedgerSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
@@ -401,6 +415,7 @@ export type LedgerQuery = {
       reason?: string | null;
       stockLineId?: string | null;
       storeId: string;
+      runningBalance: number;
     }>;
   };
 };
@@ -452,6 +467,7 @@ export type UpdateStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -740,6 +756,7 @@ export type InsertStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -885,6 +902,7 @@ export const StockLineRowFragmentDoc = gql`
         name
       }
       isVaccine
+      dosesPerUnit: doses
     }
     barcode
     vvmStatusLogs {
@@ -959,6 +977,7 @@ export const LedgerRowFragmentDoc = gql`
     reason
     stockLineId
     storeId
+    runningBalance
   }
 `;
 export const VvmStatusFragmentDoc = gql`
@@ -1014,6 +1033,16 @@ export const StockLineDocument = gql`
     }
   }
   ${StockLineRowFragmentDoc}
+`;
+export const StockLinesCountDocument = gql`
+  query stockLinesCount($filter: StockLineFilterInput, $storeId: String!) {
+    stockLines(storeId: $storeId, filter: $filter) {
+      ... on StockLineConnector {
+        __typename
+        totalCount
+      }
+    }
+  }
 `;
 export const LedgerDocument = gql`
   query ledger(
@@ -1250,6 +1279,22 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'stockLine',
+        'query',
+        variables
+      );
+    },
+    stockLinesCount(
+      variables: StockLinesCountQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<StockLinesCountQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StockLinesCountQuery>(
+            StockLinesCountDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'stockLinesCount',
         'query',
         variables
       );

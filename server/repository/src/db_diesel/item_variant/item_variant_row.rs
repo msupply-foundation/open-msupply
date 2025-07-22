@@ -19,7 +19,6 @@ table! {
         cold_storage_type_id -> Nullable<Text>,
         manufacturer_link_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
-        doses_per_unit -> Integer,
         vvm_type -> Nullable<Text>,
         created_datetime -> Timestamp,
         created_by -> Nullable<Text>,
@@ -50,8 +49,6 @@ pub struct ItemVariantRow {
     pub cold_storage_type_id: Option<String>,
     pub manufacturer_link_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
-    #[serde(default)]
-    pub doses_per_unit: i32,
     pub vvm_type: Option<String>,
     pub created_datetime: NaiveDateTime,
     #[serde(default)]

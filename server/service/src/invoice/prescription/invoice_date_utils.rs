@@ -59,7 +59,7 @@ mod test {
             their_reference: None,
             transport_reference: None,
             shipped_datetime: None,
-            delivered_datetime: None,
+            received_datetime: None,
             requisition_id: None,
             linked_invoice_id: None,
             tax_percentage: None,

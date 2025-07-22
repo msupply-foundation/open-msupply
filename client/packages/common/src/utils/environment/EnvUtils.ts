@@ -78,6 +78,11 @@ const mapRoute = (route: string): RouteMapping => {
         title: 'encounter',
         docs: '/programs/program-module/#encounter',
       };
+    case inRoute(AppRoute.Clinicians):
+      return {
+        title: 'clinicians',
+        docs: '/dispensary/clinicians/',
+      };
     case inRoute(AppRoute.Monitoring):
       return {
         title: 'monitoring',
@@ -96,10 +101,17 @@ const mapRoute = (route: string): RouteMapping => {
       };
     case inRoute(AppRoute.Campaigns):
       return { title: 'campaigns', docs: '/manage/campaigns/' };
+    case inRoute(AppRoute.GlobalPreferences):
+      return {
+        title: 'global-preferences',
+        docs: '/manage/global-preferences/',
+      };
     case inRoute(AppRoute.ImmunisationPrograms):
       return { title: 'immunisations', docs: '/programs/immunizations/' };
     case inRoute(AppRoute.RnRForms):
       return { title: 'r-and-r-forms', docs: '/replenishment/r-and-r-forms/' };
+    case inRoute(AppRoute.Help):
+      return { title: 'help', docs: '/help/help/' };
     default:
       return { title: undefined, docs: '/introduction/introduction' };
   }

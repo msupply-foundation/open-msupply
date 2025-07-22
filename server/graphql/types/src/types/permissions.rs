@@ -69,6 +69,7 @@ pub enum UserPermission {
     EditCentralData,
     ViewAndEditVvmStatus,
     MutateClinician,
+    CancelFinalisedInvoices,
 }
 
 #[Object]
@@ -172,6 +173,7 @@ impl UserPermission {
             }
             PermissionType::PurchaseOrderAuthorise => UserPermission::PurchaseOrderAuthorise,
             PermissionType::MutateClinician => UserPermission::MutateClinician,
+            PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
         }
     }
 
@@ -236,7 +238,10 @@ impl UserPermission {
             }
             UserPermission::PurchaseOrderAuthorise => PermissionType::PurchaseOrderAuthorise,
             UserPermission::MutateClinician => PermissionType::MutateClinician,
+            UserPermission::CancelFinalisedInvoices => PermissionType::CancelFinalisedInvoices,
+        }
     }
+}
 
 impl UserStorePermissionConnector {
     pub fn from_domain(

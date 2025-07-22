@@ -5,6 +5,7 @@ fragment Outbound on InvoiceNode {
   createdDatetime
   allocatedDatetime
   deliveredDatetime
+  receivedDatetime
   pickedDatetime
   shippedDatetime
   verifiedDatetime
@@ -722,6 +723,15 @@ mutation upsertOutboundShipment(
             totalCount
           }
           updates {
+            totalCount
+          }
+          skippedExpiredStockLines {
+            totalCount
+          }
+          skippedOnHoldStockLines {
+            totalCount
+          }
+          skippedUnusableVvmStatusLines {
             totalCount
           }
         }

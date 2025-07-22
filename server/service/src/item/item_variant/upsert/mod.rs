@@ -27,7 +27,6 @@ pub enum UpsertItemVariantError {
     CantChangeItem,
     DuplicateName,
     ColdStorageTypeDoesNotExist,
-    DoseConfigurationNotAllowed,
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyNotAManufacturer,
@@ -43,7 +42,6 @@ pub struct UpsertItemVariantWithPackaging {
     pub name: String,
     pub manufacturer_id: Option<NullableUpdate<String>>,
     pub packaging_variants: Vec<UpsertPackagingVariant>,
-    pub doses_per_unit: i32,
     pub vvm_type: Option<NullableUpdate<String>>,
 }
 

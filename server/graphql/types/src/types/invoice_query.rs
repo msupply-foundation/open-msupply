@@ -9,10 +9,9 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameByNameLinkIdLoader,
-    NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader,
-    StoreByIdLoader, UserLoader,
+    DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput,
+    NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
+    ProgramByIdLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -21,6 +20,7 @@ use graphql_core::{
 };
 use repository::{
     ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameLinkRow, NameRow, PricingRow,
+    Store, StoreRow,
 };
 
 use repository::Invoice;
@@ -64,18 +64,36 @@ pub enum InvoiceNodeStatus {
     /// Outbound Shipment: Becomes not editable
     /// Inbound Shipment: For inter store stock transfers an inbound Shipment
     /// becomes editable when this status is set as a result of corresponding
-    /// outbound Shipment being chagned to shipped (this is similar to New status)
+    /// outbound Shipment being changed to shipped (this is similar to New status)
     Shipped,
     /// General description: Inbound Shipment was received
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
     /// Inbound Shipment: Stock is introduced and can be issued
     Delivered,
+    /// General description: Received inbound Shipment has arrived, not counted or verified yet
+    /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
+    /// Inbound Shipment: Status update, doesn't affect stock levels or restrict access to edit
+    Received,
     /// General description: Received inbound Shipment was counted and verified
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
     /// Inbound Shipment: Becomes not editable
     Verified,
     // Cancelled only applies to Verified Transactions, they're treated like a customer return with a reverse transaction created to undo the original transaction in the ledger
     Cancelled,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterInvoiceTypeInput {
+    pub equal_to: Option<InvoiceNodeType>,
+    pub equal_any: Option<Vec<InvoiceNodeType>>,
+    pub not_equal_to: Option<InvoiceNodeType>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterInvoiceStatusInput {
+    pub equal_to: Option<InvoiceNodeStatus>,
+    pub equal_any: Option<Vec<InvoiceNodeStatus>>,
+    pub not_equal_to: Option<InvoiceNodeStatus>,
 }
 
 pub struct InvoiceNode {
@@ -178,6 +196,12 @@ impl InvoiceNode {
     pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .delivered_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+
+    pub async fn received_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .received_datetime
             .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
@@ -310,21 +334,10 @@ impl InvoiceNode {
         )
     }
 
-    pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let clinician_id = if let Some(clinician) = &self.clinician_row() {
-            &clinician.id
-        } else {
-            return Ok(None);
-        };
-
-        let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
-        Ok(loader
-            .load_one(ClinicianLoaderInput::new(
-                &self.row().store_id,
-                clinician_id,
-            ))
-            .await?
-            .map(ClinicianNode::from_domain))
+    pub async fn clinician(&self) -> Option<ClinicianNode> {
+        self.clinician_row()
+            .as_ref()
+            .map(|row| ClinicianNode::from_domain(row.clone()))
     }
 
     pub async fn clinician_id(&self) -> Option<String> {
@@ -430,12 +443,11 @@ impl InvoiceNode {
         Ok(result)
     }
 
-    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
-        Ok(loader
-            .load_one(self.row().store_id.clone())
-            .await?
-            .map(StoreNode::from_domain))
+    pub async fn store(&self) -> StoreNode {
+        StoreNode::from_domain(Store {
+            store_row: self.store_row().clone(),
+            name_row: self.name_row().clone(),
+        })
     }
 
     pub async fn name_insurance_join_id(&self) -> &Option<String> {
@@ -493,6 +505,9 @@ impl InvoiceNode {
     }
     pub fn name_row(&self) -> &NameRow {
         &self.invoice.name_row
+    }
+    pub fn store_row(&self) -> &StoreRow {
+        &self.invoice.store_row
     }
     pub fn clinician_row(&self) -> &Option<ClinicianRow> {
         &self.invoice.clinician_row
@@ -606,6 +621,7 @@ impl InvoiceNodeStatus {
             Picked => InvoiceStatus::Picked,
             Shipped => InvoiceStatus::Shipped,
             Delivered => InvoiceStatus::Delivered,
+            Received => InvoiceStatus::Received,
             Verified => InvoiceStatus::Verified,
             Cancelled => InvoiceStatus::Cancelled,
         }
@@ -619,6 +635,7 @@ impl InvoiceNodeStatus {
             Picked => InvoiceNodeStatus::Picked,
             Shipped => InvoiceNodeStatus::Shipped,
             Delivered => InvoiceNodeStatus::Delivered,
+            Received => InvoiceNodeStatus::Received,
             Verified => InvoiceNodeStatus::Verified,
             Cancelled => InvoiceNodeStatus::Cancelled,
         }

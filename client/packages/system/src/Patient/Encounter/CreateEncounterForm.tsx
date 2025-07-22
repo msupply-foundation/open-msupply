@@ -88,8 +88,16 @@ export const CreateEncounterForm = ({
       setDraft({ ...draft, clinician: undefined });
       return;
     }
-    const clinician = option.value;
-    setDraft({ ...draft, clinician });
+    const { id, lastName, firstName } = option.value;
+    setDraft({
+      ...draft,
+      clinician: {
+        id,
+        lastName,
+        // JSON schema doesn't support first name as null, map to undefined
+        firstName: firstName ?? undefined,
+      },
+    });
   };
 
   const setNote = (notes: NoteSchema[] | undefined): void => {
@@ -117,9 +125,6 @@ export const CreateEncounterForm = ({
               day: {
                 highlightedDays,
               } as BadgePickersDayProps,
-              tabs: {
-                hidden: true,
-              },
             }}
           />
         }

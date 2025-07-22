@@ -31,6 +31,7 @@ pub enum ActivityLogNodeType {
     InvoiceStatusPicked,
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
+    InvoiceStatusReceived,
     InvoiceStatusVerified,
     InventoryAdjustment,
     StocktakeCreated,
@@ -233,6 +234,7 @@ impl ActivityLogNodeType {
             from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
             from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
             from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
+            from::InvoiceStatusReceived => to::InvoiceStatusReceived,
         }
     }
 
@@ -248,6 +250,7 @@ impl ActivityLogNodeType {
             from::InvoiceStatusPicked => to::InvoiceStatusPicked,
             from::InvoiceStatusShipped => to::InvoiceStatusShipped,
             from::InvoiceStatusDelivered => to::InvoiceStatusDelivered,
+            from::InvoiceStatusReceived => to::InvoiceStatusReceived,
             from::InvoiceStatusVerified => to::InvoiceStatusVerified,
             from::InventoryAdjustment => to::InventoryAdjustment,
             from::StocktakeCreated => to::StocktakeCreated,

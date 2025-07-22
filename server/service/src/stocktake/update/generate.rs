@@ -164,6 +164,7 @@ fn generate_stock_in_out_or_update(
             // Default
             total_before_tax: None,
             tax_percentage: None,
+            shipped_number_of_packs: None,
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
@@ -330,14 +331,15 @@ fn generate_new_stock_line(
         item_id,
         note: row.note,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
+        donor_id: stocktake_line.line.donor_link_id.clone(),
         // Default
         stock_on_hold: false,
         barcode: None,
         total_before_tax: None,
         tax_percentage: None,
-        donor_id: None,
         vvm_status_id: None,
         campaign_id: None,
+        shipped_number_of_packs: None,
     });
 
     // If new stock line has a location, create location movement
@@ -569,6 +571,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        received_datetime: None,
         cancelled_datetime: None,
         colour: None,
         requisition_id: None,

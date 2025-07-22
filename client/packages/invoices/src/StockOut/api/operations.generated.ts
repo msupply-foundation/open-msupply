@@ -21,6 +21,7 @@ export type StockOutLineFragment = {
   totalAfterTax: number;
   taxPercentage?: number | null;
   itemName: string;
+  itemVariantId?: string | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -30,11 +31,6 @@ export type StockOutLineFragment = {
     isVaccine: boolean;
     doses: number;
   };
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -76,7 +72,8 @@ export type DraftStockOutLineFragment = {
   inStorePacks: number;
   availablePacks: number;
   stockLineOnHold: boolean;
-  defaultDosesPerUnit: number;
+  dosesPerUnit: number;
+  itemVariantId?: string | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -90,11 +87,6 @@ export type DraftStockOutLineFragment = {
     level: number;
     unusable: boolean;
     description: string;
-  } | null;
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
   } | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; name: string; id: string } | null;
@@ -143,7 +135,8 @@ export type GetOutboundEditLinesQuery = {
       inStorePacks: number;
       availablePacks: number;
       stockLineOnHold: boolean;
-      defaultDosesPerUnit: number;
+      dosesPerUnit: number;
+      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -157,11 +150,6 @@ export type GetOutboundEditLinesQuery = {
         level: number;
         unusable: boolean;
         description: string;
-      } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
       } | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
       campaign?: {
@@ -192,6 +180,7 @@ export const StockOutLineFragmentDoc = gql`
     taxPercentage
     note
     itemName
+    itemVariantId
     item {
       __typename
       id
@@ -200,11 +189,6 @@ export const StockOutLineFragmentDoc = gql`
       unitName
       isVaccine
       doses
-    }
-    itemVariant {
-      __typename
-      id
-      dosesPerUnit
     }
     location {
       __typename
@@ -247,7 +231,8 @@ export const DraftStockOutLineFragmentDoc = gql`
     inStorePacks
     availablePacks
     stockLineOnHold
-    defaultDosesPerUnit
+    dosesPerUnit
+    itemVariantId
     location {
       __typename
       id
@@ -261,10 +246,6 @@ export const DraftStockOutLineFragmentDoc = gql`
       level
       unusable
       description
-    }
-    itemVariant {
-      id
-      dosesPerUnit
     }
     donor(storeId: $storeId) {
       id

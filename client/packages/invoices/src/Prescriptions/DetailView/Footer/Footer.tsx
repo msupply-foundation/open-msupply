@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -33,10 +33,11 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Verified]: null,
     [InvoiceNodeStatus.Cancelled]: null,
-    // placeholder not used in prescriptions
+    // Not used in prescriptions
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
+    [InvoiceNodeStatus.Received]: null,
   };
 
   if (statusIdx >= 0) {
@@ -55,21 +56,18 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
   return statusLog;
 };
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = () => {
   const t = useTranslation();
   const {
     query: { data: prescription },
     isDisabled,
-    rows: items,
+    rows,
   } = usePrescription();
   const { navigateUpOne } = useBreadcrumbs();
 
   const selectedRows =
     useTableStore(state => {
-      return items
-        ?.filter(({ id }) => state.rowState[id]?.isSelected)
-        .map(({ lines }) => lines.flat())
-        .flat();
+      return rows?.filter(row => state.rowState[row.id]?.isSelected) || [];
     }) || [];
 
   const {
@@ -117,7 +115,8 @@ export const FooterComponent: FC = () => {
       label: t('button.print-prescription-label'),
       icon: <PrinterIcon />,
       onClick: handlePrintLabels,
-      disabled: isDisabled || isPrintingLabels,
+      disabled: isDisabled,
+      loading: isPrintingLabels,
     },
   ];
 

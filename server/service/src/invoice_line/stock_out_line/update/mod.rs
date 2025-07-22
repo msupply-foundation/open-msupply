@@ -417,6 +417,7 @@ mod test {
                 u.total_before_tax = 18.00;
                 u.total_after_tax = 18.00;
                 u.note = Some("new note".to_string());
+                u.shipped_number_of_packs = Some(2.0);
                 u
             })
         );
@@ -556,7 +557,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime,
             picked_datetime: Some(datetime),
-            delivered_datetime: Some(datetime),
+            received_datetime: Some(datetime),
             verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
@@ -574,7 +575,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime,
             picked_datetime: Some(datetime),
-            delivered_datetime: Some(datetime),
+            received_datetime: Some(datetime),
             verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
@@ -640,7 +641,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
             picked_datetime: Some(datetime),
-            delivered_datetime: None,
+            received_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,
             backdated_datetime: Some(datetime), // Backdated to 2 days ago

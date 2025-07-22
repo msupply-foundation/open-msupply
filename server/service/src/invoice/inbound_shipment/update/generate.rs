@@ -22,6 +22,7 @@ use super::{
     UpdateInboundShipmentStatus,
 };
 
+#[derive(Debug)]
 pub struct LineAndStockLine {
     pub line: InvoiceLineRow,
     pub stock_line: Option<StockLineRow>,
@@ -179,9 +180,12 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
 
     match (existing_status, new_status) {
         (
-            // From New/Picked/Shipped to Delivered/Verified
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Delivered | UpdateInboundShipmentStatus::Verified,
+            // From New/Picked/Shipped/Delivered to Received/Verified
+            InvoiceStatus::New
+            | InvoiceStatus::Picked
+            | InvoiceStatus::Shipped
+            | InvoiceStatus::Delivered,
+            UpdateInboundShipmentStatus::Received | UpdateInboundShipmentStatus::Verified,
         ) => true,
         _ => false,
     }
@@ -259,12 +263,19 @@ fn empty_lines_to_trim(
 
     // If new invoice status is not new and previous invoice status is new
     // add all empty lines to be deleted
-    let lines = InvoiceLineRepository::new(connection).query_by_filter(
+
+    let lines_with_no_received_packs = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
             .r#type(InvoiceLineType::StockIn.equal_to())
             .number_of_packs(EqualFilter::equal_to_f64(0.0)),
     )?;
+
+    // Only trim lines that have no shipped packs either (valid to track "supplier said they sent 5 packs but I received 0")
+    let lines = lines_with_no_received_packs
+        .into_iter()
+        .filter(|l| l.invoice_line_row.shipped_number_of_packs.unwrap_or(0.0) == 0.0)
+        .collect::<Vec<_>>();
 
     if lines.is_empty() {
         return Ok(None);
@@ -281,28 +292,19 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
     };
 
     let current_datetime = Utc::now().naive_utc();
-    match (&invoice.status, new_status) {
-        // From New/Picked/Shipped to Delivered
-        (
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Delivered,
-        ) => {
+    match new_status {
+        UpdateInboundShipmentStatus::Delivered => {
             invoice.delivered_datetime = Some(current_datetime);
         }
-
-        // From New/Picked/Shipped to Verified
-        (
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Verified,
-        ) => {
-            invoice.delivered_datetime = Some(current_datetime);
+        UpdateInboundShipmentStatus::Received => {
+            invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
+            invoice.received_datetime = Some(current_datetime);
+        }
+        UpdateInboundShipmentStatus::Verified => {
+            invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
+            invoice.received_datetime = invoice.received_datetime.or(Some(current_datetime));
             invoice.verified_datetime = Some(current_datetime);
         }
-        // From Delivered to Verified
-        (InvoiceStatus::Delivered, UpdateInboundShipmentStatus::Verified) => {
-            invoice.verified_datetime = Some(current_datetime);
-        }
-        _ => {}
     }
 }
 

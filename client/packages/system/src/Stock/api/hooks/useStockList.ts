@@ -1,7 +1,6 @@
 import {
   SortBy,
   StockLineFilterInput,
-  StockLineNode,
   StockLineSortFieldInput,
   useQuery,
 } from '@openmsupply-client/common';
@@ -9,14 +8,14 @@ import { StockLineRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
-export type ListParams = {
+export type StockListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<StockLineRowFragment>;
   filterBy?: StockLineFilterInput;
 };
 
-export const useStockList = (queryParams: ListParams) => {
+export const useStockList = (queryParams: StockListParams) => {
   const { stockApi, storeId } = useStockGraphQL();
 
   const {
@@ -37,10 +36,6 @@ export const useStockList = (queryParams: ListParams) => {
     const filter = {
       ...filterBy,
       hasPacksInStore: true,
-      masterList: {
-        existsForStoreId: { equalTo: storeId },
-        ...filterBy?.masterList,
-      },
     };
     const query = await stockApi.stockLines({
       storeId,
@@ -59,7 +54,7 @@ export const useStockList = (queryParams: ListParams) => {
 };
 
 const toSortField = (
-  sortBy: SortBy<StockLineNode>
+  sortBy: SortBy<StockLineRowFragment>
 ): StockLineSortFieldInput => {
   switch (sortBy.key) {
     case 'batch':

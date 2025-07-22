@@ -2,7 +2,10 @@ use chrono::NaiveDate;
 use repository::StockLineRow;
 use serde_json::json;
 
-use crate::sync::{test::TestSyncIncomingRecord, translations::stock_line::LegacyStockLineRow};
+use crate::sync::{
+    test::TestSyncIncomingRecord,
+    translations::stock_line::{LegacyStockLineRow, StockLineRowOmsFields},
+};
 
 use super::TestSyncOutgoingRecord;
 
@@ -49,7 +52,9 @@ const ITEM_LINE_1: (&str, &str) = (
       "volume_per_pack": 0,
       "vvm_status_id": "",
       "weight_per_pack": 0,
-      "oms_fields": null
+      "oms_fields": {
+        "campaign_id": "campaign_a"
+      }
     }"#,
 );
 fn item_line_1_pull_record() -> TestSyncIncomingRecord {
@@ -75,7 +80,7 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             donor_link_id: Some("donor_a".to_string()),
             vvm_status_id: None,
-            campaign_id: None,
+            campaign_id: Some("campaign_a".to_string()),
         },
     )
 }
@@ -102,7 +107,9 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: Some("donor_a".to_string()),
             vvm_status_id: None,
-            oms_fields: None,
+            oms_fields: Some(StockLineRowOmsFields {
+                campaign_id: Some("campaign_a".to_string()),
+            }),
         }),
     }
 }
@@ -148,7 +155,8 @@ const ITEM_LINE_2: (&str, &str) = (
       "volume_per_pack": 0,
       "vvm_status_id": "",
       "weight_per_pack": 0,
-      "oms_fields": null
+      "om_item_variant_id": "",
+      "oms_fields": {}
   }"#,
 );
 fn item_line_2_pull_record() -> TestSyncIncomingRecord {
@@ -206,10 +214,321 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
+const ITEM_LINE_3: (&str, &str) = (
+    "ITEM_LINE_3",
+    r#"{
+      "ID": "ITEM_LINE_3",
+      "available": 1000,
+      "barcodeID": "",
+      "batch": "none",
+      "cost_price": 0,
+      "donor_id": "",
+      "expiry_date": "0000-00-00",
+      "extraData": null,
+      "hold": false,
+      "initial_quan": 0,
+      "item_ID": "item_b",
+      "kit_data": null,
+      "location_ID": "",
+      "manufacturer_ID": "",
+      "name_ID": "",
+      "note": "",
+      "pack_inners_per_outer": 0,
+      "pack_quan_per_inner": 0,
+      "pack_size": 1,
+      "quantity": 1001,
+      "sell_price": 0,
+      "spare": 0,
+      "spare_start_year_quan_tot": 0,
+      "stock_on_hand_tot": 1000,
+      "store_ID": "store_a",
+      "total_cost": 0.0,
+      "total_volume": 0.0,
+      "user_1": "",
+      "user_2": "",
+      "user_3": "",
+      "user_4": "",
+      "user_5_ID": "",
+      "user_6_ID": "",
+      "user_7_ID": "",
+      "user_8_ID": "",
+      "volume_per_pack": 0,
+      "vvm_status_id": "",
+      "weight_per_pack": 0,
+      "om_item_variant_id": "",
+      "oms_fields": ""
+  }"#,
+);
+fn item_line_3_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        ITEM_LINE_3,
+        StockLineRow {
+            id: ITEM_LINE_3.0.to_string(),
+            store_id: "store_a".to_string(),
+            item_link_id: "item_b".to_string(),
+            location_id: None,
+            batch: Some("none".to_string()),
+            pack_size: 1.0,
+            cost_price_per_pack: 0.0,
+            sell_price_per_pack: 0.0,
+            available_number_of_packs: 1000.0,
+            total_number_of_packs: 1001.0,
+            expiry_date: None,
+            on_hold: false,
+            note: None,
+            supplier_link_id: None,
+            barcode_id: None,
+            item_variant_id: None,
+            donor_link_id: None,
+            vvm_status_id: None,
+            campaign_id: None,
+        },
+    )
+}
+fn item_line_3_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: ITEM_LINE_3.0.to_string(),
+        push_data: json!(LegacyStockLineRow {
+            ID: ITEM_LINE_3.0.to_string(),
+            store_ID: "store_a".to_string(),
+            item_ID: "item_b".to_string(),
+            batch: Some("none".to_string()),
+            expiry_date: None,
+            hold: false,
+            location_ID: None,
+            pack_size: 1.0,
+            available: 1000.0,
+            quantity: 1001.0,
+            cost_price: 0.0,
+            sell_price: 0.0,
+            note: None,
+            supplier_id: None,
+            barcode_id: None,
+            item_variant_id: None,
+            donor_id: None,
+            vvm_status_id: None,
+            oms_fields: None,
+        }),
+    }
+}
+
+const ITEM_LINE_4: (&str, &str) = (
+    "ITEM_LINE_4",
+    r#"{
+      "ID": "ITEM_LINE_4",
+      "available": 1000,
+      "barcodeID": "",
+      "batch": "none",
+      "cost_price": 0,
+      "donor_id": "",
+      "expiry_date": "0000-00-00",
+      "extraData": null,
+      "hold": false,
+      "initial_quan": 0,
+      "item_ID": "item_b",
+      "kit_data": null,
+      "location_ID": "",
+      "manufacturer_ID": "",
+      "name_ID": "",
+      "note": "",
+      "pack_inners_per_outer": 0,
+      "pack_quan_per_inner": 0,
+      "pack_size": 1,
+      "quantity": 1001,
+      "sell_price": 0,
+      "spare": 0,
+      "spare_start_year_quan_tot": 0,
+      "stock_on_hand_tot": 1000,
+      "store_ID": "store_a",
+      "total_cost": 0.0,
+      "total_volume": 0.0,
+      "user_1": "",
+      "user_2": "",
+      "user_3": "",
+      "user_4": "",
+      "user_5_ID": "",
+      "user_6_ID": "",
+      "user_7_ID": "",
+      "user_8_ID": "",
+      "volume_per_pack": 0,
+      "vvm_status_id": "",
+      "weight_per_pack": 0,
+      "om_item_variant_id": "",
+      "oms_fields": null
+  }"#,
+);
+fn item_line_4_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        ITEM_LINE_4,
+        StockLineRow {
+            id: ITEM_LINE_4.0.to_string(),
+            store_id: "store_a".to_string(),
+            item_link_id: "item_b".to_string(),
+            location_id: None,
+            batch: Some("none".to_string()),
+            pack_size: 1.0,
+            cost_price_per_pack: 0.0,
+            sell_price_per_pack: 0.0,
+            available_number_of_packs: 1000.0,
+            total_number_of_packs: 1001.0,
+            expiry_date: None,
+            on_hold: false,
+            note: None,
+            supplier_link_id: None,
+            barcode_id: None,
+            item_variant_id: None,
+            donor_link_id: None,
+            vvm_status_id: None,
+            campaign_id: None,
+        },
+    )
+}
+fn item_line_4_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: ITEM_LINE_4.0.to_string(),
+        push_data: json!(LegacyStockLineRow {
+            ID: ITEM_LINE_4.0.to_string(),
+            store_ID: "store_a".to_string(),
+            item_ID: "item_b".to_string(),
+            batch: Some("none".to_string()),
+            expiry_date: None,
+            hold: false,
+            location_ID: None,
+            pack_size: 1.0,
+            available: 1000.0,
+            quantity: 1001.0,
+            cost_price: 0.0,
+            sell_price: 0.0,
+            note: None,
+            supplier_id: None,
+            barcode_id: None,
+            item_variant_id: None,
+            donor_id: None,
+            vvm_status_id: None,
+            oms_fields: None,
+        }),
+    }
+}
+
+const ITEM_LINE_5: (&str, &str) = (
+    "ITEM_LINE_5",
+    r#"{
+      "ID": "ITEM_LINE_5",
+      "available": 1000,
+      "barcodeID": "",
+      "batch": "none",
+      "cost_price": 0,
+      "donor_id": "",
+      "expiry_date": "0000-00-00",
+      "extraData": null,
+      "hold": false,
+      "initial_quan": 0,
+      "item_ID": "item_b",
+      "kit_data": null,
+      "location_ID": "",
+      "manufacturer_ID": "",
+      "name_ID": "",
+      "note": "",
+      "pack_inners_per_outer": 0,
+      "pack_quan_per_inner": 0,
+      "pack_size": 1,
+      "quantity": 1001,
+      "sell_price": 0,
+      "spare": 0,
+      "spare_start_year_quan_tot": 0,
+      "stock_on_hand_tot": 1000,
+      "store_ID": "store_a",
+      "total_cost": 0.0,
+      "total_volume": 0.0,
+      "user_1": "",
+      "user_2": "",
+      "user_3": "",
+      "user_4": "",
+      "user_5_ID": "",
+      "user_6_ID": "",
+      "user_7_ID": "",
+      "user_8_ID": "",
+      "volume_per_pack": 0,
+      "vvm_status_id": "",
+      "weight_per_pack": 0,
+      "om_item_variant_id": ""
+  }"#,
+);
+fn item_line_5_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        ITEM_LINE_5,
+        StockLineRow {
+            id: ITEM_LINE_5.0.to_string(),
+            store_id: "store_a".to_string(),
+            item_link_id: "item_b".to_string(),
+            location_id: None,
+            batch: Some("none".to_string()),
+            pack_size: 1.0,
+            cost_price_per_pack: 0.0,
+            sell_price_per_pack: 0.0,
+            available_number_of_packs: 1000.0,
+            total_number_of_packs: 1001.0,
+            expiry_date: None,
+            on_hold: false,
+            note: None,
+            supplier_link_id: None,
+            barcode_id: None,
+            item_variant_id: None,
+            donor_link_id: None,
+            vvm_status_id: None,
+            campaign_id: None,
+        },
+    )
+}
+fn item_line_5_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: ITEM_LINE_5.0.to_string(),
+        push_data: json!(LegacyStockLineRow {
+            ID: ITEM_LINE_5.0.to_string(),
+            store_ID: "store_a".to_string(),
+            item_ID: "item_b".to_string(),
+            batch: Some("none".to_string()),
+            expiry_date: None,
+            hold: false,
+            location_ID: None,
+            pack_size: 1.0,
+            available: 1000.0,
+            quantity: 1001.0,
+            cost_price: 0.0,
+            sell_price: 0.0,
+            note: None,
+            supplier_id: None,
+            barcode_id: None,
+            item_variant_id: None,
+            donor_id: None,
+            vvm_status_id: None,
+            oms_fields: None,
+        }),
+    }
+}
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
-    vec![item_line_1_pull_record(), item_line_2_pull_record()]
+    vec![
+        item_line_1_pull_record(),
+        item_line_2_pull_record(),
+        item_line_3_pull_record(),
+        item_line_4_pull_record(),
+        item_line_5_pull_record(),
+    ]
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
-    vec![item_line_1_push_record(), item_line_2_push_record()]
+    vec![
+        item_line_1_push_record(),
+        item_line_2_push_record(),
+        item_line_3_push_record(),
+        item_line_4_push_record(),
+        item_line_5_push_record(),
+    ]
 }

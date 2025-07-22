@@ -62,7 +62,8 @@ export const Toolbar: FC = () => {
                         RouteBuilder.create(AppRoute.Distribution)
                           .addPart(AppRoute.OutboundShipment)
                           .addPart(newId)
-                          .build()
+                          .build(),
+                        { replace: true }
                       );
                     }}
                   />

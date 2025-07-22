@@ -10,3 +10,4 @@ export * from './Switch';
 export * from './Filters';
 export * from './Upload';
 export * from './PropertyInput';
+export * from './GenderInput';

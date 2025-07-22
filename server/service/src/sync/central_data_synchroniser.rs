@@ -5,7 +5,9 @@ use super::{
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
 };
 use crate::{cursor_controller::CursorController, sync::api::CentralSyncBatchV5};
-use repository::{KeyType, RepositoryError, StorageConnection, SyncBufferRowRepository};
+use repository::{
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncBufferRowRepository,
+};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -35,6 +37,15 @@ impl CentralDataSynchroniser {
 
         let cursor_controller = CursorController::new(KeyType::CentralSyncPullCursor);
 
+        let msupply_central_server_id = KeyValueStoreRepository::new(connection)
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+
+        log::info!(
+            "Pulling central data with batch size {} and msupply_central_server_id {}",
+            batch_size,
+            msupply_central_server_id.unwrap_or_default()
+        );
+
         loop {
             let start_cursor = cursor_controller.get(connection)?;
 
@@ -49,7 +60,7 @@ impl CentralDataSynchroniser {
             let last_cursor_in_batch = data.last().map(|r| r.cursor).unwrap_or(start_cursor);
             let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
                 data.into_iter().map(|r| r.record).collect(),
-                None, // Everything from mSupply Central Server is considered to not have a source_site_id
+                msupply_central_server_id,
             )?;
 
             // Upsert sync buffer rows in a transaction together with cursor update

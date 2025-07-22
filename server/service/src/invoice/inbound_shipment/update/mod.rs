@@ -20,6 +20,7 @@ use self::generate::LineAndStockLine;
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateInboundShipmentStatus {
     Delivered,
+    Received,
     Verified,
 }
 
@@ -199,6 +200,7 @@ impl UpdateInboundShipmentStatus {
     pub fn full_status(&self) -> InvoiceStatus {
         match self {
             UpdateInboundShipmentStatus::Delivered => InvoiceStatus::Delivered,
+            UpdateInboundShipmentStatus::Received => InvoiceStatus::Received,
             UpdateInboundShipmentStatus::Verified => InvoiceStatus::Verified,
         }
     }
@@ -325,7 +327,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id.clone_from(&mock_inbound_shipment_e().id);
-                    r.status = Some(UpdateInboundShipmentStatus::Delivered);
+                    r.status = Some(UpdateInboundShipmentStatus::Received);
                 })
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
@@ -419,6 +421,27 @@ mod test {
                 r.r#type = InvoiceLineType::StockIn;
             })
         }
+        fn invoice_line_only_shipped_packs_for_test() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line_only_shipped_packs_for_test".to_string();
+                r.invoice_id = "invoice_test".to_string();
+                r.item_link_id = "item_a".to_string();
+                r.pack_size = 1.0;
+                r.number_of_packs = 0.0;
+                r.shipped_number_of_packs = Some(5.0);
+                r.r#type = InvoiceLineType::StockIn;
+            })
+        }
+        fn invoice_line_placeholder_line_for_test() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line_placeholder_line_for_test".to_string();
+                r.invoice_id = "invoice_test".to_string();
+                r.item_link_id = "item_a".to_string();
+                r.pack_size = 1.0;
+                r.number_of_packs = 0.0;
+                r.r#type = InvoiceLineType::StockIn;
+            })
+        }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_success",
@@ -427,7 +450,11 @@ mod test {
                 r.names = vec![supplier()];
                 r.name_store_joins = vec![supplier_join()];
                 r.invoices = vec![invoice_test()];
-                r.invoice_lines = vec![invoice_line_for_test()];
+                r.invoice_lines = vec![
+                    invoice_line_for_test(),
+                    invoice_line_only_shipped_packs_for_test(),
+                    invoice_line_placeholder_line_for_test(),
+                ];
             }),
         )
         .await;
@@ -508,15 +535,6 @@ mod test {
         }
 
         // Test delivered status change with tax
-        let updated_line = InvoiceLineRow {
-            stock_line_id: Some(mock_stock_line_a().id),
-            ..invoice_line_for_test()
-        };
-
-        InvoiceLineRowRepository::new(&connection)
-            .upsert_one(&updated_line)
-            .unwrap();
-
         service
             .update_inbound_shipment(
                 &context,
@@ -555,17 +573,78 @@ mod test {
             None,
         )
         .unwrap();
-        let mut stock_lines_delivered = Vec::new();
+
+        // There shouldn't be any stock lines saved yet As just in delivered status
+        for line in &invoice_lines.rows {
+            assert_eq!(line.stock_line_option, None)
+        }
+        let invoice_line_ids = invoice_lines
+            .rows
+            .iter()
+            .map(|l| l.invoice_line_row.id.clone())
+            .collect::<Vec<_>>();
+
+        // Placeholder line should have been removed
+        assert_eq!(
+            invoice_line_ids,
+            vec![
+                invoice_line_for_test().id,
+                invoice_line_only_shipped_packs_for_test().id,
+            ]
+        );
+
+        // NEXT: Test updating to received status, and make sure we update stock at this stage
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_test().id,
+                    status: Some(UpdateInboundShipmentStatus::Received),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&invoice_test().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.tax_percentage = Some(10.0);
+                u.user_id = Some(mock_user_account_a().id);
+                u.status = InvoiceStatus::Received;
+                u
+            })
+        );
+
+        let filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
+        let invoice_lines = get_invoice_lines(
+            &context,
+            &invoice.clone().store_id,
+            None,
+            Some(filter),
+            None,
+        )
+        .unwrap();
+        let mut stock_lines_received = Vec::new();
 
         for lines in invoice_lines.rows {
-            let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
-            let stock_line = StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
-                .unwrap()
-                .unwrap();
-            stock_lines_delivered.push(stock_line.clone());
-            assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
+            if let Some(stock_line_id) = lines.invoice_line_row.stock_line_id.clone() {
+                let stock_line = StockLineRowRepository::new(&connection)
+                    .find_one_by_id(&stock_line_id)
+                    .unwrap()
+                    .unwrap();
+                stock_lines_received.push(stock_line.clone());
+                assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
+            }
         }
+
+        // Ensure the line with only shipped packs does not create a stock line
+        assert_eq!(stock_lines_received.len(), 1);
 
         // Test verified status change with tax
         service
@@ -598,15 +677,16 @@ mod test {
         let mut stock_lines_verified = Vec::new();
 
         for lines in invoice_lines.rows {
-            let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
-            let stock_line = StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
-                .unwrap()
-                .unwrap();
-            stock_lines_verified.push(stock_line.clone());
+            if let Some(stock_line_id) = lines.invoice_line_row.stock_line_id.clone() {
+                let stock_line = StockLineRowRepository::new(&connection)
+                    .find_one_by_id(&stock_line_id)
+                    .unwrap()
+                    .unwrap();
+                stock_lines_verified.push(stock_line.clone());
+            }
         }
 
-        assert_eq!(stock_lines_delivered, stock_lines_verified);
+        assert_eq!(stock_lines_received, stock_lines_verified);
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_success_currency",
@@ -686,7 +766,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = invoice_test().id;
-                    r.status = Some(UpdateInboundShipmentStatus::Delivered);
+                    r.status = Some(UpdateInboundShipmentStatus::Received);
                     r.currency_id = Some("currency_a".to_string());
                     r.currency_rate = Some(1.0);
                 }),
@@ -704,7 +784,7 @@ mod test {
                 u.currency_id = Some("currency_a".to_string());
                 u.currency_rate = 1.0;
                 u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceStatus::Delivered;
+                u.status = InvoiceStatus::Received;
                 u
             })
         );
@@ -802,13 +882,13 @@ mod test {
         // Check no logs exist before update
         assert_eq!(vvm_status_log, None);
 
-        // Test updating to Delivered generates Activity logs and VVM status logs
+        // Test updating to Received generates Activity logs and VVM status logs
         service
             .update_inbound_shipment(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_c().id;
-                    r.status = Some(UpdateInboundShipmentStatus::Delivered);
+                    r.status = Some(UpdateInboundShipmentStatus::Received);
                 }),
             )
             .unwrap();
@@ -821,7 +901,7 @@ mod test {
             .find_many_by_record_id(&mock_inbound_shipment_c().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::InvoiceStatusDelivered)
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusReceived)
             .unwrap();
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())
@@ -830,9 +910,9 @@ mod test {
             .map(|log| log.status_id.clone());
 
         assert_eq!(invoice.verified_datetime, None);
-        assert!(invoice.delivered_datetime.unwrap() > now);
-        assert!(invoice.delivered_datetime.unwrap() < end_time);
-        assert_eq!(activity_log.r#type, ActivityLogType::InvoiceStatusDelivered);
+        assert!(invoice.received_datetime.unwrap() > now);
+        assert!(invoice.received_datetime.unwrap() < end_time);
+        assert_eq!(activity_log.r#type, ActivityLogType::InvoiceStatusReceived);
         assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
 
         let filter =
@@ -870,9 +950,9 @@ mod test {
             .find_many_by_record_id(&mock_inbound_shipment_c().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::InvoiceStatusDelivered)
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusReceived)
             .unwrap();
-        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusDelivered);
+        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusReceived);
 
         //Test success name_store_id linked to store
         service
@@ -951,8 +1031,8 @@ mod test {
 
         // Ensure delivered time not updated by status change to verified
         assert_eq!(
-            invoice.delivered_datetime,
-            mock_inbound_shipment_a().delivered_datetime
+            invoice.received_datetime,
+            mock_inbound_shipment_a().received_datetime
         );
 
         assert!(invoice.verified_datetime.unwrap() > now);

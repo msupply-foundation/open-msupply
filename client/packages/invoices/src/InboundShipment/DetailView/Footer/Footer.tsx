@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -13,8 +14,6 @@ import {
   Action,
   ActionsFooter,
 } from '@openmsupply-client/common';
-
-import React, { FC } from 'react';
 import {
   getStatusTranslator,
   inboundStatuses,
@@ -31,6 +30,7 @@ const createStatusLog = (invoice: InboundFragment) => {
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
+    [InvoiceNodeStatus.Received]: null,
     [InvoiceNodeStatus.Verified]: null,
     // Placeholder for typescript, not used in inbounds
     [InvoiceNodeStatus.Allocated]: null,
@@ -50,6 +50,9 @@ const createStatusLog = (invoice: InboundFragment) => {
     statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
   }
   if (statusIdx >= 4) {
+    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
+  }
+  if (statusIdx >= 5) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
   }
 
@@ -60,9 +63,7 @@ interface FooterComponentProps {
   onReturnLines: (selectedLines: InboundLineFragment[]) => void;
 }
 
-export const FooterComponent: FC<FooterComponentProps> = ({
-  onReturnLines,
-}) => {
+export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
 

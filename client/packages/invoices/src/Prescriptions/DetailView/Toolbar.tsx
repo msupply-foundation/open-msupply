@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   AppBarContentPortal,
   InputWithLabelRow,
@@ -20,14 +20,14 @@ import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
 
-export const Toolbar: FC = () => {
+export const Toolbar = () => {
   const t = useTranslation();
 
   const {
     query: { data },
     update: { update },
     isDisabled,
-    rows: items,
+    rows,
   } = usePrescription();
 
   const {
@@ -44,6 +44,7 @@ export const Toolbar: FC = () => {
       DateUtils.getDateOrNull(createdDatetime) ??
       null
   );
+
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
@@ -57,9 +58,8 @@ export const Toolbar: FC = () => {
   } = usePrescriptionLines();
 
   const deleteAll = async () => {
-    const allRows = (items ?? []).map(({ lines }) => lines.flat()).flat() ?? [];
-    if (allRows.length === 0) return;
-    return deleteLines(allRows);
+    if (rows.length === 0) return;
+    return deleteLines(rows);
   };
 
   const getConfirmation = useConfirmationModal({
@@ -81,7 +81,7 @@ export const Toolbar: FC = () => {
     )
       return;
 
-    if (!items || items.length === 0) {
+    if (!rows || rows.length === 0) {
       // If there are no lines, we can just update the prescription date
       await update({
         id,
@@ -110,7 +110,7 @@ export const Toolbar: FC = () => {
   const handleProgramChange = async (
     newProgram: ProgramFragment | undefined
   ) => {
-    if (!newProgram || !items || items.length === 0) {
+    if (!newProgram || !rows || rows.length === 0) {
       // It's okay to *clear* program without losing current items
       await update({ id, programId: newProgram?.id ?? null });
       return;
@@ -142,6 +142,8 @@ export const Toolbar: FC = () => {
                 onChange={async ({ id: patientId }) => {
                   await update({ id, patientId });
                 }}
+                allowCreate
+                allowEdit
               />
             }
           />
@@ -159,6 +161,7 @@ export const Toolbar: FC = () => {
                 });
               }}
               clinicianValue={clinicianValue}
+              allowCreate
             />
           }
         />

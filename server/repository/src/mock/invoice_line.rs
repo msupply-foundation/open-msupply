@@ -28,6 +28,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         tax_percentage: Some(15.0),
         r#type: InvoiceLineType::StockOut,
         number_of_packs: 10.0,
+        shipped_number_of_packs: Some(10.0),
         ..Default::default()
     };
 
@@ -49,6 +50,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         tax_percentage: Some(15.0),
         r#type: InvoiceLineType::StockOut,
         number_of_packs: 4.0,
+        shipped_number_of_packs: Some(4.0),
         ..Default::default()
     };
 
@@ -77,6 +79,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         tax_percentage: None,
         r#type: InvoiceLineType::StockOut,
         number_of_packs: 3.0,
+        shipped_number_of_packs: Some(3.0),
         ..Default::default()
     };
 
@@ -98,6 +101,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         tax_percentage: None,
         r#type: InvoiceLineType::StockOut,
         number_of_packs: 5.0,
+        shipped_number_of_packs: Some(5.0),
         ..Default::default()
     };
 
@@ -126,6 +130,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         tax_percentage: None,
         r#type: InvoiceLineType::StockOut,
         number_of_packs: 3.0,
+        shipped_number_of_packs: Some(3.0),
         ..Default::default()
     };
 
@@ -147,6 +152,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         tax_percentage: None,
         r#type: InvoiceLineType::StockOut,
         number_of_packs: 1.0,
+        shipped_number_of_packs: Some(1.0),
         ..Default::default()
     };
 

@@ -19,7 +19,6 @@ import {
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
 import { RequestedSelection } from './RequestedSelection';
-import { RepresentationValue } from '../../../common';
 import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
@@ -28,6 +27,7 @@ import {
   ModalContentLayout,
   ValueInfoRow,
   ValueInfo,
+  RepresentationValue,
 } from '../../../common';
 import {
   getLeftPanel,
@@ -49,6 +49,8 @@ interface RequestLineEditProps {
   isUpdateMode?: boolean;
   showExtraFields?: boolean;
   manageVaccinesInDoses?: boolean;
+  isReasonsError: boolean;
+  setIsEditingRequested: (isEditingRequested: boolean) => void;
 }
 
 export const RequestLineEdit = ({
@@ -65,10 +67,13 @@ export const RequestLineEdit = ({
   isUpdateMode,
   showExtraFields,
   manageVaccinesInDoses = false,
+  isReasonsError,
+  setIsEditingRequested,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
   const { round } = useFormatNumber();
+  const { data: reasonOptions, isLoading } = useReasonOptions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 
@@ -78,7 +83,6 @@ export const RequestLineEdit = ({
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
-  const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -92,20 +96,28 @@ export const RequestLineEdit = ({
   const renderValueInfoRows = useCallback(
     (info: ValueInfo[]) => (
       <>
-        {info.map(({ label, value, sx, endAdornmentOverride }) => (
-          <ValueInfoRow
-            key={label}
-            label={label}
-            value={value}
-            endAdornmentOverride={endAdornmentOverride}
-            defaultPackSize={defaultPackSize}
-            representation={representation}
-            unitName={unitName}
-            sx={sx}
-            displayVaccinesInDoses={displayVaccinesInDoses}
-            dosesPerUnit={currentItem?.doses}
-          />
-        ))}
+        {info.map(
+          ({
+            label,
+            value,
+            sx,
+            endAdornmentOverride,
+            displayVaccinesInDoses: showDoses,
+          }) => (
+            <ValueInfoRow
+              key={label}
+              label={label}
+              value={value}
+              endAdornmentOverride={endAdornmentOverride}
+              defaultPackSize={defaultPackSize}
+              representation={representation}
+              unitName={unitName}
+              sx={sx}
+              displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
+              dosesPerUnit={currentItem?.doses}
+            />
+          )
+        )}
       </>
     ),
     [
@@ -148,6 +160,7 @@ export const RequestLineEdit = ({
             unitName={unitName}
             displayVaccinesInDoses={displayVaccinesInDoses}
             dosesPerUnit={currentItem?.doses}
+            setIsEditingRequested={setIsEditingRequested}
           />
           {showExtraFields && (
             <Typography variant="body1" fontWeight="bold">
@@ -173,6 +186,9 @@ export const RequestLineEdit = ({
                           theme.palette.background.white,
                       }
                 }
+                inputProps={{
+                  error: isReasonsError,
+                }}
               />
             </Typography>
           )}
@@ -263,13 +279,10 @@ export const RequestLineEdit = ({
         Right={showExtraFields ? getRightPanelContent() : null}
       />
 
-      {line && (
-        <Box padding={'2px 16px 0 16px'}>
-          {plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
-            <Info key={index} line={line} requisition={requisition} />
-          ))}
-        </Box>
-      )}
+      {line &&
+        plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
+          <Info key={index} line={line} requisition={requisition} />
+        ))}
 
       {showContent && line && (
         <Box

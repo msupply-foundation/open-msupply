@@ -57,6 +57,7 @@ pub enum UpdateRnRFormLineError {
     LineDoesNotExist,
     LineDoesNotBelongToRnRForm,
     ValuesDoNotBalance,
+    InitialBalanceCannotBeNegative,
     FinalBalanceCannotBeNegative,
     StockOutDurationExceedsPeriod,
     CannotRequestNegativeQuantity,
@@ -165,6 +166,13 @@ fn validate(
                 return Err(UpdateRnRFormError::LineError {
                     line_id: line.id.clone(),
                     error: UpdateRnRFormLineError::ValuesDoNotBalance,
+                });
+            }
+
+            if initial_balance < 0.0 {
+                return Err(UpdateRnRFormError::LineError {
+                    line_id: line.id.clone(),
+                    error: UpdateRnRFormLineError::InitialBalanceCannotBeNegative,
                 });
             }
 

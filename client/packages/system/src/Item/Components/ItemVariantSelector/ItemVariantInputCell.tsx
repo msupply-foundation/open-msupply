@@ -5,14 +5,12 @@ import { ItemVariantInput } from './ItemVariantInput';
 
 interface ItemVariantInputCellProps {
   itemId: string;
-  displayInDoses: boolean;
 }
 
 export const ItemVariantInputCell = <T extends RecordWithId>({
   rowData,
   column,
   itemId,
-  displayInDoses,
 }: CellProps<T> & ItemVariantInputCellProps) => {
   const selectedId = column.accessor({
     rowData,
@@ -30,7 +28,6 @@ export const ItemVariantInputCell = <T extends RecordWithId>({
     <ItemVariantInput
       selectedId={selectedId}
       itemId={itemId}
-      displayDoseColumns={displayInDoses}
       onChange={onVariantSelected}
     />
   );

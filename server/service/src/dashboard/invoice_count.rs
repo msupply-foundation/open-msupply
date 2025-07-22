@@ -120,11 +120,16 @@ fn invoices_count(
         InvoiceStatus::Delivered => {
             invoice_filter = invoice_filter.delivered_datetime(datetime_filter)
         }
+        InvoiceStatus::Received => {
+            invoice_filter = invoice_filter.received_datetime(datetime_filter)
+        }
         InvoiceStatus::Verified => {
             invoice_filter = invoice_filter.verified_datetime(datetime_filter)
         }
         InvoiceStatus::Cancelled => {
             // TO-DO: I don't think this is correct
+            // Fix as part of this issue?
+            // enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495 ?
             invoice_filter = invoice_filter.verified_datetime(datetime_filter)
         }
     }

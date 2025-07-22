@@ -5,45 +5,94 @@ import {
   FileOpener,
   FileOpenerOptions,
 } from '@capacitor-community/file-opener';
-import { Formatter } from '..';
+import { EnvUtils, Formatter, Platform } from '..';
+import { useNativeClient, useNotification } from '@common/hooks';
+import { useTranslation } from '@openmsupply-client/common';
 
-const exportFile = (data: string, type: string, title?: string) => {
-  let extension = 'txt';
-  switch (type) {
-    case 'text/csv':
-      extension = 'csv';
-      break;
-  }
+const useExportFile = () => {
+  const t = useTranslation();
+  const { success } = useNotification();
+  const nativeClient = useNativeClient();
+  const successMessage = t('success.data-saved');
 
-  const today = Formatter.naiveDate(new Date());
-  const filename = `${title || 'export'}_${today}.${extension}`;
-  const blob = new Blob([data], { type: `${type};charset=utf-8;` });
-  const link = document.createElement('a');
+  return async (
+    data: string | Blob,
+    type: string | undefined,
+    filename: string
+  ) => {
+    const isBinaryData = typeof data !== 'string';
 
-  // Browsers that support HTML5 download attribute
-  if (link.download !== undefined) {
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+    // On android, use the native client to save the file
+    if (EnvUtils.platform === Platform.Android) {
+      // Content must sent via string for capacitor
+      const content = isBinaryData ? await asBase64(data) : data;
+
+      await nativeClient.saveFile({
+        content,
+        isBinaryData,
+        filename,
+        mimeType: type,
+        successMessage,
+      });
+    } else {
+      // On browser, use HTML link to download the file
+      const link = document.createElement('a');
+
+      // Only run on browsers that support HTML5 download attribute
+      if (link.download !== undefined) {
+        // Content must be a Blob for the browser
+        const blob = !isBinaryData
+          ? new Blob([data], {
+              type: `${type ?? 'text/plain'};charset=utf-8;`,
+            })
+          : data;
+
+        const url = URL.createObjectURL(blob);
+        link.download = filename;
+        link.href = url;
+
+        link.click();
+        link.remove();
+      }
+      success(successMessage)();
+    }
+  };
 };
 
-// TODO this causes electron app to navigate to this url (at the same time as opening dialog box)
-// however for temp files, this causes Static file not found error as the temp file is delete after first request
-const downloadFile = async (url: string) => {
-  const res = await fetch(url);
-  const data = await res.blob();
-  const header = res.headers.get('Content-Disposition');
-  const filename = header?.match(/filename="(.+)"/)?.[1];
-  const a = document.createElement('a');
-  a.href = window.URL.createObjectURL(data);
-  if (filename) a.download = filename;
-  a.click();
-  a.remove();
+export const useDownloadFile = () => {
+  const exportFile = useExportFile();
+
+  return async (url: string) => {
+    const res = await fetch(url);
+    const data = await res.blob();
+    const header = res.headers.get('Content-Disposition');
+    const filename = header?.match(/filename="(.+)"/)?.[1] ?? getFilename();
+    const mimeType = res.headers.get('Content-Type');
+
+    exportFile(data, mimeType ?? undefined, filename);
+  };
+};
+
+export const useExportCSV = () => {
+  const exportFile = useExportFile();
+
+  const exportCsv = async (data: string, title: string) => {
+    const filename = getFilename('text/csv', title);
+    exportFile(data, 'text/csv', filename);
+  };
+
+  return exportCsv;
+};
+
+export const useExportLog = () => {
+  const exportFile = useExportFile();
+
+  const exportLog = async (data: string, title: string = 'log') => {
+    const filename = getFilename(undefined, title); // default to .txt
+    exportFile(data, undefined, filename);
+  };
+
+  return exportLog;
 };
 
 // On Android, we first try and open the file from the local file system. If
@@ -89,20 +138,8 @@ const openAndroidFile = async (file: {
         credentials: 'include',
       });
       const blob = await response.blob();
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
+      const base64String = await asBase64(blob);
 
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => {
-          resolve(reader.result as string);
-        };
-        reader.onerror = reject;
-      });
-      if (!base64Data) throw new Error('Problem parsing file data');
-
-      // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
-      const base64String = base64Data.split(',')[1];
-      if (!base64String) throw new Error('Problem parsing base64 string');
       // Save to filesystem
       await Filesystem.writeFile({
         path: filePath,
@@ -130,9 +167,39 @@ const openAndroidFile = async (file: {
   }
 };
 
+const getFilename = (type?: string, title?: string) => {
+  let extension = 'txt';
+  switch (type) {
+    case 'text/csv':
+      extension = 'csv';
+      break;
+  }
+
+  const today = Formatter.naiveDate(new Date());
+  const filename = `${title || 'export'}_${today}.${extension}`;
+
+  return filename;
+};
+
+const asBase64 = async (blob: Blob): Promise<string> => {
+  const reader = new FileReader();
+  reader.readAsDataURL(blob);
+
+  const base64Data = await new Promise<string>((resolve, reject) => {
+    reader.onloadend = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = reject;
+  });
+  if (!base64Data) throw new Error('Problem parsing file data');
+
+  // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
+  const base64String = base64Data.split(',')[1];
+  if (!base64String) throw new Error('Problem parsing base64 string');
+
+  return base64String;
+};
+
 export const FileUtils = {
-  exportCSV: (data: string, title: string) =>
-    exportFile(data, 'text/csv', title),
-  downloadFile,
   openAndroidFile,
 };

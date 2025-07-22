@@ -29,6 +29,7 @@ export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
   InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
@@ -37,19 +38,30 @@ export const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
   InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
 export const manualInboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
 export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
   [InvoiceNodeStatus.New]: InvoiceNodeStatus.Delivered,
   [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Verified,
+  [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Received,
+  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
+};
+
+export const nextStatusMapCustomerReturn: {
+  [k in InvoiceNodeStatus]?: InvoiceNodeStatus;
+} = {
+  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Received,
+  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Received,
+  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
 };
 
 export const prescriptionStatuses: InvoiceNodeStatus[] = [
@@ -63,7 +75,7 @@ export const supplierReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
@@ -71,12 +83,12 @@ export const customerReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 export const manualCustomerReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
@@ -85,6 +97,7 @@ const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   PICKED: 'label.picked',
   SHIPPED: 'label.shipped',
   DELIVERED: 'label.delivered',
+  RECEIVED: 'label.received',
   NEW: 'label.new',
   VERIFIED: 'label.verified',
   CANCELLED: 'label.cancelled',
@@ -124,7 +137,8 @@ export const getNextInboundStatus = (
 export const getNextCustomerReturnStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
-  return getNextInboundStatus(currentStatus);
+  const nextStatus = nextStatusMapCustomerReturn[currentStatus];
+  return nextStatus ?? null;
 };
 
 export const getNextPrescriptionStatus = (
@@ -169,11 +183,20 @@ export const getStatusTranslator =
 export const isOutboundDisabled = (
   outbound: OutboundRowFragment | SupplierReturnRowFragment
 ): boolean => {
-  return (
-    outbound.status === InvoiceNodeStatus.Shipped ||
-    outbound.status === InvoiceNodeStatus.Verified ||
-    outbound.status === InvoiceNodeStatus.Delivered
-  );
+  switch (outbound.status) {
+    case InvoiceNodeStatus.New:
+    case InvoiceNodeStatus.Allocated:
+    case InvoiceNodeStatus.Picked:
+      return false;
+    case InvoiceNodeStatus.Shipped:
+    case InvoiceNodeStatus.Delivered:
+    case InvoiceNodeStatus.Received:
+    case InvoiceNodeStatus.Verified:
+    case InvoiceNodeStatus.Cancelled:
+      return true;
+    default:
+      return noOtherVariants(outbound.status);
+  }
 };
 
 /** Returns true if the inbound shipment cannot be edited */
@@ -184,13 +207,14 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   }
   switch (inbound.status) {
     case InvoiceNodeStatus.New:
-    case InvoiceNodeStatus.Allocated:
-    // Inbound shipments can be edited when having been delivered
     case InvoiceNodeStatus.Delivered:
+    // Inbound shipments can be edited when having been received (Note: was previous known as Delivered)
+    case InvoiceNodeStatus.Received:
       return false;
+    case InvoiceNodeStatus.Verified:
+    case InvoiceNodeStatus.Allocated:
     case InvoiceNodeStatus.Picked:
     case InvoiceNodeStatus.Shipped:
-    case InvoiceNodeStatus.Verified:
     case InvoiceNodeStatus.Cancelled:
       return true;
     default:
@@ -233,7 +257,9 @@ export const isInboundListItemDisabled = (
 };
 
 export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
-  row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
+  row.type === InvoiceLineNodeType.StockIn &&
+  row.numberOfPacks === 0 &&
+  !row.shippedNumberOfPacks;
 
 export const isInboundStatusChangeDisabled = (
   inbound: InboundFragment | CustomerReturnFragment

@@ -1,17 +1,19 @@
-use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
-    translations::{
-        barcode::BarcodeTranslation, campaign::CampaignTranslation, item::ItemTranslation,
-        item_variant::ItemVariantTranslation, location::LocationTranslation, name::NameTranslation,
-        store::StoreTranslation, vvm_status::VVMStatusTranslation,
-    },
+use crate::sync::translations::{
+    barcode::BarcodeTranslation, campaign::CampaignTranslation, item::ItemTranslation,
+    item_variant::ItemVariantTranslation, location::LocationTranslation, name::NameTranslation,
+    store::StoreTranslation, vvm_status::VVMStatusTranslation,
 };
+
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
     StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
+    zero_date_as_option,
+};
 
 use super::{
     utils::{clear_invalid_barcode_id, clear_invalid_location_id},
@@ -53,6 +55,7 @@ pub struct LegacyStockLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string", rename = "barcodeID")]
     pub barcode_id: Option<String>,
     #[serde(rename = "om_item_variant_id")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub item_variant_id: Option<String>,
     #[serde(default)]
@@ -61,6 +64,7 @@ pub struct LegacyStockLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
     #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<StockLineRowOmsFields>,
 }
 // Needs to be added to all_translators()

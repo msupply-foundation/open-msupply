@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test_update {
-    use repository::mock::{mock_store_a, mock_store_b};
+    use repository::mock::{mock_new_response_program_requisition, mock_store_a, mock_store_b};
     use repository::EqualFilter;
     use repository::{
         mock::{
@@ -185,5 +185,22 @@ mod test_update {
         assert_eq!(invoice_lines.len(), 1);
 
         assert_eq!(invoice_lines[0].invoice_line_row.number_of_packs, 50.0);
+
+        // Program requisitions map program ID onto resulting outbound shipment
+        let created_outbound = service
+            .create_requisition_shipment(
+                &context,
+                CreateRequisitionShipment {
+                    response_requisition_id: mock_new_response_program_requisition().requisition.id,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            created_outbound.invoice_row.program_id,
+            mock_new_response_program_requisition()
+                .requisition
+                .program_id
+        );
     }
 }

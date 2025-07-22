@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+
+use crate::types::patient::GenderType;
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
@@ -18,8 +21,22 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
+    pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
+        let domain_genders = self.load_preference(&self.preferences.gender_options)?;
+        let genders = domain_genders.iter().map(GenderType::from_domain).collect();
+        Ok(genders)
+    }
+
     pub async fn show_contact_tracing(&self) -> Result<bool> {
         self.load_preference(&self.preferences.show_contact_tracing)
+    }
+
+    pub async fn use_campaigns(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.use_campaigns)
+    }
+
+    pub async fn custom_translations(&self) -> Result<HashMap<String, String>> {
+        self.load_preference(&self.preferences.custom_translations)
     }
 
     // Store preferences
@@ -29,6 +46,10 @@ impl PreferencesNode {
 
     pub async fn manage_vvm_status_for_stock(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vvm_status_for_stock)
+    }
+
+    pub async fn order_in_packs(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.order_in_packs)
     }
 
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
@@ -86,10 +107,14 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
+    GenderOptions,
     ShowContactTracing,
+    UseCampaigns,
+    CustomTranslations,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
+    OrderInPacks,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
 }
@@ -99,10 +124,14 @@ impl PreferenceKey {
         match pref_key {
             // Global preferences
             PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
+            PrefKey::GenderOptions => PreferenceKey::GenderOptions,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
+            PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
+            PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
+            PrefKey::OrderInPacks => PreferenceKey::OrderInPacks,
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
             PrefKey::UseSimplifiedMobileUi => PreferenceKey::UseSimplifiedMobileUi,
         }
@@ -128,6 +157,8 @@ impl PreferenceNodeType {
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
+    MultiChoice,
+    CustomTranslations, // Specific type for CustomTranslations preference
 }
 
 impl PreferenceValueNodeType {
@@ -135,6 +166,8 @@ impl PreferenceValueNodeType {
         match domain_type {
             PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
             PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
+            PreferenceValueType::MultiChoice => PreferenceValueNodeType::MultiChoice,
+            PreferenceValueType::CustomTranslations => PreferenceValueNodeType::CustomTranslations,
         }
     }
 }

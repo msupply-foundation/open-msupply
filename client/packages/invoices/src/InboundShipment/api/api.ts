@@ -23,7 +23,7 @@ import {
   UpdateDonorInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
-import { isA } from '../../utils';
+import { isA, isInboundPlaceholderRow } from '../../utils';
 import {
   Sdk,
   InboundFragment,
@@ -48,6 +48,8 @@ const inboundParsers = {
         return UpdateInboundShipmentStatusInput.Verified;
       case InvoiceNodeStatus.Delivered:
         return UpdateInboundShipmentStatusInput.Delivered;
+      case InvoiceNodeStatus.Received:
+        return UpdateInboundShipmentStatusInput.Received;
       default:
         return undefined;
     }
@@ -121,6 +123,8 @@ const inboundParsers = {
       vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
       donorId: line.donor?.id,
       campaignId: line.campaign?.id,
+      note: line.note,
+      shippedNumberOfPacks: line.shippedNumberOfPacks,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -152,6 +156,8 @@ const inboundParsers = {
     campaignId: setNullableInput('campaignId', {
       campaignId: line.campaign?.id ?? null,
     }),
+    note: setNullableInput('note', { note: line.note ?? null }),
+    shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
@@ -364,12 +370,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   updateLines: async (draftInboundLine: DraftInboundLine[]) => {
     const input = {
       insertInboundShipmentLines: draftInboundLine
-        .filter(
-          ({ type, isCreated, numberOfPacks }) =>
-            isCreated &&
-            type === InvoiceLineNodeType.StockIn &&
-            numberOfPacks > 0
-        )
+        .filter(line => line.isCreated && !isInboundPlaceholderRow(line))
         .map(inboundParsers.toInsertLine),
       updateInboundShipmentLines: draftInboundLine
         .filter(

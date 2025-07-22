@@ -34,6 +34,7 @@ interface RequestedSelectionProps {
   showExtraFields?: boolean;
   displayVaccinesInDoses?: boolean;
   dosesPerUnit?: number;
+  setIsEditingRequested: (isEditingRequested: boolean) => void;
 }
 
 export const RequestedSelection = ({
@@ -47,6 +48,7 @@ export const RequestedSelection = ({
   unitName,
   displayVaccinesInDoses = false,
   dosesPerUnit = 1,
+  setIsEditingRequested,
 }: RequestedSelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -89,11 +91,13 @@ export const RequestedSelection = ({
         draft?.suggestedQuantity
       );
       update(updatedRequest);
+      setIsEditingRequested(false);
     },
     [representation, defaultPackSize, update]
   );
 
   const handleValueChange = (newValue?: number) => {
+    setIsEditingRequested(true);
     setValue(newValue ?? 0);
     debouncedUpdate(newValue);
   };
@@ -136,6 +140,7 @@ export const RequestedSelection = ({
             value={value}
             disabled={disabled}
             onChange={handleValueChange}
+            onBlur={() => setIsEditingRequested(false)}
             slotProps={{
               input: {
                 sx: {
@@ -175,9 +180,7 @@ export const RequestedSelection = ({
             options={options}
             value={representation}
             onChange={e => {
-              setRepresentation(
-                (e.target.value as RepresentationValue) ?? Representation.UNITS
-              );
+              setRepresentation(e.target.value as RepresentationValue);
             }}
             sx={{
               '& .MuiInputBase-input': {

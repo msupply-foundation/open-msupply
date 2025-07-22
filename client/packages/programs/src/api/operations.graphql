@@ -227,6 +227,11 @@ fragment Encounter on EncounterNode {
   }
   programEnrolment {
     id
+    isImmunisationProgram
+    document {
+      type
+      name
+    }
   }
   createdDatetime
   startDatetime
@@ -269,9 +274,6 @@ query encounterById($storeId: String!, $encounterId: String!) {
       __typename
       nodes {
         ...Encounter
-        programEnrolment {
-          isImmunisationProgram
-        }
       }
       totalCount
     }
@@ -485,11 +487,13 @@ query clinicians(
   $key: ClinicianSortFieldInput!
   $desc: Boolean
   $filter: ClinicianFilterInput
+  $page: PaginationInput
 ) {
   clinicians(
     storeId: $storeId
     sort: { key: $key, desc: $desc }
     filter: $filter
+    page: $page
   ) {
     ... on ClinicianConnector {
       __typename

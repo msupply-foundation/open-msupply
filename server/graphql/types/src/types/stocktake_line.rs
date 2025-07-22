@@ -1,14 +1,11 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::StocktakeLine;
+use repository::{location::Location, ReasonOption, StocktakeLine};
 use service::usize_to_u32;
 
 use graphql_core::{
-    loader::{
-        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, ReasonOptionLoader,
-        StockLineByIdLoader,
-    },
+    loader::{ItemLoader, ItemVariantByItemVariantIdLoader, StockLineByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -48,13 +45,12 @@ impl StocktakeLineNode {
         }
     }
 
-    pub async fn location(&self, ctx: &Context<'_>) -> Option<LocationNode> {
-        let location_id = self.line.line.location_id.clone().unwrap_or_default();
-        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
-        let location_option: Option<repository::location::Location> =
-            loader.load_one(location_id.clone()).await.ok().flatten();
-
-        location_option.map(LocationNode::from_domain)
+    pub async fn location(&self) -> Option<LocationNode> {
+        self.line.location.as_ref().map(|row| {
+            LocationNode::from_domain(Location {
+                location_row: row.clone(),
+            })
+        })
     }
 
     pub async fn comment(&self) -> Option<String> {
@@ -124,21 +120,12 @@ impl StocktakeLineNode {
     }
 
     #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
-    pub async fn inventory_adjustment_reason(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<InventoryAdjustmentReasonNode>> {
-        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
-        let inventory_adjustment_reason_id = match &self.line.line.reason_option_id {
-            None => return Ok(None),
-            Some(inventory_adjustment_reason_id) => inventory_adjustment_reason_id,
-        };
-
-        let result = loader
-            .load_one(inventory_adjustment_reason_id.clone())
-            .await?;
-
-        Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
+    pub async fn inventory_adjustment_reason(&self) -> Option<InventoryAdjustmentReasonNode> {
+        self.line.reason_option.as_ref().map(|row| {
+            InventoryAdjustmentReasonNode::from_domain(ReasonOption {
+                reason_option_row: row.clone(),
+            })
+        })
     }
 
     pub async fn donor_id(&self) -> Option<String> {
@@ -162,15 +149,12 @@ impl StocktakeLineNode {
         Ok(result.map(ItemVariantNode::from_domain))
     }
 
-    pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
-        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
-        let reason_option_id = match &self.line.line.reason_option_id {
-            None => return Ok(None),
-            Some(reason_option_id) => reason_option_id,
-        };
-
-        let result = loader.load_one(reason_option_id.clone()).await?;
-        Ok(result.map(ReasonOptionNode::from_domain))
+    pub async fn reason_option(&self) -> Option<ReasonOptionNode> {
+        self.line.reason_option.as_ref().map(|row| {
+            ReasonOptionNode::from_domain(ReasonOption {
+                reason_option_row: row.clone(),
+            })
+        })
     }
 }
 

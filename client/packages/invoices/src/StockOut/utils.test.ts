@@ -4,40 +4,27 @@ import {
   canAutoAllocate,
   getAllocatedQuantity,
   getDoseQuantity,
+  getManualAllocationAlerts,
   issue,
 } from './utils';
 
 describe('getDoseQuantity', () => {
-  it('calculates allocated doses based on default doses per unit', () => {
+  it('calculates allocated doses based on doses per unit', () => {
     const line = {
       numberOfPacks: 5,
       packSize: 10,
-      defaultDosesPerUnit: 2,
+      dosesPerUnit: 2,
     } as DraftStockOutLineFragment;
 
     const result = getDoseQuantity(line);
     expect(result).toBe(100);
   });
 
-  it('calculates allocated doses based on item variant doses per unit when set', () => {
-    const line = {
-      numberOfPacks: 5,
-      packSize: 10,
-      defaultDosesPerUnit: 2,
-      itemVariant: {
-        dosesPerUnit: 3,
-      },
-    } as DraftStockOutLineFragment;
-
-    const result = getDoseQuantity(line);
-    expect(result).toBe(150);
-  });
-
   it('handles doses per unit of 0, treat as 1 dose per unit', () => {
     const line = {
       numberOfPacks: 5,
       packSize: 10,
-      defaultDosesPerUnit: 0,
+      dosesPerUnit: 0,
     } as DraftStockOutLineFragment;
 
     const result = getDoseQuantity(line);
@@ -47,22 +34,21 @@ describe('getDoseQuantity', () => {
 
 describe('getAllocatedQuantity', () => {
   const draftLines = [
-    { numberOfPacks: 2, packSize: 3, defaultDosesPerUnit: 2 },
+    { numberOfPacks: 2, packSize: 3, dosesPerUnit: 2 },
     {
       numberOfPacks: 5,
       packSize: 10,
-      defaultDosesPerUnit: 2,
-      itemVariant: { dosesPerUnit: 3 },
+      dosesPerUnit: 2,
     },
   ] as DraftStockOutLineFragment[];
 
   it('returns dose quantity when allocating in doses', () => {
     const result = getAllocatedQuantity({
       // line 1 uses default doses per unit, line 2 uses item variant doses per unit
-      draftLines, // line1: 2*3*2=12, line2: 5*10*3=150 == 162
+      draftLines, // line1: 2*3*2=12, line2: 5*10*2=100 == 112
       allocateIn: { type: AllocateInType.Doses },
     });
-    expect(result).toBe(162);
+    expect(result).toBe(112);
   });
 
   it('returns unit quantity when allocating in units', () => {
@@ -112,7 +98,7 @@ describe('issue = doses', () => {
     id: '1',
     numberOfPacks: 2,
     packSize: 10,
-    defaultDosesPerUnit: 2,
+    dosesPerUnit: 2,
   } as DraftStockOutLineFragment;
 
   it('returns the original draft lines if the specified line is not found', () => {
@@ -129,7 +115,7 @@ describe('issue = doses', () => {
     const line2 = {
       id: '2',
       packSize: 5,
-      defaultDosesPerUnit: 2,
+      dosesPerUnit: 2,
     } as DraftStockOutLineFragment;
 
     const draftLines = [line1, line2];
@@ -141,14 +127,11 @@ describe('issue = doses', () => {
     ]);
   });
 
-  it('updates based on item variant units per dose', () => {
+  it('updates based on units per dose', () => {
     const line2 = {
       id: '2',
       packSize: 5,
-      defaultDosesPerUnit: 2,
-      itemVariant: {
-        dosesPerUnit: 3,
-      },
+      dosesPerUnit: 2,
     } as DraftStockOutLineFragment;
 
     const draftLines = [line1, line2];
@@ -156,7 +139,7 @@ describe('issue = doses', () => {
     const result = issue(draftLines, '2', 30, AllocateInType.Doses);
     expect(result).toEqual([
       line1,
-      { ...line2, numberOfPacks: 2 }, // 30 doses / (5 units per pack * 3 dose per unit) = 2 packs
+      { ...line2, numberOfPacks: 3 }, // 30 doses / (5 units per pack * 2 dose per unit) = 3 packs
     ]);
   });
 
@@ -164,7 +147,7 @@ describe('issue = doses', () => {
     const line2 = {
       id: '2',
       packSize: 5,
-      defaultDosesPerUnit: 0,
+      dosesPerUnit: 0,
     } as DraftStockOutLineFragment;
 
     const draftLines = [line1, line2];
@@ -180,7 +163,7 @@ describe('issue = doses', () => {
     const line2 = {
       id: '2',
       packSize: 2,
-      defaultDosesPerUnit: 5,
+      dosesPerUnit: 5,
     } as DraftStockOutLineFragment;
 
     const draftLines = [line1, line2];
@@ -197,7 +180,7 @@ describe('issue = doses', () => {
     const line2 = {
       id: '2',
       packSize: 2,
-      defaultDosesPerUnit: 5,
+      dosesPerUnit: 5,
     } as DraftStockOutLineFragment;
 
     const draftLines = [line1, line2];
@@ -253,6 +236,51 @@ describe('canAutoAllocate ', () => {
   });
 });
 
+describe('getManualAllocationAlerts', () => {
+  const mockFormat = () => '';
+  const mockT = (key: string) => key;
+
+  it('returns empty array when no alerts', () => {
+    const alerts = getManualAllocationAlerts(
+      1,
+      1,
+      createTestLine({}),
+      { type: AllocateInType.Doses },
+      mockFormat,
+      mockT
+    );
+
+    expect(alerts).toEqual([]);
+  });
+  it('returns over-allocated warning when over-allocated', () => {
+    const alerts = getManualAllocationAlerts(
+      1,
+      4,
+      createTestLine({}),
+      { type: AllocateInType.Doses },
+      mockFormat,
+      mockT
+    );
+
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]?.message).toMatch('over-allocated');
+  });
+
+  it('returns partial pack warning when requested quantity is not a whole pack', () => {
+    const alerts = getManualAllocationAlerts(
+      7,
+      7,
+      createTestLine({ packSize: 10, numberOfPacks: 7 }),
+      { type: AllocateInType.Units },
+      mockFormat,
+      mockT
+    );
+
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]?.message).toMatch('partial-pack-warning');
+  });
+});
+
 type TestLineParams = {
   id?: string;
   packSize?: number;
@@ -283,7 +311,7 @@ function createTestLine({
     availablePacks,
     expiryDate,
     stockLineOnHold: onHold,
-    defaultDosesPerUnit: 0,
+    dosesPerUnit: 0,
     vvmStatus: vvmStatus
       ? {
           __typename: 'VvmstatusNode',

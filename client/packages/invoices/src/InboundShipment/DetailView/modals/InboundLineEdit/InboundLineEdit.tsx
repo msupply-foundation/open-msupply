@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Divider,
   useTranslation,
@@ -7,7 +7,6 @@ import {
   useDialog,
   useNotification,
   ModalMode,
-  useConfirmOnLeaving,
   TableProvider,
   createTableStore,
   createQueryParamsStore,
@@ -17,12 +16,16 @@ import {
   PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
-import { InboundLineFragment, useInbound } from '../../../api';
-import { DraftInboundLine } from '../../../../types';
-import { CreateDraft } from '../utils';
+import {
+  InboundLineFragment,
+  useDraftInboundLines,
+  useInbound,
+} from '../../../api';
+
 import { TabLayout } from './TabLayout';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { QuantityTable } from './TabTables';
+import { isInboundPlaceholderRow } from '../../../../utils';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -36,87 +39,6 @@ interface InboundLineEditProps {
   hasVvmStatusesEnabled?: boolean;
   hasItemVariantsEnabled?: boolean;
 }
-
-const useDraftInboundLines = (item: InboundLineItem | null) => {
-  const { data: lines } = useInbound.lines.list(item?.id ?? '');
-  const { id } = useInbound.document.fields('id');
-  const { mutateAsync, isLoading } = useInbound.lines.save();
-  const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
-  const { isDirty, setIsDirty } = useConfirmOnLeaving(
-    'inbound-shipment-line-edit'
-  );
-
-  const defaultPackSize = item?.defaultPackSize || 1;
-
-  useEffect(() => {
-    if (lines && item) {
-      const drafts = lines.map(line =>
-        CreateDraft.stockInLine({
-          item: line.item,
-          invoiceId: line.invoiceId,
-          seed: line,
-          defaultPackSize,
-        })
-      );
-      if (drafts.length === 0)
-        drafts.push(
-          CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize })
-        );
-      setDraftLines(drafts);
-    } else {
-      setDraftLines([]);
-    }
-  }, [lines, item, id, defaultPackSize]);
-
-  const addDraftLine = () => {
-    if (item) {
-      const newLine = CreateDraft.stockInLine({
-        item,
-        invoiceId: id,
-        defaultPackSize,
-      });
-      setIsDirty(true);
-      setDraftLines(draftLines => [...draftLines, newLine]);
-    }
-  };
-
-  const updateDraftLine = useCallback(
-    (patch: Partial<DraftInboundLine> & { id: string }) => {
-      setDraftLines(draftLines => {
-        const batch = draftLines.find(line => line.id === patch.id);
-
-        if (!batch) return draftLines;
-
-        const newBatch = { ...batch, ...patch, isUpdated: true };
-        const index = draftLines.indexOf(batch);
-        draftLines[index] = newBatch;
-        setIsDirty(true);
-        return [...draftLines];
-      });
-    },
-    [setDraftLines, setIsDirty]
-  );
-
-  const saveLines = async () => {
-    if (isDirty) {
-      const { errorMessage } = await mutateAsync(draftLines);
-
-      if (errorMessage) {
-        throw new Error(errorMessage);
-      }
-
-      setIsDirty(false);
-    }
-  };
-
-  return {
-    draftLines,
-    addDraftLine,
-    updateDraftLine,
-    isLoading,
-    saveLines,
-  };
-};
 
 export const InboundLineEdit = ({
   item,
@@ -137,11 +59,17 @@ export const InboundLineEdit = ({
   );
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
-    useDraftInboundLines(currentItem);
+  const {
+    draftLines,
+    addDraftLine,
+    updateDraftLine,
+    removeDraftLine,
+    isLoading,
+    saveLines,
+  } = useDraftInboundLines(currentItem);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
-  const zeroNumberOfPacks = draftLines.some(line => line.numberOfPacks === 0);
+  const zeroNumberOfPacks = draftLines.some(isInboundPlaceholderRow);
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   useEffect(() => {
@@ -154,6 +82,7 @@ export const InboundLineEdit = ({
         isDisabled={isDisabled}
         lines={draftLines}
         updateDraftLine={updateDraftLine}
+        removeDraftLine={removeDraftLine}
         item={currentItem}
         hasItemVariantsEnabled={hasItemVariantsEnabled}
         hasVvmStatusesEnabled={hasVvmStatusesEnabled}
@@ -174,6 +103,7 @@ export const InboundLineEdit = ({
       draftLines={draftLines}
       addDraftLine={addDraftLine}
       updateDraftLine={updateDraftLine}
+      removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
       currency={currency}
       isExternalSupplier={isExternalSupplier}

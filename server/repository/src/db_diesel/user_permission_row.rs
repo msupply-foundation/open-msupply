@@ -65,6 +65,7 @@ pub enum PermissionType {
     // prescription
     PrescriptionQuery,
     PrescriptionMutate,
+    CancelFinalisedInvoices,
     // purchase orders
     PurchaseOrderQuery,
     PurchaseOrderMutate,
