@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { ButtonWithIcon, DialogButton } from '@common/components';
 import { EditIcon, PlusCircleIcon } from '@common/icons';
-import { useIntl, useTranslation } from '@common/intl';
+import {
+  CUSTOM_TRANSLATIONS_NAMESPACE,
+  useIntl,
+  useTranslation,
+} from '@common/intl';
 import { useDialog, useToggle } from '@common/hooks';
 import {
   Box,
@@ -12,32 +16,36 @@ import {
   TooltipTextCell,
   useColumns,
 } from '@openmsupply-client/common';
-import { mapTranslations, Translation } from './helpers';
+import {
+  mapTranslationsToArray,
+  mapTranslationsToObject,
+  Translation,
+} from './helpers';
 
 export const CustomTranslationsModal = ({
   value,
+  update,
 }: {
   value: Record<string, string>;
+  update: (value: Record<string, string>) => Promise<void>;
 }) => {
   const t = useTranslation();
   const defaultTranslation = useTranslation('common');
   const isOpen = useToggle();
   const { Modal } = useDialog({ isOpen: isOpen.isOn, disableBackdrop: true });
   const [translations, setTranslations] = useState(
-    mapTranslations(value, defaultTranslation)
+    mapTranslationsToArray(value, defaultTranslation)
   );
   const { i18n } = useIntl();
 
-  // const translations = mapTranslations(value, defaultTranslation);
-
   const save = async () => {
-    //     const newValue = value; // Validate JSON format
-    //     setValue(newValue);
-    //     await update(newValue);
+    const asObject = mapTranslationsToObject(translations);
+
+    await update(asObject);
     //     // Note - this is still requires the component in question to
     //     // re-render to pick up the new translations
     //     // TODO: Could trigger full refresh on modal save?
-    //     i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
+    i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
   };
 
   return (
@@ -53,13 +61,7 @@ export const CustomTranslationsModal = ({
         cancelButton={
           <DialogButton variant="cancel" onClick={isOpen.toggleOff} />
         }
-        okButton={
-          <DialogButton
-            // disabled={}
-            variant="ok"
-            onClick={save}
-          />
-        }
+        okButton={<DialogButton variant="ok" onClick={save} />}
       >
         <TranslationsTable
           translations={translations}
@@ -73,25 +75,15 @@ export const CustomTranslationsModal = ({
 const TranslationsTable = ({
   translations,
   setTranslations,
-  //   updatePatch,
 }: {
   translations: Translation[];
   setTranslations: (translations: Translation[]) => void;
-  //   updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
 }) => {
   const t = useTranslation();
 
   //   const deleteDose = (id: string) => {
   //     updatePatch({
   //       vaccineCourseDoses: doses.filter(dose => dose.id !== id),
-  //     });
-  //   };
-
-  //   const updateDose: ColumnDataSetter<VaccineCourseDoseFragment> = newData => {
-  //     updatePatch({
-  //       vaccineCourseDoses: doses.map(dose =>
-  //         dose.id === newData.id ? { ...dose, ...newData } : dose
-  //       ),
   //     });
   //   };
 
@@ -151,28 +143,3 @@ const TranslationsTable = ({
     </>
   );
 };
-
-//  <TextArea
-//           onChange={async e => {
-//             const newValue = JSON.parse(e.target.value); // Validate JSON format
-//             setValue(newValue);
-//             await update(newValue);
-//             // Note - this is still requires the component in question to
-//             // re-render to pick up the new translations
-//             // TODO: Could trigger full refresh on modal save?
-//             i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
-//           }}
-//           value={JSON.stringify(value)}
-//           maxRows={10}
-//           minRows={10}
-//           style={{ padding: '0 0 0 50px' }}
-//           slotProps={{
-//             input: {
-//               sx: {
-//                 border: theme => `1px solid ${theme.palette.gray.main}`,
-//                 borderRadius: '5px',
-//                 padding: '3px',
-//               },
-//             },
-//           }}
-//         />

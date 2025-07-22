@@ -7,7 +7,7 @@ export interface Translation {
   custom: string;
 }
 
-export const mapTranslations = (
+export const mapTranslationsToArray = (
   translations: Record<string, string>,
   t: TypedTFunction<LocaleKey>
 ): Translation[] => {
@@ -19,4 +19,15 @@ export const mapTranslations = (
       default: t(key as LocaleKey),
       custom,
     }));
+};
+
+export const mapTranslationsToObject = (
+  translations: Translation[]
+): Record<string, string> => {
+  const asObject = translations.reduce<Record<string, string>>((acc, tr) => {
+    if (tr.custom === tr.default || tr.custom === '') return acc;
+    acc[tr.key] = tr.custom;
+    return acc;
+  }, {});
+  return asObject;
 };

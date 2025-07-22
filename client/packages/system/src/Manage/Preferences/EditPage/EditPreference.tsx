@@ -9,9 +9,6 @@ import {
   PreferenceDescriptionNode,
   useTranslation,
   useNotification,
-  TextArea,
-  useIntl,
-  CUSTOM_TRANSLATIONS_NAMESPACE,
 } from '@openmsupply-client/common';
 import {
   EnumOptions,
@@ -80,7 +77,7 @@ export const EditPreference = ({
       );
 
     case PreferenceValueNodeType.CustomTranslations:
-      return <CustomTranslationsModal value={value} />;
+      return <CustomTranslationsModal value={value} update={update} />;
 
     default:
       try {
