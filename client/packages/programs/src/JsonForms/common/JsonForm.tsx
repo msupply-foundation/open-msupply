@@ -1,6 +1,5 @@
 import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
 import {
-  EncounterNode,
   LocaleKey,
   Typography,
   UnhappyMan,

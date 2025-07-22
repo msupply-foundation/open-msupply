@@ -45,19 +45,16 @@ export const usePrevious = (
     if (!displayPrevious && !defaultToPrevious) return;
 
     if (config.previous) {
-      //   console.log('Getting previous value for path:', path);
-      config.previous.getPrevious?.(path).then((value: PreviousData) => {
-        console.log('Previous value for path', path, value);
-        if (value !== undefined && value !== previousValue) {
-          setPreviousValue(value);
-          //   console.log(path, 'defaultToPrevious', defaultToPrevious);
-          //   console.log(path, 'data', data);
+      config.previous.getPrevious?.(path).then((prev: PreviousData) => {
+        if (prev !== undefined && prev !== previousValue) {
+          setPreviousValue(prev);
+
           if (defaultToPrevious && data === undefined && setValue) {
             // Using a timeout here is very hacky, but, unless we wait for the
             // JSON Forms data to fully initialise before resetting, results in
             // an infinite data update loop. Needs proper debugging and
             // refactoring at some point.
-            setTimeout(() => setValue(value), 500);
+            setTimeout(() => setValue(prev.previousValue), 250);
           }
         }
       });
