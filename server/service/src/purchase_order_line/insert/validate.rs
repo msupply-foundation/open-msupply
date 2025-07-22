@@ -11,7 +11,10 @@ pub fn validate(
     input: &InsertPurchaseOrderLineInput,
     connection: &StorageConnection,
 ) -> Result<(), InsertPurchaseOrderLineError> {
-    if let Some(_) = PurchaseOrderLineRowRepository::new(connection).find_one_by_id(&input.id)? {
+    if PurchaseOrderLineRowRepository::new(connection)
+        .find_one_by_id(&input.id)?
+        .is_some()
+    {
         return Err(InsertPurchaseOrderLineError::PurchaseOrderLineAlreadyExists);
     }
 
