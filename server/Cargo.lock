@@ -3620,6 +3620,8 @@ dependencies = [
  "graphql_preference",
  "graphql_printer",
  "graphql_programs",
+ "graphql_purchase_order",
+ "graphql_purchase_order_line",
  "graphql_repack",
  "graphql_reports",
  "graphql_requisition",
@@ -4061,6 +4063,46 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "log",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_purchase_order"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_purchase_order_line"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
  "repository",
  "serde",
  "serde_json",
