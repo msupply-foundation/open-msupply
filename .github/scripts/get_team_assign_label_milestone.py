@@ -13,6 +13,7 @@ class TeamLabelAndMilestone:
         self.team_labels = {
             label.name: label for label in self.repo.get_labels() if 'team' in label.name
         }
+        self.opened_milestones = self.repo.get_milestones(state='open')
 
     def get_assignees_team_label(self) -> List[str]:
         issue = self.repo.get_issue(self.issue_number)
@@ -65,6 +66,29 @@ class TeamLabelAndMilestone:
             else:
                 print(f"💃💃💃")
 
+    def assign_next_milestone_from_cooldown(self) -> None:
+        issue = self.repo.get_issue(self.issue_number)
+        assignees = [a.login for a in issue.assignees]
+        
+        if not assignees:
+            return
+        if not self.opened_milestones:
+            return
+    
+        if not issue.milestone or 'Cooldown' in issue.milestone.title:
+            today = datetime.now(timezone.utc)
+            future_milestone = None
+            for milestone in self.opened_milestones:
+                if milestone.due_on and milestone.due_on > today:
+                    if not future_milestone or milestone.due_on > future_milestone.due_on:
+                        future_milestone = milestone
+            
+            if future_milestone:
+                print(f"Assigning next milestone: {future_milestone.title}")
+                issue.edit(milestone=future_milestone)
+            else:
+                print("❌ Can't find feature milestone.")
+
 def main():
     github_token = os.getenv('GITHUB_TOKEN')
     repo_name = os.getenv('GITHUB_REPOSITORY')
@@ -74,6 +98,9 @@ def main():
         team_manager = TeamLabelAndMilestone(github_token, repo_name, issue_num)
         team_manager.add_and_remove_labels()
         print("✅ Labels added and removed successfully.")
+
+        team_manager.assign_next_milestone_from_cooldown()
+        print("✅ Milestone assigned successfully.")
             
     except Exception as e:
         print(f"❌ Error: {e}")
