@@ -14,20 +14,21 @@ class TeamLabelAndMilestone:
             label.name: label for label in self.repo.get_labels() if 'team' in label.name
         }
 
-    def get_user_team_label(self) -> str:
-        user = self.github.get_user()
-        user_teams = set()
-        for team in user.get_teams():
-            if team.organization == self.org:
-                user_teams.add(team.slug)
+    def get_assignees_team_label(self) -> List[str]:
+        issue = self.repo.get_issue(self.issue_number)
+        assignees = [a for a in issue.assignees]
 
-        for l in self.team_labels:
-            if any(word in l for word in user_teams):
-                return self.team_labels[l].name
-        return ''
+        assignee_teams = set()
+        for assignee in assignees:
+            for team in self.org.get_teams():
+                team_members = [member.login for member in team.get_members()]
+                if assignee.login in team_members:
+                    assignee_teams.add(team.slug)
+        
+        return [label for label in self.team_labels if any(word in label for word in assignee_teams)]
     
-    def get_team_labels_not_belonging_to_user(self) -> List[str]:
-        team_label = self.get_user_team_label()
+    def get_team_labels_not_belonging_to_assignees(self) -> List[str]:
+        team_label = self.get_assignees_team_label()
         not_team_labels = [l for l in self.team_labels if l != team_label]
         return not_team_labels
     
@@ -37,11 +38,11 @@ class TeamLabelAndMilestone:
     
     def add_and_remove_labels(self) -> None:
         issue_labels = self.get_issue_labels()
-        user_team_label = self.get_user_team_label()
-        not_user_team_labels = self.get_team_labels_not_belonging_to_user()
+        user_team_label = self.get_assignees_team_label()
+        not_user_team_labels = self.get_team_labels_not_belonging_to_assignees()
 
         issue = self.repo.get_issue(self.issue_number)
-        assignees = [a.login for a in issue.assignees]
+        assignees = issue.assignees
 
         if not assignees:
             for label in self.team_labels:
@@ -49,12 +50,13 @@ class TeamLabelAndMilestone:
                     print(f"Removing team label: {label}")
                     issue.remove_from_labels(label)
             return
-
-        if user_team_label and user_team_label not in issue_labels:
-            print(f"Adding team label: {user_team_label}")
-            issue.add_to_labels(user_team_label)
-        else:
-            print(f"🎉🎉🎉")
+        
+        for label in user_team_label:
+            if label not in issue_labels:
+                print(f"Adding team label: {label}")
+                issue.add_to_labels(label)
+            else:
+                print(f"🎉🎉🎉")
 
         for label in not_user_team_labels:
             if label in issue_labels:
