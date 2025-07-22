@@ -16,7 +16,6 @@ import {
   useConfirmationModal,
   useEditModal,
   isEmpty,
-  EncounterNode,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
