@@ -7,7 +7,6 @@ use crate::{
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
-    contact::{ContactService, ContactServiceTrait},
     contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
@@ -186,8 +185,6 @@ pub struct ServiceProvider {
     pub vvm_service: Box<dyn VVMServiceTrait>,
     // Campaign
     pub campaign_service: Box<dyn CampaignServiceTrait>,
-    //
-    pub contact_service: Box<dyn ContactServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -292,7 +289,6 @@ impl ServiceProvider {
             preference_service: Box::new(PreferenceService {}),
             vvm_service: Box::new(VVMService {}),
             campaign_service: Box::new(CampaignService),
-            contact_service: Box::new(ContactService {}),
         }
     }
 

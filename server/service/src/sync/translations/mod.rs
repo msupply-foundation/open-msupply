@@ -15,7 +15,6 @@ pub(crate) mod category;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod cold_storage_type;
-pub(crate) mod contact;
 pub(crate) mod contact_form;
 pub(crate) mod currency;
 pub(crate) mod demographic;
@@ -129,7 +128,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_property::boxed(),
         cold_storage_type::boxed(),
         campaign::boxed(),
-        contact::boxed(),
         // Remote
         location::boxed(),
         location_movement::boxed(),
