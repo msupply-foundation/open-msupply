@@ -27,14 +27,10 @@ export const PurchaseOrder = ({
 
   const columnDefinitions: ColumnDefinition<PurchaseOrdersFragment>[] = [
     {
-      key: 'supplier',
-      label: 'label.supplier',
-      accessor: () => supplierName,
-    },
-    {
       key: 'orderNumber',
       label: 'label.number',
       accessor: ({ rowData }) => rowData.number ?? '',
+      width: 100,
     },
     {
       key: 'createdDatetime',
