@@ -38,6 +38,8 @@ mod program_indicator;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
+mod purchase_order;
+mod purchase_order_line;
 mod reason_option;
 mod reports;
 mod rnr_form;
