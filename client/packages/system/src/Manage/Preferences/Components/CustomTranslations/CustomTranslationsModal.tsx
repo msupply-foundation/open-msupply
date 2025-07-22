@@ -108,12 +108,11 @@ const TranslationsTable = ({
         fullWidth: true,
       },
       setter: input => {
-        setTranslations(translations => {
-          const updatedTranslations = translations.map(tr =>
+        setTranslations(translations =>
+          translations.map(tr =>
             tr.id === input.id ? { ...tr, ...input } : tr
-          );
-          return updatedTranslations;
-        });
+          )
+        );
       },
     },
     {
@@ -124,12 +123,9 @@ const TranslationsTable = ({
           icon={<DeleteIcon sx={{ height: '0.9em' }} />}
           label={t('label.delete')}
           onClick={() =>
-            setTranslations(translations => {
-              const updatedTranslations = translations.filter(
-                tr => tr.id !== rowData.id
-              );
-              return updatedTranslations;
-            })
+            setTranslations(translations =>
+              translations.filter(tr => tr.id !== rowData.id)
+            )
           }
         />
       ),
