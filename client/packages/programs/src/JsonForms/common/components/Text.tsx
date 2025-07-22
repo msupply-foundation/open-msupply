@@ -134,12 +134,7 @@ const UIComponent = (props: ControlProps) => {
   );
   const t = useTranslation();
 
-  const previousEncounterData = usePrevious(
-    path,
-    data,
-    schemaOptions ?? {},
-    onChange
-  );
+  const previousEncounterData = usePrevious(path, data, schemaOptions);
 
   const examples =
     (props.schema as Record<string, string[]>)['examples'] ??

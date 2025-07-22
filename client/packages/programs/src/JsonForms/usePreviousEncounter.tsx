@@ -35,18 +35,15 @@ export const usePreviousEncounter = (
 
   const getPrevious = useCallback(
     async (path: string): Promise<PreviousData | undefined> => {
-      console.log('Getting previous for path:', path);
-      console.log('Ref value', previousEncounter.current);
       if (previousEncounter.current) {
         // Retrieve data from ref store if it exists already
-        console.log('Returning cached previous encounter data for path:', path);
+        // console.log('Returning cached previous encounter data for path:', path);
         return getEncounterData(previousEncounter.current, path);
       }
 
-      console.log('Refetching, prev is currently', previousEncounter.current);
       // Otherwise fetch from API and store in ref
       const result = await refetch();
-      console.log('Refetched encounter:', result.data?.document.data);
+      // console.log('Refetched encounter:', result.data?.document.data);
       const fetchedEncounter = result.data;
       previousEncounter.current = fetchedEncounter?.document.data;
 

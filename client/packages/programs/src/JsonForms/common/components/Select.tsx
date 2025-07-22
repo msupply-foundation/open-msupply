@@ -265,8 +265,7 @@ const useFilteredItems = (
 
 const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
-  const { data, handleChange, label, schema, path, uischema, enabled, config } =
-    props;
+  const { data, handleChange, label, schema, path, uischema, enabled } = props;
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -287,14 +286,9 @@ const UIComponent = (props: ControlProps) => {
     setCustomError(validationError);
   }, [validationError]);
 
-  const previousValue = usePrevious(
-    path,
-    data,
-    schemaOptions,
-    (value: string) => handleChange(path, value)
+  usePrevious(path, data, schemaOptions, (value: string) =>
+    handleChange(path, value)
   );
-
-  console.log('previousValue', previousValue);
 
   if (!props.visible) {
     return null;
