@@ -7,15 +7,18 @@ import { I18nextProviderProps, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { browserLanguageDetector } from './browserLanguageDetector';
 import { createRegisteredContext } from 'react-singleton-context';
+import { Environment } from '@openmsupply-client/config';
 const appVersion = require('../../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
 // Created by webpack DefinePlugin see webpack.config.js
 // Only for web, otherwise default to app version
 declare const LANG_VERSION: string;
 
+export const CUSTOM_TRANSLATIONS_NAMESPACE = 'custom-translations';
 const defaultNS = 'common';
 const minuteInMilliseconds = 60 * 1000;
 const isDevelopment = process.env['NODE_ENV'] === 'development';
+// TODO dont cache pref translation
 const expirationTime = isDevelopment ? 0 : 7 * 24 * 60 * minuteInMilliseconds; // Cache for 7 days, on rebuild we should get a new language version so we can use a reasonably long cache
 
 const languageVersion =
@@ -32,6 +35,7 @@ export function initialiseI18n({
 
   // Electron `main` window translations should be served with relative path
   const loadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
+  const customTranslationsLoadPath = `${Environment.API_HOST}/custom-translations`;
 
   i18next
     .use(initReactI18next) // passes i18n down to react-i18next
@@ -42,6 +46,7 @@ export function initialiseI18n({
         backends: [
           LocalStorageBackend, // primary backend
           HttpApi, // fallback backend
+          HttpApi, // query custom translation overrides from server
         ],
         backendOptions: [
           {
@@ -55,6 +60,10 @@ export function initialiseI18n({
             queryStringParams: {
               v: languageVersion,
             },
+          },
+          {
+            /* options for translation overrides backend (http api request) */
+            loadPath: customTranslationsLoadPath,
           },
         ],
       },

@@ -33,6 +33,8 @@ export type Scalars = {
   DateTime: { input: string; output: string };
   /** A scalar that can represent any JSON value. */
   JSON: { input: any; output: any };
+  /** A scalar that can represent any JSON Object value. */
+  JSONObject: { input: any; output: any };
   /**
    * ISO 8601 calendar date without timezone.
    * Format: %Y-%m-%d
@@ -4222,7 +4224,7 @@ export type InvoiceNode = {
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']['output']>;
   status: InvoiceNodeStatus;
-  store?: Maybe<StoreNode>;
+  store: StoreNode;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   theirReference?: Maybe<Scalars['String']['output']>;
   transportReference?: Maybe<Scalars['String']['output']>;
@@ -6247,7 +6249,7 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
-  customTranslations: Scalars['JSON']['output'];
+  customTranslations: Scalars['JSONObject']['output'];
   genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
@@ -10222,7 +10224,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
-  customTranslations?: InputMaybe<Scalars['JSON']['input']>;
+  customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   genderOptions?: InputMaybe<Array<GenderType>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;

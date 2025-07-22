@@ -9,7 +9,6 @@ import {
   DateUtils,
   UserIcon,
   useFormatDateTime,
-  ClinicianNode,
   useIntlUtils,
   DocumentRegistryCategoryNode,
   SxProps,
@@ -182,9 +181,20 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                     <ClinicianSearchInput
                       onChange={clinician => {
                         setClinician(clinician);
-                        onChange({
-                          clinician: clinician?.value as ClinicianNode,
-                        });
+                        if (!!clinician) {
+                          const { id, lastName, firstName } = clinician.value;
+                          onChange({
+                            clinician: {
+                              __typename: 'ClinicianNode',
+                              id,
+                              lastName,
+                              // JSON schema doesn't support first name as null, map to undefined
+                              firstName: firstName ?? undefined,
+                            },
+                          });
+                        } else {
+                          onChange({ clinician: undefined });
+                        }
                       }}
                       clinicianValue={clinician?.value}
                     />
