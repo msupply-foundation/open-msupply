@@ -74,7 +74,7 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             id: PURCHASE_ORDER_LINE_1.0.to_string(),
             purchase_order_id: "test_purchase_order_a".to_string(),
             line_number: 1,
-            item_link_id: "test_non_item_id".to_string(),
+            item_id: "test_non_item_id".to_string(),
             item_name: None,
             snapshot_soh: None,
             pack_size: None,

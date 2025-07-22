@@ -21,7 +21,7 @@ pub struct LegacyPurchaseOrderLineRow {
     pub purchase_order_id: String,
     pub line_number: i64,
     #[serde(rename = "item_ID")]
-    pub item_link_id: String,
+    pub item_id: String,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub item_name: Option<String>,
@@ -98,15 +98,6 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             expected_delivery_date,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
-        let item_id = match item_id {
-            Some(id) if !id.is_empty() => id,
-            _ => {
-                return Err(anyhow::anyhow!(
-                    "Item ID is required for purchase order line in Open mSupply"
-                ))
-            }
-        };
-
         let result = PurchaseOrderLineRow {
             id,
             purchase_order_id,
@@ -152,7 +143,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             id: id,
             purchase_order_id: purchase_order_id,
             line_number,
-            item_id: Some(item_link_id),
+            item_id: item_link_id,
             item_name,
             snapshot_soh: number_of_packs,
             pack_size,

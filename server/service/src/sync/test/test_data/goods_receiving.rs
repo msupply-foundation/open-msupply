@@ -2,7 +2,6 @@ use crate::sync::test::TestSyncIncomingRecord;
 use chrono::NaiveDate;
 
 use repository::goods_receiving_row::{GoodsReceivingRow, GoodsReceivingStatus};
-use serde_json::json;
 
 const TABLE_NAME: &str = "goods_receiving";
 
