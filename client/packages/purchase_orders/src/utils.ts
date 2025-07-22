@@ -3,7 +3,7 @@ import { PurchaseOrderNodeStatus } from '@common/types';
 
 const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
   NEW: 'label.new',
-  AUTHORISED: 'label.authorized',
+  AUTHORISED: 'label.authorised',
   CONFIRMED: 'label.confirmed',
   FINALISED: 'label.finalised',
 };
