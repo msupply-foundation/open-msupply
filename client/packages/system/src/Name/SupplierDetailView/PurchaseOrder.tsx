@@ -6,12 +6,14 @@ import {
   createTableStore,
   DataTable,
   NothingHere,
+  PurchaseOrderNodeStatus,
   TableProvider,
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrdersFragment } from '../apiModern/operations.generated';
 import { usePurchaseOrders } from '../apiModern';
+import { getStatusTranslator } from '../utils';
 
 interface PurchaseOrderProps {
   supplierName: string;
@@ -50,6 +52,8 @@ export const PurchaseOrder = ({
       key: 'status',
       label: 'label.status',
       accessor: ({ rowData }) => rowData.status ?? '',
+      formatter: status =>
+        getStatusTranslator(t)(status as PurchaseOrderNodeStatus),
     },
     {
       key: 'targetMonths',
