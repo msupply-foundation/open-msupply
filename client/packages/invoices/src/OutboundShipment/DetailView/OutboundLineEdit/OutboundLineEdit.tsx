@@ -105,7 +105,8 @@ export const OutboundLineEdit = ({
     }
     if (
       allocatedQuantity === 0 &&
-      !alerts.some(alert => alert.message === confirmZeroQuantityMessage)
+      !alerts.some(alert => alert.message === confirmZeroQuantityMessage) &&
+      !vvmStatusChanged
     ) {
       setAlerts([{ message: confirmZeroQuantityMessage, severity: 'warning' }]);
       return;
