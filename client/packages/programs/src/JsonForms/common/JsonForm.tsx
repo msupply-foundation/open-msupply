@@ -292,12 +292,12 @@ export const JsonForm: FC<
         '& .input-with-label-row': {
           alignItems: 'flex-start',
           maxWidth: FORM_COLUMN_MAX_WIDTH,
-          whiteSpace: 'nowrap',
+          // whiteSpace: 'nowrap',
         },
         '& h1, h2, h3, h4, h5, h6': {
           width: FORM_LABEL_COLUMN_WIDTH,
           textAlign: 'right',
-          whiteSpace: 'nowrap',
+          // whiteSpace: 'nowrap',
         },
         '&:empty': {
           display: 'none',
