@@ -11,7 +11,7 @@ class TeamLabelAndMilestone:
         self.org = self.github.get_organization(repo_name.split('/')[0])
         self.issue_number = issue_number
         self.team_labels = {
-            label.name: label for label in self.repo.get_labels() if 'team' in label.name
+            label.name: label for label in self.repo.get_labels() if 'Team' in label.name
         }
         self.opened_milestones = self.repo.get_milestones(state='open')
 
