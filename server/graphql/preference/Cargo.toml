@@ -17,4 +17,3 @@ graphql_types = { path = "../types" }
 
 async-graphql = { workspace = true }
 log = { workspace = true }
-serde_json = { workspace = true }

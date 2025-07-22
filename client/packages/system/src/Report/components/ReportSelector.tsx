@@ -20,8 +20,6 @@ interface ReportSelectorProps {
   context?: ReportContext;
   subContext?: string;
   dataId: string;
-  /** Disable the whole control */
-  disabled?: boolean;
   queryParams?: ReportListParams;
   extraArguments?: Record<string, string | number | undefined>;
   sort?: PrintReportSortInput;
@@ -33,7 +31,6 @@ interface ReportSelectorProps {
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   context,
   subContext,
-  disabled = false,
   queryParams,
   extraArguments,
   dataId,
@@ -101,7 +98,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
           label: translateDynamicKey(`report-code.${report.code}`, report.name),
         }))
       : [];
-  }, [data, disabled]);
+  }, [data]);
 
   return (
     <>
@@ -109,7 +106,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
         <CustomButton onPrint={modalOpen.toggleOn} />
       ) : (
         <LoadingButton
-          disabled={initialLoading || disabled}
+          disabled={initialLoading || !dataId}
           isLoading={isPrinting}
           startIcon={<PrinterIcon />}
           onClick={modalOpen.toggleOn}

@@ -132,6 +132,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
 
 impl Upsert for PurchaseOrderLineRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        println!("upserting PO line {:?}", self.id);
         let change_log_id = PurchaseOrderLineRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
@@ -167,7 +168,7 @@ mod tests {
             p.id = purchase_order_id.to_string();
             p.status = PurchaseOrderStatus::New;
             p.store_id = mock_store_a().id.clone();
-            p.created_datetime = chrono::Utc::now().naive_utc();
+            p.created_date = chrono::Utc::now().naive_utc().into();
             p.purchase_order_number = 1;
         });
 
