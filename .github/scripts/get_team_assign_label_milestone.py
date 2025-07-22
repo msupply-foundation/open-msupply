@@ -58,12 +58,13 @@ class TeamLabelAndMilestone:
             else:
                 print(f"🎉🎉🎉")
 
-        for label in not_user_team_labels:
-            if label in issue_labels:
+        labels_to_remove = [label for label in issue_labels if label in not_user_team_labels or "triage" in label]
+        for label in labels_to_remove:
+            if label in not_user_team_labels:
                 print(f"Removing other team label: {label}")
-                issue.remove_from_labels(label)
-            else:
-                print(f"💃💃💃")
+            if "triage" in label:
+                print(f"Removing triage label: {label}")
+            issue.remove_from_labels(label)
 
     def assign_next_milestone_from_cooldown(self) -> None:
         issue = self.repo.get_issue(self.issue_number)
