@@ -89,25 +89,24 @@ export const OutboundLineEdit = ({
 
   const handleSave = async (onSaved: () => boolean | void) => {
     const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');
-    const zeroQuantityVVMStatusMessage = t('messages.zero-quantity-vvm-status');
-    const vvmStatusChanged = draftLines.some(
-      line => line.vvmStatusId !== line.vvmStatus?.id
-    );
+    const unsavedVvmStatusChange = t('messages.unsaved-outbound-vvm-status');
+    const vvmStatusChanged = draftLines.some(line => {
+      const originalId = line.vvmStatusId ?? null;
+      const currentId = line.vvmStatus?.id ?? null;
+      return currentId !== originalId;
+    });
 
-    const hasZeroQuantityAlert = alerts.some(
-      alert =>
-        alert.message === zeroQuantityVVMStatusMessage ||
-        alert.message === confirmZeroQuantityMessage
-    );
-
-    if (allocatedQuantity === 0 && !hasZeroQuantityAlert) {
-      if (vvmStatusChanged) {
-        setAlerts([
-          { message: zeroQuantityVVMStatusMessage, severity: 'warning' },
-        ]);
-        return;
-      }
-
+    if (
+      vvmStatusChanged &&
+      !alerts.some(alert => alert.message === unsavedVvmStatusChange)
+    ) {
+      setAlerts([{ message: unsavedVvmStatusChange, severity: 'warning' }]);
+      return;
+    }
+    if (
+      allocatedQuantity === 0 &&
+      !alerts.some(alert => alert.message === confirmZeroQuantityMessage)
+    ) {
       setAlerts([{ message: confirmZeroQuantityMessage, severity: 'warning' }]);
       return;
     }

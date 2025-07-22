@@ -234,6 +234,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       line.id === id
         ? {
             ...line,
+            numberOfPacks: vvmStatus?.unusable ? 0 : line.numberOfPacks,
             vvmStatus,
           }
         : line

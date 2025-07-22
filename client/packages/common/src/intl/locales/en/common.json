@@ -1852,7 +1852,7 @@
   "messages.zero-line-quantities_many": "The quantity of {{count}} lines has been set to 0",
   "messages.zero-line-quantities_one": "The quantity of 1 line has been set to 0",
   "messages.zero-line-quantities_other": "The quantity of {{count}} lines has been set to 0",
-  "messages.zero-quantity-vvm-status": "VVM status will not be saved as there is no allocated quantity for this item! Click OK again to continue with unsaved changes.",
+  "messages.unsaved-outbound-vvm-status": "VVM status will not be saved as there is no allocated quantity for this item! Click OK again to continue with unsaved changes.",
   "messages.zero-return-quantity-will-delete-lines": "There are no return quantities specified. Click OK again to confirm and remove these lines from the return.",
   "messsages.reports-uploaded-successfully": "Added reports successuflly",
   "monitoring": "Monitoring",
