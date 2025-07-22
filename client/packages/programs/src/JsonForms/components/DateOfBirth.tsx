@@ -99,8 +99,6 @@ const UIComponent = (props: ControlProps) => {
   };
 
   useEffect(() => {
-    console.log('dob', dob);
-
     if (!data) return;
     const naiveDoB = DateUtils.getNaiveDate(
       data[options?.dobFieldName ?? 'dateOfBirth']
