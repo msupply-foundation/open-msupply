@@ -58,6 +58,7 @@ impl fmt::Display for NumberRowType {
             NumberRowType::SupplierReturn => write!(f, "SUPPLIER_RETURN"),
             NumberRowType::CustomerReturn => write!(f, "CUSTOMER_RETURN"),
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
+            NumberRowType::PurchaseOrder => write!(f, "PURCHASE_ORDER"),
         }
     }
 }
