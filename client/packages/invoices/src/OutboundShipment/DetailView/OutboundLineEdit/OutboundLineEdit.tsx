@@ -88,6 +88,21 @@ export const OutboundLineEdit = ({
   const okNextDisabled = (mode === ModalMode.Update && nextDisabled) || !itemId;
 
   const handleSave = async (onSaved: () => boolean | void) => {
+    const zeroQuantityVVMStatusMessage = t('messages.zero-quantity-vvm-status');
+    const vvmStatusChanged = draftLines.some(
+      line => line.vvmStatusId !== line.vvmStatus?.id
+    );
+    if (
+      vvmStatusChanged &&
+      allocatedQuantity === 0 &&
+      !alerts.some(alert => alert.message === zeroQuantityVVMStatusMessage)
+    ) {
+      setAlerts([
+        { message: zeroQuantityVVMStatusMessage, severity: 'warning' },
+      ]);
+      return;
+    }
+
     const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');
     if (
       allocatedQuantity === 0 &&
