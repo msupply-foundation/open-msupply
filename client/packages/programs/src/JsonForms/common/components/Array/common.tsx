@@ -153,9 +153,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
     [uischemas, schema, path, uischema, rootSchema]
   );
 
-  usePrevious(path, inputData, options, (value: string) =>
-    handleChange(path, value)
-  );
+  usePrevious(path, inputData, options, value => handleChange(path, value));
 
   if (!props.visible) {
     return null;
