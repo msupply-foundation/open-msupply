@@ -142,7 +142,7 @@ const TranslationsTable = ({
       id: option.key,
       key: option.key,
       default: option.default,
-      custom: '',
+      custom: option.default,
     };
     setTranslations(translations => [...translations, newLine]);
   };
