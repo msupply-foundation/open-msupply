@@ -63,6 +63,7 @@ export const StockLineForm = ({
     PreferenceKey.AllowTrackingOfStockByDonor,
     PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.ManageVvmStatusForStock,
+    PreferenceKey.SortByVvmStatusThenExpiry,
     PreferenceKey.UseCampaigns
   );
 
@@ -70,6 +71,10 @@ export const StockLineForm = ({
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
+  const showVVMStatus =
+    draft?.item?.isVaccine &&
+    (preferences?.manageVvmStatusForStock ||
+      preferences?.sortByVvmStatusThenExpiry);
 
   const supplierName = draft.supplierName
     ? draft.supplierName
@@ -330,7 +335,7 @@ export const StockLineForm = ({
             text={String(supplierName)}
             textProps={{ textAlign: 'end' }}
           />
-          {draft?.item?.isVaccine && preferences?.manageVvmStatusForStock && (
+          {showVVMStatus && (
             <StyledInputRow
               label={t('label.vvm-status')}
               labelWidth={isNewModal ? '212px' : null}
