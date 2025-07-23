@@ -93,7 +93,7 @@ export const OutboundLineEdit = ({
     const vvmStatusChanged = draftLines.some(line => {
       const originalId = line.vvmStatusId ?? null;
       const currentId = line.vvmStatus?.id ?? null;
-      return currentId !== originalId;
+      return line.numberOfPacks === 0 && currentId !== originalId;
     });
 
     if (
