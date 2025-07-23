@@ -32,6 +32,7 @@ pub struct UpdatePurchaseOrderInput {
     pub supplier_discount_percentage: Option<f64>,
     pub supplier_discount_amount: Option<f64>,
     pub donor_link_id: Option<String>,
+    pub reference: Option<String>,
     pub currency_id: Option<String>,
     pub foreign_exchange_rate: Option<f64>,
     pub shipping_method: Option<String>,

@@ -14,6 +14,7 @@ pub fn generate(
         supplier_discount_percentage,
         supplier_discount_amount,
         donor_link_id,
+        reference,
         currency_id,
         foreign_exchange_rate,
         shipping_method,
@@ -45,10 +46,12 @@ pub fn generate(
 
     let shipping_method = shipping_method.or(purchase_order.shipping_method);
     let comment = comment.or(purchase_order.comment);
+    let reference = reference.or(purchase_order.reference);
 
     Ok(PurchaseOrderRow {
         supplier_name_link_id,
         donor_link_id,
+        reference,
         status,
         confirmed_datetime,
         sent_date,
