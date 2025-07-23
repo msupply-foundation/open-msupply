@@ -3,6 +3,7 @@ import {
   BufferedTextArea,
   BufferedTextInput,
   CopyIcon,
+  DeleteIcon,
   DetailPanelAction,
   DetailPanelPortal,
   DetailPanelSection,
@@ -11,21 +12,39 @@ import {
   PanelLabel,
   PanelRow,
   RnRFormNodeStatus,
+  RouteBuilder,
+  useDeleteConfirmation,
   useFormatDateTime,
+  useNavigate,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { useRnRForm } from '../api';
+import { useDeleteRnRForm } from '../api/hooks/useDeleteRnRForm';
 
 export const SidePanel = ({ rnrFormId }: { rnrFormId: string }) => {
-  const { success } = useNotification();
   const t = useTranslation();
+  const { success } = useNotification();
   const { localisedDate } = useFormatDateTime();
+  const navigate = useNavigate();
   const {
     query: { data },
     bufferedDetails,
     updateRnRForm,
   } = useRnRForm({ rnrFormId });
+  const { deleteRnRForms } = useDeleteRnRForm();
+  const canDelete = data?.status === RnRFormNodeStatus.Draft;
+
+  const deleteAction = async () => {
+    if (!data) return;
+    await deleteRnRForms([data.id]);
+    navigate(
+      RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.RnRForms)
+        .build()
+    );
+  };
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -33,16 +52,38 @@ export const SidePanel = ({ rnrFormId }: { rnrFormId: string }) => {
       .then(() => success(t('message.copy-success'))());
   };
 
+  const onDelete = useDeleteConfirmation({
+    selectedRows: [data],
+    deleteAction,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-rnr-form', {
+        programName: data?.programName,
+        period: data?.periodName,
+      }),
+      deleteSuccess: t('messages.deleted-rnr-form', {
+        count: 1,
+      }),
+    },
+  });
+
   if (!data) return null;
 
   return (
     <DetailPanelPortal
       Actions={
-        <DetailPanelAction
-          icon={<CopyIcon />}
-          title={t('link.copy-to-clipboard')}
-          onClick={copyToClipboard}
-        />
+        <>
+          <DetailPanelAction
+            icon={<DeleteIcon />}
+            title={t('label.delete')}
+            onClick={onDelete}
+            disabled={!canDelete}
+          />
+          <DetailPanelAction
+            icon={<CopyIcon />}
+            title={t('link.copy-to-clipboard')}
+            onClick={copyToClipboard}
+          />
+        </>
       }
     >
       <DetailPanelSection title={t('heading.additional-info')}>
