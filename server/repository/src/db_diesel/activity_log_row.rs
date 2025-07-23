@@ -81,6 +81,7 @@ pub enum ActivityLogType {
     RnrFormCreated,
     RnrFormUpdated,
     RnrFormFinalised,
+    RnrFormDeleted,
     VaccinationCreated,
     VaccinationUpdated,
     VaccinationDeleted,

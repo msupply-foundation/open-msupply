@@ -1,8 +1,27 @@
 package org.openmsupply.client;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Typeface;
 import android.util.Base64;
+import android.webkit.JavascriptInterface;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class ErrorPage {
+    Context mContext;
+
+    ErrorPage(Context c) {
+        mContext = c;
+    }
+
+    private static final String LOG_FILE_NAME = "remote_server.log";
     // the unhappy man svg and the text "Oops! Something's gone wrong"
     // Simple HTML to show the SVG and some text, centred on the page
 
@@ -242,8 +261,57 @@ public class ErrorPage {
             "  </div>\n" +
             "  <div>\n" +
             "    <h5>Oops! Something's gone wrong.</h5>\n" +
+            "     <button\n" +
+            "       style=\"\n" +
+            "         display:block;\n" +
+            "         margin: 0 auto;\n" +
+            "         background:#e95c30;\n" +
+            "         color:#fff;\n" +
+            "         border:none;\n" +
+            "         border-radius:24px;\n" +
+            "         font-size:0.875rem;\n" +
+            "         font-weight:600;\n" +
+            "         height:40px;\n" +
+            "         min-width:115px;\n" +
+            "         padding:0 24px;\n" +
+            "       \"\n" +
+            "       onClick=\"ErrorPageInject.showLogs()\"\n" +
+            "     >Show Log File</button>\n" +
             "  </div>\n" +
             "</div>\n";
     public static String encodedHtml = Base64.encodeToString(html.getBytes(), Base64.NO_PADDING);
 
+    @JavascriptInterface
+    public void showLogs() {
+        try {
+            File file = new File(mContext.getFilesDir(), LOG_FILE_NAME);
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            StringBuilder sb = new StringBuilder();
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
+            }
+            br.close();
+            AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+
+            // Create ScrollView with TextView
+            ScrollView scrollView = new ScrollView(mContext);
+            TextView textView = new TextView(mContext);
+            textView.setText(sb);
+            textView.setPadding(20, 20, 20, 20);
+            textView.setTextSize(12);
+            textView.setTypeface(Typeface.MONOSPACE);
+
+            scrollView.addView(textView);
+
+            builder.setView(scrollView)
+                    .setTitle("Log File")
+                    .setPositiveButton("Close", null)
+                    .show();
+        } catch (IOException e) {
+            Toast.makeText(mContext, "Error: Unable to read log file!", Toast.LENGTH_SHORT).show();
+        }
+    }
 }

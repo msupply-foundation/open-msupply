@@ -49,8 +49,6 @@ use graphql_plugin::{
 use graphql_preference::{PreferenceMutations, PreferenceQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
-use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
-use graphql_purchase_order_line::PurchaseOrderLineQueries;
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
@@ -59,7 +57,6 @@ use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
-use graphql_contact::ContactQueries;
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 use repository::StorageConnectionManager;
@@ -158,7 +155,6 @@ impl CentralServerQueries {
 }
 #[derive(MergedObject, Default, Clone)]
 pub struct Queries(
-    pub ContactQueries,
     pub InvoiceQueries,
     pub InvoiceLineQueries,
     pub LocationQueries,
@@ -187,14 +183,11 @@ pub struct Queries(
     pub CentralServerQueries,
     pub VVMQueries,
     pub CampaignQueries,
-    pub PurchaseOrderQueries,
-    pub PurchaseOrderLineQueries,
 );
 
 impl Queries {
     pub fn new() -> Queries {
         Queries(
-            ContactQueries,
             InvoiceQueries,
             InvoiceLineQueries,
             LocationQueries,
@@ -223,8 +216,6 @@ impl Queries {
             CentralServerQueries,
             VVMQueries,
             CampaignQueries,
-            PurchaseOrderQueries,
-            PurchaseOrderLineQueries,
         )
     }
 }
@@ -254,7 +245,6 @@ pub struct Mutations(
     pub ContactFormMutations,
     pub VVMMutations,
     pub ClinicianMutations,
-    pub PurchaseOrderMutations,
 );
 
 impl Mutations {
@@ -283,7 +273,6 @@ impl Mutations {
             ContactFormMutations,
             VVMMutations,
             ClinicianMutations,
-            PurchaseOrderMutations,
         )
     }
 }

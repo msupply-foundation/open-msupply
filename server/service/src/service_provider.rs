@@ -7,7 +7,6 @@ use crate::{
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
-    contact::{ContactService, ContactServiceTrait},
     contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
@@ -50,8 +49,6 @@ use crate::{
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
     },
-    purchase_order::{PurchaseOrderService, PurchaseOrderServiceTrait},
-    purchase_order_line::{PurchaseOrderLineService, PurchaseOrderLineServiceTrait},
     repack::{RepackService, RepackServiceTrait},
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{
@@ -188,11 +185,6 @@ pub struct ServiceProvider {
     pub vvm_service: Box<dyn VVMServiceTrait>,
     // Campaign
     pub campaign_service: Box<dyn CampaignServiceTrait>,
-    // Purchase Orders
-    pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
-    pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
-    // Purchase Orders
-    pub contact_service: Box<dyn ContactServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -297,9 +289,6 @@ impl ServiceProvider {
             preference_service: Box::new(PreferenceService {}),
             vvm_service: Box::new(VVMService {}),
             campaign_service: Box::new(CampaignService),
-            purchase_order_service: Box::new(PurchaseOrderService),
-            purchase_order_line_service: Box::new(PurchaseOrderLineService),
-            contact_service: Box::new(ContactService {}),
         }
     }
 

@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{RnRFormLineRow, RnRFormLowStock};
+use repository::{RnRFormLineDelete, RnRFormLineRow, RnRFormLowStock};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -143,4 +143,12 @@ pub(crate) fn test_v6_records() -> Vec<TestSyncOutgoingRecord> {
             push_data: json!(rnr_form_line_with_expiry()),
         },
     ]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        RNR_FORM_LINE_1.0,
+        RnRFormLineDelete(RNR_FORM_LINE_1.0.to_string()),
+    )]
 }
