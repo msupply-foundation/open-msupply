@@ -64,7 +64,7 @@ export const useUrlQueryParams = ({
     if (!initialSort) return;
 
     // Don't want to override existing sort
-    if (!!urlQuery['sort']) return;
+    if (urlQuery['sort']) return;
 
     const { key: sort, dir } = initialSort;
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
