@@ -1,6 +1,6 @@
 import sys
 import os
-from typing import List
+from typing import List, Set
 from github import Github
 from datetime import datetime, timezone
 
@@ -19,20 +19,18 @@ class TeamLabelAndMilestone:
         issue = self.repo.get_issue(self.issue_number)
         assignees = [a for a in issue.assignees]
 
-        assignee_teams = set()
+        assignee_teams: Set[str] = set()
         for assignee in assignees:
             for team in self.org.get_teams():
                 team_members = [member.login for member in team.get_members()]
                 if assignee.login in team_members:
                     assignee_teams.add(team.slug)
-        print(f"Assignee_teams: {assignee_teams}")
-        print(f"Teams: {[label for label in self.team_labels if any(word in label for word in assignee_teams)]}")
 
-        return [label for label in self.team_labels if any(word in label for word in assignee_teams)]
+        return [label for label in self.team_labels if any(word.lower() in label.lower() for word in assignee_teams)]
 
     def get_team_labels_not_belonging_to_assignees(self) -> List[str]:
         team_label = self.get_assignees_team_labels()
-        return [label for label in self.team_labels if label not in team_label]
+        return [label for label in self.team_labels if label.lower() not in [l.lower() for l in team_label]]
 
     def get_issue_labels(self) -> List[str]:
         issue = self.repo.get_issue(self.issue_number)
@@ -42,6 +40,8 @@ class TeamLabelAndMilestone:
         issue_labels = self.get_issue_labels()
         user_team_label = self.get_assignees_team_labels()
         not_user_team_labels = self.get_team_labels_not_belonging_to_assignees()
+        print(f"User team labels: {user_team_label}")
+        print(f"Not user team labels: {not_user_team_labels}")
 
         issue = self.repo.get_issue(self.issue_number)
         assignees = issue.assignees
@@ -54,7 +54,6 @@ class TeamLabelAndMilestone:
             return
 
         for label in user_team_label:
-            print(f"Adding label: {label} user team label {user_team_label}")
             if label not in issue_labels:
                 print(f"Adding team label: {label}")
                 issue.add_to_labels(label)
