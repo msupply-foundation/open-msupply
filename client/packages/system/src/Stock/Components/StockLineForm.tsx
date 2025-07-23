@@ -32,6 +32,7 @@ import {
   DonorSearchInput,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
+  VVMStatusSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
 import { ItemVariantInput, useIsItemVariantsEnabled } from '../../Item';
@@ -332,10 +333,14 @@ export const StockLineForm = ({
           {draft?.item?.isVaccine && preferences?.manageVvmStatusForStock && (
             <StyledInputRow
               label={t('label.vvm-status')}
+              labelWidth={isNewModal ? '212px' : null}
               Input={
-                <BufferedTextInput
-                  disabled
-                  value={draft.vvmStatus?.description ?? ''}
+                <VVMStatusSearchInput
+                  selected={draft?.vvmStatus ?? null}
+                  onChange={vvmStatus => onUpdate({ vvmStatus })}
+                  disabled={!isNewModal}
+                  width={!isNewModal ? 160 : undefined}
+                  useDefault
                 />
               }
             />
