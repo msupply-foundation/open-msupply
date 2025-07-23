@@ -3,9 +3,11 @@ import React, { ReactElement, useEffect } from 'react';
 import { Details } from '../Details';
 import { useBreadcrumbs, useParams } from '@openmsupply-client/common';
 import { useName } from '../api';
+import { Contacts } from './Contacts';
 
 enum SuppliersTabValue {
   Details = 'details',
+  Contacts = 'contacts',
 }
 
 export const SupplierDetailView = (): ReactElement => {
@@ -21,6 +23,10 @@ export const SupplierDetailView = (): ReactElement => {
     {
       Component: <Details nameId={id ?? ''} type="supplier" />,
       value: SuppliersTabValue.Details,
+    },
+    {
+      Component: <Contacts nameId={id ?? ''} />,
+      value: SuppliersTabValue.Contacts,
     },
   ];
 
