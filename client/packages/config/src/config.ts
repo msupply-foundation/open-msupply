@@ -4,6 +4,7 @@ declare const FEATURE_EXAMPLE: boolean;
 // `yarn start -- -- -env LOAD_REMOTE_PLUGINS=true`
 declare const LOAD_REMOTE_PLUGINS: boolean;
 declare const FEATURE_PRINTER_SETTINGS: boolean;
+declare const PURCHASE_ORDERS: boolean;
 
 // For production, API is on the same domain/ip and port as web app, available through sub-route
 // i.e. web app is on https://my.openmsupply.com/, then graphql will be available https://my.openmsupply.com/graphql
@@ -55,6 +56,8 @@ export const Environment = {
     typeof FEATURE_PRINTER_SETTINGS === 'undefined'
       ? false
       : FEATURE_PRINTER_SETTINGS,
+  PURCHASE_ORDERS:
+    typeof PURCHASE_ORDERS === 'undefined' ? false : PURCHASE_ORDERS,
 };
 
 export default Environment;

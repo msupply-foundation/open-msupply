@@ -16,6 +16,7 @@ pub enum PrefKey {
     AllowTrackingOfStockByDonor,
     GenderOptions,
     ShowContactTracing,
+    UseCampaigns,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
