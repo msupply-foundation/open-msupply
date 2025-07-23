@@ -48,6 +48,7 @@ impl PurchaseOrderNodeType {
 }
 
 #[derive(InputObject)]
+#[graphql(name = "UpdatePurchaseOrderInput")]
 pub struct UpdateInput {
     pub id: String,
     pub supplier_id: Option<String>,
@@ -110,6 +111,7 @@ impl UpdateInput {
 }
 
 #[derive(Union)]
+#[graphql(name = "UpdatePurchaseOrderResponse")]
 pub enum UpdateResponse {
     Response(IdResponse),
 }
