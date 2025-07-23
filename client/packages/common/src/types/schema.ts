@@ -1383,10 +1383,32 @@ export type ConsumptionOptionsInput = {
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type ContactConnector = {
+  __typename: 'ContactConnector';
+  nodes: Array<ContactNode>;
+};
+
 export enum ContactFormNodeType {
   Feedback = 'FEEDBACK',
   Support = 'SUPPORT',
 }
+
+export type ContactNode = {
+  __typename: 'ContactNode';
+  address1?: Maybe<Scalars['String']['output']>;
+  address2?: Maybe<Scalars['String']['output']>;
+  category1?: Maybe<Scalars['String']['output']>;
+  category2?: Maybe<Scalars['String']['output']>;
+  category3?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  country?: Maybe<Scalars['String']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
+  firstName: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  lastName: Scalars['String']['output'];
+  phone?: Maybe<Scalars['String']['output']>;
+  position?: Maybe<Scalars['String']['output']>;
+};
 
 export type ContactTraceConnector = {
   __typename: 'ContactTraceConnector';
@@ -1457,6 +1479,8 @@ export type ContactTraceSortInput = {
   /** Sort query result by `key` */
   key: ContactTraceSortFieldInput;
 };
+
+export type ContactsResponse = ContactConnector;
 
 export type CreateInventoryAdjustmentError = {
   __typename: 'CreateInventoryAdjustmentError';
@@ -6585,6 +6609,7 @@ export type Queries = {
   /** Query omSupply "cold_storage_type" entries */
   coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
+  contacts: ContactsResponse;
   currencies: CurrenciesResponse;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
@@ -6873,6 +6898,11 @@ export type QueriesContactTracesArgs = {
   filter?: InputMaybe<ContactTraceFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ContactTraceSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesContactsArgs = {
+  nameId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
