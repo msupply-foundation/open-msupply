@@ -27,6 +27,7 @@ import {
   unrankedToolbarTester,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
+import { usePreviousEncounter } from '@openmsupply-client/programs/src/JsonForms/usePreviousEncounter';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
@@ -38,7 +39,6 @@ import { ScheduleNextEncounterModal } from './ScheduleNextEncounterModal';
 import { usePatientVaccineCard } from '../../Vaccination/api/usePatientVaccineCard';
 import { getNextVaccinationEncounterDate } from './helpers';
 import { useSaveWithStatusChange } from './useSaveWithStatusChange';
-import { usePreviousEncounter } from 'packages/programs/src/JsonForms/usePreviousEncounter';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
