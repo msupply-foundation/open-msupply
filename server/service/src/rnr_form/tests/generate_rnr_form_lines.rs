@@ -1,10 +1,11 @@
 #[cfg(test)]
 mod generate_rnr_form_lines {
     use chrono::NaiveDate;
+    use pretty_assertions::assert_eq;
     use repository::mock::{
         item_query_test1, mock_item_a, mock_master_list_program_b, mock_name_invad,
-        mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_program_b, mock_rnr_form_a,
-        MockData,
+        mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_period_2_d, mock_program_b,
+        mock_rnr_form_a, MockData,
     };
     use repository::mock::{mock_store_a, MockDataInserts};
     use repository::test_db::setup_all_with_data;
@@ -92,7 +93,7 @@ mod generate_rnr_form_lines {
             line,
             RnRFormLineRow {
                 id: line_id,
-                rnr_form_id,
+                rnr_form_id: rnr_form_id.clone(),
                 item_link_id: item_query_test1().id,
                 requisition_line_id: None,
                 initial_balance: 2.0,
@@ -119,6 +120,52 @@ mod generate_rnr_form_lines {
                 comment: None,
                 confirmed: false,
             }
+        );
+
+        let result = generate_rnr_form_lines(
+            &context,
+            &context.store_id,
+            &rnr_form_id,
+            &mock_rnr_form_a().program_id,
+            &mock_master_list_program_b().master_list.id,
+            mock_period_2_d(),
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(result.len(), 1);
+        let line = result[0].clone();
+        let line_id = line.id.clone();
+        assert_eq!(
+            line,
+            RnRFormLineRow {
+                id: line_id,
+                rnr_form_id,
+                item_link_id: item_query_test1().id,
+                requisition_line_id: None,
+                initial_balance: 3.0,
+                snapshot_quantity_received: 0.0,
+                snapshot_quantity_consumed: 0.0,
+                snapshot_adjustments: 0.0,
+                stock_out_duration: 0,
+                adjusted_quantity_consumed: 0.0,
+                average_monthly_consumption: 0.0,
+                previous_monthly_consumption_values: "".to_string(),
+                final_balance: 3.0,
+                entered_quantity_received: None,
+                entered_quantity_consumed: None,
+                entered_adjustments: None,
+                entered_losses: None,
+                minimum_quantity: 0.0,
+                maximum_quantity: 0.0,
+                calculated_requested_quantity: 0.0,
+                low_stock: RnRFormLowStock::Ok,
+                entered_requested_quantity: None,
+                expiry_date: None,
+                comment: None,
+                confirmed: false,
+            },
+            "If the new RNR form's period is not immediately after the previous form's period, do not use the previous form in calculations"
         );
     }
 

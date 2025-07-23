@@ -178,6 +178,11 @@ fn validate(
         if form.rnr_form_row.status != RnRFormStatus::Finalised {
             return Err(InsertRnRFormError::PreviousRnRFormNotFinalised);
         }
+
+        // If the the previous form was from many periods ago, don't use it in subsequent calculations
+        if this_period - previous_period > 1 {
+            return Ok((None, period, master_list_id));
+        }
     }
 
     Ok((most_recent_form, period, master_list_id))
