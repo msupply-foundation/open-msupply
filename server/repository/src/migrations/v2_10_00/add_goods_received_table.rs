@@ -46,10 +46,8 @@ impl MigrationFragment for Migrate {
                     supplier_reference TEXT,
                     donor_link_id TEXT, -- references name(id) via name_link(id)
                     created_datetime {DATETIME} NOT NULL, -- corresponds to OG "entry_date"
-                    modified_datetime {DATETIME} NOT NULL, 
                     finalised_datetime {DATETIME},
-                    created_by TEXT, --- corresponds to OG "user_id_created"
-                    modified_by TEXT --- corresponds to OG "user_id_modified"
+                    created_by TEXT -- corresponds to OG "user_id_created"
                 );
             "#
         )?;
