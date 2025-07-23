@@ -69,7 +69,7 @@ mod test {
         let po = inline_init(|p: &mut PurchaseOrderRow| {
             p.id = "test_po_1".to_string();
             p.store_id = mock_store_a().id;
-            p.created_date = chrono::Utc::now().naive_utc().into();
+            p.created_datetime = chrono::Utc::now().naive_utc().into();
             p.status = repository::PurchaseOrderStatus::New;
             p.purchase_order_number = 1;
         });
