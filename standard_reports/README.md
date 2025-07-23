@@ -224,7 +224,7 @@ By default, running this command will generate and open an html file of the repo
 
 This command uses a `test-config.json` file located in the reports dir containing all arguments used to generate the report.
 
-A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json file`
+A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json` file.
 
 ### Toggle Report
 
