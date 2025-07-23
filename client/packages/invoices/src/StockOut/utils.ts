@@ -128,11 +128,18 @@ export const issue = (
   if (!foundRow) return draftLines;
   const newDraftLines = [...draftLines];
 
-  const numberOfPacks = quantityToPacks(allocateIn, quantity, foundRow);
+  const enteredPacks = quantityToPacks(allocateIn, quantity, foundRow);
+
+  const numberOfPacks = allowPartialPacks
+    ? enteredPacks
+    : Math.ceil(enteredPacks);
 
   newDraftLines[foundRowIdx] = {
     ...foundRow,
-    numberOfPacks: allowPartialPacks ? numberOfPacks : Math.ceil(numberOfPacks),
+    numberOfPacks:
+      numberOfPacks > foundRow.availablePacks
+        ? Math.floor(foundRow.availablePacks)
+        : numberOfPacks,
   };
   return newDraftLines;
 };
@@ -303,7 +310,7 @@ export const getManualAllocationAlerts = (
 ): StockOutAlert[] => {
   const alerts: StockOutAlert[] = [];
 
-  if (allocatedQuantity > requestedQuantity)
+  if (allocatedQuantity !== requestedQuantity)
     alerts.push({
       message: t('messages.over-allocated-line', {
         quantity: format(allocatedQuantity),

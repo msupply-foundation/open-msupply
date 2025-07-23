@@ -37,18 +37,27 @@
     <td class="table_number">{{costPricePerPack}}</td>
     <td class="table_number">{{line.snapshotNumberOfPacks | round( precision=2)}}</td>
 
-    {% if line.countedNumberOfPacks %}
-    {% set_global Vnumofpackscounted=line.countedNumberOfPacks %}
+
+    <!-- Counted packs and potential variance should only show if stock line has been counted -->
+    {% if line.countedNumberOfPacks is number %}
+
+      {% set_global Vnumofpackscounted=line.countedNumberOfPacks %}
+      {% set Vvariance=Vnumofpackscounted - line.snapshotNumberOfPacks %}
+      {% set VvarianceValue=Vvariance * costPricePerPack %}
+
+      <!-- Handle -0 -->
+      {% if VvarianceValue == -0 %}  {% set VvarianceValue=0 %}  {% endif %}
+
+      <td class="table_number">{{line.countedNumberOfPacks}}</td>
+      <td class="table_number">{{Vvariance | round(precision=2)}}</td>
+      <td class="table_number">{{VvarianceValue | round(precision=2)}}</td>
     {% else %}
-    {% set_global Vnumofpackscounted=0 %}
+      {% set VvarianceValue=0 %}
+
+      <td class="table_number">-</td>
+      <td class="table_number">-</td>
+      <td class="table_number">-</td>
     {% endif %}
-
-    <td class="table_number">{{Vnumofpackscounted}}</td>
-
-    {% set Vvariance=Vnumofpackscounted - line.snapshotNumberOfPacks %}
-    {% set VvarianceValue=Vvariance * costPricePerPack %}
-    <td class="table_number">{{Vvariance | round( precision=2)}}</td>
-    <td class="table_number">{{VvarianceValue | round( precision=2)}}</td>
 
     {% if line.reasonOption.id %}
     <td  class="table_text">{{line.reasonOption.reason}}</td>
