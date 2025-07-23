@@ -12,11 +12,13 @@ export interface TypedTFunction<Keys> {
   (key: Keys, options?: TOptions<Record<string, unknown>> | string): string;
 }
 
-export const useTranslation = (): TypedTFunction<LocaleKey> => {
+export const useTranslation = (
+  namespace: string = CUSTOM_TRANSLATIONS_NAMESPACE
+): TypedTFunction<LocaleKey> => {
   const { i18n } = useIntl();
   // Use custom namespace to apply Global Preference translation overrides.
   // Otherwise defaults to values in "common.json"
-  const { t } = useTranslationNext(CUSTOM_TRANSLATIONS_NAMESPACE, { i18n });
+  const { t } = useTranslationNext(namespace, { i18n });
 
   return useCallback(
     (key, opts) => {
