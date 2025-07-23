@@ -135,6 +135,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut item_variant::test_pull_upsert_records());
     test_records.append(&mut packaging_variant::test_pull_upsert_records());
     test_records.append(&mut system_log::test_pull_upsert_records());
+    test_records.append(&mut contact_form::test_pull_upsert_records());
     test_records.append(&mut backend_plugin::test_pull_upsert_records());
     test_records.append(&mut om_report::test_pull_upsert_records());
     test_records.append(&mut om_form_schema::test_pull_upsert_records());
