@@ -17,14 +17,17 @@ table! {
         purchase_order_id -> Text,
         line_number -> BigInt,
         item_link_id -> Text,
-        item_name -> Nullable<Text>,
-        number_of_packs ->  Nullable<Double>,
-        pack_size ->  Nullable<Double>,
-        requested_quantity ->  Nullable<Double>,
-        authorised_quantity ->  Nullable<Double>,
-        total_received ->  Nullable<Double>,
-        requested_delivery_date ->  Nullable<Date>,
-        expected_delivery_date ->  Nullable<Date>,
+        item_name -> Text,
+        requested_pack_size -> Double,
+        requested_number_of_units -> Double,
+        authorised_number_of_units -> Nullable<Double>,
+        received_number_of_units -> Double,
+        requested_delivery_date -> Nullable<Date>,
+        expected_delivery_date -> Nullable<Date>,
+        soh_in_units -> Double,
+        supplier_item_code -> Nullable<Text>,
+        price_per_pack_before_discount -> Double,
+        discount_percentage -> Double,
     }
 }
 
@@ -44,14 +47,17 @@ pub struct PurchaseOrderLineRow {
     pub purchase_order_id: String,
     pub line_number: i64,
     pub item_link_id: String,
-    pub item_name: Option<String>,
-    pub number_of_packs: Option<f64>,
-    pub pack_size: Option<f64>,
-    pub requested_quantity: Option<f64>,
-    pub authorised_quantity: Option<f64>,
-    pub total_received: Option<f64>,
+    pub item_name: String,
+    pub requested_pack_size: f64,
+    pub requested_number_of_units: f64,
+    pub authorised_number_of_units: Option<f64>,
+    pub received_number_of_units: f64,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub soh_in_units: f64,
+    pub supplier_item_code: Option<String>,
+    pub price_per_pack_before_discount: f64,
+    pub discount_percentage: f64,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {
@@ -132,7 +138,6 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
 
 impl Upsert for PurchaseOrderLineRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        println!("upserting PO line {:?}", self.id);
         let change_log_id = PurchaseOrderLineRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
