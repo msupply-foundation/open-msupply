@@ -1,19 +1,17 @@
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
-};
-
 use super::{
     name_link_row::name_link, name_row::name, period_row::period,
     period_schedule_row::period_schedule, program_row::program, rnr_form_row::rnr_form::dsl::*,
     store_row::store,
 };
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
+};
 
 use chrono::NaiveDateTime;
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-
-use diesel::prelude::*;
 
 table! {
     rnr_form (id) {
@@ -124,11 +122,34 @@ impl<'a> RnRFormRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, rnr_form_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(rnr_form)
-            .filter(id.eq(rnr_form_id))
+    pub fn delete(&self, rnr_form_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(rnr_form_id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
+        diesel::delete(rnr_form.filter(id.eq(rnr_form_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RnRFormDelete(pub String);
+// For tests only
+impl Delete for RnRFormDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        RnRFormRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            RnRFormRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }
 
