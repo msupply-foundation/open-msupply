@@ -195,7 +195,7 @@ mod insert {
                     supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
                     // RNR form A already exists with this period
-                    period_id: mock_period_2_a().id,
+                    period_id: mock_period_2_b().id,
                 }
             ),
             Err(InsertRnRFormError::RnRFormAlreadyExistsForPeriod)
@@ -211,10 +211,10 @@ mod insert {
                     supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
                     // Previous form was from period A, skipping period B
-                    period_id: mock_period_2_c().id,
+                    period_id: mock_period_2_a().id,
                 }
             ),
-            Err(InsertRnRFormError::PeriodNotNextInSequence)
+            Err(InsertRnRFormError::PeriodMustBeLaterThanLastUsed)
         );
 
         // PreviousRnRFormNotFinalised
@@ -227,7 +227,7 @@ mod insert {
                     supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
                     // RNR form for period A still in draft
-                    period_id: mock_period_2_b().id,
+                    period_id: mock_period_2_c().id,
                 }
             ),
             Err(InsertRnRFormError::PreviousRnRFormNotFinalised)
