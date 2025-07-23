@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   Autocomplete,
   LocaleKey,
-  Typography,
   useIntl,
   useTheme,
   useTranslation,
@@ -42,7 +41,8 @@ export const TranslationSearchInput = ({
           default: defaultT(k as LocaleKey),
         }))
     );
-  }, [i18n, defaultT, existingKeys]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingKeys.length]);
 
   return (
     <Autocomplete
@@ -53,8 +53,8 @@ export const TranslationSearchInput = ({
       sx={{ width: '100%' }}
       renderOption={(props, option) => (
         <li {...props} key={option.key} style={{ display: 'flex', gap: '8px' }}>
-          <Typography sx={{ color: 'grey' }}>{option.key}</Typography>
-          <Typography>{option.default}</Typography>
+          <span style={{ color: 'grey' }}>{option.key}</span>
+          {option.default}
         </li>
       )}
       filterOptions={(options, { inputValue }) =>

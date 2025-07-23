@@ -63,7 +63,7 @@ export const CustomTranslationsModal = ({
   const defaultTranslation = useTranslation('common');
   const { i18n } = useIntl();
 
-  const { Modal } = useDialog({ isOpen: true, disableBackdrop: true });
+  const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
 
   const [loading, setLoading] = useState(false);
   const [translations, setTranslations] = useState(
