@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Autocomplete,
   Tooltip,
@@ -11,7 +11,6 @@ interface VVMStatusSearchInputProps {
   disabled?: boolean;
   width?: number | string;
   useDefault?: boolean;
-  setDefaultVal?: (defaultValue?: VvmStatusFragment) => void;
 }
 
 export const VVMStatusSearchInput = ({
@@ -19,19 +18,22 @@ export const VVMStatusSearchInput = ({
   width,
   onChange,
   disabled,
-  setDefaultVal,
   useDefault = false,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useVvmStatusesEnabled();
 
-  if (!data) return null;
+  const defaultOption =
+    useDefault && data ? getHighestVvmStatusLevel(data) : null;
+  useMemo(() => {
+    if (useDefault && !selected && defaultOption) {
+      const defaultVvm = data?.find(status => status.id === defaultOption?.id);
+      onChange(defaultVvm);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useDefault, selected, data, defaultOption]);
 
-  const defaultOption = useDefault ? getHighestVvmStatusLevel(data) : null;
-  if (useDefault && setDefaultVal) {
-    const defaultVvm = data.find(status => status.id === defaultOption?.id);
-    setDefaultVal(defaultVvm);
-  }
+  if (!data) return null;
 
   return (
     <Tooltip title={selected?.description ?? ''} placement="top">
