@@ -5,26 +5,17 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useVvmStatusesEnabled, VvmStatusFragment } from '../../api';
-
-type VvmStatusOption = {
-  id: string;
-  code: string;
-  description: string;
-  level: number;
-  unusable: boolean;
-};
-
 interface VVMStatusSearchInputProps {
-  selectedId: string | null;
-  onChange: (variantId: string | null) => void;
+  selected: VvmStatusFragment | null;
+  onChange: (vvmStatus?: VvmStatusFragment | null) => void;
   disabled?: boolean;
   width?: number | string;
   useDefault?: boolean;
-  setDefaultVal?: (defaultValue: string) => void;
+  setDefaultVal?: (defaultValue?: VvmStatusFragment) => void;
 }
 
 export const VVMStatusSearchInput = ({
-  selectedId,
+  selected,
   width,
   onChange,
   disabled,
@@ -36,19 +27,10 @@ export const VVMStatusSearchInput = ({
 
   if (!data) return null;
 
-  const options: VvmStatusOption[] = data.map((status: VvmStatusFragment) => ({
-    id: status.id,
-    code: status.code,
-    description: status.description,
-    level: status.level,
-    unusable: status.unusable,
-  }));
-
-  const selected = options.find(option => option.id === selectedId) ?? null;
-  const defaultOption = useDefault ? getHighestVvmStatusLevel(options) : null;
-
-  if (useDefault && defaultOption && setDefaultVal) {
-    setDefaultVal(defaultOption.id);
+  const defaultOption = useDefault ? getHighestVvmStatusLevel(data) : null;
+  if (useDefault && setDefaultVal) {
+    const defaultVvm = data.find(status => status.id === defaultOption?.id);
+    setDefaultVal(defaultVvm);
   }
 
   return (
@@ -58,8 +40,10 @@ export const VVMStatusSearchInput = ({
         popperMinWidth={Math.min(Number(width), 200)}
         value={selected ?? defaultOption}
         loading={isLoading}
-        onChange={(_, option) => onChange(option?.id ?? null)}
-        options={options}
+        onChange={(_, option) => {
+          onChange(option);
+        }}
+        options={data}
         getOptionLabel={option => option.description ?? ''}
         noOptionsText={t('messages.no-vvm-statuses')}
         isOptionEqualToValue={(option, value) => option.id === value?.id}
@@ -72,7 +56,7 @@ export const VVMStatusSearchInput = ({
   );
 };
 
-const getHighestVvmStatusLevel = (statuses: VvmStatusOption[]) => {
+const getHighestVvmStatusLevel = (statuses: VvmStatusFragment[]) => {
   const usableStatuses = statuses.filter(status => !status.unusable);
   usableStatuses.sort((a, b) => a.level - b.level);
   return usableStatuses[usableStatuses.length - 1];
