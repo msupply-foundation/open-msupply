@@ -5,7 +5,9 @@ CREATED_TAGS=()
 AFFECTED_BRANCHES=()
 
 # Create tags for RC and Develop branches
+# - Check out branch type (RC or develop)
 # - Grab package version from package.json
+# - Clean the version by removing any suffixes like -develop, -rc, etc.
 # - Get latest commit hash and its date
 # - Prepend 'v' to the package version if it doesn't exist
 # - Format tag as: v<package_version>-<commit_date>
@@ -20,13 +22,20 @@ create_tag_for_branch() {
     
     git checkout "$branch_name"
     
+    if [[ "$branch_name" =~ (R|r)(C|c) ]]; then
+        BRANCH_TYPE="RC"
+    else
+        BRANCH_TYPE="develop"
+    fi
+
     PKG_VERSION=$(cat ./package.json | grep 'version":' | sed 's/.*"version":[ \t]*"\([^"]*\)".*/\1/')
+    CLEAN_VERSION=$(echo "$PKG_VERSION" | sed -E 's/-(develop|rc)$//i')
     COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
     
-    if [[ -n "$PKG_VERSION" && -n "$COMMIT_DATE" ]]; then
-        NEW_VERSION="$PKG_VERSION-$COMMIT_DATE"
+    if [[ -n "$CLEAN_VERSION" && -n "$COMMIT_DATE" ]]; then
+        NEW_VERSION="$CLEAN_VERSION-$BRANCH_TYPE-$COMMIT_DATE"
 
-        if [[ "$PKG_VERSION" == v* ]]; then
+        if [[ "$CLEAN_VERSION" == v* ]]; then
             TAG_NAME="$NEW_VERSION"
         else
             TAG_NAME="v$NEW_VERSION"

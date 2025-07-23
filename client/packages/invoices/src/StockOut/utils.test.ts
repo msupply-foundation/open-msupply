@@ -4,6 +4,7 @@ import {
   canAutoAllocate,
   getAllocatedQuantity,
   getDoseQuantity,
+  getManualAllocationAlerts,
   issue,
 } from './utils';
 
@@ -251,6 +252,51 @@ describe('canAutoAllocate ', () => {
     const packSize2 = createTestLine({ packSize: 2 });
     expect(canAutoAllocate(packSize2, 2)).toEqual(true);
     expect(canAutoAllocate(packSize2, 3)).toEqual(false);
+  });
+});
+
+describe('getManualAllocationAlerts', () => {
+  const mockFormat = () => '';
+  const mockT = (key: string) => key;
+
+  it('returns empty array when no alerts', () => {
+    const alerts = getManualAllocationAlerts(
+      1,
+      1,
+      createTestLine({}),
+      { type: AllocateInType.Doses },
+      mockFormat,
+      mockT
+    );
+
+    expect(alerts).toEqual([]);
+  });
+  it('returns over-allocated warning when over-allocated', () => {
+    const alerts = getManualAllocationAlerts(
+      1,
+      4,
+      createTestLine({}),
+      { type: AllocateInType.Doses },
+      mockFormat,
+      mockT
+    );
+
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]?.message).toMatch('over-allocated');
+  });
+
+  it('returns partial pack warning when requested quantity is not a whole pack', () => {
+    const alerts = getManualAllocationAlerts(
+      7,
+      7,
+      createTestLine({ packSize: 10, numberOfPacks: 7 }),
+      { type: AllocateInType.Units },
+      mockFormat,
+      mockT
+    );
+
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]?.message).toMatch('partial-pack-warning');
   });
 });
 

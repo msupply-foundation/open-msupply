@@ -324,7 +324,12 @@ export type EncounterFragment = {
     firstName?: string | null;
     lastName: string;
   } | null;
-  programEnrolment?: { __typename: 'ProgramEnrolmentNode'; id: string } | null;
+  programEnrolment?: {
+    __typename: 'ProgramEnrolmentNode';
+    id: string;
+    isImmunisationProgram: boolean;
+    document: { __typename: 'DocumentNode'; type: string; name: string };
+  } | null;
   document: {
     __typename: 'DocumentNode';
     id: string;
@@ -396,6 +401,8 @@ export type EncountersWithDocumentQuery = {
       programEnrolment?: {
         __typename: 'ProgramEnrolmentNode';
         id: string;
+        isImmunisationProgram: boolean;
+        document: { __typename: 'DocumentNode'; type: string; name: string };
       } | null;
       document: {
         __typename: 'DocumentNode';
@@ -448,11 +455,6 @@ export type EncounterByIdQuery = {
       createdDatetime: string;
       startDatetime: string;
       endDatetime?: string | null;
-      programEnrolment?: {
-        __typename: 'ProgramEnrolmentNode';
-        isImmunisationProgram: boolean;
-        id: string;
-      } | null;
       patient: {
         __typename: 'PatientNode';
         id: string;
@@ -468,6 +470,12 @@ export type EncounterByIdQuery = {
         id: string;
         firstName?: string | null;
         lastName: string;
+      } | null;
+      programEnrolment?: {
+        __typename: 'ProgramEnrolmentNode';
+        id: string;
+        isImmunisationProgram: boolean;
+        document: { __typename: 'DocumentNode'; type: string; name: string };
       } | null;
       document: {
         __typename: 'DocumentNode';
@@ -539,6 +547,8 @@ export type EncounterByDocNameQuery = {
       programEnrolment?: {
         __typename: 'ProgramEnrolmentNode';
         id: string;
+        isImmunisationProgram: boolean;
+        document: { __typename: 'DocumentNode'; type: string; name: string };
       } | null;
       document: {
         __typename: 'DocumentNode';
@@ -693,6 +703,8 @@ export type InsertEncounterMutation = {
     programEnrolment?: {
       __typename: 'ProgramEnrolmentNode';
       id: string;
+      isImmunisationProgram: boolean;
+      document: { __typename: 'DocumentNode'; type: string; name: string };
     } | null;
     document: {
       __typename: 'DocumentNode';
@@ -760,6 +772,8 @@ export type UpdateEncounterMutation = {
     programEnrolment?: {
       __typename: 'ProgramEnrolmentNode';
       id: string;
+      isImmunisationProgram: boolean;
+      document: { __typename: 'DocumentNode'; type: string; name: string };
     } | null;
     document: {
       __typename: 'DocumentNode';
@@ -1681,6 +1695,11 @@ export const EncounterFragmentDoc = gql`
     }
     programEnrolment {
       id
+      isImmunisationProgram
+      document {
+        type
+        name
+      }
     }
     createdDatetime
     startDatetime
@@ -2087,9 +2106,6 @@ export const EncounterByIdDocument = gql`
         __typename
         nodes {
           ...Encounter
-          programEnrolment {
-            isImmunisationProgram
-          }
         }
         totalCount
       }

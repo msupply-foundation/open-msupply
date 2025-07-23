@@ -9,10 +9,9 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameByNameLinkIdLoader,
-    NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader,
-    StoreByIdLoader, UserLoader,
+    DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput,
+    NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
+    ProgramByIdLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -21,6 +20,7 @@ use graphql_core::{
 };
 use repository::{
     ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameLinkRow, NameRow, PricingRow,
+    Store, StoreRow,
 };
 
 use repository::Invoice;
@@ -334,21 +334,10 @@ impl InvoiceNode {
         )
     }
 
-    pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let clinician_id = if let Some(clinician) = &self.clinician_row() {
-            &clinician.id
-        } else {
-            return Ok(None);
-        };
-
-        let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
-        Ok(loader
-            .load_one(ClinicianLoaderInput::new(
-                &self.row().store_id,
-                clinician_id,
-            ))
-            .await?
-            .map(ClinicianNode::from_domain))
+    pub async fn clinician(&self) -> Option<ClinicianNode> {
+        self.clinician_row()
+            .as_ref()
+            .map(|row| ClinicianNode::from_domain(row.clone()))
     }
 
     pub async fn clinician_id(&self) -> Option<String> {
@@ -454,12 +443,11 @@ impl InvoiceNode {
         Ok(result)
     }
 
-    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
-        Ok(loader
-            .load_one(self.row().store_id.clone())
-            .await?
-            .map(StoreNode::from_domain))
+    pub async fn store(&self) -> StoreNode {
+        StoreNode::from_domain(Store {
+            store_row: self.store_row().clone(),
+            name_row: self.name_row().clone(),
+        })
     }
 
     pub async fn name_insurance_join_id(&self) -> &Option<String> {
@@ -517,6 +505,9 @@ impl InvoiceNode {
     }
     pub fn name_row(&self) -> &NameRow {
         &self.invoice.name_row
+    }
+    pub fn store_row(&self) -> &StoreRow {
+        &self.invoice.store_row
     }
     pub fn clinician_row(&self) -> &Option<ClinicianRow> {
         &self.invoice.clinician_row
