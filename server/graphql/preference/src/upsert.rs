@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::patient::GenderType;
@@ -18,6 +20,7 @@ pub struct UpsertPreferencesInput {
     pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
     pub use_campaigns: Option<bool>,
+    pub custom_translations: Option<HashMap<String, String>>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
@@ -55,13 +58,14 @@ impl UpsertPreferencesInput {
             allow_tracking_of_stock_by_donor,
             gender_options,
             show_contact_tracing,
+            use_campaigns,
+            custom_translations,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
-            use_campaigns,
         } = self;
 
         UpsertPreferences {
@@ -72,7 +76,8 @@ impl UpsertPreferencesInput {
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             show_contact_tracing: *show_contact_tracing,
             use_campaigns: *use_campaigns,
-            // Global preferences*show_contact_tracing
+            custom_translations: custom_translations.clone(),
+            // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
