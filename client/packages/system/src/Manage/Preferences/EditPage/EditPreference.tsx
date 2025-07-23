@@ -14,7 +14,7 @@ import {
   EnumOptions,
   getEnumPreferenceOptions,
 } from '../Components/EnumOptions';
-import { CustomTranslationsModal } from '../Components/CustomTranslations/CustomTranslationsModal';
+import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
 
 export const EditPreference = ({
   preference,
@@ -77,7 +77,7 @@ export const EditPreference = ({
       );
 
     case PreferenceValueNodeType.CustomTranslations:
-      return <CustomTranslationsModal value={value} update={update} />;
+      return <EditCustomTranslations value={value} update={update} />;
 
     default:
       try {
