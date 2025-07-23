@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { IconButton } from '@common/components';
 import { DeleteIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import {
+  alpha,
+  AppSxProp,
   Box,
-  createTableStore,
   DataTable,
-  TableProvider,
   TextInputCell,
   TooltipTextCell,
   useColumns,
+  useRowStyle,
 } from '@openmsupply-client/common';
 import { Translation } from './helpers';
 import {
@@ -25,6 +26,18 @@ export const TranslationsTable = ({
   setTranslations: React.Dispatch<React.SetStateAction<Translation[]>>;
 }) => {
   const t = useTranslation();
+
+  const { setRowStyles } = useRowStyle();
+
+  useEffect(() => {
+    const newLines = translations.filter(tr => tr.isNew).map(tr => tr.id);
+
+    const style: AppSxProp = {
+      backgroundColor: theme =>
+        `${alpha(theme.palette.secondary.main, 0.1)} !important`,
+    };
+    setRowStyles(newLines, style);
+  }, [translations, setRowStyles]);
 
   const columns = useColumns<Translation>([
     {
@@ -78,6 +91,7 @@ export const TranslationsTable = ({
       key: option.key,
       default: option.default,
       custom: option.default,
+      isNew: true,
     };
     setTranslations(translations => [newLine, ...translations]);
   };
@@ -90,15 +104,14 @@ export const TranslationsTable = ({
           existingKeys={translations.map(t => t.key)}
         />
       </Box>
-      <TableProvider createStore={createTableStore}>
-        <DataTable
-          id={'translations-list'}
-          columns={columns}
-          data={translations}
-          noDataMessage={t('message.add-a-translation')}
-          dense
-        />
-      </TableProvider>
+
+      <DataTable
+        id={'translations-list'}
+        columns={columns}
+        data={translations}
+        noDataMessage={t('message.add-a-translation')}
+        dense
+      />
     </>
   );
 };

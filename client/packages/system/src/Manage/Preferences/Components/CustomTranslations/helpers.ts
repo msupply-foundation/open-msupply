@@ -5,6 +5,7 @@ export interface Translation {
   key: string;
   default: string;
   custom: string;
+  isNew?: boolean;
 }
 
 export const mapTranslationsToArray = (
