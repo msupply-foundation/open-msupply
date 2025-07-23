@@ -4,6 +4,7 @@ import {
   ColumnDefinition,
   RecordWithId,
   UNDEFINED_STRING_VALUE,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
 
@@ -11,6 +12,23 @@ type VaccineItemRow = {
   item: ItemRowFragment;
   numberOfPacks: number;
   packSize: number;
+};
+
+const getDosesValue = (
+  rowData: VaccineItemRow | { lines: VaccineItemRow[] }
+) => {
+  if ('lines' in rowData) {
+    const { lines } = rowData;
+
+    const isVaccine = lines[0]?.item?.isVaccine ?? false;
+    const unitQuantity = ArrayUtils.getUnitQuantity(lines);
+    return isVaccine ? unitQuantity * (lines[0]?.item?.doses ?? 1) : null;
+  } else {
+    const unitQty = (rowData?.numberOfPacks ?? 0) * (rowData?.packSize ?? 1);
+    return rowData.item && rowData.item.isVaccine
+      ? unitQty * (rowData.item.doses ?? 1)
+      : null;
+  }
 };
 
 export const getDosesQuantityColumn = <
@@ -21,21 +39,14 @@ export const getDosesQuantityColumn = <
   width: 100,
   align: ColumnAlign.Right,
   accessor: ({ rowData }) => {
-    // Doses always shown in whole numbers
-    if ('lines' in rowData) {
-      const { lines } = rowData;
-
-      const isVaccine = lines[0]?.item?.isVaccine ?? false;
-      const unitQuantity = ArrayUtils.getUnitQuantity(lines);
-      return isVaccine
-        ? Math.round(unitQuantity * (lines[0]?.item?.doses ?? 1))
-        : UNDEFINED_STRING_VALUE;
-    } else {
-      const unitQty = (rowData?.numberOfPacks ?? 0) * (rowData?.packSize ?? 1);
-      return rowData.item && rowData.item.isVaccine
-        ? Math.round(unitQty * (rowData.item.doses ?? 1))
-        : UNDEFINED_STRING_VALUE;
-    }
+    getDosesValue(rowData);
+  },
+  Cell: props => {
+    const { rowData } = props;
+    const { round } = useFormatNumber();
+    const value = getDosesValue(rowData);
+    // doses always rounded to display in whole numbers
+    return value != null ? round(value) : UNDEFINED_STRING_VALUE;
   },
 
   getSortValue: rowData => {

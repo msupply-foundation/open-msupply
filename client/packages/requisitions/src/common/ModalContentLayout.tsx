@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Grid,
   NumericTextDisplay,
@@ -143,19 +143,24 @@ export const ValueInfoRow = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { round } = useFormatNumber();
+
   const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     value
   );
-  const valueInDoses = React.useMemo(
+
+  // doses always rounded to display in whole numbers
+  const valueInDoses = useMemo(
     () =>
       displayVaccinesInDoses
-        ? calculateValueInDoses(
-            representation,
-            defaultPackSize,
-            dosesPerUnit,
-            valueInUnitsOrPacks
+        ? round(
+            calculateValueInDoses(
+              representation,
+              defaultPackSize,
+              dosesPerUnit,
+              valueInUnitsOrPacks
+            )
           )
         : undefined,
     [
@@ -187,7 +192,7 @@ export const ValueInfoRow = ({
       packagingDisplay={treatAsNull ? '' : endAdornment}
       sx={sx}
       displayVaccinesInDoses={displayVaccinesInDoses && !!valueInUnitsOrPacks}
-      doses={round(valueInDoses, 2)}
+      doses={valueInDoses}
       dosesLabel={t('label.doses')}
     />
   );

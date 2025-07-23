@@ -8,11 +8,11 @@ import { NumUtils } from '@common/utils';
 import { DraftStockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 export const useClosedSummary = () => {
-  const formatNumber = useFormatNumber();
+  const { round } = useFormatNumber();
   const { getPlural } = useIntlUtils();
 
   const getDisplayValue = (value: number) => {
-    const formatted = formatNumber.round(value, 2);
+    const formatted = round(value, 2);
     return NumUtils.hasMoreThanTwoDp(value)
       ? `${formatted}... `
       : `${formatted} `;
@@ -55,21 +55,21 @@ export const useClosedSummary = () => {
           packWord,
           unitWord,
         });
-        const tooltip = formatNumber.round(numUnits / packSize, 10);
+        const tooltip = round(numUnits / packSize, 10);
         const displayValue = getDisplayValue(totalPacks);
 
         summary.push({ displayValue, text, tooltip });
       } else {
         const unitType = getPlural(unitName, numUnits);
         const text = t('label.packs-of-1', { numUnits, unitType });
-        const tooltip = formatNumber.round(numUnits, 10);
+        const tooltip = round(numUnits, 10);
         const displayValue = getDisplayValue(numUnits);
         summary.push({ displayValue, text, tooltip });
       }
     });
     return summary;
   };
-
+  //
   const dosesSummary = (
     t: TypedTFunction<LocaleKey>,
     lines: DraftStockOutLineFragment[]
@@ -80,13 +80,12 @@ export const useClosedSummary = () => {
       0
     );
 
-    const displayValue = getDisplayValue(totalDoses);
+    const displayValue = `${round(totalDoses)} `;
     const unitWord = t('label.doses-plural', {
       count: totalDoses,
     });
-    const tooltip = formatNumber.round(totalDoses, 10);
 
-    return [{ displayValue, text: unitWord, tooltip }];
+    return [{ displayValue, text: unitWord }];
   };
 
   return { summarise, dosesSummary };
