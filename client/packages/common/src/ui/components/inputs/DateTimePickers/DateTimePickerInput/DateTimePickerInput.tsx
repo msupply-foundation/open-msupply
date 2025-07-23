@@ -56,7 +56,9 @@ export const DateTimePickerInput = ({
   slotProps,
   ...props
 }: Omit<DateTimePickerProps<true>, 'onChange'> & {
-  error?: string | undefined;
+  error?: boolean | string;
+  required?: boolean;
+  setError?: (error: string) => void;
   width?: number | string;
   label?: string;
   onChange: (value: Date | null) => void;
@@ -69,7 +71,6 @@ export const DateTimePickerInput = ({
   dateAsEndOfDay?: boolean;
   disableFuture?: boolean;
   displayAs?: 'date' | 'dateTime';
-  required?: boolean;
   textFieldSx?: SxProps;
 }) => {
   const theme = useAppTheme();

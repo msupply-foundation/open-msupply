@@ -7,6 +7,7 @@ import {
   useAuthContext,
   ContactTraceSortFieldInput,
   TabDefinition,
+  FormErrorProvider,
   usePreference,
   PreferenceKey,
 } from '@openmsupply-client/common';
@@ -164,7 +165,11 @@ export const PatientView = () => {
       {current === PatientModal.ContactTraceSearch ? (
         <CreateContactTraceModal />
       ) : null}
-      {current === PatientModal.Insurance ? <InsuranceModal /> : null}
+      {current === PatientModal.Insurance ? (
+        <FormErrorProvider>
+          <InsuranceModal />
+        </FormErrorProvider>
+      ) : null}
     </React.Suspense>
   );
 };

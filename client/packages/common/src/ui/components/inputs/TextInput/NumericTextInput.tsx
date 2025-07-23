@@ -108,7 +108,7 @@ import {
   RegexUtils,
   UNDEFINED_STRING_VALUE,
 } from '@common/utils';
-import { useFormatNumber, useCurrency } from '@common/intl';
+import { useFormatNumber, useCurrency, useTranslation } from '@common/intl';
 import { InputAdornment } from '@common/components';
 
 export interface NumericInputProps {
@@ -165,6 +165,11 @@ export interface NumericInputProps {
   noFormatting?: boolean;
 
   /**
+   * Error message to display in the form Error Handler
+   */
+  setError?: (error: string | null) => void;
+
+  /**
    * This component can also take any props used by `BasicTextInput`, or its
    * child, Mui's `TextField` -- they will be passed through unmodified.
    */
@@ -201,10 +206,13 @@ export const NumericTextInput = React.forwardRef<
       fullWidth,
       endAdornment,
       inputMode,
+      error,
+      setError,
       ...props
     },
     ref
   ) => {
+    const t = useTranslation();
     const { format, parse } = useFormatNumber();
     const {
       options: { separator, decimal },
@@ -240,11 +248,26 @@ export const NumericTextInput = React.forwardRef<
       [decimal]
     );
 
+    const checkError = (value: number | undefined) => {
+      if (!setError) return;
+
+      if (value === undefined) {
+        if (error) setError(null);
+        return;
+      }
+      if (value > max && setError)
+        setError(t('error.numeric-input-error-too-big'));
+      else if (value < min && setError)
+        setError(t('error.numeric-input-error-too-small'));
+      else if (error) setError(null);
+    };
+
     useEffect(() => {
       if (isFirstRender.current) {
         // On first render, ensure number value is set from defaultValue prop
         if (textValue && value === undefined) onChange(parse(textValue));
         isFirstRender.current = false;
+        checkError(value);
         return;
       }
 
@@ -253,8 +276,10 @@ export const NumericTextInput = React.forwardRef<
       if (
         parse(textValue ?? '') !== value &&
         !isInputIncomplete(textValue ?? '')
-      )
+      ) {
         setTextValue(formatValue(value));
+      }
+      checkError(value);
     }, [
       value,
       textValue,
@@ -331,11 +356,7 @@ export const NumericTextInput = React.forwardRef<
 
           if (Number.isNaN(parsed)) return;
 
-          const constrained = constrain(parsed, decimalLimit, min, max);
-          setTextValue(
-            noFormatting ? String(constrained) : format(constrained)
-          );
-          onChange(constrained);
+          onChange(parsed);
         }}
         onKeyDown={e => {
           if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
@@ -345,12 +366,7 @@ export const NumericTextInput = React.forwardRef<
             (e.key === 'ArrowUp' ? step : -step) *
             (e.shiftKey ? multiplier : 1);
 
-          const newNum = constrain(
-            (value ?? Math.max(min, 0)) + change,
-            decimalLimit,
-            min,
-            max
-          );
+          const newNum = (value ?? 0) + change;
           setTextValue(formatValue(newNum));
           onChange(newNum);
         }}
@@ -368,6 +384,8 @@ export const NumericTextInput = React.forwardRef<
         onFocus={e => e.target.select()}
         fullWidth={fullWidth}
         {...props}
+        helperText={props.helperText}
+        error={error}
         value={textValue}
       />
     );

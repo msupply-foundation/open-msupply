@@ -87,9 +87,9 @@ describe('Test NumericTextInput component', () => {
     const input = getByRole('textbox');
 
     fireEvent.change(input, { target: { value: '1.11' } });
-    expect(input).toHaveValue('1.1');
+    expect(input).toHaveValue('1.11');
     fireEvent.blur(input);
-    expect(input).toHaveValue('1.100');
+    expect(input).toHaveValue('1.110');
   });
 
   it('should handle negative number input', async () => {
@@ -139,7 +139,8 @@ describe('Test NumericTextInput component', () => {
     const input = getByRole('textbox');
 
     fireEvent.change(input, { target: { value: '1000' } });
-    expect(input).toHaveValue('1,000');
+    expect(input).toHaveValue('1000');
+    // Formatting only occurs on blur
     fireEvent.blur(input);
     expect(input).toHaveValue('1,000');
   });
