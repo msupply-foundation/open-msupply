@@ -46,10 +46,12 @@ impl RnRFormNode {
         &self.program_row.name
     }
 
+    #[graphql(deprecation = "Since 2.9.1. Use period.id instead")]
     pub async fn period_id(&self) -> &str {
         &self.rnr_form_row.period_id
     }
 
+    #[graphql(deprecation = "Since 2.9.1. Use period.name instead")]
     pub async fn period_name(&self) -> &str {
         &self.period_row.name
     }
