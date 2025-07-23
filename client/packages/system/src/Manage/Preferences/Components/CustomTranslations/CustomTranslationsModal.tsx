@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { ButtonWithIcon, DialogButton } from '@common/components';
-import { EditIcon } from '@common/icons';
+import {
+  ButtonWithIcon,
+  DialogButton,
+  LoadingButton,
+} from '@common/components';
+import { EditIcon, SaveIcon } from '@common/icons';
 import {
   CUSTOM_TRANSLATIONS_NAMESPACE,
   useIntl,
@@ -57,16 +61,19 @@ export const CustomTranslationsModal = ({
 
   const { Modal } = useDialog({ isOpen: true, disableBackdrop: true });
 
+  const [loading, setLoading] = useState(false);
   const [translations, setTranslations] = useState(
     mapTranslationsToArray(value, defaultTranslation)
   );
 
   const saveAndClose = async () => {
+    setLoading(true);
     const asObject = mapTranslationsToObject(translations);
     await update(asObject);
     // Note - this is still requires the component in question to
     // re-render to pick up the new translations (i.e. navigate away)
     i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
+    setLoading(false);
     onClose();
   };
 
@@ -77,7 +84,16 @@ export const CustomTranslationsModal = ({
         width={1200}
         height={700}
         cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-        okButton={<DialogButton variant="save" onClick={saveAndClose} />}
+        okButton={
+          <LoadingButton
+            isLoading={loading}
+            onClick={saveAndClose}
+            label={t('button.save')}
+            startIcon={<SaveIcon />}
+            variant="contained"
+            color="secondary"
+          />
+        }
       >
         <TranslationsTable
           translations={translations}

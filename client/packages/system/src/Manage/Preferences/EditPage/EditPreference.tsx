@@ -34,6 +34,11 @@ export const EditPreference = ({
   // is invalidated - use local state for fast UI change
   const [value, setValue] = useState(preference.value);
 
+  const handleChange = async (newValue: PreferenceDescriptionNode['value']) => {
+    setValue(newValue);
+    await update(newValue);
+  };
+
   switch (preference.valueType) {
     case PreferenceValueNodeType.Boolean:
       if (!isBoolean(value)) {
@@ -44,8 +49,7 @@ export const EditPreference = ({
           disabled={disabled}
           checked={value}
           onChange={(_, checked) => {
-            setValue(checked);
-            update(checked);
+            handleChange(checked);
           }}
         />
       );
@@ -69,15 +73,12 @@ export const EditPreference = ({
           disabled={disabled}
           options={options}
           value={value}
-          onChange={newValue => {
-            setValue(newValue);
-            update(newValue);
-          }}
+          onChange={handleChange}
         />
       );
 
     case PreferenceValueNodeType.CustomTranslations:
-      return <EditCustomTranslations value={value} update={update} />;
+      return <EditCustomTranslations value={value} update={handleChange} />;
 
     default:
       try {
