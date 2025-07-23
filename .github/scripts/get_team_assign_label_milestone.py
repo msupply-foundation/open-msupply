@@ -23,9 +23,9 @@ class TeamLabelAndMilestone:
         assignee_teams = set()
         for assignee in assignees:
             for team in self.org.get_teams():
-                print(f"Teams: {team.slug} for {assignee.login}")
                 team_members = [member.login for member in team.get_members()]
                 if assignee.login in team_members:
+                    print(f"Teams: {team.slug}")
                     assignee_teams.add(team.slug)
 
         return [label for label in self.team_labels if any(word in label for word in assignee_teams)]
