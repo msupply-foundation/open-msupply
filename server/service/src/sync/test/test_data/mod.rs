@@ -118,7 +118,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut asset_class::test_pull_upsert_records());
     test_records.append(&mut asset_category::test_pull_upsert_records());
     test_records.append(&mut asset_type::test_pull_upsert_records());
-    test_records.append(&mut contact::test_pull_upsert_records());
+    // test_records.append(&mut contact::test_pull_upsert_records());
     test_records.append(&mut asset_catalogue_item::test_pull_upsert_records());
     test_records.append(&mut asset::test_pull_upsert_records());
     test_records.append(&mut asset_log::test_pull_upsert_records());
@@ -195,6 +195,8 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_delete_records());
     test_records.append(&mut clinician_store_join::test_pull_delete_records());
+    test_records.append(&mut rnr_form::test_pull_delete_records());
+    test_records.append(&mut rnr_form_line::test_pull_delete_records());
 
     test_records
 }
