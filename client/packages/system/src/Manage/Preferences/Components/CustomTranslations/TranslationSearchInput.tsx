@@ -24,8 +24,8 @@ export const TranslationSearchInput = ({
 }: TranslationSearchInputProps) => {
   const t = useTranslation();
   const defaultT = useTranslation('common');
-  const theme = useTheme();
   const { i18n } = useIntl();
+  const theme = useTheme();
 
   const nonTranslatedOptions = useMemo(() => {
     // English common is the base for translations, will always be available and have all keys
@@ -34,7 +34,7 @@ export const TranslationSearchInput = ({
 
     return (
       keys
-        // Autocomplete should only show keys that are don't already have translations
+        // Autocomplete should only show keys that don't already have custom translations
         .filter(k => !existingKeys.includes(k))
         .map(k => ({
           key: k,

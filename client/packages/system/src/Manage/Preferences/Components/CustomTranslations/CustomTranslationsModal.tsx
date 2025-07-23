@@ -19,22 +19,21 @@ export const CustomTranslationsModal = ({
 }) => {
   const t = useTranslation();
   const defaultTranslation = useTranslation('common');
+  const { i18n } = useIntl();
+
   const isOpen = useToggle();
   const { Modal } = useDialog({ isOpen: isOpen.isOn, disableBackdrop: true });
+
   const [translations, setTranslations] = useState(
     mapTranslationsToArray(value, defaultTranslation)
   );
-  const { i18n } = useIntl();
 
   const saveAndClose = async () => {
     const asObject = mapTranslationsToObject(translations);
-
     await update(asObject);
-
     // Note - this is still requires the component in question to
     // re-render to pick up the new translations (i.e. navigate away)
     i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
-
     isOpen.toggleOff();
   };
 
@@ -52,7 +51,7 @@ export const CustomTranslationsModal = ({
         cancelButton={
           <DialogButton variant="cancel" onClick={isOpen.toggleOff} />
         }
-        okButton={<DialogButton variant="ok" onClick={saveAndClose} />}
+        okButton={<DialogButton variant="save" onClick={saveAndClose} />}
       >
         <TranslationsTable
           translations={translations}
