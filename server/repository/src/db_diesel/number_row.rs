@@ -40,7 +40,6 @@ pub enum NumberRowType {
     SupplierReturn,
     CustomerReturn,
     Program(String),
-    PurchaseOrder,
 }
 
 impl fmt::Display for NumberRowType {
@@ -58,7 +57,6 @@ impl fmt::Display for NumberRowType {
             NumberRowType::SupplierReturn => write!(f, "SUPPLIER_RETURN"),
             NumberRowType::CustomerReturn => write!(f, "CUSTOMER_RETURN"),
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
-            NumberRowType::PurchaseOrder => write!(f, "PURCHASE_ORDER"),
         }
     }
 }
@@ -325,12 +323,6 @@ mod number_row_mapping_test {
                     NumberRowType::try_from(NumberRowType::CustomerReturn.to_string()).unwrap()
                         == NumberRowType::CustomerReturn
                 ),
-                NumberRowType::PurchaseOrder => {
-                    assert!(
-                        NumberRowType::try_from(NumberRowType::PurchaseOrder.to_string()).unwrap()
-                            == NumberRowType::PurchaseOrder
-                    )
-                }
             }
         }
     }

@@ -1,12 +1,14 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_contact_table;
-pub(crate) struct V2_10_00;
+mod add_can_cancel_finalised_invoices_user_permission;
+mod add_delete_rnr_form_activity_log_enum;
 
-impl Migration for V2_10_00 {
+pub(crate) struct V2_09_01;
+
+impl Migration for V2_09_01 {
     fn version(&self) -> Version {
-        Version::from_str("2.10.0")
+        Version::from_str("2.9.1")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -14,7 +16,10 @@ impl Migration for V2_10_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_contact_table::Migrate)]
+        vec![
+            Box::new(add_can_cancel_finalised_invoices_user_permission::Migrate),
+            Box::new(add_delete_rnr_form_activity_log_enum::Migrate),
+        ]
     }
 }
 
@@ -22,14 +27,14 @@ impl Migration for V2_10_00 {
 mod test {
 
     #[actix_rt::test]
-    async fn migration_2_10_00() {
+    async fn migration_2_09_00() {
         use crate::migrations::*;
         use crate::test_db::*;
         use v2_09_00::V2_09_00;
-        use v2_10_00::V2_10_00;
+        use v2_09_01::V2_09_01;
 
         let previous_version = V2_09_00.version();
-        let version = V2_10_00.version();
+        let version = V2_09_01.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!("migration_{version}"),

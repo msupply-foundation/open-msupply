@@ -9,8 +9,9 @@ import {
   Box,
   useDialog,
   useNotification,
-  useWebClient,
+  useExportLog,
 } from '@openmsupply-client/common';
+import { Capacitor } from '@capacitor/core';
 import { useLog } from '@openmsupply-client/system';
 import { LogTextDisplay } from './LogTextDisplay';
 
@@ -44,7 +45,7 @@ export const LogDisplay = ({
   ) : null;
 };
 
-export const WebAppLogFileModal = ({
+export const LogFileModal = ({
   isOpen,
   onClose,
 }: {
@@ -56,13 +57,16 @@ export const WebAppLogFileModal = ({
   const [logToRender, setLogToRender] = useState('');
   const [logContent, setLogContent] = useState<string[]>([]);
   const { Modal } = useDialog({ isOpen, onClose });
-  const { saveFile } = useWebClient();
+  const exportLog = useExportLog();
+
   const [isSaving, setIsSaving] = useState(false);
   const noLog = logContent.length === 0;
 
   const {
     fileNames: { data, isLoading, isError },
   } = useLog();
+
+  const isAndroid = Capacitor.isNativePlatform();
 
   const saveLog = async () => {
     if (noLog) {
@@ -71,10 +75,7 @@ export const WebAppLogFileModal = ({
       warning(t('message.already-saving'))();
     } else {
       setIsSaving(true);
-      saveFile({
-        content: logContent.toString(),
-        filename: logToRender,
-      });
+      exportLog(logContent.toString(), logToRender);
       setIsSaving(false);
     }
   };
@@ -105,15 +106,19 @@ export const WebAppLogFileModal = ({
       width={850}
       height={700}
       copyButton={
-        <DialogButton
-          variant="copy"
-          onClick={
-            noLog
-              ? () => warning(t('message.nothing-to-copy'))()
-              : copyToClipboard
-          }
-          color="primary"
-        />
+        isAndroid ? (
+          <></>
+        ) : (
+          <DialogButton
+            variant="copy"
+            onClick={
+              noLog
+                ? () => warning(t('message.nothing-to-copy'))()
+                : copyToClipboard
+            }
+            color="primary"
+          />
+        )
       }
       saveButton={
         <DialogButton variant="save" onClick={saveLog} color="primary" />
@@ -137,7 +142,10 @@ export const WebAppLogFileModal = ({
               </DropdownMenuItem>
             )}
             {data?.fileNames
-              ?.filter(fileName => fileName !== logToRender)
+              ?.filter(
+                fileName =>
+                  fileName !== logToRender && fileName.includes('.log')
+              )
               .sort()
               .map((fileName, i) => (
                 <DropdownMenuItem

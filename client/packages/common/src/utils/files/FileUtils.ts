@@ -84,6 +84,17 @@ export const useExportCSV = () => {
   return exportCsv;
 };
 
+export const useExportLog = () => {
+  const exportFile = useExportFile();
+
+  const exportLog = async (data: string, title: string = 'log') => {
+    const filename = getFilename(undefined, title); // default to .txt
+    exportFile(data, undefined, filename);
+  };
+
+  return exportLog;
+};
+
 // On Android, we first try and open the file from the local file system. If
 // it's not there (i.e. hasn't been synced before), we attempt to download it
 // from the server using the HTTP "File download" endpoint, save it to the local
