@@ -69,6 +69,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
               onChange={reason => setReason(reason)}
               reasonOptions={reasonOptions?.nodes ?? []}
               loading={isLoading}
+              width={160}
             />
           }
           sx={{
