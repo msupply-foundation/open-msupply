@@ -264,7 +264,7 @@ describe('getManualAllocationAlerts', () => {
       1,
       1,
       createTestLine({}),
-      { type: AllocateInType.Doses },
+      AllocateInType.Doses,
       mockFormat,
       mockT
     );
@@ -276,7 +276,7 @@ describe('getManualAllocationAlerts', () => {
       1,
       4,
       createTestLine({}),
-      { type: AllocateInType.Doses },
+      AllocateInType.Doses,
       mockFormat,
       mockT
     );
@@ -290,7 +290,7 @@ describe('getManualAllocationAlerts', () => {
       7,
       7,
       createTestLine({ packSize: 10, numberOfPacks: 7 }),
-      { type: AllocateInType.Units },
+      AllocateInType.Units,
       mockFormat,
       mockT
     );

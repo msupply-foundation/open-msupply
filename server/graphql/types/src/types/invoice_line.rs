@@ -1,3 +1,5 @@
+use crate::types::VVMStatusNode;
+
 use super::{
     CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
     PricingNode, ReasonOptionNode, ReturnReasonNode, StockLineNode,
@@ -8,7 +10,7 @@ use dataloader::DataLoader;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByNameLinkIdLoader,
-        NameByNameLinkIdLoaderInput, ReasonOptionLoader, StockLineByIdLoader,
+        NameByNameLinkIdLoaderInput, ReasonOptionLoader, StockLineByIdLoader, VVMStatusByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -97,6 +99,22 @@ impl InvoiceLineNode {
     }
     pub async fn vvm_status_id(&self) -> &Option<String> {
         &self.row().vvm_status_id
+    }
+    pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
+        if self.row().vvm_status_id.is_none() {
+            return Ok(None);
+        }
+
+        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
+        let status_id = match self.row().vvm_status_id.clone() {
+            Some(status_id) => status_id,
+            None => return Ok(None),
+        };
+
+        Ok(loader
+            .load_one(status_id)
+            .await?
+            .map(VVMStatusNode::from_domain))
     }
     // Quantity
     pub async fn pack_size(&self) -> f64 {

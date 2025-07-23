@@ -296,10 +296,8 @@ mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
 
 fragment VVMStatus on VvmstatusNode {
   __typename
-  code
   description
   id
-  isActive
   level
   reasonId
   unusable

@@ -632,10 +632,8 @@ export type VvmStatusQuery = {
     __typename: 'VvmstatusConnector';
     nodes: Array<{
       __typename: 'VvmstatusNode';
-      code: string;
       description: string;
       id: string;
-      isActive: boolean;
       level: number;
       reasonId?: string | null;
       unusable: boolean;
@@ -800,10 +798,8 @@ export type InsertStockLineMutation = {
 
 export type VvmStatusFragment = {
   __typename: 'VvmstatusNode';
-  code: string;
   description: string;
   id: string;
-  isActive: boolean;
   level: number;
   reasonId?: string | null;
   unusable: boolean;
@@ -819,10 +815,8 @@ export type ActiveVvmStatusesQuery = {
     __typename: 'VvmstatusConnector';
     nodes: Array<{
       __typename: 'VvmstatusNode';
-      code: string;
       description: string;
       id: string;
-      isActive: boolean;
       level: number;
       reasonId?: string | null;
       unusable: boolean;
@@ -983,10 +977,8 @@ export const LedgerRowFragmentDoc = gql`
 export const VvmStatusFragmentDoc = gql`
   fragment VVMStatus on VvmstatusNode {
     __typename
-    code
     description
     id
-    isActive
     level
     reasonId
     unusable

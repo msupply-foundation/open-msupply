@@ -304,7 +304,7 @@ export const getManualAllocationAlerts = (
   requestedQuantity: number,
   allocatedQuantity: number,
   line: DraftStockOutLineFragment,
-  allocateIn: AllocateInOption,
+  allocateInType: AllocateInType,
   format: (value: number, options?: Intl.NumberFormatOptions) => string,
   t: TypedTFunction<LocaleKey>
 ): StockOutAlert[] => {
@@ -320,7 +320,7 @@ export const getManualAllocationAlerts = (
     });
 
   const nearestWholePack = packsToQuantity(
-    allocateIn.type,
+    allocateInType,
     Math.ceil(line.numberOfPacks),
     line
   );
@@ -328,7 +328,7 @@ export const getManualAllocationAlerts = (
   if (nearestWholePack > allocatedQuantity) {
     alerts.push({
       message: t(
-        `messages.partial-pack-warning-${allocateIn.type === AllocateInType.Doses ? 'doses' : 'units'}`,
+        `messages.partial-pack-warning-${allocateInType === AllocateInType.Doses ? 'doses' : 'units'}`,
         { nearestAbove: nearestWholePack }
       ),
       severity: 'warning',
