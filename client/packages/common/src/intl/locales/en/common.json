@@ -2147,6 +2147,7 @@
   "title.stock-line-details": "Stock Line Details",
   "title.stock-on-hand": "Stock on Hand",
   "title.upload-reports": "Upload Reports",
+  "title.variant-details": "Variant Details",
   "tools": "Tools",
   "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix",
   "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported.",
