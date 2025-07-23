@@ -35,11 +35,11 @@ export const EditStorePreferences = ({ storeId }: { storeId: string }) => {
           <EditPreference
             disabled={!isCentralServer}
             preference={pref}
-            update={value => {
+            update={value =>
               update({
                 [pref.key]: [{ storeId, value }],
-              });
-            }}
+              })
+            }
           />
         }
         sx={{

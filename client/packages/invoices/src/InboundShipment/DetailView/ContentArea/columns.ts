@@ -21,7 +21,7 @@ import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
 import { useInboundShipmentLineErrorContext } from '../../context/inboundShipmentLineError';
-import { getDosesQuantityColumn } from 'packages/invoices/src/DoseQtyColumn';
+import { getDosesQuantityColumn } from '../../../DoseQtyColumn';
 
 const getUnitQuantity = (row: InboundLineFragment) =>
   row.packSize * row.numberOfPacks;
@@ -327,7 +327,7 @@ export const useExpansionColumns = (
 ): Column<InboundLineFragment>[] => {
   const { data: preferences } = usePreference(
     PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns,
+    PreferenceKey.UseCampaigns
   );
 
   const columns: ColumnDescription<InboundLineFragment>[] = [

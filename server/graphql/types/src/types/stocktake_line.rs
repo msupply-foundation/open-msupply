@@ -1,13 +1,11 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::{ReasonOption, StocktakeLine};
+use repository::{location::Location, ReasonOption, StocktakeLine};
 use service::usize_to_u32;
 
 use graphql_core::{
-    loader::{
-        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, StockLineByIdLoader,
-    },
+    loader::{ItemLoader, ItemVariantByItemVariantIdLoader, StockLineByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -47,13 +45,12 @@ impl StocktakeLineNode {
         }
     }
 
-    pub async fn location(&self, ctx: &Context<'_>) -> Option<LocationNode> {
-        let location_id = self.line.line.location_id.clone().unwrap_or_default();
-        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
-        let location_option: Option<repository::location::Location> =
-            loader.load_one(location_id.clone()).await.ok().flatten();
-
-        location_option.map(LocationNode::from_domain)
+    pub async fn location(&self) -> Option<LocationNode> {
+        self.line.location.as_ref().map(|row| {
+            LocationNode::from_domain(Location {
+                location_row: row.clone(),
+            })
+        })
     }
 
     pub async fn comment(&self) -> Option<String> {

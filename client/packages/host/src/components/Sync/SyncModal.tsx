@@ -10,6 +10,7 @@ import {
   RadioIcon,
   Typography,
   UNDEFINED_STRING_VALUE,
+  CUSTOM_TRANSLATIONS_NAMESPACE,
   useAppTheme,
   useAuthContext,
   useFormatDateTime,
@@ -17,6 +18,7 @@ import {
   useQueryClient,
   useTranslation,
   useMediaQuery,
+  useIntl,
 } from '@openmsupply-client/common';
 import { useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
@@ -44,6 +46,7 @@ const useHostSync = (enabled: boolean) => {
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
+  const { i18n } = useIntl();
 
   useEffect(() => {
     if (!syncStatus) {
@@ -59,6 +62,8 @@ const useHostSync = (enabled: boolean) => {
     } else {
       allowSleep();
       queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
+      // Reload custom translations, in case we received new ones via sync
+      i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
     }
   }, [syncStatus?.isSyncing]);
 
