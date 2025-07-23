@@ -8,6 +8,7 @@ import {
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
+  useEditModal,
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -19,6 +20,7 @@ import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
+import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
 
 export const DetailViewInner = () => {
   const {
@@ -34,10 +36,13 @@ export const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.number]);
 
-  const onOpen = () => {
-    // eslint-disable-next-line no-console
-    console.log('TO-DO: Show Line Edit Modal');
-  };
+  const {
+    onOpen,
+    onClose,
+    mode,
+    entity: itemId,
+    isOpen,
+  } = useEditModal<string | null>();
 
   const onRowClick = (line: PurchaseOrderLineFragment) => {
     // eslint-disable-next-line no-console
@@ -66,21 +71,16 @@ export const DetailViewInner = () => {
           />
 
           <Footer />
-          {/* <SidePanel /> */}
 
-          {/* {isOpen && (
-            <InboundLineEdit
-              isDisabled={isDisabled}
+          {isOpen && (
+            <PurchaseOrderLineEditModal
               isOpen={isOpen}
               onClose={onClose}
               mode={mode}
-              item={entity}
-              currency={data.currency}
-              isExternalSupplier={!data.otherParty.store}
-              hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
-              hasItemVariantsEnabled={hasItemVariantsEnabled}
+              itemId={itemId}
+              purchaseOrder={data}
             />
-          )} */}
+          )}
         </>
       ) : (
         <AlertModal
