@@ -57,7 +57,6 @@ use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
-use graphql_contact::ContactQueries;
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 use repository::StorageConnectionManager;
@@ -156,7 +155,6 @@ impl CentralServerQueries {
 }
 #[derive(MergedObject, Default, Clone)]
 pub struct Queries(
-    pub ContactQueries,
     pub InvoiceQueries,
     pub InvoiceLineQueries,
     pub LocationQueries,
@@ -190,7 +188,6 @@ pub struct Queries(
 impl Queries {
     pub fn new() -> Queries {
         Queries(
-            ContactQueries,
             InvoiceQueries,
             InvoiceLineQueries,
             LocationQueries,
