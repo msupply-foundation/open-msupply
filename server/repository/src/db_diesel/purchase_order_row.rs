@@ -19,7 +19,7 @@ table! {
         purchase_order_number -> BigInt,
         status -> crate::db_diesel::purchase_order_row::PurchaseOrderStatusMapping,
         created_datetime -> Timestamp,
-        confirmed_date ->  Nullable<Date>,
+        confirmed_datetime ->  Nullable<Timestamp>,
         target_months->  Nullable<Double>,
         comment->  Nullable<Text>,
         supplier_discount_percentage ->  Nullable<Double>,
@@ -44,7 +44,9 @@ table! {
         communications_charge -> Nullable<Double>,
         insurance_charge ->  Nullable<Double>,
         freight_charge ->  Nullable<Double>,
-        freight_conditions -> Nullable<Text>
+        freight_conditions -> Nullable<Text>,
+        order_total_before_discount -> Double,
+        order_total_after_discount -> Double,
     }
 }
 
@@ -64,7 +66,7 @@ pub struct PurchaseOrderRow {
     pub purchase_order_number: i64,
     pub status: PurchaseOrderStatus,
     pub created_datetime: NaiveDateTime,
-    pub confirmed_date: Option<NaiveDate>, // TODO: Change to NaiveDateTime
+    pub confirmed_datetime: Option<NaiveDateTime>,
     pub target_months: Option<f64>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
@@ -90,6 +92,8 @@ pub struct PurchaseOrderRow {
     pub insurance_charge: Option<f64>,
     pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
+    pub order_total_before_discount: f64,
+    pub order_total_after_discount: f64,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
