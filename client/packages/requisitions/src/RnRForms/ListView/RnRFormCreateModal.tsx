@@ -16,7 +16,11 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { ProgramSearchInput } from '@openmsupply-client/programs';
-import { useCreateRnRForm, useSchedulesAndPeriods } from '../api';
+import {
+  RnRFormFragment,
+  useCreateRnRForm,
+  useSchedulesAndPeriods,
+} from '../api';
 
 interface RnRFormCreateModalProps {
   isOpen: boolean;
@@ -128,7 +132,7 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
               options={draft.schedule?.periods ?? []}
               value={draft.period}
               onChange={period => updateDraft({ period })}
-              previousFormExists={!!previousForm}
+              previousForm={previousForm}
               errorMessage={getPeriodError()}
             />
           }
@@ -155,7 +159,7 @@ const PeriodSelect = ({
   options,
   value,
   errorMessage,
-  previousFormExists = false,
+  previousForm,
   onChange,
 }: {
   width: string;
@@ -163,7 +167,7 @@ const PeriodSelect = ({
   options: SchedulePeriodNode[];
   value: SchedulePeriodNode | null;
   onChange: (period: SchedulePeriodNode) => void;
-  previousFormExists?: boolean;
+  previousForm?: RnRFormFragment | null;
   errorMessage?: string;
 }) => {
   const t = useTranslation();
@@ -180,11 +184,12 @@ const PeriodSelect = ({
       >
         {t('messages.only-closed-periods-visible')}
       </Typography>
+
       <Autocomplete
         width={width}
         disabled={disabled}
         getOptionDisabled={option =>
-          previousFormExists && option.id !== value?.id
+          !!previousForm && option.period.endDate <= previousForm.period.endDate
         }
         getOptionLabel={option => option.period.name}
         options={options}

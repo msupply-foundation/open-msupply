@@ -7,6 +7,7 @@ use serde::Serialize;
 use service::rnr_form::get_period_length;
 
 use super::rnr_form_line::RnRFormLineNode;
+use crate::types::PeriodNode;
 
 pub struct RnRFormNode {
     pub rnr_form_row: RnRFormRow,
@@ -51,6 +52,10 @@ impl RnRFormNode {
 
     pub async fn period_name(&self) -> &str {
         &self.period_row.name
+    }
+
+    pub async fn period(&self) -> PeriodNode {
+        PeriodNode::from_domain(self.period_row.clone())
     }
 
     pub async fn period_length(&self) -> i64 {
