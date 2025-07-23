@@ -49,7 +49,7 @@ export const VVMStatusSearchInput = ({
         isOptionEqualToValue={(option, value) => option.id === value?.id}
         clearable={false}
         sx={{
-          width: '100%',
+          width: width ? `${width}px` : '100%',
         }}
       />
     </Tooltip>
