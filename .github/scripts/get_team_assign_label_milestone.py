@@ -40,6 +40,8 @@ class TeamLabelAndMilestone:
         issue_labels = self.get_issue_labels()
         user_team_label = self.get_assignees_team_labels()
         not_user_team_labels = self.get_team_labels_not_belonging_to_assignees()
+        print(f"User team labels: {user_team_label}")
+        print(f"Not user team labels: {not_user_team_labels}")
 
         issue = self.repo.get_issue(self.issue_number)
         assignees = issue.assignees
