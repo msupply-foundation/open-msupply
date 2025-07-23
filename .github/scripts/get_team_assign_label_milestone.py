@@ -18,10 +18,12 @@ class TeamLabelAndMilestone:
     def get_assignees_team_labels(self) -> List[str]:
         issue = self.repo.get_issue(self.issue_number)
         assignees = [a for a in issue.assignees]
+        print(f"Org: {self.org.name}")
 
         assignee_teams = set()
         for assignee in assignees:
             for team in self.org.get_teams():
+                print(f"Teams: {team.slug} for {assignee.login}")
                 team_members = [member.login for member in team.get_members()]
                 if assignee.login in team_members:
                     assignee_teams.add(team.slug)
@@ -40,8 +42,6 @@ class TeamLabelAndMilestone:
         issue_labels = self.get_issue_labels()
         user_team_label = self.get_assignees_team_labels()
         not_user_team_labels = self.get_team_labels_not_belonging_to_assignees()
-        print(f"User team labels: {user_team_label}")
-        print(f"Not user team labels: {not_user_team_labels}")
 
         issue = self.repo.get_issue(self.issue_number)
         assignees = issue.assignees
