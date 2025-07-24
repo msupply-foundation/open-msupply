@@ -93,7 +93,6 @@ const RenderRows = <T extends RecordWithId>({
         {(row, idx) => (
           <DataRow
             key={row.id}
-            ExpandContent={ExpandContent}
             rowIndex={idx}
             columns={columnsToDisplay}
             onClick={onRowClick ? onRowClick : undefined}
