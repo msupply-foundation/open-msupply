@@ -7,7 +7,6 @@ import {
   Checkbox,
   Grid,
   NumericTextInput,
-  NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { ItemFragment } from '../../api';
 
@@ -52,14 +51,13 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
           />
           <DetailInputWithLabelRow
             label={t('label.ddd')}
-            inputProps={{ disabled: isDisabled }}
             Input={
               <NumericTextInput
                 value={Number(item?.ddd)}
                 disabled={isDisabled}
+                fullWidth
               />
             }
-            DisabledInput={<NumericTextDisplay value={item?.ddd} />}
           />
           <DetailInputWithLabelRow
             label={t('label.type')}
@@ -67,11 +65,13 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
           />
           <DetailInputWithLabelRow
             label={t('label.doses')}
-            inputProps={{ disabled: isDisabled }}
             Input={
-              <NumericTextInput value={item?.doses} disabled={isDisabled} />
+              <NumericTextInput
+                value={item?.doses}
+                disabled={isDisabled}
+                fullWidth
+              />
             }
-            DisabledInput={<NumericTextDisplay value={item?.doses} />}
           />
           <DetailInputWithLabelRow
             label={t('label.is-vaccine')}
@@ -112,12 +112,11 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
             label={t('label.default-pack-size')}
             Input={
               <NumericTextInput
-                value={item?.defaultPackSize}
+                value={item?.defaultPackSize ?? 1}
                 disabled={isDisabled}
+                fullWidth
               />
             }
-            DisabledInput={<NumericTextDisplay value={item?.defaultPackSize} />}
-            inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.outer-pack-size')}
@@ -125,10 +124,9 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
               <NumericTextInput
                 value={item?.outerPackSize}
                 disabled={isDisabled}
+                fullWidth
               />
             }
-            DisabledInput={<NumericTextDisplay value={item?.outerPackSize} />}
-            inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.volume-per-pack')}
@@ -136,10 +134,9 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
               <NumericTextInput
                 value={item?.volumePerPack}
                 disabled={isDisabled}
+                fullWidth
               />
             }
-            DisabledInput={<NumericTextDisplay value={item?.volumePerPack} />}
-            inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.volume-per-outer-pack')}
@@ -147,30 +144,31 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
               <NumericTextInput
                 value={item?.volumePerOuterPack}
                 disabled={isDisabled}
+                fullWidth
               />
             }
-            DisabledInput={
-              <NumericTextDisplay value={item?.volumePerOuterPack} />
-            }
-            inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.weight')}
             Input={
-              <NumericTextInput value={item?.weight} disabled={isDisabled} />
+              <NumericTextInput
+                value={item?.weight}
+                disabled={isDisabled}
+                fullWidth
+              />
             }
-            DisabledInput={<NumericTextDisplay value={item?.weight} />}
-            inputProps={{ disabled: isDisabled }}
           />
         </DetailSection>
         <DetailSection title={t('title.pricing')}>
           <DetailInputWithLabelRow
             label={t('label.margin')}
             Input={
-              <NumericTextInput value={item?.margin} disabled={isDisabled} />
+              <NumericTextInput
+                value={item?.margin}
+                disabled={isDisabled}
+                fullWidth
+              />
             }
-            DisabledInput={<NumericTextDisplay value={item?.margin} />}
-            inputProps={{ disabled: isDisabled }}
           />
         </DetailSection>
       </Grid>

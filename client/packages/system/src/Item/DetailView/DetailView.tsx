@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DetailFormSkeleton,
   AlertModal,
@@ -20,7 +20,7 @@ import { ItemVariantsTab } from './Tabs/ItemVariants';
 import { ItemLedgerTab } from './Tabs/ItemLedger';
 import { StoreTab } from './Tabs/Store';
 
-export const ItemDetailView: FC = () => {
+export const ItemDetailView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
