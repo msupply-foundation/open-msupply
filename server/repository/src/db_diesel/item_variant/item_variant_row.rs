@@ -1,7 +1,7 @@
 use crate::{
     db_diesel::{
-        barcode_row::barcode, cold_storage_type_row::cold_storage_type, item_row::item,
-        location_row::location, name_row::name,
+        barcode_row::barcode, item_row::item, location_row::location,
+        location_type_row::location_type, name_row::name,
     },
     item_link, name_link, user_account, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
@@ -16,7 +16,7 @@ table! {
         id -> Text,
         name -> Text,
         item_link_id -> Text,
-        cold_storage_type_id -> Nullable<Text>,
+        location_type_id -> Nullable<Text>,
         manufacturer_link_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
         vvm_type -> Nullable<Text>,
@@ -27,13 +27,13 @@ table! {
 
 joinable!(item_variant -> item_link (item_link_id));
 joinable!(item_variant -> name_link (manufacturer_link_id));
-joinable!(item_variant -> cold_storage_type (cold_storage_type_id));
+joinable!(item_variant -> location_type (location_type_id));
 allow_tables_to_appear_in_same_query!(item_variant, item_link);
 allow_tables_to_appear_in_same_query!(item_variant, item);
 allow_tables_to_appear_in_same_query!(item_variant, user_account);
 allow_tables_to_appear_in_same_query!(item_variant, name_link);
 allow_tables_to_appear_in_same_query!(item_variant, name);
-allow_tables_to_appear_in_same_query!(item_variant, cold_storage_type);
+allow_tables_to_appear_in_same_query!(item_variant, location_type);
 allow_tables_to_appear_in_same_query!(item_variant, barcode);
 allow_tables_to_appear_in_same_query!(item_variant, location);
 
@@ -46,7 +46,7 @@ pub struct ItemVariantRow {
     pub id: String,
     pub name: String,
     pub item_link_id: String,
-    pub cold_storage_type_id: Option<String>,
+    pub location_type_id: Option<String>,
     pub manufacturer_link_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
     pub vvm_type: Option<String>,
