@@ -19,6 +19,7 @@ import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
+import { SidePanel } from './SidePanel';
 
 export const DetailViewInner = () => {
   const {
@@ -66,7 +67,7 @@ export const DetailViewInner = () => {
           />
 
           <Footer />
-          {/* <SidePanel /> */}
+          <SidePanel />
 
           {/* {isOpen && (
             <InboundLineEdit

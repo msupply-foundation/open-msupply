@@ -11,7 +11,6 @@ export type PurchaseOrderRowFragment = {
   confirmedDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
-  deliveredDatetime?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -22,26 +21,26 @@ export type PurchaseOrderFragment = {
   id: string;
   number: number;
   additionalInstructions?: string | null;
-  advancePaidDatetime?: string | null;
+  advancePaidDate?: string | null;
   agentCommission?: number | null;
   authorisingOfficer1?: string | null;
   authorisingOfficer2?: string | null;
   comment?: string | null;
   communicationsCharge?: number | null;
-  contractSignedDatetime?: string | null;
+  contractSignedDate?: string | null;
+  confirmedDatetime?: string | null;
   createdDatetime: string;
   currencyId?: string | null;
-  deliveredDatetime?: string | null;
   documentCharge?: number | null;
   foreignExchangeRate?: number | null;
-  expectedDeliveryDatetime?: string | null;
+  expectedDeliveryDate?: string | null;
   freightCharge?: number | null;
   freightConditions?: string | null;
   headingMessage?: string | null;
   insuranceCharge?: number | null;
-  receivedAtPortDatetime?: string | null;
+  receivedAtPortDate?: string | null;
   reference?: string | null;
-  sentDatetime?: string | null;
+  sentDate?: string | null;
   shippingMethod?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   supplierAgent?: string | null;
@@ -55,13 +54,13 @@ export type PurchaseOrderFragment = {
     nodes: Array<{
       __typename: 'PurchaseOrderLineNode';
       id: string;
-      authorisedQuantity?: number | null;
+      authorisedNumberOfUnits?: number | null;
       expectedDeliveryDate?: string | null;
-      numberOfPacks?: number | null;
-      requestedQuantity?: number | null;
-      packSize?: number | null;
+      sohInUnits: number;
+      requestedNumberOfUnits: number;
+      requestedPackSize: number;
       requestedDeliveryDate?: string | null;
-      totalReceived?: number | null;
+      receivedNumberOfUnits: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -78,13 +77,13 @@ export type PurchaseOrderFragment = {
 export type PurchaseOrderLineFragment = {
   __typename: 'PurchaseOrderLineNode';
   id: string;
-  authorisedQuantity?: number | null;
+  authorisedNumberOfUnits?: number | null;
   expectedDeliveryDate?: string | null;
-  numberOfPacks?: number | null;
-  requestedQuantity?: number | null;
-  packSize?: number | null;
+  sohInUnits: number;
+  requestedNumberOfUnits: number;
+  requestedPackSize: number;
   requestedDeliveryDate?: string | null;
-  totalReceived?: number | null;
+  receivedNumberOfUnits: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -116,7 +115,6 @@ export type PurchaseOrdersQuery = {
       confirmedDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
-      deliveredDatetime?: string | null;
       comment?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -137,26 +135,26 @@ export type PurchaseOrderByIdQuery = {
         id: string;
         number: number;
         additionalInstructions?: string | null;
-        advancePaidDatetime?: string | null;
+        advancePaidDate?: string | null;
         agentCommission?: number | null;
         authorisingOfficer1?: string | null;
         authorisingOfficer2?: string | null;
         comment?: string | null;
         communicationsCharge?: number | null;
-        contractSignedDatetime?: string | null;
+        contractSignedDate?: string | null;
+        confirmedDatetime?: string | null;
         createdDatetime: string;
         currencyId?: string | null;
-        deliveredDatetime?: string | null;
         documentCharge?: number | null;
         foreignExchangeRate?: number | null;
-        expectedDeliveryDatetime?: string | null;
+        expectedDeliveryDate?: string | null;
         freightCharge?: number | null;
         freightConditions?: string | null;
         headingMessage?: string | null;
         insuranceCharge?: number | null;
-        receivedAtPortDatetime?: string | null;
+        receivedAtPortDate?: string | null;
         reference?: string | null;
-        sentDatetime?: string | null;
+        sentDate?: string | null;
         shippingMethod?: string | null;
         status: Types.PurchaseOrderNodeStatus;
         supplierAgent?: string | null;
@@ -170,13 +168,13 @@ export type PurchaseOrderByIdQuery = {
           nodes: Array<{
             __typename: 'PurchaseOrderLineNode';
             id: string;
-            authorisedQuantity?: number | null;
+            authorisedNumberOfUnits?: number | null;
             expectedDeliveryDate?: string | null;
-            numberOfPacks?: number | null;
-            requestedQuantity?: number | null;
-            packSize?: number | null;
+            sohInUnits: number;
+            requestedNumberOfUnits: number;
+            requestedPackSize: number;
             requestedDeliveryDate?: string | null;
-            totalReceived?: number | null;
+            receivedNumberOfUnits: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -202,6 +200,16 @@ export type InsertPurchaseOrderMutation = {
   insertPurchaseOrder: { __typename: 'IdResponse'; id: string };
 };
 
+export type UpdatePurchaseOrderMutationVariables = Types.Exact<{
+  input: Types.UpdatePurchaseOrderInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdatePurchaseOrderMutation = {
+  __typename: 'Mutations';
+  updatePurchaseOrder: { __typename: 'IdResponse'; id: string };
+};
+
 export const PurchaseOrderRowFragmentDoc = gql`
   fragment PurchaseOrderRow on PurchaseOrderNode {
     id
@@ -215,7 +223,6 @@ export const PurchaseOrderRowFragmentDoc = gql`
     confirmedDatetime
     status
     targetMonths
-    deliveredDatetime
     lines {
       totalCount
     }
@@ -226,7 +233,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
   fragment PurchaseOrderLine on PurchaseOrderLineNode {
     __typename
     id
-    authorisedQuantity
+    authorisedNumberOfUnits
     expectedDeliveryDate
     item {
       id
@@ -234,11 +241,11 @@ export const PurchaseOrderLineFragmentDoc = gql`
       name
       unitName
     }
-    numberOfPacks
-    requestedQuantity
-    packSize
+    sohInUnits
+    requestedNumberOfUnits
+    requestedPackSize
     requestedDeliveryDate
-    totalReceived
+    receivedNumberOfUnits
   }
 `;
 export const PurchaseOrderFragmentDoc = gql`
@@ -247,28 +254,28 @@ export const PurchaseOrderFragmentDoc = gql`
     id
     number
     additionalInstructions
-    advancePaidDatetime
+    advancePaidDate
     agentCommission
     authorisingOfficer1
     authorisingOfficer2
     comment
     communicationsCharge
-    contractSignedDatetime
+    contractSignedDate
+    confirmedDatetime
     createdDatetime
     currencyId
-    deliveredDatetime
     documentCharge
     donor {
       id
       name
     }
     foreignExchangeRate
-    expectedDeliveryDatetime
+    expectedDeliveryDate
     freightCharge
     freightConditions
     headingMessage
     insuranceCharge
-    receivedAtPortDatetime
+    receivedAtPortDate
     reference
     lines {
       __typename
@@ -277,7 +284,7 @@ export const PurchaseOrderFragmentDoc = gql`
       }
       totalCount
     }
-    sentDatetime
+    sentDate
     shippingMethod
     status
     store {
@@ -348,6 +355,18 @@ export const InsertPurchaseOrderDocument = gql`
     }
   }
 `;
+export const UpdatePurchaseOrderDocument = gql`
+  mutation updatePurchaseOrder(
+    $input: UpdatePurchaseOrderInput!
+    $storeId: String!
+  ) {
+    updatePurchaseOrder(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -412,6 +431,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertPurchaseOrder',
+        'mutation',
+        variables
+      );
+    },
+    updatePurchaseOrder(
+      variables: UpdatePurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdatePurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePurchaseOrderMutation>(
+            UpdatePurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updatePurchaseOrder',
         'mutation',
         variables
       );

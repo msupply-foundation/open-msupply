@@ -7,10 +7,16 @@ import {
   useTranslation,
   SearchBar,
   Tooltip,
+  useDebounceCallback,
+  DateTimePickerInput,
+  DateUtils,
+  Formatter,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
+
+const DEBOUNCED_TIME = 1000;
 
 interface ToolbarProps {
   isDisabled?: boolean;
@@ -21,9 +27,11 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const {
     query: { data, isLoading },
     lines: { itemFilter, setItemFilter },
+    update: { update },
   } = usePurchaseOrder();
-
   const { supplier, reference } = data ?? {};
+
+  const handleDebouncedUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
 
   return (
     <AppBarContentPortal
@@ -44,9 +52,8 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   disabled={isDisabled || isLoading}
                   value={(supplier as NameFragment) ?? null}
                   onChange={supplier => {
-                    // eslint-disable-next-line no-console
-                    console.log('TO-DO: Update supplier', supplier.name);
-                    // update({ supplier });
+                    if (!supplier) return;
+                    update({ supplierId: supplier?.id });
                   }}
                 />
               }
@@ -62,12 +69,24 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   sx={{ width: 250 }}
                   value={reference ?? null}
                   onChange={e => {
-                    // eslint-disable-next-line no-console
-                    console.log('TO-DO: Update reference', e.target.value);
-                    // update({ reference: e.target.value });
+                    handleDebouncedUpdate({ reference: e.target.value });
                   }}
                 />
               </Tooltip>
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.requested-delivery-date')}
+            Input={
+              <DateTimePickerInput
+                value={DateUtils.getDateOrNull()}
+                onChange={date => {
+                  // TODO: are we supporting this?
+                  const formattedDate = Formatter.naiveDate(date);
+                  // eslint-disable-next-line no-console
+                  console.log(formattedDate);
+                }}
+              />
             }
           />
         </Grid>

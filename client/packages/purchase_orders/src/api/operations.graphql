@@ -11,7 +11,6 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   confirmedDatetime
   status
   targetMonths
-  deliveredDatetime
   lines {
     totalCount
   }
@@ -23,16 +22,16 @@ fragment PurchaseOrder on PurchaseOrderNode {
   id
   number
   additionalInstructions
-  advancePaidDatetime
+  advancePaidDate
   agentCommission
   authorisingOfficer1
   authorisingOfficer2
   comment
   communicationsCharge
-  contractSignedDatetime
+  contractSignedDate
+  confirmedDatetime
   createdDatetime
   currencyId
-  deliveredDatetime
   documentCharge
   donor {
     id
@@ -40,12 +39,12 @@ fragment PurchaseOrder on PurchaseOrderNode {
     # Add as required
   }
   foreignExchangeRate
-  expectedDeliveryDatetime
+  expectedDeliveryDate
   freightCharge
   freightConditions
   headingMessage
   insuranceCharge
-  receivedAtPortDatetime
+  receivedAtPortDate
   reference
   lines {
     __typename
@@ -54,7 +53,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
     }
     totalCount
   }
-  sentDatetime
+  sentDate
   shippingMethod
   status
   store {
@@ -76,7 +75,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
   __typename
   id
-  authorisedQuantity
+  authorisedNumberOfUnits
   expectedDeliveryDate
   item {
     id
@@ -85,11 +84,11 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     unitName
     # Add as required
   }
-  numberOfPacks
-  requestedQuantity
-  packSize
+  sohInUnits
+  requestedNumberOfUnits
+  requestedPackSize
   requestedDeliveryDate
-  totalReceived
+  receivedNumberOfUnits
 }
 
 query purchaseOrders(
@@ -134,6 +133,17 @@ mutation insertPurchaseOrder(
   $storeId: String!
 ) {
   insertPurchaseOrder(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation updatePurchaseOrder(
+  $input: UpdatePurchaseOrderInput!
+  $storeId: String!
+) {
+  updatePurchaseOrder(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
     }

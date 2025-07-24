@@ -105,13 +105,6 @@ const ListView: FC = () => {
         sortable: true,
       },
       {
-        key: 'deliveryDatetime',
-        label: 'label.delivered',
-        format: ColumnFormat.Date,
-        accessor: ({ rowData }) => rowData.deliveredDatetime,
-        sortable: true,
-      },
-      {
         key: 'lines',
         label: 'label.lines',
         accessor: ({ rowData }) => rowData.lines.totalCount,
