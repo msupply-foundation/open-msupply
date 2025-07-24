@@ -72,7 +72,7 @@ const ReportsComponent = () => {
 
       {
         key: 'isCustom',
-        label: 'label.custom-column',
+        label: 'label.custom',
         align: ColumnAlign.Center,
         Cell: DotCell,
         sortable: false,

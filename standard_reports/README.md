@@ -222,7 +222,9 @@ Show report replaces previously used print.sh and show.sh bash commands on the O
 
 By default, running this command will generate and open an html file of the report. A `format` argument can be passed to generate an excel file instead.
 
-This command uses a `test-config.json` file located in the reports dir containing all arguments used to generate the report.
+#### Test Config
+
+Reports need certain parameters and arguments. Copy the `test-config.example.json` file to `test-config.json` in this directory, and update it with your desired parameters.
 
 A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json` file.
 

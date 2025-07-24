@@ -6,3 +6,6 @@ server/report_builder/config.yaml
 # Temp export files
 server/data
 .gitmodules
+
+
+standard_reports/test-config.json
