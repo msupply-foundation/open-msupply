@@ -51,6 +51,11 @@ export type StocktakeLineFragment = {
     isVaccine: boolean;
     doses: number;
     defaultPackSize: number;
+    itemStoreJoin?: {
+      __typename: 'ItemStoreJoinNode';
+      id: string;
+      defaultSellPricePerPack: number;
+    } | null;
   };
   reasonOption?: {
     __typename: 'ReasonOptionNode';
@@ -117,6 +122,11 @@ export type StocktakeFragment = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
+        itemStoreJoin?: {
+          __typename: 'ItemStoreJoinNode';
+          id: string;
+          defaultSellPricePerPack: number;
+        } | null;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -224,6 +234,11 @@ export type StocktakeQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
+              itemStoreJoin?: {
+                __typename: 'ItemStoreJoinNode';
+                id: string;
+                defaultSellPricePerPack: number;
+              } | null;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -302,6 +317,11 @@ export type StocktakeByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
+              itemStoreJoin?: {
+                __typename: 'ItemStoreJoinNode';
+                id: string;
+                defaultSellPricePerPack: number;
+              } | null;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -364,6 +384,11 @@ export type StocktakeLinesQuery = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
+        itemStoreJoin?: {
+          __typename: 'ItemStoreJoinNode';
+          id: string;
+          defaultSellPricePerPack: number;
+        } | null;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -641,6 +666,10 @@ export const StocktakeLineFragmentDoc = gql`
       isVaccine
       doses
       defaultPackSize
+      itemStoreJoin(storeId: $storeId) {
+        id
+        defaultSellPricePerPack
+      }
     }
     itemVariantId
     reasonOption {
