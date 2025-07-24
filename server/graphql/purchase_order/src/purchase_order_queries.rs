@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput},
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
@@ -8,13 +8,12 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderNodeStatus};
-use repository::{DateFilter, EqualFilter, PaginationOption, StringFilter};
+use repository::{DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
 use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum PurchaseOrderSortFieldInput {
-    Supplier,
     Number,
     CreatedDatetime,
     Status,
@@ -39,7 +38,7 @@ pub struct EqualFilterPurchaseOrderStatusInput {
 #[derive(InputObject, Clone)]
 pub struct PurchaseOrderFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub created_date: Option<DateFilterInput>,
+    pub created_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterPurchaseOrderStatusInput>,
     pub supplier: Option<StringFilterInput>,
     pub store_id: Option<EqualFilterStringInput>,
@@ -115,7 +114,7 @@ impl PurchaseOrderFilterInput {
     pub fn to_domain(self) -> PurchaseOrderFilter {
         PurchaseOrderFilter {
             id: self.id.map(EqualFilter::from),
-            created_date: self.created_date.map(DateFilter::from),
+            created_datetime: self.created_datetime.map(DatetimeFilter::from),
             status: self
                 .status
                 .map(|t| map_filter!(t, PurchaseOrderNodeStatus::to_domain)),
@@ -130,7 +129,6 @@ impl PurchaseOrderSortInput {
         use PurchaseOrderSortField as to;
         use PurchaseOrderSortFieldInput as from;
         let key = match self.key {
-            from::Supplier => to::Supplier,
             from::Number => to::Number,
             from::TargetMonths => to::TargetMonths,
             from::DeliveryDate => to::DeliveryDate,

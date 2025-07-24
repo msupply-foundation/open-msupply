@@ -42,7 +42,6 @@ impl MigrationFragment for Migrate {
                     confirmed_datetime {DATETIME},
                     target_months {DOUBLE},
                     comment TEXT,
-                    supplier_discount_percentage {DOUBLE},
                     supplier_discount_amount {DOUBLE},
                     donor_link_id TEXT REFERENCES name_link(id),
                     reference TEXT,
@@ -91,7 +90,7 @@ impl MigrationFragment for Migrate {
                     soh_in_units {DOUBLE} NOT NULL DEFAULT 0.0,
                     supplier_item_code TEXT,
                     price_per_pack_before_discount {DOUBLE} NOT NULL DEFAULT 0.0,
-                    discount_percentage {DOUBLE} NOT NULL DEFAULT 0.0
+                    price_per_pack_after_discount {DOUBLE} NOT NULL DEFAULT 0.0,
                 );
             "#
         )?;

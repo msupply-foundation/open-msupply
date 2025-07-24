@@ -130,7 +130,7 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option")]
-    pub currency_ID: Option<String>,
+    pub currency_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub reference: Option<String>,
@@ -271,7 +271,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             received_at_port_date,
             name_id,
             creation_date,
-            currency_ID,
+            currency_id,
             confirm_date: legacy_confirm_date,
             user_id,
             store_id,
@@ -301,17 +301,10 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             target_months,
             comment,
-            supplier_discount_percentage: if supplier_discount_amount > 0.0
-                && order_total_before_discount > 0.0
-            {
-                Some(supplier_discount_amount / order_total_before_discount * 100.0)
-            } else {
-                None
-            },
             supplier_discount_amount: Some(supplier_discount_amount),
             donor_link_id: donor_id,
             reference,
-            currency_id: currency_ID,
+            currency_id,
             foreign_exchange_rate: oms_fields.clone().and_then(|o| o.foreign_exchange_rate),
             shipping_method,
             sent_date,
@@ -354,7 +347,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             target_months,
             comment,
-            supplier_discount_percentage,
             supplier_discount_amount,
             donor_link_id,
             reference,
@@ -401,7 +393,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             target_months,
             status: to_legacy_status(&status),
             comment,
-            currency_ID: currency_id,
+            currency_id,
             reference,
             user_id,
             store_id,

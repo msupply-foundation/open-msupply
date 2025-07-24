@@ -77,6 +77,8 @@ const PURCHASE_ORDER_2: (&str, &str) = (
         "oms_fields": { 
             "foreign_exchange_rate": 1.6,
             "expected_delivery_date": "2025-01-22" 
+            "created_datetime": "2021-01-22T00:00:00",
+            "confirmed_datetime": "2021-07-11T00:00:00"
         }
     }"#,
 );
@@ -89,14 +91,21 @@ fn purchase_order_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_2.0.to_string(),
             store_id: "store_b".to_string(),
             user_id: Some("some user".to_string()),
-            supplier_name_link_id: Some("name_store_b".to_string()),
+            supplier_name_link_id: "name_store_b".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
-            created_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
-            confirmed_date: Some(NaiveDate::from_ymd_opt(2020, 7, 11).unwrap()),
+            created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            confirmed_datetime: Some(
+                NaiveDate::from_ymd_opt(2020, 7, 11)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
             target_months: Some(2.1),
             comment: Some("some test comment".to_string()),
-            supplier_discount_percentage: Some(222.2),
             supplier_discount_amount: Some(12.2),
             donor_link_id: Some("donor_a".to_string()),
             reference: Some("test reference".to_string()),
@@ -119,6 +128,8 @@ fn purchase_order_pull_record() -> TestSyncIncomingRecord {
             insurance_charge: Some(1.0),
             freight_charge: None,
             freight_conditions: Some("difficult".to_string()),
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 12.2,
         },
     )
 }
@@ -127,14 +138,15 @@ fn purchase_order_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_2.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            name_id: "name_store_b".to_string(),
             id: PURCHASE_ORDER_2.0.to_string(),
-            created_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
+            creation_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
             target_months: Some(2.1),
-            status: LegacyPurchaseOrderStatus::New,
+            status: LegacyPurchaseOrderStatus::Nw,
             comment: Some("some test comment".to_string()),
             currency_id: Some("currency_a".to_string()),
             reference: Some("test reference".to_string()),
-            confirmed_date: Some(NaiveDate::from_ymd_opt(2020, 7, 11).unwrap()),
+            confirm_date: Some(NaiveDate::from_ymd_opt(2020, 7, 11).unwrap()),
             user_id: Some("some user".to_string()),
             store_id: "store_b".to_string(),
             supplier_agent: Some("some agent".to_string()),
@@ -147,11 +159,11 @@ fn purchase_order_push_record() -> TestSyncOutgoingRecord {
             communications_charge: None,
             insurance_charge: Some(1.0),
             freight_charge: None,
-            supplier_discount_amount: Some(12.2),
-            donor_link_id: Some("donor_a".to_string()),
+            supplier_discount_amount: 12.2,
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 12.2,
+            donor_id: Some("donor_a".to_string()),
             purchase_order_number: 1,
-            supplier_name_link_id: Some("name_store_b".to_string()),
-            supplier_discount_percentage: Some(222.2),
             heading_message: Some("some heading message".to_string()),
             shipping_method: Some("sea".to_string()),
             sent_date: Some(NaiveDate::from_ymd_opt(2025, 1, 15).unwrap()),
@@ -160,7 +172,17 @@ fn purchase_order_push_record() -> TestSyncOutgoingRecord {
             received_at_port_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
             oms_fields: Some(PurchaseOrderOmsFields {
                 foreign_exchange_rate: Some(1.6),
-                expected_delivery_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap())
+                expected_delivery_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
+                created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                confirmed_datetime: Some(
+                    NaiveDate::from_ymd_opt(2021, 7, 11)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
+                ),
             }),
         }),
     }
@@ -194,14 +216,16 @@ fn purchase_order_empty_string_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_3.0.to_string(),
             store_id: "store_b".to_string(),
             user_id: None,
-            supplier_name_link_id: Some("name_store_b".to_string()),
+            supplier_name_link_id: "name_store_b".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
-            created_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
-            confirmed_date: None,
+            created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            confirmed_datetime: None,
             target_months: None,
             comment: None,
-            supplier_discount_percentage: None,
             supplier_discount_amount: None,
             donor_link_id: None,
             reference: None,
@@ -224,6 +248,8 @@ fn purchase_order_empty_string_pull_record() -> TestSyncIncomingRecord {
             insurance_charge: None,
             freight_charge: None,
             freight_conditions: None,
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 0.0,
         },
     )
 }
@@ -232,14 +258,15 @@ fn purchase_order_empty_string_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_3.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            name_id: "name_store_b".to_string(),
             id: PURCHASE_ORDER_3.0.to_string(),
-            created_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
+            creation_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
             target_months: None,
-            status: LegacyPurchaseOrderStatus::New,
+            status: LegacyPurchaseOrderStatus::Nw,
             comment: None,
             currency_id: None,
             reference: None,
-            confirmed_date: None,
+            confirm_date: None,
             user_id: None,
             store_id: "store_b".to_string(),
             supplier_agent: None,
@@ -252,11 +279,11 @@ fn purchase_order_empty_string_push_record() -> TestSyncOutgoingRecord {
             communications_charge: None,
             insurance_charge: None,
             freight_charge: None,
-            supplier_discount_amount: None,
-            donor_link_id: None,
+            supplier_discount_amount: 0.0,
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 0.0,
+            donor_id: None,
             purchase_order_number: 1,
-            supplier_name_link_id: Some("name_store_b".to_string()),
-            supplier_discount_percentage: None,
             heading_message: None,
             shipping_method: None,
             sent_date: None,
@@ -296,14 +323,16 @@ fn purchase_order_empty_object_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_4.0.to_string(),
             store_id: "store_b".to_string(),
             user_id: None,
-            supplier_name_link_id: None,
+            supplier_name_link_id: "".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
-            created_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
-            confirmed_date: None,
+            created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            confirmed_datetime: None,
             target_months: None,
             comment: None,
-            supplier_discount_percentage: None,
             supplier_discount_amount: None,
             donor_link_id: None,
             reference: None,
@@ -326,6 +355,8 @@ fn purchase_order_empty_object_pull_record() -> TestSyncIncomingRecord {
             insurance_charge: None,
             freight_charge: None,
             freight_conditions: None,
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 0.0,
         },
     )
 }
@@ -335,14 +366,15 @@ fn purchase_order_empty_object_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_4.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            name_id: "".to_string(),
             id: PURCHASE_ORDER_4.0.to_string(),
-            created_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
+            creation_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
             target_months: None,
-            status: LegacyPurchaseOrderStatus::New,
+            status: LegacyPurchaseOrderStatus::Nw,
             comment: None,
             currency_id: None,
             reference: None,
-            confirmed_date: None,
+            confirm_date: None,
             user_id: None,
             store_id: "store_b".to_string(),
             supplier_agent: None,
@@ -355,11 +387,11 @@ fn purchase_order_empty_object_push_record() -> TestSyncOutgoingRecord {
             communications_charge: None,
             insurance_charge: None,
             freight_charge: None,
-            supplier_discount_amount: None,
-            donor_link_id: None,
+            supplier_discount_amount: 0.0,
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 0.0,
+            donor_id: None,
             purchase_order_number: 1,
-            supplier_name_link_id: None,
-            supplier_discount_percentage: None,
             heading_message: None,
             shipping_method: None,
             sent_date: None,
@@ -399,14 +431,16 @@ fn purchase_order_null_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_5.0.to_string(),
             store_id: "store_b".to_string(),
             user_id: None,
-            supplier_name_link_id: None,
+            supplier_name_link_id: "".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
-            created_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
-            confirmed_date: None,
+            created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            confirmed_datetime: None,
             target_months: None,
             comment: None,
-            supplier_discount_percentage: None,
             supplier_discount_amount: None,
             donor_link_id: None,
             reference: None,
@@ -429,6 +463,8 @@ fn purchase_order_null_pull_record() -> TestSyncIncomingRecord {
             insurance_charge: None,
             freight_charge: None,
             freight_conditions: None,
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 0.0,
         },
     )
 }
@@ -438,14 +474,15 @@ fn purchase_order_null_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_5.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            name_id: "".to_string(),
             id: PURCHASE_ORDER_5.0.to_string(),
-            created_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
+            creation_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
             target_months: None,
-            status: LegacyPurchaseOrderStatus::New,
+            status: LegacyPurchaseOrderStatus::Nw,
             comment: None,
             currency_id: None,
             reference: None,
-            confirmed_date: None,
+            confirm_date: None,
             user_id: None,
             store_id: "store_b".to_string(),
             supplier_agent: None,
@@ -458,11 +495,11 @@ fn purchase_order_null_push_record() -> TestSyncOutgoingRecord {
             communications_charge: None,
             insurance_charge: None,
             freight_charge: None,
-            supplier_discount_amount: None,
-            donor_link_id: None,
+            supplier_discount_amount: 0.0,
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 0.0,
+            donor_id: None,
             purchase_order_number: 1,
-            supplier_name_link_id: None,
-            supplier_discount_percentage: None,
             heading_message: None,
             shipping_method: None,
             sent_date: None,
@@ -500,14 +537,16 @@ fn purchase_order_no_fields_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_6.0.to_string(),
             store_id: "store_b".to_string(),
             user_id: None,
-            supplier_name_link_id: None,
+            supplier_name_link_id: "".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
-            created_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
-            confirmed_date: None,
+            created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            confirmed_datetime: None,
             target_months: None,
             comment: None,
-            supplier_discount_percentage: None,
             supplier_discount_amount: None,
             donor_link_id: None,
             reference: None,
@@ -530,6 +569,8 @@ fn purchase_order_no_fields_pull_record() -> TestSyncIncomingRecord {
             insurance_charge: None,
             freight_charge: None,
             freight_conditions: None,
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 0.0,
         },
     )
 }
@@ -538,14 +579,15 @@ fn purchase_order_no_fields_push_record() -> TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PURCHASE_ORDER_6.0.to_string(),
         push_data: json!(LegacyPurchaseOrderRow {
+            name_id: "".to_string(),
             id: PURCHASE_ORDER_6.0.to_string(),
-            created_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
+            creation_date: NaiveDate::from_ymd_opt(2020, 1, 22).unwrap(),
             target_months: None,
-            status: LegacyPurchaseOrderStatus::New,
+            status: LegacyPurchaseOrderStatus::Nw,
             comment: None,
             currency_id: None,
             reference: None,
-            confirmed_date: None,
+            confirm_date: None,
             user_id: None,
             store_id: "store_b".to_string(),
             supplier_agent: None,
@@ -558,11 +600,11 @@ fn purchase_order_no_fields_push_record() -> TestSyncOutgoingRecord {
             communications_charge: None,
             insurance_charge: None,
             freight_charge: None,
-            supplier_discount_amount: None,
-            donor_link_id: None,
+            supplier_discount_amount: 0.0,
+            order_total_before_discount: 0.0,
+            order_total_after_discount: 0.0,
+            donor_id: None,
             purchase_order_number: 1,
-            supplier_name_link_id: None,
-            supplier_discount_percentage: None,
             heading_message: None,
             shipping_method: None,
             sent_date: None,
