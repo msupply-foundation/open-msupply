@@ -49,3 +49,27 @@ impl SyncTranslation for ItemStoreJoinTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_item_store_join_translator() {
+        use crate::sync::test::test_data::item_store_join as test_data;
+        let translator = ItemStoreJoinTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_item_store_join_translator", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
+}
