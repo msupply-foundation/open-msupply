@@ -30,8 +30,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
 
   const {
     query: { data },
-    // TODO: Are the lines needed?
-    // lines: { sortedAndFilteredLines },
   } = usePurchaseOrder();
 
   // const { OpenButton } = useDetailPanel();
