@@ -52,12 +52,12 @@ pub fn get_draft_stock_out_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
-    let invoice = get_invoice(ctx, Some(&store_id), invoice_id)?.ok_or(
-        ListError::DatabaseError(RepositoryError::DBError {
+    let invoice = get_invoice(ctx, Some(store_id), invoice_id)?.ok_or(ListError::DatabaseError(
+        RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
-        }),
-    )?;
+        },
+    ))?;
 
     let historical_stock_lines = get_historical_available_stock_lines(
         ctx,
@@ -66,7 +66,7 @@ pub fn get_draft_stock_out_lines(
         invoice.invoice_row.backdated_datetime,
     )?;
 
-    let existing_lines = get_outgoing_invoice_lines(ctx, &item_id, &invoice.invoice_row)?;
+    let existing_lines = get_outgoing_invoice_lines(ctx, item_id, &invoice.invoice_row)?;
 
     let existing_stock_line_ids: Vec<String> = existing_lines
         .iter()
@@ -75,7 +75,7 @@ pub fn get_draft_stock_out_lines(
 
     let new_lines = generate_new_draft_lines(
         ctx,
-        &item_id,
+        item_id,
         invoice.name_row.id,
         existing_stock_line_ids,
         historical_stock_lines,
@@ -237,7 +237,7 @@ fn find_stock_line_by_id(
         None => return Ok(None),
     };
     let stock_line = stock_lines
-        .into_iter()
+        .iter()
         .find(|line| line.id == stock_line_id)
         .ok_or(RepositoryError::DBError {
             msg: "Stock line not found".to_string(),
