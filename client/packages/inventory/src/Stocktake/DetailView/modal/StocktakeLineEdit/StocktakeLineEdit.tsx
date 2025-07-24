@@ -14,7 +14,6 @@ import {
   useRowHighlight,
   useMediaQuery,
   useNotification,
-  useIsGrouped,
   useUrlQueryParams,
   useSimplifiedTabletUI,
   ButtonWithIcon,
