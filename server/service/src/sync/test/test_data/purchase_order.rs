@@ -49,7 +49,7 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "total_foreign_currency_expected": "",
         "total_local_currency_expected": "",
         "insurance_charge": 1.0,
-        "Order_total_before_discount": "",
+        "Order_total_before_discount": 0.0,
         "inv_discount_amount": 222.2,
         "supplier_discount_amount": 12.2,
         "quote_ID": "",
