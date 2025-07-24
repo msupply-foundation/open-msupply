@@ -1,6 +1,8 @@
 use chrono::NaiveDate;
 use repository::{
-    goods_received_row::{GoodsReceivedRow, GoodsReceivedRowRepository, GoodsReceivedStatus},
+    goods_received_row::{
+        GoodsReceivedRow, GoodsReceivedRowDelete, GoodsReceivedRowRepository, GoodsReceivedStatus,
+    },
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -53,10 +55,6 @@ pub struct LegacyGoodsReceived {
     #[serde(rename = "user_id_created")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub created_by: Option<String>,
-    #[serde(default)]
-    #[serde(rename = "user_id_modified")]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub modified_by: Option<String>,
 }
 
 #[deny(dead_code)]
@@ -100,10 +98,8 @@ impl SyncTranslation for GoodsReceivedTranslation {
             supplier_reference: legacy.supplier_reference,
             donor_link_id: legacy.donor_link_id,
             created_datetime: legacy.created_datetime.and_hms_opt(0, 0, 0).unwrap(),
-            modified_datetime: legacy.created_datetime.and_hms_opt(0, 0, 0).unwrap(),
             finalised_datetime: None,
             created_by: legacy.created_by,
-            modified_by: legacy.modified_by,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -132,12 +128,54 @@ impl SyncTranslation for GoodsReceivedTranslation {
             supplier_reference: row.supplier_reference,
             donor_link_id: row.donor_link_id,
             created_by: row.created_by,
-            modified_by: row.modified_by,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
             serde_json::to_value(legacy)?,
         ))
+    }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(GoodsReceivedRowDelete(
+            sync_record.record_id.clone(),
+        )))
+    }
+}
+
+mod tests {
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    use crate::sync::translations::{goods_received::GoodsReceivedTranslation, SyncTranslation};
+
+    #[actix_rt::test]
+    async fn test_goods_received_translation() {
+        use crate::sync::test::test_data::goods_received as test_data;
+        let translator = GoodsReceivedTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_goods_received_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+
+        for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }
