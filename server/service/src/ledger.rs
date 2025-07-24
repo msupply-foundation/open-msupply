@@ -1,7 +1,9 @@
 use super::{ListError, ListResult};
 use crate::{get_default_pagination_unlimited, i64_to_u32, usize_to_u32};
 use repository::{
-    ledger::{LedgerFilter, LedgerRepository, LedgerRow, LedgerSort},
+    stock_line_ledger::{
+        StockLineLedgerFilter, StockLineLedgerRepository, StockLineLedgerRow, StockLineLedgerSort,
+    },
     EqualFilter, ItemLedgerFilter, ItemLedgerRepository, ItemLedgerRow, PaginationOption,
     StorageConnection, StorageConnectionManager,
 };
@@ -9,12 +11,12 @@ use repository::{
 pub fn get_ledger(
     connection_manager: &StorageConnectionManager,
     pagination: Option<PaginationOption>,
-    filter: Option<LedgerFilter>,
-    sort: Option<LedgerSort>,
-) -> Result<ListResult<LedgerRow>, ListError> {
+    filter: Option<StockLineLedgerFilter>,
+    sort: Option<StockLineLedgerSort>,
+) -> Result<ListResult<StockLineLedgerRow>, ListError> {
     let pagination = get_default_pagination_unlimited(pagination);
     let connection = connection_manager.connection()?;
-    let repository = LedgerRepository::new(&connection);
+    let repository = StockLineLedgerRepository::new(&connection);
 
     let rows = repository.query(pagination, filter, sort)?;
     Ok(ListResult {

@@ -43,6 +43,7 @@ export type StockLineRowFragment = {
     name: string;
     unitName?: string | null;
     isVaccine: boolean;
+    dosesPerUnit: number;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
   vvmStatusLogs?: {
@@ -70,6 +71,8 @@ export type StockLineRowFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
+    level: number;
+    unusable: boolean;
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
@@ -169,6 +172,7 @@ export type LedgerRowFragment = {
   reason?: string | null;
   stockLineId?: string | null;
   storeId: string;
+  runningBalance: number;
 };
 
 export type VvmStatusLogRowFragment = {
@@ -244,6 +248,7 @@ export type StockLinesQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -274,6 +279,8 @@ export type StockLinesQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
+        level: number;
+        unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
@@ -335,6 +342,7 @@ export type StockLineQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -365,6 +373,8 @@ export type StockLineQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
+        level: number;
+        unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
@@ -375,6 +385,16 @@ export type StockLineQuery = {
       } | null;
     }>;
   };
+};
+
+export type StockLinesCountQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.StockLineFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type StockLinesCountQuery = {
+  __typename: 'Queries';
+  stockLines: { __typename: 'StockLineConnector'; totalCount: number };
 };
 
 export type LedgerQueryVariables = Types.Exact<{
@@ -401,6 +421,7 @@ export type LedgerQuery = {
       reason?: string | null;
       stockLineId?: string | null;
       storeId: string;
+      runningBalance: number;
     }>;
   };
 };
@@ -452,6 +473,7 @@ export type UpdateStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -482,6 +504,8 @@ export type UpdateStockLineMutation = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
+          level: number;
+          unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
@@ -616,10 +640,8 @@ export type VvmStatusQuery = {
     __typename: 'VvmstatusConnector';
     nodes: Array<{
       __typename: 'VvmstatusNode';
-      code: string;
       description: string;
       id: string;
-      isActive: boolean;
       level: number;
       reasonId?: string | null;
       unusable: boolean;
@@ -740,6 +762,7 @@ export type InsertStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -770,6 +793,8 @@ export type InsertStockLineMutation = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
+          level: number;
+          unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
@@ -783,10 +808,8 @@ export type InsertStockLineMutation = {
 
 export type VvmStatusFragment = {
   __typename: 'VvmstatusNode';
-  code: string;
   description: string;
   id: string;
-  isActive: boolean;
   level: number;
   reasonId?: string | null;
   unusable: boolean;
@@ -802,10 +825,8 @@ export type ActiveVvmStatusesQuery = {
     __typename: 'VvmstatusConnector';
     nodes: Array<{
       __typename: 'VvmstatusNode';
-      code: string;
       description: string;
       id: string;
-      isActive: boolean;
       level: number;
       reasonId?: string | null;
       unusable: boolean;
@@ -885,6 +906,7 @@ export const StockLineRowFragmentDoc = gql`
         name
       }
       isVaccine
+      dosesPerUnit: doses
     }
     barcode
     vvmStatusLogs {
@@ -893,7 +915,10 @@ export const StockLineRowFragmentDoc = gql`
       }
     }
     vvmStatus {
+      __typename
       id
+      level
+      unusable
       description
     }
     donor(storeId: $storeId) {
@@ -959,15 +984,14 @@ export const LedgerRowFragmentDoc = gql`
     reason
     stockLineId
     storeId
+    runningBalance
   }
 `;
 export const VvmStatusFragmentDoc = gql`
   fragment VVMStatus on VvmstatusNode {
     __typename
-    code
     description
     id
-    isActive
     level
     reasonId
     unusable
@@ -1014,6 +1038,16 @@ export const StockLineDocument = gql`
     }
   }
   ${StockLineRowFragmentDoc}
+`;
+export const StockLinesCountDocument = gql`
+  query stockLinesCount($filter: StockLineFilterInput, $storeId: String!) {
+    stockLines(storeId: $storeId, filter: $filter) {
+      ... on StockLineConnector {
+        __typename
+        totalCount
+      }
+    }
+  }
 `;
 export const LedgerDocument = gql`
   query ledger(
@@ -1250,6 +1284,22 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'stockLine',
+        'query',
+        variables
+      );
+    },
+    stockLinesCount(
+      variables: StockLinesCountQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<StockLinesCountQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StockLinesCountQuery>(
+            StockLinesCountDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'stockLinesCount',
         'query',
         variables
       );

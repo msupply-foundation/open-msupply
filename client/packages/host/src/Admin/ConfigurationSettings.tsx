@@ -20,7 +20,7 @@ export const ConfigurationSettings = () => {
   const { currentLanguage } = useIntlUtils();
   const { mutateAsync, isLoading } = useConfigureNameProperties();
   const { isLoading: dataLoading } = useName.document.properties();
-  const { gapsConfigured, populationConfigured } =
+  const { gapsConfigured, forecastingConfigured } =
     useCheckConfiguredProperties();
 
   const handleClick = (propertyType: PropertyType) => async () => {
@@ -51,13 +51,13 @@ export const ConfigurationSettings = () => {
         )}
         component={
           <BaseButton
-            onClick={handleClick('population')}
+            onClick={handleClick('forecasting')}
             disabled={dataLoading || isLoading}
             title={t('tooltip.re-initialise-in-language', {
               language: currentLanguage,
             })}
           >
-            {populationConfigured
+            {forecastingConfigured
               ? t('button.re-initialise')
               : t('button.initialise')}
           </BaseButton>

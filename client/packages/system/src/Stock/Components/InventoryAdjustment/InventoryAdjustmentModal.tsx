@@ -10,6 +10,7 @@ import {
   useDialog,
   useFormatNumber,
   getReasonOptionType,
+  Checkbox,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput, useReasonOptions } from '../../..';
@@ -35,7 +36,7 @@ export const InventoryAdjustmentModal = ({
   const { data, isLoading } = useReasonOptions();
 
   const packUnit = String(stockLine.packSize);
-  const saveDisabled = draft.adjustment === 0;
+  const saveDisabled = draft.adjustment === 0 || stockLine.onHold;
   const isInventoryReduction =
     draft.adjustmentType === AdjustmentTypeInput.Reduction;
 
@@ -106,6 +107,10 @@ export const InventoryAdjustmentModal = ({
                 />
               </Box>
             }
+          />
+          <StyledInputRow
+            label={t('label.on-hold')}
+            Input={<Checkbox checked={stockLine.onHold} disabled />}
           />
         </Box>
         <Box

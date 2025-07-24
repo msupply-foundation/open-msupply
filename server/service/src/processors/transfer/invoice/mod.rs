@@ -130,7 +130,7 @@ fn process_change_log(
     // Try record against all of the processors
     for processor in processors.iter() {
         let result = processor
-            .try_process_record_common(&connection, &record)
+            .try_process_record_common(connection, &record)
             .map_err(Error::ProcessorError);
         if let Err(e) = result {
             log_system_error(connection, &e).map_err(Error::DatabaseError)?;

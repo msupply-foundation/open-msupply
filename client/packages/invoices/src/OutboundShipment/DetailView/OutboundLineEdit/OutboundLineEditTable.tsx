@@ -22,6 +22,7 @@ import {
   getAllocatedQuantity,
 } from '../../../StockOut';
 import { min } from 'lodash';
+import { useDisableVvmRows } from '../../../useDisableVvmRows';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -138,6 +139,7 @@ export const OutboundLineEditTable = ({
     allocatedQuantity,
     item,
     manualAllocate,
+    setVvmStatus,
   } = useAllocationContext(state => {
     const { placeholderUnits, item, allocateIn } = state;
 
@@ -175,6 +177,7 @@ export const OutboundLineEditTable = ({
     currency,
     isExternalSupplier,
     allocateIn: allocateIn,
+    setVvmStatus,
   });
 
   // Display all stock lines to user, including non-allocatable ones at the bottom
@@ -187,6 +190,8 @@ export const OutboundLineEditTable = ({
     tableStore.setDisabledRows(nonAllocatableLines.map(({ id }) => id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useDisableVvmRows({ rows: lines, isVaccine: item?.isVaccine });
 
   // Null means we aren't using placeholder
   if (!lines.length && placeholderQuantity === null)

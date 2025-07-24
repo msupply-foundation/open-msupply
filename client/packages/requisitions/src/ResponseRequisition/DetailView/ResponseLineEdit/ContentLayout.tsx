@@ -74,10 +74,12 @@ export const NumInputRow = ({
 
   const handleChange = (newValue?: number) => {
     if (!onChange || newValue === roundedValue) return;
-    if (representation === Representation.PACKS && newValue !== undefined) {
-      onChange(newValue * defaultPackSize);
+
+    const value = newValue === undefined ? 0 : newValue;
+    if (representation === Representation.PACKS) {
+      onChange(value * defaultPackSize);
     } else {
-      onChange(newValue);
+      onChange(value);
     }
   };
 
@@ -180,6 +182,7 @@ interface NumericInputOptions {
   disabledOverride?: boolean;
   endAdornmentOverride?: string;
   sx?: Record<string, unknown>;
+  overrideDoseDisplay?: boolean;
 }
 
 export const createNumericInput =
@@ -204,6 +207,7 @@ export const createNumericInput =
       onChange = () => {},
       disabledOverride,
       endAdornmentOverride,
+      overrideDoseDisplay,
       sx = {},
     } = options;
 
@@ -213,7 +217,9 @@ export const createNumericInput =
         representation={commonProps.representation}
         unitName={commonProps.unitName}
         showExtraFields={commonProps.showExtraFields}
-        displayVaccinesInDoses={commonProps.displayVaccinesInDoses}
+        displayVaccinesInDoses={
+          overrideDoseDisplay ?? commonProps.displayVaccinesInDoses
+        }
         disabled={disabledOverride ?? commonProps.disabled}
         label={t(label)}
         value={value ?? 0}

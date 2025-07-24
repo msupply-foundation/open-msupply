@@ -8,7 +8,11 @@
             <img class="logo" src="{{ data.store.logo }}" />
         </th>
         <th style="text-align:left;width:20%;">
-            <span style="font-weight:bold;">{{ data.store.storeName }}</span><br>
+            <span
+                style="font-weight:bold;" 
+                excel-cell="E1" 
+                excel-type="bold"
+            >{{ data.store.storeName }}</span><br>
             <span style="font-size:6pt;">{{ data.store.name.address1 }}</span><br>
             <span style="font-size:6pt;">{{ data.store.name.address2 }}</span><br>
             <span style="font-size:6pt;">
@@ -18,7 +22,7 @@
                 {{t(k="label.email",f="Email")}}: {{ data.store.name.email }}
             </span>
         </th>
-        <th style="text-align:right;width:70%;font-size:28pt;">
+        <th style="text-align:right;width:70%;font-size:28pt;" excel-cell="A1" excel-type="title">
             {{ t(k="label.outbound-shipment", f="Outbound Shipment") }}<br>
         </th>
     </tr>
@@ -26,12 +30,12 @@
 
 <div class="header_supplied_section" style="display: flex; flex-direction: column;">
     <div class="header-space-between">
-        <span>{{ t(k="label.customer", f="Customer") }}:</span>
-        <span>{{ t(k="label.number", f="Number") }}: {{ data.invoice.invoiceNumber }}</span>
+        <span excel-cell="A3">{{ t(k="label.customer", f="Customer") }}:</span>
+        <span excel-cell="E3">{{ t(k="label.number", f="Number") }}: {{ data.invoice.invoiceNumber }}</span>
     </div>
     <div class="header-space-between">
-        <span>{{ data.invoice.otherParty.name }}</span>
-        <span>{{ t(k="report.their-ref", f="Their ref") }}: {{ data.invoice.theirReference }}</span>
+        <span excel-cell="B3">{{ data.invoice.otherParty.name }}</span>
+        <span excel-cell="E4">{{ t(k="report.their-ref", f="Their ref") }}: {{ data.invoice.theirReference }}</span>
     </div>
     <div class="header-space-between">
         <span>{{ data.invoice.otherParty.code }}</span>

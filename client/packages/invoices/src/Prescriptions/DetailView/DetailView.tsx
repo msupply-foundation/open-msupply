@@ -12,8 +12,6 @@ import {
   ModalMode,
   useEditModal,
   useBreadcrumbs,
-  usePreference,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
@@ -31,9 +29,6 @@ export const PrescriptionDetailView = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
-  const { data: preference } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
-  );
   const {
     query: { data, loading },
   } = usePrescription();
@@ -48,12 +43,12 @@ export const PrescriptionDetailView = () => {
   } = useEditModal<Draft>();
 
   const onRowClick = useCallback(
-    (item: StockOutLineFragment | StockOutItem) => {
+    (line: StockOutLineFragment) => {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
           .addPart(String(data?.id))
-          .addPart(String(item.id))
+          .addPart(line.item.id)
           .build()
       );
     },
@@ -81,13 +76,7 @@ export const PrescriptionDetailView = () => {
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onRowClick={onRowClick}
-          onAddItem={onAddItem}
-          displayInDoses={preference?.manageVaccinesInDoses}
-        />
-      ),
+      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
       value: 'Details',
     },
     {

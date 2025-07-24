@@ -12,6 +12,7 @@ import {
   useIntlUtils,
   usePreference,
   useTranslation,
+  VvmStatusCell,
 } from '@openmsupply-client/common';
 import { getPrescriptionLineDosesColumns } from './columnsDoses';
 import {
@@ -72,11 +73,8 @@ export const usePrescriptionLineEditColumns = ({
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => {
-        if (!rowData.vvmStatus) return '';
-        // TODO: Show unusable VVM status somehow?
-        return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
-      },
+      Cell: VvmStatusCell,
+      accessor: ({ rowData }) => rowData?.vvmStatus,
       width: 85,
     });
   }
@@ -91,8 +89,7 @@ export const usePrescriptionLineEditColumns = ({
         : 'label.doses-per-unit',
       width: 80,
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) =>
-        rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit,
+      accessor: ({ rowData }) => rowData.dosesPerUnit,
     });
   } else {
     columnDefinitions.push(['packSize', { width: 90 }]);
@@ -150,7 +147,7 @@ export const usePrescriptionLineEditColumns = ({
 const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
-    max={props.rowData.availablePacks}
+    max={props.rowData.availablePacks * props.rowData.packSize}
     decimalLimit={2}
     min={0}
     slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}

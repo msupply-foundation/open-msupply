@@ -16,11 +16,12 @@ use super::query::get_stocktake;
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct InsertStocktake {
     pub id: String,
+    pub create_blank_stocktake: Option<bool>,
+    pub is_initial_stocktake: Option<bool>,
     pub location_id: Option<String>,
     pub master_list_id: Option<String>,
-    pub items_have_stock: Option<bool>,
+    pub include_all_master_list_items: Option<bool>,
     pub expires_before: Option<NaiveDate>,
-    pub is_initial_stocktake: Option<bool>,
     pub comment: Option<String>,
     pub description: Option<String>,
 }
@@ -294,17 +295,7 @@ mod test {
             )
             .unwrap();
 
-        assert_eq!(stocktake_rows.len(), 2);
-        // and that it does not have a stock_line linked
-        assert_eq!(
-            stocktake_rows
-                .iter()
-                .find(|r| r.line.item_link_id == "item_d")
-                .unwrap()
-                .line
-                .stock_line_id,
-            None
-        );
+        assert_eq!(stocktake_rows.len(), 1);
     }
 
     #[actix_rt::test]
@@ -463,17 +454,21 @@ mod test {
             )
             .unwrap();
 
-        assert_eq!(stocktake_rows.len(), 0);
+        assert_eq!(
+            stocktake_rows.len(),
+            2,
+            "stocktakes include all in stock stock lines by default (even if not visible)"
+        );
 
-        // test that placeholder lines are added when items_have_stock is true
+        // Test that no items are added to a stocktake when `create_blank_stocktake` is given
         service
             .insert_stocktake(
                 &context,
                 InsertStocktake {
-                    id: "stocktake_2".to_string(),
+                    id: "blank_stocktake".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    items_have_stock: Some(true),
+                    create_blank_stocktake: Some(true),
                     ..Default::default()
                 },
             )
@@ -481,30 +476,7 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
-                None,
-            )
-            .unwrap();
-
-        assert_eq!(stocktake_rows.len(), 2);
-
-        // test that stock items are not added to the stocktake when items_have_stock is false
-        service
-            .insert_stocktake(
-                &context,
-                InsertStocktake {
-                    id: "stocktake_3".to_string(),
-                    comment: Some("comment".to_string()),
-                    description: Some("description".to_string()),
-                    items_have_stock: Some(false),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        let stocktake_rows = StocktakeLineRepository::new(&connection)
-            .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_3")),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("blank_stocktake")),
                 None,
             )
             .unwrap();

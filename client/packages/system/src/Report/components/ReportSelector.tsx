@@ -20,8 +20,6 @@ interface ReportSelectorProps {
   context?: ReportContext;
   subContext?: string;
   dataId: string;
-  /** Disable the whole control */
-  disabled?: boolean;
   queryParams?: ReportListParams;
   extraArguments?: Record<string, string | number | undefined>;
   sort?: PrintReportSortInput;
@@ -33,7 +31,6 @@ interface ReportSelectorProps {
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   context,
   subContext,
-  disabled = false,
   queryParams,
   extraArguments,
   dataId,
@@ -81,13 +78,17 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     args: JsonData,
     format?: PrintFormat
   ) => {
-    await printAsync({
-      reportId: report.id,
-      dataId,
-      args,
-      sort,
-      format,
-    });
+    try {
+      await printAsync({
+        reportId: report.id,
+        dataId,
+        args,
+        sort,
+        format,
+      });
+    } catch (err) {
+      // Error is already displayed by global graphql error handler, we just need to catch
+    }
   };
 
   const options: ReportOption[] = useMemo(() => {
@@ -97,7 +98,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
           label: translateDynamicKey(`report-code.${report.code}`, report.name),
         }))
       : [];
-  }, [data, disabled]);
+  }, [data]);
 
   return (
     <>
@@ -105,7 +106,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
         <CustomButton onPrint={modalOpen.toggleOn} />
       ) : (
         <LoadingButton
-          disabled={initialLoading || disabled}
+          disabled={initialLoading || !dataId}
           isLoading={isPrinting}
           startIcon={<PrinterIcon />}
           onClick={modalOpen.toggleOn}

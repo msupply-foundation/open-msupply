@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {
   Autocomplete,
   Box,
-  IconButton,
-  PlusCircleIcon,
   Typography,
   useConfirmationModal,
   useIntlUtils,
@@ -49,8 +47,13 @@ export const ClinicianSearchInput = ({
     useCreateClinician();
 
   const clinicians: ClinicianFragment[] = data?.nodes ?? [];
-  const [modalOpen, setModalOpen] = useState(false);
-  const [sliderOpen, setSliderOpen] = useState(false);
+
+  const [editorOpen, setEditorOpen] = useState(false);
+
+  const handleCreateClick = () => {
+    onChange(null);
+    setEditorOpen(true);
+  };
 
   const asOption = (clinician: Clinician): ClinicianAutocompleteOption => ({
     label: getLocalisedFullName(clinician.firstName, clinician.lastName),
@@ -59,8 +62,7 @@ export const ClinicianSearchInput = ({
   });
 
   const handleClinicianClose = async (clinicianId?: string) => {
-    setSliderOpen(false);
-    setModalOpen(false);
+    setEditorOpen(false);
 
     if (clinicianId) {
       const refreshedList = await refetch();
@@ -119,45 +121,38 @@ export const ClinicianSearchInput = ({
         textSx={{ backgroundColor: theme.palette.background.drawer }}
         disabled={disabled}
         fullWidth={fullWidth}
+        clickableOption={
+          allowCreate
+            ? {
+                label: t('label.create-clinician'),
+                onClick: handleCreateClick,
+              }
+            : undefined
+        }
       />
-      {allowCreate && (
-        <Box
-          sx={{
-            overflow: 'hidden',
-          }}
-        >
-          <IconButton
-            icon={<PlusCircleIcon />}
-            label={t('button.add-new-clinician')}
-            color="secondary"
-            onClick={() =>
-              mountSlidePanel ? setSliderOpen(true) : setModalOpen(true)
-            }
+      {allowCreate &&
+        (mountSlidePanel ? (
+          <CreateClinicianSlider
+            draft={draft}
+            updateDraft={updateDraft}
+            width={500}
+            open={editorOpen}
+            onClose={handleClinicianClose}
+            confirmAndSave={confirmAndSave}
+            isSaving={isSaving}
+            isValid={isValid}
           />
-          {mountSlidePanel ? (
-            <CreateClinicianSlider
-              draft={draft}
-              updateDraft={updateDraft}
-              width={500}
-              open={sliderOpen}
-              onClose={handleClinicianClose}
-              confirmAndSave={confirmAndSave}
-              isSaving={isSaving}
-              isValid={isValid}
-            />
-          ) : (
-            <CreateClinicianModal
-              draft={draft}
-              updateDraft={updateDraft}
-              onClose={handleClinicianClose}
-              open={modalOpen}
-              confirmAndSave={confirmAndSave}
-              isSaving={isSaving}
-              isValid={isValid}
-            />
-          )}
-        </Box>
-      )}
+        ) : (
+          <CreateClinicianModal
+            draft={draft}
+            updateDraft={updateDraft}
+            onClose={handleClinicianClose}
+            open={editorOpen}
+            confirmAndSave={confirmAndSave}
+            isSaving={isSaving}
+            isValid={isValid}
+          />
+        ))}
     </Box>
   );
 };

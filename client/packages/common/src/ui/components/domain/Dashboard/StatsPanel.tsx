@@ -11,6 +11,7 @@ export type Stat = {
   label: string;
   value?: string;
   link?: string;
+  extraMessage?: string;
   alertFlag?: boolean;
 };
 export interface StatsPanelProps {
@@ -24,7 +25,13 @@ export interface StatsPanelProps {
   alertFlag?: boolean;
 }
 
-const Statistic: FC<Stat> = ({ label, value, link, alertFlag = false }) => {
+const Statistic = ({
+  label,
+  value,
+  link,
+  alertFlag = false,
+  extraMessage,
+}: Stat) => {
   const t = useTranslation();
   return (
     <Grid container flexDirection={'column'}>
@@ -70,6 +77,19 @@ const Statistic: FC<Stat> = ({ label, value, link, alertFlag = false }) => {
           {link ? <SimpleLink to={link}>{label}</SimpleLink> : label}
         </Grid>
       </Grid>
+      {extraMessage && (
+        <Grid
+          sx={{
+            color: 'gray.main',
+            flex: 1,
+            fontSize: '12px',
+            fontWeight: 500,
+            marginInlineStart: '8px',
+          }}
+        >
+          {extraMessage}
+        </Grid>
+      )}
       {alertFlag && (
         <Grid
           container

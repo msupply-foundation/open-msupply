@@ -60,3 +60,6 @@ export interface StockItemSearchInputWithStatsProps
 export const itemFilterOptions = {
   stringify: (item: ItemWithStatsFragment) => `${item.code} ${item.name}`,
 };
+
+export const getOptionLabel = <T extends { code: string; name: string }>(item: T): string =>
+  `${item.code} ${item.name}`;

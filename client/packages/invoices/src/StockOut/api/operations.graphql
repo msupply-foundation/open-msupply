@@ -16,6 +16,8 @@ fragment StockOutLine on InvoiceLineNode {
   taxPercentage
   note
   itemName
+  itemVariantId
+  vvmStatusId
 
   item {
     __typename
@@ -25,12 +27,6 @@ fragment StockOutLine on InvoiceLineNode {
     unitName
     isVaccine
     doses
-  }
-
-  itemVariant {
-    __typename
-    id
-    dosesPerUnit
   }
 
   location {
@@ -74,7 +70,9 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
   inStorePacks
   availablePacks
   stockLineOnHold
-  defaultDosesPerUnit
+  dosesPerUnit
+  itemVariantId
+  vvmStatusId
   location {
     __typename
     id
@@ -88,10 +86,6 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
     level
     unusable
     description
-  }
-  itemVariant {
-    id
-    dosesPerUnit
   }
   donor(storeId: $storeId) {
     id

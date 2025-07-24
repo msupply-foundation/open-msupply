@@ -76,6 +76,7 @@ pub fn generate(
                 stock_on_hold: false,
                 donor_id: None,
                 campaign_id: None,
+                shipped_number_of_packs: None,
             },
         )
         .collect();
@@ -118,6 +119,7 @@ pub fn generate(
                 total_before_tax: None,
                 donor_id: None,
                 campaign_id: None,
+                shipped_number_of_packs: None,
             },
         )
         .collect();

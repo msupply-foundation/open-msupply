@@ -2,6 +2,7 @@
 
 export type EqualFilter<T> = {
   equal_to?: T;
+  not_equal_to_or_null?: T;
   not_equal_to?: T;
   equal_any?: Array<T>;
   equal_any_or_null?: Array<T>;

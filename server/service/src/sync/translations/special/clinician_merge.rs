@@ -68,7 +68,9 @@ impl SyncTranslation for ClinicianMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
+    use crate::sync::{
+        sync_buffer::SyncBufferSource, synchroniser::integrate_and_translate_sync_buffer,
+    };
 
     use super::*;
     use repository::{
@@ -126,7 +128,8 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+            .unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo
@@ -147,7 +150,8 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+            .unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo

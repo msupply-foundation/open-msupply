@@ -1,5 +1,7 @@
 use async_graphql::*;
+mod mutations;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use mutations::install::install_uploaded_reports;
 use print::{generate_report, generate_report_definition, PrintReportResponse};
 use reports::{
     all_report_versions, report, reports, ReportFilterInput, ReportResponse, ReportSortInput,
@@ -110,6 +112,7 @@ impl ReportQueries {
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
         current_language: Option<String>,
+        excel_template_buffer: Option<Vec<u8>>,
     ) -> Result<PrintReportResponse> {
         generate_report_definition(
             ctx,
@@ -120,6 +123,7 @@ impl ReportQueries {
             arguments,
             format,
             current_language,
+            excel_template_buffer,
         )
         .await
     }
@@ -132,5 +136,20 @@ impl PrintFormat {
             PrintFormat::Html => ServicePrintFormat::Html,
             PrintFormat::Excel => ServicePrintFormat::Excel,
         }
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct CentralReportMutations;
+
+#[Object]
+impl CentralReportMutations {
+    pub async fn install_uploaded_reports(
+        &self,
+        ctx: &Context<'_>,
+        file_id: String,
+    ) -> Result<Vec<String>> {
+        let ids = install_uploaded_reports(ctx, file_id)?;
+        Ok(ids)
     }
 }

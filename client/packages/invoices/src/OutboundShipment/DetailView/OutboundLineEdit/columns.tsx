@@ -23,22 +23,23 @@ import {
   UNDEFINED_STRING_VALUE,
   TooltipTextCell,
   useSimplifiedTabletUI,
+  QuantityUtils,
 } from '@openmsupply-client/common';
 import {
   CurrencyRowFragment,
   ItemVariantInfoIcon,
+  VVMStatusInputCell,
 } from '@openmsupply-client/system';
 import { getStockOutQuantityCellId } from '../../../utils';
 import {
   canAutoAllocate,
   getDoseQuantity,
-  packsToDoses,
   DraftStockOutLineFragment,
   DraftItem,
   AllocateInOption,
   AllocateInType,
 } from '../../../StockOut';
-import { useCampaigns } from '@openmsupply-client/system/src/Manage/Campaigns/api';
+import { VvmStatusFragment } from 'packages/system/src/Stock/api';
 
 type AllocateFn = (
   key: string,
@@ -55,20 +56,19 @@ export const useOutboundLineEditColumns = ({
   currency,
   isExternalSupplier,
   allocateIn,
+  setVvmStatus,
 }: {
   allocate: AllocateFn;
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
   allocateIn: AllocateInOption;
+  setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
-  const {
-    query: { data: campaigns },
-  } = useCampaigns();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
@@ -77,7 +77,8 @@ export const useOutboundLineEditColumns = ({
   const { data: prefs } = usePreference(
     PreferenceKey.SortByVvmStatusThenExpiry,
     PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.UseCampaigns
   );
 
   const packSize =
@@ -119,7 +120,7 @@ export const useOutboundLineEditColumns = ({
       },
     ],
   ];
-  // If we have use VVM status, we need to show the VVM status column
+
   if (
     (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) &&
     item?.isVaccine
@@ -127,20 +128,15 @@ export const useOutboundLineEditColumns = ({
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => {
-        if (!rowData.vvmStatus) return '';
-        // TODO: Show unusable VVM status somehow?
-        return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
-      },
       width: 85,
-      Cell: TooltipTextCell,
+      Cell: VVMStatusInputCell,
+      accessor: ({ rowData }) => rowData.vvmStatus,
+      setter: ({ id, vvmStatus }) => setVvmStatus(id, vvmStatus),
       defaultHideOnMobile: true,
     });
   }
 
-  // Only show campaigns column if some are defined -- in time we should have a
-  // store pref for this
-  if (campaigns?.totalCount ?? 0 > 0)
+  if (prefs?.useCampaigns)
     columnDefinitions.push({
       key: 'campaign',
       label: 'label.campaign',
@@ -292,7 +288,10 @@ const getAllocateInUnitsColumns = (
 const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
-    max={packsToDoses(props.rowData.availablePacks, props.rowData)}
+    max={QuantityUtils.packsToDoses(
+      props.rowData.availablePacks,
+      props.rowData
+    )}
     id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={0}
     min={0}
@@ -316,8 +315,7 @@ const getAllocateInDosesColumns = (
         : 'label.doses-per-unit',
       width: 80,
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) =>
-        rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit,
+      accessor: ({ rowData }) => rowData.dosesPerUnit,
       defaultHideOnMobile: true,
     },
     {
@@ -326,7 +324,8 @@ const getAllocateInDosesColumns = (
       key: 'inStorePacks',
       align: ColumnAlign.Right,
       width: 80,
-      accessor: ({ rowData }) => packsToDoses(rowData.inStorePacks, rowData),
+      accessor: ({ rowData }) =>
+        QuantityUtils.packsToDoses(rowData.inStorePacks, rowData),
       defaultHideOnMobile: true,
     },
     {
@@ -338,7 +337,7 @@ const getAllocateInDosesColumns = (
       accessor: ({ rowData }) =>
         rowData.location?.onHold || rowData.stockLineOnHold
           ? 0
-          : packsToDoses(rowData.availablePacks, rowData),
+          : QuantityUtils.packsToDoses(rowData.availablePacks, rowData),
     },
     {
       key: 'dosesIssued',
@@ -383,11 +382,11 @@ const getBatchWithVariantCell =
     return (
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {rowData.batch}
-        {rowData.itemVariant && (
+        {rowData.itemVariantId && (
           <ItemVariantInfoIcon
             includeDoseColumns={includeDoseColumns}
             itemId={itemId}
-            itemVariantId={rowData.itemVariant.id}
+            itemVariantId={rowData.itemVariantId}
           />
         )}
       </div>

@@ -12,6 +12,7 @@ export type InboundLineFragment = {
   sellPricePerPack: number;
   expiryDate?: string | null;
   numberOfPacks: number;
+  shippedNumberOfPacks?: number | null;
   packSize: number;
   note?: string | null;
   invoiceId: string;
@@ -21,14 +22,9 @@ export type InboundLineFragment = {
   foreignCurrencyPriceBeforeTax?: number | null;
   itemName: string;
   itemVariantId?: string | null;
-  vvmStatusId?: string | null;
+  linkedInvoiceId?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -62,6 +58,13 @@ export type InboundLineFragment = {
     note?: string | null;
     vvmStatusId?: string | null;
   } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    level: number;
+    unusable: boolean;
+    description: string;
+  } | null;
 };
 
 export type InboundFragment = {
@@ -71,6 +74,7 @@ export type InboundFragment = {
   createdDatetime: string;
   allocatedDatetime?: string | null;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
@@ -112,6 +116,7 @@ export type InboundFragment = {
       sellPricePerPack: number;
       expiryDate?: string | null;
       numberOfPacks: number;
+      shippedNumberOfPacks?: number | null;
       packSize: number;
       note?: string | null;
       invoiceId: string;
@@ -121,17 +126,12 @@ export type InboundFragment = {
       foreignCurrencyPriceBeforeTax?: number | null;
       itemName: string;
       itemVariantId?: string | null;
-      vvmStatusId?: string | null;
+      linkedInvoiceId?: string | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
         name: string;
-      } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -165,6 +165,13 @@ export type InboundFragment = {
         onHold: boolean;
         note?: string | null;
         vvmStatusId?: string | null;
+      } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
       } | null;
     }>;
   };
@@ -203,6 +210,7 @@ export type InboundRowFragment = {
   comment?: string | null;
   createdDatetime: string;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   id: string;
   invoiceNumber: number;
   otherPartyName: string;
@@ -247,6 +255,7 @@ export type InvoicesQuery = {
       comment?: string | null;
       createdDatetime: string;
       deliveredDatetime?: string | null;
+      receivedDatetime?: string | null;
       id: string;
       invoiceNumber: number;
       otherPartyName: string;
@@ -289,6 +298,7 @@ export type InvoiceQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -334,6 +344,7 @@ export type InvoiceQuery = {
             sellPricePerPack: number;
             expiryDate?: string | null;
             numberOfPacks: number;
+            shippedNumberOfPacks?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -343,17 +354,12 @@ export type InvoiceQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
-            vvmStatusId?: string | null;
+            linkedInvoiceId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
               name: string;
-            } | null;
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
             } | null;
             item: {
               __typename: 'ItemNode';
@@ -387,6 +393,13 @@ export type InvoiceQuery = {
               onHold: boolean;
               note?: string | null;
               vvmStatusId?: string | null;
+            } | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              level: number;
+              unusable: boolean;
+              description: string;
             } | null;
           }>;
         };
@@ -446,6 +459,7 @@ export type InboundByNumberQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -491,6 +505,7 @@ export type InboundByNumberQuery = {
             sellPricePerPack: number;
             expiryDate?: string | null;
             numberOfPacks: number;
+            shippedNumberOfPacks?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -500,17 +515,12 @@ export type InboundByNumberQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
-            vvmStatusId?: string | null;
+            linkedInvoiceId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
               name: string;
-            } | null;
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
             } | null;
             item: {
               __typename: 'ItemNode';
@@ -544,6 +554,13 @@ export type InboundByNumberQuery = {
               onHold: boolean;
               note?: string | null;
               vvmStatusId?: string | null;
+            } | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              level: number;
+              unusable: boolean;
+              description: string;
             } | null;
           }>;
         };
@@ -1022,6 +1039,7 @@ export const InboundLineFragmentDoc = gql`
     sellPricePerPack
     expiryDate
     numberOfPacks
+    shippedNumberOfPacks
     packSize
     note
     type
@@ -1032,7 +1050,7 @@ export const InboundLineFragmentDoc = gql`
     foreignCurrencyPriceBeforeTax
     itemName
     itemVariantId
-    vvmStatusId
+    linkedInvoiceId
     donor(storeId: $storeId) {
       id
       name
@@ -1040,10 +1058,6 @@ export const InboundLineFragmentDoc = gql`
     campaign {
       id
       name
-    }
-    itemVariant {
-      id
-      dosesPerUnit
     }
     item {
       __typename
@@ -1078,6 +1092,13 @@ export const InboundLineFragmentDoc = gql`
       note
       vvmStatusId
     }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
+    }
   }
 `;
 export const InboundFragmentDoc = gql`
@@ -1088,6 +1109,7 @@ export const InboundFragmentDoc = gql`
     createdDatetime
     allocatedDatetime
     deliveredDatetime
+    receivedDatetime
     pickedDatetime
     shippedDatetime
     verifiedDatetime
@@ -1172,6 +1194,7 @@ export const InboundRowFragmentDoc = gql`
     comment
     createdDatetime
     deliveredDatetime
+    receivedDatetime
     id
     invoiceNumber
     otherPartyName

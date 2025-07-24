@@ -33,6 +33,7 @@ interface SupplySelectionProps {
   unitName: string;
   displayVaccinesInDoses?: boolean;
   dosesPerUnit: number;
+  setIsEditingSupply: (isEditingSupply: boolean) => void;
 }
 
 export const SupplySelection = ({
@@ -46,6 +47,7 @@ export const SupplySelection = ({
   unitName,
   displayVaccinesInDoses = false,
   dosesPerUnit,
+  setIsEditingSupply,
 }: SupplySelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -79,6 +81,7 @@ export const SupplySelection = ({
         defaultPackSize
       );
       update(updatedSupply);
+      setIsEditingSupply(false);
     },
     [representation, defaultPackSize]
   );
@@ -88,6 +91,7 @@ export const SupplySelection = ({
   }, [draft?.id, representation]);
 
   const handleValueChange = (newValue?: number) => {
+    setIsEditingSupply(true);
     setValue(newValue ?? 0);
     debouncedUpdate(newValue);
   };
@@ -131,6 +135,7 @@ export const SupplySelection = ({
             value={value}
             disabled={disabled}
             onChange={handleValueChange}
+            onBlur={() => setIsEditingSupply(false)}
             slotProps={{
               input: {
                 sx: {
@@ -171,9 +176,7 @@ export const SupplySelection = ({
             options={options}
             value={representation}
             onChange={e => {
-              setRepresentation(
-                (e.target.value as RepresentationValue) ?? Representation.UNITS
-              );
+              setRepresentation(e.target.value as RepresentationValue);
             }}
             sx={{
               boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),

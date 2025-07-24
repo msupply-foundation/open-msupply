@@ -55,6 +55,7 @@ interface useUrlQueryProps {
 
 export const useUrlQuery = ({ skipParse }: useUrlQueryProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
+
   return useMemo(() => {
     const updateQuery = (values: UrlQueryObject, overwrite = false) => {
       // We use this rather than searchParams as this function uses a stale

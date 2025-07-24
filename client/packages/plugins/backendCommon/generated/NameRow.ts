@@ -33,4 +33,9 @@ export type NameRow = {
   date_of_death: string | null;
   custom_data_string: string | null;
   deleted_datetime: string | null;
+  hsh_code: string | null;
+  hsh_name: string | null;
+  margin: number | null;
+  freight_factor: number | null;
+  currency_id: string | null;
 };

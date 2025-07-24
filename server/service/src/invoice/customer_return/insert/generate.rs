@@ -62,6 +62,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        received_datetime: None,
         verified_datetime: None,
         cancelled_datetime: None,
         linked_invoice_id: None,
@@ -129,6 +130,7 @@ pub fn generate(
                 stock_on_hold: false,
                 donor_id: None,
                 campaign_id: None,
+                shipped_number_of_packs: None,
             },
         )
         .collect();

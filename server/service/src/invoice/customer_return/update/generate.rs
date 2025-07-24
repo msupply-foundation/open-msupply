@@ -97,7 +97,7 @@ pub fn should_create_batches(
         (
             // From New/Picked/Shipped to Delivered/Verified
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateCustomerReturnStatus::Delivered | UpdateCustomerReturnStatus::Verified,
+            UpdateCustomerReturnStatus::Received | UpdateCustomerReturnStatus::Verified,
         ) => true,
         _ => false,
     }
@@ -112,24 +112,34 @@ fn set_new_status_datetime(customer_return: &mut InvoiceRow, patch: &UpdateCusto
     let current_datetime = Utc::now().naive_utc();
 
     match (&customer_return.status, new_status) {
-        // From New/Picked/Shipped to Delivered
+        // From New/Picked/Shipped to Received (Always skip Delivered for Customer Returns)
         (
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateCustomerReturnStatus::Delivered,
+            InvoiceStatus::New
+            | InvoiceStatus::Picked
+            | InvoiceStatus::Shipped
+            | InvoiceStatus::Delivered,
+            UpdateCustomerReturnStatus::Received,
         ) => {
             customer_return.delivered_datetime = Some(current_datetime);
+            customer_return.received_datetime = Some(current_datetime);
         }
 
-        // From New/Picked/Shipped to Verified
+        // From New/Picked/Shipped to Verified (Skipping Delivered & Received)
         (
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
             UpdateCustomerReturnStatus::Verified,
         ) => {
             customer_return.delivered_datetime = Some(current_datetime);
+            customer_return.received_datetime = Some(current_datetime);
             customer_return.verified_datetime = Some(current_datetime);
         }
-        // From Delivered to Verified
+        // From Delivered to Verified (Skipping Received)
         (InvoiceStatus::Delivered, UpdateCustomerReturnStatus::Verified) => {
+            customer_return.received_datetime = Some(current_datetime);
+            customer_return.verified_datetime = Some(current_datetime);
+        }
+        // From Received to Verified
+        (InvoiceStatus::Received, UpdateCustomerReturnStatus::Verified) => {
             customer_return.verified_datetime = Some(current_datetime);
         }
         _ => {}

@@ -3,6 +3,9 @@
 #[cfg(test)]
 mod tests;
 
+mod logger;
+use logger::{GraphQLRequestLogger, QueryLogInfo};
+
 use std::sync::Mutex;
 
 use actix_web::web::{self, Data};
@@ -49,13 +52,14 @@ use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::PurchaseOrderLineQueries;
 use graphql_repack::{RepackMutations, RepackQueries};
-use graphql_reports::ReportQueries;
+use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
+use graphql_contact::ContactQueries;
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 use repository::StorageConnectionManager;
@@ -112,6 +116,10 @@ impl CentralServerMutationNode {
     async fn campaign(&self) -> CampaignMutations {
         CampaignMutations
     }
+
+    async fn reports(&self) -> CentralReportMutations {
+        CentralReportMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -150,6 +158,7 @@ impl CentralServerQueries {
 }
 #[derive(MergedObject, Default, Clone)]
 pub struct Queries(
+    pub ContactQueries,
     pub InvoiceQueries,
     pub InvoiceLineQueries,
     pub LocationQueries,
@@ -185,6 +194,7 @@ pub struct Queries(
 impl Queries {
     pub fn new() -> Queries {
         Queries(
+            ContactQueries,
             InvoiceQueries,
             InvoiceLineQueries,
             LocationQueries,
@@ -318,6 +328,7 @@ impl GraphqlSchema {
                 .data(auth.clone())
                 .data(settings.clone())
                 .data(validated_plugins.clone())
+                .extension(GraphQLRequestLogger)
                 .finish();
         // Self requester does not need loggers
 
@@ -331,7 +342,8 @@ impl GraphqlSchema {
                 .data(settings.clone())
                 .data(validated_plugins.clone())
                 // Add self requester to operational
-                .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)));
+                .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
+                .extension(GraphQLRequestLogger);
 
         // Initialisation schema should ony need service_provider
         let initialisation_builder = InitialisationSchema::build(
@@ -339,7 +351,8 @@ impl GraphqlSchema {
             InitialisationMutations,
             EmptySubscription,
         )
-        .data(service_provider.clone());
+        .data(service_provider.clone())
+        .extension(GraphQLRequestLogger);
 
         GraphqlSchema {
             operational: operational_builder.finish(),
@@ -353,7 +366,9 @@ impl GraphqlSchema {
     }
 
     async fn execute(&self, http_req: HttpRequest, req: GraphQLRequest) -> Response {
-        let req = req.into_inner();
+        let mut req = req.into_inner();
+        req = req.data(QueryLogInfo::new());
+
         if *self.is_operational.read().await {
             // auth_data is only available in schema in operational mode
             let user_data = auth_data_from_request(&http_req);

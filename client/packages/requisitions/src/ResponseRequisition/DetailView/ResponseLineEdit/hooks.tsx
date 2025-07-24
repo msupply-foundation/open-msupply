@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment, ResponseFragment } from '../../api';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { FnUtils } from '@common/utils';
+import { useTranslation } from '@common/intl';
 
 export type DraftResponseLine = Omit<
   ResponseLineFragment,
@@ -56,13 +57,19 @@ const createDraftFromResponseLine = (
 export const useDraftRequisitionLine = (
   item?: ItemWithStatsFragment | null
 ) => {
+  const t = useTranslation();
   const { lines } = useResponse.line.list();
   const { data } = useResponse.document.get();
   const { mutateAsync: saveMutation, isLoading } = useResponse.line.save();
+  const [isReasonsError, setIsReasonsError] = useState(false);
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
 
   useEffect(() => {
+    if (isReasonsError) {
+      return;
+    }
+
     if (lines && item && data) {
       const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id
@@ -84,12 +91,38 @@ export const useDraftRequisitionLine = (
   const save = useCallback(async () => {
     if (draft) {
       const result = await saveMutation(draft);
-      return result;
+      setIsReasonsError(false);
+
+      if (result?.__typename === 'UpdateResponseRequisitionLineError') {
+        let errorMessage: string;
+
+        switch (result.error.__typename) {
+          case 'RequisitionReasonNotProvided':
+            setIsReasonsError(true);
+            errorMessage = t('error.provide-reason-requisition');
+            break;
+          case 'CannotEditRequisition':
+            errorMessage = t('error.cannot-edit-requisition');
+            break;
+          default:
+            errorMessage = t('error.database-error');
+            break;
+        }
+
+        return {
+          error: errorMessage,
+        };
+      }
+
+      return {
+        data: result,
+      };
     }
+
     return null;
   }, [draft, saveMutation]);
 
-  return { draft, isLoading, save, update };
+  return { draft, isLoading, save, update, isReasonsError };
 };
 
 export const useNextResponseLine = (

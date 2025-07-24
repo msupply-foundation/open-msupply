@@ -260,10 +260,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
         input,
       });
 
-      const { updateResponseRequisitionLine } = result || {};
-      if (updateResponseRequisitionLine?.__typename === 'RequisitionLineNode') {
-        return updateResponseRequisitionLine;
-      }
+      return result?.updateResponseRequisitionLine;
     }
 
     throw new Error('Unable to update requisition');

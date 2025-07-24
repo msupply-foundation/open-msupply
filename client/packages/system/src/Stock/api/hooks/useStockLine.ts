@@ -29,6 +29,7 @@ const defaultDraftStockLine: DraftStockLine = {
     code: '',
     name: '',
     isVaccine: false,
+    dosesPerUnit: 0,
   },
   reasonOption: null,
   vvmStatusLogs: {
@@ -119,9 +120,9 @@ const useCreate = () => {
     location,
     onHold,
     itemVariantId,
-    vvmStatusId,
     donor,
     campaign,
+    vvmStatus,
   }: DraftStockLine) => {
     return await stockApi.insertStockLine({
       storeId,
@@ -139,7 +140,7 @@ const useCreate = () => {
         location: setNullableInput('id', location),
         reasonOptionId: reasonOption?.id,
         itemVariantId,
-        vvmStatusId,
+        vvmStatusId: vvmStatus?.id,
         donorId: donor?.id,
         campaignId: campaign?.id,
       },

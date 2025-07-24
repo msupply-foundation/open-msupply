@@ -26,6 +26,7 @@ fragment StockLineRow on StockLineNode {
       name
     }
     isVaccine
+    dosesPerUnit: doses
   }
   barcode
   vvmStatusLogs {
@@ -34,7 +35,10 @@ fragment StockLineRow on StockLineNode {
     }
   }
   vvmStatus {
+    __typename
     id
+    level
+    unusable
     description
   }
   donor(storeId: $storeId) {
@@ -92,6 +96,7 @@ fragment LedgerRow on LedgerNode {
   reason
   stockLineId
   storeId
+  runningBalance
 }
 
 fragment VVMStatusLogRow on VvmstatusLogNode {
@@ -145,6 +150,15 @@ query stockLine($id: String!, $storeId: String!) {
         __typename
         ...StockLineRow
       }
+      totalCount
+    }
+  }
+}
+
+query stockLinesCount($filter: StockLineFilterInput, $storeId: String!) {
+  stockLines(storeId: $storeId, filter: $filter) {
+    ... on StockLineConnector {
+      __typename
       totalCount
     }
   }
@@ -285,10 +299,8 @@ mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
 
 fragment VVMStatus on VvmstatusNode {
   __typename
-  code
   description
   id
-  isActive
   level
   reasonId
   unusable

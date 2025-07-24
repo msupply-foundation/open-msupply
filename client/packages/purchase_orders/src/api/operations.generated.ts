@@ -12,6 +12,7 @@ export type PurchaseOrderRowFragment = {
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
   deliveredDatetime?: string | null;
+  expectedDeliveryDatetime?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -40,6 +41,7 @@ export type PurchaseOrderFragment = {
   headingMessage?: string | null;
   insuranceCharge?: number | null;
   receivedAtPortDatetime?: string | null;
+  reference?: string | null;
   sentDatetime?: string | null;
   shippingMethod?: string | null;
   status: Types.PurchaseOrderNodeStatus;
@@ -61,7 +63,13 @@ export type PurchaseOrderFragment = {
       packSize?: number | null;
       requestedDeliveryDate?: string | null;
       totalReceived?: number | null;
-      item: { __typename: 'ItemNode'; id: string; code: string; name: string };
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        code: string;
+        name: string;
+        unitName?: string | null;
+      };
     }>;
   };
   store?: { __typename: 'StoreNode'; id: string } | null;
@@ -78,7 +86,13 @@ export type PurchaseOrderLineFragment = {
   packSize?: number | null;
   requestedDeliveryDate?: string | null;
   totalReceived?: number | null;
-  item: { __typename: 'ItemNode'; id: string; code: string; name: string };
+  item: {
+    __typename: 'ItemNode';
+    id: string;
+    code: string;
+    name: string;
+    unitName?: string | null;
+  };
 };
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
@@ -104,6 +118,7 @@ export type PurchaseOrdersQuery = {
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
       deliveredDatetime?: string | null;
+      expectedDeliveryDatetime?: string | null;
       comment?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -142,6 +157,7 @@ export type PurchaseOrderByIdQuery = {
         headingMessage?: string | null;
         insuranceCharge?: number | null;
         receivedAtPortDatetime?: string | null;
+        reference?: string | null;
         sentDatetime?: string | null;
         shippingMethod?: string | null;
         status: Types.PurchaseOrderNodeStatus;
@@ -168,6 +184,7 @@ export type PurchaseOrderByIdQuery = {
               id: string;
               code: string;
               name: string;
+              unitName?: string | null;
             };
           }>;
         };
@@ -201,6 +218,7 @@ export const PurchaseOrderRowFragmentDoc = gql`
     status
     targetMonths
     deliveredDatetime
+    expectedDeliveryDatetime
     lines {
       totalCount
     }
@@ -217,6 +235,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
       id
       code
       name
+      unitName
     }
     numberOfPacks
     requestedQuantity
@@ -253,6 +272,7 @@ export const PurchaseOrderFragmentDoc = gql`
     headingMessage
     insuranceCharge
     receivedAtPortDatetime
+    reference
     lines {
       __typename
       nodes {

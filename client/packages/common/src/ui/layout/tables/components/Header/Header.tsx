@@ -99,14 +99,25 @@ export const HeaderCell = <T extends RecordWithId>({
   const child = (
     <div
       style={{
-        flexWrap: 'nowrap',
-        alignItems: 'center',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
+        flexDirection: 'column',
       }}
     >
-      <Header column={column} />
-      {infoIcon}
+      <div
+        style={{
+          display: 'block',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxHeight: '3em',
+          lineHeight: '1.5em',
+        }}
+      >
+        <Header column={column} />
+      </div>
+      {infoIcon && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {infoIcon}
+        </div>
+      )}
     </div>
   );
 

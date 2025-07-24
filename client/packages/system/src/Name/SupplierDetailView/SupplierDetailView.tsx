@@ -28,11 +28,11 @@ export const SupplierDetailView = (): ReactElement => {
     },
     // TODO: Hide Purchase Orders and Conctacts tabs for non store suppliers
     {
-      Component: <PurchaseOrder />,
+      Component: <PurchaseOrder supplierName={data?.name ?? ''} />,
       value: SuppliersTabValue.PurchaseOrders,
     },
     {
-      Component: <Contacts />,
+      Component: <Contacts nameId={id ?? ''} />,
       value: SuppliersTabValue.Contacts,
     },
   ];

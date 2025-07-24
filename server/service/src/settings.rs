@@ -24,6 +24,7 @@ pub struct ServerSettings {
     /// Only used in development mode
     #[serde(default)]
     pub debug_no_access_control: bool,
+
     #[serde(default)]
     pub discovery: DiscoveryMode,
     /// Sets the allowed origin for cors requests
@@ -32,6 +33,9 @@ pub struct ServerSettings {
     pub base_dir: Option<String>,
     /// Option to set the machine id of the device for an OS that isn't supported by machine_uid
     pub machine_uid: Option<String>,
+    // Option to set server mode as central server, should only be used in testing, demo and development
+    #[serde(default)]
+    pub override_is_central_server: bool,
 }
 
 impl ServerSettings {

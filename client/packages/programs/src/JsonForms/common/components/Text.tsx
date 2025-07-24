@@ -38,6 +38,7 @@ const Options = z
      * Should component debounce it's input, optional default = true
      */
     useDebounce: z.boolean().optional(),
+    autoFocus: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -150,6 +151,7 @@ const UIComponent = (props: ControlProps) => {
   const width = schemaOptions?.width ?? '100%';
   const flexBasis = schemaOptions?.flexBasis ?? '100%';
   const useDebounce = schemaOptions?.useDebounce ?? true;
+  const autoFocus = schemaOptions?.autoFocus ?? false;
 
   return (
     <DetailInputWithLabelRow
@@ -172,6 +174,7 @@ const UIComponent = (props: ControlProps) => {
         required: props.required,
         multiline,
         rows,
+        focusOnRender: autoFocus,
       }}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}

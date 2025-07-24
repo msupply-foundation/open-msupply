@@ -1,6 +1,6 @@
 import { useQuery } from '@openmsupply-client/common';
 import { useLogGraphQL } from '../useLogGraphQL';
-import { FILE_NAMES } from './keys';
+import { FILE_NAMES, FILE_CONTENT } from './keys';
 
 export const useLog = (fileName?: string) => {
   // FILE NAMES
@@ -49,7 +49,7 @@ const useGetFileNames = () => {
 
 const useGetLogContentsByFileName = (fileName: string) => {
   const { logApi } = useLogGraphQL();
-  const queryKey = [FILE_NAMES];
+  const queryKey = [FILE_CONTENT, fileName];
 
   const queryFn = async () => {
     const query = await logApi.logContentsByFileName({

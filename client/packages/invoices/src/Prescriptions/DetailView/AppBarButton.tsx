@@ -56,7 +56,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   ];
 
   const [selected, setSelected] = useState<SplitButtonOption<string>>(
-    options[0]!
+    options[1]!
   );
 
   return (
@@ -70,7 +70,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <ReportSelector
           context={ReportContext.Prescription}
           dataId={prescription?.id ?? ''}
-          disabled={isDisabled}
           CustomButton={({ onPrint }) => {
             const handleClick = (
               option: SplitButtonOption<string>,

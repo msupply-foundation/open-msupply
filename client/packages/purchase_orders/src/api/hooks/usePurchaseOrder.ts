@@ -1,14 +1,21 @@
 import {
   FnUtils,
   InsertPurchaseOrderInput,
+  SortUtils,
   useMutation,
+  useParams,
   useQuery,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { LIST, PURCHASE_ORDER } from './keys';
 import { PurchaseOrderFragment } from '../operations.generated';
+import { useMemo } from 'react';
+import { usePurchaseOrderColumns } from '../../DetailView/columns';
 
-export const usePurchaseOrder = (purchaseOrderId?: string) => {
+export const usePurchaseOrder = (pid?: string) => {
+  const { purchaseOrderId = pid } = useParams();
+
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
   const queryKey = [LIST, PURCHASE_ORDER, storeId, purchaseOrderId];
@@ -36,6 +43,9 @@ export const usePurchaseOrder = (purchaseOrderId?: string) => {
     enabled: !!purchaseOrderId,
   });
 
+  const { sortedAndFilteredLines, itemFilter, setItemFilter } =
+    useFilteredAndSortedLines(data);
+
   // UPDATE
 
   // CREATE
@@ -55,6 +65,7 @@ export const usePurchaseOrder = (purchaseOrderId?: string) => {
 
   return {
     query: { data, isLoading, isError },
+    lines: { sortedAndFilteredLines, itemFilter, setItemFilter },
     create: { create, isCreating, createError },
   };
 };
@@ -82,4 +93,50 @@ const useCreate = () => {
     mutationFn,
     onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   });
+};
+
+// Filters by item code or name, and sorts by the selected column
+const useFilteredAndSortedLines = (
+  data: PurchaseOrderFragment | undefined | void
+) => {
+  const { columns, sortBy } = usePurchaseOrderColumns();
+
+  const { urlQuery, updateQuery } = useUrlQuery({
+    skipParse: ['codeOrName'],
+  });
+
+  const itemFilter = urlQuery?.['codeOrName'] as string;
+
+  const setItemFilter = (filterValue: string) => {
+    updateQuery({
+      codeOrName: filterValue,
+    });
+  };
+
+  const sortedAndFilteredLines = useMemo(() => {
+    if (!data) return [];
+
+    const lines = data.lines.nodes || [];
+    const currentSortColumn = columns.find(({ key }) => key === sortBy.key);
+
+    if (!currentSortColumn?.getSortValue) return lines;
+
+    const sorter = SortUtils.getColumnSorter(
+      currentSortColumn?.getSortValue,
+      !!sortBy.isDesc
+    );
+
+    return [...lines].sort(sorter).filter(line => {
+      if (!itemFilter) return true;
+      const {
+        item: { code, name },
+      } = line;
+      return (
+        code?.toLowerCase().includes(itemFilter.toLowerCase()) ||
+        name?.toLowerCase().includes(itemFilter.toLowerCase())
+      );
+    });
+  }, [data, columns, sortBy, itemFilter]);
+
+  return { sortedAndFilteredLines, itemFilter, setItemFilter };
 };

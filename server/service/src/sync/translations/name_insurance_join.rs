@@ -1,4 +1,3 @@
-use crate::sync::sync_serde::empty_str_as_option_string;
 use chrono::NaiveDate;
 use repository::{
     name_insurance_join_row::{
@@ -7,6 +6,7 @@ use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::empty_str_as_option_string;
 
 use crate::sync::translations::{
     insurance_provider::InsuranceProviderTranslator, name::NameTranslation,

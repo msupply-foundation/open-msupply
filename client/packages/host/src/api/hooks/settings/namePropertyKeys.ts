@@ -32,4 +32,8 @@ export const gapsKeys = [
   ZERO_DOSE_KEY,
 ];
 
-export const populationKeys = [POPULATION_SERVED_KEY];
+export const forecastingKeys = [
+  POPULATION_SERVED_KEY,
+  BUFFER_STOCK_KEY,
+  SUPPLY_INTERVAL_KEY,
+];

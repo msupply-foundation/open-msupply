@@ -51,6 +51,7 @@ pub enum ReportContext {
     Report,
     Prescription,
     InternalOrder,
+    PurchaseOrder,
 }
 
 #[derive(InputObject, Clone)]
@@ -196,11 +197,13 @@ pub fn report(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
-    let translation_service = &service_provider.translations_service;
+    let localisations = service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
 
     match service_provider.report_service.get_report(
         &service_context,
-        translation_service,
+        &localisations,
         user_language,
         &id,
     ) {
@@ -226,11 +229,14 @@ pub fn reports(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
-    let translation_service = &service_provider.translations_service;
+
+    let localisations = service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
 
     match service_provider.report_service.query_reports(
         &service_context,
-        &translation_service,
+        &localisations,
         user_language,
         filter.map(|f| f.to_domain()),
         sort.and_then(|mut sort_list| sort_list.pop())
@@ -262,11 +268,13 @@ pub fn all_report_versions(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
-    let translation_service = &service_provider.translations_service;
+    let localisations = &service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
 
     let reports = match service_provider.report_service.query_all_report_versions(
         &service_context,
-        &translation_service,
+        &localisations,
         user_language,
         filter.map(|f| f.to_domain()),
         sort.and_then(|mut sort_list| sort_list.pop())
@@ -330,6 +338,7 @@ impl ReportContext {
             ReportContext::Report => ReportContextDomain::Report,
             ReportContext::Prescription => ReportContextDomain::Prescription,
             ReportContext::InternalOrder => ReportContextDomain::InternalOrder,
+            ReportContext::PurchaseOrder => ReportContextDomain::PurchaseOrder,
         }
     }
 
@@ -349,6 +358,7 @@ impl ReportContext {
             ReportContextDomain::Report => ReportContext::Report,
             ReportContextDomain::Prescription => ReportContext::Prescription,
             ReportContextDomain::InternalOrder => ReportContext::InternalOrder,
+            ReportContextDomain::PurchaseOrder => ReportContext::PurchaseOrder,
         }
     }
 }

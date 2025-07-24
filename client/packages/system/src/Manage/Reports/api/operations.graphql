@@ -43,3 +43,11 @@ query allReportVersions(
     }
   }
 }
+
+mutation installUploadedReports($fileId: String!) {
+  centralServer {
+    reports {
+      installUploadedReports(fileId: $fileId)
+    }
+  }
+}

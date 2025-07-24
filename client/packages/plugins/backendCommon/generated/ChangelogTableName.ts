@@ -63,4 +63,6 @@ export type ChangelogTableName =
   | 'FormSchema'
   | 'PluginData'
   | 'Preference'
+  | 'VVMStatusLog'
+  | 'Campaign'
   | 'SyncMessage';

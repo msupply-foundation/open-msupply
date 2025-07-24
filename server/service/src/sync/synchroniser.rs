@@ -1,10 +1,12 @@
 use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{sync_status::logger::SyncStep, CentralServerConfig},
+    sync::{sync_buffer::SyncBufferSource, sync_status::logger::SyncStep, CentralServerConfig},
 };
 use log::warn;
-use repository::{RepositoryError, StorageConnection, SyncAction};
+use repository::{
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
+};
 
 use std::sync::Arc;
 use thiserror::Error;
@@ -167,6 +169,13 @@ impl Synchroniser {
         let site_info = self.remote.sync_api_v5.get_site_info().await?;
         CentralServerConfig::set_central_server_config(&site_info);
 
+        let central_sync_server_id = site_info.msupply_central_site_id;
+        // Set central server site id in key value store, so it can be used by other code which hasn't called the get_site_info api
+        KeyValueStoreRepository::new(&ctx.connection).set_i32(
+            KeyType::SettingsSyncCentralServerSiteId,
+            Some(site_info.msupply_central_site_id),
+        )?;
+
         // First check sync status
 
         // Remote data was initialised
@@ -189,7 +198,7 @@ impl Synchroniser {
 
         let v6_sync = match CentralServerConfig::get() {
             CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
-            CentralServerConfig::IsCentralServer => None,
+            CentralServerConfig::IsCentralServer | CentralServerConfig::ForcedCentralServer => None,
             CentralServerConfig::CentralServerUrl(url) => {
                 let v6_sync =
                     SynchroniserV6::new(&url, &self.sync_v5_settings, self.sync_v6_version)?;
@@ -279,7 +288,7 @@ impl Synchroniser {
                 false => Some(logger),
                 true => None,
             },
-            None,
+            SyncBufferSource::Central(central_sync_server_id),
         )
         .map_err(SyncError::IntegrationError)?;
 
@@ -323,7 +332,7 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
-    source_site_id: Option<i32>,
+    record_type: SyncBufferSource,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -353,21 +362,20 @@ pub fn integrate_and_translate_sync_buffer(
         let table_order = pull_integration_order(&translators);
 
         let sync_buffer = SyncBuffer::new(connection);
-        let translation_and_integration =
-            TranslationAndIntegration::new(connection, &sync_buffer, source_site_id);
+        let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
 
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Upsert,
             &table_order,
-            source_site_id,
+            record_type.clone(),
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Delete,
             &table_order,
-            source_site_id,
+            record_type.clone(),
         )?;
 
         let upsert_integration_result = translation_and_integration
@@ -388,7 +396,7 @@ pub fn integrate_and_translate_sync_buffer(
         let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Merge,
             &table_order,
-            source_site_id,
+            record_type.clone(),
         )?;
 
         let merge_integration_result: TranslationAndIntegrationResults =

@@ -1,11 +1,9 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use dataloader::DataLoader;
-use repository::{Name, NameRow, NameType};
+use repository::{Name, NameRow, NameType, Store, StoreRow};
 
 use graphql_core::{
-    loader::StoreByIdLoader, simple_generic_errors::NodeError,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    simple_generic_errors::NodeError, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use serde::Serialize;
 
@@ -75,17 +73,13 @@ impl NameNode {
         self.name.is_system_name()
     }
 
-    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let store_id = match self.name.store_id() {
-            Some(store_id) => store_id,
-            None => return Ok(None),
-        };
-
-        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
-        Ok(loader
-            .load_one(store_id.to_string())
-            .await?
-            .map(StoreNode::from_domain))
+    pub async fn store(&self) -> Option<StoreNode> {
+        self.store_row().as_ref().map(|store_row| {
+            StoreNode::from_domain(Store {
+                store_row: store_row.clone(),
+                name_row: self.row().clone(),
+            })
+        })
     }
 
     pub async fn first_name(&self) -> &Option<String> {
@@ -222,6 +216,10 @@ pub struct NameNode {
 impl NameNode {
     pub fn from_domain(name: Name) -> NameNode {
         NameNode { name }
+    }
+
+    pub fn store_row(&self) -> &Option<StoreRow> {
+        &self.name.store_row
     }
 
     pub fn row(&self) -> &NameRow {

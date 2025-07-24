@@ -32,6 +32,7 @@ export const CreateClinicianForm = ({
             onChange={event => {
               updateDraft({ code: event.target.value.toUpperCase() });
             }}
+            autoFocus
             required
           />
         }
@@ -71,6 +72,19 @@ export const CreateClinicianForm = ({
               updateDraft({ initials: event.target.value });
             }}
             required
+          />
+        }
+      />
+      <InputWithLabelRow
+        label={t('label.mobile')}
+        Input={
+          <BasicTextInput
+            sx={{ width }}
+            value={draft.mobile}
+            onChange={event => {
+              const numericValue = event.target.value.replace(/[^0-9]/g, '');
+              updateDraft({ mobile: numericValue });
+            }}
           />
         }
       />

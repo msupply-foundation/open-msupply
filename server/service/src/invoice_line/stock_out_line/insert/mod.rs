@@ -1,18 +1,20 @@
+use super::StockOutType;
 use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
-    invoice_line::query::get_invoice_line,
+    invoice_line::{query::get_invoice_line, stock_out_line::insert::generate::GenerateResult},
     service_provider::ServiceContext,
     WithDBError,
 };
 use chrono::NaiveDate;
-use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
+use repository::{
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
+    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
+};
 
 mod generate;
 use generate::generate;
 mod validate;
 use validate::validate;
-
-use super::StockOutType;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct InsertStockOutLine {
@@ -32,6 +34,7 @@ pub struct InsertStockOutLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub campaign_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -51,6 +54,7 @@ pub enum InsertStockOutLineError {
     NewlyCreatedLineDoesNotExist,
     BatchIsOnHold,
     ReductionBelowZero { stock_line_id: String },
+    VVMStatusDoesNotExist,
 }
 
 impl From<RepositoryError> for InsertStockOutLineError {
@@ -81,11 +85,18 @@ pub fn insert_stock_out_line(
         .connection
         .transaction_sync(|connection| {
             let (item, invoice, batch, adjusted_input) =
-                validate(&connection, input, &ctx.store_id)?;
-            let (new_line, update_batch) =
-                generate(ctx, adjusted_input, item, batch, invoice.clone())?;
+                validate(connection, input, &ctx.store_id)?;
+            let GenerateResult {
+                new_line,
+                update_batch,
+                vvm_status_log_option,
+            } = generate(ctx, adjusted_input, item, batch, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(connection).upsert_one(&update_batch)?;
+
+            if let Some(vvm_status_log) = vvm_status_log_option {
+                VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
+            }
 
             update_picked_date(ctx, &invoice).map_err(|e| match e {
                 UpdatePickedDateError::AutoPickFailed(msg) => OutError::AutoPickFailed(msg),
@@ -507,10 +518,10 @@ mod test {
             name_link_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            delivered_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            received_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -525,10 +536,10 @@ mod test {
             name_link_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            delivered_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            received_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -592,9 +603,9 @@ mod test {
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
-            allocated_datetime: Some(datetime.clone()),       // Backdated to 2 days ago
-            picked_datetime: Some(datetime.clone()),
-            backdated_datetime: Some(datetime.clone()),
+            allocated_datetime: Some(datetime),               // Backdated to 2 days ago
+            picked_datetime: Some(datetime),
+            backdated_datetime: Some(datetime),
             delivered_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,

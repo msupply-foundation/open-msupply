@@ -5,7 +5,7 @@ use std::time::Duration;
 use std::{io::Write, net::SocketAddr};
 use telnet::{Event, Telnet};
 
-const PRINTER_COMMAND_TIMEOUT: Duration = Duration::new(1, 0);
+const PRINTER_COMMAND_TIMEOUT: Duration = Duration::new(2, 500);
 const PRINTER_CONNECTION_TIMEOUT: Duration = Duration::new(5, 0);
 
 // Note: this file is mostly taken from https://github.com/fearful-symmetry/zebrasend/blob/main/src/cmd/jetdirect.rs
@@ -35,7 +35,10 @@ impl Jetdirect {
         mode: Mode,
         timeout: Duration,
     ) -> Result<String> {
+        log::debug!("Sending jetdirect command |{}|", payload);
         handle.write(payload.as_bytes())?;
+        log::debug!("Command sent, awaiting response...");
+
         // As far as I can tell, there's no way to detect the end of an SGD command response.
         // There can be any number of double-quotes; there's no terminating control character, newline, etc.
         // Only thing we can really do is print lines as we get them, and wait for a timeout.
@@ -44,21 +47,24 @@ impl Jetdirect {
             let event = handle.read_timeout(timeout)?;
             match event {
                 Event::Data(data) => {
+                    // Print mode only receives the command, doesn't respond
                     if mode == Mode::Sgd {
                         let resp_part = String::from_utf8_lossy(&data);
                         response.push_str(&resp_part);
                         std::io::stdout().flush()?;
                         if return_early(&data) {
+                            log::debug!("Jetdirect response complete");
                             break;
                         }
                     }
                 }
                 Event::TimedOut => {
                     // We don't get the line break at the end of a response, usually
+                    log::debug!("Jetdirect command timeout reached, ending request");
                     break;
                 }
                 _ => {
-                    println!("Got other jetdirect event: {:?}", event)
+                    log::info!("Got other jetdirect event: {:?}", event)
                 }
             }
         }
@@ -68,7 +74,11 @@ impl Jetdirect {
     pub fn send_string(&self, data: String, mode: Mode) -> Result<String> {
         let ip_addr = IpAddr::from_str(&self.addr)?;
         let socket = SocketAddr::new(ip_addr, self.port);
+
+        log::debug!("Connecting to jetdirect printer at {}", socket);
         let mut telnet = Telnet::connect_timeout(&socket, 512, PRINTER_CONNECTION_TIMEOUT)?;
+        log::debug!("Connected to printer");
+
         self.send_command(data, &mut telnet, mode, PRINTER_COMMAND_TIMEOUT)
     }
 }

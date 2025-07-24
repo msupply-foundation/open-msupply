@@ -29,7 +29,7 @@ const StyledText = styled(Typography)(({ theme }) => ({
 
 export const BasicSpinner = ({
   messageKey = 'loading',
-  inline = false,
+  inline = true,
   style = {},
 }: BasicSpinnerProps) => {
   const t = useTranslation();

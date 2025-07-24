@@ -76,6 +76,9 @@ pub struct PrintArgs {
     pub data_id: Option<String>,
     #[clap(long)]
     pub arguments_file: Option<String>,
+    /// The path to the excel template file
+    #[clap(long)]
+    pub excel_template_file: Option<String>,
     #[clap(long)]
     pub format: Option<Format>,
     /// The output file path

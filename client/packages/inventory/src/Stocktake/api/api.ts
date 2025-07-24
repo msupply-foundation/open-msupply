@@ -60,7 +60,7 @@ const stocktakeParser = {
     toUpdate: (line: DraftStocktakeLine): UpdateStocktakeLineInput => ({
       location: setNullableInput('id', line.location),
       batch: line.batch ?? '',
-      packSize: line.packSize ?? 1,
+      packSize: line.packSize ?? line.item.defaultPackSize,
       costPricePerPack: line.costPricePerPack,
       countedNumberOfPacks: line.countedNumberOfPacks,
       sellPricePerPack: line.sellPricePerPack,
@@ -76,7 +76,7 @@ const stocktakeParser = {
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
       location: setNullableInput('id', line.location),
       batch: line.batch ?? '',
-      packSize: line.packSize ?? 1,
+      packSize: line.packSize ?? line.item.defaultPackSize,
       costPricePerPack: line.costPricePerPack,
       countedNumberOfPacks: line.countedNumberOfPacks,
       id: line.id,
@@ -123,6 +123,13 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         });
         return result?.stocktakes;
       },
+    hasStocktake: () => async () => {
+      const result = await sdk.stocktakes({
+        storeId,
+        page: { offset: 0, first: 1 },
+      });
+      return result?.stocktakes.nodes.length > 0;
+    },
     byId: async (id: string): Promise<StocktakeFragment> => {
       const result = await sdk.stocktake({ stocktakeId: id, storeId });
 

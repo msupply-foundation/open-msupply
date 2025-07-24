@@ -11,6 +11,7 @@ export type OutboundFragment = {
   createdDatetime: string;
   allocatedDatetime?: string | null;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
@@ -58,6 +59,8 @@ export type OutboundFragment = {
       totalAfterTax: number;
       taxPercentage?: number | null;
       itemName: string;
+      itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -67,11 +70,6 @@ export type OutboundFragment = {
         isVaccine: boolean;
         doses: number;
       };
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
-      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -242,6 +240,7 @@ export type InvoiceQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -289,6 +288,8 @@ export type InvoiceQuery = {
             totalAfterTax: number;
             taxPercentage?: number | null;
             itemName: string;
+            itemVariantId?: string | null;
+            vvmStatusId?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -298,11 +299,6 @@ export type InvoiceQuery = {
               isVaccine: boolean;
               doses: number;
             };
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
-            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -388,6 +384,7 @@ export type OutboundByNumberQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -435,6 +432,8 @@ export type OutboundByNumberQuery = {
             totalAfterTax: number;
             taxPercentage?: number | null;
             itemName: string;
+            itemVariantId?: string | null;
+            vvmStatusId?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -444,11 +443,6 @@ export type OutboundByNumberQuery = {
               isVaccine: boolean;
               doses: number;
             };
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
-            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -957,6 +951,18 @@ export type UpsertOutboundShipmentMutation = {
             deletes: Array<{ __typename: 'DeleteResponse'; id: string }>;
             inserts: { __typename: 'InvoiceLineConnector'; totalCount: number };
             updates: { __typename: 'InvoiceLineConnector'; totalCount: number };
+            skippedExpiredStockLines: {
+              __typename: 'StockLineConnector';
+              totalCount: number;
+            };
+            skippedOnHoldStockLines: {
+              __typename: 'StockLineConnector';
+              totalCount: number;
+            };
+            skippedUnusableVvmStatusLines: {
+              __typename: 'StockLineConnector';
+              totalCount: number;
+            };
           };
     }> | null;
   };
@@ -1046,6 +1052,7 @@ export const OutboundFragmentDoc = gql`
     createdDatetime
     allocatedDatetime
     deliveredDatetime
+    receivedDatetime
     pickedDatetime
     shippedDatetime
     verifiedDatetime
@@ -1774,6 +1781,15 @@ export const UpsertOutboundShipmentDocument = gql`
               totalCount
             }
             updates {
+              totalCount
+            }
+            skippedExpiredStockLines {
+              totalCount
+            }
+            skippedOnHoldStockLines {
+              totalCount
+            }
+            skippedUnusableVvmStatusLines {
               totalCount
             }
           }

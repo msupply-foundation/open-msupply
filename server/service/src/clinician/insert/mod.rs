@@ -31,6 +31,7 @@ pub struct InsertClinician {
     pub last_name: String,
     pub first_name: Option<String>,
     pub gender: Option<GenderType>,
+    pub mobile: Option<String>,
 }
 
 pub fn insert_clinician(
@@ -53,7 +54,7 @@ pub fn insert_clinician(
                     store_row: Box::new(store_repo),
                 },
                 &input,
-                &store_id,
+                store_id,
             )?;
 
             let GenerateResult {

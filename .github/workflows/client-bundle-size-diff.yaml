@@ -31,8 +31,6 @@ jobs:
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
         run: cd ./client && yarn build-stats
@@ -63,8 +61,6 @@ jobs:
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
       - name: Build
         run: cd ./client && yarn build-stats

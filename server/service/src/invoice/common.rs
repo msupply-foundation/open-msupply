@@ -149,6 +149,7 @@ pub struct GenerateVVMStatusLogInput {
     pub vvm_status_id: String,
     pub stock_line_id: String,
     pub invoice_line_id: String,
+    pub comment: Option<String>,
 }
 
 pub fn generate_vvm_status_log(
@@ -159,6 +160,7 @@ pub fn generate_vvm_status_log(
         stock_line_id,
         invoice_line_id,
         created_by,
+        comment,
     }: GenerateVVMStatusLogInput,
 ) -> VVMStatusLogRow {
     VVMStatusLogRow {
@@ -169,6 +171,6 @@ pub fn generate_vvm_status_log(
         status_id: vvm_status_id.to_string(),
         stock_line_id: stock_line_id.to_string(),
         invoice_line_id: Some(invoice_line_id.to_string()),
-        comment: None,
+        comment,
     }
 }
