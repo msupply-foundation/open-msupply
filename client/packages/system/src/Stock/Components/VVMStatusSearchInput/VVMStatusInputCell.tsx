@@ -1,25 +1,28 @@
 import React from 'react';
 import { RecordWithId, CellProps } from '@openmsupply-client/common';
 import { VVMStatusSearchInput } from './VVMStatusSearchInput';
+import { VvmStatusFragment } from '../../api';
 
 export const VVMStatusInputCell = <T extends RecordWithId>({
   rowData,
   column,
   isDisabled,
-}: CellProps<T>) => {
-  const selectedId = column.accessor({
+  useDefault = false,
+}: CellProps<T> & { useDefault?: boolean }) => {
+  const selected = column.accessor({
     rowData,
-  }) as string | null;
+  }) as VvmStatusFragment | null;
 
-  const onChange = (vvmStatusId: string | null) => {
-    column.setter({ ...rowData, vvmStatusId });
+  const onChange = (vvmStatus?: VvmStatusFragment | null) => {
+    column.setter({ ...rowData, vvmStatus });
   };
 
   return (
     <VVMStatusSearchInput
       disabled={!!isDisabled}
-      selectedId={selectedId}
+      selected={selected}
       onChange={onChange}
+      useDefault={useDefault}
     />
   );
 };

@@ -5,12 +5,9 @@ import {
   ColumnDescription,
   NumberCell,
   NumberInputCell,
+  QuantityUtils,
 } from '@openmsupply-client/common';
-import {
-  getDoseQuantity,
-  packsToDoses,
-  DraftStockOutLineFragment,
-} from '../../StockOut';
+import { getDoseQuantity, DraftStockOutLineFragment } from '../../StockOut';
 
 export const getPrescriptionLineDosesColumns = (
   allocate: (key: string, numPacks: number) => void
@@ -21,7 +18,8 @@ export const getPrescriptionLineDosesColumns = (
     key: 'availableDoses',
     align: ColumnAlign.Right,
     width: 85,
-    accessor: ({ rowData }) => packsToDoses(rowData.availablePacks, rowData),
+    accessor: ({ rowData }) =>
+      QuantityUtils.packsToDoses(rowData.availablePacks, rowData),
   },
   {
     key: 'dosesIssued',
@@ -44,7 +42,10 @@ export const getPrescriptionLineDosesColumns = (
 const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
-    max={packsToDoses(props.rowData.availablePacks, props.rowData)}
+    max={QuantityUtils.packsToDoses(
+      props.rowData.availablePacks,
+      props.rowData
+    )}
     slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}
     decimalLimit={0}
     min={0}

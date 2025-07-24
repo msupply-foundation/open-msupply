@@ -26,6 +26,7 @@ fragment StockLineRow on StockLineNode {
       name
     }
     isVaccine
+    dosesPerUnit: doses
   }
   barcode
   vvmStatusLogs {
@@ -34,7 +35,10 @@ fragment StockLineRow on StockLineNode {
     }
   }
   vvmStatus {
+    __typename
     id
+    level
+    unusable
     description
   }
   donor(storeId: $storeId) {
@@ -295,10 +299,8 @@ mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
 
 fragment VVMStatus on VvmstatusNode {
   __typename
-  code
   description
   id
-  isActive
   level
   reasonId
   unusable

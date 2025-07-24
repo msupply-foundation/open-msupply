@@ -94,20 +94,28 @@ export const RequestLineEdit = ({
   const renderValueInfoRows = useCallback(
     (info: ValueInfo[]) => (
       <>
-        {info.map(({ label, value, sx, endAdornmentOverride }) => (
-          <ValueInfoRow
-            key={label}
-            label={label}
-            value={value}
-            endAdornmentOverride={endAdornmentOverride}
-            defaultPackSize={defaultPackSize}
-            representation={representation}
-            unitName={unitName}
-            sx={sx}
-            displayVaccinesInDoses={displayVaccinesInDoses}
-            dosesPerUnit={currentItem?.doses}
-          />
-        ))}
+        {info.map(
+          ({
+            label,
+            value,
+            sx,
+            endAdornmentOverride,
+            displayVaccinesInDoses: showDoses,
+          }) => (
+            <ValueInfoRow
+              key={label}
+              label={label}
+              value={value}
+              endAdornmentOverride={endAdornmentOverride}
+              defaultPackSize={defaultPackSize}
+              representation={representation}
+              unitName={unitName}
+              sx={sx}
+              displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
+              dosesPerUnit={currentItem?.doses}
+            />
+          )
+        )}
       </>
     ),
     [

@@ -95,7 +95,10 @@ export const vvmStatusesColumn = (
   label: 'label.vvm-status',
   width: 170,
   Cell: VVMStatusInputCell,
-  accessor: ({ rowData }) => rowData.vvmStatusId,
+  cellProps: {
+    useDefault: true,
+  },
+  accessor: ({ rowData }) => rowData.vvmStatus,
   setter: updateDraftLine,
 });
 

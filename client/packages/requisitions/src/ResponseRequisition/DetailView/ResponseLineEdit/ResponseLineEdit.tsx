@@ -134,6 +134,7 @@ export const ResponseLineEdit = ({
             {numericInput('label.days-out-of-stock', draft?.daysOutOfStock, {
               onChange: value => update({ daysOutOfStock: value }),
               endAdornmentOverride: t('label.days'),
+              overrideDoseDisplay: false,
             })}
           </>
         )}
@@ -301,6 +302,7 @@ export const ResponseLineEdit = ({
               sx: {
                 mb: 0,
               },
+              overrideDoseDisplay: false,
             })}
           </>
         ) : null}
