@@ -178,10 +178,10 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     pub supplier_discount_amount: f64,
     #[serde(default)]
-    #[serde(rename = "OrderTotalBeforeDiscount")]
+    #[serde(rename = "Order_total_before_discount")]
     pub order_total_before_discount: f64,
     #[serde(default)]
-    #[serde(rename = "OrderTotalAfterDiscount")]
+    #[serde(rename = "Order_total_after_discount")]
     pub order_total_after_discount: f64,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
