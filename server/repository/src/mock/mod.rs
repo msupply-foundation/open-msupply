@@ -775,6 +775,8 @@ impl MockDataInserts {
     }
     pub fn purchase_order_line(mut self) -> Self {
         self.names = true;
+        self.units = true;
+        self.items = true;
         self.stores = true;
         self.currencies = true;
         self.purchase_order = true;

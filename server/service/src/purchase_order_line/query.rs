@@ -55,7 +55,7 @@ mod test {
     async fn purchase_order_service_queries() {
         let (_, connection, connection_manager, _) = setup_all(
             "purchase order line service queries",
-            MockDataInserts::all(),
+            MockDataInserts::none().stores().items(),
         )
         .await;
 

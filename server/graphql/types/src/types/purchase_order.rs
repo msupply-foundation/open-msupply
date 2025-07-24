@@ -1,6 +1,6 @@
 use self::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::{NaiveDate, NaiveDateTime};
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, PurchaseOrderLinesByPurchaseOrderIdLoader,
     StoreByIdLoader, UserLoader,
@@ -45,26 +45,20 @@ impl PurchaseOrderNode {
 
         return Ok(None);
     }
-    pub async fn supplier_name_link_id(&self) -> &Option<String> {
-        &self.row().supplier_name_link_id
-    }
+
     pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
-        if let Some(supplier_id) = self.row().supplier_name_link_id.clone() {
-            return Ok(loader
-                .load_one(NameByIdLoaderInput::new(&self.row().store_id, &supplier_id))
-                .await?
-                .map(NameNode::from_domain));
-        }
-        return Ok(None);
+        let name = loader
+            .load_one(NameByIdLoaderInput::new(
+                &self.row().store_id,
+                &self.row().supplier_name_link_id,
+            ))
+            .await?
+            .map(NameNode::from_domain);
+        return Ok(name);
     }
-    pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
-    }
-    pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
-        self.row()
-            .delivered_datetime
-            .map(|dt| DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
+    pub async fn created_datetime(&self) -> NaiveDateTime {
+        self.row().created_datetime
     }
     pub async fn confirmed_datetime(&self) -> &Option<NaiveDateTime> {
         &self.row().confirmed_datetime
@@ -77,9 +71,6 @@ impl PurchaseOrderNode {
     }
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
-    }
-    pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
-        &self.row().supplier_discount_percentage
     }
     pub async fn supplier_discount_amount(&self) -> &Option<f64> {
         &self.row().supplier_discount_amount
@@ -106,20 +97,20 @@ impl PurchaseOrderNode {
     pub async fn shipping_method(&self) -> &Option<String> {
         &self.row().shipping_method
     }
-    pub async fn sent_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().sent_datetime
+    pub async fn sent_datetime(&self) -> &Option<NaiveDate> {
+        &self.row().sent_date
     }
-    pub async fn contract_signed_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().contract_signed_datetime
+    pub async fn contract_signed_date(&self) -> &Option<NaiveDate> {
+        &self.row().contract_signed_date
     }
-    pub async fn advance_paid_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().advance_paid_datetime
+    pub async fn advance_paid_date(&self) -> &Option<NaiveDate> {
+        &self.row().advance_paid_date
     }
-    pub async fn received_at_port_datetime(&self) -> &Option<NaiveDate> {
-        &self.row().received_at_port_datetime
+    pub async fn received_at_port_date(&self) -> &Option<NaiveDate> {
+        &self.row().received_at_port_date
     }
-    pub async fn expected_delivery_datetime(&self) -> &Option<NaiveDate> {
-        &self.row().expected_delivery_datetime
+    pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
+        &self.row().expected_delivery_date
     }
     pub async fn supplier_agent(&self) -> &Option<String> {
         &self.row().supplier_agent
