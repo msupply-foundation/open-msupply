@@ -1,6 +1,6 @@
 import {  useMutation, usePatchState, useQuery } from "@openmsupply-client/common/src";
 import { usePurchaseOrderGraphQL } from "../usePurchaseOrderGraphQL";
-import { PURCHASE_ORDER_LINE } from "./keys";
+import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from "./keys";
 import { PurchaseOrderLineFragment } from "../operations.generated";
 
 export type DraftPurchaseOrderLine = Omit<
@@ -95,7 +95,6 @@ const useCreate = () => {
   return useMutation({
     mutationFn,
     onSuccess: () =>
-      // Purchase order line list needs to be re-fetched to include the new purchase order line
-      queryClient.invalidateQueries([PURCHASE_ORDER_LINE]),
+      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
   });
 };

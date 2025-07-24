@@ -37,17 +37,7 @@ export const PurchaseOrderLineEditModal = ({
     updatePatch,
   } = usePurchaseOrderLine(currentItem?.item.id);
 
-  const deletePreviousLine = () => {
-    const shouldDelete = shouldDeleteLine(mode, currentItem?.id, false);
-    if (currentItem?.id && shouldDelete) {
-      // TODO implement line delete
-    }
-  };
-
   const onChangeItem = (item: ItemWithStatsFragment) => {
-    if (mode === ModalMode.Create) {
-      deletePreviousLine();
-    }
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
     item &&
       updatePatch({
@@ -133,14 +123,4 @@ export const PurchaseOrderLineEditModal = ({
       )}
     </Modal>
   );
-};
-
-export const shouldDeleteLine = (
-  mode: ModalMode | null,
-  draftId?: string,
-  isDisabled?: boolean
-): boolean => {
-  if (mode === ModalMode.Create) return true;
-  if (!draftId || isDisabled || mode === ModalMode.Update) return false;
-  return false;
 };
