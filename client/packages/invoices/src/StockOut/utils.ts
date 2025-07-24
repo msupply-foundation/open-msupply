@@ -128,11 +128,18 @@ export const issue = (
   if (!foundRow) return draftLines;
   const newDraftLines = [...draftLines];
 
-  const numberOfPacks = quantityToPacks(allocateIn, quantity, foundRow);
+  const enteredPacks = quantityToPacks(allocateIn, quantity, foundRow);
+
+  const numberOfPacks = allowPartialPacks
+    ? enteredPacks
+    : Math.ceil(enteredPacks);
 
   newDraftLines[foundRowIdx] = {
     ...foundRow,
-    numberOfPacks: allowPartialPacks ? numberOfPacks : Math.ceil(numberOfPacks),
+    numberOfPacks:
+      numberOfPacks > foundRow.availablePacks
+        ? Math.floor(foundRow.availablePacks)
+        : numberOfPacks,
   };
   return newDraftLines;
 };
@@ -297,13 +304,13 @@ export const getManualAllocationAlerts = (
   requestedQuantity: number,
   allocatedQuantity: number,
   line: DraftStockOutLineFragment,
-  allocateIn: AllocateInOption,
+  allocateInType: AllocateInType,
   format: (value: number, options?: Intl.NumberFormatOptions) => string,
   t: TypedTFunction<LocaleKey>
 ): StockOutAlert[] => {
   const alerts: StockOutAlert[] = [];
 
-  if (allocatedQuantity > requestedQuantity)
+  if (allocatedQuantity !== requestedQuantity)
     alerts.push({
       message: t('messages.over-allocated-line', {
         quantity: format(allocatedQuantity),
@@ -313,7 +320,7 @@ export const getManualAllocationAlerts = (
     });
 
   const nearestWholePack = packsToQuantity(
-    allocateIn.type,
+    allocateInType,
     Math.ceil(line.numberOfPacks),
     line
   );
@@ -321,7 +328,7 @@ export const getManualAllocationAlerts = (
   if (nearestWholePack > allocatedQuantity) {
     alerts.push({
       message: t(
-        `messages.partial-pack-warning-${allocateIn.type === AllocateInType.Doses ? 'doses' : 'units'}`,
+        `messages.partial-pack-warning-${allocateInType === AllocateInType.Doses ? 'doses' : 'units'}`,
         { nearestAbove: nearestWholePack }
       ),
       severity: 'warning',
