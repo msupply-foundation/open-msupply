@@ -9,12 +9,12 @@ import {
   PreferenceDescriptionNode,
   useTranslation,
   useNotification,
-  TextArea,
 } from '@openmsupply-client/common';
 import {
   EnumOptions,
   getEnumPreferenceOptions,
 } from '../Components/EnumOptions';
+import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
 
 export const EditPreference = ({
   preference,
@@ -22,7 +22,9 @@ export const EditPreference = ({
   disabled = false,
 }: {
   preference: PreferenceDescriptionNode;
-  update: (input: UpsertPreferencesInput[keyof UpsertPreferencesInput]) => void;
+  update: (
+    input: UpsertPreferencesInput[keyof UpsertPreferencesInput]
+  ) => Promise<void>;
   disabled?: boolean;
 }) => {
   const t = useTranslation();
@@ -31,6 +33,11 @@ export const EditPreference = ({
   // The preference.value only updates after mutation completes and cache
   // is invalidated - use local state for fast UI change
   const [value, setValue] = useState(preference.value);
+
+  const handleChange = async (newValue: PreferenceDescriptionNode['value']) => {
+    setValue(newValue);
+    await update(newValue);
+  };
 
   switch (preference.valueType) {
     case PreferenceValueNodeType.Boolean:
@@ -42,8 +49,7 @@ export const EditPreference = ({
           disabled={disabled}
           checked={value}
           onChange={(_, checked) => {
-            setValue(checked);
-            update(checked);
+            handleChange(checked);
           }}
         />
       );
@@ -67,36 +73,12 @@ export const EditPreference = ({
           disabled={disabled}
           options={options}
           value={value}
-          onChange={newValue => {
-            setValue(newValue);
-            update(newValue);
-          }}
+          onChange={handleChange}
         />
       );
 
     case PreferenceValueNodeType.CustomTranslations:
-      return (
-        <TextArea
-          onChange={e => {
-            const newValue = JSON.parse(e.target.value); // Validate JSON format
-            setValue(newValue);
-            update(newValue);
-          }}
-          value={JSON.stringify(value)}
-          maxRows={10}
-          minRows={10}
-          style={{ padding: '0 0 0 50px' }}
-          slotProps={{
-            input: {
-              sx: {
-                border: theme => `1px solid ${theme.palette.gray.main}`,
-                borderRadius: '5px',
-                padding: '3px',
-              },
-            },
-          }}
-        />
-      );
+      return <EditCustomTranslations value={value} update={handleChange} />;
 
     default:
       try {

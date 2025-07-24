@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::types::patient::GenderType;
 use async_graphql::*;
@@ -35,7 +35,7 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.use_campaigns)
     }
 
-    pub async fn custom_translations(&self) -> Result<HashMap<String, String>> {
+    pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
         self.load_preference(&self.preferences.custom_translations)
     }
 

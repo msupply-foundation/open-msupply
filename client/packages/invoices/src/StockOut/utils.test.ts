@@ -192,6 +192,25 @@ describe('issue = doses', () => {
       { ...line2, numberOfPacks: 1.8 },
     ]);
   });
+
+  it('skips rounding if it would over-allocate the stock line', () => {
+    const line2 = {
+      id: '2',
+      packSize: 2,
+      dosesPerUnit: 5,
+      availablePacks: 1.8,
+    } as DraftStockOutLineFragment;
+
+    const draftLines = [line1, line2];
+
+    const result = issue(draftLines, '2', 16, AllocateInType.Doses);
+    expect(result).toEqual([
+      line1,
+      // 16 doses / 2 units per pack / 5 doses per unit = 1.6
+      // should round to 2, but can't, so round down
+      { ...line2, numberOfPacks: 1 },
+    ]);
+  });
 });
 
 describe('canAutoAllocate ', () => {
@@ -245,7 +264,7 @@ describe('getManualAllocationAlerts', () => {
       1,
       1,
       createTestLine({}),
-      { type: AllocateInType.Doses },
+      AllocateInType.Doses,
       mockFormat,
       mockT
     );
@@ -257,7 +276,7 @@ describe('getManualAllocationAlerts', () => {
       1,
       4,
       createTestLine({}),
-      { type: AllocateInType.Doses },
+      AllocateInType.Doses,
       mockFormat,
       mockT
     );
@@ -271,7 +290,7 @@ describe('getManualAllocationAlerts', () => {
       7,
       7,
       createTestLine({ packSize: 10, numberOfPacks: 7 }),
-      { type: AllocateInType.Units },
+      AllocateInType.Units,
       mockFormat,
       mockT
     );

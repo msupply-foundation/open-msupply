@@ -98,7 +98,7 @@ export const vvmStatusesColumn = (
   cellProps: {
     useDefault: true,
   },
-  accessor: ({ rowData }) => rowData.vvmStatusId,
+  accessor: ({ rowData }) => rowData.vvmStatus,
   setter: updateDraftLine,
 });
 
