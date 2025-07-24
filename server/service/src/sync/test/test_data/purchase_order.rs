@@ -68,7 +68,6 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "lookBackMonths": "",
         "custom_data": "",
         "minimumExpiryDate": "",
-        "received_at_port_date": "2025-01-22",
         "Date_contract_signed": "2021-01-22",
         "Date_advance_payment": "2025-01-22",
         "po_sent_date": "2025-01-15",
