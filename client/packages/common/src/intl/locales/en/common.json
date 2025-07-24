@@ -605,7 +605,6 @@
   "help": "Help",
   "immunisations": "Immunizations",
   "inbound-shipment": "Inbound Shipments",
-  "purchase-order": "Purchase Orders",
   "indicators-demographics": "Demographics",
   "info.automatic-return": "This return was created automatically, as the result of an Supplier Return in another store.",
   "info.automatic-return-no-edit": "You are unable to edit details until the status is confirmed as Delivered.",
