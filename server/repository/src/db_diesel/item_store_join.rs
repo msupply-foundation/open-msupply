@@ -31,6 +31,7 @@ pub trait ItemStoreJoinRowRepositoryTrait<'a> {
         item_link_id: &str,
         store_id: &str,
     ) -> Result<Option<ItemStoreJoinRow>, RepositoryError>;
+    fn upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError>;
 }
 
 impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> {
@@ -45,6 +46,22 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> 
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    fn upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(item_store_join::dsl::item_store_join)
+            .values(row)
+            .on_conflict(item_store_join::dsl::id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+}
+
+impl<'a> ItemStoreJoinRowRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        ItemStoreJoinRowRepository { connection }
     }
 }
 
@@ -66,5 +83,35 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for MockItemStoreJoinRowRepository 
         _store_id: &str,
     ) -> Result<Option<ItemStoreJoinRow>, RepositoryError> {
         Ok(self.find_one_by_item_and_store_id_result.clone())
+    }
+
+    fn upsert_one(&self, _row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        mock::{mock_item_a, mock_item_a_join_store_a, mock_store_a, MockDataInserts},
+        test_db::setup_all,
+        ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+    };
+
+    #[actix_rt::test]
+    async fn get_item_store_join() {
+        let (_, connection, _, _) = setup_all(
+            "get_item_store_join",
+            MockDataInserts::none().item_store_joins(),
+        )
+        .await;
+
+        let repo = ItemStoreJoinRowRepository::new(&connection);
+
+        let item_store_join = repo
+            .find_one_by_item_and_store_id(&mock_item_a().id, &mock_store_a().id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(item_store_join, mock_item_a_join_store_a());
     }
 }

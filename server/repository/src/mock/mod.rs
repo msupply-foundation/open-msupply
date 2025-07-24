@@ -23,6 +23,7 @@ mod indicator_value;
 mod invoice;
 mod invoice_line;
 mod item;
+mod item_store_join;
 mod item_variant;
 pub mod ledger;
 mod location;
@@ -96,6 +97,7 @@ pub use indicator_value::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
+pub use item_store_join::*;
 pub use item_variant::*;
 pub use location::*;
 pub use name::*;
@@ -245,6 +247,7 @@ pub struct MockData {
     pub reason_options: Vec<ReasonOptionRow>,
     pub vvm_statuses: Vec<VVMStatusRow>,
     pub campaigns: Vec<CampaignRow>,
+    pub item_store_joins: Vec<ItemStoreJoinRow>,
 }
 
 impl MockData {
@@ -333,6 +336,7 @@ pub struct MockDataInserts {
     pub reason_options: bool,
     pub vvm_statuses: bool,
     pub campaigns: bool,
+    pub item_store_joins: bool,
 }
 
 impl MockDataInserts {
@@ -410,6 +414,7 @@ impl MockDataInserts {
             store_preferences: true,
             reason_options: true,
             campaigns: true,
+            item_store_joins: true,
         }
     }
 
@@ -482,6 +487,15 @@ impl MockDataInserts {
     pub fn items(mut self) -> Self {
         self.units = true;
         self.items = true;
+        self
+    }
+
+    pub fn item_store_joins(mut self) -> Self {
+        self.units = true;
+        self.items = true;
+        self.names = true;
+        self.stores = true;
+        self.item_store_joins = true;
         self
     }
 
@@ -855,6 +869,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             printer: mock_printers(),
             vvm_statuses: mock_vvm_statuses(),
             campaigns: mock_campaigns(),
+            item_store_joins: mock_item_store_joins(),
             ..Default::default()
         },
     );
@@ -1412,6 +1427,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.item_store_joins {
+            let repo = ItemStoreJoinRowRepository::new(connection);
+            for row in &mock_data.item_store_joins {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1492,6 +1513,7 @@ impl MockData {
             mut reason_options,
             mut vvm_statuses,
             mut campaigns,
+            mut item_store_joins,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1566,6 +1588,7 @@ impl MockData {
         self.store_preferences.append(&mut store_preferences);
         self.vvm_statuses.append(&mut vvm_statuses);
         self.campaigns.append(&mut campaigns);
+        self.item_store_joins.append(&mut item_store_joins);
         self
     }
 }
