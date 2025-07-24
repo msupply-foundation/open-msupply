@@ -136,6 +136,10 @@ export type ItemStockOnHandFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  itemStoreJoin?: {
+    __typename: 'ItemStoreJoinNode';
+    defaultSellPricePerPack: number;
+  } | null;
 };
 
 export type ItemRowWithStatsFragment = {
@@ -157,6 +161,10 @@ export type ItemRowWithStatsFragment = {
     totalConsumption: number;
     stockOnHand: number;
   };
+  itemStoreJoin?: {
+    __typename: 'ItemStoreJoinNode';
+    defaultSellPricePerPack: number;
+  } | null;
 };
 
 export type ColdStorageTypeFragment = {
@@ -459,7 +467,6 @@ export type ItemFragment = {
   }>;
   itemStoreJoin?: {
     __typename: 'ItemStoreJoinNode';
-    id: string;
     defaultSellPricePerPack: number;
   } | null;
 };
@@ -654,7 +661,6 @@ export type ItemsWithStockLinesQuery = {
       }>;
       itemStoreJoin?: {
         __typename: 'ItemStoreJoinNode';
-        id: string;
         defaultSellPricePerPack: number;
       } | null;
     }>;
@@ -711,6 +717,10 @@ export type ItemStockOnHandQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
+      itemStoreJoin?: {
+        __typename: 'ItemStoreJoinNode';
+        defaultSellPricePerPack: number;
+      } | null;
     }>;
   };
 };
@@ -959,7 +969,6 @@ export type ItemByIdQuery = {
       }>;
       itemStoreJoin?: {
         __typename: 'ItemStoreJoinNode';
-        id: string;
         defaultSellPricePerPack: number;
       } | null;
     }>;
@@ -1441,10 +1450,11 @@ export const ItemStockOnHandFragmentDoc = gql`
   fragment ItemStockOnHand on ItemNode {
     ...ItemWithPackSize
     availableStockOnHand(storeId: $storeId)
-    ...ItemRow
+    itemStoreJoin(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
   ${ItemWithPackSizeFragmentDoc}
-  ${ItemRowFragmentDoc}
 `;
 export const ItemRowWithStatsFragmentDoc = gql`
   fragment ItemRowWithStats on ItemNode {
@@ -1641,8 +1651,6 @@ export const ItemFragmentDoc = gql`
       ...ItemDirection
     }
     itemStoreJoin(storeId: $storeId) {
-      __typename
-      id
       defaultSellPricePerPack
     }
   }

@@ -131,6 +131,8 @@ export const NewStockLineModal = ({
                     dosesPerUnit: newItem.doses,
                   },
                   packSize: newItem.defaultPackSize,
+                  sellPricePerPack:
+                    newItem.itemStoreJoin?.defaultSellPricePerPack ?? 0,
                 })
               }
             />
