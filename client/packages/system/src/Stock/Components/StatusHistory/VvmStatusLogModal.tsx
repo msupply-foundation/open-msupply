@@ -5,6 +5,7 @@ import React, { ReactElement, useEffect, useState } from 'react';
 import {
   useVvmStatusesEnabled,
   useVvmStatusLog,
+  VvmStatusFragment,
   VvmStatusLogRowFragment,
 } from '../../api';
 import { VVMStatusSearchInput } from '../VVMStatusSearchInput';
@@ -25,7 +26,8 @@ export const VvmStatusLogModal = ({
   const t = useTranslation();
   const isCreating = !selectedStatusLog;
   const [comment, setComment] = useState<string>('');
-  const [selectedStatusId, setSelectedStatusId] = useState<string | null>();
+  const [selectedStatus, setSelectedStatus] =
+    useState<VvmStatusFragment | null>();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const {
@@ -35,11 +37,11 @@ export const VvmStatusLogModal = ({
   const { data: vvmStatus = [] } = useVvmStatusesEnabled();
 
   const handleConfirm = () => {
-    if (isCreating && stockLineId && selectedStatusId)
+    if (isCreating && stockLineId && selectedStatus)
       createMutation({
         id: FnUtils.generateUUID(),
         stockLineId,
-        statusId: selectedStatusId,
+        statusId: selectedStatus.id,
         comment,
       });
 
@@ -56,9 +58,7 @@ export const VvmStatusLogModal = ({
     const selectedVvmStatus = vvmStatus.find(
       ({ id }) => id === selectedStatusLog?.status?.id
     );
-
-    const vvmStatusOption = selectedVvmStatus ? selectedVvmStatus.id : null;
-    setSelectedStatusId(vvmStatusOption);
+    setSelectedStatus(selectedVvmStatus);
     setComment(selectedStatusLog?.comment ?? '');
   }, [selectedStatusLog, vvmStatus]);
 
@@ -82,8 +82,8 @@ export const VvmStatusLogModal = ({
           label={t('label.vvm-status')}
           Input={
             <VVMStatusSearchInput
-              selectedId={selectedStatusId ?? null}
-              onChange={variantId => setSelectedStatusId(variantId)}
+              selected={selectedStatus ?? null}
+              onChange={vvmStatus => setSelectedStatus(vvmStatus)}
               disabled={!isCreating}
             />
           }

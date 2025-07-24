@@ -1,11 +1,11 @@
 use super::{DBType, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection};
 use crate::db_diesel::name_row::name;
 use crate::diesel_macros::{
-    apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
 };
 use crate::purchase_order_row::purchase_order::{self};
 
-use crate::{name_link, DateFilter, EqualFilter, Pagination, Sort, StringFilter};
+use crate::{name_link, DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 use diesel::query_dsl::QueryDsl;
 use diesel::{prelude::*, RunQueryDsl};
 
@@ -13,14 +13,13 @@ use diesel::{prelude::*, RunQueryDsl};
 pub struct PurchaseOrderFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
-    pub created_date: Option<DateFilter>,
+    pub created_datetime: Option<DatetimeFilter>,
     pub status: Option<EqualFilter<PurchaseOrderStatus>>,
     pub supplier: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum PurchaseOrderSortField {
-    Supplier,
     Number,
     CreatedDatetime,
     Status,
@@ -62,14 +61,11 @@ impl<'a> PurchaseOrderRepository<'a> {
         let mut query = create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
-                PurchaseOrderSortField::Supplier => {
-                    apply_sort_no_case!(query, sort, purchase_order::supplier_name_link_id)
-                }
                 PurchaseOrderSortField::Number => {
                     apply_sort!(query, sort, purchase_order::purchase_order_number)
                 }
                 PurchaseOrderSortField::CreatedDatetime => {
-                    apply_sort!(query, sort, purchase_order::created_date)
+                    apply_sort!(query, sort, purchase_order::created_datetime)
                 }
                 PurchaseOrderSortField::Status => {
                     apply_sort!(query, sort, purchase_order::status)
@@ -81,6 +77,9 @@ impl<'a> PurchaseOrderRepository<'a> {
                     apply_sort!(query, sort, purchase_order::received_at_port_date)
                 }
             }
+        } else {
+            query = query.order(purchase_order::created_datetime.desc())
+            // apply_sort!(query, sort, purchase_order::created_datetime)
         }
 
         // Debug diesel query
@@ -104,18 +103,18 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
         let PurchaseOrderFilter {
             id,
             store_id,
-            created_date,
+            created_datetime,
             status,
             supplier,
         } = f;
         apply_equal_filter!(query, id, purchase_order::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
-        apply_date_filter!(query, created_date, purchase_order::created_date);
+        apply_date_time_filter!(query, created_datetime, purchase_order::created_datetime);
         apply_equal_filter!(query, status, purchase_order::status);
         if let Some(supplier_string) = supplier {
             let mut sub_query = name_link::table
                 .inner_join(name::table)
-                .select(name_link::id.nullable())
+                .select(name_link::id)
                 .into_boxed();
             apply_string_filter!(sub_query, Some(supplier_string), name::name_);
 
@@ -139,8 +138,8 @@ impl PurchaseOrderFilter {
         self.store_id = Some(filter);
         self
     }
-    pub fn created_date(mut self, filter: DateFilter) -> Self {
-        self.created_date = Some(filter);
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
         self
     }
     pub fn status(mut self, filter: EqualFilter<PurchaseOrderStatus>) -> Self {

@@ -172,7 +172,7 @@ export type PrescriptionRowFragment = {
       providerName: string;
     } | null;
   } | null;
-  store?: { __typename: 'StoreNode'; id: string } | null;
+  store: { __typename: 'StoreNode'; id: string };
 };
 
 export type PrescriptionLineFragment = {
@@ -509,7 +509,7 @@ export type PrescriptionsQuery = {
           providerName: string;
         } | null;
       } | null;
-      store?: { __typename: 'StoreNode'; id: string } | null;
+      store: { __typename: 'StoreNode'; id: string };
     }>;
   };
 };
@@ -691,7 +691,7 @@ export type PrescriptionByNumberQuery = {
             providerName: string;
           } | null;
         } | null;
-        store?: { __typename: 'StoreNode'; id: string } | null;
+        store: { __typename: 'StoreNode'; id: string };
       }
     | {
         __typename: 'NodeError';
@@ -882,7 +882,7 @@ export type PrescriptionByIdQuery = {
             providerName: string;
           } | null;
         } | null;
-        store?: { __typename: 'StoreNode'; id: string } | null;
+        store: { __typename: 'StoreNode'; id: string };
       }
     | {
         __typename: 'NodeError';
