@@ -159,6 +159,7 @@ export enum ActivityLogNodeType {
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   RnrFormCreated = 'RNR_FORM_CREATED',
+  RnrFormDeleted = 'RNR_FORM_DELETED',
   RnrFormFinalised = 'RNR_FORM_FINALISED',
   RnrFormUpdated = 'RNR_FORM_UPDATED',
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
@@ -2061,6 +2062,12 @@ export type DeleteResponseRequisitionResponseWithId = {
   response: DeleteResponseRequisitionResponse;
 };
 
+export type DeleteRnRFormInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteRnRFormResponse = DeleteResponse;
+
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
   error: DeleteStocktakeErrorInterface;
@@ -2421,6 +2428,7 @@ export type DraftStockOutLineNode = {
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
 
 export type DraftStockOutLineNodeDonorArgs = {
@@ -3349,6 +3357,7 @@ export type InsertOutboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertOutboundShipmentLineResponse =
@@ -4136,6 +4145,7 @@ export type InvoiceLineNode = {
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
   type: InvoiceLineNodeType;
+  vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
 
@@ -4933,6 +4943,7 @@ export type Mutations = {
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
+  deleteRnrForm: DeleteRnRFormResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
@@ -5192,6 +5203,11 @@ export type MutationsDeleteResponseRequisitionArgs = {
 
 export type MutationsDeleteResponseRequisitionLineArgs = {
   input: DeleteResponseRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteRnrFormArgs = {
+  input: DeleteRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5953,6 +5969,7 @@ export type OutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type PackagingVariantInput = {
@@ -6668,15 +6685,13 @@ export type PurchaseOrderNode = {
   number: Scalars['Int']['output'];
   receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
-  sentDate?: Maybe<Scalars['NaiveDate']['output']>;
+  sentDatetime?: Maybe<Scalars['NaiveDate']['output']>;
   shippingMethod?: Maybe<Scalars['String']['output']>;
   status: PurchaseOrderNodeStatus;
   store?: Maybe<StoreNode>;
   supplier?: Maybe<NameNode>;
   supplierAgent?: Maybe<Scalars['String']['output']>;
-  supplierDiscountAmount?: Maybe<Scalars['Float']['output']>;
-  supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
-  supplierNameLinkId: Scalars['String']['output'];
+  supplierDiscountAmount: Scalars['Float']['output'];
   targetMonths?: Maybe<Scalars['Float']['output']>;
   user?: Maybe<UserNode>;
 };
@@ -9524,6 +9539,7 @@ export type UpdateOutboundShipmentLineInput = {
   prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOutboundShipmentLineResponse =

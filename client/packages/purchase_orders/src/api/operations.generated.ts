@@ -11,6 +11,7 @@ export type PurchaseOrderRowFragment = {
   confirmedDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
+  expectedDeliveryDatetime?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -21,31 +22,25 @@ export type PurchaseOrderFragment = {
   id: string;
   number: number;
   additionalInstructions?: string | null;
-  advancePaidDate?: string | null;
   agentCommission?: number | null;
   authorisingOfficer1?: string | null;
   authorisingOfficer2?: string | null;
   comment?: string | null;
   communicationsCharge?: number | null;
-  contractSignedDate?: string | null;
-  confirmedDatetime?: string | null;
   createdDatetime: string;
   currencyId?: string | null;
   documentCharge?: number | null;
   foreignExchangeRate?: number | null;
-  expectedDeliveryDate?: string | null;
   freightCharge?: number | null;
   freightConditions?: string | null;
   headingMessage?: string | null;
   insuranceCharge?: number | null;
-  receivedAtPortDate?: string | null;
   reference?: string | null;
   sentDate?: string | null;
   shippingMethod?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   supplierAgent?: string | null;
-  supplierDiscountAmount?: number | null;
-  supplierDiscountPercentage?: number | null;
+  supplierDiscountAmount: number;
   targetMonths?: number | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
@@ -54,13 +49,9 @@ export type PurchaseOrderFragment = {
     nodes: Array<{
       __typename: 'PurchaseOrderLineNode';
       id: string;
-      authorisedNumberOfUnits?: number | null;
       expectedDeliveryDate?: string | null;
-      sohInUnits: number;
-      requestedNumberOfUnits: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
-      receivedNumberOfUnits: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -77,13 +68,9 @@ export type PurchaseOrderFragment = {
 export type PurchaseOrderLineFragment = {
   __typename: 'PurchaseOrderLineNode';
   id: string;
-  authorisedNumberOfUnits?: number | null;
   expectedDeliveryDate?: string | null;
-  sohInUnits: number;
-  requestedNumberOfUnits: number;
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
-  receivedNumberOfUnits: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -115,6 +102,7 @@ export type PurchaseOrdersQuery = {
       confirmedDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
+      expectedDeliveryDatetime?: string | null;
       comment?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -135,31 +123,25 @@ export type PurchaseOrderByIdQuery = {
         id: string;
         number: number;
         additionalInstructions?: string | null;
-        advancePaidDate?: string | null;
         agentCommission?: number | null;
         authorisingOfficer1?: string | null;
         authorisingOfficer2?: string | null;
         comment?: string | null;
         communicationsCharge?: number | null;
-        contractSignedDate?: string | null;
-        confirmedDatetime?: string | null;
         createdDatetime: string;
         currencyId?: string | null;
         documentCharge?: number | null;
         foreignExchangeRate?: number | null;
-        expectedDeliveryDate?: string | null;
         freightCharge?: number | null;
         freightConditions?: string | null;
         headingMessage?: string | null;
         insuranceCharge?: number | null;
-        receivedAtPortDate?: string | null;
         reference?: string | null;
         sentDate?: string | null;
         shippingMethod?: string | null;
         status: Types.PurchaseOrderNodeStatus;
         supplierAgent?: string | null;
-        supplierDiscountAmount?: number | null;
-        supplierDiscountPercentage?: number | null;
+        supplierDiscountAmount: number;
         targetMonths?: number | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
@@ -168,13 +150,9 @@ export type PurchaseOrderByIdQuery = {
           nodes: Array<{
             __typename: 'PurchaseOrderLineNode';
             id: string;
-            authorisedNumberOfUnits?: number | null;
             expectedDeliveryDate?: string | null;
-            sohInUnits: number;
-            requestedNumberOfUnits: number;
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
-            receivedNumberOfUnits: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -223,6 +201,7 @@ export const PurchaseOrderRowFragmentDoc = gql`
     confirmedDatetime
     status
     targetMonths
+    expectedDeliveryDatetime
     lines {
       totalCount
     }
@@ -233,7 +212,6 @@ export const PurchaseOrderLineFragmentDoc = gql`
   fragment PurchaseOrderLine on PurchaseOrderLineNode {
     __typename
     id
-    authorisedNumberOfUnits
     expectedDeliveryDate
     item {
       id
@@ -241,11 +219,8 @@ export const PurchaseOrderLineFragmentDoc = gql`
       name
       unitName
     }
-    sohInUnits
-    requestedNumberOfUnits
     requestedPackSize
     requestedDeliveryDate
-    receivedNumberOfUnits
   }
 `;
 export const PurchaseOrderFragmentDoc = gql`
@@ -254,14 +229,11 @@ export const PurchaseOrderFragmentDoc = gql`
     id
     number
     additionalInstructions
-    advancePaidDate
     agentCommission
     authorisingOfficer1
     authorisingOfficer2
     comment
     communicationsCharge
-    contractSignedDate
-    confirmedDatetime
     createdDatetime
     currencyId
     documentCharge
@@ -270,12 +242,10 @@ export const PurchaseOrderFragmentDoc = gql`
       name
     }
     foreignExchangeRate
-    expectedDeliveryDate
     freightCharge
     freightConditions
     headingMessage
     insuranceCharge
-    receivedAtPortDate
     reference
     lines {
       __typename
@@ -297,7 +267,6 @@ export const PurchaseOrderFragmentDoc = gql`
     }
     supplierAgent
     supplierDiscountAmount
-    supplierDiscountPercentage
     targetMonths
   }
   ${PurchaseOrderLineFragmentDoc}

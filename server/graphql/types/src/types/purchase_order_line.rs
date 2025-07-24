@@ -26,10 +26,10 @@ impl PurchaseOrderLineNode {
     pub async fn purchase_order_id(&self) -> &str {
         &self.row().purchase_order_id
     }
-    pub async fn line_number(&self) -> &i64 {
-        &self.row().line_number
+    pub async fn line_number(&self) -> i64 {
+        self.row().line_number
     }
-    // TODO should item be optional?
+
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 
@@ -45,20 +45,20 @@ impl PurchaseOrderLineNode {
         )
     }
 
-    pub async fn soh_in_units(&self) -> &f64 {
-        &self.row().soh_in_units
+    pub async fn stock_on_hand_in_units(&self) -> f64 {
+        self.row().stock_on_hand_in_units
     }
-    pub async fn requested_pack_size(&self) -> &f64 {
-        &self.row().requested_pack_size
+    pub async fn requested_pack_size(&self) -> f64 {
+        self.row().requested_pack_size
     }
-    pub async fn requested_number_of_units(&self) -> &f64 {
-        &self.row().requested_number_of_units
+    pub async fn requested_number_of_units(&self) -> f64 {
+        self.row().requested_number_of_units
     }
     pub async fn authorised_number_of_units(&self) -> &Option<f64> {
         &self.row().authorised_number_of_units
     }
-    pub async fn received_number_of_units(&self) -> &f64 {
-        &self.row().received_number_of_units
+    pub async fn received_number_of_units(&self) -> f64 {
+        self.row().received_number_of_units
     }
     pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().requested_delivery_date
