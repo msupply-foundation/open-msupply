@@ -46,6 +46,10 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_item_code: Option<String>,
+    #[serde(default)]
+    pub price_per_pack_before_discount: f64,
+    #[serde(default)]
+    pub price_per_pack_after_discount: f64,
 }
 
 #[deny(dead_code)]
@@ -87,6 +91,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             delivery_date_requested,
             delivery_date_expected,
             supplier_item_code,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
@@ -103,8 +109,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             expected_delivery_date: delivery_date_expected,
             soh_in_units: snapshot_quantity,
             supplier_item_code,
-            price_per_pack_before_discount: 0.0,
-            price_per_pack_after_discount: 0.0,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -148,6 +154,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             delivery_date_requested: requested_delivery_date,
             delivery_date_expected: expected_delivery_date,
             supplier_item_code,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
         };
 
         Ok(PushTranslateResult::upsert(
