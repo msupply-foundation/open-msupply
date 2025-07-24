@@ -53,7 +53,6 @@ fragment StocktakeLine on StocktakeLineNode {
     doses
     defaultPackSize
     itemStoreJoin(storeId: $storeId) {
-      id
       defaultSellPricePerPack
     }
   }

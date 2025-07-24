@@ -53,7 +53,6 @@ export type StocktakeLineFragment = {
     defaultPackSize: number;
     itemStoreJoin?: {
       __typename: 'ItemStoreJoinNode';
-      id: string;
       defaultSellPricePerPack: number;
     } | null;
   };
@@ -124,7 +123,6 @@ export type StocktakeFragment = {
         defaultPackSize: number;
         itemStoreJoin?: {
           __typename: 'ItemStoreJoinNode';
-          id: string;
           defaultSellPricePerPack: number;
         } | null;
       };
@@ -236,7 +234,6 @@ export type StocktakeQuery = {
               defaultPackSize: number;
               itemStoreJoin?: {
                 __typename: 'ItemStoreJoinNode';
-                id: string;
                 defaultSellPricePerPack: number;
               } | null;
             };
@@ -319,7 +316,6 @@ export type StocktakeByNumberQuery = {
               defaultPackSize: number;
               itemStoreJoin?: {
                 __typename: 'ItemStoreJoinNode';
-                id: string;
                 defaultSellPricePerPack: number;
               } | null;
             };
@@ -386,7 +382,6 @@ export type StocktakeLinesQuery = {
         defaultPackSize: number;
         itemStoreJoin?: {
           __typename: 'ItemStoreJoinNode';
-          id: string;
           defaultSellPricePerPack: number;
         } | null;
       };
@@ -667,7 +662,6 @@ export const StocktakeLineFragmentDoc = gql`
       doses
       defaultPackSize
       itemStoreJoin(storeId: $storeId) {
-        id
         defaultSellPricePerPack
       }
     }
