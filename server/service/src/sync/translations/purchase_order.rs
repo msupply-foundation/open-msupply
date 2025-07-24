@@ -206,6 +206,7 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub advance_paid_date: Option<NaiveDate>,
+    #[serde(rename = "Date_goods_received_at_port")]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub received_at_port_date: Option<NaiveDate>,
