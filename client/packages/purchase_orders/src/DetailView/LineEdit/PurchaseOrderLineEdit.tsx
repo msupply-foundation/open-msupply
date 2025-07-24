@@ -1,123 +1,63 @@
 import React from 'react';
+import { BasicTextInput, Grid } from '@openmsupply-client/common';
+import { PurchaseOrderLineFragment } from '../../api';
 import {
-  Divider,
-  Box,
-  useTranslation,
-  TableCell,
-  styled,
-  useFormatNumber,
-  Tooltip,
-  NumUtils,
-} from '@openmsupply-client/common';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
-import { min } from 'lodash';
+  ItemWithStatsFragment,
+  StockItemSearchInputWithStats,
+} from '@openmsupply-client/system/src';
 
-export interface OutboundLineEditTableProps {}
+export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
+export interface PurchaseOrderLineEditProps {
+  isUpdateMode?: boolean;
+  currentItem?: PurchaseOrderLineFragment;
+  lines: PurchaseOrderLineFragment[];
+  onChangeItem: (item: ItemWithStatsFragment) => void;
+  // TODO add line update
+  // onUpdate: (patch: Partial<PurchaseOrderLineFragment>) => void;
+}
 
-const PlaceholderCell = styled(TableCell)(({ theme }) => ({
-  fontSize: 12,
-  padding: '4px 20px 4px 12px',
-  color: theme.palette.secondary.main,
-}));
-
-const TotalCell = styled(TableCell)(({ theme }) => ({
-  fontSize: 14,
-  padding: '8px 12px 4px 12px',
-  fontWeight: 'bold',
-  position: 'sticky',
-  bottom: 0,
-  background: theme.palette.background.white,
-  borderTop: `1px solid ${theme.palette.divider}`,
-}));
-
-const PlaceholderRow = ({
-  quantity,
-  extraColumnOffset,
-  dosesPerUnit,
-}: {
-  quantity: number | null;
-  extraColumnOffset: number;
-  dosesPerUnit?: number;
-}) => {
-  const t = useTranslation();
-
-  const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
-
-  // TODO - maybe should be editable? Can't clear when manually allocating..
-  return quantity === null ? null : (
-    <tr>
-      <PlaceholderCell
-        colSpan={5 + extraColumnOffset}
-        sx={{ color: 'secondary.main' }}
-      >
-        {t('label.placeholder')}
-      </PlaceholderCell>
-      <PlaceholderCell style={{ textAlign: 'right', paddingRight: '14px' }}>
-        1
-      </PlaceholderCell>
-      {!!dosesPerUnit && (
-        <PlaceholderCell style={{ textAlign: 'right', paddingRight: '14px' }}>
-          {dosesPerUnit}
-        </PlaceholderCell>
-      )}
-      <PlaceholderCell colSpan={dosesPerUnit ? 2 : 3}></PlaceholderCell>
-      <Tooltip title={quantity.toString()}>
-        <PlaceholderCell style={{ textAlign: 'right' }}>
-          {!!NumUtils.hasMoreThanTwoDp(quantity)
-            ? `${formattedValue}...`
-            : formattedValue}
-        </PlaceholderCell>
-      </Tooltip>
-    </tr>
-  );
-};
-
-const TotalRow = ({
-  allocatedQuantity,
-  extraColumnOffset,
-}: {
-  allocatedQuantity: number;
-  extraColumnOffset: number;
-}) => {
-  const t = useTranslation();
-  const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
-
+export const PurchaseOrderLineEdit = ({
+  isUpdateMode,
+  currentItem,
+  lines,
+  onChangeItem,
+  // TODO add line update
+  // onUpdate,
+}: PurchaseOrderLineEditProps) => {
   return (
-    <tr>
-      <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
-      <TotalCell colSpan={6 + extraColumnOffset}></TotalCell>
-      <Tooltip title={allocatedQuantity.toString()}>
-        <TotalCell
-          style={{
-            textAlign: 'right',
-            paddingRight: 20,
-          }}
-        >
-          {!!NumUtils.hasMoreThanTwoDp(allocatedQuantity)
-            ? `${formattedValue}...`
-            : formattedValue}
-        </TotalCell>
-      </Tooltip>
-      <TotalCell colSpan={2} />
-    </tr>
-  );
-};
-
-export const PurchaseOrderLineEdit = ({}: OutboundLineEditTableProps) => {
-  return (
-    <Box style={{ width: '100%' }}>
-      <Divider margin={10} />
-      <Box
-        style={{
-          maxHeight: min([screen.height - 570, 325]),
-          display: 'flex',
-          flexDirection: 'column',
-          overflowX: 'hidden',
-          overflowY: 'auto',
-        }}
-      >
-        hello
-      </Box>
-    </Box>
+    <Grid
+      container
+      spacing={1}
+      direction="row"
+      bgcolor="background.toolbar"
+      padding={2}
+      paddingBottom={1}
+    >
+      <Grid size={12} sx={{ mb: 2 }}>
+        {(isUpdateMode && (
+          <BasicTextInput
+            value={`${currentItem?.item?.code}     ${currentItem?.item?.name}`}
+            disabled
+            fullWidth
+          />
+        )) || (
+          <StockItemSearchInputWithStats
+            autoFocus={!currentItem}
+            openOnFocus={!currentItem}
+            disabled={false}
+            currentItemId={currentItem?.id}
+            onChange={(newItem: ItemWithStatsFragment | null) =>
+              newItem && onChangeItem(newItem)
+            }
+            extraFilter={item => !lines.some(line => line.item.id === item.id)}
+          />
+        )}
+      </Grid>
+      <Grid size={12} container spacing={2}>
+        {/* <Grid size={6}>{}</Grid>
+        TODO add update line fields here
+        <Grid size={6}>{}</Grid> */}
+      </Grid>
+    </Grid>
   );
 };
