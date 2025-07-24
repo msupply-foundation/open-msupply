@@ -88,6 +88,8 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             quan_original_order: 0.0,
             quan_adjusted_order: None,
             supplier_item_code: None,
+            price_per_pack_before_discount: 0.0,
+            price_per_pack_after_discount: 0.0,
         }),
     }
 }
