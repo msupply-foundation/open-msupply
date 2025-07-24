@@ -33,7 +33,7 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "lines": "",
         "requested_delivery_date": "",
         "locked": "",
-        "confirm_date": "2020-07-11",
+        "confirm_date": "2021-07-11",
         "created_by": "some user",
         "last_edited_by": "some other user",
         "Order_total_after_discount": 12.2,
@@ -78,7 +78,7 @@ const PURCHASE_ORDER_1: (&str, &str) = (
             "foreign_exchange_rate": 1.6,
             "expected_delivery_date": "2025-01-22",
             "created_datetime": "2021-01-22T00:00:00",
-            "confirmed_datetime": "2021-07-11T00:00:00",
+            "confirmed_datetime": "2021-07-11T01:02:03",
             "sent_datetime": "2025-01-15T01:02:03"
         }
     }"#,
@@ -100,9 +100,9 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
             confirmed_datetime: Some(
-                NaiveDate::from_ymd_opt(2020, 7, 11)
+                NaiveDate::from_ymd_opt(2021, 7, 11)
                     .unwrap()
-                    .and_hms_opt(0, 0, 0)
+                    .and_hms_opt(1, 2, 3)
                     .unwrap(),
             ),
             target_months: Some(2.1),
@@ -152,7 +152,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
             comment: Some("some test comment".to_string()),
             currency_id: Some("currency_a".to_string()),
             reference: Some("test reference".to_string()),
-            confirm_date: Some(NaiveDate::from_ymd_opt(2020, 7, 11).unwrap()),
+            confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 11).unwrap()),
             created_by: Some("some user".to_string()),
             store_id: "store_b".to_string(),
             supplier_agent: Some("some agent".to_string()),
@@ -186,7 +186,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                 confirmed_datetime: Some(
                     NaiveDate::from_ymd_opt(2021, 7, 11)
                         .unwrap()
-                        .and_hms_opt(0, 0, 0)
+                        .and_hms_opt(1, 2, 3)
                         .unwrap()
                 ),
                 sent_datetime: Some(
