@@ -4,16 +4,6 @@ import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { NameRowFragmentDoc } from '../../Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type ServiceItemRowFragment = {
-  __typename: 'ItemNode';
-  id: string;
-  code: string;
-  name: string;
-  unitName?: string | null;
-  isVaccine: boolean;
-  doses: number;
-};
-
 export type StockLineFragment = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: number;
@@ -1397,17 +1387,6 @@ export type ItemLedgerQuery = {
   };
 };
 
-export const ServiceItemRowFragmentDoc = gql`
-  fragment ServiceItemRow on ItemNode {
-    __typename
-    id
-    code
-    name
-    unitName
-    isVaccine
-    doses
-  }
-`;
 export const ItemRowFragmentDoc = gql`
   fragment ItemRow on ItemNode {
     __typename

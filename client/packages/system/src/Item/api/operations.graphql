@@ -1,13 +1,3 @@
-fragment ServiceItemRow on ItemNode {
-  __typename
-  id
-  code
-  name
-  unitName
-  isVaccine
-  doses
-}
-
 fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
