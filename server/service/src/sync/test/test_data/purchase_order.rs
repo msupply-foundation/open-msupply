@@ -374,7 +374,6 @@ const PURCHASE_ORDER_3: (&str, &str) = (
         "serial_number": 1,
         "store_ID": "store_b",
         "confirm_date": "0000-00-00",
-        "received_at_port_date": "0000-00-00",
         "Date_contract_signed": "0000-00-00",
         "Date_advance_payment": "0000-00-00",
         "po_sent_date": "0000-00-00",
