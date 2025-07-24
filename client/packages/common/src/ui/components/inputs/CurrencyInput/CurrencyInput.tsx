@@ -63,6 +63,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
         '&:hover': {
           borderBottom: disabled ? 'none' : undefined,
         },
+        color: disabled ? theme => theme.palette.text.disabled : undefined,
         width,
       }}
       // We implement our own rounding here, as the react-currency-input-field
