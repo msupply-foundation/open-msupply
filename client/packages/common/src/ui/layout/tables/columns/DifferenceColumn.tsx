@@ -1,11 +1,10 @@
 import React from 'react';
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { ColumnAlign, ColumnDefinition } from './types';
 import { NumberCell } from '../components';
 import { StocktakeLineFragment } from '@openmsupply-client/inventory/src/Stocktake/api';
 import { LocaleKey, TypedTFunction, useFormatNumber } from '@common/intl';
 import { StocktakeSummaryItem } from 'packages/inventory/src/types';
-import { NumUtils } from '@common/utils';
 
 interface DifferenceValues {
   total: number;
@@ -67,9 +66,9 @@ export const getDifferenceColumn = (
       rowData,
       manageVaccinesInDoses
     );
-    const formatNumber = useFormatNumber();
-    const doses = formatNumber.round(totalInDoses ?? undefined, 2);
-    const tooltipDoses = formatNumber.format(totalInDoses ?? undefined);
+    const { round } = useFormatNumber();
+    // doses always rounded to display in whole numbers
+    const doses = round(totalInDoses ?? undefined);
 
     return (
       <Box
@@ -82,17 +81,7 @@ export const getDifferenceColumn = (
       >
         <NumberCell {...props} />
         {displayDoses && !!totalInDoses && (
-          <Typography>
-            {`(`}
-            <Tooltip title={tooltipDoses}>
-              <span>
-                {!!NumUtils.hasMoreThanTwoDp(totalInDoses ?? 0)
-                  ? `${doses}...`
-                  : doses}
-              </span>
-            </Tooltip>
-            {` ${t('label.doses')})`}
-          </Typography>
+          <Typography>{`(${doses} ${t('label.doses')})`}</Typography>
         )}
       </Box>
     );
