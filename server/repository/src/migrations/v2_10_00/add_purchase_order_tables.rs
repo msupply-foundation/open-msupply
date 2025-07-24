@@ -33,7 +33,7 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE purchase_order (
                     id TEXT NOT NULL PRIMARY KEY,
                     store_id TEXT NOT NULL REFERENCES store(id),
-                    user_id TEXT,
+                    created_by TEXT,
                     supplier_name_link_id TEXT NOT NULL REFERENCES name_link(id),
                     purchase_order_number BIGINT NOT NULL,
                     status {purchase_order_status} NOT NULL,
@@ -75,6 +75,7 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE purchase_order_line (
                     id TEXT NOT NULL PRIMARY KEY,
                     purchase_order_id TEXT REFERENCES purchase_order(id) NOT NULL,
+                    store_id TEXT NOT NULL REFERENCES store(id),
                     line_number BIGINT NOT NULL,
                     item_link_id TEXT REFERENCES item_link(id) NOT NULL,
                     item_name TEXT NOT NULL,
@@ -86,8 +87,8 @@ impl MigrationFragment for Migrate {
                     expected_delivery_date {DATE},
                     stock_on_hand_in_units {DOUBLE} NOT NULL DEFAULT 0.0,
                     supplier_item_code TEXT,
-                    price_per_pack_before_discount {DOUBLE} NOT NULL DEFAULT 0.0,
-                    price_per_pack_after_discount {DOUBLE} NOT NULL DEFAULT 0.0
+                    price_per_unit_before_discount {DOUBLE} NOT NULL DEFAULT 0.0,
+                    price_per_unit_after_discount {DOUBLE} NOT NULL DEFAULT 0.0
                 );
             "#
         )?;

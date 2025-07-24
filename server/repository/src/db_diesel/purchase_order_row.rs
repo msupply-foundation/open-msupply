@@ -14,7 +14,7 @@ table! {
     purchase_order (id) {
         id ->  Text,
         store_id -> Text,
-        user_id -> Nullable<Text>,
+        created_by -> Nullable<Text>,
         supplier_name_link_id ->  Text,
         purchase_order_number -> BigInt,
         status -> crate::db_diesel::purchase_order_row::PurchaseOrderStatusMapping,
@@ -61,7 +61,7 @@ allow_tables_to_appear_in_same_query!(purchase_order, item);
 pub struct PurchaseOrderRow {
     pub id: String,
     pub store_id: String,
-    pub user_id: Option<String>,
+    pub created_by: Option<String>,
     pub supplier_name_link_id: String,
     pub purchase_order_number: i64,
     pub status: PurchaseOrderStatus,

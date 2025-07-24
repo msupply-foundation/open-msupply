@@ -4,7 +4,9 @@ use repository::{
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option, zero_date_as_option, zero_f64_as_none,
+};
 
 use crate::sync::translations::{
     item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
@@ -16,6 +18,8 @@ use crate::sync::translations::{
 pub struct LegacyPurchaseOrderLineRow {
     #[serde(rename = "ID")]
     pub id: String,
+    #[serde(rename = "store_ID")]
+    pub store_id: String,
     #[serde(rename = "purchase_order_ID")]
     pub purchase_order_id: String,
     pub line_number: i64,
@@ -30,6 +34,7 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(default)]
     pub quan_original_order: f64,
     #[serde(default)]
+    #[serde(deserialize_with = "zero_f64_as_none")]
     pub quan_adjusted_order: Option<f64>,
     #[serde(default)]
     pub quan_rec_to_date: f64,
@@ -47,9 +52,9 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_item_code: Option<String>,
     #[serde(default)]
-    pub price_per_pack_before_discount: f64,
+    pub price_extension_expected: f64,
     #[serde(default)]
-    pub price_per_pack_after_discount: f64,
+    pub price_expected_after_discount: f64,
 }
 
 #[deny(dead_code)]
@@ -82,6 +87,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyPurchaseOrderLineRow {
             id,
+            store_id,
             purchase_order_id,
             line_number,
             item_link_id,
@@ -94,12 +100,13 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             delivery_date_requested,
             delivery_date_expected,
             supplier_item_code,
-            price_per_pack_before_discount,
-            price_per_pack_after_discount,
+            price_extension_expected,
+            price_expected_after_discount,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
             id,
+            store_id,
             purchase_order_id,
             line_number,
             item_link_id,
@@ -112,8 +119,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             expected_delivery_date: delivery_date_expected,
             stock_on_hand_in_units: snapshot_quantity,
             supplier_item_code,
-            price_per_pack_before_discount,
-            price_per_pack_after_discount,
+            price_per_unit_before_discount: price_extension_expected,
+            price_per_unit_after_discount: price_expected_after_discount,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -125,6 +132,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
     ) -> Result<PushTranslateResult, anyhow::Error> {
         let PurchaseOrderLineRow {
             id,
+            store_id,
             purchase_order_id,
             line_number,
             item_link_id,
@@ -137,14 +145,15 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             received_number_of_units,
             stock_on_hand_in_units,
             supplier_item_code,
-            price_per_pack_before_discount,
-            price_per_pack_after_discount,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
         } = PurchaseOrderLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
 
         let legacy_row = LegacyPurchaseOrderLineRow {
             id,
+            store_id,
             purchase_order_id,
             line_number,
             item_link_id,
@@ -157,8 +166,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             delivery_date_requested: requested_delivery_date,
             delivery_date_expected: expected_delivery_date,
             supplier_item_code,
-            price_per_pack_before_discount,
-            price_per_pack_after_discount,
+            price_extension_expected: price_per_unit_before_discount,
+            price_expected_after_discount: price_per_unit_after_discount,
         };
 
         Ok(PushTranslateResult::upsert(
@@ -192,6 +201,7 @@ mod tests {
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            println!("Translating record: {:?}", record.sync_buffer_row.data);
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();

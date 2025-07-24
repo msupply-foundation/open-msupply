@@ -139,11 +139,9 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub confirm_date: Option<NaiveDate>,
-    // assume this is user_id - though does not reference user id in OG
     #[serde(default)]
-    #[serde(rename = "user_ID")]
     #[serde(deserialize_with = "empty_str_as_option")]
-    pub user_id: Option<String>,
+    pub created_by: Option<String>,
     #[serde(rename = "store_ID")]
     pub store_id: String,
     #[serde(default)]
@@ -270,7 +268,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             creation_date,
             currency_id,
             confirm_date: legacy_confirm_date,
-            user_id,
+            created_by,
             store_id,
             donor_id,
             order_total_before_discount,
@@ -294,7 +292,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
         let result = PurchaseOrderRow {
             id,
-            user_id,
+            created_by,
             purchase_order_number,
             store_id,
             supplier_name_link_id: name_id,
@@ -341,7 +339,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
         let PurchaseOrderRow {
             id,
             store_id,
-            user_id,
+            created_by,
             supplier_name_link_id,
             purchase_order_number,
             status,
@@ -398,7 +396,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             comment,
             currency_id,
             reference,
-            user_id,
+            created_by,
             store_id,
             supplier_agent,
             authorising_officer_1,

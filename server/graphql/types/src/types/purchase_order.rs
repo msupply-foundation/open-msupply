@@ -39,7 +39,7 @@ impl PurchaseOrderNode {
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserLoader>>();
 
-        if let Some(user_id) = self.row().user_id.clone() {
+        if let Some(user_id) = self.row().created_by.clone() {
             return Ok(loader.load_one(user_id).await?.map(UserNode::from_domain));
         }
 
