@@ -1,6 +1,6 @@
 use self::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, PurchaseOrderLinesByPurchaseOrderIdLoader,
     StoreByIdLoader, UserLoader,
@@ -45,24 +45,23 @@ impl PurchaseOrderNode {
 
         return Ok(None);
     }
-    pub async fn supplier_name_link_id(&self) -> &Option<String> {
-        &self.row().supplier_name_link_id
-    }
+
     pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
-        if let Some(supplier_id) = self.row().supplier_name_link_id.clone() {
-            return Ok(loader
-                .load_one(NameByIdLoaderInput::new(&self.row().store_id, &supplier_id))
-                .await?
-                .map(NameNode::from_domain));
-        }
-        return Ok(None);
+        let name = loader
+            .load_one(NameByIdLoaderInput::new(
+                &self.row().store_id,
+                &self.row().supplier_name_link_id,
+            ))
+            .await?
+            .map(NameNode::from_domain);
+        return Ok(name);
     }
-    pub async fn created_date(&self) -> NaiveDate {
-        self.row().created_date
+    pub async fn created_datetime(&self) -> NaiveDateTime {
+        self.row().created_datetime
     }
-    pub async fn confirmed_date(&self) -> &Option<NaiveDate> {
-        &self.row().confirmed_date
+    pub async fn confirmed_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().confirmed_datetime
     }
     pub async fn status(&self) -> PurchaseOrderNodeStatus {
         PurchaseOrderNodeStatus::from_domain(self.row().status.clone())
@@ -72,9 +71,6 @@ impl PurchaseOrderNode {
     }
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
-    }
-    pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
-        &self.row().supplier_discount_percentage
     }
     pub async fn supplier_discount_amount(&self) -> &Option<f64> {
         &self.row().supplier_discount_amount

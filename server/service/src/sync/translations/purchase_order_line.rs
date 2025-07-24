@@ -4,7 +4,7 @@ use repository::{
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::{date_option_to_isostring, zero_date_as_option};
+use util::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
 
 use crate::sync::translations::{
     purchase_order::PurchaseOrderTranslation, PullTranslateResult, PushTranslateResult,
@@ -43,6 +43,9 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "delivery_date_expected")]
     pub delivery_date_expected: Option<NaiveDate>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub supplier_item_code: Option<String>,
 }
 
 #[deny(dead_code)]
@@ -83,6 +86,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             quan_rec_to_date,
             delivery_date_requested,
             delivery_date_expected,
+            supplier_item_code,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
@@ -98,9 +102,9 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_delivery_date: delivery_date_requested,
             expected_delivery_date: delivery_date_expected,
             soh_in_units: snapshot_quantity,
-            supplier_item_code: None, // TODO: add supplier item code to Legacy Data
-            price_per_pack_before_discount: 0.0, // TODO: map this from legacy data e.g. price_per_pack_before_discount / packsize_ordered
-            discount_percentage: 0.0, // TODO: map this from legacy data Looks like it's calculated from Price Expected after discount and Price Expected before discount
+            supplier_item_code,
+            price_per_pack_before_discount: 0.0,
+            price_per_pack_after_discount: 0.0,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -125,7 +129,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             soh_in_units,
             supplier_item_code,
             price_per_pack_before_discount,
-            discount_percentage,
+            price_per_pack_after_discount,
         } = PurchaseOrderLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
@@ -143,6 +147,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             quan_rec_to_date: received_number_of_units,
             delivery_date_requested: requested_delivery_date,
             delivery_date_expected: expected_delivery_date,
+            supplier_item_code,
         };
 
         Ok(PushTranslateResult::upsert(

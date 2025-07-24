@@ -27,7 +27,7 @@ table! {
         soh_in_units -> Double,
         supplier_item_code -> Nullable<Text>,
         price_per_pack_before_discount -> Double,
-        discount_percentage -> Double,
+        price_per_pack_after_discount -> Double,
     }
 }
 
@@ -57,7 +57,7 @@ pub struct PurchaseOrderLineRow {
     pub soh_in_units: f64,
     pub supplier_item_code: Option<String>,
     pub price_per_pack_before_discount: f64,
-    pub discount_percentage: f64,
+    pub price_per_pack_after_discount: f64,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {
