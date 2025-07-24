@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Namespace, TOptions } from 'i18next';
+import { TOptions } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { LocaleKey } from '../locales';
 import { useIntl } from '../utils';
@@ -11,17 +11,11 @@ export interface TypedTFunction<Keys> {
   (key: Keys, options?: TOptions<Record<string, unknown>> | string): string;
 }
 
-// export { useTranslation };
-// ns:
-//   * Defaults to "common".
-//   * If not "common" will use ns that's specified first then "common" if local key not matched
-//   * Can parse array but only first element is used TODO fix
-//
-// returned function can be used with optional ns, i.e. t('label.create-user', { ns: 'system' })
-export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
+export const useTranslation = (): TypedTFunction<LocaleKey> => {
   const { i18n } = useIntl();
-  // leave optional ns call in in case of future client specific namespace calls
-  const { t } = useTranslationNext(ns, { i18n });
+  // Use custom namespace to apply Global Preference translation overrides.
+  // Otherwise defaults to values in "common.json"
+  const { t } = useTranslationNext('custom_preference_overrides', { i18n });
 
   return useCallback(
     (key, opts) => {

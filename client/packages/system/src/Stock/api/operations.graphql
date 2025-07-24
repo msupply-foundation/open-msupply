@@ -26,6 +26,7 @@ fragment StockLineRow on StockLineNode {
       name
     }
     isVaccine
+    dosesPerUnit: doses
   }
   barcode
   vvmStatusLogs {

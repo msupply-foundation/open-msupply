@@ -78,13 +78,11 @@ export const EditPreference = ({
       return (
         <TextArea
           onChange={e => {
-            const newValue = e.target.value;
-            JSON.parse(newValue); // Validate JSON format
-
+            const newValue = JSON.parse(e.target.value); // Validate JSON format
             setValue(newValue);
             update(newValue);
           }}
-          value={JSON.stringify(value, null, 2)}
+          value={JSON.stringify(value)}
           maxRows={10}
           minRows={10}
           style={{ padding: '0 0 0 50px' }}

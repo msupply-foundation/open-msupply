@@ -10,7 +10,7 @@ pub(crate) fn translate_report_arugment_schema(
         report_row,
         argument_schema,
     }: Report,
-    translation_service: &Box<Localisations>,
+    localisations: &Localisations,
     user_language: &str,
 ) -> Result<Report, TranslationError> {
     let Some(argument_schema) = argument_schema else {
@@ -21,9 +21,9 @@ pub(crate) fn translate_report_arugment_schema(
     };
 
     let mut json_schema = argument_schema.json_schema;
-    crawl_and_translate(&mut json_schema, translation_service, user_language)?;
+    crawl_and_translate(&mut json_schema, localisations, user_language)?;
     let mut ui_schema = argument_schema.ui_schema;
-    crawl_and_translate(&mut ui_schema, translation_service, user_language)?;
+    crawl_and_translate(&mut ui_schema, localisations, user_language)?;
 
     let argument_schema = Some(FormSchemaJson {
         json_schema,
