@@ -1,4 +1,5 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
+import { TranslationOption } from './TranslationSearchInput';
 
 export interface Translation {
   id: string;
@@ -35,4 +36,20 @@ export const mapTranslationsToObject = (
       return acc;
     }, {});
   return asObject;
+};
+
+export const findMatchingPluralisationKeys = (
+  option: TranslationOption,
+  allOptions: TranslationOption[]
+): TranslationOption[] => {
+  const underscoreIndex = option.key.indexOf('_');
+  if (underscoreIndex > 0) {
+    const prefix = option.key.substring(0, underscoreIndex);
+    // Find all options with keys starting with the same prefix
+    const matchingOptions = allOptions.filter(o =>
+      o.key.startsWith(prefix + '_')
+    );
+    return matchingOptions;
+  }
+  return [option];
 };

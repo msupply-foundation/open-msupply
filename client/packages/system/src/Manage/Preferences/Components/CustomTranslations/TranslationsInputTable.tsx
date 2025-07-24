@@ -84,16 +84,16 @@ export const TranslationsTable = ({
     },
   ]);
 
-  const onAdd = (option: TranslationOption | null) => {
-    if (!option) return;
-    const newLine = {
+  const onAdd = (options: TranslationOption[]) => {
+    if (options.length === 0) return;
+    const newLines = options.map(option => ({
       id: option.key,
       key: option.key,
       default: option.default,
       custom: option.default,
       isNew: true,
-    };
-    setTranslations(translations => [newLine, ...translations]);
+    }));
+    setTranslations(translations => [...newLines, ...translations]);
   };
 
   return (

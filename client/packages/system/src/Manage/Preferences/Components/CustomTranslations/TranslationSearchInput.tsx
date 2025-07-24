@@ -7,9 +7,10 @@ import {
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
+import { findMatchingPluralisationKeys } from './helpers';
 
 interface TranslationSearchInputProps {
-  onChange: (option: TranslationOption | null) => void;
+  onChange: (option: TranslationOption[]) => void;
   existingKeys: string[];
 }
 
@@ -45,10 +46,19 @@ export const TranslationSearchInput = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingKeys.length]);
 
+  const handleSelect = (option: TranslationOption | null) => {
+    if (!option) return;
+    const matchingOptions = findMatchingPluralisationKeys(
+      option,
+      nonTranslatedOptions
+    );
+    onChange(matchingOptions);
+  };
+
   return (
     <Autocomplete
       onChange={(_, option) => {
-        onChange(option);
+        handleSelect(option);
       }}
       options={nonTranslatedOptions}
       sx={{ width: '100%' }}
