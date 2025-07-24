@@ -86,7 +86,7 @@ export const CustomTranslationsModal = ({
       <Modal
         title={t('label.edit-custom-translations')}
         width={1200}
-        height={700}
+        height={900}
         cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
         okButton={
           <LoadingButton

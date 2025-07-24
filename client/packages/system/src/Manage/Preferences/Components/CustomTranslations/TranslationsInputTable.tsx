@@ -49,6 +49,9 @@ export const TranslationsTable = ({
     {
       key: 'default',
       Cell: TooltipTextCell,
+      cellProps: {
+        style: { textWrap: 'wrap', margin: '5px 0' },
+      },
       label: 'label.default',
       width: 300,
     },
@@ -58,6 +61,10 @@ export const TranslationsTable = ({
       label: 'label.custom',
       cellProps: {
         fullWidth: true,
+        multiline: true,
+        sx: {
+          marginY: '5px',
+        },
       },
       setter: input => {
         setTranslations(translations =>
@@ -110,7 +117,6 @@ export const TranslationsTable = ({
         columns={columns}
         data={translations}
         noDataMessage={t('message.add-a-translation')}
-        dense
       />
     </>
   );
