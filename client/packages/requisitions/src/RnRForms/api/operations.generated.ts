@@ -322,6 +322,16 @@ export const PeriodFragmentDoc = gql`
     endDate
   }
 `;
+export type DeleteRnRFormMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.DeleteRnRFormInput;
+}>;
+
+export type DeleteRnRFormMutation = {
+  __typename: 'Mutations';
+  deleteRnrForm: { __typename: 'DeleteResponse'; id: string };
+};
+
 export const RnRFormFragmentDoc = gql`
   fragment RnRForm on RnRFormNode {
     id
@@ -485,6 +495,16 @@ export const FinaliseRnRFormDocument = gql`
   }
   ${RnRFormFragmentDoc}
 `;
+export const DeleteRnRFormDocument = gql`
+  mutation deleteRnRForm($storeId: String!, $input: DeleteRnRFormInput!) {
+    deleteRnrForm(storeId: $storeId, input: $input) {
+      ... on DeleteResponse {
+        __typename
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -596,6 +616,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'finaliseRnRForm',
+        'mutation',
+        variables
+      );
+    },
+    deleteRnRForm(
+      variables: DeleteRnRFormMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeleteRnRFormMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteRnRFormMutation>(
+            DeleteRnRFormDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deleteRnRForm',
         'mutation',
         variables
       );

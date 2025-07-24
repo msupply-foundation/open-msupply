@@ -194,7 +194,7 @@ export const QuantityTableComponent = ({
   });
 
   if (displayInDoses) {
-    columnDefinitions.push(...getInboundDosesColumns());
+    columnDefinitions.push(...getInboundDosesColumns(format));
   }
 
   columnDefinitions.push({
@@ -361,7 +361,8 @@ export const LocationTableComponent = ({
   isDisabled,
 }: TableProps) => {
   const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.UseCampaigns
   );
 
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
@@ -392,7 +393,9 @@ export const LocationTableComponent = ({
     ] as ColumnDescription<DraftInboundLine>);
   }
 
-  columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+  if (preferences?.useCampaigns) {
+    columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+  }
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 
