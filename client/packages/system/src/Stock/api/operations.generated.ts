@@ -71,6 +71,8 @@ export type StockLineRowFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
+    level: number;
+    unusable: boolean;
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
@@ -277,6 +279,8 @@ export type StockLinesQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
+        level: number;
+        unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
@@ -369,6 +373,8 @@ export type StockLineQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
+        level: number;
+        unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
@@ -498,6 +504,8 @@ export type UpdateStockLineMutation = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
+          level: number;
+          unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
@@ -785,6 +793,8 @@ export type InsertStockLineMutation = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
+          level: number;
+          unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
@@ -905,7 +915,10 @@ export const StockLineRowFragmentDoc = gql`
       }
     }
     vvmStatus {
+      __typename
       id
+      level
+      unusable
       description
     }
     donor(storeId: $storeId) {

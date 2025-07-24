@@ -35,7 +35,10 @@ fragment StockLineRow on StockLineNode {
     }
   }
   vvmStatus {
+    __typename
     id
+    level
+    unusable
     description
   }
   donor(storeId: $storeId) {

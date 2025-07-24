@@ -9,9 +9,6 @@ export const VVMStatusInputCell = <T extends RecordWithId>({
   isDisabled,
   useDefault = false,
 }: CellProps<T> & { useDefault?: boolean }) => {
-  const [defaultVal, setDefaultVal] = React.useState<
-    VvmStatusFragment | undefined
-  >(undefined);
   const selected = column.accessor({
     rowData,
   }) as VvmStatusFragment | null;
@@ -20,20 +17,12 @@ export const VVMStatusInputCell = <T extends RecordWithId>({
     column.setter({ ...rowData, vvmStatus });
   };
 
-  if (useDefault && defaultVal && !selected) {
-    column.setter({
-      ...rowData,
-      vvmStatus: defaultVal,
-    });
-  }
-
   return (
     <VVMStatusSearchInput
       disabled={!!isDisabled}
       selected={selected}
       onChange={onChange}
       useDefault={useDefault}
-      setDefaultVal={setDefaultVal}
     />
   );
 };
