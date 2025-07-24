@@ -12,7 +12,7 @@ import {
   useColumns,
   useRowStyle,
 } from '@openmsupply-client/common';
-import { Translation } from './helpers';
+import { checkInvalidVariables, Translation } from './helpers';
 import {
   TranslationOption,
   TranslationSearchInput,
@@ -67,11 +67,14 @@ export const TranslationsTable = ({
         },
       },
       setter: input => {
-        setTranslations(translations =>
-          translations.map(tr =>
-            tr.id === input.id ? { ...tr, ...input } : tr
-          )
-        );
+        const invalid = checkInvalidVariables(input);
+        if (!invalid) {
+          setTranslations(translations =>
+            translations.map(tr =>
+              tr.id === input.id ? { ...tr, ...input } : tr
+            )
+          );
+        }
       },
     },
     {

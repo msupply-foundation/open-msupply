@@ -53,3 +53,39 @@ export const findMatchingPluralisationKeys = (
   }
   return [option];
 };
+
+const validVariable = /{{\s*[^{}]+\s*}}/g;
+
+// Extract values inside {{}} for both default and custom strings
+export const extractVariables = (str?: string): string[] => {
+  if (!str) return [];
+  // If the string has invalid brackets, don't extract any variables
+  if (hasInvalidBrackets(str)) return [];
+  // Only match non-nested, non-empty variables inside {{ }}
+  const matches = str.match(validVariable) || [];
+  // Filter out empty or whitespace-only variable names
+  return matches.map(m => m.slice(2, -2).trim()).filter(v => v.length > 0);
+};
+
+export const hasInvalidBrackets = (str?: string): boolean => {
+  if (!str) return false;
+  // Remove all valid {{...}} pairs
+  const cleaned = str.replace(validVariable, '');
+  // If any unmatched brackets remain, it's invalid
+  return /[{}]/.test(cleaned);
+};
+
+export const checkInvalidVariables = (input: Partial<Translation>): boolean => {
+  // Check for invalid bracket pairs first
+  if (hasInvalidBrackets(input.custom)) return true;
+  const defaultVariables = extractVariables(input.default);
+  const customVariables = extractVariables(input.custom);
+  // All custom variables must exist in default variables, but custom can use a default var multiple times
+  for (const v of customVariables) {
+    if (!defaultVariables.includes(v)) return true;
+  }
+  // If customVariables contains more unique variables than defaultVariables, it's invalid
+  if (new Set(customVariables).size > new Set(defaultVariables).size)
+    return true;
+  return false;
+};
