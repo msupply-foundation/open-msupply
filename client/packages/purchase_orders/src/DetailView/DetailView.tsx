@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   AlertModal,
   createQueryParamsStore,
@@ -15,7 +15,6 @@ import {
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { AppRoute } from 'packages/config/src';
 import { PurchaseOrderLineFragment } from '../api';
-import { InboundItem } from 'packages/invoices/src/types';
 import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
@@ -44,12 +43,18 @@ export const DetailViewInner = () => {
     isOpen,
   } = useEditModal<string | null>();
 
-  const onRowClick = (line: PurchaseOrderLineFragment) => {
-    // eslint-disable-next-line no-console
-    console.log('TO-DO: Show Line Edit Modal for line:', line);
-  };
+  const onRowClick = useCallback(
+    (line: PurchaseOrderLineFragment) => {
+      onOpen(line.item.id);
+    },
+    [onOpen]
+  );
 
   if (isLoading) return <DetailViewSkeleton />;
+
+  const onAddItem = () => {
+    onOpen();
+  };
 
   const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
 
@@ -59,7 +64,7 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
+          <AppBarButtons isDisabled={isDisabled} onAddItem={onAddItem} />
 
           <Toolbar isDisabled={isDisabled} />
 
@@ -104,9 +109,7 @@ export const PurchaseOrderDetailView = () => {
   return (
     <TableProvider
       createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<
-        PurchaseOrderLineFragment | InboundItem
-      >({
+      queryParamsStore={createQueryParamsStore<PurchaseOrderLineFragment>({
         initialSortBy: {
           key: 'itemName',
         },
