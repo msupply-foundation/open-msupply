@@ -18,13 +18,14 @@ import { MasterListsTab } from './Tabs/MasterLists';
 import { AppRoute } from '@openmsupply-client/config';
 import { ItemVariantsTab } from './Tabs/ItemVariants';
 import { ItemLedgerTab } from './Tabs/ItemLedger';
+import { StoreTab } from './Tabs/Store';
 
 export const ItemDetailView: FC = () => {
-  const { data, isLoading } = useItem();
-  const navigate = useNavigate();
   const t = useTranslation();
+  const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isCentralServer = useIsCentralServerApi();
+  const { data, isLoading } = useItem();
 
   React.useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.name ?? '' });
@@ -87,8 +88,12 @@ export const ItemDetailView: FC = () => {
 
   const tabs = [
     {
-      Component: <GeneralTab />,
+      Component: <GeneralTab item={data} isLoading={isLoading} />,
       value: t('label.general'),
+    },
+    {
+      Component: <StoreTab item={data} />,
+      value: t('label.store'),
     },
     {
       Component: <MasterListsTab itemId={data.id} />,

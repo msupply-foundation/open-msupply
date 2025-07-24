@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DetailContainer,
   DetailInputWithLabelRow,
@@ -9,16 +9,19 @@ import {
   NumericTextInput,
   NumericTextDisplay,
 } from '@openmsupply-client/common';
-import { useItem } from '../../api';
+import { ItemFragment } from '../../api';
 
-interface GeneralTabProps {}
+interface GeneralTabProps {
+  item: ItemFragment;
+  isLoading?: boolean;
+}
 
-export const GeneralTab: FC<GeneralTabProps> = ({}) => {
+export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
   const t = useTranslation();
-  const { data, isLoading } = useItem();
   const isDisabled = true;
 
   if (isLoading) return null;
+
   return (
     <DetailContainer>
       <Grid
@@ -31,66 +34,66 @@ export const GeneralTab: FC<GeneralTabProps> = ({}) => {
         <DetailSection title={t('title.details')}>
           <DetailInputWithLabelRow
             label={t('label.name')}
-            inputProps={{ value: data?.name, disabled: isDisabled }}
+            inputProps={{ value: item?.name, disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.code')}
-            inputProps={{ value: data?.code, disabled: isDisabled }}
+            inputProps={{ value: item?.code, disabled: isDisabled }}
           />
 
           <DetailInputWithLabelRow
             label={t('label.unit')}
-            inputProps={{ value: data?.unitName, disabled: isDisabled }}
+            inputProps={{ value: item?.unitName, disabled: isDisabled }}
           />
 
           <DetailInputWithLabelRow
             label={t('label.strength')}
-            inputProps={{ value: data?.strength, disabled: isDisabled }}
+            inputProps={{ value: item?.strength, disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.ddd')}
             inputProps={{ disabled: isDisabled }}
             Input={
               <NumericTextInput
-                value={Number(data?.ddd)}
+                value={Number(item?.ddd)}
                 disabled={isDisabled}
               />
             }
-            DisabledInput={<NumericTextDisplay value={data?.ddd} />}
+            DisabledInput={<NumericTextDisplay value={item?.ddd} />}
           />
           <DetailInputWithLabelRow
             label={t('label.type')}
-            inputProps={{ value: data?.type, disabled: isDisabled }}
+            inputProps={{ value: item?.type, disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.doses')}
             inputProps={{ disabled: isDisabled }}
             Input={
-              <NumericTextInput value={data?.doses} disabled={isDisabled} />
+              <NumericTextInput value={item?.doses} disabled={isDisabled} />
             }
-            DisabledInput={<NumericTextDisplay value={data?.doses} />}
+            DisabledInput={<NumericTextDisplay value={item?.doses} />}
           />
           <DetailInputWithLabelRow
             label={t('label.is-vaccine')}
-            Input={<Checkbox disabled={isDisabled} checked={data?.isVaccine} />}
+            Input={<Checkbox disabled={isDisabled} checked={item?.isVaccine} />}
           />
         </DetailSection>
         <DetailSection title={t('title.categories')}>
           <DetailInputWithLabelRow
             label={t('label.atc-category')}
-            inputProps={{ value: data?.atcCategory, disabled: isDisabled }}
+            inputProps={{ value: item?.atcCategory, disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.universal-name')}
             inputProps={{
-              value: data?.msupplyUniversalName,
+              value: item?.msupplyUniversalName,
               disabled: isDisabled,
             }}
           />
           <DetailInputWithLabelRow
             label={t('label.universal-code')}
             inputProps={{
-              value: data?.msupplyUniversalCode,
+              value: item?.msupplyUniversalCode,
               disabled: isDisabled,
             }}
           />
@@ -109,54 +112,54 @@ export const GeneralTab: FC<GeneralTabProps> = ({}) => {
             label={t('label.default-pack-size')}
             Input={
               <NumericTextInput
-                value={data?.defaultPackSize}
+                value={item?.defaultPackSize}
                 disabled={isDisabled}
               />
             }
-            DisabledInput={<NumericTextDisplay value={data?.defaultPackSize} />}
+            DisabledInput={<NumericTextDisplay value={item?.defaultPackSize} />}
             inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.outer-pack-size')}
             Input={
               <NumericTextInput
-                value={data?.outerPackSize}
+                value={item?.outerPackSize}
                 disabled={isDisabled}
               />
             }
-            DisabledInput={<NumericTextDisplay value={data?.outerPackSize} />}
+            DisabledInput={<NumericTextDisplay value={item?.outerPackSize} />}
             inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.volume-per-pack')}
             Input={
               <NumericTextInput
-                value={data?.volumePerPack}
+                value={item?.volumePerPack}
                 disabled={isDisabled}
               />
             }
-            DisabledInput={<NumericTextDisplay value={data?.volumePerPack} />}
+            DisabledInput={<NumericTextDisplay value={item?.volumePerPack} />}
             inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.volume-per-outer-pack')}
             Input={
               <NumericTextInput
-                value={data?.volumePerOuterPack}
+                value={item?.volumePerOuterPack}
                 disabled={isDisabled}
               />
             }
             DisabledInput={
-              <NumericTextDisplay value={data?.volumePerOuterPack} />
+              <NumericTextDisplay value={item?.volumePerOuterPack} />
             }
             inputProps={{ disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.weight')}
             Input={
-              <NumericTextInput value={data?.weight} disabled={isDisabled} />
+              <NumericTextInput value={item?.weight} disabled={isDisabled} />
             }
-            DisabledInput={<NumericTextDisplay value={data?.weight} />}
+            DisabledInput={<NumericTextDisplay value={item?.weight} />}
             inputProps={{ disabled: isDisabled }}
           />
         </DetailSection>
@@ -164,9 +167,9 @@ export const GeneralTab: FC<GeneralTabProps> = ({}) => {
           <DetailInputWithLabelRow
             label={t('label.margin')}
             Input={
-              <NumericTextInput value={data?.margin} disabled={isDisabled} />
+              <NumericTextInput value={item?.margin} disabled={isDisabled} />
             }
-            DisabledInput={<NumericTextDisplay value={data?.margin} />}
+            DisabledInput={<NumericTextDisplay value={item?.margin} />}
             inputProps={{ disabled: isDisabled }}
           />
         </DetailSection>
