@@ -62,7 +62,7 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
             requested_number_of_units: 0.0,
             authorised_number_of_units: None,
             received_number_of_units: 0.0,
-            soh_in_units: 0.0,
+            stock_on_hand_in_units: 0.0,
             supplier_item_code: None,
             price_per_pack_before_discount: 0.0,
             price_per_pack_after_discount: 0.0,

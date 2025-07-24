@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use util::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
 
 use crate::sync::translations::{
-    purchase_order::PurchaseOrderTranslation, PullTranslateResult, PushTranslateResult,
-    SyncTranslation,
+    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -65,7 +65,10 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![PurchaseOrderTranslation.table_name()]
+        vec![
+            PurchaseOrderTranslation.table_name(),
+            ItemTranslation.table_name(),
+        ]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -107,7 +110,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             received_number_of_units: quan_rec_to_date,
             requested_delivery_date: delivery_date_requested,
             expected_delivery_date: delivery_date_expected,
-            soh_in_units: snapshot_quantity,
+            stock_on_hand_in_units: snapshot_quantity,
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
@@ -132,7 +135,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_pack_size,
             authorised_number_of_units,
             received_number_of_units,
-            soh_in_units,
+            stock_on_hand_in_units,
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
@@ -146,7 +149,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             line_number,
             item_link_id,
             item_name,
-            snapshot_quantity: soh_in_units,
+            snapshot_quantity: stock_on_hand_in_units,
             packsize_ordered: requested_pack_size,
             quan_original_order: requested_number_of_units,
             quan_adjusted_order: authorised_number_of_units,
@@ -177,7 +180,7 @@ mod tests {
     use serde_json::json;
 
     #[actix_rt::test]
-    async fn test_purchase_order_translation() {
+    async fn test_purchase_order_line_translation() {
         use crate::sync::test::test_data::purchase_order_line as test_data;
         let translator = PurchaseOrderLineTranslation {};
 
@@ -198,7 +201,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_purchase_order_translation_to_sync_record() {
+    async fn test_purchase_order_line_translation_to_sync_record() {
         let (_, connection, _, _) = setup_all(
             "test_purchase_order_line_translation_to_sync_record",
             MockDataInserts::none().purchase_order_line(),
