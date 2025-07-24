@@ -35,21 +35,18 @@ impl Loader<ItemStoreJoinLoaderInput> for ItemStoreJoinLoader {
     ) -> Result<HashMap<ItemStoreJoinLoaderInput, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
 
-        let (store_id, item_id) = if let Some(loader_input) = loader_inputs.first() {
-            (
-                loader_input.primary_id.clone(),
-                loader_input.secondary_id.clone(),
-            )
-        } else {
-            return Ok(HashMap::new());
-        };
+        let mut result_map = HashMap::new();
 
-        let result = ItemStoreJoinRowRepository::new(&connection)
-            .find_one_by_item_and_store_id(&item_id, &store_id)?;
+        for loader_input in loader_inputs {
+            let store_id = &loader_input.primary_id;
+            let item_id = &loader_input.secondary_id;
 
-        Ok(HashMap::from([(
-            ItemStoreJoinLoaderInput::new(&store_id, &item_id),
-            result.into_iter().collect(),
-        )]))
+            let result = ItemStoreJoinRowRepository::new(&connection)
+                .find_one_by_item_and_store_id(item_id, store_id)?;
+
+            result_map.insert(loader_input.clone(), result.into_iter().collect());
+        }
+
+        Ok(result_map)
     }
 }
