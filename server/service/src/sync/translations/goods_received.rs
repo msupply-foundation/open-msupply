@@ -147,6 +147,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
