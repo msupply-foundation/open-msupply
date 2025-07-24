@@ -7,6 +7,7 @@ export interface Translation {
   default: string;
   custom: string;
   isNew?: boolean;
+  isInvalid?: boolean;
 }
 
 export const mapTranslationsToArray = (
@@ -55,6 +56,13 @@ export const findMatchingPluralisationKeys = (
 };
 
 const validVariable = /{{\s*[^{}]+\s*}}/g;
+export const hasInvalidBrackets = (str?: string): boolean => {
+  if (!str) return false;
+  // Remove all valid {{...}} pairs
+  const cleaned = str.replace(validVariable, '');
+  // If any unmatched brackets remain, it's invalid
+  return /[{}]/.test(cleaned);
+};
 
 // Extract values inside {{}} for both default and custom strings
 export const extractVariables = (str?: string): string[] => {
@@ -65,14 +73,6 @@ export const extractVariables = (str?: string): string[] => {
   const matches = str.match(validVariable) || [];
   // Filter out empty or whitespace-only variable names
   return matches.map(m => m.slice(2, -2).trim()).filter(v => v.length > 0);
-};
-
-export const hasInvalidBrackets = (str?: string): boolean => {
-  if (!str) return false;
-  // Remove all valid {{...}} pairs
-  const cleaned = str.replace(validVariable, '');
-  // If any unmatched brackets remain, it's invalid
-  return /[{}]/.test(cleaned);
 };
 
 export const checkInvalidVariables = (input: Partial<Translation>): boolean => {

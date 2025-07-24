@@ -6,6 +6,7 @@ import {
   alpha,
   AppSxProp,
   Box,
+  CellProps,
   DataTable,
   TextInputCell,
   TooltipTextCell,
@@ -21,9 +22,11 @@ import {
 export const TranslationsTable = ({
   translations,
   setTranslations,
+  showValidationErrors,
 }: {
   translations: Translation[];
   setTranslations: React.Dispatch<React.SetStateAction<Translation[]>>;
+  showValidationErrors: boolean;
 }) => {
   const t = useTranslation();
 
@@ -39,60 +42,57 @@ export const TranslationsTable = ({
     setRowStyles(newLines, style);
   }, [translations, setRowStyles]);
 
-  const columns = useColumns<Translation>([
-    {
-      key: 'key',
-      Cell: TooltipTextCell,
-      label: 'label.key',
-      width: 200,
-    },
-    {
-      key: 'default',
-      Cell: TooltipTextCell,
-      cellProps: {
-        style: { textWrap: 'wrap', margin: '5px 0' },
+  const columns = useColumns<Translation>(
+    [
+      {
+        key: 'key',
+        Cell: TooltipTextCell,
+        label: 'label.key',
+        width: 200,
       },
-      label: 'label.default',
-      width: 300,
-    },
-    {
-      key: 'custom',
-      Cell: TextInputCell,
-      label: 'label.custom',
-      cellProps: {
-        fullWidth: true,
-        multiline: true,
-        sx: {
-          marginY: '5px',
+      {
+        key: 'default',
+        Cell: TooltipTextCell,
+        cellProps: {
+          style: { textWrap: 'wrap', margin: '5px 0' },
         },
+        label: 'label.default',
+        width: 300,
       },
-      setter: input => {
-        const invalid = checkInvalidVariables(input);
-        if (!invalid) {
+      {
+        key: 'custom',
+        Cell: CustomTranslationInputCell,
+        label: 'label.custom',
+        cellProps: { showValidationErrors },
+        setter: updatedRow => {
+          const isInvalid = checkInvalidVariables(updatedRow);
+
           setTranslations(translations =>
             translations.map(tr =>
-              tr.id === input.id ? { ...tr, ...input } : tr
+              tr.id === updatedRow.id ? { ...tr, ...updatedRow, isInvalid } : tr
             )
           );
-        }
+        },
       },
-    },
-    {
-      key: 'delete',
-      width: 50,
-      Cell: ({ rowData }) => (
-        <IconButton
-          icon={<DeleteIcon sx={{ height: '0.9em' }} />}
-          label={t('label.delete')}
-          onClick={() =>
-            setTranslations(translations =>
-              translations.filter(tr => tr.id !== rowData.id)
-            )
-          }
-        />
-      ),
-    },
-  ]);
+      {
+        key: 'delete',
+        width: 50,
+        Cell: ({ rowData }) => (
+          <IconButton
+            icon={<DeleteIcon sx={{ height: '0.9em' }} />}
+            label={t('label.delete')}
+            onClick={() =>
+              setTranslations(translations =>
+                translations.filter(tr => tr.id !== rowData.id)
+              )
+            }
+          />
+        ),
+      },
+    ],
+    {},
+    [showValidationErrors]
+  );
 
   const onAdd = (options: TranslationOption[]) => {
     if (options.length === 0) return;
@@ -122,5 +122,32 @@ export const TranslationsTable = ({
         noDataMessage={t('message.add-a-translation')}
       />
     </>
+  );
+};
+
+const CustomTranslationInputCell = (
+  props: CellProps<Translation> & {
+    showValidationErrors?: boolean;
+  }
+) => {
+  const showInvalid = props.rowData.isInvalid && props.showValidationErrors;
+
+  return (
+    <TextInputCell
+      fullWidth
+      multiline
+      sx={{
+        marginY: '5px',
+        ...(showInvalid
+          ? {
+              borderColor: theme => theme.palette.error.main,
+              borderWidth: '2px',
+              borderStyle: 'solid',
+              borderRadius: '8px',
+            }
+          : undefined),
+      }}
+      {...props}
+    />
   );
 };
