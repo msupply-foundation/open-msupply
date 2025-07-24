@@ -1,4 +1,3 @@
-pub(crate) mod goods_received;
 use self::special::name_to_name_store_join;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -25,6 +24,7 @@ pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod frontend_plugin;
+pub(crate) mod goods_received;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -122,6 +122,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut asset_category::test_pull_upsert_records());
     test_records.append(&mut asset_type::test_pull_upsert_records());
     test_records.append(&mut contact::test_pull_upsert_records());
+    test_records.append(&mut goods_received::test_pull_upsert_records());
     test_records.append(&mut asset_catalogue_item::test_pull_upsert_records());
     test_records.append(&mut asset::test_pull_upsert_records());
     test_records.append(&mut asset_log::test_pull_upsert_records());

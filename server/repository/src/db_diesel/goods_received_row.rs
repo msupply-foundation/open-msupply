@@ -1,8 +1,9 @@
+use crate::Delete;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
 };
-
+//
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -21,10 +22,8 @@ table! {
         supplier_reference -> Nullable<Text>,
         donor_link_id -> Nullable<Text>,
         created_datetime -> Timestamp,
-        modified_datetime -> Timestamp,
         finalised_datetime -> Nullable<Timestamp>,
         created_by -> Nullable<Text>,
-        modified_by -> Nullable<Text>,
     }
 }
 
@@ -45,10 +44,8 @@ pub struct GoodsReceivedRow {
     pub supplier_reference: Option<String>,
     pub donor_link_id: Option<String>,
     pub created_datetime: NaiveDateTime,
-    pub modified_datetime: NaiveDateTime,
     pub finalised_datetime: Option<NaiveDateTime>,
     pub created_by: Option<String>,
-    pub modified_by: Option<String>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -132,6 +129,23 @@ impl Upsert for GoodsReceivedRow {
         assert_eq!(
             GoodsReceivedRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug)]
+pub struct GoodsReceivedRowDelete(pub String);
+impl Delete for GoodsReceivedRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        GoodsReceivedRowRepository::new(con).delete(&self.0)?;
+        Ok(None)
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            GoodsReceivedRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
         )
     }
 }
