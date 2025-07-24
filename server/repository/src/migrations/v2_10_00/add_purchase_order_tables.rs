@@ -35,7 +35,6 @@ impl MigrationFragment for Migrate {
                     store_id TEXT NOT NULL REFERENCES store(id),
                     user_id TEXT,
                     supplier_name_link_id TEXT NOT NULL REFERENCES name_link(id),
-                    -- corresponds to OG "serial_number"
                     purchase_order_number BIGINT NOT NULL,
                     status {purchase_order_status} NOT NULL,
                     created_datetime {DATETIME} NOT NULL,
@@ -48,7 +47,7 @@ impl MigrationFragment for Migrate {
                     currency_id TEXT REFERENCES currency(id),
                     foreign_exchange_rate {DOUBLE},
                     shipping_method TEXT,
-                    sent_date {DATE},
+                    sent_datetime {DATETIME},
                     contract_signed_date {DATE},
                     advance_paid_date {DATE},
                     received_at_port_date {DATE},
@@ -80,26 +79,16 @@ impl MigrationFragment for Migrate {
                     item_link_id TEXT REFERENCES item_link(id) NOT NULL,
                     item_name TEXT NOT NULL,
                     requested_pack_size {DOUBLE} NOT NULL DEFAULT 1.0,
-                    -- corresponds to OG "original_quantity"
-                    requested_quantity {DOUBLE} NOT NULL DEFAULT 0.0,
-                    -- corresponds to OG "adjusted_quantity"
-                    authorised_quantity {DOUBLE},
+                    requested_number_of_units {DOUBLE} NOT NULL DEFAULT 0.0,
+                    authorised_number_of_units {DOUBLE},
                     received_number_of_units {DOUBLE},
                     requested_delivery_date {DATE},
                     expected_delivery_date {DATE},
-                    soh_in_units {DOUBLE} NOT NULL DEFAULT 0.0,
+                    stock_on_hand_in_units {DOUBLE} NOT NULL DEFAULT 0.0,
                     supplier_item_code TEXT,
                     price_per_pack_before_discount {DOUBLE} NOT NULL DEFAULT 0.0,
                     price_per_pack_after_discount {DOUBLE} NOT NULL DEFAULT 0.0
                 );
-            "#
-        )?;
-
-        sql!(
-            connection,
-            r#"
-                ALTER TABLE invoice ADD COLUMN purchase_order_id TEXT REFERENCES purchase_order(id);
-                ALTER TABLE invoice_line ADD COLUMN purchase_order_line_id TEXT REFERENCES purchase_order(id);
             "#
         )?;
 

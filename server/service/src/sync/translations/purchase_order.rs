@@ -13,8 +13,8 @@ use util::sync_serde::{
 use crate::sync::sync_utils::map_name_link_id_to_name_id;
 use crate::sync::sync_utils::map_optional_name_link_id_to_name_id;
 use crate::sync::translations::{
-    master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
-    store::StoreTranslation, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    name::NameTranslation, store::StoreTranslation, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -48,6 +48,8 @@ pub struct PurchaseOrderOmsFields {
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     pub confirmed_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub sent_datetime: Option<NaiveDateTime>,
 }
 
 /** Example record
@@ -227,12 +229,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![
-            NameTranslation.table_name(),
-            StoreTranslation.table_name(),
-            PeriodTranslation.table_name(),
-            MasterListTranslation.table_name(),
-        ]
+        vec![NameTranslation.table_name(), StoreTranslation.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -290,6 +287,11 @@ impl SyncTranslation for PurchaseOrderTranslation {
             None => legacy_confirm_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default()),
         };
 
+        let sent_datetime = match oms_fields.clone() {
+            Some(oms) => oms.sent_datetime,
+            None => sent_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default()),
+        };
+
         let result = PurchaseOrderRow {
             id,
             user_id,
@@ -301,13 +303,13 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             target_months,
             comment,
-            supplier_discount_amount: Some(supplier_discount_amount),
+            supplier_discount_amount,
             donor_link_id: donor_id,
             reference,
             currency_id,
             foreign_exchange_rate: oms_fields.clone().and_then(|o| o.foreign_exchange_rate),
             shipping_method,
-            sent_date,
+            sent_datetime,
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
@@ -353,7 +355,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             currency_id,
             foreign_exchange_rate,
             shipping_method,
-            sent_date,
+            sent_datetime,
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
@@ -383,6 +385,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             expected_delivery_date,
             created_datetime,
             confirmed_datetime,
+            sent_datetime,
         };
 
         let donor_id = map_optional_name_link_id_to_name_id(connection, donor_link_id)?;
@@ -407,12 +410,12 @@ impl SyncTranslation for PurchaseOrderTranslation {
             communications_charge,
             insurance_charge,
             freight_charge,
-            supplier_discount_amount: supplier_discount_amount.unwrap_or(0.0),
+            supplier_discount_amount,
             purchase_order_number,
             heading_message,
             oms_fields: Some(oms_fields),
             shipping_method,
-            sent_date,
+            sent_date: sent_datetime.map(|d| d.date()),
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
@@ -476,10 +479,10 @@ mod tests {
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            println!("Translating record: {:?}", record.sync_buffer_row.data);
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
-
             assert_eq!(translation_result, record.translated_record);
         }
 
