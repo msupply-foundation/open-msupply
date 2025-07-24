@@ -90,7 +90,7 @@ impl MigrationFragment for Migrate {
                     soh_in_units {DOUBLE} NOT NULL DEFAULT 0.0,
                     supplier_item_code TEXT,
                     price_per_pack_before_discount {DOUBLE} NOT NULL DEFAULT 0.0,
-                    price_per_pack_after_discount {DOUBLE} NOT NULL DEFAULT 0.0,
+                    price_per_pack_after_discount {DOUBLE} NOT NULL DEFAULT 0.0
                 );
             "#
         )?;
