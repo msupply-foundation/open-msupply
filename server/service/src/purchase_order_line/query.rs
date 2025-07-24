@@ -84,6 +84,7 @@ mod test {
         let po_line = PurchaseOrderLineRow {
             id: po_line_id.to_string(),
             purchase_order_id: purchase_order_id.to_string(),
+            store_id: mock_store_a().id,
             line_number: 1,
             item_link_id: mock_item_a().id,
             item_name: mock_item_a().name,

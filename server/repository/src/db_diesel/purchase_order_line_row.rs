@@ -14,6 +14,7 @@ use chrono::NaiveDate;
 table! {
     purchase_order_line (id) {
         id ->  Text,
+        store_id -> Text,
         purchase_order_id -> Text,
         line_number -> BigInt,
         item_link_id -> Text,
@@ -26,8 +27,8 @@ table! {
         expected_delivery_date -> Nullable<Date>,
         stock_on_hand_in_units -> Double,
         supplier_item_code -> Nullable<Text>,
-        price_per_pack_before_discount -> Double,
-        price_per_pack_after_discount -> Double,
+        price_per_unit_before_discount -> Double,
+        price_per_unit_after_discount -> Double,
     }
 }
 
@@ -44,6 +45,7 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 #[diesel(table_name = purchase_order_line)]
 pub struct PurchaseOrderLineRow {
     pub id: String,
+    pub store_id: String,
     pub purchase_order_id: String,
     pub line_number: i64,
     pub item_link_id: String,
@@ -56,8 +58,8 @@ pub struct PurchaseOrderLineRow {
     pub expected_delivery_date: Option<NaiveDate>,
     pub stock_on_hand_in_units: f64,
     pub supplier_item_code: Option<String>,
-    pub price_per_pack_before_discount: f64,
-    pub price_per_pack_after_discount: f64,
+    pub price_per_unit_before_discount: f64,
+    pub price_per_unit_after_discount: f64,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {
@@ -184,6 +186,7 @@ mod tests {
         let line = PurchaseOrderLineRow {
             id: "test-line-1".to_string(),
             purchase_order_id: purchase_order_id.to_string(),
+            store_id: mock_store_a().id.clone(),
             line_number: 1,
             item_link_id: "item_a".to_string(),
             ..Default::default()
