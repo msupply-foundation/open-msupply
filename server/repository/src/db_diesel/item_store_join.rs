@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 
-use crate::{RepositoryError, StorageConnection};
+use crate::{RepositoryError, StorageConnection, Upsert};
 
 table! {
   item_store_join (id) {
@@ -26,6 +26,7 @@ pub struct ItemStoreJoinRowRepository<'a> {
 }
 
 pub trait ItemStoreJoinRowRepositoryTrait<'a> {
+    fn find_one_by_id(&self, row_id: &str) -> Result<Option<ItemStoreJoinRow>, RepositoryError>;
     fn find_one_by_item_and_store_id(
         &self,
         item_link_id: &str,
@@ -35,6 +36,14 @@ pub trait ItemStoreJoinRowRepositoryTrait<'a> {
 }
 
 impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> {
+    fn find_one_by_id(&self, row_id: &str) -> Result<Option<ItemStoreJoinRow>, RepositoryError> {
+        let result = item_store_join::dsl::item_store_join
+            .filter(item_store_join::dsl::id.eq(row_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     fn find_one_by_item_and_store_id(
         &self,
         item_link_id: &str,
@@ -65,8 +74,24 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
     }
 }
 
+impl Upsert for ItemStoreJoinRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ItemStoreJoinRowRepository::new(con).upsert_one(self)?;
+        Ok(None)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ItemStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
+
 #[derive(Default)]
 pub struct MockItemStoreJoinRowRepository {
+    pub find_one_by_id: Option<ItemStoreJoinRow>,
     pub find_one_by_item_and_store_id_result: Option<ItemStoreJoinRow>,
 }
 
@@ -77,6 +102,10 @@ impl MockItemStoreJoinRowRepository {
 }
 
 impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for MockItemStoreJoinRowRepository {
+    fn find_one_by_id(&self, _row_id: &str) -> Result<Option<ItemStoreJoinRow>, RepositoryError> {
+        Ok(self.find_one_by_id.clone())
+    }
+
     fn find_one_by_item_and_store_id(
         &self,
         _item_link_id: &str,
