@@ -77,7 +77,9 @@ pub async fn generate_report(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
-    let translation_service = &service_provider.translations_service;
+    let localisations = &service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
 
     // get the required report
     let resolved_report = match service.resolve_report(&service_context, &report_id) {
@@ -117,7 +119,7 @@ pub async fn generate_report(
         report_data,
         arguments,
         format.map(PrintFormat::to_domain),
-        translation_service,
+        localisations,
         current_language,
     ) {
         Ok(file_id) => file_id,
@@ -153,7 +155,9 @@ pub async fn generate_report_definition(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
-    let translation_service = &service_provider.translations_service;
+    let localisations = &service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
 
     // get the required report
     let report_definition: ReportDefinition = serde_json::from_value(report)
@@ -201,7 +205,7 @@ pub async fn generate_report_definition(
         report_data,
         arguments,
         format.map(PrintFormat::to_domain),
-        translation_service,
+        localisations,
         current_language,
     ) {
         Ok(file_id) => file_id,

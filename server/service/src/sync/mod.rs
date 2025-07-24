@@ -15,6 +15,7 @@ pub mod sync_buffer;
 pub mod sync_on_central;
 pub mod sync_status;
 pub mod sync_user;
+pub(crate) mod sync_utils;
 pub mod synchroniser;
 pub mod synchroniser_driver;
 pub(crate) mod translation_and_integration;
