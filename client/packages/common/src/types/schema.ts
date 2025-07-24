@@ -159,6 +159,7 @@ export enum ActivityLogNodeType {
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   RnrFormCreated = 'RNR_FORM_CREATED',
+  RnrFormDeleted = 'RNR_FORM_DELETED',
   RnrFormFinalised = 'RNR_FORM_FINALISED',
   RnrFormUpdated = 'RNR_FORM_UPDATED',
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
@@ -2060,6 +2061,12 @@ export type DeleteResponseRequisitionResponseWithId = {
   id: Scalars['String']['output'];
   response: DeleteResponseRequisitionResponse;
 };
+
+export type DeleteRnRFormInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteRnRFormResponse = DeleteResponse;
 
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
@@ -4947,6 +4954,7 @@ export type Mutations = {
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
+  deleteRnrForm: DeleteRnRFormResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
@@ -5205,6 +5213,11 @@ export type MutationsDeleteResponseRequisitionArgs = {
 
 export type MutationsDeleteResponseRequisitionLineArgs = {
   input: DeleteResponseRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteRnrFormArgs = {
+  input: DeleteRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -10331,6 +10344,9 @@ export enum UserPermission {
   PatientQuery = 'PATIENT_QUERY',
   PrescriptionMutate = 'PRESCRIPTION_MUTATE',
   PrescriptionQuery = 'PRESCRIPTION_QUERY',
+  PurchaseOrderAuthorise = 'PURCHASE_ORDER_AUTHORISE',
+  PurchaseOrderMutate = 'PURCHASE_ORDER_MUTATE',
+  PurchaseOrderQuery = 'PURCHASE_ORDER_QUERY',
   Report = 'REPORT',
   RequisitionCreateOutboundShipment = 'REQUISITION_CREATE_OUTBOUND_SHIPMENT',
   RequisitionMutate = 'REQUISITION_MUTATE',

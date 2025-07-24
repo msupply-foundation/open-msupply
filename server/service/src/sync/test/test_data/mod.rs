@@ -197,6 +197,8 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_delete_records());
     test_records.append(&mut clinician_store_join::test_pull_delete_records());
+    test_records.append(&mut rnr_form::test_pull_delete_records());
+    test_records.append(&mut rnr_form_line::test_pull_delete_records());
 
     test_records
 }
