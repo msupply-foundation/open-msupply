@@ -24,7 +24,7 @@ export function usePurchaseOrderLine(id?: string) {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
-  } = useCreate();
+  } = useCreate(data?.nodes[0]?.purchaseOrderId);
 
     const { patch, updatePatch, resetDraft, isDirty } =
       usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
@@ -72,7 +72,7 @@ const useGet = (id: string) => {
   return query;
 };
 
-const useCreate = () => {
+const useCreate = (purchaseOrderId?: string ) => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
   const mutationFn = async ({
@@ -95,6 +95,6 @@ const useCreate = () => {
   return useMutation({
     mutationFn,
     onSuccess: () =>
-      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
+      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId, purchaseOrderId]),
   });
 };
