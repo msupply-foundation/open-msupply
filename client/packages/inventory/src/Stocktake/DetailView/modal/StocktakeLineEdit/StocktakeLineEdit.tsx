@@ -63,7 +63,6 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const t = useTranslation();
   const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
-  const { isGrouped } = useIsGrouped('stocktake');
   const {
     updatePaginationQuery,
     queryParams: { first, offset, page },
@@ -116,13 +115,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
       return;
     }
 
-    if (item) {
-      const rowIds = draftLines.map(line =>
-        isGrouped ? line.itemId : line.id
-      );
-
-      highlightRows({ rowIds });
-    }
+    const rowIds = draftLines.map(line => line.id);
+    highlightRows({ rowIds });
     onClose();
   };
 
