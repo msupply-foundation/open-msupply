@@ -146,9 +146,16 @@ pub(crate) fn test_v6_records() -> Vec<TestSyncOutgoingRecord> {
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
-    vec![TestSyncIncomingRecord::new_pull_delete(
-        TABLE_NAME,
-        RNR_FORM_LINE_1.0,
-        RnRFormLineDelete(RNR_FORM_LINE_1.0.to_string()),
-    )]
+    vec![
+        TestSyncIncomingRecord::new_pull_delete(
+            TABLE_NAME,
+            RNR_FORM_LINE_1.0,
+            RnRFormLineDelete(RNR_FORM_LINE_1.0.to_string()),
+        ),
+        TestSyncIncomingRecord::new_pull_delete(
+            TABLE_NAME,
+            RNR_FORM_LINE_WITH_EXPIRY.0,
+            RnRFormLineDelete(RNR_FORM_LINE_WITH_EXPIRY.0.to_string()),
+        ),
+    ]
 }
