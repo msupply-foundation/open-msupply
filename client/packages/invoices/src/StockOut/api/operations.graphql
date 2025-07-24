@@ -17,6 +17,7 @@ fragment StockOutLine on InvoiceLineNode {
   note
   itemName
   itemVariantId
+  vvmStatusId
 
   item {
     __typename
@@ -71,6 +72,7 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
   stockLineOnHold
   dosesPerUnit
   itemVariantId
+  vvmStatusId
   location {
     __typename
     id

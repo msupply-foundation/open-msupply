@@ -33,6 +33,8 @@ export type Scalars = {
   DateTime: { input: string; output: string };
   /** A scalar that can represent any JSON value. */
   JSON: { input: any; output: any };
+  /** A scalar that can represent any JSON Object value. */
+  JSONObject: { input: any; output: any };
   /**
    * ISO 8601 calendar date without timezone.
    * Format: %Y-%m-%d
@@ -157,6 +159,7 @@ export enum ActivityLogNodeType {
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   RnrFormCreated = 'RNR_FORM_CREATED',
+  RnrFormDeleted = 'RNR_FORM_DELETED',
   RnrFormFinalised = 'RNR_FORM_FINALISED',
   RnrFormUpdated = 'RNR_FORM_UPDATED',
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
@@ -2059,6 +2062,12 @@ export type DeleteResponseRequisitionResponseWithId = {
   response: DeleteResponseRequisitionResponse;
 };
 
+export type DeleteRnRFormInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteRnRFormResponse = DeleteResponse;
+
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
   error: DeleteStocktakeErrorInterface;
@@ -2419,6 +2428,7 @@ export type DraftStockOutLineNode = {
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
 
 export type DraftStockOutLineNodeDonorArgs = {
@@ -3347,6 +3357,7 @@ export type InsertOutboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertOutboundShipmentLineResponse =
@@ -4134,6 +4145,7 @@ export type InvoiceLineNode = {
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
   type: InvoiceLineNodeType;
+  vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
 
@@ -4222,7 +4234,7 @@ export type InvoiceNode = {
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']['output']>;
   status: InvoiceNodeStatus;
-  store?: Maybe<StoreNode>;
+  store: StoreNode;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   theirReference?: Maybe<Scalars['String']['output']>;
   transportReference?: Maybe<Scalars['String']['output']>;
@@ -4931,6 +4943,7 @@ export type Mutations = {
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
+  deleteRnrForm: DeleteRnRFormResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
@@ -5189,6 +5202,11 @@ export type MutationsDeleteResponseRequisitionArgs = {
 
 export type MutationsDeleteResponseRequisitionLineArgs = {
   input: DeleteResponseRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteRnrFormArgs = {
+  input: DeleteRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5945,6 +5963,7 @@ export type OutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type PackagingVariantInput = {
@@ -6247,7 +6266,7 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
-  customTranslations: Scalars['JSON']['output'];
+  customTranslations: Scalars['JSONObject']['output'];
   genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
@@ -6604,30 +6623,26 @@ export type PurchaseOrderLineFilterInput = {
 
 export type PurchaseOrderLineNode = {
   __typename: 'PurchaseOrderLineNode';
-  authorisedQuantity?: Maybe<Scalars['Float']['output']>;
+  authorisedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
-  numberOfPacks?: Maybe<Scalars['Float']['output']>;
-  packSize?: Maybe<Scalars['Float']['output']>;
   purchaseOrderId: Scalars['String']['output'];
+  receivedNumberOfUnits: Scalars['Float']['output'];
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  requestedQuantity?: Maybe<Scalars['Float']['output']>;
-  totalReceived?: Maybe<Scalars['Float']['output']>;
+  requestedNumberOfUnits: Scalars['Float']['output'];
+  requestedPackSize: Scalars['Float']['output'];
+  sohInUnits: Scalars['Float']['output'];
 };
 
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
-  AuthorisedQuantity = 'authorisedQuantity',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   ItemName = 'itemName',
   LineNumber = 'lineNumber',
-  NumberOfPacks = 'numberOfPacks',
   RequestedDeliveryDate = 'requestedDeliveryDate',
-  RequestedQuantity = 'requestedQuantity',
-  TotalReceived = 'totalReceived',
 }
 
 export type PurchaseOrderLineSortInput = {
@@ -6641,20 +6656,19 @@ export type PurchaseOrderLinesResponse = PurchaseOrderLineConnector;
 export type PurchaseOrderNode = {
   __typename: 'PurchaseOrderNode';
   additionalInstructions?: Maybe<Scalars['String']['output']>;
-  advancePaidDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  advancePaidDate?: Maybe<Scalars['NaiveDate']['output']>;
   agentCommission?: Maybe<Scalars['Float']['output']>;
   authorisingOfficer1?: Maybe<Scalars['String']['output']>;
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   communicationsCharge?: Maybe<Scalars['Float']['output']>;
   confirmedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
-  contractSignedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
-  createdDatetime: Scalars['DateTime']['output'];
+  contractSignedDate?: Maybe<Scalars['NaiveDate']['output']>;
+  createdDatetime: Scalars['NaiveDateTime']['output'];
   currencyId?: Maybe<Scalars['String']['output']>;
-  deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   documentCharge?: Maybe<Scalars['Float']['output']>;
   donor?: Maybe<NameNode>;
-  expectedDeliveryDatetime?: Maybe<Scalars['NaiveDate']['output']>;
+  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
   freightCharge?: Maybe<Scalars['Float']['output']>;
   freightConditions?: Maybe<Scalars['String']['output']>;
@@ -6663,17 +6677,15 @@ export type PurchaseOrderNode = {
   insuranceCharge?: Maybe<Scalars['Float']['output']>;
   lines: PurchaseOrderLineConnector;
   number: Scalars['Int']['output'];
-  receivedAtPortDatetime?: Maybe<Scalars['NaiveDate']['output']>;
+  receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
-  sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  sentDatetime?: Maybe<Scalars['NaiveDate']['output']>;
   shippingMethod?: Maybe<Scalars['String']['output']>;
   status: PurchaseOrderNodeStatus;
   store?: Maybe<StoreNode>;
   supplier?: Maybe<NameNode>;
   supplierAgent?: Maybe<Scalars['String']['output']>;
-  supplierDiscountAmount?: Maybe<Scalars['Float']['output']>;
-  supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
-  supplierNameLinkId?: Maybe<Scalars['String']['output']>;
+  supplierDiscountAmount: Scalars['Float']['output'];
   targetMonths?: Maybe<Scalars['Float']['output']>;
   user?: Maybe<UserNode>;
 };
@@ -6692,7 +6704,6 @@ export enum PurchaseOrderSortFieldInput {
   DeliveryDate = 'deliveryDate',
   Number = 'number',
   Status = 'status',
-  Supplier = 'supplier',
   TargetMonths = 'targetMonths',
 }
 
@@ -9515,6 +9526,7 @@ export type UpdateOutboundShipmentLineInput = {
   prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOutboundShipmentLineResponse =
@@ -10222,7 +10234,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
-  customTranslations?: InputMaybe<Scalars['JSON']['input']>;
+  customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   genderOptions?: InputMaybe<Array<GenderType>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;

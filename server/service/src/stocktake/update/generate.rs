@@ -181,6 +181,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack: Some(cost_price_per_pack),
             sell_price_per_pack: Some(sell_price_per_pack),
             campaign_id: stock_line_row.campaign_id,
+            vvm_status_id: stock_line_row.vvm_status_id, // TODO: #8365
             total_before_tax: None,
             tax_percentage: None,
             prescribed_quantity: None,

@@ -1,6 +1,6 @@
 use repository::{
     rnr_form_line_row::{RnRFormLineRow, RnRFormLineRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, RnRFormLineDelete, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -80,6 +80,16 @@ impl SyncTranslation for RnRFormLineTranslation {
             self.table_name(),
             serde_json::to_value(row)?,
         ))
+    }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(RnRFormLineDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 

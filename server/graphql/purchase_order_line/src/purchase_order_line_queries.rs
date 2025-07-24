@@ -15,9 +15,6 @@ use repository::{
 pub enum PurchaseOrderLineSortFieldInput {
     ItemName,
     LineNumber,
-    // RequestedQuantity,
-    // AuthorisedQuantity,
-    // TotalReceived,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
 }
@@ -118,9 +115,6 @@ impl PurchaseOrderLineSortInput {
         let key = match self.key {
             from::ItemName => to::ItemName,
             from::LineNumber => to::LineNumber,
-            // from::RequestedQuantity => to::RequestedQuantity,
-            // from::AuthorisedQuantity => to::AuthorisedQuantity,
-            // from::TotalReceived => to::TotalReceived,
             from::RequestedDeliveryDate => to::RequestedDeliveryDate,
             from::ExpectedDeliveryDate => to::ExpectedDeliveryDate,
         };
