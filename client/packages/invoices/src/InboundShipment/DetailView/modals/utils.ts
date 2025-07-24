@@ -9,14 +9,12 @@ export interface CreateDraftInboundLineParams {
   invoiceId: string;
   seed?: InboundLineFragment;
   type?: InvoiceLineNodeType;
-  defaultPackSize: number;
 }
 
 const createDraftInboundLine = ({
   item,
   invoiceId,
   seed,
-  defaultPackSize,
   type = InvoiceLineNodeType.StockIn,
 }: CreateDraftInboundLineParams): DraftInboundLine => {
   const draftLine: DraftInboundLine = {
@@ -25,10 +23,10 @@ const createDraftInboundLine = ({
     totalBeforeTax: 0,
     id: FnUtils.generateUUID(),
     invoiceId,
-    sellPricePerPack: 0,
+    sellPricePerPack: item?.itemStoreJoin?.defaultSellPricePerPack ?? 0,
     costPricePerPack: 0,
     numberOfPacks: 0,
-    packSize: defaultPackSize,
+    packSize: item?.defaultPackSize ?? 1,
     isCreated: seed ? false : true,
     expiryDate: undefined,
     location: undefined,
@@ -43,12 +41,9 @@ const createDraftInboundLine = ({
 
 export const CreateDraft = {
   stockInLine: createDraftInboundLine,
-  serviceLine: (
-    params: Omit<CreateDraftInboundLineParams, 'type' | 'defaultPackSize'>
-  ) =>
+  serviceLine: (params: Omit<CreateDraftInboundLineParams, 'type'>) =>
     createDraftInboundLine({
       ...params,
       type: InvoiceLineNodeType.Service,
-      defaultPackSize: 1,
     }),
 };
