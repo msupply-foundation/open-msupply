@@ -11,7 +11,8 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   confirmedDatetime
   status
   targetMonths
-  deliveredDatetime
+  # deliveredDatetime
+  expectedDeliveryDatetime
   lines {
     totalCount
   }
@@ -23,29 +24,28 @@ fragment PurchaseOrder on PurchaseOrderNode {
   id
   number
   additionalInstructions
-  advancePaidDatetime
+  # advancePaidDatetime
   agentCommission
   authorisingOfficer1
   authorisingOfficer2
   comment
   communicationsCharge
-  contractSignedDatetime
+  # contractSignedDatetime
   createdDatetime
   currencyId
-  deliveredDatetime
+  # deliveredDatetime
   documentCharge
   donor {
     id
     name
-    # Add as required
   }
   foreignExchangeRate
-  expectedDeliveryDatetime
+  # expectedDeliveryDatetime
   freightCharge
   freightConditions
   headingMessage
   insuranceCharge
-  receivedAtPortDatetime
+  # receivedAtPortDatetime
   reference
   lines {
     __typename
@@ -69,14 +69,13 @@ fragment PurchaseOrder on PurchaseOrderNode {
   }
   supplierAgent
   supplierDiscountAmount
-  supplierDiscountPercentage
+  # supplierDiscountPercentage
   targetMonths
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
   __typename
   id
-  authorisedQuantity
   expectedDeliveryDate
   item {
     id
@@ -85,11 +84,11 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     unitName
     # Add as required
   }
-  numberOfPacks
-  requestedQuantity
-  packSize
+  # authorisedNumberOfPacks
+  # requestedNumberOfPacks
+  requestedPackSize
   requestedDeliveryDate
-  totalReceived
+  # receivedNumberOfPacks
 }
 
 query purchaseOrders(

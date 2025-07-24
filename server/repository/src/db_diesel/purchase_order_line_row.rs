@@ -14,17 +14,21 @@ use chrono::NaiveDate;
 table! {
     purchase_order_line (id) {
         id ->  Text,
+        store_id -> Text,
         purchase_order_id -> Text,
         line_number -> BigInt,
         item_link_id -> Text,
-        item_name -> Nullable<Text>,
-        number_of_packs ->  Nullable<Double>,
-        pack_size ->  Nullable<Double>,
-        requested_quantity ->  Nullable<Double>,
-        authorised_quantity ->  Nullable<Double>,
-        total_received ->  Nullable<Double>,
-        requested_delivery_date ->  Nullable<Date>,
-        expected_delivery_date ->  Nullable<Date>,
+        item_name -> Text,
+        requested_pack_size -> Double,
+        requested_number_of_units -> Double,
+        authorised_number_of_units -> Nullable<Double>,
+        received_number_of_units -> Double,
+        requested_delivery_date -> Nullable<Date>,
+        expected_delivery_date -> Nullable<Date>,
+        stock_on_hand_in_units -> Double,
+        supplier_item_code -> Nullable<Text>,
+        price_per_unit_before_discount -> Double,
+        price_per_unit_after_discount -> Double,
     }
 }
 
@@ -41,17 +45,21 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 #[diesel(table_name = purchase_order_line)]
 pub struct PurchaseOrderLineRow {
     pub id: String,
+    pub store_id: String,
     pub purchase_order_id: String,
     pub line_number: i64,
     pub item_link_id: String,
-    pub item_name: Option<String>,
-    pub number_of_packs: Option<f64>,
-    pub pack_size: Option<f64>,
-    pub requested_quantity: Option<f64>,
-    pub authorised_quantity: Option<f64>,
-    pub total_received: Option<f64>,
+    pub item_name: String,
+    pub requested_pack_size: f64,
+    pub requested_number_of_units: f64,
+    pub authorised_number_of_units: Option<f64>,
+    pub received_number_of_units: f64,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub stock_on_hand_in_units: f64,
+    pub supplier_item_code: Option<String>,
+    pub price_per_unit_before_discount: f64,
+    pub price_per_unit_after_discount: f64,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {
@@ -132,7 +140,6 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
 
 impl Upsert for PurchaseOrderLineRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        println!("upserting PO line {:?}", self.id);
         let change_log_id = PurchaseOrderLineRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
@@ -149,13 +156,13 @@ impl Upsert for PurchaseOrderLineRow {
 // purchase order line basic upsert and query operation test:
 #[cfg(test)]
 mod tests {
-    use crate::mock::{mock_store_a, MockDataInserts};
+    use crate::mock::{mock_name_c, mock_store_a, MockDataInserts};
     use crate::{
         db_diesel::purchase_order_line_row::PurchaseOrderLineRowRepository, test_db::setup_all,
         PurchaseOrderLineRow,
     };
     use crate::{PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus};
-    use util::inline_init;
+
     #[actix_rt::test]
     async fn purchase_order_line_upsert_and_query() {
         let (_, connection, _, _) = setup_all("purchase order line", MockDataInserts::all()).await;
@@ -164,22 +171,26 @@ mod tests {
         // add purchase order
         let purchase_order_repo = PurchaseOrderRowRepository::new(&connection);
         let purchase_order_id = "test-po-1";
-        let row = inline_init(|p: &mut PurchaseOrderRow| {
-            p.id = purchase_order_id.to_string();
-            p.status = PurchaseOrderStatus::New;
-            p.store_id = mock_store_a().id.clone();
-            p.created_date = chrono::Utc::now().naive_utc().into();
-            p.purchase_order_number = 1;
-        });
+        let row = PurchaseOrderRow {
+            id: purchase_order_id.to_string(),
+            supplier_name_link_id: mock_name_c().id,
+            status: PurchaseOrderStatus::New,
+            store_id: mock_store_a().id.clone(),
+            created_datetime: chrono::Utc::now().naive_utc().into(),
+            purchase_order_number: 1,
+            ..Default::default()
+        };
 
         let _ = purchase_order_repo.upsert_one(&row);
 
-        let line = inline_init(|l: &mut PurchaseOrderLineRow| {
-            l.id = "test-line-1".to_string();
-            l.purchase_order_id = purchase_order_id.to_string();
-            l.line_number = 1;
-            l.item_link_id = "item_a".to_string();
-        });
+        let line = PurchaseOrderLineRow {
+            id: "test-line-1".to_string(),
+            purchase_order_id: purchase_order_id.to_string(),
+            store_id: mock_store_a().id.clone(),
+            line_number: 1,
+            item_link_id: "item_a".to_string(),
+            ..Default::default()
+        };
 
         let _ = repo.upsert_one(&line);
 

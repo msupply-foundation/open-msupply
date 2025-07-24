@@ -1,7 +1,14 @@
+import fs from 'fs';
 import { CapacitorConfig } from '@capacitor/cli';
 
+const localConfigPath = './capacitor.config.local.json';
+
+const localConfig: CapacitorConfig | undefined = fs.existsSync(localConfigPath)
+  ? JSON.parse(fs.readFileSync(localConfigPath, 'utf-8'))
+  : undefined;
+
 // This file is used to generate packages/android/app/src/main/assets/capacitor.config.json
-// run `yarn apply-config` when changing this file
+// run `yarn apply-config` when changing this file (or this command will run automatically on build)
 
 const config: CapacitorConfig = {
   appId: 'org.openmsupply.client',
@@ -25,12 +32,8 @@ const config: CapacitorConfig = {
     cleartext: true,
     androidScheme: 'https',
   },
-  plugins: {
-    // Below will turn on debug (uncomment and run `yarn apply-config`)
-    //   NativeApi: {
-    //     debugUrl: 'http://192.168.178.146:3003',
-    //   },
-  },
+  // Apply additional local config if it exists and we are in debug mode
+  ...(process.env['DEBUG_BUILD'] === 'true' ? localConfig : undefined),
 };
 
 export default config;

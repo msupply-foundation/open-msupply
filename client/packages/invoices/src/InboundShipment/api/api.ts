@@ -120,7 +120,7 @@ const inboundParsers = {
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
       itemVariantId: line.itemVariantId,
-      vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
+      vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
       donorId: line.donor?.id,
       campaignId: line.campaign?.id,
       note: line.note,
@@ -151,7 +151,7 @@ const inboundParsers = {
     itemVariantId: setNullableInput('itemVariantId', {
       itemVariantId: line.itemVariantId,
     }),
-    vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
+    vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
     donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
     campaignId: setNullableInput('campaignId', {
       campaignId: line.campaign?.id ?? null,

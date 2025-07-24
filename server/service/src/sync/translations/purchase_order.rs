@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use chrono::NaiveDateTime;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository,
     PurchaseOrderRow, PurchaseOrderStatus, StorageConnection, SyncBufferRow,
@@ -9,17 +10,31 @@ use util::sync_serde::{
     zero_f64_as_none,
 };
 
+use crate::sync::sync_utils::map_name_link_id_to_name_id;
+use crate::sync::sync_utils::map_optional_name_link_id_to_name_id;
 use crate::sync::translations::{
-    master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
-    store::StoreTranslation, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    name::NameTranslation, store::StoreTranslation, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyPurchaseOrderStatus {
-    New,
-    Confirmed,
-    Authorised,
-    Finalised,
+    /// new
+    #[serde(rename = "nw")]
+    Nw,
+    /// suggested
+    #[serde(rename = "sg")]
+    Sg,
+    /// confirmed
+    #[serde(rename = "cn")]
+    Cn,
+    /// finalised
+    #[serde(rename = "fn")]
+    #[serde(alias = "FN")]
+    Fn,
+    /// Bucket to catch all other variants
+    #[serde(other)]
+    Others,
 }
 
 #[allow(non_snake_case)]
@@ -29,19 +44,85 @@ pub struct PurchaseOrderOmsFields {
     pub foreign_exchange_rate: Option<f64>,
     #[serde(default)]
     pub expected_delivery_date: Option<NaiveDate>,
+    #[serde(default)]
+    pub created_datetime: NaiveDateTime,
+    #[serde(default)]
+    pub confirmed_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub sent_datetime: Option<NaiveDateTime>,
 }
+
+/** Example record
+ * {
+    "Date_advance_payment": "0000-00-00",
+    "Date_contract_signed": "0000-00-00",
+    "Date_goods_received_at_port": "0000-00-00",
+    "ID": "74776741F45F47CBB3214143D27308B2",
+    "Order_total_after_discount": 1000,
+    "Order_total_before_discount": 1000,
+    "additional_instructions": "",
+    "agent_commission": 0,
+    "auth_checksum": "be3e0b73e1762782fc8d608ebaf760e1",
+    "authorizing_officer_1": "",
+    "authorizing_officer_2": "",
+    "budget_period_ID": "",
+    "category_ID": "",
+    "colour": 0,
+    "comment": "",
+    "communications_charge": 0,
+    "confirm_date": "2024-11-27",
+    "cost_in_local_currency": 449224.99,
+    "created_by": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "creation_date": "2021-03-11",
+    "curr_rate": 449.224988,
+    "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+    "custom_data": null,
+    "delivery_method": "",
+    "document_charge": 0,
+    "donor_id": "",
+    "editedRemotely": false,
+    "freight": 0,
+    "freight_charge": 0,
+    "freight_conditions": "",
+    "heading_message": "",
+    "include_in_on_order_calcs": false,
+    "insurance_charge": 0,
+    "inv_discount_amount": 0,
+    "inv_sub_total": 0,
+    "is_authorised": true,
+    "last_edited_by": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "lines": 1,
+    "linked_transaction_ID": "",
+    "locked": false,
+    "lookBackMonths": 0,
+    "minimumExpiryDate": "0000-00-00",
+    "name_ID": "A2815A74F4F24181B637D510A978359E",
+    "oms_fields": null,
+    "po_sent_date": "2024-11-27",
+    "quote_ID": "",
+    "reference": "",
+    "requested_delivery_date": "2021-03-11",
+    "serial_number": 16,
+    "status": "cn",
+    "store_ID": "D77F67339BF8400886D009178F4962E1",
+    "supplier_agent": "",
+    "supplier_discount_amount": 0,
+    "target_months": 0,
+    "total_foreign_currency_expected": 0,
+    "total_local_currency_expected": 0,
+    "user_field_1": "",
+    "user_field_2": ""
+}
+ */
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyPurchaseOrderRow {
-    #[serde(default)]
     #[serde(rename = "name_ID")]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub supplier_name_link_id: Option<String>,
+    pub name_id: String,
     #[serde(rename = "ID")]
     pub id: String,
-    #[serde(rename = "creation_date")]
-    pub created_date: NaiveDate,
+    pub creation_date: NaiveDate,
     #[serde(default)]
     pub target_months: Option<f64>,
     pub status: LegacyPurchaseOrderStatus,
@@ -55,15 +136,12 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub reference: Option<String>,
-    #[serde(rename = "confirm_date")]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
-    pub confirmed_date: Option<NaiveDate>,
-    // assume this is user_id - though does not reference user id in OG
+    pub confirm_date: Option<NaiveDate>,
     #[serde(default)]
-    #[serde(rename = "created_by")]
     #[serde(deserialize_with = "empty_str_as_option")]
-    pub user_id: Option<String>,
+    pub created_by: Option<String>,
     #[serde(rename = "store_ID")]
     pub store_id: String,
     #[serde(default)]
@@ -84,8 +162,10 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub additional_instructions: Option<String>,
     #[serde(default)]
+    #[serde(deserialize_with = "zero_f64_as_none")]
     pub agent_commission: Option<f64>,
     #[serde(default)]
+    #[serde(deserialize_with = "zero_f64_as_none")]
     pub document_charge: Option<f64>,
     #[serde(default)]
     #[serde(deserialize_with = "zero_f64_as_none")]
@@ -96,14 +176,16 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "zero_f64_as_none")]
     pub freight_charge: Option<f64>,
     #[serde(default)]
-    pub supplier_discount_amount: Option<f64>,
+    pub supplier_discount_amount: f64,
     #[serde(default)]
-    #[serde(rename = "inv_discount_amount")]
-    pub supplier_discount_percentage: Option<f64>,
+    #[serde(rename = "Order_total_before_discount")]
+    pub order_total_before_discount: f64,
     #[serde(default)]
-    #[serde(rename = "donor_id")]
+    #[serde(rename = "Order_total_after_discount")]
+    pub order_total_after_discount: f64,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
-    pub donor_link_id: Option<String>,
+    pub donor_id: Option<String>,
     #[serde(rename = "serial_number")]
     pub purchase_order_number: i64,
     #[serde(default)]
@@ -124,6 +206,7 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub advance_paid_date: Option<NaiveDate>,
+    #[serde(rename = "Date_goods_received_at_port")]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub received_at_port_date: Option<NaiveDate>,
@@ -145,12 +228,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![
-            NameTranslation.table_name(),
-            StoreTranslation.table_name(),
-            PeriodTranslation.table_name(),
-            MasterListTranslation.table_name(),
-        ]
+        vec![NameTranslation.table_name(), StoreTranslation.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -164,20 +242,12 @@ impl SyncTranslation for PurchaseOrderTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyPurchaseOrderRow {
             id,
-            user_id,
             purchase_order_number,
-            store_id,
-            supplier_name_link_id,
             status,
-            created_date,
-            confirmed_date,
             target_months,
             comment,
-            supplier_discount_percentage,
             supplier_discount_amount,
-            donor_link_id,
             reference,
-            currency_id,
             supplier_agent,
             authorising_officer_1,
             authorising_officer_2,
@@ -195,27 +265,50 @@ impl SyncTranslation for PurchaseOrderTranslation {
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
+            name_id,
+            creation_date,
+            currency_id,
+            confirm_date: legacy_confirm_date,
+            created_by,
+            store_id,
+            donor_id,
+            order_total_before_discount,
+            order_total_after_discount,
         } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
 
+        let created_datetime = match oms_fields.clone() {
+            Some(oms) => oms.created_datetime,
+            None => creation_date.and_hms_opt(0, 0, 0).unwrap_or_default(),
+        };
+
+        let confirmed_datetime = match oms_fields.clone() {
+            Some(oms) => oms.confirmed_datetime,
+            None => legacy_confirm_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default()),
+        };
+
+        let sent_datetime = match oms_fields.clone() {
+            Some(oms) => oms.sent_datetime,
+            None => sent_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default()),
+        };
+
         let result = PurchaseOrderRow {
-            id: id,
-            user_id,
+            id,
+            created_by,
             purchase_order_number,
             store_id,
-            supplier_name_link_id,
+            supplier_name_link_id: name_id,
             status: from_legacy_status(&status),
-            created_date,
-            confirmed_date,
+            created_datetime,
+            confirmed_datetime,
             target_months,
             comment,
-            supplier_discount_percentage,
             supplier_discount_amount,
-            donor_link_id,
+            donor_link_id: donor_id,
             reference,
             currency_id,
             foreign_exchange_rate: oms_fields.clone().and_then(|o| o.foreign_exchange_rate),
             shipping_method,
-            sent_date,
+            sent_datetime,
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
@@ -231,6 +324,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
+            order_total_before_discount,
+            order_total_after_discount,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -245,22 +340,21 @@ impl SyncTranslation for PurchaseOrderTranslation {
         let PurchaseOrderRow {
             id,
             store_id,
-            user_id,
+            created_by,
             supplier_name_link_id,
             purchase_order_number,
             status,
-            created_date,
-            confirmed_date,
+            created_datetime,
+            confirmed_datetime,
             target_months,
             comment,
-            supplier_discount_percentage,
             supplier_discount_amount,
             donor_link_id,
             reference,
             currency_id,
             foreign_exchange_rate,
             shipping_method,
-            sent_date,
+            sent_datetime,
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
@@ -276,6 +370,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
+            order_total_before_discount,
+            order_total_after_discount,
         } = PurchaseOrderRepository::new(connection)
             .query_by_filter(
                 PurchaseOrderFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
@@ -283,25 +379,25 @@ impl SyncTranslation for PurchaseOrderTranslation {
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
 
-        let oms_fields = if foreign_exchange_rate.is_some() || expected_delivery_date.is_some() {
-            Some(PurchaseOrderOmsFields {
-                foreign_exchange_rate,
-                expected_delivery_date,
-            })
-        } else {
-            None
+        let oms_fields = PurchaseOrderOmsFields {
+            foreign_exchange_rate,
+            expected_delivery_date,
+            created_datetime,
+            confirmed_datetime,
+            sent_datetime,
         };
+
+        let donor_id = map_optional_name_link_id_to_name_id(connection, donor_link_id)?;
+        let supplier_id = map_name_link_id_to_name_id(connection, supplier_name_link_id)?;
 
         let legacy_row = LegacyPurchaseOrderRow {
             id,
-            created_date,
             target_months,
             status: to_legacy_status(&status),
             comment,
             currency_id,
             reference,
-            confirmed_date,
-            user_id,
+            created_by,
             store_id,
             supplier_agent,
             authorising_officer_1,
@@ -314,17 +410,20 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             supplier_discount_amount,
-            supplier_discount_percentage,
-            donor_link_id,
             purchase_order_number,
-            supplier_name_link_id,
             heading_message,
-            oms_fields,
+            oms_fields: Some(oms_fields),
             shipping_method,
-            sent_date,
+            sent_date: sent_datetime.map(|d| d.date()),
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
+            name_id: supplier_id,
+            creation_date: created_datetime.date(),
+            confirm_date: confirmed_datetime.map(|d| d.date()),
+            order_total_before_discount,
+            order_total_after_discount,
+            donor_id,
         };
 
         Ok(PushTranslateResult::upsert(
@@ -337,20 +436,21 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
 fn from_legacy_status(status: &LegacyPurchaseOrderStatus) -> PurchaseOrderStatus {
     let oms_status = match status {
-        LegacyPurchaseOrderStatus::New => PurchaseOrderStatus::New,
-        LegacyPurchaseOrderStatus::Confirmed => PurchaseOrderStatus::Confirmed,
-        LegacyPurchaseOrderStatus::Authorised => PurchaseOrderStatus::Authorised,
-        LegacyPurchaseOrderStatus::Finalised => PurchaseOrderStatus::Finalised,
+        LegacyPurchaseOrderStatus::Nw => PurchaseOrderStatus::New,
+        LegacyPurchaseOrderStatus::Sg => PurchaseOrderStatus::New,
+        LegacyPurchaseOrderStatus::Cn => PurchaseOrderStatus::Confirmed,
+        LegacyPurchaseOrderStatus::Fn => PurchaseOrderStatus::Finalised,
+        LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New, // Default to New for
     };
     oms_status
 }
 
 fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
     let legacy_status = match status {
-        PurchaseOrderStatus::New => LegacyPurchaseOrderStatus::New,
-        PurchaseOrderStatus::Confirmed => LegacyPurchaseOrderStatus::Confirmed,
-        PurchaseOrderStatus::Authorised => LegacyPurchaseOrderStatus::Authorised,
-        PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Finalised,
+        PurchaseOrderStatus::New => LegacyPurchaseOrderStatus::Nw,
+        PurchaseOrderStatus::Confirmed => LegacyPurchaseOrderStatus::Cn,
+        PurchaseOrderStatus::Authorised => LegacyPurchaseOrderStatus::Cn, // should also set is_authorised to true
+        PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Fn,
     };
     legacy_status
 }
@@ -378,10 +478,10 @@ mod tests {
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            // println!("Translating record: {:?}", record.sync_buffer_row.data);
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
-
             assert_eq!(translation_result, record.translated_record);
         }
 
@@ -395,8 +495,6 @@ mod tests {
             MockDataInserts::none().purchase_order(),
         )
         .await;
-
-        // let
 
         let translator = PurchaseOrderTranslation {};
         let repo = ChangelogRepository::new(&connection);

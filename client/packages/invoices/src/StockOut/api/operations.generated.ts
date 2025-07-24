@@ -22,6 +22,7 @@ export type StockOutLineFragment = {
   taxPercentage?: number | null;
   itemName: string;
   itemVariantId?: string | null;
+  vvmStatusId?: string | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -74,6 +75,7 @@ export type DraftStockOutLineFragment = {
   stockLineOnHold: boolean;
   dosesPerUnit: number;
   itemVariantId?: string | null;
+  vvmStatusId?: string | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -137,6 +139,7 @@ export type GetOutboundEditLinesQuery = {
       stockLineOnHold: boolean;
       dosesPerUnit: number;
       itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -181,6 +184,7 @@ export const StockOutLineFragmentDoc = gql`
     note
     itemName
     itemVariantId
+    vvmStatusId
     item {
       __typename
       id
@@ -233,6 +237,7 @@ export const DraftStockOutLineFragmentDoc = gql`
     stockLineOnHold
     dosesPerUnit
     itemVariantId
+    vvmStatusId
     location {
       __typename
       id

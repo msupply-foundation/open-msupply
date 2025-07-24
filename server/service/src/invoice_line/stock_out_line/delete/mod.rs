@@ -1,14 +1,15 @@
-use crate::service_provider::ServiceContext;
+use super::StockOutType;
+use crate::{
+    invoice_line::stock_in_line::get_existing_vvm_status_log_id, service_provider::ServiceContext,
+};
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
-    StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLineRowRepository,
+    InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
 };
 
 mod validate;
-
 use validate::validate;
 
-use super::StockOutType;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteStockOutLine {
     pub id: String,
@@ -26,6 +27,14 @@ pub fn delete_stock_out_line(
         .transaction_sync(|connection| {
             let line = validate(&input, &ctx.store_id, connection)?;
             let stock_line_id_option = line.stock_line_id.clone();
+
+            if let Some(stock_line_id) = &stock_line_id_option {
+                if let Some(existing_log_id) =
+                    get_existing_vvm_status_log_id(connection, stock_line_id, &line.id)?
+                {
+                    VVMStatusLogRowRepository::new(connection).delete(&existing_log_id)?;
+                }
+            }
 
             InvoiceLineRowRepository::new(connection).delete(&line.id)?;
 
