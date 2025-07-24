@@ -40,6 +40,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   maxWidth,
   value,
   disabled,
+  width,
   ...restOfProps
 }) => {
   const { c, options } = useCurrency();
@@ -62,6 +63,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
         '&:hover': {
           borderBottom: disabled ? 'none' : undefined,
         },
+        width,
       }}
       // We implement our own rounding here, as the react-currency-input-field
       // component only truncates internally

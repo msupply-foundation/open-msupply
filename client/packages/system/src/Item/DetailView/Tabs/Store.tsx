@@ -31,6 +31,7 @@ export const StoreTab = ({ item }: { item: ItemFragment }) => {
                 value={item?.itemStoreJoin?.defaultSellPricePerPack}
                 disabled={isDisabled}
                 onChangeNumber={() => {}}
+                width={'100%'}
               />
             }
             DisabledInput={<NumericTextDisplay value={item?.margin} />}
