@@ -221,6 +221,11 @@ fragment Item on ItemNode {
   itemDirections {
     ...ItemDirection
   }
+  itemStoreJoin(storeId: $storeId) {
+    __typename
+    id
+    defaultSellPricePerPack
+  }
 }
 
 query itemsWithStockLines(
