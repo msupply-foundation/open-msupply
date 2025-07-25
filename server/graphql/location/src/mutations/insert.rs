@@ -47,6 +47,8 @@ pub struct InsertLocationInput {
     pub code: String,
     pub name: Option<String>,
     pub on_hold: Option<bool>,
+    pub location_type_id: Option<String>,
+    #[graphql(deprecation = "Since 2.10. Use `locationTypeId` instead")]
     pub cold_storage_type_id: Option<String>,
 }
 
@@ -57,6 +59,7 @@ impl From<InsertLocationInput> for InsertLocation {
             code,
             name,
             on_hold,
+            location_type_id,
             cold_storage_type_id,
         }: InsertLocationInput,
     ) -> Self {
@@ -65,7 +68,7 @@ impl From<InsertLocationInput> for InsertLocation {
             code,
             name,
             on_hold,
-            cold_storage_type_id,
+            location_type_id: location_type_id.or(cold_storage_type_id),
         }
     }
 }
@@ -294,7 +297,7 @@ mod test {
                     code: "code".to_owned(),
                     on_hold: true,
                     store_id: "store_a".to_owned(),
-                    cold_storage_type_id: None,
+                    location_type_id: None,
                 },
             })
         }));

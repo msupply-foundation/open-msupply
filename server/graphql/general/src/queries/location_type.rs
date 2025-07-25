@@ -49,7 +49,7 @@ pub enum LocationTypesResponse {
     Response(LocationTypeConnector),
 }
 
-pub fn cold_storage_types(
+pub fn location_types(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -65,7 +65,7 @@ pub fn cold_storage_types(
     )?;
 
     let connection_manager = ctx.get_connection_manager();
-    let cold_storage_types = get_location_types(
+    let location_types = get_location_types(
         connection_manager,
         page.map(PaginationOption::from),
         filter.map(|filter| filter.to_domain()),
@@ -76,7 +76,7 @@ pub fn cold_storage_types(
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(LocationTypesResponse::Response(
-        LocationTypeConnector::from_domain(cold_storage_types),
+        LocationTypeConnector::from_domain(location_types),
     ))
 }
 
@@ -109,14 +109,14 @@ impl LocationTypeSortInput {
 }
 
 impl LocationTypeConnector {
-    pub fn from_domain(cold_storage_types: ListResult<LocationType>) -> Self {
-        let ListResult { rows, count } = cold_storage_types;
+    pub fn from_domain(location_types: ListResult<LocationType>) -> Self {
+        let ListResult { rows, count } = location_types;
 
         LocationTypeConnector {
             total_count: count,
             nodes: rows
                 .into_iter()
-                .map(|row| LocationTypeNode::from_domain(row.cold_storage_type_row))
+                .map(|row| LocationTypeNode::from_domain(row.location_type_row))
                 .collect(),
         }
     }

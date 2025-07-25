@@ -12,7 +12,7 @@ const ITEM_VARIANT1: (&str, &str) = (
         "id": "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
         "name": "Item Variant 1",
         "item_link_id": "8F252B5884B74888AAB73A0D42C09E7A",
-        "cold_storage_type_id": null,
+        "location_type_id": null,
         "manufacturer_link_id": null,
         "created_datetime": "2023-01-01T00:00:00"
     }"#,
@@ -41,7 +41,7 @@ const ITEM_VARIANT2: (&str, &str) = (
         "id": "a9a986cd-a6dc-4e96-811c-4bc225a4f2d8",
         "name": "Item Variant 2",
         "item_link_id": "8F252B5884B74888AAB73A0D42C09E7A",
-        "cold_storage_type_id": null,
+        "location_type_id": null,
         "manufacturer_link_id": "1FB32324AF8049248D929CFB35F255BA",
         "doses_per_unit": 1,
         "vvm_type": "VVM 1",

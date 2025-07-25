@@ -288,7 +288,7 @@ mod query {
         );
         assert_eq!(result.unwrap_err(), UpsertItemVariantError::CantChangeItem);
 
-        // Test that we can't create/update a record with an invalid cold_storage_id
+        // Test that we can't create/update a record with an invalid location_type_id
         let result = service.upsert_item_variant(
             &context,
             UpsertItemVariantWithPackaging {
