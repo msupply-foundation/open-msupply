@@ -1,7 +1,9 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::EqualFilterStringInput, pagination::PaginationInput,
-    simple_generic_errors::RecordNotFound, standard_graphql_error::StandardGraphqlError,
+    generic_filters::EqualFilterStringInput,
+    pagination::PaginationInput,
+    simple_generic_errors::RecordNotFound,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{PurchaseOrderLineConnector, PurchaseOrderLineNode};
@@ -9,6 +11,7 @@ use repository::{
     EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
     PurchaseOrderLineSortField,
 };
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -52,9 +55,15 @@ pub fn get_purchase_order_line(
     store_id: &str,
     id: &str,
 ) -> Result<PurchaseOrderLineResponse> {
-    // TODO add auth validation once permissions finalised
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryPurchaseOrder,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), "".to_string())?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     match service_provider
         .purchase_order_line_service
@@ -81,9 +90,15 @@ pub fn get_purchase_order_lines(
     filter: Option<PurchaseOrderLineFilterInput>,
     sort: Option<Vec<PurchaseOrderLineSortInput>>,
 ) -> Result<PurchaseOrderLinesResponse> {
-    // TODO add auth validation once permissions finalised
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryPurchaseOrder,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), "".to_string())?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     let list_result = service_provider
         .purchase_order_line_service
