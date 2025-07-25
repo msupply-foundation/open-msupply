@@ -1,5 +1,6 @@
 import { LocaleKey, useTranslation } from '@common/intl';
 import { PurchaseOrderNodeStatus } from '@common/types';
+import { PurchaseOrderFragment } from './api';
 
 const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
   NEW: 'label.new',
@@ -16,3 +17,8 @@ export const getStatusTranslator =
         statusTranslation[PurchaseOrderNodeStatus.New]
     );
   };
+export const isPurchaseOrderDisabled = (purchaseOrder: PurchaseOrderFragment): boolean => {
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
+  );
+}
