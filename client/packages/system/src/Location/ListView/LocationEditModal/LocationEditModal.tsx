@@ -11,7 +11,7 @@ import {
   InlineSpinner,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList, useLocation } from '../../api';
-import { ColdStorageTypeInput } from '@openmsupply-client/system';
+import { LocationTypeInput } from '@openmsupply-client/system';
 interface LocationEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
@@ -145,10 +145,10 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             label={t('label.code')}
             slotProps={{ inputLabel: { shrink: true } }}
           />
-          <ColdStorageTypeInput
-            value={draft.coldStorageType ?? null}
+          <LocationTypeInput
+            value={draft.locationType ?? null}
             label={t('label.cold-storage-type')}
-            onChange={coldStorageType => onUpdate({ coldStorageType })}
+            onChange={locationType => onUpdate({ locationType })}
           />
           <Grid alignSelf="center">
             <ToggleButton

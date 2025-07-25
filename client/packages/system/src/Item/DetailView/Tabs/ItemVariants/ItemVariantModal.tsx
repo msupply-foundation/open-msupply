@@ -20,7 +20,7 @@ import {
   useItemVariant,
 } from '../../../api';
 import { ManufacturerSearchInput } from '@openmsupply-client/system';
-import { ColdStorageTypeInput } from '../../../Components/ColdStorageTypeInput';
+import { LocationTypeInput } from '../../../Components/LocationTypeInput';
 
 export const ItemVariantModal = ({
   item,
@@ -128,12 +128,12 @@ const ItemVariantForm = ({
           labelWidth="200"
           Input={
             <Box width="100%">
-              <ColdStorageTypeInput
-                value={variant.coldStorageType ?? null}
-                onChange={coldStorageType => {
+              <LocationTypeInput
+                value={variant.locationType ?? null}
+                onChange={locationType => {
                   updateVariant({
-                    coldStorageType,
-                    coldStorageTypeId: coldStorageType?.id ?? null,
+                    locationType,
+                    locationTypeId: locationType?.id ?? null,
                   });
                 }}
               />

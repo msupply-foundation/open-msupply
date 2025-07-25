@@ -4,11 +4,11 @@ import {
   useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useColdStorageTypes } from '../../api/hooks/useColdStorageTypes';
-import { ColdStorageTypeFragment } from '../../api';
+import { useLocationTypes } from '../../api/hooks/useLocationTypes';
+import { LocationTypeFragment } from '../../api';
 
-export interface ColdStorageTypeInputProps {
-  onChange: (name: ColdStorageTypeFragment | null) => void;
+export interface LocationTypeInputProps {
+  onChange: (name: LocationTypeFragment | null) => void;
   onInputChange?: (
     event: React.SyntheticEvent,
     value: string,
@@ -16,27 +16,27 @@ export interface ColdStorageTypeInputProps {
   ) => void;
   width?: number;
   label?: string;
-  value: ColdStorageTypeFragment | null;
+  value: LocationTypeFragment | null;
   disabled?: boolean;
   clearable?: boolean;
 }
 
-export const ColdStorageTypeInput = ({
+export const LocationTypeInput = ({
   onChange,
   width = 250,
   value,
   label,
   disabled = false,
-}: ColdStorageTypeInputProps) => {
-  const { data, isLoading } = useColdStorageTypes();
+}: LocationTypeInputProps) => {
+  const { data, isLoading } = useLocationTypes();
   const [buffer, setBuffer] = useBufferState(value);
   const t = useTranslation();
 
-  const getOptionLabel = (coldStorageType: ColdStorageTypeFragment) =>
+  const getOptionLabel = (locationType: LocationTypeFragment) =>
     t('label.cold-storage-temperature-range', {
-      coldStorageName: coldStorageType.name,
-      minTemperature: coldStorageType.minTemperature,
-      maxTemperature: coldStorageType.maxTemperature,
+      locationName: locationType.name,
+      minTemperature: locationType.minTemperature,
+      maxTemperature: locationType.maxTemperature,
     });
 
   return (
@@ -48,7 +48,7 @@ export const ColdStorageTypeInput = ({
         setBuffer(name);
         onChange(name);
       }}
-      options={data?.coldStorageTypes.nodes ?? []}
+      options={data?.locationTypes.nodes ?? []}
       getOptionLabel={getOptionLabel}
       width={`${width}px`}
       popperMinWidth={width}

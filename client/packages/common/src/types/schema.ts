@@ -6777,8 +6777,6 @@ export type Queries = {
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
-  /** Query omSupply "cold_storage_type" entries */
-  coldStorageTypes: LocationTypesResponse;
   contactTraces: ContactTraceResponse;
   contacts: ContactsResponse;
   currencies: CurrenciesResponse;
@@ -6850,6 +6848,8 @@ export type Queries = {
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   ledger: LedgerResponse;
+  /** Query omSupply "location_type" entries */
+  locationTypes: LocationTypesResponse;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
   logContents: LogNode;
@@ -7059,13 +7059,6 @@ export type QueriesCliniciansArgs = {
   filter?: InputMaybe<ClinicianFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ClinicianSortInput>>;
-  storeId: Scalars['String']['input'];
-};
-
-export type QueriesColdStorageTypesArgs = {
-  filter?: InputMaybe<LocationTypeFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<LocationTypeSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -7293,6 +7286,13 @@ export type QueriesItemsArgs = {
 export type QueriesLedgerArgs = {
   filter?: InputMaybe<LedgerFilterInput>;
   sort?: InputMaybe<Array<LedgerSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesLocationTypesArgs = {
+  filter?: InputMaybe<LocationTypeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LocationTypeSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
