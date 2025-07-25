@@ -14,7 +14,6 @@ use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField}
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum PurchaseOrderSortFieldInput {
-    Supplier,
     Number,
     CreatedDatetime,
     Status,
@@ -130,10 +129,9 @@ impl PurchaseOrderSortInput {
         use PurchaseOrderSortField as to;
         use PurchaseOrderSortFieldInput as from;
         let key = match self.key {
-            from::Supplier => to::Supplier,
             from::Number => to::Number,
             from::TargetMonths => to::TargetMonths,
-            from::DeliveryDate => to::DeliveryDate,
+            from::DeliveryDate => to::ExpectedDeliveryDate,
             from::Status => to::Status,
             from::CreatedDatetime => to::CreatedDatetime,
         };

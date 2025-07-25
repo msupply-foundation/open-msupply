@@ -55,6 +55,8 @@ pub(crate) mod preference;
 pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
+pub(crate) mod purchase_order;
+pub(crate) mod purchase_order_line;
 pub(crate) mod reason;
 pub(crate) mod report;
 pub(crate) mod requisition;
@@ -206,6 +208,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         report::boxed(),
         preference::boxed(),
         sync_message::boxed(),
+        // Purchase Order
+        purchase_order::boxed(),
+        purchase_order_line::boxed(),
     ]
 }
 
