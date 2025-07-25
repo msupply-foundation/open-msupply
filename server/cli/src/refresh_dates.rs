@@ -136,6 +136,7 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("campaign", "end_date"),
         ("purchase_order", "received_at_port_date"),
         ("purchase_order", "expected_delivery_date"),
+        ("purchase_order", "requested_delivery_date"),
         ("purchase_order_line", "requested_delivery_date"),
         ("purchase_order_line", "expected_delivery_date"),
         ("purchase_order", "contract_signed_date"),
