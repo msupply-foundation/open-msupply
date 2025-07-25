@@ -31,6 +31,11 @@ export const useValueInUnitsOrPacks = (
     [representation, defaultPackSize, value]
   );
 
+/**
+ * Calculates the value in doses.
+ * Does NOT round or format the result.
+ * Rounding/formatting to 0 decimal places should be done in the component with useFormatNumber().
+ */
 export const calculateValueInDoses = (
   representation: RepresentationValue,
   defaultPackSize: number,

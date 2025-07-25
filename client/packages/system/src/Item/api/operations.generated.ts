@@ -457,6 +457,11 @@ export type ItemFragment = {
     itemId: string;
     priority: number;
   }>;
+  itemStoreJoin?: {
+    __typename: 'ItemStoreJoinNode';
+    id: string;
+    defaultSellPricePerPack: number;
+  } | null;
 };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
@@ -647,6 +652,11 @@ export type ItemsWithStockLinesQuery = {
         itemId: string;
         priority: number;
       }>;
+      itemStoreJoin?: {
+        __typename: 'ItemStoreJoinNode';
+        id: string;
+        defaultSellPricePerPack: number;
+      } | null;
     }>;
   };
 };
@@ -947,6 +957,11 @@ export type ItemByIdQuery = {
         itemId: string;
         priority: number;
       }>;
+      itemStoreJoin?: {
+        __typename: 'ItemStoreJoinNode';
+        id: string;
+        defaultSellPricePerPack: number;
+      } | null;
     }>;
   };
 };
@@ -1624,6 +1639,11 @@ export const ItemFragmentDoc = gql`
     }
     itemDirections {
       ...ItemDirection
+    }
+    itemStoreJoin(storeId: $storeId) {
+      __typename
+      id
+      defaultSellPricePerPack
     }
   }
   ${StockLineFragmentDoc}
