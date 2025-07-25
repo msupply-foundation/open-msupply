@@ -154,9 +154,9 @@ pub enum Resource {
     QueryCampaigns,
     MutateCampaigns,
     // Purchase Order
-    PurchaseOrderQuery,
-    PurchaseOrderMutate,
-    PurchaseOrderAuthorise,
+    QueryPurchaseOrder,
+    MutatePurchaseOrder,
+    AuthorisePurchaseOrder,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -688,15 +688,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     map.insert(
-        Resource::PurchaseOrderQuery,
+        Resource::QueryPurchaseOrder,
         PermissionDSL::HasPermission(PermissionType::PurchaseOrderQuery),
     );
     map.insert(
-        Resource::PurchaseOrderMutate,
+        Resource::MutatePurchaseOrder,
         PermissionDSL::HasPermission(PermissionType::PurchaseOrderMutate),
     );
     map.insert(
-        Resource::PurchaseOrderAuthorise,
+        Resource::AuthorisePurchaseOrder,
         PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
     );
 
