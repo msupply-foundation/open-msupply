@@ -638,7 +638,6 @@
   "label.code-or-name": "Код или Имя",
   "label.cold-consecutive": "Последовательно Холодное",
   "label.cold-cumulative": "Накопительно Холодное",
-  "label.location-location": "Локация Холодильного склада",
   "label.location-temperature-range": " {{locationName}} ({{minTemperature}}°C до {{maxTemperature}}°C)",
   "label.location-type": "Тип холодильного склада",
   "label.collapse": "Свернуть",

@@ -673,7 +673,6 @@
   "label.code-or-name": "Código o Nombre",
   "label.cold-consecutive": "Cadena de frío consecutiva",
   "label.cold-cumulative": "Cadena de frío acumulada",
-  "label.location-location": "Ubicación de almacenamiento en frío",
   "label.location-temperature-range": " {{locationName}} ({{minTemperature}}°C a {{maxTemperature}}°C)",
   "label.location-type": "Tipo de almacenamiento en frío",
   "label.collapse": "Contraer",

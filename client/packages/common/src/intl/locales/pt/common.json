@@ -733,7 +733,6 @@
   "label.code2": "Código 2",
   "label.cold-consecutive": "Cadeia de Frio Consecutiva",
   "label.cold-cumulative": "Cadeia de Frio Acumulada",
-  "label.location-location": "Local de armazenagem a frio",
   "label.location-temperature-range": " {{locationName}} ({{minTemperature}}°C to {{maxTemperature}}°C)",
   "label.location-type": "Tipo de armazenamento frio",
   "label.collapse": "Colapsar",
