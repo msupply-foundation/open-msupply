@@ -47,6 +47,7 @@ table! {
         order_total_before_discount -> Double,
         order_total_after_discount -> Double,
         supplier_discount_amount -> Double,
+        supplier_discount_percentage -> Nullable<Double>,
     }
 }
 
@@ -69,7 +70,6 @@ pub struct PurchaseOrderRow {
     pub confirmed_datetime: Option<NaiveDateTime>,
     pub target_months: Option<f64>,
     pub comment: Option<String>,
-
     pub donor_link_id: Option<String>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
@@ -94,6 +94,7 @@ pub struct PurchaseOrderRow {
     pub order_total_before_discount: f64,
     pub order_total_after_discount: f64,
     pub supplier_discount_amount: f64,
+    pub supplier_discount_percentage: Option<f64>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

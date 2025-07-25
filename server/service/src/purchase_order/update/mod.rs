@@ -36,7 +36,7 @@ pub struct UpdatePurchaseOrderInput {
     pub currency_id: Option<String>,
     pub foreign_exchange_rate: Option<f64>,
     pub shipping_method: Option<String>,
-    pub sent_date: Option<NaiveDate>,
+    pub sent_datetime: Option<NaiveDateTime>,
     pub contract_signed_date: Option<NaiveDate>,
     pub advance_paid_date: Option<NaiveDate>,
     pub received_at_port_date: Option<NaiveDate>,

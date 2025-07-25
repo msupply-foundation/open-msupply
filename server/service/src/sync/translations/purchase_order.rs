@@ -50,6 +50,8 @@ pub struct PurchaseOrderOmsFields {
     pub confirmed_datetime: Option<NaiveDateTime>,
     #[serde(default)]
     pub sent_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub supplier_discount_percentage: Option<f64>,
 }
 
 /** Example record
@@ -301,6 +303,9 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             target_months,
             comment,
+            supplier_discount_percentage: oms_fields
+                .clone()
+                .and_then(|o| o.supplier_discount_percentage),
             supplier_discount_amount,
             donor_link_id: donor_id,
             reference,
@@ -347,6 +352,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             target_months,
             comment,
+            supplier_discount_percentage,
             supplier_discount_amount,
             donor_link_id,
             reference,
@@ -384,6 +390,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             created_datetime,
             confirmed_datetime,
             sent_datetime,
+            supplier_discount_percentage,
         };
 
         let donor_id = map_optional_name_link_id_to_name_id(connection, donor_link_id)?;
