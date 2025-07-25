@@ -264,7 +264,6 @@ const PURCHASE_ORDER_2: (&str, &str) = (
 }"#,
 );
 
-//
 fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
@@ -345,9 +344,9 @@ fn purchase_order_2_migration_push_record() -> TestSyncOutgoingRecord {
             additional_instructions: None,
             agent_commission: None,
             document_charge: None,
-            communications_charge: Some(0.0),
-            insurance_charge: Some(0.0),
-            freight_charge: Some(0.0),
+            communications_charge: None,
+            insurance_charge: None,
+            freight_charge: None,
             supplier_discount_amount: 0.0,
             curr_rate: Some(1.0),
             order_total_before_discount: 0.0,
@@ -356,12 +355,30 @@ fn purchase_order_2_migration_push_record() -> TestSyncOutgoingRecord {
             purchase_order_number: 1,
             heading_message: None,
             delivery_method: None,
-            requested_delivery_date: None,
+            requested_delivery_date: Some(NaiveDate::from_ymd_opt(2021, 3, 15).unwrap()),
             sent_date: Some(NaiveDate::from_ymd_opt(2021, 3, 15).unwrap()),
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            oms_fields: None
+            oms_fields: Some(PurchaseOrderOmsFields {
+                created_datetime: NaiveDate::from_ymd_opt(2021, 3, 15)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                confirmed_datetime: Some(
+                    NaiveDate::from_ymd_opt(2021, 3, 15)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                ),
+                sent_datetime: Some(
+                    NaiveDate::from_ymd_opt(2021, 3, 15)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                ),
+                ..Default::default()
+            }),
         }),
     }
 }
@@ -470,7 +487,15 @@ fn purchase_order_3_empty_string_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            oms_fields: None,
+            oms_fields: Some(PurchaseOrderOmsFields {
+                expected_delivery_date: None,
+                created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                confirmed_datetime: None,
+                sent_datetime: None
+            })
         }),
     }
 }
@@ -581,7 +606,13 @@ fn purchase_order_4_empty_object_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            oms_fields: None,
+            oms_fields: Some(PurchaseOrderOmsFields {
+                created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                ..Default::default()
+            })
         }),
     }
 }
@@ -692,7 +723,13 @@ fn purchase_order_5_null_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            oms_fields: None,
+            oms_fields: Some(PurchaseOrderOmsFields {
+                created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                ..Default::default()
+            })
         }),
     }
 }
@@ -800,7 +837,13 @@ fn purchase_order_6_no_fields_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            oms_fields: None,
+            oms_fields: Some(PurchaseOrderOmsFields {
+                created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                ..Default::default()
+            })
         }),
     }
 }
