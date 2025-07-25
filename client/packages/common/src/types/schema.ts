@@ -4455,6 +4455,7 @@ export type ItemNode = {
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
+  itemStoreJoin?: Maybe<ItemStoreJoinNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
@@ -4478,6 +4479,10 @@ export type ItemNodeAvailableBatchesArgs = {
 };
 
 export type ItemNodeAvailableStockOnHandArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type ItemNodeItemStoreJoinArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4535,6 +4540,12 @@ export type ItemStatsNode = {
   monthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
   stockOnHand: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
+};
+
+export type ItemStoreJoinNode = {
+  __typename: 'ItemStoreJoinNode';
+  defaultSellPricePerPack: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
 };
 
 export type ItemVariantMutations = {
