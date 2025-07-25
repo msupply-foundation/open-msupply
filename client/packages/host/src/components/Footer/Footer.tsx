@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import {
   Box,
   HomeIcon,
@@ -32,13 +32,7 @@ interface PaddedCellProps {
   onClick?: () => void;
 }
 
-const PaddedCell: FC<PaddedCellProps> = ({
-  sx,
-  text,
-  icon,
-  tooltip,
-  onClick,
-}) => {
+const PaddedCell = ({ sx, text, icon, tooltip, onClick }: PaddedCellProps) => {
   const theme = useAppTheme();
   const isExtraSmallScreen = useMediaQuery(
     theme.breakpoints.down(Breakpoints.sm)
@@ -77,7 +71,7 @@ const PaddedCell: FC<PaddedCellProps> = ({
   );
 };
 
-export const Footer: FC = () => {
+export const Footer = () => {
   const t = useTranslation();
   const theme = useAppTheme();
   const isExtraSmallScreen = useMediaQuery(
@@ -88,7 +82,6 @@ export const Footer: FC = () => {
 
   const isCentralServer = useIsCentralServerApi();
   const { isOpen, onClose, onOpen } = useEditModal();
-  const { data: nameProperties } = useName.document.properties();
 
   const Divider = styled(Box)({
     width: '1px',
@@ -118,14 +111,12 @@ export const Footer: FC = () => {
           tooltip={t('store-details', { ...store })}
         />
       </StoreSelector>
-      {!!nameProperties?.length && (
-        <PaddedCell
-          icon={<EditIcon sx={iconStyles} />}
-          text={t('label.edit')}
-          tooltip={t('label.edit-store-properties')}
-          onClick={onOpen}
-        />
-      )}
+      <PaddedCell
+        icon={<EditIcon sx={iconStyles} />}
+        text={t('label.edit')}
+        tooltip={t('label.edit-store-properties')}
+        onClick={onOpen}
+      />
       {user ? (
         <>
           <Divider />
