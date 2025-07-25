@@ -46,6 +46,7 @@ pub struct ItemVariantRow {
     pub id: String,
     pub name: String,
     pub item_link_id: String,
+    #[serde(rename = "cold_storage_type_id")] // To prevent breaking change in v6 sync API
     pub location_type_id: Option<String>,
     pub manufacturer_link_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,

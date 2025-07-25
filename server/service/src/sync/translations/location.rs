@@ -4,7 +4,9 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::translations::store::StoreTranslation;
+use util::sync_serde::empty_str_as_option_string;
+
+use crate::sync::translations::{location_type::LocationTypeTranslation, store::StoreTranslation};
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
@@ -19,6 +21,9 @@ pub struct LegacyLocationRow {
     pub on_hold: bool,
     #[serde(rename = "store_ID")]
     pub store_id: String,
+    #[serde(rename = "type_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub location_type_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -34,7 +39,10 @@ impl SyncTranslation for LocationTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![StoreTranslation.table_name()]
+        vec![
+            StoreTranslation.table_name(),
+            LocationTypeTranslation.table_name(),
+        ]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -52,6 +60,7 @@ impl SyncTranslation for LocationTranslation {
             code,
             on_hold,
             store_id,
+            location_type_id,
         } = serde_json::from_str::<LegacyLocationRow>(&sync_record.data)?;
 
         let result = LocationRow {
@@ -60,7 +69,7 @@ impl SyncTranslation for LocationTranslation {
             code,
             on_hold,
             store_id,
-            location_type_id: None,
+            location_type_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -77,7 +86,7 @@ impl SyncTranslation for LocationTranslation {
             code,
             on_hold,
             store_id,
-            location_type_id: _, // TODO: Translate location_type_id id from `location_type_id`
+            location_type_id, // TODO: Translate location_type_id id from `location_type_id`
         } = LocationRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -91,6 +100,7 @@ impl SyncTranslation for LocationTranslation {
             code,
             on_hold,
             store_id,
+            location_type_id,
         };
 
         Ok(PushTranslateResult::upsert(
