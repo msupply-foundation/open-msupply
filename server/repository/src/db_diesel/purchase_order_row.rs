@@ -69,7 +69,6 @@ pub struct PurchaseOrderRow {
     pub confirmed_datetime: Option<NaiveDateTime>,
     pub target_months: Option<f64>,
     pub comment: Option<String>,
-
     pub donor_link_id: Option<String>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
