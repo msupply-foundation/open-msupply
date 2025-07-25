@@ -124,7 +124,7 @@ const ItemVariantForm = ({
         />
 
         <InputWithLabelRow
-          label={t('label.cold-storage-type')}
+          label={t('label.location-type')}
           labelWidth="200"
           Input={
             <Box width="100%">

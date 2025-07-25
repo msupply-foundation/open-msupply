@@ -147,7 +147,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           />
           <LocationTypeInput
             value={draft.locationType ?? null}
-            label={t('label.cold-storage-type')}
+            label={t('label.location-type')}
             onChange={locationType => onUpdate({ locationType })}
           />
           <Grid alignSelf="center">

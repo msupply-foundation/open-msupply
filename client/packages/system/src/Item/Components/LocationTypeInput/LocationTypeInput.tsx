@@ -33,7 +33,7 @@ export const LocationTypeInput = ({
   const t = useTranslation();
 
   const getOptionLabel = (locationType: LocationTypeFragment) =>
-    t('label.cold-storage-temperature-range', {
+    t('label.location-temperature-range', {
       locationName: locationType.name,
       minTemperature: locationType.minTemperature,
       maxTemperature: locationType.maxTemperature,

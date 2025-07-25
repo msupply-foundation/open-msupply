@@ -85,7 +85,7 @@ const ItemVariant = ({
   const confirmAndDelete = useDeleteItemVariant({ itemId });
 
   const locationValue = variant.locationType
-    ? t('label.cold-storage-temperature-range', {
+    ? t('label.location-temperature-range', {
         locationName: variant.locationType.name,
         minTemperature: variant.locationType.minTemperature,
         maxTemperature: variant.locationType.maxTemperature,
@@ -141,7 +141,7 @@ const ItemVariant = ({
           />
 
           <InputWithLabelRow
-            label={t('label.cold-storage-type')}
+            label={t('label.location-type')}
             labelWidth="200"
             Input={<BasicTextInput value={locationValue} disabled fullWidth />}
           />
