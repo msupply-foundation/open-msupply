@@ -149,7 +149,6 @@ pub enum Resource {
     PluginGraphql,
     // Preferences
     MutatePreferences,
-    QueryPreferences,
     QueryAndMutateVvmStatus,
     // Campaigns
     QueryCampaigns,
@@ -650,8 +649,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutatePreferences,
         PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
-    map.insert(Resource::QueryPreferences, PermissionDSL::HasStoreAccess);
-
     // configure
     map.insert(
         Resource::ConfigurePlugin,
