@@ -6,6 +6,7 @@ mod add_purchase_order_permission_enum_values;
 mod add_purchase_order_report_context;
 mod add_purchase_order_tables;
 mod add_purchase_order_to_number_type;
+mod add_supply_level_to_name_properties;
 
 pub(crate) struct V2_10_00;
 
@@ -25,6 +26,7 @@ impl Migration for V2_10_00 {
             Box::new(add_purchase_order_to_number_type::Migrate),
             Box::new(add_purchase_order_report_context::Migrate),
             Box::new(add_purchase_order_permission_enum_values::Migrate),
+            Box::new(add_supply_level_to_name_properties::Migrate),
         ]
     }
 }
