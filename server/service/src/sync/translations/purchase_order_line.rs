@@ -24,12 +24,11 @@ pub struct LegacyPurchaseOrderLineRow {
     pub purchase_order_id: String,
     pub line_number: i64,
     #[serde(rename = "item_ID")]
-    pub item_id: String,
+    pub item_link_id: String,
     #[serde(default)]
     pub item_name: String,
     #[serde(default)]
-    #[serde(rename = "snapshotQuantity")]
-    pub snapshot_soh: Option<f64>,
+    pub snapshot_quantity: f64,
     #[serde(default)]
     pub packsize_ordered: f64,
     #[serde(default)]
@@ -91,15 +90,18 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             store_id,
             purchase_order_id,
             line_number,
-            item_id,
+            item_link_id,
             item_name,
-            snapshot_soh: number_of_packs,
-            pack_size,
-            requested_quantity,
-            authorised_quantity,
-            total_received,
-            requested_delivery_date,
-            expected_delivery_date,
+            snapshot_quantity,
+            packsize_ordered,
+            quan_original_order,
+            quan_adjusted_order,
+            quan_rec_to_date,
+            delivery_date_requested,
+            delivery_date_expected,
+            supplier_item_code,
+            price_extension_expected,
+            price_expected_after_discount,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
@@ -107,7 +109,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             store_id,
             purchase_order_id,
             line_number,
-            item_link_id: item_id,
+            item_link_id,
             item_name,
             requested_number_of_units: quan_original_order,
             requested_pack_size: packsize_ordered,
@@ -149,22 +151,23 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
 
-        // TODO: look up item_link_id and translate to item_id
-
         let legacy_row = LegacyPurchaseOrderLineRow {
             id,
             store_id,
             purchase_order_id,
             line_number,
-            item_id: item_link_id,
+            item_link_id,
             item_name,
-            snapshot_soh: number_of_packs,
-            pack_size,
-            requested_quantity,
-            authorised_quantity,
-            total_received,
-            requested_delivery_date: requested_delivery_date,
-            expected_delivery_date: expected_delivery_date,
+            snapshot_quantity: stock_on_hand_in_units,
+            packsize_ordered: requested_pack_size,
+            quan_original_order: requested_number_of_units,
+            quan_adjusted_order: authorised_number_of_units,
+            quan_rec_to_date: received_number_of_units,
+            delivery_date_requested: requested_delivery_date,
+            delivery_date_expected: expected_delivery_date,
+            supplier_item_code,
+            price_extension_expected: price_per_unit_before_discount,
+            price_expected_after_discount: price_per_unit_after_discount,
         };
 
         Ok(PushTranslateResult::upsert(
