@@ -1362,7 +1362,7 @@
   "label.visit-start": "Start",
   "label.volume-per-outer-pack": "Volume per outer pack",
   "label.volume-per-pack": "Volume per pack",
-  "label.volume-per-unit": "Volume per unit (L)",
+  "label.volume-per-unit": "Volume per unit (m³)",
   "label.vvm-status": "VVM Status",
   "label.vvm-type": "VVM Type",
   "label.ward": "Ward",

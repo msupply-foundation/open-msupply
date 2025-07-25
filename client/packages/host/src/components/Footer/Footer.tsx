@@ -19,9 +19,9 @@ import {
   useMediaQuery,
   Breakpoints,
 } from '@openmsupply-client/common';
+import { StoreEditModal } from '@openmsupply-client/system';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
-import { StoreEditModal, useName } from '@openmsupply-client/system';
 import { UserDetails } from './UserDetails';
 
 interface PaddedCellProps {
