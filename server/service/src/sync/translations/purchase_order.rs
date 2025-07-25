@@ -177,7 +177,8 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     pub supplier_discount_amount: f64,
     #[serde(default)]
-    pub curr_rate: f64,
+    #[serde(deserialize_with = "zero_f64_as_none")]
+    pub curr_rate: Option<f64>,
     #[serde(default)]
     #[serde(rename = "Order_total_before_discount")]
     pub order_total_before_discount: f64,
@@ -313,7 +314,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             donor_link_id: donor_id,
             reference,
             currency_id,
-            foreign_exchange_rate: Some(curr_rate),
+            foreign_exchange_rate: curr_rate,
             shipping_method: delivery_method,
             sent_datetime,
             contract_signed_date,
@@ -429,7 +430,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             name_id: supplier_id,
             creation_date: created_datetime.date(),
             confirm_date: confirmed_datetime.map(|d| d.date()),
-            curr_rate: foreign_exchange_rate.unwrap_or(1.0),
+            curr_rate: foreign_exchange_rate,
             order_total_before_discount,
             order_total_after_discount,
             donor_id,
