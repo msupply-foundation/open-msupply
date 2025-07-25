@@ -2,9 +2,12 @@ import {
   FnUtils,
   InsertPurchaseOrderInput,
   SortUtils,
+  useConfirmationModal,
   useMutation,
+  useNotification,
   useParams,
   useQuery,
+  useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
@@ -63,11 +66,13 @@ export const usePurchaseOrder = (id?: string) => {
     return result;
   };
 
+  const { addFromMasterList, isLoading: isAdding } = useAddFromMasterList();
 
   return {
     query: { data, isLoading, isError },
     lines: { sortedAndFilteredLines, itemFilter, setItemFilter },
-    create: { create, isCreating, createError },
+    create: { create, isCreating, createError},
+    masterList: { addFromMasterList, isAdding }
   };
 };
 
@@ -141,3 +146,59 @@ const useFilteredAndSortedLines = (
 
   return { sortedAndFilteredLines, itemFilter, setItemFilter };
 };
+
+const useAddFromMasterList = () => {
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+  const t = useTranslation();
+  const { error } = useNotification();
+  
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-add-from-master-list'),
+  });
+
+  const mutationState =  useMutation(purchaseOrderApi.addToPurchaseOrderFromMasterList, {
+    onSettled: () =>
+      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
+  });
+
+  const addFromMasterList = async (masterListId: string, purchaseOrderId: string) => {
+    getConfirmation({
+      onConfirm: async () => {
+        try {
+          const result = await mutationState.mutateAsync({
+            input: {
+              masterListId,
+              purchaseOrderId
+            },
+            storeId,
+          },
+          {
+        onError: e => {
+          const { message } = e as Error;
+          switch (message) {
+            case 'CannotEditPurchaseOrder': {
+              return error(t('label.cannot-edit-purchase-order'))();
+            }
+            case 'RecordNotFound': {
+              return error(t('messages.record-not-found'))();
+            }
+            case 'MasterListNotFoundForThisStore': {
+              return error(t('error.master-list-not-found'))();
+            }
+            default:
+              return error(t('label.cannot-add-item-to-purchase-order'))();
+          }
+        }
+        });
+          return result;
+        } catch (err) {
+          // Error handling is done in the onError callback, so swallow here
+        }
+      },
+    });
+  };
+
+  return { ...mutationState, addFromMasterList };
+};``
