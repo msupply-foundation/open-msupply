@@ -1,12 +1,7 @@
 import React from 'react';
-import {
-  ButtonWithIcon,
-  useTranslation,
-  useToggle,
-  PlusCircleIcon,
-  useAuthContext,
-} from '@openmsupply-client/common';
+import { useTranslation, useAuthContext } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
+import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 
 export const AddFromMasterListButtonComponent = ({
   isOn,
@@ -18,16 +13,19 @@ export const AddFromMasterListButtonComponent = ({
   const t = useTranslation();
   const { storeId } = useAuthContext();
 
+  const {
+    query: { data: purchaseOrder },
+    masterList: { addFromMasterList },
+  } = usePurchaseOrder();
+
   return (
     <>
       <MasterListSearchModal
         open={isOn}
         onClose={toggleOff}
         onChange={masterList => {
+          addFromMasterList(masterList.id, purchaseOrder?.id ?? '');
           toggleOff();
-          // eslint-disable-next-line no-console
-          console.log('TO-DO: Add from master list', masterList);
-          // addFromMasterList(masterList);
         }}
         filterBy={{ existsForStoreId: { equalTo: storeId } }}
       />

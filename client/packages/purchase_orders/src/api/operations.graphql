@@ -201,3 +201,35 @@ mutation insertPurchaseOrderLine(
     }
   }
 }
+
+mutation addToPurchaseOrderFromMasterList(
+  $storeId: String!
+  $input: AddToPurchaseOrderFromMasterListInput!
+) {
+  addToPurchaseOrderFromMasterList(storeId: $storeId, input: $input) {
+    ... on AddToPurchaseOrderFromMasterListResponse {
+      ... on PurchaseOrderLineConnector {
+        __typename
+        totalCount
+      }
+    }
+    ... on AddToPurchaseOrderFromMasterListError {
+      __typename
+      error {
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
+}
