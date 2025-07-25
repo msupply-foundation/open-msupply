@@ -8,30 +8,28 @@ import {
 } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
 
-export const AddFromMasterListButtonComponent = () => {
+export const AddFromMasterListButtonComponent = ({
+  isOn,
+  toggleOff,
+}: {
+  isOn: boolean;
+  toggleOff: () => void;
+}) => {
   const t = useTranslation();
-
-  const modalController = useToggle();
   const { storeId } = useAuthContext();
 
   return (
     <>
       <MasterListSearchModal
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
+        open={isOn}
+        onClose={toggleOff}
         onChange={masterList => {
-          modalController.toggleOff();
+          toggleOff();
           // eslint-disable-next-line no-console
           console.log('TO-DO: Add from master list', masterList);
           // addFromMasterList(masterList);
         }}
-        filterBy={{ isProgram: false, existsForStoreId: { equalTo: storeId } }}
-      />
-      <ButtonWithIcon
-        // disabled={isDisabled || isProgram}
-        Icon={<PlusCircleIcon />}
-        label={t('button.add-from-master-list')}
-        onClick={modalController.toggleOn}
+        filterBy={{ existsForStoreId: { equalTo: storeId } }}
       />
     </>
   );
