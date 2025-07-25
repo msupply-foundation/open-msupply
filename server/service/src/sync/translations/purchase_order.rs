@@ -38,7 +38,7 @@ pub enum LegacyPurchaseOrderStatus {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct PurchaseOrderOmsFields {
     #[serde(default)]
     pub expected_delivery_date: Option<NaiveDate>,
