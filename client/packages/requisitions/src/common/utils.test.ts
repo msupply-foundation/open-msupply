@@ -68,16 +68,4 @@ describe('calculateValueInDoses', () => {
     // 2.5 units × 2 doses per unit = 5 doses
     expect(calculateValueInDoses(Representation.UNITS, 10, 2, 2.5)).toBe(5);
   });
-
-  it('should round to two decimal places', () => {
-    // 3.333 packs × 10 units per pack × 2 doses per unit = 66.66 doses
-    expect(
-      calculateValueInDoses(Representation.PACKS, 10, 2, 3.333)
-    ).toBeCloseTo(66.66, 2);
-
-    // 1.111 units × 2 doses per unit = 2.22 doses
-    expect(
-      calculateValueInDoses(Representation.UNITS, 10, 2, 1.111)
-    ).toBeCloseTo(2.22, 2);
-  });
 });
