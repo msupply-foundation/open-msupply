@@ -10,7 +10,7 @@ import {
   useIntl,
   useTranslation,
 } from '@common/intl';
-import { useDialog, useToggle } from '@common/hooks';
+import { useDialog, useNotification, useToggle } from '@common/hooks';
 import { mapTranslationsToArray, mapTranslationsToObject } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
 import {
@@ -62,15 +62,25 @@ export const CustomTranslationsModal = ({
   const t = useTranslation();
   const defaultTranslation = useTranslation('common');
   const { i18n } = useIntl();
+  const { success, error } = useNotification();
 
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
 
   const [loading, setLoading] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [translations, setTranslations] = useState(
     mapTranslationsToArray(value, defaultTranslation)
   );
 
   const saveAndClose = async () => {
+    const hasInvalidTranslations = translations.some(tr => tr.isInvalid);
+    if (hasInvalidTranslations) {
+      setShowValidationErrors(true);
+      const errorSnack = error(t('error.invalid-custom-translation'));
+      errorSnack();
+      return;
+    }
+
     setLoading(true);
     const asObject = mapTranslationsToObject(translations);
     await update(asObject);
@@ -78,6 +88,7 @@ export const CustomTranslationsModal = ({
     // re-render to pick up the new translations (i.e. navigate away)
     i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
     setLoading(false);
+    success(t('messages.saved'))();
     onClose();
   };
 
@@ -86,7 +97,7 @@ export const CustomTranslationsModal = ({
       <Modal
         title={t('label.edit-custom-translations')}
         width={1200}
-        height={700}
+        height={900}
         cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
         okButton={
           <LoadingButton
@@ -103,6 +114,7 @@ export const CustomTranslationsModal = ({
           <TranslationsTable
             translations={translations}
             setTranslations={setTranslations}
+            showValidationErrors={showValidationErrors}
           />
         </TableProvider>
       </Modal>

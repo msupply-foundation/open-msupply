@@ -155,6 +155,9 @@ pub use self::purchase_order::*;
 pub mod purchase_order_line;
 pub use self::purchase_order_line::*;
 
+pub mod item_store_join;
+pub use self::item_store_join::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

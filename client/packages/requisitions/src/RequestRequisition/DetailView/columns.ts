@@ -88,6 +88,7 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
       description: 'description.available-soh',
       align: ColumnAlign.Right,
       width: 200,
+      Cell: PackQuantityCell,
       accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
       getSortValue: rowData => rowData.itemStats.availableStockOnHand,
     },
