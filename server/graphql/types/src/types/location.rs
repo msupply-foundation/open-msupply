@@ -1,10 +1,10 @@
-use crate::types::ColdStorageTypeNode;
+use crate::types::{ColdStorageTypeNode, LocationTypeNode};
 
 use super::StockLineConnector;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::ColdStorageTypeLoader;
+use graphql_core::loader::LocationTypeLoader;
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
 use repository::StringFilter;
@@ -90,20 +90,30 @@ impl LocationNode {
         ))
     }
 
+    pub async fn location_type(&self, ctx: &Context<'_>) -> Result<Option<LocationTypeNode>> {
+        let location_type_id = match &self.row().location_type_id {
+            Some(location_type_id) => location_type_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationTypeLoader>>();
+        Ok(loader
+            .load_one(location_type_id.clone())
+            .await?
+            .map(LocationTypeNode::from_domain))
+    }
+
+    #[graphql(deprecation = "Since 2.10. Use `locationType` instead")]
     pub async fn cold_storage_type(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<ColdStorageTypeNode>> {
-        let cold_storage_type_id = match &self.row().cold_storage_type_id {
-            Some(cold_storage_type_id) => cold_storage_type_id,
-            None => return Ok(None),
-        };
+        let location_type = self.location_type(ctx).await;
 
-        let loader = ctx.get_loader::<DataLoader<ColdStorageTypeLoader>>();
-        Ok(loader
-            .load_one(cold_storage_type_id.clone())
-            .await?
-            .map(ColdStorageTypeNode::from_domain))
+        // Map to deprecated ColdStorageTypeNode
+        location_type.map(|opt| {
+            opt.map(|location_type| ColdStorageTypeNode::from_domain(location_type.location_type))
+        })
     }
 }
 

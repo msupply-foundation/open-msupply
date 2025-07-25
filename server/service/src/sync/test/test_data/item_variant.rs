@@ -23,7 +23,7 @@ fn item_variant1() -> ItemVariantRow {
         id: ITEM_VARIANT1.0.to_string(),
         name: "Item Variant 1".to_string(),
         item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(), // ITEM_1.0
-        cold_storage_type_id: None,
+        location_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
         vvm_type: None,
@@ -54,7 +54,7 @@ fn item_variant2() -> ItemVariantRow {
         id: ITEM_VARIANT2.0.to_string(),
         name: "Item Variant 2".to_string(),
         item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(), // ITEM_1.0
-        cold_storage_type_id: None, //TODO: Add cold storage type when sync is implemented
+        location_type_id: None,
         manufacturer_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()), // NAME_1.0 (currently marked as manufacturer)
         deleted_datetime: None,
         vvm_type: Some("VVM 1".to_string()),

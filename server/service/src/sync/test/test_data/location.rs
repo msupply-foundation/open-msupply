@@ -41,7 +41,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             code: "Red.02".to_string(),
             on_hold: false,
             store_id: "store_a".to_string(),
-            cold_storage_type_id: None,
+            location_type_id: None,
         },
     )]
 }

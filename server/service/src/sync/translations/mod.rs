@@ -14,7 +14,6 @@ pub(crate) mod campaign;
 pub(crate) mod category;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
-pub(crate) mod cold_storage_type;
 pub(crate) mod contact;
 pub(crate) mod contact_form;
 pub(crate) mod currency;
@@ -35,6 +34,7 @@ pub(crate) mod item_variant;
 pub(crate) mod item_warning_join;
 pub(crate) mod location;
 pub(crate) mod location_movement;
+pub(crate) mod location_type;
 pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
@@ -127,7 +127,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         document_registry::boxed(),
         property::boxed(),
         name_property::boxed(),
-        cold_storage_type::boxed(),
+        location_type::boxed(),
         campaign::boxed(),
         contact::boxed(),
         // Remote

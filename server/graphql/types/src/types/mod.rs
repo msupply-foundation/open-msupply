@@ -121,8 +121,8 @@ pub use self::demographic::*;
 pub mod reason_option;
 pub use self::reason_option::*;
 
-pub mod cold_storage_type;
-pub use self::cold_storage_type::*;
+pub mod location_type;
+pub use self::location_type::*;
 
 pub mod abbreviation;
 pub use self::abbreviation::*;
