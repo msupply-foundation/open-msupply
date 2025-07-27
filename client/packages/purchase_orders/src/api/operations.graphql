@@ -80,6 +80,8 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   }
   requestedPackSize
   requestedDeliveryDate
+  requestedNumberOfUnits
+  authorisedNumberOfUnits
 }
 
 query purchaseOrders(

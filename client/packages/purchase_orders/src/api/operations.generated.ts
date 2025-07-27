@@ -52,6 +52,8 @@ export type PurchaseOrderFragment = {
       expectedDeliveryDate?: string | null;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
+      requestedNumberOfUnits: number;
+      authorisedNumberOfUnits?: number | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -71,6 +73,8 @@ export type PurchaseOrderLineFragment = {
   expectedDeliveryDate?: string | null;
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
+  requestedNumberOfUnits: number;
+  authorisedNumberOfUnits?: number | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -153,6 +157,8 @@ export type PurchaseOrderByIdQuery = {
             expectedDeliveryDate?: string | null;
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
+            requestedNumberOfUnits: number;
+            authorisedNumberOfUnits?: number | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -211,6 +217,8 @@ export const PurchaseOrderLineFragmentDoc = gql`
     }
     requestedPackSize
     requestedDeliveryDate
+    requestedNumberOfUnits
+    authorisedNumberOfUnits
   }
 `;
 export const PurchaseOrderFragmentDoc = gql`
