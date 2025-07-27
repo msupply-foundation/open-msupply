@@ -19,11 +19,10 @@ pub struct AddToPurchaseOrderFromMasterListInput {
 
 #[derive(Debug, PartialEq)]
 pub enum AddToPurchaseOrderFromMasterListError {
-    ShipmentDoesNotExist,
+    PurchaseOrderDoesNotExist,
     NotThisStorePurchaseOrder,
     CannotEditPurchaseOrder,
     MasterListNotFoundForThisStore,
-    NotAPurchaseOrder,
     DatabaseError(RepositoryError),
 }
 
@@ -70,13 +69,13 @@ fn validate(
     input: &AddToPurchaseOrderFromMasterListInput,
 ) -> Result<PurchaseOrderRow, InError> {
     let purchase_order_row = check_purchase_order_exists(&input.purchase_order_id, connection)?
-        .ok_or(InError::ShipmentDoesNotExist)?;
+        .ok_or(InError::PurchaseOrderDoesNotExist)?;
 
     if purchase_order_row.store_id != store_id {
         return Err(InError::NotThisStorePurchaseOrder);
     }
 
-    if purchase_order_row.status == PurchaseOrderStatus::Confirmed {
+    if purchase_order_row.status == PurchaseOrderStatus::Finalised {
         return Err(InError::CannotEditPurchaseOrder);
     }
 
@@ -117,4 +116,82 @@ fn generate(
         .collect();
 
     generate_empty_purchase_order_lines(ctx, &purchase_order_row, items_ids_not_in_invoice)
+}
+
+#[cfg(test)]
+mod test {
+    use crate::purchase_order::add_to_purchase_order_from_master_list::{
+        AddToPurchaseOrderFromMasterListError as ServiceError,
+        AddToPurchaseOrderFromMasterListInput as ServiceInput,
+    };
+    use crate::service_provider::ServiceProvider;
+    use repository::mock::{mock_purchase_order_a, mock_purchase_order_c};
+    use repository::{
+        mock::{mock_store_a, mock_store_c, mock_test_not_store_a_master_list, MockDataInserts},
+        test_db::setup_all,
+    };
+
+    #[actix_rt::test]
+    async fn add_from_master_list_errors() {
+        let (_, _, connection_manager, _) = setup_all(
+            "purchase_order_add_from_master_list_errors",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+
+        // PurchaseOrderDoesNotExist
+        assert_eq!(
+            service.add_to_purchase_order_from_master_list(
+                &context,
+                ServiceInput {
+                    purchase_order_id: "invalid".to_owned(),
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::PurchaseOrderDoesNotExist)
+        );
+
+        // CannotEditRecord
+        assert_eq!(
+            service.add_to_purchase_order_from_master_list(
+                &context,
+                ServiceInput {
+                    purchase_order_id: mock_purchase_order_c().id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::CannotEditPurchaseOrder)
+        );
+
+        // MasterListNotFoundForThisStore
+        assert_eq!(
+            service.add_to_purchase_order_from_master_list(
+                &context,
+                ServiceInput {
+                    purchase_order_id: mock_purchase_order_a().id,
+                    master_list_id: mock_test_not_store_a_master_list().master_list.id
+                },
+            ),
+            Err(ServiceError::MasterListNotFoundForThisStore)
+        );
+
+        // NotThisStore
+        context.store_id = mock_store_c().id;
+        assert_eq!(
+            service.add_to_purchase_order_from_master_list(
+                &context,
+                ServiceInput {
+                    purchase_order_id: mock_purchase_order_a().id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::NotThisStorePurchaseOrder)
+        );
+    }
 }
