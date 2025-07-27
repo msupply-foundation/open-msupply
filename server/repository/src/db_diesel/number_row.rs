@@ -61,7 +61,7 @@ impl fmt::Display for NumberRowType {
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
             NumberRowType::PurchaseOrder => write!(f, "PURCHASE_ORDER"),
             NumberRowType::PurchaseOrderLine(custom_string) => {
-                write!(f, "PURCHASE_ORDER_LINE_{}", custom_string)
+                write!(f, "PURCHASEORDERLINE_{}", custom_string) // Since we split this on _ we can't use that in the main part of the name
             }
         }
     }
@@ -85,7 +85,7 @@ impl TryFrom<String> for NumberRowType {
             _ => match s.split_once('_') {
                 Some((prefix, custom_string)) => match prefix {
                     "PROGRAM" => Ok(NumberRowType::Program(custom_string.to_string())),
-                    "PURCHASE_ORDER_LINE" => {
+                    "PURCHASEORDERLINE" => {
                         Ok(NumberRowType::PurchaseOrderLine(custom_string.to_string()))
                     }
                     _ => Err(NumberRowTypeError::UnknownTypePrefix(prefix.to_string())),
