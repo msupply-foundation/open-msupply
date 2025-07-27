@@ -3,7 +3,7 @@ use super::{
     rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
 };
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
     RnRFormRowRepository, RowActionType, StorageConnection, Upsert,
 };
 
@@ -201,11 +201,33 @@ impl<'a> RnRFormLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, rnr_form_line_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(rnr_form_line)
-            .filter(id.eq(rnr_form_line_id))
+    pub fn delete(&self, rnr_form_line_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let form_id = self
+            .find_one_by_id(rnr_form_line_id)?
+            .map(|r| r.rnr_form_id);
+
+        let change_log_id =
+            self.insert_changelog(rnr_form_line_id.to_owned(), form_id, RowActionType::Delete)?;
+
+        diesel::delete(rnr_form_line.filter(id.eq(rnr_form_line_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RnRFormLineDelete(pub String);
+// For tests only
+impl Delete for RnRFormLineDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        RnRFormLineRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            RnRFormLineRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }
 

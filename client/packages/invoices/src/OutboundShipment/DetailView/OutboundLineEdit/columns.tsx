@@ -24,11 +24,11 @@ import {
   TooltipTextCell,
   useSimplifiedTabletUI,
   QuantityUtils,
-  VvmStatusCell,
 } from '@openmsupply-client/common';
 import {
   CurrencyRowFragment,
   ItemVariantInfoIcon,
+  VVMStatusInputCell,
 } from '@openmsupply-client/system';
 import { getStockOutQuantityCellId } from '../../../utils';
 import {
@@ -39,6 +39,7 @@ import {
   AllocateInOption,
   AllocateInType,
 } from '../../../StockOut';
+import { VvmStatusFragment } from 'packages/system/src/Stock/api';
 
 type AllocateFn = (
   key: string,
@@ -55,12 +56,14 @@ export const useOutboundLineEditColumns = ({
   currency,
   isExternalSupplier,
   allocateIn,
+  setVvmStatus,
 }: {
   allocate: AllocateFn;
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
   allocateIn: AllocateInOption;
+  setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
@@ -117,7 +120,7 @@ export const useOutboundLineEditColumns = ({
       },
     ],
   ];
-  // If we have use VVM status, we need to show the VVM status column
+
   if (
     (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) &&
     item?.isVaccine
@@ -125,9 +128,10 @@ export const useOutboundLineEditColumns = ({
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => rowData?.vvmStatus,
       width: 85,
-      Cell: VvmStatusCell,
+      Cell: VVMStatusInputCell,
+      accessor: ({ rowData }) => rowData.vvmStatus,
+      setter: ({ id, vvmStatus }) => setVvmStatus(id, vvmStatus),
       defaultHideOnMobile: true,
     });
   }

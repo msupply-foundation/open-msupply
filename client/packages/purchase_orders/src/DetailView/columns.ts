@@ -60,7 +60,7 @@ export const usePurchaseOrderColumns = () => {
     },
     {
       key: 'authorisedQuantity',
-      label: 'label.authorized',
+      label: 'label.authorised',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.authorisedQuantity,
       getSortValue: rowData => rowData.authorisedQuantity ?? 0,

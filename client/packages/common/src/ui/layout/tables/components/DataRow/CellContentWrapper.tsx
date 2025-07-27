@@ -28,7 +28,6 @@ export const CellContentWrapper = <T extends RecordWithId>({
       sx={{
         display: 'flex',
         width: '100%',
-        height: '40px',
         textDecoration: 'none',
         alignItems: 'center',
         justifyContent: `${column.align}`,

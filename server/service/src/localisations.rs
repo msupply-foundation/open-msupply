@@ -1,5 +1,5 @@
 use repository::StorageConnection;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use tera::{Error as TeraError, Function};
 use thiserror::Error;
 
@@ -26,7 +26,7 @@ impl LocalisationsService {
     pub fn new() -> Self {
         let mut localisations = Localisations {
             translations: HashMap::new(),
-            custom_translations: HashMap::new(),
+            custom_translations: BTreeMap::new(),
         };
 
         // Initialise localisations with OMS default translations
@@ -53,7 +53,7 @@ impl LocalisationsService {
 #[derive(Clone)]
 pub struct Localisations {
     pub translations: HashMap<String, HashMap<String, HashMap<String, String>>>,
-    pub custom_translations: HashMap<String, String>,
+    pub custom_translations: BTreeMap<String, String>,
 }
 
 impl Localisations {
