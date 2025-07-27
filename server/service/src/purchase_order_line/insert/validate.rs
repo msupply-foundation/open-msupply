@@ -8,6 +8,7 @@ use crate::purchase_order_line::insert::{
 };
 
 pub fn validate(
+    store_id: &str,
     input: &InsertPurchaseOrderLineInput,
     connection: &StorageConnection,
 ) -> Result<(), InsertPurchaseOrderLineError> {
@@ -18,11 +19,12 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::PurchaseOrderLineAlreadyExists);
     }
 
-    if PurchaseOrderRowRepository::new(connection)
+    let purchase_order = PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(&input.purchase_order_id)?
-        .is_none()
-    {
-        return Err(InsertPurchaseOrderLineError::PurchaseOrderDoesNotExist);
+        .ok_or(InsertPurchaseOrderLineError::PurchaseOrderDoesNotExist)?;
+
+    if purchase_order.store_id != store_id {
+        return Err(InsertPurchaseOrderLineError::IncorrectStoreId);
     }
 
     if ItemRowRepository::new(connection)
