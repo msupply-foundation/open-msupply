@@ -150,7 +150,9 @@ const CampaignsComponent = () => {
         data={data?.nodes}
         isLoading={isLoading}
         isError={isError}
-        noDataElement={<NothingHere body={t('error.no-campaigns')} />}
+        noDataElement={
+          <NothingHere body={t('error.no-campaigns')} onCreate={onOpen} />
+        }
         onRowClick={onRowClick}
       />
       <Footer
