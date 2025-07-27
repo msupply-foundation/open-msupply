@@ -9,6 +9,8 @@ import {
   useIsGapsStoreOnly,
   PropertyNodeValueType,
   NamePropertyNode,
+  TypedTFunction,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { DraftProperties } from './useDraftStoreProperties';
 
@@ -90,11 +92,13 @@ const Row = ({
   isGapsStore: boolean;
   inputProperties: PropertyInput;
 }) => {
+  const t = useTranslation();
+
   if (!isGapsStore)
     return (
       <InputWithLabelRow
         key={key}
-        label={label}
+        label={translatePropertyLabels(t, label)}
         sx={{ width: '100%' }}
         labelProps={{
           sx: {
@@ -124,4 +128,18 @@ const Row = ({
       <PropertyInput {...inputProperties} />
     </Box>
   );
+};
+
+const translatePropertyLabels = (
+  t: TypedTFunction<LocaleKey>,
+  label: string
+) => {
+  // For now, the rest of the properties have to be initialised, and are saved
+  // in french so have not included translations yet
+  switch (label) {
+    case 'Packaging Level':
+      return t('label.packaging-level');
+    default:
+      return label;
+  }
 };
