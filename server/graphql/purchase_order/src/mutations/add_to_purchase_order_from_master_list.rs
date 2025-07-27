@@ -75,7 +75,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::ShipmentDoesNotExist => {
+        ServiceError::PurchaseOrderDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         ServiceError::CannotEditPurchaseOrder => {
