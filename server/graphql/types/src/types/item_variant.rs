@@ -1,6 +1,6 @@
 use crate::types::LocationTypeNode;
 
-use super::{BundledItemNode, ColdStorageTypeNode, ItemNode, NameNode};
+use super::{BundledItemNode, ItemNode, NameNode};
 use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::loader::{
@@ -54,11 +54,6 @@ impl ItemVariantNode {
         &self.item_variant.location_type_id
     }
 
-    #[graphql(deprecation = "Since 2.10. Use `locationTypeId` instead")]
-    pub async fn cold_storage_type_id(&self) -> &Option<String> {
-        &self.item_variant.location_type_id
-    }
-
     pub async fn location_type(&self, ctx: &Context<'_>) -> Result<Option<LocationTypeNode>> {
         let location_type_id = match &self.item_variant.location_type_id {
             Some(location_type_id) => location_type_id,
@@ -70,19 +65,6 @@ impl ItemVariantNode {
             .load_one(location_type_id.clone())
             .await?
             .map(LocationTypeNode::from_domain))
-    }
-
-    #[graphql(deprecation = "Since 2.10. Use `locationType` instead")]
-    pub async fn cold_storage_type(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<ColdStorageTypeNode>> {
-        let location_type = self.location_type(ctx).await;
-
-        // Map to deprecated ColdStorageTypeNode
-        location_type.map(|opt| {
-            opt.map(|location_type| ColdStorageTypeNode::from_domain(location_type.location_type))
-        })
     }
 
     pub async fn manufacturer(

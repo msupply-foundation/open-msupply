@@ -1307,14 +1307,6 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
-export type ColdStorageTypeNode = {
-  __typename: 'ColdStorageTypeNode';
-  id: Scalars['String']['output'];
-  maxTemperature: Scalars['Float']['output'];
-  minTemperature: Scalars['Float']['output'];
-  name: Scalars['String']['output'];
-};
-
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -3289,8 +3281,6 @@ export type InsertLocationErrorInterface = {
 
 export type InsertLocationInput = {
   code: Scalars['String']['input'];
-  /** @deprecated Since 2.10. Use `locationTypeId` instead */
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -4543,10 +4533,6 @@ export type ItemVariantNode = {
   bundledItemVariants: Array<BundledItemNode>;
   /** This item variant is bundled with other (principal) item variants */
   bundlesWith: Array<BundledItemNode>;
-  /** @deprecated Since 2.10. Use `locationType` instead */
-  coldStorageType?: Maybe<ColdStorageTypeNode>;
-  /** @deprecated Since 2.10. Use `locationTypeId` instead */
-  coldStorageTypeId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   item?: Maybe<ItemNode>;
   itemId: Scalars['String']['output'];
@@ -4710,8 +4696,6 @@ export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface &
 export type LocationNode = {
   __typename: 'LocationNode';
   code: Scalars['String']['output'];
-  /** @deprecated Since 2.10. Use `locationType` instead */
-  coldStorageType?: Maybe<ColdStorageTypeNode>;
   id: Scalars['String']['output'];
   locationType?: Maybe<LocationTypeNode>;
   name: Scalars['String']['output'];
@@ -9493,8 +9477,6 @@ export type UpdateLocationErrorInterface = {
 
 export type UpdateLocationInput = {
   code?: InputMaybe<Scalars['String']['input']>;
-  /** @deprecated Since 2.10. Use `locationTypeId` instead */
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -10247,8 +10229,6 @@ export type UpsertItemVariantErrorInterface = {
 };
 
 export type UpsertItemVariantInput = {
-  /** @deprecated Since 2.10. Use `locationTypeId` instead */
-  coldStorageTypeId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   locationTypeId?: InputMaybe<NullableStringUpdate>;

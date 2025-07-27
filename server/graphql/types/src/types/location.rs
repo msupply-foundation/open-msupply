@@ -1,4 +1,4 @@
-use crate::types::{ColdStorageTypeNode, LocationTypeNode};
+use crate::types::LocationTypeNode;
 
 use super::StockLineConnector;
 use async_graphql::dataloader::DataLoader;
@@ -101,19 +101,6 @@ impl LocationNode {
             .load_one(location_type_id.clone())
             .await?
             .map(LocationTypeNode::from_domain))
-    }
-
-    #[graphql(deprecation = "Since 2.10. Use `locationType` instead")]
-    pub async fn cold_storage_type(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<ColdStorageTypeNode>> {
-        let location_type = self.location_type(ctx).await;
-
-        // Map to deprecated ColdStorageTypeNode
-        location_type.map(|opt| {
-            opt.map(|location_type| ColdStorageTypeNode::from_domain(location_type.location_type))
-        })
     }
 }
 
