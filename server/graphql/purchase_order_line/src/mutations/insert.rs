@@ -44,11 +44,10 @@ pub fn insert_purchase_order_line(
     store_id: &str,
     input: InsertInput,
 ) -> Result<InsertResponse> {
-    // TODO: add the correct permission type - temporary permission
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
         },
     );
