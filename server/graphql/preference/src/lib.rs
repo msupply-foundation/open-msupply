@@ -53,7 +53,7 @@ impl PreferenceQueries {
         let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
-                resource: Resource::MutatePreferences,
+                resource: Resource::QueryStore,
                 store_id: Some(store_id.clone()),
             },
         )?;
