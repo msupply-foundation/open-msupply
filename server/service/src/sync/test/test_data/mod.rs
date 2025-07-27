@@ -32,6 +32,7 @@ pub(crate) mod invoice_line;
 pub(crate) mod item;
 pub(crate) mod item_category;
 pub(crate) mod item_direction;
+pub(crate) mod item_store_join;
 pub(crate) mod item_variant;
 pub(crate) mod item_warning_join;
 pub(crate) mod location;
@@ -93,6 +94,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut user::test_pull_upsert_records());
     test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());
+    test_records.append(&mut item_store_join::test_pull_upsert_records());
     test_records.append(&mut item_direction::test_pull_upsert_records());
     test_records.append(&mut master_list_line::test_pull_upsert_records());
     test_records.append(&mut master_list_name_join::test_pull_upsert_records());
@@ -199,6 +201,8 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_delete_records());
     test_records.append(&mut clinician_store_join::test_pull_delete_records());
+    test_records.append(&mut rnr_form::test_pull_delete_records());
+    test_records.append(&mut rnr_form_line::test_pull_delete_records());
 
     test_records
 }

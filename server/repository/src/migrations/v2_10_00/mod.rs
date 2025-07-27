@@ -1,12 +1,14 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_can_cancel_finalised_invoices_user_permission;
 mod add_contact_table;
-mod add_purchase_order_line_to_number_type;
+mod add_item_store_join;
+mod add_purchase_order_permission_enum_values;
 mod add_purchase_order_report_context;
 mod add_purchase_order_tables;
 mod add_purchase_order_to_number_type;
+mod add_supply_level_to_name_properties;
+mod delete_unused_number_type;
 
 pub(crate) struct V2_10_00;
 
@@ -25,8 +27,10 @@ impl Migration for V2_10_00 {
             Box::new(add_purchase_order_tables::Migrate),
             Box::new(add_purchase_order_to_number_type::Migrate),
             Box::new(add_purchase_order_report_context::Migrate),
-            Box::new(add_can_cancel_finalised_invoices_user_permission::Migrate),
-            Box::new(add_purchase_order_line_to_number_type::Migrate),
+            Box::new(add_item_store_join::Migrate),
+            Box::new(add_purchase_order_permission_enum_values::Migrate),
+            Box::new(add_supply_level_to_name_properties::Migrate),
+            Box::new(delete_unused_number_type::Migrate),
         ]
     }
 }
