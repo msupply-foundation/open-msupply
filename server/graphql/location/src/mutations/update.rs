@@ -50,8 +50,6 @@ pub struct UpdateLocationInput {
     pub name: Option<String>,
     pub on_hold: Option<bool>,
     pub location_type_id: Option<String>,
-    #[graphql(deprecation = "Since 2.10. Use `locationTypeId` instead")]
-    pub cold_storage_type_id: Option<String>,
 }
 
 impl From<UpdateLocationInput> for UpdateLocation {
@@ -62,7 +60,6 @@ impl From<UpdateLocationInput> for UpdateLocation {
             name,
             on_hold,
             location_type_id,
-            cold_storage_type_id,
         }: UpdateLocationInput,
     ) -> Self {
         UpdateLocation {
@@ -70,7 +67,7 @@ impl From<UpdateLocationInput> for UpdateLocation {
             code,
             name,
             on_hold,
-            location_type_id: location_type_id.or(cold_storage_type_id),
+            location_type_id: location_type_id,
         }
     }
 }

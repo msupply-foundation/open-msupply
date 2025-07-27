@@ -22,8 +22,6 @@ pub struct UpsertItemVariantInput {
     pub item_id: String,
     pub name: String,
     pub location_type_id: Option<NullableUpdateInput<String>>,
-    #[graphql(deprecation = "Since 2.10. Use `locationTypeId` instead")]
-    pub cold_storage_type_id: Option<NullableUpdateInput<String>>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub packaging_variants: Vec<PackagingVariantInput>,
     pub vvm_type: Option<NullableUpdateInput<String>>,
@@ -86,7 +84,6 @@ impl UpsertItemVariantInput {
             item_id,
             name,
             location_type_id,
-            cold_storage_type_id,
             manufacturer_id,
             packaging_variants,
             vvm_type,
@@ -96,11 +93,9 @@ impl UpsertItemVariantInput {
             id: id.clone(),
             item_id,
             name,
-            location_type_id: location_type_id
-                .or(cold_storage_type_id)
-                .map(|location_type_id| NullableUpdate {
-                    value: location_type_id.value,
-                }),
+            location_type_id: location_type_id.map(|location_type_id| NullableUpdate {
+                value: location_type_id.value,
+            }),
             manufacturer_id: manufacturer_id.map(|manufacturer_id| NullableUpdate {
                 value: manufacturer_id.value,
             }),
