@@ -57,6 +57,7 @@ const PlaceholderRow = ({
   const t = useTranslation();
 
   const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
+  const tooltip = useFormatNumber().round(quantity ?? 0, 10);
 
   // TODO - maybe should be editable? Can't clear when manually allocating..
   return quantity === null ? null : (
@@ -76,7 +77,7 @@ const PlaceholderRow = ({
         </PlaceholderCell>
       )}
       <PlaceholderCell colSpan={dosesPerUnit ? 2 : 3}></PlaceholderCell>
-      <Tooltip title={quantity.toString()}>
+      <Tooltip title={tooltip}>
         <PlaceholderCell style={{ textAlign: 'right' }}>
           {!!NumUtils.hasMoreThanTwoDp(quantity)
             ? `${formattedValue}...`
@@ -96,12 +97,13 @@ const TotalRow = ({
 }) => {
   const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
+  const tooltip = useFormatNumber().round(allocatedQuantity, 10);
 
   return (
     <tr>
       <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
       <TotalCell colSpan={6 + extraColumnOffset}></TotalCell>
-      <Tooltip title={allocatedQuantity.toString()}>
+      <Tooltip title={tooltip}>
         <TotalCell
           style={{
             textAlign: 'right',
@@ -139,6 +141,7 @@ export const OutboundLineEditTable = ({
     allocatedQuantity,
     item,
     manualAllocate,
+    setVvmStatus,
   } = useAllocationContext(state => {
     const { placeholderUnits, item, allocateIn } = state;
 
@@ -176,6 +179,7 @@ export const OutboundLineEditTable = ({
     currency,
     isExternalSupplier,
     allocateIn: allocateIn,
+    setVvmStatus,
   });
 
   // Display all stock lines to user, including non-allocatable ones at the bottom

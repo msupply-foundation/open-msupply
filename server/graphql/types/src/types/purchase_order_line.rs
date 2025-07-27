@@ -45,8 +45,8 @@ impl PurchaseOrderLineNode {
         )
     }
 
-    pub async fn soh_in_units(&self) -> f64 {
-        self.row().soh_in_units
+    pub async fn stock_on_hand_in_units(&self) -> f64 {
+        self.row().stock_on_hand_in_units
     }
     pub async fn requested_pack_size(&self) -> f64 {
         self.row().requested_pack_size

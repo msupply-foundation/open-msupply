@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useDialog,
   Grid,
@@ -12,6 +12,8 @@ import {
   SchedulePeriodNode,
   RnRFormNodeStatus,
   Typography,
+  LoadingButton,
+  CheckIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
@@ -23,16 +25,23 @@ interface RnRFormCreateModalProps {
   onClose: () => void;
 }
 
-export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
+export const RnRFormCreateModal = ({
   isOpen,
   onClose,
-}) => {
+}: RnRFormCreateModalProps) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation();
   const navigate = useNavigate();
 
-  const { previousForm, draft, updateDraft, clearDraft, create, isIncomplete } =
-    useCreateRnRForm();
+  const {
+    previousForm,
+    draft,
+    updateDraft,
+    clearDraft,
+    create,
+    isLoading,
+    isIncomplete,
+  } = useCreateRnRForm();
 
   const { data: schedulesAndPeriods } = useSchedulesAndPeriods(
     draft.program?.id ?? ''
@@ -55,9 +64,13 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
   return (
     <Modal
       okButton={
-        <DialogButton
-          variant="ok"
+        <LoadingButton
+          label={t('button.ok')}
+          startIcon={<CheckIcon />}
+          isLoading={isLoading}
           disabled={isIncomplete || prevFormNotFinalised}
+          variant="contained"
+          color="secondary"
           onClick={async () => {
             try {
               const result = await create();

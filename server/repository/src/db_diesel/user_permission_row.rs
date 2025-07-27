@@ -62,10 +62,14 @@ pub enum PermissionType {
     // customer return
     CustomerReturnQuery,
     CustomerReturnMutate,
-    // Prescription
+    // prescription
     PrescriptionQuery,
     PrescriptionMutate,
     CancelFinalisedInvoices,
+    // purchase orders
+    PurchaseOrderQuery,
+    PurchaseOrderMutate,
+    PurchaseOrderAuthorise,
     // reporting
     Report,
     // log

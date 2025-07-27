@@ -1,11 +1,11 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
 pub struct CustomTranslations;
 
 impl Preference for CustomTranslations {
-    type Value = HashMap<String, String>;
+    type Value = BTreeMap<String, String>;
 
     fn key(&self) -> PrefKey {
         PrefKey::CustomTranslations
@@ -22,6 +22,6 @@ impl Preference for CustomTranslations {
     }
 
     fn default_value(&self) -> Self::Value {
-        HashMap::new()
+        BTreeMap::new()
     }
 }

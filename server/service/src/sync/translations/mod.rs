@@ -31,6 +31,7 @@ pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
 pub(crate) mod item_direction;
+pub(crate) mod item_store_join;
 pub(crate) mod item_variant;
 pub(crate) mod item_warning_join;
 pub(crate) mod location;
@@ -112,6 +113,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         unit::boxed(),
         category::boxed(),
         item::boxed(),
+        item_store_join::boxed(),
         store::boxed(),
         master_list::boxed(),
         master_list_line::boxed(),
