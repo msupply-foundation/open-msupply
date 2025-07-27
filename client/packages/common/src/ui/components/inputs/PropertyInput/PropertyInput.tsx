@@ -6,6 +6,7 @@ import {
   NumericTextInput,
 } from '@common/components';
 import { PropertyNodeValueType } from '@common/types';
+import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 
 type PropertyValue = string | number | boolean | undefined;
 type PropertyInput = {
@@ -16,15 +17,6 @@ type PropertyInput = {
   disabled?: boolean;
 };
 
-const mapValueToOption = (value: PropertyValue | null) =>
-  value === null
-    ? undefined
-    : {
-        label: value as string,
-        id: value as string,
-        value,
-      };
-
 export const PropertyInput: FC<PropertyInput> = ({
   valueType,
   allowedValues,
@@ -32,6 +24,17 @@ export const PropertyInput: FC<PropertyInput> = ({
   onChange,
   disabled,
 }) => {
+  const t = useTranslation();
+
+  const mapValueToOption = (value: PropertyValue | null) =>
+    value === null
+      ? undefined
+      : {
+          label: translateValueLabels(t, value as string),
+          id: value as string,
+          value,
+        };
+
   switch (valueType) {
     case PropertyNodeValueType.Boolean:
       return (
@@ -84,4 +87,15 @@ export const PropertyInput: FC<PropertyInput> = ({
   }
 
   return <div>{value}</div>;
+};
+
+const translateValueLabels = (t: TypedTFunction<LocaleKey>, value: string) => {
+  switch (value) {
+    case 'Primary (1)':
+      return t('label.primary-1');
+    case 'Secondary (2)':
+      return t('label.secondary-2');
+    case 'Tertiary (3)':
+      return t('label.tertiary-3');
+  }
 };
