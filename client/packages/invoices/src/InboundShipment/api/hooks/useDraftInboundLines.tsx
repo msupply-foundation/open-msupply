@@ -12,7 +12,10 @@ type InboundLineItem = InboundLineFragment['item'];
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
-export const useDraftInboundLines = (item: InboundLineItem | null) => {
+export const useDraftInboundLines = (
+  // batch and expiryDate may be included if item is a scanned barcode
+  item: (InboundLineItem & { batch?: string; expiryDate?: string }) | null
+) => {
   const t = useTranslation();
   const { error } = useNotification();
 
@@ -41,7 +44,14 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
       );
       if (drafts.length === 0)
         drafts.push(
-          CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize })
+          CreateDraft.stockInLine({
+            item,
+            invoiceId: id,
+            defaultPackSize,
+            // From scanned barcode:
+            batch: item?.batch,
+            expiryDate: item?.expiryDate,
+          })
         );
       setDraftLines(drafts);
     } else {

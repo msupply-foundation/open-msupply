@@ -10,6 +10,8 @@ export interface CreateDraftInboundLineParams {
   seed?: InboundLineFragment;
   type?: InvoiceLineNodeType;
   defaultPackSize: number;
+  batch?: string;
+  expiryDate?: string;
 }
 
 const createDraftInboundLine = ({
@@ -17,6 +19,8 @@ const createDraftInboundLine = ({
   invoiceId,
   seed,
   defaultPackSize,
+  batch,
+  expiryDate,
   type = InvoiceLineNodeType.StockIn,
 }: CreateDraftInboundLineParams): DraftInboundLine => {
   const draftLine: DraftInboundLine = {
@@ -30,7 +34,8 @@ const createDraftInboundLine = ({
     numberOfPacks: 0,
     packSize: defaultPackSize,
     isCreated: seed ? false : true,
-    expiryDate: undefined,
+    expiryDate,
+    batch,
     location: undefined,
     type,
     item,

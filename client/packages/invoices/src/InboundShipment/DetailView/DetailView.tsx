@@ -31,7 +31,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
-import { InboundItem } from '../../types';
+import { InboundItem, ScannedBarcode } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
 import { canReturnInboundLines } from '../../utils';
@@ -39,14 +39,21 @@ import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLine
 
 type InboundLineItem = InboundLineFragment['item'];
 
+export type ScannedItem = {
+  id: string;
+  batch?: string;
+  expiryDate?: string;
+};
+
 const DetailViewInner = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { data, isLoading } = useInbound.document.get();
   const isDisabled = useInbound.utils.isDisabled();
-  const { onOpen, onClose, mode, entity, isOpen } =
-    useEditModal<InboundLineItem>();
+  const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
+    InboundLineItem | ScannedItem
+  >();
   const {
     onOpen: onOpenReturns,
     onClose: onCloseReturns,
@@ -70,6 +77,31 @@ const DetailViewInner = () => {
     },
     [onOpen]
   );
+
+  const onAddItem: (scannedBarcode?: ScannedBarcode) => void = openWith => {
+    // Unless we're acquiring a scanned barcode, just open the modal as normal,
+    // with no pre-filled line data
+    if (
+      (openWith as ScannedBarcode & { __typename: string })?.__typename !==
+        'BarcodeNode' ||
+      !openWith?.itemId
+    ) {
+      onOpen();
+      return;
+    }
+
+    const {
+      itemId,
+      // packSize,
+      //  gtin,
+      batch,
+    } = openWith;
+    openWith;
+    onOpen({
+      id: itemId ?? '',
+      batch,
+    });
+  };
 
   const onReturn = async (selectedLines: InboundLineFragment[]) => {
     if (!data || !canReturnInboundLines(data)) {
@@ -131,7 +163,7 @@ const DetailViewInner = () => {
         <>
           <InboundShipmentLineErrorProvider>
             <AppBarButtons
-              onAddItem={() => onOpen()}
+              onAddItem={onAddItem}
               simplifiedTabletView={simplifiedTabletView}
             />
 
@@ -148,6 +180,7 @@ const DetailViewInner = () => {
                 isOpen={isOpen}
                 onClose={onClose}
                 mode={mode}
+                // @ts-expect-error testing
                 item={entity}
                 currency={data.currency}
                 isExternalSupplier={!data.otherParty.store}
