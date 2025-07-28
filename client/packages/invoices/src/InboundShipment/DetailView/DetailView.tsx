@@ -90,16 +90,12 @@ const DetailViewInner = () => {
       return;
     }
 
-    const {
-      itemId,
-      // packSize,
-      //  gtin,
-      batch,
-    } = openWith;
+    const { itemId, expiryDate, batch } = openWith;
     openWith;
     onOpen({
       id: itemId ?? '',
       batch,
+      expiryDate,
     });
   };
 
