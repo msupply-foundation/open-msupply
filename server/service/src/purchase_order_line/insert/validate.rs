@@ -3,8 +3,9 @@ use repository::{
     StorageConnection,
 };
 
-use crate::purchase_order_line::insert::{
-    InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput,
+use crate::{
+    purchase_order::validate::purchase_order_is_editable,
+    purchase_order_line::insert::{InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput},
 };
 
 pub fn validate(
@@ -27,8 +28,8 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::IncorrectStoreId);
     }
 
-    if !purchase_order.is_editable() {
-        return Err(InsertPurchaseOrderLineError::PurchaseOrderCannotBeUpdated);
+    if !purchase_order_is_editable(&purchase_order) {
+        return Err(InsertPurchaseOrderLineError::CannotEditPurchaseOrder);
     }
 
     if ItemRowRepository::new(connection)

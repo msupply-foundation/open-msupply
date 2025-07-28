@@ -3,8 +3,11 @@ use repository::{
     StorageConnection,
 };
 
-use crate::purchase_order_line::update::{
-    UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
+use crate::{
+    purchase_order::validate::purchase_order_is_editable,
+    purchase_order_line::update::{
+        UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
+    },
 };
 
 pub fn validate(
@@ -17,8 +20,8 @@ pub fn validate(
         None => return Err(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist),
     };
 
-    if !purchase_order.is_editable() {
-        return Err(UpdatePurchaseOrderLineInputError::PurchaseOrderCannotBeUpdated);
+    if !purchase_order_is_editable(&purchase_order) {
+        return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrder);
     }
 
     let purchase_order_line =

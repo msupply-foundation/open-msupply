@@ -16,7 +16,7 @@ use validate::validate;
 pub enum UpdatePurchaseOrderLineInputError {
     PurchaseOrderLineNotFound,
     PurchaseOrderDoesNotExist,
-    PurchaseOrderCannotBeUpdated,
+    CannotEditPurchaseOrder,
     UpdatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }

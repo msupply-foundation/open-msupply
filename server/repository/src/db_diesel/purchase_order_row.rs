@@ -95,14 +95,6 @@ pub struct PurchaseOrderRow {
     pub order_total_after_discount: f64,
     pub supplier_discount_amount: f64,
 }
-impl PurchaseOrderRow {
-    pub fn is_editable(&self) -> bool {
-        match self.status {
-            PurchaseOrderStatus::New | PurchaseOrderStatus::Authorised => true,
-            PurchaseOrderStatus::Confirmed | PurchaseOrderStatus::Finalised => false,
-        }
-    }
-}
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]
