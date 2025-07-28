@@ -90,7 +90,6 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         }
         // Standard Graphql Errors
         ServiceError::NotThisStorePurchaseOrder => BadUserInput(formatted_error),
-        ServiceError::NotAPurchaseOrder => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

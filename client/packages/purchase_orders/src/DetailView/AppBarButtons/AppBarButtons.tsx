@@ -36,16 +36,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           disableAddFromMasterListButton={isLoading}
           disableAddFromInternalOrderButton={isLoading}
         />
-        <ButtonWithIcon
-          disabled={isDisabled}
-          label={t('button.add-item')}
-          Icon={<PlusCircleIcon />}
-          onClick={onAddItem}
-        />
-
-        {/* <AddFromMasterListButton /> */}
-        {/* <UseSuggestedQuantityButton /> */}
-        {/* {OpenButton} */}
       </Grid>
     </AppBarButtonsPortal>
   );
