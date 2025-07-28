@@ -180,7 +180,7 @@ fn validate(
         }
 
         // If the the previous form was from many periods ago, don't use it in subsequent calculations
-        if this_period as isize - previous_period as isize > 1 {
+        if this_period.saturating_sub(previous_period) > 1 {
             return Ok((None, period, master_list_id));
         }
     }
