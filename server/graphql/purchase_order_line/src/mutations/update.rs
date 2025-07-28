@@ -92,9 +92,10 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::PurchaseOrderLineNotFound | ServiceError::UpdatedLineDoesNotExist => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::PurchaseOrderLineNotFound
+        | ServiceError::UpdatedLineDoesNotExist
+        | ServiceError::PurchaseOrderDoesNotExist
+        | ServiceError::PurchaseOrderCannotBeUpdated => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
