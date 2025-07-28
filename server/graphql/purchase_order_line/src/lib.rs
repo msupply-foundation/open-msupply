@@ -6,7 +6,10 @@ pub mod mutations;
 
 use purchase_order_line_queries::*;
 
-use crate::mutations::insert::{insert_purchase_order_line, InsertInput, InsertResponse};
+use crate::mutations::{
+    insert::{insert_purchase_order_line, InsertInput, InsertResponse},
+    update::{update_purchase_order_line, UpdateInput, UpdateResponse},
+};
 
 #[derive(Default, Clone)]
 pub struct PurchaseOrderLineQueries;
@@ -46,5 +49,14 @@ impl PurchaseOrderLineMutations {
         input: InsertInput,
     ) -> Result<InsertResponse> {
         insert_purchase_order_line(ctx, &store_id, input)
+    }
+
+    pub async fn update_purchase_order_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateInput,
+    ) -> Result<UpdateResponse> {
+        update_purchase_order_line(ctx, &store_id, input)
     }
 }

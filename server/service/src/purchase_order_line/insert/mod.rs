@@ -15,6 +15,7 @@ pub enum InsertPurchaseOrderLineError {
     ItemDoesNotExist,
     PurchaseOrderDoesNotExist,
     IncorrectStoreId,
+    CannotEditPurchaseOrder,
     DatabaseError(RepositoryError),
 }
 

@@ -8,6 +8,7 @@ use repository::{
 
 pub mod insert;
 pub mod query;
+pub mod validate;
 
 pub trait PurchaseOrderServiceTrait: Sync + Send {
     fn get_purchase_order(
