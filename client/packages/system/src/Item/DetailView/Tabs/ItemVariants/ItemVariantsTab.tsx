@@ -84,11 +84,11 @@ const ItemVariant = ({
   const t = useTranslation();
   const confirmAndDelete = useDeleteItemVariant({ itemId });
 
-  const coldStorageValue = variant.coldStorageType
-    ? t('label.cold-storage-temperature-range', {
-        coldStorageName: variant.coldStorageType.name,
-        minTemperature: variant.coldStorageType.minTemperature,
-        maxTemperature: variant.coldStorageType.maxTemperature,
+  const locationValue = variant.locationType
+    ? t('label.location-temperature-range', {
+        locationName: variant.locationType.name,
+        minTemperature: variant.locationType.minTemperature,
+        maxTemperature: variant.locationType.maxTemperature,
       })
     : '';
 
@@ -141,11 +141,9 @@ const ItemVariant = ({
           />
 
           <InputWithLabelRow
-            label={t('label.cold-storage-type')}
+            label={t('label.location-type')}
             labelWidth="200"
-            Input={
-              <BasicTextInput value={coldStorageValue} disabled fullWidth />
-            }
+            Input={<BasicTextInput value={locationValue} disabled fullWidth />}
           />
           <InputWithLabelRow
             label={t('label.manufacturer')}

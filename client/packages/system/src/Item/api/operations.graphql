@@ -111,7 +111,7 @@ fragment ItemRowWithStats on ItemNode {
   }
 }
 
-fragment ColdStorageType on ColdStorageTypeNode {
+fragment LocationType on LocationTypeNode {
   __typename
   id
   name
@@ -161,9 +161,9 @@ fragment ItemVariant on ItemVariantNode {
   manufacturer(storeId: $storeId) {
     ...NameRow
   }
-  coldStorageTypeId
-  coldStorageType {
-    ...ColdStorageType
+  locationTypeId
+  locationType {
+    ...LocationType
   }
   packagingVariants {
     ...PackagingVariant
@@ -451,14 +451,11 @@ mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
   }
 }
 
-query coldStorageTypes($storeId: String!) {
-  coldStorageTypes(
-    storeId: $storeId
-    sort: { key: minTemperature, desc: true }
-  ) {
-    ... on ColdStorageTypeConnector {
+query locationTypes($storeId: String!) {
+  locationTypes(storeId: $storeId, sort: { key: minTemperature, desc: true }) {
+    ... on LocationTypeConnector {
       nodes {
-        ...ColdStorageType
+        ...LocationType
       }
     }
   }
