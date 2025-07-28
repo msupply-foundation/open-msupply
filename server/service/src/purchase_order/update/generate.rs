@@ -53,7 +53,7 @@ pub fn generate(
     // Use input percentage if provided, otherwise calculate it
     let supplier_discount_percentage = supplier_discount_percentage.or_else(|| {
         if order_total_before_discount != 0.0 {
-            Some((order_total_after_discount / order_total_before_discount) * 100.0)
+            Some((supplier_discount_amount / order_total_before_discount) * 100.0)
         } else {
             Some(0.0)
         }
