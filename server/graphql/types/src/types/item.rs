@@ -75,6 +75,10 @@ impl ItemNode {
         self.row().vaccine_doses
     }
 
+    pub async fn restricted_location_type_id(&self) -> &Option<String> {
+        &self.row().restricted_location_type_id
+    }
+
     pub async fn stats(
         &self,
         ctx: &Context<'_>,
@@ -474,7 +478,7 @@ mod test {
                                 "custom_data": null,
                                 "doses": 11,
                                 "is_vaccine": true,
-                                "restricted_location_type_ID": ""
+                                "restricted_location_type_ID": "cf5812e0c33911eb9757779d39ae2bdb"
                             }"#
                             .to_string();
                         });
