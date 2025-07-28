@@ -24,34 +24,33 @@ pub(crate) fn generate_inbound_lines(
             |InvoiceLineRow {
                  id: _,
                  invoice_id: _,
+                 stock_line_id: _,
+                 location_id: _,
+                 cost_price_per_pack: _,
+                 total_after_tax: _,
+                 linked_invoice_id: _,
+                 reason_option_id: _,
                  item_link_id,
                  item_name,
                  item_code,
-                 stock_line_id: _,
-                 location_id: _,
                  batch,
                  expiry_date,
                  pack_size,
-                 cost_price_per_pack: _,
                  sell_price_per_pack,
                  number_of_packs,
                  prescribed_quantity,
                  note,
                  r#type,
-                 total_after_tax: _,
                  total_before_tax,
                  tax_percentage,
                  foreign_currency_price_before_tax,
                  item_variant_id,
-                 linked_invoice_id: _,
                  donor_link_id,
                  vvm_status_id,
                  campaign_id,
-                 reason_option_id: _,
                  shipped_number_of_packs,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
-
                 let total_before_tax = match r#type {
                     // Service lines don't work in packs
                     InvoiceLineType::Service => total_before_tax,
@@ -69,8 +68,7 @@ pub(crate) fn generate_inbound_lines(
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
-                    cost_price_per_pack,
-                    sell_price_per_pack,
+                    cost_price_per_pack: sell_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -87,6 +85,7 @@ pub(crate) fn generate_inbound_lines(
                     campaign_id,
                     shipped_number_of_packs,
                     // Default
+                    sell_price_per_pack: 0.0,
                     stock_line_id: None,
                     location_id: None,
                     reason_option_id: None,
