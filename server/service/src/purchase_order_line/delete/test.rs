@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod delete {
     use repository::{
-        mock::{mock_item_a, mock_store_a, mock_user_account_a, MockDataInserts},
+        mock::{
+            mock_item_a, mock_purchase_order_b_line_1, mock_store_a, mock_user_account_a,
+            MockDataInserts,
+        },
         test_db::setup_all,
     };
 
@@ -28,6 +31,15 @@ mod delete {
                 .purchase_order_line_service
                 .delete_purchase_order_line(&context, "purchase_order_line_id_1".to_string()),
             Err(DeletePurchaseOrderLineError::PurchaseOrderLineDoesNotExist)
+        );
+
+        // try to delete a line from a purchase order that is not editable
+        let result = service_provider
+            .purchase_order_line_service
+            .delete_purchase_order_line(&context, mock_purchase_order_b_line_1().id);
+        assert_eq!(
+            result,
+            Err(DeletePurchaseOrderLineError::CannotEditPurchaseOrder)
         );
     }
 

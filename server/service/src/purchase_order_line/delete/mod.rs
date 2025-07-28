@@ -9,6 +9,8 @@ use validate::validate;
 #[derive(PartialEq, Debug)]
 pub enum DeletePurchaseOrderLineError {
     PurchaseOrderLineDoesNotExist,
+    PurchaseOrderDoesNotExist,
+    CannotEditPurchaseOrder,
     DatabaseError(RepositoryError),
 }
 
