@@ -15,6 +15,8 @@ use validate::validate;
 #[derive(PartialEq, Debug)]
 pub enum UpdatePurchaseOrderLineInputError {
     PurchaseOrderLineNotFound,
+    PurchaseOrderDoesNotExist,
+    PurchaseOrderCannotBeUpdated,
     UpdatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }

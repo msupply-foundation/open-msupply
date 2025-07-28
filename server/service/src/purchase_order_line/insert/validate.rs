@@ -27,6 +27,10 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::IncorrectStoreId);
     }
 
+    if !purchase_order.is_editable() {
+        return Err(InsertPurchaseOrderLineError::PurchaseOrderCannotBeUpdated);
+    }
+
     if ItemRowRepository::new(connection)
         .find_one_by_id(&input.item_id)?
         .is_none()
