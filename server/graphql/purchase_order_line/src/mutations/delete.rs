@@ -85,6 +85,9 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::PurchaseOrderDoesNotExist | ServiceError::CannotEditPurchaseOrder => {
+            BadUserInput(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
