@@ -84,6 +84,7 @@ mod update {
         );
     }
 
+    #[actix_rt::test]
     async fn update_purchase_order_success() {
         let (_, _, connection_manager, _) =
             setup_all("update_purchase_order_success", MockDataInserts::all()).await;
