@@ -158,7 +158,7 @@ mod tests {
                 id: item_variant_id.clone(),
                 name: name.clone(),
                 item_link_id: mock_item_a().id,
-                cold_storage_type_id: None,
+                location_type_id: None,
                 manufacturer_link_id: None,
                 deleted_datetime: None,
                 vvm_type: None,
