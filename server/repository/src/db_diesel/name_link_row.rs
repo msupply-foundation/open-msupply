@@ -1,6 +1,4 @@
-use super::{
-    cold_storage_type_row::cold_storage_type, name_link_row::name_link::dsl::*, name_row::name,
-};
+use super::{location_type_row::location_type, name_link_row::name_link::dsl::*, name_row::name};
 
 use crate::{RepositoryError, StorageConnection, Upsert};
 
@@ -13,7 +11,7 @@ table! {
     }
 }
 joinable!(name_link -> name (name_id));
-allow_tables_to_appear_in_same_query!(name_link, cold_storage_type);
+allow_tables_to_appear_in_same_query!(name_link, location_type);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = name_link)]

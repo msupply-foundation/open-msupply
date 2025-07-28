@@ -5,59 +5,57 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::ColdStorageTypeNode;
-use repository::{
-    ColdStorageType, ColdStorageTypeFilter, ColdStorageTypeSort, ColdStorageTypeSortField,
-};
+use graphql_types::types::LocationTypeNode;
 use repository::{EqualFilter, PaginationOption};
+use repository::{LocationType, LocationTypeFilter, LocationTypeSort, LocationTypeSortField};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    cold_storage_type::get_cold_storage_types,
+    location_type::get_location_types,
     ListResult,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::ColdStorageTypeSortField")]
+#[graphql(remote = "repository::LocationTypeSortField")]
 #[graphql(rename_items = "camelCase")]
-pub enum ColdStorageTypeSortFieldInput {
+pub enum LocationTypeSortFieldInput {
     Id,
     Name,
     MinTemperature,
 }
 
 #[derive(InputObject)]
-pub struct ColdStorageTypeSortInput {
+pub struct LocationTypeSortInput {
     /// Sort query result by `key`
-    key: ColdStorageTypeSortFieldInput,
+    key: LocationTypeSortFieldInput,
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
 }
 
 #[derive(InputObject, Clone)]
-pub struct ColdStorageTypeFilterInput {
+pub struct LocationTypeFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<EqualFilterStringInput>,
 }
 
 #[derive(SimpleObject)]
-pub struct ColdStorageTypeConnector {
+pub struct LocationTypeConnector {
     total_count: u32,
-    nodes: Vec<ColdStorageTypeNode>,
+    nodes: Vec<LocationTypeNode>,
 }
 
 #[derive(Union)]
-pub enum ColdStorageTypesResponse {
-    Response(ColdStorageTypeConnector),
+pub enum LocationTypesResponse {
+    Response(LocationTypeConnector),
 }
 
-pub fn cold_storage_types(
+pub fn location_types(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
-    filter: Option<ColdStorageTypeFilterInput>,
-    sort: Option<Vec<ColdStorageTypeSortInput>>,
-) -> Result<ColdStorageTypesResponse> {
+    filter: Option<LocationTypeFilterInput>,
+    sort: Option<Vec<LocationTypeSortInput>>,
+) -> Result<LocationTypesResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -67,7 +65,7 @@ pub fn cold_storage_types(
     )?;
 
     let connection_manager = ctx.get_connection_manager();
-    let cold_storage_types = get_cold_storage_types(
+    let location_types = get_location_types(
         connection_manager,
         page.map(PaginationOption::from),
         filter.map(|filter| filter.to_domain()),
@@ -77,48 +75,48 @@ pub fn cold_storage_types(
     )
     .map_err(StandardGraphqlError::from_list_error)?;
 
-    Ok(ColdStorageTypesResponse::Response(
-        ColdStorageTypeConnector::from_domain(cold_storage_types),
+    Ok(LocationTypesResponse::Response(
+        LocationTypeConnector::from_domain(location_types),
     ))
 }
 
-impl ColdStorageTypeFilterInput {
-    pub fn to_domain(self) -> ColdStorageTypeFilter {
-        let ColdStorageTypeFilterInput { id, name } = self;
+impl LocationTypeFilterInput {
+    pub fn to_domain(self) -> LocationTypeFilter {
+        let LocationTypeFilterInput { id, name } = self;
 
-        ColdStorageTypeFilter {
+        LocationTypeFilter {
             id: id.map(EqualFilter::from),
             name: name.map(EqualFilter::from),
         }
     }
 }
 
-impl ColdStorageTypeSortInput {
-    pub fn to_domain(self) -> ColdStorageTypeSort {
-        use ColdStorageTypeSortField as to;
-        use ColdStorageTypeSortFieldInput as from;
+impl LocationTypeSortInput {
+    pub fn to_domain(self) -> LocationTypeSort {
+        use LocationTypeSortField as to;
+        use LocationTypeSortFieldInput as from;
         let key = match self.key {
             from::Name => to::Name,
             from::Id => to::Id,
             from::MinTemperature => to::MinTemperature,
         };
 
-        ColdStorageTypeSort {
+        LocationTypeSort {
             key,
             desc: self.desc,
         }
     }
 }
 
-impl ColdStorageTypeConnector {
-    pub fn from_domain(cold_storage_types: ListResult<ColdStorageType>) -> Self {
-        let ListResult { rows, count } = cold_storage_types;
+impl LocationTypeConnector {
+    pub fn from_domain(location_types: ListResult<LocationType>) -> Self {
+        let ListResult { rows, count } = location_types;
 
-        ColdStorageTypeConnector {
+        LocationTypeConnector {
             total_count: count,
             nodes: rows
                 .into_iter()
-                .map(|row| ColdStorageTypeNode::from_domain(row.cold_storage_type_row))
+                .map(|row| LocationTypeNode::from_domain(row.location_type_row))
                 .collect(),
         }
     }

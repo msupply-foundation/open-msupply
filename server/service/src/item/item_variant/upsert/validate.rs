@@ -7,8 +7,7 @@ use crate::{
 };
 use repository::{
     item_variant::item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
-    ColdStorageTypeRowRepository, EqualFilter, ItemLinkRowRepository, StorageConnection,
-    StringFilter,
+    EqualFilter, ItemLinkRowRepository, LocationTypeRowRepository, StorageConnection, StringFilter,
 };
 
 pub fn validate(
@@ -55,14 +54,14 @@ pub fn validate(
     };
 
     if let Some(NullableUpdate {
-        value: Some(ref cold_storage_type_id),
-    }) = &input.cold_storage_type_id
+        value: Some(ref location_type_id),
+    }) = &input.location_type_id
     {
-        // Check if the cold storage type exists
-        let repo = ColdStorageTypeRowRepository::new(connection);
-        let cold_storage_type = repo.find_one_by_id(cold_storage_type_id)?;
-        if cold_storage_type.is_none() {
-            return Err(ColdStorageTypeDoesNotExist);
+        // Check if the location type exists
+        let repo = LocationTypeRowRepository::new(connection);
+        let location_type = repo.find_one_by_id(location_type_id)?;
+        if location_type.is_none() {
+            return Err(LocationTypeDoesNotExist);
         }
     };
 
