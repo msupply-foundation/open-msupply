@@ -4433,6 +4433,7 @@ export type ItemNode = {
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
@@ -5059,6 +5060,7 @@ export type Mutations = {
    * in a document.
    */
   updateProgramPatient: UpdateProgramPatientResponse;
+  updatePurchaseOrderLine: UpdatePurchaseOrderLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -5614,6 +5616,11 @@ export type MutationsUpdateProgramEnrolmentArgs = {
 
 export type MutationsUpdateProgramPatientArgs = {
   input: UpdateProgramPatientInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdatePurchaseOrderLineArgs = {
+  input: UpdatePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -9776,6 +9783,17 @@ export type UpdateProgramPatientInput = {
 };
 
 export type UpdateProgramPatientResponse = PatientNode;
+
+export type UpdatePurchaseOrderLineInput = {
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdatePurchaseOrderLineResponse = IdResponse;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';

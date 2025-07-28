@@ -51,6 +51,7 @@ export type StocktakeLineFragment = {
     isVaccine: boolean;
     doses: number;
     defaultPackSize: number;
+    restrictedLocationTypeId?: string | null;
   };
   reasonOption?: {
     __typename: 'ReasonOptionNode';
@@ -117,6 +118,7 @@ export type StocktakeFragment = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
+        restrictedLocationTypeId?: string | null;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -224,6 +226,7 @@ export type StocktakeQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
+              restrictedLocationTypeId?: string | null;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -302,6 +305,7 @@ export type StocktakeByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
+              restrictedLocationTypeId?: string | null;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -364,6 +368,7 @@ export type StocktakeLinesQuery = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
+        restrictedLocationTypeId?: string | null;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -641,6 +646,7 @@ export const StocktakeLineFragmentDoc = gql`
       isVaccine
       doses
       defaultPackSize
+      restrictedLocationTypeId
     }
     itemVariantId
     reasonOption {
