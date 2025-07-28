@@ -1,6 +1,9 @@
 use repository::{PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, StorageConnection};
 
-use crate::purchase_order_line::delete::DeletePurchaseOrderLineError;
+use crate::{
+    purchase_order::validate::purchase_order_is_editable,
+    purchase_order_line::delete::DeletePurchaseOrderLineError,
+};
 
 pub fn validate(
     id: &str,
@@ -18,7 +21,7 @@ pub fn validate(
         None => return Err(DeletePurchaseOrderLineError::PurchaseOrderDoesNotExist),
     };
 
-    if !purchase_order.is_editable() {
+    if !purchase_order_is_editable(&purchase_order) {
         return Err(DeletePurchaseOrderLineError::CannotEditPurchaseOrder);
     }
 
