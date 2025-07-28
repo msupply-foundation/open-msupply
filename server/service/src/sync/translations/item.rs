@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::sync::{
     translations::{
-        category::CategoryTranslation, location::LocationTranslation, unit::UnitTranslation,
+        category::CategoryTranslation, location_type::LocationTypeTranslation,
+        unit::UnitTranslation,
     },
     CentralServerConfig,
 };
@@ -103,7 +104,7 @@ impl SyncTranslation for ItemTranslation {
     fn pull_dependencies(&self) -> Vec<&str> {
         let mut deps = vec![
             UnitTranslation.table_name(),
-            LocationTranslation.table_name(),
+            LocationTypeTranslation.table_name(),
         ];
         deps.extend(CategoryTranslation.table_names());
 
@@ -282,7 +283,7 @@ mod tests {
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
-            pretty_assertions::assert_eq!(translation_result, record.translated_record);
+            assert_eq!(translation_result, record.translated_record);
         }
 
         for record in test_data::test_pull_delete_records() {
