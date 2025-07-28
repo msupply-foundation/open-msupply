@@ -23,7 +23,7 @@ pub fn generate(
         advance_paid_date,
         received_at_port_date,
         expected_delivery_date,
-        ..
+        id:_,
     } = input;
 
     let supplier_name_link_id = supplier_id.unwrap_or(purchase_order.supplier_name_link_id);
