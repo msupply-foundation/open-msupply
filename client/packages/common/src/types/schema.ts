@@ -3555,6 +3555,14 @@ export type InsertPurchaseOrderInput = {
   supplierId: Scalars['String']['input'];
 };
 
+export type InsertPurchaseOrderLineInput = {
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  purchaseOrderId: Scalars['String']['input'];
+};
+
+export type InsertPurchaseOrderLineResponse = IdResponse;
+
 export type InsertPurchaseOrderResponse = IdResponse;
 
 export type InsertRepackError = {
@@ -4998,6 +5006,7 @@ export type Mutations = {
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
   insertPurchaseOrder: InsertPurchaseOrderResponse;
+  insertPurchaseOrderLine: InsertPurchaseOrderLineResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -5384,6 +5393,11 @@ export type MutationsInsertProgramResponseRequisitionArgs = {
 
 export type MutationsInsertPurchaseOrderArgs = {
   input: InsertPurchaseOrderInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertPurchaseOrderLineArgs = {
+  input: InsertPurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6813,7 +6827,6 @@ export type Queries = {
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
-  insertPrescription: InsertPrescriptionResponse;
   insurancePolicies: InsurancesResponse;
   insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
@@ -7183,11 +7196,6 @@ export type QueriesGetVvmStatusLogByStockLineArgs = {
 export type QueriesHistoricalStockLinesArgs = {
   datetime?: InputMaybe<Scalars['DateTime']['input']>;
   itemId: Scalars['String']['input'];
-  storeId: Scalars['String']['input'];
-};
-
-export type QueriesInsertPrescriptionArgs = {
-  input: InsertPrescriptionInput;
   storeId: Scalars['String']['input'];
 };
 
