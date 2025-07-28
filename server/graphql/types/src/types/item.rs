@@ -1,9 +1,8 @@
-
-use crate::types::ItemStorePropertiesNode;
 use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
     WarningNode,
 };
+use crate::types::ItemStorePropertiesNode;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
@@ -248,7 +247,11 @@ impl ItemNode {
     }
 }
 
+#[derive(Union)]
 pub enum ItemResponseError {
+    InternalError(InternalError),
+}
+
 #[derive(SimpleObject)]
 pub struct ItemError {
     pub error: ItemResponseError,

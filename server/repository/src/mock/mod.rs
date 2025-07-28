@@ -420,6 +420,7 @@ impl MockDataInserts {
             campaigns: true,
             item_store_joins: true,
             purchase_order: true,
+            purchase_order_line: true,
         }
     }
     pub fn none() -> Self {
