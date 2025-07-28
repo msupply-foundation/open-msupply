@@ -1,5 +1,5 @@
-use crate::types::ItemStorePropertiesNode;
 
+use crate::types::ItemStorePropertiesNode;
 use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
     WarningNode,
@@ -248,11 +248,7 @@ impl ItemNode {
     }
 }
 
-#[derive(Union)]
 pub enum ItemResponseError {
-    InternalError(InternalError),
-}
-
 #[derive(SimpleObject)]
 pub struct ItemError {
     pub error: ItemResponseError,

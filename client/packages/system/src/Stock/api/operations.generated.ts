@@ -29,8 +29,8 @@ export type StockLineRowFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -71,6 +71,8 @@ export type StockLineRowFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
+    level: number;
+    unusable: boolean;
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
@@ -87,8 +89,8 @@ export type RepackStockLineFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -112,8 +114,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -131,8 +133,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -232,8 +234,8 @@ export type StockLinesQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -277,6 +279,8 @@ export type StockLinesQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
+        level: number;
+        unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
@@ -324,8 +328,8 @@ export type StockLineQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -369,6 +373,8 @@ export type StockLineQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
+        level: number;
+        unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
@@ -453,8 +459,8 @@ export type UpdateStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -498,6 +504,8 @@ export type UpdateStockLineMutation = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
+          level: number;
+          unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
@@ -534,8 +542,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -553,8 +561,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -590,8 +598,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -609,8 +617,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -740,8 +748,8 @@ export type InsertStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -785,6 +793,8 @@ export type InsertStockLineMutation = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
+          level: number;
+          unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
@@ -905,7 +915,10 @@ export const StockLineRowFragmentDoc = gql`
       }
     }
     vvmStatus {
+      __typename
       id
+      level
+      unusable
       description
     }
     donor(storeId: $storeId) {

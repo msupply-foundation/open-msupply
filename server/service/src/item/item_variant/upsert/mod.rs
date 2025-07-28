@@ -26,7 +26,7 @@ pub enum UpsertItemVariantError {
     ItemDoesNotExist,
     CantChangeItem,
     DuplicateName,
-    ColdStorageTypeDoesNotExist,
+    LocationTypeDoesNotExist,
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyNotAManufacturer,
@@ -38,7 +38,7 @@ pub enum UpsertItemVariantError {
 pub struct UpsertItemVariantWithPackaging {
     pub id: String,
     pub item_id: String,
-    pub cold_storage_type_id: Option<NullableUpdate<String>>,
+    pub location_type_id: Option<NullableUpdate<String>>,
     pub name: String,
     pub manufacturer_id: Option<NullableUpdate<String>>,
     pub packaging_variants: Vec<UpsertPackagingVariant>,

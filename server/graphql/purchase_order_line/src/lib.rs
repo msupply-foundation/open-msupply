@@ -2,7 +2,14 @@ mod purchase_order_line_queries;
 use async_graphql::{Context, Object, Result};
 use graphql_core::pagination::PaginationInput;
 
+pub mod mutations;
+
 use purchase_order_line_queries::*;
+
+use crate::mutations::{
+    insert::{insert_purchase_order_line, InsertInput, InsertResponse},
+    update::{update_purchase_order_line, UpdateInput, UpdateResponse},
+};
 
 #[derive(Default, Clone)]
 pub struct PurchaseOrderLineQueries;
@@ -27,5 +34,29 @@ impl PurchaseOrderLineQueries {
         sort: Option<Vec<PurchaseOrderLineSortInput>>,
     ) -> Result<PurchaseOrderLinesResponse, async_graphql::Error> {
         get_purchase_order_lines(ctx, &store_id, page, filter, sort)
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct PurchaseOrderLineMutations;
+
+#[Object]
+impl PurchaseOrderLineMutations {
+    pub async fn insert_purchase_order_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertInput,
+    ) -> Result<InsertResponse> {
+        insert_purchase_order_line(ctx, &store_id, input)
+    }
+
+    pub async fn update_purchase_order_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateInput,
+    ) -> Result<UpdateResponse> {
+        update_purchase_order_line(ctx, &store_id, input)
     }
 }

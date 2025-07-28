@@ -12,7 +12,6 @@ import { ItemFragment } from '../../api';
 export const StoreTab = ({ item }: { item: ItemFragment }) => {
   const t = useTranslation();
   const isDisabled = true;
-  console.log('Item: ', item);
 
   return (
     <DetailContainer>

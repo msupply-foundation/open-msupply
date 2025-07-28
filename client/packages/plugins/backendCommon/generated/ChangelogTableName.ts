@@ -17,7 +17,7 @@ export type ChangelogTableName =
   | 'Barcode'
   | 'Clinician'
   | 'ClinicianStoreJoin'
-  | 'ColdStorageType'
+  | 'LocationType'
   | 'Name'
   | 'NameStoreJoin'
   | 'Document'
