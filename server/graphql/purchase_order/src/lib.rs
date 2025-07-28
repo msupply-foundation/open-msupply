@@ -8,9 +8,7 @@ use mutations::insert::{insert_purchase_order, InsertInput, InsertResponse};
 use purchase_order_queries::*;
 
 use crate::mutations::{
-    add_to_purchase_order_from_master_list::{
-        add_to_purchase_order_from_master_list, AddFromMasterListResponse,
-    },
+    add_from_master_list::{add_from_master_list, AddFromMasterListResponse},
     AddToPurchaseOrderFromMasterListInput,
 };
 
@@ -61,6 +59,6 @@ impl PurchaseOrderMutations {
         store_id: String,
         input: AddToPurchaseOrderFromMasterListInput,
     ) -> Result<AddFromMasterListResponse> {
-        add_to_purchase_order_from_master_list(ctx, &store_id, input)
+        add_from_master_list(ctx, &store_id, input)
     }
 }

@@ -1,4 +1,4 @@
-pub mod add_to_purchase_order_from_master_list;
+pub mod add_from_master_list;
 pub mod insert;
 
 use service::purchase_order::add_to_purchase_order_from_master_list::AddToPurchaseOrderFromMasterListInput as ServiceInput;
