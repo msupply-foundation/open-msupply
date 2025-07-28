@@ -59,7 +59,8 @@ export const PurchaseOrder = ({
     {
       key: 'expectedDeliveryDate',
       label: 'label.expected-delivery-date',
-      accessor: ({ rowData }) => rowData.expectedDeliveryDatetime ?? '',
+      format: ColumnFormat.Date,
+      accessor: ({ rowData }) => rowData.expectedDeliveryDate ?? '',
     },
     {
       key: 'numberOfLines',

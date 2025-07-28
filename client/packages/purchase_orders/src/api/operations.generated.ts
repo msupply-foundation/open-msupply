@@ -11,7 +11,7 @@ export type PurchaseOrderRowFragment = {
   confirmedDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
-  expectedDeliveryDatetime?: string | null;
+  expectedDeliveryDate?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -52,6 +52,8 @@ export type PurchaseOrderFragment = {
       expectedDeliveryDate?: string | null;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
+      requestedNumberOfUnits: number;
+      authorisedNumberOfUnits?: number | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -71,6 +73,8 @@ export type PurchaseOrderLineFragment = {
   expectedDeliveryDate?: string | null;
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
+  requestedNumberOfUnits: number;
+  authorisedNumberOfUnits?: number | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -102,7 +106,7 @@ export type PurchaseOrdersQuery = {
       confirmedDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
-      expectedDeliveryDatetime?: string | null;
+      expectedDeliveryDate?: string | null;
       comment?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -153,6 +157,8 @@ export type PurchaseOrderByIdQuery = {
             expectedDeliveryDate?: string | null;
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
+            requestedNumberOfUnits: number;
+            authorisedNumberOfUnits?: number | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -191,7 +197,7 @@ export const PurchaseOrderRowFragmentDoc = gql`
     confirmedDatetime
     status
     targetMonths
-    expectedDeliveryDatetime
+    expectedDeliveryDate
     lines {
       totalCount
     }
@@ -211,6 +217,8 @@ export const PurchaseOrderLineFragmentDoc = gql`
     }
     requestedPackSize
     requestedDeliveryDate
+    requestedNumberOfUnits
+    authorisedNumberOfUnits
   }
 `;
 export const PurchaseOrderFragmentDoc = gql`
