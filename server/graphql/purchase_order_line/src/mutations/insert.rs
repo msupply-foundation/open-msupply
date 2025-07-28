@@ -75,6 +75,7 @@ fn map_error(error: ServiceError) -> Result<InsertResponse> {
     let graphql_error = match error {
         ServiceError::ItemDoesNotExist
         | ServiceError::PurchaseOrderDoesNotExist
+        | ServiceError::CannotEditPurchaseOrder
         | ServiceError::IncorrectStoreId
         | ServiceError::PurchaseOrderLineAlreadyExists => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
