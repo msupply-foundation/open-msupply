@@ -27,6 +27,7 @@ fragment StockLine on StockLineNode {
     defaultPackSize
     doses
     isVaccine
+    restrictedLocationTypeId
     itemDirections {
       ...ItemDirection
     }
@@ -156,6 +157,7 @@ fragment ItemVariant on ItemVariantNode {
     id
     name
     isVaccine
+    restrictedLocationTypeId
   }
   manufacturerId
   manufacturer(storeId: $storeId) {
@@ -197,6 +199,7 @@ fragment Item on ItemNode {
   volumePerOuterPack
   volumePerPack
   weight
+  restrictedLocationTypeId
   availableStockOnHand(storeId: $storeId)
   availableBatches(storeId: $storeId) {
     __typename
@@ -308,6 +311,7 @@ fragment ItemsWithStats on ItemNode {
   unitName
   defaultPackSize
   isVaccine
+  restrictedLocationTypeId
   doses
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
@@ -387,6 +391,7 @@ query itemVariants($storeId: String!, $itemId: String!) {
       nodes {
         __typename
         isVaccine
+        restrictedLocationTypeId
         variants {
           ...ItemVariant
         }

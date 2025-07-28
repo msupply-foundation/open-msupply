@@ -38,6 +38,7 @@ fragment InboundLine on InvoiceLineNode {
     defaultPackSize
     isVaccine
     doses
+    restrictedLocationTypeId
   }
 
   location {
