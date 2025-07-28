@@ -50,7 +50,7 @@ pub fn delete_purchase_order_line(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin, // Temporary permission for now
+            resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
         },
     )?;
