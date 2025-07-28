@@ -35,7 +35,7 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "confirm_date": "2021-07-11",
         "created_by": "some user",
         "last_edited_by": "some other user",
-        "Order_total_after_discount": 12.2,
+        "Order_total_after_discount": 180,
         "supplier_agent": "some agent",
         "authorizing_officer_1": "agent",
         "authorizing_officer_2": "agent2",
@@ -48,9 +48,9 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "total_foreign_currency_expected": "",
         "total_local_currency_expected": "",
         "insurance_charge": 1.0,
-        "Order_total_before_discount": 0.0,
+        "Order_total_before_discount": 200,
         "inv_discount_amount": 222.2,
-        "supplier_discount_amount": 12.2,
+        "supplier_discount_amount": 20,
         "quote_ID": "",
         "editedRemotely": "",
         "heading_message": "some heading message",
@@ -77,7 +77,8 @@ const PURCHASE_ORDER_1: (&str, &str) = (
             "expected_delivery_date": "2025-01-22",
             "created_datetime": "2021-01-22T00:00:00",
             "confirmed_datetime": "2021-07-11T01:02:03",
-            "sent_datetime": "2025-01-15T01:02:03"
+            "sent_datetime": "2025-01-15T01:02:03",
+            "supplier_discount_percentage": 10.0,
         }
     }"#,
 );
@@ -105,7 +106,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             ),
             target_months: Some(2.1),
             comment: Some("some test comment".to_string()),
-            supplier_discount_amount: 12.2,
+            supplier_discount_amount: 20.0,
             donor_link_id: Some("donor_a".to_string()),
             reference: Some("test reference".to_string()),
             currency_id: Some("currency_a".to_string()),
@@ -133,8 +134,9 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             insurance_charge: Some(1.0),
             freight_charge: None,
             freight_conditions: Some("difficult".to_string()),
-            order_total_before_discount: 0.0,
-            order_total_after_discount: 12.2,
+            order_total_before_discount: 200.0,
+            order_total_after_discount: 180.0,
+            supplier_discount_percentage: Some(10.0),
         },
     )
 }
@@ -164,9 +166,9 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
             communications_charge: None,
             insurance_charge: Some(1.0),
             freight_charge: None,
-            supplier_discount_amount: 12.2,
-            order_total_before_discount: 0.0,
-            order_total_after_discount: 12.2,
+            supplier_discount_amount: 20.0,
+            order_total_before_discount: 200.0,
+            order_total_after_discount: 180.0,
             donor_id: Some("donor_a".to_string()),
             purchase_order_number: 1,
             heading_message: Some("some heading message".to_string()),
@@ -195,6 +197,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                         .and_hms_opt(1, 2, 3)
                         .unwrap(),
                 ),
+                supplier_discount_percentage: Some(10.0),
             }),
         }),
     }
@@ -317,6 +320,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             freight_conditions: None,
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
+            supplier_discount_percentage: None,
         },
     )
 }
@@ -445,6 +449,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             freight_conditions: None,
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
+            supplier_discount_percentage: None,
         },
     )
 }
@@ -494,7 +499,8 @@ fn purchase_order_3_empty_string_push_record() -> TestSyncOutgoingRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
                 confirmed_datetime: None,
-                sent_datetime: None
+                sent_datetime: None,
+                ..Default::default()
             })
         }),
     }
@@ -563,6 +569,7 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
             freight_conditions: None,
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -680,6 +687,7 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
             freight_conditions: None,
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
+            supplier_discount_percentage: None,
         },
     )
 }
@@ -795,6 +803,7 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
             freight_conditions: None,
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
+            supplier_discount_percentage: None,
         },
     )
 }
