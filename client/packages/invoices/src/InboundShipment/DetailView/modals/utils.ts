@@ -18,16 +18,6 @@ const createDraftInboundLine = ({
   type = InvoiceLineNodeType.StockIn,
 }: CreateDraftInboundLineParams): DraftInboundLine => {
   const { defaultPackSize = 1, itemStoreProperties, name } = item || {};
-  const getSellPricePerPack = () => {
-    if (!seed) {
-      return itemStoreProperties?.defaultSellPricePerPack ?? 0;
-    }
-    if (defaultPackSize === seed.packSize) {
-      return seed.sellPricePerPack;
-    }
-    return 0;
-  };
-
   const draftLine: DraftInboundLine = {
     __typename: 'InvoiceLineNode',
     totalAfterTax: 0,
@@ -35,7 +25,9 @@ const createDraftInboundLine = ({
     id: FnUtils.generateUUID(),
     invoiceId,
     packSize: defaultPackSize,
-    sellPricePerPack: getSellPricePerPack(),
+    sellPricePerPack: seed
+      ? seed.sellPricePerPack
+      : (itemStoreProperties?.defaultSellPricePerPack ?? 0),
     costPricePerPack: 0,
     numberOfPacks: 0,
     isCreated: !seed,
