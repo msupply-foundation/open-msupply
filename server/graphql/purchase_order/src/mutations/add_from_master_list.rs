@@ -37,7 +37,7 @@ pub enum AddFromMasterListResponse {
     Response(PurchaseOrderLineConnector),
 }
 
-pub fn add_to_purchase_order_from_master_list(
+pub fn add_from_master_list(
     ctx: &Context<'_>,
     store_id: &str,
     input: AddToPurchaseOrderFromMasterListInput,
