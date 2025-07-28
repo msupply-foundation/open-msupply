@@ -1,4 +1,7 @@
-use repository::{PurchaseOrderLineRow, PurchaseOrderLineRowRepository, StorageConnection};
+use repository::{
+    PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository,
+    StorageConnection,
+};
 
 use crate::purchase_order_line::update::{
     UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
@@ -8,6 +11,16 @@ pub fn validate(
     input: &UpdatePurchaseOrderLineInput,
     connection: &StorageConnection,
 ) -> Result<PurchaseOrderLineRow, UpdatePurchaseOrderLineInputError> {
+    let purchase_order = PurchaseOrderRowRepository::new(connection).find_one_by_id(&input.id)?;
+    let purchase_order = match purchase_order {
+        Some(purchase_order) => purchase_order,
+        None => return Err(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist),
+    };
+
+    if !purchase_order.is_editable() {
+        return Err(UpdatePurchaseOrderLineInputError::PurchaseOrderCannotBeUpdated);
+    }
+
     let purchase_order_line =
         PurchaseOrderLineRowRepository::new(connection).find_one_by_id(&input.id)?;
 

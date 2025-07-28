@@ -26,7 +26,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             code: "TestLocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
-            cold_storage_type_id: None,
+            location_type_id: None,
         };
         let currency_row = CurrencyRow {
             id: uuid(),

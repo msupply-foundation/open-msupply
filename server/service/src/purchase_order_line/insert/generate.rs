@@ -17,6 +17,7 @@ pub fn generate(
 
     Ok(PurchaseOrderLineRow {
         id: input.id,
+        store_id: store_id.to_string(),
         purchase_order_id: input.purchase_order_id,
         line_number,
         item_link_id: input.item_id,

@@ -81,6 +81,9 @@ mod mutations;
 
 mod queries;
 pub mod types;
+use crate::mutations::rnr_form::delete::delete_rnr_form;
+use crate::mutations::rnr_form::delete::DeleteRnRFormInput;
+use crate::mutations::rnr_form::delete::DeleteRnRFormResponse;
 use crate::types::period_schedule::PeriodSchedulesResponse;
 
 use self::queries::*;
@@ -479,6 +482,15 @@ impl ProgramsMutations {
         input: FinaliseRnRFormInput,
     ) -> Result<FinaliseRnRFormResponse> {
         finalise_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn delete_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: DeleteRnRFormInput,
+    ) -> Result<DeleteRnRFormResponse> {
+        delete_rnr_form(ctx, store_id, input)
     }
 
     pub async fn insert_vaccination(

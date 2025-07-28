@@ -15,6 +15,8 @@ use validate::validate;
 #[derive(PartialEq, Debug)]
 pub enum UpdatePurchaseOrderLineInputError {
     PurchaseOrderLineNotFound,
+    PurchaseOrderDoesNotExist,
+    PurchaseOrderCannotBeUpdated,
     UpdatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }
@@ -23,8 +25,8 @@ pub enum UpdatePurchaseOrderLineInputError {
 pub struct UpdatePurchaseOrderLineInput {
     pub id: String,
     pub item_id: Option<String>,
-    pub pack_size: Option<f64>,
-    pub requested_quantity: Option<f64>,
+    pub requested_pack_size: Option<f64>,
+    pub requested_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
 }

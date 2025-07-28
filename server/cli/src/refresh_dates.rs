@@ -60,6 +60,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_message", "created_datetime"),
         ("purchase_order", "created_datetime"),
         ("purchase_order", "confirmed_datetime"),
+        ("purchase_order", "sent_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -135,9 +136,9 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("campaign", "end_date"),
         ("purchase_order", "received_at_port_date"),
         ("purchase_order", "expected_delivery_date"),
+        ("purchase_order", "requested_delivery_date"),
         ("purchase_order_line", "requested_delivery_date"),
         ("purchase_order_line", "expected_delivery_date"),
-        ("purchase_order", "sent_date"),
         ("purchase_order", "contract_signed_date"),
         ("purchase_order", "advance_paid_date"),
     ]

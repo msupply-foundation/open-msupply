@@ -43,8 +43,8 @@ mod update {
                 UpdatePurchaseOrderLineInput {
                     id: "non_existent_line_id".to_string(),
                     item_id: None,
-                    pack_size: Some(10.0),
-                    requested_quantity: Some(5.0),
+                    requested_pack_size: Some(10.0),
+                    requested_number_of_units: Some(5.0),
                     requested_delivery_date: None,
                     expected_delivery_date: None,
                 }
@@ -83,8 +83,8 @@ mod update {
                 UpdatePurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     item_id: Some(mock_item_b().id.to_string()),
-                    pack_size: Some(10.0),
-                    requested_quantity: Some(5.0),
+                    requested_pack_size: Some(10.0),
+                    requested_number_of_units: Some(5.0),
                     requested_delivery_date: None,
                     expected_delivery_date: None,
                 },

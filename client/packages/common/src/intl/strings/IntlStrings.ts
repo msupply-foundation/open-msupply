@@ -3,6 +3,7 @@ import { TOptions } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { LocaleKey } from '../locales';
 import { useIntl } from '../utils';
+import { CUSTOM_TRANSLATIONS_NAMESPACE } from '../context';
 
 export { UseTranslationResponse } from 'react-i18next';
 
@@ -11,11 +12,13 @@ export interface TypedTFunction<Keys> {
   (key: Keys, options?: TOptions<Record<string, unknown>> | string): string;
 }
 
-export const useTranslation = (): TypedTFunction<LocaleKey> => {
+export const useTranslation = (
+  namespace: string = CUSTOM_TRANSLATIONS_NAMESPACE
+): TypedTFunction<LocaleKey> => {
   const { i18n } = useIntl();
   // Use custom namespace to apply Global Preference translation overrides.
   // Otherwise defaults to values in "common.json"
-  const { t } = useTranslationNext('custom_preference_overrides', { i18n });
+  const { t } = useTranslationNext(namespace, { i18n });
 
   return useCallback(
     (key, opts) => {

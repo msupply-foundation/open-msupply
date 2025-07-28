@@ -39,7 +39,7 @@ impl PurchaseOrderNode {
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserLoader>>();
 
-        if let Some(user_id) = self.row().user_id.clone() {
+        if let Some(user_id) = self.row().created_by.clone() {
             return Ok(loader.load_one(user_id).await?.map(UserNode::from_domain));
         }
 
@@ -72,9 +72,7 @@ impl PurchaseOrderNode {
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
     }
-    pub async fn supplier_discount_amount(&self) -> &Option<f64> {
-        &self.row().supplier_discount_amount
-    }
+
     pub async fn donor(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
         if let Some(donor_id) = self.row().donor_link_id.clone() {
@@ -97,8 +95,8 @@ impl PurchaseOrderNode {
     pub async fn shipping_method(&self) -> &Option<String> {
         &self.row().shipping_method
     }
-    pub async fn sent_datetime(&self) -> &Option<NaiveDate> {
-        &self.row().sent_date
+    pub async fn sent_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().sent_datetime
     }
     pub async fn contract_signed_date(&self) -> &Option<NaiveDate> {
         &self.row().contract_signed_date
@@ -144,6 +142,10 @@ impl PurchaseOrderNode {
     }
     pub async fn freight_conditions(&self) -> &Option<String> {
         &self.row().freight_conditions
+    }
+
+    pub async fn supplier_discount_amount(&self) -> f64 {
+        self.row().supplier_discount_amount
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<PurchaseOrderLineConnector> {

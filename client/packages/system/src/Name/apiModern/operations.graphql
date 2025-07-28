@@ -24,3 +24,31 @@ query contacts($nameId: String!, $storeId: String!) {
     }
   }
 }
+
+fragment PurchaseOrders on PurchaseOrderNode {
+  id
+  number
+  createdDatetime
+  confirmedDatetime
+  status
+  targetMonths
+  expectedDeliveryDate
+  comment
+  lines {
+    totalCount
+  }
+}
+
+query purchaseOrders($storeId: String!, $supplierName: String!) {
+  purchaseOrders(
+    storeId: $storeId
+    filter: { supplier: { equalTo: $supplierName } }
+  ) {
+    ... on PurchaseOrderConnector {
+      __typename
+      nodes {
+        ...PurchaseOrders
+      }
+    }
+  }
+}

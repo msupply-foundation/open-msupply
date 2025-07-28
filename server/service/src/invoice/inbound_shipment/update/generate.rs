@@ -109,6 +109,7 @@ pub(crate) fn generate(
                         vvm_status_id,
                         stock_line_id: batch.stock_line.as_ref().unwrap().id.clone(),
                         invoice_line_id: batch.line.id.clone(),
+                        comment: None,
                     })
                 })
             })
