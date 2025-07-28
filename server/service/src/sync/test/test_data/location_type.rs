@@ -1,4 +1,4 @@
-use repository::ColdStorageTypeRow;
+use repository::LocationTypeRow;
 
 use super::TestSyncIncomingRecord;
 
@@ -19,7 +19,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         LOCATION_TYPE_1,
-        ColdStorageTypeRow {
+        LocationTypeRow {
             id: LOCATION_TYPE_1.0.to_string(),
             name: "Cool Room".to_string(),
             min_temperature: 1.0,

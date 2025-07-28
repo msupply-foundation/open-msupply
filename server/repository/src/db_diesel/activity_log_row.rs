@@ -93,7 +93,9 @@ pub enum ActivityLogType {
     ItemVariantCreated,
     ItemVariantDeleted,
     ItemVariantUpdatedName,
-    ItemVariantUpdateColdStorageType,
+    // Renamed in 2.10.0 - keeping name in DB/sync for backwards compatibility
+    #[serde(rename = "ITEM_VARIANT_UPDATE_COLD_STORAGE_TYPE")]
+    ItemVariantUpdateLocationType,
     ItemVariantUpdateManufacturer,
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,

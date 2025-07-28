@@ -29,8 +29,8 @@ export type StockLineRowFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -89,8 +89,8 @@ export type RepackStockLineFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -114,8 +114,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -133,8 +133,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -234,8 +234,8 @@ export type StockLinesQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -328,8 +328,8 @@ export type StockLineQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -459,8 +459,8 @@ export type UpdateStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -542,8 +542,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -561,8 +561,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -598,8 +598,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -617,8 +617,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -748,8 +748,8 @@ export type InsertStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
