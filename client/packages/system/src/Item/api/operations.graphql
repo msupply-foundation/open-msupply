@@ -86,7 +86,7 @@ fragment ItemWithPackSize on ItemNode {
 fragment ItemStockOnHand on ItemNode {
   ...ItemWithPackSize
   availableStockOnHand(storeId: $storeId)
-  itemStoreJoin(storeId: $storeId) {
+  itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
   }
 }
@@ -213,7 +213,7 @@ fragment Item on ItemNode {
   itemDirections {
     ...ItemDirection
   }
-  itemStoreJoin(storeId: $storeId) {
+  itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
   }
 }

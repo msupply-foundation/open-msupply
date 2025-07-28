@@ -38,7 +38,7 @@ fragment InboundLine on InvoiceLineNode {
     defaultPackSize
     isVaccine
     doses
-    itemStoreJoin(storeId: $storeId) {
+    itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
     }
   }

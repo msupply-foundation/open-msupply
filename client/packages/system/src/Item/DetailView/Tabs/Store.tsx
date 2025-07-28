@@ -12,6 +12,7 @@ import { ItemFragment } from '../../api';
 export const StoreTab = ({ item }: { item: ItemFragment }) => {
   const t = useTranslation();
   const isDisabled = true;
+  console.log('Item: ', item);
 
   return (
     <DetailContainer>
@@ -27,7 +28,7 @@ export const StoreTab = ({ item }: { item: ItemFragment }) => {
             label={t('label.default-sell-price-per-pack')}
             Input={
               <CurrencyInput
-                value={item?.itemStoreJoin?.defaultSellPricePerPack}
+                value={item?.itemStoreProperties?.defaultSellPricePerPack}
                 disabled={isDisabled}
                 onChangeNumber={() => {}}
                 width={'100%'}

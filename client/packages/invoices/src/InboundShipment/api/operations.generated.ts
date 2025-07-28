@@ -34,8 +34,8 @@ export type InboundLineFragment = {
     defaultPackSize: number;
     isVaccine: boolean;
     doses: number;
-    itemStoreJoin?: {
-      __typename: 'ItemStoreJoinNode';
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
     } | null;
   };
@@ -146,8 +146,8 @@ export type InboundFragment = {
         defaultPackSize: number;
         isVaccine: boolean;
         doses: number;
-        itemStoreJoin?: {
-          __typename: 'ItemStoreJoinNode';
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
         } | null;
       };
@@ -378,8 +378,8 @@ export type InvoiceQuery = {
               defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
-              itemStoreJoin?: {
-                __typename: 'ItemStoreJoinNode';
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
             };
@@ -543,8 +543,8 @@ export type InboundByNumberQuery = {
               defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
-              itemStoreJoin?: {
-                __typename: 'ItemStoreJoinNode';
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
             };
@@ -1084,7 +1084,7 @@ export const InboundLineFragmentDoc = gql`
       defaultPackSize
       isVaccine
       doses
-      itemStoreJoin(storeId: $storeId) {
+      itemStoreProperties(storeId: $storeId) {
         defaultSellPricePerPack
       }
     }

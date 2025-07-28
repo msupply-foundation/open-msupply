@@ -132,7 +132,7 @@ export const NewStockLineModal = ({
                   },
                   packSize: newItem.defaultPackSize,
                   sellPricePerPack:
-                    newItem.itemStoreJoin?.defaultSellPricePerPack ?? 0,
+                    newItem.itemStoreProperties?.defaultSellPricePerPack ?? 0,
                 })
               }
             />

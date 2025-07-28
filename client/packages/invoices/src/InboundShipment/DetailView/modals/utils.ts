@@ -23,7 +23,7 @@ const createDraftInboundLine = ({
     totalBeforeTax: 0,
     id: FnUtils.generateUUID(),
     invoiceId,
-    sellPricePerPack: item?.itemStoreJoin?.defaultSellPricePerPack ?? 0,
+    sellPricePerPack: item?.itemStoreProperties?.defaultSellPricePerPack ?? 0,
     costPricePerPack: 0,
     numberOfPacks: 0,
     packSize: item?.defaultPackSize ?? 1,

@@ -126,8 +126,8 @@ export type ItemStockOnHandFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
-  itemStoreJoin?: {
-    __typename: 'ItemStoreJoinNode';
+  itemStoreProperties?: {
+    __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
   } | null;
 };
@@ -151,8 +151,8 @@ export type ItemRowWithStatsFragment = {
     totalConsumption: number;
     stockOnHand: number;
   };
-  itemStoreJoin?: {
-    __typename: 'ItemStoreJoinNode';
+  itemStoreProperties?: {
+    __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
   } | null;
 };
@@ -455,8 +455,8 @@ export type ItemFragment = {
     itemId: string;
     priority: number;
   }>;
-  itemStoreJoin?: {
-    __typename: 'ItemStoreJoinNode';
+  itemStoreProperties?: {
+    __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
   } | null;
 };
@@ -649,8 +649,8 @@ export type ItemsWithStockLinesQuery = {
         itemId: string;
         priority: number;
       }>;
-      itemStoreJoin?: {
-        __typename: 'ItemStoreJoinNode';
+      itemStoreProperties?: {
+        __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
       } | null;
     }>;
@@ -707,8 +707,8 @@ export type ItemStockOnHandQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
-      itemStoreJoin?: {
-        __typename: 'ItemStoreJoinNode';
+      itemStoreProperties?: {
+        __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
       } | null;
     }>;
@@ -957,8 +957,8 @@ export type ItemByIdQuery = {
         itemId: string;
         priority: number;
       }>;
-      itemStoreJoin?: {
-        __typename: 'ItemStoreJoinNode';
+      itemStoreProperties?: {
+        __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
       } | null;
     }>;
@@ -1429,7 +1429,7 @@ export const ItemStockOnHandFragmentDoc = gql`
   fragment ItemStockOnHand on ItemNode {
     ...ItemWithPackSize
     availableStockOnHand(storeId: $storeId)
-    itemStoreJoin(storeId: $storeId) {
+    itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
     }
   }
@@ -1629,7 +1629,7 @@ export const ItemFragmentDoc = gql`
     itemDirections {
       ...ItemDirection
     }
-    itemStoreJoin(storeId: $storeId) {
+    itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
     }
   }

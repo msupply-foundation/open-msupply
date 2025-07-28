@@ -29,7 +29,7 @@ export const DraftLine = {
       id: FnUtils.generateUUID(),
       expiryDate: null,
       itemId: item.id,
-      sellPricePerPack: item.itemStoreJoin?.defaultSellPricePerPack ?? 0,
+      sellPricePerPack: item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
       costPricePerPack: 0,
       packSize: item.defaultPackSize,
       location: null,

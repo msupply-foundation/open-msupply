@@ -51,8 +51,8 @@ export type StocktakeLineFragment = {
     isVaccine: boolean;
     doses: number;
     defaultPackSize: number;
-    itemStoreJoin?: {
-      __typename: 'ItemStoreJoinNode';
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
     } | null;
   };
@@ -121,8 +121,8 @@ export type StocktakeFragment = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
-        itemStoreJoin?: {
-          __typename: 'ItemStoreJoinNode';
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
         } | null;
       };
@@ -232,8 +232,8 @@ export type StocktakeQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
-              itemStoreJoin?: {
-                __typename: 'ItemStoreJoinNode';
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
             };
@@ -314,8 +314,8 @@ export type StocktakeByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
-              itemStoreJoin?: {
-                __typename: 'ItemStoreJoinNode';
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
             };
@@ -380,8 +380,8 @@ export type StocktakeLinesQuery = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
-        itemStoreJoin?: {
-          __typename: 'ItemStoreJoinNode';
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
         } | null;
       };
@@ -661,7 +661,7 @@ export const StocktakeLineFragmentDoc = gql`
       isVaccine
       doses
       defaultPackSize
-      itemStoreJoin(storeId: $storeId) {
+      itemStoreProperties(storeId: $storeId) {
         defaultSellPricePerPack
       }
     }
