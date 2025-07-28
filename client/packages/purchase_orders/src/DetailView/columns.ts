@@ -41,36 +41,38 @@ export const usePurchaseOrderColumns = () => {
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,
-      getSortValue: rowData => rowData.numberOfPacks ?? 0,
+      getSortValue: rowData =>
+        (rowData.requestedNumberOfUnits ?? 0) /
+        (rowData.requestedPackSize ?? 1),
     },
     {
       key: 'packSize',
       label: 'label.pack-size',
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.packSize,
-      getSortValue: rowData => rowData.packSize ?? 1,
+      accessor: ({ rowData }) => rowData.requestedPackSize,
+      getSortValue: rowData => rowData.requestedPackSize ?? 1,
       defaultHideOnMobile: true,
     },
     {
       key: 'requestedQuantity',
       label: 'label.requested-quantity',
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.requestedQuantity,
-      getSortValue: rowData => rowData.requestedQuantity ?? 0,
+      accessor: ({ rowData }) => rowData.requestedNumberOfUnits,
+      getSortValue: rowData => rowData.requestedNumberOfUnits ?? 0,
     },
     {
       key: 'authorisedQuantity',
-      label: 'label.authorized',
+      label: 'label.authorised',
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.authorisedQuantity,
-      getSortValue: rowData => rowData.authorisedQuantity ?? 0,
+      accessor: ({ rowData }) => rowData.authorisedNumberOfUnits,
+      getSortValue: rowData => rowData.authorisedNumberOfUnits ?? 0,
     },
     {
       key: 'totalReceived',
       label: 'label.total-received',
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.totalReceived,
-      getSortValue: rowData => rowData.totalReceived ?? 0,
+      accessor: ({ rowData: _ }) => 'TODO: GOOD RECEIVED CALC', // rowData.totalReceived,
+      // getSortValue: rowData =>  //rowData.totalReceived ?? 0,
     },
     // TO-DO: Figure out if this is snapshot value or current value
     // {

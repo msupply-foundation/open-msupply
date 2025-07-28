@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::patient::GenderType;
@@ -18,7 +20,7 @@ pub struct UpsertPreferencesInput {
     pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
     pub use_campaigns: Option<bool>,
-    pub custom_translations: Option<serde_json::Value>,
+    pub custom_translations: Option<BTreeMap<String, String>>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,

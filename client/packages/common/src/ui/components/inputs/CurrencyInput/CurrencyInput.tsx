@@ -39,6 +39,8 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   onChangeNumber,
   maxWidth,
   value,
+  disabled,
+  width,
   ...restOfProps
 }) => {
   const { c, options } = useCurrency();
@@ -55,9 +57,14 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       sx={{
         maxWidth,
         backgroundColor: theme =>
-          restOfProps.disabled
+          disabled
             ? theme.palette.background.toolbar
             : theme.palette.background.menu,
+        '&:hover': {
+          borderBottom: disabled ? 'none' : undefined,
+        },
+        color: disabled ? theme => theme.palette.text.disabled : undefined,
+        width,
       }}
       // We implement our own rounding here, as the react-currency-input-field
       // component only truncates internally
@@ -75,6 +82,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       decimalsLimit={options.precision}
       allowDecimals={allowDecimals}
       decimalScale={allowDecimals ? options.precision : undefined}
+      disabled={disabled}
       {...restOfProps}
     />
   );

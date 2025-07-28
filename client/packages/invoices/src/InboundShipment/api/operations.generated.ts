@@ -22,7 +22,6 @@ export type InboundLineFragment = {
   foreignCurrencyPriceBeforeTax?: number | null;
   itemName: string;
   itemVariantId?: string | null;
-  vvmStatusId?: string | null;
   linkedInvoiceId?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
@@ -58,6 +57,13 @@ export type InboundLineFragment = {
     onHold: boolean;
     note?: string | null;
     vvmStatusId?: string | null;
+  } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    level: number;
+    unusable: boolean;
+    description: string;
   } | null;
 };
 
@@ -120,7 +126,6 @@ export type InboundFragment = {
       foreignCurrencyPriceBeforeTax?: number | null;
       itemName: string;
       itemVariantId?: string | null;
-      vvmStatusId?: string | null;
       linkedInvoiceId?: string | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
       campaign?: {
@@ -160,6 +165,13 @@ export type InboundFragment = {
         onHold: boolean;
         note?: string | null;
         vvmStatusId?: string | null;
+      } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
       } | null;
     }>;
   };
@@ -342,7 +354,6 @@ export type InvoiceQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
-            vvmStatusId?: string | null;
             linkedInvoiceId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             campaign?: {
@@ -382,6 +393,13 @@ export type InvoiceQuery = {
               onHold: boolean;
               note?: string | null;
               vvmStatusId?: string | null;
+            } | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              level: number;
+              unusable: boolean;
+              description: string;
             } | null;
           }>;
         };
@@ -497,7 +515,6 @@ export type InboundByNumberQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
-            vvmStatusId?: string | null;
             linkedInvoiceId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             campaign?: {
@@ -537,6 +554,13 @@ export type InboundByNumberQuery = {
               onHold: boolean;
               note?: string | null;
               vvmStatusId?: string | null;
+            } | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              level: number;
+              unusable: boolean;
+              description: string;
             } | null;
           }>;
         };
@@ -1026,7 +1050,6 @@ export const InboundLineFragmentDoc = gql`
     foreignCurrencyPriceBeforeTax
     itemName
     itemVariantId
-    vvmStatusId
     linkedInvoiceId
     donor(storeId: $storeId) {
       id
@@ -1068,6 +1091,13 @@ export const InboundLineFragmentDoc = gql`
       onHold
       note
       vvmStatusId
+    }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
     }
   }
 `;

@@ -4,11 +4,12 @@ use repository::{
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option, zero_date_as_option, zero_f64_as_none,
+};
 
 use crate::sync::translations::{
-    master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
-    purchase_order::PurchaseOrderTranslation, store::StoreTranslation, PullTranslateResult,
+    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
     PushTranslateResult, SyncTranslation,
 };
 
@@ -17,42 +18,43 @@ use crate::sync::translations::{
 pub struct LegacyPurchaseOrderLineRow {
     #[serde(rename = "ID")]
     pub id: String,
+    #[serde(rename = "store_ID")]
+    pub store_id: String,
     #[serde(rename = "purchase_order_ID")]
     pub purchase_order_id: String,
-    #[serde(default)]
-    pub line_number: Option<i64>,
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
+    pub line_number: i64,
     #[serde(rename = "item_ID")]
-    pub item_link_id: Option<String>,
+    pub item_link_id: String,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub item_name: Option<String>,
+    pub item_name: String,
     #[serde(default)]
-    #[serde(rename = "snapshotQuantity")]
-    pub number_of_packs: Option<f64>,
+    pub snapshot_quantity: f64,
     #[serde(default)]
-    #[serde(rename = "packsize_ordered")]
-    pub pack_size: Option<f64>,
+    pub packsize_ordered: f64,
     #[serde(default)]
-    #[serde(rename = "quan_original_order")]
-    pub requested_quantity: Option<f64>,
+    pub quan_original_order: f64,
     #[serde(default)]
-    #[serde(rename = "quan_adjusted_order")]
-    pub authorised_quantity: Option<f64>,
+    #[serde(deserialize_with = "zero_f64_as_none")]
+    pub quan_adjusted_order: Option<f64>,
     #[serde(default)]
-    #[serde(rename = "quan_rec_to_date")]
-    pub total_received: Option<f64>,
+    pub quan_rec_to_date: f64,
     #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "delivery_date_requested")]
-    pub requested_delivery_date: Option<NaiveDate>,
+    pub delivery_date_requested: Option<NaiveDate>,
     #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "delivery_date_expected")]
-    pub expected_delivery_date: Option<NaiveDate>,
+    pub delivery_date_expected: Option<NaiveDate>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub supplier_item_code: Option<String>,
+    #[serde(default)]
+    pub price_extension_expected: f64,
+    #[serde(default)]
+    pub price_expected_after_discount: f64,
 }
 
 #[deny(dead_code)]
@@ -69,11 +71,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
 
     fn pull_dependencies(&self) -> Vec<&str> {
         vec![
-            NameTranslation.table_name(),
-            StoreTranslation.table_name(),
-            PeriodTranslation.table_name(),
-            MasterListTranslation.table_name(),
             PurchaseOrderTranslation.table_name(),
+            ItemTranslation.table_name(),
         ]
     }
 
@@ -88,34 +87,40 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyPurchaseOrderLineRow {
             id,
+            store_id,
             purchase_order_id,
             line_number,
             item_link_id,
             item_name,
-            number_of_packs,
-            pack_size,
-            requested_quantity,
-            authorised_quantity,
-            total_received,
-            requested_delivery_date,
-            expected_delivery_date,
+            snapshot_quantity,
+            packsize_ordered,
+            quan_original_order,
+            quan_adjusted_order,
+            quan_rec_to_date,
+            delivery_date_requested,
+            delivery_date_expected,
+            supplier_item_code,
+            price_extension_expected,
+            price_expected_after_discount,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
             id,
+            store_id,
             purchase_order_id,
-            line_number: line_number
-                .ok_or_else(|| anyhow::anyhow!("line_number must be present"))?,
-            item_link_id: item_link_id
-                .ok_or_else(|| anyhow::anyhow!("item_link_id must be present"))?,
+            line_number,
+            item_link_id,
             item_name,
-            number_of_packs,
-            pack_size,
-            requested_quantity,
-            authorised_quantity,
-            total_received,
-            requested_delivery_date,
-            expected_delivery_date,
+            requested_number_of_units: quan_original_order,
+            requested_pack_size: packsize_ordered,
+            authorised_number_of_units: quan_adjusted_order,
+            received_number_of_units: quan_rec_to_date,
+            requested_delivery_date: delivery_date_requested,
+            expected_delivery_date: delivery_date_expected,
+            stock_on_hand_in_units: snapshot_quantity,
+            supplier_item_code,
+            price_per_unit_before_discount: price_extension_expected,
+            price_per_unit_after_discount: price_expected_after_discount,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -127,34 +132,42 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
     ) -> Result<PushTranslateResult, anyhow::Error> {
         let PurchaseOrderLineRow {
             id,
+            store_id,
             purchase_order_id,
             line_number,
             item_link_id,
             item_name,
-            number_of_packs,
-            pack_size,
-            requested_quantity,
-            authorised_quantity,
-            total_received,
             requested_delivery_date,
             expected_delivery_date,
+            requested_number_of_units,
+            requested_pack_size,
+            authorised_number_of_units,
+            received_number_of_units,
+            stock_on_hand_in_units,
+            supplier_item_code,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
         } = PurchaseOrderLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
 
         let legacy_row = LegacyPurchaseOrderLineRow {
-            id: id,
-            purchase_order_id: purchase_order_id,
-            line_number: Some(line_number),
-            item_link_id: Some(item_link_id),
+            id,
+            store_id,
+            purchase_order_id,
+            line_number,
+            item_link_id,
             item_name,
-            number_of_packs,
-            pack_size,
-            requested_quantity,
-            authorised_quantity,
-            total_received,
-            requested_delivery_date: requested_delivery_date,
-            expected_delivery_date: expected_delivery_date,
+            snapshot_quantity: stock_on_hand_in_units,
+            packsize_ordered: requested_pack_size,
+            quan_original_order: requested_number_of_units,
+            quan_adjusted_order: authorised_number_of_units,
+            quan_rec_to_date: received_number_of_units,
+            delivery_date_requested: requested_delivery_date,
+            delivery_date_expected: expected_delivery_date,
+            supplier_item_code,
+            price_extension_expected: price_per_unit_before_discount,
+            price_expected_after_discount: price_per_unit_after_discount,
         };
 
         Ok(PushTranslateResult::upsert(
@@ -176,7 +189,7 @@ mod tests {
     use serde_json::json;
 
     #[actix_rt::test]
-    async fn test_purchase_order_translation() {
+    async fn test_purchase_order_line_translation() {
         use crate::sync::test::test_data::purchase_order_line as test_data;
         let translator = PurchaseOrderLineTranslation {};
 
@@ -188,6 +201,7 @@ mod tests {
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            println!("Translating record: {:?}", record.sync_buffer_row.data);
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
@@ -197,7 +211,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_purchase_order_translation_to_sync_record() {
+    async fn test_purchase_order_line_translation_to_sync_record() {
         let (_, connection, _, _) = setup_all(
             "test_purchase_order_line_translation_to_sync_record",
             MockDataInserts::none().purchase_order_line(),

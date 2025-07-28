@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 use crate::service_provider::ServiceContext;
 use repository::{GenderType, TransactionError};
@@ -15,7 +17,7 @@ pub struct UpsertPreferences {
     pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
     pub use_campaigns: Option<bool>,
-    pub custom_translations: Option<serde_json::Value>,
+    pub custom_translations: Option<BTreeMap<String, String>>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,

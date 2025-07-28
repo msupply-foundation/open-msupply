@@ -23,7 +23,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             code: "TestLocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
-            cold_storage_type_id: None,
+            location_type_id: None,
         };
         // create test home currency
         let currency_row = CurrencyRow {

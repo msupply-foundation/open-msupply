@@ -4,7 +4,8 @@ use crate::{
     StorageConnection, Upsert,
 };
 
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDate;
+use chrono::NaiveDateTime;
 use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -13,27 +14,25 @@ table! {
     purchase_order (id) {
         id ->  Text,
         store_id -> Text,
-        user_id -> Nullable<Text>,
-        supplier_name_link_id ->  Nullable<Text>,
+        created_by -> Nullable<Text>,
+        supplier_name_link_id ->  Text,
         purchase_order_number -> BigInt,
         status -> crate::db_diesel::purchase_order_row::PurchaseOrderStatusMapping,
         created_datetime -> Timestamp,
         confirmed_datetime ->  Nullable<Timestamp>,
-        delivered_datetime ->  Nullable<Timestamp>,
         target_months->  Nullable<Double>,
         comment->  Nullable<Text>,
-        supplier_discount_percentage ->  Nullable<Double>,
-        supplier_discount_amount -> Nullable<Double>,
         donor_link_id -> Nullable<Text>,
         reference -> Nullable<Text>,
         currency_id -> Nullable<Text>,
         foreign_exchange_rate -> Nullable<Double>,
         shipping_method->  Nullable<Text>,
         sent_datetime -> Nullable<Timestamp>,
-        contract_signed_datetime -> Nullable<Timestamp>,
-        advance_paid_datetime ->  Nullable<Timestamp>,
-        received_at_port_datetime ->   Nullable<Date>,
-        expected_delivery_datetime -> Nullable<Date>,
+        contract_signed_date -> Nullable<Date>,
+        advance_paid_date ->  Nullable<Date>,
+        received_at_port_date ->   Nullable<Date>,
+        expected_delivery_date -> Nullable<Date>,
+        requested_delivery_date -> Nullable<Date>,
         supplier_agent ->  Nullable<Text>,
         authorising_officer_1 ->  Nullable<Text>,
         authorising_officer_2 -> Nullable<Text>,
@@ -44,7 +43,10 @@ table! {
         communications_charge -> Nullable<Double>,
         insurance_charge ->  Nullable<Double>,
         freight_charge ->  Nullable<Double>,
-        freight_conditions -> Nullable<Text>
+        freight_conditions -> Nullable<Text>,
+        order_total_before_discount -> Double,
+        order_total_after_discount -> Double,
+        supplier_discount_amount -> Double,
     }
 }
 
@@ -59,27 +61,25 @@ allow_tables_to_appear_in_same_query!(purchase_order, item);
 pub struct PurchaseOrderRow {
     pub id: String,
     pub store_id: String,
-    pub user_id: Option<String>,
-    pub supplier_name_link_id: Option<String>,
+    pub created_by: Option<String>,
+    pub supplier_name_link_id: String,
     pub purchase_order_number: i64,
     pub status: PurchaseOrderStatus,
     pub created_datetime: NaiveDateTime,
     pub confirmed_datetime: Option<NaiveDateTime>,
-    pub delivered_datetime: Option<NaiveDateTime>,
     pub target_months: Option<f64>,
     pub comment: Option<String>,
-    pub supplier_discount_percentage: Option<f64>,
-    pub supplier_discount_amount: Option<f64>,
     pub donor_link_id: Option<String>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
     pub foreign_exchange_rate: Option<f64>,
     pub shipping_method: Option<String>,
     pub sent_datetime: Option<NaiveDateTime>,
-    pub contract_signed_datetime: Option<NaiveDateTime>,
-    pub advance_paid_datetime: Option<NaiveDateTime>,
-    pub received_at_port_datetime: Option<NaiveDate>,
-    pub expected_delivery_datetime: Option<NaiveDate>,
+    pub contract_signed_date: Option<NaiveDate>,
+    pub advance_paid_date: Option<NaiveDate>,
+    pub received_at_port_date: Option<NaiveDate>,
+    pub expected_delivery_date: Option<NaiveDate>,
+    pub requested_delivery_date: Option<NaiveDate>,
     pub supplier_agent: Option<String>,
     pub authorising_officer_1: Option<String>,
     pub authorising_officer_2: Option<String>,
@@ -91,6 +91,9 @@ pub struct PurchaseOrderRow {
     pub insurance_charge: Option<f64>,
     pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
+    pub order_total_before_discount: f64,
+    pub order_total_after_discount: f64,
+    pub supplier_discount_amount: f64,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -203,12 +206,11 @@ impl Upsert for PurchaseOrderRow {
 
 #[cfg(test)]
 mod test {
-    use crate::mock::{mock_store_a, MockDataInserts};
+    use crate::mock::{mock_name_c, mock_store_a, MockDataInserts};
     use crate::{
         test_db::setup_all, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
     use strum::IntoEnumIterator;
-    use util::inline_init;
     use util::uuid::uuid;
 
     #[actix_rt::test]
@@ -219,19 +221,20 @@ mod test {
         let repo = PurchaseOrderRowRepository::new(&connection);
         // Try upsert all variants of PurchaseOrderStatus, confirm that diesel enums match postgres
         let mut po_number = 1;
-        for variant in PurchaseOrderStatus::iter() {
+        for status in PurchaseOrderStatus::iter() {
             let id = uuid();
-            let row = inline_init(|p: &mut PurchaseOrderRow| {
-                p.id = id.clone();
-                p.status = variant;
-                p.store_id = mock_store_a().id.clone();
-                p.created_datetime = chrono::Utc::now().naive_utc();
-                p.purchase_order_number = po_number;
-            });
-
+            let row = PurchaseOrderRow {
+                id: id.clone(),
+                supplier_name_link_id: mock_name_c().id,
+                status: status,
+                store_id: mock_store_a().id.clone(),
+                created_datetime: chrono::Utc::now().naive_utc().into(),
+                purchase_order_number: po_number,
+                ..Default::default()
+            };
             po_number += 1;
 
-            let _ = repo.upsert_one(&row);
+            let _ = repo.upsert_one(&row).unwrap();
 
             let result = repo.find_one_by_id(&id).unwrap().unwrap();
             assert_eq!(result.status, row.status);

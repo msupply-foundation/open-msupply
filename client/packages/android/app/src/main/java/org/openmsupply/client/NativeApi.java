@@ -119,15 +119,18 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         Logger.debug("NativeAPI.handleOnStart()");
         WebView webView = this.getBridge().getWebView();
 
-        // Normally javascript would be loaded by Capacitor by loading the generated javascript from WEBVIEW_SERVER_URL
-        // However we'd get an SSL issue with this approach, so we need to generate it ourselves and inject it later.
+        // Normally javascript would be loaded by Capacitor by loading the generated
+        // javascript from WEBVIEW_SERVER_URL
+        // However we'd get an SSL issue with this approach, so we need to generate it
+        // ourselves and inject it later.
 
-        // NOTE: There have been various timing issues with this javascript injection loading
+        // NOTE: There have been various timing issues with this javascript injection
+        // loading
         // We do the actual injection during onPageStarted in ExtendedWebViewClient
-        // We call it here as well as in ExtendedWebViewClient as this gives more time for it to be generated before the webview loads
+        // We call it here as well as in ExtendedWebViewClient as this gives more time
+        // for it to be generated before the webview loads
         // Potentially avoiding issues if it takes too long to generate.
         client.loadJsInject();
-
 
         // this method (handleOnStart) is called when resuming and switching to the app
         // the webView url will be DEFAULT_URL only on the initial load
@@ -177,6 +180,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     webView.post(() -> webView.loadUrl(localUrl + "/android"));
                 } else {
                     Log.e(OM_SUPPLY, "Server not running, displaying error page");
+                    webView.post(() -> webView.addJavascriptInterface(new ErrorPage(getContext()), "ErrorPageInject"));
                     webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
                 }
             }
@@ -341,22 +345,19 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                 eventTime,
                 KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_TAB,
-                0
-        );
+                0);
 
         KeyEvent tabUpEvent = new KeyEvent(
                 downTime,
                 eventTime + 50,
                 KeyEvent.ACTION_UP,
                 KeyEvent.KEYCODE_TAB,
-                0
-        );
+                0);
 
         // Dispatch the events
         webView.post(() -> webView.dispatchKeyEvent(tabDownEvent));
         webView.post(() -> webView.dispatchKeyEvent(tabUpEvent));
     }
-
 
     // NsdManager.DiscoveryListener
     @Override

@@ -60,6 +60,7 @@ export type OutboundFragment = {
       taxPercentage?: number | null;
       itemName: string;
       itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -288,6 +289,7 @@ export type InvoiceQuery = {
             taxPercentage?: number | null;
             itemName: string;
             itemVariantId?: string | null;
+            vvmStatusId?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -431,6 +433,7 @@ export type OutboundByNumberQuery = {
             taxPercentage?: number | null;
             itemName: string;
             itemVariantId?: string | null;
+            vvmStatusId?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
