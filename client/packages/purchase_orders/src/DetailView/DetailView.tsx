@@ -9,6 +9,7 @@ import {
   TableProvider,
   useBreadcrumbs,
   useNavigate,
+  useToggle,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
@@ -19,6 +20,7 @@ import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
+import { PurchaseOrderLineImportModal } from './ImportLines/PurchaseOrderLineImportModal';
 
 export const DetailViewInner = () => {
   const {
@@ -29,6 +31,8 @@ export const DetailViewInner = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
+
+  const importModalController = useToggle();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
@@ -54,7 +58,11 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
+          <AppBarButtons
+            importModalController={importModalController}
+            isDisabled={isDisabled}
+            onAddItem={onOpen}
+          />
 
           <Toolbar isDisabled={isDisabled} />
 
@@ -81,6 +89,10 @@ export const DetailViewInner = () => {
               hasItemVariantsEnabled={hasItemVariantsEnabled}
             />
           )} */}
+          <PurchaseOrderLineImportModal
+            isOpen={importModalController.isOn}
+            onClose={importModalController.toggleOff}
+          />
         </>
       ) : (
         <AlertModal

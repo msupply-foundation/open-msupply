@@ -50,6 +50,7 @@ export type PurchaseOrderFragment = {
       __typename: 'PurchaseOrderLineNode';
       id: string;
       expectedDeliveryDate?: string | null;
+      purchaseOrderId: string;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
@@ -71,6 +72,7 @@ export type PurchaseOrderLineFragment = {
   __typename: 'PurchaseOrderLineNode';
   id: string;
   expectedDeliveryDate?: string | null;
+  purchaseOrderId: string;
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
@@ -155,6 +157,7 @@ export type PurchaseOrderByIdQuery = {
             __typename: 'PurchaseOrderLineNode';
             id: string;
             expectedDeliveryDate?: string | null;
+            purchaseOrderId: string;
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
@@ -215,6 +218,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
       name
       unitName
     }
+    purchaseOrderId
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
