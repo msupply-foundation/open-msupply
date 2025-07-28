@@ -198,10 +198,16 @@ fn generate(
                     approval_comment: None,
                     comment: rnr_form_line_row.comment,
                     initial_stock_on_hand_units: rnr_form_line_row.initial_balance,
-                    incoming_units: rnr_form_line_row.entered_quantity_received.unwrap_or(0.0),
-                    outgoing_units: rnr_form_line_row.entered_quantity_consumed.unwrap_or(0.0),
+                    incoming_units: rnr_form_line_row
+                        .entered_quantity_received
+                        .unwrap_or(rnr_form_line_row.snapshot_quantity_received),
+                    outgoing_units: rnr_form_line_row
+                        .entered_quantity_consumed
+                        .unwrap_or(rnr_form_line_row.snapshot_quantity_consumed),
                     loss_in_units: rnr_form_line_row.entered_losses.unwrap_or(0.0),
-                    addition_in_units: rnr_form_line_row.entered_adjustments.unwrap_or(0.0),
+                    addition_in_units: rnr_form_line_row
+                        .entered_adjustments
+                        .unwrap_or(rnr_form_line_row.snapshot_adjustments),
                     expiring_units: 0.0,
                     days_out_of_stock: rnr_form_line_row.stock_out_duration as f64,
                     option_id: None,
