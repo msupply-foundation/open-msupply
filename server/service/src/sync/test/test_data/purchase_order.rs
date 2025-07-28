@@ -78,7 +78,7 @@ const PURCHASE_ORDER_1: (&str, &str) = (
             "created_datetime": "2021-01-22T00:00:00",
             "confirmed_datetime": "2021-07-11T01:02:03",
             "sent_datetime": "2025-01-15T01:02:03",
-            "supplier_discount_percentage": 10.0,
+            "supplier_discount_percentage": 10.0
         }
     }"#,
 );
