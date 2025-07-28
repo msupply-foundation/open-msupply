@@ -168,6 +168,9 @@ mod finalise {
             requisition.requisition_row.their_reference,
             Some("form B reference".to_string())
         );
+        // No store prefs in default mock data so use OMS defaults (6 and 3 months)
+        assert_eq!(requisition.requisition_row.max_months_of_stock, 6.0);
+        assert_eq!(requisition.requisition_row.min_months_of_stock, 3.0);
 
         // Check the store of the internal order is the same as the RnR form
         assert_eq!(requisition.requisition_row.store_id, mock_store_a().id);

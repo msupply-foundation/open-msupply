@@ -1,5 +1,6 @@
 use crate::{
     activity_log::activity_log_entry, number::next_number, service_provider::ServiceContext,
+    store_preference::get_store_preferences,
 };
 
 use chrono::Utc;
@@ -122,6 +123,9 @@ fn generate(
         period_row,
         ..
     } = rnr_form;
+
+    let store_preferences = get_store_preferences(&ctx.connection, &rnr_form_row.store_id)?;
+
     // Create an internal order based on the RnR form
     // Internal Orders are known as requisitions in the code base
     let requisition_row = RequisitionRow {
@@ -142,9 +146,9 @@ fn generate(
         expected_delivery_date: None,
         colour: None,
         comment: Some("Automatically created from R&R Form".to_string()),
-        max_months_of_stock: 0.0,
+        max_months_of_stock: store_preferences.months_overstock,
         their_reference: rnr_form_row.their_reference.clone(),
-        min_months_of_stock: 0.0,
+        min_months_of_stock: store_preferences.months_understock,
         approval_status: None,
         linked_requisition_id: None,
         program_id: Some(rnr_form_row.program_id.clone()),
