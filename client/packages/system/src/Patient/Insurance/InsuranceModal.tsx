@@ -24,12 +24,14 @@ import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
+import { useForm } from 'packages/common/src/hooks/useFormErrors/FormErrorStoreNew';
 
 export const InsuranceModal = (): ReactElement => {
   const t = useTranslation();
   const formatDateTime = useFormatDateTime();
   const { success, error } = useNotification();
   const { current, setModal } = usePatientModalStore();
+  const formId = 'create-insurance';
 
   const { Modal } = useDialog({
     disableBackdrop: true,
@@ -48,7 +50,7 @@ export const InsuranceModal = (): ReactElement => {
   } = useInsurancePolicies(nameId);
 
   const { showRequiredErrors, resetRequiredErrors, hasErrors } =
-    useFormErrorActions();
+    useForm(formId);
 
   const updatePatch: (newData: Partial<unknown>) => void = newData => {
     resetRequiredErrors();
@@ -112,58 +114,50 @@ export const InsuranceModal = (): ReactElement => {
       <>
         <Stack gap={8} flexDirection="row">
           <Box display="flex" flexDirection="column" gap={2}>
-            <FieldErrorWrapper
-              code="policyNumberFamily"
+            <InputWithLabelRow
               label={t('label.policy-number-family')}
-              value={draft.policyNumberFamily ?? undefined}
-              required={!draft.policyNumberPerson}
-            >
-              {({ label, value, required, error }) => (
-                <InputWithLabelRow
-                  label={label}
-                  Input={
-                    <BasicTextInput
-                      disabled={haveInsuranceId}
-                      onChange={event => {
-                        updatePatch({
-                          policyNumberFamily: event.target.value,
-                        });
-                      }}
-                      value={value}
-                      required={required}
-                      error={error}
-                    />
-                  }
+              Input={
+                <BasicTextInput
+                  formErrorProps={{
+                    formId,
+                    fieldId: 'policyNumberFamily',
+                    label: t('label.policy-number-family'),
+                  }}
+                  disabled={haveInsuranceId}
+                  onChange={event => {
+                    updatePatch({
+                      policyNumberFamily: event.target.value,
+                    });
+                  }}
+                  value={draft.policyNumberFamily ?? undefined}
+                  required={!draft.policyNumberPerson}
                 />
-              )}
-            </FieldErrorWrapper>
-            <FieldErrorWrapper
-              code="policyNumberPerson"
+              }
+            />
+
+            {/* Haven't yet considered custom errors in new format */}
+            {/* // customErrorState={draft.policyNumberPerson === '666'}
+              // customErrorMessage="That is the devil's number and is forbidden 😈" */}
+            <InputWithLabelRow
               label={t('label.policy-number-person')}
-              value={draft.policyNumberPerson ?? undefined}
-              required={!draft.policyNumberFamily}
-              customErrorState={draft.policyNumberPerson === '666'}
-              customErrorMessage="That is the devil's number and is forbidden 😈"
-            >
-              {({ label, value, required, error }) => (
-                <InputWithLabelRow
-                  label={label}
-                  Input={
-                    <BasicTextInput
-                      disabled={haveInsuranceId}
-                      onChange={event => {
-                        updatePatch({
-                          policyNumberPerson: event.target.value,
-                        });
-                      }}
-                      value={value}
-                      required={required}
-                      error={error}
-                    />
-                  }
+              Input={
+                <BasicTextInput
+                  disabled={haveInsuranceId}
+                  onChange={event => {
+                    updatePatch({
+                      policyNumberPerson: event.target.value,
+                    });
+                  }}
+                  value={draft.policyNumberPerson ?? undefined}
+                  required={!draft.policyNumberFamily}
+                  formErrorProps={{
+                    formId,
+                    fieldId: 'policyNumberPerson',
+                    label: t('label.policy-number-person'),
+                  }}
                 />
-              )}
-            </FieldErrorWrapper>
+              }
+            />
             <FieldErrorWrapper
               code="insurancePolicy"
               label={t('label.insurance-policy')}
@@ -277,7 +271,7 @@ export const InsuranceModal = (): ReactElement => {
             </FieldErrorWrapper>
           </Box>
         </Stack>
-        <ErrorDisplay sx={{ marginTop: '1em' }} />
+        <ErrorDisplay sx={{ marginTop: '1em' }} formId={formId} />
       </>
     </Modal>
   );

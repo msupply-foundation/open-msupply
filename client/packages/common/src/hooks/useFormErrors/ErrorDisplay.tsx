@@ -6,19 +6,25 @@ import {
   AlertIcon,
 } from '@openmsupply-client/common';
 import { Alert } from '@common/components';
-import { useDisplayRequiredErrors, useFormErrors } from './FormErrorStore';
+import { useDisplayRequiredErrors, useFormErrors } from './FormErrorStoreNew';
 import { SxProps } from '@mui/material';
 
-export const ErrorDisplay = ({ sx = {} }: { sx?: SxProps }) => {
+export const ErrorDisplay = ({
+  sx = {},
+  formId,
+}: {
+  sx?: SxProps;
+  formId: string;
+}) => {
   const t = useTranslation();
-  const errors = useFormErrors();
-  const displayRequiredErrors = useDisplayRequiredErrors();
+  const errors = useFormErrors(formId);
+  const displayRequiredErrors = useDisplayRequiredErrors(formId);
 
   const errorList = Object.entries(errors)
     .filter(([_, value]) => {
-      if (value.error) return true;
+      // if (value.error) return true;
 
-      if (displayRequiredErrors && value.requiredError) return true;
+      if (displayRequiredErrors && value.error) return true;
 
       return false;
     })

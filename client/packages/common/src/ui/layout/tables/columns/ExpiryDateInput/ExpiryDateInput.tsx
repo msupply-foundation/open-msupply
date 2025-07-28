@@ -43,6 +43,7 @@ export const getExpiryDateInputColumn = <
       <ExpiryDateInput
         value={value}
         onChange={onChange}
+        fieldId={`date_${rowData.id}`}
         disabled={!!isDisabled}
       />
     );

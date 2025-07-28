@@ -1,14 +1,21 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
   StandardTextFieldProps,
   TextField,
   Typography,
 } from '@mui/material';
+import { useFormFieldError } from 'packages/common/src/hooks/useFormErrors/FormErrorStoreNew';
+import { FnUtils } from '@common/utils';
 
 export type BasicTextInputProps = StandardTextFieldProps & {
   textAlign?: 'left' | 'center' | 'right';
   focusOnRender?: boolean;
+  formErrorProps?: {
+    formId: string;
+    label: string;
+    fieldId?: string;
+  };
 };
 
 /**
@@ -25,20 +32,37 @@ export const BasicTextInput = React.forwardRef<
       sx,
       style,
       slotProps,
-      error,
+      error: propsError,
       required,
       textAlign,
       focusOnRender,
+      formErrorProps: { formId, fieldId: inputFieldId, label = '' } = {},
       ...props
     },
     ref
   ) => {
     const inputRef = useRef<HTMLDivElement | null>(null);
+
+    // recommend passing in fieldId as a recognisable string (e.g. 'patientName'),
+    // but for transition could use UUID as a fallback, so only formId is required
+    const fieldId = useRef(inputFieldId ?? FnUtils.generateUUID()).current;
+
     useEffect(() => {
       if (focusOnRender && inputRef.current) {
         inputRef.current.focus();
       }
     }, [focusOnRender]);
+
+    const isError = useFormFieldError({
+      formId,
+      fieldId,
+      required,
+      value: props.value,
+      label,
+      // todo: custom errors
+    });
+
+    const error = propsError ?? isError;
 
     return (
       <Box
@@ -106,6 +130,7 @@ export const BasicTextInput = React.forwardRef<
               ...slotProps?.inputLabel,
             },
           }}
+          // What are the valid use cases of `error` - probs should go through error state
           {...props}
         />
         <Box width={2}>
