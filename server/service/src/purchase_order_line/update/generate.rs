@@ -7,20 +7,21 @@ pub fn generate(
     input: &UpdatePurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     let UpdatePurchaseOrderLineInput {
-        pack_size,
+        requested_pack_size,
         item_id,
-        requested_quantity,
+        requested_number_of_units,
         requested_delivery_date,
         expected_delivery_date,
-        .. // excludes ID, grabbed from the existing line instead
+        id: _,
     } = input;
 
     let item_link_id = item_id.clone().unwrap_or(purchase_order_line.item_link_id);
 
     Ok(PurchaseOrderLineRow {
         item_link_id,
-        pack_size: pack_size.or(purchase_order_line.pack_size),
-        requested_quantity: requested_quantity.or(purchase_order_line.requested_quantity),
+        requested_pack_size: requested_pack_size.unwrap_or(purchase_order_line.requested_pack_size),
+        requested_number_of_units: requested_number_of_units
+            .unwrap_or(purchase_order_line.requested_number_of_units),
         requested_delivery_date: requested_delivery_date
             .or(purchase_order_line.requested_delivery_date),
         expected_delivery_date: expected_delivery_date

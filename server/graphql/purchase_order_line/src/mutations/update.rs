@@ -42,8 +42,8 @@ impl UpdateInput {
         ServiceInput {
             id,
             item_id,
-            pack_size,
-            requested_quantity,
+            requested_pack_size: pack_size,
+            requested_number_of_units: requested_quantity,
             requested_delivery_date,
             expected_delivery_date,
         }
@@ -61,11 +61,10 @@ pub fn update_purchase_order_line(
     store_id: &str,
     input: UpdateInput,
 ) -> Result<UpdateResponse> {
-    // TODO: add the correct permission type - temporary permission
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
         },
     );
