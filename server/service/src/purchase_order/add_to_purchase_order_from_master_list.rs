@@ -125,11 +125,16 @@ mod test {
         AddToPurchaseOrderFromMasterListInput as ServiceInput,
     };
     use crate::service_provider::ServiceProvider;
-    use repository::mock::{mock_purchase_order_a, mock_purchase_order_c};
+    use repository::mock::{
+        item_query_test1, mock_master_list_program, mock_purchase_order_a, mock_purchase_order_c,
+        mock_purchase_order_d, mock_store_b, MockData,
+    };
+    use repository::test_db::setup_all_with_data;
     use repository::{
         mock::{mock_store_a, mock_store_c, mock_test_not_store_a_master_list, MockDataInserts},
         test_db::setup_all,
     };
+    use util::inline_init;
 
     #[actix_rt::test]
     async fn add_from_master_list_errors() {
@@ -193,5 +198,55 @@ mod test {
             ),
             Err(ServiceError::NotThisStorePurchaseOrder)
         );
+    }
+
+    #[actix_rt::test]
+    async fn add_from_master_list_success() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "purchase_order_add_from_master_list_success",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.full_master_lists = vec![mock_master_list_program()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+
+        let result: Vec<repository::PurchaseOrderLineRow> = service
+            .add_to_purchase_order_from_master_list(
+                &context,
+                ServiceInput {
+                    purchase_order_id: mock_purchase_order_d().id,
+                    master_list_id: mock_master_list_program().master_list.id,
+                },
+            )
+            .unwrap()
+            .into_iter()
+            .map(|line| line.purchase_order_line_row)
+            .collect();
+
+        let mut item_ids: Vec<String> = result
+            .clone()
+            .into_iter()
+            .map(|purchase_order_line| purchase_order_line.item_link_id)
+            .collect();
+        item_ids.sort();
+
+        let test_item_ids = vec![item_query_test1().id];
+
+        assert_eq!(item_ids, test_item_ids);
+
+        let line = result
+            .iter()
+            .find(|line| line.item_link_id == item_query_test1().id)
+            .unwrap();
+
+        assert_eq!(line.number_of_packs, None);
+        assert_eq!(line.item_name, Some(item_query_test1().name));
     }
 }
