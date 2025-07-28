@@ -33,7 +33,7 @@ export function useItemVariant({
       name: '',
       itemId: item.id,
       manufacturerId: null,
-      coldStorageTypeId: null,
+      locationTypeId: null,
       packagingVariants: [
         {
           __typename: 'PackagingVariantNode',
@@ -97,7 +97,7 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
         itemId,
         name: input.name,
         manufacturerId: setNullableInput('manufacturerId', input),
-        coldStorageTypeId: setNullableInput('coldStorageTypeId', input),
+        locationTypeId: setNullableInput('locationTypeId', input),
         packagingVariants: input.packagingVariants.map(pv => ({
           id: pv.id,
           name: pv.name,
