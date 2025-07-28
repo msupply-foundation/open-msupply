@@ -1,7 +1,7 @@
 use util::inline_init;
 
 use crate::{
-    mock::{mock_item_a, mock_item_b, mock_purchase_order_a, mock_purchase_order_b_confirmed},
+    mock::{mock_item_a, mock_item_b, mock_purchase_order_a, mock_purchase_order_b_finalised},
     PurchaseOrderLineRow,
 };
 
@@ -29,7 +29,7 @@ pub fn mock_purchase_order_b_line_1() -> PurchaseOrderLineRow {
     inline_init(|r: &mut PurchaseOrderLineRow| {
         r.id = "test_purchase_order_b_line_1".to_string();
         r.store_id = "store_a".to_string();
-        r.purchase_order_id = mock_purchase_order_b_confirmed().id;
+        r.purchase_order_id = mock_purchase_order_b_finalised().id;
         r.line_number = 1;
         r.item_link_id = mock_item_a().id;
     })
