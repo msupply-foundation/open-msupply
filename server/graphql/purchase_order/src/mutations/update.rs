@@ -127,7 +127,7 @@ pub fn update_purchase_order(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
         },
     );
