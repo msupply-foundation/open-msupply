@@ -110,6 +110,6 @@ export const LocationSearchInput = ({
 };
 
 export const formatLocationLabel = (location: LocationRowFragment) => {
-  const { name, coldStorageType } = location;
-  return `${name}${coldStorageType ? ` (${coldStorageType.name})` : ''}`;
+  const { name, locationType } = location;
+  return `${name}${locationType ? ` (${locationType.name})` : ''}`;
 };

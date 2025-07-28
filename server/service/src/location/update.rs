@@ -22,7 +22,7 @@ pub struct UpdateLocation {
     pub code: Option<String>,
     pub name: Option<String>,
     pub on_hold: Option<bool>,
-    pub cold_storage_type_id: Option<String>,
+    pub location_type_id: Option<String>,
 }
 
 pub fn update_location(
@@ -69,14 +69,14 @@ pub fn generate(
         code,
         name,
         on_hold,
-        cold_storage_type_id,
+        location_type_id,
     }: UpdateLocation,
     mut location_row: LocationRow,
 ) -> LocationRow {
     location_row.code = code.unwrap_or(location_row.code);
     location_row.name = name.unwrap_or(location_row.name);
     location_row.on_hold = on_hold.unwrap_or(location_row.on_hold);
-    location_row.cold_storage_type_id = cold_storage_type_id;
+    location_row.location_type_id = location_type_id;
     location_row
 }
 
