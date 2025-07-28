@@ -5,7 +5,6 @@ import {
   useTranslation,
   DetailSection,
   Grid,
-  NumericTextDisplay,
   CurrencyInput,
 } from '@openmsupply-client/common';
 import { ItemFragment } from '../../api';
@@ -34,7 +33,6 @@ export const StoreTab = ({ item }: { item: ItemFragment }) => {
                 width={'100%'}
               />
             }
-            DisabledInput={<NumericTextDisplay value={item?.margin} />}
           />
         </DetailSection>
       </Grid>
