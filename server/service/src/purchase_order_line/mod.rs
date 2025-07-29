@@ -1,8 +1,15 @@
 use self::query::{get_purchase_order_line, get_purchase_order_lines};
 pub mod query;
 use crate::{
-    purchase_order_line::insert::{
-        insert_purchase_order_line, InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput,
+    purchase_order_line::{
+        delete::{delete_purchase_order_line, DeletePurchaseOrderLineError},
+        insert::{
+            insert_purchase_order_line, InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput,
+        },
+        update::{
+            update_purchase_order_line, UpdatePurchaseOrderLineInput,
+            UpdatePurchaseOrderLineInputError,
+        },
     },
     service_provider::ServiceContext,
     ListError, ListResult,
@@ -13,7 +20,9 @@ use repository::{
     RepositoryError,
 };
 
+pub mod delete;
 pub mod insert;
+pub mod update;
 
 pub trait PurchaseOrderLineServiceTrait: Sync + Send {
     fn get_purchase_order_line(
@@ -43,6 +52,23 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
         input: InsertPurchaseOrderLineInput,
     ) -> Result<PurchaseOrderLineRow, InsertPurchaseOrderLineError> {
         insert_purchase_order_line(ctx, store_id, input)
+    }
+
+    fn update_purchase_order_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdatePurchaseOrderLineInput,
+    ) -> Result<PurchaseOrderLine, UpdatePurchaseOrderLineInputError> {
+        update_purchase_order_line(ctx, store_id, input)
+    }
+
+    fn delete_purchase_order_line(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<String, DeletePurchaseOrderLineError> {
+        delete_purchase_order_line(ctx, id)
     }
 }
 

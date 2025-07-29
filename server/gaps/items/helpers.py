@@ -1,17 +1,17 @@
 import uuid
 
 
-# A python function to create a cold_storage_type_id lookup query based on the 
+# A python function to create a location_type_id lookup query based on the 
 # VaccineStorageTemperature one of `2-8°C`, `-20°C`, `-70°C`
-def cold_storage_type_id_lookup(storage_temp):
+def location_type_id_lookup(storage_temp):
     if storage_temp == '2-8°C':
-        return '(SELECT id FROM cold_storage_type WHERE name = \'+5\' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)'
+        return '(SELECT id FROM location_type WHERE name = \'+5\' or (min_temperature >= 2 AND max_temperature <= 10) LIMIT 1)'
     elif storage_temp == '-20°C':
-        return '(SELECT id FROM cold_storage_type WHERE name = \'-20\' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)'
+        return '(SELECT id FROM location_type WHERE name = \'-20\' or (min_temperature >= -30 AND max_temperature <= -10) LIMIT 1)'
     elif storage_temp == '-70°C':
-        return '(SELECT id FROM cold_storage_type WHERE name = \'-70\' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)'
+        return '(SELECT id FROM location_type WHERE name = \'-70\' or (min_temperature >= -80 AND max_temperature <= -60) LIMIT 1)'
     elif storage_temp == '+25°C' or storage_temp == '25°C':
-        return '(SELECT id FROM cold_storage_type WHERE name = \'+25\' or (min_temperature >= 10 AND max_temperature <= 30) LIMIT 1)'
+        return '(SELECT id FROM location_type WHERE name = \'+25\' or (min_temperature >= 10 AND max_temperature <= 30) LIMIT 1)'
     else:
         if storage_temp != '':
             print('Unknown storage temperature: ' + storage_temp)

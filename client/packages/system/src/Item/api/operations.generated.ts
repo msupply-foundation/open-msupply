@@ -159,8 +159,8 @@ export type ItemRowWithStatsFragment = {
   };
 };
 
-export type ColdStorageTypeFragment = {
-  __typename: 'ColdStorageTypeNode';
+export type LocationTypeFragment = {
+  __typename: 'LocationTypeNode';
   id: string;
   name: string;
   minTemperature: number;
@@ -210,7 +210,7 @@ export type ItemVariantFragment = {
   name: string;
   itemId: string;
   manufacturerId?: string | null;
-  coldStorageTypeId?: string | null;
+  locationTypeId?: string | null;
   vvmType?: string | null;
   item?: {
     __typename: 'ItemNode';
@@ -228,8 +228,8 @@ export type ItemVariantFragment = {
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
-  coldStorageType?: {
-    __typename: 'ColdStorageTypeNode';
+  locationType?: {
+    __typename: 'LocationTypeNode';
     id: string;
     name: string;
     minTemperature: number;
@@ -378,7 +378,7 @@ export type ItemFragment = {
     name: string;
     itemId: string;
     manufacturerId?: string | null;
-    coldStorageTypeId?: string | null;
+    locationTypeId?: string | null;
     vvmType?: string | null;
     item?: {
       __typename: 'ItemNode';
@@ -396,8 +396,8 @@ export type ItemFragment = {
       name: string;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     } | null;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       minTemperature: number;
@@ -573,7 +573,7 @@ export type ItemsWithStockLinesQuery = {
         name: string;
         itemId: string;
         manufacturerId?: string | null;
-        coldStorageTypeId?: string | null;
+        locationTypeId?: string | null;
         vvmType?: string | null;
         item?: {
           __typename: 'ItemNode';
@@ -591,8 +591,8 @@ export type ItemsWithStockLinesQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           minTemperature: number;
@@ -878,7 +878,7 @@ export type ItemByIdQuery = {
         name: string;
         itemId: string;
         manufacturerId?: string | null;
-        coldStorageTypeId?: string | null;
+        locationTypeId?: string | null;
         vvmType?: string | null;
         item?: {
           __typename: 'ItemNode';
@@ -896,8 +896,8 @@ export type ItemByIdQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           minTemperature: number;
@@ -993,7 +993,7 @@ export type ItemVariantsQuery = {
         name: string;
         itemId: string;
         manufacturerId?: string | null;
-        coldStorageTypeId?: string | null;
+        locationTypeId?: string | null;
         vvmType?: string | null;
         item?: {
           __typename: 'ItemNode';
@@ -1011,8 +1011,8 @@ export type ItemVariantsQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           minTemperature: number;
@@ -1155,7 +1155,7 @@ export type UpsertItemVariantMutation = {
             name: string;
             itemId: string;
             manufacturerId?: string | null;
-            coldStorageTypeId?: string | null;
+            locationTypeId?: string | null;
             vvmType?: string | null;
             item?: {
               __typename: 'ItemNode';
@@ -1177,8 +1177,8 @@ export type UpsertItemVariantMutation = {
                 code: string;
               } | null;
             } | null;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               minTemperature: number;
@@ -1262,16 +1262,16 @@ export type DeleteItemVariantMutation = {
   };
 };
 
-export type ColdStorageTypesQueryVariables = Types.Exact<{
+export type LocationTypesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type ColdStorageTypesQuery = {
+export type LocationTypesQuery = {
   __typename: 'Queries';
-  coldStorageTypes: {
-    __typename: 'ColdStorageTypeConnector';
+  locationTypes: {
+    __typename: 'LocationTypeConnector';
     nodes: Array<{
-      __typename: 'ColdStorageTypeNode';
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       minTemperature: number;
@@ -1519,8 +1519,8 @@ export const StockLineFragmentDoc = gql`
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
 `;
-export const ColdStorageTypeFragmentDoc = gql`
-  fragment ColdStorageType on ColdStorageTypeNode {
+export const LocationTypeFragmentDoc = gql`
+  fragment LocationType on LocationTypeNode {
     __typename
     id
     name
@@ -1575,9 +1575,9 @@ export const ItemVariantFragmentDoc = gql`
     manufacturer(storeId: $storeId) {
       ...NameRow
     }
-    coldStorageTypeId
-    coldStorageType {
-      ...ColdStorageType
+    locationTypeId
+    locationType {
+      ...LocationType
     }
     packagingVariants {
       ...PackagingVariant
@@ -1591,7 +1591,7 @@ export const ItemVariantFragmentDoc = gql`
     vvmType
   }
   ${NameRowFragmentDoc}
-  ${ColdStorageTypeFragmentDoc}
+  ${LocationTypeFragmentDoc}
   ${PackagingVariantFragmentDoc}
   ${BundledItemFragmentDoc}
 `;
@@ -1920,20 +1920,20 @@ export const DeleteItemVariantDocument = gql`
     }
   }
 `;
-export const ColdStorageTypesDocument = gql`
-  query coldStorageTypes($storeId: String!) {
-    coldStorageTypes(
+export const LocationTypesDocument = gql`
+  query locationTypes($storeId: String!) {
+    locationTypes(
       storeId: $storeId
       sort: { key: minTemperature, desc: true }
     ) {
-      ... on ColdStorageTypeConnector {
+      ... on LocationTypeConnector {
         nodes {
-          ...ColdStorageType
+          ...LocationType
         }
       }
     }
   }
-  ${ColdStorageTypeFragmentDoc}
+  ${LocationTypeFragmentDoc}
 `;
 export const UpsertBundledItemDocument = gql`
   mutation upsertBundledItem(
@@ -2172,18 +2172,17 @@ export function getSdk(
         variables
       );
     },
-    coldStorageTypes(
-      variables: ColdStorageTypesQueryVariables,
+    locationTypes(
+      variables: LocationTypesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<ColdStorageTypesQuery> {
+    ): Promise<LocationTypesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ColdStorageTypesQuery>(
-            ColdStorageTypesDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'coldStorageTypes',
+          client.request<LocationTypesQuery>(LocationTypesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'locationTypes',
         'query',
         variables
       );
