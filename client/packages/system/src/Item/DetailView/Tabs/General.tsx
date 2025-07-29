@@ -112,16 +112,12 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
           <DetailInputWithLabelRow
             label={t('label.location-type')}
             Input={
-              // always show the label, but only show the input if it contains a value
-              // update this if enabling editing
-              item?.locationType && (
-                <LocationTypeInput
-                  onChange={locationType => locationType}
-                  value={item.locationType}
-                  disabled={isDisabled}
-                  fullWidth
-                />
-              )
+              <LocationTypeInput
+                onChange={locationType => locationType}
+                value={item.restrictedLocationType ?? null}
+                disabled={isDisabled}
+                fullWidth
+              />
             }
           />
         </DetailSection>
