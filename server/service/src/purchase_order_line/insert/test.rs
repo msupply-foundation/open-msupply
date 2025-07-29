@@ -23,13 +23,10 @@ mod insert {
             .unwrap();
         let service = service_provider.purchase_order_line_service;
 
-        let store_id = &mock_store_a().id;
-
         // Purchase Order Does Not Exist
         assert_eq!(
             service.insert_purchase_order_line(
                 &context,
-                store_id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "non_existent_purchase_order".to_string(),
@@ -56,7 +53,6 @@ mod insert {
         assert_eq!(
             service.insert_purchase_order_line(
                 &context,
-                store_id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
@@ -70,7 +66,6 @@ mod insert {
         service
             .insert_purchase_order_line(
                 &context,
-                store_id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
@@ -82,7 +77,6 @@ mod insert {
         assert_eq!(
             service.insert_purchase_order_line(
                 &context,
-                store_id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
@@ -133,7 +127,6 @@ mod insert {
         let result_1_1 = service
             .insert_purchase_order_line(
                 &context,
-                &mock_store_a().id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1_1".to_string(),
                     purchase_order_id: "purchase_order_id_1".to_string(),
@@ -145,7 +138,6 @@ mod insert {
         let result_1_2 = service
             .insert_purchase_order_line(
                 &context,
-                &mock_store_a().id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1_2".to_string(),
                     purchase_order_id: "purchase_order_id_1".to_string(),
@@ -158,7 +150,6 @@ mod insert {
         let result_2_1 = service
             .insert_purchase_order_line(
                 &context,
-                &mock_store_a().id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_2_1".to_string(),
                     purchase_order_id: "purchase_order_id_2".to_string(),
@@ -170,7 +161,6 @@ mod insert {
         let result_2_2 = service
             .insert_purchase_order_line(
                 &context,
-                &mock_store_a().id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_2_2".to_string(),
                     purchase_order_id: "purchase_order_id_2".to_string(),

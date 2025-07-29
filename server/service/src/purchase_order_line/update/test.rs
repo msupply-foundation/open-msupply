@@ -19,14 +19,15 @@ mod update {
             setup_all("update_purchase_order_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id.clone(), "".to_string())
+            .unwrap();
         let service = service_provider.purchase_order_line_service;
 
         // Create a purchase order line
         service
             .insert_purchase_order_line(
                 &context,
-                &mock_store_a().id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
@@ -39,7 +40,7 @@ mod update {
         assert_eq!(
             service.update_purchase_order_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_a().id.clone(),
                 UpdatePurchaseOrderLineInput {
                     id: "non_existent_line_id".to_string(),
                     item_id: None,
@@ -59,14 +60,15 @@ mod update {
             setup_all("update_purchase_order_line_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id.clone(), "".to_string())
+            .unwrap();
         let service = service_provider.purchase_order_line_service;
 
         // Create a purchase order line
         service
             .insert_purchase_order_line(
                 &context,
-                &mock_store_a().id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
@@ -79,7 +81,7 @@ mod update {
         let result = service
             .update_purchase_order_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_a().id.clone(),
                 UpdatePurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     item_id: Some(mock_item_b().id.to_string()),

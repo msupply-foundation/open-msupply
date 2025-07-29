@@ -1,11 +1,16 @@
 use self::query::{get_purchase_order, get_purchase_orders};
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{
+    purchase_order::batch::{batch_purchase_order, BatchPurchaseOrder, BatchPurchaseOrderResult},
+    service_provider::ServiceContext,
+    ListError, ListResult,
+};
 
 use insert::{insert_purchase_order, InsertPurchaseOrderError, InsertPurchaseOrderInput};
 use repository::{
     PaginationOption, PurchaseOrderFilter, PurchaseOrderRow, PurchaseOrderSort, RepositoryError,
 };
 
+pub mod batch;
 pub mod insert;
 pub mod query;
 pub mod validate;
@@ -38,6 +43,14 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
         input: InsertPurchaseOrderInput,
     ) -> Result<PurchaseOrderRow, InsertPurchaseOrderError> {
         insert_purchase_order(ctx, store_id, input)
+    }
+
+    fn batch_purchase_order(
+        &self,
+        ctx: &ServiceContext,
+        input: BatchPurchaseOrder,
+    ) -> Result<BatchPurchaseOrderResult, RepositoryError> {
+        batch_purchase_order(ctx, input)
     }
 }
 

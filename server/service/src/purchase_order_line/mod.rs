@@ -48,10 +48,9 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
     fn insert_purchase_order_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: InsertPurchaseOrderLineInput,
     ) -> Result<PurchaseOrderLineRow, InsertPurchaseOrderLineError> {
-        insert_purchase_order_line(ctx, store_id, input)
+        insert_purchase_order_line(ctx, input)
     }
 
     fn update_purchase_order_line(

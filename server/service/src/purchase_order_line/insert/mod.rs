@@ -28,15 +28,15 @@ pub struct InsertPurchaseOrderLineInput {
 
 pub fn insert_purchase_order_line(
     ctx: &ServiceContext,
-    store_id: &str,
     input: InsertPurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, InsertPurchaseOrderLineError> {
     let purchase_order_line = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(store_id, &input, connection)?;
+            validate(&ctx.store_id.clone(), &input, connection)?;
 
-            let new_purchase_order_line = generate(connection, store_id, input.clone())?;
+            let new_purchase_order_line =
+                generate(connection, &ctx.store_id.clone(), input.clone())?;
             PurchaseOrderLineRowRepository::new(connection).upsert_one(&new_purchase_order_line)?;
 
             Ok(new_purchase_order_line)

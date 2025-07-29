@@ -93,7 +93,7 @@ export const DetailViewInner = () => {
               itemId={itemId}
               purchaseOrder={data}
             />
-          )} */}
+          )}
           <PurchaseOrderLineImportModal
             isOpen={importModalController.isOn}
             onClose={importModalController.toggleOff}

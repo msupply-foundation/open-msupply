@@ -1,6 +1,7 @@
 mod batch_inbound_shipment;
 mod batch_outbound_shipment;
 mod batch_prescription;
+mod batch_purchase_order;
 mod batch_request_requisition;
 mod batch_response_requisition;
 mod batch_stocktake;
@@ -63,6 +64,15 @@ impl BatchMutations {
         input: batch_prescription::BatchInput,
     ) -> Result<batch_prescription::BatchResponse> {
         batch_prescription::batch(ctx, &store_id, input)
+    }
+
+    async fn batch_purchase_order(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: batch_purchase_order::BatchInput,
+    ) -> Result<batch_purchase_order::BatchResponse> {
+        batch_purchase_order::batch(ctx, &store_id, input)
     }
 }
 
