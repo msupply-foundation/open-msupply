@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation, useAuthContext } from '@openmsupply-client/common';
+import { useAuthContext } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 
@@ -10,7 +10,6 @@ export const AddFromMasterListButtonComponent = ({
   isOn: boolean;
   toggleOff: () => void;
 }) => {
-  const t = useTranslation();
   const { storeId } = useAuthContext();
 
   const {
