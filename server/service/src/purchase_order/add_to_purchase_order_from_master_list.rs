@@ -246,7 +246,6 @@ mod test {
             .find(|line| line.item_link_id == item_query_test1().id)
             .unwrap();
 
-        assert_eq!(line.number_of_packs, None);
-        assert_eq!(line.item_name, Some(item_query_test1().name));
+        assert_eq!(line.item_name, item_query_test1().name);
     }
 }

@@ -1,4 +1,7 @@
-use repository::{PurchaseOrderRow, PurchaseOrderStatus};
+use repository::{
+    PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError,
+    StorageConnection,
+};
 
 pub(crate) fn purchase_order_is_editable(purchase_order: &PurchaseOrderRow) -> bool {
     match purchase_order.status {
@@ -8,9 +11,6 @@ pub(crate) fn purchase_order_is_editable(purchase_order: &PurchaseOrderRow) -> b
         PurchaseOrderStatus::Finalised => false,
     }
 }
-use repository::{
-    PurchaseOrderRow, PurchaseOrderRowRepository, RepositoryError, StorageConnection,
-};
 
 pub fn check_purchase_order_exists(
     id: &str,
