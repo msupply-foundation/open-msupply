@@ -12,9 +12,9 @@ const GOODS_RECEIVED: (&str, &str) = (
         "ID": "3486239A597646B2B7259D91A24988E8",
         "budget_ID": "",
         "comment": "",
-        "donor_id": "",
+        "donor_id": "F81D5559210840C78E6CE455D4798414",
         "entry_date": "2025-07-24",
-        "linked_transaction_ID": "",
+        "linked_transaction_ID": "622C9D65F5124BA5B11DF55B6FB1627B",
         "purchase_order_ID": "622C9D65F5124BA5B11DF55B6FB1627B",
         "received_date": "2025-07-24",
         "serial_number": 1,
@@ -34,13 +34,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             id: "3486239A597646B2B7259D91A24988E8".to_owned(),
             store_id: "80004C94067A4CE5A34FC343EB1B4306".to_owned(),
             purchase_order_id: Some("622C9D65F5124BA5B11DF55B6FB1627B".to_string()),
-            inbound_shipment_id: None,
+            inbound_shipment_id: Some("622C9D65F5124BA5B11DF55B6FB1627B".to_string()),
             goods_received_number: 1,
             status: GoodsReceivedStatus::New.to_owned(),
             received_date: Some("2025-07-24".parse().unwrap()),
             comment: None,
             supplier_reference: Some("test po 1".to_string()),
-            donor_link_id: None,
+            donor_link_id: Some("F81D5559210840C78E6CE455D4798414".to_string()),
             created_datetime: NaiveDate::from_ymd_opt(2025, 07, 24)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
