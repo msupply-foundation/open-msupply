@@ -17,6 +17,7 @@ pub enum PrefKey {
     GenderOptions,
     ShowContactTracing,
     UseCampaigns,
+    SyncRecordsDisplayThreshold,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
