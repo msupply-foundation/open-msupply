@@ -112,6 +112,7 @@ fn generate_line(
         donor_id,
         campaign_id,
         shipped_number_of_packs,
+        volume_per_pack,
         barcode: _,
         stock_on_hold: _,
         tax_percentage: _,
@@ -157,6 +158,7 @@ fn generate_line(
         donor_link_id: donor_id,
         campaign_id,
         shipped_number_of_packs,
+        volume_per_pack,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
         prescribed_quantity: None,
@@ -167,7 +169,7 @@ fn generate_line(
 fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &InvoiceRow) -> bool {
     match stock_in_type {
         StockInType::InboundShipment | StockInType::CustomerReturn => {
-            should_update_stock(&existing_invoice_row)
+            should_update_stock(existing_invoice_row)
         }
         StockInType::InventoryAddition => true,
     }

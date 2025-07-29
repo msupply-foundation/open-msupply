@@ -283,6 +283,10 @@ impl InvoiceLineNode {
     pub async fn linked_invoice_id(&self) -> &Option<String> {
         &self.row().linked_invoice_id
     }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        self.row().volume_per_pack
+    }
 }
 
 #[derive(Union)]
