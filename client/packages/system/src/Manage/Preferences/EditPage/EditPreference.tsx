@@ -57,7 +57,6 @@ export const EditPreference = ({
       if (!isNumber(preference.value)) {
         return t('error.something-wrong');
       }
-      console.log(preference.key, preference.value);
       return (
         <NumericTextInput
           value={value}
