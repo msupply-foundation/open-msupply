@@ -63,7 +63,7 @@ const getBadge = (
 ): BadgeProps | undefined => {
   if (!syncStatus) return;
 
-  const { errorThreshold, warningThreshold, lastSuccessfulSync, error } =
+  const { warningThreshold, errorThreshold, lastSuccessfulSync, error } =
     syncStatus;
 
   const isSyncError =
