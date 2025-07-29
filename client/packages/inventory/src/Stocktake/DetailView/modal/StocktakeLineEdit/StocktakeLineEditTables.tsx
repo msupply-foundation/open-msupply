@@ -338,7 +338,10 @@ export const LocationTable = ({
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
-      getLocationInputColumn(),
+      getLocationInputColumn(
+        (rowData: DraftStocktakeLine) =>
+          rowData.item.restrictedLocationTypeId ?? null
+      ),
       {
         width: 300,
         setter: patch => update({ ...patch, countThisLine: true }),

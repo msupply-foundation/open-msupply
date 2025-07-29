@@ -144,6 +144,7 @@ export const RepackEditForm = ({
                       newLocationId: location?.id,
                     });
                   }}
+                  restrictedToLocationType={data.restrictedToLocationType}
                 />
               }
             />
