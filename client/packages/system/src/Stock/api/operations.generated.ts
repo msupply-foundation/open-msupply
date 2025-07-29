@@ -29,8 +29,8 @@ export type StockLineRowFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -43,6 +43,7 @@ export type StockLineRowFragment = {
     name: string;
     unitName?: string | null;
     isVaccine: boolean;
+    dosesPerUnit: number;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
   vvmStatusLogs?: {
@@ -70,6 +71,8 @@ export type StockLineRowFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
+    level: number;
+    unusable: boolean;
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
@@ -86,8 +89,8 @@ export type RepackStockLineFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -111,8 +114,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -130,8 +133,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -231,8 +234,8 @@ export type StockLinesQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -245,6 +248,7 @@ export type StockLinesQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -275,6 +279,8 @@ export type StockLinesQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
+        level: number;
+        unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
@@ -322,8 +328,8 @@ export type StockLineQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -336,6 +342,7 @@ export type StockLineQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -366,6 +373,8 @@ export type StockLineQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
+        level: number;
+        unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
@@ -450,8 +459,8 @@ export type UpdateStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -464,6 +473,7 @@ export type UpdateStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -494,6 +504,8 @@ export type UpdateStockLineMutation = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
+          level: number;
+          unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
@@ -530,8 +542,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -549,8 +561,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -586,8 +598,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -605,8 +617,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -628,10 +640,8 @@ export type VvmStatusQuery = {
     __typename: 'VvmstatusConnector';
     nodes: Array<{
       __typename: 'VvmstatusNode';
-      code: string;
       description: string;
       id: string;
-      isActive: boolean;
       level: number;
       reasonId?: string | null;
       unusable: boolean;
@@ -738,8 +748,8 @@ export type InsertStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -752,6 +762,7 @@ export type InsertStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -782,6 +793,8 @@ export type InsertStockLineMutation = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
+          level: number;
+          unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
@@ -795,10 +808,8 @@ export type InsertStockLineMutation = {
 
 export type VvmStatusFragment = {
   __typename: 'VvmstatusNode';
-  code: string;
   description: string;
   id: string;
-  isActive: boolean;
   level: number;
   reasonId?: string | null;
   unusable: boolean;
@@ -814,10 +825,8 @@ export type ActiveVvmStatusesQuery = {
     __typename: 'VvmstatusConnector';
     nodes: Array<{
       __typename: 'VvmstatusNode';
-      code: string;
       description: string;
       id: string;
-      isActive: boolean;
       level: number;
       reasonId?: string | null;
       unusable: boolean;
@@ -897,6 +906,7 @@ export const StockLineRowFragmentDoc = gql`
         name
       }
       isVaccine
+      dosesPerUnit: doses
     }
     barcode
     vvmStatusLogs {
@@ -905,7 +915,10 @@ export const StockLineRowFragmentDoc = gql`
       }
     }
     vvmStatus {
+      __typename
       id
+      level
+      unusable
       description
     }
     donor(storeId: $storeId) {
@@ -977,10 +990,8 @@ export const LedgerRowFragmentDoc = gql`
 export const VvmStatusFragmentDoc = gql`
   fragment VVMStatus on VvmstatusNode {
     __typename
-    code
     description
     id
-    isActive
     level
     reasonId
     unusable

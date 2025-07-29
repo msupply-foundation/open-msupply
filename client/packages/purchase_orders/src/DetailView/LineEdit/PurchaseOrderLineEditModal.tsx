@@ -35,7 +35,7 @@ export const PurchaseOrderLineEditModal = ({
     create: { create, isCreating },
     draft,
     updatePatch,
-  } = usePurchaseOrderLine(currentItem?.item.id);
+  } = usePurchaseOrderLine(currentItem?.id);
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);

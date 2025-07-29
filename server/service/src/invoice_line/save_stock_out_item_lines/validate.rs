@@ -6,12 +6,10 @@ use crate::{
 };
 
 fn is_stock_out_invoice(invoice: &InvoiceRow) -> bool {
-    match invoice.r#type {
-        InvoiceType::OutboundShipment | InvoiceType::Prescription | InvoiceType::SupplierReturn => {
-            true
-        }
-        _ => false,
-    }
+    matches!(
+        invoice.r#type,
+        InvoiceType::OutboundShipment | InvoiceType::Prescription | InvoiceType::SupplierReturn
+    )
 }
 
 pub fn validate(
@@ -21,17 +19,17 @@ pub fn validate(
 ) -> Result<InvoiceRow, SaveStockOutItemLinesError> {
     use SaveStockOutItemLinesError::*;
 
-    let outbound = check_invoice_exists(id, connection)?.ok_or(InvoiceNotFound)?;
+    let invoice = check_invoice_exists(id, connection)?.ok_or(InvoiceNotFound)?;
 
-    if !check_store(&outbound, store_id) {
+    if !check_store(&invoice, store_id) {
         return Err(InvoiceDoesNotBelongToCurrentStore);
     }
-    if !check_invoice_is_editable(&outbound) {
+    if !check_invoice_is_editable(&invoice) {
         return Err(InvoiceNotEditable);
     }
-    if !is_stock_out_invoice(&outbound) {
+    if !is_stock_out_invoice(&invoice) {
         return Err(NotAStockOutInvoice);
     }
 
-    Ok(outbound)
+    Ok(invoice)
 }

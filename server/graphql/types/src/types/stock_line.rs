@@ -7,8 +7,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader,
-        NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, VVMStatusByIdLoader,
+        CampaignByIdLoader, ItemLoader, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
         VVMStatusLogByStockLineIdLoader,
     },
     simple_generic_errors::NodeError,
@@ -16,7 +15,9 @@ use graphql_core::{
     ContextExt,
 };
 
-use repository::{ItemRow, StockLine, StockLineRow};
+use repository::{
+    item_variant::item_variant::ItemVariant, location::Location, ItemRow, StockLine, StockLineRow,
+};
 use service::{
     service_provider::ServiceContext, stock_line::query::get_stock_line, usize_to_u32, ListResult,
 };
@@ -84,18 +85,15 @@ impl StockLineNode {
     pub async fn location_name(&self) -> Option<&str> {
         self.stock_line.location_name()
     }
-    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
-        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
-        let location_id = match &self.row().location_id {
-            None => return Ok(None),
-            Some(location_id) => location_id,
-        };
-
-        let result = loader.load_one(location_id.clone()).await?;
-
-        Ok(result.map(LocationNode::from_domain))
+    pub async fn location(&self) -> Option<LocationNode> {
+        self.stock_line.location_row.as_ref().map(|row| {
+            LocationNode::from_domain(Location {
+                location_row: row.clone(),
+            })
+        })
     }
+
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
         let item_option = loader.load_one(self.item_row().id.clone()).await?;
@@ -116,34 +114,27 @@ impl StockLineNode {
         self.stock_line.barcode()
     }
 
-    pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
-        let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
-
-        let item_variant_id = match &self.row().item_variant_id {
-            None => return Ok(None),
-            Some(item_variant_id) => item_variant_id,
-        };
-
-        let result = loader.load_one(item_variant_id.clone()).await?;
-
-        Ok(result.map(ItemVariantNode::from_domain))
+    pub async fn item_variant(&self) -> Option<ItemVariantNode> {
+        self.stock_line
+            .item_variant_row
+            .as_ref()
+            .map(|item_variant_row| {
+                ItemVariantNode::from_domain(ItemVariant {
+                    item_variant_row: item_variant_row.clone(),
+                    item_row: self.stock_line.item_row.clone(),
+                    // These two fields below are required by from_domain(), but are not returned in ItemVariantNode
+                    // therefore it is simplest to pass them to from_domain() with a value of None.
+                    manufacturer_row: None,
+                    location_type_row: None,
+                })
+            })
     }
 
-    pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
-        if self.row().vvm_status_id.is_none() {
-            return Ok(None);
-        }
-
-        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
-        let type_id = match self.row().vvm_status_id.clone() {
-            Some(type_id) => type_id,
-            None => return Ok(None),
-        };
-
-        Ok(loader
-            .load_one(type_id)
-            .await?
-            .map(VVMStatusNode::from_domain))
+    pub async fn vvm_status(&self) -> Option<VVMStatusNode> {
+        self.stock_line
+            .vvm_status_row
+            .as_ref()
+            .map(|row| VVMStatusNode::from_domain(row.clone()))
     }
     pub async fn vvm_status_logs(
         &self,

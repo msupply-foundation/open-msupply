@@ -126,7 +126,10 @@ export const NewStockLineModal = ({
                 newItem &&
                 updatePatch({
                   itemId: newItem.id,
-                  item: newItem,
+                  item: {
+                    ...newItem,
+                    dosesPerUnit: newItem.doses,
+                  },
                   packSize: newItem.defaultPackSize,
                 })
               }

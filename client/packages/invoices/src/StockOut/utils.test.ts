@@ -4,6 +4,7 @@ import {
   canAutoAllocate,
   getAllocatedQuantity,
   getDoseQuantity,
+  getManualAllocationAlerts,
   issue,
 } from './utils';
 
@@ -191,6 +192,25 @@ describe('issue = doses', () => {
       { ...line2, numberOfPacks: 1.8 },
     ]);
   });
+
+  it('skips rounding if it would over-allocate the stock line', () => {
+    const line2 = {
+      id: '2',
+      packSize: 2,
+      dosesPerUnit: 5,
+      availablePacks: 1.8,
+    } as DraftStockOutLineFragment;
+
+    const draftLines = [line1, line2];
+
+    const result = issue(draftLines, '2', 16, AllocateInType.Doses);
+    expect(result).toEqual([
+      line1,
+      // 16 doses / 2 units per pack / 5 doses per unit = 1.6
+      // should round to 2, but can't, so round down
+      { ...line2, numberOfPacks: 1 },
+    ]);
+  });
 });
 
 describe('canAutoAllocate ', () => {
@@ -232,6 +252,51 @@ describe('canAutoAllocate ', () => {
     const packSize2 = createTestLine({ packSize: 2 });
     expect(canAutoAllocate(packSize2, 2)).toEqual(true);
     expect(canAutoAllocate(packSize2, 3)).toEqual(false);
+  });
+});
+
+describe('getManualAllocationAlerts', () => {
+  const mockFormat = () => '';
+  const mockT = (key: string) => key;
+
+  it('returns empty array when no alerts', () => {
+    const alerts = getManualAllocationAlerts(
+      1,
+      1,
+      createTestLine({}),
+      AllocateInType.Doses,
+      mockFormat,
+      mockT
+    );
+
+    expect(alerts).toEqual([]);
+  });
+  it('returns over-allocated warning when over-allocated', () => {
+    const alerts = getManualAllocationAlerts(
+      1,
+      4,
+      createTestLine({}),
+      AllocateInType.Doses,
+      mockFormat,
+      mockT
+    );
+
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]?.message).toMatch('over-allocated');
+  });
+
+  it('returns partial pack warning when requested quantity is not a whole pack', () => {
+    const alerts = getManualAllocationAlerts(
+      7,
+      7,
+      createTestLine({ packSize: 10, numberOfPacks: 7 }),
+      AllocateInType.Units,
+      mockFormat,
+      mockT
+    );
+
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]?.message).toMatch('partial-pack-warning');
   });
 });
 

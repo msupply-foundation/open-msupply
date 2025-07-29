@@ -274,7 +274,7 @@ mod test {
 
     #[allow(non_snake_case)]
     #[derive(Deserialize, Serialize, Debug, PartialEq)]
-    pub struct LegcacyRowWithOptionNonString {
+    pub struct LegacyRowWithOptionNonString {
         #[serde(rename = "ID")]
         pub id: String,
         #[serde(default)]
@@ -291,7 +291,7 @@ mod test {
                 "option_t": 12
             }"#,
         );
-        let a = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_1.1);
+        let a = serde_json::from_str::<LegacyRowWithOptionNonString>(&LEGACY_ROW_1.1);
         assert!(a.is_ok());
         assert_eq!(a.unwrap().option_t, Some(12));
 
@@ -303,7 +303,7 @@ mod test {
                 "option_t": null
             }"#,
         );
-        let c = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_3.1);
+        let c = serde_json::from_str::<LegacyRowWithOptionNonString>(&LEGACY_ROW_3.1);
         assert!(c.is_ok());
         assert_eq!(c.unwrap().option_t, None);
 
@@ -314,7 +314,7 @@ mod test {
                 "ID": "LEGACY_ROW_4"            
             }"#,
         );
-        let d = serde_json::from_str::<LegcacyRowWithOptionNonString>(&LEGACY_ROW_4.1);
+        let d = serde_json::from_str::<LegacyRowWithOptionNonString>(&LEGACY_ROW_4.1);
         assert!(d.is_ok());
         assert_eq!(d.unwrap().option_t, None);
     }

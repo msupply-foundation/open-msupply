@@ -17,7 +17,7 @@ export type ChangelogTableName =
   | 'Barcode'
   | 'Clinician'
   | 'ClinicianStoreJoin'
-  | 'ColdStorageType'
+  | 'LocationType'
   | 'Name'
   | 'NameStoreJoin'
   | 'Document'
@@ -63,4 +63,6 @@ export type ChangelogTableName =
   | 'FormSchema'
   | 'PluginData'
   | 'Preference'
+  | 'VVMStatusLog'
+  | 'Campaign'
   | 'SyncMessage';

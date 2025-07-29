@@ -45,7 +45,7 @@ pub fn get_purchase_order(
 #[cfg(test)]
 mod test {
     use crate::service_provider::ServiceProvider;
-    use repository::mock::mock_store_a;
+    use repository::mock::{mock_name_c, mock_store_a};
 
     use repository::PurchaseOrderRowRepository;
     use repository::{db_diesel::PurchaseOrderRow, mock::MockDataInserts, test_db::setup_all};
@@ -69,6 +69,7 @@ mod test {
         let po = inline_init(|p: &mut PurchaseOrderRow| {
             p.id = "test_po_1".to_string();
             p.store_id = mock_store_a().id;
+            p.supplier_name_link_id = mock_name_c().id;
             p.created_datetime = chrono::Utc::now().naive_utc();
             p.status = repository::PurchaseOrderStatus::New;
             p.purchase_order_number = 1;

@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use crate::types::patient::GenderType;
 use async_graphql::*;
 use repository::StorageConnection;
@@ -33,7 +35,7 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.use_campaigns)
     }
 
-    pub async fn custom_translations(&self) -> Result<serde_json::Value> {
+    pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
         self.load_preference(&self.preferences.custom_translations)
     }
 

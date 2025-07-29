@@ -100,6 +100,10 @@ impl DraftStockOutLineNode {
         &self.shipment_line.item_variant_id
     }
 
+    pub async fn vvm_status_id(&self) -> &Option<String> {
+        &self.shipment_line.vvm_status_id
+    }
+
     pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
         let donor_link_id = match &self.shipment_line.donor_link_id {
             None => return Ok(None),

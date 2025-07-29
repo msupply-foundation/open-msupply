@@ -1,4 +1,4 @@
-use repository::{rnr_form_row::RnRFormRow, RnRFormStatus};
+use repository::{rnr_form_row::RnRFormRow, RnRFormDelete, RnRFormStatus};
 use serde_json::json;
 use util::Defaults;
 
@@ -50,4 +50,12 @@ pub(crate) fn test_v6_records() -> Vec<TestSyncOutgoingRecord> {
         record_id: RNR_FORM1.0.to_string(),
         push_data: json!(rnr_form1()),
     }]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        RNR_FORM1.0,
+        RnRFormDelete(RNR_FORM1.0.to_string()),
+    )]
 }

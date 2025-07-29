@@ -4,17 +4,17 @@ use graphql_core::{
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
-    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderNodeStatus};
 use repository::{DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
 use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum PurchaseOrderSortFieldInput {
-    Supplier,
     Number,
     CreatedDatetime,
     Status,
@@ -61,9 +61,16 @@ pub fn get_purchase_order(
     store_id: &str,
     id: &str,
 ) -> Result<PurchaseOrderResponse> {
-    // TODO add auth validation once permissions finalised
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryPurchaseOrder,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), "".to_string())?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     match service_provider
         .purchase_order_service
@@ -90,9 +97,17 @@ pub fn get_purchase_orders(
     filter: Option<PurchaseOrderFilterInput>,
     sort: Option<Vec<PurchaseOrderSortInput>>,
 ) -> Result<PurchaseOrdersResponse> {
-    // TODO add auth validation once permissions finalised
+
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryPurchaseOrder,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), "".to_string())?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     let result = service_provider
         .purchase_order_service
@@ -130,10 +145,9 @@ impl PurchaseOrderSortInput {
         use PurchaseOrderSortField as to;
         use PurchaseOrderSortFieldInput as from;
         let key = match self.key {
-            from::Supplier => to::Supplier,
             from::Number => to::Number,
             from::TargetMonths => to::TargetMonths,
-            from::DeliveryDate => to::DeliveryDate,
+            from::DeliveryDate => to::ExpectedDeliveryDate,
             from::Status => to::Status,
             from::CreatedDatetime => to::CreatedDatetime,
         };
