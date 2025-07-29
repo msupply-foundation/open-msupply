@@ -88,10 +88,21 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     if (openOnFocus) {
       setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
     }
+
+    // Force focus after component mounts (this can conflict with openOnFocus)
+    if (autoFocus) {
+      setTimeout(() => {
+        const input = document.querySelector<HTMLInputElement>(
+          'input[id="stock-item-search-input"]'
+        );
+        input?.focus();
+      }, 50);
+    }
   }, []);
 
   return (
     <Autocomplete
+      id="stock-item-search-input"
       pages={data?.pages ?? []}
       pageNumber={pageNumber}
       rowsPerPage={ROWS_PER_PAGE}
