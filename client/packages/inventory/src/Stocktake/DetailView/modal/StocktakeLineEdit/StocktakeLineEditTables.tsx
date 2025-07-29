@@ -45,6 +45,7 @@ interface StocktakeLineEditTableProps {
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
   isInitialStocktake?: boolean;
   trackStockDonor?: boolean;
+  restrictedToLocationTypeId?: string | null;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -330,6 +331,7 @@ export const LocationTable = ({
   update,
   isDisabled,
   trackStockDonor,
+  restrictedToLocationTypeId,
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
@@ -338,10 +340,7 @@ export const LocationTable = ({
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
-      getLocationInputColumn(
-        (rowData: DraftStocktakeLine) =>
-          rowData.item.restrictedLocationTypeId ?? null
-      ),
+      getLocationInputColumn(restrictedToLocationTypeId),
       {
         width: 300,
         setter: patch => update({ ...patch, countThisLine: true }),

@@ -292,7 +292,7 @@ export const StockLineForm = ({
                 onChange={location => {
                   onUpdate({ location, locationId: location?.id });
                 }}
-                restrictedToLocationType={draft.item.restrictedLocationTypeId}
+                restrictedToLocationTypeId={draft.item.restrictedLocationTypeId}
               />
             }
           />
