@@ -159,6 +159,7 @@ const inboundParsers = {
     }),
     note: setNullableInput('note', { note: line.note ?? null }),
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
+    volumePerPack: line.volumePerPack ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };

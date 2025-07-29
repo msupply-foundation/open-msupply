@@ -37,6 +37,7 @@ pub struct UpdateStockInLine {
     pub donor_id: Option<NullableUpdate<String>>,
     pub campaign_id: Option<NullableUpdate<String>>,
     pub shipped_number_of_packs: Option<f64>,
+    pub volume_per_pack: Option<f64>,
 }
 
 type OutError = UpdateStockInLineError;
