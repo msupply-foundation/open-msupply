@@ -28,6 +28,8 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
   const t = useTranslation();
   const { data: items } = useInbound.lines.items();
 
+  console.log('item', item);
+
   return (
     <>
       <ModalRow>
@@ -47,6 +49,10 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
                 ? undefined
                 : item => !items?.some(({ id }) => id === item.id)
             }
+            // A scanned-in item will only have an ID, so this flag makes the
+            // Stock component update the current item on initial load from the
+            // API
+            initialUpdate={!item?.name}
           />
         </Grid>
       </ModalRow>

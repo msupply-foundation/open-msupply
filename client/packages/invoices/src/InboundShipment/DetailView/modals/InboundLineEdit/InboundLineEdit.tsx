@@ -26,6 +26,7 @@ import { TabLayout } from './TabLayout';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
+import { ScannedBatchData } from '../../DetailView';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -38,6 +39,7 @@ interface InboundLineEditProps {
   isExternalSupplier?: boolean;
   hasVvmStatusesEnabled?: boolean;
   hasItemVariantsEnabled?: boolean;
+  scannedBatchData?: ScannedBatchData;
 }
 
 export const InboundLineEdit = ({
@@ -50,6 +52,7 @@ export const InboundLineEdit = ({
   isExternalSupplier,
   hasVvmStatusesEnabled = false,
   hasItemVariantsEnabled = false,
+  scannedBatchData,
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -66,7 +69,7 @@ export const InboundLineEdit = ({
     removeDraftLine,
     isLoading,
     saveLines,
-  } = useDraftInboundLines(currentItem);
+  } = useDraftInboundLines(currentItem as InboundLineItem, scannedBatchData);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
   const zeroNumberOfPacks = draftLines.some(isInboundPlaceholderRow);
@@ -75,6 +78,8 @@ export const InboundLineEdit = ({
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
+
+  console.log('draftLines', draftLines);
 
   const tableContent = simplifiedTabletView ? (
     <>
@@ -167,7 +172,10 @@ export const InboundLineEdit = ({
             <InboundLineEditForm
               disabled={mode === ModalMode.Update}
               item={currentItem}
-              onChangeItem={setCurrentItem}
+              onChangeItem={newItem => {
+                console.log('onChangeItem', newItem);
+                setCurrentItem(newItem);
+              }}
             />
             <Divider margin={5} />
             {tableContent}

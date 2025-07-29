@@ -35,6 +35,10 @@ interface GenericStockItemSearchInputProps {
   width?: number;
   autoFocus?: boolean;
   openOnFocus?: boolean;
+  // Some component passing currentItemId haven't actually loaded the full item
+  // yet, so if this is true, we call `onChange` when the item is loaded
+  // initially
+  initialUpdate?: boolean;
 }
 
 export interface StockItemSearchInputProps
@@ -61,5 +65,6 @@ export const itemFilterOptions = {
   stringify: (item: ItemWithStatsFragment) => `${item.code} ${item.name}`,
 };
 
-export const getOptionLabel = <T extends { code: string; name: string }>(item: T): string =>
-  `${item.code} ${item.name}`;
+export const getOptionLabel = <T extends { code: string; name: string }>(
+  item: T
+): string => `${item.code} ${item.name}`;

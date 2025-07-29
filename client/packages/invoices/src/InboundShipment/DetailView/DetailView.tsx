@@ -45,6 +45,8 @@ export type ScannedItem = {
   expiryDate?: string;
 };
 
+export type ScannedBatchData = { batch?: string; expiryDate?: string };
+
 const DetailViewInner = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -60,7 +62,7 @@ const DetailViewInner = () => {
     isOpen: returnsIsOpen,
     entity: stockLineIds,
     mode: returnModalMode,
-    setMode: setReturnMode,
+    setMode,
   } = useEditModal<string[]>();
   const { info } = useNotification();
   const { clearSelected } = useTableStore();
@@ -87,6 +89,7 @@ const DetailViewInner = () => {
       !openWith?.itemId
     ) {
       onOpen();
+      setMode(ModalMode.Create);
       return;
     }
 
@@ -125,7 +128,7 @@ const DetailViewInner = () => {
     );
 
     onOpenReturns(selectedStockLineIds);
-    setReturnMode(ModalMode.Create);
+    setMode(ModalMode.Create);
   };
 
   useEffect(() => {
@@ -176,12 +179,17 @@ const DetailViewInner = () => {
                 isOpen={isOpen}
                 onClose={onClose}
                 mode={mode}
-                // @ts-expect-error testing
-                item={entity}
+                // "as" here is okay, as the child components will take care of
+                // populating the item will the full details
+                item={entity as InboundLineItem}
                 currency={data.currency}
                 isExternalSupplier={!data.otherParty.store}
                 hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
                 hasItemVariantsEnabled={hasItemVariantsEnabled}
+                scannedBatchData={{
+                  batch: (entity as ScannedBatchData)?.batch,
+                  expiryDate: (entity as ScannedBatchData)?.expiryDate,
+                }}
               />
             )}
             {returnsIsOpen && (
