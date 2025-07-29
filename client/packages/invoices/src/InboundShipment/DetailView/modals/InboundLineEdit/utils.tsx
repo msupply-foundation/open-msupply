@@ -85,7 +85,23 @@ export const itemVariantColumn = (
   label: 'label.item-variant',
   width: 150,
   Cell: InboundLineItemVariantInputCell,
-  setter: updateDraftLine,
+  setter: patch => {
+    const { volumePerPack, packSize, itemVariant } = patch;
+
+    if (!volumePerPack && itemVariant) {
+      const packaging = itemVariant.packagingVariants.find(
+        p => p.packSize === packSize
+      );
+      if (packaging?.volumePerUnit) {
+        updateDraftLine({
+          ...patch,
+          volumePerPack: packaging.volumePerUnit * 1000 * (packSize ?? 1),
+        });
+      }
+    } else {
+      updateDraftLine(patch);
+    }
+  },
 });
 
 export const vvmStatusesColumn = (

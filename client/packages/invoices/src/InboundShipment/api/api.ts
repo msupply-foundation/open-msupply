@@ -125,6 +125,7 @@ const inboundParsers = {
       campaignId: line.campaign?.id,
       note: line.note,
       shippedNumberOfPacks: line.shippedNumberOfPacks,
+      volumePerPack: line.volumePerPack,
     };
   },
   toInsertLineFromInternalOrder: (line: {
