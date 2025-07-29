@@ -653,6 +653,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutatePreferences,
         PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
+
     // configure
     map.insert(
         Resource::ConfigurePlugin,
