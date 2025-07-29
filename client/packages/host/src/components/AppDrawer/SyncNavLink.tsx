@@ -12,6 +12,7 @@ import {
 import { BadgeProps } from '@mui/material';
 import { useSync } from '@openmsupply-client/system';
 import { useSyncModal } from '../Sync';
+import { SyncInfoQuery } from '@openmsupply-client/system/src/Sync/api/operations.generated';
 
 const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000; // 1 minute
 
@@ -29,47 +30,11 @@ export const SyncNavLink = () => {
     POLLING_INTERVAL_IN_MILLISECONDS
   );
 
-  const getBadge = useCallback((): BadgeProps | undefined => {
-    if (!syncStatus) return;
-
-    const { errorThreshold, warningThreshold, lastSuccessfulSync, error } =
-      syncStatus;
-
-    const isSyncError =
-      error?.variant &&
-      // We allow connection errors until a threshold is reached (see below)
-      // all other errors should be flagged immediately
-      error.variant !== SyncErrorVariant.ConnectionError;
-
-    const now = new Date();
-    const daysSinceSuccessfulSync = DateUtils.differenceInDays(
-      now,
-      lastSuccessfulSync?.finished ?? now
-    );
-
-    const beyondWarningThreshold = daysSinceSuccessfulSync >= warningThreshold;
-    const beyondErrorThreshold = daysSinceSuccessfulSync >= errorThreshold;
-
-    const showCountBadge =
-      numberOfRecordsInPushQueue >= syncRecordsDisplayThreshold;
-
-    if (isSyncError) {
-      return {
-        badgeContent: <AlertIcon color="error" fontSize="small" />,
-      };
-    }
-
-    if (showCountBadge) {
-      return {
-        badgeContent: numberOfRecordsInPushQueue,
-        color: beyondErrorThreshold
-          ? 'error'
-          : beyondWarningThreshold
-            ? 'warning'
-            : 'default',
-      };
-    }
-  }, [syncStatus, numberOfRecordsInPushQueue, syncRecordsDisplayThreshold]);
+  const badgeProps = getBadge(
+    syncStatus,
+    numberOfRecordsInPushQueue,
+    syncRecordsDisplayThreshold
+  );
 
   return (
     <AppNavLink
@@ -86,7 +51,52 @@ export const SyncNavLink = () => {
         />
       }
       text={t('sync')}
-      badgeProps={getBadge()}
+      badgeProps={badgeProps}
     />
   );
+};
+
+const getBadge = (
+  syncStatus: SyncInfoQuery['syncStatus'],
+  syncRecordCount: number,
+  displayThreshold: number
+): BadgeProps | undefined => {
+  if (!syncStatus) return;
+
+  const { errorThreshold, warningThreshold, lastSuccessfulSync, error } =
+    syncStatus;
+
+  const isSyncError =
+    error?.variant &&
+    // We allow connection errors until a threshold is reached (see below)
+    // all other errors should be flagged immediately
+    error.variant !== SyncErrorVariant.ConnectionError;
+
+  const now = new Date();
+  const daysSinceSuccessfulSync = DateUtils.differenceInDays(
+    now,
+    lastSuccessfulSync?.finished ?? now
+  );
+
+  const beyondWarningThreshold = daysSinceSuccessfulSync >= warningThreshold;
+  const beyondErrorThreshold = daysSinceSuccessfulSync >= errorThreshold;
+
+  const showCountBadge = syncRecordCount >= displayThreshold;
+
+  if (isSyncError) {
+    return {
+      badgeContent: <AlertIcon color="error" fontSize="small" />,
+    };
+  }
+
+  if (showCountBadge) {
+    return {
+      badgeContent: syncRecordCount,
+      color: beyondErrorThreshold
+        ? 'error'
+        : beyondWarningThreshold
+          ? 'warning'
+          : 'default',
+    };
+  }
 };
