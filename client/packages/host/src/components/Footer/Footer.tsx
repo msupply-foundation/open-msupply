@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { FC, ReactNode } from 'react';
 import {
   Box,
   HomeIcon,
@@ -19,9 +19,9 @@ import {
   useMediaQuery,
   Breakpoints,
 } from '@openmsupply-client/common';
-import { StoreEditModal } from '@openmsupply-client/system';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
+import { StoreEditModal } from '@openmsupply-client/system';
 import { UserDetails } from './UserDetails';
 
 interface PaddedCellProps {
@@ -32,7 +32,13 @@ interface PaddedCellProps {
   onClick?: () => void;
 }
 
-const PaddedCell = ({ sx, text, icon, tooltip, onClick }: PaddedCellProps) => {
+const PaddedCell: FC<PaddedCellProps> = ({
+  sx,
+  text,
+  icon,
+  tooltip,
+  onClick,
+}) => {
   const theme = useAppTheme();
   const isExtraSmallScreen = useMediaQuery(
     theme.breakpoints.down(Breakpoints.sm)
