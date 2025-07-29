@@ -30,17 +30,15 @@ pub struct UpdatePurchaseOrderInput {
     pub confirmed_datetime: Option<NaiveDateTime>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
-    pub supplier_discount_amount: Option<f64>,
     pub donor_link_id: Option<String>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
     pub foreign_exchange_rate: Option<f64>,
     pub shipping_method: Option<String>,
-    pub sent_date: Option<NaiveDate>,
+    pub sent_datetime: Option<NaiveDateTime>,
     pub contract_signed_date: Option<NaiveDate>,
     pub advance_paid_date: Option<NaiveDate>,
     pub received_at_port_date: Option<NaiveDate>,
-    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 pub fn update_purchase_order(

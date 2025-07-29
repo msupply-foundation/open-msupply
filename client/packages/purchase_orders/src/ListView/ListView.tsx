@@ -112,7 +112,16 @@ const ListView: FC = () => {
         key: 'expectedDeliveryDate',
         label: 'label.expected-delivery-date',
         format: ColumnFormat.Date,
-        accessor: ({ rowData }) => rowData.expectedDeliveryDatetime,
+        accessor: ({ rowData }) => rowData.expectedDeliveryDate,
+        sortable: true,
+      },
+      {
+        key: 'deliveryDatetime',
+        label: 'label.delivered',
+        accessor: ({ rowData: _ }) => 'TODO: GOOD RECEIVED CALC', // rowData.deliveredDatetime,
+        // format: ColumnFormat.Date,
+        // accessor: ({ rowData }) => rowData.deliveredDatetime,
+        // TODO: Figure out how to get the delivery date from the goods received data
         sortable: true,
       },
       {

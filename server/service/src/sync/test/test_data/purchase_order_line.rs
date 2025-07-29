@@ -87,7 +87,7 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             item_link_id: "item_a".to_string(),
             item_name: "Item A".to_string(),
             quan_rec_to_date: 5000.0,
-            delivery_date_requested: Some(NaiveDate::from_ymd_opt(2018, 3, 22).unwrap()),
+            delivery_date_requested: Some(NaiveDate::from_ymd_opt(2018, 3, 19).unwrap()),
             delivery_date_expected: None,
             snapshot_quantity: 0.0,
             packsize_ordered: 1000.0,

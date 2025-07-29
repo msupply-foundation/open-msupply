@@ -22,7 +22,6 @@ table! {
         confirmed_datetime ->  Nullable<Timestamp>,
         target_months->  Nullable<Double>,
         comment->  Nullable<Text>,
-
         donor_link_id -> Nullable<Text>,
         reference -> Nullable<Text>,
         currency_id -> Nullable<Text>,
@@ -33,6 +32,7 @@ table! {
         advance_paid_date ->  Nullable<Date>,
         received_at_port_date ->   Nullable<Date>,
         expected_delivery_date -> Nullable<Date>,
+        requested_delivery_date -> Nullable<Date>,
         supplier_agent ->  Nullable<Text>,
         authorising_officer_1 ->  Nullable<Text>,
         authorising_officer_2 -> Nullable<Text>,
@@ -47,6 +47,7 @@ table! {
         order_total_before_discount -> Double,
         order_total_after_discount -> Double,
         supplier_discount_amount -> Double,
+        supplier_discount_percentage -> Nullable<Double>,
     }
 }
 
@@ -69,7 +70,6 @@ pub struct PurchaseOrderRow {
     pub confirmed_datetime: Option<NaiveDateTime>,
     pub target_months: Option<f64>,
     pub comment: Option<String>,
-
     pub donor_link_id: Option<String>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
@@ -80,6 +80,7 @@ pub struct PurchaseOrderRow {
     pub advance_paid_date: Option<NaiveDate>,
     pub received_at_port_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub requested_delivery_date: Option<NaiveDate>,
     pub supplier_agent: Option<String>,
     pub authorising_officer_1: Option<String>,
     pub authorising_officer_2: Option<String>,
@@ -94,6 +95,7 @@ pub struct PurchaseOrderRow {
     pub order_total_before_discount: f64,
     pub order_total_after_discount: f64,
     pub supplier_discount_amount: f64,
+    pub supplier_discount_percentage: Option<f64>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

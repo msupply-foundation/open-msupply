@@ -38,10 +38,8 @@ pub enum LegacyPurchaseOrderStatus {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct PurchaseOrderOmsFields {
-    #[serde(default)]
-    pub foreign_exchange_rate: Option<f64>,
     #[serde(default)]
     pub expected_delivery_date: Option<NaiveDate>,
     #[serde(default)]
@@ -50,6 +48,8 @@ pub struct PurchaseOrderOmsFields {
     pub confirmed_datetime: Option<NaiveDateTime>,
     #[serde(default)]
     pub sent_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub supplier_discount_percentage: Option<f64>,
 }
 
 /** Example record
@@ -171,6 +171,7 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "zero_f64_as_none")]
     pub communications_charge: Option<f64>,
     #[serde(default)]
+    #[serde(deserialize_with = "zero_f64_as_none")]
     pub insurance_charge: Option<f64>,
     #[serde(default)]
     #[serde(deserialize_with = "zero_f64_as_none")]
@@ -178,10 +179,13 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     pub supplier_discount_amount: f64,
     #[serde(default)]
-    #[serde(rename = "OrderTotalBeforeDiscount")]
+    #[serde(deserialize_with = "zero_f64_as_none")]
+    pub curr_rate: Option<f64>,
+    #[serde(default)]
+    #[serde(rename = "Order_total_before_discount")]
     pub order_total_before_discount: f64,
     #[serde(default)]
-    #[serde(rename = "OrderTotalAfterDiscount")]
+    #[serde(rename = "Order_total_after_discount")]
     pub order_total_after_discount: f64,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -192,8 +196,12 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub heading_message: Option<String>,
     #[serde(default)]
-    #[serde(rename = "delivery_method")]
-    pub shipping_method: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub delivery_method: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub requested_delivery_date: Option<NaiveDate>,
     #[serde(rename = "po_sent_date")]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
@@ -206,6 +214,7 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub advance_paid_date: Option<NaiveDate>,
+    #[serde(rename = "Date_goods_received_at_port")]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub received_at_port_date: Option<NaiveDate>,
@@ -259,7 +268,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             freight_conditions,
             heading_message,
             oms_fields,
-            shipping_method,
+            delivery_method,
+            requested_delivery_date,
             sent_date,
             contract_signed_date,
             advance_paid_date,
@@ -271,6 +281,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             created_by,
             store_id,
             donor_id,
+            curr_rate,
             order_total_before_discount,
             order_total_after_discount,
         } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
@@ -290,6 +301,17 @@ impl SyncTranslation for PurchaseOrderTranslation {
             None => sent_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default()),
         };
 
+        let supplier_discount_percentage = oms_fields
+            .clone()
+            .and_then(|oms_field| oms_field.supplier_discount_percentage)
+            .or_else(|| {
+                if order_total_before_discount > 0.0 {
+                    Some(supplier_discount_amount / order_total_before_discount * 100.0)
+                } else {
+                    None
+                }
+            });
+
         let result = PurchaseOrderRow {
             id,
             created_by,
@@ -301,16 +323,18 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             target_months,
             comment,
+            supplier_discount_percentage,
             supplier_discount_amount,
             donor_link_id: donor_id,
             reference,
             currency_id,
-            foreign_exchange_rate: oms_fields.clone().and_then(|o| o.foreign_exchange_rate),
-            shipping_method,
+            foreign_exchange_rate: curr_rate,
+            shipping_method: delivery_method,
             sent_datetime,
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
+            requested_delivery_date,
             expected_delivery_date: oms_fields.clone().and_then(|o| o.expected_delivery_date),
             supplier_agent,
             authorising_officer_1,
@@ -347,6 +371,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             target_months,
             comment,
+            supplier_discount_percentage,
             supplier_discount_amount,
             donor_link_id,
             reference,
@@ -358,6 +383,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             advance_paid_date,
             received_at_port_date,
             expected_delivery_date,
+            requested_delivery_date,
             supplier_agent,
             authorising_officer_1,
             authorising_officer_2,
@@ -379,11 +405,11 @@ impl SyncTranslation for PurchaseOrderTranslation {
             .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
 
         let oms_fields = PurchaseOrderOmsFields {
-            foreign_exchange_rate,
             expected_delivery_date,
             created_datetime,
             confirmed_datetime,
             sent_datetime,
+            supplier_discount_percentage,
         };
 
         let donor_id = map_optional_name_link_id_to_name_id(connection, donor_link_id)?;
@@ -411,8 +437,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             supplier_discount_amount,
             purchase_order_number,
             heading_message,
-            oms_fields: Some(oms_fields),
-            shipping_method,
+            requested_delivery_date,
+            delivery_method: shipping_method,
             sent_date: sent_datetime.map(|d| d.date()),
             contract_signed_date,
             advance_paid_date,
@@ -420,9 +446,11 @@ impl SyncTranslation for PurchaseOrderTranslation {
             name_id: supplier_id,
             creation_date: created_datetime.date(),
             confirm_date: confirmed_datetime.map(|d| d.date()),
+            curr_rate: foreign_exchange_rate,
             order_total_before_discount,
             order_total_after_discount,
             donor_id,
+            oms_fields: Some(oms_fields),
         };
 
         Ok(PushTranslateResult::upsert(

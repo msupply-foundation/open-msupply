@@ -1,14 +1,14 @@
 use async_graphql::*;
-use repository::ColdStorageTypeRow;
+use repository::LocationTypeRow;
 
 #[derive(PartialEq, Debug)]
 
-pub struct ColdStorageTypeNode {
-    pub cold_storage_type: ColdStorageTypeRow,
+pub struct LocationTypeNode {
+    pub location_type: LocationTypeRow,
 }
 
 #[Object]
-impl ColdStorageTypeNode {
+impl LocationTypeNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
@@ -23,11 +23,11 @@ impl ColdStorageTypeNode {
     }
 }
 
-impl ColdStorageTypeNode {
-    pub fn from_domain(cold_storage_type: ColdStorageTypeRow) -> ColdStorageTypeNode {
-        ColdStorageTypeNode { cold_storage_type }
+impl LocationTypeNode {
+    pub fn from_domain(location_type: LocationTypeRow) -> LocationTypeNode {
+        LocationTypeNode { location_type }
     }
-    pub fn row(&self) -> &ColdStorageTypeRow {
-        &self.cold_storage_type
+    pub fn row(&self) -> &LocationTypeRow {
+        &self.location_type
     }
 }

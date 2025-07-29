@@ -4,10 +4,13 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   Grid,
-  // useDetailPanel,
   useTranslation,
   useDetailPanel,
+  ReportContext,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
+import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
+import { ReportSelector } from '@openmsupply-client/system';
 // import { AddFromMasterListButton } from './AddFromMasterListButton';
 
 interface AppBarButtonProps {
@@ -22,6 +25,14 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const t = useTranslation();
   const { OpenButton } = useDetailPanel();
 
+  const {
+    queryParams: { sortBy },
+  } = useUrlQueryParams();
+
+  const {
+    query: { data },
+  } = usePurchaseOrder();
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -31,7 +42,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={onAddItem}
         />
-
+        <ReportSelector
+          context={ReportContext.PurchaseOrder}
+          dataId={data?.id ?? ''}
+          sort={{ key: sortBy.key, desc: sortBy.isDesc }}
+        />
         {/* <AddFromMasterListButton /> */}
         {/* <UseSuggestedQuantityButton /> */}
         {OpenButton}

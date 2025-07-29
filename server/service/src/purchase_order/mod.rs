@@ -14,6 +14,7 @@ use repository::{
 
 pub mod insert;
 pub mod query;
+pub mod validate;
 pub mod update;
 
 pub trait PurchaseOrderServiceTrait: Sync + Send {
