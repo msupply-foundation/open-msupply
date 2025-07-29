@@ -7,6 +7,7 @@ mod add_purchase_order_permission_enum_values;
 mod add_purchase_order_report_context;
 mod add_purchase_order_tables;
 mod add_purchase_order_to_number_type;
+mod add_stock_volume;
 mod delete_unused_number_type;
 mod rename_cold_storage_type_to_location_type;
 
@@ -31,6 +32,7 @@ impl Migration for V2_10_00 {
             Box::new(add_purchase_order_permission_enum_values::Migrate),
             Box::new(rename_cold_storage_type_to_location_type::Migrate),
             Box::new(delete_unused_number_type::Migrate),
+            Box::new(add_stock_volume::Migrate),
         ]
     }
 }
