@@ -45,8 +45,7 @@ pub fn add_from_master_list(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // TODO update to mutate purchase order
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
         },
     )?;
