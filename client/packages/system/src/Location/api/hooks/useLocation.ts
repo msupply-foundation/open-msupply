@@ -1,4 +1,8 @@
-import { useMutation, useTableStore } from '@openmsupply-client/common';
+import {
+  setNullableInput,
+  useMutation,
+  useTableStore,
+} from '@openmsupply-client/common';
 import { useLocationGraphQL } from '../useLocationGraphQL';
 import { LOCATION } from './keys';
 import { LocationRowFragment } from '../operations.generated';
@@ -48,7 +52,7 @@ const useCreateLocation = () => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
 
   const mutationFn = async (input: LocationRowFragment) => {
-    const { id, code, name, onHold, locationType } = input;
+    const { id, code, name, onHold, locationType, volume } = input;
 
     await locationApi.insertLocation({
       input: {
@@ -57,6 +61,7 @@ const useCreateLocation = () => {
         name,
         onHold,
         locationTypeId: locationType?.id,
+        volume,
       },
       storeId,
     });
@@ -86,6 +91,7 @@ const useUpdateLocation = () => {
         name,
         onHold,
         locationTypeId: locationType?.id,
+        volume: setNullableInput('volume', input),
       },
       storeId,
     });

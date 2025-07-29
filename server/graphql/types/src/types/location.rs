@@ -81,6 +81,14 @@ impl LocationNode {
         self.row().on_hold
     }
 
+    pub async fn volume(&self) -> Option<f64> {
+        self.row().volume
+    }
+
+    pub async fn volume_used(&self) -> f64 {
+        0.0
+    }
+
     pub async fn stock(&self, ctx: &Context<'_>) -> Result<StockLineConnector> {
         let loader = ctx.get_loader::<DataLoader<StockLineByLocationIdLoader>>();
         let result_option = loader.load_one(self.row().id.clone()).await?;

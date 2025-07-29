@@ -1928,6 +1928,23 @@ export type DeletePrescriptionResponseWithId = {
   response: DeletePrescriptionResponse;
 };
 
+export type DeletePurchaseOrderLineError = {
+  __typename: 'DeletePurchaseOrderLineError';
+  error: DeletePurchaseOrderLineInterface;
+};
+
+export type DeletePurchaseOrderLineInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeletePurchaseOrderLineInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeletePurchaseOrderLineResponse =
+  | DeletePurchaseOrderLineError
+  | DeleteResponse;
+
 export type DeleteRequestRequisitionError = {
   __typename: 'DeleteRequestRequisitionError';
   error: DeleteRequestRequisitionErrorInterface;
@@ -3285,6 +3302,7 @@ export type InsertLocationInput = {
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  volume?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
@@ -4709,6 +4727,8 @@ export type LocationNode = {
   name: Scalars['String']['output'];
   onHold: Scalars['Boolean']['output'];
   stock: StockLineConnector;
+  volume?: Maybe<Scalars['Float']['output']>;
+  volumeUsed: Scalars['Float']['output'];
 };
 
 export type LocationNotFound = InsertOutboundShipmentLineErrorInterface &
@@ -4958,6 +4978,7 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  deletePurchaseOrderLine: DeletePurchaseOrderLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
@@ -5059,6 +5080,7 @@ export type Mutations = {
    * in a document.
    */
   updateProgramPatient: UpdateProgramPatientResponse;
+  updatePurchaseOrderLine: UpdatePurchaseOrderLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -5202,6 +5224,11 @@ export type MutationsDeletePrescriptionArgs = {
 
 export type MutationsDeletePrescriptionLineArgs = {
   input: DeletePrescriptionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePurchaseOrderLineArgs = {
+  input: DeletePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5617,6 +5644,11 @@ export type MutationsUpdateProgramPatientArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdatePurchaseOrderLineArgs = {
+  input: UpdatePurchaseOrderLineInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpdateRequestRequisitionArgs = {
   input: UpdateRequestRequisitionInput;
   storeId: Scalars['String']['input'];
@@ -5908,6 +5940,21 @@ export type NothingRemainingToSupply =
  */
 export type NullableDateUpdate = {
   value?: InputMaybe<Scalars['NaiveDate']['input']>;
+};
+
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
+export type NullableFloatUpdate = {
+  value?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /**
@@ -7730,6 +7777,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteOutboundShipmentUnallocatedLineErrorInterface &
   DeletePrescriptionErrorInterface &
   DeletePrescriptionLineErrorInterface &
+  DeletePurchaseOrderLineInterface &
   DeleteRequestRequisitionErrorInterface &
   DeleteRequestRequisitionLineErrorInterface &
   DeleteResponseRequisitionErrorInterface &
@@ -9481,6 +9529,7 @@ export type UpdateLocationInput = {
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  volume?: InputMaybe<NullableFloatUpdate>;
 };
 
 export type UpdateLocationResponse = LocationNode | UpdateLocationError;
@@ -9776,6 +9825,17 @@ export type UpdateProgramPatientInput = {
 };
 
 export type UpdateProgramPatientResponse = PatientNode;
+
+export type UpdatePurchaseOrderLineInput = {
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdatePurchaseOrderLineResponse = IdResponse;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';

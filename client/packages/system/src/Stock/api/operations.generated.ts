@@ -29,6 +29,8 @@ export type StockLineRowFragment = {
     name: string;
     onHold: boolean;
     code: string;
+    volume?: number | null;
+    volumeUsed: number;
     locationType?: {
       __typename: 'LocationTypeNode';
       id: string;
@@ -89,6 +91,8 @@ export type RepackStockLineFragment = {
     name: string;
     onHold: boolean;
     code: string;
+    volume?: number | null;
+    volumeUsed: number;
     locationType?: {
       __typename: 'LocationTypeNode';
       id: string;
@@ -114,6 +118,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
+      volume?: number | null;
+      volumeUsed: number;
       locationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -133,6 +139,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
+      volume?: number | null;
+      volumeUsed: number;
       locationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -234,6 +242,8 @@ export type StockLinesQuery = {
         name: string;
         onHold: boolean;
         code: string;
+        volume?: number | null;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -328,6 +338,8 @@ export type StockLineQuery = {
         name: string;
         onHold: boolean;
         code: string;
+        volume?: number | null;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -459,6 +471,8 @@ export type UpdateStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
+          volume?: number | null;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -542,6 +556,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
+            volume?: number | null;
+            volumeUsed: number;
             locationType?: {
               __typename: 'LocationTypeNode';
               id: string;
@@ -561,6 +577,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
+            volume?: number | null;
+            volumeUsed: number;
             locationType?: {
               __typename: 'LocationTypeNode';
               id: string;
@@ -598,6 +616,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
+          volume?: number | null;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -617,6 +637,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
+          volume?: number | null;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -748,6 +770,8 @@ export type InsertStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
+          volume?: number | null;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;

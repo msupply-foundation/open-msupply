@@ -9,6 +9,8 @@ import {
   FnUtils,
   ToggleButton,
   InlineSpinner,
+  NumericTextInput,
+  Box,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList, useLocation } from '../../api';
 import { LocationTypeInput } from '@openmsupply-client/system';
@@ -28,6 +30,7 @@ const createNewLocation = (
   name: '',
   code: '',
   onHold: false,
+  volumeUsed: 0,
   ...seed,
 });
 
@@ -150,6 +153,24 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             label={t('label.location-type')}
             onChange={locationType => onUpdate({ locationType })}
           />
+          <Box
+            sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}
+          >
+            <NumericTextInput
+              value={draft.volume ?? 0}
+              onChange={volume => onUpdate({ volume })}
+              label={t('label.volume')}
+              fullWidth
+              decimalLimit={4}
+            />
+            <NumericTextInput
+              value={draft.volumeUsed}
+              label={t('label.volume-used')}
+              disabled
+              fullWidth
+              decimalLimit={4}
+            />
+          </Box>
           <Grid alignSelf="center">
             <ToggleButton
               label="On hold"
