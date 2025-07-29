@@ -176,7 +176,6 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
 
               '& .MuiBadge-badge:not(.MuiBadge-invisible)': drawer.isOpen
                 ? {
-                    // top: 'unset',
                     transform: 'scale(0.75) translate(100%, 0)',
                   }
                 : {
