@@ -3302,7 +3302,7 @@ export type InsertLocationInput = {
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  volume?: InputMaybe<Scalars['Float']['input']>;
+  volume: Scalars['Float']['input'];
 };
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
@@ -4727,7 +4727,7 @@ export type LocationNode = {
   name: Scalars['String']['output'];
   onHold: Scalars['Boolean']['output'];
   stock: StockLineConnector;
-  volume?: Maybe<Scalars['Float']['output']>;
+  volume: Scalars['Float']['output'];
   volumeUsed: Scalars['Float']['output'];
 };
 
@@ -5940,21 +5940,6 @@ export type NothingRemainingToSupply =
  */
 export type NullableDateUpdate = {
   value?: InputMaybe<Scalars['NaiveDate']['input']>;
-};
-
-/**
- * Update a nullable value
- *
- * This struct is usually used as an optional value.
- * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
- * This is done to encode the following cases (using `mutableValue` from previous example):
- * 1) if `mutableValue` is `null | undefined`, nothing is updated
- * 2) if `mutableValue` object is set:
- * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
- * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
- */
-export type NullableFloatUpdate = {
-  value?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /**
@@ -9529,7 +9514,7 @@ export type UpdateLocationInput = {
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  volume?: InputMaybe<NullableFloatUpdate>;
+  volume?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateLocationResponse = LocationNode | UpdateLocationError;

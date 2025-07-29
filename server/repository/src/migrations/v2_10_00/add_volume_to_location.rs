@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE location ADD COLUMN volume {DOUBLE};
+                ALTER TABLE location ADD COLUMN volume {DOUBLE} NOT NULL DEFAULT 0.0;
             "#
         )?;
 

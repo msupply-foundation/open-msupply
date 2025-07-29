@@ -63,7 +63,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 on_hold: false,
                 store_id: "store_a".to_string(),
                 location_type_id: None,
-                volume: None,
+                volume: 0.0,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -76,7 +76,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 on_hold: false,
                 store_id: "store_a".to_string(),
                 location_type_id: Some("84AA2B7A18694A2AB1E84DCABAD19617".to_string()),
-                volume: Some(10.0),
+                volume: 10.0,
             },
         ),
     ]
@@ -94,7 +94,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
                 on_hold: false,
                 store_id: "store_a".to_string(),
                 location_type_id: None,
-                volume: None,
+                volume: 0.0,
             }),
         },
         TestSyncOutgoingRecord {
@@ -107,7 +107,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
                 on_hold: false,
                 store_id: "store_a".to_string(),
                 location_type_id: Some("84AA2B7A18694A2AB1E84DCABAD19617".to_string()),
-                volume: Some(10.0),
+                volume: 10.0,
             }),
         },
     ]

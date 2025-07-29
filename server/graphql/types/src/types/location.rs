@@ -81,7 +81,7 @@ impl LocationNode {
         self.row().on_hold
     }
 
-    pub async fn volume(&self) -> Option<f64> {
+    pub async fn volume(&self) -> f64 {
         self.row().volume
     }
 

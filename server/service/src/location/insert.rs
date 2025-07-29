@@ -20,7 +20,7 @@ pub struct InsertLocation {
     pub name: Option<String>,
     pub on_hold: Option<bool>,
     pub location_type_id: Option<String>,
-    pub volume: Option<f64>,
+    pub volume: f64,
 }
 
 pub fn insert_location(

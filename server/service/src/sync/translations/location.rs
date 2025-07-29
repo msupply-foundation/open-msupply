@@ -4,7 +4,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use util::sync_serde::{empty_str_as_option_string, zero_f64_as_none};
+use util::sync_serde::empty_str_as_option_string;
 
 use crate::sync::translations::{location_type::LocationTypeTranslation, store::StoreTranslation};
 
@@ -25,8 +25,7 @@ pub struct LegacyLocationRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_type_id: Option<String>,
     #[serde(rename = "Volume")]
-    #[serde(deserialize_with = "zero_f64_as_none")]
-    pub volume: Option<f64>,
+    pub volume: f64,
 }
 
 // Needs to be added to all_translators()

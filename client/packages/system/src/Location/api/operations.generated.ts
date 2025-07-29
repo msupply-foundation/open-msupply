@@ -9,7 +9,7 @@ export type LocationRowFragment = {
   name: string;
   onHold: boolean;
   code: string;
-  volume?: number | null;
+  volume: number;
   volumeUsed: number;
   locationType?: {
     __typename: 'LocationTypeNode';
@@ -41,7 +41,7 @@ export type LocationsQuery = {
       name: string;
       onHold: boolean;
       code: string;
-      volume?: number | null;
+      volume: number;
       volumeUsed: number;
       locationType?: {
         __typename: 'LocationTypeNode';
@@ -88,7 +88,7 @@ export type InsertLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
-        volume?: number | null;
+        volume: number;
         volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -114,7 +114,7 @@ export type UpdateLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
-        volume?: number | null;
+        volume: number;
         volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';

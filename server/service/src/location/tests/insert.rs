@@ -40,7 +40,7 @@ mod query {
                     name: None,
                     on_hold: None,
                     location_type_id: None,
-                    volume: None
+                    volume: 0.0
                 },
             ),
             Err(InsertLocationError::LocationAlreadyExists)
@@ -55,7 +55,7 @@ mod query {
                     name: None,
                     on_hold: None,
                     location_type_id: None,
-                    volume: None
+                    volume: 0.0
                 },
             ),
             Err(InsertLocationError::LocationWithCodeAlreadyExists)
@@ -83,7 +83,7 @@ mod query {
                 on_hold: false,
                 store_id: "store_a".to_owned(),
                 location_type_id: None,
-                volume: None,
+                volume: 0.0,
             },
         };
 
@@ -96,7 +96,7 @@ mod query {
                     name: None,
                     on_hold: None,
                     location_type_id: None,
-                    volume: None
+                    volume: 0.0
                 },
             ),
             Ok(result_location.clone())
@@ -123,7 +123,7 @@ mod query {
                     name: Some("new_location_name".to_owned()),
                     on_hold: Some(true),
                     location_type_id: None,
-                    volume: Some(2.0)
+                    volume: 2.0
                 },
             ),
             Ok(Location {
@@ -134,7 +134,7 @@ mod query {
                     on_hold: true,
                     store_id: "store_a".to_owned(),
                     location_type_id: None,
-                    volume: Some(2.0),
+                    volume: 2.0,
                 }
             })
         );

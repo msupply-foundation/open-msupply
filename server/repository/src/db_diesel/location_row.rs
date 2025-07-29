@@ -14,7 +14,7 @@ table! {
         on_hold -> Bool,
         store_id -> Text,
         location_type_id -> Nullable<Text>,
-        volume -> Nullable<Double>
+        volume -> Double
     }
 }
 
@@ -33,7 +33,7 @@ pub struct LocationRow {
     pub on_hold: bool,
     pub store_id: String,
     pub location_type_id: Option<String>,
-    pub volume: Option<f64>,
+    pub volume: f64,
 }
 
 pub struct LocationRowRepository<'a> {
