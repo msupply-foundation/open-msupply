@@ -4,7 +4,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use util::sync_serde::empty_str_as_option_string;
+use util::sync_serde::{empty_str_as_option_string, zero_f64_as_none};
 
 use crate::sync::translations::{location_type::LocationTypeTranslation, store::StoreTranslation};
 
@@ -24,6 +24,9 @@ pub struct LegacyLocationRow {
     #[serde(rename = "type_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_type_id: Option<String>,
+    #[serde(rename = "Volume")]
+    #[serde(deserialize_with = "zero_f64_as_none")]
+    pub volume: Option<f64>,
 }
 
 // Needs to be added to all_translators()
@@ -61,6 +64,7 @@ impl SyncTranslation for LocationTranslation {
             on_hold,
             store_id,
             location_type_id,
+            volume,
         } = serde_json::from_str::<LegacyLocationRow>(&sync_record.data)?;
 
         let result = LocationRow {
@@ -70,6 +74,7 @@ impl SyncTranslation for LocationTranslation {
             on_hold,
             store_id,
             location_type_id,
+            volume,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -86,7 +91,8 @@ impl SyncTranslation for LocationTranslation {
             code,
             on_hold,
             store_id,
-            location_type_id, // TODO: Translate location_type_id id from `location_type_id`
+            location_type_id,
+            volume,
         } = LocationRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -101,6 +107,7 @@ impl SyncTranslation for LocationTranslation {
             on_hold,
             store_id,
             location_type_id,
+            volume,
         };
 
         Ok(PushTranslateResult::upsert(

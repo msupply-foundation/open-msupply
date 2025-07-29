@@ -2,7 +2,7 @@ use super::{
     query::get_location,
     validate::{check_location_code_is_unique, check_location_exists},
 };
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{service_provider::ServiceContext, NullableUpdate, SingleRecordError};
 use repository::{
     location::Location, LocationRow, LocationRowRepository, RepositoryError, StorageConnection,
 };
@@ -23,6 +23,7 @@ pub struct UpdateLocation {
     pub name: Option<String>,
     pub on_hold: Option<bool>,
     pub location_type_id: Option<String>,
+    pub volume: Option<NullableUpdate<f64>>,
 }
 
 pub fn update_location(
@@ -70,6 +71,7 @@ pub fn generate(
         name,
         on_hold,
         location_type_id,
+        volume,
     }: UpdateLocation,
     mut location_row: LocationRow,
 ) -> LocationRow {
@@ -77,6 +79,11 @@ pub fn generate(
     location_row.name = name.unwrap_or(location_row.name);
     location_row.on_hold = on_hold.unwrap_or(location_row.on_hold);
     location_row.location_type_id = location_type_id;
+
+    if let Some(volume) = volume {
+        location_row.volume = volume.value;
+    }
+
     location_row
 }
 

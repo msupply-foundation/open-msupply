@@ -106,6 +106,7 @@ pub fn insert_asset(
                             on_hold: false,
                             store_id,
                             location_type_id: None, // TODO(future): Based on asset type try to determine location type
+                            volume: None, // TODO(future): Map asset volume to location volume if applicable
                         };
                         new_location.upsert(connection)?;
                         set_asset_location(connection, &new_asset.id, vec![new_location.id])?;

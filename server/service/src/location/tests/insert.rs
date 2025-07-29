@@ -39,7 +39,8 @@ mod query {
                     code: "invalid".to_owned(),
                     name: None,
                     on_hold: None,
-                    location_type_id: None
+                    location_type_id: None,
+                    volume: None
                 },
             ),
             Err(InsertLocationError::LocationAlreadyExists)
@@ -53,7 +54,8 @@ mod query {
                     code: locations_in_store[0].location_row.code.clone(),
                     name: None,
                     on_hold: None,
-                    location_type_id: None
+                    location_type_id: None,
+                    volume: None
                 },
             ),
             Err(InsertLocationError::LocationWithCodeAlreadyExists)
@@ -81,6 +83,7 @@ mod query {
                 on_hold: false,
                 store_id: "store_a".to_owned(),
                 location_type_id: None,
+                volume: None,
             },
         };
 
@@ -92,7 +95,8 @@ mod query {
                     code: "new_code".to_owned(),
                     name: None,
                     on_hold: None,
-                    location_type_id: None
+                    location_type_id: None,
+                    volume: None
                 },
             ),
             Ok(result_location.clone())
@@ -118,7 +122,8 @@ mod query {
                     code: "store_b_location_code".to_owned(),
                     name: Some("new_location_name".to_owned()),
                     on_hold: Some(true),
-                    location_type_id: None
+                    location_type_id: None,
+                    volume: Some(2.0)
                 },
             ),
             Ok(Location {
@@ -128,7 +133,8 @@ mod query {
                     code: "store_b_location_code".to_owned(),
                     on_hold: true,
                     store_id: "store_a".to_owned(),
-                    location_type_id: None
+                    location_type_id: None,
+                    volume: Some(2.0),
                 }
             })
         );

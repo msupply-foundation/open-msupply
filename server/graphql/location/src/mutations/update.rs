@@ -1,6 +1,7 @@
 use async_graphql::*;
 
 use graphql_core::{
+    generic_inputs::NullableUpdateInput,
     simple_generic_errors::{
         DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound,
         UniqueValueViolation,
@@ -12,6 +13,7 @@ use graphql_types::types::LocationNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     location::update::{UpdateLocation, UpdateLocationError as ServiceError},
+    NullableUpdate,
 };
 
 pub fn update_location(
@@ -50,6 +52,7 @@ pub struct UpdateLocationInput {
     pub name: Option<String>,
     pub on_hold: Option<bool>,
     pub location_type_id: Option<String>,
+    pub volume: Option<NullableUpdateInput<f64>>,
 }
 
 impl From<UpdateLocationInput> for UpdateLocation {
@@ -60,6 +63,7 @@ impl From<UpdateLocationInput> for UpdateLocation {
             name,
             on_hold,
             location_type_id,
+            volume,
         }: UpdateLocationInput,
     ) -> Self {
         UpdateLocation {
@@ -67,7 +71,10 @@ impl From<UpdateLocationInput> for UpdateLocation {
             code,
             name,
             on_hold,
-            location_type_id: location_type_id,
+            location_type_id,
+            volume: volume.map(|volume| NullableUpdate {
+                value: volume.value,
+            }),
         }
     }
 }
