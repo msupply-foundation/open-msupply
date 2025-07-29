@@ -8,7 +8,6 @@ import {
   SyncErrorVariant,
   usePreference,
   useTranslation,
-  useTheme,
 } from '@openmsupply-client/common';
 import { BadgeProps } from '@mui/material';
 import { useSync } from '@openmsupply-client/system';
@@ -21,8 +20,6 @@ export const SyncNavLink = () => {
   const { data: preferences } = usePreference(
     PreferenceKey.SyncRecordsDisplayThreshold
   );
-  const theme = useTheme();
-
   const syncRecordsDisplayThreshold =
     preferences?.[PreferenceKey.SyncRecordsDisplayThreshold] ?? 0;
 
@@ -72,12 +69,7 @@ export const SyncNavLink = () => {
             : 'default',
       };
     }
-  }, [
-    syncStatus,
-    numberOfRecordsInPushQueue,
-    syncRecordsDisplayThreshold,
-    theme,
-  ]);
+  }, [syncStatus, numberOfRecordsInPushQueue, syncRecordsDisplayThreshold]);
 
   return (
     <AppNavLink
