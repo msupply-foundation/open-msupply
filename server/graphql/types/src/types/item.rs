@@ -79,7 +79,10 @@ impl ItemNode {
         &self.row().restricted_location_type_id
     }
 
-    pub async fn location_type(&self, ctx: &Context<'_>) -> Result<Option<LocationTypeNode>> {
+    pub async fn restricted_location_type(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<LocationTypeNode>> {
         let restricted_location_type_id = match &self.row().restricted_location_type_id {
             Some(restricted_location_type_id) => restricted_location_type_id,
             None => return Ok(None),

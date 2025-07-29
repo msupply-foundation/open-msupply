@@ -312,6 +312,13 @@ export type ItemFragment = {
   weight: number;
   restrictedLocationTypeId?: string | null;
   availableStockOnHand: number;
+  restrictedLocationType?: {
+    __typename: 'LocationTypeNode';
+    id: string;
+    name: string;
+    minTemperature: number;
+    maxTemperature: number;
+  } | null;
   availableBatches: {
     __typename: 'StockLineConnector';
     totalCount: number;
@@ -472,13 +479,6 @@ export type ItemFragment = {
     id: string;
     defaultSellPricePerPack: number;
   } | null;
-  locationType?: {
-    __typename: 'LocationTypeNode';
-    id: string;
-    name: string;
-    minTemperature: number;
-    maxTemperature: number;
-  } | null;
 };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
@@ -517,6 +517,13 @@ export type ItemsWithStockLinesQuery = {
       weight: number;
       restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
+      restrictedLocationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        minTemperature: number;
+        maxTemperature: number;
+      } | null;
       availableBatches: {
         __typename: 'StockLineConnector';
         totalCount: number;
@@ -676,13 +683,6 @@ export type ItemsWithStockLinesQuery = {
         __typename: 'ItemStoreJoinNode';
         id: string;
         defaultSellPricePerPack: number;
-      } | null;
-      locationType?: {
-        __typename: 'LocationTypeNode';
-        id: string;
-        name: string;
-        minTemperature: number;
-        maxTemperature: number;
       } | null;
     }>;
   };
@@ -903,6 +903,13 @@ export type ItemByIdQuery = {
           } | null;
         }>;
       };
+      restrictedLocationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        minTemperature: number;
+        maxTemperature: number;
+      } | null;
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
@@ -993,13 +1000,6 @@ export type ItemByIdQuery = {
         __typename: 'ItemStoreJoinNode';
         id: string;
         defaultSellPricePerPack: number;
-      } | null;
-      locationType?: {
-        __typename: 'LocationTypeNode';
-        id: string;
-        name: string;
-        minTemperature: number;
-        maxTemperature: number;
       } | null;
     }>;
   };
@@ -1505,6 +1505,15 @@ export const ItemRowWithStatsFragmentDoc = gql`
   }
   ${ItemStockOnHandFragmentDoc}
 `;
+export const LocationTypeFragmentDoc = gql`
+  fragment LocationType on LocationTypeNode {
+    __typename
+    id
+    name
+    minTemperature
+    maxTemperature
+  }
+`;
 export const ItemDirectionFragmentDoc = gql`
   fragment ItemDirection on ItemDirectionNode {
     __typename
@@ -1563,15 +1572,6 @@ export const StockLineFragmentDoc = gql`
   }
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
-`;
-export const LocationTypeFragmentDoc = gql`
-  fragment LocationType on LocationTypeNode {
-    __typename
-    id
-    name
-    minTemperature
-    maxTemperature
-  }
 `;
 export const PackagingVariantFragmentDoc = gql`
   fragment PackagingVariant on PackagingVariantNode {
@@ -1663,6 +1663,9 @@ export const ItemFragmentDoc = gql`
     volumePerPack
     weight
     restrictedLocationTypeId
+    restrictedLocationType {
+      ...LocationType
+    }
     availableStockOnHand(storeId: $storeId)
     availableBatches(storeId: $storeId) {
       __typename
@@ -1692,14 +1695,11 @@ export const ItemFragmentDoc = gql`
       id
       defaultSellPricePerPack
     }
-    locationType {
-      ...LocationType
-    }
   }
+  ${LocationTypeFragmentDoc}
   ${StockLineFragmentDoc}
   ${ItemVariantFragmentDoc}
   ${ItemDirectionFragmentDoc}
-  ${LocationTypeFragmentDoc}
 `;
 export const ItemsWithStatsFragmentDoc = gql`
   fragment ItemsWithStats on ItemNode {
