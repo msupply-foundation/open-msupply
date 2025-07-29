@@ -19,6 +19,8 @@ fragment InboundLine on InvoiceLineNode {
   itemName
   itemVariantId
   linkedInvoiceId
+  volumePerPack
+
   donor(storeId: $storeId) {
     id
     name
@@ -71,6 +73,17 @@ fragment InboundLine on InvoiceLineNode {
     level
     unusable
     description
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
   }
 }
 
