@@ -467,6 +467,13 @@ export type ItemFragment = {
     id: string;
     defaultSellPricePerPack: number;
   } | null;
+  locationType?: {
+    __typename: 'LocationTypeNode';
+    id: string;
+    name: string;
+    minTemperature: number;
+    maxTemperature: number;
+  } | null;
 };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
@@ -665,6 +672,13 @@ export type ItemsWithStockLinesQuery = {
         id: string;
         defaultSellPricePerPack: number;
       } | null;
+      locationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        minTemperature: number;
+        maxTemperature: number;
+      } | null;
     }>;
   };
 };
@@ -731,7 +745,6 @@ export type ItemsWithStatsFragment = {
   unitName?: string | null;
   defaultPackSize: number;
   isVaccine: boolean;
-  restrictedLocationTypeId?: string | null;
   doses: number;
   availableStockOnHand: number;
   stats: {
@@ -767,7 +780,6 @@ export type ItemsWithStatsQuery = {
       unitName?: string | null;
       defaultPackSize: number;
       isVaccine: boolean;
-      restrictedLocationTypeId?: string | null;
       doses: number;
       availableStockOnHand: number;
       stats: {
@@ -974,6 +986,13 @@ export type ItemByIdQuery = {
         __typename: 'ItemStoreJoinNode';
         id: string;
         defaultSellPricePerPack: number;
+      } | null;
+      locationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        minTemperature: number;
+        maxTemperature: number;
       } | null;
     }>;
   };
@@ -1665,10 +1684,14 @@ export const ItemFragmentDoc = gql`
       id
       defaultSellPricePerPack
     }
+    locationType {
+      ...LocationType
+    }
   }
   ${StockLineFragmentDoc}
   ${ItemVariantFragmentDoc}
   ${ItemDirectionFragmentDoc}
+  ${LocationTypeFragmentDoc}
 `;
 export const ItemsWithStatsFragmentDoc = gql`
   fragment ItemsWithStats on ItemNode {
@@ -1679,7 +1702,6 @@ export const ItemsWithStatsFragmentDoc = gql`
     unitName
     defaultPackSize
     isVaccine
-    restrictedLocationTypeId
     doses
     availableStockOnHand(storeId: $storeId)
     stats(storeId: $storeId) {

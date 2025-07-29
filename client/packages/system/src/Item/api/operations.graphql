@@ -229,6 +229,9 @@ fragment Item on ItemNode {
     id
     defaultSellPricePerPack
   }
+  locationType {
+    ...LocationType
+  }
 }
 
 query itemsWithStockLines(
@@ -311,7 +314,6 @@ fragment ItemsWithStats on ItemNode {
   unitName
   defaultPackSize
   isVaccine
-  restrictedLocationTypeId
   doses
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
