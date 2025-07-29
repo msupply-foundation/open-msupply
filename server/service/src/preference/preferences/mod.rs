@@ -16,6 +16,8 @@ pub mod use_campaigns;
 pub use use_campaigns::*;
 pub mod order_in_packs;
 pub use order_in_packs::*;
+pub mod sync_records_display_threshold;
+pub use sync_records_display_threshold::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -23,6 +25,7 @@ pub struct PreferenceProvider {
     pub gender_options: GenderOptions,
     pub show_contact_tracing: ShowContactTracing,
     pub use_campaigns: UseCampaigns,
+    pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -38,6 +41,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         gender_options: GenderOptions,
         show_contact_tracing: ShowContactTracing,
         use_campaigns: UseCampaigns,
+        sync_records_display_threshold: SyncRecordsDisplayThreshold,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
