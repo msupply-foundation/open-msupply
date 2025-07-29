@@ -56,7 +56,6 @@ pub struct UpdateInput {
     pub confirmed_datetime: Option<NaiveDateTime>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
-    pub supplier_discount_amount: Option<f64>,
     pub donor_link_id: Option<String>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
@@ -66,7 +65,6 @@ pub struct UpdateInput {
     pub contract_signed_date: Option<NaiveDate>,
     pub advance_paid_date: Option<NaiveDate>,
     pub received_at_port_date: Option<NaiveDate>,
-    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 impl UpdateInput {
@@ -78,7 +76,6 @@ impl UpdateInput {
             confirmed_datetime,
             comment,
             supplier_discount_percentage,
-            supplier_discount_amount,
             donor_link_id,
             reference,
             currency_id,
@@ -88,7 +85,6 @@ impl UpdateInput {
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
-            expected_delivery_date,
         } = self;
 
         ServiceInput {
@@ -98,7 +94,6 @@ impl UpdateInput {
             confirmed_datetime,
             comment,
             supplier_discount_percentage,
-            supplier_discount_amount,
             donor_link_id,
             reference,
             currency_id,
@@ -108,7 +103,6 @@ impl UpdateInput {
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
-            expected_delivery_date,
         }
     }
 }

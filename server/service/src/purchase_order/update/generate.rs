@@ -12,7 +12,6 @@ pub fn generate(
         confirmed_datetime,
         comment,
         supplier_discount_percentage,
-        supplier_discount_amount,
         donor_link_id,
         reference,
         currency_id,
@@ -22,8 +21,7 @@ pub fn generate(
         contract_signed_date,
         advance_paid_date,
         received_at_port_date,
-        expected_delivery_date,
-        id:_,
+        id: _,
     } = input;
 
     let supplier_name_link_id = supplier_id.unwrap_or(purchase_order.supplier_name_link_id);
@@ -44,20 +42,16 @@ pub fn generate(
     let comment = comment.or(purchase_order.comment);
     let reference = reference.or(purchase_order.reference);
 
-    let supplier_discount_amount =
-        supplier_discount_amount.unwrap_or(purchase_order.supplier_discount_amount);
-
+    // Updated through Purchase Order Lines
     let order_total_before_discount = purchase_order.order_total_before_discount;
-    let order_total_after_discount = order_total_before_discount - supplier_discount_amount;
 
-    // Use input percentage if provided, otherwise calculate it
-    let supplier_discount_percentage = supplier_discount_percentage.or_else(|| {
-        if order_total_before_discount != 0.0 {
-            Some((supplier_discount_amount / order_total_before_discount) * 100.0)
-        } else {
-            Some(0.0)
-        }
-    });
+    let supplier_discount_percentage = supplier_discount_percentage
+        .or(purchase_order.supplier_discount_percentage)
+        .unwrap_or(0.0);
+
+    let supplier_discount_amount =
+        order_total_before_discount * (supplier_discount_percentage / 100.0);
+    let order_total_after_discount = order_total_before_discount - supplier_discount_amount;
 
     Ok(PurchaseOrderRow {
         supplier_name_link_id,
@@ -69,13 +63,12 @@ pub fn generate(
         contract_signed_date,
         advance_paid_date,
         received_at_port_date,
-        supplier_discount_percentage,
+        supplier_discount_percentage: Some(supplier_discount_percentage),
         supplier_discount_amount,
         currency_id,
         foreign_exchange_rate,
         shipping_method,
         comment,
-        expected_delivery_date,
         order_total_after_discount,
         ..purchase_order
     })

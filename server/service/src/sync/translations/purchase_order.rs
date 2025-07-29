@@ -301,6 +301,17 @@ impl SyncTranslation for PurchaseOrderTranslation {
             None => sent_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default()),
         };
 
+        let supplier_discount_percentage = oms_fields
+            .clone()
+            .and_then(|oms_field| oms_field.supplier_discount_percentage)
+            .or_else(|| {
+                if order_total_before_discount > 0.0 {
+                    Some(supplier_discount_amount / order_total_before_discount * 100.0)
+                } else {
+                    None
+                }
+            });
+
         let result = PurchaseOrderRow {
             id,
             created_by,
@@ -312,9 +323,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             target_months,
             comment,
-            supplier_discount_percentage: oms_fields
-                .clone()
-                .and_then(|o| o.supplier_discount_percentage),
+            supplier_discount_percentage,
             supplier_discount_amount,
             donor_link_id: donor_id,
             reference,

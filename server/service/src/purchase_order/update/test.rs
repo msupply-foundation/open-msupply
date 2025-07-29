@@ -109,14 +109,26 @@ mod update {
             )
             .unwrap();
 
-        // Update the purchase order successfully
+        let order_total_before_discount = 1000.0;
+        let mut purchase_order = PurchaseOrderRowRepository::new(&context.connection)
+            .find_one_by_id("purchase_order_id")
+            .unwrap()
+            .unwrap();
+
+        purchase_order.order_total_before_discount = order_total_before_discount;
+        PurchaseOrderRowRepository::new(&context.connection)
+            .upsert_one(&purchase_order)
+            .unwrap();
+
+        // Update the purchase order with a known discount percentage
+        let discount_percentage = 10.0;
         let result = service
             .update_purchase_order(
                 &context,
                 store_id,
                 UpdatePurchaseOrderInput {
                     id: "purchase_order_id".to_string(),
-                    supplier_discount_percentage: Some(10.0),
+                    supplier_discount_percentage: Some(discount_percentage),
                     comment: Some("Updated comment".to_string()),
                     status: Some(PurchaseOrderStatus::Confirmed),
                     received_at_port_date: Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap()),
@@ -130,8 +142,19 @@ mod update {
             .unwrap()
             .unwrap();
 
+        let expected_discount_amount = order_total_before_discount * (discount_percentage / 100.0);
+        let expected_total_after_discount = order_total_before_discount - expected_discount_amount;
+
         assert_eq!(result.id, purchase_order.id);
-        assert_eq!(result.supplier_discount_percentage, Some(10.0));
+        assert_eq!(
+            result.supplier_discount_percentage,
+            Some(discount_percentage)
+        );
+        assert_eq!(result.supplier_discount_amount, expected_discount_amount);
+        assert_eq!(
+            result.order_total_after_discount,
+            expected_total_after_discount
+        );
         assert_eq!(result.comment, Some("Updated comment".to_string()));
         assert_eq!(result.status, PurchaseOrderStatus::Confirmed);
         assert_eq!(
