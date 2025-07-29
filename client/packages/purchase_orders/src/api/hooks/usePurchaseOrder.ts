@@ -173,32 +173,32 @@ const useAddFromMasterList = () => {
               purchaseOrderId
             },
             storeId,
-          },
-          {
-        onError: e => {
-          const { message } = e as Error;
-          switch (message) {
-            case 'CannotEditPurchaseOrder': {
-              return error(t('label.cannot-edit-purchase-order'))();
+          });
+          if (result.addToPurchaseOrderFromMasterList.__typename === 'AddToPurchaseOrderFromMasterListError') {
+            const errorType = result.addToPurchaseOrderFromMasterList.error.__typename;
+            
+            switch (errorType) {
+              case 'CannotEditPurchaseOrder': {
+                return error(t('label.cannot-edit-purchase-order'))();
+              }
+              case 'RecordNotFound': {
+                return error(t('messages.record-not-found'))();
+              }
+              case 'MasterListNotFoundForThisStore': {
+                return error(t('error.master-list-not-found'))();
+              }
+              default:
+                return error(t('label.cannot-add-item-to-purchase-order'))();
             }
-            case 'RecordNotFound': {
-              return error(t('messages.record-not-found'))();
-            }
-            case 'MasterListNotFoundForThisStore': {
-              return error(t('error.master-list-not-found'))();
-            }
-            default:
-              return error(t('label.cannot-add-item-to-purchase-order'))();
           }
-        }
-        });
-          return result;
-        } catch (err) {
-          // Error handling is done in the onError callback, so swallow here
+        } catch (e) {
+          // for non structured errors
+          console.error('Mutation error:', e);
+          return error(t('label.cannot-add-item-to-purchase-order'))();
         }
       },
     });
   };
 
   return { ...mutationState, addFromMasterList };
-};``
+};
