@@ -31,17 +31,17 @@ export const AddFromScannerButtonComponent = ({
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
-      const { content, gtin, batch } = result;
+      const { content, gtin, batch, expiryDate } = result;
       const value = gtin ?? content;
       const barcode = await getBarcode(value);
 
       // Barcode exists
       if (barcode?.__typename === 'BarcodeNode') {
-        onAddItem({ ...barcode, batch });
+        onAddItem({ ...barcode, batch, expiryDate: expiryDate ?? undefined });
       } else {
         warning(t('error.no-matching-item'))();
 
-        onAddItem({ gtin: value, batch });
+        onAddItem({ gtin: value, batch, expiryDate: expiryDate ?? undefined });
       }
     }
   };

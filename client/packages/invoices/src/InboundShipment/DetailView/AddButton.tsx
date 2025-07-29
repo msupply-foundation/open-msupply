@@ -7,11 +7,12 @@ import { AddFromInternalOrder } from './AddFromInternalOrder';
 import { PlusCircleIcon } from '@common/icons';
 import { InboundFragment } from '../api';
 import { InvoiceNodeStatus } from '@common/types';
+import { ScannedBarcode } from '../../types';
 
 interface AddButtonProps {
   requisitionId: string;
   invoice: InboundFragment | undefined;
-  onAddItem: (newState: boolean) => void;
+  onAddItem: (scannedBarcode?: ScannedBarcode) => void;
   /** Disable the whole control */
   disable: boolean;
   disableAddFromMasterListButton: boolean;
@@ -67,7 +68,7 @@ export const AddButton = ({
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
       case 'add-item':
-        onAddItem(true);
+        onAddItem();
         break;
       case 'add-from-master-list':
         invoice?.status === InvoiceNodeStatus.New

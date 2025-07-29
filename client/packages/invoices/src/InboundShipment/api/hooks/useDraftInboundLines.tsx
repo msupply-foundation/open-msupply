@@ -7,12 +7,16 @@ import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
 import { useTranslation } from '@common/intl';
+import { ScannedBatchData } from '../../DetailView';
 
 type InboundLineItem = InboundLineFragment['item'];
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
-export const useDraftInboundLines = (item: InboundLineItem | null) => {
+export const useDraftInboundLines = (
+  item: InboundLineItem | null,
+  scannedBatchData?: ScannedBatchData
+) => {
   const t = useTranslation();
   const { error } = useNotification();
 
@@ -41,7 +45,14 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
       );
       if (drafts.length === 0)
         drafts.push(
-          CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize })
+          CreateDraft.stockInLine({
+            item,
+            invoiceId: id,
+            defaultPackSize,
+            // From scanned barcode:
+            batch: scannedBatchData?.batch,
+            expiryDate: scannedBatchData?.expiryDate,
+          })
         );
       setDraftLines(drafts);
     } else {
