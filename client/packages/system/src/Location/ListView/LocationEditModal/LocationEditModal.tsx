@@ -30,6 +30,7 @@ const createNewLocation = (
   name: '',
   code: '',
   onHold: false,
+  volume: 0,
   volumeUsed: 0,
   ...seed,
 });
