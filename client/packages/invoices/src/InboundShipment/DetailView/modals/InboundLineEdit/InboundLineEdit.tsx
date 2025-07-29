@@ -69,7 +69,7 @@ export const InboundLineEdit = ({
     removeDraftLine,
     isLoading,
     saveLines,
-  } = useDraftInboundLines(currentItem as InboundLineItem, scannedBatchData);
+  } = useDraftInboundLines(currentItem, scannedBatchData);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
   const zeroNumberOfPacks = draftLines.some(isInboundPlaceholderRow);

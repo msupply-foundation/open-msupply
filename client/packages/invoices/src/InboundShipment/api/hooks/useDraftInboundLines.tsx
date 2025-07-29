@@ -14,7 +14,7 @@ type InboundLineItem = InboundLineFragment['item'];
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
 export const useDraftInboundLines = (
-  item: InboundLineItem,
+  item: InboundLineItem | null,
   scannedBatchData?: ScannedBatchData
 ) => {
   const t = useTranslation();

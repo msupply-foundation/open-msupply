@@ -39,12 +39,16 @@ import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLine
 
 type InboundLineItem = InboundLineFragment['item'];
 
+// This is what the Edit Modal receives when a scanned barcode is used (as
+// opposed to the usual full "InboundLineItem" object)
 export type ScannedItem = {
   id: string;
   batch?: string;
   expiryDate?: string;
 };
 
+// This is the data that is passed to the "CreateDraftInboundLine" function when
+// creating the new line
 export type ScannedBatchData = { batch?: string; expiryDate?: string };
 
 const DetailViewInner = () => {
@@ -100,6 +104,9 @@ const DetailViewInner = () => {
       batch,
       expiryDate,
     });
+    // Mode set to "Update" when using scanned item, which prevents the "Item"
+    // selector from being changed
+    setMode(ModalMode.Update);
   };
 
   const onReturn = async (selectedLines: InboundLineFragment[]) => {
@@ -180,7 +187,8 @@ const DetailViewInner = () => {
                 onClose={onClose}
                 mode={mode}
                 // "as" here is okay, as the child components will take care of
-                // populating the item will the full details
+                // populating the item will the full details if they are missing
+                // (which is the case when item info is scanned from barcode)
                 item={entity as InboundLineItem}
                 currency={data.currency}
                 isExternalSupplier={!data.otherParty.store}
