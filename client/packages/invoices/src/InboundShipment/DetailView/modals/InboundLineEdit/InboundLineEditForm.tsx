@@ -28,8 +28,6 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
   const t = useTranslation();
   const { data: items } = useInbound.lines.items();
 
-  console.log('item', item);
-
   return (
     <>
       <ModalRow>

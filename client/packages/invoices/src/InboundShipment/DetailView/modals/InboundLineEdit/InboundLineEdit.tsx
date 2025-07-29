@@ -79,8 +79,6 @@ export const InboundLineEdit = ({
     setCurrentItem(item);
   }, [item]);
 
-  console.log('draftLines', draftLines);
-
   const tableContent = simplifiedTabletView ? (
     <>
       <QuantityTable
@@ -172,10 +170,7 @@ export const InboundLineEdit = ({
             <InboundLineEditForm
               disabled={mode === ModalMode.Update}
               item={currentItem}
-              onChangeItem={newItem => {
-                console.log('onChangeItem', newItem);
-                setCurrentItem(newItem);
-              }}
+              onChangeItem={setCurrentItem}
             />
             <Divider margin={5} />
             {tableContent}

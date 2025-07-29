@@ -79,8 +79,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   );
 
   useEffect(() => {
-    console.log('Current item', currentItem);
-    console.log('itemCategoryName', itemCategoryName);
     if (initialUpdate && currentItem) {
       // If initialUpdate is true, we call onChange with the current item
       // when the component mounts, so that the parent component can update
