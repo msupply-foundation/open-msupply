@@ -4427,6 +4427,7 @@ export type ItemNode = {
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
   itemStoreJoin?: Maybe<ItemStoreJoinNode>;
+  locationType?: Maybe<LocationTypeNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];

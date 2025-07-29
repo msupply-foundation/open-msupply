@@ -1,4 +1,4 @@
-use crate::types::ItemStoreJoinNode;
+use crate::types::{ItemStoreJoinNode, LocationTypeNode};
 
 use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
@@ -10,8 +10,8 @@ use graphql_core::{
     loader::{
         ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
         ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
-        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, MasterListByItemIdLoader,
-        MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
+        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
@@ -77,6 +77,19 @@ impl ItemNode {
 
     pub async fn restricted_location_type_id(&self) -> &Option<String> {
         &self.row().restricted_location_type_id
+    }
+
+    pub async fn location_type(&self, ctx: &Context<'_>) -> Result<Option<LocationTypeNode>> {
+        let restricted_location_type_id = match &self.row().restricted_location_type_id {
+            Some(restricted_location_type_id) => restricted_location_type_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationTypeLoader>>();
+        Ok(loader
+            .load_one(restricted_location_type_id.clone())
+            .await?
+            .map(LocationTypeNode::from_domain))
     }
 
     pub async fn stats(
