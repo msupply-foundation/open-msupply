@@ -79,6 +79,7 @@ export type ItemRowFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
 };
 
 export type ItemDirectionFragment = {
@@ -97,6 +98,7 @@ export type ItemRowWithWarningsFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
   warnings: Array<{
     __typename: 'WarningNode';
     warningText: string;
@@ -125,6 +127,7 @@ export type ItemWithPackSizeFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
 };
 
 export type ItemStockOnHandFragment = {
@@ -137,6 +140,7 @@ export type ItemStockOnHandFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
 };
 
 export type ItemRowWithStatsFragment = {
@@ -149,6 +153,7 @@ export type ItemRowWithStatsFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -705,6 +710,7 @@ export type ItemsQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
+      restrictedLocationTypeId?: string | null;
     }>;
   };
 };
@@ -733,6 +739,7 @@ export type ItemStockOnHandQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
+      restrictedLocationTypeId?: string | null;
     }>;
   };
 };
@@ -1444,6 +1451,7 @@ export const ItemRowFragmentDoc = gql`
     unitName
     isVaccine
     doses
+    restrictedLocationTypeId
   }
 `;
 export const WarningFragmentDoc = gql`

@@ -20,6 +20,10 @@ export const toItemRow = (line: ItemLike): ItemRowFragment => ({
     ('lines' in line ? line.lines[0]?.item.isVaccine : line.item.isVaccine) ??
     false,
   doses: ('lines' in line ? line.lines[0]?.item.doses : line.item.doses) ?? 0,
+  restrictedLocationTypeId:
+    ('lines' in line
+      ? line.lines[0]?.item.restrictedLocationTypeId
+      : line.item.restrictedLocationTypeId) ?? null,
 });
 
 export const toItemWithPackSize = (
@@ -61,5 +65,6 @@ export const itemFilterOptions = {
   stringify: (item: ItemWithStatsFragment) => `${item.code} ${item.name}`,
 };
 
-export const getOptionLabel = <T extends { code: string; name: string }>(item: T): string =>
-  `${item.code} ${item.name}`;
+export const getOptionLabel = <T extends { code: string; name: string }>(
+  item: T
+): string => `${item.code} ${item.name}`;

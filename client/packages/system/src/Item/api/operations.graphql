@@ -64,6 +64,7 @@ fragment ItemRow on ItemNode {
   unitName
   isVaccine
   doses
+  restrictedLocationTypeId
 }
 
 fragment ItemDirection on ItemDirectionNode {

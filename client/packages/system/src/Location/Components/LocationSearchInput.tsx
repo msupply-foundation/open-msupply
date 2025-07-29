@@ -14,7 +14,7 @@ interface LocationSearchInputProps {
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
   autoFocus?: boolean;
-  restrictedToLocationType?: string | null;
+  restrictedToLocationTypeId?: string | null;
 }
 
 interface LocationOption {
@@ -61,7 +61,7 @@ export const LocationSearchInput = ({
   onChange,
   disabled,
   autoFocus = false,
-  restrictedToLocationType,
+  restrictedToLocationTypeId,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const {
@@ -71,7 +71,7 @@ export const LocationSearchInput = ({
       direction: 'asc',
       key: 'name',
     },
-    filterBy: { locationTypeId: { equalTo: restrictedToLocationType } },
+    filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
   });
 
   const locations = data?.nodes || [];

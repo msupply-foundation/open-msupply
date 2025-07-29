@@ -54,6 +54,7 @@ interface TableProps {
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
+  restrictedLocationTypeId?: string | null;
 }
 
 interface QuantityTableProps extends TableProps {
@@ -359,6 +360,7 @@ export const LocationTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled,
+  restrictedLocationTypeId,
 }: TableProps) => {
   const { data: preferences } = usePreference(
     PreferenceKey.AllowTrackingOfStockByDonor,
@@ -375,10 +377,7 @@ export const LocationTableComponent = ({
     [
       'location',
       {
-        ...getLocationInputColumn(
-          (rowData: DraftInboundLine) =>
-            rowData.item.restrictedLocationTypeId ?? null
-        ),
+        ...getLocationInputColumn(restrictedLocationTypeId),
         setter: updateDraftLine,
         width: 530,
       },
