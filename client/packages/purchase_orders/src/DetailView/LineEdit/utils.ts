@@ -10,5 +10,7 @@ export const createDraftPurchaseOrderLine = (
     id: FnUtils.generateUUID(),
     purchaseOrderId,
     itemId: item.id,
+    requestedPackSize: 0,
+    requestedNumberOfUnits: 0,
   };
 }
