@@ -8,6 +8,8 @@ import {
   UpsertPreferencesInput,
   PreferenceDescriptionNode,
   useTranslation,
+  NumericTextInput,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import {
   EnumOptions,
@@ -29,6 +31,12 @@ export const EditPreference = ({
   // is invalidated - use local state for fast UI change
   const [value, setValue] = useState(preference.value);
 
+  const debouncedUpdate = useDebouncedValueCallback(
+    value => update(value),
+    [],
+    350
+  );
+
   switch (preference.valueType) {
     case PreferenceValueNodeType.Boolean:
       if (!isBoolean(value)) {
@@ -49,9 +57,16 @@ export const EditPreference = ({
       if (!isNumber(preference.value)) {
         return t('error.something-wrong');
       }
-      // Adding NumericTextInput here would currently get a type error,
-      // because there are no editPreference inputs that accept a number
-      return <>To be implemented</>;
+      console.log(preference.key, preference.value);
+      return (
+        <NumericTextInput
+          value={value}
+          onChange={newValue => {
+            setValue(newValue);
+            debouncedUpdate(newValue);
+          }}
+        />
+      );
 
     case PreferenceValueNodeType.MultiChoice:
       if (!Array.isArray(value)) {
@@ -66,7 +81,7 @@ export const EditPreference = ({
           value={value}
           onChange={newValue => {
             setValue(newValue);
-            update(newValue);
+            debouncedUpdate(newValue);
           }}
         />
       );
