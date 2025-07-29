@@ -491,7 +491,7 @@ mod test {
                                 "custom_data": null,
                                 "doses": 11,
                                 "is_vaccine": true,
-                                "restricted_location_type_ID": "cf5812e0c33911eb9757779d39ae2bdb"
+                                "restricted_location_type_ID": "84AA2B7A18694A2AB1E84DCABAD19617"
                             }"#
                             .to_string();
                         });
