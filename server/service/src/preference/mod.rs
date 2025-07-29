@@ -29,6 +29,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             gender_options,
             show_contact_tracing,
             use_campaigns,
+            sync_records_display_threshold,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -57,6 +58,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(order_in_packs, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
+        append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
 
         Ok(prefs)
     }
