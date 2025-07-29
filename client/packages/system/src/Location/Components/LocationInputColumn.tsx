@@ -15,9 +15,9 @@ const hasRequiredFields = (
 ): variableToCheck is LocationObject =>
   'location' in (variableToCheck as LocationObject);
 
-export const getLocationInputColumn = <
-  T extends RecordWithId,
->(): ColumnDefinition<T> => ({
+export const getLocationInputColumn = <T extends RecordWithId>(
+  restrictedToLocationType: (rowData: T) => string | null
+): ColumnDefinition<T> => ({
   key: 'locationInput',
   label: 'label.location',
   sortable: false,
@@ -61,6 +61,7 @@ export const getLocationInputColumn = <
         selectedLocation={value}
         width={column.width}
         onChange={onChange}
+        restrictedToLocationType={restrictedToLocationType(rowData)}
       />
     );
   },

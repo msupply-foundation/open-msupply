@@ -372,7 +372,17 @@ export const LocationTableComponent = ({
         accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
-    [getLocationInputColumn(), { setter: updateDraftLine, width: 530 }],
+    [
+      'location',
+      {
+        ...getLocationInputColumn(
+          (rowData: DraftInboundLine) =>
+            rowData.item.restrictedLocationTypeId ?? null
+        ),
+        setter: updateDraftLine,
+        width: 530,
+      },
+    ],
     [
       'note',
       {
