@@ -116,8 +116,9 @@ export const QuantityTableComponent = ({
             ...patch,
             sellPricePerPack: 0,
           });
+        } else {
+          updateDraftLine(patch);
         }
-        updateDraftLine(patch);
       },
       label: 'label.pack-size',
       defaultHideOnMobile: true,
