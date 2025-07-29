@@ -85,7 +85,7 @@ const getBadge = (
 
   if (isSyncError) {
     return {
-      badgeContent: <AlertIcon color="error" fontSize="small" />,
+      badgeContent: <AlertIcon color="error" />,
     };
   }
 
