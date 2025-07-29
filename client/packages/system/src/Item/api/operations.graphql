@@ -201,6 +201,9 @@ fragment Item on ItemNode {
   volumePerPack
   weight
   restrictedLocationTypeId
+  restrictedLocationType {
+    ...LocationType
+  }
   availableStockOnHand(storeId: $storeId)
   availableBatches(storeId: $storeId) {
     __typename
@@ -229,9 +232,6 @@ fragment Item on ItemNode {
     __typename
     id
     defaultSellPricePerPack
-  }
-  locationType {
-    ...LocationType
   }
 }
 
