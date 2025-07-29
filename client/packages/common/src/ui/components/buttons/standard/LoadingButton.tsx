@@ -12,6 +12,7 @@ export const LoadingButton: React.FC<
     loadingStyle?: { backgroundColor?: string; iconColor?: string };
     shouldShrink?: boolean;
     shrinkThreshold?: 'sm' | 'md' | 'lg' | 'xl';
+    variant?: 'outlined' | 'contained';
   }
 > = ({
   children,

@@ -24,6 +24,7 @@ import {
   usePreference,
   PreferenceKey,
   ReasonOptionNodeType,
+  QuantityUtils,
 } from '@openmsupply-client/common';
 import { DraftStockLine } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -31,6 +32,7 @@ import {
   DonorSearchInput,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
+  VVMStatusSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
 import { ItemVariantInput, useIsItemVariantsEnabled } from '../../Item';
@@ -61,6 +63,7 @@ export const StockLineForm = ({
     PreferenceKey.AllowTrackingOfStockByDonor,
     PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.ManageVvmStatusForStock,
+    PreferenceKey.SortByVvmStatusThenExpiry,
     PreferenceKey.UseCampaigns
   );
 
@@ -68,6 +71,10 @@ export const StockLineForm = ({
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
+  const showVVMStatus =
+    draft?.item?.isVaccine &&
+    (preferences?.manageVvmStatusForStock ||
+      preferences?.sortByVvmStatusThenExpiry);
 
   const supplierName = draft.supplierName
     ? draft.supplierName
@@ -107,6 +114,21 @@ export const StockLineForm = ({
 
   if (loading) return null;
 
+  const getDosesProps = (numPacks: number) => {
+    if (!preferences?.manageVaccinesInDoses || !draft.item.isVaccine) return {};
+
+    const doses = QuantityUtils.packsToDoses(numPacks, draft);
+
+    return {
+      helperText: `${doses} ${t('label.doses').toLowerCase()}`,
+      sx: {
+        '& .MuiFormHelperText-root': {
+          textAlign: 'right',
+        },
+      },
+    };
+  };
+
   return (
     <DetailContainer>
       <Grid
@@ -126,32 +148,32 @@ export const StockLineForm = ({
                 autoFocus
                 disabled={!packEditable}
                 width={160}
-                value={
-                  draft.totalNumberOfPacks
-                    ? parseFloat(draft.totalNumberOfPacks.toFixed(2))
-                    : 0
-                }
+                value={draft.totalNumberOfPacks ? draft.totalNumberOfPacks : 0}
                 onChange={totalNumberOfPacks =>
                   onUpdate({ totalNumberOfPacks })
                 }
+                {...getDosesProps(draft.totalNumberOfPacks)}
               />
             }
           />
           {!packEditable && (
-            <StyledInputRow
-              label={t('label.available-packs')}
-              Input={
-                <NumericTextInput
-                  autoFocus
-                  disabled={!packEditable}
-                  width={160}
-                  value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
-                  onChange={availableNumberOfPacks =>
-                    onUpdate({ availableNumberOfPacks })
-                  }
-                />
-              }
-            />
+            <>
+              <StyledInputRow
+                label={t('label.available-packs')}
+                Input={
+                  <NumericTextInput
+                    autoFocus
+                    disabled={!packEditable}
+                    width={160}
+                    value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
+                    onChange={availableNumberOfPacks =>
+                      onUpdate({ availableNumberOfPacks })
+                    }
+                    {...getDosesProps(draft.availableNumberOfPacks)}
+                  />
+                }
+              />
+            </>
           )}
           <StyledInputRow
             label={t('label.cost-price')}
@@ -309,13 +331,17 @@ export const StockLineForm = ({
             text={String(supplierName)}
             textProps={{ textAlign: 'end' }}
           />
-          {draft?.item?.isVaccine && preferences?.manageVvmStatusForStock && (
+          {showVVMStatus && (
             <StyledInputRow
               label={t('label.vvm-status')}
+              labelWidth={isNewModal ? '212px' : null}
               Input={
-                <BufferedTextInput
-                  disabled
-                  value={draft.vvmStatus?.description ?? ''}
+                <VVMStatusSearchInput
+                  selected={draft?.vvmStatus ?? null}
+                  onChange={vvmStatus => onUpdate({ vvmStatus })}
+                  disabled={!isNewModal}
+                  width={!isNewModal ? 160 : undefined}
+                  useDefault
                 />
               }
             />

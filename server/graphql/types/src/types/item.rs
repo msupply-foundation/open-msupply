@@ -1,3 +1,5 @@
+use crate::types::ItemStoreJoinNode;
+
 use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
     WarningNode,
@@ -6,9 +8,10 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
-        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemVariantsByItemIdLoader,
-        ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
-        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
+        ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
+        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, MasterListByItemIdLoader,
+        MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
@@ -222,6 +225,26 @@ impl ItemNode {
                 .map(MasterListNode::from_domain)
                 .collect()
         }))
+    }
+
+    pub async fn item_store_join(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<ItemStoreJoinNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemStoreJoinLoader>>();
+        let result = loader
+            .load_one(ItemStoreJoinLoaderInput::new(&store_id, &self.row().id))
+            .await?
+            .unwrap_or_default();
+
+        if result.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(ItemStoreJoinNode::from_domain(
+            result.first().cloned().unwrap(),
+        )))
     }
 }
 

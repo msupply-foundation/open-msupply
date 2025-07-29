@@ -3,11 +3,13 @@ use repository::{
     StorageConnection,
 };
 
-use crate::purchase_order_line::insert::{
-    InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput,
+use crate::{
+    purchase_order::validate::purchase_order_is_editable,
+    purchase_order_line::insert::{InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput},
 };
 
 pub fn validate(
+    store_id: &str,
     input: &InsertPurchaseOrderLineInput,
     connection: &StorageConnection,
 ) -> Result<(), InsertPurchaseOrderLineError> {
@@ -18,11 +20,16 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::PurchaseOrderLineAlreadyExists);
     }
 
-    if PurchaseOrderRowRepository::new(connection)
+    let purchase_order = PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(&input.purchase_order_id)?
-        .is_none()
-    {
-        return Err(InsertPurchaseOrderLineError::PurchaseOrderDoesNotExist);
+        .ok_or(InsertPurchaseOrderLineError::PurchaseOrderDoesNotExist)?;
+
+    if purchase_order.store_id != store_id {
+        return Err(InsertPurchaseOrderLineError::IncorrectStoreId);
+    }
+
+    if !purchase_order_is_editable(&purchase_order) {
+        return Err(InsertPurchaseOrderLineError::CannotEditPurchaseOrder);
     }
 
     if ItemRowRepository::new(connection)

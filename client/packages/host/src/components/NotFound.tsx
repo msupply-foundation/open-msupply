@@ -16,7 +16,7 @@ export const NotFound: React.FC = () => {
       flexDirection="column"
       justifyContent="center"
       alignContent="center"
-      sx={{ height: '100%' }}
+      sx={{ height: '100%', margin: '0 auto' }}
     >
       <Grid display="flex" justifyContent="center">
         <Grow in timeout={1000}>
