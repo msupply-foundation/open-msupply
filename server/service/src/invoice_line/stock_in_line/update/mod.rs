@@ -104,6 +104,7 @@ pub enum UpdateStockInLineError {
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
     VVMStatusDoesNotExist,
+    ProgramNotVisible,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {
@@ -129,10 +130,10 @@ mod test {
     use repository::{
         mock::{
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
-            mock_item_a, mock_item_b, mock_name_store_b, mock_store_a, mock_store_b,
-            mock_supplier_return_a_invoice_line_a, mock_transferred_inbound_shipment_a,
-            mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, mock_vvm_status_b,
-            MockData, MockDataInserts,
+            mock_immunisation_program_a, mock_item_a, mock_item_b, mock_name_store_b, mock_store_a,
+            mock_store_b, mock_supplier_return_a_invoice_line_a,
+            mock_transferred_inbound_shipment_a, mock_user_account_a, mock_vaccine_item_a,
+            mock_vvm_status_a, mock_vvm_status_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
@@ -305,6 +306,21 @@ mod test {
                 }),
             ),
             Err(ServiceError::BatchIsReserved)
+        );
+
+        // ProgramNotVisible
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    program_id: Some(NullableUpdate {
+                        value: Some(mock_immunisation_program_a().id)
+                    }), // Master list not visible to store_b
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ProgramNotVisible)
         );
 
         // NotThisStoreInvoice

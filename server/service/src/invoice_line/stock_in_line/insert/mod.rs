@@ -110,6 +110,7 @@ pub enum InsertStockInLineError {
     NumberOfPacksBelowZero,
     NewlyCreatedLineDoesNotExist,
     VVMStatusDoesNotExist,
+    ProgramNotVisible,
 }
 
 impl From<RepositoryError> for InsertStockInLineError {
@@ -135,10 +136,11 @@ mod test {
     use repository::{
         barcode::{BarcodeFilter, BarcodeRepository},
         mock::{
-            mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_inbound_shipment_a,
-            mock_inbound_shipment_c, mock_inbound_shipment_e, mock_item_a, mock_name_customer_a,
-            mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
-            mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
+            mock_customer_return_a, mock_customer_return_a_invoice_line_a,
+            mock_immunisation_program_a, mock_inbound_shipment_a, mock_inbound_shipment_c,
+            mock_inbound_shipment_e, mock_item_a, mock_name_customer_a, mock_name_store_b,
+            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
+            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::{
@@ -380,6 +382,24 @@ mod test {
                 },
             ),
             Err(ServiceError::SelectedDonorPartyIsNotADonor)
+        );
+
+        // ProgramNotVisible
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_a().id,
+                    invoice_id: mock_inbound_shipment_e().id,
+                    r#type: StockInType::InboundShipment,
+                    program_id: Some(mock_immunisation_program_a().id), // Not master list visible to store_b
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ProgramNotVisible)
         );
     }
 

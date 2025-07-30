@@ -196,6 +196,10 @@ impl ProgramFilter {
         self.item_id = Some(filter);
         self
     }
+    pub fn exists_for_store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.exists_for_store_id = Some(filter);
+        self
+    }
 }
 
 #[cfg(test)]
