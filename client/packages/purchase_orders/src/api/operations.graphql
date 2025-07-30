@@ -50,7 +50,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
     }
     totalCount
   }
-  sentDate
+  sentDatetime
   shippingMethod
   status
   store {
@@ -65,7 +65,13 @@ fragment PurchaseOrder on PurchaseOrderNode {
   }
   supplierAgent
   supplierDiscountAmount
+  supplierDiscountPercentage
   targetMonths
+  confirmedDatetime
+  contractSignedDate
+  advancePaidDate
+  receivedAtPortDate
+  requestedDeliveryDate
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {

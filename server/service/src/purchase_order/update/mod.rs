@@ -39,6 +39,7 @@ pub struct UpdatePurchaseOrderInput {
     pub contract_signed_date: Option<NaiveDate>,
     pub advance_paid_date: Option<NaiveDate>,
     pub received_at_port_date: Option<NaiveDate>,
+    pub requested_delivery_date: Option<NaiveDate>,
 }
 
 pub fn update_purchase_order(

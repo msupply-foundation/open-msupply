@@ -21,6 +21,7 @@ pub fn generate(
         contract_signed_date,
         advance_paid_date,
         received_at_port_date,
+        requested_delivery_date,
         id: _,
     } = input;
 
@@ -34,6 +35,8 @@ pub fn generate(
     let contract_signed_date = contract_signed_date.or(purchase_order.contract_signed_date);
     let advance_paid_date = advance_paid_date.or(purchase_order.advance_paid_date);
     let received_at_port_date = received_at_port_date.or(purchase_order.received_at_port_date);
+    let requested_delivery_date =
+        requested_delivery_date.or(purchase_order.requested_delivery_date);
 
     let currency_id = currency_id.or(purchase_order.currency_id);
     let foreign_exchange_rate = foreign_exchange_rate.or(purchase_order.foreign_exchange_rate);
@@ -63,6 +66,7 @@ pub fn generate(
         contract_signed_date,
         advance_paid_date,
         received_at_port_date,
+        requested_delivery_date,
         supplier_discount_percentage: Some(supplier_discount_percentage),
         supplier_discount_amount,
         currency_id,

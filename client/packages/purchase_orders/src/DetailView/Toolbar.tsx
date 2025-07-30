@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AppBarContentPortal,
   InputWithLabelRow,
@@ -29,7 +29,10 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     lines: { itemFilter, setItemFilter },
     update: { update },
   } = usePurchaseOrder();
-  const { supplier, reference } = data ?? {};
+
+  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
+    DateUtils.getDateOrNull(data?.requestedDeliveryDate)
+  );
 
   const handleDebouncedUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
 
@@ -44,13 +47,13 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     >
       <Grid container gap={2} flexWrap="nowrap">
         <Grid display="flex" flex={1} flexDirection="column" gap={1}>
-          {supplier && (
+          {data?.supplier && (
             <InputWithLabelRow
               label={t('label.supplier-name')}
               Input={
                 <InternalSupplierSearchInput
                   disabled={isDisabled || isLoading}
-                  value={(supplier as NameFragment) ?? null}
+                  value={(data?.supplier as NameFragment) ?? null}
                   onChange={supplier => {
                     if (!supplier) return;
                     update({ supplierId: supplier?.id });
@@ -62,12 +65,12 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
           <InputWithLabelRow
             label={t('label.supplier-ref')}
             Input={
-              <Tooltip title={reference} placement="bottom-start">
+              <Tooltip title={data?.reference} placement="bottom-start">
                 <BufferedTextInput
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={reference ?? null}
+                  value={data?.reference ?? null}
                   onChange={e => {
                     handleDebouncedUpdate({ reference: e.target.value });
                   }}
@@ -79,12 +82,13 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             label={t('label.requested-delivery-date')}
             Input={
               <DateTimePickerInput
-                value={DateUtils.getDateOrNull()}
+                value={requestedDeliveryDate}
                 onChange={date => {
-                  // TODO: are we supporting this?
+                  setRequestedDeliveryDate(date);
                   const formattedDate = Formatter.naiveDate(date);
-                  // eslint-disable-next-line no-console
-                  console.log(formattedDate);
+                  update({
+                    requestedDeliveryDate: formattedDate,
+                  });
                 }}
               />
             }

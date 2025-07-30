@@ -11,7 +11,7 @@ import {
 import { DonorSearchInput } from '@openmsupply-client/system/src';
 import { PurchaseOrderFragment } from '../../api';
 
-// TODO: ShippingMethod seems to have its own table - requires further investigation
+// TODO: ShippingMethod have its own table. Need to migrate over before implementing this
 
 interface OtherSectionProps {
   data?: PurchaseOrderFragment;

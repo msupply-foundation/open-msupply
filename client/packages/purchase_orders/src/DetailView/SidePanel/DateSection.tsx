@@ -5,7 +5,6 @@ import {
   DetailPanelSection,
   PanelRow,
   PanelLabel,
-  PanelField,
   UpdatePurchaseOrderInput,
   DateTimePickerInput,
   DateUtils,
@@ -27,14 +26,18 @@ export const DateSection = ({
   return (
     <DetailPanelSection title={t('label.dates')}>
       <Grid container gap={2} key="dates-section">
-        <PanelRow>
-          <PanelLabel>{t('label.confirmation-date')}</PanelLabel>
-          <PanelField>{data?.confirmedDatetime}</PanelField>
-        </PanelRow>
         <DateField
+          type="datetime"
+          label={t('label.confirmed')}
+          value={data?.confirmedDatetime}
+          onChange={() => {}}
+          disabled
+        />
+        <DateField
+          type="datetime"
           label={t('label.po-sent')}
-          value={data?.sentDate}
-          onChange={date => onUpdate({ sentDate: date })}
+          value={data?.sentDatetime}
+          onChange={date => onUpdate({ sentDatetime: date })}
         />
         <DateField
           label={t('label.contract-signed')}
@@ -51,11 +54,6 @@ export const DateSection = ({
           value={data?.receivedAtPortDate}
           onChange={date => onUpdate({ receivedAtPortDate: date })}
         />
-        <DateField
-          label={t('label.expected-delivery-date')}
-          value={data?.expectedDeliveryDate}
-          onChange={date => onUpdate({ expectedDeliveryDate: date })}
-        />
       </Grid>
     </DetailPanelSection>
   );
@@ -66,6 +64,7 @@ interface DateFieldProps {
   value?: string | null;
   onChange: (date: string | null) => void;
   disabled?: boolean;
+  type?: 'date' | 'datetime';
 }
 
 export const DateField = ({
@@ -73,6 +72,7 @@ export const DateField = ({
   value,
   onChange,
   disabled = false,
+  type = 'date',
 }: DateFieldProps): ReactElement => {
   return (
     <PanelRow>
@@ -82,7 +82,12 @@ export const DateField = ({
         value={DateUtils.getDateOrNull(value)}
         format="P"
         onChange={date => {
-          const formatted = date ? Formatter.naiveDate(date) : null;
+          const formatted =
+            date && type === 'datetime'
+              ? Formatter.isoNoMs(date)
+              : date
+                ? Formatter.naiveDate(date)
+                : null;
           onChange(formatted);
         }}
         sx={{ flex: 2 }}

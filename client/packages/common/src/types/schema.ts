@@ -1928,6 +1928,23 @@ export type DeletePrescriptionResponseWithId = {
   response: DeletePrescriptionResponse;
 };
 
+export type DeletePurchaseOrderLineError = {
+  __typename: 'DeletePurchaseOrderLineError';
+  error: DeletePurchaseOrderLineInterface;
+};
+
+export type DeletePurchaseOrderLineInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeletePurchaseOrderLineInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeletePurchaseOrderLineResponse =
+  | DeletePurchaseOrderLineError
+  | DeleteResponse;
+
 export type DeleteRequestRequisitionError = {
   __typename: 'DeleteRequestRequisitionError';
   error: DeleteRequestRequisitionErrorInterface;
@@ -4958,6 +4975,7 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  deletePurchaseOrderLine: DeletePurchaseOrderLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
@@ -5060,6 +5078,7 @@ export type Mutations = {
    */
   updateProgramPatient: UpdateProgramPatientResponse;
   updatePurchaseOrder: UpdatePurchaseOrderResponse;
+  updatePurchaseOrderLine: UpdatePurchaseOrderLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -5203,6 +5222,11 @@ export type MutationsDeletePrescriptionArgs = {
 
 export type MutationsDeletePrescriptionLineArgs = {
   input: DeletePrescriptionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePurchaseOrderLineArgs = {
+  input: DeletePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5620,6 +5644,11 @@ export type MutationsUpdateProgramPatientArgs = {
 
 export type MutationsUpdatePurchaseOrderArgs = {
   input: UpdatePurchaseOrderInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdatePurchaseOrderLineArgs = {
+  input: UpdatePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6710,6 +6739,7 @@ export type PurchaseOrderNode = {
   number: Scalars['Int']['output'];
   receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
+  requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   shippingMethod?: Maybe<Scalars['String']['output']>;
   status: PurchaseOrderNodeStatus;
@@ -6717,6 +6747,7 @@ export type PurchaseOrderNode = {
   supplier?: Maybe<NameNode>;
   supplierAgent?: Maybe<Scalars['String']['output']>;
   supplierDiscountAmount: Scalars['Float']['output'];
+  supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   targetMonths?: Maybe<Scalars['Float']['output']>;
   user?: Maybe<UserNode>;
 };
@@ -7743,6 +7774,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteOutboundShipmentUnallocatedLineErrorInterface &
   DeletePrescriptionErrorInterface &
   DeletePrescriptionLineErrorInterface &
+  DeletePurchaseOrderLineInterface &
   DeleteRequestRequisitionErrorInterface &
   DeleteRequestRequisitionLineErrorInterface &
   DeleteResponseRequisitionErrorInterface &
@@ -9797,18 +9829,28 @@ export type UpdatePurchaseOrderInput = {
   contractSignedDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   donorLinkId?: InputMaybe<Scalars['String']['input']>;
-  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   foreignExchangeRate?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
   receivedAtPortDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   reference?: InputMaybe<Scalars['String']['input']>;
-  sentDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  sentDatetime?: InputMaybe<Scalars['NaiveDateTime']['input']>;
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<PurchaseOrderNodeType>;
-  supplierDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type UpdatePurchaseOrderLineInput = {
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdatePurchaseOrderLineResponse = IdResponse;
 
 export type UpdatePurchaseOrderResponse = IdResponse;
 

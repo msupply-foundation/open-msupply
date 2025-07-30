@@ -56,4 +56,8 @@ export const Formatter = {
       .trim();
     return _str.substring(0, 1).toUpperCase() + _str.substring(1);
   },
+  isoNoMs: (date?: Date | null): string | null => {
+    if (date && isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
+    else return null;
+  },
 };

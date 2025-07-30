@@ -22,25 +22,25 @@ import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 
 export const DetailViewInner = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+
   const {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
   } = usePurchaseOrder();
 
-  const t = useTranslation();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const navigate = useNavigate();
-
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.number]);
 
-  const onOpen = () => {
+  const handleOpen = () => {
     // eslint-disable-next-line no-console
     console.log('TO-DO: Show Line Edit Modal');
   };
 
-  const onRowClick = (line: PurchaseOrderLineFragment) => {
+  const handleRowClick = (line: PurchaseOrderLineFragment) => {
     // eslint-disable-next-line no-console
     console.log('TO-DO: Show Line Edit Modal for line:', line);
   };
@@ -55,33 +55,17 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
-
+          <AppBarButtons isDisabled={isDisabled} onAddItem={handleOpen} />
           <Toolbar isDisabled={isDisabled} />
-
           <ContentArea
             lines={sortedAndFilteredLines}
             isDisabled={isDisabled}
-            onAddItem={onOpen}
-            onRowClick={!isDisabled ? onRowClick : null}
+            onAddItem={handleOpen}
+            onRowClick={!isDisabled ? handleRowClick : null}
           />
-
           <Footer />
           <SidePanel />
-
-          {/* {isOpen && (
-            <InboundLineEdit
-              isDisabled={isDisabled}
-              isOpen={isOpen}
-              onClose={onClose}
-              mode={mode}
-              item={entity}
-              currency={data.currency}
-              isExternalSupplier={!data.otherParty.store}
-              hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
-              hasItemVariantsEnabled={hasItemVariantsEnabled}
-            />
-          )} */}
+          {/* Insert Line Edit Modal */}
         </>
       ) : (
         <AlertModal

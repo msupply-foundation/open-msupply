@@ -65,6 +65,7 @@ pub struct UpdateInput {
     pub contract_signed_date: Option<NaiveDate>,
     pub advance_paid_date: Option<NaiveDate>,
     pub received_at_port_date: Option<NaiveDate>,
+    pub requested_delivery_date: Option<NaiveDate>,
 }
 
 impl UpdateInput {
@@ -85,6 +86,7 @@ impl UpdateInput {
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
+            requested_delivery_date,
         } = self;
 
         ServiceInput {
@@ -103,6 +105,7 @@ impl UpdateInput {
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
+            requested_delivery_date,
         }
     }
 }

@@ -1281,6 +1281,7 @@
   "label.supplier": "Supplier",
   "label.supplier-details": "Supplier Details",
   "label.supplier-discount-amount": "Supplier discount amount",
+  "label.supplier-discount-percentage": "Supplier discount percentage",
   "label.supplier-name": "Supplier Name",
   "label.supplier-ref": "Reference",
   "label.supply": "Supply",

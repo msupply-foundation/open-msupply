@@ -9,13 +9,8 @@ import {
   useDebounceCallback,
   UpdatePurchaseOrderInput,
 } from '@openmsupply-client/common';
-import {
-  CurrencyAutocomplete,
-  CurrencyRowFragment,
-} from '@openmsupply-client/system';
+import { CurrencyAutocomplete } from '@openmsupply-client/system';
 import { PurchaseOrderFragment } from '../../api';
-
-// TODO: CurrencyAutocomplete - not saving the currency id correctly
 
 const slotProps = {
   input: {
@@ -43,12 +38,12 @@ export const SupplierDetailSection = ({
   onUpdate,
 }: SupplierDetailSectionProps): ReactElement => {
   const t = useTranslation();
-  const [currency, setCurrency] = useState<CurrencyRowFragment>();
+  const [currencyId, setCurrencyId] = useState(data?.currencyId);
   const [foreignExchangeRate, setForeignExchangeRate] = useState(
     data?.foreignExchangeRate ?? 0
   );
-  const [supplierDiscountAmount, setSupplierDiscountAmount] = useState(
-    data?.supplierDiscountAmount ?? 0
+  const [supplierDiscountPercentage, setSupplierDiscountPercentage] = useState(
+    data?.supplierDiscountPercentage ?? 0
   );
 
   const handleDebouncedUpdate = useDebounceCallback(
@@ -61,27 +56,36 @@ export const SupplierDetailSection = ({
     <DetailPanelSection title={t('label.supplier-details')}>
       <Grid container gap={2} key="supplier-detail-section">
         <PanelRow>
-          <PanelLabel>{t('label.supplier-discount-amount')}</PanelLabel>
+          <PanelLabel>{t('label.supplier-discount-percentage')}</PanelLabel>
           <NumericTextInput
-            value={supplierDiscountAmount}
+            value={supplierDiscountPercentage}
             max={100}
             onChange={value => {
-              if (value == null || value === supplierDiscountAmount) return;
-              setSupplierDiscountAmount(value);
+              if (value == null || value === supplierDiscountPercentage) return;
+              setSupplierDiscountPercentage(value);
               handleDebouncedUpdate({
-                supplierDiscountAmount: value,
+                supplierDiscountPercentage: value,
               });
             }}
             slotProps={slotProps}
           />
         </PanelRow>
         <PanelRow>
+          <PanelLabel>{t('label.supplier-discount-amount')}</PanelLabel>
+          <NumericTextInput
+            value={data?.supplierDiscountAmount ?? 0}
+            max={100}
+            disabled
+            slotProps={slotProps}
+          />
+        </PanelRow>
+        <PanelRow>
           <PanelLabel>{t('label.currency')}</PanelLabel>
           <CurrencyAutocomplete
-            value={currency}
+            currencyId={currencyId}
             onChange={currency => {
               if (currency == null) return;
-              setCurrency(currency);
+              setCurrencyId(currency.id);
               setForeignExchangeRate(currency.rate);
               handleDebouncedUpdate({
                 currencyId: currency.id,

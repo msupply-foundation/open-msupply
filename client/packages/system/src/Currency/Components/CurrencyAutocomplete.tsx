@@ -15,6 +15,7 @@ interface CurrencyAutocompleteProps {
   popperMinWidth?: number;
   onChange: (currency: CurrencyRowFragment | null) => void;
   disabled?: boolean;
+  currencyId?: string | null;
   sx?: SxProps;
 }
 
@@ -40,12 +41,18 @@ export const CurrencyAutocomplete = ({
   popperMinWidth,
   onChange,
   disabled = false,
+  currencyId,
   sx,
 }: CurrencyAutocompleteProps) => {
   const { data, isLoading } = useCurrencyList();
   const homeCurrency = data?.nodes.find(
     currency => currency.isHomeCurrency
   ) as CurrencyRowFragment;
+
+  const selectedCurrency = data?.nodes.find(
+    currency => currency.id === currencyId
+  ) as CurrencyRowFragment;
+
   const currencyOptionRenderer = getCurrencyOptionRenderer();
 
   if (!data) return null;
@@ -56,9 +63,11 @@ export const CurrencyAutocomplete = ({
       value={
         value
           ? { ...value, label: value.code }
-          : homeCurrency
-            ? { ...homeCurrency, label: homeCurrency.code }
-            : null
+          : selectedCurrency
+            ? { ...selectedCurrency, label: selectedCurrency.code }
+            : homeCurrency
+              ? { ...homeCurrency, label: homeCurrency.code }
+              : null
       }
       loading={isLoading}
       onChange={(_, currency) => onChange(currency)}

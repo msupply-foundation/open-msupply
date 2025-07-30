@@ -36,12 +36,18 @@ export type PurchaseOrderFragment = {
   headingMessage?: string | null;
   insuranceCharge?: number | null;
   reference?: string | null;
-  sentDate?: string | null;
+  sentDatetime?: string | null;
   shippingMethod?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   supplierAgent?: string | null;
   supplierDiscountAmount: number;
+  supplierDiscountPercentage?: number | null;
   targetMonths?: number | null;
+  confirmedDatetime?: string | null;
+  contractSignedDate?: string | null;
+  advancePaidDate?: string | null;
+  receivedAtPortDate?: string | null;
+  requestedDeliveryDate?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'PurchaseOrderLineConnector';
@@ -141,12 +147,18 @@ export type PurchaseOrderByIdQuery = {
         headingMessage?: string | null;
         insuranceCharge?: number | null;
         reference?: string | null;
-        sentDate?: string | null;
+        sentDatetime?: string | null;
         shippingMethod?: string | null;
         status: Types.PurchaseOrderNodeStatus;
         supplierAgent?: string | null;
         supplierDiscountAmount: number;
+        supplierDiscountPercentage?: number | null;
         targetMonths?: number | null;
+        confirmedDatetime?: string | null;
+        contractSignedDate?: string | null;
+        advancePaidDate?: string | null;
+        receivedAtPortDate?: string | null;
+        requestedDeliveryDate?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'PurchaseOrderLineConnector';
@@ -262,7 +274,7 @@ export const PurchaseOrderFragmentDoc = gql`
       }
       totalCount
     }
-    sentDate
+    sentDatetime
     shippingMethod
     status
     store {
@@ -275,7 +287,13 @@ export const PurchaseOrderFragmentDoc = gql`
     }
     supplierAgent
     supplierDiscountAmount
+    supplierDiscountPercentage
     targetMonths
+    confirmedDatetime
+    contractSignedDate
+    advancePaidDate
+    receivedAtPortDate
+    requestedDeliveryDate
   }
   ${PurchaseOrderLineFragmentDoc}
 `;
