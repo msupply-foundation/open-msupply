@@ -124,8 +124,8 @@ impl InsertInput {
             shipped_number_of_packs,
             campaign_id,
             program_id,
-            // Default
             note,
+            // Default
             stock_line_id: None,
             barcode: None,
             stock_on_hold: false,
