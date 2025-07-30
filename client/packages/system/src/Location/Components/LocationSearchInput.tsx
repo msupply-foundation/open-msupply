@@ -15,7 +15,7 @@ interface LocationSearchInputProps {
   disabled: boolean;
   autoFocus?: boolean;
   restrictedToLocationTypeId?: string | null;
-  setInvalidLocationAlert?: (value: React.SetStateAction<string>) => void;
+  onInvalidLocation?: (invalid: boolean, message: string) => void;
 }
 
 interface LocationOption {
@@ -63,7 +63,7 @@ export const LocationSearchInput = ({
   disabled,
   autoFocus = false,
   restrictedToLocationTypeId,
-  setInvalidLocationAlert = () => {},
+  onInvalidLocation,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const {
@@ -110,13 +110,24 @@ export const LocationSearchInput = ({
     : selectedOption || null;
 
   useEffect(() => {
-    setInvalidLocationAlert(
+    onInvalidLocation?.(
+      isInvalidLocation,
       isInvalidLocation ? t('messages.location-invalid') : ''
     );
   }, [isInvalidLocation]);
 
   return (
     <Autocomplete
+      sx={
+        !!isInvalidLocation
+          ? {
+              borderColor: theme => theme.palette.error.main,
+              borderWidth: '2px',
+              borderStyle: 'solid',
+              borderRadius: '8px',
+            }
+          : undefined
+      }
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
