@@ -117,7 +117,7 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries([LIST, PURCHASE_ORDER]),
   });
 };
 
