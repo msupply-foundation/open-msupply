@@ -82,6 +82,8 @@ pub fn upsert_preferences(
 
             if let Some(input) = custom_translations_input {
                 custom_translations.upsert(connection, input, None)?;
+            }
+
             if let Some(input) = sync_records_display_threshold_input {
                 sync_records_display_threshold.upsert(connection, input, None)?;
             }
