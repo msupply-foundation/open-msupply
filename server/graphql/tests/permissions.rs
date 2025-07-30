@@ -743,7 +743,7 @@ mod permission_tests {
             TestData {
                 name: "insertLocation",
                 query: r#"mutation Mutation {
-                insertLocation(input: {id: "", code: ""}, storeId: "") {
+                insertLocation(input: {id: "", code: "", volume: 0}, storeId: "") {
                   ... on LocationNode {
                     id
                     name
