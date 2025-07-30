@@ -4,16 +4,6 @@ import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { NameRowFragmentDoc } from '../../Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type ServiceItemRowFragment = {
-  __typename: 'ItemNode';
-  id: string;
-  code: string;
-  name: string;
-  unitName?: string | null;
-  isVaccine: boolean;
-  doses: number;
-};
-
 export type StockLineFragment = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: number;
@@ -136,6 +126,10 @@ export type ItemStockOnHandFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  itemStoreProperties?: {
+    __typename: 'ItemStorePropertiesNode';
+    defaultSellPricePerPack: number;
+  } | null;
 };
 
 export type ItemRowWithStatsFragment = {
@@ -157,6 +151,10 @@ export type ItemRowWithStatsFragment = {
     totalConsumption: number;
     stockOnHand: number;
   };
+  itemStoreProperties?: {
+    __typename: 'ItemStorePropertiesNode';
+    defaultSellPricePerPack: number;
+  } | null;
 };
 
 export type LocationTypeFragment = {
@@ -457,9 +455,8 @@ export type ItemFragment = {
     itemId: string;
     priority: number;
   }>;
-  itemStoreJoin?: {
-    __typename: 'ItemStoreJoinNode';
-    id: string;
+  itemStoreProperties?: {
+    __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
   } | null;
 };
@@ -652,9 +649,8 @@ export type ItemsWithStockLinesQuery = {
         itemId: string;
         priority: number;
       }>;
-      itemStoreJoin?: {
-        __typename: 'ItemStoreJoinNode';
-        id: string;
+      itemStoreProperties?: {
+        __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
       } | null;
     }>;
@@ -711,6 +707,10 @@ export type ItemStockOnHandQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
+      itemStoreProperties?: {
+        __typename: 'ItemStorePropertiesNode';
+        defaultSellPricePerPack: number;
+      } | null;
     }>;
   };
 };
@@ -957,9 +957,8 @@ export type ItemByIdQuery = {
         itemId: string;
         priority: number;
       }>;
-      itemStoreJoin?: {
-        __typename: 'ItemStoreJoinNode';
-        id: string;
+      itemStoreProperties?: {
+        __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
       } | null;
     }>;
@@ -1388,17 +1387,6 @@ export type ItemLedgerQuery = {
   };
 };
 
-export const ServiceItemRowFragmentDoc = gql`
-  fragment ServiceItemRow on ItemNode {
-    __typename
-    id
-    code
-    name
-    unitName
-    isVaccine
-    doses
-  }
-`;
 export const ItemRowFragmentDoc = gql`
   fragment ItemRow on ItemNode {
     __typename
@@ -1441,10 +1429,11 @@ export const ItemStockOnHandFragmentDoc = gql`
   fragment ItemStockOnHand on ItemNode {
     ...ItemWithPackSize
     availableStockOnHand(storeId: $storeId)
-    ...ItemRow
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
   ${ItemWithPackSizeFragmentDoc}
-  ${ItemRowFragmentDoc}
 `;
 export const ItemRowWithStatsFragmentDoc = gql`
   fragment ItemRowWithStats on ItemNode {
@@ -1640,9 +1629,7 @@ export const ItemFragmentDoc = gql`
     itemDirections {
       ...ItemDirection
     }
-    itemStoreJoin(storeId: $storeId) {
-      __typename
-      id
+    itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
     }
   }
