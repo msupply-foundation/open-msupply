@@ -19,6 +19,7 @@ export interface LocationTypeInputProps {
   value: LocationTypeFragment | null;
   disabled?: boolean;
   clearable?: boolean;
+  fullWidth?: boolean;
 }
 
 export const LocationTypeInput = ({
@@ -27,6 +28,7 @@ export const LocationTypeInput = ({
   value,
   label,
   disabled = false,
+  fullWidth = false,
 }: LocationTypeInputProps) => {
   const { data, isLoading } = useLocationTypes();
   const [buffer, setBuffer] = useBufferState(value);
@@ -54,6 +56,7 @@ export const LocationTypeInput = ({
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       inputProps={{ label }}
+      fullWidth={fullWidth}
     />
   );
 };

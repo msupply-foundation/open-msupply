@@ -185,6 +185,9 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                 batches={reversedDraftLines}
                 update={update}
                 trackStockDonor={enableDonorTracking}
+                restrictedToLocationTypeId={
+                  currentItem?.restrictedLocationTypeId
+                }
               />
             </QueryParamsProvider>
           </StyledTabContainer>
