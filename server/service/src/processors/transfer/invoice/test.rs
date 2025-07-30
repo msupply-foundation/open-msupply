@@ -3,9 +3,10 @@ use repository::{
     mock::{insert_extra_mock_data, MockData, MockDataInserts},
     EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceStatus, InvoiceType, ItemRow, KeyType, KeyValueStoreRow, LocationRow, NameLinkRow,
-    NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow, RequisitionRowRepository,
-    RequisitionStatus, RequisitionType, StockLineRow, StorageConnection, StoreRow,
+    InvoiceStatus, InvoiceType, ItemRow, ItemStoreJoinRow, KeyType, KeyValueStoreRow, LocationRow,
+    NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
+    StoreRow,
 };
 use util::{inline_edit, inline_init, uuid::uuid};
 
@@ -53,6 +54,7 @@ async fn invoice_transfers() {
 
     let item1 = inline_init(|r: &mut ItemRow| {
         r.id = uuid();
+        r.default_pack_size = 10.0;
     });
 
     let item2 = inline_init(|r: &mut ItemRow| {
@@ -67,6 +69,13 @@ async fn invoice_transfers() {
         r.id = KeyType::SettingsSyncSiteId;
         r.value_int = Some(site_id);
     });
+
+    let item1_store_properties = ItemStoreJoinRow {
+        id: uuid(),
+        item_link_id: item1.id.clone(),
+        store_id: inbound_store.id.clone(),
+        default_sell_price_per_pack: 20.0,
+    };
 
     let ServiceTestContext {
         service_provider,
@@ -84,6 +93,7 @@ async fn invoice_transfers() {
             r.names = vec![inbound_store_name.clone(), outbound_store_name.clone()];
             r.stores = vec![inbound_store.clone(), outbound_store.clone()];
             r.items = vec![item1.clone(), item2.clone(), service_item.clone()];
+            r.item_store_joins = vec![item1_store_properties];
             r.key_value_store_rows = vec![site_id_settings];
         }),
     )
@@ -286,6 +296,7 @@ async fn invoice_transfers_with_merged_name() {
 
     let item1 = inline_init(|r: &mut ItemRow| {
         r.id = uuid();
+        r.default_pack_size = 10.0;
     });
 
     let item2 = inline_init(|r: &mut ItemRow| {
@@ -300,6 +311,13 @@ async fn invoice_transfers_with_merged_name() {
         r.id = KeyType::SettingsSyncSiteId;
         r.value_int = Some(site_id);
     });
+
+    let item1_store_properties = ItemStoreJoinRow {
+        id: uuid(),
+        item_link_id: item1.id.clone(),
+        store_id: inbound_store.id.clone(),
+        default_sell_price_per_pack: 20.0,
+    };
 
     let ServiceTestContext {
         service_provider,
@@ -322,6 +340,7 @@ async fn invoice_transfers_with_merged_name() {
             r.stores = vec![inbound_store.clone(), outbound_store.clone()];
             r.items = vec![item1.clone(), item2.clone(), service_item.clone()];
             r.key_value_store_rows = vec![site_id_settings];
+            r.item_store_joins = vec![item1_store_properties];
             r.name_links = vec![merge_name_link.clone()] // name_link is processed after the names. Updates the existing name link created for the name, effectively merging it.
         }),
     )
@@ -829,16 +848,19 @@ impl InvoiceTransferTester {
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line1,
+            Some(self.outbound_shipment_line1.item_link_id.clone()),
         );
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line2,
+            None,
         );
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_service_line,
+            None,
         );
     }
 
@@ -962,11 +984,13 @@ impl InvoiceTransferTester {
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line2,
+            None,
         );
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_service_line,
+            None,
         );
 
         self.inbound_shipment = Some(inbound_shipment)
@@ -1126,7 +1150,12 @@ impl InvoiceTransferTester {
             1
         );
 
-        check_line(connection, &customer_return.id, &self.supplier_return_line);
+        check_line(
+            connection,
+            &customer_return.id,
+            &self.supplier_return_line,
+            None,
+        );
     }
 
     pub(crate) fn check_supplier_return_was_linked(&self, connection: &StorageConnection) {
@@ -1235,7 +1264,12 @@ impl InvoiceTransferTester {
             1
         );
 
-        check_line(connection, &customer_return.id, &self.supplier_return_line);
+        check_line(
+            connection,
+            &customer_return.id,
+            &self.supplier_return_line,
+            None,
+        );
 
         self.inbound_shipment = Some(customer_return)
     }
@@ -1307,9 +1341,13 @@ fn check_invoice_status(invoice1: &InvoiceRow, invoice2: &InvoiceRow) {
     assert_eq!(invoice1.verified_datetime, invoice2.verified_datetime);
     assert_eq!(invoice1.received_datetime, invoice2.received_datetime);
 }
-
 /// Line uniqueness is checked in caller method where invoice line count is checked
-fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &InvoiceLineRow) {
+fn check_line(
+    connection: &StorageConnection,
+    inbound_id: &str,
+    outbound_line: &InvoiceLineRow,
+    item1_id: Option<String>,
+) {
     let inbound_line = InvoiceLineRepository::new(connection)
         .query_one(
             InvoiceLineFilter::new()
@@ -1358,11 +1396,14 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
         inbound_line.cost_price_per_pack,
         outbound_line.sell_price_per_pack
     );
+    match item1_id
+        .as_ref()
+        .map(|id| outbound_line.item_link_id == *id)
+    {
+        Some(true) => assert_eq!(inbound_line.sell_price_per_pack, 20.0),
+        _ => assert_eq!(inbound_line.sell_price_per_pack, 0.0),
+    }
     assert_eq!(inbound_line.stock_line_id, None);
     assert_eq!(inbound_line.location_id, None);
-    assert_eq!(
-        inbound_line.sell_price_per_pack,
-        outbound_line.sell_price_per_pack
-    );
     assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
 }

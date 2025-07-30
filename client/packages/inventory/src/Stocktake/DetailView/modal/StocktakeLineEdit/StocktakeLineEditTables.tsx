@@ -208,7 +208,6 @@ export const BatchTable = ({
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {
         Cell: PackSizeEntryCell<DraftStocktakeLine>,
-        setter: update,
         label: 'label.pack-size',
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
@@ -217,6 +216,17 @@ export const BatchTable = ({
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
         defaultHideOnMobile: true,
+        setter: patch => {
+          const shouldClearSellPrice =
+            patch.item?.defaultPackSize !== patch.packSize &&
+            patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
+              patch.sellPricePerPack;
+          if (shouldClearSellPrice) {
+            update({ ...patch, sellPricePerPack: 0 });
+          } else {
+            update(patch);
+          }
+        },
       }),
       {
         key: 'snapshotNumberOfPacks',
