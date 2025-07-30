@@ -27,8 +27,6 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
     'inbound-shipment-line-edit'
   );
 
-  const defaultPackSize = item?.defaultPackSize || 1;
-
   useEffect(() => {
     if (lines && item) {
       const drafts = lines.map(line =>
@@ -36,25 +34,21 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
           item: line.item,
           invoiceId: line.invoiceId,
           seed: line,
-          defaultPackSize,
         })
       );
       if (drafts.length === 0)
-        drafts.push(
-          CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize })
-        );
+        drafts.push(CreateDraft.stockInLine({ item, invoiceId: id }));
       setDraftLines(drafts);
     } else {
       setDraftLines([]);
     }
-  }, [lines, item, id, defaultPackSize]);
+  }, [lines, item, id]);
 
   const addDraftLine = () => {
     if (item) {
       const newLine = CreateDraft.stockInLine({
         item,
         invoiceId: id,
-        defaultPackSize,
       });
       setIsDirty(true);
       setDraftLines(draftLines => [...draftLines, newLine]);
@@ -85,9 +79,7 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
       setDraftLines(draftLines => {
         const newLines = draftLines.filter(line => line.id !== id);
         if (newLines.length === 0 && item) {
-          return [
-            CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize }),
-          ];
+          return [CreateDraft.stockInLine({ item, invoiceId: id })];
         }
         return newLines;
       });
