@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   TextInputCell,
   alpha,
@@ -22,6 +22,8 @@ import {
   ReasonOptionNode,
   usePreference,
   PreferenceKey,
+  Alert,
+  Box,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -336,11 +338,18 @@ export const LocationTable = ({
   const theme = useTheme();
   const t = useTranslation();
 
+  const [invalidLocationRowIds, setInvalidLocationRowIds] = useState<string[]>(
+    []
+  );
+
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
-      getLocationInputColumn(restrictedToLocationTypeId),
+      getLocationInputColumn({
+        setInvalidLocationRowIds,
+        restrictedToLocationTypeId,
+      }),
       {
         width: 300,
         setter: patch => update({ ...patch, countThisLine: true }),
@@ -374,16 +383,23 @@ export const LocationTable = ({
     },
   ]);
 
-  const columns = useColumns(columnDefinitions);
+  const columns = useColumns(columnDefinitions, {}, [columnDefinitions]);
 
   return (
-    <DataTable
-      id="stocktake-location"
-      isDisabled={isDisabled}
-      columns={columns}
-      data={batches}
-      noDataMessage={t('label.add-new-line')}
-      dense
-    />
+    <Box display="flex" flexDirection="column" width="100%">
+      {invalidLocationRowIds.length > 0 && (
+        <Alert severity="warning" sx={{ mb: 2, width: '100%' }}>
+          {t('messages.location-invalid')}
+        </Alert>
+      )}
+      <DataTable
+        id="stocktake-location"
+        isDisabled={isDisabled}
+        columns={columns}
+        data={batches}
+        noDataMessage={t('label.add-new-line')}
+        dense
+      />
+    </Box>
   );
 };

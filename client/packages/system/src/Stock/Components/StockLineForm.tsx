@@ -73,9 +73,7 @@ export const StockLineForm = ({
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
 
-  const [invalidLocationAlert, setInvalidLocationAlert] = useState<string>(
-    () => ''
-  );
+  const [invalidLocationAlert, setInvalidLocationAlert] = useState<string>('');
 
   const showVVMStatus =
     draft?.item?.isVaccine &&
@@ -302,7 +300,9 @@ export const StockLineForm = ({
                   onUpdate({ location, locationId: location?.id });
                 }}
                 restrictedToLocationTypeId={draft.item.restrictedLocationTypeId}
-                setInvalidLocationAlert={setInvalidLocationAlert}
+                onInvalidLocation={(_invalid, message) =>
+                  setInvalidLocationAlert(message)
+                }
               />
             }
           />
