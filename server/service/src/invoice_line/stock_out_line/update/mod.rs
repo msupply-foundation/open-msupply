@@ -151,9 +151,10 @@ mod test {
             mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines,
             mock_outbound_shipment_no_stock_line, mock_patient, mock_prescription_a_invoice_lines,
             mock_stock_line_b, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
-            mock_store_a, mock_store_b, mock_store_c, MockData, MockDataInserts,
+            mock_store_a, mock_store_b, mock_store_c, stock_line_with_volume, MockData,
+            MockDataInserts,
         },
-        test_db::{setup_all, setup_all_with_data},
+        test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
         Upsert,
@@ -172,21 +173,6 @@ mod test {
         },
         service_provider::ServiceProvider,
     };
-
-    fn stock_line_with_volume() -> StockLineRow {
-        StockLineRow {
-            id: "stock_line_with_volume".to_string(),
-            store_id: mock_store_b().id.clone(),
-            item_link_id: mock_item_a().id,
-            pack_size: 10.0,
-            available_number_of_packs: 20.0,
-            total_number_of_packs: 20.0,
-            batch: Some("batch".to_string()),
-            volume_per_pack: 50.0,
-            total_volume: 1000.0,
-            ..Default::default()
-        }
-    }
 
     #[actix_rt::test]
     async fn update_stock_out_line_errors() {
@@ -353,12 +339,8 @@ mod test {
 
     #[actix_rt::test]
     async fn update_stock_out_line_success() {
-        let (_, connection, connection_manager, _) = setup_all_with_data(
-            "update_stock_out_line_success",
-            MockDataInserts::all(),
-            inline_init(|r: &mut MockData| r.stock_lines = vec![stock_line_with_volume()]),
-        )
-        .await;
+        let (_, connection, connection_manager, _) =
+            setup_all("update_stock_out_line_success", MockDataInserts::all()).await;
 
         // helpers to compare total
         let stock_line_for_invoice_line = |invoice_line: &InvoiceLineRow| {
