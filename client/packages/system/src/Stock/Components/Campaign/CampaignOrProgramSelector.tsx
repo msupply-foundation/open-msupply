@@ -95,12 +95,12 @@ export const CampaignOrProgramSelector = ({
 
   return (
     <Autocomplete
-      clearable // todo - ensure this clears properly
+      clearable
       options={options}
       getOptionLabel={option => option.label}
       value={selectedOption ?? null}
       onChange={handleChange}
-      noOptionsText={t('messages.no-campaigns-or-programs')}
+      noOptionsText={t('messages.no-campaigns')}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       width={'160px'}
     />
