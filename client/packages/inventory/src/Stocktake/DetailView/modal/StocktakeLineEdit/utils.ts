@@ -44,6 +44,11 @@ export const DraftLine = {
         doses: item.doses,
         defaultPackSize: item.defaultPackSize,
         restrictedLocationTypeId: item.restrictedLocationTypeId,
+        itemStoreProperties: {
+          __typename: 'ItemStorePropertiesNode',
+          defaultSellPricePerPack:
+            item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+        },
       },
     };
   },
