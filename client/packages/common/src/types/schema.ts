@@ -1557,6 +1557,7 @@ export type CustomerReturnLineInput = {
   numberOfPacksReturned: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1576,6 +1577,7 @@ export type CustomerReturnLineNode = {
   reasonId?: Maybe<Scalars['String']['output']>;
   reasonOption?: Maybe<ReasonOptionNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
+  volumePerPack: Scalars['Float']['output'];
 };
 
 export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
@@ -3217,7 +3219,7 @@ export type InsertInboundShipmentLineInput = {
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
-  volumePerPack: Scalars['Float']['input'];
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
