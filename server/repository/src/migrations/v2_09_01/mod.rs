@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_can_cancel_finalised_invoices_user_permission;
 mod add_delete_rnr_form_activity_log_enum;
+mod remove_rnr_form_line_entered_losses_default;
 
 pub(crate) struct V2_09_01;
 
@@ -19,6 +20,7 @@ impl Migration for V2_09_01 {
         vec![
             Box::new(add_can_cancel_finalised_invoices_user_permission::Migrate),
             Box::new(add_delete_rnr_form_activity_log_enum::Migrate),
+            Box::new(remove_rnr_form_line_entered_losses_default::Migrate),
         ]
     }
 }
