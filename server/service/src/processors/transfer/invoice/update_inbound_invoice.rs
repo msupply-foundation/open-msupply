@@ -108,11 +108,11 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
 
         let formatted_comment = match inbound_invoice_type {
             InboundInvoiceType::InboundShipment => match &outbound_invoice_row.comment {
-                Some(comment) => format!("Stock transfer ({})", comment),
+                Some(comment) => format!("Stock transfer ({comment})"),
                 None => "Stock transfer".to_string(),
             },
             InboundInvoiceType::CustomerReturn => match &outbound_invoice_row.comment {
-                Some(comment) => format!("Stock return ({})", comment),
+                Some(comment) => format!("Stock return ({comment})"),
                 None => "Stock return".to_string(),
             },
         };
