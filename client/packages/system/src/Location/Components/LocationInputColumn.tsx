@@ -22,8 +22,7 @@ export interface LocationInputColumnOptions {
 export const getLocationInputColumn = <T extends RecordWithId>(
   options: LocationInputColumnOptions = {}
 ): ColumnDefinition<T> => {
-  const { setInvalidLocationRowIds = () => {}, restrictedToLocationTypeId } =
-    options;
+  const { setInvalidLocationRowIds, restrictedToLocationTypeId } = options;
   return {
     key: 'locationInput',
     label: 'label.location',
@@ -59,13 +58,15 @@ export const getLocationInputColumn = <T extends RecordWithId>(
 
       // Updates the invalid location row id array for row errors
       const handleInvalidLocationChange = (invalid: boolean) => {
-        setInvalidLocationRowIds(prev => {
-          if (invalid && !prev.includes(rowData.id))
-            return [...prev, rowData.id];
-          if (!invalid && prev.includes(rowData.id))
-            return prev.filter(id => id !== rowData.id);
-          return prev;
-        });
+        if (setInvalidLocationRowIds) {
+          setInvalidLocationRowIds(prev => {
+            if (invalid && !prev.includes(rowData.id))
+              return [...prev, rowData.id];
+            if (!invalid && prev.includes(rowData.id))
+              return prev.filter(id => id !== rowData.id);
+            return prev;
+          });
+        }
       };
 
       return (
@@ -76,7 +77,11 @@ export const getLocationInputColumn = <T extends RecordWithId>(
           width={column.width}
           onChange={onChange}
           restrictedToLocationTypeId={restrictedToLocationTypeId}
-          onInvalidLocation={invalid => handleInvalidLocationChange(invalid)}
+          onInvalidLocation={
+            setInvalidLocationRowIds
+              ? invalid => handleInvalidLocationChange(invalid)
+              : undefined
+          }
         />
       );
     },
