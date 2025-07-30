@@ -235,19 +235,6 @@ export const StockLineForm = ({
               }
             />
           )}
-          {showItemVariantsInput && (
-            <StyledInputRow
-              label={t('label.item-variant')}
-              Input={
-                <ItemVariantInput
-                  itemId={draft.itemId}
-                  selectedId={draft.itemVariantId ?? null}
-                  width={160}
-                  onChange={variant => onUpdate({ itemVariantId: variant?.id })}
-                />
-              }
-            />
-          )}
           {plugins.stockLine?.editViewField.map((Plugin, index) => (
             <Plugin key={index} stockLine={draft} events={pluginEvents} />
           ))}
@@ -293,6 +280,48 @@ export const StockLineForm = ({
                   onUpdate({ location, locationId: location?.id });
                 }}
                 restrictedToLocationTypeId={draft.item.restrictedLocationTypeId}
+              />
+            }
+          />
+          {showItemVariantsInput && (
+            <StyledInputRow
+              label={t('label.item-variant')}
+              Input={
+                <ItemVariantInput
+                  itemId={draft.itemId}
+                  selectedId={draft?.itemVariant?.id}
+                  width={160}
+                  onChange={variant => {
+                    if (packEditable) {
+                      const packaging = variant?.packagingVariants.find(
+                        p => p.packSize === draft.packSize
+                      );
+                      const volumePerPack =
+                        (packaging?.volumePerUnit ?? 0) *
+                        1000 *
+                        (draft?.packSize ?? 1);
+
+                      onUpdate({
+                        itemVariant: variant,
+                        volumePerPack,
+                      });
+                    } else {
+                      onUpdate({ itemVariant: variant });
+                    }
+                  }}
+                />
+              }
+            />
+          )}
+          <StyledInputRow
+            label={t('label.volume-per-pack')}
+            Input={
+              <NumericTextInput
+                autoFocus
+                disabled={!packEditable}
+                width={160}
+                value={draft.volumePerPack ?? 0}
+                onChange={volumePerPack => onUpdate({ volumePerPack })}
               />
             }
           />
