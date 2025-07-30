@@ -393,7 +393,7 @@ export const LocationTableComponent = ({
           const note = patch.note === '' ? null : patch.note;
           updateDraftLine({ ...patch, note });
         },
-        accessor: ({ rowData }) => rowData.note,
+        accessor: ({ rowData }) => rowData.note ?? '',
       },
     ],
   ];
