@@ -53,7 +53,8 @@ const ITEM_LINE_1: (&str, &str) = (
       "vvm_status_id": "",
       "weight_per_pack": 0,
       "oms_fields": {
-        "campaign_id": "campaign_a"
+        "campaign_id": "campaign_a",
+        "program_id": "program_a"
       }
     }"#,
 );
@@ -81,6 +82,7 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: Some("donor_a".to_string()),
             vvm_status_id: None,
             campaign_id: Some("campaign_a".to_string()),
+            program_id: Some("program_a".to_string()),
         },
     )
 }
@@ -109,6 +111,7 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             vvm_status_id: None,
             oms_fields: Some(StockLineRowOmsFields {
                 campaign_id: Some("campaign_a".to_string()),
+                program_id: Some("program_a".to_string()),
             }),
         }),
     }
@@ -183,6 +186,7 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             vvm_status_id: None,
             campaign_id: None,
+            program_id: None,
         },
     )
 }
@@ -283,6 +287,7 @@ fn item_line_3_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             vvm_status_id: None,
             campaign_id: None,
+            program_id: None,
         },
     )
 }
@@ -383,6 +388,7 @@ fn item_line_4_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             vvm_status_id: None,
             campaign_id: None,
+            program_id: None,
         },
     )
 }
@@ -482,6 +488,7 @@ fn item_line_5_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             vvm_status_id: None,
             campaign_id: None,
+            program_id: None,
         },
     )
 }
