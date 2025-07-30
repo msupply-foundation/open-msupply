@@ -27,6 +27,7 @@ fragment StockLineRow on StockLineNode {
     }
     isVaccine
     dosesPerUnit: doses
+    restrictedLocationTypeId
   }
   barcode
   vvmStatusLogs {

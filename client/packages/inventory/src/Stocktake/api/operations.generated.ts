@@ -51,6 +51,7 @@ export type StocktakeLineFragment = {
     isVaccine: boolean;
     doses: number;
     defaultPackSize: number;
+    restrictedLocationTypeId?: string | null;
     itemStoreProperties?: {
       __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
@@ -121,6 +122,7 @@ export type StocktakeFragment = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
+        restrictedLocationTypeId?: string | null;
         itemStoreProperties?: {
           __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
@@ -232,6 +234,7 @@ export type StocktakeQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
+              restrictedLocationTypeId?: string | null;
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
@@ -314,6 +317,7 @@ export type StocktakeByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
+              restrictedLocationTypeId?: string | null;
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
@@ -380,6 +384,7 @@ export type StocktakeLinesQuery = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
+        restrictedLocationTypeId?: string | null;
         itemStoreProperties?: {
           __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
@@ -661,6 +666,7 @@ export const StocktakeLineFragmentDoc = gql`
       isVaccine
       doses
       defaultPackSize
+      restrictedLocationTypeId
       itemStoreProperties(storeId: $storeId) {
         defaultSellPricePerPack
       }

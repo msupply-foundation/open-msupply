@@ -43,6 +43,7 @@ export type StockLineRowFragment = {
     name: string;
     unitName?: string | null;
     isVaccine: boolean;
+    restrictedLocationTypeId?: string | null;
     dosesPerUnit: number;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
@@ -249,6 +250,7 @@ export type StockLinesQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
@@ -344,6 +346,7 @@ export type StockLineQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
@@ -476,6 +479,7 @@ export type UpdateStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
           dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
@@ -770,6 +774,7 @@ export type InsertStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
           dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
@@ -920,6 +925,7 @@ export const StockLineRowFragmentDoc = gql`
       }
       isVaccine
       dosesPerUnit: doses
+      restrictedLocationTypeId
     }
     barcode
     vvmStatusLogs {

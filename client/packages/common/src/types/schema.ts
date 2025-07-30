@@ -4453,6 +4453,8 @@ export type ItemNode = {
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  restrictedLocationType?: Maybe<LocationTypeNode>;
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
@@ -4701,6 +4703,7 @@ export type LocationFilterInput = {
   assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  locationTypeId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   storeId?: InputMaybe<EqualFilterStringInput>;

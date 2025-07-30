@@ -35,6 +35,7 @@ export type InboundLineFragment = {
     defaultPackSize: number;
     isVaccine: boolean;
     doses: number;
+    restrictedLocationTypeId?: string | null;
     itemStoreProperties?: {
       __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
@@ -148,6 +149,7 @@ export type InboundFragment = {
         defaultPackSize: number;
         isVaccine: boolean;
         doses: number;
+        restrictedLocationTypeId?: string | null;
         itemStoreProperties?: {
           __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
@@ -385,6 +387,7 @@ export type InvoiceQuery = {
               defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
+              restrictedLocationTypeId?: string | null;
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
@@ -555,6 +558,7 @@ export type InboundByNumberQuery = {
               defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
+              restrictedLocationTypeId?: string | null;
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
@@ -1100,6 +1104,7 @@ export const InboundLineFragmentDoc = gql`
       defaultPackSize
       isVaccine
       doses
+      restrictedLocationTypeId
       itemStoreProperties(storeId: $storeId) {
         defaultSellPricePerPack
       }
