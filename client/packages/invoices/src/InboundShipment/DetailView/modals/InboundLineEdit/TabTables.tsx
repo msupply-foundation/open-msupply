@@ -54,6 +54,10 @@ interface TableProps {
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
+  preferences?: {
+    allowTrackingOfStockByDonor?: boolean;
+    useCampaigns?: boolean;
+  };
 }
 
 interface QuantityTableProps extends TableProps {
@@ -371,12 +375,8 @@ export const LocationTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled,
+  preferences,
 }: TableProps) => {
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
-  );
-
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
