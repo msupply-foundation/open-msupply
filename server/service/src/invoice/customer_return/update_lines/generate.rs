@@ -120,6 +120,7 @@ pub fn generate(
                 total_before_tax: None,
                 donor_id: None,
                 campaign_id: None,
+                program_id: None,
                 shipped_number_of_packs: None,
             },
         )
