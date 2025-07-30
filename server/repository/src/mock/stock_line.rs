@@ -284,5 +284,6 @@ pub fn mock_stock_lines() -> Vec<StockLineRow> {
     mock_stock_lines.extend(mock_stock_line_location_is_on_hold());
     mock_stock_lines.extend(mock_vaccine_stock_lines());
     mock_stock_lines.push(mock_stock_line_vaccine_item_a());
+    mock_stock_lines.push(stock_line_with_volume());
     mock_stock_lines
 }
