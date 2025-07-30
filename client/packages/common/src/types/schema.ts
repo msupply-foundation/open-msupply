@@ -8314,6 +8314,7 @@ export type RnRFormNode = {
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
+  period: PeriodNode;
   periodId: Scalars['String']['output'];
   periodLength: Scalars['Int']['output'];
   periodName: Scalars['String']['output'];
