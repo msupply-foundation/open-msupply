@@ -1736,6 +1736,7 @@
   "messages.last-temperature": "Last temperature reading: {{temperature}} °C",
   "messages.loading-report": "Loading report...",
   "messages.location": "Location:",
+  "messages.location-invalid": "This stock line is allocated to an invalid location - please choose another location.",
   "messages.locations-restricted": "One or more of the selected lines is restricted to certain locations. This may limit the locations shown below.",
   "messages.log-saved-successfully": "Log saved successfully",
   "messages.logout-confirm": "This will log you out.",

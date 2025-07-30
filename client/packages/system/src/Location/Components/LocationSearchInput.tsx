@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Autocomplete,
   AutocompleteOption,
@@ -15,6 +15,7 @@ interface LocationSearchInputProps {
   disabled: boolean;
   autoFocus?: boolean;
   restrictedToLocationTypeId?: string | null;
+  setInvalidLocationAlert?: (value: React.SetStateAction<string>) => void;
 }
 
 interface LocationOption {
@@ -62,6 +63,7 @@ export const LocationSearchInput = ({
   disabled,
   autoFocus = false,
   restrictedToLocationTypeId,
+  setInvalidLocationAlert = () => {},
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const {
@@ -91,6 +93,28 @@ export const LocationSearchInput = ({
 
   const selectedOption = options.find(o => o.value === selectedLocation?.id);
 
+  const isInvalidLocation =
+    !!selectedLocation &&
+    !options.some(option => option.value === selectedLocation.id);
+
+  const invalidLocationOption = isInvalidLocation
+    ? {
+        value: selectedLocation.id,
+        label: formatLocationLabel(selectedLocation),
+        code: selectedLocation.code,
+      }
+    : selectedOption || null;
+
+  const locationValue = isInvalidLocation
+    ? invalidLocationOption
+    : selectedOption || null;
+
+  useEffect(() => {
+    setInvalidLocationAlert(
+      isInvalidLocation ? t('messages.location-invalid') : ''
+    );
+  }, [isInvalidLocation]);
+
   return (
     <Autocomplete
       autoFocus={autoFocus}
@@ -98,7 +122,7 @@ export const LocationSearchInput = ({
       width={`${width}px`}
       popperMinWidth={Number(width)}
       clearable={false}
-      value={selectedOption || null}
+      value={locationValue}
       loading={isLoading}
       onChange={(_, option) => {
         onChange(locations.find(l => l.id === option?.value) || null);
