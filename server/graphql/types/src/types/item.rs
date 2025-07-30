@@ -1,9 +1,8 @@
-use crate::types::ItemStoreJoinNode;
-
 use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
     WarningNode,
 };
+use crate::types::ItemStorePropertiesNode;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
@@ -227,13 +226,13 @@ impl ItemNode {
         }))
     }
 
-    pub async fn item_store_join(
+    pub async fn item_store_properties(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-    ) -> Result<Option<ItemStoreJoinNode>> {
+    ) -> Result<Option<ItemStorePropertiesNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemStoreJoinLoader>>();
-        let result = loader
+        let result: Vec<repository::ItemStoreJoinRow> = loader
             .load_one(ItemStoreJoinLoaderInput::new(&store_id, &self.row().id))
             .await?
             .unwrap_or_default();
@@ -242,7 +241,7 @@ impl ItemNode {
             return Ok(None);
         }
 
-        Ok(Some(ItemStoreJoinNode::from_domain(
+        Ok(Some(ItemStorePropertiesNode::from_domain(
             result.first().cloned().unwrap(),
         )))
     }

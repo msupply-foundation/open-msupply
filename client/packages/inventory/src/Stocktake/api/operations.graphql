@@ -52,6 +52,9 @@ fragment StocktakeLine on StocktakeLineNode {
     isVaccine
     doses
     defaultPackSize
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
 
   itemVariantId
