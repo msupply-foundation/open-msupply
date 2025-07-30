@@ -12,7 +12,7 @@ table! {
         id -> Text,
         goods_received_id -> Text,
         purchase_order_id -> Text,
-        requested_pack_size -> Double,
+        received_pack_size -> Double,
         number_of_packs_received -> Double,
         batch -> Nullable<Text>,
         weight_per_pack -> Nullable<Double>,
@@ -20,7 +20,7 @@ table! {
         line_number -> BigInt,
         item_link_id -> Text,
         item_name -> Text,
-        location_id -> Text,
+        location_id -> Nullable<Text>,
         volume_per_pack -> Nullable<Double>,
         manufacturer_link_id -> Text,
         // TODO map GoodsReceivedLineStatusMapping in OMS to is_authorized in OG: see issue [8647](https://github.com/msupply-foundation/open-msupply/issues/8068?issue=msupply-foundation%7Copen-msupply%7C8647)
@@ -35,23 +35,23 @@ table! {
 #[diesel(table_name = goods_received_line)]
 #[diesel(treat_none_as_null = true)]
 pub struct GoodsReceivedLineRow {
-    id: String,
-    goods_received_id: String,
-    purchase_order_id: String,
-    requested_pack_size: f64,
-    number_of_packs_received: f64,
-    batch: Option<String>,
-    weight_per_pack: Option<f64>,
-    expiry_date: Option<NaiveDateTime>,
-    line_number: i64,
-    item_link_id: String,
-    item_name: String,
-    location_id: String,
-    volume_per_pack: Option<f64>,
-    manufacturer_link_id: String,
+    pub id: String,
+    pub goods_received_id: String,
+    pub purchase_order_id: String,
+    pub received_pack_size: f64,
+    pub number_of_packs_received: f64,
+    pub batch: Option<String>,
+    pub weight_per_pack: Option<f64>,
+    pub expiry_date: Option<NaiveDateTime>,
+    pub line_number: i64,
+    pub item_link_id: String,
+    pub item_name: String,
+    pub location_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
+    pub manufacturer_link_id: String,
     // TODO map GoodsReceivedLineStatusMapping in OMS to is_authorized in OG: see issue [8647](https://github.com/msupply-foundation/open-msupply/issues/8068?issue=msupply-foundation%7Copen-msupply%7C8647)
-    status: GoodsReceivedLineStatus,
-    comment: Option<String>,
+    pub status: GoodsReceivedLineStatus,
+    pub comment: Option<String>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
