@@ -1,9 +1,10 @@
+use super::mock_vaccine_item_a;
+use crate::{
+    mock::{mock_item_a, mock_store_c},
+    StockLineRow,
+};
 use chrono::NaiveDate;
 use util::inline_init;
-
-use crate::StockLineRow;
-
-use super::mock_vaccine_item_a;
 
 pub fn mock_stock_line_a() -> StockLineRow {
     inline_init(|r: &mut StockLineRow| {
