@@ -8570,6 +8570,7 @@ export type StockLineNode = {
   note?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
   packSize: Scalars['Float']['output'];
+  program?: Maybe<ProgramNode>;
   sellPricePerPack: Scalars['Float']['output'];
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
@@ -10019,6 +10020,7 @@ export type UpdateStockLineInput = {
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  programId?: InputMaybe<NullableStringUpdate>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };

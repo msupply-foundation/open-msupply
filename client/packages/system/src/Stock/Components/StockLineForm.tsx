@@ -365,7 +365,11 @@ export const StockLineForm = ({
               Input={
                 <CampaignOrProgramSelector
                   campaignId={draft.campaign?.id}
-                  onChange={campaign => onUpdate({ campaign })}
+                  programId={draft.program?.id}
+                  itemId={draft.itemId}
+                  onChange={({ campaign, program }) =>
+                    onUpdate({ campaign, program })
+                  }
                 />
               }
             />
