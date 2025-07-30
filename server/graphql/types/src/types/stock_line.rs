@@ -52,6 +52,7 @@ impl StockLineNode {
     pub async fn pack_size(&self) -> f64 {
         self.row().pack_size
     }
+    #[graphql(deprecation = "Since 2.10.0. Use item_variant.id instead")]
     pub async fn item_variant_id(&self) -> &Option<String> {
         &self.row().item_variant_id
     }
@@ -169,6 +170,10 @@ impl StockLineNode {
 
         let result = loader.load_one(campaign_id.clone()).await?;
         Ok(result.map(CampaignNode::from_domain))
+    }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        self.row().volume_per_pack
     }
 }
 
