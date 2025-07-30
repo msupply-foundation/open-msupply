@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod insert {
+    use crate::rnr_form::insert::{InsertRnRForm, InsertRnRFormError};
+    use crate::service_provider::ServiceProvider;
     use chrono::Duration;
     use repository::mock::{
         mock_immunisation_program_a, mock_name_b, mock_name_store_b, mock_name_store_c,
@@ -14,11 +16,6 @@ mod insert {
         RnRFormRowRepository, RnRFormStatus,
     };
     use util::{date_now, date_now_with_offset};
-
-    use pretty_assertions::assert_eq;
-
-    use crate::rnr_form::insert::{InsertRnRForm, InsertRnRFormError};
-    use crate::service_provider::ServiceProvider;
 
     #[actix_rt::test]
     async fn insert_rnr_form_errors() {

@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod generate_rnr_form_lines {
     use chrono::NaiveDate;
-    use pretty_assertions::assert_eq;
     use repository::mock::{
         item_query_test1, mock_item_a, mock_master_list_program_b, mock_name_invad,
         mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_period_2_d, mock_program_b,
