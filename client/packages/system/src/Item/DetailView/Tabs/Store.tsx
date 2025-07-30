@@ -5,7 +5,6 @@ import {
   useTranslation,
   DetailSection,
   Grid,
-  NumericTextDisplay,
   CurrencyInput,
 } from '@openmsupply-client/common';
 import { ItemFragment } from '../../api';
@@ -28,13 +27,12 @@ export const StoreTab = ({ item }: { item: ItemFragment }) => {
             label={t('label.default-sell-price-per-pack')}
             Input={
               <CurrencyInput
-                value={item?.itemStoreJoin?.defaultSellPricePerPack}
+                value={item?.itemStoreProperties?.defaultSellPricePerPack}
                 disabled={isDisabled}
                 onChangeNumber={() => {}}
                 width={'100%'}
               />
             }
-            DisabledInput={<NumericTextDisplay value={item?.margin} />}
           />
         </DetailSection>
       </Grid>

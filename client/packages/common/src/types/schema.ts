@@ -4443,7 +4443,7 @@ export type ItemNode = {
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
-  itemStoreJoin?: Maybe<ItemStoreJoinNode>;
+  itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
@@ -4472,7 +4472,7 @@ export type ItemNodeAvailableStockOnHandArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type ItemNodeItemStoreJoinArgs = {
+export type ItemNodeItemStorePropertiesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4532,8 +4532,8 @@ export type ItemStatsNode = {
   totalConsumption: Scalars['Float']['output'];
 };
 
-export type ItemStoreJoinNode = {
-  __typename: 'ItemStoreJoinNode';
+export type ItemStorePropertiesNode = {
+  __typename: 'ItemStorePropertiesNode';
   defaultSellPricePerPack: Scalars['Float']['output'];
   id: Scalars['String']['output'];
 };
@@ -6550,6 +6550,7 @@ export type ProgramFilterInput = {
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
 

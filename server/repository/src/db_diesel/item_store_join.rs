@@ -37,9 +37,8 @@ pub trait ItemStoreJoinRowRepositoryTrait<'a> {
 
 impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> {
     fn find_one_by_id(&self, row_id: &str) -> Result<Option<ItemStoreJoinRow>, RepositoryError> {
-        use self::item_store_join::dsl::*;
-        let result = item_store_join
-            .filter(id.eq(row_id))
+        let result = item_store_join::dsl::item_store_join
+            .filter(item_store_join::dsl::id.eq(row_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -50,18 +49,18 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> 
         item_link_id: &str,
         store_id: &str,
     ) -> Result<Option<ItemStoreJoinRow>, RepositoryError> {
-        let result = item_store_join::table
-            .filter(item_store_join::item_link_id.eq(item_link_id))
-            .filter(item_store_join::store_id.eq(store_id))
+        let result = item_store_join::dsl::item_store_join
+            .filter(item_store_join::dsl::item_link_id.eq(item_link_id))
+            .filter(item_store_join::dsl::store_id.eq(store_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     fn upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(item_store_join::table)
+        diesel::insert_into(item_store_join::dsl::item_store_join)
             .values(row)
-            .on_conflict(item_store_join::id)
+            .on_conflict(item_store_join::dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;

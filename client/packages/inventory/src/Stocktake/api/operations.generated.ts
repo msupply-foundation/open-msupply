@@ -52,6 +52,10 @@ export type StocktakeLineFragment = {
     doses: number;
     defaultPackSize: number;
     restrictedLocationTypeId?: string | null;
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      defaultSellPricePerPack: number;
+    } | null;
   };
   reasonOption?: {
     __typename: 'ReasonOptionNode';
@@ -119,6 +123,10 @@ export type StocktakeFragment = {
         doses: number;
         defaultPackSize: number;
         restrictedLocationTypeId?: string | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -227,6 +235,10 @@ export type StocktakeQuery = {
               doses: number;
               defaultPackSize: number;
               restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -306,6 +318,10 @@ export type StocktakeByNumberQuery = {
               doses: number;
               defaultPackSize: number;
               restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -369,6 +385,10 @@ export type StocktakeLinesQuery = {
         doses: number;
         defaultPackSize: number;
         restrictedLocationTypeId?: string | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -647,6 +667,9 @@ export const StocktakeLineFragmentDoc = gql`
       doses
       defaultPackSize
       restrictedLocationTypeId
+      itemStoreProperties(storeId: $storeId) {
+        defaultSellPricePerPack
+      }
     }
     itemVariantId
     reasonOption {

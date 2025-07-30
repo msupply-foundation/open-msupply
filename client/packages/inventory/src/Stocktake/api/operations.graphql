@@ -53,6 +53,9 @@ fragment StocktakeLine on StocktakeLineNode {
     doses
     defaultPackSize
     restrictedLocationTypeId
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
 
   itemVariantId

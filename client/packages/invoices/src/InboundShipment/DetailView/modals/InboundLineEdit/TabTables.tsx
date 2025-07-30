@@ -107,7 +107,19 @@ export const QuantityTableComponent = ({
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
         setPackRoundingMessage?.('');
-        updateDraftLine(patch);
+        const shouldClearSellPrice =
+          patch.item?.defaultPackSize !== patch.packSize &&
+          patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
+            patch.sellPricePerPack;
+
+        if (shouldClearSellPrice) {
+          updateDraftLine({
+            ...patch,
+            sellPricePerPack: 0,
+          });
+        } else {
+          updateDraftLine(patch);
+        }
       },
       label: 'label.pack-size',
       defaultHideOnMobile: true,
