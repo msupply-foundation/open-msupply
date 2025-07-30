@@ -4,6 +4,7 @@ import {
   AutocompleteOption,
   CloseIcon,
   MenuItem,
+  useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
@@ -66,6 +67,8 @@ export const LocationSearchInput = ({
   onInvalidLocation,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
+  const theme = useTheme();
+
   const {
     query: { data, isLoading },
   } = useLocationList({
@@ -97,6 +100,7 @@ export const LocationSearchInput = ({
     !!selectedLocation &&
     !options.some(option => option.value === selectedLocation.id);
 
+  // If the selected location is invalid, create an option to display it in the closed input
   const invalidLocationOption = isInvalidLocation
     ? {
         value: selectedLocation.id,
@@ -116,18 +120,16 @@ export const LocationSearchInput = ({
     );
   }, [isInvalidLocation]);
 
+  const errorStyles = {
+    borderColor: theme.palette.error.main,
+    borderWidth: '2px',
+    borderStyle: 'solid',
+    borderRadius: '8px',
+  };
+
   return (
     <Autocomplete
-      sx={
-        !!isInvalidLocation && onInvalidLocation
-          ? {
-              borderColor: theme => theme.palette.error.main,
-              borderWidth: '2px',
-              borderStyle: 'solid',
-              borderRadius: '8px',
-            }
-          : undefined
-      }
+      sx={!!isInvalidLocation && onInvalidLocation ? errorStyles : undefined}
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}

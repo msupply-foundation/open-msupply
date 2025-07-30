@@ -398,9 +398,7 @@ export const LocationTable = ({
   return (
     <Box display="flex" flexDirection="column" width="100%">
       {invalidLocationRowIds.length > 0 && (
-        <Alert severity="warning" sx={{ mb: 2, width: '100%' }}>
-          {t('messages.location-invalid')}
-        </Alert>
+        <Alert severity="warning">{t('messages.location-invalid')}</Alert>
       )}
       <DataTable
         id="stocktake-location"
