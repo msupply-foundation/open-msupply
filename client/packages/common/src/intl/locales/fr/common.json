@@ -1264,7 +1264,7 @@
   "label.stocktake": "Inventaire",
   "label.stocktake-comment": "Commentaire",
   "label.stocktake-date": "Date d'inventaire",
-  "label.stocktake-estimated-lines": "Lignes d'inventaire (estimées):",
+  "label.stocktake-estimated-lines": "Lignes d'inventaire (estimées)",
   "label.stocktake-frequency": "Fréquence des inventaires",
   "label.stocktake-on-hold": "Nouveau (bloquée)",
   "label.storage-type": "Type de stockage",
