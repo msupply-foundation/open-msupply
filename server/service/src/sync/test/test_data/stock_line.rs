@@ -213,7 +213,10 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
+            oms_fields: Some(StockLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
@@ -314,7 +317,10 @@ fn item_line_3_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
+            oms_fields: Some(StockLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
@@ -415,7 +421,10 @@ fn item_line_4_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
+            oms_fields: Some(StockLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
@@ -515,7 +524,10 @@ fn item_line_5_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
+            oms_fields: Some(StockLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }

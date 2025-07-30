@@ -136,8 +136,11 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
             linked_invoice_id: None,
             donor_id: Some("donor_a".to_string()),
             vvm_status_id: None,
-            oms_fields: None,
             shipped_number_of_packs: Some(0.0),
+            oms_fields: Some(TransLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
@@ -267,8 +270,11 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
             linked_invoice_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
             shipped_number_of_packs: Some(10.0),
+            oms_fields: Some(TransLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
@@ -541,8 +547,11 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
             linked_invoice_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
             shipped_number_of_packs: Some(0.0),
+            oms_fields: Some(TransLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
@@ -675,8 +684,11 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
             linked_invoice_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
             shipped_number_of_packs: Some(0.0),
+            oms_fields: Some(TransLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
@@ -811,8 +823,11 @@ fn trans_line_prescribed_quantity_push_record() -> TestSyncOutgoingRecord {
             linked_invoice_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
             shipped_number_of_packs: Some(0.0),
+            oms_fields: Some(TransLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
@@ -944,8 +959,11 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
             linked_invoice_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
             shipped_number_of_packs: Some(0.0),
+            oms_fields: Some(TransLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
@@ -1078,8 +1096,11 @@ fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
             linked_invoice_id: None,
             donor_id: None,
             vvm_status_id: None,
-            oms_fields: None,
             shipped_number_of_packs: Some(0.0),
+            oms_fields: Some(TransLineRowOmsFields {
+                campaign_id: None,
+                program_id: None,
+            }),
         }),
     }
 }
