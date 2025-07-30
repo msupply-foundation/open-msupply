@@ -6,4 +6,5 @@ export interface RepackDraft {
   newLocationId?: string;
   locationName?: string;
   newLocationName?: string;
+  restrictedToLocationType?: string;
 }

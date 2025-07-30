@@ -14,8 +14,8 @@ import { PurchaseOrderFragment } from '../operations.generated';
 import { useMemo } from 'react';
 import { usePurchaseOrderColumns } from '../../DetailView/columns';
 
-export const usePurchaseOrder = (pid?: string) => {
-  const { purchaseOrderId = pid } = useParams();
+export const usePurchaseOrder = (id?: string) => {
+  const { purchaseOrderId = id } = useParams();
 
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 

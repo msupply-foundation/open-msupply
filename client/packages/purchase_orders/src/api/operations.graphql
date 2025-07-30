@@ -78,6 +78,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   __typename
   id
   expectedDeliveryDate
+  purchaseOrderId
   item {
     id
     code
@@ -143,6 +144,67 @@ mutation updatePurchaseOrder(
   $storeId: String!
 ) {
   updatePurchaseOrder(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+query purchaseOrderLines(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: PurchaseOrderLineSortFieldInput!
+  $desc: Boolean
+  $filter: PurchaseOrderLineFilterInput
+) {
+  purchaseOrderLines(
+    storeId: $storeId
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on PurchaseOrderLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...PurchaseOrderLine
+      }
+      totalCount
+    }
+  }
+}
+
+query purchaseOrderLine($id: String!, $storeId: String!) {
+  purchaseOrderLines(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on PurchaseOrderLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...PurchaseOrderLine
+      }
+      totalCount
+    }
+  }
+}
+
+query purchaseOrderLinesCount(
+  $filter: PurchaseOrderLineFilterInput
+  $storeId: String!
+) {
+  purchaseOrderLines(storeId: $storeId, filter: $filter) {
+    ... on PurchaseOrderLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}
+
+mutation insertPurchaseOrderLine(
+  $input: InsertPurchaseOrderLineInput!
+  $storeId: String!
+) {
+  insertPurchaseOrderLine(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
     }

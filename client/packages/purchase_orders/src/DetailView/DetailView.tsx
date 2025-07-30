@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   AlertModal,
   createQueryParamsStore,
@@ -8,18 +8,19 @@ import {
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
+  useEditModal,
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { AppRoute } from 'packages/config/src';
 import { PurchaseOrderLineFragment } from '../api';
-import { InboundItem } from 'packages/invoices/src/types';
 import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
+import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -31,19 +32,24 @@ export const DetailViewInner = () => {
     lines: { sortedAndFilteredLines },
   } = usePurchaseOrder();
 
+  const {
+    onOpen,
+    onClose,
+    mode,
+    entity: itemId,
+    isOpen,
+  } = useEditModal<string | null>();
+
+  const onRowClick = useCallback(
+    (line: PurchaseOrderLineFragment) => {
+      onOpen(line.item.id);
+    },
+    [onOpen]
+  );
+
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.number]);
-
-  const handleOpen = () => {
-    // eslint-disable-next-line no-console
-    console.log('TO-DO: Show Line Edit Modal');
-  };
-
-  const handleRowClick = (line: PurchaseOrderLineFragment) => {
-    // eslint-disable-next-line no-console
-    console.log('TO-DO: Show Line Edit Modal for line:', line);
-  };
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -55,17 +61,25 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons isDisabled={isDisabled} onAddItem={handleOpen} />
+          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
           <Toolbar isDisabled={isDisabled} />
           <ContentArea
             lines={sortedAndFilteredLines}
             isDisabled={isDisabled}
-            onAddItem={handleOpen}
-            onRowClick={!isDisabled ? handleRowClick : null}
+            onAddItem={onOpen}
+            onRowClick={!isDisabled ? onRowClick : null}
           />
           <Footer />
           <SidePanel />
-          {/* Insert Line Edit Modal */}
+          {isOpen && (
+            <PurchaseOrderLineEditModal
+              isOpen={isOpen}
+              onClose={onClose}
+              mode={mode}
+              itemId={itemId}
+              purchaseOrder={data}
+            />
+          )}
         </>
       ) : (
         <AlertModal
@@ -89,9 +103,7 @@ export const PurchaseOrderDetailView = () => {
   return (
     <TableProvider
       createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<
-        PurchaseOrderLineFragment | InboundItem
-      >({
+      queryParamsStore={createQueryParamsStore<PurchaseOrderLineFragment>({
         initialSortBy: {
           key: 'itemName',
         },

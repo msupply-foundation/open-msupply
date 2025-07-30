@@ -1,17 +1,17 @@
-use crate::types::ItemStoreJoinNode;
-
 use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
     WarningNode,
 };
+use crate::types::{ItemStorePropertiesNode, LocationTypeNode};
+
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
         ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
         ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
-        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, MasterListByItemIdLoader,
-        MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
+        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
@@ -73,6 +73,26 @@ impl ItemNode {
 
     pub async fn doses(&self) -> i32 {
         self.row().vaccine_doses
+    }
+
+    pub async fn restricted_location_type_id(&self) -> &Option<String> {
+        &self.row().restricted_location_type_id
+    }
+
+    pub async fn restricted_location_type(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<LocationTypeNode>> {
+        let restricted_location_type_id = match &self.row().restricted_location_type_id {
+            Some(restricted_location_type_id) => restricted_location_type_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationTypeLoader>>();
+        Ok(loader
+            .load_one(restricted_location_type_id.clone())
+            .await?
+            .map(LocationTypeNode::from_domain))
     }
 
     pub async fn stats(
@@ -227,13 +247,13 @@ impl ItemNode {
         }))
     }
 
-    pub async fn item_store_join(
+    pub async fn item_store_properties(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-    ) -> Result<Option<ItemStoreJoinNode>> {
+    ) -> Result<Option<ItemStorePropertiesNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemStoreJoinLoader>>();
-        let result = loader
+        let result: Vec<repository::ItemStoreJoinRow> = loader
             .load_one(ItemStoreJoinLoaderInput::new(&store_id, &self.row().id))
             .await?
             .unwrap_or_default();
@@ -242,7 +262,7 @@ impl ItemNode {
             return Ok(None);
         }
 
-        Ok(Some(ItemStoreJoinNode::from_domain(
+        Ok(Some(ItemStorePropertiesNode::from_domain(
             result.first().cloned().unwrap(),
         )))
     }
@@ -474,7 +494,7 @@ mod test {
                                 "custom_data": null,
                                 "doses": 11,
                                 "is_vaccine": true,
-                                "restricted_location_type_ID": ""
+                                "restricted_location_type_ID": "84AA2B7A18694A2AB1E84DCABAD19617"
                             }"#
                             .to_string();
                         });

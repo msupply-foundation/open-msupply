@@ -4443,13 +4443,15 @@ export type ItemNode = {
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
-  itemStoreJoin?: Maybe<ItemStoreJoinNode>;
+  itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  restrictedLocationType?: Maybe<LocationTypeNode>;
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
@@ -4470,7 +4472,7 @@ export type ItemNodeAvailableStockOnHandArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type ItemNodeItemStoreJoinArgs = {
+export type ItemNodeItemStorePropertiesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4530,8 +4532,8 @@ export type ItemStatsNode = {
   totalConsumption: Scalars['Float']['output'];
 };
 
-export type ItemStoreJoinNode = {
-  __typename: 'ItemStoreJoinNode';
+export type ItemStorePropertiesNode = {
+  __typename: 'ItemStorePropertiesNode';
   defaultSellPricePerPack: Scalars['Float']['output'];
   id: Scalars['String']['output'];
 };
@@ -4698,6 +4700,7 @@ export type LocationFilterInput = {
   assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  locationTypeId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -6553,6 +6556,7 @@ export type ProgramFilterInput = {
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
 
