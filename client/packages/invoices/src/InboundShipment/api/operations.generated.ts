@@ -35,6 +35,10 @@ export type InboundLineFragment = {
     isVaccine: boolean;
     doses: number;
     restrictedLocationTypeId?: string | null;
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      defaultSellPricePerPack: number;
+    } | null;
   };
   location?: {
     __typename: 'LocationNode';
@@ -144,6 +148,10 @@ export type InboundFragment = {
         isVaccine: boolean;
         doses: number;
         restrictedLocationTypeId?: string | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
       };
       location?: {
         __typename: 'LocationNode';
@@ -373,6 +381,10 @@ export type InvoiceQuery = {
               isVaccine: boolean;
               doses: number;
               restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -535,6 +547,10 @@ export type InboundByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -1073,6 +1089,9 @@ export const InboundLineFragmentDoc = gql`
       isVaccine
       doses
       restrictedLocationTypeId
+      itemStoreProperties(storeId: $storeId) {
+        defaultSellPricePerPack
+      }
     }
     location {
       __typename
