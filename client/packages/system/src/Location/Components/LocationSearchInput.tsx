@@ -119,7 +119,7 @@ export const LocationSearchInput = ({
   return (
     <Autocomplete
       sx={
-        !!isInvalidLocation
+        !!isInvalidLocation && onInvalidLocation
           ? {
               borderColor: theme => theme.palette.error.main,
               borderWidth: '2px',
