@@ -63,6 +63,7 @@ pub enum RowActionType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter, TS)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
+    GoodsReceivedLine,
     BackendPlugin,
     Number,
     Location,
@@ -211,6 +212,7 @@ impl ChangelogTableName {
             ChangelogTableName::SyncMessage => ChangeLogSyncStyle::Remote,
             ChangelogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::GoodsReceivedLine => ChangeLogSyncStyle::Legacy,
         }
     }
 }
