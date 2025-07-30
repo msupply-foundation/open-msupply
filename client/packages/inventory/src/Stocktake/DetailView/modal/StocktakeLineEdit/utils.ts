@@ -43,6 +43,11 @@ export const DraftLine = {
         isVaccine: item.isVaccine,
         doses: item.doses,
         defaultPackSize: item.defaultPackSize,
+        itemStoreProperties: {
+          __typename: 'ItemStorePropertiesNode',
+          defaultSellPricePerPack:
+            item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+        },
       },
     };
   },
