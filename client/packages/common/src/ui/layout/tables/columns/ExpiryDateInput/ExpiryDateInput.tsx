@@ -44,6 +44,7 @@ export const getExpiryDateInputColumn = <
         value={value}
         onChange={onChange}
         disabled={!!isDisabled}
+        width={column.width}
       />
     );
   },
