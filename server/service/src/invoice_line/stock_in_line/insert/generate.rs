@@ -158,7 +158,7 @@ fn generate_line(
         donor_link_id: donor_id,
         campaign_id,
         shipped_number_of_packs,
-        volume_per_pack,
+        volume_per_pack: volume_per_pack.unwrap_or(0.0),
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
         prescribed_quantity: None,

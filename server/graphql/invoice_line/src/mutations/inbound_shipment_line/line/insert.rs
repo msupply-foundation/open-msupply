@@ -35,7 +35,7 @@ pub struct InsertInput {
     pub campaign_id: Option<String>,
     pub note: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
-    pub volume_per_pack: f64,
+    pub volume_per_pack: Option<f64>,
 }
 
 #[derive(SimpleObject)]
