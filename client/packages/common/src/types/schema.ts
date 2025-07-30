@@ -1928,6 +1928,23 @@ export type DeletePrescriptionResponseWithId = {
   response: DeletePrescriptionResponse;
 };
 
+export type DeletePurchaseOrderLineError = {
+  __typename: 'DeletePurchaseOrderLineError';
+  error: DeletePurchaseOrderLineInterface;
+};
+
+export type DeletePurchaseOrderLineInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeletePurchaseOrderLineInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeletePurchaseOrderLineResponse =
+  | DeletePurchaseOrderLineError
+  | DeleteResponse;
+
 export type DeleteRequestRequisitionError = {
   __typename: 'DeleteRequestRequisitionError';
   error: DeleteRequestRequisitionErrorInterface;
@@ -4426,13 +4443,15 @@ export type ItemNode = {
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
-  itemStoreJoin?: Maybe<ItemStoreJoinNode>;
+  itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  restrictedLocationType?: Maybe<LocationTypeNode>;
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
@@ -4453,7 +4472,7 @@ export type ItemNodeAvailableStockOnHandArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type ItemNodeItemStoreJoinArgs = {
+export type ItemNodeItemStorePropertiesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4513,8 +4532,8 @@ export type ItemStatsNode = {
   totalConsumption: Scalars['Float']['output'];
 };
 
-export type ItemStoreJoinNode = {
-  __typename: 'ItemStoreJoinNode';
+export type ItemStorePropertiesNode = {
+  __typename: 'ItemStorePropertiesNode';
   defaultSellPricePerPack: Scalars['Float']['output'];
   id: Scalars['String']['output'];
 };
@@ -4681,6 +4700,7 @@ export type LocationFilterInput = {
   assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  locationTypeId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -4958,6 +4978,7 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  deletePurchaseOrderLine: DeletePurchaseOrderLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
@@ -5059,6 +5080,7 @@ export type Mutations = {
    * in a document.
    */
   updateProgramPatient: UpdateProgramPatientResponse;
+  updatePurchaseOrderLine: UpdatePurchaseOrderLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -5202,6 +5224,11 @@ export type MutationsDeletePrescriptionArgs = {
 
 export type MutationsDeletePrescriptionLineArgs = {
   input: DeletePrescriptionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePurchaseOrderLineArgs = {
+  input: DeletePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5614,6 +5641,11 @@ export type MutationsUpdateProgramEnrolmentArgs = {
 
 export type MutationsUpdateProgramPatientArgs = {
   input: UpdateProgramPatientInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdatePurchaseOrderLineArgs = {
+  input: UpdatePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6518,6 +6550,7 @@ export type ProgramFilterInput = {
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
 
@@ -7730,6 +7763,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteOutboundShipmentUnallocatedLineErrorInterface &
   DeletePrescriptionErrorInterface &
   DeletePrescriptionLineErrorInterface &
+  DeletePurchaseOrderLineInterface &
   DeleteRequestRequisitionErrorInterface &
   DeleteRequestRequisitionLineErrorInterface &
   DeleteResponseRequisitionErrorInterface &
@@ -9776,6 +9810,17 @@ export type UpdateProgramPatientInput = {
 };
 
 export type UpdateProgramPatientResponse = PatientNode;
+
+export type UpdatePurchaseOrderLineInput = {
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdatePurchaseOrderLineResponse = IdResponse;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';

@@ -38,6 +38,10 @@ fragment InboundLine on InvoiceLineNode {
     defaultPackSize
     isVaccine
     doses
+    restrictedLocationTypeId
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
 
   location {
