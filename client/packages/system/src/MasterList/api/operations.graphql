@@ -82,3 +82,12 @@ query masterListLines(
     }
   }
 }
+
+query masterListLineCount($storeId: String!, $masterListId: String!) {
+  masterListLines(storeId: $storeId, masterListId: $masterListId) {
+    ... on MasterListLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}

@@ -1,30 +1,43 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
   useNotification,
   AppBarButtonsPortal,
   Grid,
-  FileUtils,
   LoadingButton,
-  ToggleState,
-  EnvUtils,
-  Platform,
+  ButtonWithIcon,
+  PlusCircleIcon,
+  useToggle,
+  useSimplifiedTabletUI,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { CreateStocktakeButton } from './CreateStocktakeButton';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
 import { stocktakesToCsv } from '../../utils';
+import { CreateStocktakeModal } from './CreateStocktakeModal';
+import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 
-export const AppBarButtons: FC<{
-  modalController: ToggleState;
-}> = ({ modalController }) => {
-  const { success, error } = useNotification();
+interface AppBarButtonsProps {
+  description: string;
+  onCreate: (input: CreateStocktakeInput) => Promise<string | undefined>;
+  isCreating: boolean;
+}
+
+export const AppBarButtons = ({
+  onCreate,
+  isCreating,
+  description,
+}: AppBarButtonsProps) => {
   const t = useTranslation();
-  const { isLoading, fetchAsync } = useStocktake.document.listAll({
+  const modalController = useToggle();
+  const { error } = useNotification();
+  const { isLoading, fetchAsync } = useStocktakeOld.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,
   });
+  const simplifiedTabletView = useSimplifiedTabletUI();
+  const exportCSV = useExportCSV();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -34,22 +47,33 @@ export const AppBarButtons: FC<{
     }
 
     const csv = stocktakesToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.stocktakes'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.stocktakes'));
   };
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <CreateStocktakeButton modalController={modalController} />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          isLoading={isLoading}
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('label.new-stocktake')}
+          onClick={modalController.toggleOn}
         />
+        <CreateStocktakeModal
+          open={modalController.isOn}
+          onClose={modalController.toggleOff}
+          onCreate={onCreate}
+          isCreating={isCreating}
+          description={description}
+        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            variant="outlined"
+            isLoading={isLoading}
+            onClick={csvExport}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );

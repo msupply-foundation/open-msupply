@@ -3,10 +3,10 @@ use crate::invoice::common::{
 };
 use crate::invoice::{check_invoice_exists, common::check_master_list_for_store};
 use crate::service_provider::ServiceContext;
-use repository::{EqualFilter, ItemType};
+use repository::{EqualFilter, InvoiceStatus, ItemType};
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, MasterListLineFilter,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceType, MasterListLineFilter,
     MasterListLineRepository, RepositoryError, StorageConnection,
 };
 
@@ -68,6 +68,7 @@ fn validate(
     if invoice_row.store_id != store_id {
         return Err(InError::NotThisStoreShipment);
     }
+
     if invoice_row.status != InvoiceStatus::New {
         return Err(InError::CannotEditShipment);
     }

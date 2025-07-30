@@ -3,3 +3,4 @@ export * from './GenericErrorFallback';
 export * from './types';
 export * from './NothingHere';
 export * from './ErrorWithDetails';
+export * from './BoxedErrorWithDetails';

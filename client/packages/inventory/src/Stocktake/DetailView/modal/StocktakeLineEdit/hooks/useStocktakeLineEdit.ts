@@ -3,8 +3,7 @@ import {
   ArrayUtils,
   getErrorMessage,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
-import { StocktakeLineFragment, useStocktake } from './../../../../api';
+import { StocktakeLineFragment, useStocktakeOld } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
@@ -14,21 +13,19 @@ interface useStocktakeLineEditController {
   addLine: () => void;
   save: () => Promise<{ errorMessages?: string[] }>;
   isSaving: boolean;
-  nextItem: ItemRowFragment | null;
+  nextItem: StocktakeLineFragment['item'] | null;
 }
 
 export const useStocktakeLineEdit = (
-  item: ItemRowFragment | null
+  item: StocktakeLineFragment['item'] | null
 ): useStocktakeLineEditController => {
-  const { id } = useStocktake.document.fields('id');
-  const { items } = useStocktake.line.rows();
+  const { id } = useStocktakeOld.document.fields('id');
+  const { items } = useStocktakeOld.line.rows();
   const filteredItems = items.filter(item => item.item?.id === item?.id);
   const nextItem = useNextItem(filteredItems, item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
   const { saveAndMapStructuredErrors: upsertLines, isLoading: isSaving } =
-    useStocktake.line.save();
-
-  const defaultPackSize = 1;
+    useStocktakeOld.line.save();
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) =>
     setDraftLines(lines =>
@@ -48,10 +45,7 @@ export const useStocktakeLineEdit = (
 
   const addLine = () => {
     if (item) {
-      setDraftLines(lines => [
-        DraftLine.fromItem(id, item, defaultPackSize),
-        ...lines,
-      ]);
+      setDraftLines(lines => [DraftLine.fromItem(id, item), ...lines]);
     }
   };
 

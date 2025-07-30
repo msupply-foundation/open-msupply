@@ -16,6 +16,7 @@ export enum AppRoute {
   VaccineCard = 'vaccine-card',
   Prescription = 'prescription',
   CustomerReturn = 'customer-return',
+  Clinicians = 'clinicians',
 
   Coldchain = 'cold-chain',
   Sensors = 'sensors',
@@ -27,6 +28,7 @@ export enum AppRoute {
   Dashboard = 'dashboard',
 
   Replenishment = 'replenishment',
+  PurchaseOrder = 'purchase-order',
   InboundShipment = 'inbound-shipment',
   InternalOrder = 'internal-order',
   Suppliers = 'suppliers',
@@ -42,8 +44,9 @@ export enum AppRoute {
 
   Manage = 'manage',
   Programs = 'programs',
-  Facilities = 'facilities',
-  Preferences = 'preferences',
+  Stores = 'stores',
+  GlobalPreferences = 'global-preferences',
+  Campaigns = 'campaigns',
 
   Tools = 'tools',
 

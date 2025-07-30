@@ -41,6 +41,7 @@ import {
   Locale,
   FirstWeekContainsDate,
   ParseOptions,
+  startOfMonth,
 } from 'date-fns';
 import { getTimezoneOffset } from 'date-fns-tz';
 
@@ -86,6 +87,7 @@ const DAY = 24 * HOUR;
 
 export const DateUtils = {
   differenceInMinutes,
+  differenceInDays,
   addMinutes,
   addDays,
   addHours,
@@ -184,6 +186,7 @@ export const DateUtils = {
     return isValid(d) ? endOfDay(d) : null;
   },
   endOfDay,
+  startOfMonth,
   startOfYear,
   previousMonday,
   endOfWeek,
@@ -267,7 +270,7 @@ export const useFormatDateTime = () => {
     const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
 
     if (patientAge >= 1) {
-      return String(patientAge);
+      return `${t('label.age-years', {count: patientAge})}`;
     } else
       return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
   };

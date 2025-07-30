@@ -1,8 +1,13 @@
 use crate::{
-    db_diesel::item_row::item, item_link, ChangeLogInsertRow, ChangelogRepository,
+    db_diesel::{
+        barcode_row::barcode, item_row::item, location_row::location,
+        location_type_row::location_type, name_row::name,
+    },
+    item_link, name_link, user_account, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -11,27 +16,44 @@ table! {
         id -> Text,
         name -> Text,
         item_link_id -> Text,
-        cold_storage_type_id -> Nullable<Text>,
+        location_type_id -> Nullable<Text>,
         manufacturer_link_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
+        vvm_type -> Nullable<Text>,
+        created_datetime -> Timestamp,
+        created_by -> Nullable<Text>,
     }
 }
 
 joinable!(item_variant -> item_link (item_link_id));
+joinable!(item_variant -> name_link (manufacturer_link_id));
+joinable!(item_variant -> location_type (location_type_id));
 allow_tables_to_appear_in_same_query!(item_variant, item_link);
 allow_tables_to_appear_in_same_query!(item_variant, item);
+allow_tables_to_appear_in_same_query!(item_variant, user_account);
+allow_tables_to_appear_in_same_query!(item_variant, name_link);
+allow_tables_to_appear_in_same_query!(item_variant, name);
+allow_tables_to_appear_in_same_query!(item_variant, location_type);
+allow_tables_to_appear_in_same_query!(item_variant, barcode);
+allow_tables_to_appear_in_same_query!(item_variant, location);
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
 #[diesel(table_name = item_variant)]
+#[diesel(treat_none_as_null = true)]
 pub struct ItemVariantRow {
     pub id: String,
     pub name: String,
     pub item_link_id: String,
-    pub cold_storage_type_id: Option<String>,
+    #[serde(rename = "cold_storage_type_id")] // To prevent breaking change in v6 sync API
+    pub location_type_id: Option<String>,
     pub manufacturer_link_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
+    pub vvm_type: Option<String>,
+    pub created_datetime: NaiveDateTime,
+    #[serde(default)]
+    pub created_by: Option<String>,
 }
 
 pub struct ItemVariantRowRepository<'a> {

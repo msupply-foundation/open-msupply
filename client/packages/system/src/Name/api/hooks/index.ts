@@ -11,12 +11,12 @@ export const useName = {
     list: Document.useNames,
     suppliers: Document.useSuppliers,
     manufacturers: Document.useManufacturers,
-    facilities: Document.useFacilities,
-    facilitiesAll: Document.useFacilitiesAll,
+    stores: Document.useStores,
+    storesAll: Document.useStoresAll,
     donors: Document.useDonors,
     properties: Document.useNameProperties,
   },
   utils: {
-    nextFacilityId: Utils.useNextFacilityId,
+    nextStoreId: Utils.useNextStoreId,
   },
 };

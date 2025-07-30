@@ -1,0 +1,33 @@
+query pluginData(
+  $pluginCode: String!
+  $storeId: String!
+  $filter: PluginDataFilterInput
+) {
+  pluginData(pluginCode: $pluginCode, storeId: $storeId, filter: $filter) {
+    __typename
+    ... on PluginDataConnector {
+      nodes {
+        id
+        data
+        relatedRecordId
+      }
+    }
+  }
+}
+mutation insertPluginData($storeId: String!, $input: InsertPluginDataInput!) {
+  insertPluginData(input: $input, storeId: $storeId) {
+    ... on PluginDataNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updatePluginData($storeId: String!, $input: UpdatePluginDataInput!) {
+  updatePluginData(input: $input, storeId: $storeId) {
+    ... on PluginDataNode {
+      __typename
+      id
+    }
+  }
+}

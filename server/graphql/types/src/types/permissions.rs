@@ -43,6 +43,9 @@ pub enum UserPermission {
     CustomerReturnMutate,
     PrescriptionQuery,
     PrescriptionMutate,
+    PurchaseOrderQuery,
+    PurchaseOrderMutate,
+    PurchaseOrderAuthorise,
     Report,
     LogQuery,
     StockLineMutate,
@@ -59,6 +62,9 @@ pub enum UserPermission {
     AssetCatalogueItemMutate,
     NamePropertiesMutate,
     EditCentralData,
+    ViewAndEditVvmStatus,
+    MutateClinician,
+    CancelFinalisedInvoices,
 }
 
 #[Object]
@@ -150,6 +156,12 @@ impl UserPermission {
             PermissionType::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
             PermissionType::EditCentralData => UserPermission::EditCentralData,
+            PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
+            PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
+            PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,
+            PermissionType::PurchaseOrderAuthorise => UserPermission::PurchaseOrderAuthorise,
+            PermissionType::MutateClinician => UserPermission::MutateClinician,
+            PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
         }
     }
 
@@ -203,6 +215,12 @@ impl UserPermission {
             UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
             UserPermission::EditCentralData => PermissionType::EditCentralData,
+            UserPermission::ViewAndEditVvmStatus => PermissionType::ViewAndEditVvmStatus,
+            UserPermission::PurchaseOrderQuery => PermissionType::PurchaseOrderQuery,
+            UserPermission::PurchaseOrderMutate => PermissionType::PurchaseOrderMutate,
+            UserPermission::PurchaseOrderAuthorise => PermissionType::PurchaseOrderAuthorise,
+            UserPermission::MutateClinician => PermissionType::MutateClinician,
+            UserPermission::CancelFinalisedInvoices => PermissionType::CancelFinalisedInvoices,
         }
     }
 }

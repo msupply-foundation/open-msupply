@@ -30,6 +30,11 @@ pub struct InsertInput {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
+    pub donor_id: Option<String>,
+    pub campaign_id: Option<String>,
+    pub note: Option<String>,
+    pub shipped_number_of_packs: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -88,6 +93,11 @@ impl InsertInput {
             total_before_tax,
             tax_percentage,
             item_variant_id,
+            donor_id,
+            vvm_status_id,
+            campaign_id,
+            note,
+            shipped_number_of_packs,
         } = self;
 
         ServiceInput {
@@ -107,11 +117,15 @@ impl InsertInput {
             tax_percentage,
             r#type: StockInType::InboundShipment,
             item_variant_id,
+            vvm_status_id,
+            donor_id,
+            shipped_number_of_packs,
             // Default
-            note: None,
+            note,
             stock_line_id: None,
             barcode: None,
             stock_on_hold: false,
+            campaign_id,
         }
     }
 }
@@ -153,6 +167,10 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
+        | ServiceError::VVMStatusDoesNotExist
+        | ServiceError::DonorDoesNotExist
+        | ServiceError::DonorNotVisible
+        | ServiceError::SelectedDonorPartyIsNotADonor
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)

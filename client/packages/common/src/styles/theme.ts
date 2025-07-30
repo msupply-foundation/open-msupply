@@ -125,6 +125,7 @@ declare module '@mui/material/styles/createPalette' {
     icon: string;
     success: string;
     row: string;
+    group: string;
   }
 
   interface TypeForm {
@@ -138,6 +139,14 @@ declare module '@mui/material/styles/createTypography' {
     login: CSSProperties;
     th: CSSProperties;
   }
+}
+
+export enum Breakpoints {
+  xs = 'xs',
+  sm = 'sm',
+  md = 'md',
+  lg = 'lg',
+  xl = 'xl',
 }
 
 export const themeOptions = {
@@ -206,6 +215,7 @@ export const themeOptions = {
     },
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
     background: {
+      group: '#e2e2e9',
       drawer: '#f2f2f5',
       row: '#f2f2f5',
       icon: '#E5EEFF',
@@ -289,5 +299,7 @@ export const createTheme = (themeOptions: ThemeOptions) => {
     '0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04)';
   theme.shadows[3] =
     '0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04)';
+  theme.shadows[4] =
+    '0 12px 24px 0 rgba(96, 97, 112, 0.16), 0 4px 8px 0 rgba(40, 41, 61, 0.30)';
   return theme;
 };

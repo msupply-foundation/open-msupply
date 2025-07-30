@@ -155,6 +155,31 @@ mod update {
             })
         );
 
+        // InitialBalanceCannotBeNegative
+        assert_eq!(
+            service.update_rnr_form(
+                &context,
+                &store_id,
+                UpdateRnRForm {
+                    id: mock_rnr_form_b().id,
+                    lines: vec![UpdateRnRFormLine {
+                        id: mock_rnr_form_b_line_a().id,
+                        initial_balance: -5.0,
+                        quantity_consumed: Some(0.0),
+                        quantity_received: Some(7.0),
+                        adjustments: Some(0.0),
+                        final_balance: 2.0,
+                        ..Default::default()
+                    }],
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateRnRFormError::LineError {
+                line_id: mock_rnr_form_b_line_a().id,
+                error: UpdateRnRFormLineError::InitialBalanceCannotBeNegative
+            })
+        );
+
         // FinalBalanceCannotBeNegative
         assert_eq!(
             service.update_rnr_form(

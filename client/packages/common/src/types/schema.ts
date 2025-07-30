@@ -33,6 +33,8 @@ export type Scalars = {
   DateTime: { input: string; output: string };
   /** A scalar that can represent any JSON value. */
   JSON: { input: any; output: any };
+  /** A scalar that can represent any JSON Object value. */
+  JSONObject: { input: any; output: any };
   /**
    * ISO 8601 calendar date without timezone.
    * Format: %Y-%m-%d
@@ -131,8 +133,16 @@ export enum ActivityLogNodeType {
   InvoiceStatusCancelled = 'INVOICE_STATUS_CANCELLED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
+  InvoiceStatusReceived = 'INVOICE_STATUS_RECEIVED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
+  ItemVariantCreated = 'ITEM_VARIANT_CREATED',
+  ItemVariantDeleted = 'ITEM_VARIANT_DELETED',
+  ItemVariantUpdatedName = 'ITEM_VARIANT_UPDATED_NAME',
+  ItemVariantUpdateDosePerUnit = 'ITEM_VARIANT_UPDATE_DOSE_PER_UNIT',
+  ItemVariantUpdateLocationType = 'ITEM_VARIANT_UPDATE_LOCATION_TYPE',
+  ItemVariantUpdateManufacturer = 'ITEM_VARIANT_UPDATE_MANUFACTURER',
+  ItemVariantUpdateVvmType = 'ITEM_VARIANT_UPDATE_VVM_TYPE',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
   PrescriptionStatusCancelled = 'PRESCRIPTION_STATUS_CANCELLED',
@@ -149,6 +159,7 @@ export enum ActivityLogNodeType {
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   RnrFormCreated = 'RNR_FORM_CREATED',
+  RnrFormDeleted = 'RNR_FORM_DELETED',
   RnrFormFinalised = 'RNR_FORM_FINALISED',
   RnrFormUpdated = 'RNR_FORM_UPDATED',
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
@@ -168,6 +179,7 @@ export enum ActivityLogNodeType {
   VaccinationUpdated = 'VACCINATION_UPDATED',
   VaccineCourseCreated = 'VACCINE_COURSE_CREATED',
   VaccineCourseUpdated = 'VACCINE_COURSE_UPDATED',
+  VvmStatusLogUpdated = 'VVM_STATUS_LOG_UPDATED',
 }
 
 export type ActivityLogResponse = ActivityLogConnector;
@@ -274,6 +286,7 @@ export type AllocateOutboundShipmentUnallocatedLineNode = {
   issuedExpiringSoonStockLines: StockLineConnector;
   skippedExpiredStockLines: StockLineConnector;
   skippedOnHoldStockLines: StockLineConnector;
+  skippedUnusableVvmStatusLines: StockLineConnector;
   updates: InvoiceLineConnector;
 };
 
@@ -292,6 +305,13 @@ export type AllocateProgramNumberInput = {
 };
 
 export type AllocateProgramNumberResponse = NumberNode;
+
+export enum ApplyToLinesInput {
+  AssignIfNone = 'ASSIGN_IF_NONE',
+  AssignToAll = 'ASSIGN_TO_ALL',
+  None = 'NONE',
+  UpdateExistingDonor = 'UPDATE_EXISTING_DONOR',
+}
 
 export type AssetCatalogueItemConnector = {
   __typename: 'AssetCatalogueItemConnector';
@@ -934,6 +954,11 @@ export type BatchStocktakeResponse = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
+export type BoolStorePrefInput = {
+  storeId: Scalars['String']['input'];
+  value: Scalars['Boolean']['input'];
+};
+
 export type BundledItemMutations = {
   __typename: 'BundledItemMutations';
   deleteBundledItem: DeleteBundledItemResponse;
@@ -959,6 +984,52 @@ export type BundledItemNode = {
   principalItemVariantId: Scalars['String']['output'];
   ratio: Scalars['Float']['output'];
 };
+
+export type CampaignConnector = {
+  __typename: 'CampaignConnector';
+  nodes: Array<CampaignNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type CampaignFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type CampaignMutations = {
+  __typename: 'CampaignMutations';
+  deleteCampaign: DeleteCampaignResponse;
+  upsertCampaign: UpsertCampaignResponse;
+};
+
+export type CampaignMutationsDeleteCampaignArgs = {
+  input: DeleteCampaignInput;
+};
+
+export type CampaignMutationsUpsertCampaignArgs = {
+  input: UpsertCampaignInput;
+};
+
+export type CampaignNode = {
+  __typename: 'CampaignNode';
+  endDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  startDate?: Maybe<Scalars['NaiveDate']['output']>;
+};
+
+export enum CampaignSortFieldInput {
+  Name = 'name',
+}
+
+export type CampaignSortInput = {
+  /** Sort query result is sorted descending or ascending (if not provided the default is ascending) */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: CampaignSortFieldInput;
+};
+
+export type CampaignsResponse = CampaignConnector;
 
 export type CanOnlyChangeToAllocatedWhenNoUnallocatedLines =
   UpdateErrorInterface & {
@@ -1143,16 +1214,27 @@ export type CentralPluginQueriesUploadedPluginInfoArgs = {
   fileId: Scalars['String']['input'];
 };
 
+export type CentralReportMutations = {
+  __typename: 'CentralReportMutations';
+  installUploadedReports: Array<Scalars['String']['output']>;
+};
+
+export type CentralReportMutationsInstallUploadedReportsArgs = {
+  fileId: Scalars['String']['input'];
+};
+
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
   bundledItem: BundledItemMutations;
+  campaign: CampaignMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
   itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
   plugins: CentralPluginMutations;
   preferences: PreferenceMutations;
+  reports: CentralReportMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
@@ -1225,42 +1307,6 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
-export type ColdStorageTypeConnector = {
-  __typename: 'ColdStorageTypeConnector';
-  nodes: Array<ColdStorageTypeNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type ColdStorageTypeFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<EqualFilterStringInput>;
-};
-
-export type ColdStorageTypeNode = {
-  __typename: 'ColdStorageTypeNode';
-  id: Scalars['String']['output'];
-  maxTemperature: Scalars['Float']['output'];
-  minTemperature: Scalars['Float']['output'];
-  name: Scalars['String']['output'];
-};
-
-export enum ColdStorageTypeSortFieldInput {
-  Id = 'id',
-  Name = 'name',
-}
-
-export type ColdStorageTypeSortInput = {
-  /**
-   * Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Sort query result by `key` */
-  key: ColdStorageTypeSortFieldInput;
-};
-
-export type ColdStorageTypesResponse = ColdStorageTypeConnector;
-
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -1302,10 +1348,32 @@ export type ConsumptionOptionsInput = {
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type ContactConnector = {
+  __typename: 'ContactConnector';
+  nodes: Array<ContactNode>;
+};
+
 export enum ContactFormNodeType {
   Feedback = 'FEEDBACK',
   Support = 'SUPPORT',
 }
+
+export type ContactNode = {
+  __typename: 'ContactNode';
+  address1?: Maybe<Scalars['String']['output']>;
+  address2?: Maybe<Scalars['String']['output']>;
+  category1?: Maybe<Scalars['String']['output']>;
+  category2?: Maybe<Scalars['String']['output']>;
+  category3?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  country?: Maybe<Scalars['String']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
+  firstName: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  lastName: Scalars['String']['output'];
+  phone?: Maybe<Scalars['String']['output']>;
+  position?: Maybe<Scalars['String']['output']>;
+};
 
 export type ContactTraceConnector = {
   __typename: 'ContactTraceConnector';
@@ -1377,6 +1445,8 @@ export type ContactTraceSortInput = {
   key: ContactTraceSortFieldInput;
 };
 
+export type ContactsResponse = ContactConnector;
+
 export type CreateInventoryAdjustmentError = {
   __typename: 'CreateInventoryAdjustmentError';
   error: InsertInventoryAdjustmentErrorInterface;
@@ -1385,7 +1455,9 @@ export type CreateInventoryAdjustmentError = {
 export type CreateInventoryAdjustmentInput = {
   adjustment: Scalars['Float']['input'];
   adjustmentType: AdjustmentTypeInput;
+  /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -1449,12 +1521,6 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type CustomerAndOrderTypeNode = {
-  __typename: 'CustomerAndOrderTypeNode';
-  customer: NameNode;
-  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
-};
-
 export type CustomerIndicatorInformationNode = {
   __typename: 'CustomerIndicatorInformationNode';
   customer: NameNode;
@@ -1470,11 +1536,8 @@ export type CustomerIndicatorInformationNodeCustomerArgs = {
 
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
-  customerAndOrderTypes: Array<CustomerAndOrderTypeNode>;
-  masterList: MasterListNode;
-  programId: Scalars['String']['output'];
-  programName: Scalars['String']['output'];
-  tagName: Scalars['String']['output'];
+  customerNameId: Scalars['String']['output'];
+  programSettings: Array<ProgramSettingNode>;
 };
 
 export type CustomerReturnInput = {
@@ -1494,6 +1557,7 @@ export type CustomerReturnLineInput = {
   numberOfPacksReturned: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CustomerReturnLineNode = {
@@ -1510,12 +1574,14 @@ export type CustomerReturnLineNode = {
   numberOfPacksReturned: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
+  reasonOption?: Maybe<ReasonOptionNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
 export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   DeleteAssetErrorInterface &
   DeleteAssetLogReasonErrorInterface &
+  DeleteCampaignErrorInterface &
   DeleteLocationErrorInterface &
   DeleteVaccineCourseErrorInterface &
   InsertAssetCatalogueItemErrorInterface &
@@ -1535,6 +1601,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateSensorErrorInterface &
   UpdateVaccineCourseErrorInterface &
   UpsertBundledItemErrorInterface &
+  UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
     __typename: 'DatabaseError';
     description: Scalars['String']['output'];
@@ -1605,6 +1672,28 @@ export type DeleteBundledItemInput = {
 };
 
 export type DeleteBundledItemResponse = DeleteResponse;
+
+export type DeleteCampaignError = {
+  __typename: 'DeleteCampaignError';
+  error: DeleteCampaignErrorInterface;
+};
+
+export type DeleteCampaignErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteCampaignInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteCampaignResponse =
+  | DeleteCampaignError
+  | DeleteCampaignSuccess;
+
+export type DeleteCampaignSuccess = {
+  __typename: 'DeleteCampaignSuccess';
+  id: Scalars['String']['output'];
+};
 
 export type DeleteCustomerReturnError = {
   __typename: 'DeleteCustomerReturnError';
@@ -1839,6 +1928,23 @@ export type DeletePrescriptionResponseWithId = {
   response: DeletePrescriptionResponse;
 };
 
+export type DeletePurchaseOrderLineError = {
+  __typename: 'DeletePurchaseOrderLineError';
+  error: DeletePurchaseOrderLineInterface;
+};
+
+export type DeletePurchaseOrderLineInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeletePurchaseOrderLineInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeletePurchaseOrderLineResponse =
+  | DeletePurchaseOrderLineError
+  | DeleteResponse;
+
 export type DeleteRequestRequisitionError = {
   __typename: 'DeleteRequestRequisitionError';
   error: DeleteRequestRequisitionErrorInterface;
@@ -1935,6 +2041,12 @@ export type DeleteResponseRequisitionResponseWithId = {
   id: Scalars['String']['output'];
   response: DeleteResponseRequisitionResponse;
 };
+
+export type DeleteRnRFormInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteRnRFormResponse = DeleteResponse;
 
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
@@ -2269,6 +2381,45 @@ export type DocumentSortInput = {
   key: DocumentSortFieldInput;
 };
 
+export type DraftStockOutItemData = {
+  __typename: 'DraftStockOutItemData';
+  draftLines: Array<DraftStockOutLineNode>;
+  note?: Maybe<Scalars['String']['output']>;
+  placeholderQuantity?: Maybe<Scalars['Float']['output']>;
+  prescribedQuantity?: Maybe<Scalars['Float']['output']>;
+};
+
+export type DraftStockOutLineNode = {
+  __typename: 'DraftStockOutLineNode';
+  availablePacks: Scalars['Float']['output'];
+  batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
+  donor?: Maybe<NameNode>;
+  dosesPerUnit: Scalars['Int']['output'];
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  inStorePacks: Scalars['Float']['output'];
+  itemVariant?: Maybe<ItemVariantNode>;
+  itemVariantId?: Maybe<Scalars['String']['output']>;
+  location?: Maybe<LocationNode>;
+  numberOfPacks: Scalars['Float']['output'];
+  packSize: Scalars['Float']['output'];
+  sellPricePerPack: Scalars['Float']['output'];
+  stockLineId: Scalars['String']['output'];
+  stockLineOnHold: Scalars['Boolean']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
+};
+
+export type DraftStockOutLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type EmergencyResponseRequisitionCounts = {
+  __typename: 'EmergencyResponseRequisitionCounts';
+  new: Scalars['Int']['output'];
+};
+
 export type EncounterConnector = {
   __typename: 'EncounterConnector';
   nodes: Array<EncounterNode>;
@@ -2468,6 +2619,12 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type EqualFilterPurchaseOrderStatusInput = {
+  equalAny?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
+  equalTo?: InputMaybe<PurchaseOrderNodeStatus>;
+  notEqualTo?: InputMaybe<PurchaseOrderNodeStatus>;
+};
+
 export type EqualFilterReasonOptionTypeInput = {
   equalAny?: InputMaybe<Array<ReasonOptionNodeType>>;
   equalTo?: InputMaybe<ReasonOptionNodeType>;
@@ -2633,6 +2790,7 @@ export type FrontendPluginMetadataNode = {
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
+  errorThreshold: Scalars['Int']['output'];
   integration?: Maybe<SyncStatusWithProgressNode>;
   isSyncing: Scalars['Boolean']['output'];
   lastSuccessfulSync?: Maybe<SyncStatusNode>;
@@ -2643,6 +2801,7 @@ export type FullSyncStatusNode = {
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  warningThreshold: Scalars['Int']['output'];
 };
 
 export enum GenderType {
@@ -2869,6 +3028,16 @@ export type InsertBarcodeInput = {
 
 export type InsertBarcodeResponse = BarcodeNode;
 
+export type InsertClinicianInput = {
+  code: Scalars['String']['input'];
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  gender?: InputMaybe<GenderType>;
+  id: Scalars['String']['input'];
+  initials: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+  mobile?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type InsertContactFormInput = {
   body: Scalars['String']['input'];
   contactType: ContactFormNodeType;
@@ -3032,18 +3201,23 @@ export type InsertInboundShipmentLineFromInternalOrderLineResponseWithId = {
 
 export type InsertInboundShipmentLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
+  donorId?: InputMaybe<Scalars['String']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
+  note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
+  shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertInboundShipmentLineResponse =
@@ -3124,8 +3298,8 @@ export type InsertLocationErrorInterface = {
 
 export type InsertLocationInput = {
   code: Scalars['String']['input'];
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -3163,6 +3337,7 @@ export type InsertOutboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertOutboundShipmentLineResponse =
@@ -3392,6 +3567,21 @@ export type InsertProgramResponseRequisitionResponse =
   | InsertProgramResponseRequisitionError
   | RequisitionNode;
 
+export type InsertPurchaseOrderInput = {
+  id: Scalars['String']['input'];
+  supplierId: Scalars['String']['input'];
+};
+
+export type InsertPurchaseOrderLineInput = {
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  purchaseOrderId: Scalars['String']['input'];
+};
+
+export type InsertPurchaseOrderLineResponse = IdResponse;
+
+export type InsertPurchaseOrderResponse = IdResponse;
+
 export type InsertRepackError = {
   __typename: 'InsertRepackError';
   error: InsertRepackErrorInterface;
@@ -3532,9 +3722,12 @@ export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
+  donorId?: InputMaybe<Scalars['String']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId: Scalars['String']['input'];
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
@@ -3542,21 +3735,23 @@ export type InsertStockLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   onHold: Scalars['Boolean']['input'];
   packSize: Scalars['Float']['input'];
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
+  createBlankStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  isLocked?: InputMaybe<Scalars['Boolean']['input']>;
-  itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<NullableStringUpdate>;
+  includeAllMasterListItems?: InputMaybe<Scalars['Boolean']['input']>;
+  isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
+  locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
-  stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type InsertStocktakeLineError = {
@@ -3573,14 +3768,17 @@ export type InsertStocktakeLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<Scalars['String']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   stocktakeId: Scalars['String']['input'];
@@ -3617,6 +3815,15 @@ export type InsertSupplierReturnResponse =
   | InsertSupplierReturnError
   | InvoiceNode;
 
+export type InsertVvmStatusLogInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  statusId: Scalars['String']['input'];
+  stockLineId: Scalars['String']['input'];
+};
+
+export type InsertVvmStatusLogResponse = VvmstatusLogNode;
+
 export type InsertVaccinationInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -3625,6 +3832,7 @@ export type InsertVaccinationInput = {
   facilityNameId?: InputMaybe<Scalars['String']['input']>;
   given: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
+  itemId?: InputMaybe<Scalars['String']['input']>;
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -3647,9 +3855,9 @@ export type InsertVaccineCourseInput = {
   demographicId?: InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
-  isActive: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
   programId: Scalars['String']['input'];
+  useInGapsCalculations: Scalars['Boolean']['input'];
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
 };
@@ -3740,6 +3948,7 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
   UpsertBundledItemErrorInterface &
+  UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
     __typename: 'InternalError';
     description: Scalars['String']['output'];
@@ -3840,6 +4049,7 @@ export type InvoiceFilterInput = {
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
@@ -3867,6 +4077,7 @@ export type InvoiceLineConnector = {
 
 export type InvoiceLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  /** @deprecated Since 2.8.0. Use reason_option */
   inventoryAdjustmentReason?: InputMaybe<EqualFilterStringInput>;
   invoiceId?: InputMaybe<EqualFilterStringInput>;
   invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
@@ -3874,6 +4085,8 @@ export type InvoiceLineFilterInput = {
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
+  reasonOption?: InputMaybe<EqualFilterStringInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -3884,17 +4097,22 @@ export type InvoiceLineFilterInput = {
 export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   costPricePerPack: Scalars['Float']['output'];
+  donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
   invoiceId: Scalars['String']['output'];
   item: ItemNode;
   itemCode: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
+  linkedInvoiceId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
@@ -3903,14 +4121,24 @@ export type InvoiceLineNode = {
   packSize: Scalars['Float']['output'];
   prescribedQuantity?: Maybe<Scalars['Float']['output']>;
   pricing: PricingNode;
+  reasonOption?: Maybe<ReasonOptionNode>;
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
+  shippedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   stockLine?: Maybe<StockLineNode>;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
   type: InvoiceLineNodeType;
+  vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
+};
+
+export type InvoiceLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export enum InvoiceLineNodeType {
@@ -3957,6 +4185,7 @@ export type InvoiceNode = {
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
+  defaultDonor?: Maybe<NameNode>;
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
@@ -3985,6 +4214,7 @@ export type InvoiceNode = {
   pricing: PricingNode;
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
+  receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -3992,7 +4222,7 @@ export type InvoiceNode = {
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']['output']>;
   status: InvoiceNodeStatus;
-  store?: Maybe<StoreNode>;
+  store: StoreNode;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   theirReference?: Maybe<Scalars['String']['output']>;
   transportReference?: Maybe<Scalars['String']['output']>;
@@ -4004,6 +4234,10 @@ export type InvoiceNode = {
    */
   user?: Maybe<UserNode>;
   verifiedDatetime?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type InvoiceNodeDefaultDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type InvoiceNodeOtherPartyArgs = {
@@ -4042,11 +4276,17 @@ export enum InvoiceNodeStatus {
    */
   Picked = 'PICKED',
   /**
+   * General description: Received inbound Shipment has arrived, not counted or verified yet
+   * Outbound Shipment: Status is updated based on corresponding inbound Shipment
+   * Inbound Shipment: Status update, doesn't affect stock levels or restrict access to edit
+   */
+  Received = 'RECEIVED',
+  /**
    * General description: Outbound Shipment is sent out for delivery
    * Outbound Shipment: Becomes not editable
    * Inbound Shipment: For inter store stock transfers an inbound Shipment
    * becomes editable when this status is set as a result of corresponding
-   * outbound Shipment being chagned to shipped (this is similar to New status)
+   * outbound Shipment being changed to shipped (this is similar to New status)
    */
   Shipped = 'SHIPPED',
   /**
@@ -4139,10 +4379,12 @@ export type ItemFilterInput = {
   categoryName?: InputMaybe<Scalars['String']['input']>;
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
+  /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
+  hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Items that are part of a masterlist which is visible in this store. This filter is void if `is_visible_or_on_hand` is true */
+  /** Items that are part of a masterlist which is visible in this store. This filter is ignored if `is_visible_or_on_hand` is true */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4155,6 +4397,13 @@ export type ItemLedgerConnector = {
   __typename: 'ItemLedgerConnector';
   nodes: Array<ItemLedgerNode>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type ItemLedgerFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
+  invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
+  invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type ItemLedgerNode = {
@@ -4170,13 +4419,12 @@ export type ItemLedgerNode = {
   invoiceStatus: InvoiceNodeStatus;
   invoiceType: InvoiceNodeType;
   itemId: Scalars['String']['output'];
+  movementInUnits: Scalars['Float']['output'];
   name: Scalars['String']['output'];
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
-  quantity: Scalars['Float']['output'];
   reason?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
-  stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
   totalBeforeTax?: Maybe<Scalars['Float']['output']>;
 };
@@ -4195,12 +4443,15 @@ export type ItemNode = {
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
+  itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  restrictedLocationType?: Maybe<LocationTypeNode>;
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
@@ -4209,6 +4460,7 @@ export type ItemNode = {
   venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
   volumePerPack: Scalars['Float']['output'];
+  warnings: Array<WarningNode>;
   weight: Scalars['Float']['output'];
 };
 
@@ -4217,6 +4469,10 @@ export type ItemNodeAvailableBatchesArgs = {
 };
 
 export type ItemNodeAvailableStockOnHandArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type ItemNodeItemStorePropertiesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4276,6 +4532,12 @@ export type ItemStatsNode = {
   totalConsumption: Scalars['Float']['output'];
 };
 
+export type ItemStorePropertiesNode = {
+  __typename: 'ItemStorePropertiesNode';
+  defaultSellPricePerPack: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+};
+
 export type ItemVariantMutations = {
   __typename: 'ItemVariantMutations';
   deleteItemVariant: DeleteItemVariantResponse;
@@ -4298,15 +4560,17 @@ export type ItemVariantNode = {
   bundledItemVariants: Array<BundledItemNode>;
   /** This item variant is bundled with other (principal) item variants */
   bundlesWith: Array<BundledItemNode>;
-  coldStorageType?: Maybe<ColdStorageTypeNode>;
-  coldStorageTypeId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
+  item?: Maybe<ItemNode>;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  locationType?: Maybe<LocationTypeNode>;
+  locationTypeId?: Maybe<Scalars['String']['output']>;
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   packagingVariants: Array<PackagingVariantNode>;
+  vvmType?: Maybe<Scalars['String']['output']>;
 };
 
 export type ItemVariantNodeManufacturerArgs = {
@@ -4359,7 +4623,9 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  masterListId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -4373,6 +4639,8 @@ export type LedgerNode = {
   name: Scalars['String']['output'];
   quantity: Scalars['Float']['output'];
   reason?: Maybe<Scalars['String']['output']>;
+  runningBalance: Scalars['Float']['output'];
+  stockLine?: Maybe<StockLineNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
 };
@@ -4432,6 +4700,7 @@ export type LocationFilterInput = {
   assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  locationTypeId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -4455,8 +4724,8 @@ export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface &
 export type LocationNode = {
   __typename: 'LocationNode';
   code: Scalars['String']['output'];
-  coldStorageType?: Maybe<ColdStorageTypeNode>;
   id: Scalars['String']['output'];
+  locationType?: Maybe<LocationTypeNode>;
   name: Scalars['String']['output'];
   onHold: Scalars['Boolean']['output'];
   stock: StockLineConnector;
@@ -4484,6 +4753,43 @@ export type LocationSortInput = {
   /** Sort query result by `key` */
   key: LocationSortFieldInput;
 };
+
+export type LocationTypeConnector = {
+  __typename: 'LocationTypeConnector';
+  nodes: Array<LocationTypeNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type LocationTypeFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type LocationTypeNode = {
+  __typename: 'LocationTypeNode';
+  id: Scalars['String']['output'];
+  maxTemperature: Scalars['Float']['output'];
+  minTemperature: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
+};
+
+export enum LocationTypeSortFieldInput {
+  Id = 'id',
+  MinTemperature = 'minTemperature',
+  Name = 'name',
+}
+
+export type LocationTypeSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: LocationTypeSortFieldInput;
+};
+
+export type LocationTypesResponse = LocationTypeConnector;
 
 export type LocationsResponse = LocationConnector;
 
@@ -4672,10 +4978,12 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  deletePurchaseOrderLine: DeletePurchaseOrderLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
+  deleteRnrForm: DeleteRnRFormResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
@@ -4684,6 +4992,7 @@ export type Mutations = {
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
+  insertClinician: IdResponse;
   insertContactForm: InsertContactFormResponse;
   insertContactTrace: InsertContactTraceResponse;
   insertCustomerReturn: InsertCustomerReturnResponse;
@@ -4717,6 +5026,8 @@ export type Mutations = {
   insertProgramPatient: InsertProgramPatientResponse;
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
+  insertPurchaseOrder: InsertPurchaseOrderResponse;
+  insertPurchaseOrderLine: InsertPurchaseOrderLineResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -4728,9 +5039,12 @@ export type Mutations = {
   insertStocktakeLine: InsertStocktakeLineResponse;
   insertSupplierReturn: InsertSupplierReturnResponse;
   insertVaccination: InsertVaccinationResponse;
+  insertVvmStatusLog: InsertVvmStatusLogResponse;
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  saveOutboundShipmentItemLines: InvoiceNode;
+  savePrescriptionItemLines: InvoiceNode;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
   updateAsset: UpdateAssetResponse;
@@ -4766,6 +5080,7 @@ export type Mutations = {
    * in a document.
    */
   updateProgramPatient: UpdateProgramPatientResponse;
+  updatePurchaseOrderLine: UpdatePurchaseOrderLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -4782,6 +5097,7 @@ export type Mutations = {
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
   updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
+  updateVvmStatusLog: UpdateVvmStatusResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -4911,6 +5227,11 @@ export type MutationsDeletePrescriptionLineArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsDeletePurchaseOrderLineArgs = {
+  input: DeletePurchaseOrderLineInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsDeleteRequestRequisitionArgs = {
   input: DeleteRequestRequisitionInput;
   storeId: Scalars['String']['input'];
@@ -4928,6 +5249,11 @@ export type MutationsDeleteResponseRequisitionArgs = {
 
 export type MutationsDeleteResponseRequisitionLineArgs = {
   input: DeleteResponseRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteRnrFormArgs = {
+  input: DeleteRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4967,6 +5293,11 @@ export type MutationsInsertAssetLogArgs = {
 
 export type MutationsInsertBarcodeArgs = {
   input: InsertBarcodeInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertClinicianArgs = {
+  input: InsertClinicianInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5087,6 +5418,16 @@ export type MutationsInsertProgramResponseRequisitionArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsInsertPurchaseOrderArgs = {
+  input: InsertPurchaseOrderInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertPurchaseOrderLineArgs = {
+  input: InsertPurchaseOrderLineInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsInsertRepackArgs = {
   input: InsertRepackInput;
   storeId: Scalars['String']['input'];
@@ -5142,8 +5483,27 @@ export type MutationsInsertVaccinationArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsInsertVvmStatusLogArgs = {
+  input: InsertVvmStatusLogInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsLinkPatientToStoreArgs = {
   nameId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsManualSyncArgs = {
+  fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MutationsSaveOutboundShipmentItemLinesArgs = {
+  input: SaveOutboundShipmentLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsSavePrescriptionItemLinesArgs = {
+  input: SavePrescriptionLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5284,6 +5644,11 @@ export type MutationsUpdateProgramPatientArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdatePurchaseOrderLineArgs = {
+  input: UpdatePurchaseOrderLineInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpdateRequestRequisitionArgs = {
   input: UpdateRequestRequisitionInput;
   storeId: Scalars['String']['input'];
@@ -5358,6 +5723,11 @@ export type MutationsUpdateVaccinationArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdateVvmStatusLogArgs = {
+  input: UpdateVvmStatusLogInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUseSuggestedQuantityArgs = {
   input: UseSuggestedQuantityInput;
   storeId: Scalars['String']['input'];
@@ -5416,11 +5786,15 @@ export type NameNode = {
   comment?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['String']['output']>;
   createdDatetime?: Maybe<Scalars['DateTime']['output']>;
+  currency?: Maybe<CurrencyNode>;
   customData?: Maybe<Scalars['JSON']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
+  freightFactor?: Maybe<Scalars['Float']['output']>;
   gender?: Maybe<GenderType>;
+  hshCode?: Maybe<Scalars['String']['output']>;
+  hshName?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   isCustomer: Scalars['Boolean']['output'];
   isDonor: Scalars['Boolean']['output'];
@@ -5430,6 +5804,7 @@ export type NameNode = {
   isSystemName: Scalars['Boolean']['output'];
   isVisible: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
+  margin?: Maybe<Scalars['Float']['output']>;
   name: Scalars['String']['output'];
   phone?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the name properties e.g {"property_key": "value"} */
@@ -5587,6 +5962,11 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
+export type OkResponse = {
+  __typename: 'OkResponse';
+  ok: Scalars['Boolean']['output'];
+};
+
 export type OrderingTooManyItems = UpdateRequestRequisitionErrorInterface &
   UpdateResponseRequisitionErrorInterface & {
     __typename: 'OrderingTooManyItems';
@@ -5633,6 +6013,14 @@ export type OutboundInvoiceCounts = {
   created: InvoiceCountsSummary;
   /** Number of outbound shipments not shipped yet */
   notShipped: Scalars['Int']['output'];
+};
+
+export type OutboundShipmentLineInput = {
+  campaignId?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  numberOfPacks: Scalars['Float']['input'];
+  stockLineId: Scalars['String']['input'];
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type PackagingVariantInput = {
@@ -5881,35 +6269,75 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+/** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
+export type PreferenceDescriptionContext = {
+  storeId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
-  jsonSchema: Scalars['JSON']['output'];
-  key: Scalars['String']['output'];
-  uiSchema: Scalars['JSON']['output'];
+  key: PreferenceKey;
+  /**
+   * WARNING: Type loss - holds any kind of pref value (for edit UI).
+   * Use the PreferencesNode to load the strictly typed value.
+   */
+  value: Scalars['JSON']['output'];
+  valueType: PreferenceValueNodeType;
 };
+
+export enum PreferenceKey {
+  AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
+  CustomTranslations = 'customTranslations',
+  GenderOptions = 'genderOptions',
+  ManageVaccinesInDoses = 'manageVaccinesInDoses',
+  ManageVvmStatusForStock = 'manageVvmStatusForStock',
+  OrderInPacks = 'orderInPacks',
+  ShowContactTracing = 'showContactTracing',
+  SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  UseCampaigns = 'useCampaigns',
+  UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+}
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';
-  upsertPreference: PreferenceNode;
+  upsertPreferences: OkResponse;
 };
 
-export type PreferenceMutationsUpsertPreferenceArgs = {
-  input: UpsertPreferenceInput;
+export type PreferenceMutationsUpsertPreferencesArgs = {
+  input: UpsertPreferencesInput;
   storeId: Scalars['String']['input'];
 };
 
-export type PreferenceNode = {
-  __typename: 'PreferenceNode';
-  id: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  storeId?: Maybe<Scalars['String']['output']>;
-  /** JSON serialized value */
-  value: Scalars['String']['output'];
-};
+export enum PreferenceNodeType {
+  Global = 'GLOBAL',
+  Store = 'STORE',
+}
+
+export enum PreferenceValueNodeType {
+  Boolean = 'BOOLEAN',
+  CustomTranslations = 'CUSTOM_TRANSLATIONS',
+  Integer = 'INTEGER',
+  MultiChoice = 'MULTI_CHOICE',
+}
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  customTranslations: Scalars['JSONObject']['output'];
+  genderOptions: Array<GenderType>;
+  manageVaccinesInDoses: Scalars['Boolean']['output'];
+  manageVvmStatusForStock: Scalars['Boolean']['output'];
+  orderInPacks: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
+  sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  useCampaigns: Scalars['Boolean']['output'];
+  useSimplifiedMobileUi: Scalars['Boolean']['output'];
+};
+
+export type PrescriptionLineInput = {
+  id: Scalars['String']['input'];
+  numberOfPacks: Scalars['Float']['input'];
+  stockLineId: Scalars['String']['input'];
 };
 
 export type PricingNode = {
@@ -6122,6 +6550,7 @@ export type ProgramFilterInput = {
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
 
@@ -6173,6 +6602,20 @@ export type ProgramRequisitionOrderTypeNode = {
   name: Scalars['String']['output'];
 };
 
+export type ProgramSettingNode = {
+  __typename: 'ProgramSettingNode';
+  masterListCode: Scalars['String']['output'];
+  masterListDescription: Scalars['String']['output'];
+  masterListDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  masterListId: Scalars['String']['output'];
+  masterListIsActive: Scalars['Boolean']['output'];
+  masterListIsDefaultPriceList: Scalars['Boolean']['output'];
+  masterListName: Scalars['String']['output'];
+  masterListNameTagId: Scalars['String']['output'];
+  masterListNameTagName: Scalars['String']['output'];
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+};
+
 export enum ProgramSortFieldInput {
   Name = 'name',
 }
@@ -6211,6 +6654,125 @@ export enum PropertyNodeValueType {
   String = 'STRING',
 }
 
+export type PurchaseOrderConnector = {
+  __typename: 'PurchaseOrderConnector';
+  nodes: Array<PurchaseOrderNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PurchaseOrderFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+  supplier?: InputMaybe<StringFilterInput>;
+};
+
+export type PurchaseOrderLineConnector = {
+  __typename: 'PurchaseOrderLineConnector';
+  nodes: Array<PurchaseOrderLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PurchaseOrderLineFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type PurchaseOrderLineNode = {
+  __typename: 'PurchaseOrderLineNode';
+  authorisedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
+  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  item: ItemNode;
+  lineNumber: Scalars['Int']['output'];
+  purchaseOrderId: Scalars['String']['output'];
+  receivedNumberOfUnits: Scalars['Float']['output'];
+  requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  requestedNumberOfUnits: Scalars['Float']['output'];
+  requestedPackSize: Scalars['Float']['output'];
+  stockOnHandInUnits: Scalars['Float']['output'];
+};
+
+export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
+
+export enum PurchaseOrderLineSortFieldInput {
+  ExpectedDeliveryDate = 'expectedDeliveryDate',
+  ItemName = 'itemName',
+  LineNumber = 'lineNumber',
+  RequestedDeliveryDate = 'requestedDeliveryDate',
+}
+
+export type PurchaseOrderLineSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PurchaseOrderLineSortFieldInput;
+};
+
+export type PurchaseOrderLinesResponse = PurchaseOrderLineConnector;
+
+export type PurchaseOrderNode = {
+  __typename: 'PurchaseOrderNode';
+  additionalInstructions?: Maybe<Scalars['String']['output']>;
+  advancePaidDate?: Maybe<Scalars['NaiveDate']['output']>;
+  agentCommission?: Maybe<Scalars['Float']['output']>;
+  authorisingOfficer1?: Maybe<Scalars['String']['output']>;
+  authorisingOfficer2?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  communicationsCharge?: Maybe<Scalars['Float']['output']>;
+  confirmedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  contractSignedDate?: Maybe<Scalars['NaiveDate']['output']>;
+  createdDatetime: Scalars['NaiveDateTime']['output'];
+  currencyId?: Maybe<Scalars['String']['output']>;
+  documentCharge?: Maybe<Scalars['Float']['output']>;
+  donor?: Maybe<NameNode>;
+  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
+  freightCharge?: Maybe<Scalars['Float']['output']>;
+  freightConditions?: Maybe<Scalars['String']['output']>;
+  headingMessage?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  insuranceCharge?: Maybe<Scalars['Float']['output']>;
+  lines: PurchaseOrderLineConnector;
+  number: Scalars['Int']['output'];
+  receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
+  reference?: Maybe<Scalars['String']['output']>;
+  sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  shippingMethod?: Maybe<Scalars['String']['output']>;
+  status: PurchaseOrderNodeStatus;
+  store?: Maybe<StoreNode>;
+  supplier?: Maybe<NameNode>;
+  supplierAgent?: Maybe<Scalars['String']['output']>;
+  supplierDiscountAmount: Scalars['Float']['output'];
+  targetMonths?: Maybe<Scalars['Float']['output']>;
+  user?: Maybe<UserNode>;
+};
+
+export enum PurchaseOrderNodeStatus {
+  Authorised = 'AUTHORISED',
+  Confirmed = 'CONFIRMED',
+  Finalised = 'FINALISED',
+  New = 'NEW',
+}
+
+export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
+
+export enum PurchaseOrderSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  DeliveryDate = 'deliveryDate',
+  Number = 'number',
+  Status = 'status',
+  TargetMonths = 'targetMonths',
+}
+
+export type PurchaseOrderSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PurchaseOrderSortFieldInput;
+};
+
+export type PurchaseOrdersResponse = PurchaseOrderConnector;
+
 export type Queries = {
   __typename: 'Queries';
   abbreviations: Array<AbbreviationNode>;
@@ -6220,7 +6782,10 @@ export type Queries = {
    * `active_start_datetime <= at && active_end_datetime + 1 >= at`
    */
   activeProgramEvents: ProgramEventResponse;
+  activeVvmStatuses: VvmstatusesResponse;
   activityLogs: ActivityLogResponse;
+  /** Queries all reports and their respective versions */
+  allReportVersions: ReportsResponse;
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
@@ -6241,16 +6806,14 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  availablePreferences: Array<PreferenceDescriptionNode>;
   barcodeByGtin: BarcodeResponse;
+  campaigns: CampaignsResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
-  /** Query omSupply "cold_storage_type" entries */
-  coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
+  contacts: ContactsResponse;
   currencies: CurrenciesResponse;
-  customerProgramRequisitionSettings: Array<CustomerProgramRequisitionSettingNode>;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
   demographicProjectionByBaseYear: DemographicProjectionResponse;
@@ -6262,6 +6825,7 @@ export type Queries = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
+  draftStockOutLines: DraftStockOutItemData;
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
@@ -6291,14 +6855,15 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
+  getVvmStatusLogByStockLine: VvmstatusLogResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
-  insertPrescription: InsertPrescriptionResponse;
   insurancePolicies: InsurancesResponse;
   insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
+  /** @deprecated Since 2.8.0. Use reason_options instead */
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -6316,6 +6881,8 @@ export type Queries = {
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   ledger: LedgerResponse;
+  /** Query omSupply "location_type" entries */
+  locationTypes: LocationTypesResponse;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
   logContents: LogNode;
@@ -6336,12 +6903,20 @@ export type Queries = {
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
+  /** The list of preferences and their current values (used for the admin/edit page) */
+  preferenceDescriptions: Array<PreferenceDescriptionNode>;
+  /** Returns the relevant set of preferences based on context (e.g. current store) */
   preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;
+  programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
+  purchaseOrder: PurchaseOrderResponse;
+  purchaseOrderLine: PurchaseOrderLineResponse;
+  purchaseOrderLines: PurchaseOrderLinesResponse;
+  purchaseOrders: PurchaseOrdersResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
   reasonOptions: ReasonOptionResponse;
@@ -6361,6 +6936,7 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
+  /** @deprecated Since 2.8.0. Use reason_options instead */
   returnReasons: ReturnReasonResponse;
   schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
@@ -6402,10 +6978,22 @@ export type QueriesActiveProgramEventsArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesActiveVvmStatusesArgs = {
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesActivityLogsArgs = {
   filter?: InputMaybe<ActivityLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ActivityLogSortInput>>;
+};
+
+export type QueriesAllReportVersionsArgs = {
+  filter?: InputMaybe<ReportFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReportSortInput>>;
+  storeId: Scalars['String']['input'];
+  userLanguage: Scalars['String']['input'];
 };
 
 export type QueriesAssetCatalogueItemArgs = {
@@ -6483,12 +7071,15 @@ export type QueriesAuthTokenArgs = {
   username: Scalars['String']['input'];
 };
 
-export type QueriesAvailablePreferencesArgs = {
+export type QueriesBarcodeByGtinArgs = {
+  gtin: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesBarcodeByGtinArgs = {
-  gtin: Scalars['String']['input'];
+export type QueriesCampaignsArgs = {
+  filter?: InputMaybe<CampaignFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<CampaignSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6504,13 +7095,6 @@ export type QueriesCliniciansArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesColdStorageTypesArgs = {
-  filter?: InputMaybe<ColdStorageTypeFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<ColdStorageTypeSortInput>>;
-  storeId: Scalars['String']['input'];
-};
-
 export type QueriesContactTracesArgs = {
   filter?: InputMaybe<ContactTraceFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -6518,13 +7102,14 @@ export type QueriesContactTracesArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesContactsArgs = {
+  nameId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
-};
-
-export type QueriesCustomerProgramRequisitionSettingsArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export type QueriesDemographicIndicatorsArgs = {
@@ -6578,6 +7163,12 @@ export type QueriesDocumentsArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesDraftStockOutLinesArgs = {
+  invoiceId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesEncounterFieldsArgs = {
   filter?: InputMaybe<EncounterFilterInput>;
   input: EncounterFieldsInput;
@@ -6618,6 +7209,7 @@ export type QueriesGenerateReportDefinitionArgs = {
   arguments?: InputMaybe<Scalars['JSON']['input']>;
   currentLanguage?: InputMaybe<Scalars['String']['input']>;
   dataId?: InputMaybe<Scalars['String']['input']>;
+  excelTemplateBuffer?: InputMaybe<Array<Scalars['Int']['input']>>;
   format?: InputMaybe<PrintFormat>;
   name?: InputMaybe<Scalars['String']['input']>;
   report: Scalars['JSON']['input'];
@@ -6629,14 +7221,14 @@ export type QueriesGenerateSupplierReturnLinesArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesHistoricalStockLinesArgs = {
-  datetime?: InputMaybe<Scalars['DateTime']['input']>;
-  itemId: Scalars['String']['input'];
+export type QueriesGetVvmStatusLogByStockLineArgs = {
+  stockLineId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesInsertPrescriptionArgs = {
-  input: InsertPrescriptionInput;
+export type QueriesHistoricalStockLinesArgs = {
+  datetime?: InputMaybe<Scalars['DateTime']['input']>;
+  itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -6698,9 +7290,8 @@ export type QueriesItemCountsArgs = {
 };
 
 export type QueriesItemLedgerArgs = {
-  filter?: InputMaybe<LedgerFilterInput>;
+  filter?: InputMaybe<ItemLedgerFilterInput>;
   page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<LedgerSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6723,6 +7314,13 @@ export type QueriesItemsArgs = {
 export type QueriesLedgerArgs = {
   filter?: InputMaybe<LedgerFilterInput>;
   sort?: InputMaybe<Array<LedgerSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesLocationTypesArgs = {
+  filter?: InputMaybe<LocationTypeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LocationTypeSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6796,6 +7394,12 @@ export type QueriesPluginGraphqlQueryArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesPreferenceDescriptionsArgs = {
+  prefContext: PreferenceDescriptionContext;
+  prefType: PreferenceNodeType;
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesPreferencesArgs = {
   storeId: Scalars['String']['input'];
 };
@@ -6823,10 +7427,39 @@ export type QueriesProgramIndicatorsArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesProgramRequisitionSettingsByCustomerArgs = {
+  customerNameId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesProgramsArgs = {
   filter?: InputMaybe<ProgramFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderLineArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderLinesArgs = {
+  filter?: InputMaybe<PurchaseOrderLineFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PurchaseOrderLineSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrdersArgs = {
+  filter?: InputMaybe<PurchaseOrderFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PurchaseOrderSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -7063,6 +7696,7 @@ export type ReasonOptionNode = {
 
 export enum ReasonOptionNodeType {
   NegativeInventoryAdjustment = 'NEGATIVE_INVENTORY_ADJUSTMENT',
+  OpenVialWastage = 'OPEN_VIAL_WASTAGE',
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
   RequisitionLineVariance = 'REQUISITION_LINE_VARIANCE',
   ReturnReason = 'RETURN_REASON',
@@ -7117,6 +7751,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteAssetCatalogueItemErrorInterface &
   DeleteAssetErrorInterface &
   DeleteAssetLogReasonErrorInterface &
+  DeleteCampaignErrorInterface &
   DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
   DeleteInboundShipmentErrorInterface &
@@ -7128,6 +7763,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteOutboundShipmentUnallocatedLineErrorInterface &
   DeletePrescriptionErrorInterface &
   DeletePrescriptionLineErrorInterface &
+  DeletePurchaseOrderLineInterface &
   DeleteRequestRequisitionErrorInterface &
   DeleteRequestRequisitionLineErrorInterface &
   DeleteResponseRequisitionErrorInterface &
@@ -7232,6 +7868,7 @@ export enum ReportContext {
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
   Prescription = 'PRESCRIPTION',
+  PurchaseOrder = 'PURCHASE_ORDER',
   Repack = 'REPACK',
   Report = 'REPORT',
   Requisition = 'REQUISITION',
@@ -7250,6 +7887,7 @@ export type ReportFilterInput = {
 export type ReportNode = {
   __typename: 'ReportNode';
   argumentSchema?: Maybe<FormSchemaNode>;
+  code: Scalars['String']['output'];
   context: ReportContext;
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
@@ -7257,13 +7895,16 @@ export type ReportNode = {
   /** Human readable name of the report */
   name: Scalars['String']['output'];
   subContext?: Maybe<Scalars['String']['output']>;
+  version: Scalars['String']['output'];
 };
 
 export type ReportResponse = QueryReportError | ReportNode;
 
 export enum ReportSortFieldInput {
+  Code = 'code',
   Id = 'id',
   Name = 'name',
+  Version = 'version',
 }
 
 export type ReportSortInput = {
@@ -7299,12 +7940,14 @@ export type RequisitionConnector = {
 
 export type RequisitionCounts = {
   __typename: 'RequisitionCounts';
+  emergency: EmergencyResponseRequisitionCounts;
   request: RequestRequisitionCounts;
   response: ResponseRequisitionCounts;
 };
 
 export type RequisitionFilterInput = {
   aShipmentHasBeenCreated?: InputMaybe<Scalars['Boolean']['input']>;
+  automaticallyCreated?: InputMaybe<Scalars['Boolean']['input']>;
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -7312,6 +7955,7 @@ export type RequisitionFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isEmergency?: InputMaybe<Scalars['Boolean']['input']>;
   orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
@@ -7514,11 +8158,13 @@ export enum RequisitionNodeType {
   Response = 'RESPONSE',
 }
 
-export type RequisitionReasonNotProvided = {
-  __typename: 'RequisitionReasonNotProvided';
-  description: Scalars['String']['output'];
-  requisitionLine: RequisitionLineNode;
-};
+export type RequisitionReasonNotProvided =
+  UpdateRequestRequisitionLineErrorInterface &
+    UpdateResponseRequisitionLineErrorInterface & {
+      __typename: 'RequisitionReasonNotProvided';
+      description: Scalars['String']['output'];
+      requisitionLine: RequisitionLineNode;
+    };
 
 export type RequisitionReasonsNotProvided =
   UpdateRequestRequisitionErrorInterface &
@@ -7703,6 +8349,21 @@ export type RnRFormSortInput = {
 };
 
 export type RnRFormsResponse = RnRFormConnector;
+
+export type SaveOutboundShipmentLinesInput = {
+  invoiceId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  lines: Array<OutboundShipmentLineInput>;
+  placeholderQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type SavePrescriptionLinesInput = {
+  invoiceId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  lines: Array<PrescriptionLineInput>;
+  note?: InputMaybe<Scalars['String']['input']>;
+  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
 
 export type ScannedDataParseError = {
   __typename: 'ScannedDataParseError';
@@ -7892,12 +8553,15 @@ export type StockLineNode = {
   availableNumberOfPacks: Scalars['Float']['output'];
   barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   costPricePerPack: Scalars['Float']['output'];
+  donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
@@ -7909,6 +8573,13 @@ export type StockLineNode = {
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
+  vvmStatusLogs?: Maybe<VvmstatusLogConnector>;
+};
+
+export type StockLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type StockLineReducedBelowZero =
@@ -7966,6 +8637,7 @@ export type StocktakeFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramStocktake?: InputMaybe<Scalars['Boolean']['input']>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStocktakeStatusInput>;
   stocktakeDate?: InputMaybe<DateFilterInput>;
   stocktakeNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -7986,6 +8658,7 @@ export type StocktakeLineConnector = {
 export type StocktakeLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -7996,17 +8669,23 @@ export type StocktakeLineNode = {
   comment?: Maybe<Scalars['String']['output']>;
   costPricePerPack?: Maybe<Scalars['Float']['output']>;
   countedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
+  donorId?: Maybe<Scalars['String']['output']>;
+  donorName?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
   item: ItemNode;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
+  reasonOption?: Maybe<ReasonOptionNode>;
   sellPricePerPack?: Maybe<Scalars['Float']['output']>;
   snapshotNumberOfPacks: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
@@ -8014,16 +8693,15 @@ export type StocktakeLineNode = {
 };
 
 export enum StocktakeLineSortFieldInput {
-  /** Stocktake line batch */
   Batch = 'batch',
-  /** Stocktake line expiry date */
+  CountedNumberOfPacks = 'countedNumberOfPacks',
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
-  /** Stocktake line item stock location code */
   LocationCode = 'locationCode',
-  /** Stocktake line pack size */
   PackSize = 'packSize',
+  ReasonOption = 'reasonOption',
+  SnapshotNumberOfPacks = 'snapshotNumberOfPacks',
 }
 
 export type StocktakeLineSortInput = {
@@ -8048,6 +8726,7 @@ export type StocktakeNode = {
   inventoryAdditionId?: Maybe<Scalars['String']['output']>;
   inventoryReduction?: Maybe<InvoiceNode>;
   inventoryReductionId?: Maybe<Scalars['String']['output']>;
+  isInitialStocktake: Scalars['Boolean']['output'];
   isLocked: Scalars['Boolean']['output'];
   lines: StocktakeLineConnector;
   program?: Maybe<ProgramNode>;
@@ -8240,6 +8919,7 @@ export type SupplierReturnLineNode = {
   numberOfPacksToReturn: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
+  reasonOption?: Maybe<ReasonOptionNode>;
   stockLineId: Scalars['String']['output'];
 };
 
@@ -8511,6 +9191,7 @@ export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
     __typename: 'UniqueValueViolation';
     description: Scalars['String']['output'];
@@ -8591,7 +9272,7 @@ export type UpdateCustomerReturnResponse =
   | UpdateCustomerReturnError;
 
 export enum UpdateCustomerReturnStatusInput {
-  Delivered = 'DELIVERED',
+  Received = 'RECEIVED',
   Verified = 'VERIFIED',
 }
 
@@ -8653,6 +9334,11 @@ export type UpdateDisplaySettingsResponse =
   | UpdateDisplaySettingsError
   | UpdateResult;
 
+export type UpdateDonorInput = {
+  applyToLines: ApplyToLinesInput;
+  donorId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateEncounterInput = {
   /** Encounter document data */
   data: Scalars['JSON']['input'];
@@ -8684,6 +9370,7 @@ export type UpdateInboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
+  defaultDonor?: InputMaybe<UpdateDonorInput>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
@@ -8703,17 +9390,22 @@ export type UpdateInboundShipmentLineErrorInterface = {
 
 export type UpdateInboundShipmentLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<NullableStringUpdate>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
+  note?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateInboundShipmentLineResponse =
@@ -8766,6 +9458,7 @@ export type UpdateInboundShipmentServiceLineResponseWithId = {
 
 export enum UpdateInboundShipmentStatusInput {
   Delivered = 'DELIVERED',
+  Received = 'RECEIVED',
   Verified = 'VERIFIED',
 }
 
@@ -8818,8 +9511,8 @@ export type UpdateLocationErrorInterface = {
 
 export type UpdateLocationInput = {
   code?: InputMaybe<Scalars['String']['input']>;
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -8886,6 +9579,7 @@ export type UpdateOutboundShipmentLineInput = {
   prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOutboundShipmentLineResponse =
@@ -9117,6 +9811,17 @@ export type UpdateProgramPatientInput = {
 
 export type UpdateProgramPatientResponse = PatientNode;
 
+export type UpdatePurchaseOrderLineInput = {
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdatePurchaseOrderLineResponse = IdResponse;
+
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';
   error: UpdateRequestRequisitionErrorInterface;
@@ -9304,13 +10009,16 @@ export type UpdateStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<NullableStringUpdate>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateStockLineLineResponse = StockLineNode | UpdateStockLineError;
@@ -9349,13 +10057,16 @@ export type UpdateStocktakeLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
 };
@@ -9446,6 +10157,13 @@ export type UpdateUserNode = {
 
 export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
+export type UpdateVvmStatusLogInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+};
+
+export type UpdateVvmStatusResponse = IdResponse;
+
 export type UpdateVaccinationError = {
   __typename: 'UpdateVaccinationError';
   error: UpdateVaccinationErrorInterface;
@@ -9462,10 +10180,11 @@ export type UpdateVaccinationInput = {
   facilityNameId?: InputMaybe<NullableStringUpdate>;
   given?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
+  itemId?: InputMaybe<NullableStringUpdate>;
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
-  vaccinationDate?: InputMaybe<NullableDateUpdate>;
+  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type UpdateVaccinationResponse =
@@ -9486,8 +10205,8 @@ export type UpdateVaccineCourseInput = {
   demographicId?: InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
-  isActive: Scalars['Boolean']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
+  useInGapsCalculations: Scalars['Boolean']['input'];
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
 };
@@ -9527,6 +10246,24 @@ export type UpsertBundledItemResponse =
   | BundledItemNode
   | UpsertBundledItemError;
 
+export type UpsertCampaignError = {
+  __typename: 'UpsertCampaignError';
+  error: UpsertCampaignErrorInterface;
+};
+
+export type UpsertCampaignErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertCampaignInput = {
+  endDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  startDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+};
+
+export type UpsertCampaignResponse = CampaignNode | UpsertCampaignError;
+
 export type UpsertItemVariantError = {
   __typename: 'UpsertItemVariantError';
   error: UpsertItemVariantErrorInterface;
@@ -9537,12 +10274,13 @@ export type UpsertItemVariantErrorInterface = {
 };
 
 export type UpsertItemVariantInput = {
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  locationTypeId?: InputMaybe<NullableStringUpdate>;
+  manufacturerId?: InputMaybe<NullableStringUpdate>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
+  vvmType?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpsertLogLevelInput = {
@@ -9558,11 +10296,17 @@ export type UpsertPackVariantResponse =
   | ItemVariantNode
   | UpsertItemVariantError;
 
-export type UpsertPreferenceInput = {
-  id: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-  storeId?: InputMaybe<Scalars['String']['input']>;
-  value: Scalars['String']['input'];
+export type UpsertPreferencesInput = {
+  allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
+  genderOptions?: InputMaybe<Array<GenderType>>;
+  manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
+  manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
+  orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
+  showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
+  sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  useCampaigns?: InputMaybe<Scalars['Boolean']['input']>;
+  useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
 export type UpsertVaccineCourseDoseInput = {
@@ -9622,6 +10366,7 @@ export enum UserPermission {
   AssetMutate = 'ASSET_MUTATE',
   AssetMutateViaDataMatrix = 'ASSET_MUTATE_VIA_DATA_MATRIX',
   AssetQuery = 'ASSET_QUERY',
+  CancelFinalisedInvoices = 'CANCEL_FINALISED_INVOICES',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   CustomerReturnMutate = 'CUSTOMER_RETURN_MUTATE',
@@ -9636,6 +10381,7 @@ export enum UserPermission {
   ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
   LogQuery = 'LOG_QUERY',
+  MutateClinician = 'MUTATE_CLINICIAN',
   NamePropertiesMutate = 'NAME_PROPERTIES_MUTATE',
   OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',
   OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
@@ -9643,6 +10389,9 @@ export enum UserPermission {
   PatientQuery = 'PATIENT_QUERY',
   PrescriptionMutate = 'PRESCRIPTION_MUTATE',
   PrescriptionQuery = 'PRESCRIPTION_QUERY',
+  PurchaseOrderAuthorise = 'PURCHASE_ORDER_AUTHORISE',
+  PurchaseOrderMutate = 'PURCHASE_ORDER_MUTATE',
+  PurchaseOrderQuery = 'PURCHASE_ORDER_QUERY',
   Report = 'REPORT',
   RequisitionCreateOutboundShipment = 'REQUISITION_CREATE_OUTBOUND_SHIPMENT',
   RequisitionMutate = 'REQUISITION_MUTATE',
@@ -9662,6 +10411,7 @@ export enum UserPermission {
   SupplierReturnQuery = 'SUPPLIER_RETURN_QUERY',
   TemperatureBreachQuery = 'TEMPERATURE_BREACH_QUERY',
   TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY',
+  ViewAndEditVvmStatus = 'VIEW_AND_EDIT_VVM_STATUS',
 }
 
 export type UserResponse = UserNode;
@@ -9750,12 +10500,14 @@ export type VaccinationNode = {
   facilityName?: Maybe<Scalars['String']['output']>;
   facilityNameId?: Maybe<Scalars['String']['output']>;
   given: Scalars['Boolean']['output'];
+  givenStoreId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   invoice?: Maybe<InvoiceNode>;
   invoiceId?: Maybe<Scalars['String']['output']>;
+  item?: Maybe<ItemNode>;
   notGivenReason?: Maybe<Scalars['String']['output']>;
   stockLine?: Maybe<StockLineNode>;
-  vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  vaccinationDate: Scalars['NaiveDate']['output'];
 };
 
 export type VaccineCourseConnector = {
@@ -9818,9 +10570,9 @@ export type VaccineCourseNode = {
   demographic?: Maybe<DemographicNode>;
   demographicId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   programId: Scalars['String']['output'];
+  useInGapsCalculations: Scalars['Boolean']['output'];
   vaccineCourseDoses?: Maybe<Array<VaccineCourseDoseNode>>;
   vaccineCourseItems?: Maybe<Array<VaccineCourseItemNode>>;
   wastageRate: Scalars['Float']['output'];
@@ -9850,3 +10602,49 @@ export enum VenCategoryType {
   NotAssigned = 'NOT_ASSIGNED',
   V = 'V',
 }
+
+export type VvmstatusConnector = {
+  __typename: 'VvmstatusConnector';
+  nodes: Array<VvmstatusNode>;
+};
+
+export type VvmstatusLogConnector = {
+  __typename: 'VvmstatusLogConnector';
+  nodes: Array<VvmstatusLogNode>;
+};
+
+export type VvmstatusLogNode = {
+  __typename: 'VvmstatusLogNode';
+  comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  invoiceLineId?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<VvmstatusNode>;
+  stockLine?: Maybe<StockLineNode>;
+  user?: Maybe<UserNode>;
+};
+
+export type VvmstatusLogResponse = VvmstatusLogConnector;
+
+export type VvmstatusNode = {
+  __typename: 'VvmstatusNode';
+  code: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  level: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  unusable: Scalars['Boolean']['output'];
+};
+
+export type VvmstatusesResponse = VvmstatusConnector;
+
+export type WarningNode = {
+  __typename: 'WarningNode';
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  priority: Scalars['Boolean']['output'];
+  warningId: Scalars['String']['output'];
+  warningText: Scalars['String']['output'];
+};

@@ -26,8 +26,13 @@ const parseValue = <T, K extends keyof T>(object: T, key: K) => {
 };
 
 const getSortByExpiry =
-  (desc = false) =>
+  (desc = false, nonExpiringLast = false) =>
   (a: { expiryDate?: string | null }, b: { expiryDate?: string | null }) => {
+    if (nonExpiringLast) {
+      if (!a.expiryDate) return 1;
+      if (!b.expiryDate) return -1;
+    }
+
     const expiryA = new Date(a.expiryDate ?? '');
     const expiryB = new Date(b.expiryDate ?? '');
 
@@ -39,6 +44,31 @@ const getSortByExpiry =
     }
 
     return 0;
+  };
+
+const getSortByVVMStatus =
+  () =>
+  (
+    a: { vvmStatus?: { level?: number } | null; expiryDate?: string | null },
+    b: { vvmStatus?: { level?: number } | null; expiryDate?: string | null }
+  ) => {
+    // VVM level is the priority order of issuing (1 first)
+    // This does not match VVM Status Stage (e.g. Stage 2 should be issued first, i.e. would be level 1)
+    const aLevel = a.vvmStatus?.level;
+    const bLevel = b.vvmStatus?.level;
+
+    if (aLevel !== undefined && bLevel !== undefined) {
+      if (aLevel < bLevel) return -1;
+      if (aLevel > bLevel) return 1;
+    } else if (aLevel !== undefined) {
+      return -1;
+    } else if (bLevel !== undefined) {
+      return 1;
+    }
+
+    const expirySort = getSortByExpiry(false, true)(a, b);
+
+    return expirySort;
   };
 
 export const SortUtils = {
@@ -59,5 +89,7 @@ export const SortUtils = {
       return sortValues(valueA, valueB, desc);
     },
   byExpiryAsc: getSortByExpiry(false),
+  byExpiryAscNonExpiringLast: getSortByExpiry(false, true),
   byExpiryDesc: getSortByExpiry(true),
+  byVVMStatusAsc: getSortByVVMStatus(),
 };

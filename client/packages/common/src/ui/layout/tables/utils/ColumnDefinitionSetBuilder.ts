@@ -49,7 +49,8 @@ export type ColumnKey =
   | 'availableNumberOfPacks'
   | 'numberOfPacksToReturn'
   | 'numberOfPacksReturned'
-  | 'availableStockOnHand';
+  | 'availableStockOnHand'
+  | 'note';
 
 export const getColumnLookupWithOverrides = <T extends RecordWithId>(
   columnKey: ColumnKey,
@@ -303,11 +304,17 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'availableNumberOfPacks',
     width: 125,
     align: ColumnAlign.Right,
+    Cell: NumberCell,
   },
   returnReason: {
     label: 'label.reason',
     key: 'returnReason',
     width: 200,
+  },
+  note: {
+    label: 'label.comment',
+    key: 'note',
+    width: 250,
   },
 });
 

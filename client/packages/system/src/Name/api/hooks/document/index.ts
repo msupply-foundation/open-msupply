@@ -4,15 +4,15 @@ import { useManufacturers } from './useManufacturers';
 import { useInternalSuppliers } from './useInternalSuppliers';
 import { useName } from './useName';
 import { useNames } from './useNames';
-import { useFacilities } from './useFacilities';
+import { useStores } from './useStores';
 import { useDonors } from './useDonors';
 import { useNameProperties } from './useNameProperties';
 import { useUpdateProperties } from './useUpdateProperties';
-import { useFacilitiesAll } from './useFacilitiesAll';
+import { useStoresAll } from './useStoresAll';
 
 export const Document = {
   useCustomers,
-  useFacilities,
+  useStores,
   useSuppliers,
   useManufacturers,
   useInternalSuppliers,
@@ -21,5 +21,5 @@ export const Document = {
   useNames,
   useDonors,
   useNameProperties,
-  useFacilitiesAll,
+  useStoresAll,
 };

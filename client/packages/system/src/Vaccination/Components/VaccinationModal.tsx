@@ -10,35 +10,37 @@ import {
   Grid,
   InputWithLabelRow,
   Link,
+  LoadingButton,
   Radio,
   RadioGroup,
   RouteBuilder,
+  SaveIcon,
   Select,
-  Switch,
+  useAuthContext,
   useDialog,
   useFormatDateTime,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import { FormControlLabel, Typography } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import {
+  VaccinationCardItemFragment,
   VaccinationCourseDoseFragment,
   VaccinationDetailFragment,
 } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
-import { getSwitchReason } from './getSwitchReason';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 import { useClinicians } from '@openmsupply-client/programs';
+import { useConfirmEarlyVaccination } from './useConfirmEarlyVaccination';
 
 interface VaccinationModalProps {
-  vaccinationId: string | undefined;
   encounterId?: string;
-  vaccineCourseDoseId: string;
+  cardRow: VaccinationCardItemFragment;
   isOpen: boolean;
   onClose: () => void;
   defaultClinician?: Clinician;
@@ -48,14 +50,14 @@ interface VaccinationModalProps {
 export const VaccinationModal = ({
   isOpen,
   onClose,
-  vaccineCourseDoseId,
   encounterId,
-  vaccinationId,
+  cardRow,
   defaultClinician,
   onOk,
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
+  const [isSaving, setIsSaving] = useState(false);
   const {
     draft,
     updateDraft,
@@ -65,41 +67,52 @@ export const VaccinationModal = ({
     saveVaccination,
   } = useVaccination({
     encounterId,
-    vaccineCourseDoseId,
-    vaccinationId,
+    cardRow,
     defaultClinician,
   });
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const save = useConfirmNoStockLineSelected(
+  const onSave = async () => {
+    try {
+      setIsSaving(true);
+      const result = await saveVaccination(draft);
+      setIsSaving(false);
+
+      if (result?.__typename === 'VaccinationNode') {
+        result?.invoice?.id && draft.createTransactions
+          ? success(t('messages.vaccination-saved-and-stock-recorded'))()
+          : success(t('messages.vaccination-saved'))();
+        onOk();
+        onClose();
+      }
+
+      if (result?.__typename === 'UpdateVaccinationError') {
+        if (result.error.__typename === 'NotMostRecentGivenDose') {
+          const errorSnack = error(t('error.not-most-recent-given-dose'));
+          errorSnack();
+        }
+      }
+    } catch (e) {
+      setIsSaving(false);
+      console.error(e);
+      error(t('error.something-wrong'))();
+    }
+  };
+
+  const confirmNoStockLine = useConfirmNoStockLineSelected(
     draft,
     !!dose?.vaccineCourse.vaccineCourseItems?.length,
-    async () => {
-      try {
-        const result = await saveVaccination(draft);
-
-        if (result?.__typename === 'VaccinationNode') {
-          result?.invoice?.id && draft.createTransactions
-            ? success(t('messages.vaccination-saved-and-stock-recorded'))()
-            : success(t('messages.vaccination-saved'))();
-          onOk();
-          onClose();
-        }
-
-        if (result?.__typename === 'UpdateVaccinationError') {
-          if (result.error.__typename === 'NotMostRecentGivenDose') {
-            const errorSnack = error(t('error.not-most-recent-given-dose'));
-            errorSnack();
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    onSave
   );
 
-  const InfoBox = <GivenInfoBox vaccination={vaccination} />;
+  const save = useConfirmEarlyVaccination(
+    cardRow.suggestedDate,
+    draft,
+    confirmNoStockLine
+  );
+
+  const InfoBox = <VaccineInfoBox vaccination={vaccination} />;
 
   const modalContent = isLoading ? (
     <BasicSpinner />
@@ -120,9 +133,13 @@ export const VaccinationModal = ({
       title={dose?.label ?? t('label.vaccination')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
-        <DialogButton
+        <LoadingButton
+          label={t('button.save')}
+          isLoading={isSaving}
           disabled={!isDirty || !isComplete}
-          variant="ok"
+          startIcon={<SaveIcon />}
+          variant="contained"
+          color="secondary"
           onClick={save}
         />
       }
@@ -148,6 +165,7 @@ const VaccinationForm = ({
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
+  const { store, storeId } = useAuthContext();
 
   const { data: clinicians } = useClinicians.document.list({});
   const hasClinicians = clinicians?.nodes.length !== 0;
@@ -155,36 +173,12 @@ const VaccinationForm = ({
   if (!dose) {
     return null;
   }
+  const givenAtOtherStore =
+    !!vaccination?.given && vaccination.givenStoreId !== storeId;
 
-  const transactionSwitchReason = getSwitchReason(
-    draft,
-    !!dose.vaccineCourse.vaccineCourseItems?.length,
-    vaccination
-  );
-  const CreateTransactions = transactionSwitchReason ? (
-    <Switch
-      label={t(transactionSwitchReason)}
-      checked={draft.createTransactions}
-      onChange={() =>
-        updateDraft({
-          createTransactions: !draft.createTransactions,
-        })
-      }
-      labelPlacement="end"
-      size="small"
-    />
-  ) : null;
-
-  const SelectBatch = (
-    <SelectItemAndBatch
-      dose={dose}
-      draft={draft}
-      updateDraft={updateDraft}
-      hasExistingSelectedBatch={!!vaccination?.stockLine}
-    />
-  );
-
-  const isOtherFacility = draft.facilityId === OTHER_FACILITY;
+  const isFreeTextFacility = draft.facilityId === OTHER_FACILITY;
+  const isOtherFacility =
+    !!draft.facilityId && draft.facilityId !== store?.nameId;
 
   return (
     <Container
@@ -203,9 +197,11 @@ const VaccinationForm = ({
                 })
               }
               facilityId={draft.facilityId}
+              enteredAtOtherFacility={draft.enteredAtOtherFacility}
+              disabled={givenAtOtherStore}
             />
 
-            {isOtherFacility && (
+            {isFreeTextFacility && (
               <BasicTextInput
                 fullWidth
                 autoFocus
@@ -241,6 +237,7 @@ const VaccinationForm = ({
         label={t('label.date')}
         Input={
           <DatePicker
+            disabled={givenAtOtherStore}
             disableFuture
             value={draft.date}
             onChange={date => updateDraft({ date })}
@@ -252,33 +249,35 @@ const VaccinationForm = ({
         sx={{ margin: '0 auto' }}
         value={draft.given ?? null}
         onChange={event =>
-          updateDraft({ given: event.target.value === 'true' })
+          updateDraft({
+            given: event.target.value === 'true',
+            // Ensure current facility is selected when changing given status
+            facilityId: isFreeTextFacility ? OTHER_FACILITY : store?.nameId,
+          })
         }
       >
         <FormControlLabel
+          disabled={givenAtOtherStore}
           value={true}
           control={<Radio />}
           label={t('label.vaccine-given')}
         />
         <FormControlLabel
+          disabled={givenAtOtherStore}
           value={false}
           control={<Radio />}
           label={t('label.vaccine-not-given')}
         />
       </RadioGroup>
 
-      {/* Switch makes more sense below the batch selection if you're updating the batch */}
-      {transactionSwitchReason === 'label.update-transactions' ? (
-        <>
-          {SelectBatch}
-          {CreateTransactions}
-        </>
-      ) : (
-        <>
-          {CreateTransactions}
-          {SelectBatch}
-        </>
-      )}
+      <SelectItemAndBatch
+        draft={draft}
+        vaccination={vaccination}
+        isOtherFacility={isOtherFacility}
+        dose={dose}
+        updateDraft={updateDraft}
+        givenAtOtherStore={givenAtOtherStore}
+      />
 
       {draft.given === false && (
         <>
@@ -337,44 +336,46 @@ const VaccinationForm = ({
   );
 };
 
-const GivenInfoBox = ({
+const VaccineInfoBox = ({
   vaccination,
 }: {
   vaccination: VaccinationDetailFragment | null | undefined;
 }) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
+  const { store } = useAuthContext();
+  const prescriptionCreatedAtStore = vaccination?.givenStoreId === store?.id;
 
-  if (vaccination?.given) {
-    return (
-      <Alert severity="success">
-        <Box display="flex" alignItems="center">
-          {t('messages.vaccination-was-given', {
-            date: localisedDate(vaccination.vaccinationDate ?? ''),
-          })}
-          {vaccination.invoice && (
-            <Link
-              style={{
-                marginLeft: 6,
-                fontWeight: 'bold',
-                alignItems: 'center',
-                display: 'flex',
+  return vaccination?.given ? (
+    <Alert severity="success">
+      <Box display="flex" alignItems="center">
+        {t('messages.vaccination-was-given', {
+          date: localisedDate(vaccination.vaccinationDate ?? ''),
+        })}
+        {vaccination.invoice && prescriptionCreatedAtStore && (
+          <Link
+            style={{
+              marginLeft: 6,
+              fontWeight: 'bold',
+              alignItems: 'center',
+              display: 'flex',
+            }}
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Prescription)
+              .addPart(vaccination.invoice.id)
+              .build()}
+          >
+            {t('button.view-prescription')}
+            <ChevronDownIcon
+              sx={{
+                transform: 'rotate(-90deg)',
               }}
-              to={RouteBuilder.create(AppRoute.Dispensary)
-                .addPart(AppRoute.Prescription)
-                .addPart(vaccination.invoice.id)
-                .build()}
-            >
-              {t('button.view-prescription')}
-              <ChevronDownIcon
-                sx={{
-                  transform: 'rotate(-90deg)',
-                }}
-              />
-            </Link>
-          )}
-        </Box>
-      </Alert>
-    );
-  }
+            />
+          </Link>
+        )}
+      </Box>
+    </Alert>
+  ) : (
+    <Alert severity="warning">{t('warning.check-before-vaccinating')}</Alert>
+  );
 };

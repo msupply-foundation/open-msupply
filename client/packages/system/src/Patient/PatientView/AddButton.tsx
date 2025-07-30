@@ -6,7 +6,8 @@ import {
   PlusCircleIcon,
   useUrlQuery,
   UserStoreNodeFragment,
-  usePreferences,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import {
   PatientModal,
@@ -30,7 +31,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
 }) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const { data: preferences } = usePreferences();
+  const { data: preferences } = usePreference(PreferenceKey.ShowContactTracing);
   const currentUrlTab = urlQuery['tab'];
   const { createNewPatient } = usePatientStore();
   const { setModal: selectModal, reset } = usePatientModalStore();

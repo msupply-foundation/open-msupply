@@ -1,18 +1,16 @@
-use crate::sync::{
-    sync_serde::{
-        date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_string, naive_time, zero_date_as_option,
-    },
-    translations::{invoice::InvoiceTranslation, store::StoreTranslation},
-};
+use crate::sync::translations::{invoice::InvoiceTranslation, store::StoreTranslation};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{
+    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
+    empty_str_as_option_string, naive_time, zero_date_as_option,
+};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum LegacyStocktakeStatus {
@@ -82,6 +80,9 @@ pub struct LegacyStocktakeRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub verified_by: Option<String>,
+    #[serde(rename = "om_is_initial_stocktake")]
+    #[serde(default)]
+    pub is_initial_stocktake: bool,
 }
 
 // Needs to be added to all_translators()
@@ -151,6 +152,7 @@ impl SyncTranslation for StocktakeTranslation {
             program_id: data.program_id,
             counted_by: data.counted_by,
             verified_by: data.verified_by,
+            is_initial_stocktake: data.is_initial_stocktake,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -178,6 +180,7 @@ impl SyncTranslation for StocktakeTranslation {
             program_id,
             counted_by,
             verified_by,
+            is_initial_stocktake,
         } = StocktakeRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
@@ -195,12 +198,13 @@ impl SyncTranslation for StocktakeTranslation {
             inventory_reduction_id,
             serial_number: stocktake_number,
             stock_take_created_date: date_from_date_time(&created_datetime),
-            stock_take_time: created_datetime.time(),
+            stock_take_time: to_legacy_time(created_datetime),
             created_datetime: Some(created_datetime),
             finalised_datetime,
             program_id,
             counted_by,
             verified_by,
+            is_initial_stocktake,
         };
 
         Ok(PushTranslateResult::upsert(

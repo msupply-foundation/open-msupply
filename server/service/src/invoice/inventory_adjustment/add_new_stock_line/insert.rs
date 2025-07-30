@@ -25,9 +25,12 @@ pub struct AddNewStockLine {
     pub batch: Option<String>,
     pub location: Option<NullableUpdate<String>>,
     pub expiry_date: Option<NaiveDate>,
-    pub inventory_adjustment_reason_id: Option<String>,
+    pub reason_option_id: Option<String>,
     pub barcode: Option<String>,
     pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
+    pub donor_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -68,9 +71,9 @@ pub fn add_new_stock_line(
 
             // Add inventory adjustment reason to the invoice line
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
-            invoice_line_repo.update_inventory_adjustment_reason_id(
+            invoice_line_repo.update_reason_option_id(
                 &update_inventory_adjustment_reason.invoice_line_id,
-                update_inventory_adjustment_reason.reason_id,
+                update_inventory_adjustment_reason.reason_option_id,
             )?;
 
             // Set invoice to verified
@@ -118,11 +121,12 @@ mod test {
     use repository::{
         mock::{
             mock_item_a, mock_location_1, mock_stock_line_a, mock_store_a, mock_user_account_a,
-            MockData, MockDataInserts,
+            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentType, InvoiceFilter,
-        InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, InvoiceStatus,
+        vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
+        EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
+        InvoiceStatus, ReasonOptionRow, ReasonOptionType,
     };
     use util::inline_edit;
 
@@ -138,19 +142,19 @@ mod test {
 
     #[actix_rt::test]
     async fn add_new_stock_line_errors() {
-        fn addition_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn addition_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "addition".to_string(),
                 reason: "test addition".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Positive,
+                r#type: ReasonOptionType::PositiveInventoryAdjustment,
             }
         }
         let (_, _, connection_manager, _) = setup_all_with_data(
             "add_new_stock_line_errors",
             MockDataInserts::all(),
             MockData {
-                inventory_adjustment_reasons: vec![addition_reason()],
+                reason_options: vec![addition_reason()],
                 ..Default::default()
             },
         )
@@ -181,7 +185,7 @@ mod test {
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
                     number_of_packs: 1.0,
-                    inventory_adjustment_reason_id: None,
+                    reason_option_id: None,
                     ..Default::default()
                 }
             ),
@@ -195,7 +199,7 @@ mod test {
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
                     number_of_packs: 2.0,
-                    inventory_adjustment_reason_id: Some("invalid".to_string()),
+                    reason_option_id: Some("invalid".to_string()),
                     ..Default::default()
                 }
             ),
@@ -220,19 +224,19 @@ mod test {
 
     #[actix_rt::test]
     async fn add_new_stock_line_success() {
-        fn addition_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn addition_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "addition".to_string(),
                 reason: "test addition".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Positive,
+                r#type: ReasonOptionType::PositiveInventoryAdjustment,
             }
         }
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "add_new_stock_line_success",
             MockDataInserts::all(),
             MockData {
-                inventory_adjustment_reasons: vec![addition_reason()],
+                reason_options: vec![addition_reason()],
                 ..Default::default()
             },
         )
@@ -252,7 +256,7 @@ mod test {
                     pack_size: 1.0,
                     number_of_packs: 2.0,
                     item_id: mock_item_a().id,
-                    inventory_adjustment_reason_id: Some(addition_reason().id),
+                    reason_option_id: Some(addition_reason().id),
                     on_hold: true,
                     location: Some(NullableUpdate {
                         value: Some(mock_location_1().id),
@@ -307,10 +311,52 @@ mod test {
             invoice_line_row,
             inline_edit(&invoice_line_row, |mut u| {
                 u.number_of_packs = 2.0;
-                u.inventory_adjustment_reason_id = Some(addition_reason().id);
+                u.reason_option_id = Some(addition_reason().id);
                 u
             })
         );
+
+        let new_stock_line = service
+            .add_new_stock_line(
+                &context,
+                AddNewStockLine {
+                    stock_line_id: "new_vaccine".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 2.0,
+                    item_id: mock_vaccine_item_a().id,
+                    reason_option_id: Some(addition_reason().id),
+                    vvm_status_id: Some(mock_vvm_status_a().id),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stock_line_id = new_stock_line.stock_line_row.id.clone();
+        let invoice = InvoiceRepository::new(&connection)
+            .query_by_filter(InvoiceFilter::new().stock_line_id(stock_line_id.clone()))
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        let invoice_lines = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id)),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        let vvm_status_log = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(
+                VVMStatusLogFilter::new()
+                    .stock_line_id(EqualFilter::equal_to(&stock_line_id))
+                    .invoice_line_id(EqualFilter::equal_to(&invoice_lines.invoice_line_row.id)),
+            )
+            .unwrap()
+            .pop();
+
+        assert!(new_stock_line.vvm_status_row.is_some());
+        assert!(vvm_status_log.is_some());
     }
 
     #[actix_rt::test]
@@ -334,7 +380,7 @@ mod test {
                 pack_size: 1.0,
                 number_of_packs: 2.0,
                 item_id: mock_item_a().id,
-                inventory_adjustment_reason_id: None, // Check *no* error when reasons not defined and not provided
+                reason_option_id: None, // Check *no* error when reasons not defined and not provided
                 ..Default::default()
             },
         );

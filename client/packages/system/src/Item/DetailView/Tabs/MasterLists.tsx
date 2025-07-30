@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   MasterListRowFragment,
   useMasterLists,
@@ -13,18 +13,22 @@ import {
   createQueryParamsStore,
   TooltipTextCell,
   useTranslation,
+  useAuthContext,
 } from '@openmsupply-client/common';
 
 const MasterListsTable = ({ itemId }: { itemId?: string }) => {
+  const t = useTranslation();
+  const { store } = useAuthContext();
+
   const { data, isLoading } = useMasterLists({
     queryParams: {
       filterBy: {
-        existsForStoreId: { equalTo: 'storeId' },
+        existsForStoreId: { equalTo: store?.id },
         itemId: { equalTo: itemId ?? '' },
       },
     },
   });
-  const t = useTranslation();
+
   const columns = useColumns<MasterListRowFragment>([
     ['code', { Cell: TooltipTextCell }],
     ['name', { width: 200, Cell: TooltipTextCell }],
@@ -32,7 +36,6 @@ const MasterListsTable = ({ itemId }: { itemId?: string }) => {
   ]);
 
   if (isLoading) return <BasicSpinner />;
-
   return (
     <DataTable
       id="master-list-detail"
@@ -43,9 +46,9 @@ const MasterListsTable = ({ itemId }: { itemId?: string }) => {
   );
 };
 
-export const MasterListsTab: FC<{ itemId?: string }> = ({ itemId }) => (
-  <Box justifyContent="center" display="flex" flex={1} paddingTop={3}>
-    <Box flex={1} display="flex" style={{ maxWidth: 1000 }}>
+export const MasterListsTab = ({ itemId }: { itemId?: string }) => (
+  <Box justifyContent="center" display="flex" flex={1}>
+    <Box flex={1} display="flex">
       <TableProvider
         createStore={createTableStore}
         queryParamsStore={createQueryParamsStore({

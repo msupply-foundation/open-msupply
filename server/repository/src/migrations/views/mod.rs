@@ -4,11 +4,15 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
     log::info!("Dropping database views...");
     sql!(
         connection,
+        // Drop order is important here, as some views depend on others. Please
+        // check when adding new views.
         r#"
       DROP VIEW IF EXISTS invoice_stats;
       DROP VIEW IF EXISTS consumption;
       DROP VIEW IF EXISTS replenishment;
       DROP VIEW IF EXISTS adjustments;
+      DROP VIEW IF EXISTS item_ledger;
+      DROP VIEW IF EXISTS stock_line_ledger;
       DROP VIEW IF EXISTS stock_movement;
       DROP VIEW IF EXISTS outbound_shipment_stock_movement;
       DROP VIEW IF EXISTS inbound_shipment_stock_movement;
@@ -28,6 +32,7 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
       DROP VIEW IF EXISTS requisitions_in_period;
       DROP VIEW IF EXISTS store_items;
       DROP VIEW IF EXISTS vaccination_card;
+      DROP VIEW IF EXISTS vaccination_course;
     "#
     )?;
 
@@ -65,10 +70,9 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice_line.pack_size,
         invoice_line.note,
         invoice_line.type,
-        invoice_line.inventory_adjustment_reason_id,
+        invoice_line.reason_option_id,
         invoice_line.foreign_currency_price_before_tax,
         invoice_line.item_link_id,
-        invoice_line.return_reason_id,
         item_link.item_id AS item_id,
         CASE
             WHEN "type" = 'STOCK_IN' THEN (number_of_packs * pack_size)
@@ -102,12 +106,12 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         quantity_movement as quantity,
         item_id,
         store_id,
-        delivered_datetime as datetime
+        received_datetime as datetime
     FROM invoice_line_stock_movement 
     JOIN invoice
         ON invoice_line_stock_movement.invoice_id = invoice.id
     WHERE invoice.type = 'INBOUND_SHIPMENT' 
-        AND delivered_datetime IS NOT NULL;
+        AND received_datetime IS NOT NULL;
                     
   CREATE VIEW inventory_adjustment_stock_movement AS
     SELECT
@@ -135,7 +139,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         ) THEN picked_datetime
                     WHEN invoice.type IN (
             'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
-        ) THEN delivered_datetime
+        ) THEN received_datetime
                     WHEN invoice.type IN (
             'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
         ) THEN verified_datetime
@@ -144,8 +148,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice.type AS invoice_type,
         invoice.invoice_number AS invoice_number,
         invoice.id AS invoice_id,
-        inventory_adjustment_reason.reason as inventory_adjustment_reason,
-        return_reason.reason as return_reason,
+        reason_option.reason AS reason,
         stock_line_id,
         invoice_line_stock_movement.expiry_date AS expiry_date,
         invoice_line_stock_movement.batch AS batch,
@@ -157,8 +160,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice_line_stock_movement.number_of_packs as number_of_packs
     FROM
         invoice_line_stock_movement
-        LEFT JOIN inventory_adjustment_reason ON invoice_line_stock_movement.inventory_adjustment_reason_id = inventory_adjustment_reason.id
-        LEFT JOIN return_reason ON invoice_line_stock_movement.return_reason_id = return_reason.id
+        LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
         LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
         JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
         JOIN name_link ON invoice.name_link_id = name_link.id
@@ -166,6 +168,84 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     )
     SELECT * FROM all_movements
     WHERE datetime IS NOT NULL;
+
+
+  -- Separate views for stock & item ledger, so the running balance window functions are only executed when required
+
+  CREATE VIEW stock_line_ledger AS
+    WITH movements_with_precedence AS (
+      SELECT *,
+        CASE
+          WHEN invoice_type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
+          WHEN invoice_type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
+          ELSE 3
+        END AS type_precedence
+      FROM stock_movement
+      WHERE stock_line_id IS NOT NULL
+    )
+    SELECT *,
+      SUM(quantity) OVER (
+        PARTITION BY store_id, stock_line_id
+        ORDER BY datetime, type_precedence
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+      ) AS running_balance
+    FROM movements_with_precedence
+    ORDER BY datetime, type_precedence;
+
+  CREATE VIEW item_ledger AS
+    WITH all_movements AS (
+      SELECT
+        invoice_line_stock_movement.id AS id,
+        quantity_movement AS movement_in_units,
+        invoice_line_stock_movement.item_link_id AS item_id,
+        invoice.store_id as store_id,
+        CASE WHEN invoice.type IN (
+          'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION'
+        ) THEN picked_datetime
+          WHEN invoice.type IN (
+            'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
+        ) THEN received_datetime
+          WHEN invoice.type IN (
+            'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
+        ) THEN verified_datetime
+        ELSE NULL
+        END AS datetime,
+        name,
+        invoice.type AS invoice_type,
+        invoice.invoice_number AS invoice_number,
+        invoice.id AS invoice_id,
+        reason_option.reason AS reason,
+        stock_line_id,
+        invoice_line_stock_movement.expiry_date AS expiry_date,
+        invoice_line_stock_movement.batch AS batch,
+        invoice_line_stock_movement.cost_price_per_pack AS cost_price_per_pack,
+        invoice_line_stock_movement.sell_price_per_pack AS sell_price_per_pack,
+        invoice.status AS invoice_status,
+        invoice_line_stock_movement.total_before_tax AS total_before_tax,
+        invoice_line_stock_movement.pack_size as pack_size,
+        invoice_line_stock_movement.number_of_packs as number_of_packs,
+        CASE
+          WHEN invoice.type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
+          WHEN invoice.type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
+          ELSE 3
+        END AS type_precedence
+    FROM
+        invoice_line_stock_movement
+        LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
+        LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
+        JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
+        JOIN name_link ON invoice.name_link_id = name_link.id
+        JOIN name ON name_link.name_id = name.id
+    )
+    SELECT *,
+      SUM(movement_in_units) OVER (
+        PARTITION BY store_id, item_id
+        ORDER BY datetime, id, type_precedence
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+      ) AS running_balance
+    FROM all_movements
+    WHERE datetime IS NOT NULL  
+    ORDER BY datetime, id, type_precedence;
 
   CREATE VIEW replenishment AS
     SELECT
@@ -441,6 +521,48 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     -- Only show doses that haven't been deleted, unless they have a vaccination
     WHERE vcd.deleted_datetime IS NULL OR v.id IS NOT NULL;
 
+CREATE VIEW vaccination_course AS
+    SELECT
+      vc.id,
+      vc.name AS vaccine_course_name,
+      coverage_rate,
+      wastage_rate,
+      vcd.id AS vaccine_course_dose_id,
+      label AS dose_label,
+      min_interval_days,
+      min_age,
+      max_age,
+      custom_age_label,
+      vci.id AS vaccine_course_item_id,
+      item.id AS item_id,
+      il.id AS item_link_id,
+      item.name AS item_name,
+      item.code AS item_code,
+      item.type AS item_type,
+      item.default_pack_size,
+      item.is_vaccine AS is_vaccine_item,
+      item.vaccine_doses,
+      item.unit_id AS unit_id,
+      unit.name AS unit,
+      unit."index" AS unit_index,
+      d.id AS demographic_id,
+      d.name AS demographic_name,
+      d.population_percentage AS population_percentage,
+      p.id AS program_id,
+      p.name AS program_name
+    FROM
+      vaccine_course vc
+      JOIN vaccine_course_dose vcd ON vc.id = vcd.vaccine_course_id
+      JOIN vaccine_course_item vci ON vci.vaccine_course_id = vc.id
+      JOIN item_link il ON vci.item_link_id = il.id
+      JOIN item ON item.id = il.item_id
+      LEFT JOIN unit ON item.unit_id = unit.id
+      LEFT JOIN demographic d ON d.id = vc.demographic_id
+      JOIN PROGRAM p ON p.id = vc.program_id
+    WHERE
+      vc.deleted_datetime IS NULL
+      AND vcd.deleted_datetime IS NULL
+      AND vci.deleted_datetime IS NULL;
     "#,
     )?;
 
@@ -533,4 +655,30 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use crate::test_db::{setup_test, SetupOption, SetupResult};
+
+    use super::{drop_views, rebuild_views};
+
+    #[actix_rt::test]
+    async fn drop_and_rebuild_views() {
+        // Setup will run initial migrations, which will create the views
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: "drop_and_rebuild_views",
+            ..Default::default()
+        })
+        .await;
+
+        // Ensure views can be dropped and recreated without error
+        drop_views(&connection).unwrap();
+        // Rebuild should be fine, this already happens in our setup_test, but just to be sure :)
+        rebuild_views(&connection).unwrap();
+
+        // Note: what this test does not capture is whether previous views can be dropped
+        // successfully (as we only have current state of the views)
+        // This is handled in CI, the validate-db-migration-with-views workflow
+    }
 }

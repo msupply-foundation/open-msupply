@@ -1,4 +1,7 @@
-use super::{item_row::item, StorageConnection};
+use super::{
+    clinician_link_row::clinician_link, clinician_row::clinician, item_row::item,
+    location_type_row::location_type, StorageConnection,
+};
 use crate::{name_link, repository_error::RepositoryError, Upsert};
 
 use diesel::prelude::*;
@@ -12,6 +15,9 @@ table! {
 
 joinable!(item_link -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_link, name_link);
+allow_tables_to_appear_in_same_query!(item_link, clinician_link);
+allow_tables_to_appear_in_same_query!(item_link, clinician);
+allow_tables_to_appear_in_same_query!(item_link, location_type);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = item_link)]

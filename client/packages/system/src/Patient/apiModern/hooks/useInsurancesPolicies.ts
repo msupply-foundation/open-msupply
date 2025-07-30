@@ -28,8 +28,8 @@ const defaultDraftInsurance: DraftInsurance = {
   nameId: '',
 };
 
-export const useInsurancePolicies = (id: string) => {
-  const { data, isLoading, error } = useGet(id);
+export const useInsurancePolicies = (nameId: string) => {
+  const { data, isLoading, error } = useGet(nameId);
 
   const {
     mutateAsync: createMutation,
@@ -51,8 +51,8 @@ export const useInsurancePolicies = (id: string) => {
   const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
 
   const draft = data
-    ? { ...defaultDraftInsurance, ...selectedInsurance, ...patch, nameId: id }
-    : { ...defaultDraftInsurance, ...patch, nameId: id };
+    ? { ...defaultDraftInsurance, ...selectedInsurance, ...patch, nameId }
+    : { ...defaultDraftInsurance, ...patch, nameId };
 
   const create = async () => {
     const result = await createMutation(draft);
@@ -79,13 +79,13 @@ export const useInsurancePolicies = (id: string) => {
   };
 };
 
-const useGet = (id: string) => {
+const useGet = (nameId: string) => {
   const { patientApi, storeId } = usePatientGraphQL();
 
   const queryFn = async () => {
     const result = await patientApi.insurancePolicies({
       storeId,
-      nameId: id,
+      nameId,
     });
 
     if (result.insurancePolicies.__typename === 'InsuranceConnector') {
@@ -93,7 +93,7 @@ const useGet = (id: string) => {
     }
   };
 
-  const query = useQuery({ queryKey: [INSURANCE_POLICIES], queryFn });
+  const query = useQuery({ queryKey: [INSURANCE_POLICIES, nameId], queryFn });
 
   return query;
 };

@@ -14,6 +14,8 @@ export * from './files';
 export * from './BarcodeScannerContext';
 export * from './item';
 export * from './globalConst';
+export * from './reasons';
+export * from './mappers';
 
 // having issues with tree shaking lodash
 // so we're just importing the functions we need
@@ -28,6 +30,8 @@ import isEqual from 'lodash/isEqual';
 import isEqualWith from 'lodash/isEqualWith';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
+import isBoolean from 'lodash/isBoolean';
+import isNumber from 'lodash/isNumber';
 import keyBy from 'lodash/keyBy';
 import mapKeys from 'lodash/mapKeys';
 import mapValues from 'lodash/mapValues';
@@ -55,5 +59,7 @@ export {
   uniqBy,
   uniqWith,
   isString,
+  isBoolean,
+  isNumber,
   mergeWith,
 };

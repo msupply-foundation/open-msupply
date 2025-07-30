@@ -8,21 +8,20 @@ import {
   QueryParamsProvider,
   createQueryParamsStore,
 } from '@openmsupply-client/common';
-import { useServiceItems } from '../../api';
-import { ServiceItemRowFragment } from '../../api/operations.generated';
+import { ItemRowFragment, useServiceItems } from '../../api';
 
 interface ItemSearchInputProps {
-  onChange: (item: ServiceItemRowFragment | null) => void;
+  onChange: (item: ItemRowFragment | null) => void;
   currentItemId?: string | null;
   disabled?: boolean;
-  extraFilter?: (item: ServiceItemRowFragment) => boolean;
+  extraFilter?: (item: ItemRowFragment) => boolean;
   width?: number;
   autoFocus?: boolean;
   refetchOnMount?: boolean;
 }
 
 const filterOptions = {
-  stringify: (item: ServiceItemRowFragment) => `${item.code} ${item.name}`,
+  stringify: (item: ItemRowFragment) => `${item.code} ${item.name}`,
   limit: 100,
 };
 
@@ -33,7 +32,7 @@ const ItemOption = styled('li')(({ theme }) => ({
 
 export const optionRenderer = (
   props: React.HTMLAttributes<HTMLLIElement>,
-  item: ServiceItemRowFragment
+  item: ItemRowFragment
 ) => (
   <ItemOption {...props} key={item.code}>
     <span style={{ whiteSpace: 'nowrap', width: 500 }}>{item.name}</span>
@@ -78,7 +77,7 @@ const ServiceItemSearchComponent: FC<ItemSearchInputProps> = ({
 
 export const ServiceItemSearchInput = (props: ItemSearchInputProps) => (
   <QueryParamsProvider
-    createStore={createQueryParamsStore<ServiceItemRowFragment>({
+    createStore={createQueryParamsStore<ItemRowFragment>({
       initialSortBy: { key: 'name' },
     })}
   >

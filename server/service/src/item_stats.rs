@@ -140,7 +140,7 @@ pub fn get_stock_on_hand_rows(
     item_ids: Option<Vec<String>>,
 ) -> Result<Vec<StockOnHandRow>, RepositoryError> {
     let filter = StockOnHandFilter {
-        item_id: item_ids.map(|ids| EqualFilter::equal_any(ids)),
+        item_id: item_ids.map(EqualFilter::equal_any),
         store_id: Some(EqualFilter::equal_to(store_id)),
     };
 
@@ -161,8 +161,7 @@ impl ItemStats {
                 item_name: stock_on_hand.item_name.clone(),
                 average_monthly_consumption: amc_by_item
                     .get(&stock_on_hand.item_id)
-                    .map(|r| r.average_monthly_consumption)
-                    .flatten()
+                    .and_then(|r| r.average_monthly_consumption)
                     .unwrap_or_default(),
                 total_consumption: consumption_map
                     .get(&stock_on_hand.item_id)

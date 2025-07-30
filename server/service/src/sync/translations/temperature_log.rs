@@ -1,14 +1,12 @@
-use crate::sync::{
-    sync_serde::{
-        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
-        zero_date_as_option,
-    },
-    translations::{
-        location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
-        temperature_breach::TemperatureBreachTranslation,
-    },
+use crate::sync::translations::{
+    location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
+    temperature_breach::TemperatureBreachTranslation,
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
+    zero_date_as_option,
+};
 
 use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureLogRow,
@@ -16,7 +14,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -130,7 +128,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             location_id,
             store_id,
             date: Some(datetime.date()),
-            time: datetime.time(),
+            time: to_legacy_time(datetime),
             temperature_breach_id,
             datetime: Some(datetime),
         };

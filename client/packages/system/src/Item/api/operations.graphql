@@ -1,11 +1,3 @@
-fragment ServiceItemRow on ItemNode {
-  __typename
-  id
-  code
-  name
-  unitName
-}
-
 fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
@@ -22,9 +14,15 @@ fragment StockLine on StockLineNode {
     name
     code
     unitName
+    defaultPackSize
     doses
+    isVaccine
+    restrictedLocationTypeId
     itemDirections {
       ...ItemDirection
+    }
+    warnings {
+      ...Warning
     }
   }
   note
@@ -35,6 +33,17 @@ fragment StockLine on StockLineNode {
   storeId
   totalNumberOfPacks
   itemVariantId
+
+  donor(storeId: $storeId) {
+    id
+  }
+  vvmStatus {
+    __typename
+    id
+    level
+    unusable
+    description
+  }
 }
 
 fragment ItemRow on ItemNode {
@@ -43,13 +52,9 @@ fragment ItemRow on ItemNode {
   code
   name
   unitName
-}
-
-fragment ItemRowWithDirections on ItemNode {
-  ...ItemRow
-  itemDirections {
-    ...ItemDirection
-  }
+  isVaccine
+  doses
+  restrictedLocationTypeId
 }
 
 fragment ItemDirection on ItemDirectionNode {
@@ -60,6 +65,22 @@ fragment ItemDirection on ItemDirectionNode {
   priority
 }
 
+fragment ItemRowWithWarnings on ItemNode {
+  ...ItemRow
+  warnings {
+    ...Warning
+  }
+}
+
+fragment Warning on WarningNode {
+  __typename
+  warningText
+  id
+  itemId
+  priority
+  code
+}
+
 fragment ItemWithPackSize on ItemNode {
   ...ItemRow
   defaultPackSize
@@ -67,7 +88,9 @@ fragment ItemWithPackSize on ItemNode {
 fragment ItemStockOnHand on ItemNode {
   ...ItemWithPackSize
   availableStockOnHand(storeId: $storeId)
-  ...ItemRowWithDirections
+  itemStoreProperties(storeId: $storeId) {
+    defaultSellPricePerPack
+  }
 }
 fragment ItemRowWithStats on ItemNode {
   ...ItemStockOnHand
@@ -82,7 +105,7 @@ fragment ItemRowWithStats on ItemNode {
   }
 }
 
-fragment ColdStorageType on ColdStorageTypeNode {
+fragment LocationType on LocationTypeNode {
   __typename
   id
   name
@@ -123,13 +146,19 @@ fragment ItemVariant on ItemVariantNode {
   id
   name
   itemId
+  item {
+    id
+    name
+    isVaccine
+    restrictedLocationTypeId
+  }
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow
   }
-  coldStorageTypeId
-  coldStorageType {
-    ...ColdStorageType
+  locationTypeId
+  locationType {
+    ...LocationType
   }
   packagingVariants {
     ...PackagingVariant
@@ -140,6 +169,7 @@ fragment ItemVariant on ItemVariantNode {
   bundlesWith {
     ...BundledItem
   }
+  vvmType
 }
 
 fragment Item on ItemNode {
@@ -162,6 +192,10 @@ fragment Item on ItemNode {
   volumePerOuterPack
   volumePerPack
   weight
+  restrictedLocationTypeId
+  restrictedLocationType {
+    ...LocationType
+  }
   availableStockOnHand(storeId: $storeId)
   availableBatches(storeId: $storeId) {
     __typename
@@ -185,6 +219,9 @@ fragment Item on ItemNode {
   }
   itemDirections {
     ...ItemDirection
+  }
+  itemStoreProperties(storeId: $storeId) {
+    defaultSellPricePerPack
   }
 }
 
@@ -267,6 +304,8 @@ fragment ItemsWithStats on ItemNode {
   name
   unitName
   defaultPackSize
+  isVaccine
+  doses
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
     __typename
@@ -331,16 +370,6 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
-fragment ItemVariantOption on ItemVariantNode {
-  __typename
-  id
-  label: name
-  # To determine if the variant already has other variants bundled to it
-  bundledItemVariants {
-    id
-  }
-}
-
 query itemVariantsConfigured($storeId: String!) {
   itemVariantsConfigured(storeId: $storeId)
 }
@@ -354,8 +383,10 @@ query itemVariants($storeId: String!, $itemId: String!) {
       __typename
       nodes {
         __typename
+        isVaccine
+        restrictedLocationTypeId
         variants {
-          ...ItemVariantOption
+          ...ItemVariant
         }
       }
     }
@@ -418,11 +449,11 @@ mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
   }
 }
 
-query coldStorageTypes($storeId: String!) {
-  coldStorageTypes(storeId: $storeId) {
-    ... on ColdStorageTypeConnector {
+query locationTypes($storeId: String!) {
+  locationTypes(storeId: $storeId, sort: { key: minTemperature, desc: true }) {
+    ... on LocationTypeConnector {
       nodes {
-        ...ColdStorageType
+        ...LocationType
       }
     }
   }
@@ -468,7 +499,7 @@ fragment ItemLedger on ItemLedgerNode {
   invoiceType
   name
   packSize
-  quantity
+  movementInUnits
   reason
   sellPricePerPack
   totalBeforeTax
@@ -476,18 +507,15 @@ fragment ItemLedger on ItemLedgerNode {
 }
 
 query itemLedger(
-  $key: LedgerSortFieldInput!
   $first: Int
   $offset: Int
-  $desc: Boolean
-  $filter: LedgerFilterInput
+  $filter: ItemLedgerFilterInput
   $storeId: String!
 ) {
   itemLedger(
     storeId: $storeId
     filter: $filter
     page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
   ) {
     ... on ItemLedgerConnector {
       __typename

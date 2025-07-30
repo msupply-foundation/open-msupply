@@ -1,13 +1,13 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use dataloader::DataLoader;
-use repository::{Name, NameRow, NameType};
+use repository::{Name, NameRow, NameType, Store, StoreRow};
 
 use graphql_core::{
-    loader::StoreByIdLoader, simple_generic_errors::NodeError,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    simple_generic_errors::NodeError, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use serde::Serialize;
+
+use crate::types::CurrencyNode;
 
 use super::{patient::GenderType, StoreNode};
 
@@ -73,17 +73,13 @@ impl NameNode {
         self.name.is_system_name()
     }
 
-    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let store_id = match self.name.store_id() {
-            Some(store_id) => store_id,
-            None => return Ok(None),
-        };
-
-        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
-        Ok(loader
-            .load_one(store_id.to_string())
-            .await?
-            .map(StoreNode::from_domain))
+    pub async fn store(&self) -> Option<StoreNode> {
+        self.store_row().as_ref().map(|store_row| {
+            StoreNode::from_domain(Store {
+                store_row: store_row.clone(),
+                name_row: self.row().clone(),
+            })
+        })
     }
 
     pub async fn first_name(&self) -> &Option<String> {
@@ -165,6 +161,45 @@ impl NameNode {
             None => "{}".to_string(), // Empty JSON object
         }
     }
+
+    pub async fn hsh_code(&self) -> &Option<String> {
+        &self.row().hsh_code
+    }
+
+    pub async fn hsh_name(&self) -> &Option<String> {
+        &self.row().hsh_name
+    }
+
+    pub async fn margin(&self) -> &Option<f64> {
+        &self.row().margin
+    }
+
+    pub async fn freight_factor(&self) -> &Option<f64> {
+        &self.row().freight_factor
+    }
+
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+        let service_provider = ctx.service_provider();
+        let currency_provider = &service_provider.currency_service;
+        let service_context = &service_provider.basic_context()?;
+
+        let currency_id = if let Some(currency_id) = &self.row().currency_id {
+            currency_id
+        } else {
+            return Ok(None);
+        };
+
+        let currency = currency_provider
+            .get_currency(service_context, currency_id)
+            .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
+            .ok_or(StandardGraphqlError::InternalError(format!(
+                "Cannot find currency ({}) for name ({})",
+                currency_id,
+                self.row().id
+            )))?;
+
+        Ok(Some(CurrencyNode::from_domain(currency)))
+    }
 }
 
 #[derive(Union)]
@@ -183,6 +218,10 @@ impl NameNode {
         NameNode { name }
     }
 
+    pub fn store_row(&self) -> &Option<StoreRow> {
+        &self.name.store_row
+    }
+
     pub fn row(&self) -> &NameRow {
         &self.name.name_row
     }
@@ -193,7 +232,7 @@ mod test {
     use async_graphql::Object;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
-    use repository::{GenderType as GenderRepo, NameRowType};
+    use repository::{GenderType as GenderRepo, NameLinkRow, NameRowType};
     use serde_json::json;
     use util::inline_init;
 
@@ -243,6 +282,10 @@ mod test {
                             r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 5, 15).unwrap());
                             r.custom_data_string = Some(r#"{"check": "check"}"#.to_string());
                         }),
+                        name_link_row: NameLinkRow {
+                            id: "test_id".to_string(),
+                            name_id: "test_id".to_string(),
+                        },
                         name_store_join_row: None,
                         store_row: None,
                         properties: None,

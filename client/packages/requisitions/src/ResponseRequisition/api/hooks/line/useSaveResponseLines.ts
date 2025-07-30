@@ -7,8 +7,7 @@ export const useSaveResponseLines = () => {
   const queryClient = useQueryClient();
   const api = useResponseApi();
 
-  return useMutation(api.updateLine, {
-    onSuccess: () =>
-      queryClient.invalidateQueries(api.keys.detail(responseId)),
+  return useMutation(api.upsertLine, {
+    onSuccess: () => queryClient.invalidateQueries(api.keys.detail(responseId)),
   });
 };

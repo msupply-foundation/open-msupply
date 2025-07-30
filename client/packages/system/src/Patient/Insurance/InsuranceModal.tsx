@@ -1,9 +1,9 @@
-import React, { FC, ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import { useDialog, useNotification } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
-  BaseDatePickerInput,
   BasicTextInput,
+  DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
   NumericTextInput,
@@ -19,7 +19,7 @@ import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
-export const InsuranceModal: FC = (): ReactElement => {
+export const InsuranceModal = (): ReactElement => {
   const t = useTranslation();
   const formatDateTime = useFormatDateTime();
   const { success, error } = useNotification();
@@ -55,6 +55,10 @@ export const InsuranceModal: FC = (): ReactElement => {
 
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
+      // Temp hotfix for when both policy number fields are empty. Will be
+      // improved with new Error State handler
+      if (draft.policyNumberFamily === '' && draft.policyNumberPerson === '')
+        throw new Error('missing policy numbers');
       const result = await create();
       if (result != null) setModal(undefined);
       success(t('messages.insurance-created'))();
@@ -83,7 +87,11 @@ export const InsuranceModal: FC = (): ReactElement => {
       }
       okButton={<DialogButton variant="save" onClick={handleSave} />}
       sx={{
-        '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
+        '& .MuiDialogContent-root': {
+          display: 'flex',
+          alignItems: 'center',
+          margin: '0 auto',
+        },
       }}
     >
       <Stack gap={8} flexDirection="row">
@@ -140,9 +148,9 @@ export const InsuranceModal: FC = (): ReactElement => {
         </Box>
         <Box display="flex" flexDirection="column" gap={2}>
           <InputWithLabelRow
-            label={t('label.expiry-date')}
+            label={t('label.insurance-expiry-date')}
             Input={
-              <BaseDatePickerInput
+              <DateTimePickerInput
                 required
                 value={DateUtils.getNaiveDate(draft.expiryDate)}
                 onChange={date => {
@@ -163,13 +171,14 @@ export const InsuranceModal: FC = (): ReactElement => {
             }}
           />
           <InputWithLabelRow
-            label={t('label.discount-rate')}
+            label={t('label.coverage-rate')}
             Input={
               <NumericTextInput
                 required
                 min={0}
                 decimalLimit={2}
                 value={draft.discountPercentage ?? 0}
+                endAdornment="%"
                 onChange={value => {
                   if (value) {
                     updatePatch({

@@ -31,6 +31,8 @@ pub enum InsertVaccinationError {
     FacilityDoesNotExist,
     ReasonNotProvided,
     StockLineDoesNotExist,
+    StockLineDoesNotMatchItem,
+    ItemDoesNotExist,
     ItemDoesNotBelongToVaccineCourse,
     CreatedRecordNotFound,
     InternalError(String),
@@ -48,6 +50,7 @@ pub struct InsertVaccination {
     pub facility_free_text: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
+    pub item_id: Option<String>,
     pub stock_line_id: Option<String>,
     pub not_given_reason: Option<String>,
 }
@@ -137,9 +140,10 @@ impl From<UpdatePrescriptionError> for InsertVaccinationError {
 mod insert {
     use repository::mock::{
         mock_encounter_a, mock_immunisation_encounter_a, mock_name_1, mock_patient_b,
-        mock_program_a, mock_stock_line_a, mock_stock_line_vaccine_item_a, mock_store_a,
+        mock_program_a, mock_stock_line_b, mock_stock_line_vaccine_item_a, mock_store_a,
         mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_a,
-        mock_vaccine_course_a_dose_b, mock_vaccine_course_a_dose_c, MockData, MockDataInserts,
+        mock_vaccine_course_a_dose_b, mock_vaccine_course_a_dose_c, mock_vaccine_item_a, MockData,
+        MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::{
@@ -328,7 +332,7 @@ mod insert {
             Err(InsertVaccinationError::ReasonNotProvided)
         );
 
-        // StockLineDoesNotExist
+        // ItemDoesNotExist
         assert_eq!(
             service.insert_vaccination(
                 &context,
@@ -339,11 +343,11 @@ mod insert {
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     facility_name_id: Some(mock_name_1().id),
                     given: true,
-                    stock_line_id: Some("non_existent_stock_line_id".to_string()),
+                    item_id: Some("does_not_exist".to_string()),
                     ..Default::default()
                 }
             ),
-            Err(InsertVaccinationError::StockLineDoesNotExist)
+            Err(InsertVaccinationError::ItemDoesNotExist)
         );
 
         // ItemDoesNotBelongToVaccineCourse
@@ -357,11 +361,49 @@ mod insert {
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     facility_name_id: Some(mock_name_1().id),
                     given: true,
-                    stock_line_id: Some(mock_stock_line_a().id), // FOR ITEM A (not linked to vaccine course)
+                    item_id: Some("item_a".to_string()), // Item A not linked to vaccine course
                     ..Default::default()
                 }
             ),
             Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse)
+        );
+
+        // StockLineDoesNotExist
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    facility_name_id: Some(mock_name_1().id),
+                    given: true,
+                    item_id: Some(mock_vaccine_item_a().id),
+                    stock_line_id: Some("non_existent_stock_line_id".to_string()),
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::StockLineDoesNotExist)
+        );
+
+        // StockLineDoesNotMatchItem
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    facility_name_id: Some(mock_name_1().id),
+                    given: true,
+                    item_id: Some(mock_vaccine_item_a().id),
+                    stock_line_id: Some(mock_stock_line_b().id), // Stock line B is not linked to vaccine item A
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::StockLineDoesNotMatchItem)
         );
 
         // Insert dose B as NOT GIVEN
@@ -419,6 +461,7 @@ mod insert {
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     facility_name_id: Some(mock_name_1().id),
                     given: true,
+                    item_id: Some(mock_vaccine_item_a().id),
                     stock_line_id: Some(mock_stock_line_vaccine_item_a().id), // Vaccine item A is linked to vaccine course A
                     ..Default::default()
                 },

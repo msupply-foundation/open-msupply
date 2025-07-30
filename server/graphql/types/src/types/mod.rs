@@ -121,8 +121,8 @@ pub use self::demographic::*;
 pub mod reason_option;
 pub use self::reason_option::*;
 
-pub mod cold_storage_type;
-pub use self::cold_storage_type::*;
+pub mod location_type;
+pub use self::location_type::*;
 
 pub mod abbreviation;
 pub use self::abbreviation::*;
@@ -135,6 +135,28 @@ pub use self::insurance_policy::*;
 
 pub mod insurance_provider;
 pub use self::insurance_provider::*;
+
+pub mod warning;
+pub use self::warning::*;
+
+pub mod vvm_status;
+pub use self::vvm_status::*;
+
+mod campaign;
+pub mod draft_stock_out_line;
+pub use self::draft_stock_out_line::*;
+
+pub mod vvm_status_log;
+pub use self::vvm_status_log::*;
+
+pub mod purchase_order;
+pub use self::purchase_order::*;
+
+pub mod purchase_order_line;
+pub use self::purchase_order_line::*;
+
+pub mod item_store_join;
+pub use self::item_store_join::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
@@ -152,3 +174,13 @@ impl IdResponse {
         &self.0
     }
 }
+
+pub struct OkResponse;
+#[Object]
+impl OkResponse {
+    pub async fn ok(&self) -> bool {
+        true
+    }
+}
+
+pub use campaign::*;

@@ -37,6 +37,7 @@ pub trait ContextExt {
     fn service_provider(&self) -> &ServiceProvider;
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
+    fn get_override_user_id(&self) -> Option<String>;
     fn self_request(&self) -> Option<&BoxedSelfRequest>;
     fn get_settings(&self) -> &Settings;
     fn get_validated_plugins(&self) -> &Mutex<ValidatedPluginBucket>;
@@ -65,6 +66,11 @@ impl<'a> ContextExt for Context<'a> {
             .and_then(|d| d.auth_token.to_owned())
     }
 
+    fn get_override_user_id(&self) -> Option<String> {
+        self.data_opt::<RequestUserData>()
+            .and_then(|d| d.override_user_id.to_owned())
+    }
+
     fn get_settings(&self) -> &Settings {
         self.data_unchecked::<Data<Settings>>()
     }
@@ -85,7 +91,9 @@ impl<'a> ContextExt for Context<'a> {
 
 #[derive(Clone)]
 pub struct RequestUserData {
-    auth_token: Option<String>,
+    // Used for self execution of graphql queries for plugins
+    pub override_user_id: Option<String>,
+    pub auth_token: Option<String>,
     pub refresh_token: Option<String>,
 }
 
@@ -123,6 +131,7 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
     RequestUserData {
         auth_token,
         refresh_token,
+        override_user_id: None,
     }
 }
 
@@ -135,6 +144,7 @@ macro_rules! map_filter {
             equal_any: $from
                 .equal_any
                 .map(|inputs| inputs.into_iter().map($f).collect()),
+            not_equal_to_or_null: None,
             equal_any_or_null: None,
             not_equal_all: None,
             is_null: None,

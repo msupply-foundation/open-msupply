@@ -1,13 +1,6 @@
 import React, { FC, ReactNode } from 'react';
-import {
-  FormLabel,
-  Box,
-  FormLabelProps,
-  StandardTextFieldProps,
-  SxProps,
-  Theme,
-} from '@mui/material';
-import { BasicTextInput } from '@common/components';
+import { FormLabel, Box, FormLabelProps, SxProps, Theme } from '@mui/material';
+import { BasicTextInput, BasicTextInputProps } from '@common/components';
 
 interface InputWithLabelRowProps {
   sx?: SxProps<Theme>;
@@ -16,7 +9,7 @@ interface InputWithLabelRowProps {
   label: string;
   labelWidthPercentage?: number;
   labelProps?: FormLabelProps;
-  inputProps?: StandardTextFieldProps;
+  inputProps?: BasicTextInputProps;
   inputSx?: SxProps<Theme>;
   /** flex-{$inputAlignment} alignment of the input field  */
   inputAlignment?: 'start' | 'end';

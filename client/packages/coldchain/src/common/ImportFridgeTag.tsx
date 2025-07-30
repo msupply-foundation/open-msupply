@@ -3,15 +3,14 @@ import { LoadingButton, useConfirmationModal } from '@common/components';
 import { UploadIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import {
-  useConfirmOnLeaving,
-  useIsExtraSmallScreen,
-  useNotification,
-} from '@common/hooks';
+import { useConfirmOnLeaving, useNotification } from '@common/hooks';
 
 import {
+  Breakpoints,
   RouteBuilder,
+  useAppTheme,
   useAuthContext,
+  useMediaQuery,
   useNavigate,
   useQueryClient,
 } from '@openmsupply-client/common';
@@ -38,7 +37,10 @@ export const ImportFridgeTag = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
-  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
 
   const hiddenFileInput = useRef<HTMLInputElement>(null);
   const { storeId } = useAuthContext();

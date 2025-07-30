@@ -16,7 +16,7 @@ use super::{
     InsertPrescription, InsertPrescriptionError, UpdatePrescription, UpdatePrescriptionError,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct BatchPrescription {
     pub insert_prescription: Option<Vec<InsertPrescription>>,
     pub insert_line: Option<Vec<InsertStockOutLine>>,

@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -21,12 +21,18 @@ import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
 import { Footer } from './Footer';
-import { StockOutLineFragment } from '../../StockOut';
+import { StockOutLineFragment, Draft } from '../../StockOut';
 import { StockOutItem } from '../../types';
 import { HistoryModal } from './History/HistoryModal';
-import { Draft } from '../..';
 
-export const PrescriptionDetailView: FC = () => {
+export const PrescriptionDetailView = () => {
+  const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const navigate = useNavigate();
+  const {
+    query: { data, loading },
+  } = usePrescription();
+
   const {
     entity: historyEntity,
     mode: historyMode,
@@ -35,19 +41,14 @@ export const PrescriptionDetailView: FC = () => {
     isOpen: isHistoryOpen,
     setMode: setHistoryMode,
   } = useEditModal<Draft>();
-  const {
-    query: { data, loading },
-  } = usePrescription();
-  const t = useTranslation();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const navigate = useNavigate();
+
   const onRowClick = useCallback(
-    (item: StockOutLineFragment | StockOutItem) => {
+    (line: StockOutLineFragment) => {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
           .addPart(String(data?.id))
-          .addPart(String(item.id))
+          .addPart(line.item.id)
           .build()
       );
     },

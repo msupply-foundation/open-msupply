@@ -22,14 +22,14 @@ import {
   UNDEFINED_STRING_VALUE,
   BufferedTextInput,
 } from '@openmsupply-client/common';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
 import { canDeleteStocktake } from '../../utils';
 
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation();
 
   const { comment, user, createdDatetime, update, verifiedBy, countedBy } =
-    useStocktake.document.fields([
+    useStocktakeOld.document.fields([
       'comment',
       'user',
       'createdDatetime',
@@ -43,7 +43,7 @@ const AdditionalInfoSection: FC = () => {
   const [bufferedVerifiedBy, setBufferedVerifiedBy] = useBufferState(
     verifiedBy ?? ''
   );
-  const isDisabled = useStocktake.utils.isDisabled();
+  const isDisabled = useStocktakeOld.utils.isDisabled();
   const { localisedDate } = useFormatDateTime();
 
   return (
@@ -113,8 +113,8 @@ export const SidePanel = () => {
   const t = useTranslation();
   const { success } = useNotification();
   const navigate = useNavigate();
-  const { mutateAsync } = useStocktake.document.delete();
-  const { data: stocktake } = useStocktake.document.get();
+  const { mutateAsync } = useStocktakeOld.document.delete();
+  const { data: stocktake } = useStocktakeOld.document.get();
   const canDelete = stocktake ? canDeleteStocktake(stocktake) : false;
 
   const copyToClipboard = () => {

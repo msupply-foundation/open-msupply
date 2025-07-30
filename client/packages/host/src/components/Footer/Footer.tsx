@@ -14,13 +14,14 @@ import {
   CentralIcon,
   useEditModal,
   EditIcon,
-  useTheme,
-  useIsExtraSmallScreen,
   SxProps,
+  useAppTheme,
+  useMediaQuery,
+  Breakpoints,
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
-import { FacilityEditModal, useName } from '@openmsupply-client/system';
+import { StoreEditModal } from '@openmsupply-client/system';
 import { UserDetails } from './UserDetails';
 
 interface PaddedCellProps {
@@ -38,7 +39,10 @@ const PaddedCell: FC<PaddedCellProps> = ({
   tooltip,
   onClick,
 }) => {
-  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
   return (
     <Box
       onClick={onClick}
@@ -73,16 +77,17 @@ const PaddedCell: FC<PaddedCellProps> = ({
   );
 };
 
-export const Footer: FC = () => {
-  const theme = useTheme();
+export const Footer = () => {
   const t = useTranslation();
-  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
   const { user, store } = useAuthContext();
   const { currentLanguageName, getLocalisedFullName } = useIntlUtils();
 
   const isCentralServer = useIsCentralServerApi();
   const { isOpen, onClose, onOpen } = useEditModal();
-  const { data: nameProperties } = useName.document.properties();
 
   const Divider = styled(Box)({
     width: '1px',
@@ -112,14 +117,12 @@ export const Footer: FC = () => {
           tooltip={t('store-details', { ...store })}
         />
       </StoreSelector>
-      {!!nameProperties?.length && (
-        <PaddedCell
-          icon={<EditIcon sx={iconStyles} />}
-          text={t('label.edit')}
-          tooltip={t('label.edit-store-properties')}
-          onClick={onOpen}
-        />
-      )}
+      <PaddedCell
+        icon={<EditIcon sx={iconStyles} />}
+        text={t('label.edit')}
+        tooltip={t('label.edit-store-properties')}
+        onClick={onOpen}
+      />
       {user ? (
         <>
           <Divider />
@@ -150,7 +153,7 @@ export const Footer: FC = () => {
         />
       ) : null}
       {isOpen && (
-        <FacilityEditModal
+        <StoreEditModal
           nameId={store?.nameId ?? ''}
           isOpen={isOpen}
           onClose={onClose}

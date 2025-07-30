@@ -1,9 +1,11 @@
-use super::{BundledItemNode, ColdStorageTypeNode, NameNode};
+use crate::types::LocationTypeNode;
+
+use super::{BundledItemNode, ItemNode, NameNode};
 use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::loader::{
-    BundledItemByBundledItemVariantIdLoader, BundledItemByPrincipalItemVariantIdLoader,
-    ColdStorageTypeLoader, NameByIdLoader, NameByIdLoaderInput,
+    BundledItemByBundledItemVariantIdLoader, BundledItemByPrincipalItemVariantIdLoader, ItemLoader,
+    LocationTypeLoader, NameByIdLoader, NameByIdLoaderInput,
 };
 use graphql_core::{loader::PackagingVariantRowLoader, ContextExt};
 use repository::item_variant::item_variant::ItemVariant;
@@ -33,32 +35,36 @@ impl ItemVariantNode {
     pub async fn item_id(&self) -> &String {
         &self.item.id
     }
-
     pub async fn item_name(&self) -> &String {
         &self.item.name
+    }
+
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<Option<ItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
+        let result = loader.load_one(self.item.id.clone()).await?;
+
+        Ok(result.map(ItemNode::from_domain))
     }
 
     pub async fn manufacturer_id(&self) -> &Option<String> {
         &self.item_variant.manufacturer_link_id // TODO join to name for manufacturer_id https://github.com/msupply-foundation/open-msupply/issues/5241
     }
 
-    pub async fn cold_storage_type_id(&self) -> &Option<String> {
-        &self.item_variant.cold_storage_type_id
+    pub async fn location_type_id(&self) -> &Option<String> {
+        &self.item_variant.location_type_id
     }
 
-    pub async fn cold_storage_type(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<ColdStorageTypeNode>> {
-        let cold_storage_type_id = match &self.item_variant.cold_storage_type_id {
-            Some(cold_storage_type_id) => cold_storage_type_id,
+    pub async fn location_type(&self, ctx: &Context<'_>) -> Result<Option<LocationTypeNode>> {
+        let location_type_id = match &self.item_variant.location_type_id {
+            Some(location_type_id) => location_type_id,
             None => return Ok(None),
         };
 
-        let loader = ctx.get_loader::<DataLoader<ColdStorageTypeLoader>>();
-        let result = loader.load_one(cold_storage_type_id.clone()).await?;
-
-        Ok(result.map(|cold_storage_type| ColdStorageTypeNode::from_domain(cold_storage_type)))
+        let loader = ctx.get_loader::<DataLoader<LocationTypeLoader>>();
+        Ok(loader
+            .load_one(location_type_id.clone())
+            .await?
+            .map(LocationTypeNode::from_domain))
     }
 
     pub async fn manufacturer(
@@ -76,7 +82,7 @@ impl ItemVariantNode {
             .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_link_id))
             .await?;
 
-        Ok(result.map(|manufacturer| NameNode::from_domain(manufacturer)))
+        Ok(result.map(NameNode::from_domain))
     }
 
     pub async fn packaging_variants(&self, ctx: &Context<'_>) -> Result<Vec<PackagingVariantNode>> {
@@ -110,6 +116,10 @@ impl ItemVariantNode {
 
         Ok(BundledItemNode::from_vec(result))
     }
+
+    pub async fn vvm_type(&self) -> &Option<String> {
+        &self.item_variant.vvm_type
+    }
 }
 
 impl ItemVariantNode {
@@ -117,6 +127,8 @@ impl ItemVariantNode {
         ItemVariant {
             item_variant_row,
             item_row,
+            manufacturer_row: _,
+            location_type_row: _,
         }: ItemVariant,
     ) -> ItemVariantNode {
         ItemVariantNode {

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   AppFooterPortal,
@@ -8,17 +8,17 @@ import {
 
 interface FooterProps {
   isSaving: boolean;
-  isDirty: boolean;
+  disabled: boolean;
   handleSave: () => Promise<boolean | void>;
   handleCancel: () => void;
 }
 
-export const Footer: FC<FooterProps> = ({
+export const Footer = ({
   isSaving,
-  isDirty,
+  disabled,
   handleSave,
   handleCancel,
-}) => (
+}: FooterProps) => (
   <AppFooterPortal
     Content={
       isSaving ? (
@@ -41,7 +41,7 @@ export const Footer: FC<FooterProps> = ({
             <DialogButton variant="cancel" onClick={handleCancel} />
             <DialogButton
               variant={'save'}
-              disabled={!isDirty}
+              disabled={disabled}
               onClick={handleSave}
             />
           </Box>

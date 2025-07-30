@@ -16,6 +16,7 @@ fragment FacilityNameRow on NameNode {
   id
   isCustomer
   isSupplier
+  isDonor
   isOnHold
   name
   store {
@@ -49,6 +50,14 @@ fragment Name on NameNode {
     code
   }
   properties
+  hshCode
+  hshName
+  margin
+  freightFactor
+  currency {
+    id
+    code
+  }
 }
 
 fragment Property on PropertyNode {

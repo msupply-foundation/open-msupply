@@ -17,7 +17,7 @@ import {
 } from '../../../utils';
 import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { PaymentsModal } from '../Payments';
-import { Draft } from '../../..';
+import { Draft } from 'packages/invoices/src/StockOut';
 import { useInsuranceProviders } from '@openmsupply-client/system/src';
 
 const getStatusOptions = (

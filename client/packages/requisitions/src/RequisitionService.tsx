@@ -3,13 +3,11 @@ import React, { FC } from 'react';
 import {
   ListView as RequestRequisitionListView,
   DetailView as RequestRequisitionDetailView,
-  RequestLineEditPage,
   IndicatorEditPage as RequestRequisitionIndicatorEditPage,
 } from './RequestRequisition';
 import {
   ListView as ResponseRequisitionListView,
   DetailView as ResponseRequisitionDetailView,
-  ResponseLineEditPage,
   IndicatorEditPage as ResponseRequisitionIndicatorEditPage,
 } from './ResponseRequisition';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
@@ -22,25 +20,18 @@ const customerRequisitionsRoute = RouteBuilder.create(
 const customerRequisitionRoute = RouteBuilder.create(
   AppRoute.CustomerRequisition
 )
-  .addPart(':requisitionId')
-  .build();
-
-const customerRequisitionLineRoute = RouteBuilder.create(
-  AppRoute.CustomerRequisition
-)
-  .addPart(':requisitionId')
-  .addPart(':itemId')
+  .addPart(':id')
   .build();
 
 const indicatorLineRoute = RouteBuilder.create(AppRoute.CustomerRequisition)
-  .addPart(':requisitionId')
+  .addPart(':id')
   .addPart(AppRoute.Indicators)
   .addPart(':programIndicatorCode')
   .addPart(':programIndicatorLineId')
   .build();
 
 const requestIndicatorLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
-  .addPart(':requisitionId')
+  .addPart(':id')
   .addPart(AppRoute.Indicators)
   .addPart(':programIndicatorCode')
   .addPart(':programIndicatorLineId')
@@ -48,12 +39,7 @@ const requestIndicatorLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
 
 const internalOrdersRoute = RouteBuilder.create(AppRoute.InternalOrder).build();
 const internalOrderRoute = RouteBuilder.create(AppRoute.InternalOrder)
-  .addPart(':requisitionId')
-  .build();
-
-const internalOrderLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
-  .addPart(':requisitionId')
-  .addPart(':itemId')
+  .addPart(':id')
   .build();
 
 const rnrFormsRoute = RouteBuilder.create(AppRoute.RnRForms).build();
@@ -74,10 +60,6 @@ export const RequisitionService: FC = () => {
         element={<ResponseRequisitionDetailView />}
       />
       <Route
-        path={customerRequisitionLineRoute}
-        element={<ResponseLineEditPage />}
-      />
-      <Route
         path={indicatorLineRoute}
         element={<ResponseRequisitionIndicatorEditPage />}
       />
@@ -89,7 +71,6 @@ export const RequisitionService: FC = () => {
         path={internalOrderRoute}
         element={<RequestRequisitionDetailView />}
       />
-      <Route path={internalOrderLineRoute} element={<RequestLineEditPage />} />
       <Route
         path={requestIndicatorLineRoute}
         element={<RequestRequisitionIndicatorEditPage />}

@@ -49,6 +49,7 @@ export const useUrlQueryParams = ({
   // if this is parsed as numeric, the query param changes filter=0300 to filter=300
   // which then does not match against codes, as the filter is usually a 'startsWith'
   const skipParse = filters.length > 0 ? filters.map(f => f.key) : ['filter'];
+
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse,
   });
@@ -63,7 +64,7 @@ export const useUrlQueryParams = ({
     if (!initialSort) return;
 
     // Don't want to override existing sort
-    if (!!urlQuery['sort']) return;
+    if (urlQuery['sort']) return;
 
     const { key: sort, dir } = initialSort;
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });

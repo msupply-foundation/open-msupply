@@ -101,7 +101,7 @@ impl CustomerReturnLine {
     fn from_return_invoice_line(line: InvoiceLine) -> Self {
         Self {
             id: line.invoice_line_row.id.clone(),
-            reason_id: line.invoice_line_row.return_reason_id.clone(),
+            reason_id: line.invoice_line_row.reason_option_id.clone(),
             note: line.invoice_line_row.note.clone(),
             number_of_packs: line.invoice_line_row.number_of_packs,
             stock_line_id: line.invoice_line_row.stock_line_id.clone(),

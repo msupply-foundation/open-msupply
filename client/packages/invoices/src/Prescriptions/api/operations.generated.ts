@@ -67,12 +67,22 @@ export type PrescriptionRowFragment = {
         name: string;
         code: string;
         unitName?: string | null;
+        isVaccine: boolean;
+        doses: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
           id: string;
           itemId: string;
           priority: number;
+        }>;
+        warnings: Array<{
+          __typename: 'WarningNode';
+          warningText: string;
+          id: string;
+          itemId: string;
+          priority: boolean;
+          code: string;
         }>;
       };
       location?: {
@@ -98,6 +108,8 @@ export type PrescriptionRowFragment = {
           __typename: 'ItemNode';
           name: string;
           code: string;
+          isVaccine: boolean;
+          doses: number;
           itemDirections: Array<{
             __typename: 'ItemDirectionNode';
             directions: string;
@@ -105,7 +117,22 @@ export type PrescriptionRowFragment = {
             itemId: string;
             priority: number;
           }>;
+          warnings: Array<{
+            __typename: 'WarningNode';
+            warningText: string;
+            id: string;
+            itemId: string;
+            priority: boolean;
+            code: string;
+          }>;
         };
+        vvmStatus?: {
+          __typename: 'VvmstatusNode';
+          id: string;
+          level: number;
+          unusable: boolean;
+          description: string;
+        } | null;
       } | null;
     }>;
   };
@@ -145,6 +172,7 @@ export type PrescriptionRowFragment = {
       providerName: string;
     } | null;
   } | null;
+  store: { __typename: 'StoreNode'; id: string };
 };
 
 export type PrescriptionLineFragment = {
@@ -170,12 +198,22 @@ export type PrescriptionLineFragment = {
     name: string;
     code: string;
     unitName?: string | null;
+    isVaccine: boolean;
+    doses: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
       id: string;
       itemId: string;
       priority: number;
+    }>;
+    warnings: Array<{
+      __typename: 'WarningNode';
+      warningText: string;
+      id: string;
+      itemId: string;
+      priority: boolean;
+      code: string;
     }>;
   };
   location?: {
@@ -201,6 +239,8 @@ export type PrescriptionLineFragment = {
       __typename: 'ItemNode';
       name: string;
       code: string;
+      isVaccine: boolean;
+      doses: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -208,7 +248,22 @@ export type PrescriptionLineFragment = {
         itemId: string;
         priority: number;
       }>;
+      warnings: Array<{
+        __typename: 'WarningNode';
+        warningText: string;
+        id: string;
+        itemId: string;
+        priority: boolean;
+        code: string;
+      }>;
     };
+    vvmStatus?: {
+      __typename: 'VvmstatusNode';
+      id: string;
+      level: number;
+      unusable: boolean;
+      description: string;
+    } | null;
   } | null;
 };
 
@@ -218,6 +273,15 @@ export type ItemDirectionFragment = {
   id: string;
   itemId: string;
   priority: number;
+};
+
+export type WarningFragment = {
+  __typename: 'WarningNode';
+  warningText: string;
+  id: string;
+  itemId: string;
+  priority: boolean;
+  code: string;
 };
 
 export type PartialPrescriptionLineFragment = {
@@ -235,12 +299,22 @@ export type PartialPrescriptionLineFragment = {
     __typename: 'ItemNode';
     name: string;
     code: string;
+    isVaccine: boolean;
+    doses: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
       id: string;
       itemId: string;
       priority: number;
+    }>;
+    warnings: Array<{
+      __typename: 'WarningNode';
+      warningText: string;
+      id: string;
+      itemId: string;
+      priority: boolean;
+      code: string;
     }>;
   };
   location?: {
@@ -330,12 +404,22 @@ export type PrescriptionsQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            isVaccine: boolean;
+            doses: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
               id: string;
               itemId: string;
               priority: number;
+            }>;
+            warnings: Array<{
+              __typename: 'WarningNode';
+              warningText: string;
+              id: string;
+              itemId: string;
+              priority: boolean;
+              code: string;
             }>;
           };
           location?: {
@@ -361,6 +445,8 @@ export type PrescriptionsQuery = {
               __typename: 'ItemNode';
               name: string;
               code: string;
+              isVaccine: boolean;
+              doses: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -368,7 +454,22 @@ export type PrescriptionsQuery = {
                 itemId: string;
                 priority: number;
               }>;
+              warnings: Array<{
+                __typename: 'WarningNode';
+                warningText: string;
+                id: string;
+                itemId: string;
+                priority: boolean;
+                code: string;
+              }>;
             };
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              level: number;
+              unusable: boolean;
+              description: string;
+            } | null;
           } | null;
         }>;
       };
@@ -408,6 +509,7 @@ export type PrescriptionsQuery = {
           providerName: string;
         } | null;
       } | null;
+      store: { __typename: 'StoreNode'; id: string };
     }>;
   };
 };
@@ -484,12 +586,22 @@ export type PrescriptionByNumberQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
                 id: string;
                 itemId: string;
                 priority: number;
+              }>;
+              warnings: Array<{
+                __typename: 'WarningNode';
+                warningText: string;
+                id: string;
+                itemId: string;
+                priority: boolean;
+                code: string;
               }>;
             };
             location?: {
@@ -515,6 +627,8 @@ export type PrescriptionByNumberQuery = {
                 __typename: 'ItemNode';
                 name: string;
                 code: string;
+                isVaccine: boolean;
+                doses: number;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -522,7 +636,22 @@ export type PrescriptionByNumberQuery = {
                   itemId: string;
                   priority: number;
                 }>;
+                warnings: Array<{
+                  __typename: 'WarningNode';
+                  warningText: string;
+                  id: string;
+                  itemId: string;
+                  priority: boolean;
+                  code: string;
+                }>;
               };
+              vvmStatus?: {
+                __typename: 'VvmstatusNode';
+                id: string;
+                level: number;
+                unusable: boolean;
+                description: string;
+              } | null;
             } | null;
           }>;
         };
@@ -562,6 +691,7 @@ export type PrescriptionByNumberQuery = {
             providerName: string;
           } | null;
         } | null;
+        store: { __typename: 'StoreNode'; id: string };
       }
     | {
         __typename: 'NodeError';
@@ -647,12 +777,22 @@ export type PrescriptionByIdQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
                 id: string;
                 itemId: string;
                 priority: number;
+              }>;
+              warnings: Array<{
+                __typename: 'WarningNode';
+                warningText: string;
+                id: string;
+                itemId: string;
+                priority: boolean;
+                code: string;
               }>;
             };
             location?: {
@@ -678,6 +818,8 @@ export type PrescriptionByIdQuery = {
                 __typename: 'ItemNode';
                 name: string;
                 code: string;
+                isVaccine: boolean;
+                doses: number;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -685,7 +827,22 @@ export type PrescriptionByIdQuery = {
                   itemId: string;
                   priority: number;
                 }>;
+                warnings: Array<{
+                  __typename: 'WarningNode';
+                  warningText: string;
+                  id: string;
+                  itemId: string;
+                  priority: boolean;
+                  code: string;
+                }>;
               };
+              vvmStatus?: {
+                __typename: 'VvmstatusNode';
+                id: string;
+                level: number;
+                unusable: boolean;
+                description: string;
+              } | null;
             } | null;
           }>;
         };
@@ -725,6 +882,7 @@ export type PrescriptionByIdQuery = {
             providerName: string;
           } | null;
         } | null;
+        store: { __typename: 'StoreNode'; id: string };
       }
     | {
         __typename: 'NodeError';
@@ -978,6 +1136,8 @@ export type HistoricalStockLineFragment = {
     __typename: 'ItemNode';
     name: string;
     code: string;
+    isVaccine: boolean;
+    doses: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -1045,6 +1205,16 @@ export type LabelPrinterSettingsQuery = {
   } | null;
 };
 
+export type SavePrescriptionItemLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.SavePrescriptionLinesInput;
+}>;
+
+export type SavePrescriptionItemLinesMutation = {
+  __typename: 'Mutations';
+  savePrescriptionItemLines: { __typename: 'InvoiceNode'; id: string };
+};
+
 export const ItemDirectionFragmentDoc = gql`
   fragment ItemDirection on ItemDirectionNode {
     __typename
@@ -1052,6 +1222,16 @@ export const ItemDirectionFragmentDoc = gql`
     id
     itemId
     priority
+  }
+`;
+export const WarningFragmentDoc = gql`
+  fragment Warning on WarningNode {
+    __typename
+    warningText
+    id
+    itemId
+    priority
+    code
   }
 `;
 export const PrescriptionLineFragmentDoc = gql`
@@ -1079,9 +1259,15 @@ export const PrescriptionLineFragmentDoc = gql`
       name
       code
       unitName
+      isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
+      warnings {
+        ...Warning
+      }
+      isVaccine
     }
     location {
       __typename
@@ -1105,13 +1291,27 @@ export const PrescriptionLineFragmentDoc = gql`
       item {
         name
         code
+        isVaccine
+        doses
         itemDirections {
           ...ItemDirection
         }
+        warnings {
+          ...Warning
+        }
+        isVaccine
+      }
+      vvmStatus {
+        __typename
+        id
+        level
+        unusable
+        description
       }
     }
   }
   ${ItemDirectionFragmentDoc}
+  ${WarningFragmentDoc}
 `;
 export const PrescriptionRowFragmentDoc = gql`
   fragment PrescriptionRow on InvoiceNode {
@@ -1193,6 +1393,9 @@ export const PrescriptionRowFragmentDoc = gql`
       }
       policyNumber
     }
+    store {
+      id
+    }
   }
   ${PrescriptionLineFragmentDoc}
 `;
@@ -1210,9 +1413,15 @@ export const PartialPrescriptionLineFragmentDoc = gql`
     item {
       name
       code
+      isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
+      warnings {
+        ...Warning
+      }
+      isVaccine
     }
     location {
       __typename
@@ -1223,6 +1432,7 @@ export const PartialPrescriptionLineFragmentDoc = gql`
     }
   }
   ${ItemDirectionFragmentDoc}
+  ${WarningFragmentDoc}
 `;
 export const HistoricalStockLineFragmentDoc = gql`
   fragment historicalStockLine on StockLineNode {
@@ -1232,6 +1442,8 @@ export const HistoricalStockLineFragmentDoc = gql`
     item {
       name
       code
+      isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
@@ -1629,6 +1841,19 @@ export const LabelPrinterSettingsDocument = gql`
     }
   }
 `;
+export const SavePrescriptionItemLinesDocument = gql`
+  mutation savePrescriptionItemLines(
+    $storeId: String!
+    $input: SavePrescriptionLinesInput!
+  ) {
+    savePrescriptionItemLines(input: $input, storeId: $storeId) {
+      ... on InvoiceNode {
+        __typename
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1804,6 +2029,22 @@ export function getSdk(
           ),
         'labelPrinterSettings',
         'query',
+        variables
+      );
+    },
+    savePrescriptionItemLines(
+      variables: SavePrescriptionItemLinesMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<SavePrescriptionItemLinesMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SavePrescriptionItemLinesMutation>(
+            SavePrescriptionItemLinesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'savePrescriptionItemLines',
+        'mutation',
         variables
       );
     },

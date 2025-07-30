@@ -2,10 +2,22 @@ import { RegexUtils } from '../../utils/regex';
 import { useCurrency } from '../currency';
 import { MAX_FRACTION_DIGITS, SupportedLocales, useIntlUtils } from '../utils';
 
+const localeNumberOverrides: { [locale: string]: /* Override */ string } = {
+  tet: 'en-US',
+};
+
+// This method needs to be used instead of Intl.NumberFormat directly
+export const intlNumberFormat = (
+  locale: string,
+  params?: Intl.NumberFormatOptions
+) => {
+  return new Intl.NumberFormat(localeNumberOverrides[locale] ?? locale, params);
+};
+
 export const useFormatNumber = () => {
   const { currentLanguage } = useIntlUtils();
   const {
-    options: { decimal },
+    options: { separator, decimal },
   } = useCurrency();
 
   return {
@@ -15,13 +27,13 @@ export const useFormatNumber = () => {
     ) => {
       if (value === undefined || value === null) return '';
       const locale = options?.locale ?? currentLanguage;
-      return new Intl.NumberFormat(locale, {
+      return intlNumberFormat(locale, {
         maximumFractionDigits: MAX_FRACTION_DIGITS,
         ...options,
       }).format(value);
     },
     round: (value?: number, dp?: number): string => {
-      const intl = new Intl.NumberFormat(currentLanguage, {
+      const intl = intlNumberFormat(currentLanguage, {
         // not strictly necessary perhaps - but if you specify a minimumFractionDigits
         // outside of the range 0,20 then an error is thrown
         maximumFractionDigits: Math.max(
@@ -33,13 +45,12 @@ export const useFormatNumber = () => {
     },
     parse: (numberString: string, decimalChar: string = decimal) => {
       const negative = numberString.startsWith('-') ? -1 : 1;
-      const separatorRegex = new RegExp(
-        `[${RegexUtils.escapeChars(decimalChar)}](\\d+)$`
-      );
 
       const num = numberString
-        // Convert separator to standard decimal point
-        .replace(separatorRegex, '.$1')
+        // Remove separators
+        .replace(new RegExp(`\\${separator}`, 'g'), '')
+        // Convert decimal separator to standard decimal point
+        .replace(RegexUtils.escapeChars(decimalChar), '.')
         // Remove all other characters
         .replace(/[^\d\.]/g, '');
 

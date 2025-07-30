@@ -70,7 +70,7 @@ export const CardListView: FC = () => {
       >
         <ButtonWithIcon
           shouldShrink={!isGaps}
-          label="Add Asset"
+          label={t('button.new-asset')}
           onClick={onAdd}
           Icon={<PlusCircleIcon />}
         />

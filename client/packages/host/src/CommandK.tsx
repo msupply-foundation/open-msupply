@@ -364,7 +364,7 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
       <KBarPortal>
         <KBarPositioner style={{ zIndex: 1001 }}>
           <StyledKBarAnimator>
-            <CustomKBarSearch placeholder={t('cmdk.placeholder')} />
+            <CustomKBarSearch defaultPlaceholder={t('cmdk.placeholder')} />
             <CustomKBarResults />
           </StyledKBarAnimator>
         </KBarPositioner>

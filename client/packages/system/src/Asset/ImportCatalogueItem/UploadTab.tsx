@@ -1,21 +1,23 @@
 import React, { FC, useState } from 'react';
 import Papa, { ParseResult } from 'papaparse';
-import { ImportPanel } from './ImportPanel';
-import { useNotification } from '@common/hooks';
-import { InlineProgress, Typography, Upload } from '@common/components';
-import { useTranslation } from '@common/intl';
 import {
   Grid,
   Stack,
   Link,
   FnUtils,
-  FileUtils,
   AssetClassNode,
   AssetCategoryNode,
   AssetTypeNode,
   ArrayUtils,
+  useTranslation,
+  InlineProgress,
+  Typography,
+  useNotification,
+  UploadFile,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
+import { ImportPanel } from './ImportPanel';
 import { ImportRow } from './CatalogueItemImportModal';
 import { importRowToCsv } from '../utils';
 import { AssetCatalogueItemFragment, useAssetProperties } from '../api';
@@ -70,6 +72,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const AssetItemBuffer: AssetItemImportModal.ImportRow[] = [];
   const { data: properties } = useAssetProperties();
+  const exportCSV = useExportCSV();
 
   const csvExample = async () => {
     const exampleRows: ImportRow[] = [
@@ -92,7 +95,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
       false, // exclude errors
       properties ? ArrayUtils.dedupe(properties.map(p => p.key)) : []
     );
-    FileUtils.exportCSV(csv, t('filename.asset-import-example'));
+    exportCSV(csv, t('filename.asset-import-example'));
   };
 
   const csvImport = <T extends File>(files: T[]) => {
@@ -279,7 +282,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
         </Grid>
       ) : null}
       <Stack spacing={2}>
-        <Upload onUpload={csvImport} />
+        <UploadFile onUpload={csvImport} />
         <Typography textAlign="center">
           {t('messages.template-download-text')}
           <Link

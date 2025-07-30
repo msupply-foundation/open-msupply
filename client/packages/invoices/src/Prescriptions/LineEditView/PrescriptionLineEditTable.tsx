@@ -4,35 +4,41 @@ import {
   Box,
   DataTable,
   useTranslation,
+  useFormatNumber,
 } from '@openmsupply-client/common';
-import { DraftPrescriptionLine } from '../../types';
-import { DraftItem } from '../..';
-import { usePrescriptionLineEditRows } from './hooks';
+
 import { usePrescriptionLineEditColumns } from './columns';
+import { getAllocatedQuantity, useAllocationContext } from '../../StockOut';
+import { useDisableVvmRows } from '../../useDisableVvmRows';
 
 export interface PrescriptionLineEditTableProps {
-  onChange: (key: string, value: number) => void;
-  rows: DraftPrescriptionLine[];
-  item: DraftItem | null;
-  allocatedUnits: number;
-  batch?: string;
-  isDisabled: boolean;
+  disabled?: boolean;
 }
 
-export const PrescriptionLineEditTable: React.FC<
-  PrescriptionLineEditTableProps
-> = ({ onChange, rows, item, isDisabled }) => {
+export const PrescriptionLineEditTable = ({
+  disabled,
+}: PrescriptionLineEditTableProps) => {
   const t = useTranslation();
-  const { orderedRows } = usePrescriptionLineEditRows(rows, isDisabled);
-  const onEditStockLine = (key: string, value: number) => {
+  const { format } = useFormatNumber();
+  const { draftLines, allocateIn, item, manualAllocate } = useAllocationContext(
+    state => ({
+      ...state,
+      allocatedQuantity: getAllocatedQuantity(state),
+    })
+  );
+
+  useDisableVvmRows({ rows: draftLines, isVaccine: item?.isVaccine });
+
+  const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
-    onChange(key, num);
+    return manualAllocate(key, num, format, t);
   };
-  const unit = item?.unitName ?? t('label.unit');
 
   const columns = usePrescriptionLineEditColumns({
-    onChange: onEditStockLine,
-    unit,
+    allocate,
+    item,
+    allocateIn: allocateIn.type,
+    disabled,
   });
 
   return (
@@ -53,11 +59,12 @@ export const PrescriptionLineEditTable: React.FC<
           },
         }}
       >
-        {!!orderedRows.length && (
+        {!!draftLines.length && (
           <DataTable
             id="prescription-line-edit"
             columns={columns}
-            data={orderedRows}
+            data={draftLines}
+            isDisabled={disabled}
             dense
           />
         )}

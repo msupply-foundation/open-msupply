@@ -22,9 +22,8 @@ import { Capacitor } from '@capacitor/core';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
-import { AndroidLogFileModal } from './AndroidLogFileModal';
-import { WebAppLogFileModal } from './WebAppLogFileModal';
 import { useDatabaseSettings } from '../api/hooks/settings/useDatabaseSettings';
+import { LogFileModal } from './LogFileModal';
 
 export const ServerSettings = () => {
   const [nativeMode, setNativeMode] = useState(NativeMode.None);
@@ -84,7 +83,7 @@ export const ServerSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            <AndroidLogFileModal onClose={hideLog} isOpen={isLogShown} />
+            <LogFileModal onClose={hideLog} isOpen={isLogShown} />
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
         }
@@ -136,7 +135,7 @@ export const ServerSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            <WebAppLogFileModal onClose={hideLog} isOpen={isLogShown} />
+            <LogFileModal onClose={hideLog} isOpen={isLogShown} />
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
         }

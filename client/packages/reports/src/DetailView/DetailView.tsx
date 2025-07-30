@@ -7,6 +7,8 @@ import {
   PrintFormat,
   TypedTFunction,
   useBreadcrumbs,
+  useDownloadFile,
+  useIntlUtils,
   useParams,
   useTranslation,
   useUrlQuery,
@@ -22,7 +24,6 @@ import { Environment } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButton';
 import { JsonData } from '@openmsupply-client/programs';
 import { Toolbar } from './Toolbar';
-import { translateReportName } from '../utils';
 
 export const DetailView = () => {
   const { id } = useParams();
@@ -56,15 +57,17 @@ const DetailViewInner = ({
   t: TypedTFunction<LocaleKey>;
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
+  const { translateDynamicKey } = useIntlUtils();
   const [state, setState] = useState<
     | { s: 'loading' }
     | { s: 'error'; errorMessage: string }
     | { s: 'loaded'; fileId: string }
   >({ s: 'loading' });
-  const { mutateAsync } = useGenerateReport();
+  const { mutateAsync, isLoading } = useGenerateReport();
 
   const { print, isPrinting } = usePrintReport();
   const { updateQuery } = useUrlQuery();
+  const downloadFile = useDownloadFile();
 
   // When reportWithArgs is undefined, args modal is closed
   const [reportWithArgs, setReportWithArgs] = useState<
@@ -73,7 +76,7 @@ const DetailViewInner = ({
 
   useEffect(() => {
     setCustomBreadcrumbs({
-      1: translateReportName(t, report.name),
+      1: translateDynamicKey(`report-code.${report.code}`, report.name),
     });
 
     // Initial report generation
@@ -133,7 +136,10 @@ const DetailViewInner = ({
           }
         }
       } catch (error) {
-        console.error(error);
+        setState({
+          s: 'error',
+          errorMessage: t('error.failed-to-generate-report'),
+        });
       }
     },
     []
@@ -160,8 +166,7 @@ const DetailViewInner = ({
         format: PrintFormat.Excel,
       });
       if (result?.__typename === 'PrintReportNode') {
-        // Setting iframe url with response != html disposition, causes iframe to 'download' this file
-        setState({ s: 'loaded', fileId: result.fileId });
+        downloadFile(`${Environment.FILE_URL}${result.fileId}`);
       }
 
       if (result?.__typename === 'PrintReportError') {
@@ -178,7 +183,7 @@ const DetailViewInner = ({
           } else {
             setState({
               s: 'error',
-              errorMessage: t('error.no-permission-report'),
+              errorMessage: t('error.failed-to-generate-report'),
             });
           }
         } else {
@@ -187,6 +192,10 @@ const DetailViewInner = ({
       }
     } catch (error) {
       console.error(error);
+      setState({
+        s: 'error',
+        errorMessage: t('error.failed-to-generate-report'),
+      });
     }
   }, [reportArgs]);
 
@@ -198,7 +207,7 @@ const DetailViewInner = ({
         onFilterOpen={openReportArgumentsModal}
         printReport={printReport}
         exportReport={exportExcelReport}
-        isPrinting={isPrinting}
+        isPrinting={isPrinting || isLoading}
       />
       <ReportArgumentsModal
         key={report.id}
@@ -206,7 +215,7 @@ const DetailViewInner = ({
         onReset={() => {
           setReportWithArgs(undefined);
         }}
-        onArgumentsSelected={generateReport}
+        onArgumentsSelected={(report, args) => generateReport(report, args)}
       />
       {state.s === 'loading' && (
         <BasicSpinner messageKey="messages.loading-report"></BasicSpinner>

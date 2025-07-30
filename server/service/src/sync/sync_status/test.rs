@@ -356,6 +356,7 @@ fn get_initialisation_sync_status_tester(
                 initialisation_status: crate::sync::api::InitialisationStatus::New,
                 central_server_url: format!("http://127.0.0.1:{}", ctx.open_msupply_central_port),
                 is_central_server: false,
+                msupply_central_site_id: 1,
             };
 
             TestOutput {
@@ -503,6 +504,7 @@ fn get_push_and_error_sync_status_tester(
                 initialisation_status: crate::sync::api::InitialisationStatus::New,
                 central_server_url: format!("http://127.0.0.1:{}", ctx.open_msupply_central_port),
                 is_central_server: false,
+                msupply_central_site_id: 1,
             };
 
             TestOutput {
@@ -603,7 +605,7 @@ async fn run_server_and_sync(
     let result = tokio::select! {
         _ = server_future => unreachable!("Sync should finish first"),
         _ = v6_server_future  => unreachable!("Sync should finish first"),
-        result = synchroniser.sync() => result
+        result = synchroniser.sync(None) => result
     };
 
     server_handle.stop(true).await;

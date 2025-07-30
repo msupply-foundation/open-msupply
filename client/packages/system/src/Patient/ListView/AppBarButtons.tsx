@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -7,25 +7,33 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
   SortBy,
   UserPermission,
   useCallbackWithPermission,
-  EnvUtils,
-  Platform,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
 import { CreatePatientModal } from '../CreatePatientModal';
+import { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
 
-export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
+interface AppBarButtonsComponentProps {
+  onCreatePatient: () => void;
+  onSelectPatient: (selectedPatient: PatientColumnData) => void;
+  sortBy: SortBy<PatientRowFragment>;
+}
+
+export const AppBarButtons = ({
+  onCreatePatient,
+  onSelectPatient,
   sortBy,
-}) => {
-  const { success, error } = useNotification();
+}: AppBarButtonsComponentProps) => {
+  const { error } = useNotification();
   const t = useTranslation();
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const exportCSV = useExportCSV();
 
   const csvExport = async () => {
     const data = await mutateAsync();
@@ -35,11 +43,10 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
     }
 
     const csv = patientsToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.patients'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.patients'));
   };
 
-  const onCreatePatient = useCallbackWithPermission(
+  const handleClick = useCallbackWithPermission(
     UserPermission.PatientMutate,
     () => setCreateModalOpen(true)
   );
@@ -50,20 +57,24 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-patient')}
-          onClick={onCreatePatient}
+          onClick={handleClick}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
           variant="outlined"
           onClick={csvExport}
           isLoading={isLoading}
-          disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
       </Grid>
 
       {createModalOpen ? (
-        <CreatePatientModal onClose={() => setCreateModalOpen(false)} />
+        <CreatePatientModal
+          open={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          onCreate={onCreatePatient}
+          onSelectPatient={onSelectPatient}
+        />
       ) : null}
     </AppBarButtonsPortal>
   );

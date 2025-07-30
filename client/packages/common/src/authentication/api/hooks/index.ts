@@ -6,4 +6,4 @@ export * from './useLogin';
 export * from './useGetUserPermissions';
 export * from './useIsCentralServer';
 export * from './useUpdateUser';
-export * from './usePreferences';
+export * from './usePreference';

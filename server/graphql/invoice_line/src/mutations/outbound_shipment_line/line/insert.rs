@@ -24,6 +24,7 @@ pub struct InsertInput {
     pub stock_line_id: String,
     pub number_of_packs: f64,
     pub tax_percentage: Option<f64>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -90,6 +91,7 @@ impl InsertInput {
             stock_line_id,
             number_of_packs,
             tax_percentage,
+            vvm_status_id,
         } = self;
 
         ServiceInput {
@@ -98,9 +100,10 @@ impl InsertInput {
             invoice_id,
             stock_line_id,
             number_of_packs,
-            total_before_tax: None,
             tax_percentage,
+            vvm_status_id,
             // Default
+            total_before_tax: None,
             prescribed_quantity: None,
             note: None,
             location_id: None,
@@ -109,6 +112,7 @@ impl InsertInput {
             expiry_date: None,
             cost_price_per_pack: None,
             sell_price_per_pack: None,
+            campaign_id: None,
         }
     }
 }
@@ -116,6 +120,10 @@ impl InsertInput {
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!(
+        "Error inserting outbound shipment line: {}",
+        formatted_error
+    );
 
     let graphql_error = match error {
         // Structured Errors
@@ -166,9 +174,11 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
+        | VVMStatusDoesNotExist
         | NumberOfPacksBelowZero => StandardGraphqlError::BadUserInput(formatted_error),
-        DatabaseError(_) => StandardGraphqlError::InternalError(formatted_error),
-        NewlyCreatedLineDoesNotExist => StandardGraphqlError::InternalError(formatted_error),
+        AutoPickFailed(_) | DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
+            StandardGraphqlError::InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -544,7 +554,9 @@ mod test {
                     pack_size: None,
                     expiry_date: None,
                     cost_price_per_pack: None,
-                    sell_price_per_pack: None
+                    sell_price_per_pack: None,
+                    campaign_id: None,
+                    vvm_status_id: None,
                 }
             );
             Ok(InvoiceLine {

@@ -86,6 +86,8 @@ export type SyncStatusWithProgressFragment = {
 export type FullSyncStatusFragment = {
   __typename: 'FullSyncStatusNode';
   isSyncing: boolean;
+  errorThreshold: number;
+  warningThreshold: number;
   error?: {
     __typename: 'SyncErrorNode';
     variant: Types.SyncErrorVariant;
@@ -161,6 +163,8 @@ export type SyncInfoQuery = {
   syncStatus?: {
     __typename: 'FullSyncStatusNode';
     isSyncing: boolean;
+    errorThreshold: number;
+    warningThreshold: number;
     error?: {
       __typename: 'SyncErrorNode';
       variant: Types.SyncErrorVariant;
@@ -236,6 +240,8 @@ export type SyncStatusQuery = {
   syncStatus?: {
     __typename: 'FullSyncStatusNode';
     isSyncing: boolean;
+    errorThreshold: number;
+    warningThreshold: number;
     error?: {
       __typename: 'SyncErrorNode';
       variant: Types.SyncErrorVariant;
@@ -304,7 +310,9 @@ export type SyncStatusQuery = {
   } | null;
 };
 
-export type ManualSyncMutationVariables = Types.Exact<{ [key: string]: never }>;
+export type ManualSyncMutationVariables = Types.Exact<{
+  fetchPatientId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
 
 export type ManualSyncMutation = {
   __typename: 'Mutations';
@@ -377,6 +385,8 @@ export const FullSyncStatusFragmentDoc = gql`
     lastSuccessfulSync {
       ...SyncStatus
     }
+    errorThreshold
+    warningThreshold
   }
   ${SyncErrorFragmentDoc}
   ${SyncStatusWithProgressFragmentDoc}
@@ -438,8 +448,8 @@ export const SyncStatusDocument = gql`
   ${FullSyncStatusFragmentDoc}
 `;
 export const ManualSyncDocument = gql`
-  mutation manualSync {
-    manualSync
+  mutation manualSync($fetchPatientId: String) {
+    manualSync(fetchPatientId: $fetchPatientId)
   }
 `;
 

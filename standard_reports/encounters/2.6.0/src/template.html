@@ -1,0 +1,56 @@
+{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |
+date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% endif %} {% endmacro input %}
+
+<style>
+  {% include "encounters.css" %}
+</style>
+
+<div class="container">
+  <table>
+    <thead>
+      <tr class="heading">
+        <td>{{t(k="report.program-id", f="Program ID")}}</td>
+        <td>{{t(k="label.first-name", f="First Name")}}</td>
+        <td>{{t(k="label.last-name", f="Last Name")}}</td>
+        <td>{{t(k="label.date-of-birth", f="Date of birth")}}</td>
+        <td>{{t(k="label.next-of-kin", f="Next of kin")}}</td>
+        <td>{{t(k="label.phone", f="Phone")}}</td>
+        <td>
+          {{t(k="report.last-encounter-date", f="Last appointment date")}}
+        </td>
+        <td>{{t(k="report.encounter-date", f="Appointment date")}}</td>
+        <td>{{t(k="report.days-overdue", f="Days overdue")}}</td>
+        <td>{{t(k="label.status", f="Status")}}</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for encounter in data.encounters.nodes %}
+      <tr>
+        <td>{{encounter.programEnrolment.programEnrolmentId}}</td>
+        <td>{{encounter.patient.firstName}}</td>
+        <td>{{encounter.patient.lastName}}</td>
+        <td>{{self::formatDate(datetime=encounter.patient.dateOfBirth)}}</td>
+        <td>{{encounter.patient.nextOfKinName}}</td>
+        <td>{{encounter.patient.phone}}</td>
+        {% if encounter.previousEncounter %}
+        <td>
+          {{self::formatDate(datetime=encounter.previousEncounter.startDatetime)}}
+        </td>
+        {% else %}
+        <td></td>
+        {% endif %}
+        <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>
+        <td>{{encounter.daysLate}}</td>
+
+        {% if encounter.status == "LTFU" %}
+        <td>{{t(k="report.lost-to-follow-up", f="Lost to follow-up")}}</td>
+        {% elif encounter.status == "LATE" %}
+        <td>{{t(k="report.late", f="Late")}}</td>
+        {% else %}
+        <td>{{t(k="report.planned", f="Planned")}}</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

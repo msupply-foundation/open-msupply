@@ -1,26 +1,24 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import Papa, { ParseResult } from 'papaparse';
-import { ImportPanel } from './ImportPanel';
-import { useNotification } from '@common/hooks';
-import { InlineProgress, Typography, Upload } from '@common/components';
-import {
-  DateUtils,
-  LocaleKey,
-  TypedTFunction,
-  useTranslation,
-} from '@common/intl';
 import {
   Grid,
   Stack,
   Link,
   FnUtils,
-  FileUtils,
   Formatter,
   useIsCentralServerApi,
-  EnvUtils,
-  Platform,
   StatusType,
+  DateUtils,
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
+  InlineProgress,
+  Typography,
+  useNotification,
+  UploadFile,
+  useExportCSV,
 } from '@openmsupply-client/common';
+import { ImportPanel } from './ImportPanel';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
 import { importEquipmentToCsv, parseStatusFromString } from '../utils';
@@ -196,28 +194,25 @@ function getImportHelpers<T, P>(
   };
 }
 
-export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
+export const EquipmentUploadTab = ({
   tab,
   setErrorMessage,
   setWarningMessage,
   setEquipment,
   onUploadComplete,
   catalogueItemData,
-}) => {
+}: ImportPanel & EquipmentUploadTabProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { data: stores } = useStoreList();
-  const { error, info } = useNotification();
+  const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
+
+  const exportCSV = useExportCSV();
   const { data: properties } = useAssetProperties();
 
   const csvExample = async () => {
-    if (EnvUtils.platform === Platform.Android) {
-      info(t('messages.cant-download-android'))();
-      return;
-    }
-
     const exampleRows: Partial<ImportRow>[] = [
       {
         assetNumber: t('label.asset-number').toUpperCase(),
@@ -239,7 +234,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       isCentralServer,
       properties ? properties.map(p => p.key) : []
     );
-    FileUtils.exportCSV(csv, t('filename.cce'));
+    exportCSV(csv, t('filename.cce'));
   };
 
   const csvImport = <T extends File>(files: T[]) => {
@@ -356,9 +351,9 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
           <InlineProgress variant={'indeterminate'} color={'secondary'} />
         </Grid>
       ) : null}
-      <Stack spacing={2}>
-        <Upload onUpload={csvImport} />
-        <Typography textAlign="center">
+      <Stack spacing={2} alignItems={'center'}>
+        <UploadFile onUpload={csvImport} />
+        <Typography>
           {t('messages.template-download-text')}
           <Link onClick={csvExample} to={''}>
             {t('heading.download-example')}

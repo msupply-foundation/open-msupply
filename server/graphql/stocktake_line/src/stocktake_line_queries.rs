@@ -18,6 +18,7 @@ pub struct StocktakeLineFilterInput {
     pub stocktake_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
     pub item_code_or_name: Option<StringFilterInput>,
+    pub item_id: Option<EqualFilterStringInput>,
 }
 
 impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
@@ -27,6 +28,7 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
             stocktake_id: f.stocktake_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
+            item_id: f.item_id.map(EqualFilter::from),
         }
     }
 }
@@ -37,14 +39,13 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
 pub enum StocktakeLineSortFieldInput {
     ItemCode,
     ItemName,
-    /// Stocktake line batch
     Batch,
-    /// Stocktake line expiry date
     ExpiryDate,
-    /// Stocktake line pack size
     PackSize,
-    /// Stocktake line item stock location code
     LocationCode,
+    SnapshotNumberOfPacks,
+    CountedNumberOfPacks,
+    ReasonOption,
 }
 
 #[derive(InputObject)]
@@ -67,6 +68,9 @@ impl StocktakeLineSortInput {
             from::ExpiryDate => to::ExpiryDate,
             from::PackSize => to::PackSize,
             from::LocationCode => to::LocationCode,
+            from::SnapshotNumberOfPacks => to::SnapshotNumberOfPacks,
+            from::CountedNumberOfPacks => to::CountedNumberOfPacks,
+            from::ReasonOption => to::ReasonOption,
         };
 
         StocktakeLineSort {

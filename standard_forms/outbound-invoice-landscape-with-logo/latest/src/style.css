@@ -86,6 +86,10 @@
   font-family: Tahoma;
 }
 
+.body_total_section {
+  font-weight: bold;
+}
+
 .body_section tr.body_column_label th {
   border-bottom: 0.5px solid black;
 }

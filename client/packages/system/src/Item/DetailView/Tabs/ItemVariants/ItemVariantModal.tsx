@@ -14,29 +14,31 @@ import {
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import {
+  ItemRowFragment,
   ItemVariantFragment,
   PackagingVariantFragment,
   useItemVariant,
 } from '../../../api';
 import { ManufacturerSearchInput } from '@openmsupply-client/system';
-import { ColdStorageTypeInput } from '../../../Components/ColdStorageTypeInput';
+import { LocationTypeInput } from '../../../Components/LocationTypeInput';
 
 export const ItemVariantModal = ({
-  itemId,
+  item,
   variant,
   onClose,
 }: {
-  itemId: string;
+  item: ItemRowFragment;
   variant: ItemVariantFragment | null;
   onClose: () => void;
 }) => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
   const { success, error } = useNotification();
+  const isVaccine = item?.isVaccine;
 
   const { draft, isComplete, updateDraft, updatePackagingVariant, save } =
     useItemVariant({
-      itemId,
+      item,
       variant,
     });
 
@@ -83,6 +85,7 @@ export const ItemVariantModal = ({
           updateVariant={updateDraft}
           updatePackagingVariant={updatePackagingVariant}
           variant={draft}
+          isVaccine={isVaccine}
         />
       </QueryParamsProvider>
     </Modal>
@@ -93,10 +96,12 @@ const ItemVariantForm = ({
   variant,
   updateVariant,
   updatePackagingVariant,
+  isVaccine,
 }: {
   variant: ItemVariantFragment;
   updateVariant: (patch: Partial<ItemVariantFragment>) => void;
   updatePackagingVariant: (patch: Partial<PackagingVariantFragment>) => void;
+  isVaccine?: boolean;
 }) => {
   const t = useTranslation();
 
@@ -119,18 +124,18 @@ const ItemVariantForm = ({
         />
 
         <InputWithLabelRow
-          label={t('label.cold-storage-type')}
+          label={t('label.location-type')}
           labelWidth="200"
           Input={
             <Box width="100%">
-              <ColdStorageTypeInput
-                value={variant.coldStorageType ?? null}
-                onChange={coldStorageType =>
+              <LocationTypeInput
+                value={variant.locationType ?? null}
+                onChange={locationType => {
                   updateVariant({
-                    coldStorageType,
-                    coldStorageTypeId: coldStorageType?.id ?? '',
-                  })
-                }
+                    locationType,
+                    locationTypeId: locationType?.id ?? null,
+                  });
+                }}
               />
             </Box>
           }
@@ -145,13 +150,28 @@ const ItemVariantForm = ({
                 onChange={manufacturer =>
                   updateVariant({
                     manufacturer,
-                    manufacturerId: manufacturer?.id ?? '',
+                    manufacturerId: manufacturer?.id ?? null,
                   })
                 }
               />
             </Box>
           }
         />
+        {isVaccine && (
+          <InputWithLabelRow
+            label={t('label.vvm-type')}
+            labelWidth="200"
+            Input={
+              <BasicTextInput
+                value={variant.vvmType}
+                onChange={event => {
+                  updateVariant({ vvmType: event.target.value });
+                }}
+                fullWidth
+              />
+            }
+          />
+        )}
       </Box>
       <Box flex={1}>
         <Typography fontWeight="bold">{t('title.packaging')}</Typography>

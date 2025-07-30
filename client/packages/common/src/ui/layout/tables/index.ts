@@ -1,5 +1,5 @@
 import { AppSxProp } from '@common/styles';
-import { ViewportList } from 'react-viewport-list';
+import { ViewportList, ViewportListRef } from 'react-viewport-list';
 import {
   Table,
   TableBody,
@@ -19,6 +19,7 @@ export {
   TableHead,
   TableRow,
   ViewportList,
+  ViewportListRef,
 };
 export * from './hooks';
 export * from './DataTable';
@@ -31,4 +32,13 @@ export const DEFAULT_PAGE_SIZE = 25;
 
 export const placeholderRowStyle: AppSxProp = {
   color: theme => theme.palette.secondary.light,
+};
+
+export const textStyles = {
+  default: { fontSize: '14px', paddingLeft: '16px', paddingRight: 0 },
+  dense: {
+    fontSize: '12px',
+    paddingLeft: '12px',
+    paddingRight: '4px',
+  },
 };

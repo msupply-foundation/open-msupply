@@ -13,6 +13,7 @@ mod invoice_rename_tax;
 mod linked_shipment;
 mod name_deleted_datetime;
 mod pack_variant;
+mod remove_changelog_triggers;
 mod report_views;
 mod requisition_line_add_item_name;
 mod returns;
@@ -30,6 +31,8 @@ impl Migration for V2_00_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Remove changelog triggers (time travelling, as the code was actually introduced in 2.2.0, but we want to run it early in a patch to avoid syncing changes updated in this version invoice_line_tax for example)
+        remove_changelog_triggers::migrate(connection)?;
         add_source_site_id::migrate(connection)?;
         central_omsupply::migrate(connection)?;
         assets::migrate_assets(connection)?;

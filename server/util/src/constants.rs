@@ -27,6 +27,8 @@ pub fn expected_delivery_date_offset() -> Duration {
 pub const DEFAULT_AMC_LOOKBACK_MONTHS: f64 = 3.0;
 // System user
 pub const SYSTEM_USER_ID: &str = "omsupply_system";
+// Plugin user
+pub const PLUGIN_USER_ID: &str = "omsupply_plugin";
 // Missing program
 pub const MISSING_PROGRAM: &str = "missing_program";
 

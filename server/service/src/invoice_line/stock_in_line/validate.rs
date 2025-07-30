@@ -1,5 +1,7 @@
 use repository::{
-    InvoiceLineRow, RepositoryError, StockLineRow, StockLineRowRepository, StorageConnection,
+    vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
+    EqualFilter, InvoiceLineRow, RepositoryError, StockLineRow, StockLineRowRepository,
+    StorageConnection,
 };
 
 pub fn check_pack_size(pack_size_option: Option<f64>) -> bool {
@@ -43,4 +45,19 @@ pub fn check_batch_stock_reserved(
         }
     }
     Ok(true)
+}
+
+pub fn get_existing_vvm_status_log_id(
+    connection: &StorageConnection,
+    stock_line_id: &str,
+    invoice_line_id: &str,
+) -> Result<Option<String>, RepositoryError> {
+    Ok(VVMStatusLogRepository::new(connection)
+        .query_by_filter(
+            VVMStatusLogFilter::new()
+                .stock_line_id(EqualFilter::equal_to(stock_line_id))
+                .invoice_line_id(EqualFilter::equal_to(invoice_line_id)),
+        )?
+        .first()
+        .map(|log| log.id.clone()))
 }

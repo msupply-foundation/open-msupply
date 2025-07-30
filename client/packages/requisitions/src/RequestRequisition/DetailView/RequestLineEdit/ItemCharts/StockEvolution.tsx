@@ -20,7 +20,7 @@ export interface StockEvolutionProps {
   id: string;
 }
 
-export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
+export const StockEvolution = ({ id }: StockEvolutionProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const { dayMonthShort } = useFormatDateTime();

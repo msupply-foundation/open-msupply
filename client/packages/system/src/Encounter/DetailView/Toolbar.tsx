@@ -9,23 +9,25 @@ import {
   DateUtils,
   UserIcon,
   useFormatDateTime,
-  ClinicianNode,
   useIntlUtils,
   DocumentRegistryCategoryNode,
   SxProps,
   Theme,
+  CustomersIcon,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
+  PatientModal,
   useClinicians,
   useDocumentRegistry,
+  usePatientModalStore,
 } from '@openmsupply-client/programs';
 import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
 } from '../../Clinician';
-import { Clinician } from '../../Clinician/utils';
-import { DateTimePickerInput } from '@common/components';
+import { ButtonWithIcon, DateTimePickerInput } from '@common/components';
+import { ProgramDetailModal } from '../../Patient/ProgramEnrolment';
 
 const Row = ({
   label,
@@ -40,7 +42,8 @@ const Row = ({
 );
 
 /**
- * Updates the date component of the endDate to match the date of the startDatetime.
+ * Updates the date component of the endDate to match the date of the
+ * startDatetime.
  * If the startDatetime is not provided the current date is used.
  */
 const updateEndDatetimeFromStartDate = (
@@ -77,27 +80,35 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
       },
     });
 
+  const { current, setEditModal } = usePatientModalStore();
+
   const { data: clinicians } = useClinicians.document.list({});
   const hasClinicians = clinicians?.nodes.length !== 0;
 
   useEffect(() => {
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
-    setClinician({
-      label: getLocalisedFullName(
-        encounter.clinician?.firstName,
-        encounter.clinician?.lastName
-      ),
-      value: encounter.clinician as Clinician,
-    });
+    if (encounter.clinician) {
+      setClinician({
+        id: encounter.clinician.id,
+        label: getLocalisedFullName(
+          encounter.clinician.firstName,
+          encounter.clinician.lastName
+        ),
+        value: encounter.clinician,
+      });
+    }
   }, [encounter, getLocalisedFullName]);
 
-  const { patient } = encounter;
+  const { patient, programEnrolment } = encounter;
 
   const dateOfBirth = DateUtils.getNaiveDate(patient?.dateOfBirth);
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
+      {current === PatientModal.Program ? (
+        <ProgramDetailModal patientId={patient?.id} />
+      ) : null}
       <Grid
         container
         flexDirection="row"
@@ -170,9 +181,20 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                     <ClinicianSearchInput
                       onChange={clinician => {
                         setClinician(clinician);
-                        onChange({
-                          clinician: clinician?.value as ClinicianNode,
-                        });
+                        if (!!clinician) {
+                          const { id, lastName, firstName } = clinician.value;
+                          onChange({
+                            clinician: {
+                              __typename: 'ClinicianNode',
+                              id,
+                              lastName,
+                              // JSON schema doesn't support first name as null, map to undefined
+                              firstName: firstName ?? undefined,
+                            },
+                          });
+                        } else {
+                          onChange({ clinician: undefined });
+                        }
                       }}
                       clinicianValue={clinician?.value}
                     />
@@ -180,7 +202,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                 />
               )}
             </Box>
-            <Box display="flex" gap={1}>
+            <Box display="flex" justifyContent="space-between" paddingRight={1}>
               <Row
                 label={t('label.visit-date')}
                 Input={
@@ -200,6 +222,19 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   />
                 }
               />
+              {programEnrolment && (
+                <ButtonWithIcon
+                  Icon={<CustomersIcon />}
+                  label={t('button.enrolment-info')}
+                  onClick={() => {
+                    setEditModal(
+                      PatientModal.Program,
+                      programEnrolment?.document?.type,
+                      programEnrolment?.document?.name
+                    );
+                  }}
+                />
+              )}
             </Box>
           </Box>
         </Grid>

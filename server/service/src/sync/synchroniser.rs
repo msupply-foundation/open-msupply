@@ -1,10 +1,12 @@
 use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{sync_status::logger::SyncStep, CentralServerConfig},
+    sync::{sync_buffer::SyncBufferSource, sync_status::logger::SyncStep, CentralServerConfig},
 };
 use log::warn;
-use repository::{RepositoryError, StorageConnection, SyncAction};
+use repository::{
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
+};
 
 use std::sync::Arc;
 use thiserror::Error;
@@ -132,11 +134,11 @@ impl Synchroniser {
         })
     }
 
-    pub(crate) async fn sync(&self) -> Result<(), SyncError> {
+    pub(crate) async fn sync(&self, fetch_patient_id: Option<String>) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
         let mut logger = SyncLogger::start(&ctx.connection)?;
 
-        let sync_result = self.sync_inner(&mut logger, &ctx).await;
+        let sync_result = self.sync_inner(&mut logger, &ctx, fetch_patient_id).await;
 
         if let Err(error) = &sync_result {
             logger.error(error)?;
@@ -152,6 +154,7 @@ impl Synchroniser {
         &self,
         logger: &mut SyncLogger<'a>,
         ctx: &'a ServiceContext,
+        fetch_patient_id: Option<String>,
     ) -> Result<(), SyncError> {
         let batch_size = &self.settings.batch_size;
         let sync_status_service = &self.service_provider.sync_status_service;
@@ -165,6 +168,13 @@ impl Synchroniser {
         // Get site info for initialisation status and for omSupply central url required in SynchroniserV6
         let site_info = self.remote.sync_api_v5.get_site_info().await?;
         CentralServerConfig::set_central_server_config(&site_info);
+
+        let central_sync_server_id = site_info.msupply_central_site_id;
+        // Set central server site id in key value store, so it can be used by other code which hasn't called the get_site_info api
+        KeyValueStoreRepository::new(&ctx.connection).set_i32(
+            KeyType::SettingsSyncCentralServerSiteId,
+            Some(site_info.msupply_central_site_id),
+        )?;
 
         // First check sync status
 
@@ -188,7 +198,7 @@ impl Synchroniser {
 
         let v6_sync = match CentralServerConfig::get() {
             CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
-            CentralServerConfig::IsCentralServer => None,
+            CentralServerConfig::IsCentralServer | CentralServerConfig::ForcedCentralServer => None,
             CentralServerConfig::CentralServerUrl(url) => {
                 let v6_sync =
                     SynchroniserV6::new(&url, &self.sync_v5_settings, self.sync_v6_version)?;
@@ -247,9 +257,23 @@ impl Synchroniser {
         if let Some(v6_sync) = &v6_sync {
             logger.start_step(SyncStep::PullCentralV6)?;
 
-            v6_sync
-                .pull(&ctx.connection, 20, is_initialised, logger)
-                .await?;
+            match fetch_patient_id {
+                Some(patient_id) => {
+                    v6_sync
+                        .patient_pull(&ctx.connection, batch_size.central_pull, patient_id, logger)
+                        .await?;
+                }
+                None => {
+                    v6_sync
+                        .pull(
+                            &ctx.connection,
+                            batch_size.central_pull,
+                            is_initialised,
+                            logger,
+                        )
+                        .await?;
+                }
+            }
 
             logger.done_step(SyncStep::PullCentralV6)?;
         }
@@ -264,7 +288,7 @@ impl Synchroniser {
                 false => Some(logger),
                 true => None,
             },
-            None,
+            SyncBufferSource::Central(central_sync_server_id),
         )
         .map_err(SyncError::IntegrationError)?;
 
@@ -289,8 +313,16 @@ impl Synchroniser {
         ctx.processors_trigger
             .trigger_processor(ProcessorType::ContactFormEmail);
 
+        // This should be before plugin processor below, in case there is a processor error, need to be able
+        // to sync new plugin version to avoid bricking the app
         ctx.processors_trigger
             .trigger_processor(ProcessorType::LoadPlugin);
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::AssignRequisitionNumber);
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::Plugins);
 
         Ok(())
     }
@@ -300,7 +332,7 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
-    source_site_id: Option<i32>,
+    record_type: SyncBufferSource,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -330,21 +362,20 @@ pub fn integrate_and_translate_sync_buffer(
         let table_order = pull_integration_order(&translators);
 
         let sync_buffer = SyncBuffer::new(connection);
-        let translation_and_integration =
-            TranslationAndIntegration::new(connection, &sync_buffer, source_site_id);
+        let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
 
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Upsert,
             &table_order,
-            source_site_id,
+            record_type.clone(),
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Delete,
             &table_order,
-            source_site_id,
+            record_type.clone(),
         )?;
 
         let upsert_integration_result = translation_and_integration
@@ -365,7 +396,7 @@ pub fn integrate_and_translate_sync_buffer(
         let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Merge,
             &table_order,
-            source_site_id,
+            record_type.clone(),
         )?;
 
         let merge_integration_result: TranslationAndIntegrationResults =
@@ -415,10 +446,10 @@ mod tests {
         .unwrap();
 
         // First check that synch fails (due to wrong url)
-        assert!(s.sync().await.is_err());
+        assert!(s.sync(None).await.is_err());
 
         // Check that disabling return Ok(())
         service.disable_sync(&ctx).unwrap();
-        assert!(s.sync().await.is_ok());
+        assert!(s.sync(None).await.is_ok());
     }
 }

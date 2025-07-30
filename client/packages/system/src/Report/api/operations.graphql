@@ -3,8 +3,10 @@ fragment ReportRow on ReportNode {
   context
   id
   name
+  code
   subContext
   isCustom
+  isActive
   argumentSchema {
     id
     type

@@ -15,6 +15,7 @@ import {
   TooltipTextCell,
   GenericColumnKey,
   getCommentPopoverColumn,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -47,12 +48,14 @@ const OutboundShipmentListViewComponent: FC = () => {
       { key: 'theirReference' },
       { key: 'createdDatetime', condition: 'between' },
       { key: 'shippedDatetime', condition: 'between' },
+      { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
     ],
   });
   const navigate = useNavigate();
   const modalController = useToggle();
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const { data, isError, isLoading } = useOutbound.document.list(queryParams);
   useDisableOutboundRows(data?.nodes);
@@ -60,7 +63,10 @@ const OutboundShipmentListViewComponent: FC = () => {
   const columns = useColumns<OutboundRowFragment>(
     [
       GenericColumnKey.Selection,
-      [getNameAndColorColumn(), { setter: onUpdate }],
+      [
+        getNameAndColorColumn(),
+        { setter: onUpdate, defaultHideOnMobile: true },
+      ],
       [
         'status',
         {
@@ -79,6 +85,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         label: 'label.reference',
         Cell: TooltipTextCell,
         width: 175,
+        defaultHideOnMobile: true,
       },
       getCommentPopoverColumn(),
       [
@@ -86,6 +93,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         {
           accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
           width: 125,
+          defaultHideOnMobile: true,
         },
       ],
     ],
@@ -95,8 +103,11 @@ const OutboundShipmentListViewComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
+      <Toolbar filter={filter} simplifiedTabletView={simplifiedTabletView} />
+      <AppBarButtons
+        modalController={modalController}
+        simplifiedTabletView={simplifiedTabletView}
+      />
 
       <DataTable
         id="outbound-list"

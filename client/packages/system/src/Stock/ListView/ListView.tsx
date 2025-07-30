@@ -16,6 +16,10 @@ import {
   ExpiryDateCell,
   usePluginProvider,
   useEditModal,
+  CellProps,
+  usePreference,
+  PreferenceKey,
+  UnitsAndMaybeDoses,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -48,7 +52,7 @@ const StockListComponent: FC = () => {
   });
   const navigate = useNavigate();
   const queryParams = {
-    filterBy: filterBy ?? undefined,
+    filterBy: { ...filterBy },
     offset,
     sortBy,
     first,
@@ -58,6 +62,7 @@ const StockListComponent: FC = () => {
   const t = useTranslation();
   const { data, isLoading, isError } = useStockList(queryParams);
   const { plugins } = usePluginProvider();
+  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
 
   const { isOpen, onClose, onOpen } = useEditModal();
 
@@ -84,19 +89,27 @@ const StockListComponent: FC = () => {
     //   width: 150,
     //   accessor: ({ rowData }) => rowData.item.masterLists.map(m => m.name),
     // },
-    { key: 'batch', label: 'label.batch', Cell: TooltipTextCell, width: 100 },
+    {
+      key: 'batch',
+      label: 'label.batch',
+      Cell: TooltipTextCell,
+      width: 100,
+      defaultHideOnMobile: true,
+    },
     {
       key: 'expiryDate',
       label: 'label.expiry',
       accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.expiryDate),
       Cell: ExpiryDateCell,
-      width: 110,
+      width: 120,
+      defaultHideOnMobile: true,
     },
     {
       key: 'location',
       label: 'label.location',
       Cell: TooltipTextCell,
       width: 100,
+      defaultHideOnMobile: true,
       accessor: ({ rowData }) => rowData.location?.code,
     },
     {
@@ -106,17 +119,19 @@ const StockListComponent: FC = () => {
       sortable: false,
       Cell: TooltipTextCell,
       width: 75,
+      defaultHideOnMobile: true,
     },
     {
       key: 'packSize',
       label: 'label.pack-size',
       Cell: TooltipTextCell,
       width: 125,
+      defaultHideOnMobile: true,
     },
     [
       'numberOfPacks',
       {
-        accessor: ({ rowData }) => rowData.totalNumberOfPacks.toFixed(2),
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
         width: 125,
       },
     ],
@@ -124,9 +139,14 @@ const StockListComponent: FC = () => {
       'stockOnHand',
       {
         accessor: ({ rowData }) =>
-          (rowData.totalNumberOfPacks * rowData.packSize).toFixed(2),
+          rowData.totalNumberOfPacks * rowData.packSize,
         sortable: false,
-        width: 125,
+        maxWidth: 'unset',
+        defaultHideOnMobile: true,
+        Cell: UnitsAndMaybeDosesCell,
+        cellProps: {
+          displayDoses: prefs?.manageVaccinesInDoses,
+        },
       },
     ],
     [
@@ -135,9 +155,12 @@ const StockListComponent: FC = () => {
         label: 'label.available-soh',
         description: 'description.available-soh',
         accessor: ({ rowData }) =>
-          (rowData.availableNumberOfPacks * rowData.packSize).toFixed(2),
+          rowData.availableNumberOfPacks * rowData.packSize,
         sortable: false,
-        width: 125,
+        maxWidth: 'unset',
+        defaultHideOnMobile: true,
+        Cell: UnitsAndMaybeDosesCell,
+        cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
       },
     ],
     {
@@ -146,6 +169,7 @@ const StockListComponent: FC = () => {
       description: 'description.pack-cost',
       Cell: CurrencyCell,
       width: 125,
+      defaultHideOnMobile: true,
     },
     {
       key: 'totalValue',
@@ -155,6 +179,7 @@ const StockListComponent: FC = () => {
       Cell: CurrencyCell,
       description: 'description.total-cost',
       width: 125,
+      defaultHideOnMobile: true,
     },
     {
       key: 'supplierName',
@@ -163,6 +188,7 @@ const StockListComponent: FC = () => {
         rowData.supplierName ? rowData.supplierName : t('message.no-supplier'),
       Cell: TooltipTextCell,
       width: 190,
+      defaultHideOnMobile: true,
     },
     ...(plugins.stockLine?.tableColumn || []),
   ];
@@ -218,3 +244,21 @@ export const StockListView: FC = () => (
     <StockListComponent />
   </TableProvider>
 );
+
+const UnitsAndMaybeDosesCell = (
+  props: CellProps<StockLineRowFragment> & { displayDoses?: boolean }
+) => {
+  const { rowData, column } = props;
+  const units = Number(column.accessor({ rowData })) ?? 0;
+  const { isVaccine, dosesPerUnit } = rowData.item;
+
+  return (
+    <UnitsAndMaybeDoses
+      numberCellProps={props}
+      units={units}
+      isVaccine={isVaccine}
+      dosesPerUnit={dosesPerUnit}
+      displayDoses={props.displayDoses}
+    />
+  );
+};

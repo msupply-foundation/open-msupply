@@ -62,6 +62,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        received_datetime: None,
         verified_datetime: None,
         cancelled_datetime: None,
         linked_invoice_id: None,
@@ -75,6 +76,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
+        default_donor_link_id: None,
     };
 
     let lines_with_packs: Vec<CustomerReturnLineInput> = customer_return_lines
@@ -104,6 +106,7 @@ pub fn generate(
                  reason_id: _,
                  note,
                  item_variant_id,
+                 vvm_status_id,
              }| InsertStockInLine {
                 id,
                 expiry_date,
@@ -115,6 +118,7 @@ pub fn generate(
                 note,
                 r#type: StockInType::CustomerReturn,
                 item_variant_id,
+                vvm_status_id,
                 // Default
                 location: None,
                 cost_price_per_pack: 0.0,
@@ -124,6 +128,9 @@ pub fn generate(
                 stock_line_id,
                 barcode: None,
                 stock_on_hold: false,
+                donor_id: None,
+                campaign_id: None,
+                shipped_number_of_packs: None,
             },
         )
         .collect();

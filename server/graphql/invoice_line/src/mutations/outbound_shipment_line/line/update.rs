@@ -28,6 +28,7 @@ pub struct UpdateInput {
     number_of_packs: Option<f64>,
     prescribed_quantity: Option<f64>,
     tax: Option<TaxInput>,
+    pub vvm_status_id: Option<String>,
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
@@ -95,6 +96,7 @@ impl UpdateInput {
             number_of_packs,
             prescribed_quantity,
             tax,
+            vvm_status_id,
         } = self;
         ServiceInput {
             id,
@@ -102,11 +104,13 @@ impl UpdateInput {
             stock_line_id,
             number_of_packs,
             prescribed_quantity,
-            total_before_tax: None,
             tax: tax.map(|tax| ShipmentTaxUpdate {
                 percentage: tax.percentage,
             }),
+            vvm_status_id,
+            total_before_tax: None,
             note: None,
+            campaign_id: None,
         }
     }
 }
@@ -114,6 +118,7 @@ impl UpdateInput {
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!("Error updating outbound shipment line: {}", formatted_error);
 
     let graphql_error = match error {
         // Structured Errors
@@ -171,9 +176,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | NumberOfPacksBelowZero
         | ItemNotFound
         | ItemDoesNotMatchStockLine
+        | VVMStatusDoesNotExist
         | NotThisInvoiceLine(_)
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
-        DatabaseError(_) | UpdatedLineDoesNotExist => {
+        AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
         }
     };
@@ -547,12 +553,14 @@ mod test {
                     r#type: Some(StockOutType::OutboundShipment),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
-                    prescribed_quantity: None,
-                    total_before_tax: None,
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(1.0),
                     }),
+                    prescribed_quantity: None,
+                    total_before_tax: None,
                     note: None,
+                    campaign_id: None,
+                    vvm_status_id: None,
                 }
             );
             Ok(InvoiceLine {

@@ -5,10 +5,8 @@ import {
   AppBarButtonsPortal,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
-  EnvUtils,
-  Platform,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { masterListsToCsv } from '../../utils';
 import { MasterListRowFragment } from '../api';
@@ -19,7 +17,8 @@ export const AppBarButtons = ({
   data?: MasterListRowFragment[] | null;
 }) => {
   const t = useTranslation();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
+  const exportCSV = useExportCSV();
 
   const csvExport = async () => {
     if (!data || !data?.length) {
@@ -28,15 +27,13 @@ export const AppBarButtons = ({
     }
 
     const csv = masterListsToCsv(data, t);
-    FileUtils.exportCSV(csv, t('filename.master-lists'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.master-lists'));
   };
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <LoadingButton
-          disabled={EnvUtils.platform === Platform.Android}
           startIcon={<DownloadIcon />}
           variant="outlined"
           isLoading={false}

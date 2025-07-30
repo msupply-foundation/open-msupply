@@ -37,6 +37,7 @@ pub enum ActivityLogType {
     InvoiceStatusPicked,
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
+    InvoiceStatusReceived,
     InvoiceStatusVerified,
     InvoiceStatusCancelled,
     InventoryAdjustment,
@@ -80,13 +81,24 @@ pub enum ActivityLogType {
     RnrFormCreated,
     RnrFormUpdated,
     RnrFormFinalised,
+    RnrFormDeleted,
     VaccinationCreated,
     VaccinationUpdated,
     VaccinationDeleted,
+    VVMStatusLogUpdated,
     DemographicIndicatorCreated,
     DemographicIndicatorUpdated,
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
+    ItemVariantCreated,
+    ItemVariantDeleted,
+    ItemVariantUpdatedName,
+    // Renamed in 2.10.0 - keeping name in DB/sync for backwards compatibility
+    #[serde(rename = "ITEM_VARIANT_UPDATE_COLD_STORAGE_TYPE")]
+    ItemVariantUpdateLocationType,
+    ItemVariantUpdateManufacturer,
+    ItemVariantUpdateDosePerUnit,
+    ItemVariantUpdateVVMType,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

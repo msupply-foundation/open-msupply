@@ -77,7 +77,9 @@ pub async fn generate_report(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
-    let translation_service = &service_provider.translations_service;
+    let localisations = &service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
 
     // get the required report
     let resolved_report = match service.resolve_report(&service_context, &report_id) {
@@ -110,16 +112,14 @@ pub async fn generate_report(
             }))
         }
     };
-    let ctx_with_con = service_provider.basic_context()?;
     // generate the report with the fetched data
     let file_id = match service.generate_html_report(
-        ctx_with_con.connection,
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
         arguments,
         format.map(PrintFormat::to_domain),
-        translation_service,
+        localisations,
         current_language,
     ) {
         Ok(file_id) => file_id,
@@ -142,6 +142,7 @@ pub async fn generate_report_definition(
     arguments: Option<serde_json::Value>,
     format: Option<PrintFormat>,
     current_language: Option<String>,
+    excel_template_buffer: Option<Vec<u8>>,
 ) -> Result<PrintReportResponse> {
     let user = validate_auth(
         ctx,
@@ -154,7 +155,9 @@ pub async fn generate_report_definition(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
-    let translation_service = &service_provider.translations_service;
+    let localisations = &service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
 
     // get the required report
     let report_definition: ReportDefinition = serde_json::from_value(report)
@@ -163,6 +166,7 @@ pub async fn generate_report_definition(
         &service_context,
         name.unwrap_or("report".to_string()),
         report_definition,
+        excel_template_buffer,
     ) {
         Ok(resolved_report) => resolved_report,
         Err(err) => {
@@ -194,16 +198,14 @@ pub async fn generate_report_definition(
         }
     };
 
-    let ctx_with_connection = service_provider.basic_context()?;
     // generate the report with the fetched data
     let file_id = match service.generate_html_report(
-        ctx_with_connection.connection,
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
         arguments,
         format.map(PrintFormat::to_domain),
-        translation_service,
+        localisations,
         current_language,
     ) {
         Ok(file_id) => file_id,

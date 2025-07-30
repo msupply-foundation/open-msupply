@@ -18,6 +18,7 @@ pub enum UpdateLineReturnReasonError {
     ReasonDoesNotExist,
     ReasonIsNotActive,
     UpdatedLineDoesNotExist,
+    InvalidReasonType,
     DatabaseError(RepositoryError),
 }
 
@@ -32,7 +33,7 @@ pub fn update_return_reason_id(
 
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
 
-            invoice_line_repo.update_return_reason_id(&input.line_id, input.reason_id.clone())?;
+            invoice_line_repo.update_reason_option_id(&input.line_id, input.reason_id.clone())?;
 
             get_invoice_line(ctx, &input.line_id)
                 .map_err(UpdateLineReturnReasonError::DatabaseError)?
@@ -67,7 +68,7 @@ mod test {
     use repository::{
         mock::{mock_store_b, mock_supplier_return_a_invoice_line_a, MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        ReturnReasonRow,
+        ReasonOptionRow, ReasonOptionType,
     };
 
     use crate::{
@@ -77,10 +78,19 @@ mod test {
 
     #[actix_rt::test]
     async fn update_return_reason_id_errors() {
-        fn non_active_return_reason() -> ReturnReasonRow {
-            ReturnReasonRow {
+        fn non_active_return_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "not_active".to_string(),
                 is_active: false,
+                ..Default::default()
+            }
+        }
+
+        fn invalid_reason_type() -> ReasonOptionRow {
+            ReasonOptionRow {
+                id: "invalid_reason".to_string(),
+                is_active: true,
+                r#type: ReasonOptionType::NegativeInventoryAdjustment,
                 ..Default::default()
             }
         }
@@ -89,7 +99,7 @@ mod test {
             "update_return_reason_id_errors",
             MockDataInserts::all(),
             MockData {
-                return_reasons: vec![non_active_return_reason()],
+                reason_options: vec![non_active_return_reason(), invalid_reason_type()],
                 ..Default::default()
             },
         )
@@ -142,14 +152,29 @@ mod test {
                 .unwrap_err(),
             UpdateLineReturnReasonError::ReasonIsNotActive
         );
+
+        //InvalidReasonType
+        assert_eq!(
+            service
+                .update_return_reason_id(
+                    &context,
+                    UpdateLineReturnReason {
+                        line_id: mock_supplier_return_a_invoice_line_a().id,
+                        reason_id: Some(invalid_reason_type().id.clone())
+                    }
+                )
+                .unwrap_err(),
+            UpdateLineReturnReasonError::InvalidReasonType
+        );
     }
 
     #[actix_rt::test]
     async fn update_return_reason_id_success() {
-        fn return_reason() -> ReturnReasonRow {
-            ReturnReasonRow {
+        fn return_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "reason_id".to_string(),
                 is_active: true,
+                r#type: ReasonOptionType::ReturnReason,
                 ..Default::default()
             }
         }
@@ -158,7 +183,7 @@ mod test {
             "update_return_reason_id_success",
             MockDataInserts::all(),
             MockData {
-                return_reasons: vec![return_reason()],
+                reason_options: vec![return_reason()],
                 ..Default::default()
             },
         )
@@ -181,7 +206,7 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            updated_line.invoice_line_row.return_reason_id,
+            updated_line.invoice_line_row.reason_option_id,
             Some(return_reason().id)
         );
     }

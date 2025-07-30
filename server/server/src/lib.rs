@@ -3,7 +3,8 @@ extern crate machine_uid;
 
 use crate::{
     central::config_central, certs::Certificates, cold_chain::config_cold_chain,
-    configuration::get_or_create_token_secret, cors::cors_policy, middleware::central_server_only,
+    configuration::get_or_create_token_secret, cors::cors_policy,
+    custom_translations::config_custom_translations, middleware::central_server_only,
     print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
     support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
@@ -11,11 +12,11 @@ use crate::{
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
 use anyhow::Context;
-use extism::set_log_callback;
 use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{
     attach_discovery_graphql_schema, attach_graphql_schema, GraphSchemaData, GraphqlSchema,
+    PluginExecuteGraphql,
 };
 use log::info;
 use repository::{get_storage_connection_manager, migrations::migrate};
@@ -32,6 +33,7 @@ use service::{
     sync::{
         file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
+        CentralServerConfig,
     },
     token_bucket::TokenBucket,
 };
@@ -53,6 +55,7 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+mod custom_translations;
 mod serve_frontend_plugins;
 mod upload;
 
@@ -62,7 +65,7 @@ pub mod print;
 use serve_frontend_plugins::config_server_frontend_plugins;
 use upload::config_upload;
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
-#[cfg(not(target_os = "android"))]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 mod discovery;
 
 /// Starts the server
@@ -84,6 +87,11 @@ pub async fn start_server(
         },
         settings.server.port
     );
+
+    // ON STARTUP OVERRIDE IS CENTRAL SERVER
+    if settings.server.override_is_central_server {
+        CentralServerConfig::set_is_central_server_on_startup();
+    }
 
     // INITIALISE DATABASE AND CONNECTION
     let connection_manager = get_storage_connection_manager(&settings.database);
@@ -146,20 +154,6 @@ pub async fn start_server(
             .update_log_level(&service_context, settings.logging.clone().unwrap().level)
             .unwrap();
     }
-
-    // PLUGIN CONTEXT
-    BoaJsContext {
-        service_provider: service_provider.clone(),
-    }
-    .bind();
-    service_provider
-        .plugin_service
-        .reload_all_plugins(&service_context)
-        .unwrap();
-
-    // SET LOG CALLBACK FOR WASM FUNCTIONS
-    info!("Setting wasm function log callback..");
-    let _ = set_log_callback(|log| info!("log {:?}", log), "info");
 
     // SET HARDWARE UUID
     info!("Getting hardware uuid..");
@@ -268,11 +262,25 @@ pub async fn start_server(
             graphql_schema.clone().toggle_is_operational(true).await;
         });
     }
-    info!("Creating graphql schema..done",);
+    info!("Creating graphql schema..done");
+
+    // PLUGIN CONTEXT
+    info!("Creating plugin context and reloading plugins..");
+    BoaJsContext::new(
+        &service_provider,
+        PluginExecuteGraphql(graphql_schema.clone()),
+    )
+    .bind();
+
+    service_provider
+        .plugin_service
+        .reload_all_plugins(&service_context)
+        .unwrap();
+    info!("Creating plugin context and reloading plugins..done");
 
     // START DISCOVERY
-    // Don't do discovery in android
-    #[cfg(not(target_os = "android"))]
+    // Only run discovery on Mac or Windows
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     {
         let discovery_enabled = match settings.server.discovery {
             DiscoveryMode::Disabled => false,
@@ -297,7 +305,7 @@ pub async fn start_server(
     info!("Starting discovery graphql server",);
     let closure_service_provider = service_provider.clone();
     // See attach_discovery_graphql_schema for more details
-    actix_web::rt::spawn(
+    tokio::spawn(
         HttpServer::new(move || {
             App::new()
                 .wrap(Cors::permissive())
@@ -345,6 +353,7 @@ pub async fn start_server(
             .configure(config_central)
             .configure(config_support)
             .configure(config_print)
+            .configure(config_custom_translations)
             .configure(config_upload)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
@@ -366,7 +375,7 @@ pub async fn start_server(
         settings.server.port, version
     );
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_server);
+    tokio::spawn(running_server);
 
     tokio::select! {
         // TODO log error in ctrl_c and None in off_switch

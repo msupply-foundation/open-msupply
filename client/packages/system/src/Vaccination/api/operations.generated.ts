@@ -25,8 +25,9 @@ export type VaccinationDetailFragment = {
   id: string;
   facilityNameId?: string | null;
   facilityFreeText?: string | null;
-  vaccinationDate?: string | null;
+  vaccinationDate: string;
   given: boolean;
+  givenStoreId?: string | null;
   notGivenReason?: string | null;
   comment?: string | null;
   clinician?: {
@@ -35,11 +36,10 @@ export type VaccinationDetailFragment = {
     firstName?: string | null;
     lastName: string;
   } | null;
+  item?: { __typename: 'ItemNode'; id: string; name: string } | null;
   stockLine?: {
     __typename: 'StockLineNode';
     id: string;
-    itemId: string;
-    itemName: string;
     batch?: string | null;
   } | null;
   invoice?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -139,8 +139,9 @@ export type VaccinationQuery = {
     id: string;
     facilityNameId?: string | null;
     facilityFreeText?: string | null;
-    vaccinationDate?: string | null;
+    vaccinationDate: string;
     given: boolean;
+    givenStoreId?: string | null;
     notGivenReason?: string | null;
     comment?: string | null;
     clinician?: {
@@ -149,11 +150,10 @@ export type VaccinationQuery = {
       firstName?: string | null;
       lastName: string;
     } | null;
+    item?: { __typename: 'ItemNode'; id: string; name: string } | null;
     stockLine?: {
       __typename: 'StockLineNode';
       id: string;
-      itemId: string;
-      itemName: string;
       batch?: string | null;
     } | null;
     invoice?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -250,10 +250,13 @@ export const VaccinationDetailFragmentDoc = gql`
       lastName
     }
     given
+    givenStoreId
+    item {
+      id
+      name
+    }
     stockLine {
       id
-      itemId
-      itemName
       batch
     }
     invoice {

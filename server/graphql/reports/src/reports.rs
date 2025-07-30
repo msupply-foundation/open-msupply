@@ -9,17 +9,20 @@ use graphql_core::{
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::FormSchemaNode;
 use repository::{
-    ContextType as ReportContextDomain, EqualFilter, Report, ReportFilter, ReportSort,
-    ReportSortField, StringFilter,
+    ContextType as ReportContextDomain, EqualFilter, PaginationOption, Report, ReportFilter,
+    ReportSort, ReportSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::report_service::{GetReportError, GetReportsError};
+use service::ListResult;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum ReportSortFieldInput {
     Id,
     Name,
+    Code,
+    Version,
 }
 
 #[derive(InputObject)]
@@ -47,7 +50,8 @@ pub enum ReportContext {
     InboundReturn,
     Report,
     Prescription,
-    InternalOrder
+    InternalOrder,
+    PurchaseOrder,
 }
 
 #[derive(InputObject, Clone)]
@@ -122,6 +126,10 @@ impl ReportNode {
         &self.row.report_row.name
     }
 
+    pub async fn code(&self) -> &str {
+        &self.row.report_row.code
+    }
+
     pub async fn context(&self) -> ReportContext {
         ReportContext::from_domain(&self.row.report_row.context)
     }
@@ -144,6 +152,33 @@ impl ReportNode {
             .clone()
             .map(|schema| FormSchemaNode { schema })
     }
+
+    pub async fn version(&self) -> &str {
+        &self.row.report_row.version
+    }
+}
+
+impl ReportNode {
+    pub fn from_domain(row: Report) -> ReportNode {
+        ReportNode { row }
+    }
+
+    pub fn row(&self) -> &Report {
+        &self.row
+    }
+}
+
+impl ReportConnector {
+    pub fn from_domain(reports: ListResult<Report>) -> ReportConnector {
+        ReportConnector {
+            total_count: reports.count,
+            nodes: reports
+                .rows
+                .into_iter()
+                .map(ReportNode::from_domain)
+                .collect(),
+        }
+    }
 }
 
 pub fn report(
@@ -162,11 +197,13 @@ pub fn report(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
-    let translation_service = &service_provider.translations_service;
+    let localisations = service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
 
     match service_provider.report_service.get_report(
         &service_context,
-        translation_service,
+        &localisations,
         user_language,
         &id,
     ) {
@@ -192,11 +229,14 @@ pub fn reports(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
-    let translation_service = &service_provider.translations_service;
+
+    let localisations = service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
 
     match service_provider.report_service.query_reports(
         &service_context,
-        &translation_service,
+        &localisations,
         user_language,
         filter.map(|f| f.to_domain()),
         sort.and_then(|mut sort_list| sort_list.pop())
@@ -208,6 +248,46 @@ pub fn reports(
         })),
         Err(err) => map_reports_error(err),
     }
+}
+
+pub fn all_report_versions(
+    ctx: &Context<'_>,
+    store_id: String,
+    user_language: String,
+    filter: Option<ReportFilterInput>,
+    sort: Option<Vec<ReportSortInput>>,
+    pagination: Option<PaginationOption>,
+) -> Result<ReportsResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::ServerAdmin,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id, user.user_id)?;
+    let localisations = &service_provider
+        .localisations_service
+        .get_localisations(&service_context.connection)?;
+
+    let reports = match service_provider.report_service.query_all_report_versions(
+        &service_context,
+        &localisations,
+        user_language,
+        filter.map(|f| f.to_domain()),
+        sort.and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain()),
+        pagination,
+    ) {
+        Ok(reports) => reports,
+        Err(err) => return map_reports_error(err),
+    };
+
+    Ok(ReportsResponse::Response(ReportConnector::from_domain(
+        reports,
+    )))
 }
 
 impl ReportFilterInput {
@@ -231,6 +311,8 @@ impl ReportSortInput {
         let key = match self.key {
             ReportSortFieldInput::Id => ReportSortField::Id,
             ReportSortFieldInput::Name => ReportSortField::Name,
+            ReportSortFieldInput::Code => ReportSortField::Code,
+            ReportSortFieldInput::Version => ReportSortField::Version,
         };
         ReportSort {
             key,
@@ -256,6 +338,7 @@ impl ReportContext {
             ReportContext::Report => ReportContextDomain::Report,
             ReportContext::Prescription => ReportContextDomain::Prescription,
             ReportContext::InternalOrder => ReportContextDomain::InternalOrder,
+            ReportContext::PurchaseOrder => ReportContextDomain::PurchaseOrder,
         }
     }
 
@@ -275,19 +358,18 @@ impl ReportContext {
             ReportContextDomain::Report => ReportContext::Report,
             ReportContextDomain::Prescription => ReportContext::Prescription,
             ReportContextDomain::InternalOrder => ReportContext::InternalOrder,
+            ReportContextDomain::PurchaseOrder => ReportContext::PurchaseOrder,
         }
     }
 }
 
 fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
     match error {
-        GetReportError::TranslationError(error) => {
-            Ok(ReportResponse::Error(QueryReportError {
-                error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation(
-                    error.to_string(),
-                )),
-            }))
-        }
+        GetReportError::TranslationError(error) => Ok(ReportResponse::Error(QueryReportError {
+            error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation(
+                error.to_string(),
+            )),
+        })),
         GetReportError::RepositoryError(error) => {
             Err(StandardGraphqlError::from_repository_error(error))
         }
@@ -296,13 +378,11 @@ fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
 
 fn map_reports_error(error: GetReportsError) -> Result<ReportsResponse> {
     match error {
-        GetReportsError::TranslationError(error) => {
-            Ok(ReportsResponse::Error(QueryReportsError {
-                error: QueryReportsErrorInterface::ReportsTranslationError(FailedTranslation(
-                    error.to_string(),
-                )),
-            }))
-        }
+        GetReportsError::TranslationError(error) => Ok(ReportsResponse::Error(QueryReportsError {
+            error: QueryReportsErrorInterface::ReportsTranslationError(FailedTranslation(
+                error.to_string(),
+            )),
+        })),
         GetReportsError::ListError(error) => Err(list_error_to_gql_err(error)),
     }
 }

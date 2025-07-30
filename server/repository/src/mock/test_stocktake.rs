@@ -3,7 +3,7 @@ use util::inline_init;
 
 use crate::{StockLineRow, StocktakeLineRow, StocktakeRow, StocktakeStatus};
 
-use super::{mock_item_a, mock_stock_line_a, mock_stock_line_b, MockData};
+use super::{mock_donor_a, mock_item_a, mock_stock_line_a, mock_stock_line_b, MockData};
 
 pub fn mock_stocktake_without_lines() -> StocktakeRow {
     inline_init(|r: &mut StocktakeRow| {
@@ -261,6 +261,7 @@ pub fn mock_stocktake_line_new_stock_line() -> StocktakeLineRow {
         r.cost_price_per_pack = Some(11.0);
         r.sell_price_per_pack = Some(12.0);
         r.note = Some("note".to_string());
+        r.donor_link_id = Some(mock_donor_a().id);
     })
 }
 

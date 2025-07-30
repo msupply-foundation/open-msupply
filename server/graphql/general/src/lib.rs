@@ -1,3 +1,4 @@
+pub mod campaign;
 mod mutations;
 mod queries;
 mod sync_api_error;
@@ -182,11 +183,9 @@ impl GeneralQueries {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<LedgerFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<LedgerSortInput>>,
+        #[graphql(desc = "Filter option")] filter: Option<ItemLedgerFilterInput>,
     ) -> Result<ItemLedgerResponse> {
-        item_ledger(ctx, store_id, page, filter, sort)
+        item_ledger(ctx, store_id, page, filter)
     }
 
     pub async fn invoice_counts(
@@ -276,6 +275,7 @@ impl GeneralQueries {
         response_requisition_stats(ctx, &store_id, &requisition_line_id)
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_options instead")]
     pub async fn inventory_adjustment_reasons(
         &self,
         ctx: &Context<'_>,
@@ -377,6 +377,7 @@ impl GeneralQueries {
         generate_supplier_return_lines(ctx, store_id, input)
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_options instead")]
     pub async fn return_reasons(
         &self,
         ctx: &Context<'_>,
@@ -422,17 +423,17 @@ impl GeneralQueries {
         reason_options(ctx, page, filter, sort)
     }
 
-    /// Query omSupply "cold_storage_type" entries
-    pub async fn cold_storage_types(
+    /// Query omSupply "location_type" entries
+    pub async fn location_types(
         &self,
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<ColdStorageTypeFilterInput>,
+        #[graphql(desc = "Filter option")] filter: Option<LocationTypeFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<ColdStorageTypeSortInput>>,
-    ) -> Result<ColdStorageTypesResponse> {
-        cold_storage_types(ctx, store_id, page, filter, sort)
+        sort: Option<Vec<LocationTypeSortInput>>,
+    ) -> Result<LocationTypesResponse> {
+        location_types(ctx, store_id, page, filter, sort)
     }
 
     pub async fn diagnoses_active(&self, ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
@@ -497,8 +498,12 @@ impl GeneralMutations {
         initialise_site(ctx, input).await
     }
 
-    pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
-        manual_sync(ctx, true)
+    pub async fn manual_sync(
+        &self,
+        ctx: &Context<'_>,
+        fetch_patient_id: Option<String>,
+    ) -> Result<String> {
+        manual_sync(ctx, true, fetch_patient_id)
     }
 
     pub async fn update_display_settings(
@@ -605,8 +610,12 @@ impl InitialisationMutations {
         initialise_site(ctx, input).await
     }
 
-    pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
-        manual_sync(ctx, false)
+    pub async fn manual_sync(
+        &self,
+        ctx: &Context<'_>,
+        _fetch_patient_id: Option<String>,
+    ) -> Result<String> {
+        manual_sync(ctx, false, None)
     }
 }
 

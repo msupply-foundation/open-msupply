@@ -5,18 +5,22 @@
   "devDependencies": {
     "@bcyesil/capacitor-plugin-printer": "^0.0.4",
     "@capacitor-community/barcode-scanner": "^4.0.1",
+    "@capacitor-community/file-opener": "^6.0.1",
     "@capacitor-community/keep-awake": "^5.0.0",
     "@capacitor/app": "^6.0.0",
     "@capacitor/cli": "^6.1.0",
+    "@capacitor/device": "^6.0.2",
+    "@capacitor/filesystem": "^6.0.3",
     "@capacitor/keyboard": "^6.0.1",
     "@capacitor/preferences": "^6.0.1",
-    "@capacitor-community/file-opener": "^6.0.1",
-    "@capacitor/filesystem": "^6.0.3"
+    "@capacitor/screen-orientation": "^6.0.3"
   },
   "scripts": {
     "build:server": "./build_remote_server_libs.sh",
-    "build:debug": "yarn build:server && ./gradlew assembleDebug",
-    "build:release": "yarn build:server && ./gradlew assembleRelease",
+    "//": "assembleDebug and assembleRelease will build both arm64 and universal flavors in client/packages/android/app/build.gradle",
+    "build:debug": "yarn build:server && yarn apply-config:debug && ./gradlew assembleDebug",
+    "build:release": "yarn build:server && yarn apply-config && ./gradlew assembleRelease",
+    "apply-config:debug": "DEBUG_BUILD=true yarn apply-config",
     "apply-config": "npx cap copy"
   },
   "dependencies": {

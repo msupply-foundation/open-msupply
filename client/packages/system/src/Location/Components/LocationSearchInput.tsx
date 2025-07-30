@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Autocomplete,
   AutocompleteOption,
@@ -14,6 +14,7 @@ interface LocationSearchInputProps {
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
   autoFocus?: boolean;
+  restrictedToLocationTypeId?: string | null;
 }
 
 interface LocationOption {
@@ -54,13 +55,14 @@ const optionRenderer = (
   );
 };
 
-export const LocationSearchInput: FC<LocationSearchInputProps> = ({
+export const LocationSearchInput = ({
   selectedLocation,
   width,
   onChange,
   disabled,
   autoFocus = false,
-}) => {
+  restrictedToLocationTypeId,
+}: LocationSearchInputProps) => {
   const t = useTranslation();
   const {
     query: { data, isLoading },
@@ -69,6 +71,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       direction: 'asc',
       key: 'name',
     },
+    filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
   });
 
   const locations = data?.nodes || [];
@@ -110,6 +113,6 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
 };
 
 export const formatLocationLabel = (location: LocationRowFragment) => {
-  const { name, coldStorageType } = location;
-  return `${name}${coldStorageType ? ` (${coldStorageType.name})` : ''}`;
+  const { name, locationType } = location;
+  return `${name}${locationType ? ` (${locationType.name})` : ''}`;
 };

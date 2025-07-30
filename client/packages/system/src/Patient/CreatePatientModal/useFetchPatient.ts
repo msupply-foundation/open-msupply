@@ -65,7 +65,7 @@ export const useFetchPatient = () => {
       }
 
       setStep('Syncing');
-      await manualSync();
+      await manualSync(patientId);
       await pollTillSynced();
       await queryClient.invalidateQueries(api.keys.list());
       if (!hasErroredDuringSync.current) setStep('Synced');

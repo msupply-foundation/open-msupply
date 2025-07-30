@@ -246,7 +246,8 @@ mod tests {
     use crate::{
         mock::{mock_store_a, MockDataInserts},
         test_db, ClinicianFilter, ClinicianRepository, ClinicianRow, ClinicianRowRepository,
-        ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, StringFilter,
+        ClinicianRowRepositoryTrait, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository,
+        StringFilter,
     };
     use util::inline_init;
 

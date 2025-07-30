@@ -1,4 +1,5 @@
 import { LowStockStatus } from '@common/types';
+import { RnRFormLineFragment } from '../api';
 
 export const getAmc = (
   previousMonthlyConsumptionValues: string,
@@ -35,4 +36,8 @@ export const getLowStockStatus = (
   }
 
   return LowStockStatus.Ok;
+};
+
+export const isLineError = (line: Partial<RnRFormLineFragment>): boolean => {
+  return (line.initialBalance ?? 0) < 0 || (line.finalBalance ?? 0) < 0;
 };

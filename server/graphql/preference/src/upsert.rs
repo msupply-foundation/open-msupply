@@ -1,24 +1,39 @@
+use std::collections::BTreeMap;
+
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::PreferenceNode;
+use graphql_types::types::patient::GenderType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    preference::UpsertPreference,
+    preference::{StorePrefUpdate, UpsertPreferences},
 };
 
 #[derive(InputObject)]
-pub struct UpsertPreferenceInput {
-    pub id: String,
-    pub key: String,
-    pub value: String,
-    pub store_id: Option<String>,
+pub struct BoolStorePrefInput {
+    pub store_id: String,
+    pub value: bool,
+}
+#[derive(InputObject)]
+pub struct UpsertPreferencesInput {
+    // Global preferences
+    pub allow_tracking_of_stock_by_donor: Option<bool>,
+    pub gender_options: Option<Vec<GenderType>>,
+    pub show_contact_tracing: Option<bool>,
+    pub use_campaigns: Option<bool>,
+    pub custom_translations: Option<BTreeMap<String, String>>,
+    // Store preferences
+    pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
+    pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
+    pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
+    pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
+    pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
 }
 
-pub fn upsert_preference(
+pub fn upsert_preferences(
     ctx: &Context<'_>,
     store_id: String,
-    input: UpsertPreferenceInput,
-) -> Result<PreferenceNode> {
+    input: UpsertPreferencesInput,
+) -> Result<()> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -29,27 +44,64 @@ pub fn upsert_preference(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let preference = service_provider
+    service_provider
         .preference_service
         .upsert(&service_context, input.to_domain())?;
 
-    Ok(PreferenceNode { preference })
+    Ok(())
 }
 
-impl UpsertPreferenceInput {
-    pub fn to_domain(self) -> UpsertPreference {
-        let UpsertPreferenceInput {
-            id,
-            key,
-            value,
-            store_id,
+impl UpsertPreferencesInput {
+    pub fn to_domain(&self) -> UpsertPreferences {
+        let UpsertPreferencesInput {
+            // Global preferences
+            allow_tracking_of_stock_by_donor,
+            gender_options,
+            show_contact_tracing,
+            use_campaigns,
+            custom_translations,
+            // Store preferences
+            manage_vaccines_in_doses,
+            manage_vvm_status_for_stock,
+            order_in_packs,
+            sort_by_vvm_status_then_expiry,
+            use_simplified_mobile_ui,
         } = self;
 
-        UpsertPreference {
-            id,
-            key,
-            value,
-            store_id,
+        UpsertPreferences {
+            // Global preferences
+            allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
+            gender_options: gender_options
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            show_contact_tracing: *show_contact_tracing,
+            use_campaigns: *use_campaigns,
+            custom_translations: custom_translations.clone(),
+            // Store preferences
+            manage_vaccines_in_doses: manage_vaccines_in_doses
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            manage_vvm_status_for_stock: manage_vvm_status_for_stock
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            order_in_packs: order_in_packs
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            use_simplified_mobile_ui: use_simplified_mobile_ui
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+        }
+    }
+}
+
+impl BoolStorePrefInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<bool> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value,
         }
     }
 }

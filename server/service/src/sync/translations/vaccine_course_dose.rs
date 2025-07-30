@@ -51,6 +51,12 @@ impl SyncTranslation for VaccineCourseDoseTranslation {
             ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
+            ToSyncRecordTranslationType::PushToOmSupplyCentral => {
+                // We shouldn't ever create Vaccine Course dose rows in the central server,
+                // so we don't translate this, even when changelog records might exist
+                // This can happen due to migrations that recreate change log rows
+                false
+            }
             _ => false,
         }
     }

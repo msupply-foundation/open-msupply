@@ -10,7 +10,7 @@ fragment SupplierReturnRow on InvoiceNode {
   createdDatetime
   pickedDatetime
   shippedDatetime
-  deliveredDatetime
+  receivedDatetime
   verifiedDatetime
   comment
   theirReference
@@ -25,6 +25,7 @@ fragment CustomerReturnRow on InvoiceNode {
   colour
   createdDatetime
   deliveredDatetime
+  receivedDatetime
   comment
   theirReference
   linkedShipment {
@@ -97,6 +98,7 @@ fragment CustomerReturn on InvoiceNode {
   pickedDatetime
   shippedDatetime
   deliveredDatetime
+  receivedDatetime
   verifiedDatetime
 
   otherPartyId
@@ -242,6 +244,12 @@ fragment GenerateSupplierReturnLine on SupplierReturnLineNode {
     id
     unitName
   }
+  reasonOption {
+    id
+    isActive
+    reason
+    type
+  }
 }
 
 query generateSupplierReturnLines(
@@ -275,6 +283,12 @@ fragment GenerateCustomerReturnLine on CustomerReturnLineNode {
     unitName
     code
     name
+  }
+  reasonOption {
+    id
+    isActive
+    reason
+    type
   }
 }
 
@@ -310,10 +324,7 @@ query supplierReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
 }
 
 query supplierReturnById($invoiceId: String!, $storeId: String!) {
-  invoice(
-    id: $invoiceId
-    storeId: $storeId
-  ) {
+  invoice(id: $invoiceId, storeId: $storeId) {
     ... on InvoiceNode {
       __typename
       ...SupplierReturn
@@ -346,10 +357,7 @@ query customerReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
 }
 
 query customerReturnById($invoiceId: String!, $storeId: String!) {
-  invoice(
-    id: $invoiceId
-    storeId: $storeId
-  ) {
+  invoice(id: $invoiceId, storeId: $storeId) {
     ... on InvoiceNode {
       __typename
       ...CustomerReturn

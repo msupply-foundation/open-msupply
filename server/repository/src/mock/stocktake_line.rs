@@ -19,8 +19,9 @@ pub fn mock_stocktake_line_a() -> StocktakeLineRow {
         cost_price_per_pack: None,
         sell_price_per_pack: None,
         note: None,
-        inventory_adjustment_reason_id: None,
         item_variant_id: None,
+        donor_link_id: None,
+        reason_option_id: None,
     }
 }
 
@@ -41,8 +42,9 @@ pub fn mock_stocktake_line_b() -> StocktakeLineRow {
         cost_price_per_pack: None,
         sell_price_per_pack: None,
         note: None,
-        inventory_adjustment_reason_id: None,
         item_variant_id: None,
+        donor_link_id: None,
+        reason_option_id: None,
     }
 }
 

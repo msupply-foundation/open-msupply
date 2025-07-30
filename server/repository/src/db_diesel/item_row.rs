@@ -1,8 +1,9 @@
 use crate::{Delete, Upsert};
 
 use super::{
-    item_link_row::item_link, item_row::item::dsl::*, name_link_row::name_link, unit_row::unit,
-    ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
+    clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
+    location_type_row::location_type, name_link_row::name_link, unit_row::unit, ItemLinkRow,
+    ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -23,6 +24,7 @@ table! {
         is_active -> Bool,
         is_vaccine -> Bool,
         vaccine_doses -> Integer,
+        restricted_location_type_id ->  Nullable<Text>,
     }
 }
 
@@ -37,6 +39,8 @@ joinable!(item -> unit (unit_id));
 joinable!(item_is_visible -> item (id));
 allow_tables_to_appear_in_same_query!(item, item_link);
 allow_tables_to_appear_in_same_query!(item, name_link);
+allow_tables_to_appear_in_same_query!(item, clinician_link);
+allow_tables_to_appear_in_same_query!(item, location_type);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -73,6 +77,7 @@ pub struct ItemRow {
     pub is_active: bool,
     pub is_vaccine: bool,
     pub vaccine_doses: i32,
+    pub restricted_location_type_id: Option<String>,
 }
 
 impl Default for ItemRow {
@@ -90,6 +95,7 @@ impl Default for ItemRow {
             strength: Default::default(),
             ven_category: VENCategory::NotAssigned,
             vaccine_doses: 0,
+            restricted_location_type_id: None,
         }
     }
 }

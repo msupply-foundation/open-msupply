@@ -1,11 +1,9 @@
-use crate::sync::{
-    sync_serde::{
-        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
-        zero_date_as_option,
-    },
-    translations::{location::LocationTranslation, store::StoreTranslation},
-};
+use crate::sync::translations::{location::LocationTranslation, store::StoreTranslation};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
+    zero_date_as_option,
+};
 
 use repository::{
     get_sensor_type, ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, SensorType,
@@ -13,7 +11,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacySensorRow {
@@ -137,7 +135,7 @@ impl SyncTranslation for SensorTranslation {
         let last_connection_date = last_connection_datetime.map(|t| t.date());
 
         let last_connection_time = last_connection_datetime
-            .map(|last_connection_datetime: NaiveDateTime| last_connection_datetime.time())
+            .map(to_legacy_time)
             .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
 
         let r#type = match r#type {

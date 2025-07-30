@@ -4,7 +4,11 @@ on:
       - "server/**"
   workflow_dispatch:
 
-name: CI
+name: Backend Tests
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   build_and_test:

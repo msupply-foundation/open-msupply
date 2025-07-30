@@ -2,6 +2,9 @@ import { Document } from './document';
 import { Lines } from './line';
 import { Utils } from './utils';
 
+export * from './useDraftInboundLines';
+export type { PatchDraftLineInput } from './useDraftInboundLines';
+
 export const useInbound = {
   document: {
     get: Document.useInbound,
@@ -18,6 +21,7 @@ export const useInbound = {
     next: Document.useNextItem,
 
     listInternalOrders: Document.useListInternalOrders,
+    listInternalOrdersPromise: Document.useListInternalOrdersPromise,
     listInternalOrderLines: Document.useListInternalOrderLines,
   },
   lines: {

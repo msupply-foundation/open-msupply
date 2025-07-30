@@ -3,8 +3,8 @@ use program::deleted_datetime;
 
 use crate::{
     db_diesel::{
-        context_row::context, document::document, master_list_row::master_list,
-        name_link_row::name_link,
+        context_row::context, document::document, item_link_row::item_link,
+        master_list_row::master_list, name_link_row::name_link,
     },
     repository_error::RepositoryError,
     StorageConnection, Upsert,
@@ -28,6 +28,7 @@ joinable!(program -> master_list (master_list_id));
 joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
 allow_tables_to_appear_in_same_query!(program, name_link);
+allow_tables_to_appear_in_same_query!(program, item_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = program)]

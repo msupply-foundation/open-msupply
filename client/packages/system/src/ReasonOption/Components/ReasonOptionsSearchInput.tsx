@@ -1,8 +1,7 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Autocomplete,
-  BasicTextInput,
-  Box,
+  AutocompleteProps,
   defaultOptionMapper,
   getDefaultOptionRenderer,
   ReasonOptionNode,
@@ -10,27 +9,29 @@ import {
 } from '@openmsupply-client/common';
 import { useReasonOptions } from '../api/hooks/useReasonOptions';
 
-interface ReasonOptionsSearchInputProps {
+interface ReasonOptionsSearchInputProps
+  extends Omit<
+    AutocompleteProps<ReasonOptionNode>,
+    'value' | 'onChange' | 'options' | 'width'
+  > {
   value?: ReasonOptionNode | null;
-  width?: number | string;
   onChange: (reasonOption: ReasonOptionNode | null) => void;
-  autoFocus?: boolean;
-  type: ReasonOptionNodeType;
-  isError?: boolean;
-  isDisabled?: boolean;
-  onBlur?: () => void;
+  type: ReasonOptionNodeType | ReasonOptionNodeType[];
+  initialStocktake?: boolean;
+  reasonOptions: ReasonOptionNode[];
+  width?: number;
 }
 
-export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
+export const ReasonOptionsSearchInput = ({
   value,
   width,
   onChange,
-  autoFocus = false,
   type,
-  isError,
-  isDisabled,
-  onBlur,
-}) => {
+  initialStocktake,
+  reasonOptions,
+  disabled,
+  ...restProps
+}: ReasonOptionsSearchInputProps) => {
   const { data, isLoading } = useReasonOptions();
 
   const reasonFilter = (reason: ReasonOptionNode) => {
@@ -47,50 +48,34 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
         return false;
     }
   };
-  const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
-  const isRequired = reasons.length !== 0;
+  const reasons = (reasonOptions ?? []).filter(reasonFilter);
+  const isRequired = reasons.length !== 0 && !initialStocktake;
 
   return (
-    <Box display="flex" flexDirection="row" width={120}>
-      <Autocomplete
-        autoFocus={autoFocus}
-        disabled={isDisabled || !isRequired}
-        width={`${width}px`}
-        clearable={false}
-        value={
-          value
-            ? {
-                ...value,
-                label: value.reason,
-              }
-            : null
-        }
-        loading={isLoading}
-        onChange={(_, reason) => {
-          onChange(reason);
-        }}
-        renderInput={props => (
-          <BasicTextInput
-            {...props}
-            autoFocus={autoFocus}
-            slotProps={{
-              input: {
-                disableUnderline: false,
-                style: props.disabled ? { paddingLeft: 0 } : {},
-                ...props.InputProps,
-              },
-            }}
-            sx={{ minWidth: width }}
-            error={isError}
-            required={isRequired && !isDisabled}
-            onBlur={onBlur}
-          />
-        )}
-        options={defaultOptionMapper(reasons, 'reason')}
-        renderOption={getDefaultOptionRenderer('reason')}
-        isOptionEqualToValue={(option, value) => option?.id === value?.id}
-      />
-    </Box>
+    <Autocomplete
+      width={`${width}px`}
+      disabled={disabled || !isRequired}
+      clearable={false}
+      value={
+        value
+          ? {
+              ...value,
+              label: value.reason,
+            }
+          : null
+      }
+      required={isRequired && !disabled}
+      inputProps={{
+        ...restProps.inputProps,
+      }}
+      onChange={(_, reason) => {
+        onChange(reason);
+      }}
+      options={defaultOptionMapper(reasons, 'reason')}
+      renderOption={getDefaultOptionRenderer('reason')}
+      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+      {...restProps}
+    />
   );
 };

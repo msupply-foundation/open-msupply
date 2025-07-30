@@ -1,8 +1,14 @@
 import React from 'react';
-import { Button as MuiButton, styled, SxProps, Theme } from '@mui/material';
+import {
+  CircularProgress,
+  Button as MuiButton,
+  styled,
+  SxProps,
+  Theme,
+} from '@mui/material';
 import { Property } from 'csstype';
 import { useIntlUtils } from '@common/intl';
-import { useIsScreen } from '@common/hooks';
+import { useAppTheme, useMediaQuery } from '@common/styles';
 interface ButtonProps {
   color?: 'inherit' | 'primary' | 'secondary';
   endIcon?: React.ReactNode;
@@ -14,6 +20,7 @@ interface ButtonProps {
   name?: string;
   shouldShrink?: boolean;
   shrinkThreshold?: 'sm' | 'md' | 'lg' | 'xl';
+  loading?: boolean;
 }
 
 const StyledButton = styled(MuiButton, {
@@ -50,9 +57,13 @@ export const FlatButton: React.FC<ButtonProps> = ({
   disabled = false,
   shouldShrink = false,
   shrinkThreshold = 'md',
+  loading = false,
 }) => {
   const { isRtl } = useIntlUtils();
-  const isShrinkThreshold: boolean = useIsScreen(shrinkThreshold);
+  const theme = useAppTheme();
+  const isShrinkThreshold = useMediaQuery(
+    theme.breakpoints.down(shrinkThreshold)
+  );
 
   // On small screens, if the button shouldShrink, then
   // only display a centred icon, with no text.
@@ -63,16 +74,18 @@ export const FlatButton: React.FC<ButtonProps> = ({
 
   return (
     <StyledButton
-      disabled={disabled}
       shrink={shrink}
       onClick={onClick}
       endIcon={endIcon}
-      startIcon={regularIcon}
       variant="text"
       color={color}
       isRtl={isRtl}
       sx={sx}
       name={name}
+      disabled={loading || disabled}
+      startIcon={
+        loading ? <CircularProgress size={20} sx={{ color }} /> : regularIcon
+      }
     >
       {centredIcon}
       {text}

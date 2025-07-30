@@ -1,3 +1,5 @@
+use repository::InvoiceRow;
+use repository::InvoiceStatus;
 use repository::InvoiceType;
 
 pub mod generate;
@@ -28,5 +30,17 @@ impl StockInType {
             StockInType::InventoryAddition => InvoiceType::InventoryAddition,
             StockInType::InboundShipment => InvoiceType::InboundShipment,
         }
+    }
+}
+
+pub fn should_update_stock(invoice: &InvoiceRow) -> bool {
+    match invoice.status {
+        InvoiceStatus::New | InvoiceStatus::Delivered => false,
+        InvoiceStatus::Allocated
+        | InvoiceStatus::Picked
+        | InvoiceStatus::Shipped
+        | InvoiceStatus::Cancelled
+        | InvoiceStatus::Received
+        | InvoiceStatus::Verified => true,
     }
 }

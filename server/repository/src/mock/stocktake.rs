@@ -12,6 +12,7 @@ pub fn mock_stocktake_a() -> StocktakeRow {
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
+        r.is_initial_stocktake = false
     })
 }
 
@@ -26,6 +27,7 @@ pub fn mock_stocktake_b() -> StocktakeRow {
             .unwrap()
             .and_hms_milli_opt(22, 15, 0, 0)
             .unwrap();
+        r.is_initial_stocktake = false
     })
 }
 

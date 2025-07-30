@@ -1,17 +1,20 @@
 use crate::{
     invoice::common::{
         calculate_foreign_currency_total, calculate_total_after_tax,
-        generate_invoice_user_id_update,
+        generate_invoice_user_id_update, generate_vvm_status_log, GenerateVVMStatusLogInput,
     },
     invoice_line::{
-        stock_in_line::{convert_invoice_line_to_single_pack, generate_batch, StockLineInput},
+        stock_in_line::{
+            convert_invoice_line_to_single_pack, generate_batch, get_existing_vvm_status_log_id,
+            should_update_stock, StockLineInput,
+        },
         StockInType,
     },
     store_preference::get_store_preferences,
 };
 use repository::{
-    InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow,
-    StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow, InvoiceRow,
+    ItemRow, RepositoryError, StockLineRow, StorageConnection,
 };
 
 use super::UpdateStockInLine;
@@ -21,6 +24,7 @@ pub struct GenerateResult {
     pub updated_line: InvoiceLineRow,
     pub upsert_batch_option: Option<StockLineRow>,
     pub batch_to_delete_id: Option<String>,
+    pub vvm_status_log_option: Option<VVMStatusLogRow>,
 }
 
 pub fn generate(
@@ -48,7 +52,8 @@ pub fn generate(
         update_line = convert_invoice_line_to_single_pack(update_line);
     }
 
-    let upsert_batch_option = if existing_invoice_row.status != InvoiceStatus::New {
+    let (upsert_batch_option, vvm_status_log_option) = if should_update_stock(&existing_invoice_row)
+    {
         // There will be a batch_to_delete_id if the item has changed
         // If item has changed, we want a new stock line, otherwise keep existing
         let stock_line_id = match batch_to_delete_id {
@@ -69,9 +74,27 @@ pub fn generate(
             },
         )?;
         update_line.stock_line_id = Some(new_batch.id.clone());
-        Some(new_batch)
+
+        let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
+            let existing_log_id =
+                get_existing_vvm_status_log_id(connection, &new_batch.id, &update_line.id)?;
+
+            Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+                id: existing_log_id,
+                store_id: existing_invoice_row.store_id.clone(),
+                created_by: user_id.to_string(),
+                vvm_status_id,
+                stock_line_id: new_batch.id.clone(),
+                invoice_line_id: update_line.id.clone(),
+                comment: None,
+            }))
+        } else {
+            None
+        };
+
+        (Some(new_batch), vvm_status_log_option)
     } else {
-        None
+        (None, None)
     };
 
     Ok(GenerateResult {
@@ -79,6 +102,7 @@ pub fn generate(
         updated_line: update_line,
         upsert_batch_option,
         batch_to_delete_id,
+        vvm_status_log_option,
     })
 }
 
@@ -108,12 +132,16 @@ fn generate_line(
         number_of_packs,
         note,
         location,
-        id: _,
-        item_id: _,
         total_before_tax,
         tax_percentage,
-        r#type: _,
         item_variant_id,
+        vvm_status_id,
+        donor_id,
+        campaign_id,
+        shipped_number_of_packs,
+        id: _,
+        item_id: _,
+        r#type: _,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -124,7 +152,7 @@ fn generate_line(
 
     update_line.pack_size = pack_size.unwrap_or(update_line.pack_size);
     update_line.batch = batch.or(update_line.batch);
-    update_line.note = note.or(update_line.note);
+    update_line.note = note.map(|n| n.value).unwrap_or(update_line.note);
     update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);
     update_line.expiry_date = expiry_date.or(update_line.expiry_date);
     update_line.sell_price_per_pack =
@@ -145,6 +173,12 @@ fn generate_line(
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
 
+    update_line.donor_link_id = donor_id
+        .map(|d| d.value)
+        .unwrap_or(update_line.donor_link_id);
+
+    update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
+
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;
         update_line.item_code = item.code;
@@ -161,6 +195,13 @@ fn generate_line(
 
     update_line.total_after_tax =
         calculate_total_after_tax(update_line.total_before_tax, update_line.tax_percentage);
+
+    update_line.campaign_id = campaign_id
+        .map(|c| c.value)
+        .unwrap_or(update_line.campaign_id);
+
+    update_line.shipped_number_of_packs =
+        shipped_number_of_packs.or(update_line.shipped_number_of_packs);
 
     Ok(update_line)
 }

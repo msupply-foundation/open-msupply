@@ -31,6 +31,7 @@ pub enum ActivityLogNodeType {
     InvoiceStatusPicked,
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
+    InvoiceStatusReceived,
     InvoiceStatusVerified,
     InventoryAdjustment,
     StocktakeCreated,
@@ -72,6 +73,7 @@ pub enum ActivityLogNodeType {
     VaccineCourseUpdated,
     RnrFormCreated,
     RnrFormUpdated,
+    RnrFormDeleted,
     RnrFormFinalised,
     VaccinationCreated,
     VaccinationUpdated,
@@ -81,6 +83,14 @@ pub enum ActivityLogNodeType {
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
     InvoiceStatusCancelled,
+    ItemVariantCreated,
+    ItemVariantDeleted,
+    ItemVariantUpdatedName,
+    ItemVariantUpdateLocationType,
+    ItemVariantUpdateManufacturer,
+    ItemVariantUpdateDosePerUnit,
+    ItemVariantUpdateVVMType,
+    VVMStatusLogUpdated,
 }
 
 #[Object]
@@ -207,6 +217,7 @@ impl ActivityLogNodeType {
             from::ProgramUpdated => to::ProgramUpdated,
             from::RnrFormCreated => to::RnrFormCreated,
             from::RnrFormUpdated => to::RnrFormUpdated,
+            from::RnrFormDeleted => to::RnrFormDeleted,
             from::RnrFormFinalised => to::RnrFormFinalised,
             from::VaccinationCreated => to::VaccinationCreated,
             from::VaccinationUpdated => to::VaccinationUpdated,
@@ -217,6 +228,15 @@ impl ActivityLogNodeType {
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
             from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
             from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
+            from::ItemVariantCreated => to::ItemVariantCreated,
+            from::ItemVariantDeleted => to::ItemVariantDeleted,
+            from::ItemVariantUpdatedName => to::ItemVariantUpdatedName,
+            from::ItemVariantUpdateLocationType => to::ItemVariantUpdateLocationType,
+            from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
+            from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
+            from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
+            from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
+            from::InvoiceStatusReceived => to::InvoiceStatusReceived,
         }
     }
 
@@ -232,6 +252,7 @@ impl ActivityLogNodeType {
             from::InvoiceStatusPicked => to::InvoiceStatusPicked,
             from::InvoiceStatusShipped => to::InvoiceStatusShipped,
             from::InvoiceStatusDelivered => to::InvoiceStatusDelivered,
+            from::InvoiceStatusReceived => to::InvoiceStatusReceived,
             from::InvoiceStatusVerified => to::InvoiceStatusVerified,
             from::InventoryAdjustment => to::InventoryAdjustment,
             from::StocktakeCreated => to::StocktakeCreated,
@@ -273,6 +294,7 @@ impl ActivityLogNodeType {
             from::ProgramUpdated => to::ProgramUpdated,
             from::RnrFormCreated => to::RnrFormCreated,
             from::RnrFormUpdated => to::RnrFormUpdated,
+            from::RnrFormDeleted => to::RnrFormDeleted,
             from::RnrFormFinalised => to::RnrFormFinalised,
             from::VaccinationCreated => to::VaccinationCreated,
             from::VaccinationUpdated => to::VaccinationUpdated,
@@ -283,6 +305,14 @@ impl ActivityLogNodeType {
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
             from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
             from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
+            from::ItemVariantCreated => to::ItemVariantCreated,
+            from::ItemVariantDeleted => to::ItemVariantDeleted,
+            from::ItemVariantUpdatedName => to::ItemVariantUpdatedName,
+            from::ItemVariantUpdateLocationType => to::ItemVariantUpdateLocationType,
+            from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
+            from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
+            from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
+            from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
         }
     }
 }

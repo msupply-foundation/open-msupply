@@ -1,5 +1,4 @@
 import {
-  ArrayUtils,
   RecordPatch,
   SortUtils,
   UpdatePrescriptionInput,
@@ -48,19 +47,14 @@ export const usePrescription = (id?: string) => {
   const isDisabled = data ? isPrescriptionDisabled(data) : false;
 
   const rows = useMemo(() => {
-    const stockLines = data?.lines?.nodes;
-    const items = Object.entries(
-      ArrayUtils.groupBy(stockLines, line => line.item.id)
-    ).map(([itemId, lines]) => {
-      return { id: itemId, itemId, lines };
-    });
+    const stockLines = data?.lines?.nodes ?? [];
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    if (!currentColumn?.getSortValue) return items;
+    if (!currentColumn?.getSortValue) return stockLines;
     const sorter = SortUtils.getColumnSorter(
-      currentColumn?.getSortValue,
+      currentColumn.getSortValue,
       !!sortBy.isDesc
     );
-    return [...(items ?? [])].sort(sorter);
+    return [...stockLines].sort(sorter);
   }, [data, sortBy.key, sortBy.isDesc]);
 
   // UPDATE
@@ -135,7 +129,8 @@ const useGetById = (invoiceId: string | undefined) => {
     if (invoice?.__typename === 'InvoiceNode') {
       return invoice;
     } else {
-      throw new Error('Could not find invoice');
+      console.error('No invoice found', invoiceId);
+      throw new Error(`Could not find invoice ${invoiceId}`);
     }
   };
 

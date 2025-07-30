@@ -99,7 +99,9 @@ const customerParsers = {
       case undefined:
         return;
       case InvoiceNodeStatus.Delivered:
-        return UpdateCustomerReturnStatusInput.Delivered;
+        return UpdateCustomerReturnStatusInput.Received; // We always skip Delivered for customer returns
+      case InvoiceNodeStatus.Received:
+        return UpdateCustomerReturnStatusInput.Received;
       case InvoiceNodeStatus.Verified:
         return UpdateCustomerReturnStatusInput.Verified;
       default:

@@ -216,8 +216,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         </Row>
         <Row label={t('label.calculate-demand')}>
           <Checkbox
-            checked={draft?.isActive ?? true}
-            onChange={e => updatePatch({ isActive: e.target.checked })}
+            checked={draft?.useInGapsCalculations ?? true}
+            onChange={e =>
+              updatePatch({ useInGapsCalculations: e.target.checked })
+            }
           ></Checkbox>
         </Row>
         <VaccineCourseDoseTable
@@ -334,6 +336,7 @@ const VaccineCourseDoseTable = ({
         Cell: LabelCell,
         label: 'label.custom-age-label',
         accessor: ({ rowData }) => rowData.customAgeLabel ?? '',
+        cellProps: { debounceTime: 0 },
         setter: updateDose,
       },
       {

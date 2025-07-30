@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -38,6 +38,7 @@ const Options = z
      * Should component debounce it's input, optional default = true
      */
     useDebounce: z.boolean().optional(),
+    autoFocus: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -75,12 +76,30 @@ const usePatternValidation = (
   value?: string
 ): string | undefined => {
   const { customError, setCustomError } = useJSONFormsCustomError(path, 'Text');
+  const lastValidatedValue = useRef<{ pattern?: string; value?: string }>({});
 
   useEffect(() => {
+    // Skip validation if pattern or value hasn't actually changed
+    const patternString = pattern?.toString();
+    if (
+      lastValidatedValue.current.pattern === patternString &&
+      lastValidatedValue.current.value === value
+    ) {
+      return;
+    }
+
+    // Update last validated values
+    lastValidatedValue.current = {
+      pattern: patternString,
+      value,
+    };
+
+    // Process validation
     if (!pattern || !value) {
       setCustomError(undefined);
       return;
     }
+
     const result = pattern.exec(value);
     if (result == null) {
       setCustomError('Invalid format');
@@ -88,6 +107,7 @@ const usePatternValidation = (
       setCustomError(undefined);
     }
   }, [pattern, setCustomError, value]);
+
   return customError;
 };
 
@@ -131,6 +151,7 @@ const UIComponent = (props: ControlProps) => {
   const width = schemaOptions?.width ?? '100%';
   const flexBasis = schemaOptions?.flexBasis ?? '100%';
   const useDebounce = schemaOptions?.useDebounce ?? true;
+  const autoFocus = schemaOptions?.autoFocus ?? false;
 
   return (
     <DetailInputWithLabelRow
@@ -153,6 +174,7 @@ const UIComponent = (props: ControlProps) => {
         required: props.required,
         multiline,
         rows,
+        focusOnRender: autoFocus,
       }}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}

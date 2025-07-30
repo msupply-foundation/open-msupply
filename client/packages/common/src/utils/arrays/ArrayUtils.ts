@@ -4,6 +4,7 @@ import uniqBy from 'lodash/uniqBy';
 import keyBy from 'lodash/keyBy';
 import uniq from 'lodash/uniq';
 import flatMap from 'lodash/flatMap';
+import partition from 'lodash/partition';
 
 export const ArrayUtils = {
   ifTheSameElseDefault: <T, K extends keyof T, J>(
@@ -54,6 +55,7 @@ export const ArrayUtils = {
   uniqBy,
   keyBy,
   flatMap,
+  partition,
   toObject: <T extends RecordWithId>(arr: T[]) => {
     const obj: Record<string, T> = {};
     arr.forEach(t => (obj[t.id] = { ...t }));

@@ -1,6 +1,7 @@
 import { LocaleKey } from '@common/intl';
 import { PrintFormat } from '@common/types';
 import { AppRoute } from '@openmsupply-client/config';
+import { Device } from '@capacitor/device';
 
 export enum Platform {
   Android,
@@ -77,6 +78,11 @@ const mapRoute = (route: string): RouteMapping => {
         title: 'encounter',
         docs: '/programs/program-module/#encounter',
       };
+    case inRoute(AppRoute.Clinicians):
+      return {
+        title: 'clinicians',
+        docs: '/dispensary/clinicians/',
+      };
     case inRoute(AppRoute.Monitoring):
       return {
         title: 'monitoring',
@@ -86,17 +92,26 @@ const mapRoute = (route: string): RouteMapping => {
       return { title: 'sensors', docs: '/coldchain/sensors/' };
     case inRoute(AppRoute.Equipment):
       return { title: 'equipment', docs: '/coldchain/equipment/' };
-    case inRoute(AppRoute.Facilities):
-      return { title: 'facilities', docs: '/manage/facilities/' };
+    case inRoute(AppRoute.Stores):
+      return { title: 'stores', docs: '/manage/facilities/' };
     case inRoute(AppRoute.IndicatorsDemographics):
       return {
         title: 'indicators-demographics',
         docs: '/manage/demographics/',
       };
+    case inRoute(AppRoute.Campaigns):
+      return { title: 'campaigns', docs: '/manage/campaigns/' };
+    case inRoute(AppRoute.GlobalPreferences):
+      return {
+        title: 'global-preferences',
+        docs: '/manage/global-preferences/',
+      };
     case inRoute(AppRoute.ImmunisationPrograms):
       return { title: 'immunisations', docs: '/programs/immunizations/' };
     case inRoute(AppRoute.RnRForms):
       return { title: 'r-and-r-forms', docs: '/replenishment/r-and-r-forms/' };
+    case inRoute(AppRoute.Help):
+      return { title: 'help', docs: '/help/help/' };
     default:
       return { title: undefined, docs: '/introduction/introduction' };
   }
@@ -136,8 +151,22 @@ const getOS = () => {
   return 'Windows';
 };
 
+// V7 of the Device plugin includes screen dimensions, so bundling it in here to
+// emulate that functionality
+const getDeviceInfo = async () => {
+  const deviceInfo = await Device.getInfo();
+  return {
+    ...deviceInfo,
+    screen: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    },
+  };
+};
+
 const platform = getPlatform();
 const os = getOS();
+const deviceInfo = getDeviceInfo();
 
 const isTouchScreen = 'ontouchstart' in document.documentElement;
 
@@ -148,6 +177,7 @@ export const EnvUtils = {
   isTouchScreen,
   mapRoute,
   os,
+  deviceInfo,
   platform,
   printFormat: PrintFormat.Html, // platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
 };

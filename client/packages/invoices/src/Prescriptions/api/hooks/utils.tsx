@@ -17,9 +17,8 @@ import {
 } from '../operations.generated';
 import React from 'react';
 
-import { getPackQuantityCellId } from '../../../utils';
+import { getStockOutQuantityCellId } from '../../../utils';
 import { DraftPrescriptionLine } from '../../../types';
-import { ItemPriceFragment } from '../../../OutboundShipment/api/operations.generated';
 
 export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
   createdDateTime: InvoiceSortFieldInput.CreatedDatetime,
@@ -98,8 +97,11 @@ export const createPrescriptionPlaceholderRow = (
     id: itemId,
     code: '',
     name: '',
+    isVaccine: false,
+    doses: 0,
     __typename: 'ItemNode',
     itemDirections: [],
+    warnings: [],
   },
   itemName: '',
   stockLine: {
@@ -118,6 +120,8 @@ export const createPrescriptionPlaceholderRow = (
       __typename: 'ItemNode',
       code: '',
       name: '',
+      isVaccine: false,
+      doses: 0,
       itemDirections: [
         {
           id: '',
@@ -125,6 +129,16 @@ export const createPrescriptionPlaceholderRow = (
           __typename: 'ItemDirectionNode',
           directions: '',
           priority: 0,
+        },
+      ],
+      warnings: [
+        {
+          __typename: 'WarningNode',
+          id: '',
+          itemId,
+          warningText: '',
+          code: '',
+          priority: false,
         },
       ],
     },
@@ -142,25 +156,10 @@ export interface DraftPrescriptionLineSeeds {
 export const createDraftPrescriptionLineFromStockLine = ({
   invoiceId,
   stockLine,
-  defaultPricing,
 }: {
   invoiceId: string;
   stockLine: PartialPrescriptionLineFragment;
-  defaultPricing?: ItemPriceFragment;
 }): DraftPrescriptionLine => {
-  let sellPricePerPack = stockLine?.sellPricePerPack ?? 0;
-
-  // if there's a default price, it overrides the stock line price
-  if (defaultPricing?.defaultPricePerUnit) {
-    sellPricePerPack =
-      defaultPricing?.defaultPricePerUnit ?? 0 * (stockLine?.packSize ?? 1);
-  }
-
-  if (defaultPricing?.discountPercentage) {
-    sellPricePerPack =
-      sellPricePerPack * (1 - defaultPricing.discountPercentage / 100);
-  }
-
   return {
     isCreated: true,
     isUpdated: false,
@@ -169,7 +168,7 @@ export const createDraftPrescriptionLineFromStockLine = ({
     prescribedQuantity: 0,
     location: stockLine?.location,
     expiryDate: stockLine?.expiryDate,
-    sellPricePerPack,
+    sellPricePerPack: stockLine?.sellPricePerPack ?? 0,
     costPricePerPack: 0,
     packSize: stockLine?.packSize ?? 0,
     id: FnUtils.generateUUID(),
@@ -183,8 +182,11 @@ export const createDraftPrescriptionLineFromStockLine = ({
       id: stockLine?.itemId ?? '',
       name: stockLine?.item?.name,
       code: stockLine?.item?.code,
+      isVaccine: stockLine?.item?.isVaccine ?? false,
+      doses: stockLine?.item?.doses ?? 0,
       __typename: 'ItemNode',
       itemDirections: [],
+      warnings: [],
     },
 
     stockLine,
@@ -516,7 +518,7 @@ export const assignPrescribedQuantity = (
   let prescribedQuantityAssigned = false;
 
   newDraftPrescriptionLines.forEach(stockOutLine => {
-    if (stockOutLine.numberOfPacks > 0 && !prescribedQuantityAssigned) {
+    if (stockOutLine.numberOfPacks >= 0 && !prescribedQuantityAssigned) {
       stockOutLine.prescribedQuantity = prescribedQuantity;
       prescribedQuantityAssigned = true;
     } else {
@@ -548,7 +550,7 @@ export const UnitQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
       (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
       (props.rowData.stockLine?.packSize ?? 1)
     }
-    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    id={getStockOutQuantityCellId(props.rowData.stockLine?.batch)}
     min={0}
     decimalLimit={2}
     slotProps={{
@@ -565,8 +567,29 @@ export const PackQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.stockLine?.availableNumberOfPacks}
-    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    id={getStockOutQuantityCellId(props.rowData.stockLine?.batch)}
     decimalLimit={2}
     min={0}
+  />
+);
+
+export const DosesQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
+  <NumberInputCell
+    {...props}
+    max={
+      (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
+      (props.rowData.stockLine?.packSize ?? 1) *
+      props.rowData.item.doses
+    }
+    id={getStockOutQuantityCellId(props.rowData.stockLine?.batch)}
+    min={0}
+    decimalLimit={2}
+    slotProps={{
+      htmlInput: {
+        sx: {
+          backgroundColor: 'background.white',
+        },
+      },
+    }}
   />
 );

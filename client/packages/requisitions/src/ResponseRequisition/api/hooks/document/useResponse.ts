@@ -7,8 +7,8 @@ import { ResponseFragment } from '../../operations.generated';
 import { useResponseApi } from '../utils/useResponseApi';
 
 export const useResponseId = () => {
-  const { requisitionId = '' } = useParams();
-  return requisitionId;
+  const { id = '' } = useParams();
+  return id;
 };
 
 export const useResponse = (): UseQueryResult<ResponseFragment> => {

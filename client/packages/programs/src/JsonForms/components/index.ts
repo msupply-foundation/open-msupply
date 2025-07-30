@@ -15,3 +15,4 @@ export * from './PatientProgramSearch';
 export * from './Prescription/Prescription';
 export * from './ProgramSearch';
 export * from './PeriodSearch';
+export * from './DateRange';

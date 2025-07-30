@@ -8,13 +8,12 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
   ToggleState,
-  Platform,
-  EnvUtils,
   useNavigate,
   RouteBuilder,
+  useSimplifiedTabletUI,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
@@ -29,12 +28,15 @@ export const AppBarButtons: FC<{
   const navigate = useNavigate();
   const { mutateAsync: onCreate } = useRequest.document.insert();
   const { insert: onProgramCreate } = useRequest.document.insertProgram();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
+
+  const exportCSV = useExportCSV();
   const { isLoading, fetchAsync } = useRequest.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,
   });
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -44,8 +46,7 @@ export const AppBarButtons: FC<{
     }
 
     const csv = requestsToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.requests'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.requests'));
   };
 
   return (
@@ -56,14 +57,15 @@ export const AppBarButtons: FC<{
           label={t('label.new-internal-order')}
           onClick={modalController.toggleOn}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          isLoading={isLoading}
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            variant="outlined"
+            isLoading={isLoading}
+            onClick={csvExport}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
       <CreateRequisitionModal
         isOpen={modalController.isOn}

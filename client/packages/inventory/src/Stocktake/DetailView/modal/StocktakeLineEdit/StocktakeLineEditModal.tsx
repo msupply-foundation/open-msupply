@@ -44,8 +44,8 @@ export const StocktakeLineEditModal: FC<
       okButton={
         <DialogButton variant="ok" onClick={onOk} disabled={!isValid} />
       }
-      height={600}
-      width={1125}
+      height={650}
+      width={1260}
     >
       <>{children}</>
     </Modal>

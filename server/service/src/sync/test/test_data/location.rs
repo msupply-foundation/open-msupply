@@ -15,7 +15,7 @@ const LOCATION_1: (&str, &str) = (
         "Description": "NameRed.02",
         "Comment": "",
         "Volume": 0,
-        "type_ID": "",
+        "type_ID": "84AA2B7A18694A2AB1E84DCABAD19617",
         "object_type": "",
         "parent_id": "",
         "Colour": "",
@@ -41,7 +41,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             code: "Red.02".to_string(),
             on_hold: false,
             store_id: "store_a".to_string(),
-            cold_storage_type_id: None,
+            location_type_id: Some("84AA2B7A18694A2AB1E84DCABAD19617".to_string()),
         },
     )]
 }
@@ -56,6 +56,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
             code: "Red.02".to_string(),
             on_hold: false,
             store_id: "store_a".to_string(),
+            location_type_id: Some("84AA2B7A18694A2AB1E84DCABAD19617".to_string())
         }),
     }]
 }

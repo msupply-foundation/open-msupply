@@ -3,6 +3,7 @@ use super::StorageConnection;
 use crate::{diesel_macros::apply_equal_filter, EqualFilter, RepositoryError};
 use diesel::prelude::*;
 
+// This is a view
 table! {
     vaccination_card (id) {
         id -> Text,

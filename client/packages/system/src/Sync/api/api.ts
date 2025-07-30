@@ -22,7 +22,8 @@ export const getSyncQueries = (sdk: Sdk) => ({
       sdk.syncInfo({}, { Authorization: `Bearer ${token}` }),
   },
   // manualSync is a trigger that returns a string result (don't need to capture it)
-  manualSync: async () => sdk.manualSync(),
+  manualSync: async (fetchPatientId?: string) =>
+    sdk.manualSync({ fetchPatientId }),
   initialise: async (settings: SyncSettingsInput) => {
     const result = await sdk.initialiseSite({
       syncSettings: cleanSyncSettings(settings),

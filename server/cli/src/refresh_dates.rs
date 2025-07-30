@@ -34,6 +34,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("invoice", "delivered_datetime"),
         ("invoice", "verified_datetime"),
         ("invoice", "cancelled_datetime"),
+        ("invoice", "received_datetime"),
         ("location_movement", "enter_datetime"),
         ("location_movement", "exit_datetime"),
         ("requisition", "created_datetime"),
@@ -54,6 +55,12 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("vaccination", "created_datetime"),
         ("invoice", "backdated_datetime"),
         ("contact_form", "created_datetime"),
+        ("item_variant", "created_datetime"),
+        ("vvm_status_log", "created_datetime"),
+        ("sync_message", "created_datetime"),
+        ("purchase_order", "created_datetime"),
+        ("purchase_order", "confirmed_datetime"),
+        ("purchase_order", "sent_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -125,6 +132,15 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("vaccination", "vaccination_date"),
         ("name_insurance_join", "expiry_date"),
         ("invoice", "expected_delivery_date"),
+        ("campaign", "start_date"),
+        ("campaign", "end_date"),
+        ("purchase_order", "received_at_port_date"),
+        ("purchase_order", "expected_delivery_date"),
+        ("purchase_order", "requested_delivery_date"),
+        ("purchase_order_line", "requested_delivery_date"),
+        ("purchase_order_line", "expected_delivery_date"),
+        ("purchase_order", "contract_signed_date"),
+        ("purchase_order", "advance_paid_date"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {

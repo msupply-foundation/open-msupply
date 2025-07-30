@@ -1,13 +1,11 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::StocktakeNode;
 use repository::Stocktake;
-use service::NullableUpdate;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     stocktake::{InsertStocktake as ServiceInput, InsertStocktakeError as ServiceError},
@@ -17,14 +15,14 @@ use service::{
 #[graphql(name = "InsertStocktakeInput")]
 pub struct InsertInput {
     pub id: String,
+    pub master_list_id: Option<String>,
+    pub include_all_master_list_items: Option<bool>,
+    pub location_id: Option<String>,
+    pub expires_before: Option<NaiveDate>,
+    pub is_initial_stocktake: Option<bool>,
+    pub create_blank_stocktake: Option<bool>,
     pub comment: Option<String>,
     pub description: Option<String>,
-    pub is_locked: Option<bool>,
-    pub stocktake_date: Option<NaiveDate>,
-    pub master_list_id: Option<String>,
-    pub location: Option<NullableUpdateInput<String>>,
-    pub items_have_stock: Option<bool>,
-    pub expires_before: Option<NaiveDate>,
 }
 
 #[derive(Union)]
@@ -76,6 +74,7 @@ pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertRespo
             let graphql_error = match error {
                 ServiceError::InvalidStore => BadUserInput(formatted_error),
                 ServiceError::StocktakeAlreadyExists => BadUserInput(formatted_error),
+                ServiceError::InitialStocktakeAlreadyExists => BadUserInput(formatted_error),
                 ServiceError::InternalError(err) => InternalError(err),
                 ServiceError::DatabaseError(_) => InternalError(formatted_error),
                 ServiceError::InvalidMasterList => BadUserInput(formatted_error),
@@ -92,28 +91,26 @@ impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
         let InsertInput {
             id,
+            location_id,
+            master_list_id,
+            include_all_master_list_items,
+            expires_before,
+            create_blank_stocktake,
+            is_initial_stocktake,
             comment,
             description,
-            stocktake_date,
-            is_locked,
-            location,
-            master_list_id,
-            items_have_stock,
-            expires_before,
         } = self;
 
         ServiceInput {
             id,
             comment,
-            description,
-            stocktake_date,
-            is_locked,
-            location: location.map(|location| NullableUpdate {
-                value: location.value,
-            }),
+            location_id,
             master_list_id,
-            items_have_stock,
+            include_all_master_list_items,
             expires_before,
+            is_initial_stocktake,
+            description,
+            create_blank_stocktake,
         }
     }
 }
@@ -121,7 +118,6 @@ impl InsertInput {
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
-    use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{mock::MockDataInserts, Stocktake, StocktakeRow, StorageConnectionManager};
     use serde_json::json;
@@ -186,12 +182,8 @@ mod test {
                     id: "id1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
-                    is_locked: Some(true),
-                    location: None,
-                    master_list_id: None,
-                    items_have_stock: None,
-                    expires_before: None
+                    is_initial_stocktake: Some(true),
+                    ..Default::default()
                 }
             );
             // StocktakeNode result is checked in queries
@@ -203,8 +195,7 @@ mod test {
               "id": "id1",
               "comment": "comment",
               "description": "description",
-              "stocktakeDate": "2022-01-03",
-              "isLocked": true
+              "isInitialStocktake": Some(true)
             }
         }));
         let expected = json!({

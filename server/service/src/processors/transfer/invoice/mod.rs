@@ -130,7 +130,7 @@ fn process_change_log(
     // Try record against all of the processors
     for processor in processors.iter() {
         let result = processor
-            .try_process_record_common(&connection, &record)
+            .try_process_record_common(connection, &record)
             .map_err(Error::ProcessorError);
         if let Err(e) = result {
             log_system_error(connection, &e).map_err(Error::DatabaseError)?;
@@ -199,6 +199,8 @@ pub(crate) fn process_invoice_transfers(
 pub(crate) enum GetUpsertOperationError {
     #[error("Invoice not found {0:?}")]
     InvoiceNotFound(ChangelogRow),
+    #[error("Linked invoice not found {0:?}")]
+    LinkedInvoiceNotFound(String),
     #[error("Database error while fetching invoice with id {0} {1:?}")]
     DatabaseError(String, RepositoryError),
     #[error("Error while fetching invoice operation {0:?} {1}")]
@@ -220,9 +222,11 @@ fn get_upsert_operation(
         .ok_or_else(|| InvoiceNotFound(changelog_row.clone()))?;
 
     let linked_invoice = match &invoice.invoice_row.linked_invoice_id {
-        Some(id) => repo
-            .query_one(InvoiceFilter::by_id(id))
-            .map_err(|e| DatabaseError(id.to_string(), e))?,
+        Some(id) => Some(
+            repo.query_one(InvoiceFilter::by_id(id))
+                .map_err(|e| DatabaseError(id.to_string(), e))?
+                .ok_or_else(|| LinkedInvoiceNotFound(id.to_string()))?,
+        ),
         None => repo
             .query_one(InvoiceFilter::new_match_linked_invoice_id(
                 &invoice.invoice_row.id,

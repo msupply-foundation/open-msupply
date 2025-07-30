@@ -36,6 +36,7 @@ pub enum AllocateOutboundShipmentUnallocatedLineError {
     LineIsNotUnallocatedLine,
     // TODO NotThisStoreInvoice,
     // Internal
+    PreferenceError(String),
     InsertOutboundShipmentLine(InputWithError<InsertStockOutLine, InsertStockOutLineError>),
     UpdateOutboundShipmentLine(InputWithError<UpdateStockOutLine, UpdateStockOutLineError>),
     DeleteOutboundShipmentUnallocatedLine(
@@ -62,6 +63,7 @@ pub struct AllocateLineResult {
     pub updates: Vec<InvoiceLine>,
     pub skipped_expired_stock_lines: Vec<StockLine>,
     pub skipped_on_hold_stock_lines: Vec<StockLine>,
+    pub skipped_unusable_vvm_status_lines: Vec<StockLine>,
     pub issued_expiring_soon_stock_lines: Vec<StockLine>,
 }
 
@@ -82,6 +84,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 delete_unallocated_line,
                 skipped_expired_stock_lines,
                 skipped_on_hold_stock_lines,
+                skipped_unusable_vvm_status_lines,
                 issued_expiring_soon_stock_lines,
             } = generate(connection, &ctx.store_id, unallocated_line)?;
 
@@ -92,6 +95,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 skipped_expired_stock_lines,
                 skipped_on_hold_stock_lines,
                 issued_expiring_soon_stock_lines,
+                skipped_unusable_vvm_status_lines,
             };
 
             for input in update_lines.into_iter() {
@@ -143,8 +147,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
 }
 
 fn validate(connection: &StorageConnection, line_id: &str) -> Result<InvoiceLine, OutError> {
-    let invoice_line =
-        check_line_exists(connection, line_id)?.ok_or(OutError::LineDoesNotExist)?;
+    let invoice_line = check_line_exists(connection, line_id)?.ok_or(OutError::LineDoesNotExist)?;
 
     if invoice_line.invoice_line_row.r#type != InvoiceLineType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);

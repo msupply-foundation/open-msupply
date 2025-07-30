@@ -1,11 +1,9 @@
-use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option, zero_f64_as_none},
-    translations::{
-        currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
-        item_variant::ItemVariantTranslation, location::LocationTranslation,
-        reason::ReasonTranslation, stock_line::StockLineTranslation,
-    },
+use crate::sync::translations::{
+    currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
+    item_variant::ItemVariantTranslation, location::LocationTranslation, reason::ReasonTranslation,
+    stock_line::StockLineTranslation,
 };
+
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
@@ -14,6 +12,10 @@ use repository::{
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
+    zero_date_as_option,
+};
 
 use super::{
     is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck,
@@ -34,6 +36,14 @@ pub enum LegacyTransLineType {
     /// E.g. "non_stock"
     #[serde(other)]
     Others,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+pub struct TransLineRowOmsFields {
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -66,7 +76,6 @@ pub struct LegacyTransLineRow {
     pub r#type: LegacyTransLineType,
     #[serde(rename = "quantity")]
     pub number_of_packs: f64,
-    #[serde(deserialize_with = "zero_f64_as_none")]
     #[serde(rename = "prescribedQuantity")]
     pub prescribed_quantity: Option<f64>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -82,16 +91,30 @@ pub struct LegacyTransLineRow {
     pub total_after_tax: Option<f64>,
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub option_id: Option<String>,
+    pub reason_option_id: Option<String>,
     #[serde(rename = "foreign_currency_price")]
     pub foreign_currency_price_before_tax: Option<f64>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    #[serde(rename = "om_item_variant_id")]
+    #[serde(
+        rename = "om_item_variant_id",
+        default,
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub item_variant_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "linked_transact_id")]
     pub linked_invoice_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub donor_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "vaccine_vial_monitor_status_ID")]
+    pub vvm_status_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<TransLineRowOmsFields>,
+    #[serde(rename = "sentQuantity")]
+    pub shipped_number_of_packs: Option<f64>,
 }
+
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -145,11 +168,16 @@ impl SyncTranslation for InvoiceLineTranslation {
             tax_percentage,
             total_before_tax,
             total_after_tax,
-            option_id,
+            reason_option_id,
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
+            donor_id,
+            vvm_status_id,
+            oms_fields,
+            shipped_number_of_packs,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
+
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
             None => {
@@ -248,12 +276,12 @@ impl SyncTranslation for InvoiceLineTranslation {
         };
         let location_id = clear_invalid_location_id(connection, location_id)?;
 
-        let option_id = option_id.and_then(|option_id| {
-            if option_id == "0" {
+        let reason_option_id = reason_option_id.and_then(|reason_option_id| {
+            if reason_option_id == "0" {
                 // This is not a valid optionID
                 None
             } else {
-                Some(option_id)
+                Some(reason_option_id)
             }
         });
 
@@ -277,19 +305,14 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             prescribed_quantity,
             note,
-            inventory_adjustment_reason_id: match invoice.r#type {
-                InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
-                    option_id.clone()
-                }
-                _ => None,
-            },
-            return_reason_id: match invoice.r#type {
-                InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => option_id,
-                _ => None,
-            },
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
+            donor_link_id: donor_id,
+            reason_option_id,
+            vvm_status_id,
+            campaign_id: oms_fields.and_then(|o| o.campaign_id),
+            shipped_number_of_packs,
         };
 
         let result = adjust_negative_values(result);
@@ -341,23 +364,23 @@ impl SyncTranslation for InvoiceLineTranslation {
                     number_of_packs,
                     prescribed_quantity,
                     note,
-                    inventory_adjustment_reason_id,
-                    return_reason_id,
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
+                    donor_link_id,
+                    vvm_status_id,
+                    reason_option_id,
+                    campaign_id,
+                    shipped_number_of_packs,
                 },
             item_row,
-            invoice_row,
             ..
         } = invoice_line;
 
-        let option_id = match invoice_row.r#type {
-            InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
-                inventory_adjustment_reason_id
-            }
-            InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => return_reason_id,
-            _ => None,
+        let oms_fields = if campaign_id.is_some() {
+            Some(TransLineRowOmsFields { campaign_id })
+        } else {
+            None
         };
 
         let legacy_row = LegacyTransLineRow {
@@ -382,8 +405,12 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_after_tax: Some(total_after_tax),
             foreign_currency_price_before_tax,
             item_variant_id,
-            option_id,
+            reason_option_id,
             linked_invoice_id,
+            donor_id: donor_link_id,
+            vvm_status_id,
+            oms_fields,
+            shipped_number_of_packs,
         };
         Ok(PushTranslateResult::upsert(
             changelog,

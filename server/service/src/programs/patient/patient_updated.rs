@@ -16,15 +16,20 @@ pub fn create_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
     name_id: &str,
+    name_store_join_id: Option<String>,
 ) -> Result<(), RepositoryError> {
     let name_store_join = NameStoreJoinRepository::new(con)
-        .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(name_id)))?
+        .query_by_filter(
+            NameStoreJoinFilter::new()
+                .store_id(EqualFilter::equal_to(store_id))
+                .name_id(EqualFilter::equal_to(name_id)),
+        )?
         .pop();
     if name_store_join.is_none() {
         // add name store join
         let name_store_join_repo = NameStoreJoinRepository::new(con);
         name_store_join_repo.upsert_one(&NameStoreJoinRow {
-            id: uuid(),
+            id: name_store_join_id.unwrap_or(uuid()),
             name_link_id: name_id.to_string(),
             store_id: store_id.to_string(),
             name_is_customer: true,
@@ -149,6 +154,12 @@ pub(crate) fn patient_to_name_row(
         national_health_number: code_2,
         custom_data_string: None,
         deleted_datetime: existing_name.and_then(|name| name.deleted_datetime),
+        // Supplier fields below are not used for patients, we set them to none
+        hsh_code: None,
+        hsh_name: None,
+        margin: None,
+        freight_factor: None,
+        currency_id: None,
     })
 }
 
@@ -478,6 +489,12 @@ mod test {
             date_of_death: Some(NaiveDate::from_ymd_opt(2001, 1, 2).unwrap()),
             custom_data_string: None,
             deleted_datetime: None,
+            // Supplier fields below are not used for patients, we set them to none
+            hsh_code: None,
+            hsh_name: None,
+            margin: None,
+            freight_factor: None,
+            currency_id: None,
         };
         let updated_patient = patient_draft_document(&name_row_update, patient.clone());
         // Check that 2nd contact_details entry is not affected by the name_row change

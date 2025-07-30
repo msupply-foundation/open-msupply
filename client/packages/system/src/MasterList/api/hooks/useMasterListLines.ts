@@ -11,12 +11,12 @@ import { MASTER_LIST } from './keys';
 import { MasterListLineFragment } from '../operations.generated';
 
 export const useMasterListLines = () => {
-  const { masterListApi, storeId } = useMasterListGraphQL();
   const { id } = useParams();
+  const masterListId = id || '';
+  const { masterListApi, storeId } = useMasterListGraphQL();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'itemName', dir: 'asc' },
   });
-  const masterListId = id || '';
   const { first, offset, sortBy, filterBy } = queryParams ?? {};
 
   const queryKey = [

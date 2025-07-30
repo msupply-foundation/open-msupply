@@ -3,6 +3,10 @@ use super::{
 };
 
 use crate::{
+    db_diesel::{
+        clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
+        item_row::item, name_link_row::name_link, name_row::name,
+    },
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
 };
@@ -26,6 +30,12 @@ table! {
 
 joinable!(vaccine_course_dose -> vaccine_course (vaccine_course_id));
 allow_tables_to_appear_in_same_query!(vaccine_course_dose, vaccine_course);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician_link);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, name_link);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, name);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, item_link);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, item);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize,

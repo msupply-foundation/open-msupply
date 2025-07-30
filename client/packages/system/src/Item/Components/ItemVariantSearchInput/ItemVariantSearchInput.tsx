@@ -1,14 +1,14 @@
 import React from 'react';
 import { Autocomplete, useTranslation } from '@openmsupply-client/common';
-import { ItemVariantOptionFragment, useItemVariants } from '../../api';
+import { ItemVariantFragment, useItemVariants } from '../../api';
 
 interface ItemVariantSearchInputProps {
   itemId: string;
   selectedId: string | null;
-  onChange: (variantId: string | null) => void;
+  onChange: (variant: ItemVariantFragment | null) => void;
   disabled?: boolean;
   width?: number | string;
-  getOptionDisabled?: (variant: ItemVariantOptionFragment) => boolean;
+  getOptionDisabled?: (variant: ItemVariantFragment) => boolean;
 }
 
 export const ItemVariantSearchInput = ({
@@ -24,7 +24,7 @@ export const ItemVariantSearchInput = ({
 
   if (!data) return null;
 
-  const selected = data.find(variant => variant.id === selectedId);
+  const selected = data.variants.find(variant => variant.id === selectedId);
 
   return (
     <Autocomplete
@@ -33,12 +33,17 @@ export const ItemVariantSearchInput = ({
       popperMinWidth={Math.min(Number(width), 200)}
       value={selected ?? null}
       loading={isLoading}
-      onChange={(_, option) => onChange(option?.id ?? null)}
-      options={data}
+      onChange={(_, option) => onChange(option)}
+      getOptionLabel={getOptionLabel}
+      options={data.variants}
       noOptionsText={t('messages.no-item-variants')}
       isOptionEqualToValue={(option, value) => option.id === value?.id}
       clearable
       getOptionDisabled={getOptionDisabled}
     />
   );
+};
+
+const getOptionLabel = (option: ItemVariantFragment): string => {
+  return `${option.name}`;
 };

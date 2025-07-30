@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use repository::{
     contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
     contact_form_row::ContactType,
@@ -7,6 +8,7 @@ use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 
 use crate::{
+    cursor_controller::CursorType,
     email::{
         enqueue::{enqueue_email, EnqueueEmailData},
         EmailServiceError,
@@ -21,6 +23,7 @@ const DESCRIPTION: &str = "Adds an email to the queue from a contact form";
 
 pub(crate) struct QueueContactEmailProcessor;
 
+#[async_trait]
 impl Processor for QueueContactEmailProcessor {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
@@ -28,7 +31,7 @@ impl Processor for QueueContactEmailProcessor {
 
     /// Only runs once because contact form is create only
     /// Changelog will only be processed once
-    fn try_process_record(
+    async fn try_process_record(
         &self,
         ctx: &ServiceContext,
         _: &ServiceProvider,
@@ -86,8 +89,8 @@ impl Processor for QueueContactEmailProcessor {
         vec![ChangelogTableName::ContactForm]
     }
 
-    fn cursor_type(&self) -> KeyType {
-        KeyType::ContactFormProcessorCursor
+    fn cursor_type(&self) -> CursorType {
+        CursorType::Standard(KeyType::ContactFormProcessorCursor)
     }
 
     // Only run on central server

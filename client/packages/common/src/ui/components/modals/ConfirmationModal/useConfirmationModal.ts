@@ -13,6 +13,7 @@ export const useConfirmationModal = ({
   cancelButtonLabel,
   title,
   onCancel,
+  cleanupConfirm,
   iconType = 'help',
 }: PartialBy<ConfirmationModalState, 'open'>) => {
   const {
@@ -25,6 +26,7 @@ export const useConfirmationModal = ({
     setTitle,
     setButtonLabel,
     setCancelButtonLabel,
+    setCleanupConfirm,
   } = useContext(ConfirmationModalContext);
 
   const trigger = (
@@ -38,6 +40,7 @@ export const useConfirmationModal = ({
     setIconType(iconType);
     setButtonLabel(paramPatch?.buttonLabel ?? buttonLabel);
     setCancelButtonLabel(paramPatch?.cancelButtonLabel ?? cancelButtonLabel);
+    setCleanupConfirm(paramPatch?.cleanupConfirm ?? cleanupConfirm);
     setOpen(true);
   };
 

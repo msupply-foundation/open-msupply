@@ -15,7 +15,7 @@ export type SupplierReturnRowFragment = {
   createdDatetime: string;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   comment?: string | null;
   theirReference?: string | null;
@@ -30,6 +30,7 @@ export type CustomerReturnRowFragment = {
   colour?: string | null;
   createdDatetime: string;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   comment?: string | null;
   theirReference?: string | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -88,6 +89,7 @@ export type CustomerReturnFragment = {
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   otherPartyId: string;
   otherPartyName: string;
@@ -185,7 +187,7 @@ export type SupplierReturnsQuery = {
       createdDatetime: string;
       pickedDatetime?: string | null;
       shippedDatetime?: string | null;
-      deliveredDatetime?: string | null;
+      receivedDatetime?: string | null;
       verifiedDatetime?: string | null;
       comment?: string | null;
       theirReference?: string | null;
@@ -216,6 +218,7 @@ export type CustomerReturnsQuery = {
       colour?: string | null;
       createdDatetime: string;
       deliveredDatetime?: string | null;
+      receivedDatetime?: string | null;
       comment?: string | null;
       theirReference?: string | null;
       linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -237,6 +240,13 @@ export type GenerateSupplierReturnLineFragment = {
   itemName: string;
   itemCode: string;
   item: { __typename: 'ItemNode'; id: string; unitName?: string | null };
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    isActive: boolean;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+  } | null;
 };
 
 export type GenerateSupplierReturnLinesQueryVariables = Types.Exact<{
@@ -262,6 +272,13 @@ export type GenerateSupplierReturnLinesQuery = {
       itemName: string;
       itemCode: string;
       item: { __typename: 'ItemNode'; id: string; unitName?: string | null };
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        isActive: boolean;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+      } | null;
     }>;
   };
 };
@@ -287,6 +304,13 @@ export type GenerateCustomerReturnLineFragment = {
     code: string;
     name: string;
   };
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    isActive: boolean;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+  } | null;
 };
 
 export type GenerateCustomerReturnLinesQueryVariables = Types.Exact<{
@@ -319,6 +343,13 @@ export type GenerateCustomerReturnLinesQuery = {
         code: string;
         name: string;
       };
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        isActive: boolean;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+      } | null;
     }>;
   };
 };
@@ -491,6 +522,7 @@ export type CustomerReturnByNumberQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyId: string;
         otherPartyName: string;
@@ -566,6 +598,7 @@ export type CustomerReturnByIdQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyId: string;
         otherPartyName: string;
@@ -771,7 +804,7 @@ export const SupplierReturnRowFragmentDoc = gql`
     createdDatetime
     pickedDatetime
     shippedDatetime
-    deliveredDatetime
+    receivedDatetime
     verifiedDatetime
     comment
     theirReference
@@ -787,6 +820,7 @@ export const CustomerReturnRowFragmentDoc = gql`
     colour
     createdDatetime
     deliveredDatetime
+    receivedDatetime
     comment
     theirReference
     linkedShipment {
@@ -854,6 +888,7 @@ export const CustomerReturnFragmentDoc = gql`
     pickedDatetime
     shippedDatetime
     deliveredDatetime
+    receivedDatetime
     verifiedDatetime
     otherPartyId
     otherPartyName
@@ -950,6 +985,12 @@ export const GenerateSupplierReturnLineFragmentDoc = gql`
       id
       unitName
     }
+    reasonOption {
+      id
+      isActive
+      reason
+      type
+    }
   }
 `;
 export const GenerateCustomerReturnLineFragmentDoc = gql`
@@ -971,6 +1012,12 @@ export const GenerateCustomerReturnLineFragmentDoc = gql`
       unitName
       code
       name
+    }
+    reasonOption {
+      id
+      isActive
+      reason
+      type
     }
   }
 `;

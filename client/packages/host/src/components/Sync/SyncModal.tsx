@@ -1,6 +1,7 @@
 import React, { PropsWithChildren, useState, useEffect } from 'react';
 
 import {
+  Breakpoints,
   CloseIcon,
   DateUtils,
   Formatter,
@@ -9,12 +10,15 @@ import {
   RadioIcon,
   Typography,
   UNDEFINED_STRING_VALUE,
+  CUSTOM_TRANSLATIONS_NAMESPACE,
+  useAppTheme,
   useAuthContext,
   useFormatDateTime,
   useNativeClient,
   useQueryClient,
   useTranslation,
-  useIsScreen,
+  useMediaQuery,
+  useIntl,
 } from '@openmsupply-client/common';
 import { useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
@@ -42,6 +46,7 @@ const useHostSync = (enabled: boolean) => {
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
+  const { i18n } = useIntl();
 
   useEffect(() => {
     if (!syncStatus) {
@@ -57,6 +62,8 @@ const useHostSync = (enabled: boolean) => {
     } else {
       allowSleep();
       queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
+      // Reload custom translations, in case we received new ones via sync
+      i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
     }
   }, [syncStatus?.isSyncing]);
 
@@ -90,6 +97,11 @@ export const SyncModal = ({
   height = 500,
 }: SyncModalProps) => {
   const t = useTranslation();
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
+
   const {
     syncStatus,
     latestSyncStart,
@@ -100,7 +112,6 @@ export const SyncModal = ({
     onManualSync,
   } = useHostSync(open);
   const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
-  const isMobile = useIsScreen('sm');
 
   const sync = async () => {
     await updateUser();
@@ -120,14 +131,14 @@ export const SyncModal = ({
 
   return (
     <BasicModal
-      width={!isMobile ? width : 340}
-      height={!isMobile ? height : 600}
+      width={!isExtraSmallScreen ? width : 340}
+      height={!isExtraSmallScreen ? height : 600}
       open={open}
       onKeyDown={e => {
         if (e.key === 'Escape') onCancel();
       }}
     >
-      <Grid sx={{ padding: 2, paddingBottom: 5 }} justifyContent="center">
+      <Grid sx={{ padding: 2 }} justifyContent="center">
         <IconButton
           icon={<CloseIcon />}
           color="primary"
@@ -135,7 +146,6 @@ export const SyncModal = ({
           sx={{ position: 'absolute', right: 0, top: 0, padding: 2 }}
           label={t('button.close')}
         />
-
         <Grid
           container
           flexDirection="column"
@@ -143,11 +153,9 @@ export const SyncModal = ({
           sx={theme => ({
             [theme.breakpoints.down('sm')]: {
               minWidth: 300,
-              padding: 0,
-              marginTop: '50px',
+              padding: '2 0 0 0',
             },
             padding: 2,
-            paddingBottom: 6,
             minWidth: 650,
           })}
           flexWrap="nowrap"
@@ -165,7 +173,7 @@ export const SyncModal = ({
               maxWidth: 650,
             })}
           >
-            {!isMobile
+            {!isExtraSmallScreen
               ? t('sync-info.summary')
                   .split('\n')
                   .map((line, index) => <div key={index}>{line}</div>)
@@ -190,20 +198,29 @@ export const SyncModal = ({
           <Row title={t('sync-info.last-successful-sync')}>
             <FormattedSyncDate date={latestSuccessfulSyncDate} />
           </Row>
-          <Row>
+          <Grid
+            sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                flexDirection: 'column',
+                padding: '0em .5em 1em 0em',
+              },
+              padding: 1,
+            })}
+          >
+            <ServerInfo />
+          </Grid>
+          <Grid display="flex" justifyContent="center">
             <LoadingButton
               shouldShrink={false}
               autoFocus
               isLoading={isLoading || updateUserIsLoading}
-              startIcon={<RadioIcon sx={{ color: '#fff!important' }} />}
+              startIcon={<RadioIcon />}
               variant="contained"
               sx={theme => ({
                 [theme.breakpoints.down('sm')]: {
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  margin: '1em',
+                  margin: '0em .5em 1em 0em',
                 },
+                margin: 1,
                 color: theme.palette.common.white,
                 fontSize: '12px',
               })}
@@ -215,12 +232,24 @@ export const SyncModal = ({
               isSyncing={isLoading}
               isUpdatingUser={updateUserIsLoading}
             />
-          </Row>
-          <ServerInfo />
+          </Grid>
         </Grid>
-        {!isMobile && (
+        <Grid
+          container
+          flexDirection="column"
+          justifyContent="flex-start"
+          sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              minWidth: 300,
+              padding: '0 0 0 2',
+            },
+            padding: '0 2 2 2',
+            minWidth: 650,
+          })}
+          flexWrap="nowrap"
+        >
           <SyncProgress syncStatus={syncStatus} isOperational={true} />
-        )}
+        </Grid>
       </Grid>
     </BasicModal>
   );

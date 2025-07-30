@@ -38,9 +38,9 @@ pub fn generate_create_prescription(
         id: uuid(),
         r#type: StockOutType::Prescription,
         invoice_id: prescription_id.clone(),
-
         stock_line_id: stock_line.stock_line_row.id,
         number_of_packs,
+        vvm_status_id: stock_line.stock_line_row.vvm_status_id.clone(),
 
         // default
         prescribed_quantity: None,
@@ -53,6 +53,7 @@ pub fn generate_create_prescription(
         expiry_date: None,
         cost_price_per_pack: None,
         sell_price_per_pack: None,
+        campaign_id: None,
     };
 
     let finalise_prescription = UpdatePrescription {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LinkedRequestRowFragment } from '../api';
+import { LinkedRequestRowFragment, useInbound } from '../api';
 import {
   useColumns,
   getNotePopoverColumn,
@@ -11,27 +11,29 @@ import {
   DialogButton,
   Typography,
 } from '@openmsupply-client/common';
+import { NameRowFragment } from '@openmsupply-client/system';
 
 interface LinkInternalOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  requestRequisitions?: LinkedRequestRowFragment[];
   onRowClick: (row: LinkedRequestRowFragment) => void;
-  isLoading: boolean;
   onNextClick: () => void;
+  name: NameRowFragment | null;
 }
 
 export const LinkInternalOrderModal = ({
   isOpen,
   onClose,
-  requestRequisitions: data,
   onRowClick,
-  isLoading,
   onNextClick: createInvoice,
+  name,
 }: LinkInternalOrderModalProps) => {
   const t = useTranslation();
   const { width, height } = useWindowDimensions();
   const { Modal } = useDialog({ isOpen, onClose });
+  const { data, isLoading } = useInbound.document.listInternalOrders(
+    name?.id ?? ''
+  );
 
   const columns = useColumns<LinkedRequestRowFragment>([
     {
@@ -83,7 +85,7 @@ export const LinkInternalOrderModal = ({
         <DataTable
           id="link-internal-order-to-inbound"
           columns={columns}
-          data={data ?? []}
+          data={data?.nodes ?? []}
           dense
           onRowClick={onRowClick}
           isLoading={isLoading}

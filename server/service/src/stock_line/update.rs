@@ -13,6 +13,7 @@ use crate::{
     check_item_variant_exists, check_location_exists,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate, SingleRecordError,
 };
 
@@ -29,6 +30,9 @@ pub struct UpdateStockLine {
     pub batch: Option<String>,
     pub barcode: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
+    pub vvm_status_id: Option<String>,
+    pub donor_id: Option<NullableUpdate<String>>,
+    pub campaign_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -38,8 +42,12 @@ pub enum UpdateStockLineError {
     StockDoesNotExist,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
+    DonorDoesNotExist,
+    DonorNotVisible,
+    DonorIsNotADonor,
     UpdatedStockNotFound,
     StockMovementNotFound,
+    VVMStatusDoesNotExist,
 }
 
 pub fn update_stock_line(
@@ -95,20 +103,39 @@ fn validate(
             CommonStockLineError::DatabaseError(error) => DatabaseError(error),
         })?;
 
-    if !check_location_exists(connection, store_id, &input.location)? {
-        return Err(LocationDoesNotExist);
+    if let Some(NullableUpdate {
+        value: Some(ref location),
+    }) = &input.location
+    {
+        if !check_location_exists(connection, store_id, location)? {
+            return Err(LocationDoesNotExist);
+        }
     }
 
-    match &input.item_variant_id {
-        Some(NullableUpdate {
-            value: Some(item_variant_id),
-        }) => {
-            if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-                return Err(ItemVariantDoesNotExist);
-            }
+    if let Some(NullableUpdate {
+        value: Some(item_variant_id),
+    }) = &input.item_variant_id
+    {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
+            return Err(ItemVariantDoesNotExist);
         }
-        _ => {}
     }
+
+    if let Some(NullableUpdate {
+        value: Some(donor_id),
+    }) = &input.donor_id
+    {
+        check_other_party(connection, store_id, donor_id, CheckOtherPartyType::Donor).map_err(
+            |e| match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => DonorDoesNotExist {},
+                OtherPartyErrors::OtherPartyNotVisible => DonorNotVisible,
+                OtherPartyErrors::TypeMismatched => DonorIsNotADonor,
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    DatabaseError(repository_error)
+                }
+            },
+        )?;
+    };
 
     Ok(stock_line)
 }
@@ -133,6 +160,9 @@ fn generate(
         on_hold,
         barcode,
         item_variant_id,
+        vvm_status_id,
+        donor_id,
+        campaign_id,
     }: UpdateStockLine,
 ) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
@@ -183,6 +213,9 @@ fn generate(
     existing.item_variant_id = item_variant_id
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
+    existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
+    existing.donor_link_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_link_id);
+    existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
 
     Ok(GenerateResult {
         new_stock_line: existing,

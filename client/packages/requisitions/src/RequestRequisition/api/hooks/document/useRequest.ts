@@ -7,16 +7,16 @@ import { RequestFragment } from '../../.';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useRequestId = () => {
-  const { requisitionId = '' } = useParams();
-  return requisitionId;
+  const { id = '' } = useParams();
+  return id;
 };
 
 export const useRequest = (): UseQueryResult<RequestFragment> => {
-  const requisitionId = useRequestId();
+  const id = useRequestId();
   const api = useRequestApi();
   return useQuery(
-    api.keys.detail(requisitionId),
-    () => api.get.byId(requisitionId),
+    api.keys.detail(id),
+    () => api.get.byId(id),
     // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
     // is inactive. For example, when navigating away from the page and back again, refetch.
     {

@@ -20,9 +20,10 @@ import {
   RequisitionNodeType,
   InsertInboundShipmentLineFromInternalOrderLineInput,
   RequisitionNodeStatus,
+  UpdateDonorInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
-import { isA } from '../../utils';
+import { isA, isInboundPlaceholderRow } from '../../utils';
 import {
   Sdk,
   InboundFragment,
@@ -47,6 +48,8 @@ const inboundParsers = {
         return UpdateInboundShipmentStatusInput.Verified;
       case InvoiceNodeStatus.Delivered:
         return UpdateInboundShipmentStatusInput.Delivered;
+      case InvoiceNodeStatus.Received:
+        return UpdateInboundShipmentStatusInput.Received;
       default:
         return undefined;
     }
@@ -75,12 +78,18 @@ const inboundParsers = {
     }
   },
   toUpdate: (
-    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
+    patch:
+      | RecordPatch<InboundFragment>
+      | RecordPatch<InboundRowFragment>
+      | {
+          id: string;
+          defaultDonorUpdate: UpdateDonorInput;
+        }
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
-      colour: patch.colour,
-      comment: patch.comment,
+      colour: 'colour' in patch ? patch.colour : undefined,
+      comment: 'comment' in patch ? patch.comment : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
@@ -92,6 +101,8 @@ const inboundParsers = {
           : undefined,
       currencyId: 'currency' in patch ? patch.currency?.id : undefined,
       currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
+      defaultDonor:
+        'defaultDonorUpdate' in patch ? patch.defaultDonorUpdate : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -109,6 +120,11 @@ const inboundParsers = {
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
       itemVariantId: line.itemVariantId,
+      vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
+      donorId: line.donor?.id,
+      campaignId: line.campaign?.id,
+      note: line.note,
+      shippedNumberOfPacks: line.shippedNumberOfPacks,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -135,6 +151,13 @@ const inboundParsers = {
     itemVariantId: setNullableInput('itemVariantId', {
       itemVariantId: line.itemVariantId,
     }),
+    vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
+    donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
+    campaignId: setNullableInput('campaignId', {
+      campaignId: line.campaign?.id ?? null,
+    }),
+    note: setNullableInput('note', { note: line.note ?? null }),
+    shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
@@ -282,7 +305,10 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error(insertInboundShipment.error.description);
   },
   update: async (
-    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
+    patch:
+      | RecordPatch<InboundFragment>
+      | RecordPatch<InboundRowFragment>
+      | { id: string; defaultDonorUpdate: UpdateDonorInput }
   ) =>
     sdk.updateInboundShipment({
       input: inboundParsers.toUpdate(patch),
@@ -344,12 +370,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   updateLines: async (draftInboundLine: DraftInboundLine[]) => {
     const input = {
       insertInboundShipmentLines: draftInboundLine
-        .filter(
-          ({ type, isCreated, numberOfPacks }) =>
-            isCreated &&
-            type === InvoiceLineNodeType.StockIn &&
-            numberOfPacks > 0
-        )
+        .filter(line => line.isCreated && !isInboundPlaceholderRow(line))
         .map(inboundParsers.toInsertLine),
       updateInboundShipmentLines: draftInboundLine
         .filter(

@@ -7,7 +7,8 @@ import {
   useAuthContext,
   ContactTraceSortFieldInput,
   TabDefinition,
-  usePreferences,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -47,7 +48,7 @@ export const PatientView = () => {
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
   const { store, storeId } = useAuthContext();
-  const { data: prefs } = usePreferences();
+  const { data: prefs } = usePreference(PreferenceKey.ShowContactTracing);
 
   const {
     query: { data: insuranceProvidersData },
@@ -91,7 +92,9 @@ export const PatientView = () => {
 
   const tabs: TabDefinition[] = [
     {
-      Component: <PatientDetailView onEdit={setIsDirtyPatient} />,
+      Component: (
+        <PatientDetailView patientId={patientId} onEdit={setIsDirtyPatient} />
+      ),
       value: PatientTabValue.Details,
       confirmOnLeaving: isDirtyPatient,
     },
@@ -117,7 +120,7 @@ export const PatientView = () => {
   // Display insurance tab only if insurance providers are available and the patient is saved
   if (insuranceProvidersData.length > 0)
     tabs.push({
-      Component: <InsuranceListView />,
+      Component: <InsuranceListView patientId={patientId} />,
       value: PatientTabValue.Insurance,
     });
 
@@ -129,7 +132,7 @@ export const PatientView = () => {
       {!createNewPatient ? (
         <DetailTabs tabs={tabs} requiresConfirmation={requiresConfirmation} />
       ) : (
-        <PatientDetailView onEdit={setIsDirtyPatient} />
+        <PatientDetailView patientId={patientId} onEdit={setIsDirtyPatient} />
       )}
       {/* Note: unmount modals when not used because they have some internal
       state that shouldn't be reused across calls. */}

@@ -842,7 +842,7 @@ mod permission_tests {
             TestData {
                 name: "insertStocktake",
                 query: r#"mutation Mutation {
-                insertStocktake(input: {id: ""}, storeId: "") {
+                insertStocktake(input: {id: "", isInitialStocktake: false}, storeId: "") {
                   ... on StocktakeNode {
                     id
                   }
@@ -1159,6 +1159,7 @@ mod permission_tests {
             &self,
             _: &ServiceContext,
             _: &AuthData,
+            _: &Option<String>,
             _: &Option<String>,
             resource_request: &ResourceAccessRequest,
         ) -> Result<ValidatedUser, AuthError> {

@@ -111,9 +111,9 @@ pub fn update_stocktake(
             }
             // Add inventory adjustment reasons to the invoice lines
             for update_reason in result.inventory_adjustment_reason_updates {
-                invoice_line_repo.update_inventory_adjustment_reason_id(
+                invoice_line_repo.update_reason_option_id(
                     &update_reason.invoice_line_id,
-                    update_reason.reason_id,
+                    update_reason.reason_option_id,
                 )?;
             }
             // write updated stocktake lines (update with stock_line_ids for newly created stock lines)
@@ -380,6 +380,8 @@ mod test {
                 stock_line: Some(stock_line),
                 location: None,
                 item: mock_item_a(),
+                donor: None,
+                reason_option: None,
             }])
         );
 
@@ -597,6 +599,7 @@ mod test {
             stock_line.supplier_link_id.unwrap(),
             INVENTORY_ADJUSTMENT_NAME_CODE.to_string()
         );
+        assert_eq!(stock_line.donor_link_id, stocktake_line.donor_link_id);
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)

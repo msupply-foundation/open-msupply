@@ -36,7 +36,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     /// 3. Source outbound invoice is either Shipped or Picked
     ///    (outbounds can also be New or Allocated, but we only want to generate transfer when it's Shipped or Picked, as per
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
-    /// 4. Linked invoice does not exist (the inbound invoice)
+    /// 4. The outbound_invoice.linked_invoice_id is None. This check rather than looking for the Some inbound invoice gives us an escape hatch to prevent transfers being generated.
     /// 5. Source invoice was not created a month before receiving store was created.
     ///
     /// Only runs once:
@@ -106,8 +106,12 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
             original_shipment,
             new_invoice_type,
         )?;
-        let new_inbound_lines =
-            generate_inbound_lines(connection, &new_inbound_invoice.id, outbound_invoice)?;
+        let new_inbound_lines = generate_inbound_lines(
+            connection,
+            &new_inbound_invoice.id,
+            &new_inbound_invoice.store_id,
+            outbound_invoice,
+        )?;
         let store_preferences = get_store_preferences(connection, &new_inbound_invoice.store_id)?;
 
         let new_inbound_lines = match store_preferences.pack_to_one {
@@ -230,22 +234,24 @@ fn generate_inbound_invoice(
         currency_rate: outbound_invoice_row.currency_rate,
         expected_delivery_date: outbound_invoice_row.expected_delivery_date,
         original_shipment_id,
+        program_id: outbound_invoice_row.program_id.clone(),
         // Default
         colour: None,
         user_id: None,
         on_hold: false,
         allocated_datetime: None,
         delivered_datetime: None,
+        received_datetime: None,
         verified_datetime: None,
         cancelled_datetime: None,
         clinician_link_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
-        program_id: None,
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
         is_cancellation: false,
+        default_donor_link_id: None,
     };
 
     Ok(result)

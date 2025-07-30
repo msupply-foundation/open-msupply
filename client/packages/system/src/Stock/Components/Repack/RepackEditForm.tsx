@@ -1,8 +1,10 @@
+import React, { useState } from 'react';
 import {
   ArrowRightIcon,
   Box,
   Divider,
   InputWithLabelRow,
+  NumericTextDisplay,
   NumericTextInput,
   TextWithLabelRow,
   UNDEFINED_STRING_VALUE,
@@ -10,7 +12,6 @@ import {
 } from '@openmsupply-client/common';
 import { LocationRowFragment, RepackDraft } from '@openmsupply-client/system';
 import { LocationSearchInput } from '../../..';
-import React, { FC, useState } from 'react';
 
 const INPUT_WIDTH = 100;
 
@@ -21,13 +22,14 @@ interface RepackEditFormProps {
   availableNumberOfPacks: number;
 }
 
-export const RepackEditForm: FC<RepackEditFormProps> = ({
+export const RepackEditForm = ({
   onChange,
   data,
   isNew,
   availableNumberOfPacks,
-}) => {
+}: RepackEditFormProps) => {
   const t = useTranslation();
+
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
   const textProps = { textAlign: 'end' as 'end' | 'start' };
   const labelProps = { sx: { width: 0 } };
@@ -38,11 +40,10 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
       <Box display="flex">
         <Box display="flex" flexDirection="column" padding={2} gap={1} flex={1}>
           {isNew && (
-            <TextWithLabelRow
+            <InputWithLabelRow
               label={t('label.packs-available')}
-              text={String(availableNumberOfPacks ?? '')}
-              textProps={textProps}
-              labelProps={labelProps}
+              labelWidth="100%"
+              Input={<NumericTextDisplay value={availableNumberOfPacks} />}
             />
           )}
           <InputWithLabelRow
@@ -63,11 +64,10 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
               />
             }
           />
-          <TextWithLabelRow
+          <InputWithLabelRow
             label={t('label.pack-size')}
-            text={String(data.packSize ?? '')}
-            textProps={textProps}
-            labelProps={labelProps}
+            labelWidth="100%"
+            Input={<NumericTextDisplay value={data.packSize} />}
           />
           <TextWithLabelRow
             label={t('label.location')}
@@ -92,14 +92,17 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           flex={1}
         >
           {isNew && <Box height={24} />}
-          <TextWithLabelRow
+          <InputWithLabelRow
             label={t('label.new-num-packs')}
-            text={(
-              ((data.numberOfPacks ?? 0) * (data?.packSize ?? 0)) /
-              (data.newPackSize || 1)
-            ).toFixed(2)}
-            textProps={textProps}
-            labelProps={labelProps}
+            labelWidth="100%"
+            Input={
+              <NumericTextDisplay
+                value={
+                  ((data.numberOfPacks ?? 0) * (data?.packSize ?? 0)) /
+                  (data.newPackSize || 1)
+                }
+              />
+            }
           />
           <InputWithLabelRow
             label={t('label.new-pack-size')}
@@ -114,6 +117,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
                 width={INPUT_WIDTH}
                 value={data.newPackSize}
                 disabled={!isNew}
+                max={data?.numberOfPacks * (data?.packSize ?? 1)}
               />
             }
           />
@@ -140,6 +144,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
                       newLocationId: location?.id,
                     });
                   }}
+                  restrictedToLocationTypeId={data.restrictedToLocationType}
                 />
               }
             />

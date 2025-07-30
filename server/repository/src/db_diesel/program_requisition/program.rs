@@ -1,6 +1,9 @@
 use super::program_row::program;
 use crate::{
-    db_diesel::{master_list_row::master_list, store_row::store},
+    db_diesel::{
+        item_link_row::item_link, item_row::item, master_list_line_row::master_list_line,
+        master_list_row::master_list, store_row::store,
+    },
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     master_list_name_join::master_list_name_join,
     name_link,
@@ -21,6 +24,7 @@ pub struct ProgramFilter {
     pub is_immunisation: Option<bool>,
     pub exists_for_store_id: Option<EqualFilter<String>>,
     pub elmis_code: Option<EqualFilter<String>>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -99,6 +103,7 @@ impl<'a> ProgramRepository<'a> {
                 is_immunisation,
                 exists_for_store_id,
                 elmis_code,
+                item_id,
             } = f;
 
             apply_equal_filter!(query, id, program::id);
@@ -128,6 +133,23 @@ impl<'a> ProgramRepository<'a> {
                 );
 
                 query = query.filter(program::id.eq_any(master_list_name_join_query));
+            }
+
+            if item_id.is_some() {
+                let mut master_list_item_query = program::table
+                    .select(program::id)
+                    .distinct()
+                    .left_join(
+                        master_list_line::table
+                            .on(program::master_list_id
+                                .eq(master_list_line::master_list_id.nullable()))
+                            .left_join(item_link::table.left_join(item::table)),
+                    )
+                    .into_boxed();
+
+                apply_equal_filter!(master_list_item_query, item_id, item::id);
+
+                query = query.filter(program::id.eq_any(master_list_item_query));
             }
         }
 
@@ -163,9 +185,35 @@ impl ProgramFilter {
         self.is_immunisation = Some(filter);
         self
     }
-
     pub fn elmis_code(mut self, filter: EqualFilter<String>) -> Self {
         self.elmis_code = Some(filter);
         self
+    }
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
+        self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{mock::MockDataInserts, test_db, EqualFilter, ProgramFilter, ProgramRepository};
+
+    #[actix_rt::test]
+    async fn test_program_repository() {
+        let (_, storage_connection, _, _) =
+            test_db::setup_all("test_program_repository", MockDataInserts::all()).await;
+        let program_repository = ProgramRepository::new(&storage_connection);
+
+        let programs = program_repository
+            .query_by_filter(
+                ProgramFilter::new().item_id(EqualFilter::equal_to("item_query_test1")),
+            )
+            .unwrap();
+
+        let program_ids: Vec<String> = programs.iter().map(|p| p.id.clone()).collect();
+
+        // item_query_test1 is in these two programs, per "full_master_list" mock data
+        assert_eq!(program_ids, vec!["program_a", "program_b"]);
     }
 }

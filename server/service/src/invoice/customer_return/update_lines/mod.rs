@@ -143,7 +143,7 @@ mod test {
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType,
-        ReturnReasonRow,
+        ReasonOptionRow, ReasonOptionType,
     };
 
     #[actix_rt::test]
@@ -325,10 +325,11 @@ mod test {
 
     #[actix_rt::test]
     async fn test_update_customer_return_lines_success() {
-        fn return_reason() -> ReturnReasonRow {
-            ReturnReasonRow {
+        fn return_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "return_reason".to_string(),
                 is_active: true,
+                r#type: ReasonOptionType::ReturnReason,
                 ..Default::default()
             }
         }
@@ -346,7 +347,7 @@ mod test {
             "test_update_customer_return_lines_success",
             MockDataInserts::all(),
             MockData {
-                return_reasons: vec![return_reason()],
+                reason_options: vec![return_reason()],
                 invoice_lines: vec![line_to_delete()],
                 ..Default::default()
             },
@@ -406,7 +407,7 @@ mod test {
             .find(|line| line.id == mock_customer_return_a_invoice_line_a().id)
             .unwrap();
         assert_eq!(updated_line.number_of_packs, 2.0);
-        assert_eq!(updated_line.return_reason_id, Some(return_reason().id));
+        assert_eq!(updated_line.reason_option_id, Some(return_reason().id));
 
         // zeroed line was deleted
         assert!(!updated_lines

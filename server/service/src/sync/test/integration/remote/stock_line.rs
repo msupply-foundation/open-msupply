@@ -21,7 +21,7 @@ impl SyncRecordTester for StockLineRecordTester {
             code: "LocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
-            cold_storage_type_id: None,
+            location_type_id: None,
         };
 
         let stock_line_row = StockLineRow {
@@ -41,6 +41,7 @@ impl SyncRecordTester for StockLineRecordTester {
             supplier_link_id: Some(new_site_properties.name_id.clone()),
             barcode_id: None,
             item_variant_id: None,
+            donor_link_id: None,
         };
 
         result.push(TestStepData {

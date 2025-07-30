@@ -28,15 +28,9 @@
       }
     },
     {
-      "type": "Control",
+      "type": "SortToggle",
       "scope": "#/properties/dir",
-      "label": "T#report.sort-direction",
-      "options": {
-       "show": [
-          ["asc", "T#report.ascending"],
-          ["desc", "T#report.descending"]
-        ]
-      }
+      "label": "T#report.sort-direction"
     }
   ]
 }

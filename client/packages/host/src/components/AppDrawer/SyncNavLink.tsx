@@ -2,40 +2,27 @@ import React from 'react';
 import {
   AlertIcon,
   AppNavLink,
+  DateUtils,
   RadioIcon,
-  useTheme,
+  SyncErrorVariant,
   useTranslation,
 } from '@openmsupply-client/common';
-import { getBadgeProps } from '../../utils';
 import { useSync } from '@openmsupply-client/system';
 import { useSyncModal } from '../Sync';
+import { SyncInfoQuery } from 'packages/system/src/Sync/api/operations.generated';
 
 const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000;
 
 export const SyncNavLink = () => {
   const t = useTranslation();
-  const theme = useTheme();
   const showSync = useSyncModal();
 
-  const { syncStatus, numberOfRecordsInPushQueue } = useSync.utils.syncInfo(
+  const { syncStatus } = useSync.utils.syncInfo(
     POLLING_INTERVAL_IN_MILLISECONDS
   );
 
-  // the Badge does not show if the content is 0
-  // somehow though the numberOfRecordsInPushQueue can be '0' which does show
-  const syncCount = Number(numberOfRecordsInPushQueue);
-  const badgeProps = getBadgeProps(Number.isNaN(syncCount) ? 0 : syncCount);
+  const badgeProps = getBadge(syncStatus);
 
-  if (syncStatus && syncStatus.error) {
-    badgeProps.color = 'default';
-    badgeProps.badgeContent = (
-      <AlertIcon
-        color="error"
-        fontSize="small"
-        fill={theme.palette.background.drawer}
-      />
-    );
-  }
   return (
     <AppNavLink
       to="sync"
@@ -49,4 +36,38 @@ export const SyncNavLink = () => {
       badgeProps={badgeProps}
     />
   );
+};
+
+const getBadge = (syncStatus: SyncInfoQuery['syncStatus']) => {
+  if (!syncStatus) return;
+
+  const { warningThreshold, errorThreshold, lastSuccessfulSync, error } =
+    syncStatus;
+
+  const isSyncError =
+    error?.variant &&
+    // We allow connection errors until a threshold is reached (see below)
+    // all other errors should be flagged immediately
+    error.variant !== SyncErrorVariant.ConnectionError;
+
+  const now = new Date();
+  const daysSinceSuccessfulSync = DateUtils.differenceInDays(
+    now,
+    lastSuccessfulSync?.finished ?? now
+  );
+
+  const beyondWarningThreshold = daysSinceSuccessfulSync >= warningThreshold;
+  const beyondErrorThreshold = daysSinceSuccessfulSync >= errorThreshold;
+
+  if (isSyncError || beyondWarningThreshold) {
+    return {
+      badgeContent: (
+        <AlertIcon
+          color={isSyncError || beyondErrorThreshold ? 'error' : 'warning'}
+          fontSize="small"
+        />
+      ),
+      color: 'default' as 'primary' | 'default',
+    };
+  }
 };

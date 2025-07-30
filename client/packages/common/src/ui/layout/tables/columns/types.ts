@@ -16,8 +16,12 @@ export interface CellProps<T extends RecordWithId> {
   isAutoFocus?: boolean;
   // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
+  // Build a link on the row to allow context menu in browser
+  rowLinkBuilder?: (rowData: T) => string;
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
+  debounceTime?: number;
+  dense?: boolean;
 }
 
 export interface HeaderProps<T extends RecordWithId> {
@@ -88,6 +92,9 @@ export interface Column<T extends RecordWithId> {
   maxWidth?: number | string;
   maxLength?: number;
   backgroundColor?: string;
+  customLinkRendering?: boolean;
+
+  defaultHideOnMobile?: boolean;
 
   Cell: JSXElementConstructor<CellProps<T>>;
   // For passing additional props to the above Cell -- ⚠️ use with caution as

@@ -25,6 +25,8 @@ pub fn html_to_pdf(
         header_template: None,
         footer_template: None,
         transfer_mode: None,
+        generate_document_outline: None,
+        generate_tagged_pdf: None,
     });
 
     let temp_dir = match temp_dir {

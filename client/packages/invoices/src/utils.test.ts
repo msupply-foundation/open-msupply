@@ -1,4 +1,6 @@
-import { getNextItemId } from './utils';
+import { InvoiceLineNodeType } from '@common/types';
+import { getNextItemId, isInboundPlaceholderRow } from './utils';
+import { InboundLineFragment } from './InboundShipment';
 
 describe('getNextItemId', () => {
   it('gets next item in array', () => {
@@ -31,5 +33,32 @@ describe('getNextItemId', () => {
     expect(getNextItemId(rows, '1')).toBe('2');
     expect(getNextItemId(rows, '2')).toBe('3');
     expect(getNextItemId(rows, '3')).toBeUndefined();
+  });
+});
+
+describe('isInboundPlaceholderRow', () => {
+  it('returns true for placeholder rows', () => {
+    const row = {
+      type: InvoiceLineNodeType.StockIn,
+      numberOfPacks: 0,
+      shippedNumberOfPacks: 0,
+    } as InboundLineFragment;
+    expect(isInboundPlaceholderRow(row)).toBe(true);
+  });
+  it('returns false when has some received packs', () => {
+    const row = {
+      type: InvoiceLineNodeType.StockIn,
+      numberOfPacks: 1,
+      shippedNumberOfPacks: 0,
+    } as InboundLineFragment;
+    expect(isInboundPlaceholderRow(row)).toBe(false);
+  });
+  it('returns false when has some shipped packs', () => {
+    const row = {
+      type: InvoiceLineNodeType.StockIn,
+      numberOfPacks: 0,
+      shippedNumberOfPacks: 1,
+    } as InboundLineFragment;
+    expect(isInboundPlaceholderRow(row)).toBe(false);
   });
 });

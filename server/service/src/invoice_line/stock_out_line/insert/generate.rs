@@ -1,10 +1,9 @@
-use repository::{
-    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError,
-    StockLine, StockLineRow, StorageConnection,
-};
-
+use super::{InsertStockOutLine, InsertStockOutLineError};
 use crate::{
-    invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax},
+    invoice::common::{
+        calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
+        GenerateVVMStatusLogInput,
+    },
     invoice_line::StockOutType,
     pricing::{
         calculate_sell_price::calculate_sell_price,
@@ -12,8 +11,17 @@ use crate::{
     },
     service_provider::ServiceContext,
 };
+use repository::{
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLineRow, InvoiceLineType, InvoiceRow,
+    InvoiceStatus, ItemRow, RepositoryError, StockLine, StockLineRow, StorageConnection,
+};
+use util::uuid::uuid;
 
-use super::{InsertStockOutLine, InsertStockOutLineError};
+pub struct GenerateResult {
+    pub new_line: InvoiceLineRow,
+    pub update_batch: StockLineRow,
+    pub vvm_status_log_option: Option<VVMStatusLogRow>,
+}
 
 pub fn generate(
     ctx: &ServiceContext,
@@ -21,7 +29,7 @@ pub fn generate(
     item_row: ItemRow,
     batch: StockLine,
     invoice: InvoiceRow,
-) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
+) -> Result<GenerateResult, InsertStockOutLineError> {
     let adjust_total_number_of_packs =
         should_adjust_total_number_of_packs(invoice.status.clone(), &input.r#type);
 
@@ -41,14 +49,39 @@ pub fn generate(
     )?;
     let new_line = generate_line(
         &ctx.connection,
-        input,
+        input.clone(),
         item_row,
         update_batch.clone(),
-        invoice,
+        invoice.clone(),
         pricing,
     )?;
 
-    Ok((new_line, update_batch))
+    let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
+        if batch.stock_line_row.vvm_status_id != Some(vvm_status_id.clone()) {
+            Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+                id: Some(uuid()),
+                store_id: invoice.store_id.clone(),
+                created_by: ctx.user_id.clone(),
+                vvm_status_id,
+                stock_line_id: update_batch.id.clone(),
+                invoice_line_id: new_line.id.clone(),
+                comment: Some(format!(
+                    "Updated from Outbound Shipment #{}",
+                    invoice.invoice_number
+                )),
+            }))
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    Ok(GenerateResult {
+        new_line,
+        update_batch,
+        vvm_status_log_option,
+    })
 }
 
 fn generate_batch_update(
@@ -60,6 +93,7 @@ fn generate_batch_update(
         cost_price_per_pack,
         sell_price_per_pack,
         number_of_packs,
+        vvm_status_id,
         prescribed_quantity: _,
         note: _,
         id: _,
@@ -68,6 +102,7 @@ fn generate_batch_update(
         stock_line_id: _,
         total_before_tax: _,
         tax_percentage: _,
+        campaign_id: _,
     }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
@@ -88,6 +123,7 @@ fn generate_batch_update(
         pack_size: pack_size.unwrap_or(batch.pack_size),
         cost_price_per_pack: cost_price_per_pack.unwrap_or(batch.cost_price_per_pack),
         sell_price_per_pack: sell_price_per_pack.unwrap_or(batch.sell_price_per_pack),
+        vvm_status_id: vvm_status_id.or(batch.vvm_status_id),
         ..batch
     }
 }
@@ -96,13 +132,14 @@ fn generate_line(
     connection: &StorageConnection,
     InsertStockOutLine {
         id,
-        r#type: _,
+        r#type,
         invoice_id,
         stock_line_id,
         number_of_packs,
         prescribed_quantity,
         total_before_tax,
         note,
+        campaign_id,
         tax_percentage: _,
         location_id: _,
         batch: _,
@@ -110,6 +147,7 @@ fn generate_line(
         expiry_date: _,
         cost_price_per_pack: _,
         sell_price_per_pack: _,
+        vvm_status_id: input_vvm_status_id,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -125,7 +163,9 @@ fn generate_line(
         expiry_date,
         location_id,
         item_variant_id,
+        donor_link_id,
         note: _,
+        vvm_status_id,
         ..
     }: StockLineRow,
     InvoiceRow {
@@ -169,12 +209,16 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax_percentage,
+        donor_link_id,
         note,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
         foreign_currency_price_before_tax,
         item_variant_id,
+        vvm_status_id: input_vvm_status_id.or(vvm_status_id),
+        campaign_id,
+        shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
+            .then_some(number_of_packs),
         linked_invoice_id: None,
+        reason_option_id: None,
     })
 }
 

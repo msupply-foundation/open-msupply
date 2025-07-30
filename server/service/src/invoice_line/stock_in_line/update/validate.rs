@@ -1,5 +1,5 @@
 use crate::{
-    check_item_variant_exists, check_location_exists,
+    check_item_variant_exists, check_location_exists, check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         stock_in_line::{check_batch, check_pack_size},
@@ -49,8 +49,13 @@ pub fn validate(
     if !check_batch(line_row, connection)? {
         return Err(BatchIsReserved);
     }
-    if !check_location_exists(connection, store_id, &input.location)? {
-        return Err(LocationDoesNotExist);
+    if let Some(NullableUpdate {
+        value: Some(ref location),
+    }) = &input.location
+    {
+        if !check_location_exists(connection, store_id, location)? {
+            return Err(LocationDoesNotExist);
+        }
     }
     if let Some(NullableUpdate {
         value: Some(item_variant_id),
@@ -58,6 +63,12 @@ pub fn validate(
     {
         if check_item_variant_exists(connection, item_variant_id)?.is_none() {
             return Err(ItemVariantDoesNotExist);
+        }
+    }
+
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VVMStatusDoesNotExist);
         }
     }
 

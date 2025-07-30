@@ -5,16 +5,14 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::{
-    sync_serde::{
-        date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
-    },
-    translations::{
-        location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
-    },
+use crate::sync::translations::{
+    location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
+};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyLocationMovementRow {
@@ -118,11 +116,11 @@ impl SyncTranslation for LocationMovementTranslation {
             location_id,
             enter_date: enter_datetime.map(|datetime| datetime.date()),
             enter_time: enter_datetime
-                .map(|datetime| datetime.time())
+                .map(to_legacy_time)
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
             exit_date: exit_datetime.map(|datetime| datetime.date()),
             exit_time: exit_datetime
-                .map(|datetime| datetime.time())
+                .map(to_legacy_time)
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
         };
 

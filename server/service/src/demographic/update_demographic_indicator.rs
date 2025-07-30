@@ -2,8 +2,8 @@ use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
 use repository::{
-    ActivityLogType, DemographicIndicatorRow, DemographicIndicatorRowRepository, RepositoryError,
-    StorageConnection,
+    ActivityLogType, DemographicIndicatorRow, DemographicIndicatorRowRepository, DemographicRow,
+    DemographicRowRepository, RepositoryError, StorageConnection,
 };
 
 use super::{
@@ -46,6 +46,15 @@ pub fn update_demographic_indicator(
                 generate(input.clone(), demographic_indicator_row.clone());
             DemographicIndicatorRowRepository::new(connection)
                 .upsert_one(&updated_demographic_indicator_row)?;
+
+            // Also update corresponding demographic record
+            DemographicRowRepository::new(connection).upsert_one(&DemographicRow {
+                id: updated_demographic_indicator_row.demographic_id.clone(),
+                name: updated_demographic_indicator_row.name.clone(),
+                population_percentage: updated_demographic_indicator_row
+                    .population_percentage
+                    .clone(),
+            })?;
 
             activity_log_entry(
                 ctx,

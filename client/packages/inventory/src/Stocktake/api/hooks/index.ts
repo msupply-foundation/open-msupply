@@ -2,15 +2,15 @@ import { Document } from './document';
 import { Lines } from './line';
 import { Utils } from './utils';
 
-export const useStocktake = {
+export const useStocktakeOld = {
   document: {
     get: Document.useStocktake,
     list: Document.useStocktakes,
     listAll: Document.useStocktakesAll,
+    hasStocktake: Document.useHasStocktake,
 
     delete: Document.useStocktakeDelete,
     deleteSelected: Document.useStocktakeDeleteSelected,
-    insert: Document.useInsertStocktake,
     update: Document.useUpdateStocktake,
 
     fields: Document.useStocktakeFields,

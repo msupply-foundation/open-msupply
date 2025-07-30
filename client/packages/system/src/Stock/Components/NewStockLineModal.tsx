@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   Grid,
@@ -7,9 +7,7 @@ import {
   ModalRow,
   ModalLabel,
   Divider,
-  Box,
   useNotification,
-  AdjustmentTypeInput,
   useNavigate,
   RouteBuilder,
   usePluginEvents,
@@ -17,11 +15,7 @@ import {
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
-import {
-  InventoryAdjustmentReasonSearchInput,
-  StockItemSearchInput,
-} from '../..';
-import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
+import { StockItemSearchInput, useReasonOptions } from '../..';
 import { AppRoute } from '@openmsupply-client/config';
 
 interface NewStockLineModalProps {
@@ -29,18 +23,23 @@ interface NewStockLineModalProps {
   onClose: () => void;
 }
 
-export const NewStockLineModal: FC<NewStockLineModalProps> = ({
+export const NewStockLineModal = ({
   isOpen,
   onClose,
-}) => {
+}: NewStockLineModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const pluginEvents = usePluginEvents({
     isDirty: false,
   });
+  const { data: reasonOptions } = useReasonOptions();
 
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({
+    isOpen,
+    onClose,
+    disableMobileFullScreen: true,
+  });
 
   const {
     query: { isLoading },
@@ -127,8 +126,13 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
                 newItem &&
                 updatePatch({
                   itemId: newItem.id,
-                  item: newItem,
+                  item: {
+                    ...newItem,
+                    dosesPerUnit: newItem.doses,
+                  },
                   packSize: newItem.defaultPackSize,
+                  sellPricePerPack:
+                    newItem.itemStoreProperties?.defaultSellPricePerPack ?? 0,
                 })
               }
             />
@@ -143,26 +147,10 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
               loading={isLoading}
               onUpdate={updatePatch}
               packEditable
-              isInModal
+              isNewModal
               pluginEvents={pluginEvents}
+              reasonOptions={reasonOptions?.nodes}
             />
-            <Grid width={'50%'}>
-              <StyledInputRow
-                label={t('label.reason')}
-                Input={
-                  <Box display="flex" width={INPUT_WIDTH}>
-                    <InventoryAdjustmentReasonSearchInput
-                      width={INPUT_WIDTH}
-                      adjustmentType={AdjustmentTypeInput.Addition}
-                      value={draft.inventoryAdjustmentReason}
-                      onChange={reason =>
-                        updatePatch({ inventoryAdjustmentReason: reason })
-                      }
-                    />
-                  </Box>
-                }
-              />
-            </Grid>
           </Grid>
         )}
       </Grid>

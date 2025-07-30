@@ -16,6 +16,7 @@ export interface SplitButtonOption<T> {
   label: string;
   value?: T;
   isDisabled?: boolean;
+  Icon?: ButtonWithIconProps['Icon'];
 }
 
 export interface SplitButtonProps<T> {
@@ -82,6 +83,7 @@ export const SplitButton = <T,>({
     },
     label: buttonLabel,
   };
+  const icon = selectedOption.Icon || Icon;
 
   return (
     <>
@@ -98,11 +100,11 @@ export const SplitButton = <T,>({
           {isLoadingType ? (
             <LoadingButton
               isLoading={isLoading}
-              startIcon={Icon}
+              startIcon={icon}
               {...sharedButtonProps}
             />
           ) : (
-            <ButtonWithIcon Icon={Icon} {...sharedButtonProps} />
+            <ButtonWithIcon Icon={icon} {...sharedButtonProps} />
           )}
 
           <ShrinkableBaseButton
@@ -149,14 +151,12 @@ export const SplitButton = <T,>({
             key={option.label}
             disabled={option?.isDisabled}
             selected={option.value === selectedOption.value}
+            onClick={() => {
+              onSelectOption(option);
+              setAnchorEl(null);
+            }}
           >
-            <FlatButton
-              label={option.label}
-              onClick={e => {
-                onSelectOption(option, e);
-                setAnchorEl(null);
-              }}
-            />
+            <FlatButton label={option.label} onClick={() => {}} />
           </MenuItem>
         ))}
       </Menu>

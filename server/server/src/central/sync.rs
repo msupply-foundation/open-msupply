@@ -15,8 +15,9 @@ use service::{
     sync::{
         api_v6::{
             SiteStatusRequestV6, SiteStatusResponseV6, SyncDownloadFileRequestV6,
-            SyncParsedErrorV6, SyncPullRequestV6, SyncPullResponseV6, SyncPushRequestV6,
-            SyncPushResponseV6, SyncUploadFileRequestV6, SyncUploadFileResponseV6,
+            SyncParsedErrorV6, SyncPatientPullRequestV6, SyncPullRequestV6, SyncPullResponseV6,
+            SyncPushRequestV6, SyncPushResponseV6, SyncUploadFileRequestV6,
+            SyncUploadFileResponseV6,
         },
         sync_on_central,
     },
@@ -25,6 +26,7 @@ use service::{
 pub fn sync_on_central() -> impl HttpServiceFactory {
     web::scope("sync")
         .service(pull)
+        .service(patient_pull)
         .service(push)
         .service(site_status)
         .service(download_file)
@@ -44,6 +46,20 @@ async fn pull(
     Ok(web::Json(response))
 }
 
+#[post("/patient-pull")]
+async fn patient_pull(
+    request: Json<SyncPatientPullRequestV6>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response =
+        match sync_on_central::patient_pull(&service_provider, request.into_inner()).await {
+            Ok(batch) => SyncPullResponseV6::Data(batch),
+            Err(error) => SyncPullResponseV6::Error(error),
+        };
+
+    Ok(web::Json(response))
+}
+
 #[post("/push")]
 async fn push(
     request: Json<SyncPushRequestV6>,
@@ -59,11 +75,15 @@ async fn push(
 }
 
 #[post("/site_status")]
-async fn site_status(request: Json<SiteStatusRequestV6>) -> actix_web::Result<impl Responder> {
-    let response = match sync_on_central::get_site_status(request.into_inner()).await {
-        Ok(result) => SiteStatusResponseV6::Data(result),
-        Err(error) => SiteStatusResponseV6::Error(error),
-    };
+async fn site_status(
+    request: Json<SiteStatusRequestV6>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response =
+        match sync_on_central::get_site_status(&service_provider, request.into_inner()).await {
+            Ok(result) => SiteStatusResponseV6::Data(result),
+            Err(error) => SiteStatusResponseV6::Error(error),
+        };
 
     Ok(web::Json(response))
 }
@@ -89,11 +109,13 @@ async fn download_file(
     req: HttpRequest,
     request: Json<SyncDownloadFileRequestV6>,
     settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     log::info!("Sending a file via sync");
-    let (file, file_description) = sync_on_central::download_file(&settings, request.into_inner())
-        .await
-        .map_err(ToResponseError)?;
+    let (file, file_description) =
+        sync_on_central::download_file(&settings, request.into_inner(), &service_provider)
+            .await
+            .map_err(ToResponseError)?;
 
     let response = file
         .set_content_disposition(ContentDisposition {

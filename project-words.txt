@@ -1,5 +1,7 @@
 actix
 anymap
+authorised
+authorising
 chrono
 clearable
 coldchain
@@ -14,6 +16,7 @@ Masterlist
 msupply
 openmsupply
 parseable
+pluralised
 Popover
 reqwest
 rustls

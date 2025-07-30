@@ -3,6 +3,7 @@ import { Arguments } from './generated-types/arguments';
 import { ItemUsageQuery } from './generated-types/graphql';
 import get from 'lodash/get';
 import orderBy from 'lodash/orderBy';
+import groupBy from 'lodash/groupBy';
 
 type SqlResult = { item_id: string; quantity: number }[];
 export type Data = ItemUsageQuery & {
@@ -36,25 +37,33 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
   data,
   arguments: { sort, dir },
 }) => {
+  const thisMonthConsumptionMap = groupBy(data.thisMonthConsumption, 'item_id');
+  const lastMonthConsumptionMap = groupBy(data.lastMonthConsumption, 'item_id');
+  const twoMonthsAgoConsumptionMap = groupBy(data.twoMonthsAgoConsumption, 'item_id');
+  const expiringInSixMonthsMap = groupBy(data.expiringInSixMonths, 'item_id');
+  const expiringInTwelveMonthsMap = groupBy(data.expiringInTwelveMonths, 'item_id');
+  const stockOnOrderMap = groupBy(data.stockOnOrder, 'item_id');
+  const AMCTwelveMap = groupBy(data.AMCTwelve, 'item_id');
+  const AMCTwentyFourMap = groupBy(data.AMCTwentyFour, 'item_id');
+
   let output = data.items.nodes.map((item) => {
     let outputNode: OutputNode = {
       ...item,
-      monthConsumption: getQuantity(data.thisMonthConsumption, item.id),
-      lastMonthConsumption: getQuantity(data.lastMonthConsumption, item.id),
-      twoMonthsAgoConsumption: getQuantity(data.twoMonthsAgoConsumption, item.id),
-      expiringInSixMonths: getQuantity(data.expiringInSixMonths, item.id),
-      expiringInTwelveMonths: getQuantity(data.expiringInTwelveMonths, item.id),
+      monthConsumption: thisMonthConsumptionMap[item.id]?.[0]?.quantity || 0,
+      lastMonthConsumption: lastMonthConsumptionMap[item.id]?.[0]?.quantity || 0,
+      twoMonthsAgoConsumption: twoMonthsAgoConsumptionMap[item.id]?.[0]?.quantity || 0,
+      expiringInSixMonths: expiringInSixMonthsMap[item.id]?.[0]?.quantity || 0,
+      expiringInTwelveMonths: expiringInTwelveMonthsMap[item.id]?.[0]?.quantity || 0,
       // invoice lines could add up to more then requested stock
-      stockOnOrder: Math.max(getQuantity(data.stockOnOrder, item.id), 0),
-      AMC12: getQuantity(data.AMCTwelve, item.id),
-      AMC24: getQuantity(data.AMCTwentyFour, item.id),
+      stockOnOrder: Math.max(stockOnOrderMap[item.id]?.[0]?.quantity || 0),
+      AMC12: AMCTwelveMap[item.id]?.[0]?.quantity || 0,
+      AMC24: AMCTwentyFourMap[item.id]?.[0]?.quantity || 0,
       SOH: item.stats?.stockOnHand || 0,
       MOS: item.stats?.availableMonthsOfStockOnHand || 0,
       AMC: item.stats?.averageMonthlyConsumption || 0,
     };
     return outputNode;
   });
-
   let sortedNodes = orderBy(
     output,
     (row) => {
@@ -68,7 +77,3 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
 
   return { data: { items: { nodes: sortedNodes } } };
 };
-
-// function adds month consumption to data  (either this or last month)
-const getQuantity = (queryResult: SqlResult, id: string) =>
-  queryResult.find((element) => element.item_id == id)?.quantity || 0;

@@ -8,7 +8,7 @@ import { useNextItem } from './useNextItem';
 import { useUpdateInbound } from './useUpdateInbound';
 import { useUpdateInboundServiceTax } from './useInboundUpdateServiceTax';
 import { useInboundDelete } from './useInboundDelete';
-import { useListInternalOrders } from './useListInternalOrders';
+import { useListInternalOrders, useListInternalOrdersPromise } from './useListInternalOrders';
 import { useListInternalOrderLines } from './useListInternalOrderLines';
 
 export const Document = {
@@ -23,5 +23,6 @@ export const Document = {
   useUpdateInbound,
   useUpdateInboundServiceTax,
   useListInternalOrders,
+  useListInternalOrdersPromise,
   useListInternalOrderLines,
 };

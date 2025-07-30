@@ -30,5 +30,5 @@ export const useOutboundApi = () => {
   const sdk = getSdk(client);
   const { storeId } = useAuthContext();
   const queries = getOutboundQueries(sdk, storeId);
-  return { ...queries, storeId, keys };
+  return { ...queries, storeId, keys, sdk };
 };

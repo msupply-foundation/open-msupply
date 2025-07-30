@@ -463,6 +463,16 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::CreateCustomerInvoicesFromRequisitions => {
                 output.insert(PermissionType::RequisitionCreateOutboundShipment);
             }
+            // purchase orders
+            Permissions::ViewPurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderQuery);
+            }
+            Permissions::EditPurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderMutate);
+            }
+            Permissions::AuthorisePurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderAuthorise);
+            }
             // reports
             Permissions::ViewReports => {
                 output.insert(PermissionType::Report);
@@ -510,6 +520,15 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             }
             Permissions::EditCentralData => {
                 output.insert(PermissionType::EditCentralData);
+            }
+            Permissions::ViewAndEditVaccineVialMonitorStatus => {
+                output.insert(PermissionType::ViewAndEditVvmStatus);
+            }
+            Permissions::AddEditPrescribers => {
+                output.insert(PermissionType::MutateClinician);
+            }
+            Permissions::CancelFinalisedInvoices => {
+                output.insert(PermissionType::CancelFinalisedInvoices);
             }
             _ => continue,
         }

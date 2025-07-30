@@ -1,20 +1,21 @@
-use repository::{
-    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLine,
-    StockLineRowRepository,
-};
-
+use super::StockOutType;
 use crate::{
-    invoice::update_picked_date::update_picked_date,
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
+    invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
+    invoice_line::{
+        query::get_invoice_line, stock_out_line::update::generate::GenerateResult,
+        ShipmentTaxUpdate,
+    },
     service_provider::ServiceContext,
+};
+use repository::{
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine, InvoiceLineRow,
+    InvoiceLineRowRepository, RepositoryError, StockLine, StockLineRowRepository,
 };
 
 mod generate;
 use generate::generate;
 mod validate;
 use validate::validate;
-
-use super::StockOutType;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateStockOutLine {
@@ -26,6 +27,8 @@ pub struct UpdateStockOutLine {
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
+    pub campaign_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -48,10 +51,12 @@ pub enum UpdateStockOutLineError {
     BatchIsOnHold,
     UpdatedLineDoesNotExist,
     StockLineAlreadyExistsInInvoice(String),
+    AutoPickFailed(String),
     ReductionBelowZero {
         stock_line_id: String,
         line_id: String,
     },
+    VVMStatusDoesNotExist,
 }
 
 type OutError = UpdateStockOutLineError;
@@ -63,10 +68,14 @@ pub fn update_stock_out_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, batch_pair, invoice) = validate(ctx, &input, &ctx.store_id)?;
+            let (line, item, batch_pair, invoice, adjusted_input) =
+                validate(ctx, input, &ctx.store_id)?;
 
-            let (update_line, batch_pair) =
-                generate(input, line, item, batch_pair, invoice.clone())?;
+            let GenerateResult {
+                update_line,
+                batch_pair,
+                vvm_status_log_option,
+            } = generate(ctx, adjusted_input, line, item, batch_pair, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&update_line)?;
 
             let stock_line_repo = StockLineRowRepository::new(connection);
@@ -75,7 +84,16 @@ pub fn update_stock_out_line(
                 stock_line_repo.upsert_one(&previous_batch.stock_line_row)?;
             }
 
-            update_picked_date(connection, &invoice)?;
+            if let Some(vvm_status_log) = vvm_status_log_option {
+                VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
+            }
+
+            update_picked_date(ctx, &invoice).map_err(|e| match e {
+                UpdatePickedDateError::AutoPickFailed(msg) => OutError::AutoPickFailed(msg),
+                UpdatePickedDateError::RepositoryError(repo_error) => {
+                    OutError::DatabaseError(repo_error)
+                }
+            })?;
 
             get_invoice_line(ctx, &update_line.id)
                 .map_err(OutError::DatabaseError)?
@@ -409,6 +427,7 @@ mod test {
                 u.total_before_tax = 18.00;
                 u.total_after_tax = 18.00;
                 u.note = Some("new note".to_string());
+                u.shipped_number_of_packs = Some(2.0);
                 u
             })
         );
@@ -548,7 +567,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime,
             picked_datetime: Some(datetime),
-            delivered_datetime: Some(datetime),
+            received_datetime: Some(datetime),
             verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
@@ -566,7 +585,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime,
             picked_datetime: Some(datetime),
-            delivered_datetime: Some(datetime),
+            received_datetime: Some(datetime),
             verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
@@ -632,7 +651,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
             picked_datetime: Some(datetime),
-            delivered_datetime: None,
+            received_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,
             backdated_datetime: Some(datetime), // Backdated to 2 days ago
@@ -779,7 +798,41 @@ mod test {
         let updated_picked_date = invoice.picked_datetime.unwrap();
         assert_eq!(updated_picked_date, inserted_picked_date);
 
-        // Make sure that the picked date is not updated if the invoice is not in picked status
+        // Make sure that the picked date is not updated if the invoice is not in picked status unless it's a prescription
+        let outbound1 = InvoiceRow {
+            id: "outbound_invoice-1".to_string(),
+            invoice_number: 1,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::OutboundShipment,
+            store_id: context.store_id.clone(),
+            created_datetime: datetime,
+            picked_datetime: None,
+            status: InvoiceStatus::New,
+            ..Default::default()
+        };
+
+        outbound1.upsert(&context.connection).unwrap();
+
+        let stock_out_line = InsertStockOutLine {
+            id: "outbound_invoice-1-1".to_string(),
+            r#type: StockOutType::OutboundShipment,
+            invoice_id: outbound1.id.clone(),
+            stock_line_id: mock_stock_line_b().id.clone(),
+            number_of_packs: 1.0,
+            ..Default::default()
+        };
+
+        invoice_line_service
+            .insert_stock_out_line(&context, stock_out_line)
+            .unwrap();
+
+        let invoice = invoice_row_repo
+            .find_one_by_id(&outbound1.id)
+            .unwrap()
+            .unwrap();
+
+        assert!(invoice.picked_datetime.is_none());
+
         let prescription1 = InvoiceRow {
             id: "prescription_invoice-1".to_string(),
             invoice_number: 1,
@@ -812,7 +865,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert!(invoice.picked_datetime.is_none());
+        assert!(invoice.picked_datetime.is_some());
     }
 
     #[actix_rt::test]

@@ -32,10 +32,8 @@ export const useOutbound = {
   line: {
     stockLines: Lines.useOutboundLines,
     serviceLines: Lines.useOutboundServiceLines,
-    stockItems: Lines.useOutboundItems,
     rows: Lines.useOutboundRows,
     save: Lines.useOutboundSaveLines,
-    delete: Lines.useOutboundDeleteLines,
     deleteSelected: Lines.useOutboundDeleteSelectedLines,
     allocateSelected: Lines.useOutboundAllocateSelectedLines,
   },

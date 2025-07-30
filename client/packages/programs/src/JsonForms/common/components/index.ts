@@ -11,3 +11,4 @@ export * from './Autocomplete';
 export * from './ConditionalSelect';
 export * from './Spacer';
 export * from './ToolbarLayout';
+export * from './SortToggle';

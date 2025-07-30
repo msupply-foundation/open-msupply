@@ -4,9 +4,9 @@ use crate::{
 };
 
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician, name_link_row::name_link,
-    name_row::name, name_store_join::name_store_join, store_row::store,
-    vaccination_row::vaccination::dsl::*,
+    clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
+    item_row::item, name_link_row::name_link, name_row::name, name_store_join::name_store_join,
+    store_row::store, vaccination_row::vaccination::dsl::*,
     vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
 };
 
@@ -20,6 +20,7 @@ table! {
     vaccination (id) {
         id -> Text,
         store_id -> Text,
+        given_store_id -> Nullable<Text>,
         program_enrolment_id -> Text,
         encounter_id -> Text,
         patient_link_id -> Text,
@@ -30,29 +31,30 @@ table! {
         facility_free_text -> Nullable<Text>,
         invoice_id -> Nullable<Text>,
         stock_line_id -> Nullable<Text>,
+        item_link_id -> Nullable<Text>,
         clinician_link_id -> Nullable<Text>,
-        vaccination_date -> Nullable<Date>,
+        vaccination_date -> Date,
         given -> Bool,
         not_given_reason -> Nullable<Text>,
         comment -> Nullable<Text>,
     }
 }
 
+// NOTE: both patient_link_id and facility_name_link_id are foreign keys to name_link
+// so not defining a default joinable here, so as not to accidentally join on the wrong one
 joinable!(vaccination -> clinician_link (clinician_link_id));
-joinable!(vaccination -> name_link (facility_name_link_id));
+joinable!(vaccination -> item_link (item_link_id));
 joinable!(vaccination -> vaccine_course_dose (vaccine_course_dose_id));
 
 allow_tables_to_appear_in_same_query!(vaccination, name_link);
 allow_tables_to_appear_in_same_query!(vaccination, name);
 allow_tables_to_appear_in_same_query!(vaccination, clinician_link);
 allow_tables_to_appear_in_same_query!(vaccination, clinician);
+allow_tables_to_appear_in_same_query!(vaccination, item_link);
+allow_tables_to_appear_in_same_query!(vaccination, item);
 allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_dose);
 allow_tables_to_appear_in_same_query!(vaccination, name_store_join);
 allow_tables_to_appear_in_same_query!(vaccination, store);
-allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician_link);
-allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician);
-allow_tables_to_appear_in_same_query!(vaccine_course_dose, name_link);
-allow_tables_to_appear_in_same_query!(vaccine_course_dose, name);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
@@ -61,7 +63,10 @@ allow_tables_to_appear_in_same_query!(vaccine_course_dose, name);
 #[diesel(treat_none_as_null = true)]
 pub struct VaccinationRow {
     pub id: String,
+    // Store where record was originally created
     pub store_id: String,
+    // Store where vaccination was marked as Given
+    pub given_store_id: Option<String>,
     pub program_enrolment_id: String,
     pub encounter_id: String,
     pub patient_link_id: String,
@@ -72,8 +77,10 @@ pub struct VaccinationRow {
     pub facility_free_text: Option<String>,
     pub invoice_id: Option<String>,
     pub stock_line_id: Option<String>,
+    pub item_link_id: Option<String>,
     pub clinician_link_id: Option<String>,
-    pub vaccination_date: Option<NaiveDate>,
+    /// Event date (e.g. date given, or date marked not given)
+    pub vaccination_date: NaiveDate,
     pub given: bool,
     pub not_given_reason: Option<String>,
     pub comment: Option<String>,
@@ -121,8 +128,8 @@ impl<'a> VaccinationRowRepository<'a> {
             table_name: ChangelogTableName::Vaccination,
             record_id: row.id,
             row_action: action,
-            store_id: Some(row.store_id),
-            name_link_id: None,
+            store_id: None,
+            name_link_id: Some(row.patient_link_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

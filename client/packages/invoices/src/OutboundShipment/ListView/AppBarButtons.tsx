@@ -9,13 +9,11 @@ import {
   Grid,
   useTranslation,
   FnUtils,
-  FileUtils,
   LoadingButton,
   ToggleState,
-  EnvUtils,
-  Platform,
   RouteBuilder,
   useNavigate,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
@@ -23,9 +21,10 @@ import { outboundsToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
-}> = ({ modalController }) => {
+  simplifiedTabletView?: boolean;
+}> = ({ modalController, simplifiedTabletView }) => {
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const t = useTranslation();
   const { fetchAsync, isLoading } = useOutbound.document.listAll({
@@ -33,6 +32,7 @@ export const AppBarButtonsComponent: FC<{
     direction: 'desc',
     isDesc: true,
   });
+  const exportCSV = useExportCSV();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -42,8 +42,7 @@ export const AppBarButtonsComponent: FC<{
     }
 
     const csv = outboundsToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.outbounds'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.outbounds'));
   };
 
   return (
@@ -79,14 +78,15 @@ export const AppBarButtonsComponent: FC<{
             }
           }}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            isLoading={isLoading}
+            variant="outlined"
+            onClick={csvExport}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );

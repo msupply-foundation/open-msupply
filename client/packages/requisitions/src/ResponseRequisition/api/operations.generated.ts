@@ -4,12 +4,10 @@ import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import {
   RequisitionReasonsNotProvidedErrorFragmentDoc,
-  OrderTypeRowFragmentDoc,
   ProgramIndicatorFragmentDoc,
 } from '../../RequestRequisition/api/operations.generated';
-import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
+import { ItemWithStatsFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
-import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -76,6 +74,7 @@ export type ResponseLineFragment = {
   __typename: 'RequisitionLineNode';
   id: string;
   itemId: string;
+  itemName: string;
   requestedQuantity: number;
   supplyQuantity: number;
   remainingQuantityToSupply: number;
@@ -105,9 +104,22 @@ export type ResponseLineFragment = {
   item: {
     __typename: 'ItemNode';
     id: string;
-    code: string;
     name: string;
+    code: string;
     unitName?: string | null;
+    defaultPackSize: number;
+    isVaccine: boolean;
+    doses: number;
+    availableStockOnHand: number;
+    stats: {
+      __typename: 'ItemStatsNode';
+      averageMonthlyConsumption: number;
+      availableStockOnHand: number;
+      availableMonthsOfStockOnHand?: number | null;
+      totalConsumption: number;
+      stockOnHand: number;
+      monthsOfStockOnHand?: number | null;
+    };
   };
   linkedRequisitionLine?: {
     __typename: 'RequisitionLineNode';
@@ -174,6 +186,7 @@ export type ResponseFragment = {
       __typename: 'RequisitionLineNode';
       id: string;
       itemId: string;
+      itemName: string;
       requestedQuantity: number;
       supplyQuantity: number;
       remainingQuantityToSupply: number;
@@ -203,9 +216,22 @@ export type ResponseFragment = {
       item: {
         __typename: 'ItemNode';
         id: string;
-        code: string;
         name: string;
+        code: string;
         unitName?: string | null;
+        defaultPackSize: number;
+        isVaccine: boolean;
+        doses: number;
+        availableStockOnHand: number;
+        stats: {
+          __typename: 'ItemStatsNode';
+          averageMonthlyConsumption: number;
+          availableStockOnHand: number;
+          availableMonthsOfStockOnHand?: number | null;
+          totalConsumption: number;
+          stockOnHand: number;
+          monthsOfStockOnHand?: number | null;
+        };
       };
       linkedRequisitionLine?: {
         __typename: 'RequisitionLineNode';
@@ -302,6 +328,7 @@ export type ResponseByNumberQuery = {
             __typename: 'RequisitionLineNode';
             id: string;
             itemId: string;
+            itemName: string;
             requestedQuantity: number;
             supplyQuantity: number;
             remainingQuantityToSupply: number;
@@ -331,9 +358,22 @@ export type ResponseByNumberQuery = {
             item: {
               __typename: 'ItemNode';
               id: string;
-              code: string;
               name: string;
+              code: string;
               unitName?: string | null;
+              defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
+              availableStockOnHand: number;
+              stats: {
+                __typename: 'ItemStatsNode';
+                averageMonthlyConsumption: number;
+                availableStockOnHand: number;
+                availableMonthsOfStockOnHand?: number | null;
+                totalConsumption: number;
+                stockOnHand: number;
+                monthsOfStockOnHand?: number | null;
+              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -438,6 +478,7 @@ export type ResponseByIdQuery = {
             __typename: 'RequisitionLineNode';
             id: string;
             itemId: string;
+            itemName: string;
             requestedQuantity: number;
             supplyQuantity: number;
             remainingQuantityToSupply: number;
@@ -467,9 +508,22 @@ export type ResponseByIdQuery = {
             item: {
               __typename: 'ItemNode';
               id: string;
-              code: string;
               name: string;
+              code: string;
               unitName?: string | null;
+              defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
+              availableStockOnHand: number;
+              stats: {
+                __typename: 'ItemStatsNode';
+                averageMonthlyConsumption: number;
+                availableStockOnHand: number;
+                availableMonthsOfStockOnHand?: number | null;
+                totalConsumption: number;
+                stockOnHand: number;
+                monthsOfStockOnHand?: number | null;
+              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -661,7 +715,8 @@ export type UpdateResponseLineMutation = {
               description: string;
               key: Types.ForeignKey;
             }
-          | { __typename: 'RecordNotFound'; description: string };
+          | { __typename: 'RecordNotFound'; description: string }
+          | { __typename: 'RequisitionReasonNotProvided'; description: string };
       };
 };
 
@@ -771,23 +826,60 @@ export type ResponseRequisitionStatsQuery = {
       };
 };
 
-export type CustomerProgramSettingsFragment = {
-  __typename: 'CustomerProgramRequisitionSettingNode';
-  programName: string;
-  tagName: string;
-  programId: string;
-  customerAndOrderTypes: Array<{
-    __typename: 'CustomerAndOrderTypeNode';
-    customer: {
-      __typename: 'NameNode';
-      code: string;
+export type AvailablePeriodFragment = {
+  __typename: 'PeriodNode';
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+};
+
+export type ProgramRequisitionOrderTypeFragment = {
+  __typename: 'ProgramRequisitionOrderTypeNode';
+  id: string;
+  name: string;
+  isEmergency: boolean;
+  availablePeriods: Array<{
+    __typename: 'PeriodNode';
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  }>;
+};
+
+export type ProgramSettingFragment = {
+  __typename: 'ProgramSettingNode';
+  masterListId: string;
+  masterListCode: string;
+  masterListName: string;
+  masterListNameTagId: string;
+  masterListNameTagName: string;
+  orderTypes: Array<{
+    __typename: 'ProgramRequisitionOrderTypeNode';
+    id: string;
+    name: string;
+    isEmergency: boolean;
+    availablePeriods: Array<{
+      __typename: 'PeriodNode';
       id: string;
-      isCustomer: boolean;
-      isSupplier: boolean;
-      isOnHold: boolean;
       name: string;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-    };
+      startDate: string;
+      endDate: string;
+    }>;
+  }>;
+};
+
+export type ProgramSettingsByCustomerFragment = {
+  __typename: 'CustomerProgramRequisitionSettingNode';
+  customerNameId: string;
+  programSettings: Array<{
+    __typename: 'ProgramSettingNode';
+    masterListId: string;
+    masterListCode: string;
+    masterListName: string;
+    masterListNameTagId: string;
+    masterListNameTagName: string;
     orderTypes: Array<{
       __typename: 'ProgramRequisitionOrderTypeNode';
       id: string;
@@ -797,34 +889,30 @@ export type CustomerProgramSettingsFragment = {
         __typename: 'PeriodNode';
         id: string;
         name: string;
+        startDate: string;
+        endDate: string;
       }>;
     }>;
   }>;
 };
 
-export type CustomerProgramSettingsQueryVariables = Types.Exact<{
+export type ProgramRequisitionSettingsByCustomerQueryVariables = Types.Exact<{
+  customerNameId: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type CustomerProgramSettingsQuery = {
+export type ProgramRequisitionSettingsByCustomerQuery = {
   __typename: 'Queries';
-  customerProgramRequisitionSettings: Array<{
+  programRequisitionSettingsByCustomer: {
     __typename: 'CustomerProgramRequisitionSettingNode';
-    programName: string;
-    tagName: string;
-    programId: string;
-    customerAndOrderTypes: Array<{
-      __typename: 'CustomerAndOrderTypeNode';
-      customer: {
-        __typename: 'NameNode';
-        code: string;
-        id: string;
-        isCustomer: boolean;
-        isSupplier: boolean;
-        isOnHold: boolean;
-        name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-      };
+    customerNameId: string;
+    programSettings: Array<{
+      __typename: 'ProgramSettingNode';
+      masterListId: string;
+      masterListCode: string;
+      masterListName: string;
+      masterListNameTagId: string;
+      masterListNameTagName: string;
       orderTypes: Array<{
         __typename: 'ProgramRequisitionOrderTypeNode';
         id: string;
@@ -834,10 +922,12 @@ export type CustomerProgramSettingsQuery = {
           __typename: 'PeriodNode';
           id: string;
           name: string;
+          startDate: string;
+          endDate: string;
         }>;
       }>;
     }>;
-  }>;
+  };
 };
 
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
@@ -915,6 +1005,7 @@ export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
     itemId
+    itemName
     requestedQuantity
     supplyQuantity
     remainingQuantityToSupply
@@ -941,7 +1032,7 @@ export const ResponseLineFragmentDoc = gql`
       averageMonthlyConsumption
     }
     item {
-      ...ItemRow
+      ...ItemWithStats
     }
     approvedQuantity
     approvalComment
@@ -956,7 +1047,7 @@ export const ResponseLineFragmentDoc = gql`
       ...ReasonOptionRow
     }
   }
-  ${ItemRowFragmentDoc}
+  ${ItemWithStatsFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
 `;
 export const ResponseFragmentDoc = gql`
@@ -1074,22 +1165,49 @@ export const CannotDeleteLineLinkedToShipmentErrorFragmentDoc = gql`
     __typename
   }
 `;
-export const CustomerProgramSettingsFragmentDoc = gql`
-  fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
-    programName
-    tagName
-    programId
-    customerAndOrderTypes {
-      customer {
-        ...NameRow
-      }
-      orderTypes {
-        ...OrderTypeRow
-      }
+export const AvailablePeriodFragmentDoc = gql`
+  fragment AvailablePeriod on PeriodNode {
+    id
+    name
+    startDate
+    endDate
+  }
+`;
+export const ProgramRequisitionOrderTypeFragmentDoc = gql`
+  fragment ProgramRequisitionOrderType on ProgramRequisitionOrderTypeNode {
+    __typename
+    id
+    name
+    availablePeriods {
+      ...AvailablePeriod
+    }
+    isEmergency
+  }
+  ${AvailablePeriodFragmentDoc}
+`;
+export const ProgramSettingFragmentDoc = gql`
+  fragment ProgramSetting on ProgramSettingNode {
+    __typename
+    masterListId
+    masterListCode
+    masterListName
+    masterListNameTagId
+    masterListNameTagName
+    orderTypes {
+      ...ProgramRequisitionOrderType
     }
   }
-  ${NameRowFragmentDoc}
-  ${OrderTypeRowFragmentDoc}
+  ${ProgramRequisitionOrderTypeFragmentDoc}
+`;
+export const ProgramSettingsByCustomerFragmentDoc = gql`
+  fragment ProgramSettingsByCustomer on CustomerProgramRequisitionSettingNode {
+    __typename
+    customerNameId
+    programSettings {
+      ...ProgramSetting
+    }
+  }
+  ${ProgramSettingFragmentDoc}
 `;
 export const UpdateResponseDocument = gql`
   mutation updateResponse(
@@ -1311,6 +1429,10 @@ export const UpdateResponseLineDocument = gql`
             __typename
             description
           }
+          ... on RequisitionReasonNotProvided {
+            __typename
+            description
+          }
         }
       }
     }
@@ -1454,13 +1576,19 @@ export const ResponseRequisitionStatsDocument = gql`
     }
   }
 `;
-export const CustomerProgramSettingsDocument = gql`
-  query customerProgramSettings($storeId: String!) {
-    customerProgramRequisitionSettings(storeId: $storeId) {
-      ...CustomerProgramSettings
+export const ProgramRequisitionSettingsByCustomerDocument = gql`
+  query programRequisitionSettingsByCustomer(
+    $customerNameId: String!
+    $storeId: String!
+  ) {
+    programRequisitionSettingsByCustomer(
+      customerNameId: $customerNameId
+      storeId: $storeId
+    ) {
+      ...ProgramSettingsByCustomer
     }
   }
-  ${CustomerProgramSettingsFragmentDoc}
+  ${ProgramSettingsByCustomerFragmentDoc}
 `;
 export const ProgramIndicatorsDocument = gql`
   query programIndicators(
@@ -1738,18 +1866,18 @@ export function getSdk(
         variables
       );
     },
-    customerProgramSettings(
-      variables: CustomerProgramSettingsQueryVariables,
+    programRequisitionSettingsByCustomer(
+      variables: ProgramRequisitionSettingsByCustomerQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<CustomerProgramSettingsQuery> {
+    ): Promise<ProgramRequisitionSettingsByCustomerQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<CustomerProgramSettingsQuery>(
-            CustomerProgramSettingsDocument,
+          client.request<ProgramRequisitionSettingsByCustomerQuery>(
+            ProgramRequisitionSettingsByCustomerDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'customerProgramSettings',
+        'programRequisitionSettingsByCustomer',
         'query',
         variables
       );

@@ -1,10 +1,10 @@
 use chrono::NaiveDate;
-use reqwest::{Client, StatusCode, Url};
+use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Deserializer, Serialize};
+use util::{with_retries, RetrySeconds};
 
 pub struct PatientApiV4 {
     server_url: Url,
-    client: Client,
     /// Username to authenticate with the central server. For the backend this is usually the site
     /// name.
     username: String,
@@ -66,10 +66,9 @@ pub enum PatientV4Error {
 }
 
 impl PatientApiV4 {
-    pub fn new(client: Client, server_url: Url, username: &str, password_sha256: &str) -> Self {
+    pub fn new(server_url: Url, username: &str, password_sha256: &str) -> Self {
         PatientApiV4 {
             server_url,
-            client,
             username: username.to_string(),
             password_sha256: password_sha256.to_string(),
         }
@@ -81,14 +80,14 @@ impl PatientApiV4 {
         &self,
         body: NameStoreJoinParamsV4,
     ) -> Result<NameStoreJoinV2, PatientV4Error> {
-        let response = self
-            .client
-            .post(self.server_url.join("/api/v4/name_store_join").unwrap())
-            .json(&body)
-            .basic_auth(&self.username, Some(&self.password_sha256))
-            .send()
-            .await
-            .map_err(PatientV4Error::ConnectionError)?;
+        let response = with_retries(RetrySeconds::default(), |client| {
+            client
+                .post(self.server_url.join("/api/v4/name_store_join").unwrap())
+                .json(&body)
+                .basic_auth(&self.username, Some(&self.password_sha256))
+        })
+        .await
+        .map_err(PatientV4Error::ConnectionError)?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
             return Err(PatientV4Error::AuthenticationFailed);
@@ -100,14 +99,14 @@ impl PatientApiV4 {
     }
 
     pub async fn patient(&self, params: PatientParamsV4) -> Result<Vec<PatientV4>, PatientV4Error> {
-        let response = self
-            .client
-            .get(self.server_url.join("/api/v4/patient").unwrap())
-            .basic_auth(&self.username, Some(&self.password_sha256))
-            .query(&params)
-            .send()
-            .await
-            .map_err(PatientV4Error::ConnectionError)?;
+        let response = with_retries(RetrySeconds::default(), |client| {
+            client
+                .get(self.server_url.join("/api/v4/patient").unwrap())
+                .basic_auth(&self.username, Some(&self.password_sha256))
+                .query(&params)
+        })
+        .await
+        .map_err(PatientV4Error::ConnectionError)?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
             return Err(PatientV4Error::AuthenticationFailed);

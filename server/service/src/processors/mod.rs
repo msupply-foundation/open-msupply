@@ -17,9 +17,12 @@ use self::transfer::{
 };
 use general_processor::{process_records, ProcessorError};
 
+mod add_central_patient_visibility;
+mod assign_requisition_number;
 mod contact_form;
 mod general_processor;
 mod load_plugin;
+mod plugin_processor;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;
@@ -106,7 +109,7 @@ impl Processors {
                         process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
                     },
                     Some(r#type) = general_processor.recv() => {
-                        process_records(&service_provider, r#type).map_err(ProcessorsError::ProcessCentralRecord)
+                        process_records(&service_provider, r#type).await.map_err(ProcessorsError::ProcessCentralRecord)
                     },
                     Some(sender) = await_process_queue.recv() => {
                         sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)
@@ -141,7 +144,7 @@ impl ProcessorsTrigger {
 
     pub(crate) fn trigger_processor(&self, r#type: ProcessorType) {
         if let Err(error) = self.general_processor.try_send(r#type.clone()) {
-            let description = r#type.get_processor().get_description();
+            let description = r#type.get_description();
             log::error!("Problem triggering {description} processor {:#?}", error)
         }
     }

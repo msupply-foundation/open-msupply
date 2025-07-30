@@ -1,11 +1,10 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useColumns,
   TableProvider,
   createTableStore,
   getNameAndColorColumn,
-  useNavigate,
   useTranslation,
   RequisitionNodeStatus,
   useTableStore,
@@ -15,6 +14,9 @@ import {
   ColumnDescription,
   GenericColumnKey,
   getCommentPopoverColumn,
+  useSimplifiedTabletUI,
+  RouteBuilder,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -25,6 +27,7 @@ import {
   isRequestDisabled,
 } from '../../utils';
 import { Footer } from './Footer';
+import { AppRoute } from '@openmsupply-client/config';
 
 const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -35,7 +38,6 @@ const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
 };
 
 export const RequestRequisitionListView: FC = () => {
-  const navigate = useNavigate();
   const t = useTranslation();
   const modalController = useToggle();
   const { data: programSettings } = useRequest.utils.programSettings();
@@ -59,10 +61,17 @@ export const RequestRequisitionListView: FC = () => {
   const { data, isError, isLoading } = useRequest.document.list(queryParams);
   useDisableRequestRows(data?.nodes);
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
     GenericColumnKey.Selection,
-    [getNameAndColorColumn(), { setter: onUpdate }],
+    [
+      getNameAndColorColumn(),
+      {
+        setter: onUpdate,
+        customLinkRendering: true,
+      },
+    ],
     {
       key: 'requisitionNumber',
       label: 'label.number',
@@ -70,6 +79,16 @@ export const RequestRequisitionListView: FC = () => {
     },
     ['createdDatetime', { width: 150 }],
   ];
+
+  if (simplifiedTabletView) {
+    columnDefinitions.push({
+      key: 'count',
+      label: 'label.count-rows',
+      width: 110,
+      accessor: ({ rowData }: { rowData: RequestRowFragment }) =>
+        rowData.lines.totalCount,
+    });
+  }
 
   if (programSettings && programSettings.length > 0) {
     columnDefinitions.push(
@@ -80,18 +99,23 @@ export const RequestRequisitionListView: FC = () => {
         description: 'description.program',
         sortable: true,
         width: 150,
+        defaultHideOnMobile: true,
+        Cell: TooltipTextCell,
       },
       {
         key: 'orderType',
         accessor: ({ rowData }) => rowData.orderType,
         label: 'label.order-type',
         sortable: true,
+        width: 100,
+        defaultHideOnMobile: true,
       },
       {
         key: 'period',
         accessor: ({ rowData }) => rowData.period?.name ?? '',
         label: 'label.period',
         sortable: true,
+        defaultHideOnMobile: true,
       }
     );
   }
@@ -122,15 +146,14 @@ export const RequestRequisitionListView: FC = () => {
   const columns = useColumns<RequestRowFragment>(
     columnDefinitions,
     { sortBy, onChangeSortBy: updateSortQuery },
-    [sortBy, updateSortQuery]
+    [sortBy]
   );
 
-  const onRowClick = useCallback(
-    (row: RequestRowFragment) => {
-      navigate(String(row.id));
-    },
-    [navigate]
-  );
+  const getRoute = (row: RequestRowFragment) =>
+    RouteBuilder.create(AppRoute.Replenishment)
+      .addPart(AppRoute.InternalOrder)
+      .addPart(row.id)
+      .build();
 
   return (
     <>
@@ -142,10 +165,11 @@ export const RequestRequisitionListView: FC = () => {
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
-        data={data?.nodes}
-        onRowClick={onRowClick}
+        data={data?.nodes ?? []}
+        rowLinkBuilder={getRoute}
         isError={isError}
         isLoading={isLoading}
+        enableColumnSelection
         noDataElement={
           <NothingHere
             body={t('error.no-internal-orders')}
@@ -158,7 +182,7 @@ export const RequestRequisitionListView: FC = () => {
   );
 };
 
-export const ListView: FC = () => (
+export const ListView = () => (
   <TableProvider createStore={createTableStore}>
     <RequestRequisitionListView />
   </TableProvider>

@@ -22,7 +22,11 @@ export type ConnectionResult = {
 };
 export type FileInfo = {
   content: string;
+  // Whether to base64 decode content before saving
+  isBinaryData?: boolean;
+  mimeType?: string;
   filename?: string;
+  successMessage?: string;
 };
 
 export interface NativeAPI {
@@ -36,6 +40,7 @@ export interface NativeAPI {
   connectedServer: () => Promise<FrontEndHost | null>;
   goBackToDiscovery: () => void;
   advertiseService?: () => void;
+  sendTabKeyPress?: () => void;
   startBarcodeScan: () => Promise<void>;
   stopBarcodeScan: () => Promise<void>;
   // Callback for barcode scan result

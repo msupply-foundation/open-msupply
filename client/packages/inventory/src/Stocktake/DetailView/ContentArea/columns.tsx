@@ -17,8 +17,12 @@ import {
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
   getCommentPopoverColumn,
+  usePreference,
+  PreferenceKey,
+  getDosesPerUnitColumn,
+  getDifferenceColumn,
 } from '@openmsupply-client/common';
-import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
+import { ReasonOptionRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
@@ -38,13 +42,13 @@ const getStocktakeReasons = (
 ) => {
   if ('lines' in rowData) {
     const { lines } = rowData;
-    const inventoryAdjustmentReasons = lines
-      .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
-      .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
-    if (inventoryAdjustmentReasons.length !== 0) {
+    const reasonOptions = lines
+      .map(({ reasonOption }) => reasonOption)
+      .filter(Boolean) as ReasonOptionRowFragment[];
+    if (reasonOptions.length !== 0) {
       return (
         ArrayUtils.ifTheSameElseDefault(
-          inventoryAdjustmentReasons,
+          reasonOptions,
           'reason',
           t('multiple')
         ) ?? ''
@@ -53,7 +57,23 @@ const getStocktakeReasons = (
       return '';
     }
   } else {
-    return rowData.inventoryAdjustmentReason?.reason ?? '';
+    return rowData.reasonOption?.reason ?? '';
+  }
+};
+
+const getStocktakeDonor = (
+  rowData: StocktakeLineFragment | StocktakeSummaryItem,
+  t: TypedTFunction<LocaleKey>
+) => {
+  if ('lines' in rowData) {
+    const { lines } = rowData;
+
+    return (
+      ArrayUtils.ifTheSameElseDefault(lines, 'donorName', t('multiple')) ??
+      UNDEFINED_STRING_VALUE
+    );
+  } else {
+    return rowData.donorName ?? UNDEFINED_STRING_VALUE;
   }
 };
 
@@ -63,8 +83,12 @@ export const useStocktakeColumns = ({
 }: UseStocktakeColumnOptions): Column<
   StocktakeLineFragment | StocktakeSummaryItem
 >[] => {
-  const { getError } = useStocktakeLineErrorContext();
   const t = useTranslation();
+  const { getError } = useStocktakeLineErrorContext();
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns: ColumnDescription<
@@ -109,6 +133,7 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'batch'] },
             { path: ['batch'] },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -119,6 +144,7 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'expiryDate'] },
             { path: ['expiryDate'] },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
     {
@@ -130,6 +156,7 @@ export const useStocktakeColumns = ({
           { path: ['lines', 'location', 'code'] },
           { path: ['location', 'code'] },
         ]),
+      defaultHideOnMobile: true,
     },
     [
       'itemUnit',
@@ -139,6 +166,7 @@ export const useStocktakeColumns = ({
         },
         accessor: ({ rowData }) => rowData.item?.unitName ?? '',
         sortable: false,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -150,10 +178,21 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'packSize'] },
             { path: ['packSize'] },
           ]),
+        cellProps: {
+          defaultValue: UNDEFINED_STRING_VALUE,
+        },
+        defaultHideOnMobile: true,
       },
     ],
+  ];
+
+  if (preferences?.manageVaccinesInDoses) {
+    columns.push(getDosesPerUnitColumn(t));
+  }
+
+  columns.push(
     {
-      key: 'snapshotNumPacks',
+      key: 'snapshotNumberOfPacks',
       label: 'label.snapshot-num-of-packs',
       description: 'description.snapshot-num-of-packs',
       align: ColumnAlign.Right,
@@ -163,7 +202,7 @@ export const useStocktakeColumns = ({
           r =>
             getError(r)?.__typename === 'SnapshotCountCurrentCountMismatchLine'
         ),
-      sortable: false,
+      sortable: true,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
@@ -179,7 +218,7 @@ export const useStocktakeColumns = ({
       },
     },
     {
-      key: 'countedNumPacks',
+      key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       description: 'description.counted-num-of-packs',
       align: ColumnAlign.Right,
@@ -190,7 +229,7 @@ export const useStocktakeColumns = ({
         getLinesFromRow(row).some(
           r => getError(r)?.__typename === 'StockLineReducedBelowZero'
         ),
-      sortable: false,
+      sortable: true,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
@@ -206,46 +245,25 @@ export const useStocktakeColumns = ({
         }
       },
     },
+    getDifferenceColumn(t, preferences?.manageVaccinesInDoses ?? false),
     {
-      key: 'difference',
-      label: 'label.difference',
-      Cell: props => (
-        <NumberCell {...props} defaultValue={UNDEFINED_STRING_VALUE} />
-      ),
-      align: ColumnAlign.Right,
-      sortable: false,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          const { lines } = rowData;
-          const total =
-            lines.reduce(
-              (total, line) =>
-                total +
-                (line.snapshotNumberOfPacks -
-                  (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
-              0
-            ) ?? 0;
-          return (total < 0 ? Math.abs(total) : -total).toString();
-        } else if (rowData.countedNumberOfPacks === null) {
-          return null;
-        } else {
-          return (
-            (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
-            rowData.snapshotNumberOfPacks
-          );
-        }
-      },
-    },
-    {
-      key: 'inventoryAdjustmentReason',
+      key: 'reasonOption',
       label: 'label.reason',
       accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
+      sortable: true,
+    }
+  );
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columns.push({
+      key: 'donorId',
+      label: 'label.donor',
+      accessor: ({ rowData }) => getStocktakeDonor(rowData, t),
       sortable: false,
-    },
+      defaultHideOnMobile: true,
+    });
+  }
 
-    getCommentPopoverColumn(),
-    expandColumn,
-  ];
+  columns.push(getCommentPopoverColumn(), expandColumn);
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
@@ -267,7 +285,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
     ],
     'packSize',
     {
-      key: 'snapshotNumPacks',
+      key: 'snapshotNumberOfPacks',
       width: 150,
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
@@ -277,7 +295,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
     },
     {
-      key: 'countedNumPacks',
+      key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 150,
       align: ColumnAlign.Right,
@@ -287,10 +305,9 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
     },
     'comment',
     {
-      key: 'inventoryAdjustmentReason',
+      key: 'reasonOption',
       label: 'label.reason',
-      accessor: ({ rowData }) =>
-        rowData.inventoryAdjustmentReason?.reason || '',
+      accessor: ({ rowData }) => rowData.reasonOption?.reason || '',
     },
   ]);
 };

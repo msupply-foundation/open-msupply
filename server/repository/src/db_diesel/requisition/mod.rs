@@ -31,6 +31,8 @@ pub struct RequisitionFilter {
     pub period_id: Option<EqualFilter<String>>,
     pub elmis_code: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
+    pub is_emergency: Option<bool>,
+    pub automatically_created: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -167,6 +169,16 @@ impl RequisitionFilter {
 
     pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
         self.program_id = Some(filter);
+        self
+    }
+
+    pub fn is_emergency(mut self, filter: bool) -> Self {
+        self.is_emergency = Some(filter);
+        self
+    }
+
+    pub fn automatically_created(mut self, filter: bool) -> Self {
+        self.automatically_created = Some(filter);
         self
     }
 }

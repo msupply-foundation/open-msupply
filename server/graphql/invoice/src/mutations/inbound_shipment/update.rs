@@ -14,10 +14,24 @@ use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::{
-    UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
-    UpdateInboundShipmentStatus,
+    ApplyDonorToInvoiceLines, UpdateDefaultDonor, UpdateInboundShipment as ServiceInput,
+    UpdateInboundShipmentError as ServiceError, UpdateInboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum ApplyToLinesInput {
+    None,
+    UpdateExistingDonor,
+    AssignIfNone,
+    AssignToAll,
+}
+
+#[derive(InputObject)]
+pub struct UpdateDonorInput {
+    pub donor_id: Option<String>,
+    pub apply_to_lines: ApplyToLinesInput,
+}
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentInput")]
@@ -32,11 +46,13 @@ pub struct UpdateInput {
     pub tax: Option<TaxInput>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub default_donor: Option<UpdateDonorInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum UpdateInboundShipmentStatusInput {
     Delivered,
+    Received,
     Verified,
 }
 
@@ -98,6 +114,7 @@ impl UpdateInput {
             tax,
             currency_id,
             currency_rate,
+            default_donor,
         } = self;
 
         ServiceInput {
@@ -113,6 +130,10 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
+            default_donor: default_donor.map(|donor| UpdateDefaultDonor {
+                donor_id: donor.donor_id,
+                apply_to_lines: donor.apply_to_lines.to_domain(),
+            }),
         }
     }
 }
@@ -131,6 +152,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateRespons
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!("Error updating inbound shipment: {}", formatted_error);
 
     let graphql_error = match error {
         // Structured Errors
@@ -169,9 +191,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             )
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
-        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::CannotUpdateStatusAndDonorAtTheSameTime
+        | ServiceError::NotThisStoreInvoice
+        | ServiceError::NotAnInboundShipment
+        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -184,7 +207,19 @@ impl UpdateInboundShipmentStatusInput {
         use UpdateInboundShipmentStatus::*;
         match self {
             UpdateInboundShipmentStatusInput::Delivered => Delivered,
+            UpdateInboundShipmentStatusInput::Received => Received,
             UpdateInboundShipmentStatusInput::Verified => Verified,
+        }
+    }
+}
+
+impl ApplyToLinesInput {
+    pub fn to_domain(&self) -> ApplyDonorToInvoiceLines {
+        match self {
+            ApplyToLinesInput::None => ApplyDonorToInvoiceLines::None,
+            ApplyToLinesInput::UpdateExistingDonor => ApplyDonorToInvoiceLines::UpdateExistingDonor,
+            ApplyToLinesInput::AssignIfNone => ApplyDonorToInvoiceLines::AssignIfNone,
+            ApplyToLinesInput::AssignToAll => ApplyDonorToInvoiceLines::AssignToAll,
         }
     }
 }
@@ -497,7 +532,8 @@ mod test {
                     colour: Some("colour input".to_string()),
                     tax: None,
                     currency_id: None,
-                    currency_rate: None
+                    currency_rate: None,
+                    default_donor: None,
                 }
             );
             Ok(Invoice {

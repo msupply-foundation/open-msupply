@@ -9,8 +9,8 @@ export type LocationRowFragment = {
   name: string;
   onHold: boolean;
   code: string;
-  coldStorageType?: {
-    __typename: 'ColdStorageTypeNode';
+  locationType?: {
+    __typename: 'LocationTypeNode';
     id: string;
     name: string;
     maxTemperature: number;
@@ -39,8 +39,8 @@ export type LocationsQuery = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -84,8 +84,8 @@ export type InsertLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -108,8 +108,8 @@ export type UpdateLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -186,7 +186,7 @@ export const LocationRowFragmentDoc = gql`
     name
     onHold
     code
-    coldStorageType {
+    locationType {
       id
       name
       maxTemperature

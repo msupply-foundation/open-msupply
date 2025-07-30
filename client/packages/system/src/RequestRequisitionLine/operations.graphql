@@ -4,6 +4,8 @@ fragment ItemWithStats on ItemNode {
   code
   unitName
   defaultPackSize
+  isVaccine
+  doses
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
     averageMonthlyConsumption
@@ -13,6 +15,7 @@ fragment ItemWithStats on ItemNode {
     stockOnHand
     monthsOfStockOnHand
   }
+  isVaccine
 }
 
 fragment RequestLine on RequisitionLineNode {

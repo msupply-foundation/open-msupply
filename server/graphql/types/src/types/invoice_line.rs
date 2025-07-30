@@ -1,20 +1,22 @@
+use crate::types::VVMStatusNode;
+
 use super::{
-    InventoryAdjustmentReasonNode, ItemNode, LocationNode, PricingNode, ReturnReasonNode,
-    StockLineNode,
+    CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
+    PricingNode, ReasonOptionNode, ReturnReasonNode, StockLineNode,
 };
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, ReturnReasonLoader,
-        StockLineByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByNameLinkIdLoader,
+        NameByNameLinkIdLoaderInput, ReasonOptionLoader, StockLineByIdLoader, VVMStatusByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineType, ItemRow};
+use repository::{location::Location, InvoiceLine, InvoiceLineRow, InvoiceLineType, ItemRow};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -95,6 +97,25 @@ impl InvoiceLineNode {
     pub async fn item_variant_id(&self) -> &Option<String> {
         &self.row().item_variant_id
     }
+    pub async fn vvm_status_id(&self) -> &Option<String> {
+        &self.row().vvm_status_id
+    }
+    pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
+        if self.row().vvm_status_id.is_none() {
+            return Ok(None);
+        }
+
+        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
+        let status_id = match self.row().vvm_status_id.clone() {
+            Some(status_id) => status_id,
+            None => return Ok(None),
+        };
+
+        Ok(loader
+            .load_one(status_id)
+            .await?
+            .map(VVMStatusNode::from_domain))
+    }
     // Quantity
     pub async fn pack_size(&self) -> f64 {
         self.row().pack_size
@@ -104,6 +125,9 @@ impl InvoiceLineNode {
     }
     pub async fn prescribed_quantity(&self) -> Option<f64> {
         self.row().prescribed_quantity
+    }
+    pub async fn shipped_number_of_packs(&self) -> Option<f64> {
+        self.row().shipped_number_of_packs
     }
     // Batch
     pub async fn batch(&self) -> &Option<String> {
@@ -156,31 +180,30 @@ impl InvoiceLineNode {
     pub async fn location_id(&self) -> &Option<String> {
         &self.row().location_id
     }
-    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
-        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
-        let location_id = match &self.row().location_id {
-            None => return Ok(None),
-            Some(location_id) => location_id,
-        };
-
-        let result = loader.load_one(location_id.clone()).await?;
-
-        Ok(result.map(LocationNode::from_domain))
+    pub async fn location(&self) -> Option<LocationNode> {
+        self.invoice_line.location_row_option.as_ref().map(|row| {
+            LocationNode::from_domain(Location {
+                location_row: row.clone(),
+            })
+        })
     }
 
     // Other
     pub async fn note(&self) -> &Option<String> {
         &self.row().note
     }
+
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn return_reason_id(&self) -> &Option<String> {
-        &self.row().return_reason_id
+        &self.row().reason_option_id
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReturnReasonNode>> {
-        let loader = ctx.get_loader::<DataLoader<ReturnReasonLoader>>();
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
 
-        let return_reason_id = match &self.row().return_reason_id {
+        let return_reason_id = match &self.row().reason_option_id {
             Some(return_reason_id) => return_reason_id,
             None => return Ok(None),
         };
@@ -190,12 +213,13 @@ impl InvoiceLineNode {
         Ok(result.map(ReturnReasonNode::from_domain))
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<InventoryAdjustmentReasonNode>> {
-        let loader = ctx.get_loader::<DataLoader<InventoryAdjustmentReasonByIdLoader>>();
-        let inventory_adjustment_reason_id = match &self.row().inventory_adjustment_reason_id {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        let inventory_adjustment_reason_id = match &self.row().reason_option_id {
             None => return Ok(None),
             Some(inventory_adjustment_reason_id) => inventory_adjustment_reason_id,
         };
@@ -205,6 +229,59 @@ impl InvoiceLineNode {
             .await?;
 
         Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
+    }
+
+    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let donor_link_id = match &self.row().donor_link_id {
+            None => return Ok(None),
+            Some(donor_link_id) => donor_link_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let result = loader
+            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
+    pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
+
+        let item_variant_id = match &self.row().item_variant_id {
+            None => return Ok(None),
+            Some(item_variant_id) => item_variant_id,
+        };
+
+        let result = loader.load_one(item_variant_id.clone()).await?;
+
+        Ok(result.map(ItemVariantNode::from_domain))
+    }
+
+    pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        let reason_option_id = match &self.row().reason_option_id {
+            None => return Ok(None),
+            Some(reason_option_id) => reason_option_id,
+        };
+
+        let result = loader.load_one(reason_option_id.clone()).await?;
+        Ok(result.map(ReasonOptionNode::from_domain))
+    }
+
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+
+        let campaign_id = match &self.row().campaign_id {
+            Some(campaign_id) => campaign_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(campaign_id.clone()).await?;
+        Ok(result.map(CampaignNode::from_domain))
+    }
+
+    pub async fn linked_invoice_id(&self) -> &Option<String> {
+        &self.row().linked_invoice_id
     }
 }
 

@@ -1,27 +1,29 @@
 use base64::prelude::*;
 use chrono::{DateTime, Utc};
-use extism::{
-    convert::{encoding, Json},
-    host_fn, FromBytes, Manifest, PluginBuilder, ToBytes, UserData, Wasm, WasmMetadata, PTR,
-};
+use log::error;
 use repository::{
-    migrations::Version, raw_query, EqualFilter, JsonRawRow, Report, ReportFilter, ReportMetaData,
-    ReportRepository, ReportRowRepository, ReportSort, RepositoryError, StorageConnection,
+    get_storage_connection_manager, migrations::Version, EqualFilter, Pagination, PaginationOption,
+    Report, ReportFilter, ReportMetaData, ReportRepository, ReportRowRepository, ReportSort,
+    RepositoryError,
 };
-use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
+use thiserror::Error;
 use util::{format_error, uuid::uuid};
 
 use crate::{
     boajs::{call_method, BoaJsError},
+    get_default_pagination, i64_to_u32,
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
+    settings::Settings,
+    standard_reports::{ReportsData, StandardReports},
     static_files::{StaticFileCategory, StaticFileService},
-    ListError,
+    ListError, ListResult, UploadedFile,
 };
 
 use super::{
+    convert_to_excel::export_html_report_to_excel,
     default_queries::get_default_gql_query,
     definition::{
         ConvertDataType, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
@@ -38,9 +40,11 @@ pub enum PrintFormat {
     Excel,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ConvertDataError {
+    #[error(transparent)]
     Extism(anyhow::Error),
+    #[error("BoaJs error: {0}")]
     BoaJs(String),
 }
 
@@ -57,6 +61,16 @@ pub enum ReportError {
     HTMLToPDFError(String),
     TranslationError,
     ConvertDataError(ConvertDataError),
+}
+
+#[derive(Debug, Error)]
+pub enum InstallReportError {
+    #[error(transparent)]
+    RepositoryError(RepositoryError),
+    #[error("Invalid file")]
+    InvalidFile,
+    #[error("File not found")]
+    FileNotFound,
 }
 
 #[derive(Debug, Clone)]
@@ -83,6 +97,7 @@ pub struct ResolvedReportDefinition {
     pub resources: HashMap<String, serde_json::Value>,
     pub convert_data: Option<String>,
     pub convert_data_type: ConvertDataType,
+    pub excel_template_buffer: Option<Vec<u8>>,
 }
 
 pub struct GeneratedReport {
@@ -95,22 +110,34 @@ pub trait ReportServiceTrait: Sync + Send {
     fn get_report(
         &self,
         ctx: &ServiceContext,
-        translation_service: &Box<Localisations>,
+        localisations: &Localisations,
         user_language: String,
         id: &str,
     ) -> Result<Report, GetReportError> {
-        get_report(ctx, translation_service, user_language, id)
+        get_report(ctx, localisations, user_language, id)
     }
 
     fn query_reports(
         &self,
         ctx: &ServiceContext,
-        translation_service: &Box<Localisations>,
+        localisations: &Localisations,
         user_language: String,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
     ) -> Result<Vec<Report>, GetReportsError> {
-        query_reports(ctx, translation_service, user_language, filter, sort)
+        query_reports(ctx, localisations, user_language, filter, sort)
+    }
+
+    fn query_all_report_versions(
+        &self,
+        ctx: &ServiceContext,
+        localisations: &Localisations,
+        user_language: String,
+        filter: Option<ReportFilter>,
+        sort: Option<ReportSort>,
+        pagination: Option<PaginationOption>,
+    ) -> Result<ListResult<Report>, GetReportsError> {
+        query_all_report_versions(ctx, localisations, user_language, filter, sort, pagination)
     }
 
     /// Loads a report definition by id and resolves it
@@ -128,28 +155,27 @@ pub trait ReportServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         name: String,
         report_definition: ReportDefinition,
+        excel_template_buffer: Option<Vec<u8>>,
     ) -> Result<ResolvedReportDefinition, ReportError> {
-        resolve_report_definition(ctx, name, report_definition)
+        resolve_report_definition(ctx, name, report_definition, excel_template_buffer)
     }
 
     /// Converts a HTML report to a file for the target PrintFormat and returns file id
     fn generate_html_report(
         &self,
-        connection: StorageConnection,
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
-        translation_service: &Localisations,
+        localisations: &Localisations,
         current_language: Option<String>,
     ) -> Result<String, ReportError> {
         let document = generate_report(
-            connection,
             report,
             report_data,
             arguments,
-            translation_service,
+            localisations,
             current_language,
         )?;
 
@@ -157,13 +183,43 @@ pub trait ReportServiceTrait: Sync + Send {
             Some(PrintFormat::Html) => {
                 generate_html_report_to_html(base_dir, document, report.name.clone())
             }
-            Some(PrintFormat::Excel) => {
-                print_html_report_to_excel(base_dir, document, report.name.clone())
-            }
+            Some(PrintFormat::Excel) => export_html_report_to_excel(
+                base_dir,
+                document,
+                report.name.clone(),
+                &report.excel_template_buffer,
+            ),
             Some(PrintFormat::Pdf) | None => {
                 generate_html_report_to_pdf(base_dir, document, report.name.clone())
             }
         }
+    }
+
+    fn install_uploaded_reports(
+        &self,
+        settings: &Settings,
+        uploaded_file: UploadedFile,
+    ) -> Result<Vec<String>, InstallReportError> {
+        // TODO generalise plugin errors to be compatible with reports also
+        let report_json: ReportsData = uploaded_file
+            .as_json_file(settings)
+            .map_err(|_| InstallReportError::InvalidFile)?;
+        let connection_manager = get_storage_connection_manager(&settings.database);
+        let con = connection_manager
+            .connection()
+            .map_err(|error| InstallReportError::RepositoryError(error))?;
+
+        // default overwrite as true
+        // TODO add user input to customise overwrite
+        let reports =
+            StandardReports::upsert_reports(report_json, &con, true).map_err(|_error| {
+                InstallReportError::RepositoryError(RepositoryError::DBError {
+                    msg: String::from("Failed to upsert report"),
+                    extra: String::new(),
+                })
+            })?;
+
+        Ok(reports.iter().map(|r| r.id.clone()).collect())
     }
 }
 
@@ -210,95 +266,12 @@ fn generate_html_report_to_html(
     Ok(file.id)
 }
 
-struct Selectors<'a> {
-    html: &'a Html,
-}
-
-impl<'a> Selectors<'a> {
-    fn new(html: &'a Html) -> Self {
-        Self { html }
-    }
-
-    fn headers(&self) -> Vec<&str> {
-        let headers_selector = Selector::parse(".paging tbody thead tr td").unwrap();
-        self.html
-            .select(&headers_selector)
-            .map(inner_text)
-            .collect()
-    }
-
-    fn rows_and_cells(&self) -> Vec<Vec<&str>> {
-        let rows_selector = Selector::parse(".paging tbody tbody tr").unwrap();
-        let cells_selector = Selector::parse("td").unwrap();
-        self.html
-            .select(&rows_selector)
-            .map(|row| row.select(&cells_selector).map(inner_text).collect())
-            .collect()
-    }
-}
-
-fn inner_text(element_ref: ElementRef) -> &str {
-    element_ref
-        .text()
-        .find(|t| !t.trim().is_empty())
-        .map(|t| t.trim())
-        .unwrap_or_default()
-}
-
-/// Converts the report to an Excel file and returns the file id
-fn print_html_report_to_excel(
-    base_dir: &Option<String>,
-    document: GeneratedReport,
-    report_name: String,
-) -> Result<String, ReportError> {
-    let sheet_name = "Report";
-
-    let mut book = umya_spreadsheet::new_file();
-    book.set_sheet_name(0, sheet_name).unwrap();
-    let sheet = book.get_sheet_by_name_mut(sheet_name).unwrap();
-
-    let fragment = Html::parse_fragment(&format_html_document(document));
-
-    let selectors = Selectors::new(&fragment); // Store Html when creating
-
-    for (index, header) in selectors.headers().into_iter().enumerate() {
-        let cell = sheet.get_cell_mut((index as u32 + 1, 1));
-
-        cell.set_value(header);
-        cell.get_style_mut().get_font_mut().set_bold(true);
-    }
-
-    for (row_index, row) in selectors.rows_and_cells().into_iter().enumerate() {
-        for (cell_index, cell) in row.into_iter().enumerate() {
-            sheet
-                .get_cell_mut((cell_index as u32 + 1, row_index as u32 + 2))
-                .set_value(cell);
-        }
-    }
-
-    let now: DateTime<Utc> = SystemTime::now().into();
-    let file_service = StaticFileService::new(base_dir)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-
-    let reserved_file = file_service
-        .reserve_file(
-            &format!("{}_{}.xlsx", now.format("%Y%m%d_%H%M%S"), report_name),
-            &StaticFileCategory::Temporary,
-            None,
-        )
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-
-    umya_spreadsheet::writer::xlsx::write(&book, reserved_file.path)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-
-    Ok(reserved_file.id)
-}
-
 /// Puts the document content, header and footer into a <html> template.
 /// This assumes that the document contains the html body.
 fn format_html_document(document: GeneratedReport) -> String {
     // ensure that <html> is at the start of the text
     // if not, the cordova printer plugin renders as text not HTML!
+    // The table structure is a formatting hack to show the footer on every page
     format!(
         "<html>
     <body>
@@ -341,7 +314,7 @@ pub enum GetReportError {
 
 fn get_report(
     ctx: &ServiceContext,
-    translation_service: &Box<Localisations>,
+    localisations: &Localisations,
     user_language: String,
     id: &str,
 ) -> Result<Report, GetReportError> {
@@ -351,7 +324,7 @@ fn get_report(
         .pop()
         .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
 
-    let report = translate_report_arugment_schema(report, translation_service, &user_language)
+    let report = translate_report_arugment_schema(report, localisations, &user_language)
         .map_err(GetReportError::TranslationError)?;
 
     Ok(report)
@@ -365,7 +338,7 @@ pub enum GetReportsError {
 
 fn query_reports(
     ctx: &ServiceContext,
-    translation_service: &Box<Localisations>,
+    localisations: &Localisations,
     user_language: String,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
@@ -382,18 +355,53 @@ fn query_reports(
     let filter = ReportFilter::new().id(EqualFilter::equal_any(reports_to_show_meta_data));
 
     let reports = repo
-        .query(Some(filter), sort)
+        .query(Pagination::all(), Some(filter), sort)
         .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?;
 
     let reports = reports
         .into_iter()
         .map(|r| {
-            translate_report_arugment_schema(r, translation_service, &user_language)
+            translate_report_arugment_schema(r, localisations, &user_language)
                 .map_err(GetReportsError::TranslationError)
         })
         .collect::<Result<Vec<Report>, GetReportsError>>();
 
     reports
+}
+
+fn query_all_report_versions(
+    ctx: &ServiceContext,
+    localisations: &Localisations,
+    user_language: String,
+    filter: Option<ReportFilter>,
+    sort: Option<ReportSort>,
+    pagination: Option<PaginationOption>,
+) -> Result<ListResult<Report>, GetReportsError> {
+    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
+        .map_err(GetReportsError::ListError)?;
+
+    let repo = ReportRepository::new(&ctx.connection);
+
+    let reports = repo
+        .query(pagination, filter.clone(), sort)
+        .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?;
+
+    // we don't return schema currently - but maybe we will need so leaving here for now
+    let reports = reports
+        .into_iter()
+        .map(|r| {
+            translate_report_arugment_schema(r, localisations, &user_language)
+                .map_err(GetReportsError::TranslationError)
+        })
+        .collect::<Result<Vec<Report>, GetReportsError>>()?;
+
+    Ok(ListResult {
+        count: i64_to_u32(
+            repo.count(filter)
+                .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?,
+        ),
+        rows: reports,
+    })
 }
 
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {
@@ -453,14 +461,15 @@ fn resolve_report(
 ) -> Result<ResolvedReportDefinition, ReportError> {
     let repo = ReportRowRepository::new(&ctx.connection);
 
-    let (report_name, main) = load_report_definition(&repo, report_id)?;
-    resolve_report_definition(ctx, report_name, main)
+    let (report_name, main, excel_template_buffer) = load_report_definition(&repo, report_id)?;
+    resolve_report_definition(ctx, report_name, main, excel_template_buffer)
 }
 
 fn resolve_report_definition(
     ctx: &ServiceContext,
     name: String,
     main: ReportDefinition,
+    excel_template_buffer: Option<Vec<u8>>,
 ) -> Result<ResolvedReportDefinition, ReportError> {
     let repo = ReportRowRepository::new(&ctx.connection);
     let fully_loaded_report = load_template_references(&repo, &ctx.store_id, main)?;
@@ -516,6 +525,7 @@ fn resolve_report_definition(
     let queries = query_from_resolved_template(query_entry)?;
 
     let resources = resources_from_resolved_template(&fully_loaded_report);
+
     Ok(ResolvedReportDefinition {
         name,
         template,
@@ -526,57 +536,17 @@ fn resolve_report_definition(
         resources,
         convert_data: fully_loaded_report.index.convert_data,
         convert_data_type: fully_loaded_report.index.convert_data_type,
+        excel_template_buffer,
     })
 }
 
-#[derive(Serialize, Debug, Deserialize, FromBytes)]
-#[encoding(Json)]
-struct WasmSqlQuery {
-    statement: String,
-    parameters: Vec<serde_json::Value>,
-}
-
-#[derive(Serialize, Debug, Deserialize, FromBytes)]
-#[encoding(Json)]
-struct WasmSqlResult {
-    rows: Vec<serde_json::Value>,
-}
-
-host_fn!(sql(user_data: StorageConnection; key: Json<WasmSqlQuery>) -> Json<WasmSqlResult> {
-    Ok(wasm_sql(user_data, key))
-});
-
-fn wasm_sql(
-    user_data: UserData<StorageConnection>,
-    Json(WasmSqlQuery {
-        statement,
-        parameters,
-    }): Json<WasmSqlQuery>,
-) -> Json<WasmSqlResult> {
-    let _ = parameters; // Explicitly ignore parameters
-    let con_mut = user_data.get().unwrap();
-    let con = con_mut.lock().unwrap();
-    let results = raw_query(&con, statement);
-    Json(WasmSqlResult {
-        rows: results
-            .unwrap()
-            .into_iter()
-            .map(|JsonRawRow { json_row }| {
-                serde_json::from_str::<serde_json::Value>(&json_row).unwrap()
-            })
-            .collect(),
-    })
-}
-
-#[derive(Serialize, Deserialize, FromBytes, ToBytes)]
-#[encoding(Json)]
+#[derive(Serialize, Deserialize)]
 struct ReportData {
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,
 }
 
 fn transform_data(
-    connection: StorageConnection,
     data: ReportData,
     convert_data: Option<String>,
     convert_data_type: &ConvertDataType,
@@ -589,9 +559,9 @@ fn transform_data(
         // Mapping to string via format_error since it's better then debug output on error
         ConvertDataType::BoaJs => transform_data_boajs(data, convert_data)
             .map_err(|e| ConvertDataError::BoaJs(format_error(&e))),
-        ConvertDataType::Extism => {
-            transform_data_extism(connection, data, convert_data).map_err(ConvertDataError::Extism)
-        }
+        ConvertDataType::Extism => Err(ConvertDataError::Extism(anyhow::anyhow!(
+            "Extism convert data no longer implemented."
+        ))),
     }
 }
 
@@ -603,48 +573,27 @@ fn transform_data_boajs(data: ReportData, convert_data: String) -> Result<Report
     )
 }
 
-fn transform_data_extism(
-    connection: StorageConnection,
-    data: ReportData,
-    convert_data: String,
-) -> Result<ReportData, anyhow::Error> {
-    let manifest = Manifest::new([Wasm::Data {
-        data: BASE64_STANDARD.decode(convert_data).unwrap(),
-        meta: WasmMetadata {
-            name: Some("commander".to_string()),
-            hash: None,
-        },
-    }]);
-
-    let mut plugin = PluginBuilder::new(manifest)
-        .with_wasi(true)
-        // For android was getting error 'config file not specified and failed to get the default'
-        // leading to https://github.com/bytecodealliance/wasmtime/blob/3e0b7e501beebf5d7c094b7ac751f582ba12bc95/crates/cache/src/config.rs#L195
-        .with_cache_disabled()
-        .with_function("sql", [PTR], [PTR], UserData::new(connection), sql)
-        .build()?;
-
-    let data = plugin.call("convert_data", data)?;
-
-    Ok(data)
-}
-
 fn generate_report(
-    connection: StorageConnection,
     report: &ResolvedReportDefinition,
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,
-    translation_service: &Localisations,
+    localisations: &Localisations,
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let report_data = ReportData { data, arguments };
     let report_data = transform_data(
-        connection,
         report_data,
         report.convert_data.clone(),
         &report.convert_data_type,
     )
-    .map_err(ReportError::ConvertDataError)?;
+    .map_err(|err| {
+        error!(
+            "Error transforming data for report {}: {}",
+            report.name,
+            format_error(&err)
+        );
+        ReportError::ConvertDataError(err)
+    })?;
 
     let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
         ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))
@@ -671,7 +620,7 @@ fn generate_report(
 
     tera.register_function(
         "t",
-        translation_service.get_translation_function(current_language),
+        localisations.get_translation_function(current_language),
     );
 
     let mut templates: HashMap<String, String> = report
@@ -798,7 +747,14 @@ fn resources_from_resolved_template(
 fn load_report_definition(
     repo: &ReportRowRepository,
     report_id: &str,
-) -> Result<(String, ReportDefinition), ReportError> {
+) -> Result<
+    (
+        String,
+        ReportDefinition,
+        Option<Vec<u8>>, /* excel template */
+    ),
+    ReportError,
+> {
     let row = match repo.find_one_by_id(report_id)? {
         Some(row) => row,
         None => {
@@ -811,7 +767,7 @@ fn load_report_definition(
     let def = serde_json::from_str::<ReportDefinition>(&row.template).map_err(|err| {
         ReportError::InvalidReportDefinition(format!("Can't parse report: {}", err))
     })?;
-    Ok((row.name, def))
+    Ok((row.name, def, row.excel_template_buffer))
 }
 
 fn load_template_references(
@@ -895,7 +851,6 @@ mod report_service_test {
         let report_1 = ReportDefinition {
             index: ReportDefinitionIndex {
                 template: Some("template.html".to_string()),
-                header: None,
                 footer: Some("footer.html".to_string()),
                 query: vec!["query".to_string()],
                 ..Default::default()
@@ -955,6 +910,7 @@ mod report_service_test {
             version: "1.0".to_string(),
             code: "report_1".to_string(),
             is_active: true,
+            excel_template_buffer: None,
         })
         .unwrap();
 
@@ -970,6 +926,7 @@ mod report_service_test {
             version: "1.0".to_string(),
             code: "report_base_1".to_string(),
             is_active: true,
+            excel_template_buffer: None,
         })
         .unwrap();
 
@@ -978,128 +935,23 @@ mod report_service_test {
             .context("store_id".to_string(), "".to_string())
             .unwrap();
         let service = &service_provider.report_service;
-        let translation_service = &service_provider.translations_service;
+        let localisations = &service_provider
+            .localisations_service
+            .get_localisations(&connection)
+            .unwrap();
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
         let doc = generate_report(
-            connection,
             &resolved_def,
             serde_json::json!({
                 "test": "Hello"
             }),
             None,
-            translation_service,
+            localisations,
             None,
         )
         .unwrap();
         assert_eq!(doc.document, "Template: Hello Footer");
-    }
-}
-
-#[cfg(test)]
-mod report_to_excel_test {
-    use scraper::Html;
-
-    use super::*;
-
-    #[test]
-    fn test_selectors() {
-        let html = Html::parse_fragment(
-            r#"
-<html>
-   <body>
-      <table class="paging">
-         <thead>
-            <tr>
-               <td></td>
-            </tr>
-         </thead>
-         <tbody>
-            <tr>
-               <td>
-                  <style>
-                  </style>
-                  <div class="container">
-                     <table>
-                        <thead>
-                           <tr class="heading">
-                              <td>First Header</td>
-                              <td>Second Header</td>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           <tr>
-                              <td>Row One Cell One</td>
-                              <td>Row One Cell Two</td>
-                           </tr>
-                           <tr>
-                              <td>Row Two Cell One</td>
-                              <td>Row Two Cell Two</td>
-                           </tr>
-                        </tbody>
-                     </table>
-                  </div>
-               </td>
-            </tr>
-         </tbody>
-         <tfoot>
-            <tr>
-               <td></td>
-            </tr>
-         </tfoot>
-      </table>
-   </body>
-</html>
-
-    "#,
-        );
-
-        let selectors = Selectors::new(&html);
-
-        assert_eq!(selectors.headers(), vec!["First Header", "Second Header"]);
-
-        assert_eq!(
-            selectors.rows_and_cells(),
-            vec![
-                vec!["Row One Cell One", "Row One Cell Two"],
-                vec!["Row Two Cell One", "Row Two Cell Two"]
-            ]
-        );
-    }
-
-    #[test]
-    fn test_inner_text() {
-        let html = Html::parse_fragment(
-            r#"
-<html>
-   <body>
-      <table>
-         <tbody>
-            <tr>
-               <td class="status"> 
-                  <span class="out-of-stock">Out of Stock</span>
-               </td>
-                <td class="status"> 
-                  Out of Stock
-               </td>
-            </tr>
-         </tbody>
-      </table>         
-   </body>
-</html>
-
-        "#,
-        );
-
-        let cells_selector = Selector::parse("td").unwrap();
-        let mut cells = html.select(&cells_selector);
-        let cell = cells.next().unwrap();
-
-        assert_eq!(inner_text(cell), "Out of Stock");
-
-        let cell = cells.next().unwrap();
-
-        assert_eq!(inner_text(cell), "Out of Stock");
     }
 }
 
@@ -1132,7 +984,10 @@ mod report_generation_test {
         let (_, connection, connection_manager, _) =
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
-        let translation_service = ServiceProvider::new(connection_manager).translations_service;
+        let localisations = ServiceProvider::new(connection_manager)
+            .localisations_service
+            .get_localisations(&connection)
+            .unwrap();
 
         let mut templates = HashMap::new();
         templates.insert("test.html".to_string(), tera_template);
@@ -1151,11 +1006,10 @@ mod report_generation_test {
         let report_data = json!(null);
 
         let generated_report = generate_report(
-            connection,
             &report,
             report_data.clone(),
             None,
-            &translation_service,
+            &localisations,
             Some("en".to_string()),
         )
         .unwrap();
@@ -1163,17 +1017,13 @@ mod report_generation_test {
         assert!(generated_report.document.contains("some text"));
         assert!(generated_report.document.contains("Name"));
 
-        let (_, connection, _, _) =
-            setup_all("test_report_translations", MockDataInserts::none()).await;
-
         // // test generation in other languages
 
         let generated_report = generate_report(
-            connection,
             &report,
             report_data,
             None,
-            &translation_service,
+            &localisations,
             Some("fr".to_string()),
         )
         .unwrap();

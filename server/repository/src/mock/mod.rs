@@ -4,6 +4,7 @@ mod activity_log;
 pub mod asset;
 pub mod asset_log;
 mod barcode;
+mod campaign;
 mod clinician;
 pub mod common;
 mod contact_form;
@@ -22,13 +23,14 @@ mod indicator_value;
 mod invoice;
 mod invoice_line;
 mod item;
+mod item_store_join;
 mod item_variant;
+pub mod ledger;
 mod location;
 mod name;
 mod name_store_join;
 mod name_tag;
 mod number;
-mod option;
 mod period_and_period_schedule;
 mod printer;
 mod program;
@@ -37,6 +39,9 @@ mod program_indicator;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
+mod purchase_order;
+mod purchase_order_line;
+mod reason_option;
 mod reports;
 mod rnr_form;
 mod sensor;
@@ -68,10 +73,12 @@ mod unit;
 mod user_account;
 mod vaccination;
 mod vaccine_course;
+mod vvm_status;
 
 pub use asset::*;
 pub use asset_log::*;
 pub use barcode::*;
+pub use campaign::*;
 pub use clinician::*;
 use common::*;
 pub use contact_form::*;
@@ -90,13 +97,13 @@ pub use indicator_value::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
+pub use item_store_join::*;
 pub use item_variant::*;
 pub use location::*;
 pub use name::*;
 pub use name_store_join::*;
 pub use name_tag::*;
 pub use number::*;
-pub use option::*;
 pub use period_and_period_schedule::*;
 pub use printer::*;
 pub use program::*;
@@ -105,6 +112,9 @@ pub use program_indicator::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
 pub use property::*;
+pub use purchase_order::*;
+pub use purchase_order_line::*;
+pub use reason_option::*;
 pub use reports::*;
 pub use rnr_form::*;
 pub use sensor::*;
@@ -133,12 +143,14 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 pub use vaccination::*;
 pub use vaccine_course::*;
+pub use vvm_status::*;
 
 use crate::{
     assets::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
+    campaign_row::{CampaignRow, CampaignRowRepository},
     category_row::{CategoryRow, CategoryRowRepository},
     contact_form_row::{ContactFormRow, ContactFormRowRepository},
     item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
@@ -148,6 +160,7 @@ use crate::{
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
+    vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
     *,
 };
 
@@ -201,8 +214,6 @@ pub struct MockData {
     pub sync_logs: Vec<SyncLogRow>,
     pub name_tags: Vec<NameTagRow>,
     pub name_tag_joins: Vec<NameTagJoinRow>,
-    pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
-    pub return_reasons: Vec<ReturnReasonRow>,
     pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
     pub programs: Vec<ProgramRow>,
     pub program_order_types: Vec<ProgramRequisitionOrderTypeRow>,
@@ -228,12 +239,17 @@ pub struct MockData {
     pub indicator_columns: Vec<IndicatorColumnRow>,
     pub indicator_values: Vec<IndicatorValueRow>,
     pub categories: Vec<CategoryRow>,
-    pub options: Vec<ReasonOptionRow>,
     pub contact_form: Vec<ContactFormRow>,
     pub reports: Vec<crate::ReportRow>,
     pub backend_plugin: Vec<BackendPluginRow>,
     pub printer: Vec<PrinterRow>,
     pub store_preferences: Vec<StorePreferenceRow>,
+    pub reason_options: Vec<ReasonOptionRow>,
+    pub vvm_statuses: Vec<VVMStatusRow>,
+    pub campaigns: Vec<CampaignRow>,
+    pub item_store_joins: Vec<ItemStoreJoinRow>,
+    pub purchase_order: Vec<PurchaseOrderRow>,
+    pub purchase_order_line: Vec<PurchaseOrderLineRow>,
 }
 
 impl MockData {
@@ -288,8 +304,6 @@ pub struct MockDataInserts {
     pub key_value_store_rows: bool,
     pub activity_logs: bool,
     pub sync_logs: bool,
-    pub inventory_adjustment_reasons: bool,
-    pub return_reasons: bool,
     pub barcodes: bool,
     pub programs: bool,
     pub program_requisition_settings: bool,
@@ -321,6 +335,12 @@ pub struct MockDataInserts {
     pub backend_plugin: bool,
     pub printer: bool,
     pub store_preferences: bool,
+    pub reason_options: bool,
+    pub vvm_statuses: bool,
+    pub campaigns: bool,
+    pub item_store_joins: bool,
+    pub purchase_order: bool,
+    pub purchase_order_line: bool,
 }
 
 impl MockDataInserts {
@@ -329,6 +349,7 @@ impl MockDataInserts {
             user_accounts: true,
             user_store_joins: true,
             user_permissions: true,
+            vvm_statuses: true,
             names: true,
             name_tags: true,
             name_tag_joins: true,
@@ -364,8 +385,6 @@ impl MockDataInserts {
             key_value_store_rows: true,
             activity_logs: true,
             sync_logs: true,
-            inventory_adjustment_reasons: true,
-            return_reasons: true,
             barcodes: true,
             programs: true,
             program_requisition_settings: true,
@@ -397,9 +416,13 @@ impl MockDataInserts {
             backend_plugin: true,
             printer: true,
             store_preferences: true,
+            reason_options: true,
+            campaigns: true,
+            item_store_joins: true,
+            purchase_order: true,
+            purchase_order_line: true,
         }
     }
-
     pub fn none() -> Self {
         MockDataInserts::default()
     }
@@ -472,6 +495,15 @@ impl MockDataInserts {
         self
     }
 
+    pub fn item_store_joins(mut self) -> Self {
+        self.units = true;
+        self.items = true;
+        self.names = true;
+        self.stores = true;
+        self.item_store_joins = true;
+        self
+    }
+
     pub fn item_variants(mut self) -> Self {
         self.units = true;
         self.items = true;
@@ -510,6 +542,7 @@ impl MockDataInserts {
     }
 
     pub fn invoices(mut self) -> Self {
+        self.names = true;
         self.invoices = true;
         self
     }
@@ -566,15 +599,6 @@ impl MockDataInserts {
 
     pub fn sync_logs(mut self) -> Self {
         self.sync_logs = true;
-        self
-    }
-
-    pub fn inventory_adjustment_reasons(mut self) -> Self {
-        self.inventory_adjustment_reasons = true;
-        self
-    }
-    pub fn return_reasons(mut self) -> Self {
-        self.return_reasons = true;
         self
     }
 
@@ -720,11 +744,6 @@ impl MockDataInserts {
         self
     }
 
-    pub fn options(mut self) -> Self {
-        self.options = true;
-        self
-    }
-
     pub fn contact_form(mut self) -> Self {
         self.contact_form = true;
         self
@@ -747,6 +766,34 @@ impl MockDataInserts {
 
     pub fn store_preferences(mut self) -> Self {
         self.store_preferences = true;
+        self
+    }
+
+    pub fn reason_options(mut self) -> Self {
+        self.reason_options = true;
+        self
+    }
+
+    pub fn vvm_statuses(mut self) -> Self {
+        self.vvm_statuses = true;
+        self
+    }
+
+    pub fn purchase_order(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.currencies = true;
+        self.purchase_order = true;
+        self
+    }
+    pub fn purchase_order_line(mut self) -> Self {
+        self.names = true;
+        self.units = true;
+        self.items = true;
+        self.stores = true;
+        self.currencies = true;
+        self.purchase_order = true;
+        self.purchase_order_line = true;
         self
     }
 }
@@ -839,10 +886,15 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             indicator_lines: mock_indicator_lines(),
             indicator_columns: mock_indicator_columns(),
             indicator_values: mock_indicator_values(),
-            options: mock_options(),
+            reason_options: mock_reason_options(),
             contact_form: mock_contact_form(),
             reports: mock_reports(),
             printer: mock_printers(),
+            vvm_statuses: mock_vvm_statuses(),
+            campaigns: mock_campaigns(),
+            item_store_joins: mock_item_store_joins(),
+            purchase_order: mock_purchase_orders(),
+            purchase_order_line: mock_purchase_order_lines(),
             ..Default::default()
         },
     );
@@ -1181,19 +1233,6 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.inventory_adjustment_reasons {
-            for row in &mock_data.inventory_adjustment_reasons {
-                let repo = InventoryAdjustmentReasonRowRepository::new(connection);
-                repo.upsert_one(row).unwrap();
-            }
-        }
-        if inserts.return_reasons {
-            for row in &mock_data.return_reasons {
-                let repo = ReturnReasonRowRepository::new(connection);
-                repo.upsert_one(row).unwrap();
-            }
-        }
-
         if inserts.programs {
             for row in &mock_data.programs {
                 let repo = ProgramRowRepository::new(connection);
@@ -1361,13 +1400,6 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.options {
-            let repo = ReasonOptionRowRepository::new(connection);
-            for row in &mock_data.options {
-                repo.upsert_one(row).unwrap();
-            }
-        }
-
         if inserts.contact_form {
             let repo = ContactFormRowRepository::new(connection);
             for row in &mock_data.contact_form {
@@ -1398,6 +1430,43 @@ pub fn insert_mock_data(
         if inserts.store_preferences {
             let repo = StorePreferenceRowRepository::new(connection);
             for row in &mock_data.store_preferences {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.reason_options {
+            let repo = ReasonOptionRowRepository::new(connection);
+            for row in &mock_data.reason_options {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.vvm_statuses {
+            let repo = VVMStatusRowRepository::new(connection);
+            for row in &mock_data.vvm_statuses {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.campaigns {
+            let repo = CampaignRowRepository::new(connection);
+            for row in &mock_data.campaigns {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.item_store_joins {
+            let repo = ItemStoreJoinRowRepository::new(connection);
+            for row in &mock_data.item_store_joins {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.purchase_order {
+            let repo = PurchaseOrderRowRepository::new(connection);
+            for row in &mock_data.purchase_order {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.purchase_order_line {
+            let repo = PurchaseOrderLineRowRepository::new(connection);
+            for row in &mock_data.purchase_order_line {
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1444,8 +1513,6 @@ impl MockData {
             mut key_value_store_rows,
             mut activity_logs,
             mut sync_logs,
-            mut inventory_adjustment_reasons,
-            mut return_reasons,
             mut name_tag_joins,
             mut program_requisition_settings,
             mut programs,
@@ -1475,12 +1542,17 @@ impl MockData {
             mut indicator_columns,
             mut indicator_values,
             mut categories,
-            mut options,
             mut contact_form,
             mut reports,
             backend_plugin: _,
             mut printer,
             mut store_preferences,
+            mut reason_options,
+            mut vvm_statuses,
+            mut campaigns,
+            mut item_store_joins,
+            mut purchase_order,
+            mut purchase_order_line,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1517,9 +1589,6 @@ impl MockData {
         self.key_value_store_rows.append(&mut key_value_store_rows);
         self.activity_logs.append(&mut activity_logs);
         self.sync_logs.append(&mut sync_logs);
-        self.inventory_adjustment_reasons
-            .append(&mut inventory_adjustment_reasons);
-        self.return_reasons.append(&mut return_reasons);
         self.name_tag_joins.append(&mut name_tag_joins);
         self.program_requisition_settings
             .append(&mut program_requisition_settings);
@@ -1551,12 +1620,16 @@ impl MockData {
         self.indicator_columns.append(&mut indicator_columns);
         self.indicator_values.append(&mut indicator_values);
         self.categories.append(&mut categories);
-        self.options.append(&mut options);
         self.contact_form.append(&mut contact_form);
         self.reports.append(&mut reports);
         self.printer.append(&mut printer);
-
+        self.reason_options.append(&mut reason_options);
         self.store_preferences.append(&mut store_preferences);
+        self.vvm_statuses.append(&mut vvm_statuses);
+        self.campaigns.append(&mut campaigns);
+        self.item_store_joins.append(&mut item_store_joins);
+        self.purchase_order.append(&mut purchase_order);
+        self.purchase_order_line.append(&mut purchase_order_line);
         self
     }
 }

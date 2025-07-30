@@ -1,145 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>GraphiQL Playground</title>
-    <style>
-      body {
-        height: 100%;
-        margin: 0;
-        width: 100%;
-        overflow: hidden;
-      }
 
-      #graphiql {
-        height: 100vh;
-      }
-      input {
-        margin-bottom: 10px;
-      }
-    </style>
+<head>
+  <title>GraphiQL Playground</title>
+  <style>
+    body {
+      height: 100%;
+      margin: 0;
+      width: 100%;
+      overflow: hidden;
+    }
 
-    <link rel="stylesheet" href="https://unpkg.com/graphiql@3.0.6/graphiql.min.css" />
-    <link rel="stylesheet" href="https://unpkg.com/@graphiql/plugin-explorer/dist/style.css" />
-  </head>
+    #graphiql {
+      height: 100vh;
+    }
 
-  <body>
-    <div id="graphiql">Loading...</div>
+    input {
+      margin-bottom: 10px;
+    }
+  </style>
 
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/graphiql@4.0.5/graphiql.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@graphiql/plugin-explorer@4.0.4/dist/style.css" />
+</head>
 
-    <script src="https://unpkg.com/graphiql/graphiql.min.js"></script>
-    <script src="https://unpkg.com/@graphiql/plugin-explorer/dist/index.umd.js"></script>
+<body>
+  <div id="graphiql">Loading...</div>
 
-    <script>
-      // Login plugin for GraphiQL
-      function LoginContent() {
-        return React.createElement(
-          'div',
-          {
-            style: {
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-            },
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <script src="https://unpkg.com/graphiql@4.0.5/graphiql.min.js"></script>
+  <script src="https://unpkg.com/@graphiql/plugin-explorer@4.0.4/dist/index.umd.js"></script>
+
+  <script>
+    // Login plugin for GraphiQL
+    function LoginContent() {
+      const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+      function handleSubmit(event) {
+        event.preventDefault();
+
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
+
+        const formData = new FormData(event.target);
+        const username = formData.get('username');
+        const password = formData.get('password');
+
+        fetch('/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          React.createElement('h1', null, 'Login'),
+          body: JSON.stringify({
+            query: `query Login {
+  authToken(password: "${password}", username: "${username}") {
+    ... on AuthToken {
+      __typename
+      token
+    }
+  }
+}`,
+          }),
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            const token = res.data.authToken.token;
+            localStorage.setItem('token', token);
+            window.location.reload();
+          })
+          .finally(() => {
+            setIsSubmitting(false);
+          });
+      }
+
+      return React.createElement(
+        'div',
+        {
+          style: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          },
+        },
+        React.createElement('h1', null, 'Login'),
+        React.createElement(
+          'form',
+          {
+            onSubmit: handleSubmit,
+            style: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
+          },
           React.createElement('input', {
             type: 'text',
             id: 'username',
+            name: 'username',
             placeholder: 'Username',
+            autoFocus: true,
           }),
           React.createElement('input', {
             type: 'password',
+            name: 'password',
             id: 'password',
             placeholder: 'Password',
           }),
           React.createElement(
-            'button',
-            {
-              onClick: () => {
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-                fetch('/graphql', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    query: `query Login {
-    authToken(password: "${password}", username: "${username}") {
-        ... on AuthToken {
-            __typename
-            token
-        }
-    }
-}`,
-                  }),
-                })
-                  .then((res) => res.json())
-                  .then((res) => {
-                    const token = res.data.authToken.token;
-                    localStorage.setItem('token', token);
-                    window.location.reload();
-                  });
+            'div',
+            null,
+            React.createElement(
+              'button',
+              {
+                type: 'submit',
+                disabled: isSubmitting,
+                style: {
+                  width: 'auto',
+                  padding: '0.5rem 1rem',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  opacity: isSubmitting ? 0.6 : 1,
+                },
               },
-            },
-            'Login'
+              isSubmitting ? 'Logging in...' : 'Login'
+            )
           )
-        );
-      }
+        )
+      );
+    }
 
-      function LoginImage() {
-        // FeatherIcons login icon
-        return React.createElement(
-          'svg',
-          {
-            width: 24,
-            height: 24,
-            viewBox: '0 0 24 24',
-            fill: 'none',
-            xmlns: 'http://www.w3.org/2000/svg',
-          },
-          React.createElement('path', {
-            d: 'M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4',
-            stroke: 'currentColor',
-            strokeWidth: '2',
-            strokeLinecap: 'round',
-            strokeLinejoin: 'round',
-          }),
-          React.createElement('polyline', {
-            points: '10 17 15 12 10 7',
-            stroke: 'currentColor',
-            strokeWidth: '2',
-            strokeLinecap: 'round',
-            strokeLinejoin: 'round',
-          }),
-          React.createElement('line', {
-            x1: '15',
-            y1: '12',
-            x2: '3',
-            y2: '12',
-            stroke: 'currentColor',
-            strokeWidth: '2',
-            strokeLinecap: 'round',
-            strokeLinejoin: 'round',
-          })
-        );
-      }
-    </script>
+    function LoginImage() {
+      // FeatherIcons login icon
+      return React.createElement(
+        'svg',
+        {
+          width: 24,
+          height: 24,
+          viewBox: '0 0 24 24',
+          fill: 'none',
+          xmlns: 'http://www.w3.org/2000/svg',
+        },
+        React.createElement('path', {
+          d: 'M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4',
+          stroke: 'currentColor',
+          strokeWidth: '2',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        }),
+        React.createElement('polyline', {
+          points: '10 17 15 12 10 7',
+          stroke: 'currentColor',
+          strokeWidth: '2',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        }),
+        React.createElement('line', {
+          x1: '15',
+          y1: '12',
+          x2: '3',
+          y2: '12',
+          stroke: 'currentColor',
+          strokeWidth: '2',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        })
+      );
+    }
+  </script>
 
-    <script>
-      // Always connect to the current app's local graphql endpoint
-      // Pass the token from local storage as the Authorization header if it exists
-      const authHeader = 'Bearer ' + localStorage.getItem('token');
-      var fetcher = GraphiQL.createFetcher({
-        url: '/graphql',
-        headers: { Authorization: authHeader },
-      });
+  <script>
+    // Always connect to the current app's local graphql endpoint
+    // Pass the token from local storage as the Authorization header if it exists
+    const authHeader = 'Bearer ' + localStorage.getItem('token');
+    var fetcher = GraphiQL.createFetcher({
+      url: '/graphql',
+      headers: { Authorization: authHeader },
+    });
 
-      var defaultQuery = `
+    var defaultQuery = `
 query MyQuery {
   me {
     ... on UserAccountNode {
@@ -148,24 +186,25 @@ query MyQuery {
   }
 }
 `;
-      var explorerPlugin = GraphiQLPluginExplorer.explorerPlugin();
-      const loginPlugin = {
-        title: 'Login',
-        icon: LoginImage,
-        content: LoginContent,
-      };
+    var explorerPlugin = GraphiQLPluginExplorer.explorerPlugin();
+    const loginPlugin = {
+      title: 'Login',
+      icon: LoginImage,
+      content: LoginContent,
+    };
 
-      function GraphiQLWithPlugins() {
-        return React.createElement(GraphiQL, {
-          fetcher: fetcher,
-          defaultEditorToolsVisibility: true,
-          plugins: [explorerPlugin, loginPlugin],
-          defaultQuery: defaultQuery,
-        });
-      }
+    function GraphiQLWithPlugins() {
+      return React.createElement(GraphiQL, {
+        fetcher: fetcher,
+        defaultEditorToolsVisibility: true,
+        plugins: [explorerPlugin, loginPlugin],
+        defaultQuery: defaultQuery,
+      });
+    }
 
-      const root = ReactDOM.createRoot(document.getElementById('graphiql'));
-      root.render(React.createElement(GraphiQLWithPlugins));
-    </script>
-  </body>
+    const root = ReactDOM.createRoot(document.getElementById('graphiql'));
+    root.render(React.createElement(GraphiQLWithPlugins));
+  </script>
+</body>
+
 </html>

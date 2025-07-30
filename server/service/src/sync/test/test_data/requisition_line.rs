@@ -91,7 +91,7 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
             approved_quantity: 0.0,
             approval_comment: None,
             item_name: "Ibuprofen 200mg tablets".to_string(),
-            initial_stock_on_hand_units: 0.0,
+            initial_stock_on_hand_units: 10.0,
             incoming_units: 0.0,
             outgoing_units: 0.0,
             loss_in_units: 0.0,
@@ -197,7 +197,7 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
                     .and_hms_opt(14, 48, 11)
                     .unwrap()
             ),
-            initial_stock_on_hand_units: 0.0,
+            initial_stock_on_hand_units: 10.0,
             incoming_units: 0.0,
             outgoing_units: 0.0,
             loss_in_units: 0.0,

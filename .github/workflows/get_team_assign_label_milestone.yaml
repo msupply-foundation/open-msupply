@@ -1,0 +1,32 @@
+name: "Team Label Assignment"
+
+on:
+  issues:
+    types: [assigned, unassigned]
+
+jobs:
+  assign-team-labels:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install PyGithub requests
+
+      - name: Run team label assignment script
+        run: python .github/scripts/get_team_assign_label_milestone.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.ASSIGN_TEAM_LABEL_AND_MILESTONE }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}

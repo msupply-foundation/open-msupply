@@ -20,6 +20,7 @@ pub struct ReasonOptionConnector {
 pub enum ReasonOptionNodeType {
     PositiveInventoryAdjustment,
     NegativeInventoryAdjustment,
+    OpenVialWastage,
     ReturnReason,
     RequisitionLineVariance,
 }
@@ -61,6 +62,7 @@ impl ReasonOptionNodeType {
         match from {
             from::PositiveInventoryAdjustment => to::PositiveInventoryAdjustment,
             from::NegativeInventoryAdjustment => to::NegativeInventoryAdjustment,
+            from::OpenVialWastage => to::OpenVialWastage,
             from::ReturnReason => to::ReturnReason,
             from::RequisitionLineVariance => to::RequisitionLineVariance,
         }
@@ -73,6 +75,7 @@ impl ReasonOptionNodeType {
         match self {
             from::PositiveInventoryAdjustment => to::PositiveInventoryAdjustment,
             from::NegativeInventoryAdjustment => to::NegativeInventoryAdjustment,
+            from::OpenVialWastage => to::OpenVialWastage,
             from::ReturnReason => to::ReturnReason,
             from::RequisitionLineVariance => to::RequisitionLineVariance,
         }

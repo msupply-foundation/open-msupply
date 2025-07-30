@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TextWithLabelRow,
   useTranslation,
@@ -8,10 +8,12 @@ import {
   useNotification,
   AdjustmentTypeInput,
   useDialog,
-  useFormatNumber,
+  getReasonOptionType,
+  Checkbox,
+  NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
-import { InventoryAdjustmentReasonSearchInput } from '../../..';
+import { ReasonOptionsSearchInput, useReasonOptions } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
 import { INPUT_WIDTH, StyledInputRow } from '../StyledInputRow';
 
@@ -20,20 +22,22 @@ interface InventoryAdjustmentModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
+export const InventoryAdjustmentModal = ({
   stockLine,
   isOpen,
   onClose,
-}) => {
+}: InventoryAdjustmentModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
-  const { round } = useFormatNumber();
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
+  const { data, isLoading } = useReasonOptions();
 
   const packUnit = String(stockLine.packSize);
-  const saveDisabled = draft.adjustment === 0;
+  const saveDisabled = draft.adjustment === 0 || stockLine.onHold;
+  const isInventoryReduction =
+    draft.adjustmentType === AdjustmentTypeInput.Reduction;
 
   const save = async () => {
     try {
@@ -88,14 +92,24 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
             label={t('label.reason')}
             Input={
               <Box display="flex" width={INPUT_WIDTH}>
-                <InventoryAdjustmentReasonSearchInput
+                <ReasonOptionsSearchInput
+                  disabled={draft.adjustment === 0}
                   onChange={reason => setDraft(state => ({ ...state, reason }))}
                   value={draft.reason}
-                  adjustmentType={draft.adjustmentType}
+                  type={getReasonOptionType(
+                    isInventoryReduction,
+                    stockLine.item.isVaccine
+                  )}
                   width={INPUT_WIDTH}
+                  reasonOptions={data?.nodes ?? []}
+                  loading={isLoading}
                 />
               </Box>
             }
+          />
+          <StyledInputRow
+            label={t('label.on-hold')}
+            Input={<Checkbox checked={stockLine.onHold} disabled />}
           />
         </Box>
         <Box
@@ -105,17 +119,15 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
           paddingTop={2}
           flex={1}
         >
-          <TextWithLabelRow
+          <StyledInputRow
             label={t('label.pack-quantity')}
-            text={round(stockLine.totalNumberOfPacks, 2)}
-            textProps={{ textAlign: 'end' }}
-            labelProps={{ sx: { textWrap: 'wrap' } }}
+            Input={<NumericTextDisplay value={stockLine.totalNumberOfPacks} />}
           />
-          <TextWithLabelRow
+          <StyledInputRow
             label={t('label.available-packs')}
-            text={round(stockLine.availableNumberOfPacks, 2)}
-            textProps={{ textAlign: 'end' }}
-            labelProps={{ sx: { textWrap: 'wrap' } }}
+            Input={
+              <NumericTextDisplay value={stockLine.availableNumberOfPacks} />
+            }
           />
           <StyledInputRow
             label={t('label.adjust-by')}
@@ -144,14 +156,12 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
               <NumericTextInput
                 width={INPUT_WIDTH}
                 disabled={true}
-                value={parseFloat(
-                  (
-                    stockLine.totalNumberOfPacks +
-                    (draft.adjustmentType === AdjustmentTypeInput.Addition
-                      ? draft.adjustment
-                      : -draft.adjustment)
-                  ).toFixed(2)
-                )}
+                value={
+                  stockLine.totalNumberOfPacks +
+                  (draft.adjustmentType === AdjustmentTypeInput.Addition
+                    ? draft.adjustment
+                    : -draft.adjustment)
+                }
               />
             }
           />

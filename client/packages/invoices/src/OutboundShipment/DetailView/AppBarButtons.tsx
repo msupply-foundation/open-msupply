@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -10,44 +10,23 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  usePrintReport,
-} from '@openmsupply-client/system';
+import { ReportSelector } from '@openmsupply-client/system';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
-import { JsonData } from '@openmsupply-client/programs';
 import { AddFromScannerButton } from './AddFromScannerButton';
-import { Draft } from '../..';
+import { ScannedBarcode } from '../../types';
 
 interface AppBarButtonProps {
-  onAddItem: (draft?: Draft) => void;
+  onAddItem: (scanned?: ScannedBarcode) => void;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
-  onAddItem,
-}) => {
+export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
   const isDisabled = useOutbound.utils.isDisabled();
   const { data } = useOutbound.document.get();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation();
-  const { print, isPrinting } = usePrintReport();
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
-
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    if (!data) return;
-    print({
-      reportId: report.id,
-      dataId: data?.id,
-      args,
-      sort: { key: sortBy.key, desc: sortBy.isDesc },
-    });
-  };
 
   return (
     <AppBarButtonsPortal>
@@ -62,9 +41,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <AddFromScannerButton onAddItem={onAddItem} />
         <ReportSelector
           context={ReportContext.OutboundShipment}
-          onPrint={printReport}
-          isPrinting={isPrinting}
-          buttonLabel={t('button.print')}
+          dataId={data?.id ?? ''}
+          sort={{ key: sortBy.key, desc: sortBy.isDesc }}
         />
         {OpenButton}
       </Grid>
