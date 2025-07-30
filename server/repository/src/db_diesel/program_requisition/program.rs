@@ -135,6 +135,9 @@ impl<'a> ProgramRepository<'a> {
                 query = query.filter(program::id.eq_any(master_list_name_join_query));
             }
 
+            // Note, this gets all programs/master lists including the item - not checking
+            // whether the master list is visible in the store
+            // Should use "exists_for_store_id" filter as well if needing this
             if item_id.is_some() {
                 let mut master_list_item_query = program::table
                     .select(program::id)
