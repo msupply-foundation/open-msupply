@@ -54,6 +54,7 @@ pub(crate) fn generate_inbound_lines(
                     donor_link_id,
                     vvm_status_id,
                     campaign_id,
+                    program_id,
                     shipped_number_of_packs,
                 },
                 ItemRow {
@@ -104,6 +105,7 @@ pub(crate) fn generate_inbound_lines(
                     vvm_status_id,
                     donor_link_id,
                     campaign_id,
+                    program_id,
                     shipped_number_of_packs,
                     sell_price_per_pack: default_sell_price_per_pack,
                     // Default

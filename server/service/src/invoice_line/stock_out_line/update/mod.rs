@@ -28,6 +28,7 @@ pub struct UpdateStockOutLine {
     pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
     pub vvm_status_id: Option<String>,
 }
 

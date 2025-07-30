@@ -161,6 +161,7 @@ fn generate_stock_in_out_or_update(
             donor_id: stock_line_row.donor_link_id,
             vvm_status_id: stock_line_row.vvm_status_id,
             campaign_id: stock_line_row.campaign_id,
+            program_id: stock_line_row.program_id,
             // Default
             total_before_tax: None,
             tax_percentage: None,
@@ -181,6 +182,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack: Some(cost_price_per_pack),
             sell_price_per_pack: Some(sell_price_per_pack),
             campaign_id: stock_line_row.campaign_id,
+            program_id: stock_line_row.program_id,
             vvm_status_id: stock_line_row.vvm_status_id, // TODO: #8365
             total_before_tax: None,
             tax_percentage: None,
@@ -340,6 +342,7 @@ fn generate_new_stock_line(
         tax_percentage: None,
         vvm_status_id: None,
         campaign_id: None,
+        program_id: None,
         shipped_number_of_packs: None,
     });
 

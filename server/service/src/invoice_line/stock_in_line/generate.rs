@@ -43,6 +43,7 @@ pub fn generate_batch(
         donor_link_id,
         vvm_status_id,
         campaign_id,
+        program_id,
         // Ignore other fields, this might be a problem when new fields are added
         ..
     }: InvoiceLineRow,
@@ -104,6 +105,7 @@ pub fn generate_batch(
         donor_link_id,
         vvm_status_id,
         campaign_id,
+        program_id,
     };
 
     Ok(stock_line_row)
