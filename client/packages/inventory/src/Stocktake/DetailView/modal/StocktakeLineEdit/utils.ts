@@ -43,6 +43,7 @@ export const DraftLine = {
         isVaccine: item.isVaccine,
         doses: item.doses,
         defaultPackSize: item.defaultPackSize,
+        restrictedLocationTypeId: item.restrictedLocationTypeId,
         itemStoreProperties: {
           __typename: 'ItemStorePropertiesNode',
           defaultSellPricePerPack:
@@ -78,6 +79,7 @@ export const DraftLine = {
         isVaccine: stockLine.item.isVaccine,
         doses: stockLine.item.doses,
         defaultPackSize: stockLine.item.defaultPackSize,
+        restrictedLocationTypeId: stockLine.item.restrictedLocationTypeId,
       },
     };
   },

@@ -34,6 +34,7 @@ export type StockLineFragment = {
     defaultPackSize: number;
     doses: number;
     isVaccine: boolean;
+    restrictedLocationTypeId?: string | null;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -68,6 +69,7 @@ export type ItemRowFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
 };
 
 export type ItemDirectionFragment = {
@@ -86,6 +88,7 @@ export type ItemRowWithWarningsFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
   warnings: Array<{
     __typename: 'WarningNode';
     warningText: string;
@@ -114,6 +117,7 @@ export type ItemWithPackSizeFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
 };
 
 export type ItemStockOnHandFragment = {
@@ -126,6 +130,7 @@ export type ItemStockOnHandFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
   itemStoreProperties?: {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
@@ -142,6 +147,7 @@ export type ItemRowWithStatsFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -215,6 +221,7 @@ export type ItemVariantFragment = {
     id: string;
     name: string;
     isVaccine: boolean;
+    restrictedLocationTypeId?: string | null;
   } | null;
   manufacturer?: {
     __typename: 'NameNode';
@@ -301,7 +308,15 @@ export type ItemFragment = {
   volumePerOuterPack: number;
   volumePerPack: number;
   weight: number;
+  restrictedLocationTypeId?: string | null;
   availableStockOnHand: number;
+  restrictedLocationType?: {
+    __typename: 'LocationTypeNode';
+    id: string;
+    name: string;
+    minTemperature: number;
+    maxTemperature: number;
+  } | null;
   availableBatches: {
     __typename: 'StockLineConnector';
     totalCount: number;
@@ -335,6 +350,7 @@ export type ItemFragment = {
         defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -383,6 +399,7 @@ export type ItemFragment = {
       id: string;
       name: string;
       isVaccine: boolean;
+      restrictedLocationTypeId?: string | null;
     } | null;
     manufacturer?: {
       __typename: 'NameNode';
@@ -495,7 +512,15 @@ export type ItemsWithStockLinesQuery = {
       volumePerOuterPack: number;
       volumePerPack: number;
       weight: number;
+      restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
+      restrictedLocationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        minTemperature: number;
+        maxTemperature: number;
+      } | null;
       availableBatches: {
         __typename: 'StockLineConnector';
         totalCount: number;
@@ -529,6 +554,7 @@ export type ItemsWithStockLinesQuery = {
             defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
+            restrictedLocationTypeId?: string | null;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -577,6 +603,7 @@ export type ItemsWithStockLinesQuery = {
           id: string;
           name: string;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
@@ -679,6 +706,7 @@ export type ItemsQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
+      restrictedLocationTypeId?: string | null;
     }>;
   };
 };
@@ -707,6 +735,7 @@ export type ItemStockOnHandQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
+      restrictedLocationTypeId?: string | null;
       itemStoreProperties?: {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
@@ -803,6 +832,7 @@ export type ItemByIdQuery = {
       volumePerOuterPack: number;
       volumePerPack: number;
       weight: number;
+      restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
       stats: {
         __typename: 'ItemStatsNode';
@@ -846,6 +876,7 @@ export type ItemByIdQuery = {
             defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
+            restrictedLocationTypeId?: string | null;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -872,6 +903,13 @@ export type ItemByIdQuery = {
           } | null;
         }>;
       };
+      restrictedLocationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        minTemperature: number;
+        maxTemperature: number;
+      } | null;
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
@@ -885,6 +923,7 @@ export type ItemByIdQuery = {
           id: string;
           name: string;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
@@ -986,6 +1025,7 @@ export type ItemVariantsQuery = {
     nodes: Array<{
       __typename: 'ItemNode';
       isVaccine: boolean;
+      restrictedLocationTypeId?: string | null;
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
@@ -999,6 +1039,7 @@ export type ItemVariantsQuery = {
           id: string;
           name: string;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
@@ -1108,6 +1149,7 @@ export type GetHistoricalStockLinesQuery = {
         defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -1161,6 +1203,7 @@ export type UpsertItemVariantMutation = {
               id: string;
               name: string;
               isVaccine: boolean;
+              restrictedLocationTypeId?: string | null;
             } | null;
             manufacturer?: {
               __typename: 'NameNode';
@@ -1396,6 +1439,7 @@ export const ItemRowFragmentDoc = gql`
     unitName
     isVaccine
     doses
+    restrictedLocationTypeId
   }
 `;
 export const WarningFragmentDoc = gql`
@@ -1450,6 +1494,15 @@ export const ItemRowWithStatsFragmentDoc = gql`
   }
   ${ItemStockOnHandFragmentDoc}
 `;
+export const LocationTypeFragmentDoc = gql`
+  fragment LocationType on LocationTypeNode {
+    __typename
+    id
+    name
+    minTemperature
+    maxTemperature
+  }
+`;
 export const ItemDirectionFragmentDoc = gql`
   fragment ItemDirection on ItemDirectionNode {
     __typename
@@ -1479,6 +1532,7 @@ export const StockLineFragmentDoc = gql`
       defaultPackSize
       doses
       isVaccine
+      restrictedLocationTypeId
       itemDirections {
         ...ItemDirection
       }
@@ -1507,15 +1561,6 @@ export const StockLineFragmentDoc = gql`
   }
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
-`;
-export const LocationTypeFragmentDoc = gql`
-  fragment LocationType on LocationTypeNode {
-    __typename
-    id
-    name
-    minTemperature
-    maxTemperature
-  }
 `;
 export const PackagingVariantFragmentDoc = gql`
   fragment PackagingVariant on PackagingVariantNode {
@@ -1559,6 +1604,7 @@ export const ItemVariantFragmentDoc = gql`
       id
       name
       isVaccine
+      restrictedLocationTypeId
     }
     manufacturerId
     manufacturer(storeId: $storeId) {
@@ -1605,6 +1651,10 @@ export const ItemFragmentDoc = gql`
     volumePerOuterPack
     volumePerPack
     weight
+    restrictedLocationTypeId
+    restrictedLocationType {
+      ...LocationType
+    }
     availableStockOnHand(storeId: $storeId)
     availableBatches(storeId: $storeId) {
       __typename
@@ -1633,6 +1683,7 @@ export const ItemFragmentDoc = gql`
       defaultSellPricePerPack
     }
   }
+  ${LocationTypeFragmentDoc}
   ${StockLineFragmentDoc}
   ${ItemVariantFragmentDoc}
   ${ItemDirectionFragmentDoc}
@@ -1831,6 +1882,7 @@ export const ItemVariantsDocument = gql`
         nodes {
           __typename
           isVaccine
+          restrictedLocationTypeId
           variants {
             ...ItemVariant
           }
