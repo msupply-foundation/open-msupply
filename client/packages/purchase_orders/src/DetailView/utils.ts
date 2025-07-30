@@ -14,6 +14,7 @@ function baseAssetFields(t: TypedTFunction<LocaleKey>) {
   return [
     t('label.id'),
     t('label.purchase-order-id'),
+    t('label.item-id'),
   ];
 }
 
@@ -38,6 +39,7 @@ export const purchaseOrderLinesToCsv = (
     return [
       node.id,
       node.purchaseOrderId,
+      node.item.id,
     ];
   });
 
@@ -65,6 +67,7 @@ export const importEquipmentToCsvWithErrors = (
     const mapped: (string | number | null | undefined)[] = [
       node.id,
       node.purchaseOrderId,
+      node.itemId,
     ];
 
     return mapped;
@@ -72,12 +75,12 @@ export const importEquipmentToCsvWithErrors = (
   return Formatter.csv({ fields, data });
 };
 
-export const importEquipmentToCsv = (
+export const importPurchaseOrderLinesToCsv = (
   purchaseOrderLines: Partial<ImportRow>[],
   t: TypedTFunction<LocaleKey>,
 ) => {
 
-  const fields: string[] = [t('label.id'), t('label.purchase-order-id')];
+  const fields: string[] = [t('label.id'), t('label.purchase-order-id'), t('label.item-id')];
 
 
   const data = purchaseOrderLines.map(node => {
@@ -85,6 +88,7 @@ export const importEquipmentToCsv = (
     const row = [
       node.id,
       node.purchaseOrderId,
+      node.itemId,
     ];
 
     return row;

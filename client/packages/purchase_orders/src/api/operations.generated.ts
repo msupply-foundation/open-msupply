@@ -271,7 +271,39 @@ export type InsertPurchaseOrderLineMutationVariables = Types.Exact<{
 
 export type InsertPurchaseOrderLineMutation = {
   __typename: 'Mutations';
-  insertPurchaseOrderLine: { __typename: 'IdResponse'; id: string };
+  insertPurchaseOrderLine:
+    | { __typename: 'IdResponse'; id: string }
+    | { __typename: 'InsertPurchaseOrderLineError' };
+};
+
+export type SaveBatchMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  insertPurchaseOrderLines?: Types.InputMaybe<
+    | Array<Types.InsertPurchaseOrderLineInput>
+    | Types.InsertPurchaseOrderLineInput
+  >;
+}>;
+
+export type SaveBatchMutation = {
+  __typename: 'Mutations';
+  batchPurchaseOrder: {
+    __typename: 'BatchPurchaseOrderResponse';
+    insertPurchaseOrderLines?: Array<{
+      __typename: 'InsertPurchaseOrderLineResponseWithId';
+      response:
+        | { __typename: 'IdResponse'; id: string }
+        | {
+            __typename: 'InsertPurchaseOrderLineError';
+            error:
+              | { __typename: 'CannotEditPurchaseOrder'; description: string }
+              | { __typename: 'ForeignKeyError'; description: string }
+              | {
+                  __typename: 'PurchaseOrderLineWithItemIdExists';
+                  description: string;
+                };
+          };
+    }> | null;
+  };
 };
 
 export const PurchaseOrderRowFragmentDoc = gql`
@@ -481,6 +513,31 @@ export const InsertPurchaseOrderLineDocument = gql`
     }
   }
 `;
+export const SaveBatchDocument = gql`
+  mutation saveBatch(
+    $storeId: String!
+    $insertPurchaseOrderLines: [InsertPurchaseOrderLineInput!]
+  ) {
+    batchPurchaseOrder(
+      input: { insertPurchaseOrderLines: $insertPurchaseOrderLines }
+      storeId: $storeId
+    ) {
+      insertPurchaseOrderLines {
+        response {
+          ... on IdResponse {
+            id
+          }
+          ... on InsertPurchaseOrderLineError {
+            __typename
+            error {
+              description
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -609,6 +666,21 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertPurchaseOrderLine',
+        'mutation',
+        variables
+      );
+    },
+    saveBatch(
+      variables: SaveBatchMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<SaveBatchMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SaveBatchMutation>(SaveBatchDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'saveBatch',
         'mutation',
         variables
       );

@@ -30,6 +30,7 @@ pub fn insert_purchase_order_line(
     ctx: &ServiceContext,
     input: InsertPurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, InsertPurchaseOrderLineError> {
+    println!("Inserting purchase order line: {:?}", input);
     let purchase_order_line = ctx
         .connection
         .transaction_sync(|connection| {

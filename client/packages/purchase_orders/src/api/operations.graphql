@@ -194,3 +194,27 @@ mutation insertPurchaseOrderLine(
     }
   }
 }
+
+mutation saveBatch(
+  $storeId: String!
+  $insertPurchaseOrderLines: [InsertPurchaseOrderLineInput!]
+) {
+  batchPurchaseOrder(
+    input: { insertPurchaseOrderLines: $insertPurchaseOrderLines }
+    storeId: $storeId
+  ) {
+    insertPurchaseOrderLines {
+      response {
+        ... on IdResponse {
+          id
+        }
+        ... on InsertPurchaseOrderLineError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}

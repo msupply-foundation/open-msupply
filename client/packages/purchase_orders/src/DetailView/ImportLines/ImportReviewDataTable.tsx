@@ -41,6 +41,12 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       key: 'purchaseOrderId',
       sortable: false,
       label: 'label.purchase-order-id',
+    },
+    // item id
+    {
+      key: 'itemId',
+      sortable: false,
+      label: 'label.item-id',
     }
     // TODO add more input / show fields
   );

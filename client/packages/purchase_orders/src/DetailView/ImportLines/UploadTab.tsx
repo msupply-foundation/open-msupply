@@ -18,7 +18,7 @@ import {} from '@openmsupply-client/system';
 import { ImportRow } from './PurchaseOrderLineImportModal';
 import { ImportPanel } from './ImportPanel';
 import * as PurchaseOrderLineImportModal from './PurchaseOrderLineImportModal';
-import { importEquipmentToCsv } from '../utils';
+import { importPurchaseOrderLinesToCsv } from '../utils';
 
 interface UploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -191,9 +191,10 @@ export const UploadTab = ({
       {
         id: t('label.id'),
         purchaseOrderId: t('label.purchaseOrderId'),
+        itemId: t('label.itemId'),
       },
     ];
-    const csv = importEquipmentToCsv(exampleRows, t);
+    const csv = importPurchaseOrderLinesToCsv(exampleRows, t);
     exportCSV(csv, t('filename.cce'));
   };
 
@@ -240,9 +241,11 @@ export const UploadTab = ({
         index,
         t
       );
+      console.log('Processing row:', row, index);
 
       addUnique('id', 'label.id');
       addUnique('purchaseOrderId', 'label.purchase-order-id');
+      addUnique('itemId', 'label.item-id');
 
       importRow.errorMessage = rowErrors.join(',');
       importRow.warningMessage = rowWarnings.join(',');
@@ -256,6 +259,7 @@ export const UploadTab = ({
         setWarningMessage(t('messages.import-warning-on-upload'));
       }
     });
+    console.log('Processed rows:', rows);
     LineBuffer.push(...rows);
   };
 

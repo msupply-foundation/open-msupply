@@ -12,12 +12,16 @@ import {
   createQueryParamsStore,
 } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { Grid, PurchaseOrderLineNode } from '@openmsupply-client/common/src';
-import { useAssetList, StoreRowFragment } from '@openmsupply-client/system/src';
+import { Grid } from '@openmsupply-client/common/src';
+import { StoreRowFragment } from '@openmsupply-client/system/src';
 import React, { useState } from 'react';
 import { UploadTab } from './UploadTab';
 import { ReviewTab } from './ReviewTab';
 import { ImportTab } from './ImportTab';
+import {
+  PurchaseOrderBatchLineInput,
+  usePurchaseOrder,
+} from '../../api/hooks/usePurchaseOrder';
 
 interface PurchaseOrderLineImportModalProps {
   isOpen: boolean;
@@ -33,6 +37,7 @@ enum Tabs {
 export type ImportRow = {
   id: string;
   purchaseOrderId: string;
+  itemId: string;
   errorMessage: string;
   warningMessage: string;
   // TODO add remaining fields as needed
@@ -44,11 +49,12 @@ export type LineNumber = {
 
 export const toInsertPurchaseOrderLine = (
   row: ImportRow
-): Partial<PurchaseOrderLineNode> => {
-  const { ...rest } = row;
-  // TODO convert row to inputs (ie item to itemId, etc.)
+): PurchaseOrderBatchLineInput => {
   return {
-    ...rest,
+    id: row.id,
+    purchaseOrderId: row.purchaseOrderId,
+    itemId: row.itemId,
+    // TODO map remaining fields as needed
   };
 };
 
@@ -61,6 +67,9 @@ export const PurchaseOrderLineImportModal = ({
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const [activeStep, setActiveStep] = useState(0);
   const { Modal } = useDialog({ isOpen, onClose });
+  const {
+    batch: { saveBatch },
+  } = usePurchaseOrder();
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
   const [warningMessage, setWarningMessage] = useState<string>(() => '');
@@ -86,20 +95,6 @@ export const PurchaseOrderLineImportModal = ({
   };
 
   const importErrorRows: ImportRow[] = [];
-  const insertAsset = async (row: ImportRow) => {
-    try {
-      // TODO add insert (api coming in later PR)
-      // await insertAssets(toInsertPurchaseOrderLine(row));
-      // TODO add logs?
-      console.log('insert purchase order line', row);
-    } catch (e) {
-      const errorMessage = (e as Error).message ?? t('messages.unknown-error');
-      importErrorRows.push({
-        ...row,
-        errorMessage,
-      });
-    }
-  };
 
   const importAction = async () => {
     onChangeTab(Tabs.Import);
@@ -109,9 +104,9 @@ export const PurchaseOrderLineImportModal = ({
       // Import count can be quite large, we break this into blocks of 100 to avoid too much concurrency
       const remainingRecords = bufferedLines;
       while (remainingRecords.length) {
-        await Promise.all(
-          remainingRecords.splice(0, 100).map(insertAsset)
-        ).then(() => {
+        // TODO do these need to be in 100 line chunks?
+        const linesChunk = remainingRecords.splice(0, 100);
+        await saveBatch(linesChunk.map(toInsertPurchaseOrderLine)).then(() => {
           // TODO invalidateQueries();
           // invalidateQueries();
           // Update Progress Bar

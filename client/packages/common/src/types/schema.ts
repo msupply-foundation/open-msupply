@@ -876,6 +876,18 @@ export type BatchPrescriptionResponse = {
   updatePrescriptions?: Maybe<Array<UpdatePrescriptionResponseWithId>>;
 };
 
+export type BatchPurchaseOrderInput = {
+  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
+  insertPurchaseOrderLines?: InputMaybe<Array<InsertPurchaseOrderLineInput>>;
+};
+
+export type BatchPurchaseOrderResponse = {
+  __typename: 'BatchPurchaseOrderResponse';
+  insertPurchaseOrderLines?: Maybe<
+    Array<InsertPurchaseOrderLineResponseWithId>
+  >;
+};
+
 export type BatchRequestRequisitionInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
   deleteRequestRequisitionLines?: InputMaybe<
@@ -1100,6 +1112,11 @@ export type CannotEditInvoice =
       __typename: 'CannotEditInvoice';
       description: Scalars['String']['output'];
     };
+
+export type CannotEditPurchaseOrder = InsertPurchaseOrderLineErrorInterface & {
+  __typename: 'CannotEditPurchaseOrder';
+  description: Scalars['String']['output'];
+};
 
 export type CannotEditRequisition = AddFromMasterListErrorInterface &
   CreateRequisitionShipmentErrorInterface &
@@ -2713,6 +2730,7 @@ export enum ForeignKey {
   ItemId = 'itemId',
   LocationId = 'locationId',
   OtherPartyId = 'otherPartyId',
+  PurchaseOrderId = 'purchaseOrderId',
   RequisitionId = 'requisitionId',
   StockLineId = 'stockLineId',
 }
@@ -2730,6 +2748,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
   InsertOutboundShipmentServiceLineErrorInterface &
   InsertOutboundShipmentUnallocatedLineErrorInterface &
   InsertPrescriptionLineErrorInterface &
+  InsertPurchaseOrderLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
   SetPrescribedQuantityErrorInterface &
@@ -3572,13 +3591,30 @@ export type InsertPurchaseOrderInput = {
   supplierId: Scalars['String']['input'];
 };
 
+export type InsertPurchaseOrderLineError = {
+  __typename: 'InsertPurchaseOrderLineError';
+  error: InsertPurchaseOrderLineErrorInterface;
+};
+
+export type InsertPurchaseOrderLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type InsertPurchaseOrderLineInput = {
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   purchaseOrderId: Scalars['String']['input'];
 };
 
-export type InsertPurchaseOrderLineResponse = IdResponse;
+export type InsertPurchaseOrderLineResponse =
+  | IdResponse
+  | InsertPurchaseOrderLineError;
+
+export type InsertPurchaseOrderLineResponseWithId = {
+  __typename: 'InsertPurchaseOrderLineResponseWithId';
+  id: Scalars['String']['output'];
+  response: InsertPurchaseOrderLineResponse;
+};
 
 export type InsertPurchaseOrderResponse = IdResponse;
 
@@ -4954,6 +4990,7 @@ export type Mutations = {
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
   batchPrescription: BatchPrescriptionResponse;
+  batchPurchaseOrder: BatchPurchaseOrderResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
   batchResponseRequisition: BatchResponseRequisitionResponse;
   batchStocktake: BatchStocktakeResponse;
@@ -5139,6 +5176,11 @@ export type MutationsBatchOutboundShipmentArgs = {
 
 export type MutationsBatchPrescriptionArgs = {
   input: BatchPrescriptionInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsBatchPurchaseOrderArgs = {
+  input: BatchPurchaseOrderInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6708,6 +6750,12 @@ export type PurchaseOrderLineSortInput = {
   /** Sort query result by `key` */
   key: PurchaseOrderLineSortFieldInput;
 };
+
+export type PurchaseOrderLineWithItemIdExists =
+  InsertPurchaseOrderLineErrorInterface & {
+    __typename: 'PurchaseOrderLineWithItemIdExists';
+    description: Scalars['String']['output'];
+  };
 
 export type PurchaseOrderLinesResponse = PurchaseOrderLineConnector;
 
