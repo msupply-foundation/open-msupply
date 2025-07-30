@@ -5,29 +5,43 @@ import {
   ConfirmationModalLayout,
   Grid,
   DialogButton,
+  Alert,
 } from '@openmsupply-client/common';
 import {
   LocationRowFragment,
   LocationSearchInput,
 } from '@openmsupply-client/system';
-import { useStocktakeOld } from '../api';
+import { StocktakeLineFragment, useStocktakeOld } from '../api';
 
 interface ChangeLocationConfirmationModalProps {
   isOpen: boolean;
   onCancel: () => void;
   clearSelected: () => void;
+  rows: StocktakeLineFragment[];
 }
 
 export const ChangeLocationConfirmationModal = ({
   isOpen,
   onCancel,
   clearSelected,
+  rows,
 }: ChangeLocationConfirmationModalProps) => {
   const t = useTranslation();
 
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
 
   const onChangeLocation = useStocktakeOld.line.changeLocation();
+
+  // Get all unique, non-empty restricted location type IDs from the selected rows
+  const uniqueLocationTypeIds = Array.from(
+    new Set(rows.map(row => row.item.restrictedLocationTypeId).filter(Boolean))
+  );
+
+  const restrictedToLocationTypeId =
+    // Location filter will return none if multiple location type ids present
+    uniqueLocationTypeIds.length > 1
+      ? 'multiple location type ids'
+      : uniqueLocationTypeIds[0];
 
   return (
     <ConfirmationModalLayout
@@ -52,6 +66,9 @@ export const ChangeLocationConfirmationModal = ({
         </>
       }
     >
+      {uniqueLocationTypeIds.length > 0 && (
+        <Alert severity="warning">{t('messages.locations-restricted')}</Alert>
+      )}
       <InputWithLabelRow
         label={t('label.location')}
         labelWidth="100px"
@@ -61,6 +78,7 @@ export const ChangeLocationConfirmationModal = ({
             selectedLocation={location}
             onChange={setLocation}
             width={200}
+            restrictedToLocationTypeId={restrictedToLocationTypeId}
           />
         }
       />
