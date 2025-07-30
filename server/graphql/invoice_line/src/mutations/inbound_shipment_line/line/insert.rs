@@ -33,6 +33,7 @@ pub struct InsertInput {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
     pub note: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
 }
@@ -96,6 +97,7 @@ impl InsertInput {
             donor_id,
             vvm_status_id,
             campaign_id,
+            program_id,
             note,
             shipped_number_of_packs,
         } = self;
@@ -120,12 +122,13 @@ impl InsertInput {
             vvm_status_id,
             donor_id,
             shipped_number_of_packs,
+            campaign_id,
+            program_id,
             // Default
             note,
             stock_line_id: None,
             barcode: None,
             stock_on_hold: false,
-            campaign_id,
         }
     }
 }
