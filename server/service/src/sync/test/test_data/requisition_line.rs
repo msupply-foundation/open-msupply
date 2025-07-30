@@ -1,4 +1,6 @@
-use crate::sync::translations::requisition_line::LegacyRequisitionLineRow;
+use crate::sync::translations::requisition_line::{
+    LegacyRequisitionLineRow, RequisitionLineOmsFields,
+};
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 use chrono::NaiveDate;
@@ -41,7 +43,11 @@ const REQUISITION_LINE_1: (&str, &str) = (
         "requestedPackSize": 0,
         "approved_quantity": 0,
         "authoriser_comment": "",
-        "om_snapshot_datetime": ""
+        "om_snapshot_datetime": "",
+        "oms_fields": {
+            "rnr_form_line_id": null,
+            "expiry_date": null
+        }
     }"#,
 );
 fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
@@ -99,7 +105,11 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
             expiring_units: 0.0,
             days_out_of_stock: 0.0,
             option_id: None,
-            stock_adjustment_in_units: 0.0
+            stock_adjustment_in_units: 0.0,
+            oms_fields: Some(RequisitionLineOmsFields {
+                rnr_form_line_id: None,
+                expiry_date: None,
+            }),
         }),
     }
 }
@@ -137,7 +147,11 @@ const REQUISITION_LINE_OM_FIELD: (&str, &str) = (
         "requestedPackSize": 0,
         "approved_quantity": 0,
         "authoriser_comment": "approval comment",
-        "om_snapshot_datetime": "2022-04-04T14:48:11"
+        "om_snapshot_datetime": "2022-04-04T14:48:11",
+        "oms_fields": {
+            "rnr_form_line_id": "rnr_form_line_with_expiry",
+            "expiry_date": "2023-12-31"
+        }
     }"#,
 );
 fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
@@ -205,7 +219,11 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             expiring_units: 0.0,
             days_out_of_stock: 0.0,
             option_id: None,
-            stock_adjustment_in_units: 0.0
+            stock_adjustment_in_units: 0.0,
+            oms_fields: Some(RequisitionLineOmsFields {
+                rnr_form_line_id: Some("rnr_form_line_with_expiry".to_string()),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2023, 12, 31).unwrap()),
+            }),
         }),
     }
 }
