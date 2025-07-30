@@ -1752,7 +1752,7 @@
   "messages.no-available-periods": "No available periods found for schedule",
   "messages.no-batch-selected": "You have not selected a batch for this vaccination. No stock transaction will be created. Are you sure you want to continue?",
   "messages.no-bundled-items": "No bundled items configured",
-  "messages.no-campaigns": "No campaigns available",
+  "messages.no-campaigns-or-programs": "No campaigns or programs available",
   "messages.no-contact-traces": "This patient has no contact traces.",
   "messages.no-data-available": "No data available",
   "messages.no-data-found": "No data found",
