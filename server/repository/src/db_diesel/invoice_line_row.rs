@@ -45,6 +45,7 @@ table! {
         vvm_status_id -> Nullable<Text>,
         reason_option_id -> Nullable<Text>,
         campaign_id -> Nullable<Text>,
+        program_id -> Nullable<Text>,
         shipped_number_of_packs -> Nullable<Double>
     }
 }
@@ -104,6 +105,7 @@ pub struct InvoiceLineRow {
     pub vvm_status_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
 }
 

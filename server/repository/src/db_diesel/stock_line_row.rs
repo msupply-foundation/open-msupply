@@ -34,6 +34,7 @@ table! {
         donor_link_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
         campaign_id -> Nullable<Text>,
+        program_id -> Nullable<Text>,
     }
 }
 
@@ -73,6 +74,7 @@ pub struct StockLineRow {
     pub donor_link_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {
