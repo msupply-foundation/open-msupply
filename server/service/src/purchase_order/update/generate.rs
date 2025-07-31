@@ -19,9 +19,9 @@ pub fn generate(
         shipping_method,
         sent_datetime,
         contract_signed_date,
+        requested_delivery_date,
         advance_paid_date,
         received_at_port_date,
-        requested_delivery_date,
         id: _,
     } = input;
 
@@ -30,13 +30,18 @@ pub fn generate(
 
     let status = status.unwrap_or(purchase_order.status);
 
-    let confirmed_datetime = confirmed_datetime.or(purchase_order.confirmed_datetime);
-    let sent_datetime = sent_datetime.or(purchase_order.sent_datetime);
-    let contract_signed_date = contract_signed_date.or(purchase_order.contract_signed_date);
-    let advance_paid_date = advance_paid_date.or(purchase_order.advance_paid_date);
-    let received_at_port_date = received_at_port_date.or(purchase_order.received_at_port_date);
-    let requested_delivery_date =
-        requested_delivery_date.or(purchase_order.requested_delivery_date);
+    let confirmed_datetime =
+        nullable_update(&confirmed_datetime, purchase_order.confirmed_datetime);
+    let sent_datetime = nullable_update(&sent_datetime, purchase_order.sent_datetime);
+    let contract_signed_date =
+        nullable_update(&contract_signed_date, purchase_order.contract_signed_date);
+    let advance_paid_date = nullable_update(&advance_paid_date, purchase_order.advance_paid_date);
+    let received_at_port_date =
+        nullable_update(&received_at_port_date, purchase_order.received_at_port_date);
+    let requested_delivery_date = nullable_update(
+        &requested_delivery_date,
+        purchase_order.requested_delivery_date,
+    );
 
     let currency_id = currency_id.or(purchase_order.currency_id);
     let foreign_exchange_rate = foreign_exchange_rate.or(purchase_order.foreign_exchange_rate);
@@ -76,4 +81,14 @@ pub fn generate(
         order_total_after_discount,
         ..purchase_order
     })
+}
+
+fn nullable_update<T: Clone>(
+    input: &Option<crate::NullableUpdate<T>>,
+    current: Option<T>,
+) -> Option<T> {
+    match input {
+        Some(crate::NullableUpdate { value }) => value.clone(),
+        None => current,
+    }
 }

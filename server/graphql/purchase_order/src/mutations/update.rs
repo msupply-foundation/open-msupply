@@ -1,6 +1,7 @@
 use async_graphql::*;
 use chrono::{NaiveDate, NaiveDateTime};
 use graphql_core::{
+    generic_inputs::NullableUpdateInput,
     standard_graphql_error::{
         validate_auth,
         StandardGraphqlError::{BadUserInput, InternalError},
@@ -16,6 +17,7 @@ use service::{
     purchase_order::update::{
         UpdatePurchaseOrderError as ServiceError, UpdatePurchaseOrderInput as ServiceInput,
     },
+    NullableUpdate,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -53,7 +55,7 @@ pub struct UpdateInput {
     pub id: String,
     pub supplier_id: Option<String>,
     pub status: Option<PurchaseOrderNodeType>,
-    pub confirmed_datetime: Option<NaiveDateTime>,
+    pub confirmed_datetime: Option<NullableUpdateInput<NaiveDateTime>>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
     pub donor_link_id: Option<String>,
@@ -61,11 +63,11 @@ pub struct UpdateInput {
     pub currency_id: Option<String>,
     pub foreign_exchange_rate: Option<f64>,
     pub shipping_method: Option<String>,
-    pub sent_datetime: Option<NaiveDateTime>,
-    pub contract_signed_date: Option<NaiveDate>,
-    pub advance_paid_date: Option<NaiveDate>,
-    pub received_at_port_date: Option<NaiveDate>,
-    pub requested_delivery_date: Option<NaiveDate>,
+    pub sent_datetime: Option<NullableUpdateInput<NaiveDateTime>>,
+    pub contract_signed_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub advance_paid_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub received_at_port_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub requested_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
 }
 
 impl UpdateInput {
@@ -93,7 +95,7 @@ impl UpdateInput {
             id,
             supplier_id,
             status: status.map(PurchaseOrderNodeType::to_domain),
-            confirmed_datetime,
+            confirmed_datetime: confirmed_datetime.map(|c| NullableUpdate { value: c.value }),
             comment,
             supplier_discount_percentage,
             donor_link_id,
@@ -101,11 +103,12 @@ impl UpdateInput {
             currency_id,
             foreign_exchange_rate,
             shipping_method,
-            sent_datetime,
-            contract_signed_date,
-            advance_paid_date,
-            received_at_port_date,
-            requested_delivery_date,
+            sent_datetime: sent_datetime.map(|s| NullableUpdate { value: s.value }),
+            contract_signed_date: contract_signed_date.map(|c| NullableUpdate { value: c.value }),
+            advance_paid_date: advance_paid_date.map(|a| NullableUpdate { value: a.value }),
+            received_at_port_date: received_at_port_date.map(|r| NullableUpdate { value: r.value }),
+            requested_delivery_date: requested_delivery_date
+                .map(|r| NullableUpdate { value: r.value }),
         }
     }
 }
