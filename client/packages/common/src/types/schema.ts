@@ -5080,6 +5080,7 @@ export type Mutations = {
    * in a document.
    */
   updateProgramPatient: UpdateProgramPatientResponse;
+  updatePurchaseOrder: UpdatePurchaseOrderResponse;
   updatePurchaseOrderLine: UpdatePurchaseOrderLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
@@ -5641,6 +5642,11 @@ export type MutationsUpdateProgramEnrolmentArgs = {
 
 export type MutationsUpdateProgramPatientArgs = {
   input: UpdateProgramPatientInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdatePurchaseOrderArgs = {
+  input: UpdatePurchaseOrderInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6744,11 +6750,19 @@ export type PurchaseOrderNode = {
   supplier?: Maybe<NameNode>;
   supplierAgent?: Maybe<Scalars['String']['output']>;
   supplierDiscountAmount: Scalars['Float']['output'];
+  supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   targetMonths?: Maybe<Scalars['Float']['output']>;
   user?: Maybe<UserNode>;
 };
 
 export enum PurchaseOrderNodeStatus {
+  Authorised = 'AUTHORISED',
+  Confirmed = 'CONFIRMED',
+  Finalised = 'FINALISED',
+  New = 'NEW',
+}
+
+export enum PurchaseOrderNodeType {
   Authorised = 'AUTHORISED',
   Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
@@ -9811,6 +9825,24 @@ export type UpdateProgramPatientInput = {
 
 export type UpdateProgramPatientResponse = PatientNode;
 
+export type UpdatePurchaseOrderInput = {
+  advancePaidDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  confirmedDatetime?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+  contractSignedDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  currencyId?: InputMaybe<Scalars['String']['input']>;
+  donorLinkId?: InputMaybe<Scalars['String']['input']>;
+  foreignExchangeRate?: InputMaybe<Scalars['Float']['input']>;
+  id: Scalars['String']['input'];
+  receivedAtPortDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  reference?: InputMaybe<Scalars['String']['input']>;
+  sentDatetime?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+  shippingMethod?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<PurchaseOrderNodeType>;
+  supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
+  supplierId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdatePurchaseOrderLineInput = {
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
@@ -9821,6 +9853,8 @@ export type UpdatePurchaseOrderLineInput = {
 };
 
 export type UpdatePurchaseOrderLineResponse = IdResponse;
+
+export type UpdatePurchaseOrderResponse = IdResponse;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';
