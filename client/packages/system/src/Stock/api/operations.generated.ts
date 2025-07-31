@@ -77,6 +77,7 @@ export type StockLineRowFragment = {
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
@@ -286,6 +287,7 @@ export type StockLinesQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -381,6 +383,7 @@ export type StockLineQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -513,6 +516,11 @@ export type UpdateStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        program?: {
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
@@ -803,6 +811,11 @@ export type InsertStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        program?: {
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
@@ -929,6 +942,10 @@ export const StockLineRowFragmentDoc = gql`
     }
     donor(storeId: $storeId) {
       id
+    }
+    program {
+      id
+      name
     }
     campaign {
       id

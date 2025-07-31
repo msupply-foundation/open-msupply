@@ -379,6 +379,7 @@ pub fn generate_lines_and_stock_lines(
             note,
             vvm_status_id,
             campaign_id,
+            program_id,
             reason_option_id: _,
             ..
         }: InvoiceLineRow = invoice_line;
@@ -404,6 +405,7 @@ pub fn generate_lines_and_stock_lines(
                 donor_link_id,
                 vvm_status_id,
                 campaign_id,
+                program_id,
             };
             result.push(LineAndStockLine {
                 line,

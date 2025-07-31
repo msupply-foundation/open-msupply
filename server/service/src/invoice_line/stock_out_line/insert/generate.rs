@@ -103,6 +103,7 @@ fn generate_batch_update(
         total_before_tax: _,
         tax_percentage: _,
         campaign_id: _,
+        program_id: _,
     }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
@@ -140,6 +141,7 @@ fn generate_line(
         total_before_tax,
         note,
         campaign_id,
+        program_id,
         tax_percentage: _,
         location_id: _,
         batch: _,
@@ -215,6 +217,7 @@ fn generate_line(
         item_variant_id,
         vvm_status_id: input_vvm_status_id.or(vvm_status_id),
         campaign_id,
+        program_id,
         shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
             .then_some(number_of_packs),
         linked_invoice_id: None,

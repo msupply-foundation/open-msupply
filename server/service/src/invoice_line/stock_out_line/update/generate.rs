@@ -134,6 +134,7 @@ fn generate_line(
         cost_price_per_pack: invoice_line_cost_price_per_pack,
         donor_link_id,
         campaign_id,
+        program_id,
         shipped_number_of_packs,
         ..
     }: InvoiceLineRow,
@@ -185,6 +186,7 @@ fn generate_line(
         vvm_status_id: input.vvm_status_id.or(vvm_status_id),
         donor_link_id,
         campaign_id,
+        program_id,
         shipped_number_of_packs,
         reason_option_id: None,
         linked_invoice_id: None,

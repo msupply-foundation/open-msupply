@@ -38,6 +38,7 @@ const defaultDraftStockLine: DraftStockLine = {
   },
   vvmStatus: null,
   campaign: null,
+  program: null,
 };
 
 export function useStockLine(id?: string) {
@@ -122,6 +123,7 @@ const useCreate = () => {
     itemVariantId,
     donor,
     campaign,
+    program,
     vvmStatus,
   }: DraftStockLine) => {
     return await stockApi.insertStockLine({
@@ -143,6 +145,7 @@ const useCreate = () => {
         vvmStatusId: vvmStatus?.id,
         donorId: donor?.id,
         campaignId: campaign?.id,
+        programId: program?.id,
       },
     });
   };
@@ -170,6 +173,7 @@ const useUpdate = (id: string) => {
     vvmStatusId,
     donor,
     campaign,
+    program,
   }: Partial<DraftStockLine>) => {
     const result = await stockApi.updateStockLine({
       input: {
@@ -185,6 +189,7 @@ const useUpdate = (id: string) => {
         vvmStatusId,
         donorId: setNullableInput('id', donor),
         campaignId: setNullableInput('id', campaign),
+        programId: setNullableInput('id', program),
       },
       storeId,
     });

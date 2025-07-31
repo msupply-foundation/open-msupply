@@ -305,11 +305,23 @@ export const useInboundShipmentColumns = ({
     columns.push({
       key: 'campaign',
       label: 'label.campaign',
-      accessor: ({ rowData }) =>
-        getColumnProperty(rowData, [
+      accessor: ({ rowData }) => {
+        // Campaign or program could be selected
+
+        // Check for campaign name first
+        const campaignName = getColumnProperty(rowData, [
           { path: ['lines', 'campaign', 'name'] },
-          { path: ['campaign', 'name'], default: '' },
-        ]),
+          { path: ['campaign', 'name'] },
+        ]);
+
+        if (!!campaignName) return campaignName;
+
+        // Otherwise, check for program name
+        return getColumnProperty(rowData, [
+          { path: ['lines', 'program', 'name'] },
+          { path: ['program', 'name'], default: '' },
+        ]);
+      },
       defaultHideOnMobile: true,
     });
   }
