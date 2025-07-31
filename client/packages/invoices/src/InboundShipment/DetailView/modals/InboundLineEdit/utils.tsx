@@ -94,7 +94,8 @@ export const itemVariantColumn = (
       );
       updateDraftLine({
         ...patch,
-        volumePerPack: (packaging?.volumePerUnit ?? 0) * 1000 * (packSize ?? 1),
+        volumePerPack:
+          ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
       });
     } else {
       updateDraftLine(patch);
