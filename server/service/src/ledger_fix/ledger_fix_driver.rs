@@ -113,7 +113,7 @@ fn get_last_ledger_fix_run(
                 &ctx.connection,
                 SystemLogType::LedgerFixError,
                 &e,
-                "Error parsing last ledger fix run datetime",
+                &format!("Error parsing last ledger fix run datetime, {s}"),
             )?;
             Ok(None)
         }
