@@ -116,7 +116,7 @@ export const LocationSearchInput = ({
   useEffect(() => {
     onInvalidLocation?.(
       isInvalidLocation,
-      isInvalidLocation ? t('messages.location-invalid') : ''
+      isInvalidLocation ? t('messages.stock-location-invalid') : ''
     );
   }, [isInvalidLocation]);
 
