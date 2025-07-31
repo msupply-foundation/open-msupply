@@ -247,8 +247,8 @@ mod tests {
             };
 
             assert_eq!(
-                translated[0].record.record_data["purchase_order_ID"],
-                json!("test_purchase_order_a")
+                translated[0].record.record_data["ID"],
+                json!(changelog.record_id)
             );
         }
     }

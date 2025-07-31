@@ -29,8 +29,8 @@ export type StockLineRowFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -43,6 +43,7 @@ export type StockLineRowFragment = {
     name: string;
     unitName?: string | null;
     isVaccine: boolean;
+    restrictedLocationTypeId?: string | null;
     dosesPerUnit: number;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
@@ -89,8 +90,8 @@ export type RepackStockLineFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -114,8 +115,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -133,8 +134,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -234,8 +235,8 @@ export type StockLinesQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -248,6 +249,7 @@ export type StockLinesQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
@@ -328,8 +330,8 @@ export type StockLineQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -342,6 +344,7 @@ export type StockLineQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
@@ -459,8 +462,8 @@ export type UpdateStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -473,6 +476,7 @@ export type UpdateStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
           dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
@@ -542,8 +546,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -561,8 +565,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -598,8 +602,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -617,8 +621,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -748,8 +752,8 @@ export type InsertStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -762,6 +766,7 @@ export type InsertStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
           dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
@@ -907,6 +912,7 @@ export const StockLineRowFragmentDoc = gql`
       }
       isVaccine
       dosesPerUnit: doses
+      restrictedLocationTypeId
     }
     barcode
     vvmStatusLogs {

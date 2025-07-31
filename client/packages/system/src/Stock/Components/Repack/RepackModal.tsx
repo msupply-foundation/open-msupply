@@ -103,6 +103,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         ...draft,
         locationName: stockLine.location?.name,
         packSize: stockLine.packSize,
+        restrictedToLocationType:
+          stockLine.item.restrictedLocationTypeId ?? undefined,
       };
     }
 

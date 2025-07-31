@@ -4,7 +4,9 @@ import {
   LocaleKey,
   NothingHere,
   PreferenceNodeType,
+  useAuthContext,
   useIsCentralServerApi,
+  UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
@@ -15,6 +17,7 @@ import {
 export const EditStorePreferences = ({ storeId }: { storeId: string }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
+  const { userHasPermission } = useAuthContext();
   const { update, preferences } = useEditPreferences(
     PreferenceNodeType.Store,
     storeId
@@ -33,7 +36,10 @@ export const EditStorePreferences = ({ storeId }: { storeId: string }) => {
         label={t(`preference.${pref.key}` as LocaleKey)}
         Input={
           <EditPreference
-            disabled={!isCentralServer}
+            disabled={
+              !isCentralServer ||
+              !userHasPermission(UserPermission.EditCentralData)
+            }
             preference={pref}
             update={value =>
               update({
