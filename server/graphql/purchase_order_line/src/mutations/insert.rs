@@ -8,9 +8,12 @@ use repository::PurchaseOrderLineRow;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::purchase_order_line::insert::{
     InsertPurchaseOrderLineError as ServiceError, InsertPurchaseOrderLineInput as ServiceInput,
+    PackSizeCodeCombination,
 };
 
-use crate::mutations::errors::PurchaseOrderLineWithItemIdExists;
+use crate::mutations::errors::{
+    CannnotFindItemByCode, PackSizeCodeCombinationExists, PurchaseOrderLineWithItemIdExists,
+};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertPurchaseOrderLineInput")]
@@ -43,6 +46,8 @@ pub enum InsertErrorInterface {
     PurchaseOrderDoesNotExist(ForeignKeyError),
     CannotEditPurchaseOrder(CannotEditPurchaseOrder),
     PurchaseOrderLineWithItemIdExists(PurchaseOrderLineWithItemIdExists),
+    PackSizeCodeCombinationExists(PackSizeCodeCombinationExists),
+    CannotFindItemByCode(CannnotFindItemByCode),
 }
 
 #[derive(SimpleObject)]
@@ -93,11 +98,10 @@ pub fn map_response(from: Result<PurchaseOrderLineRow, ServiceError>) -> Result<
     Ok(result)
 }
 
-fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        // structured errors
         ServiceError::PurchaseOrderDoesNotExist => {
             return Ok(InsertErrorInterface::PurchaseOrderDoesNotExist(
                 ForeignKeyError(ForeignKey::PurchaseOrderId),
@@ -108,10 +112,30 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 CannotEditPurchaseOrder {},
             ));
         }
-        // standard errors
-        ServiceError::ItemDoesNotExist
-        | ServiceError::IncorrectStoreId
-        | ServiceError::PurchaseOrderLineAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::PurchaseOrderLineAlreadyExists => {
+            return Ok(InsertErrorInterface::PurchaseOrderLineWithItemIdExists(
+                PurchaseOrderLineWithItemIdExists {},
+            ));
+        }
+        ServiceError::PackSizeCodeCombinationExists(PackSizeCodeCombination {
+            item_code,
+            requested_pack_size,
+        }) => {
+            return Ok(InsertErrorInterface::PackSizeCodeCombinationExists(
+                PackSizeCodeCombinationExists {
+                    item_code,
+                    requested_pack_size,
+                },
+            ));
+        }
+        ServiceError::CannotFindItemByCode(_) => {
+            return Ok(InsertErrorInterface::CannotFindItemByCode(
+                CannnotFindItemByCode {},
+            ));
+        }
+        ServiceError::ItemDoesNotExist | ServiceError::IncorrectStoreId => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

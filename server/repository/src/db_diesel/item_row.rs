@@ -147,6 +147,14 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result?)
     }
 
+    pub fn find_one_by_code(&self, item_code: &str) -> Result<Option<ItemRow>, RepositoryError> {
+        let result = item
+            .filter(code.eq(item_code))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_active_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = self
             .find_one_by_id(item_id)?
