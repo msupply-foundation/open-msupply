@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::ledger_fix::find_ledger_discrepancies::find_stock_line_ledger_discrepancies;
 use crate::{activity_log::system_error_log, service_provider::ServiceProvider};
 
 use chrono::{NaiveDateTime, TimeDelta, Utc};
@@ -57,8 +58,16 @@ impl LedgerFixDriver {
         }
     }
 
-    pub async fn ledger_fix(&self, _service_provider: Arc<ServiceProvider>) {
-        log::info!("Performing ledger fix...");
+    pub async fn ledger_fix(&self, service_provider: Arc<ServiceProvider>) {
+        // Unwraps for now, should be changed to repository errors and handled as errors
+        let ctx = service_provider.basic_context().unwrap();
+
+        log::info!(
+            "Performing ledger fix on {} lines...",
+            find_stock_line_ledger_discrepancies(&ctx.connection)
+                .unwrap()
+                .len()
+        );
     }
 }
 

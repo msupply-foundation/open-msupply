@@ -7,6 +7,7 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
         // Drop order is important here, as some views depend on others. Please
         // check when adding new views.
         r#"
+      DROP VIEW IF EXISTS stock_line_ledger_discrepancy;
       DROP VIEW IF EXISTS invoice_stats;
       DROP VIEW IF EXISTS consumption;
       DROP VIEW IF EXISTS replenishment;
@@ -107,7 +108,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         item_id,
         store_id,
         received_datetime as datetime
-    FROM invoice_line_stock_movement 
+    FROM invoice_line_stock_movement
     JOIN invoice
         ON invoice_line_stock_movement.invoice_id = invoice.id
     WHERE invoice.type = 'INBOUND_SHIPMENT' 
@@ -191,6 +192,59 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       ) AS running_balance
     FROM movements_with_precedence
     ORDER BY datetime, type_precedence;
+
+  CREATE VIEW stock_line_ledger_discrepancy AS 
+  WITH 
+  allocated_not_picked AS (
+      SELECT stock_line_id,
+          SUM(number_of_packs * pack_size) AS q
+      FROM invoice_line
+          JOIN invoice on invoice.id = invoice_line.invoice_id
+      WHERE invoice_line.type = 'STOCK_OUT'
+          AND invoice.status IN ('NEW', 'ALLOCATED')
+      GROUP BY 1
+  ),
+  max_ledger_datetime AS (
+      SELECT stock_line_id,
+          MAX(datetime) AS dt
+      FROM stock_line_ledger
+      GROUP BY 1
+  ),
+  running_balance AS (
+      SELECT stock_line_ledger.stock_line_id,
+          running_balance AS q
+      FROM stock_line_ledger
+          JOIN max_ledger_datetime on stock_line_ledger.stock_line_id = max_ledger_datetime.stock_line_id
+          AND stock_line_ledger.datetime = max_ledger_datetime.dt
+  ),
+  current_balance AS (
+      SELECT stock_line.id AS stock_line_id,
+          store_id,
+          available_number_of_packs * pack_size AS a_q,
+          total_number_of_packs * pack_size AS t_q
+      from stock_line
+  )
+  SELECT DISTINCT stock_line_id
+  FROM stock_line_ledger
+  WHERE running_balance < 0
+  UNION
+  SELECT running_balance.stock_line_id
+  FROM running_balance
+      JOIN current_balance ON running_balance.stock_line_id = current_balance.stock_line_id
+      LEFT JOIN allocated_not_picked ON running_balance.stock_line_id = allocated_not_picked.stock_line_id
+  WHERE NOT(
+          running_balance.q = current_balance.t_q
+          AND (
+              (
+                  allocated_not_picked.q IS NULL
+                  AND current_balance.t_q = current_balance.a_q
+              )
+              OR (
+                  allocated_not_picked.q IS NOT NULL
+                  AND current_balance.a_q + allocated_not_picked.q = current_balance.t_q
+              )
+          )
+      );
 
   CREATE VIEW item_ledger AS
     WITH all_movements AS (
