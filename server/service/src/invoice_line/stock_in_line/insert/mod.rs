@@ -440,7 +440,6 @@ mod test {
         assert_eq!(stock_line.barcode_id, Some(barcode.barcode_row.id));
 
         // pack to one preference is set
-        // Pack size to one shouldn't affect customer returns they'll stay in the same pack size
         let pack_to_one = StorePreferenceRow {
             id: mock_store_b().id,
             pack_to_one: true,
@@ -473,9 +472,9 @@ mod test {
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new_invoice_line_pack_to_one".to_string();
                 u.item_link_id = mock_item_a().id;
-                u.pack_size = 10.0;
-                u.number_of_packs = 20.0;
-                u.sell_price_per_pack = 100.0;
+                u.pack_size = 1.0;
+                u.number_of_packs = 200.0;
+                u.sell_price_per_pack = 10.0;
                 u
             })
         );
