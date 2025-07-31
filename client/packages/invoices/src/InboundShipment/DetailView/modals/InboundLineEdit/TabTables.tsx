@@ -125,6 +125,18 @@ export const QuantityTableComponent = ({
       defaultHideOnMobile: true,
       align: ColumnAlign.Left,
     }),
+    {
+      key: 'shippedNumberOfPacks',
+      label: 'label.shipped-number-of-packs',
+      Cell: NumberOfPacksCell,
+      cellProps: {
+        decimalLimit: 0,
+      },
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
+      width: 100,
+      align: ColumnAlign.Left,
+      setter: patch => updateDraftLine(patch),
+    },
     [
       'numberOfPacks',
       {
@@ -147,19 +159,7 @@ export const QuantityTableComponent = ({
           }
         },
       },
-    ],
-    {
-      key: 'shippedNumberOfPacks',
-      label: 'label.shipped-number-of-packs',
-      Cell: NumberOfPacksCell,
-      cellProps: {
-        decimalLimit: 0,
-      },
-      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
-      width: 100,
-      align: ColumnAlign.Left,
-      setter: patch => updateDraftLine(patch),
-    }
+    ]
   );
 
   columnDefinitions.push({

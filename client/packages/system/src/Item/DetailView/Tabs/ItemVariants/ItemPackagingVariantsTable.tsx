@@ -59,6 +59,7 @@ export const ItemPackagingVariantsTable = ({
         id="item-variant-packaging"
         data={data}
         columns={columns}
+        headerSx={{ height: '25px' }}
         dense
       />
     </TableProvider>

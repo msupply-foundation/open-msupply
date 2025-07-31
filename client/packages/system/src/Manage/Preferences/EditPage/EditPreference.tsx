@@ -9,6 +9,8 @@ import {
   PreferenceDescriptionNode,
   useTranslation,
   useNotification,
+  NumericTextInput,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import {
   EnumOptions,
@@ -34,10 +36,14 @@ export const EditPreference = ({
   // is invalidated - use local state for fast UI change
   const [value, setValue] = useState(preference.value);
 
-  const handleChange = async (newValue: PreferenceDescriptionNode['value']) => {
-    setValue(newValue);
-    await update(newValue);
-  };
+  const debouncedUpdate = useDebouncedValueCallback(
+    value => {
+      setValue(value);
+      update(value);
+    },
+    [],
+    350
+  );
 
   switch (preference.valueType) {
     case PreferenceValueNodeType.Boolean:
@@ -49,7 +55,7 @@ export const EditPreference = ({
           disabled={disabled}
           checked={value}
           onChange={(_, checked) => {
-            handleChange(checked);
+            debouncedUpdate(checked);
           }}
         />
       );
@@ -58,9 +64,15 @@ export const EditPreference = ({
       if (!isNumber(preference.value)) {
         return t('error.something-wrong');
       }
-      // Adding NumericTextInput here would currently get a type error,
-      // because there are no editPreference inputs that accept a number
-      return <>To be implemented</>;
+      return (
+        <NumericTextInput
+          value={value}
+          onChange={newValue => {
+            setValue(newValue);
+            debouncedUpdate(newValue);
+          }}
+        />
+      );
 
     case PreferenceValueNodeType.MultiChoice:
       if (!Array.isArray(value)) {
@@ -73,12 +85,15 @@ export const EditPreference = ({
           disabled={disabled}
           options={options}
           value={value}
-          onChange={handleChange}
+          onChange={newValue => {
+            setValue(newValue);
+            debouncedUpdate(newValue);
+          }}
         />
       );
 
     case PreferenceValueNodeType.CustomTranslations:
-      return <EditCustomTranslations value={value} update={handleChange} />;
+      return <EditCustomTranslations value={value} update={debouncedUpdate} />;
 
     default:
       try {
