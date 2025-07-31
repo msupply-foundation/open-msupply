@@ -219,6 +219,37 @@ export const StockLineForm = ({
               />
             }
           />
+          <StyledInputRow
+            label={t('label.barcode')}
+            Input={
+              <Box style={{ width: 162 }}>
+                <BufferedTextInput
+                  value={draft.barcode ?? ''}
+                  onChange={e => onUpdate({ barcode: e.target.value })}
+                />
+                {isEnabled && (
+                  <Tooltip
+                    title={isConnected ? '' : t('error.scanner-not-connected')}
+                  >
+                    <Box>
+                      <IconButton
+                        disabled={isScanning || !isConnected}
+                        onClick={scanBarcode}
+                        icon={
+                          isScanning ? (
+                            <CircularProgress size={20} color="secondary" />
+                          ) : (
+                            <ScanIcon />
+                          )
+                        }
+                        label={t('button.scan')}
+                      />
+                    </Box>
+                  </Tooltip>
+                )}
+              </Box>
+            }
+          />
           {isNewModal && (
             <StyledInputRow
               label={t('label.reason')}
@@ -320,37 +351,6 @@ export const StockLineForm = ({
                 value={draft.volumePerPack ?? 0}
                 onChange={volumePerPack => onUpdate({ volumePerPack })}
               />
-            }
-          />
-          <StyledInputRow
-            label={t('label.barcode')}
-            Input={
-              <Box style={{ width: 162 }}>
-                <BufferedTextInput
-                  value={draft.barcode ?? ''}
-                  onChange={e => onUpdate({ barcode: e.target.value })}
-                />
-                {isEnabled && (
-                  <Tooltip
-                    title={isConnected ? '' : t('error.scanner-not-connected')}
-                  >
-                    <Box>
-                      <IconButton
-                        disabled={isScanning || !isConnected}
-                        onClick={scanBarcode}
-                        icon={
-                          isScanning ? (
-                            <CircularProgress size={20} color="secondary" />
-                          ) : (
-                            <ScanIcon />
-                          )
-                        }
-                        label={t('button.scan')}
-                      />
-                    </Box>
-                  </Tooltip>
-                )}
-              </Box>
             }
           />
           <TextWithLabelRow
