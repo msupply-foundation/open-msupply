@@ -3604,6 +3604,8 @@ export type InsertPurchaseOrderLineInput = {
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   purchaseOrderId: Scalars['String']['input'];
+  requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
+  requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertPurchaseOrderLineResponse =

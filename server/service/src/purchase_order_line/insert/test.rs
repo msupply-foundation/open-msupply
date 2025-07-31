@@ -31,6 +31,8 @@ mod insert {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "non_existent_purchase_order".to_string(),
                     item_id: "item_id".to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                 }
             ),
             Err(InsertPurchaseOrderLineError::PurchaseOrderDoesNotExist)
@@ -57,6 +59,8 @@ mod insert {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_id: "non_existent_item".to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                 }
             ),
             Err(InsertPurchaseOrderLineError::ItemDoesNotExist)
@@ -70,6 +74,8 @@ mod insert {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                 },
             )
             .unwrap();
@@ -81,6 +87,8 @@ mod insert {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                 }
             ),
             Err(InsertPurchaseOrderLineError::PurchaseOrderLineAlreadyExists)
@@ -131,6 +139,8 @@ mod insert {
                     id: "purchase_order_line_id_1_1".to_string(),
                     purchase_order_id: "purchase_order_id_1".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                 },
             )
             .unwrap();
@@ -142,6 +152,8 @@ mod insert {
                     id: "purchase_order_line_id_1_2".to_string(),
                     purchase_order_id: "purchase_order_id_1".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                 },
             )
             .unwrap();
@@ -154,6 +166,8 @@ mod insert {
                     id: "purchase_order_line_id_2_1".to_string(),
                     purchase_order_id: "purchase_order_id_2".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                 },
             )
             .unwrap();
@@ -165,6 +179,8 @@ mod insert {
                     id: "purchase_order_line_id_2_2".to_string(),
                     purchase_order_id: "purchase_order_id_2".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                 },
             )
             .unwrap();

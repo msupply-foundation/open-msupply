@@ -62,6 +62,8 @@ mod delete {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: mock_purchase_order_a().id.to_string(),
                     item_id: mock_item_c().id.to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                 },
             )
             .unwrap();
