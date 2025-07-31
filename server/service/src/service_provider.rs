@@ -30,6 +30,7 @@ use crate::{
     item::ItemServiceTrait,
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
+    ledger_fix::ledger_fix_driver::LedgerFixTrigger,
     localisations::Localisations,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
@@ -142,6 +143,8 @@ pub struct ServiceProvider {
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
     pub site_is_initialised_trigger: SiteIsInitialisedTrigger,
+    pub ledger_fix_trigger: LedgerFixTrigger,
+    // Settings
     pub display_settings_service: Box<dyn DisplaySettingsServiceTrait>,
     // Barcodes
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
@@ -206,6 +209,7 @@ impl ServiceProvider {
             connection_manager,
             ProcessorsTrigger::new_void(),
             SyncTrigger::new_void(),
+            LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
         )
@@ -215,6 +219,7 @@ impl ServiceProvider {
         connection_manager: StorageConnectionManager,
         processors_trigger: ProcessorsTrigger,
         sync_trigger: SyncTrigger,
+        ledger_fix_trigger: LedgerFixTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
     ) -> Self {
@@ -289,6 +294,7 @@ impl ServiceProvider {
             preference_service: Box::new(PreferenceService {}),
             vvm_service: Box::new(VVMService {}),
             campaign_service: Box::new(CampaignService),
+            ledger_fix_trigger,
         }
     }
 
