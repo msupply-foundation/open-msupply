@@ -54,6 +54,7 @@ interface TableProps {
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
+  restrictedLocationTypeId?: string | null;
 }
 
 interface QuantityTableProps extends TableProps {
@@ -106,12 +107,36 @@ export const QuantityTableComponent = ({
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
         setPackRoundingMessage?.('');
-        updateDraftLine(patch);
+        const shouldClearSellPrice =
+          patch.item?.defaultPackSize !== patch.packSize &&
+          patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
+            patch.sellPricePerPack;
+
+        if (shouldClearSellPrice) {
+          updateDraftLine({
+            ...patch,
+            sellPricePerPack: 0,
+          });
+        } else {
+          updateDraftLine(patch);
+        }
       },
       label: 'label.pack-size',
       defaultHideOnMobile: true,
       align: ColumnAlign.Left,
     }),
+    {
+      key: 'shippedNumberOfPacks',
+      label: 'label.shipped-number-of-packs',
+      Cell: NumberOfPacksCell,
+      cellProps: {
+        decimalLimit: 0,
+      },
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
+      width: 100,
+      align: ColumnAlign.Left,
+      setter: patch => updateDraftLine(patch),
+    },
     [
       'numberOfPacks',
       {
@@ -134,19 +159,7 @@ export const QuantityTableComponent = ({
           }
         },
       },
-    ],
-    {
-      key: 'shippedNumberOfPacks',
-      label: 'label.shipped-number-of-packs',
-      Cell: NumberOfPacksCell,
-      cellProps: {
-        decimalLimit: 0,
-      },
-      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
-      width: 100,
-      align: ColumnAlign.Left,
-      setter: patch => updateDraftLine(patch),
-    }
+    ]
   );
 
   columnDefinitions.push({
@@ -359,6 +372,7 @@ export const LocationTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled,
+  restrictedLocationTypeId,
 }: TableProps) => {
   const { data: preferences } = usePreference(
     PreferenceKey.AllowTrackingOfStockByDonor,
@@ -372,7 +386,14 @@ export const LocationTableComponent = ({
         accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
-    [getLocationInputColumn(), { setter: updateDraftLine, width: 530 }],
+    [
+      'location',
+      {
+        ...getLocationInputColumn(restrictedLocationTypeId),
+        setter: updateDraftLine,
+        width: 530,
+      },
+    ],
     [
       'note',
       {

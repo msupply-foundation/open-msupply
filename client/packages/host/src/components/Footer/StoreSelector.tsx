@@ -14,11 +14,11 @@ import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
 
 export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
-  const { store, setStore, token } = useAuthContext();
+  const t = useTranslation();
   const navigate = useNavigate();
+  const { store, setStore, token } = useAuthContext();
   const { hide, PaperClickPopover } = usePaperClickPopover();
   const { data, isLoading } = useUserDetails(token);
-  const t = useTranslation();
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
     if (a.name < b.name) return -1;

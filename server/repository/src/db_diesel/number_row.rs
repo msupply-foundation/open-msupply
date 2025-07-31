@@ -41,6 +41,7 @@ pub enum NumberRowType {
     CustomerReturn,
     Program(String),
     PurchaseOrder,
+    PurchaseOrderLine(String),
 }
 
 impl fmt::Display for NumberRowType {
@@ -59,6 +60,9 @@ impl fmt::Display for NumberRowType {
             NumberRowType::CustomerReturn => write!(f, "CUSTOMER_RETURN"),
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
             NumberRowType::PurchaseOrder => write!(f, "PURCHASE_ORDER"),
+            NumberRowType::PurchaseOrderLine(custom_string) => {
+                write!(f, "PURCHASEORDERLINE_{}", custom_string) // Since we split this on _ we can't use that in the main part of the name
+            }
         }
     }
 }
@@ -79,13 +83,13 @@ impl TryFrom<String> for NumberRowType {
             "SUPPLIER_RETURN" => Ok(NumberRowType::SupplierReturn),
             "CUSTOMER_RETURN" => Ok(NumberRowType::CustomerReturn),
             _ => match s.split_once('_') {
-                Some((prefix, custom_string)) => {
-                    if prefix == "PROGRAM" {
-                        Ok(NumberRowType::Program(custom_string.to_string()))
-                    } else {
-                        Err(NumberRowTypeError::UnknownTypePrefix(prefix.to_string()))
+                Some((prefix, custom_string)) => match prefix {
+                    "PROGRAM" => Ok(NumberRowType::Program(custom_string.to_string())),
+                    "PURCHASEORDERLINE" => {
+                        Ok(NumberRowType::PurchaseOrderLine(custom_string.to_string()))
                     }
-                }
+                    _ => Err(NumberRowTypeError::UnknownTypePrefix(prefix.to_string())),
+                },
                 None => Err(NumberRowTypeError::MissingTypePrefix),
             },
         }
@@ -246,6 +250,7 @@ mod number_row_mapping_test {
 
         for number_row_type in [
             NumberRowType::Program("EXAMPLE_TEST".to_string()),
+            NumberRowType::PurchaseOrderLine("EXAMPLE_TEST".to_string()),
             NumberRowType::SupplierReturn,
             NumberRowType::CustomerReturn,
         ] {
@@ -329,6 +334,15 @@ mod number_row_mapping_test {
                     assert!(
                         NumberRowType::try_from(NumberRowType::PurchaseOrder.to_string()).unwrap()
                             == NumberRowType::PurchaseOrder
+                    )
+                }
+                NumberRowType::PurchaseOrderLine(s) => {
+                    assert!(
+                        NumberRowType::try_from(
+                            NumberRowType::PurchaseOrderLine(s.to_string()).to_string()
+                        )
+                        .unwrap()
+                            == NumberRowType::PurchaseOrderLine(s)
                     )
                 }
             }

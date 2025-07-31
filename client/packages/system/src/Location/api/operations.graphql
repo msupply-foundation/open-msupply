@@ -4,7 +4,7 @@ fragment LocationRow on LocationNode {
   name
   onHold
   code
-  coldStorageType {
+  locationType {
     id
     name
     maxTemperature

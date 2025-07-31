@@ -21,7 +21,7 @@ import {
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
-import { StoreEditModal, useName } from '@openmsupply-client/system';
+import { StoreEditModal } from '@openmsupply-client/system';
 import { UserDetails } from './UserDetails';
 
 interface PaddedCellProps {
@@ -77,7 +77,7 @@ const PaddedCell: FC<PaddedCellProps> = ({
   );
 };
 
-export const Footer: FC = () => {
+export const Footer = () => {
   const t = useTranslation();
   const theme = useAppTheme();
   const isExtraSmallScreen = useMediaQuery(
@@ -88,7 +88,6 @@ export const Footer: FC = () => {
 
   const isCentralServer = useIsCentralServerApi();
   const { isOpen, onClose, onOpen } = useEditModal();
-  const { data: nameProperties } = useName.document.properties();
 
   const Divider = styled(Box)({
     width: '1px',
@@ -118,14 +117,12 @@ export const Footer: FC = () => {
           tooltip={t('store-details', { ...store })}
         />
       </StoreSelector>
-      {!!nameProperties?.length && (
-        <PaddedCell
-          icon={<EditIcon sx={iconStyles} />}
-          text={t('label.edit')}
-          tooltip={t('label.edit-store-properties')}
-          onClick={onOpen}
-        />
-      )}
+      <PaddedCell
+        icon={<EditIcon sx={iconStyles} />}
+        text={t('label.edit')}
+        tooltip={t('label.edit-store-properties')}
+        onClick={onOpen}
+      />
       {user ? (
         <>
           <Divider />

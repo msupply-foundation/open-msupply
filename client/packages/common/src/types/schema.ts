@@ -139,8 +139,8 @@ export enum ActivityLogNodeType {
   ItemVariantCreated = 'ITEM_VARIANT_CREATED',
   ItemVariantDeleted = 'ITEM_VARIANT_DELETED',
   ItemVariantUpdatedName = 'ITEM_VARIANT_UPDATED_NAME',
-  ItemVariantUpdateColdStorageType = 'ITEM_VARIANT_UPDATE_COLD_STORAGE_TYPE',
   ItemVariantUpdateDosePerUnit = 'ITEM_VARIANT_UPDATE_DOSE_PER_UNIT',
+  ItemVariantUpdateLocationType = 'ITEM_VARIANT_UPDATE_LOCATION_TYPE',
   ItemVariantUpdateManufacturer = 'ITEM_VARIANT_UPDATE_MANUFACTURER',
   ItemVariantUpdateVvmType = 'ITEM_VARIANT_UPDATE_VVM_TYPE',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
@@ -1307,43 +1307,6 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
-export type ColdStorageTypeConnector = {
-  __typename: 'ColdStorageTypeConnector';
-  nodes: Array<ColdStorageTypeNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type ColdStorageTypeFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<EqualFilterStringInput>;
-};
-
-export type ColdStorageTypeNode = {
-  __typename: 'ColdStorageTypeNode';
-  id: Scalars['String']['output'];
-  maxTemperature: Scalars['Float']['output'];
-  minTemperature: Scalars['Float']['output'];
-  name: Scalars['String']['output'];
-};
-
-export enum ColdStorageTypeSortFieldInput {
-  Id = 'id',
-  MinTemperature = 'minTemperature',
-  Name = 'name',
-}
-
-export type ColdStorageTypeSortInput = {
-  /**
-   * Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Sort query result by `key` */
-  key: ColdStorageTypeSortFieldInput;
-};
-
-export type ColdStorageTypesResponse = ColdStorageTypeConnector;
-
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -1964,6 +1927,23 @@ export type DeletePrescriptionResponseWithId = {
   id: Scalars['String']['output'];
   response: DeletePrescriptionResponse;
 };
+
+export type DeletePurchaseOrderLineError = {
+  __typename: 'DeletePurchaseOrderLineError';
+  error: DeletePurchaseOrderLineInterface;
+};
+
+export type DeletePurchaseOrderLineInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeletePurchaseOrderLineInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeletePurchaseOrderLineResponse =
+  | DeletePurchaseOrderLineError
+  | DeleteResponse;
 
 export type DeleteRequestRequisitionError = {
   __typename: 'DeleteRequestRequisitionError';
@@ -3318,8 +3298,8 @@ export type InsertLocationErrorInterface = {
 
 export type InsertLocationInput = {
   code: Scalars['String']['input'];
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -3591,6 +3571,14 @@ export type InsertPurchaseOrderInput = {
   id: Scalars['String']['input'];
   supplierId: Scalars['String']['input'];
 };
+
+export type InsertPurchaseOrderLineInput = {
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  purchaseOrderId: Scalars['String']['input'];
+};
+
+export type InsertPurchaseOrderLineResponse = IdResponse;
 
 export type InsertPurchaseOrderResponse = IdResponse;
 
@@ -4455,13 +4443,15 @@ export type ItemNode = {
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
-  itemStoreJoin?: Maybe<ItemStoreJoinNode>;
+  itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  restrictedLocationType?: Maybe<LocationTypeNode>;
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
@@ -4482,7 +4472,7 @@ export type ItemNodeAvailableStockOnHandArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type ItemNodeItemStoreJoinArgs = {
+export type ItemNodeItemStorePropertiesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4542,8 +4532,8 @@ export type ItemStatsNode = {
   totalConsumption: Scalars['Float']['output'];
 };
 
-export type ItemStoreJoinNode = {
-  __typename: 'ItemStoreJoinNode';
+export type ItemStorePropertiesNode = {
+  __typename: 'ItemStorePropertiesNode';
   defaultSellPricePerPack: Scalars['Float']['output'];
   id: Scalars['String']['output'];
 };
@@ -4570,12 +4560,12 @@ export type ItemVariantNode = {
   bundledItemVariants: Array<BundledItemNode>;
   /** This item variant is bundled with other (principal) item variants */
   bundlesWith: Array<BundledItemNode>;
-  coldStorageType?: Maybe<ColdStorageTypeNode>;
-  coldStorageTypeId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   item?: Maybe<ItemNode>;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  locationType?: Maybe<LocationTypeNode>;
+  locationTypeId?: Maybe<Scalars['String']['output']>;
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
@@ -4710,6 +4700,7 @@ export type LocationFilterInput = {
   assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  locationTypeId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -4733,8 +4724,8 @@ export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface &
 export type LocationNode = {
   __typename: 'LocationNode';
   code: Scalars['String']['output'];
-  coldStorageType?: Maybe<ColdStorageTypeNode>;
   id: Scalars['String']['output'];
+  locationType?: Maybe<LocationTypeNode>;
   name: Scalars['String']['output'];
   onHold: Scalars['Boolean']['output'];
   stock: StockLineConnector;
@@ -4762,6 +4753,43 @@ export type LocationSortInput = {
   /** Sort query result by `key` */
   key: LocationSortFieldInput;
 };
+
+export type LocationTypeConnector = {
+  __typename: 'LocationTypeConnector';
+  nodes: Array<LocationTypeNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type LocationTypeFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type LocationTypeNode = {
+  __typename: 'LocationTypeNode';
+  id: Scalars['String']['output'];
+  maxTemperature: Scalars['Float']['output'];
+  minTemperature: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
+};
+
+export enum LocationTypeSortFieldInput {
+  Id = 'id',
+  MinTemperature = 'minTemperature',
+  Name = 'name',
+}
+
+export type LocationTypeSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: LocationTypeSortFieldInput;
+};
+
+export type LocationTypesResponse = LocationTypeConnector;
 
 export type LocationsResponse = LocationConnector;
 
@@ -4950,6 +4978,7 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  deletePurchaseOrderLine: DeletePurchaseOrderLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
@@ -4998,6 +5027,7 @@ export type Mutations = {
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
   insertPurchaseOrder: InsertPurchaseOrderResponse;
+  insertPurchaseOrderLine: InsertPurchaseOrderLineResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -5050,6 +5080,7 @@ export type Mutations = {
    * in a document.
    */
   updateProgramPatient: UpdateProgramPatientResponse;
+  updatePurchaseOrderLine: UpdatePurchaseOrderLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -5193,6 +5224,11 @@ export type MutationsDeletePrescriptionArgs = {
 
 export type MutationsDeletePrescriptionLineArgs = {
   input: DeletePrescriptionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePurchaseOrderLineArgs = {
+  input: DeletePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5384,6 +5420,11 @@ export type MutationsInsertProgramResponseRequisitionArgs = {
 
 export type MutationsInsertPurchaseOrderArgs = {
   input: InsertPurchaseOrderInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertPurchaseOrderLineArgs = {
+  input: InsertPurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5600,6 +5641,11 @@ export type MutationsUpdateProgramEnrolmentArgs = {
 
 export type MutationsUpdateProgramPatientArgs = {
   input: UpdateProgramPatientInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdatePurchaseOrderLineArgs = {
+  input: UpdatePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6248,6 +6294,7 @@ export enum PreferenceKey {
   OrderInPacks = 'orderInPacks',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   UseCampaigns = 'useCampaigns',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
@@ -6284,6 +6331,7 @@ export type PreferencesNode = {
   orderInPacks: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  syncRecordsDisplayThreshold: Scalars['Int']['output'];
   useCampaigns: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
@@ -6504,6 +6552,7 @@ export type ProgramFilterInput = {
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
 
@@ -6764,8 +6813,6 @@ export type Queries = {
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
-  /** Query omSupply "cold_storage_type" entries */
-  coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
   contacts: ContactsResponse;
   currencies: CurrenciesResponse;
@@ -6815,7 +6862,6 @@ export type Queries = {
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
-  insertPrescription: InsertPrescriptionResponse;
   insurancePolicies: InsurancesResponse;
   insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
@@ -6837,6 +6883,8 @@ export type Queries = {
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   ledger: LedgerResponse;
+  /** Query omSupply "location_type" entries */
+  locationTypes: LocationTypesResponse;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
   logContents: LogNode;
@@ -7049,13 +7097,6 @@ export type QueriesCliniciansArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesColdStorageTypesArgs = {
-  filter?: InputMaybe<ColdStorageTypeFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<ColdStorageTypeSortInput>>;
-  storeId: Scalars['String']['input'];
-};
-
 export type QueriesContactTracesArgs = {
   filter?: InputMaybe<ContactTraceFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -7193,11 +7234,6 @@ export type QueriesHistoricalStockLinesArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesInsertPrescriptionArgs = {
-  input: InsertPrescriptionInput;
-  storeId: Scalars['String']['input'];
-};
-
 export type QueriesInsurancePoliciesArgs = {
   nameId: Scalars['String']['input'];
   sort?: InputMaybe<Array<InsuranceSortInput>>;
@@ -7280,6 +7316,13 @@ export type QueriesItemsArgs = {
 export type QueriesLedgerArgs = {
   filter?: InputMaybe<LedgerFilterInput>;
   sort?: InputMaybe<Array<LedgerSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesLocationTypesArgs = {
+  filter?: InputMaybe<LocationTypeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LocationTypeSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -7722,6 +7765,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteOutboundShipmentUnallocatedLineErrorInterface &
   DeletePrescriptionErrorInterface &
   DeletePrescriptionLineErrorInterface &
+  DeletePurchaseOrderLineInterface &
   DeleteRequestRequisitionErrorInterface &
   DeleteRequestRequisitionLineErrorInterface &
   DeleteResponseRequisitionErrorInterface &
@@ -8270,6 +8314,7 @@ export type RnRFormNode = {
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
+  period: PeriodNode;
   periodId: Scalars['String']['output'];
   periodLength: Scalars['Int']['output'];
   periodName: Scalars['String']['output'];
@@ -9469,8 +9514,8 @@ export type UpdateLocationErrorInterface = {
 
 export type UpdateLocationInput = {
   code?: InputMaybe<Scalars['String']['input']>;
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -9768,6 +9813,17 @@ export type UpdateProgramPatientInput = {
 };
 
 export type UpdateProgramPatientResponse = PatientNode;
+
+export type UpdatePurchaseOrderLineInput = {
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdatePurchaseOrderLineResponse = IdResponse;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';
@@ -10221,9 +10277,9 @@ export type UpsertItemVariantErrorInterface = {
 };
 
 export type UpsertItemVariantInput = {
-  coldStorageTypeId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+  locationTypeId?: InputMaybe<NullableStringUpdate>;
   manufacturerId?: InputMaybe<NullableStringUpdate>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
@@ -10252,6 +10308,7 @@ export type UpsertPreferencesInput = {
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   useCampaigns?: InputMaybe<Scalars['Boolean']['input']>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };

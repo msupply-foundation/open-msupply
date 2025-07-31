@@ -25,7 +25,7 @@ const useHighlightPlaceholderRows = (
     if (!rows) return;
 
     const placeholders = rows
-      .filter(row => row.requestedQuantity === 0)
+      .filter(row => row.requestedNumberOfUnits === 0)
       .map(row => row.id);
     const style: AppSxProp = {
       color: theme => theme.palette.secondary.light,

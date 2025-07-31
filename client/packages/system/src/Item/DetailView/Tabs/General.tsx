@@ -9,6 +9,7 @@ import {
   NumericTextInput,
 } from '@openmsupply-client/common';
 import { ItemFragment } from '../../api';
+import { LocationTypeInput } from '../../Components';
 
 interface GeneralTabProps {
   item: ItemFragment;
@@ -107,6 +108,19 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
         style={{ maxWidth: 500 }}
         gap={4}
       >
+        <DetailSection title={t('title.storage')}>
+          <DetailInputWithLabelRow
+            label={t('label.location-type')}
+            Input={
+              <LocationTypeInput
+                onChange={locationType => locationType}
+                value={item.restrictedLocationType ?? null}
+                disabled={isDisabled}
+                fullWidth
+              />
+            }
+          />
+        </DetailSection>
         <DetailSection title={t('title.packaging')}>
           <DetailInputWithLabelRow
             label={t('label.default-pack-size')}

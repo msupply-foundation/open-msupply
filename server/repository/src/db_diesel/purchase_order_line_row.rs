@@ -4,7 +4,7 @@ use crate::{db_diesel::item_link_row::item_link, Upsert};
 
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
-use diesel::prelude::*;
+use diesel::{dsl::max, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
@@ -134,6 +134,17 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         let result = purchase_order_line::table
             .filter(purchase_order_line::purchase_order_id.eq_any(purchase_order_ids))
             .load::<PurchaseOrderLineRow>(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_max_purchase_order_line_number(
+        &self,
+        purchase_order_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = purchase_order_line::table
+            .filter(purchase_order_line::purchase_order_id.eq(purchase_order_id))
+            .select(max(purchase_order_line::line_number))
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 }

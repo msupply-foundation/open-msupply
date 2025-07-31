@@ -1,4 +1,4 @@
-use repository::{ChangelogTableName, ColdStorageTypeRow, StorageConnection, SyncBufferRow};
+use repository::{ChangelogTableName, LocationTypeRow, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};
@@ -17,12 +17,11 @@ pub struct LegacyLocationTypeRow {
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(ColdStorageTypeTranslation)
+    Box::new(LocationTypeTranslation)
 }
 
-/// Translates between the legacy LocationTypeRow and the new ColdStorageTypeRow
-pub(super) struct ColdStorageTypeTranslation;
-impl SyncTranslation for ColdStorageTypeTranslation {
+pub(super) struct LocationTypeTranslation;
+impl SyncTranslation for LocationTypeTranslation {
     fn table_name(&self) -> &str {
         "Location_type"
     }
@@ -47,7 +46,7 @@ impl SyncTranslation for ColdStorageTypeTranslation {
             temperature_max,
         } = serde_json::from_str::<LegacyLocationTypeRow>(&sync_record.data)?;
 
-        let result = ColdStorageTypeRow {
+        let result = LocationTypeRow {
             id,
             name: description,
             min_temperature: temperature_min,
@@ -64,12 +63,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn cold_storage_type_translation() {
-        use crate::sync::test::test_data::cold_storage_type as test_data;
-        let translator = ColdStorageTypeTranslation {};
+    async fn location_type_translation() {
+        use crate::sync::test::test_data::location_type as test_data;
+        let translator = LocationTypeTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("cold_storage_type_translation", MockDataInserts::none()).await;
+            setup_all("location_type_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
