@@ -248,6 +248,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut clinician_store_join::test_push_records());
     test_records.append(&mut purchase_order::test_push_records());
     test_records.append(&mut purchase_order_line::test_push_records());
+    test_records.append(&mut goods_received::test_push_records());
 
     test_records
 }

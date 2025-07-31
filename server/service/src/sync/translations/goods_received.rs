@@ -8,7 +8,10 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option;
 
-use crate::sync::translations::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use crate::sync::translations::{
+    invoice::InvoiceTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
+};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub enum LegacyGoodsReceivedStatus {
@@ -70,7 +73,10 @@ impl SyncTranslation for GoodsReceivedTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
+        vec![
+            PurchaseOrderTranslation.table_name(),
+            InvoiceTranslation.table_name(),
+        ]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
