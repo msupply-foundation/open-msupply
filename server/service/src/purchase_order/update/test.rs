@@ -15,6 +15,7 @@ mod update {
             update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
         },
         service_provider::ServiceProvider,
+        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -131,7 +132,9 @@ mod update {
                     supplier_discount_percentage: Some(discount_percentage),
                     comment: Some("Updated comment".to_string()),
                     status: Some(PurchaseOrderStatus::Confirmed),
-                    received_at_port_date: Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap()),
+                    received_at_port_date: Some(NullableUpdate {
+                        value: Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap()),
+                    }),
                     ..Default::default()
                 },
             )
