@@ -5,12 +5,12 @@ import {
   DetailPanelSection,
   PanelRow,
   PanelLabel,
-  UpdatePurchaseOrderInput,
   DateTimePickerInput,
   DateUtils,
   Formatter,
 } from '@openmsupply-client/common';
 import { PurchaseOrderFragment } from '../../api';
+import { UpdatePurchaseOrderInput } from '../../api/hooks/usePurchaseOrder';
 
 interface DateSectionProps {
   data?: PurchaseOrderFragment;

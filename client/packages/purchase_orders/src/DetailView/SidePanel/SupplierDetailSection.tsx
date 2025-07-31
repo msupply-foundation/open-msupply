@@ -7,10 +7,10 @@ import {
   PanelLabel,
   NumericTextInput,
   useDebounceCallback,
-  UpdatePurchaseOrderInput,
 } from '@openmsupply-client/common';
 import { CurrencyAutocomplete } from '@openmsupply-client/system';
 import { PurchaseOrderFragment } from '../../api';
+import { UpdatePurchaseOrderInput } from '../../api/hooks/usePurchaseOrder';
 
 const slotProps = {
   input: {
@@ -111,6 +111,7 @@ export const SupplierDetailSection = ({
                 foreignExchangeRate: value,
               });
             }}
+            decimalLimit={4}
             slotProps={slotProps}
           />
         </PanelRow>

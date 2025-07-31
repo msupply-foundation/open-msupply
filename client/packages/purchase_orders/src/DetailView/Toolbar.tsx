@@ -11,6 +11,8 @@ import {
   DateTimePickerInput,
   DateUtils,
   Formatter,
+  UpdatePurchaseOrderInput,
+  useNotification,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
@@ -24,6 +26,7 @@ interface ToolbarProps {
 
 export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
+  const { error } = useNotification();
   const {
     query: { data, isLoading },
     lines: { itemFilter, setItemFilter },
@@ -34,7 +37,19 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     DateUtils.getDateOrNull(data?.requestedDeliveryDate)
   );
 
-  const handleDebouncedUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
+  const handleUpdate = (input: Partial<UpdatePurchaseOrderInput>) => {
+    try {
+      update(input);
+    } catch (e) {
+      error(t('messages.error-saving-purchase-order'))();
+    }
+  };
+
+  const handleDebouncedUpdate = useDebounceCallback(
+    handleUpdate,
+    [],
+    DEBOUNCED_TIME
+  );
 
   return (
     <AppBarContentPortal
@@ -56,7 +71,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   value={(data?.supplier as NameFragment) ?? null}
                   onChange={supplier => {
                     if (!supplier) return;
-                    update({ supplierId: supplier?.id });
+                    handleUpdate({ supplierId: supplier?.id });
                   }}
                 />
               }
@@ -86,7 +101,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                 onChange={date => {
                   setRequestedDeliveryDate(date);
                   const formattedDate = Formatter.naiveDate(date);
-                  update({
+                  handleUpdate({
                     requestedDeliveryDate: formattedDate,
                   });
                 }}

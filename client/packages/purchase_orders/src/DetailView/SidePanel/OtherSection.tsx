@@ -3,13 +3,13 @@ import {
   Grid,
   useTranslation,
   DetailPanelSection,
-  UpdatePurchaseOrderInput,
   PanelRow,
   PanelLabel,
   BufferedTextArea,
 } from '@openmsupply-client/common';
 import { DonorSearchInput } from '@openmsupply-client/system/src';
 import { PurchaseOrderFragment } from '../../api';
+import { UpdatePurchaseOrderInput } from '../../api/hooks/usePurchaseOrder';
 
 // TODO: ShippingMethod have its own table. Need to migrate over before implementing this
 
@@ -25,7 +25,7 @@ export const OtherSection = ({
   const t = useTranslation();
 
   return (
-    <DetailPanelSection title={t('label.other')}>
+    <DetailPanelSection title={t('heading.other')}>
       <Grid container gap={1} key="other-section">
         <PanelRow
           sx={{
