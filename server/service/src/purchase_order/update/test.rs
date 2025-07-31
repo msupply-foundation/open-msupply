@@ -77,7 +77,9 @@ mod update {
                 store_id,
                 UpdatePurchaseOrderInput {
                     id: "purchase_order_id".to_string(),
-                    donor_link_id: Some("non_existent_donor".to_string()),
+                    donor_id: Some(NullableUpdate {
+                        value: Some("non_existent_donor".to_string())
+                    }),
                     ..Default::default()
                 }
             ),
