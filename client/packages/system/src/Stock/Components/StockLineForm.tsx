@@ -353,6 +353,19 @@ export const StockLineForm = ({
               />
             }
           />
+          {!packEditable && (
+            <StyledInputRow
+              label={t('label.total-volume')}
+              Input={
+                <NumericTextInput
+                  autoFocus
+                  disabled
+                  width={160}
+                  value={draft.totalVolume ?? 0}
+                />
+              }
+            />
+          )}
           <TextWithLabelRow
             label={t('label.supplier')}
             text={String(supplierName)}
