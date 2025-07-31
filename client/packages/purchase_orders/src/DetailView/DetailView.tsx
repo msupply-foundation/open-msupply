@@ -22,14 +22,14 @@ import { Footer } from './Footer';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
 
 export const DetailViewInner = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+
   const {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
   } = usePurchaseOrder();
-
-  const t = useTranslation();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const navigate = useNavigate();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
@@ -65,18 +65,14 @@ export const DetailViewInner = () => {
       {data ? (
         <>
           <AppBarButtons isDisabled={isDisabled} onAddItem={onAddItem} />
-
           <Toolbar isDisabled={isDisabled} />
-
           <ContentArea
             lines={sortedAndFilteredLines}
             isDisabled={isDisabled}
             onAddItem={onOpen}
             onRowClick={!isDisabled ? onRowClick : null}
           />
-
           <Footer />
-
           {isOpen && (
             <PurchaseOrderLineEditModal
               isOpen={isOpen}
