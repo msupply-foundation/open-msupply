@@ -39,6 +39,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.custom_translations)
     }
 
+    pub async fn sync_records_display_threshold(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.sync_records_display_threshold)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -111,6 +115,7 @@ pub enum PreferenceKey {
     ShowContactTracing,
     UseCampaigns,
     CustomTranslations,
+    SyncRecordsDisplayThreshold,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -128,6 +133,7 @@ impl PreferenceKey {
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
             PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
+            PrefKey::SyncRecordsDisplayThreshold => PreferenceKey::SyncRecordsDisplayThreshold,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,

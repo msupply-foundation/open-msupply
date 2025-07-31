@@ -45,12 +45,7 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      inputSx={{
-        '& > .MuiBox-root': {
-          flexBasis: '90%',
-          width: '100%',
-        },
-      }}
+      inputSx={{ width: '1px' }} // hack so widths honour flexBasis
       label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"
