@@ -1459,6 +1459,7 @@
   "messages.allocated-lines_one": "Allocated {{count}} line",
   "messages.allocated-lines_other": "Allocated {{count}} lines",
   "messages.asset-saved": "Asset saved 🥳",
+  "messages.auto-allocated-lines": "Placeholder quantity has been auto-allocated.",
   "messages.breach-ongoing": "This breach is ongoing and cannot be acknowledged until it has ended.",
   "messages.bundled-item-saved": "Bundled item saved successfully",
   "messages.by-user": "by {{username}}",
