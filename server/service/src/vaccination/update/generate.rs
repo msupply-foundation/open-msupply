@@ -108,14 +108,13 @@ fn generate_not_given(
 
     let cancel_prescription = if update_transactions {
         existing_prescription.map(|p| CancelPrescription {
-            prescription_id: p.prescription_line.invoice_line_row.id.clone(),
+            prescription_id: p.prescription_line.invoice_row.id.clone(),
         })
     } else {
         None
     };
 
     // clear given status, item/transaction ids, apply reason
-
     let vaccination = VaccinationRow {
         given: false,
         given_store_id: None,
