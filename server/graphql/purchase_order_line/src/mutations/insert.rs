@@ -18,8 +18,6 @@ pub struct InsertInput {
     pub id: String,
     pub purchase_order_id: String,
     pub item_id: String,
-    pub requested_pack_size: Option<f64>,
-    pub requested_number_of_units: Option<f64>,
 }
 
 impl InsertInput {
@@ -28,16 +26,12 @@ impl InsertInput {
             id,
             purchase_order_id,
             item_id,
-            requested_pack_size,
-            requested_number_of_units,
         } = self;
 
         ServiceInput {
             id,
             purchase_order_id,
             item_id,
-            requested_pack_size,
-            requested_number_of_units,
         }
     }
 }

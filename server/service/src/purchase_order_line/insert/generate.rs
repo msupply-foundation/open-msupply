@@ -21,8 +21,6 @@ pub fn generate(
         purchase_order_id: input.purchase_order_id,
         line_number,
         item_link_id: input.item_id,
-        requested_pack_size: input.requested_pack_size.unwrap_or_default(),
-        requested_number_of_units: input.requested_number_of_units.unwrap_or_default(),
         ..Default::default()
     })
 }
