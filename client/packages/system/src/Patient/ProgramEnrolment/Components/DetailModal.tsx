@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   BasicSpinner,
   Box,
@@ -48,11 +48,17 @@ const useUpsertProgramEnrolment = (
         });
 };
 
-export const ProgramDetailModal: FC = () => {
+export const ProgramDetailModal = ({
+  patientId: inputPatientId,
+}: {
+  patientId?: string;
+}) => {
   const t = useTranslation();
-  const patientId = usePatient.utils.id();
 
   const { current, document, reset } = usePatientModalStore();
+
+  const patientId = usePatient.utils.id() || inputPatientId || '';
+
   const handleSave = useUpsertProgramEnrolment(patientId, document?.type || '');
 
   const dataAccessor = useDocumentDataAccessor(
