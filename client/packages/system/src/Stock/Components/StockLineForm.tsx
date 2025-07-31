@@ -291,23 +291,20 @@ export const StockLineForm = ({
                   itemId={draft.itemId}
                   selectedId={draft?.itemVariant?.id}
                   width={160}
+                  disabled={!packEditable}
                   onChange={variant => {
-                    if (packEditable) {
-                      const packaging = variant?.packagingVariants.find(
-                        p => p.packSize === draft.packSize
-                      );
-                      const volumePerPack =
-                        (packaging?.volumePerUnit ?? 0) *
-                        1000 *
-                        (draft?.packSize ?? 1);
+                    const packaging = variant?.packagingVariants.find(
+                      p => p.packSize === draft.packSize
+                    );
+                    const volumePerPack =
+                      (packaging?.volumePerUnit ?? 0) *
+                      1000 *
+                      (draft?.packSize ?? 1);
 
-                      onUpdate({
-                        itemVariant: variant,
-                        volumePerPack,
-                      });
-                    } else {
-                      onUpdate({ itemVariant: variant });
-                    }
+                    onUpdate({
+                      itemVariant: variant,
+                      volumePerPack,
+                    });
                   }}
                 />
               }
