@@ -29,6 +29,7 @@ export const ItemVariantInputCell = <T extends RecordWithId>({
       selectedId={selectedId}
       itemId={itemId}
       onChange={onVariantSelected}
+      width={column.width}
     />
   );
 };

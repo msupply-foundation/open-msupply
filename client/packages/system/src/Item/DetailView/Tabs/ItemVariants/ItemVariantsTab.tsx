@@ -2,10 +2,8 @@ import React from 'react';
 
 import {
   AppBarButtonsPortal,
-  BasicTextInput,
   ButtonWithIcon,
   FlatButton,
-  InputWithLabelRow,
   NothingHere,
   Tooltip,
   Typography,
@@ -18,7 +16,6 @@ import {
   DeleteIcon,
   useEditModal,
 } from '@openmsupply-client/common';
-import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import {
   ItemRowFragment,
   ItemVariantFragment,
@@ -26,6 +23,7 @@ import {
 } from '../../../api';
 import { ItemVariantModal } from './ItemVariantModal';
 import { BundledItemVariants } from './BundledItemVariants';
+import { ItemVariantForm } from './ItemVariantForm';
 
 export const ItemVariantsTab = ({
   item,
@@ -84,16 +82,14 @@ const ItemVariant = ({
   const t = useTranslation();
   const confirmAndDelete = useDeleteItemVariant({ itemId });
 
-  const locationValue = variant.locationType
-    ? t('label.location-temperature-range', {
-        locationName: variant.locationType.name,
-        minTemperature: variant.locationType.minTemperature,
-        maxTemperature: variant.locationType.maxTemperature,
-      })
-    : '';
-
   return (
-    <Box maxWidth="1000px" margin="25px auto" paddingBottom={6}>
+    <Box
+      maxWidth="1000px"
+      margin="25px auto"
+      paddingBottom={6}
+      display="grid"
+      gap={3}
+    >
       <Box display="flex" justifyContent="space-between" alignItems="end">
         <Tooltip title={variant?.name ?? ''}>
           <Typography
@@ -126,55 +122,7 @@ const ItemVariant = ({
         </Box>
       </Box>
 
-      <Box
-        justifyContent="center"
-        display="flex"
-        gap={2}
-        alignItems={'center'}
-        marginBottom={3}
-      >
-        <Box display="flex" flexDirection="column" gap={1} flex={1}>
-          <InputWithLabelRow
-            label={t('label.name')}
-            labelWidth="200"
-            Input={<BasicTextInput value={variant.name} disabled fullWidth />}
-          />
-
-          <InputWithLabelRow
-            label={t('label.location-type')}
-            labelWidth="200"
-            Input={<BasicTextInput value={locationValue} disabled fullWidth />}
-          />
-          <InputWithLabelRow
-            label={t('label.manufacturer')}
-            labelWidth="200"
-            Input={
-              <BasicTextInput
-                value={variant.manufacturer?.name ?? ''}
-                disabled
-                fullWidth
-              />
-            }
-          />
-          {variant.item?.isVaccine && (
-            <InputWithLabelRow
-              label={t('label.vvm-type')}
-              labelWidth="200"
-              Input={
-                <BasicTextInput
-                  value={variant.vvmType ?? ''}
-                  disabled
-                  fullWidth
-                />
-              }
-            />
-          )}
-        </Box>
-        <Box flex={1}>
-          <Typography fontWeight="bold">{t('title.packaging')}</Typography>
-          <ItemPackagingVariantsTable data={variant.packagingVariants} />
-        </Box>
-      </Box>
+      <ItemVariantForm variant={variant} />
       <BundledItemVariants variant={variant} />
     </Box>
   );

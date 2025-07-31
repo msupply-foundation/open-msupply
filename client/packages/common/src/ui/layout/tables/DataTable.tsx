@@ -119,6 +119,7 @@ const DataTableComponent = <T extends RecordWithId>({
   columns,
   data = [],
   dense = false,
+  headerSx,
   enableColumnSelection,
   generateRowTooltip,
   isDisabled = false,
@@ -236,7 +237,7 @@ const DataTableComponent = <T extends RecordWithId>({
             boxShadow: dense ? null : theme => theme.shadows[2],
           }}
         >
-          <HeaderRow dense={dense}>
+          <HeaderRow dense={dense} sx={headerSx}>
             {columnsToDisplay.map(column => (
               <HeaderCell
                 dense={dense}
