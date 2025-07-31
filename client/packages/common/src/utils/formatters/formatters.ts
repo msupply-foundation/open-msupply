@@ -12,6 +12,10 @@ export const Formatter = {
     if (date && isValid(date)) return format(date, 'yyyy-MM-dd');
     else return null;
   },
+  naiveDateTime: (date?: Date | null): string | null => {
+    if (date && isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
+    else return null;
+  },
   toIsoString: (date?: Date | null): string | null => {
     if (date && isValid(date)) return date.toISOString();
     else return null;
@@ -55,9 +59,5 @@ export const Formatter = {
       .toLowerCase()
       .trim();
     return _str.substring(0, 1).toUpperCase() + _str.substring(1);
-  },
-  isoNoMs: (date?: Date | null): string | null => {
-    if (date && isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
-    else return null;
   },
 };

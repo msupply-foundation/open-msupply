@@ -21,7 +21,7 @@ export type UpdatePurchaseOrderInput = {
   confirmedDatetime?: string | null;
   contractSignedDate?: string | null;
   currencyId?: string | null;
-  donorLinkId?: string | null;
+  donorId?: string | null;
   foreignExchangeRate?: number | null;
   id: string;
   receivedAtPortDate?: string | null;
@@ -39,7 +39,7 @@ export const usePurchaseOrder = (id?: string) => {
 
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
-  const queryKey = [LIST, PURCHASE_ORDER, storeId, purchaseOrderId];
+  const queryKey = [PURCHASE_ORDER, LIST, storeId, purchaseOrderId];
 
   // QUERY
   const queryFn = async (): Promise<PurchaseOrderFragment | undefined> => {
@@ -123,6 +123,7 @@ const useUpdate = () => {
     return await purchaseOrderApi.updatePurchaseOrder({
       input: {
         ...input,
+        donorId: setNullableInput('donorId', input),
         confirmedDatetime: setNullableInput('confirmedDatetime', input),
         contractSignedDate: setNullableInput('contractSignedDate', input),
         advancePaidDate: setNullableInput('advancePaidDate', input),
@@ -136,7 +137,7 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([LIST, PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   });
 };
 

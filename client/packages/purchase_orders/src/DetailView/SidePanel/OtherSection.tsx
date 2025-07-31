@@ -37,7 +37,7 @@ export const OtherSection = ({
           <PanelLabel>{t('label.donor')}</PanelLabel>
           <DonorSearchInput
             donorId={data?.donor?.id ?? null}
-            onChange={donor => onUpdate({ donorLinkId: donor?.id })}
+            onChange={donor => onUpdate({ donorId: donor?.id })}
           />
         </PanelRow>
         {/* <PanelRow>

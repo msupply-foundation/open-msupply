@@ -9847,7 +9847,7 @@ export type UpdatePurchaseOrderInput = {
   confirmedDatetime?: InputMaybe<NullableDatetimeUpdate>;
   contractSignedDate?: InputMaybe<NullableDateUpdate>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
-  donorLinkId?: InputMaybe<Scalars['String']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   foreignExchangeRate?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
   receivedAtPortDate?: InputMaybe<NullableDateUpdate>;

@@ -74,6 +74,16 @@ export const DateField = ({
   disabled = false,
   type = 'date',
 }: DateFieldProps): ReactElement => {
+  const formatDateValue = (date: Date | null, type: 'date' | 'datetime') => {
+    if (!date) return null;
+    if (type === 'datetime') return Formatter.naiveDateTime(date);
+    return Formatter.naiveDate(date);
+  };
+
+  const handleChange = (date: Date | null) => {
+    onChange(formatDateValue(date, type));
+  };
+
   return (
     <PanelRow>
       <PanelLabel>{label}</PanelLabel>
@@ -81,15 +91,7 @@ export const DateField = ({
         disabled={disabled}
         value={DateUtils.getDateOrNull(value)}
         format="P"
-        onChange={date => {
-          const formatted =
-            date && type === 'datetime'
-              ? Formatter.isoNoMs(date)
-              : date
-                ? Formatter.naiveDate(date)
-                : null;
-          onChange(formatted);
-        }}
+        onChange={handleChange}
         sx={{ flex: 2 }}
         textFieldSx={{
           backgroundColor: 'white',

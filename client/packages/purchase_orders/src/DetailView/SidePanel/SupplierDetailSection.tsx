@@ -98,6 +98,7 @@ export const SupplierDetailSection = ({
                 backgroundColor: 'white',
               },
             }}
+            disabled={!!data?.confirmedDatetime}
           />
         </PanelRow>
         <PanelRow>
@@ -113,6 +114,7 @@ export const SupplierDetailSection = ({
             }}
             decimalLimit={4}
             slotProps={slotProps}
+            disabled={!!data?.confirmedDatetime}
           />
         </PanelRow>
       </Grid>
