@@ -13,6 +13,7 @@ import {
   useIntlUtils,
   BasicSpinner,
   Divider,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import {
@@ -48,6 +49,8 @@ export const Allocation = ({
   scannedBatch,
   prefOptions: { sortByVvmStatus, manageVaccinesInDoses },
 }: AllocationProps) => {
+  const t = useTranslation();
+  const { format } = useFormatNumber();
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
     item,
@@ -76,19 +79,24 @@ export const Allocation = ({
             }
           : undefined;
 
-      initialise({
-        itemData: data,
-        strategy: sortByVvmStatus
-          ? AllocationStrategy.VVMStatus
-          : AllocationStrategy.FEFO,
-        allowPlaceholder,
-        scannedBatch,
-        // Default to allocate in doses for vaccines if pref is on
-        allocateIn:
-          manageVaccinesInDoses && data.item.isVaccine
-            ? { type: AllocateInType.Doses }
-            : allocateInPacksize,
-      });
+      initialise(
+        {
+          itemData: data,
+          strategy: sortByVvmStatus
+            ? AllocationStrategy.VVMStatus
+            : AllocationStrategy.FEFO,
+          allowPlaceholder,
+          scannedBatch,
+          // Default to allocate in doses for vaccines if pref is on
+
+          allocateIn:
+            manageVaccinesInDoses && data.item.isVaccine
+              ? { type: AllocateInType.Doses }
+              : allocateInPacksize,
+        },
+        format,
+        t
+      );
     });
     // Expect dependencies to be stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
