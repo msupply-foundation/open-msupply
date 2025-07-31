@@ -50,7 +50,7 @@ pub fn generate(
         StockInType::InventoryAddition => false,
         // For customer returns, we only want to overwrite stock levels if the stock line does't already exist
         StockInType::CustomerReturn => old_stock_line.is_none(),
-        // For inbound shipments, we always create a new stock line, never update an existing one, so shouldn't overwrite stock levels based on the invoice when adding stock
+        // For inbound shipments, we always create a new stock line, never update an existing one, so should overwrite stock levels based on the invoice when adding stock
         StockInType::InboundShipment => true,
     };
 
