@@ -12,7 +12,7 @@ use crate::{
 };
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineType,
-    InvoiceRow, ItemRow, RepositoryError, StockLineRow, StorageConnection,
+    InvoiceRow, ItemRow, RepositoryError, StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
 use super::InsertStockInLine;
@@ -36,11 +36,20 @@ pub fn generate(
 
     let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone()); // include vvm status here
 
+    // Check if the stock line already exists, if it does we may need to update it rather than replacing it
+    let old_stock_line = match &input.stock_line_id {
+        Some(stock_line_id) => {
+            StockLineRowRepository::new(&connection).find_one_by_id(stock_line_id)?
+        }
+        None => None,
+    };
+
     let should_overwrite_stock_levels = match &input.r#type {
         // Even though we're `inserting` here, if a stock line already exists, we want to add to the existing quantity rather than replace it.
-        // for inventory adjustments and customer returns, the invoice only records the new additional stock to add to the stock line
+        // for inventory adjustments and customer returns
         StockInType::InventoryAddition => false,
-        StockInType::CustomerReturn => false,
+        // For customer returns, we only want to overwrite stock levels if the stock line does't already exist
+        StockInType::CustomerReturn => old_stock_line.is_none(),
         // For inbound shipments, we always create a new stock line, never update an existing one, so shouldn't overwrite stock levels based on the invoice when adding stock
         StockInType::InboundShipment => true,
     };
