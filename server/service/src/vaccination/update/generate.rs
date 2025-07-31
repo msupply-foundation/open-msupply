@@ -1,14 +1,7 @@
-use repository::{InvoiceLine, StockLineRow, VaccinationRow};
-use util::uuid::uuid;
+use repository::VaccinationRow;
 
 use crate::{
-    invoice::customer_return::{
-        insert::InsertCustomerReturn, CustomerReturnLineInput, UpdateCustomerReturn,
-        UpdateCustomerReturnStatus,
-    },
-    vaccination::generate::{
-        generate_create_prescription, get_dose_as_number_of_packs, CreatePrescription,
-    },
+    vaccination::generate::{generate_create_prescription, CreatePrescription},
     NullableUpdate,
 };
 
@@ -18,14 +11,13 @@ use super::{
 };
 
 #[derive(Debug)]
-pub struct CreateCustomerReturn {
-    pub create_return: InsertCustomerReturn,
-    pub finalise_return: UpdateCustomerReturn,
+pub struct CancelPrescription {
+    pub prescription_id: String,
 }
 
 pub struct GenerateResult {
     pub vaccination: VaccinationRow,
-    pub create_customer_return: Option<CreateCustomerReturn>,
+    pub cancel_prescription: Option<CancelPrescription>,
     pub create_prescription: Option<CreatePrescription>,
 }
 
@@ -94,14 +86,13 @@ fn generate_given(
     GenerateResult {
         vaccination,
         create_prescription,
-        create_customer_return: None,
+        cancel_prescription: None,
     }
 }
 
 fn generate_not_given(
     ChangeToNotGiven {
         existing_vaccination,
-        patient_id,
         existing_prescription,
     }: ChangeToNotGiven,
     update_input: UpdateVaccination,
@@ -115,9 +106,10 @@ fn generate_not_given(
 
     let vaccination = get_vaccination_with_updated_base_fields(existing_vaccination, update_input);
 
-    let create_customer_return = if update_transactions {
-        existing_prescription
-            .map(|p| generate_customer_return(p.prescription_line, p.stock_line_row, patient_id))
+    let cancel_prescription = if update_transactions {
+        existing_prescription.map(|p| CancelPrescription {
+            prescription_id: p.prescription_line.invoice_line_row.id.clone(),
+        })
     } else {
         None
     };
@@ -138,8 +130,8 @@ fn generate_not_given(
 
     GenerateResult {
         vaccination,
-        create_customer_return,
         create_prescription: None,
+        cancel_prescription,
     }
 }
 
@@ -164,9 +156,9 @@ fn generate_change_stock_line(
 
     let vaccination = get_vaccination_with_updated_base_fields(existing_vaccination, update_input);
 
-    let create_customer_return = if update_transactions {
-        existing_prescription.map(|p| {
-            generate_customer_return(p.prescription_line, p.stock_line_row, patient_id.clone())
+    let cancel_prescription = if update_transactions {
+        existing_prescription.map(|p| CancelPrescription {
+            prescription_id: p.prescription_line.invoice_row.id.clone(),
         })
     } else {
         None
@@ -198,7 +190,7 @@ fn generate_change_stock_line(
     GenerateResult {
         vaccination,
         create_prescription,
-        create_customer_return,
+        cancel_prescription,
     }
 }
 
@@ -210,7 +202,7 @@ fn generate_no_status_change(
 
     GenerateResult {
         vaccination,
-        create_customer_return: None,
+        cancel_prescription: None,
         create_prescription: None,
     }
 }
@@ -282,47 +274,5 @@ fn get_vaccination_with_updated_base_fields(
             Some(NullableUpdate { value }) => value,
             None => item_link_id,
         },
-    }
-}
-
-fn generate_customer_return(
-    prescription_line: InvoiceLine,
-    stock_line_row: StockLineRow,
-    patient_id: String,
-) -> CreateCustomerReturn {
-    let amount = get_dose_as_number_of_packs(&prescription_line.item_row, &stock_line_row);
-
-    let create_return = InsertCustomerReturn {
-        id: uuid(),
-        other_party_id: patient_id.clone(),
-        is_patient_return: true,
-        outbound_shipment_id: None,
-        customer_return_lines: vec![CustomerReturnLineInput {
-            id: uuid(),
-            stock_line_id: Some(stock_line_row.id),
-            item_id: stock_line_row.item_link_id,
-            item_variant_id: stock_line_row.item_variant_id,
-            expiry_date: stock_line_row.expiry_date,
-            batch: stock_line_row.batch,
-            pack_size: stock_line_row.pack_size,
-            number_of_packs: amount,
-            vvm_status_id: stock_line_row.vvm_status_id,
-            reason_id: None,
-            note: None,
-        }],
-    };
-    let finalise_return = UpdateCustomerReturn {
-        id: create_return.id.clone(),
-        status: Some(UpdateCustomerReturnStatus::Verified),
-        comment: Some("Reversed vaccination prescription".to_string()),
-        on_hold: None,
-        colour: None,
-        their_reference: None,
-        other_party_id: None,
-    };
-
-    CreateCustomerReturn {
-        create_return,
-        finalise_return,
     }
 }
