@@ -22,6 +22,7 @@ export type StockLineRowFragment = {
   totalNumberOfPacks: number;
   supplierName?: string | null;
   volumePerPack: number;
+  totalVolume: number;
   barcode?: string | null;
   location?: {
     __typename: 'LocationNode';
@@ -238,6 +239,7 @@ export type StockLinesQuery = {
       totalNumberOfPacks: number;
       supplierName?: string | null;
       volumePerPack: number;
+      totalVolume: number;
       barcode?: string | null;
       location?: {
         __typename: 'LocationNode';
@@ -343,6 +345,7 @@ export type StockLineQuery = {
       totalNumberOfPacks: number;
       supplierName?: string | null;
       volumePerPack: number;
+      totalVolume: number;
       barcode?: string | null;
       location?: {
         __typename: 'LocationNode';
@@ -485,6 +488,7 @@ export type UpdateStockLineMutation = {
         totalNumberOfPacks: number;
         supplierName?: string | null;
         volumePerPack: number;
+        totalVolume: number;
         barcode?: string | null;
         location?: {
           __typename: 'LocationNode';
@@ -785,6 +789,7 @@ export type InsertStockLineMutation = {
         totalNumberOfPacks: number;
         supplierName?: string | null;
         volumePerPack: number;
+        totalVolume: number;
         barcode?: string | null;
         location?: {
           __typename: 'LocationNode';
@@ -950,6 +955,7 @@ export const StockLineRowFragmentDoc = gql`
     totalNumberOfPacks
     supplierName
     volumePerPack
+    totalVolume
     location {
       ...LocationRow
     }

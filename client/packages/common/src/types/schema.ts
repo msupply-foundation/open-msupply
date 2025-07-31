@@ -8579,6 +8579,7 @@ export type StockLineNode = {
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
+  totalVolume: Scalars['Float']['output'];
   volumePerPack: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;

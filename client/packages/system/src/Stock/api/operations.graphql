@@ -15,6 +15,7 @@ fragment StockLineRow on StockLineNode {
   totalNumberOfPacks
   supplierName
   volumePerPack
+  totalVolume
   location {
     ...LocationRow
   }

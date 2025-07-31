@@ -175,6 +175,10 @@ impl StockLineNode {
     pub async fn volume_per_pack(&self) -> f64 {
         self.row().volume_per_pack
     }
+
+    pub async fn total_volume(&self) -> f64 {
+        self.row().total_volume
+    }
 }
 
 #[derive(Union)]
