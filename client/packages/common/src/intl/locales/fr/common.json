@@ -111,6 +111,7 @@
   "button.retry": "Réessayer",
   "button.return-lines": "Retourner les lignes sélectionnées",
   "button.save": "Enregistrer",
+  "button.save-progress": "Enregistrer le progrès",
   "button.save-and-confirm-status": "Confirmer {{status}}",
   "button.save-log": "Enregistrer le journal",
   "button.scan": "Scanner",

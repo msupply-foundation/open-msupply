@@ -110,6 +110,7 @@
   "button.retry": "Retry",
   "button.return-lines": "Return selected lines",
   "button.save": "Save",
+  "button.save-progress": "Save Progress",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "button.save-log": "Save log",
   "button.scan": "Scan",
