@@ -54,7 +54,7 @@ pub use self::version::*;
 
 use crate::{
     run_db_migrations, KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository,
-    RepositoryError, StorageConnection,
+    RepositoryError, StorageConnection, TransactionError,
 };
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
@@ -202,13 +202,19 @@ pub fn migrate(
         // Run one time migrations only if we're on the last version, if we're in a test case checking an old creating migrations might fail
         if migration_version > database_version {
             log::info!("Running one time database migration {}", migration_version);
-            migration
-                .migrate(connection)
-                .map_err(|source| MigrationError::MigrationError {
-                    source,
-                    version: migration_version.clone(),
-                })?;
-            set_database_version(connection, &migration_version)?;
+            // Run migration & version in a transaction
+            connection
+                .transaction_sync(|connection| {
+                    migration.migrate(connection).map_err(|source| {
+                        MigrationError::MigrationError {
+                            source,
+                            version: migration_version.clone(),
+                        }
+                    })?;
+                    set_database_version(connection, &migration_version)?;
+                    Ok(())
+                })
+                .map_err(|err: TransactionError<MigrationError>| err.to_inner_error())?;
         }
 
         // Run fragment migrations (can run on current version)
@@ -217,16 +223,21 @@ pub fn migrate(
                 if migration_fragment_log_repo.has_run(&migration, &fragment)? {
                     continue;
                 }
+                // Run migration fragment in a transaction
+                connection
+                    .transaction_sync(|connection| {
+                        fragment.migrate(connection).map_err(|source| {
+                            MigrationError::FragmentMigrationError {
+                                source,
+                                version: migration_version.clone(),
+                                identifier: fragment.identifier(),
+                            }
+                        })?;
 
-                fragment.migrate(connection).map_err(|source| {
-                    MigrationError::FragmentMigrationError {
-                        source,
-                        version: migration_version.clone(),
-                        identifier: fragment.identifier(),
-                    }
-                })?;
-
-                migration_fragment_log_repo.insert(&migration, &fragment)?;
+                        migration_fragment_log_repo.insert(&migration, &fragment)?;
+                        Ok(())
+                    })
+                    .map_err(|err: TransactionError<MigrationError>| err.to_inner_error())?;
             }
         }
     }
