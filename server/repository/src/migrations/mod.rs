@@ -214,7 +214,7 @@ pub fn migrate(
         // Run fragment migrations (can run on current version)
         if migration_version >= database_version {
             for fragment in migration.migrate_fragments() {
-                if migration_fragment_log_repo.has_run(&migration, &fragment)? {
+                if migration_fragment_log_repo.has_run(migration, &fragment)? {
                     continue;
                 }
 
@@ -226,7 +226,7 @@ pub fn migrate(
                     }
                 })?;
 
-                migration_fragment_log_repo.insert(&migration, &fragment)?;
+                migration_fragment_log_repo.insert(migration, &fragment)?;
             }
         }
     }
