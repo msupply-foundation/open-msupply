@@ -17,6 +17,13 @@ export type RnRFormFragment = {
   status: Types.RnRFormNodeStatus;
   theirReference?: string | null;
   comment?: string | null;
+  period: {
+    __typename: 'PeriodNode';
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  };
 };
 
 export type RnRFormLineFragment = {
@@ -105,6 +112,13 @@ export type RnrFormsQuery = {
       status: Types.RnRFormNodeStatus;
       theirReference?: string | null;
       comment?: string | null;
+      period: {
+        __typename: 'PeriodNode';
+        id: string;
+        name: string;
+        startDate: string;
+        endDate: string;
+      };
     }>;
   };
 };
@@ -197,6 +211,13 @@ export type RAndRFormDetailQuery = {
             venCategory: Types.VenCategoryType;
           };
         }>;
+        period: {
+          __typename: 'PeriodNode';
+          id: string;
+          name: string;
+          startDate: string;
+          endDate: string;
+        };
       };
 };
 
@@ -221,6 +242,13 @@ export type CreateRnRFormMutation = {
     status: Types.RnRFormNodeStatus;
     theirReference?: string | null;
     comment?: string | null;
+    period: {
+      __typename: 'PeriodNode';
+      id: string;
+      name: string;
+      startDate: string;
+      endDate: string;
+    };
   };
 };
 
@@ -245,6 +273,13 @@ export type UpdateRnRFormMutation = {
     status: Types.RnRFormNodeStatus;
     theirReference?: string | null;
     comment?: string | null;
+    period: {
+      __typename: 'PeriodNode';
+      id: string;
+      name: string;
+      startDate: string;
+      endDate: string;
+    };
   };
 };
 
@@ -269,7 +304,32 @@ export type FinaliseRnRFormMutation = {
     status: Types.RnRFormNodeStatus;
     theirReference?: string | null;
     comment?: string | null;
+    period: {
+      __typename: 'PeriodNode';
+      id: string;
+      name: string;
+      startDate: string;
+      endDate: string;
+    };
   };
+};
+
+export const PeriodFragmentDoc = gql`
+  fragment Period on PeriodNode {
+    id
+    name
+    startDate
+    endDate
+  }
+`;
+export type DeleteRnRFormMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.DeleteRnRFormInput;
+}>;
+
+export type DeleteRnRFormMutation = {
+  __typename: 'Mutations';
+  deleteRnrForm: { __typename: 'DeleteResponse'; id: string };
 };
 
 export const RnRFormFragmentDoc = gql`
@@ -279,6 +339,9 @@ export const RnRFormFragmentDoc = gql`
     periodId
     periodName
     periodLength
+    period {
+      ...Period
+    }
     programId
     programName
     supplierName
@@ -287,6 +350,7 @@ export const RnRFormFragmentDoc = gql`
     theirReference
     comment
   }
+  ${PeriodFragmentDoc}
 `;
 export const RnRFormLineFragmentDoc = gql`
   fragment RnRFormLine on RnRFormLineNode {
@@ -317,14 +381,6 @@ export const RnRFormLineFragmentDoc = gql`
       strength
       venCategory
     }
-  }
-`;
-export const PeriodFragmentDoc = gql`
-  fragment Period on PeriodNode {
-    id
-    name
-    startDate
-    endDate
   }
 `;
 export const PeriodScheduleFragmentDoc = gql`
@@ -439,6 +495,16 @@ export const FinaliseRnRFormDocument = gql`
   }
   ${RnRFormFragmentDoc}
 `;
+export const DeleteRnRFormDocument = gql`
+  mutation deleteRnRForm($storeId: String!, $input: DeleteRnRFormInput!) {
+    deleteRnrForm(storeId: $storeId, input: $input) {
+      ... on DeleteResponse {
+        __typename
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -550,6 +616,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'finaliseRnRForm',
+        'mutation',
+        variables
+      );
+    },
+    deleteRnRForm(
+      variables: DeleteRnRFormMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeleteRnRFormMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteRnRFormMutation>(
+            DeleteRnRFormDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deleteRnRForm',
         'mutation',
         variables
       );

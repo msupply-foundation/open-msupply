@@ -1,18 +1,20 @@
+use super::StockOutType;
 use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
-    invoice_line::query::get_invoice_line,
+    invoice_line::{query::get_invoice_line, stock_out_line::insert::generate::GenerateResult},
     service_provider::ServiceContext,
     WithDBError,
 };
 use chrono::NaiveDate;
-use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
+use repository::{
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
+    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
+};
 
 mod generate;
 use generate::generate;
 mod validate;
 use validate::validate;
-
-use super::StockOutType;
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct InsertStockOutLine {
@@ -32,6 +34,7 @@ pub struct InsertStockOutLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub campaign_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -51,6 +54,7 @@ pub enum InsertStockOutLineError {
     NewlyCreatedLineDoesNotExist,
     BatchIsOnHold,
     ReductionBelowZero { stock_line_id: String },
+    VVMStatusDoesNotExist,
 }
 
 impl From<RepositoryError> for InsertStockOutLineError {
@@ -82,10 +86,17 @@ pub fn insert_stock_out_line(
         .transaction_sync(|connection| {
             let (item, invoice, batch, adjusted_input) =
                 validate(connection, input, &ctx.store_id)?;
-            let (new_line, update_batch) =
-                generate(ctx, adjusted_input, item, batch, invoice.clone())?;
+            let GenerateResult {
+                new_line,
+                update_batch,
+                vvm_status_log_option,
+            } = generate(ctx, adjusted_input, item, batch, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(connection).upsert_one(&update_batch)?;
+
+            if let Some(vvm_status_log) = vvm_status_log_option {
+                VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
+            }
 
             update_picked_date(ctx, &invoice).map_err(|e| match e {
                 UpdatePickedDateError::AutoPickFailed(msg) => OutError::AutoPickFailed(msg),

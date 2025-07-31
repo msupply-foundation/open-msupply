@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useDialog,
   Grid,
@@ -12,27 +12,40 @@ import {
   SchedulePeriodNode,
   RnRFormNodeStatus,
   Typography,
+  LoadingButton,
+  CheckIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { ProgramSearchInput } from '@openmsupply-client/programs';
-import { useCreateRnRForm, useSchedulesAndPeriods } from '../api';
+import {
+  RnRFormFragment,
+  useCreateRnRForm,
+  useSchedulesAndPeriods,
+} from '../api';
 
 interface RnRFormCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
+export const RnRFormCreateModal = ({
   isOpen,
   onClose,
-}) => {
+}: RnRFormCreateModalProps) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation();
   const navigate = useNavigate();
 
-  const { previousForm, draft, updateDraft, clearDraft, create, isIncomplete } =
-    useCreateRnRForm();
+  const {
+    previousForm,
+    draft,
+    updateDraft,
+    clearDraft,
+    create,
+    isLoading,
+    isIncomplete,
+  } = useCreateRnRForm();
 
   const { data: schedulesAndPeriods } = useSchedulesAndPeriods(
     draft.program?.id ?? ''
@@ -55,9 +68,13 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
   return (
     <Modal
       okButton={
-        <DialogButton
-          variant="ok"
+        <LoadingButton
+          label={t('button.ok')}
+          startIcon={<CheckIcon />}
+          isLoading={isLoading}
           disabled={isIncomplete || prevFormNotFinalised}
+          variant="contained"
+          color="secondary"
           onClick={async () => {
             try {
               const result = await create();
@@ -128,7 +145,7 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
               options={draft.schedule?.periods ?? []}
               value={draft.period}
               onChange={period => updateDraft({ period })}
-              previousFormExists={!!previousForm}
+              previousForm={previousForm}
               errorMessage={getPeriodError()}
             />
           }
@@ -155,7 +172,7 @@ const PeriodSelect = ({
   options,
   value,
   errorMessage,
-  previousFormExists = false,
+  previousForm,
   onChange,
 }: {
   width: string;
@@ -163,7 +180,7 @@ const PeriodSelect = ({
   options: SchedulePeriodNode[];
   value: SchedulePeriodNode | null;
   onChange: (period: SchedulePeriodNode) => void;
-  previousFormExists?: boolean;
+  previousForm?: RnRFormFragment | null;
   errorMessage?: string;
 }) => {
   const t = useTranslation();
@@ -180,11 +197,12 @@ const PeriodSelect = ({
       >
         {t('messages.only-closed-periods-visible')}
       </Typography>
+
       <Autocomplete
         width={width}
         disabled={disabled}
         getOptionDisabled={option =>
-          previousFormExists && option.id !== value?.id
+          !!previousForm && option.period.endDate <= previousForm.period.endDate
         }
         getOptionLabel={option => option.period.name}
         options={options}

@@ -11,8 +11,10 @@ import {
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import { ItemVariantFragment, PackagingVariantFragment } from '../../../api';
-import { ManufacturerSearchInput } from '@openmsupply-client/system';
-import { ColdStorageTypeInput } from '../../../Components/ColdStorageTypeInput';
+import {
+  LocationTypeInput,
+  ManufacturerSearchInput,
+} from '@openmsupply-client/system';
 
 export const ItemVariantForm = ({
   variant,
@@ -55,16 +57,16 @@ export const ItemVariantForm = ({
           />
 
           <InputWithLabelRow
-            label={t('label.cold-storage-type')}
+            label={t('label.location-type')}
             labelWidth="200"
             Input={
               <Box width="100%">
-                <ColdStorageTypeInput
-                  value={variant.coldStorageType ?? null}
-                  onChange={coldStorageType => {
+                <LocationTypeInput
+                  value={variant.locationType ?? null}
+                  onChange={locationType => {
                     updateVariant?.({
-                      coldStorageType,
-                      coldStorageTypeId: coldStorageType?.id ?? null,
+                      locationType,
+                      locationTypeId: locationType?.id ?? null,
                     });
                   }}
                   disabled={disabled}

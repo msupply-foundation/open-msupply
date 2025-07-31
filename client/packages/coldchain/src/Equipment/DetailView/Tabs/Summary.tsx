@@ -311,7 +311,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         </Section>
         {(!isCentralServer || draft.storeId == storeId) && (
           <Section heading={t('heading.cold-chain')}>
-            <Row isGaps={isGaps} label={t('label.cold-storage-location')}>
+            <Row isGaps={isGaps} label={t('label.location')}>
               {locations ? (
                 <AutocompleteMulti
                   isOptionEqualToValue={(option, value) =>

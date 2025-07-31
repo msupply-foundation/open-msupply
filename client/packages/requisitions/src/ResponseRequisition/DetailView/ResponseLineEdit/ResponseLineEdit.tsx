@@ -8,7 +8,6 @@ import {
   RequisitionNodeApprovalStatus,
   Typography,
   UserStoreNodeFragment,
-  useFormatNumber,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -62,7 +61,6 @@ export const ResponseLineEdit = ({
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { data: reasonOptions, isLoading } = useReasonOptions();
-  const { round } = useFormatNumber();
 
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
@@ -103,13 +101,13 @@ export const ResponseLineEdit = ({
         {isPacksEnabled && (
           <InfoRow
             label={t('label.default-pack-size')}
-            value={round(currentItem?.defaultPackSize)}
+            value={currentItem?.defaultPackSize}
           />
         )}
         {displayVaccinesInDoses && currentItem?.doses ? (
           <InfoRow
             label={t('label.doses-per-unit')}
-            value={round(currentItem?.doses)}
+            value={currentItem?.doses}
           />
         ) : null}
         {showExtraFields && (
@@ -152,13 +150,13 @@ export const ResponseLineEdit = ({
         {isPacksEnabled && !showExtraFields && (
           <InfoRow
             label={t('label.default-pack-size')}
-            value={round(currentItem?.defaultPackSize)}
+            value={currentItem?.defaultPackSize}
           />
         )}
         {displayVaccinesInDoses && currentItem?.doses && !showExtraFields ? (
           <InfoRow
             label={t('label.doses-per-unit')}
-            value={round(currentItem?.doses)}
+            value={currentItem?.doses}
           />
         ) : null}
         <Box

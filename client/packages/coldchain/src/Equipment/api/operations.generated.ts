@@ -83,8 +83,8 @@ export type AssetFragment = {
       code: string;
       name: string;
       onHold: boolean;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -261,8 +261,8 @@ export type AssetByIdQuery = {
           code: string;
           name: string;
           onHold: boolean;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -357,8 +357,8 @@ export type AssetFromGs1DataQuery = {
             code: string;
             name: string;
             onHold: boolean;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -610,7 +610,7 @@ export const AssetFragmentDoc = gql`
         code
         name
         onHold
-        coldStorageType {
+        locationType {
           id
           name
           maxTemperature

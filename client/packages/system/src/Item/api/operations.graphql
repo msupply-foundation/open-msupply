@@ -1,13 +1,3 @@
-fragment ServiceItemRow on ItemNode {
-  __typename
-  id
-  code
-  name
-  unitName
-  isVaccine
-  doses
-}
-
 fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
@@ -27,6 +17,7 @@ fragment StockLine on StockLineNode {
     defaultPackSize
     doses
     isVaccine
+    restrictedLocationTypeId
     itemDirections {
       ...ItemDirection
     }
@@ -63,6 +54,7 @@ fragment ItemRow on ItemNode {
   unitName
   isVaccine
   doses
+  restrictedLocationTypeId
 }
 
 fragment ItemDirection on ItemDirectionNode {
@@ -96,7 +88,9 @@ fragment ItemWithPackSize on ItemNode {
 fragment ItemStockOnHand on ItemNode {
   ...ItemWithPackSize
   availableStockOnHand(storeId: $storeId)
-  ...ItemRow
+  itemStoreProperties(storeId: $storeId) {
+    defaultSellPricePerPack
+  }
 }
 fragment ItemRowWithStats on ItemNode {
   ...ItemStockOnHand
@@ -111,7 +105,7 @@ fragment ItemRowWithStats on ItemNode {
   }
 }
 
-fragment ColdStorageType on ColdStorageTypeNode {
+fragment LocationType on LocationTypeNode {
   __typename
   id
   name
@@ -156,14 +150,15 @@ fragment ItemVariant on ItemVariantNode {
     id
     name
     isVaccine
+    restrictedLocationTypeId
   }
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow
   }
-  coldStorageTypeId
-  coldStorageType {
-    ...ColdStorageType
+  locationTypeId
+  locationType {
+    ...LocationType
   }
   packagingVariants {
     ...PackagingVariant
@@ -197,6 +192,10 @@ fragment Item on ItemNode {
   volumePerOuterPack
   volumePerPack
   weight
+  restrictedLocationTypeId
+  restrictedLocationType {
+    ...LocationType
+  }
   availableStockOnHand(storeId: $storeId)
   availableBatches(storeId: $storeId) {
     __typename
@@ -220,6 +219,9 @@ fragment Item on ItemNode {
   }
   itemDirections {
     ...ItemDirection
+  }
+  itemStoreProperties(storeId: $storeId) {
+    defaultSellPricePerPack
   }
 }
 
@@ -382,6 +384,7 @@ query itemVariants($storeId: String!, $itemId: String!) {
       nodes {
         __typename
         isVaccine
+        restrictedLocationTypeId
         variants {
           ...ItemVariant
         }
@@ -446,14 +449,11 @@ mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
   }
 }
 
-query coldStorageTypes($storeId: String!) {
-  coldStorageTypes(
-    storeId: $storeId
-    sort: { key: minTemperature, desc: true }
-  ) {
-    ... on ColdStorageTypeConnector {
+query locationTypes($storeId: String!) {
+  locationTypes(storeId: $storeId, sort: { key: minTemperature, desc: true }) {
+    ... on LocationTypeConnector {
       nodes {
-        ...ColdStorageType
+        ...LocationType
       }
     }
   }

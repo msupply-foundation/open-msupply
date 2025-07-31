@@ -29,7 +29,7 @@ export const DraftLine = {
       id: FnUtils.generateUUID(),
       expiryDate: null,
       itemId: item.id,
-      sellPricePerPack: 0,
+      sellPricePerPack: item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
       costPricePerPack: 0,
       packSize: item.defaultPackSize,
       location: null,
@@ -43,6 +43,12 @@ export const DraftLine = {
         isVaccine: item.isVaccine,
         doses: item.doses,
         defaultPackSize: item.defaultPackSize,
+        restrictedLocationTypeId: item.restrictedLocationTypeId,
+        itemStoreProperties: {
+          __typename: 'ItemStorePropertiesNode',
+          defaultSellPricePerPack:
+            item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+        },
       },
     };
   },
@@ -73,6 +79,7 @@ export const DraftLine = {
         isVaccine: stockLine.item.isVaccine,
         doses: stockLine.item.doses,
         defaultPackSize: stockLine.item.defaultPackSize,
+        restrictedLocationTypeId: stockLine.item.restrictedLocationTypeId,
       },
     };
   },

@@ -18,7 +18,6 @@ fragment InboundLine on InvoiceLineNode {
   foreignCurrencyPriceBeforeTax
   itemName
   itemVariantId
-  vvmStatusId
   linkedInvoiceId
   donor(storeId: $storeId) {
     id
@@ -39,6 +38,10 @@ fragment InboundLine on InvoiceLineNode {
     defaultPackSize
     isVaccine
     doses
+    restrictedLocationTypeId
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
 
   location {
@@ -64,6 +67,14 @@ fragment InboundLine on InvoiceLineNode {
     onHold
     note
     vvmStatusId
+  }
+
+  vvmStatus {
+    __typename
+    id
+    level
+    unusable
+    description
   }
 }
 

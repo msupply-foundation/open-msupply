@@ -87,7 +87,11 @@ export const InsuranceModal = (): ReactElement => {
       }
       okButton={<DialogButton variant="save" onClick={handleSave} />}
       sx={{
-        '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
+        '& .MuiDialogContent-root': {
+          display: 'flex',
+          alignItems: 'center',
+          margin: '0 auto',
+        },
       }}
     >
       <Stack gap={8} flexDirection="row">
@@ -174,6 +178,7 @@ export const InsuranceModal = (): ReactElement => {
                 min={0}
                 decimalLimit={2}
                 value={draft.discountPercentage ?? 0}
+                endAdornment="%"
                 onChange={value => {
                   if (value) {
                     updatePatch({

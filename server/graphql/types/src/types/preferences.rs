@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::types::patient::GenderType;
 use async_graphql::*;
@@ -35,8 +35,12 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.use_campaigns)
     }
 
-    pub async fn custom_translations(&self) -> Result<HashMap<String, String>> {
+    pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
         self.load_preference(&self.preferences.custom_translations)
+    }
+
+    pub async fn sync_records_display_threshold(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
     // Store preferences
@@ -111,6 +115,7 @@ pub enum PreferenceKey {
     ShowContactTracing,
     UseCampaigns,
     CustomTranslations,
+    SyncRecordsDisplayThreshold,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -128,6 +133,7 @@ impl PreferenceKey {
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
             PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
+            PrefKey::SyncRecordsDisplayThreshold => PreferenceKey::SyncRecordsDisplayThreshold,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
