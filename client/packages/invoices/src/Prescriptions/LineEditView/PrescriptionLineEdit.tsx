@@ -3,6 +3,7 @@ import {
   BasicSpinner,
   Grid,
   useBufferState,
+  useFormatNumber,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
@@ -35,6 +36,7 @@ export const PrescriptionLineEdit = ({
   const isNew = !itemId;
 
   const t = useTranslation();
+  const { format } = useFormatNumber();
 
   // Needs to update when user clicks on different item in the list, or when
   // changing item with the selector
@@ -66,21 +68,25 @@ export const PrescriptionLineEdit = ({
     queryData().then(({ data }) => {
       if (!data) return;
 
-      initialise({
-        itemData: data,
-        strategy: sortByVvmStatus
-          ? AllocationStrategy.VVMStatus
-          : AllocationStrategy.FEFO,
-        allowPlaceholder: false,
-        allowPrescribedQuantity: true,
-        ignoreNonAllocatableLines: true,
-        // In prescriptions, default to allocate in doses for vaccines
-        // if pref is on
-        allocateIn:
-          allocateVaccineItemsInDoses && data.item.isVaccine
-            ? { type: AllocateInType.Doses }
-            : undefined,
-      });
+      initialise(
+        {
+          itemData: data,
+          strategy: sortByVvmStatus
+            ? AllocationStrategy.VVMStatus
+            : AllocationStrategy.FEFO,
+          allowPlaceholder: false,
+          allowPrescribedQuantity: true,
+          ignoreNonAllocatableLines: true,
+          // In prescriptions, default to allocate in doses for vaccines
+          // if pref is on
+          allocateIn:
+            allocateVaccineItemsInDoses && data.item.isVaccine
+              ? { type: AllocateInType.Doses }
+              : undefined,
+        },
+        format,
+        t
+      );
     });
     // Expect dependencies to be stable
     // eslint-disable-next-line react-hooks/exhaustive-deps

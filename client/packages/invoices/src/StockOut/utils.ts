@@ -109,6 +109,27 @@ export const packsToQuantity = (
       throw new Error('Unhandled allocation unit of measure');
   }
 };
+/** Converts a number of units to quantity based on allocation unit of measure */
+export const unitsToQuantity = (
+  allocateIn: AllocateInOption,
+  numUnits: number,
+  dosesPerUnit: number
+): number => {
+  switch (allocateIn.type) {
+    case AllocateInType.Doses:
+      return numUnits * (dosesPerUnit || 1);
+
+    case AllocateInType.Units:
+      return numUnits;
+
+    case AllocateInType.Packs:
+      return numUnits / allocateIn.packSize;
+
+    default:
+      noOtherVariants(allocateIn);
+      throw new Error('Unhandled allocation unit of measure');
+  }
+};
 
 /** Converts a quantity to number of packs based on allocation unit of measure */
 export const quantityToPacks = (
@@ -246,17 +267,29 @@ export const getAllocationAlerts = (
   if (allocatedQuantity < requestedQuantity) {
     // If we were able to create a placeholder, let the user know
     if (placeholderUnits > 0) {
+      let messageKey: LocaleKey = 'messages.placeholder-allocated-units';
+      let packSize = 1;
+      switch (allocateIn.type) {
+        case AllocateInType.Doses:
+          messageKey = 'messages.placeholder-allocated-doses';
+          break;
+        case AllocateInType.Units:
+          messageKey = 'messages.placeholder-allocated-units';
+          break;
+        case AllocateInType.Packs:
+          messageKey = 'messages.placeholder-allocated-packs';
+          packSize = allocateIn.packSize;
+          break;
+        default:
+      }
       alerts.push({
-        message: t(
-          // When issuing in packs, placeholder quantity is in units
-          `messages.placeholder-allocated-${isDoses ? 'doses' : 'units'}`,
-          {
-            requestedQuantity: format(requestedQuantity),
-            placeholderQuantity: format(
-              isDoses ? placeholderUnits * dosesPerUnit : placeholderUnits
-            ),
-          }
-        ),
+        message: t(messageKey, {
+          requestedQuantity: format(requestedQuantity),
+          placeholderQuantity: format(
+            isDoses ? placeholderUnits * dosesPerUnit : placeholderUnits
+          ),
+          packSize,
+        }),
         severity: 'info',
       });
     } else {
