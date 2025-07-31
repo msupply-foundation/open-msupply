@@ -6,6 +6,7 @@ import {
   Grid,
   DialogButton,
   Alert,
+  Box,
 } from '@openmsupply-client/common';
 import {
   LocationRowFragment,
@@ -66,22 +67,24 @@ export const ChangeLocationConfirmationModal = ({
         </>
       }
     >
-      {uniqueLocationTypeIds.length > 0 && (
-        <Alert severity="warning">{t('messages.locations-restricted')}</Alert>
-      )}
-      <InputWithLabelRow
-        label={t('label.location')}
-        labelWidth="100px"
-        Input={
-          <LocationSearchInput
-            disabled={false}
-            selectedLocation={location}
-            onChange={setLocation}
-            width={200}
-            restrictedToLocationTypeId={restrictedToLocationTypeId}
-          />
-        }
-      />
+      <Box gap={1} display="flex" flexDirection="column">
+        {uniqueLocationTypeIds.length > 0 && (
+          <Alert severity="warning">{t('messages.locations-restricted')}</Alert>
+        )}
+        <InputWithLabelRow
+          label={t('label.location')}
+          labelWidth="100px"
+          Input={
+            <LocationSearchInput
+              disabled={false}
+              selectedLocation={location}
+              onChange={setLocation}
+              width={200}
+              restrictedToLocationTypeId={restrictedToLocationTypeId}
+            />
+          }
+        />
+      </Box>
     </ConfirmationModalLayout>
   );
 };
