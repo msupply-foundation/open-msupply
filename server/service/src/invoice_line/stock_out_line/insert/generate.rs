@@ -183,6 +183,7 @@ fn generate_line(
         reason_option_id: None,
         shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
             .then_some(number_of_packs),
+        shipped_pack_size: (r#type == StockOutType::OutboundShipment).then_some(pack_size),
     })
 }
 
