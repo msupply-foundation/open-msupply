@@ -328,8 +328,7 @@ export const StockLineForm = ({
                       p => p.packSize === draft.packSize
                     );
                     const volumePerPack =
-                      (packaging?.volumePerUnit ?? 0) *
-                      1000 *
+                      ((packaging?.volumePerUnit ?? 0) / 1000) *
                       (draft?.packSize ?? 1);
 
                     onUpdate({
