@@ -305,6 +305,9 @@ export const PricingTable = ({
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
+
+  useDisableStocktakeRows(batches);
+
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
@@ -347,6 +350,8 @@ export const LocationTable = ({
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
+
+  useDisableStocktakeRows(batches);
 
   const [invalidLocationRowIds, setInvalidLocationRowIds] = useState<string[]>(
     []
