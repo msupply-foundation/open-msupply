@@ -1093,6 +1093,8 @@
   "label.pack": "Pack",
   "label.pack-cost-price": "Pack cost price",
   "label.pack-quantity": "Pack Qty",
+  "label.shipped-pack-size": "Shipped pack size",
+  "label.received-pack-size": "Received pack size",
   "label.pack-quantity-issued": "Packs Issued",
   "label.pack-sell-price": "Pack sell price",
   "label.pack-size": "Pack Size",
