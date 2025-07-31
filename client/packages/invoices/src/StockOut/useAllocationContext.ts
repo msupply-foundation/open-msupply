@@ -176,6 +176,13 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     // If no quantity has yet been allocated, attempt to allocate the placeholder on initialise
     if (allocatedQuantity === 0) {
       reallocateLines(format, t);
+      set(state => ({
+        ...state,
+        alerts: [
+          ...state.alerts,
+          { message: t('messages.auto-allocated-lines'), severity: 'warning' },
+        ],
+      }));
     }
   },
 

@@ -339,12 +339,5 @@ export const getAllocationAlerts = (
     });
   }
 
-  // If we allocated stock automatically, alert the user
-  if (allocatedQuantity) {
-    alerts.push({
-      message: t('messages.auto-allocated-lines'),
-      severity: 'warning',
-    });
-  }
   return alerts;
 };
