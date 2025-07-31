@@ -4,15 +4,14 @@ use super::UpdatePurchaseOrderInput;
 
 pub fn generate(
     purchase_order: PurchaseOrderRow,
-    input: UpdatePurchaseOrderInput,
-) -> Result<PurchaseOrderRow, RepositoryError> {
-    let UpdatePurchaseOrderInput {
+    UpdatePurchaseOrderInput {
+        id: _,
         supplier_id,
         status,
         confirmed_datetime,
         comment,
         supplier_discount_percentage,
-        donor_link_id,
+        donor_id,
         reference,
         currency_id,
         foreign_exchange_rate,
@@ -22,11 +21,12 @@ pub fn generate(
         requested_delivery_date,
         advance_paid_date,
         received_at_port_date,
-        id: _,
-    } = input;
-
+    }: UpdatePurchaseOrderInput,
+) -> Result<PurchaseOrderRow, RepositoryError> {
     let supplier_name_link_id = supplier_id.unwrap_or(purchase_order.supplier_name_link_id);
-    let donor_link_id = donor_link_id.or(purchase_order.donor_link_id);
+    let donor_link_id = donor_id
+        .map(|d| d.value)
+        .unwrap_or(purchase_order.donor_link_id);
 
     let status = status.unwrap_or(purchase_order.status);
 
