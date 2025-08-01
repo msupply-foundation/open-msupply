@@ -5,7 +5,10 @@ import {
   useIntlUtils,
 } from '@common/intl';
 import { NumUtils } from '@common/utils';
-import { DraftStockOutLineFragment } from 'packages/invoices/src/StockOut';
+import {
+  AllocateInType,
+  DraftStockOutLineFragment,
+} from '../../../../../invoices/src/StockOut';
 
 export const useClosedSummary = () => {
   const { round } = useFormatNumber();
@@ -18,7 +21,7 @@ export const useClosedSummary = () => {
       : `${formatted} `;
   };
 
-  const summarise = (
+  const unitsSummary = (
     t: TypedTFunction<LocaleKey>,
     unitName: string,
     lines: DraftStockOutLineFragment[]
@@ -88,5 +91,17 @@ export const useClosedSummary = () => {
     return [{ displayValue, text: unitWord }];
   };
 
-  return { summarise, dosesSummary };
+  const summarise = (
+    t: TypedTFunction<LocaleKey>,
+    lines: DraftStockOutLineFragment[],
+    allocationInType: AllocateInType,
+    unitName?: string | null
+  ) => {
+    if (allocationInType === AllocateInType.Doses) {
+      return dosesSummary(t, lines);
+    }
+    return unitsSummary(t, unitName ?? t('label.unit'), lines);
+  };
+
+  return summarise;
 };
