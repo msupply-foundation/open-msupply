@@ -40,7 +40,7 @@ pub enum InsertRnRFormError {
     ProgramHasNoMasterList,
     PeriodDoesNotExist,
     PeriodNotInProgramSchedule,
-    PeriodNotNextInSequence,
+    PeriodMustBeLaterThanLastUsed,
     PeriodNotClosed,
     PreviousRnRFormNotFinalised,
     RnRFormAlreadyExistsForPeriod,
@@ -170,12 +170,18 @@ fn validate(
             // this should never happen, we've already checked it's there
             .ok_or(InsertRnRFormError::PeriodNotInProgramSchedule)?;
 
-        if previous_period != this_period + 1 {
-            return Err(InsertRnRFormError::PeriodNotNextInSequence);
+        // Periods are ordered by end_date desc in get_schedules_with_periods_by_program, so condition operator implies opposite to what error states
+        if this_period > previous_period {
+            return Err(InsertRnRFormError::PeriodMustBeLaterThanLastUsed);
         }
 
         if form.rnr_form_row.status != RnRFormStatus::Finalised {
             return Err(InsertRnRFormError::PreviousRnRFormNotFinalised);
+        }
+
+        // If the the previous form was from many periods ago, don't use it in subsequent calculations
+        if previous_period.saturating_sub(this_period) > 1 {
+            return Ok((None, period, master_list_id));
         }
     }
 
