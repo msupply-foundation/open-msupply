@@ -203,18 +203,14 @@ pub fn migrate(
         if migration_version > database_version {
             log::info!("Running one time database migration {}", migration_version);
             // Run migration & version in a transaction
-            connection
-                .transaction_sync(|connection| {
-                    migration.migrate(connection).map_err(|source| {
-                        MigrationError::MigrationError {
-                            source,
-                            version: migration_version.clone(),
-                        }
-                    })?;
-                    set_database_version(connection, &migration_version)?;
-                    Ok(())
-                })
-                .map_err(|err: TransactionError<MigrationError>| err.to_inner_error())?;
+
+            migration
+                .migrate(connection)
+                .map_err(|source| MigrationError::MigrationError {
+                    source,
+                    version: migration_version.clone(),
+                })?;
+            set_database_version(connection, &migration_version)?;
         }
 
         // Run fragment migrations (can run on current version)
@@ -223,21 +219,16 @@ pub fn migrate(
                 if migration_fragment_log_repo.has_run(&migration, &fragment)? {
                     continue;
                 }
-                // Run migration fragment in a transaction
-                connection
-                    .transaction_sync(|connection| {
-                        fragment.migrate(connection).map_err(|source| {
-                            MigrationError::FragmentMigrationError {
-                                source,
-                                version: migration_version.clone(),
-                                identifier: fragment.identifier(),
-                            }
-                        })?;
 
-                        migration_fragment_log_repo.insert(&migration, &fragment)?;
-                        Ok(())
-                    })
-                    .map_err(|err: TransactionError<MigrationError>| err.to_inner_error())?;
+                fragment.migrate(connection).map_err(|source| {
+                    MigrationError::FragmentMigrationError {
+                        source,
+                        version: migration_version.clone(),
+                        identifier: fragment.identifier(),
+                    }
+                })?;
+
+                migration_fragment_log_repo.insert(&migration, &fragment)?;
             }
         }
     }
