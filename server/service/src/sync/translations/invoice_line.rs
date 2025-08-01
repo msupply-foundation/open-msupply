@@ -113,6 +113,7 @@ pub struct LegacyTransLineRow {
     pub oms_fields: Option<TransLineRowOmsFields>,
     #[serde(rename = "sentQuantity")]
     pub shipped_number_of_packs: Option<f64>,
+    pub volume_per_pack: f64,
 }
 
 // Needs to be added to all_translators()
@@ -176,6 +177,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,
+            volume_per_pack,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -313,6 +315,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             vvm_status_id,
             campaign_id: oms_fields.and_then(|o| o.campaign_id),
             shipped_number_of_packs,
+            volume_per_pack,
         };
 
         let result = adjust_negative_values(result);
@@ -372,6 +375,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     reason_option_id,
                     campaign_id,
                     shipped_number_of_packs,
+                    volume_per_pack,
                 },
             item_row,
             ..
@@ -411,6 +415,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,
+            volume_per_pack,
         };
         Ok(PushTranslateResult::upsert(
             changelog,

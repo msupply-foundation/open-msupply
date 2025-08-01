@@ -278,6 +278,7 @@ fragment GenerateCustomerReturnLine on CustomerReturnLineNode {
   itemName
   itemCode
   itemVariantId
+  volumePerPack
   item {
     id
     unitName

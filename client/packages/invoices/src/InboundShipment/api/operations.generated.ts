@@ -23,6 +23,7 @@ export type InboundLineFragment = {
   itemName: string;
   itemVariantId?: string | null;
   linkedInvoiceId?: string | null;
+  volumePerPack: number;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   item: {
@@ -69,6 +70,16 @@ export type InboundLineFragment = {
     level: number;
     unusable: boolean;
     description: string;
+  } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
   } | null;
 };
 
@@ -132,6 +143,7 @@ export type InboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       linkedInvoiceId?: string | null;
+      volumePerPack: number;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -182,6 +194,16 @@ export type InboundFragment = {
         level: number;
         unusable: boolean;
         description: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
     }>;
   };
@@ -365,6 +387,7 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             linkedInvoiceId?: string | null;
+            volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             campaign?: {
               __typename: 'CampaignNode';
@@ -415,6 +438,16 @@ export type InvoiceQuery = {
               level: number;
               unusable: boolean;
               description: string;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
             } | null;
           }>;
         };
@@ -531,6 +564,7 @@ export type InboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             linkedInvoiceId?: string | null;
+            volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             campaign?: {
               __typename: 'CampaignNode';
@@ -581,6 +615,16 @@ export type InboundByNumberQuery = {
               level: number;
               unusable: boolean;
               description: string;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
             } | null;
           }>;
         };
@@ -1071,6 +1115,7 @@ export const InboundLineFragmentDoc = gql`
     itemName
     itemVariantId
     linkedInvoiceId
+    volumePerPack
     donor(storeId: $storeId) {
       id
       name
@@ -1122,6 +1167,16 @@ export const InboundLineFragmentDoc = gql`
       level
       unusable
       description
+    }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
     }
   }
 `;
