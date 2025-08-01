@@ -2187,6 +2187,7 @@
   "warning.caps-lock": "Warning: Caps lock is on",
   "warning.check-before-vaccinating": "Vaccination records from other stores may not be up to date. Ensure you have synced recently, and always confirm against the patient's physical vaccination card first.",
   "warning.field-not-parsed": "{{field}} not parsed",
+  "warning.foreign-exchange-rate-different": "This rate is not the same as the currency.",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!"
 }

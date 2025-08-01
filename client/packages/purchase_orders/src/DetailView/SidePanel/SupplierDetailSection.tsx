@@ -7,6 +7,7 @@ import {
   PanelLabel,
   NumericTextInput,
   useDebounceCallback,
+  useNotification,
 } from '@openmsupply-client/common';
 import { CurrencyAutocomplete } from '@openmsupply-client/system';
 import { PurchaseOrderFragment } from '../../api';
@@ -38,6 +39,7 @@ export const SupplierDetailSection = ({
   onUpdate,
 }: SupplierDetailSectionProps): ReactElement => {
   const t = useTranslation();
+  const { warning } = useNotification();
   const [currencyId, setCurrencyId] = useState(data?.currencyId);
   const [foreignExchangeRate, setForeignExchangeRate] = useState(
     data?.foreignExchangeRate ?? 0
@@ -48,6 +50,15 @@ export const SupplierDetailSection = ({
 
   const handleDebouncedUpdate = useDebounceCallback(
     onUpdate,
+    [],
+    DEBOUNCED_TIME
+  );
+
+  const handleForeignExchangeRateChange = useDebounceCallback(
+    value => {
+      warning(t('warning.foreign-exchange-rate-different'))();
+      onUpdate(value);
+    },
     [],
     DEBOUNCED_TIME
   );
@@ -107,10 +118,11 @@ export const SupplierDetailSection = ({
             value={foreignExchangeRate}
             onChange={value => {
               if (value == null || value === foreignExchangeRate) return;
+              if (foreignExchangeRate !== value)
+                handleForeignExchangeRateChange({
+                  foreignExchangeRate: value,
+                });
               setForeignExchangeRate(value);
-              handleDebouncedUpdate({
-                foreignExchangeRate: value,
-              });
             }}
             decimalLimit={4}
             slotProps={slotProps}
