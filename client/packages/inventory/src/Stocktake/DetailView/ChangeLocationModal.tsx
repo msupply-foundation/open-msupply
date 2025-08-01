@@ -28,10 +28,9 @@ export const ChangeLocationConfirmationModal = ({
   rows,
 }: ChangeLocationConfirmationModalProps) => {
   const t = useTranslation();
+  const onChangeLocation = useStocktakeOld.line.changeLocation();
 
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
-
-  const onChangeLocation = useStocktakeOld.line.changeLocation();
 
   // Get all unique, non-empty restricted location type IDs from the selected rows
   const uniqueLocationTypeIds = Array.from(
@@ -68,9 +67,11 @@ export const ChangeLocationConfirmationModal = ({
       }
     >
       <Box gap={1} display="flex" flexDirection="column">
-        {uniqueLocationTypeIds.length > 0 && (
-          <Alert severity="warning">{t('messages.locations-restricted')}</Alert>
-        )}
+        <Alert severity="warning">
+          {hasMultipleLocationTypes
+            ? t('messages.cannot-change-location-multiple-types')
+            : t('messages.locations-restricted')}
+        </Alert>
         <InputWithLabelRow
           label={t('label.location')}
           labelWidth="100px"
