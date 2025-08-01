@@ -38,11 +38,11 @@ export const ChangeLocationConfirmationModal = ({
     new Set(rows.map(row => row.item.restrictedLocationTypeId).filter(Boolean))
   );
 
-  const restrictedToLocationTypeId =
-    // Location filter will return none if multiple location type ids present
-    uniqueLocationTypeIds.length > 1
-      ? 'multiple location type ids'
-      : uniqueLocationTypeIds[0];
+  // Only want to display location if all restricted location types match
+  const hasMultipleLocationTypes = uniqueLocationTypeIds.length > 1;
+  const restrictedToLocationTypeId = hasMultipleLocationTypes
+    ? undefined
+    : uniqueLocationTypeIds[0];
 
   return (
     <ConfirmationModalLayout
@@ -81,6 +81,7 @@ export const ChangeLocationConfirmationModal = ({
               onChange={setLocation}
               width={200}
               restrictedToLocationTypeId={restrictedToLocationTypeId}
+              enableAPI={!hasMultipleLocationTypes}
             />
           }
         />
