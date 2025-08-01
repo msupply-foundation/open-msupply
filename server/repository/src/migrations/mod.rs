@@ -54,7 +54,7 @@ pub use self::version::*;
 
 use crate::{
     run_db_migrations, KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository,
-    RepositoryError, StorageConnection, TransactionError,
+    RepositoryError, StorageConnection,
 };
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
