@@ -120,6 +120,17 @@ pub fn system_error_log(
     Ok(())
 }
 
+// Will also log in file/console
+pub fn system_log(
+    connection: &StorageConnection,
+    log_type: SystemLogType,
+    log: &str,
+) -> Result<(), RepositoryError> {
+    log::info!("{} {log}", log_type.to_string());
+    system_log_entry(connection, log_type, &log)?;
+    Ok(())
+}
+
 pub fn log_type_from_invoice_status(status: &InvoiceStatus, prescription: bool) -> ActivityLogType {
     use ActivityLogType as to;
     use InvoiceStatus as from;

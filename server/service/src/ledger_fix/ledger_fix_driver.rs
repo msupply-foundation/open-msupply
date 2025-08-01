@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
+use crate::activity_log::system_log;
 use crate::ledger_fix::find_ledger_discrepancies::find_stock_line_ledger_discrepancies;
+use crate::ledger_fix::stock_line_ledger_fix::stock_line_ledger_fix;
 use crate::{activity_log::system_error_log, service_provider::ServiceProvider};
 
 use chrono::{NaiveDateTime, TimeDelta, Utc};
@@ -59,15 +61,48 @@ impl LedgerFixDriver {
     }
 
     pub async fn ledger_fix(&self, service_provider: Arc<ServiceProvider>) {
-        // Unwraps for now, should be changed to repository errors and handled as errors
         let ctx = service_provider.basic_context().unwrap();
 
-        log::info!(
-            "Performing ledger fix on {} lines...",
-            find_stock_line_ledger_discrepancies(&ctx.connection)
-                .unwrap()
-                .len()
-        );
+        let stock_line_ids = match find_stock_line_ledger_discrepancies(&ctx.connection, None) {
+            Ok(stock_line_ids) => stock_line_ids,
+            Err(e) => {
+                system_error_log(
+                    &ctx.connection,
+                    SystemLogType::LedgerFixError,
+                    &e,
+                    "Error while finding stock line ledger discrepancies",
+                )
+                .unwrap();
+                return;
+            }
+        };
+
+        log::info!("Performing ledger fix on {} lines...", stock_line_ids.len());
+
+        for stock_line_id in stock_line_ids {
+            let mut operation_log = String::new();
+
+            match stock_line_ledger_fix(&ctx.connection, &mut operation_log, &stock_line_id) {
+                Ok(is_fixed) => {
+                    let status = if is_fixed { "Fully" } else { "Partially" };
+                    system_log(&ctx.connection, SystemLogType::LedgerFix,
+                        &format!("{status} fixed ledger discrepancy for stock_line {stock_line_id} - Details: {operation_log}"
+                    )).unwrap();
+                }
+                Err(e) => {
+                    system_error_log(
+                        &ctx.connection,
+                        SystemLogType::LedgerFixError,
+                        &e,
+                        &format!(
+                            "Error fixing stock line {}, {}",
+                            stock_line_id, operation_log
+                        ),
+                    )
+                    .unwrap();
+                }
+            }
+        }
     }
 }
 
