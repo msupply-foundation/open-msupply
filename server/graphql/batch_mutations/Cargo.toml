@@ -16,7 +16,6 @@ graphql_core = { path = "../core" }
 graphql_types = { path = "../types" }
 graphql_invoice = { path = "../invoice" }
 graphql_invoice_line = { path = "../invoice_line" }
-graphql_purchase_order_line = { path = "../purchase_order_line" }
 graphql_stocktake = { path = "../stocktake" }
 graphql_stocktake_line = { path = "../stocktake_line" }
 graphql_requisition = { path = "../requisition" }
