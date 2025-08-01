@@ -102,10 +102,10 @@ impl UpdateInput {
             stock_line_id,
             number_of_packs,
             prescribed_quantity,
-            total_before_tax: None,
             tax: tax.map(|tax| ShipmentTaxUpdate {
                 percentage: tax.percentage,
             }),
+            total_before_tax: None,
             note: None,
             campaign_id: None,
         }
