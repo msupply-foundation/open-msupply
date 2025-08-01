@@ -1,16 +1,16 @@
 use crate::migrations::*;
-pub(crate) struct Migrate;
 
+pub(crate) struct Migrate;
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_shipped_number_of_packs_to_invoice_line"
+        "add_invoice_line_shipped_pack_size"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                ALTER TABLE invoice_line ADD COLUMN shipped_number_of_packs {DOUBLE};
+                ALTER TABLE invoice_line ADD COLUMN shipped_pack_size {DOUBLE};
             "#
         )?;
 

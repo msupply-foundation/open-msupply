@@ -103,7 +103,10 @@ export const QuantityTableComponent = ({
   }
 
   columnDefinitions.push(
-    getColumnLookupWithOverrides('packSize', {
+    {
+      key: 'shippedPackSize',
+      label: 'label.shipped-pack-size',
+      width: 100,
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
         setPackRoundingMessage?.('');
@@ -121,10 +124,10 @@ export const QuantityTableComponent = ({
           updateDraftLine(patch);
         }
       },
-      label: 'label.pack-size',
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
       defaultHideOnMobile: true,
       align: ColumnAlign.Left,
-    }),
+    },
     {
       key: 'shippedNumberOfPacks',
       label: 'label.shipped-number-of-packs',
@@ -137,6 +140,17 @@ export const QuantityTableComponent = ({
       align: ColumnAlign.Left,
       setter: patch => updateDraftLine(patch),
     },
+    getColumnLookupWithOverrides('packSize', {
+      Cell: PackSizeEntryCell<DraftInboundLine>,
+      setter: patch => {
+        setPackRoundingMessage?.('');
+        updateDraftLine(patch);
+      },
+      label: 'label.received-pack-size',
+      width: 100,
+      defaultHideOnMobile: true,
+      align: ColumnAlign.Left,
+    }),
     [
       'numberOfPacks',
       {
