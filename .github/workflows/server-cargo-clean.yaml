@@ -1,7 +1,7 @@
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 7 * * 7" # Every Sunday at 7:30 PM UTC - equivalent to 7:30 AM NZST
+    - cron: "30 7 * * 0" # Every Sunday at 7:30 PM UTC - equivalent to 7:30 AM NZST
 
 name: Manual Cargo Clean
 
