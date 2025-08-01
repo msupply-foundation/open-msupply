@@ -92,6 +92,7 @@ export const itemVariantColumn = (
       const packaging = itemVariant.packagingVariants.find(
         p => p.packSize === packSize
       );
+      // Item variants save volume in L, but it is saved in m3 everywhere else
       updateDraftLine({
         ...patch,
         volumePerPack:

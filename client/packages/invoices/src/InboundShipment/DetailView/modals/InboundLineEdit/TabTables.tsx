@@ -214,7 +214,7 @@ export const QuantityTableComponent = ({
       key: 'volumePerPack',
       label: t('label.volume-per-pack'),
       Cell: NumberInputCell,
-      cellProps: { decimalLimit: 2 },
+      cellProps: { decimalLimit: 10 },
       width: 100,
       accessor: ({ rowData }) => rowData?.volumePerPack,
       setter: updateDraftLine,
