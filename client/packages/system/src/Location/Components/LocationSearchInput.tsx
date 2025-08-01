@@ -106,24 +106,22 @@ export const LocationSearchInput = ({
     !!selectedLocation &&
     !options.some(option => option.value === selectedLocation.id);
 
-  // If the selected location is invalid, create an option to display it in the closed input
-  const invalidLocationOption = isInvalidLocation
-    ? {
-        value: selectedLocation.id,
-        label: formatLocationLabel(selectedLocation),
-        code: selectedLocation.code,
-      }
-    : selectedOption || null;
-
-  const locationValue = isInvalidLocation
-    ? invalidLocationOption
-    : selectedOption || null;
+  // Invalid location no longer a part of options
+  const locationValue =
+    isInvalidLocation && selectedLocation
+      ? {
+          value: selectedLocation.id,
+          label: formatLocationLabel(selectedLocation),
+          code: selectedLocation.code,
+        }
+      : selectedOption || null;
 
   useEffect(() => {
     onInvalidLocation?.(
       isInvalidLocation,
       isInvalidLocation ? t('messages.stock-location-invalid') : ''
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInvalidLocation]);
 
   const errorStyles = {
