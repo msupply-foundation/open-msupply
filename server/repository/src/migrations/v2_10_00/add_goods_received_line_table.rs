@@ -22,11 +22,11 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                     CREATE TYPE goods_received_status AS ENUM ('NEW', 'FINALISED');
+                     CREATE TYPE goods_received_line_status AS ENUM ('UNAUTHORISED', 'AUTHORISED');
                 "#
             )?;
 
-            "goods_received_status"
+            "goods_received_line_status"
         } else {
             "TEXT"
         };
@@ -38,7 +38,7 @@ impl MigrationFragment for Migrate {
                     id TEXT NOT NULL PRIMARY KEY,
                     goods_received_id TEXT NOT NULL REFERENCES goods_received(id),
                     purchase_order_id TEXT NOT NULL REFERENCES purchase_order(id),
-                    requested_pack_size {DOUBLE} NOT NULL,
+                    received_pack_size {DOUBLE} NOT NULL,
                     number_of_packs_received {DOUBLE} NOT NULL DEFAULT 0.0,
                     batch TEXT,
                     weight_per_pack {DOUBLE},
@@ -46,11 +46,11 @@ impl MigrationFragment for Migrate {
                     line_number BIGINT NOT NULL,
                     item_link_id TEXT REFERENCES item_link(id) NOT NULL,
                     item_name TEXT NOT NULL,
-                    location_id TEXT,
+                    location_id TEXT REFERENCES location(id),
                     volume_per_pack {DOUBLE},
-                    manufacturer_link_id TEXT NOT NULL REFERENCES item_link(id),
-                    status {status_type} NOT NULL DEFAULT 'NEW',
-                    comment TEXT,
+                    manufacturer_link_id TEXT NOT NULL REFERENCES name_link(id),
+                    status {status_type} NOT NULL DEFAULT 'UNAUTHORISED',
+                    comment TEXT
                 );
             "#
         )?;

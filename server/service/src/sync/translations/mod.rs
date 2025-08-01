@@ -215,6 +215,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         purchase_order_line::boxed(),
         // Goods Receiving
         goods_received::boxed(),
+        // Goods Received
+        goods_received_line::boxed(),
     ]
 }
 

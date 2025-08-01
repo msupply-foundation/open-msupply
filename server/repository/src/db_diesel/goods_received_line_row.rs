@@ -2,7 +2,7 @@ use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete,
     PurchaseOrderRowRepository, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
-use chrono::NaiveDateTime;
+use chrono::NaiveDate;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ table! {
         number_of_packs_received -> Double,
         batch -> Nullable<Text>,
         weight_per_pack -> Nullable<Double>,
-        expiry_date -> Nullable<Timestamp>,
+        expiry_date -> Nullable<Date>,
         line_number -> BigInt,
         item_link_id -> Text,
         item_name -> Text,
@@ -42,7 +42,7 @@ pub struct GoodsReceivedLineRow {
     pub number_of_packs_received: f64,
     pub batch: Option<String>,
     pub weight_per_pack: Option<f64>,
-    pub expiry_date: Option<NaiveDateTime>,
+    pub expiry_date: Option<NaiveDate>,
     pub line_number: i64,
     pub item_link_id: String,
     pub item_name: String,
