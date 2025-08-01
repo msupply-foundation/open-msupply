@@ -1,15 +1,12 @@
 import React, { FC } from 'react';
-import { CurrencyRowFragment, useCurrencyList } from '../api';
+import { CurrencyRowFragment } from '../api';
 import {
-  Autocomplete,
-  AutocompleteOptionRenderer,
   Box,
-  DefaultAutocompleteItemOption,
   InputWithLabelRow,
   NumericTextInput,
-  Typography,
   useTranslation,
 } from '@openmsupply-client/common';
+import { CurrencyAutocomplete } from './CurrencyAutocomplete';
 
 interface CurrencySearchInputProps {
   value?: CurrencyRowFragment | null;
@@ -19,22 +16,6 @@ interface CurrencySearchInputProps {
   currencyRate?: number;
 }
 
-export const getCurrencyOptionRenderer =
-  (): AutocompleteOptionRenderer<CurrencyRowFragment> => (props, currency) => {
-    return (
-      <DefaultAutocompleteItemOption {...props} key={props.id}>
-        <Box display="flex" alignItems="flex-end" gap={1} height={25}>
-          <Typography>{currency.code}</Typography>
-        </Box>
-      </DefaultAutocompleteItemOption>
-    );
-  };
-
-const currencyConfigOption = {
-  stringify: (currency: CurrencyRowFragment) => `${currency.code}`,
-  limit: 100,
-};
-
 export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
   value,
   width,
@@ -42,17 +23,8 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
   onChange,
   currencyRate,
 }) => {
-  const { data, isLoading } = useCurrencyList();
-  const homeCurrency = data?.nodes.find(
-    currency => currency.isHomeCurrency
-  ) as CurrencyRowFragment;
   const t = useTranslation();
-  const currencyOptionRenderer = getCurrencyOptionRenderer();
   const [rate, setRate] = React.useState(currencyRate);
-
-  if (!data) {
-    return null;
-  }
 
   return (
     <Box display="flex" flexDirection="column" gap={1}>
@@ -60,24 +32,15 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
         label={t('label.currency')}
         labelWidth="100%"
         Input={
-          <Autocomplete
-            clearable={false}
-            value={
-              value
-                ? { ...value, label: value.code }
-                : { ...homeCurrency, label: homeCurrency.code }
-            }
-            loading={isLoading}
-            onChange={(_, currency) => {
+          <CurrencyAutocomplete
+            value={value}
+            width={width}
+            popperMinWidth={width}
+            onChange={currency => {
               setRate(currency?.rate);
               onChange(currency);
             }}
-            filterOptionConfig={currencyConfigOption}
-            options={data?.nodes ?? []}
-            renderOption={currencyOptionRenderer}
-            width={`${width}px`}
-            popperMinWidth={width}
-            isOptionEqualToValue={(option, value) => option?.id === value?.id}
+            disabled={disabled}
           />
         }
       />
