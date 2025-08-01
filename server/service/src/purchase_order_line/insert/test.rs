@@ -297,7 +297,7 @@ mod insert {
             service.insert_purchase_order_line_from_csv(
                 &context,
                 InsertPurchaseOrderLineFromCSVInput {
-                    id: "purchase_order_line_id".to_string(),
+                    id: "purchase_order_line_id_2".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_code: mock_item_a().code.clone(),
                     requested_pack_size: Some(1.1),
