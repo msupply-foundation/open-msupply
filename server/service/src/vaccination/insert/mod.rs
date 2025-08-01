@@ -129,10 +129,7 @@ impl From<InsertStockOutLineError> for InsertVaccinationError {
 }
 impl From<UpdatePrescriptionError> for InsertVaccinationError {
     fn from(error: UpdatePrescriptionError) -> Self {
-        InsertVaccinationError::InternalError(format!(
-            "Could not finalise prescription: {:?}",
-            error
-        ))
+        InsertVaccinationError::InternalError(format!("Could not update prescription: {:?}", error))
     }
 }
 

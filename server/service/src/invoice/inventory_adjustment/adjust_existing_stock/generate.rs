@@ -143,6 +143,7 @@ pub fn generate(
             total_before_tax: None,
             tax_percentage: None,
             shipped_number_of_packs: None,
+            shipped_pack_size: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,

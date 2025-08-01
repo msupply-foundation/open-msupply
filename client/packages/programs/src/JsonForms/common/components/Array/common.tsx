@@ -32,6 +32,7 @@ import {
 } from '../../styleConstants';
 import { JsonData } from '../../JsonForm';
 import { EnumArrayComponent } from './';
+import { usePrevious } from '../../hooks/usePrevious';
 
 export interface UISchemaWithCustomProps extends ControlElement {
   defaultNewItem?: JsonData;
@@ -42,6 +43,7 @@ export interface ArrayControlCustomProps extends ArrayControlProps {
   uischema: UISchemaWithCustomProps;
   removeItems: (path: string, toDelete: number[]) => () => void;
   data: JsonData[] | undefined;
+  handleChange: (path: string, value: JsonData[]) => void;
   isElementEditable?: (child: JsonData, index: number) => boolean;
   checkIsError?: (child: JsonData | undefined) => boolean;
   getItemLabel?: (
@@ -67,8 +69,10 @@ export const CommonOptions = z
      */
     defaultExpanded: z.boolean().optional(),
     /**
-     * Restrictions for which elements can be edited
+     * If true, the value will be pre-populated with the previous value (if
+     * available)
      */
+    defaultToPrevious: z.boolean().optional(),
   })
   .strict();
 
@@ -87,6 +91,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
     uischemas,
     schema,
     path,
+    handleChange,
     data: inputData,
     addItem,
     removeItems,
@@ -147,6 +152,8 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
       ),
     [uischemas, schema, path, uischema, rootSchema]
   );
+
+  usePrevious(path, inputData, options, value => handleChange(path, value));
 
   if (!props.visible) {
     return null;

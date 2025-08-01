@@ -7,7 +7,6 @@ import {
   useIntlUtils,
   useFormatNumber,
   Typography,
-  Box,
 } from '@openmsupply-client/common';
 import { AllocateInType, useAllocationContext } from '../useAllocationContext';
 import { canAutoAllocate } from '../utils';
@@ -43,7 +42,10 @@ export const AllocateInSelector = ({
   const includeDosesOption = item?.isVaccine && prefs?.manageVaccinesInDoses;
 
   // EARLY RETURN - if only allocating in units, don't show the selector
-  if (!includePackSizeOptions && !includeDosesOption) {
+  if (
+    (!includePackSizeOptions || !availablePackSizes.length) &&
+    !includeDosesOption
+  ) {
     return <Typography sx={{ fontSize: 12 }}>{pluralisedUnitName}</Typography>;
   }
 
@@ -87,20 +89,17 @@ export const AllocateInSelector = ({
   };
 
   return (
-    <>
-      <Box marginLeft={1} />
-      <Select
-        options={options}
-        value={
-          allocateIn.type === AllocateInType.Packs
-            ? allocateIn.packSize
-            : allocateIn.type
-        }
-        onChange={e =>
-          handleAllocateInChange(e.target.value as AllocateInType | number)
-        }
-        sx={{ width: '150px' }}
-      />
-    </>
+    <Select
+      options={options}
+      value={
+        allocateIn.type === AllocateInType.Packs
+          ? allocateIn.packSize
+          : allocateIn.type
+      }
+      onChange={e =>
+        handleAllocateInChange(e.target.value as AllocateInType | number)
+      }
+      sx={{ width: '150px' }}
+    />
   );
 };

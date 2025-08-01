@@ -131,6 +131,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineType::StockOut,
         number_of_packs: 3.0,
         shipped_number_of_packs: Some(3.0),
+        shipped_pack_size: Some(3.0),
         ..Default::default()
     };
 
