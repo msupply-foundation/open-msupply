@@ -401,7 +401,7 @@ export const LocationTable = ({
   return (
     <Box display="flex" flexDirection="column" width="100%">
       {invalidLocationRowIds.length > 0 && (
-        <Alert severity="warning">
+        <Alert severity="warning" sx={{ mb: 2 }}>
           {t('messages.stock-location-invalid-many')}
         </Alert>
       )}
