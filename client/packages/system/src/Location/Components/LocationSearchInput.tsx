@@ -17,6 +17,7 @@ interface LocationSearchInputProps {
   autoFocus?: boolean;
   restrictedToLocationTypeId?: string | null;
   onInvalidLocation?: (invalid: boolean, message: string) => void;
+  enableAPI?: boolean;
 }
 
 interface LocationOption {
@@ -65,19 +66,24 @@ export const LocationSearchInput = ({
   autoFocus = false,
   restrictedToLocationTypeId,
   onInvalidLocation,
+  enableAPI = true,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const theme = useTheme();
 
   const {
     query: { data, isLoading },
-  } = useLocationList({
-    sortBy: {
-      direction: 'asc',
-      key: 'name',
+  } = useLocationList(
+    {
+      sortBy: {
+        direction: 'asc',
+        key: 'name',
+      },
+      filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
     },
-    filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
-  });
+    undefined,
+    enableAPI
+  );
 
   const locations = data?.nodes || [];
   const options: AutocompleteOption<LocationOption>[] = locations.map(l => ({
