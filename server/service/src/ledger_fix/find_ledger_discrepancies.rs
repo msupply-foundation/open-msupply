@@ -18,14 +18,18 @@ pub enum FindStockLineLedgerDiscrepanciesError {
 
 pub(super) fn find_stock_line_ledger_discrepancies(
     connection: &StorageConnection,
+    stock_line_id: Option<&str>,
 ) -> Result</* stock line ids */ Vec<String>, FindStockLineLedgerDiscrepanciesError> {
     let active_stores = ActiveStoresOnSite::get(connection)?;
 
+    let stock_line_filter = match stock_line_id {
+        Some(id) => StockLineFilter::new().id(EqualFilter::equal_to(id)),
+        None => StockLineFilter::new()
+            .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids())),
+    };
+
     let filter = StockLineLedgerDiscrepancyFilter {
-        stock_line: Some(
-            StockLineFilter::new()
-                .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids())),
-        ),
+        stock_line: Some(stock_line_filter),
     };
 
     Ok(StockLineLedgerDiscrepancyRepository::new(connection)
@@ -204,7 +208,7 @@ mod test {
             )
             .unwrap();
 
-        let mut stock_line_ids = find_stock_line_ledger_discrepancies(&connection).unwrap();
+        let mut stock_line_ids = find_stock_line_ledger_discrepancies(&connection, None).unwrap();
         stock_line_ids.sort();
 
         assert_eq!(
