@@ -202,6 +202,8 @@ pub fn migrate(
         // Run one time migrations only if we're on the last version, if we're in a test case checking an old creating migrations might fail
         if migration_version > database_version {
             log::info!("Running one time database migration {}", migration_version);
+            // Run migration & version in a transaction
+
             migration
                 .migrate(connection)
                 .map_err(|source| MigrationError::MigrationError {
