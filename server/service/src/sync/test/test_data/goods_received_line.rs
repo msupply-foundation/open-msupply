@@ -69,7 +69,7 @@ fn goods_received_line_pull_record() -> TestSyncIncomingRecord {
             item_name: "Salbutamol Inhaler".to_string(),
             location_id: Some("cf5812e0c33911eb9757779d39ae2bdb".to_string()),
             volume_per_pack: Some(0.0), //MOTZ could cause a problem if 0 is meant to be None
-            manufacturer_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(), //MOTZ could cause a problem if empty string is meant to be None. In the test JSON it is "".
+            manufacturer_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             status: repository::GoodsReceivedLineStatus::Authorised,
             comment: None, //MOTZ could cause a problem if empty string is not converted to None as in the test JSON it is "".
         },
@@ -96,7 +96,7 @@ fn goods_received_line_push_record() -> TestSyncOutgoingRecord {
             volume_per_pack: Some(0.0),
             manufacturer_ID: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             is_authorised: true,
-            comment: Some("".to_string()),
+            comment: None,
         }),
     }
 }

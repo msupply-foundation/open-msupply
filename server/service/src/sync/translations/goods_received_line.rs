@@ -1,3 +1,4 @@
+use crate::sync::translations::goods_received::GoodsReceivedTranslation;
 use crate::sync::translations::item::ItemTranslation;
 use crate::sync::translations::purchase_order::PurchaseOrderTranslation;
 use crate::sync::translations::{location::LocationTranslation, name::NameTranslation};
@@ -51,8 +52,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 
     fn pull_dependencies(&self) -> Vec<&str> {
         vec![
-            // TODO add this dependency once PR 8631 is merged https://github.com/msupply-foundation/open-msupply/pull/8631
-            // GoodsReceivedTranslation.table_name(),
+            GoodsReceivedTranslation.table_name(),
             PurchaseOrderTranslation.table_name(),
             ItemTranslation.table_name(),
             LocationTranslation.table_name(),
