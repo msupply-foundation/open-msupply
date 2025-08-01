@@ -314,14 +314,6 @@ export type FinaliseRnRFormMutation = {
   };
 };
 
-export const PeriodFragmentDoc = gql`
-  fragment Period on PeriodNode {
-    id
-    name
-    startDate
-    endDate
-  }
-`;
 export type DeleteRnRFormMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.DeleteRnRFormInput;
@@ -332,6 +324,14 @@ export type DeleteRnRFormMutation = {
   deleteRnrForm: { __typename: 'DeleteResponse'; id: string };
 };
 
+export const PeriodFragmentDoc = gql`
+  fragment Period on PeriodNode {
+    id
+    name
+    startDate
+    endDate
+  }
+`;
 export const RnRFormFragmentDoc = gql`
   fragment RnRForm on RnRFormNode {
     id

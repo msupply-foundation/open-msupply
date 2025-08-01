@@ -119,7 +119,7 @@ export const PurchaseOrderLineEditModal = ({
           isUpdateMode={mode === ModalMode.Update}
           lines={lines}
           onChangeItem={onChangeItem}
-        ></PurchaseOrderLineEdit>
+        />
       )}
     </Modal>
   );

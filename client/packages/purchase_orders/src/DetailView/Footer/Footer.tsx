@@ -5,21 +5,26 @@ import {
   DeleteIcon,
   Action,
   ActionsFooter,
+  PurchaseOrderNodeStatus,
+  StatusCrumbs,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
+import { StatusChangeButton } from './StatusChangeButton';
+import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 
-// export const createStatusLog = (requisition: RequestFragment) => {
-//   const statusLog: Record<RequisitionNodeStatus, null | undefined | string> = {
-//     [RequisitionNodeStatus.Draft]: requisition.createdDatetime,
-//     [RequisitionNodeStatus.Sent]: requisition.sentDatetime,
-//     [RequisitionNodeStatus.Finalised]: requisition.finalisedDatetime,
-//     // Keeping typescript happy, not used for request requisitions.
-//     [RequisitionNodeStatus.New]: null,
-//   };
+const createStatusLog = () => {
+  // TODO: Implement the logic that ties the dates for when status changes?
+  const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
+    {
+      [PurchaseOrderNodeStatus.New]: null, // PurchaseOrder.createdDatetime
+      [PurchaseOrderNodeStatus.Authorised]: null,
+      [PurchaseOrderNodeStatus.Confirmed]: null,
+      [PurchaseOrderNodeStatus.Finalised]: null,
+    };
 
-//   return statusLog;
-// };
+  return statusLog;
+};
 
 export const Footer: FC = () => {
   const {
@@ -56,14 +61,13 @@ export const Footer: FC = () => {
               alignItems="center"
               height={64}
             >
-              {/* <StatusCrumbs
-                statuses={requestStatuses}
-                statusLog={createStatusLog(data)}
-                statusFormatter={getRequisitionTranslator(t)}
-              /> */}
-
+              <StatusCrumbs
+                statuses={purchaseOrderStatuses}
+                statusLog={createStatusLog()}
+                statusFormatter={getStatusTranslator(t)}
+              />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-                {/* <StatusChangeButton /> */}
+                <StatusChangeButton />
               </Box>
             </Box>
           ) : null}

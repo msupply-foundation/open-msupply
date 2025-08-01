@@ -118,7 +118,7 @@ const ListView: FC = () => {
       {
         key: 'deliveryDatetime',
         label: 'label.delivered',
-        accessor: ({ rowData: _ }) => 'TODO: GOOD RECEIVED CALC', // rowData.deliveredDatetime,
+        accessor: ({ rowData: _ }) => '', // rowData.deliveredDatetime,
         // format: ColumnFormat.Date,
         // accessor: ({ rowData }) => rowData.deliveredDatetime,
         // TODO: Figure out how to get the delivery date from the goods received data
