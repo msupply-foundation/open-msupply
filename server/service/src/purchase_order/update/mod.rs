@@ -4,7 +4,7 @@ use repository::{
     TransactionError,
 };
 
-use crate::service_provider::ServiceContext;
+use crate::{service_provider::ServiceContext, NullableUpdate};
 
 mod generate;
 mod test;
@@ -27,18 +27,19 @@ pub struct UpdatePurchaseOrderInput {
     pub id: String,
     pub supplier_id: Option<String>,
     pub status: Option<PurchaseOrderStatus>,
-    pub confirmed_datetime: Option<NaiveDateTime>,
+    pub confirmed_datetime: Option<NullableUpdate<NaiveDateTime>>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
-    pub donor_link_id: Option<String>,
+    pub donor_id: Option<NullableUpdate<String>>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
     pub foreign_exchange_rate: Option<f64>,
     pub shipping_method: Option<String>,
-    pub sent_datetime: Option<NaiveDateTime>,
-    pub contract_signed_date: Option<NaiveDate>,
-    pub advance_paid_date: Option<NaiveDate>,
-    pub received_at_port_date: Option<NaiveDate>,
+    pub sent_datetime: Option<NullableUpdate<NaiveDateTime>>,
+    pub contract_signed_date: Option<NullableUpdate<NaiveDate>>,
+    pub advance_paid_date: Option<NullableUpdate<NaiveDate>>,
+    pub received_at_port_date: Option<NullableUpdate<NaiveDate>>,
+    pub requested_delivery_date: Option<NullableUpdate<NaiveDate>>,
 }
 
 pub fn update_purchase_order(

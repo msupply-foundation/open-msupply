@@ -6300,6 +6300,7 @@ export enum PreferenceKey {
   OrderInPacks = 'orderInPacks',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   UseCampaigns = 'useCampaigns',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
@@ -6336,6 +6337,7 @@ export type PreferencesNode = {
   orderInPacks: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  syncRecordsDisplayThreshold: Scalars['Int']['output'];
   useCampaigns: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
@@ -8326,6 +8328,7 @@ export type RnRFormNode = {
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
+  period: PeriodNode;
   periodId: Scalars['String']['output'];
   periodLength: Scalars['Int']['output'];
   periodName: Scalars['String']['output'];
@@ -10339,6 +10342,7 @@ export type UpsertPreferencesInput = {
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   useCampaigns?: InputMaybe<Scalars['Boolean']['input']>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };
