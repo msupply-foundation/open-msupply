@@ -72,7 +72,7 @@ pub fn validate(
         return Err(
             UpdatePurchaseOrderLineInputError::PackSizeCodeCombinationExists(
                 PackSizeCodeCombination {
-                    item_code: item.id.clone(),
+                    item_code: item.code.clone(),
                     requested_pack_size: input
                         .requested_pack_size
                         .unwrap_or(purchase_order_line.requested_pack_size),

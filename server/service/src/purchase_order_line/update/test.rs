@@ -54,12 +54,13 @@ mod update {
         );
 
         // Cannot update to the same item and pack size combination
+
         assert_eq!(
             service.update_purchase_order_line(
                 &context,
                 &mock_store_a().id.clone(),
                 UpdatePurchaseOrderLineInput {
-                    id: "non_existent_line_id".to_string(),
+                    id: "purchase_order_line_id_1".to_string(),
                     item_id: Some(mock_item_a().id.to_string()),
                     requested_pack_size: None,
                     requested_number_of_units: None,

@@ -5,7 +5,7 @@ use repository::{
 };
 
 mod generate;
-use generate::generate;
+use generate::{generate, generate_from_csv, GenerateFromCSVInput};
 mod validate;
 use validate::validate;
 mod test;
@@ -106,14 +106,16 @@ pub fn insert_purchase_order_line_from_csv(
 
             validate(&ctx.store_id.clone(), &validate_input, connection)?;
 
-            let generate_input = InsertPurchaseOrderLineInput {
+            let generate_input = GenerateFromCSVInput {
                 id: input.id,
                 purchase_order_id: input.purchase_order_id,
                 item_id: item.id,
+                requested_pack_size: input.requested_pack_size,
+                requested_number_of_units: input.requested_number_of_units,
             };
 
             let new_purchase_order_line =
-                generate(connection, &ctx.store_id.clone(), generate_input)?;
+                generate_from_csv(connection, &ctx.store_id.clone(), generate_input)?;
 
             PurchaseOrderLineRowRepository::new(connection).upsert_one(&new_purchase_order_line)?;
 
