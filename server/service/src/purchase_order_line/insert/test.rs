@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod insert {
     use repository::{
-        mock::{mock_item_a, mock_name_a, mock_store_a, mock_user_account_a, MockDataInserts},
+        mock::{
+            mock_item_a, mock_item_b, mock_name_a, mock_store_a, mock_user_account_a,
+            MockDataInserts,
+        },
         test_db::setup_all,
         PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
     };
@@ -284,6 +287,7 @@ mod insert {
                 item_link_id: mock_item_a().id.to_string(),
                 requested_pack_size: 1.1,
                 requested_number_of_units: 0.0,
+                line_number: 1,
                 ..Default::default()
             })
         );

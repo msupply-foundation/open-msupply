@@ -45,12 +45,9 @@ pub fn validate(
         Pagination::all(),
         Some(PurchaseOrderLineFilter {
             id: None,
-            purchase_order_id: None,
+            purchase_order_id: Some(EqualFilter::equal_to(&input.purchase_order_id)),
             store_id: None,
-            requested_pack_size: Some(EqualFilter {
-                equal_to: Some(input.requested_pack_size),
-                ..Default::default()
-            }),
+            requested_pack_size: Some(EqualFilter::equal_to_f64(input.requested_pack_size)),
             item_id: Some(EqualFilter::equal_to(&input.item_id.clone())),
         }),
         None,
