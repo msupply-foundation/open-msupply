@@ -102,13 +102,39 @@ export const QuantityTableComponent = ({
   }
 
   columnDefinitions.push(
+    {
+      key: 'shippedPackSize',
+      label: 'label.shipped-pack-size',
+      width: 100,
+      Cell: PackSizeEntryCell<DraftInboundLine>,
+      setter: patch => {
+        setPackRoundingMessage?.('');
+        updateDraftLine(patch);
+      },
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
+      defaultHideOnMobile: true,
+      align: ColumnAlign.Left,
+    },
+    {
+      key: 'shippedNumberOfPacks',
+      label: 'label.shipped-number-of-packs',
+      Cell: NumberOfPacksCell,
+      cellProps: {
+        decimalLimit: 0,
+      },
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
+      width: 100,
+      align: ColumnAlign.Left,
+      setter: patch => updateDraftLine(patch),
+    },
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
         setPackRoundingMessage?.('');
         updateDraftLine(patch);
       },
-      label: 'label.pack-size',
+      label: 'label.received-pack-size',
+      width: 100,
       defaultHideOnMobile: true,
       align: ColumnAlign.Left,
     }),
@@ -134,19 +160,7 @@ export const QuantityTableComponent = ({
           }
         },
       },
-    ],
-    {
-      key: 'shippedNumberOfPacks',
-      label: 'label.shipped-number-of-packs',
-      Cell: NumberOfPacksCell,
-      cellProps: {
-        decimalLimit: 0,
-      },
-      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
-      width: 100,
-      align: ColumnAlign.Left,
-      setter: patch => updateDraftLine(patch),
-    }
+    ]
   );
 
   columnDefinitions.push({
@@ -194,7 +208,7 @@ export const QuantityTableComponent = ({
   });
 
   if (displayInDoses) {
-    columnDefinitions.push(...getInboundDosesColumns());
+    columnDefinitions.push(...getInboundDosesColumns(format));
   }
 
   columnDefinitions.push({
@@ -361,7 +375,8 @@ export const LocationTableComponent = ({
   isDisabled,
 }: TableProps) => {
   const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.UseCampaigns
   );
 
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
@@ -392,7 +407,9 @@ export const LocationTableComponent = ({
     ] as ColumnDescription<DraftInboundLine>);
   }
 
-  columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+  if (preferences?.useCampaigns) {
+    columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+  }
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 

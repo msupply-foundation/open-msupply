@@ -1,35 +1,9 @@
 use anyhow::Context;
 use diesel::prelude::*;
-use serde::{
-    de::{value::StrDeserializer, IntoDeserializer},
-    Deserialize, Deserializer, Serialize,
-};
+use serde::{Deserialize, Serialize};
+use util::sync_serde::ok_or_none;
 
 use crate::{migrations::*, sync_buffer::sync_buffer, GenderType, SyncAction};
-
-pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
-    d: D,
-) -> Result<Option<String>, D::Error> {
-    let s: Option<String> = Option::deserialize(d)?;
-    Ok(s.filter(|s| !s.is_empty()))
-}
-
-pub fn empty_str_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
-    d: D,
-) -> Result<Option<T>, D::Error> {
-    let s: Option<String> = empty_str_as_option_string(d)?;
-
-    let Some(s) = s else { return Ok(None) };
-
-    let str_d: StrDeserializer<D::Error> = s.as_str().into_deserializer();
-    Ok(Some(T::deserialize(str_d)?))
-}
-
-pub fn ok_or_none<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
-    d: D,
-) -> Result<Option<T>, D::Error> {
-    Ok(empty_str_as_option(d).map_or(None, |v| v))
-}
 
 #[derive(Deserialize, Serialize)]
 pub struct ClinicianOmsFields {

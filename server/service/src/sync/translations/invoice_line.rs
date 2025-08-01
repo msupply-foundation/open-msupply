@@ -1,14 +1,9 @@
-use crate::sync::{
-    sync_serde::{
-        date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
-        zero_date_as_option,
-    },
-    translations::{
-        currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
-        item_variant::ItemVariantTranslation, location::LocationTranslation,
-        reason::ReasonTranslation, stock_line::StockLineTranslation,
-    },
+use crate::sync::translations::{
+    currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
+    item_variant::ItemVariantTranslation, location::LocationTranslation, reason::ReasonTranslation,
+    stock_line::StockLineTranslation,
 };
+
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
@@ -17,6 +12,10 @@ use repository::{
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
+    zero_date_as_option,
+};
 
 use super::{
     is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck,
@@ -114,6 +113,8 @@ pub struct LegacyTransLineRow {
     pub oms_fields: Option<TransLineRowOmsFields>,
     #[serde(rename = "sentQuantity")]
     pub shipped_number_of_packs: Option<f64>,
+    #[serde(rename = "sent_pack_size")]
+    pub shipped_pack_size: Option<f64>,
 }
 
 // Needs to be added to all_translators()
@@ -177,6 +178,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,
+            shipped_pack_size,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -314,6 +316,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             vvm_status_id,
             campaign_id: oms_fields.and_then(|o| o.campaign_id),
             shipped_number_of_packs,
+            shipped_pack_size,
         };
 
         let result = adjust_negative_values(result);
@@ -373,6 +376,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     reason_option_id,
                     campaign_id,
                     shipped_number_of_packs,
+                    shipped_pack_size,
                 },
             item_row,
             ..
@@ -412,6 +416,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,
+            shipped_pack_size,
         };
         Ok(PushTranslateResult::upsert(
             changelog,

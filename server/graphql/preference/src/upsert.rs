@@ -17,6 +17,8 @@ pub struct UpsertPreferencesInput {
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
+    pub use_campaigns: Option<bool>,
+    pub sync_records_display_threshold: Option<i32>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
@@ -54,12 +56,14 @@ impl UpsertPreferencesInput {
             allow_tracking_of_stock_by_donor,
             gender_options,
             show_contact_tracing,
+            sync_records_display_threshold,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
+            use_campaigns,
         } = self;
 
         UpsertPreferences {
@@ -69,7 +73,10 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             show_contact_tracing: *show_contact_tracing,
-            // Global preferences*show_contact_tracing
+            use_campaigns: *use_campaigns,
+            sync_records_display_threshold: *sync_records_display_threshold,
+
+            // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
