@@ -19,21 +19,18 @@ import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
+import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
 
 export const DetailViewInner = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+
   const {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
   } = usePurchaseOrder();
-
-  const t = useTranslation();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.number]);
 
   const {
     onOpen,
@@ -50,11 +47,11 @@ export const DetailViewInner = () => {
     [onOpen]
   );
 
-  if (isLoading) return <DetailViewSkeleton />;
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.number]);
 
-  const onAddItem = () => {
-    onOpen();
-  };
+  if (isLoading) return <DetailViewSkeleton />;
 
   const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
 
@@ -64,19 +61,16 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons isDisabled={isDisabled} onAddItem={onAddItem} />
-
+          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
           <Toolbar isDisabled={isDisabled} />
-
           <ContentArea
             lines={sortedAndFilteredLines}
             isDisabled={isDisabled}
             onAddItem={onOpen}
             onRowClick={!isDisabled ? onRowClick : null}
           />
-
           <Footer />
-
+          <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal
               isOpen={isOpen}
