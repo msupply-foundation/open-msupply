@@ -1,11 +1,9 @@
-use crate::sync::{
-    sync_serde::{
-        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
-        zero_date_as_option,
-    },
-    translations::{location::LocationTranslation, store::StoreTranslation},
-};
+use crate::sync::translations::{location::LocationTranslation, store::StoreTranslation};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
+    zero_date_as_option,
+};
 
 use repository::{
     get_sensor_type, ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, SensorType,

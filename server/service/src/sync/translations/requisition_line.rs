@@ -1,17 +1,26 @@
-use crate::sync::{
-    sync_serde::{empty_str_as_option, empty_str_as_option_string},
-    translations::{item::ItemTranslation, requisition::RequisitionTranslation},
-};
-use chrono::NaiveDateTime;
+use crate::sync::translations::{item::ItemTranslation, requisition::RequisitionTranslation};
+
+use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_fields_as_option};
+
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
     RequisitionLineRow, RequisitionLineRowDelete, RequisitionLineRowRepository,
-    RequisitionRepository, StorageConnection, SyncBufferRow,
+    RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+#[derive(Deserialize, Serialize, PartialEq)]
+pub struct RequisitionLineOmsFields {
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub rnr_form_line_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub expiry_date: Option<NaiveDate>,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, PartialEq)]
@@ -73,6 +82,9 @@ pub struct LegacyRequisitionLineRow {
 
     #[serde(rename = "Cust_loss_adjust")]
     pub stock_adjustment_in_units: f64,
+
+    #[serde(default, deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<RequisitionLineOmsFields>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -198,8 +210,23 @@ impl SyncTranslation for RequisitionLineTranslation {
             available_stock_on_hand
         };
 
+        let rnr_form_line = RnRFormLineRepository::new(connection)
+            .query_one(RnRFormLineFilter::new().requisition_line_id(EqualFilter::equal_to(&id)))?;
+
+        let expiry_date = rnr_form_line
+            .as_ref()
+            .and_then(|line| line.rnr_form_line_row.expiry_date);
+        let rnr_form_line_id = rnr_form_line
+            .as_ref()
+            .map(|line| line.rnr_form_line_row.id.clone());
+
+        let oms_fields = Some(RequisitionLineOmsFields {
+            rnr_form_line_id,
+            expiry_date,
+        });
+
         let legacy_row = LegacyRequisitionLineRow {
-            ID: id.clone(),
+            ID: id,
             requisition_ID: requisition_id,
             item_ID: item_id,
             Cust_stock_order: requested_quantity,
@@ -221,6 +248,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             days_out_of_stock,
             option_id,
             stock_adjustment_in_units: addition_in_units - loss_in_units,
+            oms_fields,
         };
 
         Ok(PushTranslateResult::upsert(

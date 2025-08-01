@@ -96,24 +96,27 @@ export const SupplySelection = ({
     debouncedUpdate(newValue);
   };
 
-  const valueInDoses = useMemo(() => {
-    if (!displayVaccinesInDoses) return undefined;
-    return round(
-      calculateValueInDoses(
-        representation,
-        defaultPackSize || 1,
-        dosesPerUnit,
-        value
-      ),
-      2
-    );
-  }, [
-    displayVaccinesInDoses,
-    representation,
-    defaultPackSize,
-    dosesPerUnit,
-    value,
-  ]);
+  // doses always rounded to display in whole numbers
+  const valueInDoses = useMemo(
+    () =>
+      displayVaccinesInDoses
+        ? round(
+            calculateValueInDoses(
+              representation,
+              defaultPackSize || 1,
+              dosesPerUnit,
+              value
+            )
+          )
+        : undefined,
+    [
+      displayVaccinesInDoses,
+      representation,
+      defaultPackSize,
+      dosesPerUnit,
+      value,
+    ]
+  );
 
   return (
     <Box

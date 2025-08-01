@@ -1,8 +1,4 @@
-use crate::sync::{
-    sync_serde::{empty_str_as_option_string, naive_time},
-    translations::{store::StoreTranslation, PullTranslateResult, SyncTranslation},
-};
-
+use crate::sync::translations::{store::StoreTranslation, PullTranslateResult, SyncTranslation};
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -10,6 +6,7 @@ use repository::{
     SyncMessageRowStatus, SyncMessageRowType,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{empty_str_as_option_string, naive_time};
 
 use super::{to_legacy_time, PushTranslateResult};
 

@@ -13,17 +13,21 @@ import {
   DocumentRegistryCategoryNode,
   SxProps,
   Theme,
+  CustomersIcon,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
+  PatientModal,
   useClinicians,
   useDocumentRegistry,
+  usePatientModalStore,
 } from '@openmsupply-client/programs';
 import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
 } from '../../Clinician';
-import { DateTimePickerInput } from '@common/components';
+import { ButtonWithIcon, DateTimePickerInput } from '@common/components';
+import { ProgramDetailModal } from '../../Patient/ProgramEnrolment';
 
 const Row = ({
   label,
@@ -38,7 +42,8 @@ const Row = ({
 );
 
 /**
- * Updates the date component of the endDate to match the date of the startDatetime.
+ * Updates the date component of the endDate to match the date of the
+ * startDatetime.
  * If the startDatetime is not provided the current date is used.
  */
 const updateEndDatetimeFromStartDate = (
@@ -75,6 +80,8 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
       },
     });
 
+  const { current, setEditModal } = usePatientModalStore();
+
   const { data: clinicians } = useClinicians.document.list({});
   const hasClinicians = clinicians?.nodes.length !== 0;
 
@@ -93,12 +100,15 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
     }
   }, [encounter, getLocalisedFullName]);
 
-  const { patient } = encounter;
+  const { patient, programEnrolment } = encounter;
 
   const dateOfBirth = DateUtils.getNaiveDate(patient?.dateOfBirth);
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
+      {current === PatientModal.Program ? (
+        <ProgramDetailModal patientId={patient?.id} />
+      ) : null}
       <Grid
         container
         flexDirection="row"
@@ -192,7 +202,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                 />
               )}
             </Box>
-            <Box display="flex" gap={1}>
+            <Box display="flex" justifyContent="space-between" paddingRight={1}>
               <Row
                 label={t('label.visit-date')}
                 Input={
@@ -212,6 +222,19 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   />
                 }
               />
+              {programEnrolment && (
+                <ButtonWithIcon
+                  Icon={<CustomersIcon />}
+                  label={t('button.enrolment-info')}
+                  onClick={() => {
+                    setEditModal(
+                      PatientModal.Program,
+                      programEnrolment?.document?.type,
+                      programEnrolment?.document?.name
+                    );
+                  }}
+                />
+              )}
             </Box>
           </Box>
         </Grid>

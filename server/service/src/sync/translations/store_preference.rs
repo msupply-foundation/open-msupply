@@ -2,7 +2,7 @@ use repository::{StorageConnection, StorePreferenceRow, StorePreferenceType, Syn
 use serde::{Deserialize, Serialize};
 use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
-use crate::sync::sync_serde::string_to_f64;
+use util::sync_serde::string_to_f64;
 
 use super::{PullTranslateResult, SyncTranslation};
 

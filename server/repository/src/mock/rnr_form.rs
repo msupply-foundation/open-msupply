@@ -1,15 +1,16 @@
 use chrono::NaiveDate;
 
-use crate::{RnRFormLineRow, RnRFormRow, RnRFormStatus};
-
-use super::{item_query_test1, mock_period_2_a, mock_period_2_b, mock_program_b, mock_store_a};
+use crate::{
+    mock::{item_query_test1, mock_period_2_b, mock_period_2_c, mock_program_b, mock_store_a},
+    RnRFormLineRow, RnRFormRow, RnRFormStatus,
+};
 
 pub fn mock_rnr_form_a() -> RnRFormRow {
     RnRFormRow {
         id: "rnr_form_a".to_string(),
         store_id: mock_store_a().id,
         name_link_id: String::from("name_store_b"),
-        period_id: mock_period_2_a().id,
+        period_id: mock_period_2_b().id,
         program_id: mock_program_b().id,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()
@@ -25,7 +26,7 @@ pub fn mock_rnr_form_b() -> RnRFormRow {
         id: "rnr_form_b".to_string(),
         store_id: mock_store_a().id,
         name_link_id: String::from("name_store_b"),
-        period_id: mock_period_2_b().id,
+        period_id: mock_period_2_c().id,
         program_id: mock_program_b().id,
         created_datetime: NaiveDate::from_ymd_opt(2024, 3, 1)
             .unwrap()

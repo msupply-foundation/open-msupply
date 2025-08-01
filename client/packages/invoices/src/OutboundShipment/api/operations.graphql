@@ -725,6 +725,15 @@ mutation upsertOutboundShipment(
           updates {
             totalCount
           }
+          skippedExpiredStockLines {
+            totalCount
+          }
+          skippedOnHoldStockLines {
+            totalCount
+          }
+          skippedUnusableVvmStatusLines {
+            totalCount
+          }
         }
       }
     }

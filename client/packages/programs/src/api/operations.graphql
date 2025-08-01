@@ -227,6 +227,11 @@ fragment Encounter on EncounterNode {
   }
   programEnrolment {
     id
+    isImmunisationProgram
+    document {
+      type
+      name
+    }
   }
   createdDatetime
   startDatetime
@@ -269,9 +274,6 @@ query encounterById($storeId: String!, $encounterId: String!) {
       __typename
       nodes {
         ...Encounter
-        programEnrolment {
-          isImmunisationProgram
-        }
       }
       totalCount
     }

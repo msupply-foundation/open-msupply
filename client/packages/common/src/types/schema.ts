@@ -157,6 +157,7 @@ export enum ActivityLogNodeType {
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   RnrFormCreated = 'RNR_FORM_CREATED',
+  RnrFormDeleted = 'RNR_FORM_DELETED',
   RnrFormFinalised = 'RNR_FORM_FINALISED',
   RnrFormUpdated = 'RNR_FORM_UPDATED',
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
@@ -2035,6 +2036,12 @@ export type DeleteResponseRequisitionResponseWithId = {
   response: DeleteResponseRequisitionResponse;
 };
 
+export type DeleteRnRFormInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteRnRFormResponse = DeleteResponse;
+
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
   error: DeleteStocktakeErrorInterface;
@@ -3195,6 +3202,7 @@ export type InsertInboundShipmentLineInput = {
   packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
@@ -4092,6 +4100,7 @@ export type InvoiceLineNode = {
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   shippedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
+  shippedPackSize?: Maybe<Scalars['Float']['output']>;
   stockLine?: Maybe<StockLineNode>;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
@@ -4894,6 +4903,7 @@ export type Mutations = {
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
+  deleteRnrForm: DeleteRnRFormResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
@@ -5151,6 +5161,11 @@ export type MutationsDeleteResponseRequisitionArgs = {
 
 export type MutationsDeleteResponseRequisitionLineArgs = {
   input: DeleteResponseRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteRnrFormArgs = {
+  input: DeleteRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6174,6 +6189,8 @@ export enum PreferenceKey {
   OrderInPacks = 'orderInPacks',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
+  UseCampaigns = 'useCampaigns',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
 
@@ -6207,6 +6224,8 @@ export type PreferencesNode = {
   orderInPacks: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  syncRecordsDisplayThreshold: Scalars['Int']['output'];
+  useCampaigns: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
 
@@ -8038,8 +8057,11 @@ export type RnRFormNode = {
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
+  period: PeriodNode;
+  /** @deprecated Since 2.9.1. Use period.id instead */
   periodId: Scalars['String']['output'];
   periodLength: Scalars['Int']['output'];
+  /** @deprecated Since 2.9.1. Use period.name instead */
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
@@ -9129,6 +9151,7 @@ export type UpdateInboundShipmentLineInput = {
   packSize?: InputMaybe<Scalars['Float']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
@@ -10018,6 +10041,8 @@ export type UpsertPreferencesInput = {
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
+  useCampaigns?: InputMaybe<Scalars['Boolean']['input']>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
@@ -10078,6 +10103,7 @@ export enum UserPermission {
   AssetMutate = 'ASSET_MUTATE',
   AssetMutateViaDataMatrix = 'ASSET_MUTATE_VIA_DATA_MATRIX',
   AssetQuery = 'ASSET_QUERY',
+  CancelFinalisedInvoices = 'CANCEL_FINALISED_INVOICES',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   CustomerReturnMutate = 'CUSTOMER_RETURN_MUTATE',

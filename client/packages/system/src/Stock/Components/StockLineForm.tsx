@@ -23,25 +23,27 @@ import {
   useRegisterActions,
   usePreference,
   PreferenceKey,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../api';
+import { DraftStockLine } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { DonorSearchInput } from '../..';
-import { StyledInputRow } from './StyledInputRow';
 import {
-  ItemVariantInput,
-  PackSizeNumberInput,
-  useIsItemVariantsEnabled,
-} from '../../Item';
+  DonorSearchInput,
+  ReasonOptionRowFragment,
+  ReasonOptionsSearchInput,
+} from '../..';
+import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
+import { ItemVariantInput, useIsItemVariantsEnabled } from '../../Item';
 import { CampaignSelector } from './Campaign';
 
 interface StockLineFormProps {
-  draft: StockLineRowFragment;
+  draft: DraftStockLine;
   loading: boolean;
-  onUpdate: (patch: Partial<StockLineRowFragment>) => void;
+  onUpdate: (patch: Partial<DraftStockLine>) => void;
   pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
   packEditable?: boolean;
-  isInModal?: boolean;
+  isNewModal?: boolean;
+  reasonOptions?: ReasonOptionRowFragment[];
 }
 export const StockLineForm = ({
   draft,
@@ -49,7 +51,8 @@ export const StockLineForm = ({
   onUpdate,
   pluginEvents,
   packEditable,
-  isInModal = false,
+  isNewModal = false,
+  reasonOptions,
 }: StockLineFormProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -57,7 +60,8 @@ export const StockLineForm = ({
   const { data: preferences } = usePreference(
     PreferenceKey.AllowTrackingOfStockByDonor,
     PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.ManageVvmStatusForStock
+    PreferenceKey.ManageVvmStatusForStock,
+    PreferenceKey.UseCampaigns
   );
 
   const { isConnected, isEnabled, isScanning, startScan } =
@@ -112,7 +116,7 @@ export const StockLineForm = ({
         width="100%"
         flexWrap="nowrap"
         maxWidth={900}
-        gap={isInModal ? undefined : 10}
+        gap={isNewModal ? undefined : 10}
       >
         <Grid container flex={1} flexBasis="50%" flexDirection="column" gap={1}>
           <StyledInputRow
@@ -122,11 +126,7 @@ export const StockLineForm = ({
                 autoFocus
                 disabled={!packEditable}
                 width={160}
-                value={
-                  draft.totalNumberOfPacks
-                    ? parseFloat(draft.totalNumberOfPacks.toFixed(2))
-                    : 0
-                }
+                value={draft.totalNumberOfPacks ? draft.totalNumberOfPacks : 0}
                 onChange={totalNumberOfPacks =>
                   onUpdate({ totalNumberOfPacks })
                 }
@@ -141,7 +141,7 @@ export const StockLineForm = ({
                   autoFocus
                   disabled={!packEditable}
                   width={160}
-                  value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
+                  value={draft.availableNumberOfPacks}
                   onChange={availableNumberOfPacks =>
                     onUpdate({ availableNumberOfPacks })
                   }
@@ -193,6 +193,22 @@ export const StockLineForm = ({
               />
             }
           />
+          {isNewModal && (
+            <StyledInputRow
+              label={t('label.reason')}
+              Input={
+                <ReasonOptionsSearchInput
+                  width={INPUT_WIDTH}
+                  type={ReasonOptionNodeType.PositiveInventoryAdjustment}
+                  value={draft.reasonOption}
+                  onChange={reason => onUpdate({ reasonOption: reason })}
+                  reasonOptions={reasonOptions ?? []}
+                  loading={loading}
+                  disabled={draft?.totalNumberOfPacks === 0}
+                />
+              }
+            />
+          )}
           {showItemVariantsInput && (
             <StyledInputRow
               label={t('label.item-variant')}
@@ -215,11 +231,10 @@ export const StockLineForm = ({
             <StyledInputRow
               label={t('label.pack-size')}
               Input={
-                <PackSizeNumberInput
-                  isDisabled={!packEditable}
-                  packSize={draft.packSize}
-                  itemId={draft.itemId}
-                  unitName={draft.item.unitName ?? null}
+                <NumericTextInput
+                  disabled={!packEditable}
+                  width={160}
+                  value={draft.packSize ?? 1}
                   onChange={packSize => onUpdate({ packSize })}
                 />
               }
@@ -314,15 +329,17 @@ export const StockLineForm = ({
               }
             />
           )}
-          <StyledInputRow
-            label={t('label.campaign')}
-            Input={
-              <CampaignSelector
-                campaignId={draft.campaign?.id}
-                onChange={campaign => onUpdate({ campaign })}
-              />
-            }
-          />
+          {preferences?.useCampaigns && (
+            <StyledInputRow
+              label={t('label.campaign')}
+              Input={
+                <CampaignSelector
+                  campaignId={draft.campaign?.id}
+                  onChange={campaign => onUpdate({ campaign })}
+                />
+              }
+            />
+          )}
         </Grid>
       </Grid>
     </DetailContainer>

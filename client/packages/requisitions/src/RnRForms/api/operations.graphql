@@ -4,6 +4,9 @@ fragment RnRForm on RnRFormNode {
   periodId
   periodName
   periodLength
+  period {
+    ...Period
+  }
   programId
   programName
   supplierName
@@ -143,6 +146,15 @@ mutation finaliseRnRForm($storeId: String!, $input: FinaliseRnRFormInput!) {
     ... on RnRFormNode {
       __typename
       ...RnRForm
+    }
+  }
+}
+
+mutation deleteRnRForm($storeId: String!, $input: DeleteRnRFormInput!) {
+  deleteRnrForm(storeId: $storeId, input: $input) {
+    ... on DeleteResponse {
+      __typename
+      id
     }
   }
 }

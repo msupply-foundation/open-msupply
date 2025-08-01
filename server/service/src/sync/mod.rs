@@ -13,7 +13,6 @@ pub mod settings;
 pub mod site_info;
 pub mod sync_buffer;
 pub mod sync_on_central;
-pub(crate) mod sync_serde;
 pub mod sync_status;
 pub mod sync_user;
 pub mod synchroniser;

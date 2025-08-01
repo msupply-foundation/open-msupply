@@ -1,6 +1,6 @@
-use crate::sync::sync_serde::empty_str_as_option_string;
 use anyhow::anyhow;
 use repository::{ProgramIndicatorRow, StorageConnection, SyncBufferRow};
+use util::sync_serde::empty_str_as_option_string;
 
 use serde::Deserialize;
 
