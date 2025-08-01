@@ -22,14 +22,21 @@ pub(super) fn find_stock_line_ledger_discrepancies(
 ) -> Result</* stock line ids */ Vec<String>, FindStockLineLedgerDiscrepanciesError> {
     let active_stores = ActiveStoresOnSite::get(connection)?;
 
-    let stock_line_filter = match stock_line_id {
-        Some(id) => StockLineFilter::new().id(EqualFilter::equal_to(id)),
-        None => StockLineFilter::new()
-            .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids())),
+    // Filters
+    let (stock_line, stock_line_id) = match stock_line_id {
+        Some(id) => (None, Some(EqualFilter::equal_to(id))),
+        None => (
+            Some(
+                StockLineFilter::new()
+                    .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids())),
+            ),
+            None,
+        ),
     };
 
     let filter = StockLineLedgerDiscrepancyFilter {
-        stock_line: Some(stock_line_filter),
+        stock_line,
+        stock_line_id,
     };
 
     Ok(StockLineLedgerDiscrepancyRepository::new(connection)

@@ -207,7 +207,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
   max_ledger_datetime AS (
       SELECT stock_line_id,
           MAX(datetime) AS dt
-      FROM stock_line_ledger
+      FROM stock_movement
       GROUP BY 1
   ),
   running_balance AS (
