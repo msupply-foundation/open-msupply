@@ -1,12 +1,25 @@
-use crate::migrations::{
-    templates::add_data_from_sync_buffer::{sync_buffer, SyncAction},
-    *,
-};
-use anyhow::Context;
+use crate::migrations::*;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use serde::Deserialize;
 
 pub(crate) struct Migrate;
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum SyncAction {
+    Upsert,
+}
+
+table! {
+    sync_buffer (record_id) {
+        record_id -> Text,
+        data -> Text,
+        action -> crate::migrations::v2_09_01::invoice_line_shipped_pack_size_sync_buffer::SyncActionMapping,
+        table_name -> Text,
+        integration_error -> Nullable<Text>,
+    }
+}
 
 table! {
     invoice_line (id) {
@@ -37,8 +50,23 @@ impl MigrationFragment for Migrate {
             .load::<(String, String)>(connection.lock().connection())?;
 
         for (id, data) in sync_buffer_rows {
-            let legacy_row = serde_json::from_str::<LegacyTransLineRow>(&data)
-                .with_context(|| format!("Cannot parse sync buffer row data: {data}"))?;
+            let legacy_row_or_error = serde_json::from_str::<LegacyTransLineRow>(&data);
+            let legacy_row = match legacy_row_or_error {
+                Ok(legacy_row) => {
+                    if legacy_row.shipped_pack_size.is_none() {
+                        continue;
+                    }
+                    legacy_row
+                }
+                Err(e) => {
+                    diesel::update(sync_buffer::table)
+                        .filter(sync_buffer::record_id.eq(&id))
+                        .set(sync_buffer::integration_error.eq(e.to_string()))
+                        .execute(connection.lock().connection())?;
+                    println!("Error parsing legacy row for ID {}: {}", id, e);
+                    continue;
+                }
+            };
 
             diesel::update(invoice_line::table)
                 .filter(invoice_line::id.eq(id))
