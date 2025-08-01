@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AppBarContentPortal,
   InputWithLabelRow,
@@ -7,10 +7,20 @@ import {
   useTranslation,
   SearchBar,
   Tooltip,
+  useDebounceCallback,
+  DateTimePickerInput,
+  DateUtils,
+  Formatter,
+  useNotification,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
-import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
+import {
+  UpdatePurchaseOrderInput,
+  usePurchaseOrder,
+} from '../api/hooks/usePurchaseOrder';
 import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
+
+const DEBOUNCED_TIME = 1000;
 
 interface ToolbarProps {
   isDisabled?: boolean;
@@ -18,12 +28,30 @@ interface ToolbarProps {
 
 export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
+  const { error } = useNotification();
   const {
     query: { data, isLoading },
     lines: { itemFilter, setItemFilter },
+    update: { update },
   } = usePurchaseOrder();
 
-  const { supplier, reference } = data ?? {};
+  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
+    DateUtils.getDateOrNull(data?.requestedDeliveryDate)
+  );
+
+  const handleUpdate = (input: Partial<UpdatePurchaseOrderInput>) => {
+    try {
+      update(input);
+    } catch (e) {
+      error(t('messages.error-saving-purchase-order'))();
+    }
+  };
+
+  const handleDebouncedUpdate = useDebounceCallback(
+    handleUpdate,
+    [],
+    DEBOUNCED_TIME
+  );
 
   return (
     <AppBarContentPortal
@@ -36,17 +64,16 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     >
       <Grid container gap={2} flexWrap="nowrap">
         <Grid display="flex" flex={1} flexDirection="column" gap={1}>
-          {supplier && (
+          {data?.supplier && (
             <InputWithLabelRow
               label={t('label.supplier-name')}
               Input={
                 <InternalSupplierSearchInput
                   disabled={isDisabled || isLoading}
-                  value={(supplier as NameFragment) ?? null}
+                  value={(data?.supplier as NameFragment) ?? null}
                   onChange={supplier => {
-                    // eslint-disable-next-line no-console
-                    console.log('TO-DO: Update supplier', supplier.name);
-                    // update({ supplier });
+                    if (!supplier) return;
+                    handleUpdate({ supplierId: supplier?.id });
                   }}
                 />
               }
@@ -55,19 +82,32 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
           <InputWithLabelRow
             label={t('label.supplier-ref')}
             Input={
-              <Tooltip title={reference} placement="bottom-start">
+              <Tooltip title={data?.reference} placement="bottom-start">
                 <BufferedTextInput
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={reference ?? null}
+                  value={data?.reference ?? null}
                   onChange={e => {
-                    // eslint-disable-next-line no-console
-                    console.log('TO-DO: Update reference', e.target.value);
-                    // update({ reference: e.target.value });
+                    handleDebouncedUpdate({ reference: e.target.value });
                   }}
                 />
               </Tooltip>
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.requested-delivery-date')}
+            Input={
+              <DateTimePickerInput
+                value={requestedDeliveryDate}
+                onChange={date => {
+                  setRequestedDeliveryDate(date);
+                  const formattedDate = Formatter.naiveDate(date);
+                  handleUpdate({
+                    requestedDeliveryDate: formattedDate,
+                  });
+                }}
+              />
             }
           />
         </Grid>

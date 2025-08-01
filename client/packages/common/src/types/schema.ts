@@ -5959,6 +5959,21 @@ export type NullableDateUpdate = {
  * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
  * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
  */
+export type NullableDatetimeUpdate = {
+  value?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+};
+
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
 export type NullableStringUpdate = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
@@ -6745,6 +6760,7 @@ export type PurchaseOrderNode = {
   number: Scalars['Int']['output'];
   receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
+  requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   shippingMethod?: Maybe<Scalars['String']['output']>;
   status: PurchaseOrderNodeStatus;
@@ -8329,8 +8345,10 @@ export type RnRFormNode = {
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
   period: PeriodNode;
+  /** @deprecated Since 2.9.1. Use period.id instead */
   periodId: Scalars['String']['output'];
   periodLength: Scalars['Int']['output'];
+  /** @deprecated Since 2.9.1. Use period.name instead */
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
@@ -9829,17 +9847,18 @@ export type UpdateProgramPatientInput = {
 export type UpdateProgramPatientResponse = PatientNode;
 
 export type UpdatePurchaseOrderInput = {
-  advancePaidDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  advancePaidDate?: InputMaybe<NullableDateUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
-  confirmedDatetime?: InputMaybe<Scalars['NaiveDateTime']['input']>;
-  contractSignedDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  confirmedDatetime?: InputMaybe<NullableDatetimeUpdate>;
+  contractSignedDate?: InputMaybe<NullableDateUpdate>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
-  donorLinkId?: InputMaybe<Scalars['String']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   foreignExchangeRate?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
-  receivedAtPortDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  receivedAtPortDate?: InputMaybe<NullableDateUpdate>;
   reference?: InputMaybe<Scalars['String']['input']>;
-  sentDatetime?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+  requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
+  sentDatetime?: InputMaybe<NullableDatetimeUpdate>;
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<PurchaseOrderNodeType>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;

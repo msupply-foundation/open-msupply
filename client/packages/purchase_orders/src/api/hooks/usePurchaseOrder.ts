@@ -1,12 +1,13 @@
 import {
   FnUtils,
   InsertPurchaseOrderInput,
+  PurchaseOrderNodeType,
   SortUtils,
-  UpdatePurchaseOrderInput,
   useMutation,
   useParams,
   useQuery,
   useUrlQuery,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { LIST, PURCHASE_ORDER } from './keys';
@@ -14,12 +15,31 @@ import { PurchaseOrderFragment } from '../operations.generated';
 import { useMemo } from 'react';
 import { usePurchaseOrderColumns } from '../../DetailView/columns';
 
+export type UpdatePurchaseOrderInput = {
+  advancePaidDate?: string | null;
+  comment?: string | null;
+  confirmedDatetime?: string | null;
+  contractSignedDate?: string | null;
+  currencyId?: string | null;
+  donorId?: string | null;
+  foreignExchangeRate?: number | null;
+  id: string;
+  receivedAtPortDate?: string | null;
+  reference?: string | null;
+  requestedDeliveryDate?: string | null;
+  sentDatetime?: string | null;
+  shippingMethod?: string | null;
+  status?: PurchaseOrderNodeType | null;
+  supplierDiscountPercentage?: number | null;
+  supplierId?: string | null;
+};
+
 export const usePurchaseOrder = (id?: string) => {
   const { purchaseOrderId = id } = useParams();
 
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
-  const queryKey = [LIST, PURCHASE_ORDER, storeId, purchaseOrderId];
+  const queryKey = [PURCHASE_ORDER, LIST, storeId, purchaseOrderId];
 
   // QUERY
   const queryFn = async (): Promise<PurchaseOrderFragment | undefined> => {
@@ -68,7 +88,6 @@ export const usePurchaseOrder = (id?: string) => {
 
   const create = async (supplierId: string) => {
     const id = FnUtils.generateUUID();
-
     const result = await createMutation({ id, supplierId });
     return result;
   };
@@ -84,15 +103,11 @@ export const usePurchaseOrder = (id?: string) => {
 const useCreate = () => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
-  const mutationFn = async (
-    input: InsertPurchaseOrderInput
-  ): Promise<string> => {
-    const result = await purchaseOrderApi.insertPurchaseOrder({
+  const mutationFn = async (input: InsertPurchaseOrderInput) => {
+    return await purchaseOrderApi.insertPurchaseOrder({
       input,
       storeId,
     });
-    if (result?.insertPurchaseOrder.id) return result?.insertPurchaseOrder.id;
-    throw new Error('Could not insert purchase order');
   };
 
   return useMutation({
@@ -104,20 +119,25 @@ const useCreate = () => {
 const useUpdate = () => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
-  const mutationFn = async (
-    input: UpdatePurchaseOrderInput
-  ): Promise<string> => {
-    const result = await purchaseOrderApi.updatePurchaseOrder({
-      input,
+  const mutationFn = async (input: UpdatePurchaseOrderInput) => {
+    return await purchaseOrderApi.updatePurchaseOrder({
+      input: {
+        ...input,
+        donorId: setNullableInput('donorId', input),
+        confirmedDatetime: setNullableInput('confirmedDatetime', input),
+        contractSignedDate: setNullableInput('contractSignedDate', input),
+        advancePaidDate: setNullableInput('advancePaidDate', input),
+        receivedAtPortDate: setNullableInput('receivedAtPortDate', input),
+        sentDatetime: setNullableInput('sentDatetime', input),
+        requestedDeliveryDate: setNullableInput('requestedDeliveryDate', input),
+      },
       storeId,
     });
-    if (result?.updatePurchaseOrder.id) return result?.updatePurchaseOrder.id;
-    throw new Error('Could not update purchase order');
   };
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([LIST, PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   });
 };
 
