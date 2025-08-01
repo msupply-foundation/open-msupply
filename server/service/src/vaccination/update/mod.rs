@@ -1,14 +1,12 @@
 use crate::{
     activity_log::activity_log_entry,
     invoice::{
-        customer_return::{
-            insert::{insert_customer_return, InsertCustomerReturnError},
-            update_customer_return, UpdateCustomerReturnError,
-        },
-        insert_prescription, update_prescription, InsertPrescriptionError, UpdatePrescriptionError,
+        insert_prescription, update_prescription, InsertPrescriptionError, UpdatePrescription,
+        UpdatePrescriptionError, UpdatePrescriptionStatus,
     },
     invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
     service_provider::ServiceContext,
+    vaccination::update::generate::CancelPrescription,
     NullableUpdate,
 };
 
@@ -18,7 +16,7 @@ use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRe
 mod generate;
 mod validate;
 
-use generate::{generate, CreateCustomerReturn, GenerateResult};
+use generate::{generate, GenerateResult};
 use validate::validate;
 
 use super::{generate::CreatePrescription, query::get_vaccination};
@@ -68,7 +66,7 @@ pub fn update_vaccination(
 
             let GenerateResult {
                 vaccination,
-                create_customer_return,
+                cancel_prescription,
                 create_prescription,
             } = generate(store_id, validate_result, input.clone());
 
@@ -76,15 +74,16 @@ pub fn update_vaccination(
             VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;
 
             // Reverse existing prescription if needed
-            if let Some(CreateCustomerReturn {
-                create_return,
-                finalise_return,
-            }) = create_customer_return
-            {
-                // Create customer return (in NEW status, with line)
-                insert_customer_return(ctx, create_return)?;
-                // Finalise, reintroducing stock, and add comment
-                update_customer_return(ctx, finalise_return)?;
+            // NOTE: We reverse the whole prescription so if in the future we want to reverse just some lines on the prescription this logic might need to change
+            if let Some(CancelPrescription { prescription_id }) = cancel_prescription {
+                update_prescription(
+                    ctx,
+                    UpdatePrescription {
+                        id: prescription_id,
+                        status: Some(UpdatePrescriptionStatus::Cancelled),
+                        ..Default::default()
+                    },
+                )?;
             }
 
             // Create new prescription if needed
@@ -121,23 +120,6 @@ impl From<RepositoryError> for UpdateVaccinationError {
         UpdateVaccinationError::DatabaseError(error)
     }
 }
-
-impl From<InsertCustomerReturnError> for UpdateVaccinationError {
-    fn from(error: InsertCustomerReturnError) -> Self {
-        UpdateVaccinationError::InternalError(format!(
-            "Could not create customer return: {:?}",
-            error
-        ))
-    }
-}
-impl From<UpdateCustomerReturnError> for UpdateVaccinationError {
-    fn from(error: UpdateCustomerReturnError) -> Self {
-        UpdateVaccinationError::InternalError(format!(
-            "Could not finalise customer return: {:?}",
-            error
-        ))
-    }
-}
 impl From<InsertPrescriptionError> for UpdateVaccinationError {
     fn from(error: InsertPrescriptionError) -> Self {
         UpdateVaccinationError::InternalError(format!("Could not create prescription: {:?}", error))
@@ -153,10 +135,7 @@ impl From<InsertStockOutLineError> for UpdateVaccinationError {
 }
 impl From<UpdatePrescriptionError> for UpdateVaccinationError {
     fn from(error: UpdatePrescriptionError) -> Self {
-        UpdateVaccinationError::InternalError(format!(
-            "Could not finalise prescription: {:?}",
-            error
-        ))
+        UpdateVaccinationError::InternalError(format!("Could not update prescription: {:?}", error))
     }
 }
 
@@ -625,7 +604,8 @@ mod update {
         assert_eq!(created_invoices.len(), 2);
         assert!(created_invoices
             .iter()
-            .any(|inv| inv.invoice_row.r#type == InvoiceType::CustomerReturn));
+            .any(|inv| inv.invoice_row.r#type == InvoiceType::Prescription
+                && inv.invoice_row.is_cancellation));
 
         // Check new stock was introduced
         let stock_line = StockLineRowRepository::new(&context.connection)
@@ -685,7 +665,8 @@ mod update {
         assert_eq!(created_invoices.len(), 2);
         assert!(created_invoices
             .iter()
-            .any(|inv| inv.invoice_row.r#type == InvoiceType::CustomerReturn));
+            .any(|inv| inv.invoice_row.r#type == InvoiceType::Prescription
+                && inv.invoice_row.is_cancellation));
 
         // Check stock was re-introduced
         let stock_line = StockLineRowRepository::new(&context.connection)

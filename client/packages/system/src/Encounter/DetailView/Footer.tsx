@@ -121,7 +121,7 @@ export const Footer: FC<FooterProps> = ({
               isLoading={isSaving}
               onClick={onSave}
               startIcon={<SaveIcon />}
-              label={t('button.save')}
+              label={t('button.save-progress')}
             />
             {encounter?.status &&
               // Status no longer editable once visited

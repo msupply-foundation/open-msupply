@@ -18,6 +18,7 @@ import {
   DraftStockOutLineFragment,
   normaliseToUnits,
   getManualAllocationAlerts,
+  unitsToQuantity,
 } from '.';
 import { allocateQuantities } from './allocateQuantities';
 import { VvmStatusFragment } from 'packages/system/src/Stock/api';
@@ -63,15 +64,19 @@ interface AllocationContext {
   prescribedUnits: number | null;
   note: string | null;
 
-  initialise: (params: {
-    itemData: OutboundLineEditData;
-    strategy: AllocationStrategy;
-    allowPlaceholder: boolean;
-    allowPrescribedQuantity?: boolean;
-    scannedBatch?: string;
-    allocateIn?: AllocateInOption;
-    ignoreNonAllocatableLines?: boolean;
-  }) => void;
+  initialise: (
+    params: {
+      itemData: OutboundLineEditData;
+      strategy: AllocationStrategy;
+      allowPlaceholder: boolean;
+      allowPrescribedQuantity?: boolean;
+      scannedBatch?: string;
+      allocateIn?: AllocateInOption;
+      ignoreNonAllocatableLines?: boolean;
+    },
+    format: (value: number, options?: Intl.NumberFormatOptions) => string,
+    t: TypedTFunction<LocaleKey>
+  ) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
   setPrescribedQuantity: (quantity: number) => void;
@@ -86,6 +91,10 @@ interface AllocationContext {
   setIsDirty: (isDirty: boolean) => void;
   clear: () => void;
 
+  reallocateLines: (
+    format: (value: number, options?: Intl.NumberFormatOptions) => string,
+    t: TypedTFunction<LocaleKey>
+  ) => void;
   manualAllocate: (
     lineId: string,
     quantity: number,
@@ -117,15 +126,20 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   allocateIn: { type: AllocateInType.Units },
   note: null,
 
-  initialise: ({
-    itemData: { item, draftLines, placeholderUnits, prescribedUnits, note },
-    strategy,
-    allowPlaceholder,
-    allowPrescribedQuantity,
-    scannedBatch,
-    allocateIn,
-    ignoreNonAllocatableLines,
-  }) => {
+  initialise: (
+    {
+      itemData: { item, draftLines, placeholderUnits, prescribedUnits, note },
+      strategy,
+      allowPlaceholder,
+      allowPrescribedQuantity,
+      scannedBatch,
+      allocateIn: inputAllocateIn,
+      ignoreNonAllocatableLines,
+    },
+    format,
+    t
+  ) => {
+    const { reallocateLines } = get();
     const sortedLines = draftLines.sort(SorterByStrategy[strategy]);
 
     // Separate lines here, so only dealing with allocatable lines going forward
@@ -140,11 +154,12 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       }
     );
 
+    const allocateIn = inputAllocateIn ?? { type: AllocateInType.Units };
     set({
       isDirty: false,
       item,
       note,
-      allocateIn: allocateIn ?? { type: AllocateInType.Units },
+      allocateIn,
 
       draftLines: allocatableLines,
       // When not ignored, we still want to display non-allocatable lines to the user
@@ -155,6 +170,23 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       prescribedUnits: allowPrescribedQuantity ? (prescribedUnits ?? 0) : null,
       alerts: [],
     });
+
+    const allocatedQuantity = getAllocatedQuantity({
+      draftLines: allocatableLines,
+      allocateIn,
+    });
+
+    // If no quantity has yet been allocated, attempt to allocate the placeholder on initialise
+    if (allocatedQuantity === 0) {
+      reallocateLines(format, t);
+      set(state => ({
+        ...state,
+        alerts: [
+          ...state.alerts,
+          { message: t('messages.auto-allocated-lines'), severity: 'warning' },
+        ],
+      }));
+    }
   },
 
   clear: () =>
@@ -173,7 +205,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     })),
 
   setAllocateIn: (allocateIn, format, t) => {
-    const { draftLines, placeholderUnits, autoAllocate } = get();
+    const { reallocateLines } = get();
 
     set(state => ({
       ...state,
@@ -185,17 +217,27 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     // but changing which pack size to allocate in means we might
     // need to redistribute the stock.
     if (allocateIn.type === AllocateInType.Packs) {
-      const existingQuantityInUnits =
-        getAllocatedQuantity({
-          draftLines,
-          allocateIn: { type: AllocateInType.Units },
-        }) + (placeholderUnits ?? 0);
-
-      const quantityInNewPackSize =
-        existingQuantityInUnits / allocateIn.packSize;
-
-      autoAllocate(quantityInNewPackSize, format, t);
+      reallocateLines(format, t);
     }
+  },
+
+  reallocateLines: (format, t) => {
+    const { draftLines, allocateIn, placeholderUnits, autoAllocate, item } =
+      get();
+
+    const unitQuantityIncludingPlaceholder =
+      getAllocatedQuantity({
+        draftLines,
+        allocateIn: { type: AllocateInType.Units },
+      }) + (placeholderUnits ?? 0);
+
+    const quantityInNewPackSize = unitsToQuantity(
+      allocateIn,
+      unitQuantityIncludingPlaceholder,
+      item?.doses ?? 0
+    );
+
+    autoAllocate(quantityInNewPackSize, format, t);
   },
 
   setAlerts: alerts =>
