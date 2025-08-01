@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Checkbox,
   Grid,
@@ -25,6 +25,7 @@ import {
   PreferenceKey,
   ReasonOptionNodeType,
   QuantityUtils,
+  Alert,
 } from '@openmsupply-client/common';
 import { DraftStockLine } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -71,6 +72,9 @@ export const StockLineForm = ({
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
+
+  const [invalidLocationAlert, setInvalidLocationAlert] = useState<string>('');
+
   const showVVMStatus =
     draft?.item?.isVaccine &&
     (preferences?.manageVvmStatusForStock ||
@@ -281,6 +285,9 @@ export const StockLineForm = ({
               />
             }
           />
+          {invalidLocationAlert && (
+            <Alert severity="warning">{invalidLocationAlert}</Alert>
+          )}
           <StyledInputRow
             label={t('label.location')}
             Input={
@@ -293,6 +300,9 @@ export const StockLineForm = ({
                   onUpdate({ location, locationId: location?.id });
                 }}
                 restrictedToLocationTypeId={draft.item.restrictedLocationTypeId}
+                onInvalidLocation={(_invalid, message) =>
+                  setInvalidLocationAlert(message)
+                }
               />
             }
           />

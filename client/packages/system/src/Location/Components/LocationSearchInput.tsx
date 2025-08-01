@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Autocomplete,
   AutocompleteOption,
   CloseIcon,
   MenuItem,
+  useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
@@ -15,6 +16,7 @@ interface LocationSearchInputProps {
   disabled: boolean;
   autoFocus?: boolean;
   restrictedToLocationTypeId?: string | null;
+  onInvalidLocation?: (invalid: boolean, message: string) => void;
 }
 
 interface LocationOption {
@@ -62,8 +64,11 @@ export const LocationSearchInput = ({
   disabled,
   autoFocus = false,
   restrictedToLocationTypeId,
+  onInvalidLocation,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
+  const theme = useTheme();
+
   const {
     query: { data, isLoading },
   } = useLocationList({
@@ -91,14 +96,46 @@ export const LocationSearchInput = ({
 
   const selectedOption = options.find(o => o.value === selectedLocation?.id);
 
+  const isInvalidLocation =
+    !!selectedLocation &&
+    !options.some(option => option.value === selectedLocation.id);
+
+  // If the selected location is invalid, create an option to display it in the closed input
+  const invalidLocationOption = isInvalidLocation
+    ? {
+        value: selectedLocation.id,
+        label: formatLocationLabel(selectedLocation),
+        code: selectedLocation.code,
+      }
+    : selectedOption || null;
+
+  const locationValue = isInvalidLocation
+    ? invalidLocationOption
+    : selectedOption || null;
+
+  useEffect(() => {
+    onInvalidLocation?.(
+      isInvalidLocation,
+      isInvalidLocation ? t('messages.stock-location-invalid') : ''
+    );
+  }, [isInvalidLocation]);
+
+  const errorStyles = {
+    borderColor: theme.palette.error.main,
+    borderWidth: '2px',
+    borderStyle: 'solid',
+    borderRadius: '8px',
+  };
+
   return (
     <Autocomplete
+      sx={!!isInvalidLocation && onInvalidLocation ? errorStyles : undefined}
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
       popperMinWidth={Number(width)}
       clearable={false}
-      value={selectedOption || null}
+      value={locationValue}
       loading={isLoading}
       onChange={(_, option) => {
         onChange(locations.find(l => l.id === option?.value) || null);
