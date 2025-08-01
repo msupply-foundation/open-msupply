@@ -3,9 +3,13 @@ use crate::{service_provider::ServiceContext, ListError, ListResult};
 
 use insert::{insert_purchase_order, InsertPurchaseOrderError, InsertPurchaseOrderInput};
 use repository::{
-    PaginationOption, PurchaseOrderFilter, PurchaseOrderRow, PurchaseOrderSort, RepositoryError,
+    PaginationOption, PurchaseOrderFilter, PurchaseOrderLine, PurchaseOrderRow, PurchaseOrderSort,
+    RepositoryError,
 };
 
+pub mod add_to_purchase_order_from_master_list;
+pub mod common;
+pub mod generate;
 pub mod insert;
 pub mod query;
 pub mod validate;
@@ -38,6 +42,17 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
         input: InsertPurchaseOrderInput,
     ) -> Result<PurchaseOrderRow, InsertPurchaseOrderError> {
         insert_purchase_order(ctx, store_id, input)
+    }
+
+    fn add_to_purchase_order_from_master_list(
+        &self,
+        ctx: &ServiceContext,
+        input: add_to_purchase_order_from_master_list::AddToPurchaseOrderFromMasterListInput,
+    ) -> Result<
+        Vec<PurchaseOrderLine>,
+        add_to_purchase_order_from_master_list::AddToPurchaseOrderFromMasterListError,
+    > {
+        add_to_purchase_order_from_master_list::add_from_master_list(ctx, input)
     }
 }
 

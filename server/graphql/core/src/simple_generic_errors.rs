@@ -251,6 +251,14 @@ impl CannotEditStocktake {
     }
 }
 
+pub struct CannotEditPurchaseOrder;
+#[Object]
+impl CannotEditPurchaseOrder {
+    pub async fn description(&self) -> &str {
+        "Cannot edit purchase order"
+    }
+}
+
 pub struct CannotHaveFractionalPack;
 #[Object]
 impl CannotHaveFractionalPack {
