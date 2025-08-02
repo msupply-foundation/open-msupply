@@ -80,9 +80,18 @@ impl LedgerFixDriver {
         log::info!("Performing ledger fix on {} lines...", stock_line_ids.len());
 
         for stock_line_id in stock_line_ids {
-            let mut operation_log = String::new();
+            let mut operation_log = format!(
+                "Fixing stock line {stock_line_id} {}\n",
+                Utc::now().naive_utc()
+            );
 
-            match stock_line_ledger_fix(&ctx.connection, &mut operation_log, &stock_line_id) {
+            let result = stock_line_ledger_fix(&ctx.connection, &mut operation_log, &stock_line_id);
+            operation_log.push_str(&format!(
+                "Finished stock line fix operation {}\n",
+                Utc::now().naive_utc()
+            ));
+
+            match result {
                 Ok(is_fixed) => {
                     let status = if is_fixed { "Fully" } else { "Partially" };
                     system_log(&ctx.connection, SystemLogType::LedgerFix,
