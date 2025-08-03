@@ -73,7 +73,6 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   id
   expectedDeliveryDate
   purchaseOrderId
-  purchaseOrderId
   item {
     id
     code
