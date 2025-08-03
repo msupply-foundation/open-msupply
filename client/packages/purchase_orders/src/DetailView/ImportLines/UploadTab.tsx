@@ -133,6 +133,42 @@ function getImportHelpers<T, P>(
     }
   };
 
+  const addUniqueCombination = (
+    inputs: {
+      key: keyof T;
+      localeKey: LocaleKey;
+      formatter?: (value: string) => unknown;
+    }[]
+  ) => {
+    // add all column values in the row
+    inputs.forEach(({ key, localeKey, formatter }) => {
+      addCell(key, localeKey, formatter);
+    });
+
+    // TODO add mapping check with hash maps for optimisation
+
+    if (
+      rows.some((r, i) => {
+        return inputs.every(({ key, localeKey, formatter }) => {
+          const prop = t(localeKey) as keyof P;
+          const value = row[prop] ?? '';
+          const rValue = r[key] as string | undefined;
+          return (
+            rValue !== undefined &&
+            rValue === (formatter ? formatter(value as string) : value) &&
+            index !== i
+          );
+        });
+      })
+    ) {
+      rowErrors.push(
+        t('error.duplicated-combination', {
+          fields: inputs.map(({ localeKey }) => t(localeKey)).join(', '),
+        })
+      );
+    }
+  };
+
   function addLookup<K>(
     key: keyof T,
     lookupData: K[],
@@ -166,6 +202,7 @@ function getImportHelpers<T, P>(
     addRequired,
     addSoftRequired,
     addUnique,
+    addUniqueCombination,
     importRow,
     rowErrors,
     rowWarnings,
@@ -189,9 +226,9 @@ export const UploadTab = ({
   const csvExample = async () => {
     const exampleRows: Partial<ImportRow>[] = [
       {
-        id: t('label.id'),
-        purchaseOrderId: t('label.purchaseOrderId'),
-        itemId: t('label.itemId'),
+        itemCode: t('label.code'),
+        requestedPackSize: 0,
+        requestedNumberOfUnits: 0,
       },
     ];
     const csv = importPurchaseOrderLinesToCsv(exampleRows, t);
@@ -235,17 +272,29 @@ export const UploadTab = ({
     let hasErrors = false;
 
     data.data.forEach((row, index) => {
-      const { addUnique, importRow, rowErrors, rowWarnings } = getImportHelpers(
-        row,
-        rows,
-        index,
-        t
-      );
-      console.log('Processing row:', row, index);
+      const {
+        importRow,
+        rowErrors,
+        rowWarnings,
+        addUniqueCombination,
+        addCell,
+      } = getImportHelpers(row, rows, index, t);
 
-      addUnique('id', 'label.id');
-      addUnique('purchaseOrderId', 'label.purchase-order-id');
-      addUnique('itemId', 'label.item-id');
+      addUniqueCombination([
+        {
+          key: 'itemCode',
+          localeKey: 'label.code',
+        },
+        {
+          key: 'requestedPackSize',
+          localeKey: 'label.pack-size',
+          formatter: numString => parseFloat(numString),
+        },
+      ]);
+
+      addCell('requestedNumberOfUnits', 'label.requested', numString =>
+        parseFloat(numString)
+      );
 
       importRow.errorMessage = rowErrors.join(',');
       importRow.warningMessage = rowWarnings.join(',');
@@ -259,7 +308,6 @@ export const UploadTab = ({
         setWarningMessage(t('messages.import-warning-on-upload'));
       }
     });
-    console.log('Processed rows:', rows);
     LineBuffer.push(...rows);
   };
 

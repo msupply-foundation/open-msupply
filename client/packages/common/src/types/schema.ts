@@ -876,18 +876,6 @@ export type BatchPrescriptionResponse = {
   updatePrescriptions?: Maybe<Array<UpdatePrescriptionResponseWithId>>;
 };
 
-export type BatchPurchaseOrderInput = {
-  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
-  insertPurchaseOrderLines?: InputMaybe<Array<InsertPurchaseOrderLineInput>>;
-};
-
-export type BatchPurchaseOrderResponse = {
-  __typename: 'BatchPurchaseOrderResponse';
-  insertPurchaseOrderLines?: Maybe<
-    Array<InsertPurchaseOrderLineResponseWithId>
-  >;
-};
-
 export type BatchRequestRequisitionInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
   deleteRequestRequisitionLines?: InputMaybe<
@@ -1056,6 +1044,11 @@ export type CanOnlyChangeToPickedWhenNoUnallocatedLines =
     description: Scalars['String']['output'];
     invoiceLines: InvoiceLineConnector;
   };
+
+export type CannnotFindItemByCode = InsertPurchaseOrderLineErrorInterface & {
+  __typename: 'CannnotFindItemByCode';
+  description: Scalars['String']['output'];
+};
 
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
   UpdateInboundShipmentErrorInterface & {
@@ -3600,23 +3593,22 @@ export type InsertPurchaseOrderLineErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type InsertPurchaseOrderLineInput = {
-  id: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
+export type InsertPurchaseOrderLineFromCsvInput = {
+  itemCode: Scalars['String']['input'];
   purchaseOrderId: Scalars['String']['input'];
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
+export type InsertPurchaseOrderLineInput = {
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  purchaseOrderId: Scalars['String']['input'];
+};
+
 export type InsertPurchaseOrderLineResponse =
   | IdResponse
   | InsertPurchaseOrderLineError;
-
-export type InsertPurchaseOrderLineResponseWithId = {
-  __typename: 'InsertPurchaseOrderLineResponseWithId';
-  id: Scalars['String']['output'];
-  response: InsertPurchaseOrderLineResponse;
-};
 
 export type InsertPurchaseOrderResponse = IdResponse;
 
@@ -4992,7 +4984,6 @@ export type Mutations = {
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
   batchPrescription: BatchPrescriptionResponse;
-  batchPurchaseOrder: BatchPurchaseOrderResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
   batchResponseRequisition: BatchResponseRequisitionResponse;
   batchStocktake: BatchStocktakeResponse;
@@ -5067,6 +5058,7 @@ export type Mutations = {
   insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
   insertPurchaseOrder: InsertPurchaseOrderResponse;
   insertPurchaseOrderLine: InsertPurchaseOrderLineResponse;
+  insertPurchaseOrderLineFromCsv: InsertPurchaseOrderLineResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -5178,11 +5170,6 @@ export type MutationsBatchOutboundShipmentArgs = {
 
 export type MutationsBatchPrescriptionArgs = {
   input: BatchPrescriptionInput;
-  storeId: Scalars['String']['input'];
-};
-
-export type MutationsBatchPurchaseOrderArgs = {
-  input: BatchPurchaseOrderInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5469,6 +5456,11 @@ export type MutationsInsertPurchaseOrderArgs = {
 
 export type MutationsInsertPurchaseOrderLineArgs = {
   input: InsertPurchaseOrderLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertPurchaseOrderLineFromCsvArgs = {
+  input: InsertPurchaseOrderLineFromCsvInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6066,6 +6058,14 @@ export type OutboundShipmentLineInput = {
   stockLineId: Scalars['String']['input'];
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type PackSizeCodeCombinationExists =
+  InsertPurchaseOrderLineErrorInterface & {
+    __typename: 'PackSizeCodeCombinationExists';
+    description: Scalars['String']['output'];
+    itemCode: Scalars['String']['output'];
+    requestedPackSize: Scalars['Float']['output'];
+  };
 
 export type PackagingVariantInput = {
   id: Scalars['String']['input'];

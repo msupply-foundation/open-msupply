@@ -1,4 +1,4 @@
-import {  useMutation, usePatchState, useQuery } from "@openmsupply-client/common/src";
+import {   useMutation, usePatchState, useQuery } from "@openmsupply-client/common/src";
 import { usePurchaseOrderGraphQL } from "../usePurchaseOrderGraphQL";
 import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from "./keys";
 import { PurchaseOrderLineFragment } from "../operations.generated";
@@ -8,7 +8,17 @@ export type DraftPurchaseOrderLine = Omit<
   "__typename"| "item"> & {
   purchaseOrderId: string;
   itemId: string;
+  requestedPackSize: number | undefined;
+  requestedNumberOfUnits: number | undefined;
   }
+
+  export type DraftPurchaseOrderLineFromCSV = Omit<
+  DraftPurchaseOrderLine,
+  "id" | "itemId"> & {
+    itemCode: string;
+  }
+
+
 
 const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
     id: "",
@@ -18,15 +28,21 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
     requestedNumberOfUnits: 0,
 };
 
+
+
 export function usePurchaseOrderLine(id?: string) {
 
  const { data, isLoading, error } = useGet(id ?? '');
 
+
+ // CREATE
   const {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
   } = useCreate();
+
+
 
     const { patch, updatePatch, resetDraft, isDirty } =
       usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
@@ -40,9 +56,18 @@ export function usePurchaseOrderLine(id?: string) {
       return result;
     };
 
+    // CREATE FROM CSV
+
+  const {
+    mutateAsync,
+    invalidateQueries,
+  } = useLineInsertFromCSV();
+
+
     return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
+    createFromCSV: {mutateAsync, invalidateQueries},
     draft,
     resetDraft,
     isDirty,
@@ -89,7 +114,6 @@ const useCreate = () => {
         // TODO better way of handling non item id
         itemId: itemId,
         purchaseOrderId,
-        
       },
     });
   };
@@ -100,3 +124,31 @@ const useCreate = () => {
       queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
   });
 };
+
+
+
+export const useLineInsertFromCSV = () => {
+    const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+
+  const {mutateAsync} = useMutation(async (line: Partial<DraftPurchaseOrderLineFromCSV>) => {
+  
+    purchaseOrderApi.insertPurchaseOrderLineFromCSV({
+    storeId,
+    input:  {
+      itemCode: line.itemCode ?? "",
+      purchaseOrderId: line.purchaseOrderId ?? "",
+      requestedPackSize: line.requestedPackSize ?? 0.0,
+      requestedNumberOfUnits: line.requestedNumberOfUnits ?? 0,
+    },
+  }), {
+    // TODO handle errors
+    onError: (e: any) => {
+      console.error(e);
+    }
+  }});
+
+return {
+  mutateAsync,
+  invalidateQueries: () => queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
+};
+}

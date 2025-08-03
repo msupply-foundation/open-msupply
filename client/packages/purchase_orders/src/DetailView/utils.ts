@@ -2,7 +2,6 @@ import { PurchaseOrderLineFragment } from '../api';
 import {
   LocaleKey,
   TypedTFunction,
-  ArrayUtils,
   Formatter,
 } from '@openmsupply-client/common';
 import { ImportRow, LineNumber } from './ImportLines/PurchaseOrderLineImportModal';
@@ -10,11 +9,11 @@ import { ImportRow, LineNumber } from './ImportLines/PurchaseOrderLineImportModa
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 
-function baseAssetFields(t: TypedTFunction<LocaleKey>) {
+function basePurchaseOrderLineFields(t: TypedTFunction<LocaleKey>) {
   return [
-    t('label.id'),
-    t('label.purchase-order-id'),
-    t('label.item-id'),
+    t('label.code'),
+    t('label.pack-size'),
+    t('label.requested'),
   ];
 }
 
@@ -27,7 +26,7 @@ export const purchaseOrderLinesToCsv = (
 
 
   fields.push(
-    ...baseAssetFields(t),
+    ...basePurchaseOrderLineFields(t),
     t('label.created-datetime-UTC'),
     t('label.modified-datetime-UTC'),
   );
@@ -46,28 +45,26 @@ export const purchaseOrderLinesToCsv = (
   return Formatter.csv({ fields, data });
 };
 
-export const importEquipmentToCsvWithErrors = (
+export const importPurchaseOrderLinesToCSVWithErrors = (
   purchaseOrderLines: Partial<ImportRow & LineNumber>[],
   t: TypedTFunction<LocaleKey>,
-  isCentralServer: boolean,
-  properties?: string[]
 ) => {
-  const dedupedAssetProperties = ArrayUtils.dedupe(properties ?? []);
 
-  const fields: string[] = isCentralServer ? [t('label.store')] : [];
+  const fields: string[] = [];
 
   fields.push(
-    ...baseAssetFields(t),
+    ...basePurchaseOrderLineFields(t),
     t('label.line-number'),
-    ...dedupedAssetProperties,
     t('label.error-message')
   );
 
   const data = purchaseOrderLines.map(node => {
     const mapped: (string | number | null | undefined)[] = [
-      node.id,
-      node.purchaseOrderId,
-      node.itemId,
+      node.itemCode,
+      node.requestedPackSize,
+      node.requestedNumberOfUnits,
+      node.lineNumber,
+      node.errorMessage
     ];
 
     return mapped;
@@ -80,15 +77,14 @@ export const importPurchaseOrderLinesToCsv = (
   t: TypedTFunction<LocaleKey>,
 ) => {
 
-  const fields: string[] = [t('label.id'), t('label.purchase-order-id'), t('label.item-id')];
-
+  const fields: string[] = [t('label.code'), t('label.pack-size'), t('label.requested')];
 
   const data = purchaseOrderLines.map(node => {
 
     const row = [
-      node.id,
-      node.purchaseOrderId,
-      node.itemId,
+      node.itemCode,
+      node.requestedPackSize,
+      node.requestedNumberOfUnits,
     ];
 
     return row;

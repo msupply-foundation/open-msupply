@@ -32,21 +32,21 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
 
   columnDescriptions.push(
     {
-      key: 'id',
+      key: 'itemCode',
       width: 90,
       sortable: false,
-      label: 'label.id',
+      label: 'label.code',
     },
     {
-      key: 'purchaseOrderId',
+      key: 'requestedPackSize',
       sortable: false,
-      label: 'label.purchase-order-id',
+      label: 'label.pack-size',
     },
     // item id
     {
-      key: 'itemId',
+      key: 'requestedNumberOfUnits',
       sortable: false,
-      label: 'label.item-id',
+      label: 'label.requested',
     }
     // TODO add more input / show fields
   );
@@ -66,7 +66,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       Cell: TooltipTextCell,
     });
   }
-
+  // TODO implement searching for item & mapping item name to table
   const columns = useColumns<ImportRow>(columnDescriptions, {}, []);
 
   const filteredEquipment = importRows.filter(row => {
@@ -75,7 +75,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     }
     return (
       row.id.includes(searchString) ||
-      (row.purchaseOrderId && row.purchaseOrderId.includes(searchString))
+      (row.itemCode && row.itemCode.includes(searchString))
     );
   });
 

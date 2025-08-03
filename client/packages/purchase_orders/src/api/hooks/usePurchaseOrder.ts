@@ -14,8 +14,8 @@ import { PurchaseOrderFragment } from '../operations.generated';
 import { useMemo } from 'react';
 import { usePurchaseOrderColumns } from '../../DetailView/columns';
 
-export type PurchaseOrderBatchLineInput = Partial<
-  PurchaseOrderLineNode & { purchaseOrderId: string; itemId: string }
+export type PurchaseOrderLineInsertFromCsvInput = Partial<
+  PurchaseOrderLineNode & { purchaseOrderId: string; itemCode: string }
 >;
 
 export const usePurchaseOrder = (id?: string) => {
@@ -68,19 +68,10 @@ export const usePurchaseOrder = (id?: string) => {
     return result;
   };
 
-  // BATCH
-
-  const {
-    mutateAsync: saveBatch,
-    isLoading: isSavingBatch,
-    error: saveBatchError,
-  } = useBatch();
-
   return {
     query: { data, isLoading, isError },
     lines: { sortedAndFilteredLines, itemFilter, setItemFilter },
     create: { create, isCreating, createError },
-    batch: { saveBatch, isSavingBatch, saveBatchError },
   };
 };
 
@@ -154,30 +145,4 @@ const useFilteredAndSortedLines = (
 
   return { sortedAndFilteredLines, itemFilter, setItemFilter };
 };
-
-const useBatch = () => {
-  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
-
-  const mutationFn = async (
-    // ensure type has purchaseOrderId and itemId
-    lines: PurchaseOrderBatchLineInput[]
-  ) => {
-
-    return await purchaseOrderApi.saveBatch({
-      storeId,
-      insertPurchaseOrderLines: lines.map(line => ({
-        // TODO better way of handling missing IDs
-        id: FnUtils.generateUUID(),
-        itemId: line.itemId ?? "",
-        purchaseOrderId: line.purchaseOrderId ?? "",
-      })),
-    });
-
-  };
-
-  return useMutation({
-    mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
-  });
-}
 

@@ -276,34 +276,16 @@ export type InsertPurchaseOrderLineMutation = {
     | { __typename: 'InsertPurchaseOrderLineError' };
 };
 
-export type SaveBatchMutationVariables = Types.Exact<{
+export type InsertPurchaseOrderLineFromCsvMutationVariables = Types.Exact<{
+  input: Types.InsertPurchaseOrderLineFromCsvInput;
   storeId: Types.Scalars['String']['input'];
-  insertPurchaseOrderLines?: Types.InputMaybe<
-    | Array<Types.InsertPurchaseOrderLineInput>
-    | Types.InsertPurchaseOrderLineInput
-  >;
 }>;
 
-export type SaveBatchMutation = {
+export type InsertPurchaseOrderLineFromCsvMutation = {
   __typename: 'Mutations';
-  batchPurchaseOrder: {
-    __typename: 'BatchPurchaseOrderResponse';
-    insertPurchaseOrderLines?: Array<{
-      __typename: 'InsertPurchaseOrderLineResponseWithId';
-      response:
-        | { __typename: 'IdResponse'; id: string }
-        | {
-            __typename: 'InsertPurchaseOrderLineError';
-            error:
-              | { __typename: 'CannotEditPurchaseOrder'; description: string }
-              | { __typename: 'ForeignKeyError'; description: string }
-              | {
-                  __typename: 'PurchaseOrderLineWithItemIdExists';
-                  description: string;
-                };
-          };
-    }> | null;
-  };
+  insertPurchaseOrderLineFromCsv:
+    | { __typename: 'IdResponse'; id: string }
+    | { __typename: 'InsertPurchaseOrderLineError' };
 };
 
 export const PurchaseOrderRowFragmentDoc = gql`
@@ -513,27 +495,14 @@ export const InsertPurchaseOrderLineDocument = gql`
     }
   }
 `;
-export const SaveBatchDocument = gql`
-  mutation saveBatch(
+export const InsertPurchaseOrderLineFromCsvDocument = gql`
+  mutation insertPurchaseOrderLineFromCSV(
+    $input: InsertPurchaseOrderLineFromCSVInput!
     $storeId: String!
-    $insertPurchaseOrderLines: [InsertPurchaseOrderLineInput!]
   ) {
-    batchPurchaseOrder(
-      input: { insertPurchaseOrderLines: $insertPurchaseOrderLines }
-      storeId: $storeId
-    ) {
-      insertPurchaseOrderLines {
-        response {
-          ... on IdResponse {
-            id
-          }
-          ... on InsertPurchaseOrderLineError {
-            __typename
-            error {
-              description
-            }
-          }
-        }
+    insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
       }
     }
   }
@@ -670,17 +639,18 @@ export function getSdk(
         variables
       );
     },
-    saveBatch(
-      variables: SaveBatchMutationVariables,
+    insertPurchaseOrderLineFromCSV(
+      variables: InsertPurchaseOrderLineFromCsvMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<SaveBatchMutation> {
+    ): Promise<InsertPurchaseOrderLineFromCsvMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SaveBatchMutation>(SaveBatchDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'saveBatch',
+          client.request<InsertPurchaseOrderLineFromCsvMutation>(
+            InsertPurchaseOrderLineFromCsvDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertPurchaseOrderLineFromCSV',
         'mutation',
         variables
       );

@@ -256,7 +256,6 @@ mod insert {
             service.insert_purchase_order_line_from_csv(
                 &context,
                 InsertPurchaseOrderLineFromCSVInput {
-                    id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_code: "some_non_existent_item".to_string(),
                     requested_pack_size: Some(0.0),
@@ -273,7 +272,6 @@ mod insert {
             service.insert_purchase_order_line_from_csv(
                 &context,
                 InsertPurchaseOrderLineFromCSVInput {
-                    id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_code: mock_item_a().code.clone(),
                     requested_pack_size: Some(1.1),
@@ -297,7 +295,6 @@ mod insert {
             service.insert_purchase_order_line_from_csv(
                 &context,
                 InsertPurchaseOrderLineFromCSVInput {
-                    id: "purchase_order_line_id_2".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_code: mock_item_a().code.clone(),
                     requested_pack_size: Some(1.1),

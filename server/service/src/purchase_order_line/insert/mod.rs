@@ -7,6 +7,7 @@ use repository::{
 mod generate;
 use generate::{generate, generate_from_csv, GenerateFromCSVInput};
 mod validate;
+use util::uuid;
 use validate::validate;
 mod test;
 
@@ -70,7 +71,6 @@ impl From<RepositoryError> for InsertPurchaseOrderLineError {
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertPurchaseOrderLineFromCSVInput {
-    pub id: String,
     pub purchase_order_id: String,
     pub item_code: String,
     pub requested_pack_size: Option<f64>,
@@ -97,8 +97,9 @@ pub fn insert_purchase_order_line_from_csv(
                 }
             };
 
+            let id = uuid::uuid();
             let validate_input = validate::ValidateInput {
-                id: input.id.clone(),
+                id: id.clone(),
                 purchase_order_id: input.purchase_order_id.clone(),
                 item_id: item.id.clone(),
                 requested_pack_size: input.requested_pack_size.unwrap_or(0.0), // Default value which can be edited in UI
@@ -107,7 +108,7 @@ pub fn insert_purchase_order_line_from_csv(
             validate(&ctx.store_id.clone(), &validate_input, connection)?;
 
             let generate_input = GenerateFromCSVInput {
-                id: input.id,
+                id,
                 purchase_order_id: input.purchase_order_id,
                 item_id: item.id,
                 requested_pack_size: input.requested_pack_size,

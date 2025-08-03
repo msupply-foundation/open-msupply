@@ -12,16 +12,18 @@ import {
   createQueryParamsStore,
 } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { Grid } from '@openmsupply-client/common/src';
+import { Grid, useExportCSV } from '@openmsupply-client/common/src';
 import { StoreRowFragment } from '@openmsupply-client/system/src';
 import React, { useState } from 'react';
 import { UploadTab } from './UploadTab';
 import { ReviewTab } from './ReviewTab';
 import { ImportTab } from './ImportTab';
 import {
-  PurchaseOrderBatchLineInput,
+  PurchaseOrderLineInsertFromCsvInput,
   usePurchaseOrder,
 } from '../../api/hooks/usePurchaseOrder';
+import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
+import { importPurchaseOrderLinesToCSVWithErrors } from '../utils';
 
 interface PurchaseOrderLineImportModalProps {
   isOpen: boolean;
@@ -36,8 +38,9 @@ enum Tabs {
 
 export type ImportRow = {
   id: string;
-  purchaseOrderId: string;
-  itemId: string;
+  itemCode: string;
+  requestedPackSize?: number;
+  requestedNumberOfUnits?: number;
   errorMessage: string;
   warningMessage: string;
   // TODO add remaining fields as needed
@@ -48,15 +51,24 @@ export type LineNumber = {
 };
 
 export const toInsertPurchaseOrderLine = (
-  row: ImportRow
-): PurchaseOrderBatchLineInput => {
+  row: ImportRow,
+  purchaseOrderId: string
+): PurchaseOrderLineInsertFromCsvInput => {
   return {
-    id: row.id,
-    purchaseOrderId: row.purchaseOrderId,
-    itemId: row.itemId,
-    // TODO map remaining fields as needed
+    purchaseOrderId,
+    itemCode: row.itemCode,
+    requestedPackSize: row.requestedPackSize,
+    requestedNumberOfUnits: row.requestedNumberOfUnits,
   };
 };
+
+export const toExportLines = (
+  row: ImportRow,
+  index: number
+): Partial<ImportRow & LineNumber> => ({
+  ...row,
+  lineNumber: index + 2,
+});
 
 export const PurchaseOrderLineImportModal = ({
   isOpen,
@@ -67,8 +79,13 @@ export const PurchaseOrderLineImportModal = ({
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const [activeStep, setActiveStep] = useState(0);
   const { Modal } = useDialog({ isOpen, onClose });
+  const exportCSV = useExportCSV();
+
   const {
-    batch: { saveBatch },
+    createFromCSV: { mutateAsync, invalidateQueries },
+  } = usePurchaseOrderLine();
+  const {
+    query: { data },
   } = usePurchaseOrder();
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
@@ -82,19 +99,31 @@ export const PurchaseOrderLineImportModal = ({
   const [bufferedLines, setBufferedLines] = useState<ImportRow[]>(() => []);
 
   const csvExport = async () => {
-    // const csv = importEquipmentToCsvWithErrors(
-    //   bufferedLines.map((row: ImportRow, index: number) =>
-    //     toExportEquipment(row, index)
-    //   ),
-    //   t,
-    //   isCentralServer,
-    //   properties?.map(p => p.key) ?? []
-    // );
-    // exportCSV(csv, t('filename.cce-failed-uploads'));
-    console.log('CSV export not implemented yet');
+    const csv = importPurchaseOrderLinesToCSVWithErrors(
+      bufferedLines.map((row: ImportRow, index: number) =>
+        toExportLines(row, index)
+      ),
+      t
+    );
+    exportCSV(csv, t('filename.purchase-order-line-failed-uploads'));
   };
 
   const importErrorRows: ImportRow[] = [];
+  const insertFromCSV = async (row: ImportRow) => {
+    try {
+      const result = await mutateAsync(
+        toInsertPurchaseOrderLine(row, data?.id ?? '')
+      );
+      return result;
+    } catch (e) {
+      const errorMessage = (e as Error).message || t('messages.unknown-error');
+      importErrorRows.push({
+        ...row,
+        errorMessage: t('error.import-failed', { error: errorMessage }),
+      });
+      return null;
+    }
+  };
 
   const importAction = async () => {
     onChangeTab(Tabs.Import);
@@ -105,11 +134,10 @@ export const PurchaseOrderLineImportModal = ({
       const remainingRecords = bufferedLines;
       while (remainingRecords.length) {
         // TODO do these need to be in 100 line chunks?
-        const linesChunk = remainingRecords.splice(0, 100);
-        await saveBatch(linesChunk.map(toInsertPurchaseOrderLine)).then(() => {
-          // TODO invalidateQueries();
-          // invalidateQueries();
-          // Update Progress Bar
+        await Promise.all(
+          remainingRecords.splice(0, 100).map(insertFromCSV)
+        ).then(() => {
+          invalidateQueries();
           const percentComplete =
             100 - (remainingRecords.length / numberImportRecords) * 100.0;
           setImportProgress(percentComplete);

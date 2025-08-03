@@ -10,7 +10,6 @@ use crate::mutations::insert::{map_response, InsertResponse};
 #[derive(InputObject)]
 #[graphql(name = "InsertPurchaseOrderLineFromCSVInput")]
 pub struct InsertFromCSVInput {
-    pub id: String,
     pub purchase_order_id: String,
     pub item_code: String,
     pub requested_pack_size: Option<f64>,
@@ -20,7 +19,6 @@ pub struct InsertFromCSVInput {
 impl InsertFromCSVInput {
     pub fn to_domain(self) -> ServiceInput {
         let InsertFromCSVInput {
-            id,
             purchase_order_id,
             item_code,
             requested_pack_size,
@@ -28,7 +26,6 @@ impl InsertFromCSVInput {
         } = self;
 
         ServiceInput {
-            id,
             purchase_order_id,
             item_code,
             requested_pack_size,
