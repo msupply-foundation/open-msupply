@@ -80,9 +80,10 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
 
     log::info!("Performing ledger fix on {} lines...", stock_line_ids.len());
 
-    for stock_line_id in stock_line_ids {
+    for (index, stock_line_id) in stock_line_ids.iter().enumerate() {
         let mut operation_log = format!(
-            "Fixing stock line {stock_line_id} {}\n",
+            "{index}/{} Fixing stock line {stock_line_id} {}\n",
+            stock_line_ids.len(),
             Utc::now().naive_utc()
         );
 
@@ -96,7 +97,7 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
             Ok(is_fixed) => {
                 let status = if is_fixed { "Fully" } else { "Partially" };
                 system_log(&ctx.connection, SystemLogType::LedgerFix,
-                        &format!("{status} fixed ledger discrepancy for stock_line {stock_line_id} - Details: {operation_log}"
+                        &format!("{status} fixed ledger discrepancy for stock_line {stock_line_id} - Details: {operation_log}\n"
                     )).unwrap();
             }
             Err(e) => {

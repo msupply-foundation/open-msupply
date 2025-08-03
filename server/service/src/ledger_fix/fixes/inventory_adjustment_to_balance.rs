@@ -174,8 +174,7 @@ pub(crate) mod test {
             .into_iter()
             .map(|line| line.running_balance)
             .collect::<Vec<f64>>(),
-            // There is a chance this test could fail because incoming invoices have the same datetime
-            vec![6.0, 15.0, 9.0, 15.0, 12.0, 10.0, 0.0, 3.0]
+            vec![9.0, 15.0, 9.0, 15.0, 12.0, 10.0, 0.0, 3.0]
         );
 
         assert_eq!(
