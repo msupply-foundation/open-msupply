@@ -10,6 +10,7 @@ mod add_purchase_order_tables;
 mod add_purchase_order_to_number_type;
 mod add_restricted_location_type_id_to_item;
 mod add_supplier_discount_percentage_to_purchase_order;
+mod add_vvm_status_to_stocktake_line;
 mod delete_unused_number_type;
 mod rename_cold_storage_type_to_location_type;
 
@@ -37,6 +38,7 @@ impl Migration for V2_10_00 {
             Box::new(add_restricted_location_type_id_to_item::Migrate),
             Box::new(add_goods_received_table::Migrate),
             Box::new(add_supplier_discount_percentage_to_purchase_order::Migrate),
+            Box::new(add_vvm_status_to_stocktake_line::Migrate),
         ]
     }
 }

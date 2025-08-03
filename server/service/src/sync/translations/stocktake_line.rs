@@ -1,6 +1,7 @@
 use crate::sync::translations::{
     item::ItemTranslation, location::LocationTranslation, reason::ReasonTranslation,
     stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
+    vvm_status::VVMStatusTranslation,
 };
 
 use chrono::NaiveDate;
@@ -57,6 +58,10 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub donor_id: Option<String>,
+
+    #[serde(rename = "vaccine_vial_monitor_status_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub vvm_status_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -77,6 +82,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             ItemTranslation.table_name(),
             LocationTranslation.table_name(),
             ReasonTranslation.table_name(),
+            VVMStatusTranslation.table_name(),
         ]
     }
 
@@ -109,6 +115,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             reason_option_id,
             item_variant_id,
             donor_id,
+            vvm_status_id,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
         // TODO is this correct?
@@ -158,6 +165,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_variant_id,
             donor_link_id: donor_id,
             reason_option_id,
+            vvm_status_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -199,6 +207,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     item_variant_id,
                     donor_link_id: donor_id,
                     reason_option_id,
+                    vvm_status_id,
                 },
             item,
             stock_line,
@@ -226,6 +235,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             reason_option_id,
             item_variant_id,
             donor_id,
+            vvm_status_id,
         };
 
         Ok(PushTranslateResult::upsert(
