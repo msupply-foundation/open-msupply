@@ -39,7 +39,7 @@ pub fn generate(
         created_datetime: Utc::now().naive_utc(),
         requisition_id: Some(requisition_row.id),
         their_reference: requisition_row.their_reference,
-        program_id: requisition_row.program_id.clone(),
+        program_id: requisition_row.program_id,
 
         // Default
         currency_id: Some(currency.currency_row.id),
@@ -69,12 +69,7 @@ pub fn generate(
         default_donor_link_id: None,
     };
 
-    let invoice_line_rows = generate_invoice_lines(
-        connection,
-        &new_invoice.id,
-        fulfillments,
-        requisition_row.program_id,
-    )?;
+    let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
     Ok((new_invoice, invoice_line_rows))
 }
 
@@ -82,7 +77,6 @@ pub fn generate_invoice_lines(
     connection: &StorageConnection,
     invoice_id: &str,
     requisition_line_supply_statuses: Vec<RequisitionLineSupplyStatus>,
-    program_id: Option<String>,
 ) -> Result<Vec<InvoiceLineRow>, OutError> {
     let mut invoice_line_rows = vec![];
 
@@ -100,7 +94,6 @@ pub fn generate_invoice_lines(
             item_code: item_row.code,
             item_name: item_row.name,
             r#type: InvoiceLineType::UnallocatedStock,
-            program_id: program_id.clone(),
 
             // Default
             total_before_tax: 0.0,
@@ -121,6 +114,10 @@ pub fn generate_invoice_lines(
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            // Generating placeholder outbound lines - program_id will be populated later based on
+            // the program of existing stock lines when this line is allocated, rather than the
+            // program of the requisition here
+            program_id: None,
             shipped_number_of_packs: None,
         });
     }
