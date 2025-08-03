@@ -114,14 +114,16 @@ export const PurchaseOrderLineImportModal = ({
       const result = await mutateAsync(
         toInsertPurchaseOrderLine(row, data?.id ?? '')
       );
+      console.log('inserted line from CSV', result);
       return result;
     } catch (e) {
+      console.log('caught error in importFromCSV');
+      console.error(e);
       const errorMessage = (e as Error).message || t('messages.unknown-error');
       importErrorRows.push({
         ...row,
         errorMessage: t('error.import-failed', { error: errorMessage }),
       });
-      return null;
     }
   };
 
@@ -130,10 +132,8 @@ export const PurchaseOrderLineImportModal = ({
     const numberImportRecords = bufferedLines?.length ?? 0;
     if (bufferedLines && numberImportRecords > 0) {
       importErrorRows.length = 0;
-      // Import count can be quite large, we break this into blocks of 100 to avoid too much concurrency
       const remainingRecords = bufferedLines;
       while (remainingRecords.length) {
-        // TODO do these need to be in 100 line chunks?
         await Promise.all(
           remainingRecords.splice(0, 100).map(insertFromCSV)
         ).then(() => {

@@ -1,4 +1,4 @@
-import {   useMutation, usePatchState, useQuery } from "@openmsupply-client/common/src";
+import {   useIntlUtils, useMutation, usePatchState, useQuery, useTranslation } from "@openmsupply-client/common/src";
 import { usePurchaseOrderGraphQL } from "../usePurchaseOrderGraphQL";
 import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from "./keys";
 import { PurchaseOrderLineFragment } from "../operations.generated";
@@ -129,10 +129,11 @@ const useCreate = () => {
 
 export const useLineInsertFromCSV = () => {
     const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+    const  t = useTranslation();
+    const {isLocaleKey} = useIntlUtils();
 
-  const {mutateAsync} = useMutation(async (line: Partial<DraftPurchaseOrderLineFromCSV>) => {
-  
-    purchaseOrderApi.insertPurchaseOrderLineFromCSV({
+  const { mutateAsync } = useMutation(async (line: Partial<DraftPurchaseOrderLineFromCSV>) => {
+    const result = await purchaseOrderApi.insertPurchaseOrderLineFromCSV({
     storeId,
     input:  {
       itemCode: line.itemCode ?? "",
@@ -140,15 +141,24 @@ export const useLineInsertFromCSV = () => {
       requestedPackSize: line.requestedPackSize ?? 0.0,
       requestedNumberOfUnits: line.requestedNumberOfUnits ?? 0,
     },
-  }), {
-    // TODO handle errors
-    onError: (e: any) => {
-      console.error(e);
-    }
-  }});
+    });
+    if (result.insertPurchaseOrderLineFromCsv.__typename === 'IdResponse') {
+      return result.insertPurchaseOrderLineFromCsv.id;
+    } 
 
-return {
+
+    const error = result.insertPurchaseOrderLineFromCsv.error.description;
+    const errorMessage = isLocaleKey(error) ? t(error) : error;
+
+    throw new Error(errorMessage);
+  });
+
+  return {
   mutateAsync,
   invalidateQueries: () => queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
-};
+  };
+
 }
+
+
+
