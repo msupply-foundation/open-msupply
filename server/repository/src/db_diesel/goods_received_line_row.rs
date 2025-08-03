@@ -23,7 +23,6 @@ table! {
         location_id -> Nullable<Text>,
         volume_per_pack -> Nullable<Double>,
         manufacturer_link_id -> Text,
-        // TODO map GoodsReceivedLineStatusMapping in OMS to is_authorized in OG: see issue [8647](https://github.com/msupply-foundation/open-msupply/issues/8068?issue=msupply-foundation%7Copen-msupply%7C8647)
         status -> crate::db_diesel::goods_received_line_row::GoodsReceivedLineStatusMapping,
         comment -> Nullable<Text>,
     }
@@ -49,7 +48,6 @@ pub struct GoodsReceivedLineRow {
     pub location_id: Option<String>,
     pub volume_per_pack: Option<f64>,
     pub manufacturer_link_id: String,
-    // TODO map GoodsReceivedLineStatusMapping in OMS to is_authorized in OG: see issue [8647](https://github.com/msupply-foundation/open-msupply/issues/8068?issue=msupply-foundation%7Copen-msupply%7C8647)
     pub status: GoodsReceivedLineStatus,
     pub comment: Option<String>,
 }
