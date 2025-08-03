@@ -1,20 +1,11 @@
 use repository::{
-    stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository, StockLineLedgerRow},
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
-    InvoiceRowRepository, InvoiceStatus, InvoiceType, ItemRowRepository, NameRowRepository,
-    NumberRowType, RepositoryError, StockLineRowRepository, StorageConnection,
-};
-use util::{
-    constants::{INVENTORY_ADJUSTMENT_NAME_CODE, SYSTEM_USER_ID},
-    uuid::uuid,
+    stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
+    EqualFilter, StorageConnection,
 };
 
-use crate::{
-    ledger_fix::{
-        fixes::{is_omsupply_uuid, LedgerFixError},
-        ledger_balance_summary, LedgerBalanceSummary,
-    },
-    number::next_number,
+use crate::ledger_fix::{
+    fixes::{adjust_ledger_running_balance, is_omsupply_uuid, LedgerFixError},
+    ledger_balance_summary, LedgerBalanceSummary,
 };
 
 pub(crate) fn inventory_adjustment_to_balance(
@@ -49,133 +40,14 @@ pub(crate) fn inventory_adjustment_to_balance(
         return Ok(());
     }
 
-    let adjustment = running_balance * -1.0;
-    // If adjustment is positive, we can add positive adjustment at the start of the ledger safely (without causing negative balance)
-    if adjustment > 0.0 {
-        operation_log.push_str(
-            "Adjustment is positive, adding positive adjustment at the start of the ledger.\n",
-        );
-        adjust(
-            connection,
-            operation_log,
-            ledger_lines.first(),
-            adjustment,
-            stock_line_id,
-        )?;
-
-        return Ok(());
-    }
-
-    // if adjustment is negative we need to add negative adjustment as far back in history as possible (without causing negative balance)
-    let mut backdate_at_ledger_line = None;
-
-    for ledger_line in ledger_lines.iter().rev() {
-        if ledger_line.running_balance + adjustment < 0.0 {
-            break;
-        }
-        backdate_at_ledger_line = Some(ledger_line);
-    }
-
-    operation_log.push_str("Adjustment is negative, adding negative inventory adjustment.\n");
-
-    adjust(
+    adjust_ledger_running_balance(
         connection,
         operation_log,
-        backdate_at_ledger_line.or(ledger_lines.last()),
-        adjustment,
+        &ledger_lines,
+        running_balance,
+        total,
         stock_line_id,
     )?;
-
-    Ok(())
-}
-
-fn adjust(
-    connection: &StorageConnection,
-    operation_log: &mut String,
-    stock_line_ledger_row: Option<&StockLineLedgerRow>,
-    adjustment: f64,
-    stock_line_id: &str,
-) -> Result<(), LedgerFixError> {
-    let Some(StockLineLedgerRow {
-        item_id,
-        store_id,
-        datetime,
-        ..
-    }) = stock_line_ledger_row.map(|r| r.clone())
-    else {
-        return LedgerFixError::other("Ledger line should exist for adjustment");
-    };
-
-    let inventory_adjustment_id = NameRowRepository::new(connection)
-        .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
-        .ok_or(RepositoryError::NotFound)?
-        .id;
-
-    let Some(item) = ItemRowRepository::new(connection).find_one_by_id(&item_id)? else {
-        return LedgerFixError::other("Item not found for inventory adjustment");
-    };
-
-    let Some(stock_line) =
-        StockLineRowRepository::new(connection).find_one_by_id(&stock_line_id)?
-    else {
-        return LedgerFixError::other("Stock line not found for inventory adjustment");
-    };
-
-    operation_log.push_str(&format!(
-        "Adding {adjustment} adjustment for date {datetime:?}.\n"
-    ));
-
-    let (invoice_type, number_type, invoice_line_type) = if adjustment > 0.0 {
-        (
-            InvoiceType::InventoryAddition,
-            NumberRowType::InventoryAddition,
-            InvoiceLineType::StockIn,
-        )
-    } else {
-        (
-            InvoiceType::InventoryReduction,
-            NumberRowType::InventoryReduction,
-            InvoiceLineType::StockOut,
-        )
-    };
-
-    let invoice_number = next_number(connection, &number_type, &store_id)?;
-
-    // Similar to stock take
-    let adjustment_invoice = InvoiceRow {
-        id: uuid(),
-        name_link_id: inventory_adjustment_id,
-        r#type: invoice_type,
-        status: InvoiceStatus::Verified,
-        store_id,
-        user_id: Some(SYSTEM_USER_ID.to_string()),
-        invoice_number,
-        comment: Some(format!(
-            "Ledger balance for stock line batch {} id {}",
-            stock_line.batch.unwrap_or_default(),
-            stock_line_id
-        )),
-        created_datetime: datetime,
-        verified_datetime: Some(datetime),
-        ..Default::default()
-    };
-
-    let line = InvoiceLineRow {
-        id: uuid(),
-        invoice_id: adjustment_invoice.id.clone(),
-        item_link_id: item_id,
-        item_name: item.name,
-        item_code: item.code,
-        stock_line_id: Some(stock_line.id),
-        r#type: invoice_line_type,
-        number_of_packs: adjustment.abs() / stock_line.pack_size,
-        pack_size: stock_line.pack_size,
-        ..Default::default()
-    };
-
-    InvoiceRowRepository::new(connection).upsert_one(&adjustment_invoice)?;
-
-    InvoiceLineRowRepository::new(connection).upsert_one(&line)?;
 
     Ok(())
 }
@@ -200,11 +72,14 @@ mod test {
             item_link_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             pack_size: 1.0,
+            available_number_of_packs: 3.0,
+            total_number_of_packs: 3.0,
             ..Default::default()
         };
 
         let negative_running_balance_fix = StockLineRow {
             id: "negative_running_balance_fix".to_string(),
+            pack_size: 1.0,
             ..positive_running_balance_fix.clone()
         };
 
@@ -218,11 +93,19 @@ mod test {
         // Movements are (date as day, quantity)
         .join(make_movements(
             positive_running_balance_fix,
-            vec![(2, 6), (3, -6), (4, 6), (5, -3), (25, -2)],
+            vec![(2, 6), (3, -6), (4, 6), (5, -3), (25, -2), (27, 3)],
         ))
         .join(make_movements(
             negative_running_balance_fix,
-            vec![(2, 6), (3, -6), (4, 6), (5, -3), (25, -2), (28, -10)],
+            vec![
+                (2, 6),
+                (3, -6),
+                (4, 6),
+                (5, -3),
+                (25, -2),
+                (28, -10),
+                (29, 3),
+            ],
         ));
 
         mock_data
@@ -257,11 +140,6 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            is_ledger_fixed(&connection, "positive_running_balance_fix"),
-            Ok(true)
-        );
-
-        assert_eq!(
             repo.query_by_filter(
                 StockLineLedgerFilter::new()
                     .stock_line_id(EqualFilter::equal_to("positive_running_balance_fix"))
@@ -270,7 +148,12 @@ mod test {
             .into_iter()
             .map(|line| line.running_balance)
             .collect::<Vec<f64>>(),
-            vec![6.0, 0.0, 6.0, 5.0, 2.0, 0.0]
+            vec![6.0, 0.0, 6.0, 5.0, 2.0, 0.0, 3.0]
+        );
+
+        assert_eq!(
+            is_ledger_fixed(&connection, "positive_running_balance_fix"),
+            Ok(true)
         );
 
         assert_eq!(
@@ -293,7 +176,7 @@ mod test {
             .map(|line| line.running_balance)
             .collect::<Vec<f64>>(),
             // There is a chance this test could fail because incoming invoices have the same datetime
-            vec![6.0, 15.0, 9.0, 15.0, 12.0, 10.0, 0.0]
+            vec![6.0, 15.0, 9.0, 15.0, 12.0, 10.0, 0.0, 3.0]
         );
 
         assert_eq!(

@@ -3,8 +3,9 @@ use thiserror::Error;
 
 use crate::ledger_fix::{
     fixes::{
-        adjust_historic_incoming_invoices, adjust_total_to_match_ledger, fix_cancellations,
-        inventory_adjustment_to_balance, LedgerFixError,
+        adjust_all_to_match_available, adjust_historic_incoming_invoices,
+        adjust_total_to_match_ledger, fix_cancellations, inventory_adjustment_to_balance,
+        LedgerFixError,
     },
     is_ledger_fixed,
 };
@@ -42,6 +43,12 @@ pub(super) fn stock_line_ledger_fix(
     }
 
     fix_cancellations(connection, operation_log, stock_line_id)?;
+
+    if is_ledger_fixed(connection, stock_line_id)? {
+        return Ok(true);
+    }
+
+    adjust_all_to_match_available(connection, operation_log, stock_line_id)?;
 
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
