@@ -28,6 +28,7 @@ pub struct UpdateStocktakeLine {
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -44,6 +45,7 @@ pub enum UpdateStocktakeLineError {
     AdjustmentReasonNotValid,
     SnapshotCountCurrentCountMismatchLine(StocktakeLine),
     StockLineReducedBelowZero(StockLine),
+    VvmStatusDoesNotExist,
 }
 
 pub fn update_stocktake_line(
@@ -255,6 +257,20 @@ mod stocktake_line_test {
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::LocationDoesNotExist);
 
+        // error: VvmStatusDoesNotExist
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: stocktake_line_a.id,
+                    vvm_status_id: Some("invalid".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::VvmStatusDoesNotExist);
+
         // error CannotEditFinalised
         let stocktake_line_a = mock_stocktake_line_finalised();
         let error = service
@@ -363,12 +379,7 @@ mod stocktake_line_test {
                 counted_number_of_packs: Some(14.0),
                 item_link_id: stocktake_line_a.item_link_id,
                 item_name: stocktake_line_a.item_name,
-                expiry_date: None,
-                pack_size: None,
-                note: None,
-                item_variant_id: None,
-                donor_link_id: None,
-                reason_option_id: None,
+                ..Default::default()
             }
         );
 

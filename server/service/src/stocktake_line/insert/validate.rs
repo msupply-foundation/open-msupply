@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    check_location_exists,
+    check_location_exists, check_vvm_status_exists,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
@@ -45,6 +45,12 @@ pub fn validate(
 
     if stocktake.is_locked {
         return Err(StocktakeIsLocked);
+    }
+
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VvmStatusDoesNotExist);
+        }
     }
 
     let stock_line = if let Some(stock_line_id) = &input.stock_line_id {

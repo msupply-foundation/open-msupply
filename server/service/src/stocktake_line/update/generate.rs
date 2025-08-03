@@ -19,6 +19,7 @@ pub fn generate(
         item_variant_id,
         donor_id,
         reason_option_id,
+        vvm_status_id,
     }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
     let existing_line = existing.line;
@@ -63,5 +64,6 @@ pub fn generate(
         item_variant_id,
         donor_link_id,
         reason_option_id: reason_option_id.or(existing_line.reason_option_id),
+        vvm_status_id: vvm_status_id.or(existing_line.vvm_status_id),
     })
 }

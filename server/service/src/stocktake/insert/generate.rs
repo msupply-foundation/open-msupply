@@ -137,8 +137,8 @@ fn generate_stocktake_lines(
                          on_hold: _,
                          available_number_of_packs: _,
                          barcode_id: _,
-                         vvm_status_id: _, // Todo?
-                         campaign_id: _,   // Todo?
+                         vvm_status_id,  // Todo?
+                         campaign_id: _, // Todo?
                      },
                  item_row,
                  location_row: _,
@@ -163,6 +163,7 @@ fn generate_stocktake_lines(
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
                     donor_link_id,
+                    vvm_status_id,
                     counted_number_of_packs: None,
                     comment: None,
                     reason_option_id: None,
@@ -212,6 +213,7 @@ fn generate_lines_initial_stocktake(
             item_variant_id: None,
             donor_link_id: None,
             reason_option_id: None,
+            vvm_status_id: None,
         })
         .collect();
 
@@ -272,6 +274,7 @@ pub fn generate_lines_from_master_list(
                 reason_option_id: None,
                 item_variant_id: None,
                 donor_link_id: None,
+                vvm_status_id: None,
             });
         } else {
             stock_lines.into_iter().for_each(|line| {
@@ -293,8 +296,8 @@ pub fn generate_lines_from_master_list(
                     barcode_id: _,
                     item_variant_id,
                     donor_link_id,
-                    vvm_status_id: _, // Not currently included in stocktakes?
-                    campaign_id: _,   // Should this be included?
+                    vvm_status_id,
+                    campaign_id: _, // Should this be included?
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
@@ -313,6 +316,7 @@ pub fn generate_lines_from_master_list(
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
                     donor_link_id,
+                    vvm_status_id,
                     // campaign_id,
                     comment: None,
                     reason_option_id: None,
