@@ -40,6 +40,13 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::CannotEditPurchaseOrder);
     }
 
+    let item = match ItemRowRepository::new(connection).find_one_by_id(&input.item_id)? {
+        Some(item) => item,
+        None => {
+            return Err(InsertPurchaseOrderLineError::ItemDoesNotExist);
+        }
+    };
+
     // check if pack size and item id combination already exists
     let existing_pack_item = PurchaseOrderLineRepository::new(connection).query(
         Pagination::all(),
@@ -55,17 +62,10 @@ pub fn validate(
     if !existing_pack_item.is_empty() {
         return Err(InsertPurchaseOrderLineError::PackSizeCodeCombinationExists(
             PackSizeCodeCombination {
-                item_code: input.item_id.clone(),
+                item_code: item.code.clone(),
                 requested_pack_size: input.requested_pack_size,
             },
         ));
-    }
-
-    if ItemRowRepository::new(connection)
-        .find_one_by_id(&input.item_id)?
-        .is_none()
-    {
-        return Err(InsertPurchaseOrderLineError::ItemDoesNotExist);
     }
 
     Ok(())

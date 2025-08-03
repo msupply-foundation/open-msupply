@@ -94,8 +94,6 @@ export const PurchaseOrderLineImportModal = ({
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
 
-  // const exportCSV = useExportCSV();
-
   const [bufferedLines, setBufferedLines] = useState<ImportRow[]>(() => []);
 
   const csvExport = async () => {
@@ -191,7 +189,6 @@ export const PurchaseOrderLineImportModal = ({
     onChangeTab(tabName);
   };
 
-  // TODO || isLoading
   const importNotReady = bufferedLines.length == 0 || errorMessage.length > 0;
   const exportNotReady = !(
     bufferedLines.length >= 0 && errorMessage.length > 0

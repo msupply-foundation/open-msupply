@@ -6,9 +6,6 @@ import {
 } from '@openmsupply-client/common';
 import { ImportRow, LineNumber } from './ImportLines/PurchaseOrderLineImportModal';
 
-// the reference data is loaded in migrations so the id here is hardcoded
-export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
-
 function basePurchaseOrderLineFields(t: TypedTFunction<LocaleKey>) {
   return [
     t('label.code'),

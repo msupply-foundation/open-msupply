@@ -313,7 +313,12 @@ export type InsertPurchaseOrderLineFromCsvMutation = {
           | { __typename: 'CannnotFindItemByCode'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
           | { __typename: 'ForeignKeyError'; description: string }
-          | { __typename: 'PackSizeCodeCombinationExists'; description: string }
+          | {
+              __typename: 'PackSizeCodeCombinationExists';
+              description: string;
+              itemCode: string;
+              requestedPackSize: number;
+            }
           | {
               __typename: 'PurchaseOrderLineWithItemIdExists';
               description: string;
@@ -559,6 +564,10 @@ export const InsertPurchaseOrderLineFromCsvDocument = gql`
         __typename
         error {
           description
+          ... on CannnotFindItemByCode {
+            __typename
+            description
+          }
           ... on CannotEditPurchaseOrder {
             __typename
             description
@@ -570,6 +579,8 @@ export const InsertPurchaseOrderLineFromCsvDocument = gql`
           ... on PackSizeCodeCombinationExists {
             __typename
             description
+            itemCode
+            requestedPackSize
           }
           ... on PurchaseOrderLineWithItemIdExists {
             __typename

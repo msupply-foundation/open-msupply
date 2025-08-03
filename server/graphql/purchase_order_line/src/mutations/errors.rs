@@ -15,7 +15,7 @@ pub struct PackSizeCodeCombinationExists {
 #[Object]
 impl PackSizeCodeCombinationExists {
     pub async fn description(&self) -> &str {
-        "Purchase order line already exists for this item and pack size combination"
+        "combination already exists for this item and pack size"
     }
     pub async fn item_code(&self) -> &str {
         self.item_code.as_str() // Placeholder, should return the actual item code

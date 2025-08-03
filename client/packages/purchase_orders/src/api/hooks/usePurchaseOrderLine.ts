@@ -146,10 +146,25 @@ export const useLineInsertFromCSV = () => {
       return result.insertPurchaseOrderLineFromCsv.id;
     } 
 
-    const error = result.insertPurchaseOrderLineFromCsv.error.description;
-    const errorMessage = isLocaleKey(error) ? t(error) : error;
+    if (result.insertPurchaseOrderLineFromCsv.__typename === 'InsertPurchaseOrderLineError') {
+      let errorMessage = '';
+      switch (result.insertPurchaseOrderLineFromCsv.error.__typename) {
+        case 'PackSizeCodeCombinationExists':
+          const description = result.insertPurchaseOrderLineFromCsv.error.description;
+          const itemCode = result.insertPurchaseOrderLineFromCsv.error.itemCode;
+          const requestedPackSize = result.insertPurchaseOrderLineFromCsv.error.requestedPackSize;
+          errorMessage = isLocaleKey(description)
+            ? t(description, { itemCode, requestedPackSize })
+            : description;
+            break;
+            // Can add other cases with additional information as needed
+        default:
+          const error = result.insertPurchaseOrderLineFromCsv.error.description;
+          errorMessage = isLocaleKey(error) ? t(error) : error;
+      }
+      throw new Error(errorMessage);
+    }
 
-    throw new Error(errorMessage);
   });
 
   return {

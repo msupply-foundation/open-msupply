@@ -8395,8 +8395,10 @@ export type RnRFormNode = {
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
   period: PeriodNode;
+  /** @deprecated Since 2.9.1. Use period.id instead */
   periodId: Scalars['String']['output'];
   periodLength: Scalars['Int']['output'];
+  /** @deprecated Since 2.9.1. Use period.name instead */
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];

@@ -234,7 +234,7 @@ export const EquipmentUploadTab = ({
       isCentralServer,
       properties ? properties.map(p => p.key) : []
     );
-    exportCSV(csv, t('filename.cce'));
+    exportCSV(csv, t('filename.pol'));
   };
 
   const csvImport = <T extends File>(files: T[]) => {
