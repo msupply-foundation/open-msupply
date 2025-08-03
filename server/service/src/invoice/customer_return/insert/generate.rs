@@ -132,6 +132,7 @@ pub fn generate(
                 campaign_id: None,
                 program_id: None,
                 shipped_number_of_packs: None,
+                shipped_pack_size: None,
             },
         )
         .collect();

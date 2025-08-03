@@ -126,6 +126,7 @@ const inboundParsers = {
       programId: line.program?.id,
       note: line.note,
       shippedNumberOfPacks: line.shippedNumberOfPacks,
+      shippedPackSize: line.shippedPackSize,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -162,6 +163,7 @@ const inboundParsers = {
     }),
     note: setNullableInput('note', { note: line.note ?? null }),
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
+    shippedPackSize: line.shippedPackSize ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };

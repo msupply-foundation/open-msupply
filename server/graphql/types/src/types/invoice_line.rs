@@ -130,6 +130,9 @@ impl InvoiceLineNode {
     pub async fn shipped_number_of_packs(&self) -> Option<f64> {
         self.row().shipped_number_of_packs
     }
+    pub async fn shipped_pack_size(&self) -> Option<f64> {
+        self.row().shipped_pack_size
+    }
     // Batch
     pub async fn batch(&self) -> &Option<String> {
         &self.row().batch

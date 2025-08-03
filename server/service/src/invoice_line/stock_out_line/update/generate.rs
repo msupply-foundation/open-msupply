@@ -136,6 +136,7 @@ fn generate_line(
         campaign_id,
         program_id,
         shipped_number_of_packs,
+        shipped_pack_size,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -188,6 +189,7 @@ fn generate_line(
         campaign_id,
         program_id,
         shipped_number_of_packs,
+        shipped_pack_size,
         reason_option_id: None,
         linked_invoice_id: None,
     };
@@ -222,6 +224,7 @@ fn generate_line(
 
     if matches!(input.r#type, Some(StockOutType::OutboundShipment)) {
         update_line.shipped_number_of_packs = Some(update_line.number_of_packs);
+        update_line.shipped_pack_size = Some(update_line.pack_size);
     }
 
     update_line.total_after_tax =

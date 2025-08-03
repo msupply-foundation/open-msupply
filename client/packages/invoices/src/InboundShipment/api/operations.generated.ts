@@ -13,6 +13,7 @@ export type InboundLineFragment = {
   expiryDate?: string | null;
   numberOfPacks: number;
   shippedNumberOfPacks?: number | null;
+  shippedPackSize?: number | null;
   packSize: number;
   note?: string | null;
   invoiceId: string;
@@ -123,6 +124,7 @@ export type InboundFragment = {
       expiryDate?: string | null;
       numberOfPacks: number;
       shippedNumberOfPacks?: number | null;
+      shippedPackSize?: number | null;
       packSize: number;
       note?: string | null;
       invoiceId: string;
@@ -357,6 +359,7 @@ export type InvoiceQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
+            shippedPackSize?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -528,6 +531,7 @@ export type InboundByNumberQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
+            shippedPackSize?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -1072,6 +1076,7 @@ export const InboundLineFragmentDoc = gql`
     expiryDate
     numberOfPacks
     shippedNumberOfPacks
+    shippedPackSize
     packSize
     note
     type

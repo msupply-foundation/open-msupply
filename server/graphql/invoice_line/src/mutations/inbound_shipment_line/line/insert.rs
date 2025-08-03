@@ -36,6 +36,7 @@ pub struct InsertInput {
     pub program_id: Option<String>,
     pub note: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
+    pub shipped_pack_size: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -100,6 +101,7 @@ impl InsertInput {
             program_id,
             note,
             shipped_number_of_packs,
+            shipped_pack_size,
         } = self;
 
         ServiceInput {
@@ -124,6 +126,7 @@ impl InsertInput {
             shipped_number_of_packs,
             campaign_id,
             program_id,
+            shipped_pack_size,
             note,
             // Default
             stock_line_id: None,

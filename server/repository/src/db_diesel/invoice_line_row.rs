@@ -46,7 +46,8 @@ table! {
         reason_option_id -> Nullable<Text>,
         campaign_id -> Nullable<Text>,
         program_id -> Nullable<Text>,
-        shipped_number_of_packs -> Nullable<Double>
+        shipped_number_of_packs -> Nullable<Double>,
+        shipped_pack_size -> Nullable<Double>
     }
 }
 
@@ -107,6 +108,7 @@ pub struct InvoiceLineRow {
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
+    pub shipped_pack_size: Option<f64>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
