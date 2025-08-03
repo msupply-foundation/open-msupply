@@ -1,5 +1,5 @@
 use repository::{
-    stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
+    stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository, StockLineLedgerRow},
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceStatus,
     RepositoryError, StockLineRowRepository, StorageConnection,
 };
@@ -21,6 +21,26 @@ pub(crate) fn is_ledger_fixed(
         return Ok(false);
     }
 
+    let balance_summary = ledger_balance_summary(connection, &ledger_lines, stock_line_id)?;
+
+    println!("Balance summary: {:?}", balance_summary);
+    return Ok(balance_summary.is_fixed);
+}
+
+#[derive(Debug)]
+pub(crate) struct LedgerBalanceSummary {
+    is_fixed: bool,
+    available: f64,
+    total: f64,
+    running_balance: f64,
+    reserved_not_picked: f64,
+}
+
+pub(crate) fn ledger_balance_summary(
+    connection: &StorageConnection,
+    ledger_lines: &[StockLineLedgerRow],
+    stock_line_id: &str,
+) -> Result<LedgerBalanceSummary, RepositoryError> {
     let reserved_not_picked = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .stock_line_id(EqualFilter::equal_to(stock_line_id))
@@ -31,7 +51,7 @@ pub(crate) fn is_ledger_fixed(
             ])),
     )?;
 
-    let reserved_not_picked_summed = reserved_not_picked
+    let reserved_not_picked = reserved_not_picked
         .iter()
         .map(|line| line.invoice_line_row.number_of_packs * line.invoice_line_row.pack_size)
         .sum::<f64>();
@@ -43,18 +63,26 @@ pub(crate) fn is_ledger_fixed(
 
     let available = stock_line.available_number_of_packs * stock_line.pack_size;
     let total = stock_line.total_number_of_packs * stock_line.pack_size;
+    let running_balance = ledger_lines
+        .last()
+        .map(|line| line.running_balance)
+        .unwrap_or(0.0);
 
     if available > 0.0 || total > 0.0 && ledger_lines.is_empty() {
-        return Ok(false);
+        return Ok(LedgerBalanceSummary {
+            is_fixed: false,
+            available,
+            total,
+            running_balance,
+            reserved_not_picked,
+        });
     }
 
-    match ledger_lines.last() {
-        Some(last_line) => {
-            return Ok(available + reserved_not_picked_summed == total
-                && total == last_line.running_balance);
-        }
-        None => {
-            return Ok(available == 0.0 || total == 0.0);
-        }
-    }
+    Ok(LedgerBalanceSummary {
+        is_fixed: (available + reserved_not_picked) == total && total == running_balance,
+        available,
+        total,
+        running_balance,
+        reserved_not_picked,
+    })
 }

@@ -2,7 +2,7 @@ use repository::{RepositoryError, StorageConnection};
 use thiserror::Error;
 
 use crate::ledger_fix::{
-    fixes::{adjust_historic_incoming_invoices, LedgerFixError},
+    fixes::{adjust_historic_incoming_invoices, inventory_adjustment_to_balance, LedgerFixError},
     is_ledger_fixed,
 };
 
@@ -21,11 +21,12 @@ pub(super) fn stock_line_ledger_fix(
 ) -> Result</* fixed fully */ bool, StockLineLedgerFixError> {
     adjust_historic_incoming_invoices(connection, operation_log, stock_line_id)?;
 
+    // TODO only check this if some action was done in ledger fix
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
     }
 
-    fix_ledger_2(connection, operation_log, stock_line_id)?;
+    inventory_adjustment_to_balance(connection, operation_log, stock_line_id)?;
 
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
