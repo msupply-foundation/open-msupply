@@ -29,7 +29,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
     /// 6. Source invoice is from mSupply thus the status will be `New`. Shouldn't happen for OMS since
     ///     OMS will follow OMS status sequence
     ///
-    /// Can only run two times (one for Delivered and one for Verified status):
+    /// Can only run three times (one for Delivered, Received and one for Verified status):
     /// 7. Because linked outbound invoice status will be updated to source inbound invoice status and `5.` will never be true again
     ///    and business rules guarantee that Inbound invoice can only change status to Delivered and Verified
     ///    and status cannot be changed backwards
@@ -69,6 +69,14 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
         }
         // 6.
         if inbound_invoice.invoice_row.status == InvoiceStatus::New {
+            return Ok(None);
+        }
+        // 7.
+        // Original unknown but we did have om system user updated outbound back to picked
+        if !matches!(
+            inbound_invoice.invoice_row.status,
+            InvoiceStatus::Delivered | InvoiceStatus::Received | InvoiceStatus::Verified
+        ) {
             return Ok(None);
         }
 
