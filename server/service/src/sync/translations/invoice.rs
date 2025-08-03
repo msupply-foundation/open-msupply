@@ -4,6 +4,7 @@ use crate::sync::translations::{
     name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation, to_legacy_time,
 };
 
+use anyhow::Context;
 use util::sync_serde::{
     date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
     empty_str_as_option_string, naive_time, zero_date_as_option, zero_f64_as_none,
@@ -12,8 +13,9 @@ use util::sync_serde::{
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
-    InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
-    NameRow, NameRowRepository, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowRepository,
+    InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository,
+    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
     UserAccountRow, UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
@@ -343,6 +345,9 @@ impl SyncTranslation for InvoiceTranslation {
         let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
         let data = sanitize_legacy_record(data);
         let data = serde_json::from_value::<LegacyTransactRow>(data)?;
+        // For owner records, only integrate if it's an insert operation, to happen only during initialisation,
+        // or when a store is added to a site
+        check_owned_invoice_update(connection, &data)?;
 
         let name = NameRowRepository::new(connection)
             .find_one_by_id(&data.name_ID)?
@@ -931,6 +936,28 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
     Some(status)
 }
 
+// Don't allow owned invoice updates, only inserts
+fn check_owned_invoice_update(
+    connection: &StorageConnection,
+    invoice_upsert: &LegacyTransactRow,
+) -> anyhow::Result<()> {
+    let site_id = KeyValueStoreRepository::new(connection)
+        .get_i32(repository::KeyType::SettingsSyncSiteId)?
+        .context("Site id not set")?;
+
+    let store = StoreRowRepository::new(connection)
+        .find_one_by_id(&invoice_upsert.store_ID)?
+        .context("Store not found")?;
+
+    if (store.site_id != site_id) {
+        return Ok(());
+    }
+
+    match InvoiceRowRepository::new(connection).find_one_by_id(&invoice_upsert.ID)? {
+        Some(_) => Err(anyhow::anyhow!("Owned invoice updates are not allowed")),
+        None => Ok(()),
+    }
+}
 #[cfg(test)]
 mod tests {
     use crate::sync::{
@@ -939,7 +966,9 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::{mock_store_a, MockData, MockDataInserts},
+        test_db::{setup_all, setup_all_with_data},
+        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
     };
     use serde_json::json;
 
@@ -948,15 +977,23 @@ mod tests {
         use crate::sync::test::test_data::invoice as test_data;
         let translator = InvoiceTranslation {};
 
-        let (_, connection, _, _) = setup_all(
+        let (_, connection, _, _) = setup_all_with_data(
             "test_invoice_translation",
             MockDataInserts::none().names().stores().currencies(),
+            MockData {
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_a().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
         )
         .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            println!("sync buffer row {:?}", record.sync_buffer_row);
+
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
