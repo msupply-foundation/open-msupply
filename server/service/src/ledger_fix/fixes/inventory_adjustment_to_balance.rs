@@ -8,7 +8,7 @@ use crate::ledger_fix::{
     ledger_balance_summary, LedgerBalanceSummary,
 };
 
-pub(crate) fn inventory_adjustment_to_balance(
+pub(crate) fn fix(
     connection: &StorageConnection,
     operation_log: &mut String,
     stock_line_id: &str,
@@ -53,7 +53,8 @@ pub(crate) fn inventory_adjustment_to_balance(
 }
 
 #[cfg(test)]
-mod test {
+
+pub(crate) mod test {
     use super::*;
     use crate::{
         ledger_fix::is_ledger_fixed,
@@ -66,7 +67,7 @@ mod test {
         KeyValueStoreRepository, StockLineRow,
     };
 
-    fn mock_data() -> MockData {
+    pub(crate) fn mock_data() -> MockData {
         let positive_running_balance_fix = StockLineRow {
             id: "positive_running_balance_fix".to_string(),
             item_link_id: mock_item_a().id.clone(),
@@ -136,8 +137,7 @@ mod test {
 
         let mut logs = String::new();
 
-        inventory_adjustment_to_balance(&connection, &mut logs, "positive_running_balance_fix")
-            .unwrap();
+        fix(&connection, &mut logs, "positive_running_balance_fix").unwrap();
 
         assert_eq!(
             repo.query_by_filter(
@@ -163,8 +163,7 @@ mod test {
 
         let mut logs = String::new();
 
-        inventory_adjustment_to_balance(&connection, &mut logs, "negative_running_balance_fix")
-            .unwrap();
+        fix(&connection, &mut logs, "negative_running_balance_fix").unwrap();
 
         assert_eq!(
             repo.query_by_filter(

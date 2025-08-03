@@ -23,32 +23,32 @@ pub(super) fn stock_line_ledger_fix(
     operation_log: &mut String,
     stock_line_id: &str,
 ) -> Result</* fixed fully */ bool, StockLineLedgerFixError> {
-    adjust_historic_incoming_invoices(connection, operation_log, stock_line_id)?;
+    adjust_historic_incoming_invoices::fix(connection, operation_log, stock_line_id)?;
 
     // TODO only check this if some action was done in ledger fix
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
     }
 
-    inventory_adjustment_to_balance(connection, operation_log, stock_line_id)?;
+    inventory_adjustment_to_balance::fix(connection, operation_log, stock_line_id)?;
 
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
     }
 
-    adjust_total_to_match_ledger(connection, operation_log, stock_line_id)?;
+    adjust_total_to_match_ledger::fix(connection, operation_log, stock_line_id)?;
 
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
     }
 
-    fix_cancellations(connection, operation_log, stock_line_id)?;
+    fix_cancellations::fix(connection, operation_log, stock_line_id)?;
 
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
     }
 
-    adjust_all_to_match_available(connection, operation_log, stock_line_id)?;
+    adjust_all_to_match_available::fix(connection, operation_log, stock_line_id)?;
 
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);

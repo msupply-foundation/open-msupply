@@ -43,7 +43,7 @@ impl<'a> StockLineLedgerDiscrepancyRepository<'a> {
         let query = create_filtered_query(filter);
 
         // Debug diesel query
-        println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result =
             query.load::<StockLineLedgerDiscrepancy>(self.connection.lock().connection())?;
