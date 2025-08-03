@@ -1,4 +1,5 @@
 use crate::number::next_number;
+use chrono::TimeDelta;
 use repository::stock_line_ledger::StockLineLedgerRow;
 use repository::InvoiceLineRow;
 use repository::InvoiceLineRowRepository;
@@ -143,18 +144,28 @@ fn create_inventory_adjustment(
     operation_log.push_str(&format!(
         "Adding {adjustment} adjustment for date {datetime:?}.\n"
     ));
+    // Datetime offset to make sure stock is in before out and out before it's in
+    let datetime_offset = TimeDelta::seconds(1);
 
-    let (invoice_type, number_type, invoice_line_type) = if adjustment > 0.0 {
+    let (invoice_type, number_type, invoice_line_type, datetime) = if adjustment > 0.0 {
+        let Some(datetime) = datetime.checked_sub_signed(datetime_offset) else {
+            return LedgerFixError::other("Failed to adjust datetime by 1 second");
+        };
         (
             InvoiceType::InventoryAddition,
             NumberRowType::InventoryAddition,
             InvoiceLineType::StockIn,
+            datetime,
         )
     } else {
+        let Some(datetime) = datetime.checked_add_signed(datetime_offset) else {
+            return LedgerFixError::other("Failed to adjust datetime by 1 second");
+        };
         (
             InvoiceType::InventoryReduction,
             NumberRowType::InventoryReduction,
             InvoiceLineType::StockOut,
+            datetime,
         )
     };
 

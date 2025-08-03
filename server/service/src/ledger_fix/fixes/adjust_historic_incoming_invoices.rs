@@ -1,10 +1,10 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, TimeDelta};
 use repository::{
     stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository, StockLineLedgerRow},
     EqualFilter, InvoiceRow, InvoiceRowRepository, StorageConnection,
 };
 
-use crate::ledger_fix::fixes::LedgerFixError;
+use crate::ledger_fix::{fixes::LedgerFixError, ledger_balance_summary, LedgerBalanceSummary};
 
 const MAX_ITERATIONS: i32 = 100;
 
@@ -14,6 +14,29 @@ pub(crate) fn fix(
     stock_line_id: &str,
 ) -> Result<(), LedgerFixError> {
     operation_log.push_str("Starting adjust_historic_incoming_invoices\n");
+
+    let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
+        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+    )?;
+    let balance_summary = ledger_balance_summary(connection, &ledger_lines, stock_line_id)?;
+    let LedgerBalanceSummary {
+        available,
+        total,
+        running_balance,
+        reserved_not_picked,
+        ..
+    } = balance_summary;
+
+    let should_adjust = available + reserved_not_picked == total && total == running_balance;
+
+    if !should_adjust {
+        operation_log.push_str(&format!(
+            "Ledger does not match use case for adjust_historic_incoming_invoices {:?}.\n",
+            balance_summary
+        ));
+        return Ok(());
+    }
+
     let mut iteration = 0;
     loop {
         iteration = iteration + 1;
@@ -67,6 +90,12 @@ pub(crate) fn fix(
                 backdate_datetime
             ));
             break;
+        };
+
+        // Make sure incoming stock is a little bit before outgoing stock
+        let Some(backdate_datetime) = backdate_datetime.checked_sub_signed(TimeDelta::seconds(1))
+        else {
+            return LedgerFixError::other("Failed to adjust datetime by 1 second");
         };
 
         backdate_invoice(
