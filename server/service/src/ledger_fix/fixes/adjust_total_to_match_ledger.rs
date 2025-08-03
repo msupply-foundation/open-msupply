@@ -41,16 +41,16 @@ pub(crate) fn adjust_total_to_match_ledger(
         return LedgerFixError::other("Stock line not found for adjustment");
     };
 
-    let new_stock_line = StockLineRow {
+    let updated_stock_line = StockLineRow {
         total_number_of_packs: running_balance / stock_line.pack_size,
         ..stock_line
     };
 
     operation_log.push_str(&format!(
         "Adjusting stock line {} to match ledger with total number of packs: {}.\n",
-        stock_line_id, new_stock_line.total_number_of_packs
+        stock_line_id, updated_stock_line.total_number_of_packs
     ));
-    StockLineRowRepository::new(connection).upsert_one(&new_stock_line)?;
+    StockLineRowRepository::new(connection).upsert_one(&updated_stock_line)?;
 
     Ok(())
 }
@@ -121,9 +121,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn adjust_historic_incoming_invoices_test() {
+    async fn adjust_total_to_match_ledger_test() {
         let ServiceTestContext { connection, .. } = setup_all_with_data_and_service_provider(
-            "adjust_historic_incoming_invoices",
+            "adjust_total_to_match_ledger",
             MockDataInserts::none().names().stores().units().items(),
             mock_data(),
         )

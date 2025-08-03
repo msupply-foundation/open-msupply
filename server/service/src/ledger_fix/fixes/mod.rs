@@ -10,6 +10,9 @@ pub(crate) use self::inventory_adjustment_to_balance::*;
 mod adjust_total_to_match_ledger;
 pub(crate) use self::adjust_total_to_match_ledger::*;
 
+mod fix_cancellations;
+pub(crate) use self::fix_cancellations::*;
+
 #[derive(Error, Debug)]
 pub(crate) enum LedgerFixError {
     #[error(transparent)]
