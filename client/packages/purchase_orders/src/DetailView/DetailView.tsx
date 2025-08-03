@@ -34,10 +34,6 @@ export const DetailViewInner = () => {
     lines: { sortedAndFilteredLines },
   } = usePurchaseOrder();
 
-  const t = useTranslation();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const navigate = useNavigate();
-
   const importModalController = useToggle();
 
   useEffect(() => {
