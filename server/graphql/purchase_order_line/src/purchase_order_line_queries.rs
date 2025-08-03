@@ -131,9 +131,7 @@ impl PurchaseOrderLineSortInput {
         use PurchaseOrderLineSortFieldInput as from;
         let key = match self.key {
             from::ItemName => to::ItemName,
-
             from::LineNumber => to::LineNumber,
-
             from::RequestedDeliveryDate => to::RequestedDeliveryDate,
             from::ExpectedDeliveryDate => to::ExpectedDeliveryDate,
         };

@@ -4,8 +4,8 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   Grid,
-  // useDetailPanel,
   useTranslation,
+  useDetailPanel,
   ReportContext,
   useUrlQueryParams,
   ToggleState,
@@ -29,6 +29,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   isDisabled,
 }) => {
   const t = useTranslation();
+  const { OpenButton } = useDetailPanel();
 
   const {
     queryParams: { sortBy },
@@ -43,8 +44,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     importModalController.toggleOn,
     t('error.no-purchase-order-import-permission')
   );
-
-  // const { OpenButton } = useDetailPanel();
 
   return (
     <AppBarButtonsPortal>
@@ -67,7 +66,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         />
         {/* <AddFromMasterListButton /> */}
         {/* <UseSuggestedQuantityButton /> */}
-        {/* {OpenButton} */}
+        {OpenButton}
       </Grid>
     </AppBarButtonsPortal>
   );

@@ -2,17 +2,38 @@ import {
   FnUtils,
   InsertPurchaseOrderInput,
   PurchaseOrderLineNode,
+  PurchaseOrderNodeType,
   SortUtils,
   useMutation,
   useParams,
   useQuery,
   useUrlQuery,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { LIST, PURCHASE_ORDER } from './keys';
 import { PurchaseOrderFragment } from '../operations.generated';
 import { useMemo } from 'react';
 import { usePurchaseOrderColumns } from '../../DetailView/columns';
+
+export type UpdatePurchaseOrderInput = {
+  advancePaidDate?: string | null;
+  comment?: string | null;
+  confirmedDatetime?: string | null;
+  contractSignedDate?: string | null;
+  currencyId?: string | null;
+  donorId?: string | null;
+  foreignExchangeRate?: number | null;
+  id: string;
+  receivedAtPortDate?: string | null;
+  reference?: string | null;
+  requestedDeliveryDate?: string | null;
+  sentDatetime?: string | null;
+  shippingMethod?: string | null;
+  status?: PurchaseOrderNodeType | null;
+  supplierDiscountPercentage?: number | null;
+  supplierId?: string | null;
+};
 
 export type PurchaseOrderLineInsertFromCsvInput = Partial<
   PurchaseOrderLineNode & { purchaseOrderId: string; itemCode: string }
@@ -23,11 +44,10 @@ export const usePurchaseOrder = (id?: string) => {
 
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
-  const queryKey = [LIST, PURCHASE_ORDER, storeId, purchaseOrderId];
+  const queryKey = [PURCHASE_ORDER, LIST, storeId, purchaseOrderId];
 
   // QUERY
-
-  const queryFn = async (): Promise<PurchaseOrderFragment | void> => {
+  const queryFn = async (): Promise<PurchaseOrderFragment | undefined> => {
     if (!purchaseOrderId) return;
 
     const result = await purchaseOrderApi.purchaseOrderById({
@@ -52,9 +72,19 @@ export const usePurchaseOrder = (id?: string) => {
     useFilteredAndSortedLines(data);
 
   // UPDATE
+  const {
+    mutateAsync: updateMutation,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate();
+
+  const update = async (input: Omit<UpdatePurchaseOrderInput, 'id'>) => {
+    if (!purchaseOrderId) return;
+    const result = await updateMutation({ id: purchaseOrderId, ...input });
+    return result;
+  };
 
   // CREATE
-
   const {
     mutateAsync: createMutation,
     isLoading: isCreating,
@@ -63,7 +93,6 @@ export const usePurchaseOrder = (id?: string) => {
 
   const create = async (supplierId: string) => {
     const id = FnUtils.generateUUID();
-
     const result = await createMutation({ id, supplierId });
     return result;
   };
@@ -72,26 +101,43 @@ export const usePurchaseOrder = (id?: string) => {
     query: { data, isLoading, isError },
     lines: { sortedAndFilteredLines, itemFilter, setItemFilter },
     create: { create, isCreating, createError },
+    update: { update, isUpdating, updateError },
   };
 };
 
 const useCreate = () => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
-  const mutationFn = async (
-    input: InsertPurchaseOrderInput
-  ): Promise<string> => {
-    const result =
-      (await purchaseOrderApi.insertPurchaseOrder({
-        input,
-        storeId,
-      })) || {};
+  const mutationFn = async (input: InsertPurchaseOrderInput) => {
+    return await purchaseOrderApi.insertPurchaseOrder({
+      input,
+      storeId,
+    });
+  };
 
-    const { insertPurchaseOrder } = result;
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+  });
+};
 
-    if (insertPurchaseOrder.id) return insertPurchaseOrder.id;
+const useUpdate = () => {
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
-    throw new Error('Could not insert purchase order');
+  const mutationFn = async (input: UpdatePurchaseOrderInput) => {
+    return await purchaseOrderApi.updatePurchaseOrder({
+      input: {
+        ...input,
+        donorId: setNullableInput('donorId', input),
+        confirmedDatetime: setNullableInput('confirmedDatetime', input),
+        contractSignedDate: setNullableInput('contractSignedDate', input),
+        advancePaidDate: setNullableInput('advancePaidDate', input),
+        receivedAtPortDate: setNullableInput('receivedAtPortDate', input),
+        sentDatetime: setNullableInput('sentDatetime', input),
+        requestedDeliveryDate: setNullableInput('requestedDeliveryDate', input),
+      },
+      storeId,
+    });
   };
 
   return useMutation({

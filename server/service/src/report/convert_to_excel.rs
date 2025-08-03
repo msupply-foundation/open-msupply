@@ -610,7 +610,6 @@ mod report_to_excel_test {
             let start = std::time::Instant::now();
             apply_report(sheet, report);
             let duration_millisec = start.elapsed().as_millis();
-            dbg!(&duration_millisec);
             duration_millisec
         });
 

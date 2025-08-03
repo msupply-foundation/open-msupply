@@ -20,10 +20,15 @@ import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
+import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
 import { PurchaseOrderLineImportModal } from './ImportLines/PurchaseOrderLineImportModal';
 
 export const DetailViewInner = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+
   const {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
@@ -54,11 +59,11 @@ export const DetailViewInner = () => {
     [onOpen]
   );
 
-  if (isLoading) return <DetailViewSkeleton />;
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.number]);
 
-  const onAddItem = () => {
-    onOpen();
-  };
+  if (isLoading) return <DetailViewSkeleton />;
 
   const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
 
@@ -71,20 +76,17 @@ export const DetailViewInner = () => {
           <AppBarButtons
             importModalController={importModalController}
             isDisabled={isDisabled}
-            onAddItem={onAddItem}
+            onAddItem={onOpen}
           />
-
           <Toolbar isDisabled={isDisabled} />
-
           <ContentArea
             lines={sortedAndFilteredLines}
             isDisabled={isDisabled}
             onAddItem={onOpen}
             onRowClick={!isDisabled ? onRowClick : null}
           />
-
           <Footer />
-
+          <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal
               isOpen={isOpen}

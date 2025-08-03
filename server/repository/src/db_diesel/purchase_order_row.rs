@@ -47,6 +47,7 @@ table! {
         order_total_before_discount -> Double,
         order_total_after_discount -> Double,
         supplier_discount_amount -> Double,
+        supplier_discount_percentage -> Nullable<Double>,
     }
 }
 
@@ -94,6 +95,7 @@ pub struct PurchaseOrderRow {
     pub order_total_before_discount: f64,
     pub order_total_after_discount: f64,
     pub supplier_discount_amount: f64,
+    pub supplier_discount_percentage: Option<f64>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
