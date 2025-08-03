@@ -561,6 +561,7 @@ pub fn generate(
         store_id: store_id.to_string(),
         status: InvoiceStatus::New,
         verified_datetime: Some(now),
+        program_id: stocktake.program_id.clone(),
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
@@ -584,7 +585,6 @@ pub fn generate(
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
-        program_id: None,
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
