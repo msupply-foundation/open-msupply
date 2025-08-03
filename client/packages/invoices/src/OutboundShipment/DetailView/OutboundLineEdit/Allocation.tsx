@@ -151,7 +151,7 @@ const AllocationInner = () => {
         <Divider margin={10} />
 
         <Box display="flex" alignItems="flex-start" gap={2}>
-          <Grid container alignItems="center" pt={1}>
+          <Grid container alignItems="center" pt={1} gap={1}>
             <AutoAllocateField />
             <AllocateInSelector includePackSizeOptions />
           </Grid>
