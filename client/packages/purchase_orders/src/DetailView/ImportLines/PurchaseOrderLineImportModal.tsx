@@ -114,6 +114,7 @@ export const PurchaseOrderLineImportModal = ({
       await mutateAsync(toInsertPurchaseOrderLine(row, data?.id ?? ''));
     } catch (e) {
       console.error(e);
+
       const errorMessage = (e as Error).message || t('messages.unknown-error');
       importErrorRows.push({
         ...row,

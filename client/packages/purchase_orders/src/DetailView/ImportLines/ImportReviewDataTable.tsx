@@ -38,12 +38,14 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       label: 'label.code',
     },
     {
+      width: 90,
+
       key: 'requestedPackSize',
       sortable: false,
       label: 'label.pack-size',
     },
-    // item id
     {
+      width: 90,
       key: 'requestedNumberOfUnits',
       sortable: false,
       label: 'label.requested',
@@ -62,11 +64,11 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     columnDescriptions.push({
       key: 'errorMessage',
       label: 'label.error-message',
-      width: 150,
+      width: 200,
       Cell: TooltipTextCell,
     });
   }
-  // TODO implement searching for item & mapping item name to table
+  // TODO implement searching for item & mapping item name to table for more easeful UI (Currently users need to know the item code)
   const columns = useColumns<ImportRow>(columnDescriptions, {}, []);
 
   const filteredEquipment = importRows.filter(row => {

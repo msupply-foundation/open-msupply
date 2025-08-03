@@ -146,7 +146,6 @@ export const useLineInsertFromCSV = () => {
       return result.insertPurchaseOrderLineFromCsv.id;
     } 
 
-
     const error = result.insertPurchaseOrderLineFromCsv.error.description;
     const errorMessage = isLocaleKey(error) ? t(error) : error;
 
