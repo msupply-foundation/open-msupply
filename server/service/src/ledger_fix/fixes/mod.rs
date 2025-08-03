@@ -7,6 +7,9 @@ pub(crate) use self::adjust_historic_incoming_invoices::*;
 mod inventory_adjustment_to_balance;
 pub(crate) use self::inventory_adjustment_to_balance::*;
 
+mod adjust_total_to_match_ledger;
+pub(crate) use self::adjust_total_to_match_ledger::*;
+
 #[derive(Error, Debug)]
 pub(crate) enum LedgerFixError {
     #[error(transparent)]

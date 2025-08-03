@@ -67,7 +67,7 @@ pub(crate) fn ledger_balance_summary(
         .map(|line| line.running_balance)
         .unwrap_or(0.0);
 
-    if available > 0.0 || total > 0.0 && ledger_lines.is_empty() {
+    if (available > 0.0 || total > 0.0) && ledger_lines.is_empty() {
         return Ok(LedgerBalanceSummary {
             is_fixed: false,
             available,

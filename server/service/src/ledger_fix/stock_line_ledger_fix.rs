@@ -2,7 +2,10 @@ use repository::{RepositoryError, StorageConnection};
 use thiserror::Error;
 
 use crate::ledger_fix::{
-    fixes::{adjust_historic_incoming_invoices, inventory_adjustment_to_balance, LedgerFixError},
+    fixes::{
+        adjust_historic_incoming_invoices, adjust_total_to_match_ledger,
+        inventory_adjustment_to_balance, LedgerFixError,
+    },
     is_ledger_fixed,
 };
 
@@ -32,29 +35,11 @@ pub(super) fn stock_line_ledger_fix(
         return Ok(true);
     }
 
-    fix_ledger_3(connection, operation_log, stock_line_id)?;
+    adjust_total_to_match_ledger(connection, operation_log, stock_line_id)?;
 
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
     }
 
     Ok(false)
-}
-
-fn fix_ledger_2(
-    _connection: &StorageConnection,
-    operation_log: &mut String,
-    _stock_line_id: &str,
-) -> Result<(), LedgerFixError> {
-    operation_log.push_str("Starting fix_ledger_2\n");
-    Ok(())
-}
-
-fn fix_ledger_3(
-    _connection: &StorageConnection,
-    operation_log: &mut String,
-    _stock_line_id: &str,
-) -> Result<(), LedgerFixError> {
-    operation_log.push_str("Starting fix_ledger_3\n");
-    Ok(())
 }
