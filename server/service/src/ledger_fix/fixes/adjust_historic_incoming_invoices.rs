@@ -8,7 +8,7 @@ use crate::ledger_fix::fixes::LedgerFixError;
 
 const MAX_ITERATIONS: i32 = 100;
 
-pub(crate) fn adjust_historic_incoming_invoices(
+pub(crate) fn fix(
     connection: &StorageConnection,
     operation_log: &mut String,
     stock_line_id: &str,
@@ -115,7 +115,7 @@ fn backdate_invoice(
 }
 
 #[cfg(test)]
-mod test {
+pub(crate) mod test {
     use super::*;
     use crate::{
         ledger_fix::is_ledger_fixed,
@@ -128,7 +128,7 @@ mod test {
         KeyValueStoreRepository, StockLineRow,
     };
 
-    fn mock_data() -> MockData {
+    pub(crate) fn mock_data() -> MockData {
         let single_historic_negative_balance = StockLineRow {
             id: "single_historic_negative_balance".to_string(),
             item_link_id: mock_item_a().id.clone(),
@@ -185,12 +185,7 @@ mod test {
 
         let mut logs = String::new();
 
-        adjust_historic_incoming_invoices(
-            &connection,
-            &mut logs,
-            "single_historic_negative_balance",
-        )
-        .unwrap();
+        fix(&connection, &mut logs, "single_historic_negative_balance").unwrap();
 
         assert_eq!(
             is_ledger_fixed(&connection, "single_historic_negative_balance"),
@@ -204,7 +199,7 @@ mod test {
 
         let mut logs = String::new();
 
-        adjust_historic_incoming_invoices(
+        fix(
             &connection,
             &mut logs,
             "multiple_historic_negative_balances",

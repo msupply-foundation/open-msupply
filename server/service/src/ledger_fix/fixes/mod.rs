@@ -1,3 +1,4 @@
+use crate::number::next_number;
 use repository::stock_line_ledger::StockLineLedgerRow;
 use repository::InvoiceLineRow;
 use repository::InvoiceLineRowRepository;
@@ -17,22 +18,12 @@ use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::constants::SYSTEM_USER_ID;
 use util::uuid::uuid;
 
-mod adjust_historic_incoming_invoices;
-use crate::number::next_number;
+pub(crate) mod adjust_historic_incoming_invoices;
 
-pub(crate) use self::adjust_historic_incoming_invoices::*;
-
-mod inventory_adjustment_to_balance;
-pub(crate) use self::inventory_adjustment_to_balance::*;
-
-mod adjust_total_to_match_ledger;
-pub(crate) use self::adjust_total_to_match_ledger::*;
-
-mod fix_cancellations;
-pub(crate) use self::fix_cancellations::*;
-
-mod adjust_all_to_match_available;
-pub(crate) use self::adjust_all_to_match_available::*;
+pub(crate) mod adjust_all_to_match_available;
+pub(crate) mod adjust_total_to_match_ledger;
+pub(crate) mod fix_cancellations;
+pub(crate) mod inventory_adjustment_to_balance;
 
 #[derive(Error, Debug)]
 pub(crate) enum LedgerFixError {

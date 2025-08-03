@@ -5,7 +5,7 @@ use repository::{
 
 use crate::ledger_fix::{fixes::LedgerFixError, ledger_balance_summary, LedgerBalanceSummary};
 
-pub(crate) fn adjust_total_to_match_ledger(
+pub(crate) fn fix(
     connection: &StorageConnection,
     operation_log: &mut String,
     stock_line_id: &str,
@@ -56,7 +56,8 @@ pub(crate) fn adjust_total_to_match_ledger(
 }
 
 #[cfg(test)]
-mod test {
+
+pub(crate) mod test {
     use super::*;
     use crate::{
         ledger_fix::is_ledger_fixed,
@@ -70,7 +71,7 @@ mod test {
     };
     use util::inline_edit;
 
-    fn mock_data() -> MockData {
+    pub(crate) fn mock_data() -> MockData {
         let total_does_not_match = StockLineRow {
             id: "total_does_not_match".to_string(),
             item_link_id: mock_item_a().id.clone(),
@@ -143,7 +144,7 @@ mod test {
 
         let mut logs = String::new();
 
-        adjust_total_to_match_ledger(&connection, &mut logs, "total_does_not_match").unwrap();
+        fix(&connection, &mut logs, "total_does_not_match").unwrap();
 
         assert_eq!(
             is_ledger_fixed(&connection, "total_does_not_match"),
@@ -157,8 +158,7 @@ mod test {
 
         let mut logs = String::new();
 
-        adjust_total_to_match_ledger(&connection, &mut logs, "total_does_not_match_with_reserved")
-            .unwrap();
+        fix(&connection, &mut logs, "total_does_not_match_with_reserved").unwrap();
 
         assert_eq!(
             is_ledger_fixed(&connection, "total_does_not_match_with_reserved"),
