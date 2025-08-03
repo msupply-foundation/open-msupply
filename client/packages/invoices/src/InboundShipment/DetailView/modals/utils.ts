@@ -17,7 +17,7 @@ const createDraftInboundLine = ({
   seed,
   type = InvoiceLineNodeType.StockIn,
 }: CreateDraftInboundLineParams): DraftInboundLine => {
-  const { defaultPackSize = 1, itemStoreProperties, name } = item || {};
+  const { defaultPackSize = 1, itemStoreProperties } = item || {};
   const draftLine: DraftInboundLine = {
     __typename: 'InvoiceLineNode',
     totalAfterTax: 0,
@@ -35,7 +35,8 @@ const createDraftInboundLine = ({
     location: undefined,
     type,
     item,
-    itemName: name,
+    itemName: item.name,
+    shippedPackSize: defaultPackSize,
     ...seed,
   };
 

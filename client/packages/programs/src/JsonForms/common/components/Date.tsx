@@ -68,7 +68,6 @@ const UIComponent = (props: ControlProps) => {
           onError={validationError =>
             setCustomError(validationError ?? undefined)
           }
-          actions={['clear']}
         />
       }
     />
