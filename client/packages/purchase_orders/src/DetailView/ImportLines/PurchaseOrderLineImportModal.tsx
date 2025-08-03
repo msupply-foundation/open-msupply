@@ -111,13 +111,8 @@ export const PurchaseOrderLineImportModal = ({
   const importErrorRows: ImportRow[] = [];
   const insertFromCSV = async (row: ImportRow) => {
     try {
-      const result = await mutateAsync(
-        toInsertPurchaseOrderLine(row, data?.id ?? '')
-      );
-      console.log('inserted line from CSV', result);
-      return result;
+      await mutateAsync(toInsertPurchaseOrderLine(row, data?.id ?? ''));
     } catch (e) {
-      console.log('caught error in importFromCSV');
       console.error(e);
       const errorMessage = (e as Error).message || t('messages.unknown-error');
       importErrorRows.push({
@@ -239,7 +234,7 @@ export const PurchaseOrderLineImportModal = ({
           onClick={csvExport}
         />
       }
-      title={t('label.import-cce')}
+      title={t('label.import-purchase-order-lines')}
       height={1000}
       width={1600}
     >

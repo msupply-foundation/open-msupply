@@ -25,6 +25,7 @@
   "button.add-form": "Add Form",
   "button.add-from-internal-order": "Add from Internal Order",
   "button.add-from-master-list": "Add from master list",
+  "label.import-purchase-order-lines": "Import Purchase Order Lines",
   "button.add-insurance": "Add Insurance",
   "button.add-item": "Add Item",
   "button.add-new-campaign": "Add New Campaign",
