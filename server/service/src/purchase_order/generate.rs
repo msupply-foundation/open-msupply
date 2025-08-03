@@ -43,7 +43,7 @@ pub fn generate_empty_purchase_order_lines(
                 result.push(PurchaseOrderLineRow {
                     id: uuid(),
                     purchase_order_id: purchase_order_row.id.clone(),
-                    line_number: line_number,
+                    line_number,
                     item_link_id: item.id,
                     item_name: item.name,
                     store_id: ctx.store_id.clone(),
