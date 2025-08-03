@@ -27,6 +27,7 @@ import {
   unrankedToolbarTester,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
+import { usePreviousEncounter } from '@openmsupply-client/programs/src/JsonForms/usePreviousEncounter';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
@@ -93,6 +94,11 @@ export const DetailView: FC = () => {
     encounter?.type ?? ''
   );
 
+  const previous = usePreviousEncounter(
+    encounter?.patient?.id,
+    encounter?.startDatetime
+  );
+
   const dataAccessor = useDocumentDataAccessor(
     encounter?.document?.name,
     undefined,
@@ -111,6 +117,7 @@ export const DetailView: FC = () => {
     {
       documentName: encounter?.document?.name,
       patientId: encounter?.patient?.id,
+      previous,
     },
     dataAccessor
   );
