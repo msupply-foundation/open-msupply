@@ -335,13 +335,12 @@ export const useInboundShipmentColumns = ({
 };
 
 export const useExpansionColumns = (
-  withDoseColumns?: boolean
+  withDoseColumns?: boolean,
+  preferences?: {
+    allowTrackingOfStockByDonor?: boolean;
+    useCampaigns?: boolean;
+  }
 ): Column<InboundLineFragment>[] => {
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
-  );
-
   const columns: ColumnDescription<InboundLineFragment>[] = [
     'batch',
     'expiryDate',
@@ -393,7 +392,8 @@ export const useExpansionColumns = (
       key: 'campaign',
       label: 'label.campaign',
       width: 100,
-      accessor: ({ rowData }) => rowData.campaign?.name,
+      accessor: ({ rowData }) =>
+        rowData.campaign?.name ?? rowData.program?.name ?? '',
       defaultHideOnMobile: true,
     });
   }
