@@ -64,11 +64,12 @@ export const getLocationInputColumn = <T extends RecordWithId>(
           setInvalidLocationRowIds(prev => {
             const prevSet = new Set(prev);
             if (invalid) {
-              prevSet.add(rowData.id);
+              if (prevSet.has(rowData.id)) return prev;
+              return [...prev, rowData.id];
             } else {
-              prevSet.delete(rowData.id);
+              if (!prevSet.has(rowData.id)) return prev;
+              return prev.filter(id => id !== rowData.id);
             }
-            return Array.from(prevSet);
           });
         }
       };
