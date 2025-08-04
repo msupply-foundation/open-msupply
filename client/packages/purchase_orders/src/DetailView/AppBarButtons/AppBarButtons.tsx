@@ -2,6 +2,8 @@ import React, { FC } from 'react';
 import {
   AppBarButtonsPortal,
   Grid,
+  useTranslation,
+  useDetailPanel,
   ReportContext,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
@@ -18,6 +20,9 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
   isDisabled,
 }) => {
+  const t = useTranslation();
+  const { OpenButton } = useDetailPanel();
+
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
@@ -41,6 +46,9 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           disableAddFromMasterListButton={isLoading}
           disableAddFromInternalOrderButton={isLoading}
         />
+        {/* <AddFromMasterListButton /> */}
+        {/* <UseSuggestedQuantityButton /> */}
+        {OpenButton}
       </Grid>
     </AppBarButtonsPortal>
   );

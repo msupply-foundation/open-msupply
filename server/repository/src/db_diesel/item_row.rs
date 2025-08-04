@@ -24,6 +24,7 @@ table! {
         is_active -> Bool,
         is_vaccine -> Bool,
         vaccine_doses -> Integer,
+        restricted_location_type_id ->  Nullable<Text>,
     }
 }
 
@@ -76,6 +77,7 @@ pub struct ItemRow {
     pub is_active: bool,
     pub is_vaccine: bool,
     pub vaccine_doses: i32,
+    pub restricted_location_type_id: Option<String>,
 }
 
 impl Default for ItemRow {
@@ -93,6 +95,7 @@ impl Default for ItemRow {
             strength: Default::default(),
             ven_category: VENCategory::NotAssigned,
             vaccine_doses: 0,
+            restricted_location_type_id: None,
         }
     }
 }

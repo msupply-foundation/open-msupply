@@ -28,8 +28,8 @@ export const AppBarButtonsComponent = () => {
 
   const handleSupplierSelected = async (selected: NameRowFragment) => {
     try {
-      const id = await create(selected.id);
-      navigate(id);
+      const result = await create(selected.id);
+      navigate(result?.insertPurchaseOrder?.id);
     } catch (e) {
       console.error('Error creating purchase order:', e);
       const errorSnack = error(

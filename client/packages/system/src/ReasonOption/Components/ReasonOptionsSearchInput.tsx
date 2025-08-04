@@ -42,7 +42,7 @@ export const ReasonOptionsSearchInput = ({
 
   return (
     <Autocomplete
-      width={`${width}px`}
+      sx={{ width: width ? `${width}px` : '100%' }}
       disabled={disabled || !isRequired}
       clearable={false}
       value={

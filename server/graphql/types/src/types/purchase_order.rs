@@ -110,6 +110,9 @@ impl PurchaseOrderNode {
     pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().expected_delivery_date
     }
+    pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
+        &self.row().requested_delivery_date
+    }
     pub async fn supplier_agent(&self) -> &Option<String> {
         &self.row().supplier_agent
     }
@@ -146,6 +149,9 @@ impl PurchaseOrderNode {
 
     pub async fn supplier_discount_amount(&self) -> f64 {
         self.row().supplier_discount_amount
+    }
+    pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
+        &self.row().supplier_discount_percentage
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<PurchaseOrderLineConnector> {

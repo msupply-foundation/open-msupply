@@ -423,7 +423,6 @@ impl MockDataInserts {
             purchase_order_line: true,
         }
     }
-
     pub fn none() -> Self {
         MockDataInserts::default()
     }
