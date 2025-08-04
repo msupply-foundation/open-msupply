@@ -65,7 +65,7 @@ impl LedgerFixDriver {
         log::info!(
             "Performing ledger fix on {} lines...",
             find_stock_line_ledger_discrepancies(&ctx.connection)
-                .unwrap()
+                .unwrap_or_else(|_| vec![])
                 .len()
         );
     }
