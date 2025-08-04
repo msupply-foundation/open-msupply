@@ -72,6 +72,8 @@ fragment PurchaseOrder on PurchaseOrderNode {
   advancePaidDate
   receivedAtPortDate
   requestedDeliveryDate
+  authorisedDatetime
+  finalisedDatetime
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
