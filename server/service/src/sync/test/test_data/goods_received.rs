@@ -8,7 +8,7 @@ use repository::goods_received_row::{
 };
 use serde_json::json;
 
-const TABLE_NAME: &str = "goods_received";
+const TABLE_NAME: &str = "Goods_received";
 
 const GOODS_RECEIVED: (&str, &str) = (
     "3486239A597646B2B7259D91A24988E8",
@@ -37,8 +37,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         GoodsReceivedRow {
             id: "3486239A597646B2B7259D91A24988E8".to_owned(),
             store_id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_owned(),
-purchase_order_id: Some("12e889c0f0d211eb8dddb54df6d741hx".to_string()),
-inbound_shipment_id: Some("12e889c0f0d211eb8dddb54df6d741bc".to_string()),
+            purchase_order_id: Some("12e889c0f0d211eb8dddb54df6d741hx".to_string()),
+            inbound_shipment_id: Some("12e889c0f0d211eb8dddb54df6d741bc".to_string()),
             goods_received_number: 1,
             status: GoodsReceivedStatus::New.to_owned(),
             received_date: Some("2025-07-24".parse().unwrap()),

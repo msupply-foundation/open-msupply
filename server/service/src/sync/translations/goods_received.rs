@@ -69,7 +69,7 @@ pub(super) struct GoodsReceivedTranslation;
 
 impl SyncTranslation for GoodsReceivedTranslation {
     fn table_name(&self) -> &str {
-        "goods_received"
+        "Goods_received"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
