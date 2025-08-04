@@ -72,9 +72,9 @@ A case where available and reserved is the same as final running balance but tot
 
 `fix` adjust total to match available plus reserved not yet picked
 
-#### Cancelations - fix_cancellations
+#### Cancellations - fix_cancellations
 
-We had a bug in omSupply where cancelations were not putting stock back into stock line, this since has been fixed, but we did find some use cases of this as ledger discrepancies.
+We had a bug in omSupply where cancellations were not putting stock back into stock line, this since has been fixed, but we did find some use cases of this as ledger discrepancies.
 
 `state` where available + reserved not picked + sum of cancelled prescriptions = final running and total + sum of cancelled prescriptions = final running balance
 
