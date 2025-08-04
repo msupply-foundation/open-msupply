@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod add_excel_template_to_report;
 mod add_mutate_clinician_permission;
 mod add_shipped_number_of_packs_to_invoice_line;
+mod add_shipped_number_of_packs_to_invoice_line_legacy;
 mod add_store_id_to_clinician;
 mod extend_name_table_fields;
 mod process_clinician_store_join_deletes;
@@ -32,6 +33,7 @@ impl Migration for V2_09_00 {
             Box::new(resync_existing_vaccine_course_records::Migrate),
             Box::new(resync_existing_vaccine_course_dose_and_item::Migrate),
             Box::new(add_shipped_number_of_packs_to_invoice_line::Migrate),
+            Box::new(add_shipped_number_of_packs_to_invoice_line_legacy::Migrate),
             Box::new(add_excel_template_to_report::Migrate),
             Box::new(resync_existing_vaccination_records::Migrate),
             Box::new(remove_item_variant_doses_column::Migrate),
