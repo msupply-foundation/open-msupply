@@ -109,11 +109,6 @@ impl<'a> GoodsReceivedLineRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&row)
     }
 
-    pub fn find_all(&self) -> Result<Vec<GoodsReceivedLineRow>, RepositoryError> {
-        let result = goods_received_line::table.load(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
     pub fn find_one_by_id(
         &self,
         id: &str,
