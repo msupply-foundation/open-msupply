@@ -1,6 +1,7 @@
 use super::StorageConnection;
 
-use crate::{RepositoryError, StockLineFilter};
+use crate::diesel_macros::apply_equal_filter;
+use crate::{EqualFilter, RepositoryError, StockLineFilter};
 
 use crate::{db_diesel::stock_line_row::stock_line, DBType, StockLineRepository};
 
@@ -27,6 +28,7 @@ pub struct StockLineLedgerDiscrepancyRepository<'a> {
 
 pub struct StockLineLedgerDiscrepancyFilter {
     pub stock_line: Option<StockLineFilter>,
+    pub stock_line_id: Option<EqualFilter<String>>,
 }
 
 impl<'a> StockLineLedgerDiscrepancyRepository<'a> {
@@ -41,10 +43,7 @@ impl<'a> StockLineLedgerDiscrepancyRepository<'a> {
         let query = create_filtered_query(filter);
 
         // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<DBType, _>(&query).to_string()
-        // );
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result =
             query.load::<StockLineLedgerDiscrepancy>(self.connection.lock().connection())?;
@@ -58,9 +57,19 @@ fn create_filtered_query(
 ) -> IntoBoxed<'static, stock_line_ledger_discrepancy::table, DBType> {
     let mut query = stock_line_ledger_discrepancy::table.into_boxed();
 
-    let Some(StockLineLedgerDiscrepancyFilter { stock_line }) = filter else {
+    let Some(StockLineLedgerDiscrepancyFilter {
+        stock_line,
+        stock_line_id,
+    }) = filter
+    else {
         return query;
     };
+
+    apply_equal_filter!(
+        query,
+        stock_line_id,
+        stock_line_ledger_discrepancy::stock_line_id
+    );
 
     if let Some(stock_line_filter) = stock_line {
         let stock_line_ids = StockLineRepository::create_filtered_query(Some(stock_line_filter))
