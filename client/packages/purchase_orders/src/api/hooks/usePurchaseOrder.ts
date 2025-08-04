@@ -100,9 +100,9 @@ export const usePurchaseOrder = (id?: string) => {
   return {
     query: { data, isLoading, isError },
     lines: { sortedAndFilteredLines, itemFilter, setItemFilter },
-    create: { create, isCreating, createError},
+    create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
-    masterList: { addFromMasterList, isAdding }
+    masterList: { addFromMasterList, isAdding },
   };
 };
 
@@ -197,31 +197,41 @@ const useAddFromMasterList = () => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const t = useTranslation();
   const { error } = useNotification();
-  
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-add-from-master-list'),
   });
 
-  const mutationState =  useMutation(purchaseOrderApi.addToPurchaseOrderFromMasterList, {
-    onSuccess: () =>  queryClient.invalidateQueries([PURCHASE_ORDER, LIST, storeId]),
-  });
+  const mutationState = useMutation(
+    purchaseOrderApi.addToPurchaseOrderFromMasterList,
+    {
+      onSuccess: () =>
+        queryClient.invalidateQueries([PURCHASE_ORDER, LIST, storeId]),
+    }
+  );
 
-  const addFromMasterList = async (masterListId: string, purchaseOrderId: string) => {
+  const addFromMasterList = async (
+    masterListId: string,
+    purchaseOrderId: string
+  ) => {
     getConfirmation({
       onConfirm: async () => {
         try {
           const result = await mutationState.mutateAsync({
             input: {
               masterListId,
-              purchaseOrderId
+              purchaseOrderId,
             },
             storeId,
           });
-          if (result.addToPurchaseOrderFromMasterList.__typename === 'AddToPurchaseOrderFromMasterListError') {
-            const errorType = result.addToPurchaseOrderFromMasterList.error.__typename;
-            
+          if (
+            result.addToPurchaseOrderFromMasterList.__typename ===
+            'AddToPurchaseOrderFromMasterListError'
+          ) {
+            const errorType =
+              result.addToPurchaseOrderFromMasterList.error.__typename;
+
             switch (errorType) {
               case 'CannotEditPurchaseOrder': {
                 return error(t('label.cannot-edit-purchase-order'))();
@@ -235,8 +245,7 @@ const useAddFromMasterList = () => {
               default:
                 return error(t('label.cannot-add-item-to-purchase-order'))();
             }
-          } 
-          
+          }
         } catch (e) {
           // for non structured errors
           console.error('Mutation error:', e);
