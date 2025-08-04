@@ -1,9 +1,11 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_activity_log_volume_per_pack_changed;
 mod add_contact_table;
 mod add_goods_received_table;
 mod add_item_store_join;
+mod add_more_dates_to_purchase_order;
 mod add_purchase_order_permission_enum_values;
 mod add_purchase_order_report_context;
 mod add_purchase_order_tables;
@@ -14,7 +16,6 @@ mod add_supplier_discount_percentage_to_purchase_order;
 mod delete_unused_number_type;
 mod rename_cold_storage_type_to_location_type;
 mod stock_volume_sync_buffer;
-mod add_activity_log_volume_per_pack_changed;
 
 pub(crate) struct V2_10_00;
 
@@ -43,6 +44,7 @@ impl Migration for V2_10_00 {
             Box::new(add_stock_volume::Migrate),
             Box::new(stock_volume_sync_buffer::Migrate),
             Box::new(add_activity_log_volume_per_pack_changed::Migrate),
+            Box::new(add_more_dates_to_purchase_order::Migrate),
         ]
     }
 }

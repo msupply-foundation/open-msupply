@@ -1837,6 +1837,7 @@
   "messages.prescription-will-be-created": "Prescription will be created when form is saved",
   "messages.properties-download-example": "Download a template CSV",
   "messages.properties-template-download-text": " with the facilities' current properties ",
+  "messages.purchase-order-saved": "Purchase order saved 🥳",
   "messages.record-not-found": "Record not found",
   "messages.recorded-on": "Recorded on {{datetime}}",
   "messages.reduced-to-zero_one": "Reduced 1 line to quantity of 0",
