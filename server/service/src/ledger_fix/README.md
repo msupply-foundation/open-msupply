@@ -42,7 +42,7 @@ This operations should be quick and efficient, using partition sql introduced in
 
 ### Fix Ledger discrepancies
 
-Each stock line will go through a series of fixes based on know 'states' of ledger. After each fix a ledger discrepancy check is performed, if ledger is not yet fixed the next fix is attempted.
+Each stock line will go through a series of fixes based on know invalid 'states' of ledger. After each fix a ledger discrepancy check is performed, if ledger is not yet fixed the next fix is attempted.
 
 ### States and Fixes
 
