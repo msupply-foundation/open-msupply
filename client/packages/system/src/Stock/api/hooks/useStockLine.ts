@@ -40,6 +40,7 @@ const defaultDraftStockLine: DraftStockLine = {
   campaign: null,
   volumePerPack: 0,
   itemVariant: null,
+  totalVolume: 0,
 };
 
 export function useStockLine(id?: string) {
@@ -170,10 +171,10 @@ const useUpdate = (id: string) => {
     costPricePerPack,
     onHold,
     location,
-    itemVariantId,
     vvmStatusId,
     donor,
     campaign,
+    volumePerPack,
   }: Partial<DraftStockLine>) => {
     const result = await stockApi.updateStockLine({
       input: {
@@ -185,10 +186,10 @@ const useUpdate = (id: string) => {
         onHold,
         sellPricePerPack,
         location: setNullableInput('id', location),
-        itemVariantId: setNullableInput('itemVariantId', { itemVariantId }),
         vvmStatusId,
         donorId: setNullableInput('id', donor),
         campaignId: setNullableInput('id', campaign),
+        volumePerPack,
       },
       storeId,
     });

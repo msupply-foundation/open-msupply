@@ -360,7 +360,7 @@ export const StockLineForm = ({
                   autoFocus
                   disabled
                   width={160}
-                  value={draft.totalVolume ?? 0}
+                  value={draft?.volumePerPack * draft?.totalNumberOfPacks}
                 />
               }
             />

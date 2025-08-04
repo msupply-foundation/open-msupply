@@ -179,6 +179,7 @@ export enum ActivityLogNodeType {
   VaccinationUpdated = 'VACCINATION_UPDATED',
   VaccineCourseCreated = 'VACCINE_COURSE_CREATED',
   VaccineCourseUpdated = 'VACCINE_COURSE_UPDATED',
+  VolumePerPackChanged = 'VOLUME_PER_PACK_CHANGED',
   VvmStatusLogUpdated = 'VVM_STATUS_LOG_UPDATED',
 }
 
@@ -10082,10 +10083,10 @@ export type UpdateStockLineInput = {
   donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
