@@ -1618,7 +1618,6 @@
   "messages.confirm-not-fully-supplied_one": "There is {{count}} line in this requisition that has not been fully supplied to the customer. \n\nWould you still like to continue?",
   "messages.confirm-not-fully-supplied_other": "There are {{count}} lines in this requisition that have not been fully supplied to the customer. \n\nWould you still like to continue?",
   "messages.confirm-patient-retrieval": "Are you sure you want to retrieve patient data for {{name}}?",
-  "messages.confirm-purchase-order-status-as": "Confirm status as $t({{status}})?",
   "messages.confirm-reduce-lines-to-zero": "This will reduce the quantity of all selected stock lines to 0",
   "messages.confirm-remove-item": "Are you sure?",
   "messages.confirm-save-generic": "Are you ready to save changes?",

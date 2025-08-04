@@ -47,7 +47,7 @@ export const useStatusChangeButton = () => {
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-purchase-order-status-as', {
+    message: t('messages.confirm-status-as', {
       status: selectedOption?.value
         ? getStatusTranslation(selectedOption?.value)
         : '',
