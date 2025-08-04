@@ -70,7 +70,7 @@ pub(crate) fn adjust_ledger_running_balance(
     new_end_balance: f64,
     stock_line_id: &str,
 ) -> Result<(), LedgerFixError> {
-    let adjustment = (current_end_balance - new_end_balance) * -1.0;
+    let adjustment = new_end_balance - current_end_balance;
     // If adjustment is positive, we can add positive adjustment at the start of the ledger safely (without causing negative balance)
     if adjustment > 0.0 {
         operation_log.push_str(
