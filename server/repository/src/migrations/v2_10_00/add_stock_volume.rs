@@ -16,5 +16,7 @@ impl MigrationFragment for Migrate {
                 ALTER TABLE stocktake_line ADD COLUMN volume_per_pack {DOUBLE} NOT NULL DEFAULT 0.0;
             "#
         )?;
+
+        Ok(())
     }
 }
