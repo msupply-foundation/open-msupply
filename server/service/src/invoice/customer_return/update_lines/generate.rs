@@ -53,6 +53,7 @@ pub fn generate(
                  stock_line_id: _,
                  item_variant_id,
                  vvm_status_id,
+                 volume_per_pack,
              }| InsertStockInLine {
                 id,
                 invoice_id: customer_return_id.clone(),
@@ -65,6 +66,7 @@ pub fn generate(
                 expiry_date,
                 r#type: StockInType::CustomerReturn,
                 vvm_status_id,
+                volume_per_pack,
                 // Default
                 location: None,
                 cost_price_per_pack: 0.0,
@@ -77,6 +79,7 @@ pub fn generate(
                 donor_id: None,
                 campaign_id: None,
                 shipped_number_of_packs: None,
+                shipped_pack_size: None,
             },
         )
         .collect();
@@ -98,6 +101,7 @@ pub fn generate(
                  stock_line_id: _,
                  item_variant_id,
                  vvm_status_id,
+                 volume_per_pack,
              }| UpdateStockInLine {
                 id,
                 batch,
@@ -111,6 +115,7 @@ pub fn generate(
                     value: item_variant_id,
                 }),
                 vvm_status_id,
+                volume_per_pack,
                 // Default
                 location: None,
                 cost_price_per_pack: None,
@@ -120,6 +125,7 @@ pub fn generate(
                 donor_id: None,
                 campaign_id: None,
                 shipped_number_of_packs: None,
+                shipped_pack_size: None,
             },
         )
         .collect();

@@ -54,6 +54,7 @@ pub struct ProgramFilterInput {
     pub is_immunisation: Option<bool>,
     pub exists_for_store_id: Option<EqualFilterStringInput>,
     pub elmis_code: Option<EqualFilterStringInput>,
+    pub item_id: Option<EqualFilterStringInput>,
 }
 impl From<ProgramFilterInput> for ProgramFilter {
     fn from(f: ProgramFilterInput) -> Self {
@@ -64,6 +65,7 @@ impl From<ProgramFilterInput> for ProgramFilter {
             is_immunisation: f.is_immunisation,
             exists_for_store_id: f.exists_for_store_id.map(EqualFilter::from),
             elmis_code: f.elmis_code.map(EqualFilter::from),
+            item_id: f.item_id.map(EqualFilter::from),
         }
     }
 }

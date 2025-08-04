@@ -92,7 +92,7 @@ fn map_error(error: ServiceError) -> Result<InsertRnRFormResponse> {
         | ServiceError::ProgramHasNoMasterList
 
         // TODO: these three either need to be prevented in UI or made into structured errors!
-        | ServiceError::PeriodNotNextInSequence
+        | ServiceError::PeriodMustBeLaterThanLastUsed
         | ServiceError::PeriodNotClosed
         | ServiceError::PreviousRnRFormNotFinalised
 

@@ -165,10 +165,17 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             {...badgeProps}
             sx={{
               alignItems: 'center',
-              flexGrow: 1,
+              '& .MuiBadge-badge':
+                badgeProps?.color === 'default'
+                  ? {
+                      backgroundColor: 'gray.light',
+                      color: 'gray.dark',
+                    }
+                  : undefined,
+
               '& .MuiBadge-badge:not(.MuiBadge-invisible)': drawer.isOpen
                 ? {
-                    transform: 'scale(0.75) translate(75%, -25%)',
+                    transform: 'scale(0.75) translate(100%, 0)',
                   }
                 : {
                     top: 'unset',
@@ -185,11 +192,10 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
                     selected || isSelectedParentItem ? 'bold' : 'normal',
                   color: isSelectedParentItem ? 'primary.main' : undefined,
                 },
-                flexGrow: 0,
               }}
             />
           </Badge>
-
+          <span style={{ flexGrow: 1 }} />
           <ListItemIcon
             sx={{
               minWidth: 20,

@@ -54,6 +54,7 @@ interface TableProps {
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
+  restrictedLocationTypeId?: string | null;
 }
 
 interface QuantityTableProps extends TableProps {
@@ -77,7 +78,6 @@ export const QuantityTableComponent = ({
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
-
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -102,13 +102,51 @@ export const QuantityTableComponent = ({
   }
 
   columnDefinitions.push(
+    {
+      key: 'shippedPackSize',
+      label: 'label.shipped-pack-size',
+      width: 100,
+      Cell: PackSizeEntryCell<DraftInboundLine>,
+      setter: patch => {
+        setPackRoundingMessage?.('');
+        const shouldClearSellPrice =
+          patch.item?.defaultPackSize !== patch.packSize &&
+          patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
+            patch.sellPricePerPack;
+
+        if (shouldClearSellPrice) {
+          updateDraftLine({
+            ...patch,
+            sellPricePerPack: 0,
+          });
+        } else {
+          updateDraftLine(patch);
+        }
+      },
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
+      defaultHideOnMobile: true,
+      align: ColumnAlign.Left,
+    },
+    {
+      key: 'shippedNumberOfPacks',
+      label: 'label.shipped-number-of-packs',
+      Cell: NumberOfPacksCell,
+      cellProps: {
+        decimalLimit: 0,
+      },
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
+      width: 100,
+      align: ColumnAlign.Left,
+      setter: patch => updateDraftLine(patch),
+    },
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
         setPackRoundingMessage?.('');
         updateDraftLine(patch);
       },
-      label: 'label.pack-size',
+      label: 'label.received-pack-size',
+      width: 100,
       defaultHideOnMobile: true,
       align: ColumnAlign.Left,
     }),
@@ -134,19 +172,7 @@ export const QuantityTableComponent = ({
           }
         },
       },
-    ],
-    {
-      key: 'shippedNumberOfPacks',
-      label: 'label.shipped-number-of-packs',
-      Cell: NumberOfPacksCell,
-      cellProps: {
-        decimalLimit: 0,
-      },
-      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
-      width: 100,
-      align: ColumnAlign.Left,
-      setter: patch => updateDraftLine(patch),
-    }
+    ]
   );
 
   columnDefinitions.push({
@@ -197,17 +223,28 @@ export const QuantityTableComponent = ({
     columnDefinitions.push(...getInboundDosesColumns(format));
   }
 
-  columnDefinitions.push({
-    key: 'delete',
-    width: 50,
-    Cell: ({ rowData }) => (
-      <IconButton
-        label="Delete"
-        onClick={() => removeDraftLine(rowData.id)}
-        icon={<DeleteIcon fontSize="small" />}
-      />
-    ),
-  });
+  columnDefinitions.push(
+    {
+      key: 'volumePerPack',
+      label: t('label.volume-per-pack'),
+      Cell: NumberInputCell,
+      cellProps: { decimalLimit: 10 },
+      width: 100,
+      accessor: ({ rowData }) => rowData?.volumePerPack,
+      setter: updateDraftLine,
+    },
+    {
+      key: 'delete',
+      width: 50,
+      Cell: ({ rowData }) => (
+        <IconButton
+          label="Delete"
+          onClick={() => removeDraftLine(rowData.id)}
+          icon={<DeleteIcon fontSize="small" />}
+        />
+      ),
+    }
+  );
 
   const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
     updateDraftLine,
@@ -359,6 +396,7 @@ export const LocationTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled,
+  restrictedLocationTypeId,
 }: TableProps) => {
   const { data: preferences } = usePreference(
     PreferenceKey.AllowTrackingOfStockByDonor,
@@ -372,7 +410,14 @@ export const LocationTableComponent = ({
         accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
-    [getLocationInputColumn(), { setter: updateDraftLine, width: 530 }],
+    [
+      'location',
+      {
+        ...getLocationInputColumn(restrictedLocationTypeId),
+        setter: updateDraftLine,
+        width: 530,
+      },
+    ],
     [
       'note',
       {

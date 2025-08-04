@@ -35,6 +35,8 @@ pub struct InsertInput {
     pub campaign_id: Option<String>,
     pub note: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
+    pub volume_per_pack: Option<f64>,
+    pub shipped_pack_size: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -98,6 +100,8 @@ impl InsertInput {
             campaign_id,
             note,
             shipped_number_of_packs,
+            volume_per_pack,
+            shipped_pack_size,
         } = self;
 
         ServiceInput {
@@ -120,12 +124,15 @@ impl InsertInput {
             vvm_status_id,
             donor_id,
             shipped_number_of_packs,
+            volume_per_pack,
+            shipped_pack_size,
             // Default
             note,
+            campaign_id,
+            // Default
             stock_line_id: None,
             barcode: None,
             stock_on_hold: false,
-            campaign_id,
         }
     }
 }
@@ -244,6 +251,7 @@ mod test {
             "packSize": 0,
             "sellPricePerPack": 0,
             "totalBeforeTax": 0,
+            "volumePerPack": 0,
           }
         })
     }

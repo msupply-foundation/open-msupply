@@ -1,3 +1,4 @@
+pub mod goods_received_row;
 use crate::repository_error::RepositoryError;
 
 pub mod abbreviation;
@@ -130,6 +131,7 @@ pub mod sensor;
 mod sensor_row;
 pub mod stock_line;
 pub mod stock_line_ledger;
+pub mod stock_line_ledger_discrepancy;
 mod stock_line_row;
 pub mod stock_movement;
 pub mod stock_on_hand;

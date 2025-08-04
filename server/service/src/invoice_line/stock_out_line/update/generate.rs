@@ -95,6 +95,8 @@ fn generate_batch_update(
     update_batch.stock_line_row.available_number_of_packs -= reduction;
     if adjust_total_number_of_packs {
         update_batch.stock_line_row.total_number_of_packs -= reduction;
+        update_batch.stock_line_row.total_volume -=
+            update_batch.stock_line_row.volume_per_pack * reduction;
     }
     update_batch.stock_line_row.vvm_status_id = input.vvm_status_id.clone();
 
@@ -135,6 +137,7 @@ fn generate_line(
         donor_link_id,
         campaign_id,
         shipped_number_of_packs,
+        shipped_pack_size,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -153,6 +156,7 @@ fn generate_line(
         location_id,
         item_variant_id,
         vvm_status_id,
+        volume_per_pack,
         ..
     }: StockLineRow,
 ) -> InvoiceLineRow {
@@ -160,7 +164,7 @@ fn generate_line(
     let cost_price_per_pack = invoice_line_cost_price_per_pack;
     let sell_price_per_pack = invoice_line_sell_price_per_pack;
 
-    let mut update_line = InvoiceLineRow {
+    let mut update_line: InvoiceLineRow = InvoiceLineRow {
         id,
         invoice_id,
         item_link_id: item_id,
@@ -186,6 +190,8 @@ fn generate_line(
         donor_link_id,
         campaign_id,
         shipped_number_of_packs,
+        volume_per_pack,
+        shipped_pack_size,
         reason_option_id: None,
         linked_invoice_id: None,
     };
@@ -220,6 +226,7 @@ fn generate_line(
 
     if matches!(input.r#type, Some(StockOutType::OutboundShipment)) {
         update_line.shipped_number_of_packs = Some(update_line.number_of_packs);
+        update_line.shipped_pack_size = Some(update_line.pack_size);
     }
 
     update_line.total_after_tax =

@@ -14,7 +14,7 @@ export const RadioCell = <T extends RecordWithId>({
   groupName = '',
   isDisabled,
 }: CellProps<T> & {
-  selectedId: string | null;
+  selectedId?: string | null;
   onSelected: (id: string | null) => void;
   groupName: string;
 }) => {

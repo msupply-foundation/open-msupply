@@ -9,7 +9,10 @@ use repository::{
     StockLineFilter, StockLineRepository, StockLineSort, StockLineSortField, StockMovementFilter,
     StockMovementRepository, StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
-use util::{constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_now, date_with_offset, uuid::uuid};
+use util::{
+    constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_now, date_with_offset, pos_zero,
+    uuid::uuid,
+};
 
 use crate::{
     requisition_line::chart::{get_stock_evolution_for_item, StockEvolutionOptions},
@@ -42,8 +45,10 @@ pub fn generate_rnr_form_lines(
     )?;
 
     // Get previous form data for initial balances
-    let previous_rnr_form_lines_by_item_id =
-        get_rnr_form_lines_map(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
+    let previous_rnr_form_lines_by_item_id = get_rnr_form_lines_map(
+        &ctx.connection,
+        previous_form.as_ref().map(|f| f.rnr_form_row.id.to_owned()),
+    )?;
 
     // Get monthly consumption for each item from previous forms
     let previous_monthly_consumption = get_previous_monthly_consumption(
@@ -89,10 +94,11 @@ pub fn generate_rnr_form_lines(
                 usage.consumed,
             );
 
-            let previous_monthly_consumption = match previous_monthly_consumption.get(&item_id) {
-                Some(monthly_consumption) => monthly_consumption.clone(),
-                None => vec![],
-            };
+            let previous_monthly_consumption = previous_form
+                .as_ref()
+                .and_then(|_| previous_monthly_consumption.get(&item_id))
+                .cloned()
+                .unwrap_or_default();
 
             let average_monthly_consumption = get_amc(
                 period_length_in_days,
@@ -128,7 +134,7 @@ pub fn generate_rnr_form_lines(
                 requisition_line_id: None,
                 previous_monthly_consumption_values,
                 average_monthly_consumption,
-                initial_balance,
+                initial_balance: pos_zero(initial_balance),
 
                 snapshot_quantity_received: usage.replenished,
                 snapshot_quantity_consumed: usage.consumed,
@@ -140,7 +146,7 @@ pub fn generate_rnr_form_lines(
 
                 stock_out_duration,
                 adjusted_quantity_consumed,
-                final_balance,
+                final_balance: pos_zero(final_balance),
                 maximum_quantity,
                 minimum_quantity,
                 expiry_date: earliest_expiry,
@@ -176,7 +182,6 @@ fn get_rnr_form_lines_map(
     previous_form_id: Option<String>,
 ) -> Result<HashMap<String, RnRFormLineRow>, RepositoryError> {
     let mut form_lines_by_item_id = HashMap::new();
-
     if let Some(previous_form_id) = previous_form_id {
         let rows = RnRFormLineRowRepository::new(connection)
             .find_many_by_rnr_form_id(&previous_form_id)?;
@@ -185,7 +190,6 @@ fn get_rnr_form_lines_map(
             form_lines_by_item_id.insert(row.item_link_id.clone(), row);
         }
     }
-
     Ok(form_lines_by_item_id)
 }
 
