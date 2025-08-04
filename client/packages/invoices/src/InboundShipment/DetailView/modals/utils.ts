@@ -36,6 +36,7 @@ const createDraftInboundLine = ({
     type,
     item,
     itemName: item.name,
+    volumePerPack: 0.0,
     shippedPackSize: defaultPackSize,
     ...seed,
   };

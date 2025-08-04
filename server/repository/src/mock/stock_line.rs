@@ -1,9 +1,10 @@
+use super::mock_vaccine_item_a;
+use crate::{
+    mock::{mock_item_a, mock_store_c},
+    StockLineRow,
+};
 use chrono::NaiveDate;
 use util::inline_init;
-
-use crate::StockLineRow;
-
-use super::mock_vaccine_item_a;
 
 pub fn mock_stock_line_a() -> StockLineRow {
     inline_init(|r: &mut StockLineRow| {
@@ -244,6 +245,21 @@ pub fn mock_stock_line_b_vaccine_item_a() -> StockLineRow {
     })
 }
 
+pub fn stock_line_with_volume() -> StockLineRow {
+    StockLineRow {
+        id: "stock_line_with_volume".to_string(),
+        store_id: mock_store_c().id.clone(),
+        item_link_id: mock_item_a().id,
+        pack_size: 10.0,
+        available_number_of_packs: 20.0,
+        total_number_of_packs: 20.0,
+        batch: Some("batch".to_string()),
+        volume_per_pack: 50.0,
+        total_volume: 1000.0,
+        ..Default::default()
+    }
+}
+
 pub fn mock_vaccine_stock_lines() -> Vec<StockLineRow> {
     let mock_stock_line_vaccine_item_a = mock_stock_line_vaccine_item_a();
     let mock_stock_line_b_vaccine_item_a = mock_stock_line_b_vaccine_item_a();
@@ -267,5 +283,6 @@ pub fn mock_stock_lines() -> Vec<StockLineRow> {
     mock_stock_lines.extend(mock_stock_line_on_hold());
     mock_stock_lines.extend(mock_stock_line_location_is_on_hold());
     mock_stock_lines.extend(mock_vaccine_stock_lines());
+    mock_stock_lines.push(stock_line_with_volume());
     mock_stock_lines
 }

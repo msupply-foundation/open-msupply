@@ -203,9 +203,7 @@ pub fn migrate(
 
         // Run one time migrations only if we're on the last version, if we're in a test case checking an old creating migrations might fail
         if migration_version > database_version {
-            log::info!("Running one time database migration {}", migration_version);
-            // Run migration & version in a transaction
-
+            log::info!("Running one time database migration {migration_version}");
             migration
                 .migrate(connection)
                 .map_err(|source| MigrationError::MigrationError {
@@ -247,9 +245,7 @@ pub fn migrate(
         rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
     } else {
         log::warn!(
-            "Not recreating views, database version is {}, last version in migration vec is {}",
-            final_database_version,
-            last_version_in_migration_vec
+            "Not recreating views, database version is {final_database_version}, last version in migration vec is {last_version_in_migration_vec}"
         );
     }
 
