@@ -13,6 +13,7 @@ export type InboundLineFragment = {
   expiryDate?: string | null;
   numberOfPacks: number;
   shippedNumberOfPacks?: number | null;
+  shippedPackSize?: number | null;
   packSize: number;
   note?: string | null;
   invoiceId: string;
@@ -34,6 +35,11 @@ export type InboundLineFragment = {
     defaultPackSize: number;
     isVaccine: boolean;
     doses: number;
+    restrictedLocationTypeId?: string | null;
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      defaultSellPricePerPack: number;
+    } | null;
   };
   location?: {
     __typename: 'LocationNode';
@@ -117,6 +123,7 @@ export type InboundFragment = {
       expiryDate?: string | null;
       numberOfPacks: number;
       shippedNumberOfPacks?: number | null;
+      shippedPackSize?: number | null;
       packSize: number;
       note?: string | null;
       invoiceId: string;
@@ -142,6 +149,11 @@ export type InboundFragment = {
         defaultPackSize: number;
         isVaccine: boolean;
         doses: number;
+        restrictedLocationTypeId?: string | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
       };
       location?: {
         __typename: 'LocationNode';
@@ -345,6 +357,7 @@ export type InvoiceQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
+            shippedPackSize?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -370,6 +383,11 @@ export type InvoiceQuery = {
               defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
+              restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -506,6 +524,7 @@ export type InboundByNumberQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
+            shippedPackSize?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -531,6 +550,11 @@ export type InboundByNumberQuery = {
               defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
+              restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -1040,6 +1064,7 @@ export const InboundLineFragmentDoc = gql`
     expiryDate
     numberOfPacks
     shippedNumberOfPacks
+    shippedPackSize
     packSize
     note
     type
@@ -1068,6 +1093,10 @@ export const InboundLineFragmentDoc = gql`
       defaultPackSize
       isVaccine
       doses
+      restrictedLocationTypeId
+      itemStoreProperties(storeId: $storeId) {
+        defaultSellPricePerPack
+      }
     }
     location {
       __typename

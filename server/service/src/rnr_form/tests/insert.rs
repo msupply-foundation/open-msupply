@@ -1,21 +1,21 @@
 #[cfg(test)]
 mod insert {
+    use crate::rnr_form::insert::{InsertRnRForm, InsertRnRFormError};
+    use crate::service_provider::ServiceProvider;
     use chrono::Duration;
     use repository::mock::{
         mock_immunisation_program_a, mock_name_b, mock_name_store_b, mock_name_store_c,
-        mock_period, mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_rnr_form_a,
-        mock_rnr_form_b, mock_rnr_form_b_line_a, mock_store_a, mock_store_b, MockData,
+        mock_period, mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_period_2_d,
+        mock_rnr_form_a, mock_rnr_form_a_line_a, mock_rnr_form_b, mock_rnr_form_b_line_a,
+        mock_store_a, mock_store_b, MockData,
     };
     use repository::mock::{mock_program_b, MockDataInserts};
     use repository::test_db::setup_all_with_data;
     use repository::{
-        NameStoreJoinRow, PeriodRow, RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository,
-        RnRFormStatus,
+        NameStoreJoinRow, PeriodRow, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRow,
+        RnRFormRowRepository, RnRFormStatus,
     };
     use util::{date_now, date_now_with_offset};
-
-    use crate::rnr_form::insert::{InsertRnRForm, InsertRnRFormError};
-    use crate::service_provider::ServiceProvider;
 
     #[actix_rt::test]
     async fn insert_rnr_form_errors() {
@@ -195,7 +195,7 @@ mod insert {
                     supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
                     // RNR form A already exists with this period
-                    period_id: mock_period_2_a().id,
+                    period_id: mock_period_2_b().id,
                 }
             ),
             Err(InsertRnRFormError::RnRFormAlreadyExistsForPeriod)
@@ -211,10 +211,10 @@ mod insert {
                     supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
                     // Previous form was from period A, skipping period B
-                    period_id: mock_period_2_c().id,
+                    period_id: mock_period_2_a().id,
                 }
             ),
-            Err(InsertRnRFormError::PeriodNotNextInSequence)
+            Err(InsertRnRFormError::PeriodMustBeLaterThanLastUsed)
         );
 
         // PreviousRnRFormNotFinalised
@@ -227,7 +227,7 @@ mod insert {
                     supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
                     // RNR form for period A still in draft
-                    period_id: mock_period_2_b().id,
+                    period_id: mock_period_2_c().id,
                 }
             ),
             Err(InsertRnRFormError::PreviousRnRFormNotFinalised)
@@ -276,7 +276,7 @@ mod insert {
                     id: "new_rnr_id".to_string(),
                     supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
-                    period_id: mock_period_2_c().id,
+                    period_id: mock_period_2_d().id,
                 },
             )
             .unwrap();
@@ -301,7 +301,10 @@ mod insert {
             mock_rnr_form_b_line_a().final_balance
         );
         // AMC considers previous form
-        assert_eq!(form_lines[0].average_monthly_consumption, 4.026696329254727); // 5 (Form A) + 7 (Form B) + 0 (this period) / 3 ... decimals due to more/less than 30 days in period
+        assert_eq!(
+            form_lines[0].average_monthly_consumption,
+            3.9822024471635147
+        ); // 5 (Form A) + 7 (Form B) + 0 (this period) / 3 ... decimals due to more/less than 30 days in period
 
         // Can create same supplier/program/period in a different store
         // Also - there are no previous forms in store B - checking can start from period C
@@ -320,5 +323,74 @@ mod insert {
                 },
             )
             .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn insert_rnr_skip_period() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_rnr_skip_period",
+            MockDataInserts::none()
+                .stores()
+                .name_store_joins()
+                .items()
+                .periods()
+                .program_requisition_settings()
+                .full_master_list(),
+            MockData {
+                // make supplier store B visible in store A
+                name_store_joins: vec![NameStoreJoinRow {
+                    id: String::from("name_store_a_join_b"),
+                    name_link_id: String::from("name_store_b"),
+                    store_id: String::from("store_a"),
+                    name_is_customer: false,
+                    name_is_supplier: true,
+                }],
+                rnr_forms: vec![RnRFormRow {
+                    status: RnRFormStatus::Finalised,
+                    ..mock_rnr_form_a()
+                }],
+                rnr_form_lines: vec![mock_rnr_form_a_line_a()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+
+        // Can create
+        let _result = service_provider
+            .rnr_form_service
+            .insert_rnr_form(
+                &context,
+                &mock_store_a().id,
+                InsertRnRForm {
+                    id: "new_rnr_id".to_string(),
+                    supplier_id: mock_name_store_b().id,
+                    program_id: mock_program_b().id,
+                    period_id: mock_period_2_d().id,
+                },
+            )
+            .unwrap();
+
+        let mut form_lines = RnRFormLineRowRepository::new(&context.connection)
+            .find_many_by_rnr_form_id("new_rnr_id")
+            .unwrap();
+        assert_eq!(form_lines.len(), 1);
+
+        let created_line = form_lines.pop().unwrap();
+        let blank_line = RnRFormLineRow {
+            id: created_line.id.to_owned(),
+            rnr_form_id: created_line.rnr_form_id.to_owned(),
+            item_link_id: created_line.item_link_id.to_owned(),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            created_line, blank_line,
+            "all the values should be defaults, i.e. 0, empty strings or none"
+        );
     }
 }

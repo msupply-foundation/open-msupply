@@ -11,11 +11,7 @@ import {
   RegexUtils,
   ItemFilterInput,
 } from '@openmsupply-client/common';
-import {
-  ItemStockOnHandFragment,
-  useItemById,
-  useItemStockOnHandInfinite,
-} from '../../api';
+import { ItemStockOnHandFragment, useItemStockOnHandInfinite } from '../../api';
 import { getOptionLabel, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
@@ -62,11 +58,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       rowsPerPage: ROWS_PER_PAGE,
       filter: fullFilter,
     });
-  // changed from useStockLines even though that is more appropriate
-  // when viewing a stocktake, you may have a stocktake line which has no stock lines.
-  // this call is to fetch the current item; if you have a large number of items
-  // then the current item may not be in the available list of items due to pagination batching
-  const { data: currentItem } = useItemById(currentItemId ?? undefined);
+
+  const currentItem = data?.pages
+    .flatMap(page => page.data.nodes)
+    .find(item => item.id === currentItemId);
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
 
@@ -95,10 +90,21 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     if (openOnFocus) {
       setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
     }
+
+    // Force focus after component mounts (this can conflict with openOnFocus)
+    if (autoFocus) {
+      setTimeout(() => {
+        const input = document.querySelector<HTMLInputElement>(
+          'input[id="stock-item-search-input"]'
+        );
+        input?.focus();
+      }, 50);
+    }
   }, []);
 
   return (
     <Autocomplete
+      id="stock-item-search-input"
       pages={data?.pages ?? []}
       pageNumber={pageNumber}
       rowsPerPage={ROWS_PER_PAGE}

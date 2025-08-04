@@ -41,7 +41,13 @@ export type PurchaseOrderFragment = {
   status: Types.PurchaseOrderNodeStatus;
   supplierAgent?: string | null;
   supplierDiscountAmount: number;
+  supplierDiscountPercentage?: number | null;
   targetMonths?: number | null;
+  confirmedDatetime?: string | null;
+  contractSignedDate?: string | null;
+  advancePaidDate?: string | null;
+  receivedAtPortDate?: string | null;
+  requestedDeliveryDate?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'PurchaseOrderLineConnector';
@@ -50,6 +56,7 @@ export type PurchaseOrderFragment = {
       __typename: 'PurchaseOrderLineNode';
       id: string;
       expectedDeliveryDate?: string | null;
+      purchaseOrderId: string;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
@@ -71,6 +78,7 @@ export type PurchaseOrderLineFragment = {
   __typename: 'PurchaseOrderLineNode';
   id: string;
   expectedDeliveryDate?: string | null;
+  purchaseOrderId: string;
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
@@ -146,7 +154,13 @@ export type PurchaseOrderByIdQuery = {
         status: Types.PurchaseOrderNodeStatus;
         supplierAgent?: string | null;
         supplierDiscountAmount: number;
+        supplierDiscountPercentage?: number | null;
         targetMonths?: number | null;
+        confirmedDatetime?: string | null;
+        contractSignedDate?: string | null;
+        advancePaidDate?: string | null;
+        receivedAtPortDate?: string | null;
+        requestedDeliveryDate?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'PurchaseOrderLineConnector';
@@ -155,6 +169,7 @@ export type PurchaseOrderByIdQuery = {
             __typename: 'PurchaseOrderLineNode';
             id: string;
             expectedDeliveryDate?: string | null;
+            purchaseOrderId: string;
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
@@ -184,6 +199,103 @@ export type InsertPurchaseOrderMutation = {
   insertPurchaseOrder: { __typename: 'IdResponse'; id: string };
 };
 
+export type UpdatePurchaseOrderMutationVariables = Types.Exact<{
+  input: Types.UpdatePurchaseOrderInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdatePurchaseOrderMutation = {
+  __typename: 'Mutations';
+  updatePurchaseOrder: { __typename: 'IdResponse'; id: string };
+};
+
+export type PurchaseOrderLinesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.PurchaseOrderLineSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.PurchaseOrderLineFilterInput>;
+}>;
+
+export type PurchaseOrderLinesQuery = {
+  __typename: 'Queries';
+  purchaseOrderLines: {
+    __typename: 'PurchaseOrderLineConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PurchaseOrderLineNode';
+      id: string;
+      expectedDeliveryDate?: string | null;
+      purchaseOrderId: string;
+      requestedPackSize: number;
+      requestedDeliveryDate?: string | null;
+      requestedNumberOfUnits: number;
+      authorisedNumberOfUnits?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        code: string;
+        name: string;
+        unitName?: string | null;
+      };
+    }>;
+  };
+};
+
+export type PurchaseOrderLineQueryVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PurchaseOrderLineQuery = {
+  __typename: 'Queries';
+  purchaseOrderLines: {
+    __typename: 'PurchaseOrderLineConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PurchaseOrderLineNode';
+      id: string;
+      expectedDeliveryDate?: string | null;
+      purchaseOrderId: string;
+      requestedPackSize: number;
+      requestedDeliveryDate?: string | null;
+      requestedNumberOfUnits: number;
+      authorisedNumberOfUnits?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        code: string;
+        name: string;
+        unitName?: string | null;
+      };
+    }>;
+  };
+};
+
+export type PurchaseOrderLinesCountQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.PurchaseOrderLineFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PurchaseOrderLinesCountQuery = {
+  __typename: 'Queries';
+  purchaseOrderLines: {
+    __typename: 'PurchaseOrderLineConnector';
+    totalCount: number;
+  };
+};
+
+export type InsertPurchaseOrderLineMutationVariables = Types.Exact<{
+  input: Types.InsertPurchaseOrderLineInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InsertPurchaseOrderLineMutation = {
+  __typename: 'Mutations';
+  insertPurchaseOrderLine: { __typename: 'IdResponse'; id: string };
+};
+
 export const PurchaseOrderRowFragmentDoc = gql`
   fragment PurchaseOrderRow on PurchaseOrderNode {
     id
@@ -209,6 +321,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     __typename
     id
     expectedDeliveryDate
+    purchaseOrderId
     item {
       id
       code
@@ -265,7 +378,13 @@ export const PurchaseOrderFragmentDoc = gql`
     }
     supplierAgent
     supplierDiscountAmount
+    supplierDiscountPercentage
     targetMonths
+    confirmedDatetime
+    contractSignedDate
+    advancePaidDate
+    receivedAtPortDate
+    requestedDeliveryDate
   }
   ${PurchaseOrderLineFragmentDoc}
 `;
@@ -316,6 +435,85 @@ export const InsertPurchaseOrderDocument = gql`
     $storeId: String!
   ) {
     insertPurchaseOrder(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
+export const UpdatePurchaseOrderDocument = gql`
+  mutation updatePurchaseOrder(
+    $input: UpdatePurchaseOrderInput!
+    $storeId: String!
+  ) {
+    updatePurchaseOrder(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
+export const PurchaseOrderLinesDocument = gql`
+  query purchaseOrderLines(
+    $storeId: String!
+    $first: Int
+    $offset: Int
+    $key: PurchaseOrderLineSortFieldInput!
+    $desc: Boolean
+    $filter: PurchaseOrderLineFilterInput
+  ) {
+    purchaseOrderLines(
+      storeId: $storeId
+      filter: $filter
+      page: { first: $first, offset: $offset }
+      sort: { key: $key, desc: $desc }
+    ) {
+      ... on PurchaseOrderLineConnector {
+        __typename
+        nodes {
+          __typename
+          ...PurchaseOrderLine
+        }
+        totalCount
+      }
+    }
+  }
+  ${PurchaseOrderLineFragmentDoc}
+`;
+export const PurchaseOrderLineDocument = gql`
+  query purchaseOrderLine($id: String!, $storeId: String!) {
+    purchaseOrderLines(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+      ... on PurchaseOrderLineConnector {
+        __typename
+        nodes {
+          __typename
+          ...PurchaseOrderLine
+        }
+        totalCount
+      }
+    }
+  }
+  ${PurchaseOrderLineFragmentDoc}
+`;
+export const PurchaseOrderLinesCountDocument = gql`
+  query purchaseOrderLinesCount(
+    $filter: PurchaseOrderLineFilterInput
+    $storeId: String!
+  ) {
+    purchaseOrderLines(storeId: $storeId, filter: $filter) {
+      ... on PurchaseOrderLineConnector {
+        __typename
+        totalCount
+      }
+    }
+  }
+`;
+export const InsertPurchaseOrderLineDocument = gql`
+  mutation insertPurchaseOrderLine(
+    $input: InsertPurchaseOrderLineInput!
+    $storeId: String!
+  ) {
+    insertPurchaseOrderLine(input: $input, storeId: $storeId) {
       ... on IdResponse {
         id
       }
@@ -386,6 +584,86 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertPurchaseOrder',
+        'mutation',
+        variables
+      );
+    },
+    updatePurchaseOrder(
+      variables: UpdatePurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdatePurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePurchaseOrderMutation>(
+            UpdatePurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updatePurchaseOrder',
+        'mutation',
+        variables
+      );
+    },
+    purchaseOrderLines(
+      variables: PurchaseOrderLinesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<PurchaseOrderLinesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PurchaseOrderLinesQuery>(
+            PurchaseOrderLinesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'purchaseOrderLines',
+        'query',
+        variables
+      );
+    },
+    purchaseOrderLine(
+      variables: PurchaseOrderLineQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<PurchaseOrderLineQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PurchaseOrderLineQuery>(
+            PurchaseOrderLineDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'purchaseOrderLine',
+        'query',
+        variables
+      );
+    },
+    purchaseOrderLinesCount(
+      variables: PurchaseOrderLinesCountQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<PurchaseOrderLinesCountQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PurchaseOrderLinesCountQuery>(
+            PurchaseOrderLinesCountDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'purchaseOrderLinesCount',
+        'query',
+        variables
+      );
+    },
+    insertPurchaseOrderLine(
+      variables: InsertPurchaseOrderLineMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertPurchaseOrderLineMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertPurchaseOrderLineMutation>(
+            InsertPurchaseOrderLineDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertPurchaseOrderLine',
         'mutation',
         variables
       );
