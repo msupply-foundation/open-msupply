@@ -76,6 +76,7 @@ impl<'a> VVMStatusRowRepository<'a> {
     pub fn find_all_active(&self) -> Result<Vec<VVMStatusRow>, RepositoryError> {
         let result = vvm_status::table
             .filter(vvm_status::is_active.eq(true))
+            .order(vvm_status::level.asc())
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
