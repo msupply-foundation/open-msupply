@@ -22,6 +22,7 @@ pub mod apis;
 pub mod app_data;
 pub mod boajs;
 pub mod campaign;
+pub mod ledger_fix;
 
 pub mod asset;
 pub mod auth;
