@@ -98,7 +98,6 @@ const DetailViewInner = () => {
     }
 
     const { itemId, expiryDate, batch } = openWith;
-    openWith;
     onOpen({
       id: itemId ?? '',
       batch,
