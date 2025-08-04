@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_activity_log_volume_per_pack_changed;
 mod add_contact_table;
+mod add_goods_received_line_table;
 mod add_goods_received_table;
 mod add_item_store_join;
 mod add_more_dates_to_purchase_order;
@@ -45,6 +46,7 @@ impl Migration for V2_10_00 {
             Box::new(stock_volume_sync_buffer::Migrate),
             Box::new(add_activity_log_volume_per_pack_changed::Migrate),
             Box::new(add_more_dates_to_purchase_order::Migrate),
+            Box::new(add_goods_received_line_table::Migrate),
         ]
     }
 }
