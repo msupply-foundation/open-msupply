@@ -223,6 +223,8 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(serialize_with = "date_option_to_isostring")]
     pub received_at_port_date: Option<NaiveDate>,
     #[serde(default)]
+    pub is_authorised: bool,
+    #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<PurchaseOrderOmsFields>,
 }
@@ -288,6 +290,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             curr_rate,
             order_total_before_discount,
             order_total_after_discount,
+            is_authorised,
         } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
 
         let created_datetime = match oms_fields.clone() {
@@ -330,7 +333,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             purchase_order_number,
             store_id,
             supplier_name_link_id: name_id,
-            status: from_legacy_status(&status),
+            status: from_legacy_status(&status, is_authorised),
             created_datetime,
             confirmed_datetime,
             target_months,
@@ -468,6 +471,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             order_total_before_discount,
             order_total_after_discount,
             donor_id,
+            is_authorised: check_is_authorised(&status),
             oms_fields: Some(oms_fields),
         };
 
@@ -479,13 +483,22 @@ impl SyncTranslation for PurchaseOrderTranslation {
     }
 }
 
-fn from_legacy_status(status: &LegacyPurchaseOrderStatus) -> PurchaseOrderStatus {
+fn from_legacy_status(
+    status: &LegacyPurchaseOrderStatus,
+    is_authorised: bool,
+) -> PurchaseOrderStatus {
     let oms_status = match status {
         LegacyPurchaseOrderStatus::Nw => PurchaseOrderStatus::New,
         LegacyPurchaseOrderStatus::Sg => PurchaseOrderStatus::New,
-        LegacyPurchaseOrderStatus::Cn => PurchaseOrderStatus::Confirmed,
-        LegacyPurchaseOrderStatus::Fn => PurchaseOrderStatus::Finalised,
-        LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New, // Default to New for
+        LegacyPurchaseOrderStatus::Cn => {
+            if is_authorised {
+                PurchaseOrderStatus::Authorised
+            } else {
+                PurchaseOrderStatus::Confirmed
+            }
+        }
+        LegacyPurchaseOrderStatus::Fn => PurchaseOrderStatus::Finalised, // authorised might or might not be true in this case...
+        LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New,   // Default to New for
     };
     oms_status
 }
@@ -498,6 +511,13 @@ fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
         PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Fn,
     };
     legacy_status
+}
+
+fn check_is_authorised(status: &PurchaseOrderStatus) -> bool {
+    matches!(
+        status,
+        PurchaseOrderStatus::Authorised | PurchaseOrderStatus::Finalised // Assuming Finalised is always authorised, but might be skipped in some cases
+    )
 }
 
 #[cfg(test)]
