@@ -107,10 +107,9 @@ fn generate_stock_in_out_or_update(
     let sell_price_per_pack = row
         .sell_price_per_pack
         .unwrap_or(stock_line_row.sell_price_per_pack);
-    let vvm_status_id = row
-        .vvm_status_id
-        .clone()
-        .or(stock_line_row.vvm_status_id.clone());
+
+    let previous_vvm_status_id = stock_line_row.vvm_status_id.clone();
+    let vvm_status_id = row.vvm_status_id.clone().or(previous_vvm_status_id.clone());
 
     // If item_variant_id is null on the stocktake_line, we need to set the stock_line item_variant_id to null too.
     // Without this, we'd wouldn't be able to clear it...
@@ -134,15 +133,20 @@ fn generate_stock_in_out_or_update(
         .to_owned();
 
         // if vvm status was set, need to generate a log here - stock in and stock out do this in other cases..
-        let vvm_status_log = vvm_status_id.map(|status_id| VVMStatusLogRow {
-            id: uuid(),
-            status_id,
-            stock_line_id: updated_stock_line.id.clone(),
-            created_datetime: Utc::now().naive_utc(),
-            created_by: ctx.user_id.clone(),
-            store_id: store_id.to_string(),
-            comment: Some(format!("Updated from Stocktake {}", stocktake_number)),
-            invoice_line_id: None,
+        let vvm_status_log = vvm_status_id.and_then(|status_id| {
+            if Some(status_id.clone()) == previous_vvm_status_id {
+                return None; // No change in VVM status, no log needed
+            }
+            Some(VVMStatusLogRow {
+                id: uuid(),
+                status_id,
+                stock_line_id: updated_stock_line.id.clone(),
+                created_datetime: Utc::now().naive_utc(),
+                created_by: ctx.user_id.clone(),
+                store_id: store_id.to_string(),
+                comment: Some(format!("Updated from Stocktake {}", stocktake_number)),
+                invoice_line_id: None,
+            })
         });
 
         return Ok(StockLineJob {
