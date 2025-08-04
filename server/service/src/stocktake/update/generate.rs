@@ -1,6 +1,7 @@
 use chrono::Utc;
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
     ActivityLogType, CurrencyFilter, CurrencyRepository, DatetimeFilter, EqualFilter, InvoiceRow,
     InvoiceStatus, InvoiceType, LocationMovementRow, NameRowRepository, NumberRowType,
     RepositoryError, StockLineRow, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
@@ -41,6 +42,7 @@ pub struct StocktakeGenerateJob {
 
     pub stocktake_lines_to_trim: Option<Vec<StocktakeLineRow>>,
     pub location_movements: Option<Vec<LocationMovementRow>>,
+    pub vvm_status_logs: Vec<VVMStatusLogRow>,
 }
 
 pub enum StockChange {
@@ -55,6 +57,7 @@ struct StockLineJob {
     stocktake_line: Option<StocktakeLineRow>,
     location_movement: Option<LocationMovementRow>,
     update_inventory_adjustment_reason: Option<UpdateInventoryAdjustmentReason>,
+    vvm_status_log: Option<VVMStatusLogRow>,
 }
 
 fn generate_update_inventory_adjustment_reason(
@@ -75,6 +78,7 @@ fn generate_stock_in_out_or_update(
     inventory_reduction_id: &str,
     stocktake_line: &StocktakeLine,
     stock_line: &StockLineRow,
+    stocktake_number: &i64,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let row = stocktake_line.line.to_owned();
 
@@ -86,6 +90,7 @@ fn generate_stock_in_out_or_update(
                 stocktake_line: None,
                 location_movement: None,
                 update_inventory_adjustment_reason: None,
+                vvm_status_log: None,
             });
         }
     };
@@ -102,6 +107,10 @@ fn generate_stock_in_out_or_update(
     let sell_price_per_pack = row
         .sell_price_per_pack
         .unwrap_or(stock_line_row.sell_price_per_pack);
+    let vvm_status_id = row
+        .vvm_status_id
+        .clone()
+        .or(stock_line_row.vvm_status_id.clone());
 
     // If item_variant_id is null on the stocktake_line, we need to set the stock_line item_variant_id to null too.
     // Without this, we'd wouldn't be able to clear it...
@@ -119,15 +128,29 @@ fn generate_stock_in_out_or_update(
             sell_price_per_pack,
             expiry_date,
             item_variant_id,
+            vvm_status_id: vvm_status_id.clone(),
             ..stock_line_row
         }
         .to_owned();
+
+        // if vvm status was set, need to generate a log here - stock in and stock out do this in other cases..
+        let vvm_status_log = vvm_status_id.map(|status_id| VVMStatusLogRow {
+            id: uuid(),
+            status_id,
+            stock_line_id: updated_stock_line.id.clone(),
+            created_datetime: Utc::now().naive_utc(),
+            created_by: ctx.user_id.clone(),
+            store_id: store_id.to_string(),
+            comment: Some(format!("Updated from Stocktake {}", stocktake_number)),
+            invoice_line_id: None,
+        });
 
         return Ok(StockLineJob {
             stock_in_out_or_update: Some(StockChange::StockUpdate(updated_stock_line)),
             stocktake_line: None,
             location_movement: None,
             update_inventory_adjustment_reason: None,
+            vvm_status_log,
         });
     };
 
@@ -151,6 +174,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            vvm_status_id,
             // From existing stock line
             stock_line_id: Some(stock_line_row.id),
             item_id: stock_line_row.item_link_id,
@@ -159,7 +183,6 @@ fn generate_stock_in_out_or_update(
             item_variant_id: stock_line_row.item_variant_id,
             barcode: stock_line_row.barcode_id,
             donor_id: stock_line_row.donor_link_id,
-            vvm_status_id: stock_line_row.vvm_status_id,
             campaign_id: stock_line_row.campaign_id,
             // Default
             total_before_tax: None,
@@ -182,7 +205,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack: Some(cost_price_per_pack),
             sell_price_per_pack: Some(sell_price_per_pack),
             campaign_id: stock_line_row.campaign_id,
-            vvm_status_id: stock_line_row.vvm_status_id, // TODO: #8365
+            vvm_status_id,
             total_before_tax: None,
             tax_percentage: None,
             prescribed_quantity: None,
@@ -201,6 +224,7 @@ fn generate_stock_in_out_or_update(
         location_movement,
         stocktake_line: None,
         update_inventory_adjustment_reason,
+        vvm_status_log: None, // Created by stock in/out lines
     })
 }
 
@@ -298,6 +322,7 @@ fn generate_new_stock_line(
             location_movement: None,
             stocktake_line: None,
             update_inventory_adjustment_reason: None,
+            vvm_status_log: None,
         });
     }
 
@@ -334,12 +359,12 @@ fn generate_new_stock_line(
         note: row.note,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
         donor_id: stocktake_line.line.donor_link_id.clone(),
+        vvm_status_id: row.vvm_status_id,
         // Default
         stock_on_hold: false,
         barcode: None,
         total_before_tax: None,
         tax_percentage: None,
-        vvm_status_id: None,
         campaign_id: None,
         shipped_number_of_packs: None,
         shipped_pack_size: None,
@@ -361,6 +386,7 @@ fn generate_new_stock_line(
         location_movement,
         stocktake_line: Some(updated_stocktake_line),
         update_inventory_adjustment_reason,
+        vvm_status_log: None, // Created by stock in line
     })
 }
 
@@ -496,6 +522,7 @@ pub fn generate(
     let mut inventory_adjustment_reason_updates: Vec<UpdateInventoryAdjustmentReason> = Vec::new();
     let mut stocktake_line_updates: Vec<StocktakeLineRow> = Vec::new();
     let mut location_movements: Vec<LocationMovementRow> = Vec::new();
+    let mut vvm_status_logs: Vec<VVMStatusLogRow> = Vec::new();
 
     for stocktake_line in stocktake_lines {
         let StockLineJob {
@@ -503,6 +530,7 @@ pub fn generate(
             location_movement,
             stock_in_out_or_update,
             update_inventory_adjustment_reason,
+            vvm_status_log,
         } = if let Some(ref stock_line) = stocktake_line.stock_line {
             // adjust existing stock line
             generate_stock_in_out_or_update(
@@ -512,6 +540,7 @@ pub fn generate(
                 &inventory_reduction_id,
                 &stocktake_line,
                 stock_line,
+                &stocktake.stocktake_number,
             )?
         } else {
             // create new stock line
@@ -539,6 +568,9 @@ pub fn generate(
         }
         if let Some(location_movement) = location_movement {
             location_movements.push(location_movement);
+        }
+        if let Some(vvm_status_log) = vvm_status_log {
+            vvm_status_logs.push(vvm_status_log);
         }
     }
 
@@ -633,5 +665,6 @@ pub fn generate(
         stock_lines,
         location_movements: Some(location_movements),
         stocktake_lines_to_trim: unallocated_lines_to_trim(connection, &stocktake, &ctx.store_id)?,
+        vvm_status_logs,
     })
 }
