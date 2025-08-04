@@ -72,6 +72,7 @@ const stocktakeParser = {
       itemVariantId: setNullableInput('itemVariantId', line),
       donorId: setNullableInput('donorId', line),
       reasonOptionId: line.reasonOption?.id,
+      vvmStatusId: line.vvmStatus?.id,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
       location: setNullableInput('id', line.location),
@@ -91,6 +92,7 @@ const stocktakeParser = {
       itemVariantId: line.itemVariantId,
       donorId: line.donorId,
       reasonOptionId: line.reasonOption?.id,
+      vvmStatusId: line.vvmStatus?.id,
     }),
   },
 };
