@@ -7,7 +7,7 @@ pub(crate) struct V2_09_02;
 
 impl Migration for V2_09_02 {
     fn version(&self) -> Version {
-        Version::from_str("2.9.1")
+        Version::from_str("2.9.2")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -26,9 +26,10 @@ mod test {
     async fn migration_2_09_02() {
         use crate::migrations::*;
         use crate::test_db::*;
+        use v2_09_01::V2_09_01;
         use v2_09_02::V2_09_02;
 
-        let previous_version = V2_09_02.version();
+        let previous_version = V2_09_01.version();
         let version = V2_09_02.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
