@@ -44,7 +44,15 @@ export const useDraftInboundLines = (
         })
       );
       if (drafts.length === 0)
-        drafts.push(CreateDraft.stockInLine({ item, invoiceId: id }));
+        drafts.push(
+          CreateDraft.stockInLine({
+            item,
+            invoiceId: id,
+            // From scanned barcode:
+            batch: scannedBatchData?.batch,
+            expiryDate: scannedBatchData?.expiryDate,
+          })
+        );
       setDraftLines(drafts);
     } else {
       setDraftLines([]);
