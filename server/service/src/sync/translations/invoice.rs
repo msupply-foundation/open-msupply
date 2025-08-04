@@ -949,7 +949,7 @@ fn check_owned_invoice_update(
         .find_one_by_id(&invoice_upsert.store_ID)?
         .context("Store not found")?;
 
-    if (store.site_id != site_id) {
+    if store.site_id != site_id {
         return Ok(());
     }
 
