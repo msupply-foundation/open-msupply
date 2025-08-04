@@ -64,6 +64,7 @@ import {
   FORM_LABEL_COLUMN_WIDTH,
 } from './styleConstants';
 import { FormActionStructure } from '../useFormActions';
+import { PreviousData } from '../usePreviousEncounter';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -101,6 +102,10 @@ interface JsonFormsComponentProps {
   };
 }
 
+export interface PreviousDocument {
+  getPrevious?: (path: string) => Promise<PreviousData | undefined>;
+}
+
 // Prevents Form window being loaded with the same scroll position as its parent
 const ScrollFix = () => {
   useEffect(() => {
@@ -119,6 +124,10 @@ export type JsonFormsConfig = {
     id: string;
     name: string;
   };
+  /** Previous event document of the same type. Currently only implemented for
+   * Encounters (via `usePreviousEncounter`)
+   */
+  previous?: PreviousDocument;
   /**
    * The initial data of the form before doing any modifications.
    */
@@ -283,12 +292,12 @@ export const JsonForm: FC<
         '& .input-with-label-row': {
           alignItems: 'flex-start',
           maxWidth: FORM_COLUMN_MAX_WIDTH,
-          whiteSpace: 'nowrap',
+          // whiteSpace: 'nowrap',
         },
         '& h1, h2, h3, h4, h5, h6': {
           width: FORM_LABEL_COLUMN_WIDTH,
           textAlign: 'right',
-          whiteSpace: 'nowrap',
+          // whiteSpace: 'nowrap',
         },
         '&:empty': {
           display: 'none',

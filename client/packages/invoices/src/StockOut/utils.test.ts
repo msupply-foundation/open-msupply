@@ -1,11 +1,12 @@
 import { FnUtils } from '@common/utils';
-import { DraftStockOutLineFragment, AllocateInType } from '.';
+import { DraftStockOutLineFragment, AllocateInType, AllocateInOption } from '.';
 import {
   canAutoAllocate,
   getAllocatedQuantity,
   getDoseQuantity,
   getManualAllocationAlerts,
   issue,
+  unitsToQuantity,
 } from './utils';
 
 describe('getDoseQuantity', () => {
@@ -297,6 +298,37 @@ describe('getManualAllocationAlerts', () => {
 
     expect(alerts).toHaveLength(1);
     expect(alerts[0]?.message).toMatch('partial-pack-warning');
+  });
+});
+
+describe('unitsToQuantity', () => {
+  it('converts units to doses (dosesPerUnit=2)', () => {
+    const result = unitsToQuantity({ type: AllocateInType.Doses }, 5, 2);
+    expect(result).toBe(10);
+  });
+
+  it('converts units to doses (dosesPerUnit=0, treat as 1)', () => {
+    const result = unitsToQuantity({ type: AllocateInType.Doses }, 5, 0);
+    expect(result).toBe(5);
+  });
+
+  it('converts units to units', () => {
+    const result = unitsToQuantity({ type: AllocateInType.Units }, 7, 3);
+    expect(result).toBe(7);
+  });
+
+  it('converts units to packs', () => {
+    const result = unitsToQuantity(
+      { type: AllocateInType.Packs, packSize: 10 },
+      20,
+      3
+    );
+    expect(result).toBe(2);
+  });
+
+  it('throws for unknown allocation type', () => {
+    const badAllocateIn = { type: 'Unknown' } as unknown as AllocateInOption;
+    expect(() => unitsToQuantity(badAllocateIn, 1, 1)).toThrow();
   });
 });
 

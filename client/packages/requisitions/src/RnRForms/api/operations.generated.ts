@@ -17,6 +17,13 @@ export type RnRFormFragment = {
   status: Types.RnRFormNodeStatus;
   theirReference?: string | null;
   comment?: string | null;
+  period: {
+    __typename: 'PeriodNode';
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  };
 };
 
 export type RnRFormLineFragment = {
@@ -105,6 +112,13 @@ export type RnrFormsQuery = {
       status: Types.RnRFormNodeStatus;
       theirReference?: string | null;
       comment?: string | null;
+      period: {
+        __typename: 'PeriodNode';
+        id: string;
+        name: string;
+        startDate: string;
+        endDate: string;
+      };
     }>;
   };
 };
@@ -197,6 +211,13 @@ export type RAndRFormDetailQuery = {
             venCategory: Types.VenCategoryType;
           };
         }>;
+        period: {
+          __typename: 'PeriodNode';
+          id: string;
+          name: string;
+          startDate: string;
+          endDate: string;
+        };
       };
 };
 
@@ -221,6 +242,13 @@ export type CreateRnRFormMutation = {
     status: Types.RnRFormNodeStatus;
     theirReference?: string | null;
     comment?: string | null;
+    period: {
+      __typename: 'PeriodNode';
+      id: string;
+      name: string;
+      startDate: string;
+      endDate: string;
+    };
   };
 };
 
@@ -245,6 +273,13 @@ export type UpdateRnRFormMutation = {
     status: Types.RnRFormNodeStatus;
     theirReference?: string | null;
     comment?: string | null;
+    period: {
+      __typename: 'PeriodNode';
+      id: string;
+      name: string;
+      startDate: string;
+      endDate: string;
+    };
   };
 };
 
@@ -269,6 +304,13 @@ export type FinaliseRnRFormMutation = {
     status: Types.RnRFormNodeStatus;
     theirReference?: string | null;
     comment?: string | null;
+    period: {
+      __typename: 'PeriodNode';
+      id: string;
+      name: string;
+      startDate: string;
+      endDate: string;
+    };
   };
 };
 
@@ -282,6 +324,14 @@ export type DeleteRnRFormMutation = {
   deleteRnrForm: { __typename: 'DeleteResponse'; id: string };
 };
 
+export const PeriodFragmentDoc = gql`
+  fragment Period on PeriodNode {
+    id
+    name
+    startDate
+    endDate
+  }
+`;
 export const RnRFormFragmentDoc = gql`
   fragment RnRForm on RnRFormNode {
     id
@@ -289,6 +339,9 @@ export const RnRFormFragmentDoc = gql`
     periodId
     periodName
     periodLength
+    period {
+      ...Period
+    }
     programId
     programName
     supplierName
@@ -297,6 +350,7 @@ export const RnRFormFragmentDoc = gql`
     theirReference
     comment
   }
+  ${PeriodFragmentDoc}
 `;
 export const RnRFormLineFragmentDoc = gql`
   fragment RnRFormLine on RnRFormLineNode {
@@ -327,14 +381,6 @@ export const RnRFormLineFragmentDoc = gql`
       strength
       venCategory
     }
-  }
-`;
-export const PeriodFragmentDoc = gql`
-  fragment Period on PeriodNode {
-    id
-    name
-    startDate
-    endDate
   }
 `;
 export const PeriodScheduleFragmentDoc = gql`

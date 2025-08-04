@@ -3,8 +3,8 @@ mod generate_rnr_form_lines {
     use chrono::NaiveDate;
     use repository::mock::{
         item_query_test1, mock_item_a, mock_master_list_program_b, mock_name_invad,
-        mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_program_b, mock_rnr_form_a,
-        MockData,
+        mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_period_2_d, mock_program_b,
+        mock_rnr_form_a, MockData,
     };
     use repository::mock::{mock_store_a, MockDataInserts};
     use repository::test_db::setup_all_with_data;
@@ -92,7 +92,7 @@ mod generate_rnr_form_lines {
             line,
             RnRFormLineRow {
                 id: line_id,
-                rnr_form_id,
+                rnr_form_id: rnr_form_id.clone(),
                 item_link_id: item_query_test1().id,
                 requisition_line_id: None,
                 initial_balance: 2.0,
@@ -119,6 +119,33 @@ mod generate_rnr_form_lines {
                 comment: None,
                 confirmed: false,
             }
+        );
+
+        let result = generate_rnr_form_lines(
+            &context,
+            &context.store_id,
+            &rnr_form_id,
+            &mock_rnr_form_a().program_id,
+            &mock_master_list_program_b().master_list.id,
+            mock_period_2_d(),
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(result.len(), 1);
+        let line = result[0].clone();
+        let line_id = line.id.clone();
+        assert_eq!(
+            line,
+            RnRFormLineRow {
+                id: line_id,
+                rnr_form_id,
+                item_link_id: item_query_test1().id,
+                initial_balance: 3.0,
+                final_balance: 3.0,
+                ..Default::default()
+            },
+            "If the new RNR form's period is not immediately after the previous form's period, do not use the previous form in calculations"
         );
     }
 

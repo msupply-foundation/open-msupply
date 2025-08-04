@@ -6,8 +6,8 @@
 <ArchiveFiles>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>#PROJECTFILEDIR#\Server\omSupply-sqlite.exe</FullName>
-<FileName>omSupply-sqlite.exe</FileName>
+<FullName>#PROJECTFILEDIR#\Server\omSupply-server-sqlite.exe</FullName>
+<FileName>omSupply-server-sqlite.exe</FileName>
 <Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
@@ -2032,7 +2032,7 @@ Screen.Back();
 <Script>-- These actions are performed when the Next button is clicked.
 -- Launch omSupply Server
 if (cbStartOmSupply) then
-	File.Run(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "", SessionVar.Expand("%AppFolder%"), SW_SHOWNORMAL, false);
+	File.Run(SessionVar.Expand("%AppFolder%\\omSupply-server-sqlite.exe"), "", SessionVar.Expand("%AppFolder%"), SW_SHOWNORMAL, false);
 	File.OpenURL("http://localhost:8000");
 end
 -- advance to the next screen
@@ -3361,7 +3361,7 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Post Install</Name>
 <Args/>
-<Script>Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Demo Server", SessionVar.Expand("%AppFolder%\\launch.bat"), "", SessionVar.Expand("%AppFolder%"), SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+<Script>Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Demo Server", SessionVar.Expand("%AppFolder%\\launch.bat"), "", SessionVar.Expand("%AppFolder%"), SessionVar.Expand("%AppFolder%\\omSupply-server-sqlite.exe"), 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 
 local uninstallPath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 local installedApps = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, uninstallPath);

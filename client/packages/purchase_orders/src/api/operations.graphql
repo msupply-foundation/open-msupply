@@ -65,7 +65,13 @@ fragment PurchaseOrder on PurchaseOrderNode {
   }
   supplierAgent
   supplierDiscountAmount
+  supplierDiscountPercentage
   targetMonths
+  confirmedDatetime
+  contractSignedDate
+  advancePaidDate
+  receivedAtPortDate
+  requestedDeliveryDate
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
@@ -127,6 +133,17 @@ mutation insertPurchaseOrder(
   $storeId: String!
 ) {
   insertPurchaseOrder(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation updatePurchaseOrder(
+  $input: UpdatePurchaseOrderInput!
+  $storeId: String!
+) {
+  updatePurchaseOrder(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
     }

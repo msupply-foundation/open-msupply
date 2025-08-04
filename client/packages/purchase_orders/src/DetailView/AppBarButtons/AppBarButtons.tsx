@@ -4,8 +4,8 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   Grid,
-  // useDetailPanel,
   useTranslation,
+  useDetailPanel,
   ReportContext,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
@@ -23,6 +23,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   isDisabled,
 }) => {
   const t = useTranslation();
+  const { OpenButton } = useDetailPanel();
 
   const {
     queryParams: { sortBy },
@@ -31,8 +32,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const {
     query: { data },
   } = usePurchaseOrder();
-
-  // const { OpenButton } = useDetailPanel();
 
   return (
     <AppBarButtonsPortal>
@@ -50,7 +49,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         />
         {/* <AddFromMasterListButton /> */}
         {/* <UseSuggestedQuantityButton /> */}
-        {/* {OpenButton} */}
+        {OpenButton}
       </Grid>
     </AppBarButtonsPortal>
   );
