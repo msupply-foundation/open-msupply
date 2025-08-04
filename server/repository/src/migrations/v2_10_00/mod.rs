@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_closed_vial_wastage_reason_option_type;
 mod add_contact_table;
 mod add_goods_received_table;
 mod add_item_store_join;
@@ -39,6 +40,7 @@ impl Migration for V2_10_00 {
             Box::new(add_goods_received_table::Migrate),
             Box::new(add_supplier_discount_percentage_to_purchase_order::Migrate),
             Box::new(add_more_dates_to_purchase_order::Migrate),
+            Box::new(add_closed_vial_wastage_reason_option_type::Migrate),
         ]
     }
 }

@@ -29,11 +29,13 @@ allow_tables_to_appear_in_same_query!(reason_option, name_link);
 allow_tables_to_appear_in_same_query!(reason_option, name);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReasonOptionType {
     PositiveInventoryAdjustment,
     NegativeInventoryAdjustment,
     OpenVialWastage,
+    ClosedVialWastage,
     ReturnReason,
     RequisitionLineVariance,
 }
