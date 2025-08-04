@@ -144,8 +144,6 @@ pub(crate) fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, 
                     status: if quantity > 0 {
                         InvoiceStatus::Verified
                     } else {
-                        use repository::InvoiceStatus;
-
                         InvoiceStatus::Shipped
                     },
                     created_datetime: date,
