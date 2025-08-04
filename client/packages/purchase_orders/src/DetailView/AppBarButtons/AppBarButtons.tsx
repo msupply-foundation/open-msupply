@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import {
   AppBarButtonsPortal,
   Grid,
-  useTranslation,
   useDetailPanel,
   ReportContext,
   useUrlQueryParams,
@@ -20,7 +19,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
   isDisabled,
 }) => {
-  const t = useTranslation();
   const { OpenButton } = useDetailPanel();
 
   const {
