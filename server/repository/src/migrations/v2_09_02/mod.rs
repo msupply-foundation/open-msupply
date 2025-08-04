@@ -7,7 +7,7 @@ pub(crate) struct V2_09_02;
 
 impl Migration for V2_09_02 {
     fn version(&self) -> Version {
-        Version::from_str("2.9.1")
+        Version::from_str("2.9.2")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
