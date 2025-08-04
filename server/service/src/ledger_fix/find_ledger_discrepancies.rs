@@ -112,7 +112,7 @@ mod test {
         ))
         .join(make_movements(
             total_not_matched,
-            vec![(7, 6), (3, -2), (5, -3), (25, -1)],
+            vec![(1, 6), (3, -2), (5, -3), (25, -1)],
         ));
 
         let mut allocated_not_picked_movements = make_movements(
