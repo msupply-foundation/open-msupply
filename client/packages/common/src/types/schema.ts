@@ -6741,6 +6741,7 @@ export type PurchaseOrderNode = {
   additionalInstructions?: Maybe<Scalars['String']['output']>;
   advancePaidDate?: Maybe<Scalars['NaiveDate']['output']>;
   agentCommission?: Maybe<Scalars['Float']['output']>;
+  authorisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   authorisingOfficer1?: Maybe<Scalars['String']['output']>;
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
@@ -6752,6 +6753,7 @@ export type PurchaseOrderNode = {
   documentCharge?: Maybe<Scalars['Float']['output']>;
   donor?: Maybe<NameNode>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
   freightCharge?: Maybe<Scalars['Float']['output']>;
   freightConditions?: Maybe<Scalars['String']['output']>;

@@ -78,7 +78,9 @@ const PURCHASE_ORDER_1: (&str, &str) = (
             "created_datetime": "2021-01-22T00:00:00",
             "confirmed_datetime": "2021-07-11T01:02:03",
             "sent_datetime": "2025-01-15T01:02:03",
-            "supplier_discount_percentage": 10.0
+            "supplier_discount_percentage": 10.0, 
+            "authorised_datetime": "2025-01-22T00:00:00",
+            "finalised_datetime": "2025-01-22T00:00:00"
         }
     }"#,
 );
@@ -137,6 +139,18 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 200.0,
             order_total_after_discount: 180.0,
             supplier_discount_percentage: Some(10.0),
+            authorised_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 1, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            finalised_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 1, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
         },
     )
 }
@@ -198,6 +212,18 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                         .unwrap(),
                 ),
                 supplier_discount_percentage: Some(10.0),
+                authorised_datetime: Some(
+                    NaiveDate::from_ymd_opt(2025, 1, 22)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
+                ),
+                finalised_datetime: Some(
+                    NaiveDate::from_ymd_opt(2025, 1, 22)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
+                ),
             }),
         }),
     }
@@ -321,6 +347,8 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             supplier_discount_percentage: None,
+            authorised_datetime: None,
+            finalised_datetime: None,
         },
     )
 }
@@ -450,6 +478,8 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             supplier_discount_percentage: None,
+            authorised_datetime: None,
+            finalised_datetime: None,
         },
     )
 }
@@ -688,6 +718,8 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             supplier_discount_percentage: None,
+            authorised_datetime: None,
+            finalised_datetime: None,
         },
     )
 }
@@ -804,6 +836,8 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             supplier_discount_percentage: None,
+            authorised_datetime: None,
+            finalised_datetime: None,
         },
     )
 }

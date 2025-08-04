@@ -45,6 +45,7 @@ export const OtherSection = ({
         </PanelRow> */}
         <PanelLabel>{t('label.comment')}</PanelLabel>
         <BufferedTextArea
+          fullWidth
           value={data?.comment ?? ''}
           onChange={e => onUpdate({ comment: e.target.value })}
         />
