@@ -225,6 +225,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
                 ),
+                status: PurchaseOrderStatus::Authorised,
             }),
         }),
     }
@@ -411,6 +412,7 @@ fn purchase_order_2_migration_push_record() -> TestSyncOutgoingRecord {
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
                 ),
+                status: PurchaseOrderStatus::Confirmed,
                 ..Default::default()
             }),
         }),

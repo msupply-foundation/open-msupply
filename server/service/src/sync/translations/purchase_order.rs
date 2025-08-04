@@ -54,6 +54,8 @@ pub struct PurchaseOrderOmsFields {
     pub authorised_datetime: Option<NaiveDateTime>,
     #[serde(default)]
     pub finalised_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub status: PurchaseOrderStatus,
 }
 
 /** Example record
@@ -327,13 +329,17 @@ impl SyncTranslation for PurchaseOrderTranslation {
             .clone()
             .and_then(|oms_field| oms_field.finalised_datetime);
 
+        let status = oms_fields
+            .and_then(|oms_field| oms_field.status)
+            .unwrap_or_else(|| from_legacy_status(&status, is_authorised));
+
         let result = PurchaseOrderRow {
             id,
             created_by,
             purchase_order_number,
             store_id,
             supplier_name_link_id: name_id,
-            status: from_legacy_status(&status, is_authorised),
+            status,
             created_datetime,
             confirmed_datetime,
             target_months,
@@ -431,6 +437,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             supplier_discount_percentage,
             authorised_datetime,
             finalised_datetime,
+            status: status.clone(),
         };
 
         let donor_id = map_optional_name_link_id_to_name_id(connection, donor_link_id)?;
