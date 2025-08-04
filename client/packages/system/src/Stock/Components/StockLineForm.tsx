@@ -345,9 +345,9 @@ export const StockLineForm = ({
             Input={
               <NumericTextInput
                 autoFocus
-                disabled={!packEditable}
                 width={160}
                 value={draft.volumePerPack ?? 0}
+                decimalLimit={10}
                 onChange={volumePerPack => onUpdate({ volumePerPack })}
               />
             }
