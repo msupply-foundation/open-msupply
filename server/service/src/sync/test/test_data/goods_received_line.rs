@@ -1,12 +1,3 @@
-// use crate::sync::{
-//     test::TestSyncIncomingRecord, translations::purchase_order_line::LegacyPurchaseOrderLineRow,
-// };
-// use chrono::NaiveDate;
-// use repository::PurchaseOrderLineRow;
-// use serde_json::json;
-
-// use super::TestSyncOutgoingRecord;
-
 use chrono::NaiveDate;
 use repository::{GoodsReceivedLineRow, GoodsReceivedLineRowDelete};
 use serde_json::json;
@@ -68,10 +59,10 @@ fn goods_received_line_pull_record() -> TestSyncIncomingRecord {
             item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
             item_name: "Salbutamol Inhaler".to_string(),
             location_id: Some("cf5812e0c33911eb9757779d39ae2bdb".to_string()),
-            volume_per_pack: Some(0.0), //MOTZ could cause a problem if 0 is meant to be None
-            manufacturer_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            volume_per_pack: None,
+            manufacturer_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
             status: repository::GoodsReceivedLineStatus::Authorised,
-            comment: None, //MOTZ could cause a problem if empty string is not converted to None as in the test JSON it is "".
+            comment: None,
         },
     )
 }
@@ -93,8 +84,8 @@ fn goods_received_line_push_record() -> TestSyncOutgoingRecord {
             item_ID: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
             item_name: "Salbutamol Inhaler".to_string(),
             location_ID: Some("cf5812e0c33911eb9757779d39ae2bdb".to_string()),
-            volume_per_pack: Some(0.0),
-            manufacturer_ID: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            volume_per_pack: None,
+            manufacturer_ID: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
             is_authorised: true,
             comment: None,
         }),
