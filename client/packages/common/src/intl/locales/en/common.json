@@ -1443,6 +1443,7 @@
   "log.stocktake-deleted": "Deleted",
   "log.stocktake-status-finalised": "Finalised",
   "log.user-logged-in": "User logged in",
+  "log.volume-per-pack-changed": "Volume per pack changed",
   "log.zero-quantities-for-invoice-created-before-store": "The quantity of all lines has been set to 0 as it was created before the store.",
   "login.body": "Welcome to Open mSupply. Your partner for managing health supply chains and improving medicine availability.",
   "login.heading": "Simple.\nPowerful.\nPharmaceutical\nManagement.",
