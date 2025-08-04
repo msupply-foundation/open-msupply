@@ -56,6 +56,8 @@ pub enum KeyType {
     LogLevel,
     LogDirectory,
     LogFileName,
+
+    LastLedgerFixRun,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
