@@ -1,6 +1,11 @@
 use std::sync::Arc;
 
 use actix_rt::task::JoinHandle;
+use chrono::Utc;
+use repository::{
+    mock::mock_name_a, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+    StockLineRow,
+};
 use repository::{
     mock::{MockData, MockDataInserts},
     test_db::setup_all_with_data,
@@ -118,12 +123,6 @@ pub mod email_test {
         println!("Skipping email sending");
     }
 }
-
-use chrono::Utc;
-use repository::{
-    mock::mock_name_a, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
-    StockLineRow,
-};
 
 pub(crate) fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, i64)>) -> MockData {
     let (invoices, invoice_lines) = date_quantity
