@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete,
-    PurchaseOrderRowRepository, RepositoryError, RowActionType, StorageConnection, Upsert,
+    goods_received_row::GoodsReceivedRowRepository, ChangeLogInsertRow, ChangelogRepository,
+    ChangelogTableName, Delete, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -91,11 +91,10 @@ impl<'a> GoodsReceivedLineRowRepository<'a> {
         row: GoodsReceivedLineRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
-        // TODO NIT query goods_received for store_id instead of purchase_order once PR 8631 merged (https://github.com/msupply-foundation/open-msupply/pull/8631)
-        let purchase_order = PurchaseOrderRowRepository::new(self.connection)
+        let goods_received = GoodsReceivedRowRepository::new(self.connection)
             .find_one_by_id(&row.purchase_order_id)?;
-        let store_id = match purchase_order {
-            Some(purchase_order) => purchase_order.store_id,
+        let store_id = match goods_received {
+            Some(goods_received) => goods_received.store_id,
             None => return Err(RepositoryError::NotFound),
         };
 
