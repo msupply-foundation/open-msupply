@@ -51,8 +51,9 @@ pub fn get_volume_used(
         Some(location.store_id.clone()),
     )?;
 
-    // TODO: Get stock lines with this location id
     // Sum their total volumes
-    // Ok(lines.iter().map(|line| line.volume).sum())
-    Ok(0.0)
+    Ok(lines
+        .iter()
+        .map(|line| line.stock_line_row.total_volume)
+        .sum())
 }

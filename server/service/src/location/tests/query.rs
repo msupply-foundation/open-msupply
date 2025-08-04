@@ -2,13 +2,15 @@
 mod query {
     use repository::{
         location::{LocationFilter, LocationSortField},
-        mock::{mock_asset_b, mock_location_1, MockDataInserts},
+        mock::{mock_asset_b, mock_location_1, stock_line_with_volume, MockDataInserts},
         test_db::setup_all,
+        StockLineRow, Upsert,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
 
     use crate::{
-        asset::update::UpdateAsset, service_provider::ServiceProvider, ListError, SingleRecordError,
+        asset::update::UpdateAsset, location::query::get_volume_used,
+        service_provider::ServiceProvider, ListError, SingleRecordError,
     };
 
     #[actix_rt::test]
@@ -225,5 +227,36 @@ mod query {
             .unwrap();
 
         assert_eq!(result.count, 1);
+    }
+
+    #[actix_rt::test]
+    async fn location_get_volume_used() {
+        let (_mock_data, connection, _, _) =
+            setup_all("test_location_get_volume_used", MockDataInserts::all()).await;
+
+        let result = get_volume_used(&connection, &mock_location_1()).unwrap();
+
+        assert_eq!(result, 0.0);
+
+        StockLineRow {
+            id: "line1".to_owned(),
+            location_id: Some(mock_location_1().id),
+            ..stock_line_with_volume() // total volume is 1000.0
+        }
+        .upsert(&connection)
+        .unwrap();
+
+        StockLineRow {
+            id: "line2".to_owned(),
+            location_id: Some(mock_location_1().id),
+            total_volume: 500.0,
+            ..stock_line_with_volume()
+        }
+        .upsert(&connection)
+        .unwrap();
+
+        // Adds volumes correctly
+        let result = get_volume_used(&connection, &mock_location_1()).unwrap();
+        assert_eq!(result, 1500.0);
     }
 }
