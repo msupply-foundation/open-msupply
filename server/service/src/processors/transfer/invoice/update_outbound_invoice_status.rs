@@ -73,11 +73,13 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
         }
         // 7.
         // Original unknown but we did have om system user updated outbound back to picked
-        if !matches!(
-            inbound_invoice.invoice_row.status,
-            InvoiceStatus::Delivered | InvoiceStatus::Received | InvoiceStatus::Verified
-        ) {
-            return Ok(None);
+        match inbound_invoice.invoice_row.status {
+            InvoiceStatus::Delivered | InvoiceStatus::Received | InvoiceStatus::Verified => {}
+            InvoiceStatus::New
+            | InvoiceStatus::Picked
+            | InvoiceStatus::Shipped
+            | InvoiceStatus::Allocated
+            | InvoiceStatus::Cancelled => return Ok(None),
         }
 
         // Execute
