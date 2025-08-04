@@ -343,7 +343,6 @@ export const PurchaseOrderLineFragmentDoc = gql`
     id
     expectedDeliveryDate
     purchaseOrderId
-    purchaseOrderId
     item {
       id
       code

@@ -42,7 +42,7 @@ export const usePurchaseOrder = (id?: string) => {
 
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
-  const queryKey = [PURCHASE_ORDER, LIST, storeId, purchaseOrderId];
+  const queryKey = [PURCHASE_ORDER, LIST, storeId];
 
   // QUERY
   const queryFn = async (): Promise<PurchaseOrderFragment | undefined> => {
@@ -205,8 +205,7 @@ const useAddFromMasterList = () => {
   });
 
   const mutationState =  useMutation(purchaseOrderApi.addToPurchaseOrderFromMasterList, {
-    onSettled: () =>
-      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
+    onSuccess: () =>  queryClient.invalidateQueries([PURCHASE_ORDER, LIST, storeId]),
   });
 
   const addFromMasterList = async (masterListId: string, purchaseOrderId: string) => {
@@ -236,7 +235,8 @@ const useAddFromMasterList = () => {
               default:
                 return error(t('label.cannot-add-item-to-purchase-order'))();
             }
-          }
+          } 
+          
         } catch (e) {
           // for non structured errors
           console.error('Mutation error:', e);
