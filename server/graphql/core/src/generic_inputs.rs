@@ -21,7 +21,6 @@ pub struct TaxInput {
 #[graphql(concrete(name = "NullableStringUpdate", params(String)))]
 #[graphql(concrete(name = "NullableDateUpdate", params(NaiveDate)))]
 #[graphql(concrete(name = "NullableDatetimeUpdate", params(NaiveDateTime)))]
-#[graphql(concrete(name = "NullableFloatUpdate", params(f64)))]
 pub struct NullableUpdateInput<T: InputType> {
     pub value: Option<T>,
 }
