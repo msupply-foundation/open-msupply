@@ -204,7 +204,23 @@ export const BatchTable = ({
         Cell: props => (
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
-        setter: patch => update({ ...patch }),
+        setter: patch => {
+          const { packSize, itemVariant } = patch;
+
+          if (itemVariant) {
+            const packaging = itemVariant.packagingVariants.find(
+              p => p.packSize === packSize
+            );
+            // Item variants save volume in L, but it is saved in m3 everywhere else
+            update({
+              ...patch,
+              volumePerPack:
+                ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
+            });
+          } else {
+            update(patch);
+          }
+        },
       });
     }
     columnDefinitions.push(
@@ -263,6 +279,15 @@ export const BatchTable = ({
           update({ ...patch, countThisLine: true, reasonOption });
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
+      },
+      {
+        key: 'volumePerPack',
+        label: t('label.volume-per-pack'),
+        Cell: NumberInputCell,
+        cellProps: { decimalLimit: 10 },
+        width: 100,
+        accessor: ({ rowData }) => rowData?.volumePerPack,
+        setter: patch => update({ ...patch, countThisLine: true }),
       },
       getInventoryAdjustmentReasonInputColumn(
         update,
