@@ -139,6 +139,8 @@ fn generate_stocktake_lines(
                          barcode_id: _,
                          vvm_status_id: _, // Todo?
                          campaign_id: _,   // Todo?
+                         volume_per_pack: _,
+                         total_volume: _,
                      },
                  item_row,
                  location_row: _,
@@ -166,6 +168,7 @@ fn generate_stocktake_lines(
                     counted_number_of_packs: None,
                     comment: None,
                     reason_option_id: None,
+                    volume_per_pack: 0.0,
                 }
             },
         )
@@ -212,6 +215,7 @@ fn generate_lines_initial_stocktake(
             item_variant_id: None,
             donor_link_id: None,
             reason_option_id: None,
+            volume_per_pack: 0.0,
         })
         .collect();
 
@@ -272,6 +276,7 @@ pub fn generate_lines_from_master_list(
                 reason_option_id: None,
                 item_variant_id: None,
                 donor_link_id: None,
+                volume_per_pack: 0.0,
             });
         } else {
             stock_lines.into_iter().for_each(|line| {
@@ -295,6 +300,8 @@ pub fn generate_lines_from_master_list(
                     donor_link_id,
                     vvm_status_id: _, // Not currently included in stocktakes?
                     campaign_id: _,   // Should this be included?
+                    volume_per_pack: _,
+                    total_volume: _,
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
@@ -317,6 +324,7 @@ pub fn generate_lines_from_master_list(
                     comment: None,
                     reason_option_id: None,
                     counted_number_of_packs: None,
+                    volume_per_pack: 0.0,
                 });
             });
         }
