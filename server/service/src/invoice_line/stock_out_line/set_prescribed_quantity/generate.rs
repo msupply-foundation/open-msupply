@@ -42,6 +42,7 @@ pub fn generate(
         campaign_id: None,
         shipped_number_of_packs: None,
         volume_per_pack: 0.0,
+        shipped_pack_size: None,
     };
 
     Ok(invoice_line)

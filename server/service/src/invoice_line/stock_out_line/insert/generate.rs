@@ -223,6 +223,7 @@ fn generate_line(
         volume_per_pack,
         shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
             .then_some(number_of_packs),
+        shipped_pack_size: (r#type == StockOutType::OutboundShipment).then_some(pack_size),
         linked_invoice_id: None,
         reason_option_id: None,
     })

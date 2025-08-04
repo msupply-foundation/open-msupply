@@ -35,7 +35,7 @@ export const ItemVariantInput = ({
 
   const ItemVariantButton = (
     <TextInputButton
-      sx={{ width }}
+      sx={{ width: disabled ? width : '100%' }}
       endIcon={<EditIcon />}
       disabled={disabled}
       {...props}
@@ -45,15 +45,17 @@ export const ItemVariantInput = ({
   );
 
   return !disabled ? (
-    <ItemVariantSelector
-      selectedId={selectedId}
-      onVariantSelected={onVariantSelected}
-      isLoading={isLoading}
-      variants={data?.variants ?? []}
-      isVaccine={data?.isVaccine}
-    >
-      {ItemVariantButton}
-    </ItemVariantSelector>
+    <div style={{ width }}>
+      <ItemVariantSelector
+        selectedId={selectedId}
+        onVariantSelected={onVariantSelected}
+        isLoading={isLoading}
+        variants={data?.variants ?? []}
+        isVaccine={data?.isVaccine}
+      >
+        {ItemVariantButton}
+      </ItemVariantSelector>
+    </div>
   ) : (
     ItemVariantButton
   );

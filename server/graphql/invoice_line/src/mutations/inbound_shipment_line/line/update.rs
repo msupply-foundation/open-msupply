@@ -39,6 +39,7 @@ pub struct UpdateInput {
     pub note: Option<NullableUpdateInput<String>>,
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
+    pub shipped_pack_size: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -111,6 +112,7 @@ impl UpdateInput {
             note,
             shipped_number_of_packs,
             volume_per_pack,
+            shipped_pack_size,
         } = self;
 
         ServiceInput {
@@ -143,6 +145,7 @@ impl UpdateInput {
             }),
             shipped_number_of_packs,
             volume_per_pack,
+            shipped_pack_size,
         }
     }
 }

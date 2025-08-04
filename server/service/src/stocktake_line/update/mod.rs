@@ -369,6 +369,7 @@ mod stocktake_line_test {
                 item_variant_id: None,
                 donor_link_id: None,
                 reason_option_id: None,
+                volume_per_pack: 0.0,
             }
         );
 
