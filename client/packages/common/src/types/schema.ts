@@ -1570,6 +1570,7 @@ export type CustomerReturnLineNode = {
   item: ItemNode;
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
