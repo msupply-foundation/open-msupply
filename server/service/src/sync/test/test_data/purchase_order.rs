@@ -4,7 +4,7 @@ use crate::sync::{
         LegacyPurchaseOrderRow, LegacyPurchaseOrderStatus, PurchaseOrderOmsFields,
     },
 };
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDate;
 use repository::{PurchaseOrderRow, PurchaseOrderStatus};
 use serde_json::json;
 
@@ -78,7 +78,9 @@ const PURCHASE_ORDER_1: (&str, &str) = (
             "created_datetime": "2021-01-22T00:00:00",
             "confirmed_datetime": "2021-07-11T01:02:03",
             "sent_datetime": "2025-01-15T01:02:03",
-            "supplier_discount_percentage": 10.0
+            "supplier_discount_percentage": 10.0, 
+            "authorised_datetime": "2025-01-22T00:00:00",
+            "finalised_datetime": "2025-01-22T00:00:00"
         }
     }"#,
 );
