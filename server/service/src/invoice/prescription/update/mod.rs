@@ -467,6 +467,7 @@ mod test {
             campaign_id: None,
             shipped_number_of_packs: None,
             volume_per_pack: 0.0,
+            shipped_pack_size: None,
         };
 
         invoice_line_row_repo.upsert_one(&invoice_line).unwrap();

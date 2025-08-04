@@ -48,6 +48,7 @@ pub struct InsertStockInLine {
     pub campaign_id: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
+    pub shipped_pack_size: Option<f64>,
 }
 
 type OutError = InsertStockInLineError;

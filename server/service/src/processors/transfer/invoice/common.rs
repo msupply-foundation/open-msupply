@@ -56,6 +56,7 @@ pub(crate) fn generate_inbound_lines(
                     campaign_id,
                     shipped_number_of_packs,
                     volume_per_pack,
+                    shipped_pack_size,
                 },
                 ItemRow {
                     id: item_id,
@@ -108,6 +109,7 @@ pub(crate) fn generate_inbound_lines(
                     shipped_number_of_packs,
                     volume_per_pack,
                     sell_price_per_pack: default_sell_price_per_pack,
+                    shipped_pack_size,
                     // Default
                     stock_line_id: None,
                     location_id: None,
@@ -137,6 +139,7 @@ pub(crate) fn convert_invoice_line_to_single_pack(
             line.sell_price_per_pack /= line.pack_size;
             line.pack_size = 1.0;
             line.shipped_number_of_packs = Some(line.number_of_packs);
+            line.shipped_pack_size = Some(line.pack_size);
             line
         })
         .collect()

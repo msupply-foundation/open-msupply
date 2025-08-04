@@ -1,14 +1,7 @@
-use repository::{InvoiceLine, StockLineRow, VaccinationRow};
-use util::uuid::uuid;
+use repository::VaccinationRow;
 
 use crate::{
-    invoice::customer_return::{
-        insert::InsertCustomerReturn, CustomerReturnLineInput, UpdateCustomerReturn,
-        UpdateCustomerReturnStatus,
-    },
-    vaccination::generate::{
-        generate_create_prescription, get_dose_as_number_of_packs, CreatePrescription,
-    },
+    vaccination::generate::{generate_create_prescription, CreatePrescription},
     NullableUpdate,
 };
 
@@ -18,14 +11,13 @@ use super::{
 };
 
 #[derive(Debug)]
-pub struct CreateCustomerReturn {
-    pub create_return: InsertCustomerReturn,
-    pub finalise_return: UpdateCustomerReturn,
+pub struct CancelPrescription {
+    pub prescription_id: String,
 }
 
 pub struct GenerateResult {
     pub vaccination: VaccinationRow,
-    pub create_customer_return: Option<CreateCustomerReturn>,
+    pub cancel_prescription: Option<CancelPrescription>,
     pub create_prescription: Option<CreatePrescription>,
 }
 
@@ -94,14 +86,13 @@ fn generate_given(
     GenerateResult {
         vaccination,
         create_prescription,
-        create_customer_return: None,
+        cancel_prescription: None,
     }
 }
 
 fn generate_not_given(
     ChangeToNotGiven {
         existing_vaccination,
-        patient_id,
         existing_prescription,
     }: ChangeToNotGiven,
     update_input: UpdateVaccination,
@@ -115,15 +106,15 @@ fn generate_not_given(
 
     let vaccination = get_vaccination_with_updated_base_fields(existing_vaccination, update_input);
 
-    let create_customer_return = if update_transactions {
-        existing_prescription
-            .map(|p| generate_customer_return(p.prescription_line, p.stock_line_row, patient_id))
+    let cancel_prescription = if update_transactions {
+        existing_prescription.map(|p| CancelPrescription {
+            prescription_id: p.prescription_line.invoice_row.id.clone(),
+        })
     } else {
         None
     };
 
     // clear given status, item/transaction ids, apply reason
-
     let vaccination = VaccinationRow {
         given: false,
         given_store_id: None,
@@ -138,8 +129,8 @@ fn generate_not_given(
 
     GenerateResult {
         vaccination,
-        create_customer_return,
         create_prescription: None,
+        cancel_prescription,
     }
 }
 
@@ -164,9 +155,9 @@ fn generate_change_stock_line(
 
     let vaccination = get_vaccination_with_updated_base_fields(existing_vaccination, update_input);
 
-    let create_customer_return = if update_transactions {
-        existing_prescription.map(|p| {
-            generate_customer_return(p.prescription_line, p.stock_line_row, patient_id.clone())
+    let cancel_prescription = if update_transactions {
+        existing_prescription.map(|p| CancelPrescription {
+            prescription_id: p.prescription_line.invoice_row.id.clone(),
         })
     } else {
         None
@@ -198,7 +189,7 @@ fn generate_change_stock_line(
     GenerateResult {
         vaccination,
         create_prescription,
-        create_customer_return,
+        cancel_prescription,
     }
 }
 
@@ -210,7 +201,7 @@ fn generate_no_status_change(
 
     GenerateResult {
         vaccination,
-        create_customer_return: None,
+        cancel_prescription: None,
         create_prescription: None,
     }
 }
