@@ -17,6 +17,11 @@ use service::{
     },
 };
 
+use crate::mutations::errors::{
+    CannotEditPurchaseOrder, PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound,
+    UpdatedLineDoesNotExist,
+};
+
 #[derive(InputObject)]
 #[graphql(name = "UpdatePurchaseOrderLineInput")]
 pub struct UpdateInput {
@@ -50,9 +55,24 @@ impl UpdateInput {
     }
 }
 
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum PurchaseOrderLineError {
+    PurchaseOrderLineNotFound(PurchaseOrderLineNotFound),
+    UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
+    PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
+    CannotEditPurchaseOrder(CannotEditPurchaseOrder),
+}
+
+#[derive(SimpleObject)]
+pub struct UpdatePurchaseOrderLineError {
+    pub error: PurchaseOrderLineError,
+}
+
 #[derive(Union)]
 #[graphql(name = "UpdatePurchaseOrderLineResponse")]
 pub enum UpdateResponse {
+    Error(UpdatePurchaseOrderLineError),
     Response(IdResponse),
 }
 
@@ -92,10 +112,26 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::PurchaseOrderLineNotFound
-        | ServiceError::UpdatedLineDoesNotExist
-        | ServiceError::PurchaseOrderDoesNotExist
-        | ServiceError::CannotEditPurchaseOrder => BadUserInput(formatted_error),
+        ServiceError::PurchaseOrderLineNotFound => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::PurchaseOrderLineNotFound(PurchaseOrderLineNotFound),
+            }))
+        }
+        ServiceError::UpdatedLineDoesNotExist => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
+            }))
+        }
+        ServiceError::PurchaseOrderDoesNotExist => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
+            }))
+        }
+        ServiceError::CannotEditPurchaseOrder => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::CannotEditPurchaseOrder(CannotEditPurchaseOrder),
+            }))
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

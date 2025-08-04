@@ -296,6 +296,18 @@ export type InsertPurchaseOrderLineMutation = {
   insertPurchaseOrderLine: { __typename: 'IdResponse'; id: string };
 };
 
+export type UpdatePurchaseOrderLineMutationVariables = Types.Exact<{
+  input: Types.UpdatePurchaseOrderLineInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdatePurchaseOrderLineMutation = {
+  __typename: 'Mutations';
+  updatePurchaseOrderLine:
+    | { __typename: 'IdResponse'; id: string }
+    | { __typename: 'UpdatePurchaseOrderLineError' };
+};
+
 export const PurchaseOrderRowFragmentDoc = gql`
   fragment PurchaseOrderRow on PurchaseOrderNode {
     id
@@ -520,6 +532,18 @@ export const InsertPurchaseOrderLineDocument = gql`
     }
   }
 `;
+export const UpdatePurchaseOrderLineDocument = gql`
+  mutation updatePurchaseOrderLine(
+    $input: UpdatePurchaseOrderLineInput!
+    $storeId: String!
+  ) {
+    updatePurchaseOrderLine(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -664,6 +688,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertPurchaseOrderLine',
+        'mutation',
+        variables
+      );
+    },
+    updatePurchaseOrderLine(
+      variables: UpdatePurchaseOrderLineMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdatePurchaseOrderLineMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePurchaseOrderLineMutation>(
+            UpdatePurchaseOrderLineDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updatePurchaseOrderLine',
         'mutation',
         variables
       );
