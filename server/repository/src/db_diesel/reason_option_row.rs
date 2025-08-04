@@ -128,3 +128,32 @@ impl Upsert for ReasonOptionRow {
         )
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use strum::IntoEnumIterator;
+    use util::assert_matches;
+
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn reason_option_type_enum() {
+        let (_, connection, _, _) =
+            setup_all("reason_option_type_enum", MockDataInserts::none()).await;
+
+        let repo = ReasonOptionRowRepository::new(&connection);
+        // Try upsert all variants, confirm that diesel enums match postgres
+        for option_type in ReasonOptionType::iter() {
+            let id = format!("{:?}", option_type);
+            let result = repo.upsert_one(&ReasonOptionRow {
+                id: id.clone(),
+                r#type: option_type,
+                ..Default::default()
+            });
+            assert_eq!(result, Ok(()));
+
+            assert_matches!(repo.find_one_by_id(&id), Ok(Some(_)));
+        }
+    }
+}
