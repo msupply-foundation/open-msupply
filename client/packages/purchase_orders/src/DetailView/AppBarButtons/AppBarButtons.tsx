@@ -15,7 +15,6 @@ import {
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 import { ReportSelector } from '@openmsupply-client/system';
-// import { AddFromMasterListButton } from './AddFromMasterListButton';
 
 interface AppBarButtonProps {
   importModalController: ToggleState;

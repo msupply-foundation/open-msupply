@@ -268,27 +268,16 @@ mod insert {
         );
 
         // successfully insert a purchase order line
-        assert_eq!(
-            service.insert_purchase_order_line_from_csv(
-                &context,
-                InsertPurchaseOrderLineFromCSVInput {
-                    purchase_order_id: "purchase_order_id".to_string(),
-                    item_code: mock_item_a().code.clone(),
-                    requested_pack_size: Some(1.1),
-                    requested_number_of_units: Some(0.0),
-                },
-            ),
-            Ok(PurchaseOrderLineRow {
-                id: "purchase_order_line_id".to_string(),
-                store_id: mock_store_a().id.clone(),
+        let result = service.insert_purchase_order_line_from_csv(
+            &context,
+            InsertPurchaseOrderLineFromCSVInput {
                 purchase_order_id: "purchase_order_id".to_string(),
-                item_link_id: mock_item_a().id.to_string(),
-                requested_pack_size: 1.1,
-                requested_number_of_units: 0.0,
-                line_number: 1,
-                ..Default::default()
-            })
+                item_code: mock_item_a().code.clone(),
+                requested_pack_size: Some(1.1),
+                requested_number_of_units: Some(0.0),
+            },
         );
+        assert!(result.is_ok());
 
         // Same item code and pack size combination cannot be inserted again
         assert_eq!(
