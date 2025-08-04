@@ -132,7 +132,8 @@ fn generate_stock_in_out_or_update(
         }
         .to_owned();
 
-        // if vvm status was set, need to generate a log here - stock in and stock out do this in other cases..
+        // If vvm status changed, generate a log. Only required here, where delta is 0, as stock_in/stock_out
+        // methods generate their own vvm_status_logs if vvm_status_id changes
         let vvm_status_log = vvm_status_id.and_then(|status_id| {
             if Some(status_id.clone()) == previous_vvm_status_id {
                 return None; // No change in VVM status, no log needed
