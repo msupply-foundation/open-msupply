@@ -38,6 +38,7 @@ pub struct UpdateInput {
     pub campaign_id: Option<NullableUpdateInput<String>>,
     pub note: Option<NullableUpdateInput<String>>,
     pub shipped_number_of_packs: Option<f64>,
+    pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
 }
 
@@ -110,6 +111,7 @@ impl UpdateInput {
             campaign_id,
             note,
             shipped_number_of_packs,
+            volume_per_pack,
             shipped_pack_size,
         } = self;
 
@@ -142,6 +144,7 @@ impl UpdateInput {
                 value: campaign_id.value,
             }),
             shipped_number_of_packs,
+            volume_per_pack,
             shipped_pack_size,
         }
     }

@@ -60,5 +60,6 @@ pub fn generate(
         item_variant_id,
         donor_link_id: donor_id,
         reason_option_id,
+        volume_per_pack: 0.0,
     }
 }

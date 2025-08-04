@@ -299,6 +299,7 @@ mod test {
                     item_variant_id: None,
                     donor_link_id: None,
                     reason_option_id: None,
+                    volume_per_pack: 0.0,
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),

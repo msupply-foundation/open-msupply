@@ -22,6 +22,7 @@ pub fn mock_stocktake_line_a() -> StocktakeLineRow {
         item_variant_id: None,
         donor_link_id: None,
         reason_option_id: None,
+        volume_per_pack: 0.0,
     }
 }
 
@@ -45,6 +46,7 @@ pub fn mock_stocktake_line_b() -> StocktakeLineRow {
         item_variant_id: None,
         donor_link_id: None,
         reason_option_id: None,
+        volume_per_pack: 0.0,
     }
 }
 

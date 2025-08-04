@@ -120,4 +120,8 @@ impl CustomerReturnLineNode {
         let result = loader.load_one(reason_option_id.clone()).await?;
         Ok(result.map(ReasonOptionNode::from_domain))
     }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        self.return_line.volume_per_pack
+    }
 }

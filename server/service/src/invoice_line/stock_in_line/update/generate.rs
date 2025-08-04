@@ -139,6 +139,7 @@ fn generate_line(
         donor_id,
         campaign_id,
         shipped_number_of_packs,
+        volume_per_pack,
         shipped_pack_size,
         id: _,
         item_id: _,
@@ -204,6 +205,8 @@ fn generate_line(
     update_line.shipped_number_of_packs =
         shipped_number_of_packs.or(update_line.shipped_number_of_packs);
     update_line.shipped_pack_size = shipped_pack_size.or(update_line.shipped_pack_size);
+
+    update_line.volume_per_pack = volume_per_pack.unwrap_or(update_line.volume_per_pack);
 
     Ok(update_line)
 }

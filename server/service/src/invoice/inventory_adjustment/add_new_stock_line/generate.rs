@@ -118,6 +118,7 @@ pub fn generate(
         tax_percentage: None,
         shipped_number_of_packs: None,
         shipped_pack_size: None,
+        volume_per_pack: None,
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {

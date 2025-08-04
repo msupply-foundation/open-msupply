@@ -66,6 +66,8 @@ pub struct LegacyStockLineRow {
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<StockLineRowOmsFields>,
+    pub total_volume: f64,
+    pub volume_per_pack: f64,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -121,6 +123,8 @@ impl SyncTranslation for StockLineTranslation {
             donor_id,
             vvm_status_id,
             oms_fields,
+            total_volume,
+            volume_per_pack,
         } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
 
         let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
@@ -145,6 +149,8 @@ impl SyncTranslation for StockLineTranslation {
             donor_link_id: donor_id,
             vvm_status_id,
             campaign_id: oms_fields.and_then(|o| o.campaign_id),
+            total_volume,
+            volume_per_pack,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -187,6 +193,8 @@ impl SyncTranslation for StockLineTranslation {
                     donor_link_id,
                     vvm_status_id,
                     campaign_id,
+                    total_volume,
+                    volume_per_pack,
                 },
             item_row,
             supplier_name_row,
@@ -218,6 +226,8 @@ impl SyncTranslation for StockLineTranslation {
             donor_id: donor_link_id,
             vvm_status_id,
             oms_fields,
+            total_volume,
+            volume_per_pack,
         };
 
         Ok(PushTranslateResult::upsert(

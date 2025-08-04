@@ -297,6 +297,7 @@ export type GenerateCustomerReturnLineFragment = {
   itemName: string;
   itemCode: string;
   itemVariantId?: string | null;
+  volumePerPack: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -336,6 +337,7 @@ export type GenerateCustomerReturnLinesQuery = {
       itemName: string;
       itemCode: string;
       itemVariantId?: string | null;
+      volumePerPack: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -1007,6 +1009,7 @@ export const GenerateCustomerReturnLineFragmentDoc = gql`
     itemName
     itemCode
     itemVariantId
+    volumePerPack
     item {
       id
       unitName
