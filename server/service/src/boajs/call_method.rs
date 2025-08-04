@@ -22,6 +22,8 @@ pub enum BoaJsError {
     ExportMissing(String),
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
+    #[error("As string {0}")]
+    String(String),
 }
 
 impl PartialEq for BoaJsError {
@@ -38,8 +40,30 @@ pub(crate) fn call_method<I, O>(
     bundle: &Vec<u8>,
 ) -> Result<O, BoaJsError>
 where
-    I: Serialize,
-    O: DeserializeOwned,
+    I: Serialize + Send + Sync + 'static,
+    O: DeserializeOwned + Send + Sync + 'static,
+{
+    let export_location: Vec<String> = export_location.iter().map(|s| s.to_string()).collect();
+    let bundle = bundle.to_owned();
+    std::thread::spawn(move || {
+        let export_location = export_location.iter().map(|s| s.as_str()).collect();
+
+        call_method_inner::<I, O>(input, export_location, &bundle).map_err(|e| format!("{:?}", e))
+    })
+    .join()
+    .unwrap()
+    .map_err(|e| BoaJsError::String(e))
+}
+fn call_method_inner<I, O>(
+    input: I,
+    // A path to exported method, plugins export { plugins: { plugin_name }}, thus we look for vec!["plugins", "plugin_name"]
+    // reports export { convert_data } thus we look for vec!["convert_data"]
+    export_location: Vec<&str>,
+    bundle: &Vec<u8>,
+) -> Result<O, BoaJsError>
+where
+    I: Serialize + Send + Sync + 'static,
+    O: DeserializeOwned + Send + Sync + 'static,
 {
     use BoaJsError as Error;
     // Initialise context with loader
