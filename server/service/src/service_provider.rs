@@ -32,7 +32,6 @@ use crate::{
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
     ledger_fix::ledger_fix_driver::LedgerFixTrigger,
-    localisations::Localisations,
     localisations::LocalisationsService,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
