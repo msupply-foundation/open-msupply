@@ -193,6 +193,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
             advance_paid_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
             received_at_port_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
             curr_rate: Some(1.6),
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 expected_delivery_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
@@ -392,6 +393,7 @@ fn purchase_order_2_migration_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 created_datetime: NaiveDate::from_ymd_opt(2021, 3, 15)
                     .unwrap()
@@ -522,6 +524,7 @@ fn purchase_order_3_empty_string_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 expected_delivery_date: None,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
@@ -643,6 +646,7 @@ fn purchase_order_4_empty_object_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                     .unwrap()
@@ -763,6 +767,7 @@ fn purchase_order_5_null_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                     .unwrap()
@@ -880,6 +885,7 @@ fn purchase_order_6_no_fields_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                     .unwrap()
