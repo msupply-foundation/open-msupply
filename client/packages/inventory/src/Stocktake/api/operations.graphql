@@ -60,6 +60,10 @@ fragment StocktakeLine on StocktakeLineNode {
 
   itemVariantId
 
+  vvmStatus {
+    ...VVMStatus
+  }
+
   reasonOption {
     reason
     type

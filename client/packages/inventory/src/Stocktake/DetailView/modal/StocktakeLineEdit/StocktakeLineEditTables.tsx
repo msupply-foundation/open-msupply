@@ -33,6 +33,7 @@ import {
   ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
   useReasonOptions,
+  VVMStatusInputCell,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
@@ -176,7 +177,8 @@ export const BatchTable = ({
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.ManageVvmStatusForStock
   );
   useDisableStocktakeRows(batches);
   const { data: reasonOptions, isLoading } = useReasonOptions();
@@ -206,6 +208,16 @@ export const BatchTable = ({
         ),
         setter: patch => update({ ...patch }),
       });
+
+      if (preferences?.manageVvmStatusForStock) {
+        columnDefinitions.push({
+          key: 'vvmStatus',
+          label: 'label.vvm-status',
+          width: 170,
+          Cell: props => <VVMStatusInputCell {...props} />,
+          setter: patch => update({ ...patch }),
+        });
+      }
     }
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {

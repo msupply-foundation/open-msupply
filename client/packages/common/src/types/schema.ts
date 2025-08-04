@@ -8728,6 +8728,7 @@ export type StocktakeLineNode = {
   snapshotNumberOfPacks: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
   stocktakeId: Scalars['String']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
 };
 
 export enum StocktakeLineSortFieldInput {
