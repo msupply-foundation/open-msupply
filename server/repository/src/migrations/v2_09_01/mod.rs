@@ -31,9 +31,8 @@ impl Migration for V2_09_01 {
 
 #[cfg(test)]
 mod test {
-
     #[actix_rt::test]
-    async fn migration_2_09_00() {
+    async fn migration_2_09_01() {
         use crate::migrations::*;
         use crate::test_db::*;
         use v2_09_00::V2_09_00;

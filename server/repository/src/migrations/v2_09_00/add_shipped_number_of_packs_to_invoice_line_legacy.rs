@@ -163,7 +163,7 @@ mod tests {
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!(
-                "test_sync_shipped_number_of_packs_to_existing_invoice_lines{}",
+                "test_sync_ship_num_of_packs_to_exist_invoice_lines{}",
                 version
             ),
             version: Some(previous_version.clone()),
