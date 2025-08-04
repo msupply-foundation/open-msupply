@@ -12,6 +12,7 @@ use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option;
 use util::sync_serde::empty_str_as_option_string;
+use util::sync_serde::zero_f64_as_none;
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -31,8 +32,10 @@ pub struct LegacyGoodsReceivedLineRow {
     pub item_name: String,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_ID: Option<String>,
+    #[serde(deserialize_with = "zero_f64_as_none")]
     pub volume_per_pack: Option<f64>,
-    pub manufacturer_ID: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub manufacturer_ID: Option<String>,
     pub is_authorised: bool,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,

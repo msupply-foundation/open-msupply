@@ -48,7 +48,7 @@ impl MigrationFragment for Migrate {
                     item_name TEXT NOT NULL,
                     location_id TEXT REFERENCES location(id),
                     volume_per_pack {DOUBLE},
-                    manufacturer_link_id TEXT NOT NULL REFERENCES name_link(id),
+                    manufacturer_link_id TEXT REFERENCES name_link(id),
                     status {status_type} NOT NULL DEFAULT 'UNAUTHORISED',
                     comment TEXT
                 );

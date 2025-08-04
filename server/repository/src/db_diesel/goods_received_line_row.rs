@@ -22,7 +22,7 @@ table! {
         item_name -> Text,
         location_id -> Nullable<Text>,
         volume_per_pack -> Nullable<Double>,
-        manufacturer_link_id -> Text,
+        manufacturer_link_id -> Nullable<Text>,
         status -> crate::db_diesel::goods_received_line_row::GoodsReceivedLineStatusMapping,
         comment -> Nullable<Text>,
     }
@@ -47,7 +47,7 @@ pub struct GoodsReceivedLineRow {
     pub item_name: String,
     pub location_id: Option<String>,
     pub volume_per_pack: Option<f64>,
-    pub manufacturer_link_id: String,
+    pub manufacturer_link_id: Option<String>,
     pub status: GoodsReceivedLineStatus,
     pub comment: Option<String>,
 }
