@@ -156,6 +156,10 @@ impl StocktakeLineNode {
             })
         })
     }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        self.line.line.volume_per_pack
+    }
 }
 
 #[derive(SimpleObject)]
