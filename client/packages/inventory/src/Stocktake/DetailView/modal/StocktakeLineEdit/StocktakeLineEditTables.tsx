@@ -47,6 +47,7 @@ interface StocktakeLineEditTableProps {
   isInitialStocktake?: boolean;
   trackStockDonor?: boolean;
   restrictedToLocationTypeId?: string | null;
+  isVaccineItem?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -172,6 +173,7 @@ export const BatchTable = ({
   update,
   isDisabled = false,
   isInitialStocktake,
+  isVaccineItem = false,
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -206,7 +208,7 @@ export const BatchTable = ({
         setter: patch => update({ ...patch }),
       });
 
-      if (preferences?.manageVvmStatusForStock) {
+      if (preferences?.manageVvmStatusForStock && isVaccineItem) {
         columnDefinitions.push({
           key: 'vvmStatus',
           label: 'label.vvm-status',
