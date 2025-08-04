@@ -2,7 +2,7 @@ use super::query::get_stock_line;
 use crate::{
     activity_log::activity_log_entry,
     barcode::{self, BarcodeInput},
-    check_location_exists,
+    check_item_variant_exists, check_location_exists,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
@@ -28,6 +28,7 @@ pub struct UpdateStockLine {
     pub batch: Option<String>,
     pub barcode: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub campaign_id: Option<NullableUpdate<String>>,
     pub volume_per_pack: Option<f64>,
@@ -111,6 +112,15 @@ fn validate(
     }
 
     if let Some(NullableUpdate {
+        value: Some(item_variant_id),
+    }) = &input.item_variant_id
+    {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
+            return Err(ItemVariantDoesNotExist);
+        }
+    }
+
+    if let Some(NullableUpdate {
         value: Some(donor_id),
     }) = &input.donor_id
     {
@@ -149,6 +159,7 @@ fn generate(
         on_hold,
         barcode,
         vvm_status_id,
+        item_variant_id,
         donor_id,
         campaign_id,
         volume_per_pack,
@@ -200,6 +211,9 @@ fn generate(
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing.barcode_id = barcode_id;
     existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
+    existing.item_variant_id = item_variant_id
+        .map(|v| v.value)
+        .unwrap_or(existing.item_variant_id);
     existing.donor_link_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_link_id);
     existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
     existing.volume_per_pack = volume_per_pack.unwrap_or(existing.volume_per_pack);

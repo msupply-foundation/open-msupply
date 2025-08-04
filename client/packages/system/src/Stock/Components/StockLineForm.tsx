@@ -322,7 +322,6 @@ export const StockLineForm = ({
                   itemId={draft.itemId}
                   selectedId={draft?.itemVariant?.id}
                   width={160}
-                  disabled={!packEditable}
                   onChange={variant => {
                     const packaging = variant?.packagingVariants.find(
                       p => p.packSize === draft.packSize
