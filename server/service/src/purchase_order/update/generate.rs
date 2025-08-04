@@ -2,9 +2,6 @@ use super::UpdatePurchaseOrderInput;
 use crate::NullableUpdate;
 use repository::{PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
 
-// TODO: When status chanages corresponding dates should also be updated
-// TODO: Need to add authorisedDate and finalisedDate to the table
-
 pub fn generate(
     purchase_order: PurchaseOrderRow,
     UpdatePurchaseOrderInput {
@@ -89,13 +86,13 @@ fn set_new_status_datetime(
     if let Some(status) = input_status {
         match status {
             PurchaseOrderStatus::Authorised => {
-                println!("add to authorised_datetime to table");
+                purchase_order.authorised_datetime = Some(current_datetime);
             }
             PurchaseOrderStatus::Confirmed => {
                 purchase_order.confirmed_datetime = Some(current_datetime);
             }
             PurchaseOrderStatus::Finalised => {
-                println!("add to finalised_datetime to table");
+                purchase_order.finalised_datetime = Some(current_datetime)
             }
             _ => {}
         }

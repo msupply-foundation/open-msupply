@@ -12,15 +12,15 @@ import React, { FC } from 'react';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 import { StatusChangeButton } from './StatusChangeButton';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
+import { PurchaseOrderFragment } from '../../api';
 
-const createStatusLog = () => {
-  // TODO: Implement the logic that ties the dates for when status changes?
+const createStatusLog = (purchaseOrder: PurchaseOrderFragment) => {
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
-      [PurchaseOrderNodeStatus.New]: null, // PurchaseOrder.createdDatetime
-      [PurchaseOrderNodeStatus.Authorised]: null,
-      [PurchaseOrderNodeStatus.Confirmed]: null,
-      [PurchaseOrderNodeStatus.Finalised]: null,
+      [PurchaseOrderNodeStatus.New]: purchaseOrder.createdDatetime,
+      [PurchaseOrderNodeStatus.Authorised]: purchaseOrder.authorisedDatetime,
+      [PurchaseOrderNodeStatus.Confirmed]: purchaseOrder.confirmedDatetime,
+      [PurchaseOrderNodeStatus.Finalised]: purchaseOrder.finalisedDatetime,
     };
 
   return statusLog;
@@ -63,7 +63,7 @@ export const Footer: FC = () => {
             >
               <StatusCrumbs
                 statuses={purchaseOrderStatuses}
-                statusLog={createStatusLog()}
+                statusLog={createStatusLog(data)}
                 statusFormatter={getStatusTranslator(t)}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>

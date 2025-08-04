@@ -4,7 +4,7 @@ use crate::sync::{
         LegacyPurchaseOrderRow, LegacyPurchaseOrderStatus, PurchaseOrderOmsFields,
     },
 };
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{PurchaseOrderRow, PurchaseOrderStatus};
 use serde_json::json;
 
@@ -137,6 +137,18 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 200.0,
             order_total_after_discount: 180.0,
             supplier_discount_percentage: Some(10.0),
+            authorised_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 1, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            finalised_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 1, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
         },
     )
 }
@@ -198,6 +210,18 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                         .unwrap(),
                 ),
                 supplier_discount_percentage: Some(10.0),
+                authorised_datetime: Some(
+                    NaiveDate::from_ymd_opt(2025, 1, 22)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
+                ),
+                finalised_datetime: Some(
+                    NaiveDate::from_ymd_opt(2025, 1, 22)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
+                ),
             }),
         }),
     }
@@ -321,6 +345,8 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             supplier_discount_percentage: None,
+            authorised_datetime: None,
+            finalised_datetime: None,
         },
     )
 }
@@ -450,6 +476,8 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             supplier_discount_percentage: None,
+            authorised_datetime: None,
+            finalised_datetime: None,
         },
     )
 }
@@ -688,6 +716,8 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             supplier_discount_percentage: None,
+            authorised_datetime: None,
+            finalised_datetime: None,
         },
     )
 }
@@ -804,6 +834,8 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             supplier_discount_percentage: None,
+            authorised_datetime: None,
+            finalised_datetime: None,
         },
     )
 }
