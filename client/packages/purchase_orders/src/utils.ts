@@ -39,8 +39,8 @@ export const getDeliveryStatusTranslator =
     );
   };
 
-export const isPurchaseOrderDisabled = (purchaseOrder: PurchaseOrderFragment): boolean => {
-  return (
-    purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
-  );
-}
+export const isPurchaseOrderDisabled = (
+  purchaseOrder: PurchaseOrderFragment
+): boolean => {
+  return purchaseOrder.status === PurchaseOrderNodeStatus.Finalised;
+};
