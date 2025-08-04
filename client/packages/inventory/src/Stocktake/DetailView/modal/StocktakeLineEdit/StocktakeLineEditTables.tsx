@@ -45,6 +45,7 @@ interface StocktakeLineEditTableProps {
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
   isInitialStocktake?: boolean;
   trackStockDonor?: boolean;
+  restrictedToLocationTypeId?: string | null;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -134,6 +135,11 @@ const getInventoryAdjustmentReasonInputColumn = (
       const isInventoryReduction =
         rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
 
+      const required =
+        typeof rowData.countedNumberOfPacks === 'number' &&
+        rowData.countThisLine &&
+        rowData.snapshotNumberOfPacks !== rowData.countedNumberOfPacks;
+
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
       // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
       return (
@@ -149,11 +155,8 @@ const getInventoryAdjustmentReasonInputColumn = (
           inputProps={{
             error: isAdjustmentReasonError,
           }}
-          disabled={
-            typeof rowData.countedNumberOfPacks !== 'number' ||
-            !rowData.countThisLine ||
-            rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks
-          }
+          disabled={!required}
+          required={required}
           initialStocktake={initialStocktake}
           reasonOptions={reasonOptions}
           loading={isLoading}
@@ -207,7 +210,6 @@ export const BatchTable = ({
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {
         Cell: PackSizeEntryCell<DraftStocktakeLine>,
-        setter: update,
         label: 'label.pack-size',
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
@@ -216,6 +218,17 @@ export const BatchTable = ({
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
         defaultHideOnMobile: true,
+        setter: patch => {
+          const shouldClearSellPrice =
+            patch.item?.defaultPackSize !== patch.packSize &&
+            patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
+              patch.sellPricePerPack;
+          if (shouldClearSellPrice) {
+            update({ ...patch, sellPricePerPack: 0 });
+          } else {
+            update(patch);
+          }
+        },
       }),
       {
         key: 'snapshotNumberOfPacks',
@@ -330,6 +343,7 @@ export const LocationTable = ({
   update,
   isDisabled,
   trackStockDonor,
+  restrictedToLocationTypeId,
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
@@ -338,7 +352,7 @@ export const LocationTable = ({
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
-      getLocationInputColumn(),
+      getLocationInputColumn(restrictedToLocationTypeId),
       {
         width: 300,
         setter: patch => update({ ...patch, countThisLine: true }),

@@ -41,7 +41,13 @@ export type PurchaseOrderFragment = {
   status: Types.PurchaseOrderNodeStatus;
   supplierAgent?: string | null;
   supplierDiscountAmount: number;
+  supplierDiscountPercentage?: number | null;
   targetMonths?: number | null;
+  confirmedDatetime?: string | null;
+  contractSignedDate?: string | null;
+  advancePaidDate?: string | null;
+  receivedAtPortDate?: string | null;
+  requestedDeliveryDate?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'PurchaseOrderLineConnector';
@@ -148,7 +154,13 @@ export type PurchaseOrderByIdQuery = {
         status: Types.PurchaseOrderNodeStatus;
         supplierAgent?: string | null;
         supplierDiscountAmount: number;
+        supplierDiscountPercentage?: number | null;
         targetMonths?: number | null;
+        confirmedDatetime?: string | null;
+        contractSignedDate?: string | null;
+        advancePaidDate?: string | null;
+        receivedAtPortDate?: string | null;
+        requestedDeliveryDate?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'PurchaseOrderLineConnector';
@@ -185,6 +197,16 @@ export type InsertPurchaseOrderMutationVariables = Types.Exact<{
 export type InsertPurchaseOrderMutation = {
   __typename: 'Mutations';
   insertPurchaseOrder: { __typename: 'IdResponse'; id: string };
+};
+
+export type UpdatePurchaseOrderMutationVariables = Types.Exact<{
+  input: Types.UpdatePurchaseOrderInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdatePurchaseOrderMutation = {
+  __typename: 'Mutations';
+  updatePurchaseOrder: { __typename: 'IdResponse'; id: string };
 };
 
 export type PurchaseOrderLinesQueryVariables = Types.Exact<{
@@ -378,7 +400,13 @@ export const PurchaseOrderFragmentDoc = gql`
     }
     supplierAgent
     supplierDiscountAmount
+    supplierDiscountPercentage
     targetMonths
+    confirmedDatetime
+    contractSignedDate
+    advancePaidDate
+    receivedAtPortDate
+    requestedDeliveryDate
   }
   ${PurchaseOrderLineFragmentDoc}
 `;
@@ -429,6 +457,18 @@ export const InsertPurchaseOrderDocument = gql`
     $storeId: String!
   ) {
     insertPurchaseOrder(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
+export const UpdatePurchaseOrderDocument = gql`
+  mutation updatePurchaseOrder(
+    $input: UpdatePurchaseOrderInput!
+    $storeId: String!
+  ) {
+    updatePurchaseOrder(input: $input, storeId: $storeId) {
       ... on IdResponse {
         id
       }
@@ -599,6 +639,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertPurchaseOrder',
+        'mutation',
+        variables
+      );
+    },
+    updatePurchaseOrder(
+      variables: UpdatePurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdatePurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePurchaseOrderMutation>(
+            UpdatePurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updatePurchaseOrder',
         'mutation',
         variables
       );

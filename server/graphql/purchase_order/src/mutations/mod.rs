@@ -1,5 +1,6 @@
 pub mod add_from_master_list;
 pub mod insert;
+pub mod update;
 
 use service::purchase_order::add_to_purchase_order_from_master_list::AddToPurchaseOrderFromMasterListInput as ServiceInput;
 

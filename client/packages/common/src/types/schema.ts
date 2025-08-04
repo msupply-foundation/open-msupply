@@ -3239,6 +3239,7 @@ export type InsertInboundShipmentLineInput = {
   packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
@@ -4152,6 +4153,7 @@ export type InvoiceLineNode = {
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   shippedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
+  shippedPackSize?: Maybe<Scalars['Float']['output']>;
   stockLine?: Maybe<StockLineNode>;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
@@ -4467,13 +4469,15 @@ export type ItemNode = {
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
-  itemStoreJoin?: Maybe<ItemStoreJoinNode>;
+  itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  restrictedLocationType?: Maybe<LocationTypeNode>;
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
@@ -4494,7 +4498,7 @@ export type ItemNodeAvailableStockOnHandArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type ItemNodeItemStoreJoinArgs = {
+export type ItemNodeItemStorePropertiesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4554,8 +4558,8 @@ export type ItemStatsNode = {
   totalConsumption: Scalars['Float']['output'];
 };
 
-export type ItemStoreJoinNode = {
-  __typename: 'ItemStoreJoinNode';
+export type ItemStorePropertiesNode = {
+  __typename: 'ItemStorePropertiesNode';
   defaultSellPricePerPack: Scalars['Float']['output'];
   id: Scalars['String']['output'];
 };
@@ -4722,6 +4726,7 @@ export type LocationFilterInput = {
   assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  locationTypeId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -5103,6 +5108,7 @@ export type Mutations = {
    * in a document.
    */
   updateProgramPatient: UpdateProgramPatientResponse;
+  updatePurchaseOrder: UpdatePurchaseOrderResponse;
   updatePurchaseOrderLine: UpdatePurchaseOrderLineResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
@@ -5672,6 +5678,11 @@ export type MutationsUpdateProgramPatientArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdatePurchaseOrderArgs = {
+  input: UpdatePurchaseOrderInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpdatePurchaseOrderLineArgs = {
   input: UpdatePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
@@ -5968,6 +5979,21 @@ export type NothingRemainingToSupply =
  */
 export type NullableDateUpdate = {
   value?: InputMaybe<Scalars['NaiveDate']['input']>;
+};
+
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
+export type NullableDatetimeUpdate = {
+  value?: InputMaybe<Scalars['NaiveDateTime']['input']>;
 };
 
 /**
@@ -6322,6 +6348,7 @@ export enum PreferenceKey {
   OrderInPacks = 'orderInPacks',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   UseCampaigns = 'useCampaigns',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
@@ -6358,6 +6385,7 @@ export type PreferencesNode = {
   orderInPacks: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  syncRecordsDisplayThreshold: Scalars['Int']['output'];
   useCampaigns: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
@@ -6578,6 +6606,7 @@ export type ProgramFilterInput = {
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
 
@@ -6764,6 +6793,7 @@ export type PurchaseOrderNode = {
   number: Scalars['Int']['output'];
   receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
+  requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   shippingMethod?: Maybe<Scalars['String']['output']>;
   status: PurchaseOrderNodeStatus;
@@ -6771,11 +6801,19 @@ export type PurchaseOrderNode = {
   supplier?: Maybe<NameNode>;
   supplierAgent?: Maybe<Scalars['String']['output']>;
   supplierDiscountAmount: Scalars['Float']['output'];
+  supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   targetMonths?: Maybe<Scalars['Float']['output']>;
   user?: Maybe<UserNode>;
 };
 
 export enum PurchaseOrderNodeStatus {
+  Authorised = 'AUTHORISED',
+  Confirmed = 'CONFIRMED',
+  Finalised = 'FINALISED',
+  New = 'NEW',
+}
+
+export enum PurchaseOrderNodeType {
   Authorised = 'AUTHORISED',
   Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
@@ -8340,8 +8378,11 @@ export type RnRFormNode = {
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
+  period: PeriodNode;
+  /** @deprecated Since 2.9.1. Use period.id instead */
   periodId: Scalars['String']['output'];
   periodLength: Scalars['Int']['output'];
+  /** @deprecated Since 2.9.1. Use period.name instead */
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
@@ -9431,6 +9472,7 @@ export type UpdateInboundShipmentLineInput = {
   packSize?: InputMaybe<Scalars['Float']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
@@ -9839,6 +9881,25 @@ export type UpdateProgramPatientInput = {
 
 export type UpdateProgramPatientResponse = PatientNode;
 
+export type UpdatePurchaseOrderInput = {
+  advancePaidDate?: InputMaybe<NullableDateUpdate>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  confirmedDatetime?: InputMaybe<NullableDatetimeUpdate>;
+  contractSignedDate?: InputMaybe<NullableDateUpdate>;
+  currencyId?: InputMaybe<Scalars['String']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
+  foreignExchangeRate?: InputMaybe<Scalars['Float']['input']>;
+  id: Scalars['String']['input'];
+  receivedAtPortDate?: InputMaybe<NullableDateUpdate>;
+  reference?: InputMaybe<Scalars['String']['input']>;
+  requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
+  sentDatetime?: InputMaybe<NullableDatetimeUpdate>;
+  shippingMethod?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<PurchaseOrderNodeType>;
+  supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
+  supplierId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdatePurchaseOrderLineInput = {
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
@@ -9849,6 +9910,8 @@ export type UpdatePurchaseOrderLineInput = {
 };
 
 export type UpdatePurchaseOrderLineResponse = IdResponse;
+
+export type UpdatePurchaseOrderResponse = IdResponse;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';
@@ -10333,6 +10396,7 @@ export type UpsertPreferencesInput = {
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   useCampaigns?: InputMaybe<Scalars['Boolean']['input']>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };

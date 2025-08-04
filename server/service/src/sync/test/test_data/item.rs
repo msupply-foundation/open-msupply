@@ -216,7 +216,7 @@ const ITEM_3_VACCINE: (&str, &str) = (
     "print_units_in_dis_labels": false,
     "product_specifications": "",
     "reference_bom_quantity": 0,
-    "restricted_location_type_ID": "",
+    "restricted_location_type_ID": "84AA2B7A18694A2AB1E84DCABAD19617",
     "sms_code": "",
     "sms_pack_size": 0,
     "spare_hold_for_issue": false,
@@ -295,6 +295,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     is_active: true,
                     is_vaccine: true,
                     vaccine_doses: 1,
+                    restricted_location_type_id: Some(
+                        "84AA2B7A18694A2AB1E84DCABAD19617".to_owned(),
+                    ),
                     ..Default::default()
                 }),
                 IntegrationOperation::upsert(ItemCategoryJoinRow {

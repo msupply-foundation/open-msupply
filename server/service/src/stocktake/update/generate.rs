@@ -165,6 +165,7 @@ fn generate_stock_in_out_or_update(
             total_before_tax: None,
             tax_percentage: None,
             shipped_number_of_packs: None,
+            shipped_pack_size: None,
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
@@ -341,6 +342,7 @@ fn generate_new_stock_line(
         vvm_status_id: None,
         campaign_id: None,
         shipped_number_of_packs: None,
+        shipped_pack_size: None,
     });
 
     // If new stock line has a location, create location movement
@@ -559,6 +561,7 @@ pub fn generate(
         store_id: store_id.to_string(),
         status: InvoiceStatus::New,
         verified_datetime: Some(now),
+        program_id: stocktake.program_id.clone(),
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
@@ -582,7 +585,6 @@ pub fn generate(
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
-        program_id: None,
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,

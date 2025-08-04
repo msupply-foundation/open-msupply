@@ -22,6 +22,7 @@ pub struct LocationFilter {
     pub on_hold: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
     pub assigned_to_asset: Option<bool>,
+    pub location_type_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -113,6 +114,7 @@ impl<'a> LocationRepository<'a> {
             }
 
             apply_equal_filter!(query, filter.store_id, location::store_id);
+            apply_equal_filter!(query, filter.location_type_id, location::location_type_id);
         }
 
         query
@@ -157,6 +159,11 @@ impl LocationFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn location_type_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.location_type_id = Some(filter);
         self
     }
 }

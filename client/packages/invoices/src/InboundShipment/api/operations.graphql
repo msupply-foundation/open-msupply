@@ -8,6 +8,7 @@ fragment InboundLine on InvoiceLineNode {
   expiryDate
   numberOfPacks
   shippedNumberOfPacks
+  shippedPackSize
   packSize
   note
   type
@@ -38,6 +39,10 @@ fragment InboundLine on InvoiceLineNode {
     defaultPackSize
     isVaccine
     doses
+    restrictedLocationTypeId
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
 
   location {
