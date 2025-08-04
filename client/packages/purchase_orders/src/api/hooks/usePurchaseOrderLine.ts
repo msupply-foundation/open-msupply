@@ -1,4 +1,4 @@
-import {   useIntlUtils, useMutation, usePatchState, useQuery, useTranslation } from "@openmsupply-client/common/src";
+import {    useMutation, usePatchState, useQuery, useTranslation } from "@openmsupply-client/common/src";
 import { usePurchaseOrderGraphQL } from "../usePurchaseOrderGraphQL";
 import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from "./keys";
 import { PurchaseOrderLineFragment } from "../operations.generated";
@@ -10,13 +10,13 @@ export type DraftPurchaseOrderLine = Omit<
   itemId: string;
   requestedPackSize: number | undefined;
   requestedNumberOfUnits: number | undefined;
-  }
+}
 
-  export type DraftPurchaseOrderLineFromCSV = Omit<
-  DraftPurchaseOrderLine,
-  "id" | "itemId"> & {
-    itemCode: string;
-  }
+export type DraftPurchaseOrderLineFromCSV = Omit<
+DraftPurchaseOrderLine,
+"id" | "itemId"> & {
+  itemCode: string;
+}
 
 
 
@@ -130,7 +130,6 @@ const useCreate = () => {
 export const useLineInsertFromCSV = () => {
     const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
     const  t = useTranslation();
-    const {isLocaleKey} = useIntlUtils();
 
   const { mutateAsync } = useMutation(async (line: Partial<DraftPurchaseOrderLineFromCSV>) => {
     const result = await purchaseOrderApi.insertPurchaseOrderLineFromCSV({
@@ -146,25 +145,24 @@ export const useLineInsertFromCSV = () => {
       return result.insertPurchaseOrderLineFromCsv.id;
     } 
 
-    if (result.insertPurchaseOrderLineFromCsv.__typename === 'InsertPurchaseOrderLineError') {
-      let errorMessage = '';
       switch (result.insertPurchaseOrderLineFromCsv.error.__typename) {
         case 'PackSizeCodeCombinationExists':
-          const description = result.insertPurchaseOrderLineFromCsv.error.description;
           const itemCode = result.insertPurchaseOrderLineFromCsv.error.itemCode;
           const requestedPackSize = result.insertPurchaseOrderLineFromCsv.error.requestedPackSize;
-          errorMessage = isLocaleKey(description)
-            ? t(description, { itemCode, requestedPackSize })
-            : description;
-            break;
-            // Can add other cases with additional information as needed
+          throw new Error(
+            t('error.line-combination-error', { itemCode, requestedPackSize })
+          );
+        case 'CannnotFindItemByCode':
+          throw new Error(t('error.cannot-find-item-by-code'));
+        case 'CannotEditPurchaseOrder':
+          throw new Error(t('error.cannot-edit-purchase-order'));
+        case 'ForeignKeyError':
+          throw new Error(t('error.foreign-key-error'));
+        case 'PurchaseOrderLineWithIdExists':
+          throw new Error(t('error.purchase-order-line-already-exists'));
         default:
-          const error = result.insertPurchaseOrderLineFromCsv.error.description;
-          errorMessage = isLocaleKey(error) ? t(error) : error;
+          throw new Error(t('error.unknown-insert-error'));
       }
-      throw new Error(errorMessage);
-    }
-
   });
 
   return {

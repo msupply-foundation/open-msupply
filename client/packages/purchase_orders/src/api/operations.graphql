@@ -242,7 +242,7 @@ mutation insertPurchaseOrderLineFromCSV(
           itemCode
           requestedPackSize
         }
-        ... on PurchaseOrderLineWithItemIdExists {
+        ... on PurchaseOrderLineWithIdExists {
           __typename
           description
         }

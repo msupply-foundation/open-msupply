@@ -12,7 +12,7 @@ use service::purchase_order_line::insert::{
 };
 
 use crate::mutations::errors::{
-    CannnotFindItemByCode, PackSizeCodeCombinationExists, PurchaseOrderLineWithItemIdExists,
+    CannnotFindItemByCode, PackSizeCodeCombinationExists, PurchaseOrderLineWithIdExists,
 };
 
 #[derive(InputObject)]
@@ -45,7 +45,7 @@ impl InsertInput {
 pub enum InsertErrorInterface {
     PurchaseOrderDoesNotExist(ForeignKeyError),
     CannotEditPurchaseOrder(CannotEditPurchaseOrder),
-    PurchaseOrderLineWithItemIdExists(PurchaseOrderLineWithItemIdExists),
+    PurchaseOrderLineWithIdExists(PurchaseOrderLineWithIdExists),
     PackSizeCodeCombinationExists(PackSizeCodeCombinationExists),
     CannotFindItemByCode(CannnotFindItemByCode),
 }
@@ -113,8 +113,8 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             ));
         }
         ServiceError::PurchaseOrderLineAlreadyExists => {
-            return Ok(InsertErrorInterface::PurchaseOrderLineWithItemIdExists(
-                PurchaseOrderLineWithItemIdExists {},
+            return Ok(InsertErrorInterface::PurchaseOrderLineWithIdExists(
+                PurchaseOrderLineWithIdExists {},
             ));
         }
         ServiceError::PackSizeCodeCombinationExists(PackSizeCodeCombination {

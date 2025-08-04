@@ -320,7 +320,7 @@ export type InsertPurchaseOrderLineFromCsvMutation = {
               requestedPackSize: number;
             }
           | {
-              __typename: 'PurchaseOrderLineWithItemIdExists';
+              __typename: 'PurchaseOrderLineWithIdExists';
               description: string;
             };
       };
@@ -582,7 +582,7 @@ export const InsertPurchaseOrderLineFromCsvDocument = gql`
             itemCode
             requestedPackSize
           }
-          ... on PurchaseOrderLineWithItemIdExists {
+          ... on PurchaseOrderLineWithIdExists {
             __typename
             description
           }

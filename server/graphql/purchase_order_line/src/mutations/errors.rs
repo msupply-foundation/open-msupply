@@ -1,10 +1,10 @@
 use async_graphql::*;
 
-pub struct PurchaseOrderLineWithItemIdExists;
+pub struct PurchaseOrderLineWithIdExists;
 #[Object]
-impl PurchaseOrderLineWithItemIdExists {
+impl PurchaseOrderLineWithIdExists {
     pub async fn description(&self) -> &str {
-        "Purchase order line already exists for this item"
+        "Purchase order line already exists"
     }
 }
 

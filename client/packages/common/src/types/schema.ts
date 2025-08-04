@@ -6776,9 +6776,9 @@ export type PurchaseOrderLineSortInput = {
   key: PurchaseOrderLineSortFieldInput;
 };
 
-export type PurchaseOrderLineWithItemIdExists =
+export type PurchaseOrderLineWithIdExists =
   InsertPurchaseOrderLineErrorInterface & {
-    __typename: 'PurchaseOrderLineWithItemIdExists';
+    __typename: 'PurchaseOrderLineWithIdExists';
     description: Scalars['String']['output'];
   };
 
