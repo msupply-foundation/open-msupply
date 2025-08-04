@@ -8,7 +8,7 @@ import {
 import { ItemVariantFragment } from '../../api';
 
 interface ItemVariantSelectorColumnProps {
-  selectedId: string | null;
+  selectedId?: string | null;
   onVariantSelected: (itemVariantId: string | null) => void;
   isVaccine?: boolean;
 }

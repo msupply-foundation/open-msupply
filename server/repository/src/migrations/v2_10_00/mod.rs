@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_activity_log_volume_per_pack_changed;
 mod add_contact_table;
 mod add_goods_received_table;
 mod add_item_store_join;
@@ -42,6 +43,7 @@ impl Migration for V2_10_00 {
             Box::new(add_supplier_discount_percentage_to_purchase_order::Migrate),
             Box::new(add_stock_volume::Migrate),
             Box::new(stock_volume_sync_buffer::Migrate),
+            Box::new(add_activity_log_volume_per_pack_changed::Migrate),
             Box::new(add_more_dates_to_purchase_order::Migrate),
         ]
     }

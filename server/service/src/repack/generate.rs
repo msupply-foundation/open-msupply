@@ -121,6 +121,7 @@ fn generate_invoice_and_lines(
         sell_price_per_pack: new_stock_line.sell_price_per_pack,
         total_before_tax: new_stock_line.cost_price_per_pack * new_stock_line.total_number_of_packs,
         total_after_tax: new_stock_line.cost_price_per_pack * new_stock_line.total_number_of_packs,
+        volume_per_pack: new_stock_line.volume_per_pack,
         ..Default::default()
     };
 
@@ -135,6 +136,7 @@ fn generate_invoice_and_lines(
         sell_price_per_pack: stock_line_to_update_row.sell_price_per_pack,
         total_before_tax: stock_line_to_update_row.cost_price_per_pack * number_of_packs_input,
         total_after_tax: stock_line_to_update_row.cost_price_per_pack * number_of_packs_input,
+        volume_per_pack: stock_line_to_update_row.volume_per_pack,
         ..stock_in.clone()
     };
 
@@ -145,25 +147,32 @@ fn generate_invoice_and_lines(
 }
 
 fn generate_new_stock_lines(stock_line: &StockLineRow, input: &InsertRepack) -> StockLineJob {
+    let total_number_of_packs = stock_line.total_number_of_packs - input.number_of_packs;
+
     let stock_line_to_update = StockLineRow {
         available_number_of_packs: stock_line.available_number_of_packs - input.number_of_packs,
-        total_number_of_packs: stock_line.total_number_of_packs - input.number_of_packs,
+        total_number_of_packs,
+        total_volume: stock_line.volume_per_pack * total_number_of_packs,
         ..stock_line.clone()
     };
 
     let new_stock_line = {
         let mut new_line = stock_line.clone();
         let difference = input.new_pack_size / stock_line.pack_size;
+        let total_number_of_packs =
+            input.number_of_packs * stock_line.pack_size / input.new_pack_size;
+        let volume_per_pack = stock_line.volume_per_pack * difference;
 
         new_line.id = uuid();
         new_line.pack_size = input.new_pack_size;
         new_line.available_number_of_packs =
             input.number_of_packs * stock_line.pack_size / input.new_pack_size;
-        new_line.total_number_of_packs =
-            input.number_of_packs * stock_line.pack_size / input.new_pack_size;
+        new_line.total_number_of_packs = total_number_of_packs;
         new_line.sell_price_per_pack = stock_line.sell_price_per_pack * difference;
         new_line.cost_price_per_pack = stock_line.cost_price_per_pack * difference;
         new_line.location_id.clone_from(&input.new_location_id);
+        new_line.volume_per_pack = volume_per_pack;
+        new_line.total_volume = volume_per_pack * total_number_of_packs;
 
         new_line
     };
