@@ -12,17 +12,16 @@ import {
   Box,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
-import { isOutboundDisabled } from '../../utils';
 import { ScannedBarcode } from '../../types';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
+  disabled,
 }: {
   onAddItem: (scannedBarcode?: ScannedBarcode) => void;
+  disabled: boolean;
 }) => {
   const t = useTranslation();
-  const { data: outbound } = useOutbound.document.get();
-  const isDisabled = !!outbound && isOutboundDisabled(outbound);
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
@@ -87,7 +86,7 @@ export const AddFromScannerButtonComponent = ({
       <Box>
         <ButtonWithIcon
           ref={buttonRef}
-          disabled={isDisabled || !isConnected}
+          disabled={disabled || !isConnected}
           onClick={handleClick}
           Icon={
             isScanning ? (

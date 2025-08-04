@@ -47,7 +47,7 @@ export const AppBarButtonsComponent = ({
           disableAddFromMasterListButton={!!data?.linkedShipment}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
         />
-        <AddFromScannerButton onAddItem={onAddItem} />
+        <AddFromScannerButton onAddItem={onAddItem} disabled={isDisabled} />
         {data && (
           <>
             {plugins.inboundShipmentAppBar?.map((Plugin, index) => (
