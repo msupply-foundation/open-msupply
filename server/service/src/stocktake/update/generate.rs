@@ -161,12 +161,12 @@ fn generate_stock_in_out_or_update(
             donor_id: stock_line_row.donor_link_id,
             vvm_status_id: stock_line_row.vvm_status_id,
             campaign_id: stock_line_row.campaign_id,
+            volume_per_pack: Some(stock_line_row.volume_per_pack),
             // Default
             total_before_tax: None,
             tax_percentage: None,
             shipped_number_of_packs: None,
             shipped_pack_size: None,
-            volume_per_pack: None,
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
@@ -335,6 +335,7 @@ fn generate_new_stock_line(
         note: row.note,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
         donor_id: stocktake_line.line.donor_link_id.clone(),
+        volume_per_pack: Some(stocktake_line.line.volume_per_pack),
         // Default
         stock_on_hold: false,
         barcode: None,
@@ -344,7 +345,6 @@ fn generate_new_stock_line(
         campaign_id: None,
         shipped_number_of_packs: None,
         shipped_pack_size: None,
-        volume_per_pack: None,
     });
 
     // If new stock line has a location, create location movement
