@@ -139,7 +139,7 @@ impl StockMovementFilter {
 #[cfg(test)]
 mod test {
     use chrono::NaiveDate;
-    use util::{inline_edit, inline_init, uuid::uuid};
+    use util::{inline_init, uuid::uuid};
 
     use crate::{
         mock::{mock_item_a, mock_name_a, MockData, MockDataInserts},
@@ -191,7 +191,7 @@ mod test {
                 r.names = vec![name()];
                 r.stores = vec![store()];
             })
-            .join(inline_edit(&stock_movement_point(), |mut u| {
+            .join(inline_init(|mut u| {
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 11, 2)
                         .unwrap()
@@ -201,14 +201,14 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
             }))
-            .join(inline_edit(&stock_movement_point(), |mut u| {
+            .join(inline_init(|mut u| {
                 // Should not be counted
                 u.invoices[0].picked_datetime = None;
                 u.invoice_lines[0].pack_size = 10.0;
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u
             }))
-            .join(inline_edit(&stock_movement_point(), |mut u| {
+            .join(inline_init(|mut u| {
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 11, 3)
                         .unwrap()
@@ -219,7 +219,7 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u
             }))
-            .join(inline_edit(&stock_movement_point(), |mut u| {
+            .join(inline_init(|mut u| {
                 u.invoices[0].r#type = InvoiceType::InboundShipment;
                 u.invoices[0].received_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 12, 15)
@@ -231,7 +231,7 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 15.0;
                 u
             }))
-            .join(inline_edit(&stock_movement_point(), |mut u| {
+            .join(inline_init(|mut u| {
                 u.invoices[0].r#type = InvoiceType::InboundShipment;
                 // Should not be counted
                 u.invoices[0].received_datetime = None;
@@ -239,7 +239,7 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
             }))
-            .join(inline_edit(&stock_movement_point(), |mut u| {
+            .join(inline_init(|mut u| {
                 u.invoices[0].r#type = InvoiceType::InventoryAddition;
                 u.invoices[0].verified_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 20)
@@ -251,7 +251,7 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 60.0;
                 u
             }))
-            .join(inline_edit(&stock_movement_point(), |mut u| {
+            .join(inline_init(|mut u| {
                 u.invoices[0].r#type = InvoiceType::InventoryReduction;
                 u.invoices[0].verified_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 2, 1)
@@ -263,7 +263,7 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 50.0;
                 u
             }))
-            .join(inline_edit(&stock_movement_point(), |mut u| {
+            .join(inline_init(|mut u| {
                 u.invoices[0].r#type = InvoiceType::InventoryReduction;
                 // Should not be counted
                 u.invoices[0].verified_datetime = None;

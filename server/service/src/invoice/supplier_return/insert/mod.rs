@@ -157,7 +157,7 @@ mod test {
         InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, NameRow, NameStoreJoinRow,
         ReasonOptionRow, ReasonOptionType,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{
         invoice::supplier_return::insert::{
@@ -429,16 +429,14 @@ mod test {
             .unwrap();
 
         assert_eq!(invoice.id, "new_supplier_return_id");
-        assert_eq!(
-            invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_link_id = supplier().id;
-                u.user_id = Some(mock_user_account_a().id);
-                u.original_shipment_id = Some(mock_inbound_shipment_a().id);
-                u.status = InvoiceStatus::Shipped;
-                u
-            })
-        );
+        assert_eq!(invoice, {
+            let mut u = invoice.clone();
+            u.name_link_id = supplier().id;
+            u.user_id = Some(mock_user_account_a().id);
+            u.original_shipment_id = Some(mock_inbound_shipment_a().id);
+            u.status = InvoiceStatus::Shipped;
+            u
+        });
 
         let lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id("new_supplier_return_id")
@@ -446,16 +444,14 @@ mod test {
 
         // line with number_of_packs == 0.0 should not be inserted
         assert_eq!(lines.len(), 1);
-        assert_eq!(
-            lines[0],
-            inline_edit(&lines[0], |mut u| {
-                u.invoice_id = "new_supplier_return_id".to_string();
-                u.id = "new_supplier_return_line_id".to_string();
-                u.stock_line_id = Some(mock_stock_line_b().id);
-                u.number_of_packs = 1.0;
-                u
-            })
-        );
+        assert_eq!(lines[0], {
+            let mut u = lines[0].clone();
+            u.invoice_id = "new_supplier_return_id".to_string();
+            u.id = "new_supplier_return_line_id".to_string();
+            u.stock_line_id = Some(mock_stock_line_b().id);
+            u.number_of_packs = 1.0;
+            u
+        });
 
         // Check new return without original shipment gets created with status of 'New'
         service_provider
@@ -476,14 +472,12 @@ mod test {
             .unwrap();
 
         assert_eq!(invoice.id, "new_supplier_return_id_2");
-        assert_eq!(
-            invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_link_id = supplier().id;
-                u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceStatus::New;
-                u
-            })
-        );
+        assert_eq!(invoice, {
+            let mut u = invoice.clone();
+            u.name_link_id = supplier().id;
+            u.user_id = Some(mock_user_account_a().id);
+            u.status = InvoiceStatus::New;
+            u
+        });
     }
 }

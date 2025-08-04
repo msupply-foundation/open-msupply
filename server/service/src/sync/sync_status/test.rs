@@ -6,12 +6,11 @@ use actix_web::{
     App, HttpServer, Responder,
 };
 use chrono::{NaiveDateTime, Utc};
-use repository::{
-    mock::{insert_extra_mock_data, mock_store_b, MockData, MockDataInserts},
-    ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
+use repository::mock::{
+    insert_extra_mock_data, ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
 };
 use tokio::sync::Mutex;
-use util::{inline_edit, inline_init};
+use util::inline_init;
 
 use crate::{
     service_provider::ServiceProvider,
@@ -178,13 +177,13 @@ fn get_initialisation_sync_status_tester(
                  now,
                  ..
              }| {
-                let new_status = inline_edit(&previous_status, |mut r| {
-                    r.is_syncing = true;
-                    r.summary = current_status.summary.clone();
-                    r.prepare_initial
-                        .clone_from(&current_status.prepare_initial);
-                    r
-                });
+                let mut new_status = previous_status.clone();
+                new_status.is_syncing = true;
+                new_status.summary = current_status.summary.clone();
+                new_status
+                    .prepare_initial
+                    .clone_from(&current_status.prepare_initial);
+
                 assert_eq!(current_status, new_status);
                 assert!(current_status.summary.started < now);
                 let prepare_initial = current_status.prepare_initial.unwrap();
@@ -208,17 +207,19 @@ fn get_initialisation_sync_status_tester(
                  iteration,
                  ..
              }| {
-                let new_status = inline_edit(&previous_status, |mut r| {
-                    if iteration == 0 {
-                        r.prepare_initial
-                            .clone_from(&current_status.prepare_initial)
-                    }
-                    // Even though push is not done start and end is logged
-                    r.push.clone_from(&current_status.push);
-                    r.push_v6.clone_from(&current_status.push_v6);
-                    r.pull_central.clone_from(&current_status.pull_central);
-                    r
-                });
+                let mut new_status = previous_status.clone();
+                if iteration == 0 {
+                    new_status
+                        .prepare_initial
+                        .clone_from(&current_status.prepare_initial)
+                }
+                // Even though push is not done start and end is logged
+                new_status.push.clone_from(&current_status.push);
+                new_status.push_v6.clone_from(&current_status.push_v6);
+                new_status
+                    .pull_central
+                    .clone_from(&current_status.pull_central);
+
                 assert_eq!(current_status, new_status);
 
                 let mut response_record = CentralSyncBatchV5 {
@@ -283,13 +284,16 @@ fn get_initialisation_sync_status_tester(
                  iteration,
                  ..
              }| {
-                let new_status = inline_edit(&previous_status, |mut r| {
-                    if iteration == 0 {
-                        r.pull_central.clone_from(&current_status.pull_central)
-                    }
-                    r.pull_remote.clone_from(&current_status.pull_remote);
-                    r
-                });
+                let mut new_status = previous_status.clone();
+                if iteration == 0 {
+                    new_status
+                        .pull_central
+                        .clone_from(&current_status.pull_central)
+                }
+                new_status
+                    .pull_remote
+                    .clone_from(&current_status.pull_remote);
+
                 assert_eq!(current_status, new_status);
 
                 let mut response_record = RemoteSyncBatchV5 {
@@ -373,16 +377,18 @@ fn get_initialisation_sync_status_tester(
                  now,
                  ..
              }| {
-                let new_status = inline_edit(&previous_status, |mut r| {
-                    r.is_syncing = false;
-                    r.summary = current_status.summary.clone();
-                    r.pull_remote.clone_from(&current_status.pull_remote);
-                    r.integration.clone_from(&current_status.integration);
-                    // TODO update with proper v6 tests
-                    r.pull_v6.clone_from(&current_status.pull_v6);
-                    r.push_v6.clone_from(&current_status.push_v6);
-                    r
-                });
+                let mut new_status = previous_status.clone();
+                new_status.is_syncing = false;
+                new_status.summary = current_status.summary.clone();
+                new_status
+                    .pull_remote
+                    .clone_from(&current_status.pull_remote);
+                new_status
+                    .integration
+                    .clone_from(&current_status.integration);
+                // TODO update with proper v6 tests
+                new_status.pull_v6.clone_from(&current_status.pull_v6);
+                new_status.push_v6.clone_from(&current_status.push_v6);
 
                 assert_eq!(current_status, new_status);
 
@@ -430,18 +436,18 @@ fn get_push_and_error_sync_status_tester(
                  iteration,
                  ..
              }| {
-                let new_status = inline_edit(&previous_status, |mut r| {
-                    if iteration == 0 {
-                        r.is_syncing = true;
-                        r.summary = current_status.summary.clone();
-                    }
-                    // Even though prepare_initial is not run, it is logged
-                    r.prepare_initial
-                        .clone_from(&current_status.prepare_initial);
-                    r.push.clone_from(&current_status.push);
-                    r.push_v6.clone_from(&current_status.push_v6);
-                    r
-                });
+                let mut new_status = previous_status.clone();
+                if iteration == 0 {
+                    new_status.is_syncing = true;
+                    new_status.summary = current_status.summary.clone();
+                }
+                // Even though prepare_initial is not run, it is logged
+                new_status
+                    .prepare_initial
+                    .clone_from(&current_status.prepare_initial);
+                new_status.push.clone_from(&current_status.push);
+                new_status.push_v6.clone_from(&current_status.push_v6);
+
                 assert_eq!(current_status, new_status);
                 let push_status = current_status.push.unwrap();
 
@@ -521,14 +527,15 @@ fn get_push_and_error_sync_status_tester(
                  now,
                  ..
              }| {
-                let new_status = inline_edit(&previous_status, |mut r| {
-                    r.push.clone_from(&current_status.push);
-                    r.push_v6.clone_from(&current_status.push_v6);
-                    r.pull_central.clone_from(&current_status.pull_central);
-                    r.pull_v6.clone_from(&current_status.pull_v6);
-                    r.summary.duration_in_seconds = current_status.summary.duration_in_seconds;
-                    r
-                });
+                let mut new_status = previous_status.clone();
+                new_status.push.clone_from(&current_status.push);
+                new_status.push_v6.clone_from(&current_status.push_v6);
+                new_status
+                    .pull_central
+                    .clone_from(&current_status.pull_central);
+                new_status.pull_v6.clone_from(&current_status.pull_v6);
+                new_status.summary.duration_in_seconds = current_status.summary.duration_in_seconds;
+
                 assert_eq!(current_status, new_status);
 
                 let push_status = current_status.push.unwrap();
@@ -547,11 +554,10 @@ fn get_push_and_error_sync_status_tester(
                  current_status,
                  ..
              }| {
-                let new_status = inline_edit(&previous_status, |mut r| {
-                    r.is_syncing = false;
-                    r.error.clone_from(&current_status.error);
-                    r
-                });
+                let mut new_status = previous_status.clone();
+                new_status.is_syncing = false;
+                new_status.error.clone_from(&current_status.error);
+
                 assert_eq!(current_status, new_status);
                 util::assert_matches!(current_status.error, Some(SyncLogError { .. }));
 

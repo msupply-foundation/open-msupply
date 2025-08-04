@@ -90,9 +90,9 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow, NameRowType, NameStoreJoinRow,
+        InvoiceRow, InvoiceRowRepository, NameRow, NameRowType, NameStoreJoinRow,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{invoice::prescription::InsertPrescription, service_provider::ServiceProvider};
 
@@ -215,11 +215,11 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_link_id = patient().id;
-                u.user_id = Some(mock_user_account_a().id);
-                u
-            })
+            InvoiceRow {
+                name_link_id: patient().id,
+                user_id: Some(mock_user_account_a().id),
+                ..invoice.clone()
+            }
         );
     }
 }

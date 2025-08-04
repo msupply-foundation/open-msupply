@@ -94,7 +94,7 @@ mod test {
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, NameRow, NameStoreJoinRow,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{
         invoice::supplier_return::update_other_party::UpdateSupplierReturnOtherParty,
@@ -129,10 +129,9 @@ mod test {
         }
 
         fn return_not_editable() -> InvoiceRow {
-            inline_edit(&mock_supplier_return_a(), |mut r| {
-                r.status = InvoiceStatus::Shipped;
-                r
-            })
+            let mut r = mock_supplier_return_a().clone();
+            r.status = InvoiceStatus::Shipped;
+            r
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
@@ -335,16 +334,18 @@ mod test {
         assert_eq!(
             updated_lines,
             vec![
-                inline_edit(&invoice_line_a(), |mut l| {
-                    l.id.clone_from(&updated_lines[0].id);
-                    l.invoice_id.clone_from(&updated_invoice.invoice_row.id);
+                {
+                    let mut l = invoice_line_a().clone();
+                    l.id = updated_lines[0].id.clone();
+                    l.invoice_id = updated_invoice.invoice_row.id.clone();
                     l
-                }),
-                inline_edit(&invoice_line_b(), |mut l| {
-                    l.id.clone_from(&updated_lines[1].id);
-                    l.invoice_id.clone_from(&updated_invoice.invoice_row.id);
+                },
+                {
+                    let mut l = invoice_line_b().clone();
+                    l.id = updated_lines[1].id.clone();
+                    l.invoice_id = updated_invoice.invoice_row.id.clone();
                     l
-                })
+                }
             ]
         );
     }

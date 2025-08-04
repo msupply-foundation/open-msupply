@@ -193,7 +193,7 @@ mod test {
         StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
         StocktakeRow, StocktakeStatus,
     };
-    use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, inline_init};
+    use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
     use crate::{
         service_provider::ServiceProvider,

@@ -223,7 +223,7 @@ fn create_filtered_query(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQue
 
 #[cfg(test)]
 mod test {
-    use util::{inline_edit, inline_init, Defaults};
+    use util::{inline_init, Defaults};
 
     use crate::{
         mock::{MockData, MockDataInserts},
@@ -294,10 +294,8 @@ mod test {
             vec![row_b()]
         );
         // Test upsert overwrites integration_datetime
-        let new_a = inline_edit(&row_a(), |mut r| {
-            r.integration_datetime = None;
-            r
-        });
+        let mut new_a = row_a().clone();
+        new_a.integration_datetime = None;
 
         SyncBufferRowRepository::new(&connection)
             .upsert_one(&new_a)

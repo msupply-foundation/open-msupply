@@ -5,13 +5,10 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use repository::{GenderType, NameRow, NameStoreJoinRow, NameRowType, StoreMode, StoreRow};
+use repository::{GenderType, NameRow, NameRowType, NameStoreJoinRow, StoreMode, StoreRow};
 
 use serde_json::json;
-use util::{
-    inline_edit, inline_init,
-    uuid::{small_uuid, uuid},
-};
+use util::inline_init;
 
 pub(crate) struct PatientNameAndStoreAndNameStoreJoinTester;
 
@@ -102,12 +99,10 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         });
 
         // STEP 2 - update patient name
-        let patient_row = inline_edit(&patient_name_row, |mut p| {
-            p.first_name = Some("Rebeus".to_string());
-            p.last_name = Some("Hagrid".to_string());
-            p.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 09, 21).unwrap());
-            p
-        });
+        let mut patient_row = patient_name_row.clone();
+        patient_row.first_name = Some("Rebeus".to_string());
+        patient_row.last_name = Some("Hagrid".to_string());
+        patient_row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 09, 21).unwrap());
 
         result.push(TestStepData {
             integration_records: vec![IntegrationOperation::upsert(patient_row)],

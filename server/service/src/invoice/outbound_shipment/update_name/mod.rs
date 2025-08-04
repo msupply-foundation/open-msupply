@@ -95,7 +95,7 @@ mod test {
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, NameRow, NameStoreJoinRow,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{
         invoice::outbound_shipment::update_name::UpdateOutboundShipmentName,
@@ -326,16 +326,16 @@ mod test {
         assert_eq!(
             updated_lines,
             vec![
-                inline_edit(&invoice_line_a(), |mut l| {
-                    l.id.clone_from(&updated_lines[0].id);
-                    l.invoice_id.clone_from(&updated_invoice.invoice_row.id);
-                    l
-                }),
-                inline_edit(&invoice_line_b(), |mut l| {
-                    l.id.clone_from(&updated_lines[1].id);
-                    l.invoice_id.clone_from(&updated_invoice.invoice_row.id);
-                    l
-                })
+                InvoiceLineRow {
+                    id: updated_lines[0].id.clone(),
+                    invoice_id: updated_invoice.invoice_row.id.clone(),
+                    ..invoice_line_a()
+                },
+                InvoiceLineRow {
+                    id: updated_lines[1].id.clone(),
+                    invoice_id: updated_invoice.invoice_row.id.clone(),
+                    ..invoice_line_b()
+                }
             ]
         );
     }

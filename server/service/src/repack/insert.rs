@@ -102,7 +102,7 @@ mod test {
         InvoiceLineRow, InvoiceLineType, InvoiceRowRepository, LocationMovementRow,
         StockLineFilter, StockLineRepository, StockLineRow, StorageConnection,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use super::{InsertRepack, InsertRepackError};
     type ServiceError = InsertRepackError;

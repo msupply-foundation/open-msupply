@@ -8,7 +8,7 @@ mod test {
         test_db::setup_all,
         StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{service_provider::ServiceProvider, stock_line::UpdateStockLine, NullableUpdate};
 

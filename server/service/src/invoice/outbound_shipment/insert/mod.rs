@@ -95,9 +95,9 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow, NameStoreJoinRow,
+        InvoiceRow, InvoiceRowRepository, NameRow, NameStoreJoinRow,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{
         invoice::outbound_shipment::insert::InsertOutboundShipment,
@@ -245,12 +245,12 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_link_id = customer().id;
-                u.user_id = Some(mock_user_account_a().id);
-                u.currency_id = Some(currency_a().id);
-                u
-            })
+            InvoiceRow {
+                name_link_id: customer().id,
+                user_id: Some(mock_user_account_a().id),
+                currency_id: Some(currency_a().id),
+                ..invoice.clone()
+            }
         );
 
         //Test success onHold
@@ -272,11 +272,11 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_link_id = customer().id;
-                u.on_hold = true;
-                u
-            })
+            InvoiceRow {
+                name_link_id: customer().id,
+                on_hold: true,
+                ..invoice.clone()
+            }
         );
 
         //Test success name_store_id linked to store
@@ -298,10 +298,10 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_store_id = Some(mock_store_linked_to_name().id.clone());
-                u
-            })
+            InvoiceRow {
+                name_store_id: Some(mock_store_linked_to_name().id.clone()),
+                ..invoice.clone()
+            }
         );
 
         //Test success name_store_id, not linked to store

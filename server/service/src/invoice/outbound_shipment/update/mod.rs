@@ -181,7 +181,7 @@ mod test {
         InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow,
         NameStoreJoinRow, StockLineRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{
         invoice::outbound_shipment::update::{
@@ -459,7 +459,7 @@ mod test {
 
         assert_eq!(
             updated_record,
-            inline_edit(&invoice(), |mut u| {
+            {
                 let UpdateOutboundShipment {
                     id: _,
                     status: _,
@@ -473,15 +473,17 @@ mod test {
                     currency_rate: _,
                     expected_delivery_date,
                 } = get_update();
-                u.on_hold = on_hold.unwrap();
-                u.comment = comment;
-                u.their_reference = their_reference;
-                u.colour = colour;
-                u.transport_reference = transport_reference;
-                u.tax_percentage = tax.map(|tax| tax.percentage.unwrap());
-                u.expected_delivery_date = expected_delivery_date.and_then(|v| v.value);
-                u
-            })
+                InvoiceRow {
+                    on_hold: on_hold.unwrap(),
+                    comment,
+                    their_reference,
+                    colour,
+                    transport_reference,
+                    tax_percentage: tax.map(|tax| tax.percentage.unwrap()),
+                    expected_delivery_date: expected_delivery_date.and_then(|v| v.value),
+                    ..invoice()
+                }
+            }
         );
 
         // helpers to compare totals
@@ -618,10 +620,10 @@ mod test {
         let stock_line_repo = StockLineRowRepository::new(&connection);
 
         // Stock line total_number_of_packs should have been reduced
-        let new_stock_line = inline_edit(&stock_line(), |mut u| {
-            u.total_number_of_packs = 8.0;
-            u
-        });
+        let new_stock_line = StockLineRow {
+            total_number_of_packs: 8.0,
+            ..stock_line()
+        };
         assert_eq!(
             stock_line_repo
                 .find_one_by_id(&new_stock_line.id)
@@ -716,10 +718,10 @@ mod test {
                 .find_one_by_id(&stock_line().id)
                 .unwrap()
                 .unwrap(),
-            inline_edit(&stock_line(), |mut u| {
-                u.total_number_of_packs = 8.0;
-                u
-            })
+            StockLineRow {
+                total_number_of_packs: 8.0,
+                ..stock_line()
+            }
         );
     }
 }

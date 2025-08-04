@@ -204,7 +204,7 @@ mod test {
         InvoiceRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
         StockLineRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{
         invoice::prescription::{UpdatePrescription, UpdatePrescriptionStatus},
@@ -410,31 +410,30 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            updated_record,
-            inline_edit(&prescription(), |mut u| {
-                let UpdatePrescription {
-                    id: _,
-                    status: _,
-                    patient_id,
-                    clinician_id,
-                    comment,
-                    colour,
-                    backdated_datetime: _,
-                    diagnosis_id: _,
-                    program_id: _,
-                    their_reference: _,
-                    name_insurance_join_id: _,
-                    insurance_discount_amount: _,
-                    insurance_discount_percentage: _,
-                } = get_update();
-                u.name_link_id = patient_id.unwrap();
-                u.clinician_link_id = clinician_id.unwrap().value;
-                u.comment = comment;
-                u.colour = colour;
-                u
-            })
-        );
+        assert_eq!(updated_record, {
+            let UpdatePrescription {
+                id: _,
+                status: _,
+                patient_id,
+                clinician_id,
+                comment,
+                colour,
+                backdated_datetime: _,
+                diagnosis_id: _,
+                program_id: _,
+                their_reference: _,
+                name_insurance_join_id: _,
+                insurance_discount_amount: _,
+                insurance_discount_percentage: _,
+            } = get_update();
+            InvoiceRow {
+                name_link_id: patient_id.unwrap(),
+                clinician_link_id: clinician_id.unwrap().value,
+                comment,
+                colour,
+                ..prescription()
+            }
+        });
 
         // add a an invoice line to the prescription
         let invoice_line_row_repo = InvoiceLineRowRepository::new(&connection);

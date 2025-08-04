@@ -8,7 +8,7 @@ use chrono::NaiveDate;
 use rand::{thread_rng, Rng};
 use repository::*;
 use serde_json::json;
-use util::{inline_edit, inline_init, uuid::uuid};
+use util::{inline_init, uuid::uuid};
 
 fn gen_f64() -> f64 {
     format!("{:.6}", thread_rng().gen::<f64>()).parse().unwrap()
@@ -111,37 +111,33 @@ impl SyncRecordTester for StocktakeRecordTester {
             r.store_id = store_id.clone();
         });
 
-        let stocktake_row = inline_edit(&stocktake_row, |mut d| {
-            d.user_id = "test user 2".to_string();
-            d.comment = Some("comment sync test".to_string());
-            d.description = Some("description sync test".to_string());
-            d.status = StocktakeStatus::Finalised;
-            d.stocktake_date = NaiveDate::from_ymd_opt(2022, 03, 23);
-            d.finalised_datetime = NaiveDate::from_ymd_opt(2022, 03, 24)
-                .unwrap()
-                .and_hms_opt(8, 15, 30);
-            // Not testing that logically invoices are correct inventory adjustments just testing they sync correctly
-            d.inventory_addition_id = Some(invoice_row.id.clone());
-            d.inventory_reduction_id = Some(invoice_row.id.clone());
-            d.is_locked = true;
-            d
-        });
+        let mut stocktake_row = stocktake_row.clone();
+        stocktake_row.user_id = "test user 2".to_string();
+        stocktake_row.comment = Some("comment sync test".to_string());
+        stocktake_row.description = Some("description sync test".to_string());
+        stocktake_row.status = StocktakeStatus::Finalised;
+        stocktake_row.stocktake_date = NaiveDate::from_ymd_opt(2022, 03, 23);
+        stocktake_row.finalised_datetime = NaiveDate::from_ymd_opt(2022, 03, 24)
+            .unwrap()
+            .and_hms_opt(8, 15, 30);
+        // Not testing that logically invoices are correct inventory adjustments just testing they sync correctly
+        stocktake_row.inventory_addition_id = Some(invoice_row.id.clone());
+        stocktake_row.inventory_reduction_id = Some(invoice_row.id.clone());
+        stocktake_row.is_locked = true;
 
-        let stocktake_line_row = inline_edit(&stocktake_line_row, |mut d| {
-            d.comment = Some("stocktake line comment".to_string());
-            d.location_id = None;
-            d.snapshot_number_of_packs = 110.12;
-            d.counted_number_of_packs = Some(90.3219);
-            d.item_link_id = stock_line_row.item_link_id.clone();
-            d.stock_line_id = Some(stock_line_row.id.clone());
-            d.batch = Some(uuid());
-            d.expiry_date = NaiveDate::from_ymd_opt(2025, 03, 24);
-            d.pack_size = Some(2.25);
-            d.cost_price_per_pack = Some(gen_f64());
-            d.sell_price_per_pack = Some(gen_f64());
-            d.note = Some("stock_line.note".to_string());
-            d
-        });
+        let mut stocktake_line_row = stocktake_line_row.clone();
+        stocktake_line_row.comment = Some("stocktake line comment".to_string());
+        stocktake_line_row.location_id = None;
+        stocktake_line_row.snapshot_number_of_packs = 110.12;
+        stocktake_line_row.counted_number_of_packs = Some(90.3219);
+        stocktake_line_row.item_link_id = stock_line_row.item_link_id.clone();
+        stocktake_line_row.stock_line_id = Some(stock_line_row.id.clone());
+        stocktake_line_row.batch = Some(uuid());
+        stocktake_line_row.expiry_date = NaiveDate::from_ymd_opt(2025, 03, 24);
+        stocktake_line_row.pack_size = Some(2.25);
+        stocktake_line_row.cost_price_per_pack = Some(gen_f64());
+        stocktake_line_row.sell_price_per_pack = Some(gen_f64());
+        stocktake_line_row.note = Some("stock_line.note".to_string());
 
         result.push(TestStepData {
             central_upsert: json!({"item": [{

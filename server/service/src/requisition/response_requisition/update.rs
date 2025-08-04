@@ -18,7 +18,6 @@ use repository::{
     Requisition, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
     RequisitionRowRepository, StorageConnection,
 };
-use util::inline_edit;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum UpdateResponseRequisitionStatus {
@@ -176,24 +175,23 @@ pub fn generate(
         their_reference: update_their_reference,
     }: UpdateResponseRequisition,
 ) -> RequisitionRow {
-    inline_edit(&existing, |mut r| {
-        r.user_id = Some(user_id.to_string());
-        r.status = if update_status.is_some() {
+    RequisitionRow {
+        user_id: Some(user_id.to_string()),
+        status: if update_status.is_some() {
             RequisitionStatus::Finalised
         } else {
-            r.status
-        };
-
-        r.finalised_datetime = if update_status.is_some() {
+            existing.status
+        },
+        finalised_datetime: if update_status.is_some() {
             Some(Utc::now().naive_utc())
         } else {
-            r.finalised_datetime
-        };
-        r.colour = update_colour.or(r.colour);
-        r.comment = update_comment.or(r.comment);
-        r.their_reference = update_their_reference.or(r.their_reference);
-        r
-    })
+            existing.finalised_datetime
+        },
+        colour: update_colour.or(existing.colour),
+        comment: update_comment.or(existing.comment),
+        their_reference: update_their_reference.or(existing.their_reference),
+        ..existing
+    }
 }
 
 impl From<RepositoryError> for UpdateResponseRequisitionError {

@@ -1,6 +1,6 @@
 use repository::{mock::MockData, NameRow, NameStoreJoinRow, StoreRow, SyncBufferRow};
 use serde_json::json;
-use util::{inline_edit, inline_init};
+use util::inline_init;
 
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
@@ -163,16 +163,18 @@ pub fn name_store_join3() -> NameStoreJoinRow {
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord {
         translated_record: PullTranslateResult::upserts(vec![
-            inline_edit(&name_store_join1(), |mut r| {
+            {
+                let mut r = name_store_join1().clone();
                 r.name_is_customer = true;
                 r.name_is_supplier = false;
                 r
-            }),
-            inline_edit(&name_store_join2(), |mut r| {
+            },
+            {
+                let mut r = name_store_join2().clone();
                 r.name_is_customer = true;
                 r.name_is_supplier = false;
                 r
-            }),
+            },
         ]),
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
             r.table_name = "name".to_string();

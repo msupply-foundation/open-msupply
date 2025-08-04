@@ -3,7 +3,7 @@ use repository::{
     DatetimeFilter, EqualFilter, RepositoryError, StorageConnection, SyncAction, SyncBufferFilter,
     SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository,
 };
-use util::inline_edit;
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SyncBufferSource {
@@ -28,11 +28,11 @@ impl<'a> SyncBuffer<'a> {
         &self,
         row: &SyncBufferRow,
     ) -> Result<(), RepositoryError> {
-        self.row_repository.upsert_one(&inline_edit(row, |mut r| {
-            r.integration_datetime = Some(Utc::now().naive_utc());
-            r.integration_error = None;
-            r
-        }))
+        self.row_repository.upsert_one(&SyncBufferRow {
+            integration_datetime: Some(Utc::now().naive_utc()),
+            integration_error: None,
+            ..row.clone()
+        })
     }
 
     pub(crate) fn record_integration_error(
@@ -40,11 +40,11 @@ impl<'a> SyncBuffer<'a> {
         row: &SyncBufferRow,
         error: &anyhow::Error,
     ) -> Result<(), RepositoryError> {
-        self.row_repository.upsert_one(&inline_edit(row, |mut r| {
-            r.integration_datetime = Some(Utc::now().naive_utc());
-            r.integration_error = Some(format!("{:?}", &error));
-            r
-        }))
+        self.row_repository.upsert_one(&SyncBufferRow {
+            integration_datetime: Some(Utc::now().naive_utc()),
+            integration_error: Some(format!("{:?}", &error)),
+            ..row.clone()
+        })
     }
 
     pub(crate) fn get_ordered_sync_buffer_records(

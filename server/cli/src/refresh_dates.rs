@@ -398,7 +398,7 @@ mod tests {
         test_db::setup_all_with_data,
         InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use super::*;
 
@@ -644,51 +644,45 @@ mod tests {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            invoice1_result,
-            inline_edit(&invoice1_result, |mut u| {
-                u.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 11)
-                    .unwrap()
-                    .and_hms_opt(00, 00, 00)
-                    .unwrap();
-                u
-            })
-        );
+        assert_eq!(invoice1_result, {
+            let mut u = invoice1_result.clone();
+            u.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 11)
+                .unwrap()
+                .and_hms_opt(00, 00, 00)
+                .unwrap();
+            u
+        });
 
         let invoice2_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice2().id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            invoice2_result,
-            inline_edit(&invoice2_result, |mut u| {
-                u.created_datetime = NaiveDate::from_ymd_opt(2021, 2, 11)
+        assert_eq!(invoice2_result, {
+            let mut u = invoice2_result.clone();
+            u.created_datetime = NaiveDate::from_ymd_opt(2021, 2, 11)
+                .unwrap()
+                .and_hms_opt(00, 00, 00)
+                .unwrap();
+            u.shipped_datetime = Some(
+                NaiveDate::from_ymd_opt(2021, 1, 11)
                     .unwrap()
                     .and_hms_opt(00, 00, 00)
-                    .unwrap();
-                u.shipped_datetime = Some(
-                    NaiveDate::from_ymd_opt(2021, 1, 11)
-                        .unwrap()
-                        .and_hms_opt(00, 00, 00)
-                        .unwrap(),
-                );
-                u
-            })
-        );
+                    .unwrap(),
+            );
+            u
+        });
 
         let stock_line1_result = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line1().id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            stock_line1_result,
-            inline_edit(&stock_line1_result, |mut u| {
-                u.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 2, 11).unwrap());
-                u
-            })
-        );
+        assert_eq!(stock_line1_result, {
+            let mut u = stock_line1_result.clone();
+            u.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 2, 11).unwrap());
+            u
+        });
     }
 
     #[derive(QueryableByName, Debug, PartialEq)]

@@ -231,7 +231,7 @@ mod test {
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, NameRow, NameStoreJoinRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     use crate::{
         invoice::inbound_shipment::{
@@ -485,11 +485,11 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_link_id = supplier().id;
-                u.user_id = Some(mock_user_account_a().id);
-                u
-            })
+            InvoiceRow {
+                name_link_id: supplier().id,
+                user_id: Some(mock_user_account_a().id),
+                ..invoice.clone()
+            }
         );
 
         // Success with tax change (no stock lines saved)
@@ -512,11 +512,11 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.tax_percentage = Some(0.0);
-                u.user_id = Some(mock_user_account_a().id);
-                u
-            })
+            InvoiceRow {
+                tax_percentage: Some(0.0),
+                user_id: Some(mock_user_account_a().id),
+                ..invoice.clone()
+            }
         );
 
         let filter =
@@ -555,12 +555,12 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.tax_percentage = Some(10.0);
-                u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceStatus::Delivered;
-                u
-            })
+            InvoiceRow {
+                tax_percentage: Some(10.0),
+                user_id: Some(mock_user_account_a().id),
+                status: InvoiceStatus::Delivered,
+                ..invoice.clone()
+            }
         );
 
         let filter =
@@ -612,12 +612,12 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.tax_percentage = Some(10.0);
-                u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceStatus::Received;
-                u
-            })
+            InvoiceRow {
+                tax_percentage: Some(10.0),
+                user_id: Some(mock_user_account_a().id),
+                status: InvoiceStatus::Received,
+                ..invoice.clone()
+            }
         );
 
         let filter =
@@ -725,12 +725,12 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.currency_id = Some("currency_a".to_string());
-                u.currency_rate = 1.0;
-                u.user_id = Some(mock_user_account_a().id);
-                u
-            })
+            InvoiceRow {
+                currency_id: Some("currency_a".to_string()),
+                currency_rate: 1.0,
+                user_id: Some(mock_user_account_a().id),
+                ..invoice.clone()
+            }
         );
 
         let filter =
@@ -780,13 +780,13 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.currency_id = Some("currency_a".to_string());
-                u.currency_rate = 1.0;
-                u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceStatus::Received;
-                u
-            })
+            InvoiceRow {
+                currency_id: Some("currency_a".to_string()),
+                currency_rate: 1.0,
+                user_id: Some(mock_user_account_a().id),
+                status: InvoiceStatus::Received,
+                ..invoice.clone()
+            }
         );
 
         let filter =
@@ -972,10 +972,10 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_store_id = Some(mock_store_linked_to_name().id.clone());
-                u
-            })
+            InvoiceRow {
+                name_store_id: Some(mock_store_linked_to_name().id.clone()),
+                ..invoice.clone()
+            }
         );
 
         //Test success name_store_id, not linked to store
@@ -1039,11 +1039,11 @@ mod test {
         assert!(invoice.verified_datetime.unwrap() < end_time);
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.status = InvoiceStatus::Verified;
-                u.on_hold = true;
-                u
-            })
+            InvoiceRow {
+                status: InvoiceStatus::Verified,
+                on_hold: true,
+                ..invoice.clone()
+            }
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
         assert_eq!(Some(invoice.name_link_id), stock_line.supplier_link_id);

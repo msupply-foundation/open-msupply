@@ -6,7 +6,7 @@ use repository::{
     RepositoryError, StockLineRow, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StocktakeRow, StocktakeStatus, StorageConnection,
 };
-use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
+use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, uuid::uuid};
 
 use crate::{
     activity_log::activity_log_entry,
@@ -465,15 +465,15 @@ pub fn generate(
             RepositoryError::NotFound,
         ))?;
 
-    let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
-        u.description = input_description.or(u.description);
-        u.comment = input_comment.or(u.comment);
-        u.is_locked = input_is_locked.unwrap_or(false);
-        u.stocktake_date = input_stocktake_date.or(u.stocktake_date);
-        u.counted_by = counted_by.or(u.counted_by);
-        u.verified_by = verified_by.or(u.verified_by);
-        u
-    });
+    let stocktake = StocktakeRow {
+        description: input_description.or(existing.description.clone()),
+        comment: input_comment.or(existing.comment.clone()),
+        is_locked: input_is_locked.unwrap_or(false),
+        stocktake_date: input_stocktake_date.or(existing.stocktake_date.clone()),
+        counted_by: counted_by.or(existing.counted_by.clone()),
+        verified_by: verified_by.or(existing.verified_by.clone()),
+        ..existing.clone()
+    };
 
     if !is_finalised {
         // just update the existing stocktakes
@@ -612,13 +612,13 @@ pub fn generate(
         None
     };
 
-    let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
-        u.status = StocktakeStatus::Finalised;
-        u.finalised_datetime = Some(now);
-        u.inventory_addition_id = inventory_addition.as_ref().map(|i| i.id.clone());
-        u.inventory_reduction_id = inventory_reduction.as_ref().map(|i| i.id.clone());
-        u
-    });
+    let stocktake = StocktakeRow {
+        status: StocktakeStatus::Finalised,
+        finalised_datetime: Some(now),
+        inventory_addition_id: inventory_addition.as_ref().map(|i| i.id.clone()),
+        inventory_reduction_id: inventory_reduction.as_ref().map(|i| i.id.clone()),
+        ..existing.clone()
+    };
 
     Ok(StocktakeGenerateJob {
         stocktake: stocktake.clone(),

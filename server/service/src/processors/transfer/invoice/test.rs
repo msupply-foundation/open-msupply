@@ -8,7 +8,7 @@ use repository::{
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
     StoreRow,
 };
-use util::{inline_edit, inline_init, uuid::uuid};
+use util::{uuid::uuid};
 
 use crate::{
     invoice::{
@@ -30,45 +30,47 @@ use crate::{
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn invoice_transfers() {
     let site_id = 25;
-    let outbound_store_name = inline_init(|r: &mut NameRow| {
-        r.id = uuid();
-        r.name = uuid();
-    });
+    let outbound_store_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
 
-    let outbound_store = inline_init(|r: &mut StoreRow| {
-        r.id = uuid();
-        r.name_link_id.clone_from(&outbound_store_name.id);
-        r.site_id = site_id;
-    });
+    let outbound_store = StoreRow {
+        id: uuid(),
+        name_link_id: outbound_store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
 
-    let inbound_store_name = inline_init(|r: &mut NameRow| {
-        r.id = uuid();
-        r.name = uuid();
-    });
+    let inbound_store_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
 
-    let inbound_store = inline_init(|r: &mut StoreRow| {
-        r.id = uuid();
-        r.name_link_id.clone_from(&inbound_store_name.id);
-        r.site_id = site_id;
-    });
+    let inbound_store = StoreRow {
+        id: uuid(),
+        name_link_id: inbound_store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
 
-    let item1 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-        r.default_pack_size = 10.0;
-    });
+    let item1 = ItemRow {
+        id: uuid(),
+        default_pack_size: 10.0,
+        ..Default::default()
+    };
 
-    let item2 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
+    let item2 = ItemRow { id: uuid(), ..Default::default() };
 
-    let service_item = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
+    let service_item = ItemRow { id: uuid(), ..Default::default() };
 
-    let site_id_settings = inline_init(|r: &mut KeyValueStoreRow| {
-        r.id = KeyType::SettingsSyncSiteId;
-        r.value_int = Some(site_id);
-    });
+    let site_id_settings = KeyValueStoreRow {
+        id: KeyType::SettingsSyncSiteId,
+        value_int: Some(site_id),
+        ..Default::default()
+    };
 
     let item1_store_properties = ItemStoreJoinRow {
         id: uuid(),
@@ -89,13 +91,13 @@ async fn invoice_transfers() {
             .items()
             .units()
             .currencies(),
-        inline_init(|r: &mut MockData| {
+        |r: &mut MockData| {
             r.names = vec![inbound_store_name.clone(), outbound_store_name.clone()];
             r.stores = vec![inbound_store.clone(), outbound_store.clone()];
             r.items = vec![item1.clone(), item2.clone(), service_item.clone()];
             r.item_store_joins = vec![item1_store_properties];
             r.key_value_store_rows = vec![site_id_settings];
-        }),
+        },
     )
     .await;
 
@@ -262,55 +264,59 @@ async fn invoice_transfers() {
 async fn invoice_transfers_with_merged_name() {
     let site_id = 25;
 
-    let outbound_store_name = inline_init(|r: &mut NameRow| {
-        r.id = uuid();
-        r.name = uuid();
-    });
+    let outbound_store_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
 
-    let outbound_store = inline_init(|r: &mut StoreRow| {
-        r.id = uuid();
-        r.name_link_id.clone_from(&outbound_store_name.id);
-        r.site_id = site_id;
-    });
+    let outbound_store = StoreRow {
+        id: uuid(),
+        name_link_id: outbound_store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
 
-    let inbound_store_name = inline_init(|r: &mut NameRow| {
-        r.id = uuid();
-        r.name = uuid();
-    });
+    let inbound_store_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
 
-    let inbound_store = inline_init(|r: &mut StoreRow| {
-        r.id = uuid();
-        r.name_link_id.clone_from(&inbound_store_name.id);
-        r.site_id = site_id;
-    });
+    let inbound_store = StoreRow {
+        id: uuid(),
+        name_link_id: inbound_store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
 
-    let merge_name = inline_init(|r: &mut NameRow| {
-        r.id = uuid();
-        r.name = uuid();
-    });
+    let merge_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
 
-    let merge_name_link = inline_init(|r: &mut NameLinkRow| {
-        r.id.clone_from(&merge_name.id);
-        r.name_id.clone_from(&inbound_store_name.id);
-    });
+    let merge_name_link = NameLinkRow {
+        id: merge_name.id.clone(),
+        name_id: inbound_store_name.id.clone(),
+        ..Default::default()
+    };
 
-    let item1 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-        r.default_pack_size = 10.0;
-    });
+    let item1 = ItemRow {
+        id: uuid(),
+        default_pack_size: 10.0,
+        ..Default::default()
+    };
 
-    let item2 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
+    let item2 = ItemRow { id: uuid(), ..Default::default() };
 
-    let service_item = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
+    let service_item = ItemRow { id: uuid(), ..Default::default() };
 
-    let site_id_settings = inline_init(|r: &mut KeyValueStoreRow| {
-        r.id = KeyType::SettingsSyncSiteId;
-        r.value_int = Some(site_id);
-    });
+    let site_id_settings = KeyValueStoreRow {
+        id: KeyType::SettingsSyncSiteId,
+        value_int: Some(site_id),
+        ..Default::default()
+    };
 
     let item1_store_properties = ItemStoreJoinRow {
         id: uuid(),
@@ -331,7 +337,7 @@ async fn invoice_transfers_with_merged_name() {
             .items()
             .units()
             .currencies(),
-        inline_init(|r: &mut MockData| {
+        |r: &mut MockData| {
             r.names = vec![
                 inbound_store_name.clone(),
                 outbound_store_name.clone(),
@@ -342,7 +348,7 @@ async fn invoice_transfers_with_merged_name() {
             r.key_value_store_rows = vec![site_id_settings];
             r.item_store_joins = vec![item1_store_properties];
             r.name_links = vec![merge_name_link.clone()] // name_link is processed after the names. Updates the existing name link created for the name, effectively merging it.
-        }),
+        },
     )
     .await;
 
@@ -529,152 +535,161 @@ impl InvoiceTransferTester {
         item2: &ItemRow,
         service_item: &ItemRow,
     ) -> InvoiceTransferTester {
-        let request_requisition = inline_init(|r: &mut RequisitionRow| {
-            r.id = uuid();
-            r.name_link_id.clone_from(&outbound_store.name_link_id);
-            r.store_id.clone_from(&inbound_store.id);
-            r.r#type = RequisitionType::Request;
-            r.status = RequisitionStatus::Draft;
-        });
+        let request_requisition = RequisitionRow {
+            id: uuid(),
+            name_link_id: outbound_store.name_link_id.clone(),
+            store_id: inbound_store.id.clone(),
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Draft,
+            ..Default::default()
+        };
 
-        let outbound_shipment = inline_init(|r: &mut InvoiceRow| {
-            r.id = uuid();
-            r.name_link_id =
-                inbound_name.map_or(inbound_store.name_link_id.clone(), |n| n.id.clone());
-            r.store_id.clone_from(&outbound_store.id);
-            r.invoice_number = 20;
-            r.r#type = InvoiceType::OutboundShipment;
-            r.status = InvoiceStatus::Allocated;
-            r.their_reference = Some("some reference".to_string());
-            r.comment = Some("some comment".to_string());
-            r.created_datetime = NaiveDate::from_ymd_opt(2024, 1, 1)
+        let outbound_shipment = InvoiceRow {
+            id: uuid(),
+            name_link_id: inbound_name.map_or(inbound_store.name_link_id.clone(), |n| n.id.clone()),
+            store_id: outbound_store.id.clone(),
+            invoice_number: 20,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::Allocated,
+            their_reference: Some("some reference".to_string()),
+            comment: Some("some comment".to_string()),
+            created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
-                .unwrap();
-            r.tax_percentage = Some(0.0);
-        });
+                .unwrap(),
+            tax_percentage: Some(0.0),
+            ..Default::default()
+        };
 
-        let location = inline_init(|r: &mut LocationRow| {
-            r.id = uuid();
-            r.store_id.clone_from(&outbound_store.id)
-        });
+        let location = LocationRow {
+            id: uuid(),
+            store_id: outbound_store.id.clone(),
+            ..Default::default()
+        };
 
-        let stock_line1 = inline_init(|r: &mut StockLineRow| {
-            r.id = uuid();
-            r.store_id.clone_from(&outbound_store.id);
-            r.item_link_id.clone_from(&item1.id);
-            r.batch = Some(uuid());
-            r.expiry_date = Some(NaiveDate::from_ymd_opt(2025, 3, 1).unwrap());
-            r.pack_size = 10.0;
-            r.total_number_of_packs = 200.0;
-            r.available_number_of_packs = 200.0;
-        });
+        let stock_line1 = StockLineRow {
+            id: uuid(),
+            store_id: outbound_store.id.clone(),
+            item_link_id: item1.id.clone(),
+            batch: Some(uuid()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2025, 3, 1).unwrap()),
+            pack_size: 10.0,
+            total_number_of_packs: 200.0,
+            available_number_of_packs: 200.0,
+            ..Default::default()
+        };
 
-        let outbound_shipment_line1 = inline_init(|r: &mut InvoiceLineRow| {
-            r.id = uuid();
-            r.invoice_id.clone_from(&outbound_shipment.id);
-            r.r#type = InvoiceLineType::StockOut;
-            r.pack_size = stock_line1.pack_size;
-            r.number_of_packs = 2.0;
-            r.item_link_id.clone_from(&item1.id);
-            r.item_name.clone_from(&item1.name);
-            r.item_code.clone_from(&item1.code);
-            r.cost_price_per_pack = 20.0;
-            r.sell_price_per_pack = 10.0;
-            r.batch.clone_from(&stock_line1.batch);
-            r.expiry_date = stock_line1.expiry_date;
-            r.stock_line_id = Some(stock_line1.id.clone());
-            r.location_id = Some(location.id.clone());
-            r.tax_percentage = Some(0.0);
-        });
+        let outbound_shipment_line1 = InvoiceLineRow {
+            id: uuid(),
+            invoice_id: outbound_shipment.id.clone(),
+            r#type: InvoiceLineType::StockOut,
+            pack_size: stock_line1.pack_size,
+            number_of_packs: 2.0,
+            item_link_id: item1.id.clone(),
+            item_name: item1.name.clone(),
+            item_code: item1.code.clone(),
+            cost_price_per_pack: 20.0,
+            sell_price_per_pack: 10.0,
+            batch: stock_line1.batch.clone(),
+            expiry_date: stock_line1.expiry_date,
+            stock_line_id: Some(stock_line1.id.clone()),
+            location_id: Some(location.id.clone()),
+            tax_percentage: Some(0.0),
+            ..Default::default()
+        };
 
-        let stock_line2 = inline_init(|r: &mut StockLineRow| {
-            r.id = uuid();
-            r.store_id.clone_from(&outbound_store.id);
-            r.item_link_id.clone_from(&item2.id);
-            r.batch = Some(uuid());
-            r.pack_size = 10.0;
-            r.total_number_of_packs = 200.0;
-            r.available_number_of_packs = 200.0;
-            r.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 1, 5).unwrap());
-        });
+        let stock_line2 = StockLineRow {
+            id: uuid(),
+            store_id: outbound_store.id.clone(),
+            item_link_id: item2.id.clone(),
+            batch: Some(uuid()),
+            pack_size: 10.0,
+            total_number_of_packs: 200.0,
+            available_number_of_packs: 200.0,
+            expiry_date: Some(NaiveDate::from_ymd_opt(2023, 1, 5).unwrap()),
+            ..Default::default()
+        };
 
-        let outbound_shipment_line2 = inline_init(|r: &mut InvoiceLineRow| {
-            r.id = uuid();
-            r.invoice_id.clone_from(&outbound_shipment.id);
-            r.r#type = InvoiceLineType::StockOut;
-            r.pack_size = stock_line2.pack_size;
-            r.number_of_packs = 6.0;
-            r.item_link_id.clone_from(&item2.id);
-            r.item_name.clone_from(&item2.name);
-            r.item_code.clone_from(&item2.code);
-            r.cost_price_per_pack = 15.0;
-            r.sell_price_per_pack = 35.0;
-            r.batch.clone_from(&stock_line2.batch);
-            r.expiry_date = stock_line2.expiry_date;
-            r.stock_line_id = Some(stock_line2.id.clone());
-            r.tax_percentage = Some(0.0);
+        let outbound_shipment_line2 = InvoiceLineRow {
+            id: uuid(),
+            invoice_id: outbound_shipment.id.clone(),
+            r#type: InvoiceLineType::StockOut,
+            pack_size: stock_line2.pack_size,
+            number_of_packs: 6.0,
+            item_link_id: item2.id.clone(),
+            item_name: item2.name.clone(),
+            item_code: item2.code.clone(),
+            cost_price_per_pack: 15.0,
+            sell_price_per_pack: 35.0,
+            batch: stock_line2.batch.clone(),
+            expiry_date: stock_line2.expiry_date,
+            stock_line_id: Some(stock_line2.id.clone()),
+            tax_percentage: Some(0.0),
             // Location todo
-        });
+            ..Default::default()
+        };
 
-        let outbound_shipment_service_line = inline_init(|r: &mut InvoiceLineRow| {
-            r.id = uuid();
-            r.invoice_id.clone_from(&outbound_shipment.id);
-            r.r#type = InvoiceLineType::Service;
-            r.item_link_id.clone_from(&service_item.id);
-            r.item_name.clone_from(&service_item.name);
-            r.item_code.clone_from(&service_item.code);
-            r.total_before_tax = 100.0;
-            r.total_after_tax = 110.0;
-            r.tax_percentage = Some(10.0);
+        let outbound_shipment_service_line = InvoiceLineRow {
+            id: uuid(),
+            invoice_id: outbound_shipment.id.clone(),
+            r#type: InvoiceLineType::Service,
+            item_link_id: service_item.id.clone(),
+            item_name: service_item.name.clone(),
+            item_code: service_item.code.clone(),
+            total_before_tax: 100.0,
+            total_after_tax: 110.0,
+            tax_percentage: Some(10.0),
             // Location todo
-        });
+            ..Default::default()
+        };
 
-        let outbound_shipment_unallocated_line = inline_init(|r: &mut InvoiceLineRow| {
-            r.id = uuid();
-            r.invoice_id.clone_from(&outbound_shipment.id);
-            r.r#type = InvoiceLineType::UnallocatedStock;
-            r.pack_size = 1.0;
-            r.number_of_packs = 10.0;
-            r.item_link_id.clone_from(&item2.id);
-            r.item_name.clone_from(&item2.name);
-            r.item_code.clone_from(&item2.code);
-            r.tax_percentage = Some(0.0);
-        });
+        let outbound_shipment_unallocated_line = InvoiceLineRow {
+            id: uuid(),
+            invoice_id: outbound_shipment.id.clone(),
+            r#type: InvoiceLineType::UnallocatedStock,
+            pack_size: 1.0,
+            number_of_packs: 10.0,
+            item_link_id: item2.id.clone(),
+            item_name: item2.name.clone(),
+            item_code: item2.code.clone(),
+            tax_percentage: Some(0.0),
+            ..Default::default()
+        };
 
-        let supplier_return = inline_init(|r: &mut InvoiceRow| {
-            r.id = uuid();
-            r.name_link_id =
-                outbound_name.map_or(outbound_store.name_link_id.clone(), |n| n.id.clone());
-            r.store_id.clone_from(&inbound_store.id);
-            r.invoice_number = 5;
-            r.r#type = InvoiceType::SupplierReturn;
-            r.status = InvoiceStatus::New;
-            r.their_reference = Some("some return reference".to_string());
-            r.comment = Some("some return comment".to_string());
-            r.created_datetime = NaiveDate::from_ymd_opt(2024, 1, 1)
+        let supplier_return = InvoiceRow {
+            id: uuid(),
+            name_link_id: outbound_name.map_or(outbound_store.name_link_id.clone(), |n| n.id.clone()),
+            store_id: inbound_store.id.clone(),
+            invoice_number: 5,
+            r#type: InvoiceType::SupplierReturn,
+            status: InvoiceStatus::New,
+            their_reference: Some("some return reference".to_string()),
+            comment: Some("some return comment".to_string()),
+            created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(13, 00, 0, 0)
-                .unwrap();
-        });
+                .unwrap(),
+            ..Default::default()
+        };
 
-        let supplier_return_line = inline_init(|r: &mut InvoiceLineRow| {
-            r.id = uuid();
-            r.invoice_id.clone_from(&supplier_return.id);
-            r.r#type = InvoiceLineType::StockOut;
-            r.pack_size = stock_line1.pack_size;
-            r.number_of_packs = 2.0;
-            r.item_link_id.clone_from(&item1.id);
-            r.item_name.clone_from(&item1.name);
-            r.item_code.clone_from(&item1.code);
-            r.cost_price_per_pack = 20.0;
-            r.sell_price_per_pack = 10.0;
-            r.batch.clone_from(&stock_line1.batch);
-            r.expiry_date = stock_line1.expiry_date;
-            r.stock_line_id = Some(stock_line1.id.clone());
-            r.location_id = Some(location.id.clone());
-            r.tax_percentage = Some(0.0);
-        });
+        let supplier_return_line = InvoiceLineRow {
+            id: uuid(),
+            invoice_id: supplier_return.id.clone(),
+            r#type: InvoiceLineType::StockOut,
+            pack_size: stock_line1.pack_size,
+            number_of_packs: 2.0,
+            item_link_id: item1.id.clone(),
+            item_name: item1.name.clone(),
+            item_code: item1.code.clone(),
+            cost_price_per_pack: 20.0,
+            sell_price_per_pack: 10.0,
+            batch: stock_line1.batch.clone(),
+            expiry_date: stock_line1.expiry_date,
+            stock_line_id: Some(stock_line1.id.clone()),
+            location_id: Some(location.id.clone()),
+            tax_percentage: Some(0.0),
+            ..Default::default()
+        };
 
         InvoiceTransferTester {
             outbound_store: outbound_store.clone(),
@@ -738,10 +753,11 @@ impl InvoiceTransferTester {
         insert_extra_mock_data(
             connection,
             inline_init(|r: &mut MockData| {
-                r.invoices = vec![inline_edit(&self.outbound_shipment, |mut r| {
+                r.invoices = vec![{
+                    let mut r = self.outbound_shipment.clone();
                     r.requisition_id = response_requisition_id;
                     r
-                })];
+                }];
                 r.invoice_lines = vec![
                     self.outbound_shipment_line1.clone(),
                     self.outbound_shipment_line2.clone(),
@@ -1371,7 +1387,6 @@ fn check_line(
         InvoiceLineType::Service => {
             assert_eq!(inbound_line.r#type, InvoiceLineType::Service);
             assert_eq!(
-                inbound_line.total_before_tax,
                 outbound_line.total_before_tax
             );
             assert_approx_eq::assert_approx_eq!(
