@@ -113,9 +113,9 @@ pub(crate) mod test {
     }
 
     #[actix_rt::test]
-    async fn adjust_historic_incoming_invoices_test() {
+    async fn inventory_adjustment_to_balance_test() {
         let ServiceTestContext { connection, .. } = setup_all_with_data_and_service_provider(
-            "adjust_historic_incoming_invoices",
+            "inventory_adjustment_to_balance",
             MockDataInserts::none().names().stores().units().items(),
             mock_data(),
         )
