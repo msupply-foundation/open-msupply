@@ -69,9 +69,12 @@ const stocktakeParser = {
         ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
       comment: line.comment ?? '',
-      itemVariantId: setNullableInput('itemVariantId', line),
+      itemVariantId: setNullableInput('itemVariantId', {
+        itemVariantId: line.itemVariantId,
+      }),
       donorId: setNullableInput('donorId', line),
       reasonOptionId: line.reasonOption?.id,
+      volumePerPack: line.volumePerPack,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
       location: setNullableInput('id', line.location),
@@ -91,6 +94,7 @@ const stocktakeParser = {
       itemVariantId: line.itemVariantId,
       donorId: line.donorId,
       reasonOptionId: line.reasonOption?.id,
+      volumePerPack: line.volumePerPack,
     }),
   },
 };
