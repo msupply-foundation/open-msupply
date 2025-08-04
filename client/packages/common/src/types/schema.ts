@@ -179,6 +179,7 @@ export enum ActivityLogNodeType {
   VaccinationUpdated = 'VACCINATION_UPDATED',
   VaccineCourseCreated = 'VACCINE_COURSE_CREATED',
   VaccineCourseUpdated = 'VACCINE_COURSE_UPDATED',
+  VolumePerPackChanged = 'VOLUME_PER_PACK_CHANGED',
   VvmStatusLogUpdated = 'VVM_STATUS_LOG_UPDATED',
 }
 
@@ -1557,6 +1558,7 @@ export type CustomerReturnLineInput = {
   numberOfPacksReturned: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1576,6 +1578,7 @@ export type CustomerReturnLineNode = {
   reasonId?: Maybe<Scalars['String']['output']>;
   reasonOption?: Maybe<ReasonOptionNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
+  volumePerPack: Scalars['Float']['output'];
 };
 
 export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
@@ -3218,6 +3221,7 @@ export type InsertInboundShipmentLineInput = {
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -3738,6 +3742,7 @@ export type InsertStockLineInput = {
   packSize: Scalars['Float']['input'];
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -4135,6 +4140,7 @@ export type InvoiceLineNode = {
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
   type: InvoiceLineNodeType;
+  volumePerPack: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
@@ -8601,6 +8607,7 @@ export type StockLineNode = {
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   itemVariant?: Maybe<ItemVariantNode>;
+  /** @deprecated Since 2.10.0. Use item_variant.id instead */
   itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
@@ -8612,6 +8619,8 @@ export type StockLineNode = {
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
+  totalVolume: Scalars['Float']['output'];
+  volumePerPack: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
   vvmStatusLogs?: Maybe<VvmstatusLogConnector>;
@@ -9445,6 +9454,7 @@ export type UpdateInboundShipmentLineInput = {
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -10075,10 +10085,10 @@ export type UpdateStockLineInput = {
   donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 

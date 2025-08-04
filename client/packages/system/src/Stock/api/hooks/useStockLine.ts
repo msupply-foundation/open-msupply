@@ -38,6 +38,9 @@ const defaultDraftStockLine: DraftStockLine = {
   },
   vvmStatus: null,
   campaign: null,
+  volumePerPack: 0,
+  itemVariant: null,
+  totalVolume: 0,
 };
 
 export function useStockLine(id?: string) {
@@ -119,10 +122,11 @@ const useCreate = () => {
     costPricePerPack,
     location,
     onHold,
-    itemVariantId,
+    itemVariant,
     donor,
     campaign,
     vvmStatus,
+    volumePerPack,
   }: DraftStockLine) => {
     return await stockApi.insertStockLine({
       storeId,
@@ -139,10 +143,11 @@ const useCreate = () => {
         numberOfPacks: totalNumberOfPacks,
         location: setNullableInput('id', location),
         reasonOptionId: reasonOption?.id,
-        itemVariantId,
+        itemVariantId: itemVariant?.id,
         vvmStatusId: vvmStatus?.id,
         donorId: donor?.id,
         campaignId: campaign?.id,
+        volumePerPack: volumePerPack,
       },
     });
   };
@@ -166,10 +171,10 @@ const useUpdate = (id: string) => {
     costPricePerPack,
     onHold,
     location,
-    itemVariantId,
     vvmStatusId,
     donor,
     campaign,
+    volumePerPack,
   }: Partial<DraftStockLine>) => {
     const result = await stockApi.updateStockLine({
       input: {
@@ -181,10 +186,10 @@ const useUpdate = (id: string) => {
         onHold,
         sellPricePerPack,
         location: setNullableInput('id', location),
-        itemVariantId: setNullableInput('itemVariantId', { itemVariantId }),
         vvmStatusId,
         donorId: setNullableInput('id', donor),
         campaignId: setNullableInput('id', campaign),
+        volumePerPack,
       },
       storeId,
     });
