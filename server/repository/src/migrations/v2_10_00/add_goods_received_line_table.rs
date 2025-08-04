@@ -37,7 +37,7 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE goods_received_line (
                     id TEXT NOT NULL PRIMARY KEY,
                     goods_received_id TEXT NOT NULL REFERENCES goods_received(id),
-                    purchase_order_id TEXT NOT NULL REFERENCES purchase_order(id),
+                    purchase_order_line_id TEXT NOT NULL REFERENCES purchase_order_line(id),
                     received_pack_size {DOUBLE} NOT NULL,
                     number_of_packs_received {DOUBLE} NOT NULL DEFAULT 0.0,
                     batch TEXT,

@@ -10,9 +10,9 @@ use repository::{
 };
 use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
-use util::sync_serde::empty_str_as_option;
 use util::sync_serde::empty_str_as_option_string;
 use util::sync_serde::zero_f64_as_none;
+use util::sync_serde::{date_option_to_isostring, zero_date_as_option};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -25,7 +25,8 @@ pub struct LegacyGoodsReceivedLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub batch_received: Option<String>,
     pub weight_per_pack: Option<f64>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub expiry_date: Option<NaiveDate>,
     pub line_number: i64,
     pub item_ID: String,
@@ -50,7 +51,7 @@ pub(super) struct GoodsReceivedLineTranslation;
 
 impl SyncTranslation for GoodsReceivedLineTranslation {
     fn table_name(&self) -> &str {
-        "goods_received_line"
+        "Goods_received_line"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
@@ -76,7 +77,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         let result = GoodsReceivedLineRow {
             id: legacy_row.ID,
             goods_received_id: legacy_row.goods_received_ID,
-            purchase_order_id: legacy_row.order_line_ID,
+            purchase_order_line_id: legacy_row.order_line_ID,
             received_pack_size: legacy_row.pack_received,
             number_of_packs_received: legacy_row.quantity_received,
             batch: legacy_row.batch_received,
@@ -114,7 +115,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         let legacy_row = LegacyGoodsReceivedLineRow {
             ID: row.id,
             goods_received_ID: row.goods_received_id,
-            order_line_ID: row.purchase_order_id,
+            order_line_ID: row.purchase_order_line_id,
             pack_received: row.received_pack_size,
             quantity_received: row.number_of_packs_received,
             batch_received: row.batch,

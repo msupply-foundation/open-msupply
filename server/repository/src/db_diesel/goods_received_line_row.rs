@@ -11,7 +11,7 @@ table! {
     goods_received_line (id) {
         id -> Text,
         goods_received_id -> Text,
-        purchase_order_id -> Text,
+        purchase_order_line_id -> Text,
         received_pack_size -> Double,
         number_of_packs_received -> Double,
         batch -> Nullable<Text>,
@@ -36,7 +36,7 @@ table! {
 pub struct GoodsReceivedLineRow {
     pub id: String,
     pub goods_received_id: String,
-    pub purchase_order_id: String,
+    pub purchase_order_line_id: String,
     pub received_pack_size: f64,
     pub number_of_packs_received: f64,
     pub batch: Option<String>,
@@ -92,7 +92,7 @@ impl<'a> GoodsReceivedLineRowRepository<'a> {
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let goods_received = GoodsReceivedRowRepository::new(self.connection)
-            .find_one_by_id(&row.purchase_order_id)?;
+            .find_one_by_id(&row.goods_received_id)?;
         let store_id = match goods_received {
             Some(goods_received) => goods_received.store_id,
             None => return Err(RepositoryError::NotFound),
