@@ -39,6 +39,7 @@ pub struct InsertInput {
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -121,18 +122,19 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
-        ServiceError::InvalidStore => BadUserInput(formatted_error),
-        ServiceError::StocktakeDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StocktakeLineAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StockLineAlreadyExistsInStocktake => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        ServiceError::InvalidStore
+        | ServiceError::StocktakeDoesNotExist
+        | ServiceError::StocktakeLineAlreadyExists
+        | ServiceError::StockLineDoesNotExist
+        | ServiceError::StockLineAlreadyExistsInStocktake
+        | ServiceError::LocationDoesNotExist
+        | ServiceError::StocktakeIsLocked
+        | ServiceError::VvmStatusDoesNotExist
+        | ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
         ServiceError::StockLineXOrItem => BadUserInput(format!(
             "Either a stock line id or item id must be set (not both), {}",
             formatted_error
         )),
-        ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };
@@ -160,6 +162,7 @@ impl InsertInput {
             item_variant_id,
             donor_id,
             reason_option_id,
+            vvm_status_id,
         } = self;
 
         ServiceInput {
@@ -181,6 +184,7 @@ impl InsertInput {
             item_variant_id,
             donor_id,
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
+            vvm_status_id,
         }
     }
 }
@@ -302,9 +306,7 @@ mod test {
                     cost_price_per_pack: Some(10.0),
                     sell_price_per_pack: Some(12.0),
                     note: Some("note".to_string()),
-                    item_variant_id: None,
-                    donor_link_id: None,
-                    reason_option_id: None,
+                    ..Default::default()
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),

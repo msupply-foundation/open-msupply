@@ -39,6 +39,7 @@ pub struct UpdateInput {
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub reason_option_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -112,6 +113,7 @@ impl UpdateInput {
             item_variant_id,
             donor_id,
             reason_option_id,
+            vvm_status_id,
         } = self;
 
         ServiceInput {
@@ -128,6 +130,7 @@ impl UpdateInput {
             cost_price_per_pack,
             sell_price_per_pack,
             note,
+            vvm_status_id,
             item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
                 value: item_variant_id.value,
             }),
@@ -172,11 +175,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
-        ServiceError::InvalidStore => BadUserInput(formatted_error),
-        ServiceError::StocktakeLineDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        ServiceError::InvalidStore
+        | ServiceError::StocktakeLineDoesNotExist
+        | ServiceError::StockLineDoesNotExist
+        | ServiceError::LocationDoesNotExist
+        | ServiceError::VvmStatusDoesNotExist
+        | ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };
@@ -296,9 +300,7 @@ mod test {
                     cost_price_per_pack: Some(10.0),
                     sell_price_per_pack: Some(12.0),
                     note: Some("note".to_string()),
-                    item_variant_id: None,
-                    donor_link_id: None,
-                    reason_option_id: None,
+                    ..Default::default()
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
