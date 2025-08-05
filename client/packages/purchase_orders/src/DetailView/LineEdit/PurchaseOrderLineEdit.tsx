@@ -71,11 +71,6 @@ export const PurchaseOrderLineEdit = ({
           />
         )}
       </Grid>
-      <Grid size={12} container spacing={2}>
-        {/* <Grid size={6}>{}</Grid>
-        TODO add update line fields here
-        <Grid size={6}>{}</Grid> */}
-      </Grid>
       {showContent && currentLine && (
         <Box style={{ width: '100%' }}>
           <Divider margin={10} />
@@ -93,8 +88,6 @@ export const PurchaseOrderLineEdit = ({
               columns={columns}
               data={lines}
               dense
-              // additionalRows={additionalRows}
-              enableColumnSelection={true}
             />
           </Box>
         </Box>

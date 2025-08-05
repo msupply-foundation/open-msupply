@@ -15,7 +15,6 @@ export const usePurchaseOrderLineEditColumns = ({
             Cell: NumberInputCell,
             key: 'requestedPackSize',
             label: 'Pack Size',
-            // accessor: ({ rowData }) => rowData?.requestedPackSize || '',
             setter: patch => {
                 updatePatch({ ...patch });
             },
@@ -24,7 +23,6 @@ export const usePurchaseOrderLineEditColumns = ({
             Cell: DateInputCell,
             key: 'requestedDeliveryDate',
             label: 'Requested delivery date',
-            // accessor: ({ rowData }) => rowData?.requestedNumberOfUnits || '',
             setter: ({id, requestedDeliveryDate}) => {
                 updatePatch({ id, requestedDeliveryDate: Formatter.naiveDate(DateUtils.getNaiveDate(requestedDeliveryDate)) });
             },
@@ -33,7 +31,6 @@ export const usePurchaseOrderLineEditColumns = ({
             Cell: DateInputCell,
             key: 'expectedDeliveryDate',
             label: 'Expected Delivery Date',
-            // accessor: ({ rowData }) => rowData?.expectedDeliveryDate || '',
             setter: ({id, expectedDeliveryDate}) => {
                 updatePatch({ id, expectedDeliveryDate: Formatter.naiveDate(DateUtils.getNaiveDate(expectedDeliveryDate)) });
             },
@@ -42,7 +39,6 @@ export const usePurchaseOrderLineEditColumns = ({
             Cell: NumberInputCell,
             key: 'requestedNumberOfUnits',
             label: 'Requested number of units',
-            // accessor: ({ rowData }) => rowData?.requestedNumberOfUnits || '',
             setter: patch => {
                 updatePatch({ ...patch });
             },
@@ -51,13 +47,12 @@ export const usePurchaseOrderLineEditColumns = ({
             Cell: NumberInputCell,
             key: 'authorisedNumberOfUnits',
             label: 'authorised number of units',
-            // accessor: ({ rowData }) => rowData?.authorisedNumberOfUnits || '',
               setter: patch => {
                 updatePatch({ ...patch });
             },
         },
         ],
-        []
+        [updatePatch]
     );
 
     const columns = useColumns<DraftPurchaseOrderLine>(columnDefinitions, {}, [updatePatch, draft]);
