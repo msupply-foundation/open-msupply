@@ -69,17 +69,6 @@ export const PurchaseOrderLineEditModal = ({
     }
   };
 
-  // TODO handle next item workflow
-  // const onSave = async () => {
-  //   const success = await handleSave();
-  //   if (!success) return false;
-  //   // if (mode === ModalMode.Update && false setCurrentItem(next);
-  //   // else if (mode === ModalMode.Create) setCurrentItem(undefined);
-  //   // else onClose();
-  //   onClose();
-  //   return true;
-  // };
-
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   return (
@@ -90,8 +79,6 @@ export const PurchaseOrderLineEditModal = ({
           : t('heading.edit-item')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      // TODO add next button functionality
-      // nextButton={<DialogButton variant="next-and-ok" onClick={onSave} />}
       okButton={
         <DialogButton
           variant="ok"
