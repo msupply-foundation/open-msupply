@@ -1,14 +1,15 @@
 use async_graphql::{Context, Object, Result};
 use graphql_core::pagination::PaginationInput;
 
-pub mod goods_received_queries;
 pub mod mutations;
+pub mod query;
+pub mod types;
 
-use goods_received_queries::*;
 use mutations::{
     insert::{insert_goods_received, InsertInput, InsertResponse},
     update::{update_goods_received, UpdateInput, UpdateResponse},
 };
+use query::*;
 
 #[derive(Default, Clone)]
 pub struct GoodsReceivedQueries;
