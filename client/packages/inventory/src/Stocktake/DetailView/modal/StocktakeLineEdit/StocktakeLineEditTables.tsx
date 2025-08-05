@@ -185,6 +185,9 @@ export const BatchTable = ({
   const { data: reasonOptions, isLoading } = useReasonOptions();
   const errorsContext = useStocktakeLineErrorContext();
 
+  const showVVMStatusColumn =
+    (preferences?.manageVvmStatusForStock && isVaccineItem) ?? false;
+
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
       getCountThisLineColumn(update, theme),
@@ -207,19 +210,19 @@ export const BatchTable = ({
         ),
         setter: patch => update({ ...patch }),
       });
+    }
 
-      if (preferences?.manageVvmStatusForStock && isVaccineItem) {
-        columnDefinitions.push({
-          key: 'vvmStatus',
-          label: 'label.vvm-status',
-          width: 170,
-          cellProps: {
-            useDefault: true,
-          },
-          Cell: props => <VVMStatusInputCell {...props} />,
-          setter: patch => update({ ...patch }),
-        });
-      }
+    if (showVVMStatusColumn) {
+      columnDefinitions.push({
+        key: 'vvmStatus',
+        label: 'label.vvm-status',
+        width: 170,
+        cellProps: {
+          useDefault: true,
+        },
+        Cell: props => <VVMStatusInputCell {...props} />,
+        setter: patch => update({ ...patch }),
+      });
     }
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {
@@ -294,7 +297,7 @@ export const BatchTable = ({
     reasonOptions,
     isLoading,
     isInitialStocktake,
-    preferences?.manageVvmStatusForStock,
+    showVVMStatusColumn,
   ]);
 
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
