@@ -151,7 +151,7 @@ describe('getStatusOptions', () => {
     expect(options[1]?.isDisabled).toBe(false);
 
     expect(options[2]?.value).toBe(PurchaseOrderNodeStatus.Confirmed);
-    expect(options[2]?.isDisabled).toBe(false);
+    expect(options[2]?.isDisabled).toBe(true);
 
     expect(options[3]?.value).toBe(PurchaseOrderNodeStatus.Finalised);
     expect(options[3]?.isDisabled).toBe(true);
