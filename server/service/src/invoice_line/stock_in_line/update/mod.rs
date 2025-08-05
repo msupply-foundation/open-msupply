@@ -104,6 +104,7 @@ pub enum UpdateStockInLineError {
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
     VVMStatusDoesNotExist,
+    IncorrectLocationType,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {

@@ -44,6 +44,7 @@ pub enum UpdateStocktakeLineError {
     AdjustmentReasonNotValid,
     SnapshotCountCurrentCountMismatchLine(StocktakeLine),
     StockLineReducedBelowZero(StockLine),
+    IncorrectLocationType(StockLine),
 }
 
 pub fn update_stocktake_line(

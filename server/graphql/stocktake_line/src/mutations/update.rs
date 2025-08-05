@@ -6,7 +6,7 @@ use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::{
-    SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
+    IncorrectLocationType, SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
 };
 use graphql_types::types::{
     AdjustmentReasonNotProvided, AdjustmentReasonNotValid, StocktakeLineNode,
@@ -57,6 +57,7 @@ pub enum UpdateErrorInterface {
     AdjustmentReasonNotProvided(AdjustmentReasonNotProvided),
     AdjustmentReasonNotValid(AdjustmentReasonNotValid),
     SnapshotCountCurrentCountMismatchLine(SnapshotCountCurrentCountMismatchLine),
+    IncorrectLocationType(IncorrectLocationType),
 }
 
 #[derive(SimpleObject)]
@@ -168,6 +169,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::SnapshotCountCurrentCountMismatchLine(line) => {
             return Ok(UpdateErrorInterface::SnapshotCountCurrentCountMismatchLine(
                 SnapshotCountCurrentCountMismatchLine::from_domain(line),
+            ))
+        }
+        ServiceError::IncorrectLocationType(line) => {
+            return Ok(UpdateErrorInterface::IncorrectLocationType(
+                IncorrectLocationType::from_domain(line),
             ))
         }
         // Standard Graphql Errors

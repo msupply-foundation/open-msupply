@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    check_location_exists,
+    check_location_exists, check_location_type_is_valid,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
@@ -87,6 +87,16 @@ pub fn validate(
     {
         if !check_location_exists(connection, store_id, location)? {
             return Err(LocationDoesNotExist);
+        }
+
+        if let Some(item_restricted_type) = stock_line
+            .as_ref()
+            .and_then(|sl| sl.item_row.restricted_location_type_id.as_ref())
+        {
+            if !check_location_type_is_valid(connection, store_id, &location, item_restricted_type)?
+            {
+                return Err(IncorrectLocationType);
+            }
         }
     }
 

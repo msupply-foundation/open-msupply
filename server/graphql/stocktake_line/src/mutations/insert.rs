@@ -5,7 +5,7 @@ use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::generic_errors::StockLineReducedBelowZero;
+use graphql_types::generic_errors::{IncorrectLocationType, StockLineReducedBelowZero};
 use graphql_types::types::{
     AdjustmentReasonNotProvided, AdjustmentReasonNotValid, StocktakeLineNode,
 };
@@ -56,6 +56,7 @@ pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
     AdjustmentReasonNotProvided(AdjustmentReasonNotProvided),
     AdjustmentReasonNotValid(AdjustmentReasonNotValid),
+    IncorrectLocationType(IncorrectLocationType),
 }
 
 #[derive(SimpleObject)]
@@ -135,6 +136,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
