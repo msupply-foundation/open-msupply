@@ -71,7 +71,9 @@ export const usePurchaseOrderColumns = () => {
       key: 'totalReceived',
       label: 'label.total-received',
       align: ColumnAlign.Right,
-      accessor: ({ rowData: _ }) => 'TODO: GOOD RECEIVED CALC', // rowData.totalReceived,
+      accessor: ({ rowData: _ }) => '',
+      // TODO: GOOD RECEIVED CALC
+      // rowData.totalReceived,
       // getSortValue: rowData =>  //rowData.totalReceived ?? 0,
     },
     // TO-DO: Figure out if this is snapshot value or current value

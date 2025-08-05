@@ -19,6 +19,15 @@ const RETURN_REASON_1: (&str, &str) = (
     "title": "Damaged"
     }"#,
 );
+const CLOSED_VIAL_WASTAGE_REASON_1: (&str, &str) = (
+    "vvm_status_now_unusable",
+    r#"{
+    "ID": "vvm_status_now_unusable",
+    "type": "closedVialWastage",
+    "isActive": true,
+    "title": "VVM Status Unusable"
+    }"#,
+);
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
@@ -40,6 +49,16 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 r#type: ReasonOptionType::ReturnReason,
                 is_active: true,
                 reason: "Damaged".to_string(),
+            },
+        ),
+        TestSyncIncomingRecord::new_pull_upsert(
+            "options",
+            CLOSED_VIAL_WASTAGE_REASON_1,
+            ReasonOptionRow {
+                id: CLOSED_VIAL_WASTAGE_REASON_1.0.to_string(),
+                r#type: ReasonOptionType::ClosedVialWastage,
+                is_active: true,
+                reason: "VVM Status Unusable".to_string(),
             },
         ),
     ]

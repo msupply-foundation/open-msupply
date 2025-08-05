@@ -1,15 +1,20 @@
-import {   UpdatePurchaseOrderLineInput, useMutation, usePatchState, useQuery } from "@openmsupply-client/common/src";
-import { usePurchaseOrderGraphQL } from "../usePurchaseOrderGraphQL";
-import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from "./keys";
-import { PurchaseOrderLineFragment } from "../operations.generated";
+import {
+   UpdatePurchaseOrderLineInput, useMutation,
+  usePatchState,
+  useQuery,
+} from '@openmsupply-client/common/src';
+import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
+import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
+import { PurchaseOrderLineFragment } from '../operations.generated';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
-  "__typename"| "item"> & {
+  '__typename' | 'item'
+> & {
   purchaseOrderId: string;
   // TODO remove itemId - can extract from item
   itemId: string;
-  }
+};
 
 const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
     id: "",
@@ -23,8 +28,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
 };
 
 export function usePurchaseOrderLine(id?: string) {
-
- const { data, isLoading, error } = useGet(id ?? '');
+  const { data, isLoading, error } = useGet(id ?? '');
 
     const { patch, updatePatch, resetDraft, isDirty } =
       usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
@@ -67,6 +71,7 @@ export function usePurchaseOrderLine(id?: string) {
   };
 
   return {
+  return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
@@ -76,7 +81,6 @@ export function usePurchaseOrderLine(id?: string) {
     updatePatch,
   };
 }
-
 
 const useGet = (id: string) => {
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
@@ -116,7 +120,6 @@ const useCreate = () => {
         // TODO better way of handling non item id
         itemId: itemId,
         purchaseOrderId,
-        
       },
     });
   };

@@ -50,6 +50,10 @@ pub struct PurchaseOrderOmsFields {
     pub sent_datetime: Option<NaiveDateTime>,
     #[serde(default)]
     pub supplier_discount_percentage: Option<f64>,
+    #[serde(default)]
+    pub authorised_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub finalised_datetime: Option<NaiveDateTime>,
 }
 
 /** Example record
@@ -312,6 +316,14 @@ impl SyncTranslation for PurchaseOrderTranslation {
                 }
             });
 
+        let authorised_datetime = oms_fields
+            .clone()
+            .and_then(|oms_field| oms_field.authorised_datetime);
+
+        let finalised_datetime = oms_fields
+            .clone()
+            .and_then(|oms_field| oms_field.finalised_datetime);
+
         let result = PurchaseOrderRow {
             id,
             created_by,
@@ -349,6 +361,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             freight_conditions,
             order_total_before_discount,
             order_total_after_discount,
+            authorised_datetime,
+            finalised_datetime,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -397,6 +411,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             freight_conditions,
             order_total_before_discount,
             order_total_after_discount,
+            authorised_datetime,
+            finalised_datetime,
         } = PurchaseOrderRepository::new(connection)
             .query_by_filter(
                 PurchaseOrderFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
@@ -410,6 +426,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             sent_datetime,
             supplier_discount_percentage,
+            authorised_datetime,
+            finalised_datetime,
         };
 
         let donor_id = map_optional_name_link_id_to_name_id(connection, donor_link_id)?;

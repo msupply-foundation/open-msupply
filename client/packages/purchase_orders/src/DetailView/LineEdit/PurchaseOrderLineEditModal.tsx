@@ -111,7 +111,7 @@ export const PurchaseOrderLineEditModal = ({
           onChangeItem={onChangeItem}
           draft={draft}
           updatePatch={updatePatch}
-        ></PurchaseOrderLineEdit>
+        />
       )}
     </Modal>
   );

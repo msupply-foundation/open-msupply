@@ -48,6 +48,8 @@ export type PurchaseOrderFragment = {
   advancePaidDate?: string | null;
   receivedAtPortDate?: string | null;
   requestedDeliveryDate?: string | null;
+  authorisedDatetime?: string | null;
+  finalisedDatetime?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'PurchaseOrderLineConnector';
@@ -161,6 +163,8 @@ export type PurchaseOrderByIdQuery = {
         advancePaidDate?: string | null;
         receivedAtPortDate?: string | null;
         requestedDeliveryDate?: string | null;
+        authorisedDatetime?: string | null;
+        finalisedDatetime?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'PurchaseOrderLineConnector';
@@ -296,16 +300,25 @@ export type InsertPurchaseOrderLineMutation = {
   insertPurchaseOrderLine: { __typename: 'IdResponse'; id: string };
 };
 
-export type UpdatePurchaseOrderLineMutationVariables = Types.Exact<{
-  input: Types.UpdatePurchaseOrderLineInput;
+export type AddToPurchaseOrderFromMasterListMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
+  input: Types.AddToPurchaseOrderFromMasterListInput;
 }>;
 
-export type UpdatePurchaseOrderLineMutation = {
+export type AddToPurchaseOrderFromMasterListMutation = {
   __typename: 'Mutations';
-  updatePurchaseOrderLine:
-    | { __typename: 'IdResponse'; id: string }
-    | { __typename: 'UpdatePurchaseOrderLineError' };
+  addToPurchaseOrderFromMasterList:
+    | {
+        __typename: 'AddToPurchaseOrderFromMasterListError';
+        error:
+          | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | {
+              __typename: 'MasterListNotFoundForThisStore';
+              description: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      }
+    | { __typename: 'PurchaseOrderLineConnector' };
 };
 
 export const PurchaseOrderRowFragmentDoc = gql`
@@ -397,6 +410,8 @@ export const PurchaseOrderFragmentDoc = gql`
     advancePaidDate
     receivedAtPortDate
     requestedDeliveryDate
+    authorisedDatetime
+    finalisedDatetime
   }
   ${PurchaseOrderLineFragmentDoc}
 `;
@@ -532,14 +547,35 @@ export const InsertPurchaseOrderLineDocument = gql`
     }
   }
 `;
-export const UpdatePurchaseOrderLineDocument = gql`
-  mutation updatePurchaseOrderLine(
-    $input: UpdatePurchaseOrderLineInput!
+export const AddToPurchaseOrderFromMasterListDocument = gql`
+  mutation addToPurchaseOrderFromMasterList(
     $storeId: String!
+    $input: AddToPurchaseOrderFromMasterListInput!
   ) {
-    updatePurchaseOrderLine(input: $input, storeId: $storeId) {
-      ... on IdResponse {
-        id
+    addToPurchaseOrderFromMasterList(storeId: $storeId, input: $input) {
+      ... on AddToPurchaseOrderFromMasterListResponse {
+        ... on PurchaseOrderLineConnector {
+          __typename
+          totalCount
+        }
+      }
+      ... on AddToPurchaseOrderFromMasterListError {
+        __typename
+        error {
+          ... on CannotEditPurchaseOrder {
+            __typename
+            description
+          }
+          ... on MasterListNotFoundForThisStore {
+            __typename
+            description
+          }
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+          description
+        }
       }
     }
   }
@@ -692,18 +728,18 @@ export function getSdk(
         variables
       );
     },
-    updatePurchaseOrderLine(
-      variables: UpdatePurchaseOrderLineMutationVariables,
+    addToPurchaseOrderFromMasterList(
+      variables: AddToPurchaseOrderFromMasterListMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<UpdatePurchaseOrderLineMutation> {
+    ): Promise<AddToPurchaseOrderFromMasterListMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdatePurchaseOrderLineMutation>(
-            UpdatePurchaseOrderLineDocument,
+          client.request<AddToPurchaseOrderFromMasterListMutation>(
+            AddToPurchaseOrderFromMasterListDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'updatePurchaseOrderLine',
+        'addToPurchaseOrderFromMasterList',
         'mutation',
         variables
       );

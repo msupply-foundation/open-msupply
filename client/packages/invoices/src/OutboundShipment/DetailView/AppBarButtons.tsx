@@ -38,7 +38,7 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
           onClick={() => onAddItem()}
         />
         <AddFromMasterListButton />
-        <AddFromScannerButton onAddItem={onAddItem} />
+        <AddFromScannerButton onAddItem={onAddItem} disabled={isDisabled} />
         <ReportSelector
           context={ReportContext.OutboundShipment}
           dataId={data?.id ?? ''}

@@ -23,6 +23,7 @@ pub enum ReasonOptionNodeType {
     OpenVialWastage,
     ReturnReason,
     RequisitionLineVariance,
+    ClosedVialWastage,
 }
 
 #[Object]
@@ -65,6 +66,7 @@ impl ReasonOptionNodeType {
             from::OpenVialWastage => to::OpenVialWastage,
             from::ReturnReason => to::ReturnReason,
             from::RequisitionLineVariance => to::RequisitionLineVariance,
+            from::ClosedVialWastage => to::ClosedVialWastage,
         }
     }
 
@@ -78,6 +80,7 @@ impl ReasonOptionNodeType {
             from::OpenVialWastage => to::OpenVialWastage,
             from::ReturnReason => to::ReturnReason,
             from::RequisitionLineVariance => to::RequisitionLineVariance,
+            from::ClosedVialWastage => to::ClosedVialWastage,
         }
     }
 }
