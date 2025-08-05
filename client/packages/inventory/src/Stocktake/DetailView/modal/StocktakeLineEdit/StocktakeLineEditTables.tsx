@@ -25,6 +25,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
+  getCampaignColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemVariantInputCell,
@@ -46,6 +47,7 @@ interface StocktakeLineEditTableProps {
   isInitialStocktake?: boolean;
   trackStockDonor?: boolean;
   restrictedToLocationTypeId?: string | null;
+  useCampaigns?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -135,11 +137,6 @@ const getInventoryAdjustmentReasonInputColumn = (
       const isInventoryReduction =
         rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
 
-      const required =
-        typeof rowData.countedNumberOfPacks === 'number' &&
-        rowData.countThisLine &&
-        rowData.snapshotNumberOfPacks !== rowData.countedNumberOfPacks;
-
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
       // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
       return (
@@ -155,8 +152,6 @@ const getInventoryAdjustmentReasonInputColumn = (
           inputProps={{
             error: isAdjustmentReasonError,
           }}
-          disabled={!required}
-          required={required}
           initialStocktake={initialStocktake}
           reasonOptions={reasonOptions}
           loading={isLoading}
@@ -344,9 +339,10 @@ export const LocationTable = ({
   isDisabled,
   trackStockDonor,
   restrictedToLocationTypeId,
+  useCampaigns,
 }: StocktakeLineEditTableProps) => {
-  const theme = useTheme();
   const t = useTranslation();
+  const theme = useTheme();
 
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
@@ -371,6 +367,10 @@ export const LocationTable = ({
       )
     );
   }
+  if (useCampaigns) {
+    columnDefinitions.push(getCampaignColumn(patch => update(patch)));
+  }
+
   columnDefinitions.push([
     'comment',
     {

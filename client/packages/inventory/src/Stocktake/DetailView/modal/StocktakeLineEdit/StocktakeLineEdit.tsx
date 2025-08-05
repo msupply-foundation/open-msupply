@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import {
   BasicSpinner,
@@ -42,16 +42,18 @@ interface StocktakeLineEditProps {
   isOpen: boolean;
   isInitialStocktake: boolean;
   enableDonorTracking: boolean;
+  useCampaigns?: boolean;
 }
 
-export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
+export const StocktakeLineEdit = ({
   item,
   mode,
   onClose,
   isOpen,
   isInitialStocktake,
   enableDonorTracking,
-}) => {
+  useCampaigns = false,
+}: StocktakeLineEditProps) => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentItem, setCurrentItem] = useState(item);
@@ -188,6 +190,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                 restrictedToLocationTypeId={
                   currentItem?.restrictedLocationTypeId
                 }
+                useCampaigns={useCampaigns}
               />
             </QueryParamsProvider>
           </StyledTabContainer>
