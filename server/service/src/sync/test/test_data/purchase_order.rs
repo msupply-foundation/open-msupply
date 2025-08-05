@@ -80,7 +80,8 @@ const PURCHASE_ORDER_1: (&str, &str) = (
             "sent_datetime": "2025-01-15T01:02:03",
             "supplier_discount_percentage": 10.0, 
             "authorised_datetime": "2025-01-22T00:00:00",
-            "finalised_datetime": "2025-01-22T00:00:00"
+            "finalised_datetime": "2025-01-22T00:00:00",
+            "status": "AUTHORISED"
         }
     }"#,
 );

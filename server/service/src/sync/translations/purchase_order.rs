@@ -330,7 +330,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             .and_then(|oms_field| oms_field.finalised_datetime);
 
         let status = oms_fields
-            .and_then(|oms_field| oms_field.status)
+            .clone()
+            .map(|oms_field| oms_field.status)
             .unwrap_or_else(|| from_legacy_status(&status, is_authorised));
 
         let result = PurchaseOrderRow {
