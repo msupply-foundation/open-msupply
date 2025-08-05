@@ -3307,7 +3307,7 @@ export type InsertLocationInput = {
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  volume: Scalars['Float']['input'];
+  volume?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;

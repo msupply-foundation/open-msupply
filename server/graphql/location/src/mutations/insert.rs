@@ -48,7 +48,7 @@ pub struct InsertLocationInput {
     pub name: Option<String>,
     pub on_hold: Option<bool>,
     pub location_type_id: Option<String>,
-    pub volume: f64,
+    pub volume: Option<f64>,
 }
 
 impl From<InsertLocationInput> for InsertLocation {
@@ -180,7 +180,6 @@ mod test {
             "id": "n/a",
             "code": "n/a",
             "name": "n/a",
-            "volume": 0.0,
           }
         }));
 
@@ -286,7 +285,6 @@ mod test {
             "id": "n/a",
             "code": "n/a",
             "name": "n/a",
-            "volume": 0.0,
           }
         }));
 

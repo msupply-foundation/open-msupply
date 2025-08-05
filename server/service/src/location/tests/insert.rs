@@ -40,7 +40,7 @@ mod query {
                     name: None,
                     on_hold: None,
                     location_type_id: None,
-                    volume: 0.0
+                    volume: None
                 },
             ),
             Err(InsertLocationError::LocationAlreadyExists)
@@ -55,7 +55,7 @@ mod query {
                     name: None,
                     on_hold: None,
                     location_type_id: None,
-                    volume: 0.0
+                    volume: None
                 },
             ),
             Err(InsertLocationError::LocationWithCodeAlreadyExists)
@@ -96,7 +96,7 @@ mod query {
                     name: None,
                     on_hold: None,
                     location_type_id: None,
-                    volume: 0.0
+                    volume: None
                 },
             ),
             Ok(result_location.clone())
@@ -123,7 +123,7 @@ mod query {
                     name: Some("new_location_name".to_owned()),
                     on_hold: Some(true),
                     location_type_id: None,
-                    volume: 2.0
+                    volume: Some(2.0)
                 },
             ),
             Ok(Location {
