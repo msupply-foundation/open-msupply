@@ -1,29 +1,48 @@
 import React from 'react';
-import { BasicTextInput, Grid } from '@openmsupply-client/common';
+import {
+  BasicTextInput,
+  Box,
+  DataTable,
+  Divider,
+  Grid,
+} from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
   ItemWithStatsFragment,
   StockItemSearchInputWithStats,
 } from '@openmsupply-client/system/src';
+import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
+import { min } from 'lodash';
+import { usePurchaseOrderLineEditColumns } from './columns';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
-  currentItem?: PurchaseOrderLineFragment;
-  lines: PurchaseOrderLineFragment[];
+  currentLine?: PurchaseOrderLineFragment;
   onChangeItem: (item: ItemWithStatsFragment) => void;
-  // TODO add line update
-  // onUpdate: (patch: Partial<PurchaseOrderLineFragment>) => void;
+  draft?: DraftPurchaseOrderLine | null;
+  updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
 }
 
 export const PurchaseOrderLineEdit = ({
   isUpdateMode,
-  currentItem,
-  lines,
+  currentLine,
   onChangeItem,
-  // TODO add line update
-  // onUpdate,
+  draft,
+  updatePatch,
 }: PurchaseOrderLineEditProps) => {
+  const showContent = !!draft && !!currentLine;
+
+  const lines: DraftPurchaseOrderLine[] = [];
+  if (draft) {
+    lines.push(draft);
+  }
+
+  const columns = usePurchaseOrderLineEditColumns({
+    draft,
+    updatePatch,
+  });
+
   return (
     <Grid
       container
@@ -36,20 +55,19 @@ export const PurchaseOrderLineEdit = ({
       <Grid size={12} sx={{ mb: 2 }}>
         {(isUpdateMode && (
           <BasicTextInput
-            value={`${currentItem?.item?.code}     ${currentItem?.item?.name}`}
+            value={`${currentLine?.item?.code}     ${currentLine?.item?.name}`}
             disabled
             fullWidth
           />
         )) || (
           <StockItemSearchInputWithStats
-            autoFocus={!currentItem}
-            openOnFocus={!currentItem}
+            autoFocus={!currentLine}
+            openOnFocus={!currentLine}
             disabled={false}
-            currentItemId={currentItem?.id}
+            currentItemId={currentLine?.item.id}
             onChange={(newItem: ItemWithStatsFragment | null) =>
               newItem && onChangeItem(newItem)
             }
-            extraFilter={item => !lines.some(line => line.item.id === item.id)}
           />
         )}
       </Grid>
@@ -58,6 +76,29 @@ export const PurchaseOrderLineEdit = ({
         TODO add update line fields here
         <Grid size={6}>{}</Grid> */}
       </Grid>
+      {showContent && currentLine && (
+        <Box style={{ width: '100%' }}>
+          <Divider margin={10} />
+          <Box
+            style={{
+              maxHeight: min([screen.height - 570, 325]),
+              display: 'flex',
+              flexDirection: 'column',
+              overflowX: 'hidden',
+              overflowY: 'auto',
+            }}
+          >
+            <DataTable
+              id="purchase-order-line-edit"
+              columns={columns}
+              data={lines}
+              dense
+              // additionalRows={additionalRows}
+              enableColumnSelection={true}
+            />
+          </Box>
+        </Box>
+      )}
     </Grid>
   );
 };

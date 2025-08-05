@@ -8,7 +8,7 @@ import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { createDraftPurchaseOrderLine } from './utils';
 interface PurchaseOrderLineEditModalProps {
-  itemId: string | null;
+  lineId: string | null;
   purchaseOrder: PurchaseOrderFragment;
   mode: ModalMode | null;
   isOpen: boolean;
@@ -16,7 +16,7 @@ interface PurchaseOrderLineEditModalProps {
 }
 
 export const PurchaseOrderLineEditModal = ({
-  itemId,
+  lineId,
   purchaseOrder,
   mode,
   isOpen,
@@ -27,15 +27,16 @@ export const PurchaseOrderLineEditModal = ({
 
   const lines = purchaseOrder.lines.nodes;
 
-  const [currentItem, setCurrentItem] = useState(
-    lines.find(line => line.item.id === itemId) ?? undefined
+  const [currentLine, setCurrentLine] = useState(
+    lines.find(line => line.id === lineId) ?? undefined
   );
 
   const {
     create: { create, isCreating },
+    update: { update, isUpdating },
     draft,
     updatePatch,
-  } = usePurchaseOrderLine(currentItem?.id);
+  } = usePurchaseOrderLine(currentLine?.id);
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
@@ -43,7 +44,7 @@ export const PurchaseOrderLineEditModal = ({
       updatePatch({
         ...draftLine,
       });
-    setCurrentItem({
+    setCurrentLine({
       ...draftLine,
       __typename: 'PurchaseOrderLineNode',
       item: item,
@@ -52,10 +53,12 @@ export const PurchaseOrderLineEditModal = ({
 
   const handleSave = async () => {
     try {
-      await create();
-      updatePatch(draft);
+      if (mode === ModalMode.Create) {
+        await create();
+      } else if (mode === ModalMode.Update) {
+        await update();
+      }
       return true;
-      // TODO add proper error handling by returning type errors from API
     } catch (e: unknown) {
       if (e instanceof Error) {
         error(e.message)();
@@ -92,7 +95,7 @@ export const PurchaseOrderLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem}
+          disabled={!currentLine}
           onClick={async () => {
             const success = await handleSave();
             if (success) onClose();
@@ -103,7 +106,7 @@ export const PurchaseOrderLineEditModal = ({
       width={1200}
       enableAutocomplete
     >
-      {isCreating ? (
+      {isCreating || isUpdating ? (
         <Box
           display="flex"
           flex={1}
@@ -115,10 +118,11 @@ export const PurchaseOrderLineEditModal = ({
         </Box>
       ) : (
         <PurchaseOrderLineEdit
-          currentItem={currentItem}
+          currentLine={currentLine}
           isUpdateMode={mode === ModalMode.Update}
-          lines={lines}
           onChangeItem={onChangeItem}
+          draft={draft}
+          updatePatch={updatePatch}
         ></PurchaseOrderLineEdit>
       )}
     </Modal>
