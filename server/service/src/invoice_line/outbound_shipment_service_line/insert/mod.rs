@@ -120,9 +120,10 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id = "invalid".to_string();
-                }),
+                InsertOutboundShipmentServiceLine {
+                    invoice_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -131,9 +132,10 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id = mock_inbound_shipment_c().id;
-                }),
+                InsertOutboundShipmentServiceLine {
+                    invoice_id: mock_inbound_shipment_c().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAnOutboundShipment)
         );
@@ -143,9 +145,10 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.id.clone_from(&draft_shipment.lines[0].line.id);
-                }),
+                InsertOutboundShipmentServiceLine {
+                    id: draft_shipment.lines[0].line.id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::LineAlreadyExists)
         );
@@ -154,9 +157,10 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id = mock_outbound_shipment_shipped().id;
-                }),
+                InsertOutboundShipmentServiceLine {
+                    invoice_id: mock_outbound_shipment_shipped().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditInvoice)
         );
@@ -165,10 +169,11 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id.clone_from(&draft_shipment.invoice.id);
-                    r.item_id = Some("invalid".to_string())
-                }),
+                InsertOutboundShipmentServiceLine {
+                    invoice_id: draft_shipment.invoice.id.clone(),
+                    item_id: Some("invalid".to_string()),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -177,10 +182,11 @@ mod test {
         assert_eq!(
             service.insert_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id.clone_from(&draft_shipment.invoice.id);
-                    r.item_id = Some(mock_item_a().id)
-                }),
+                InsertOutboundShipmentServiceLine {
+                    invoice_id: draft_shipment.invoice.id.clone(),
+                    item_id: Some(mock_item_a().id),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAServiceItem)
         );
@@ -204,10 +210,11 @@ mod test {
         service
             .insert_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.id = "new_line_id".to_string();
-                    r.invoice_id = mock_full_draft_outbound_shipment_a().invoice.id;
-                }),
+                InsertOutboundShipmentServiceLine {
+                    id: "new_line_id".to_string(),
+                    invoice_id: mock_full_draft_outbound_shipment_a().invoice.id,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -225,14 +232,12 @@ mod test {
             )
             .unwrap()
             .unwrap();
-        assert_eq!(
-            line,
-            inline_edit(&line, |mut u| {
-                u.item_link_id = default_service_item.item_row.id;
-                u.item_name = default_service_item.item_row.name;
-                u
-            })
-        );
+        assert_eq!(line, {
+            let mut expected = line.clone();
+            expected.item_link_id = default_service_item.item_row.id;
+            expected.item_name = default_service_item.item_row.name;
+            expected
+        });
 
         // Specified service line
 
@@ -256,18 +261,16 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            line,
-            inline_edit(&line, |mut u| {
-                u.id = "new_line2_id".to_string();
-                u.invoice_id = mock_full_draft_outbound_shipment_a().invoice.id;
-                u.item_link_id = mock_item_service_item().id;
-                u.item_name = "modified name".to_string();
-                u.total_before_tax = 0.3;
-                u.tax_percentage = Some(0.1);
-                u.note = Some("note".to_string());
-                u
-            })
-        );
+        assert_eq!(line, {
+            let mut expected = line.clone();
+            expected.id = "new_line2_id".to_string();
+            expected.invoice_id = mock_full_draft_outbound_shipment_a().invoice.id;
+            expected.item_link_id = mock_item_service_item().id;
+            expected.item_name = "modified name".to_string();
+            expected.total_before_tax = 0.3;
+            expected.tax_percentage = Some(0.1);
+            expected.note = Some("note".to_string());
+            expected
+        });
     }
 }

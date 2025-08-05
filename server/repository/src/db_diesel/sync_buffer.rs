@@ -65,7 +65,7 @@ pub struct SyncBufferRowRepository<'a> {
 }
 
 use serde::{Deserialize, Serialize};
-use util::{inline_init, Defaults};
+use util::Defaults;
 
 impl<'a> SyncBufferRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -157,7 +157,10 @@ impl SyncBufferFilter {
 
 impl SyncAction {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }
 
@@ -223,7 +226,7 @@ fn create_filtered_query(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQue
 
 #[cfg(test)]
 mod test {
-    use util::{inline_init, Defaults};
+    use util::Defaults;
 
     use crate::{
         mock::{MockData, MockDataInserts},
@@ -232,26 +235,29 @@ mod test {
     };
 
     pub fn row_a() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "store_a".to_string();
-            r.integration_datetime = Some(Defaults::naive_date_time());
-            r.action = SyncAction::Upsert;
-        })
+        SyncBufferRow {
+            record_id: "store_a".to_string(),
+            integration_datetime: Some(Defaults::naive_date_time()),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        }
     }
 
     pub fn row_b() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "store_b".to_string();
-            r.integration_error = Some("error".to_string());
-            r.action = SyncAction::Delete;
-        })
+        SyncBufferRow {
+            record_id: "store_b".to_string(),
+            integration_error: Some("error".to_string()),
+            action: SyncAction::Delete,
+            ..Default::default()
+        }
     }
 
     pub fn row_c() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "store_c".to_string();
-            r.action = SyncAction::Upsert;
-        })
+        SyncBufferRow {
+            record_id: "store_c".to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        }
     }
 
     #[actix_rt::test]
@@ -259,9 +265,10 @@ mod test {
         let (_, connection, _, _) = test_db::setup_all_with_data(
             "test_sync_buffer",
             MockDataInserts::none(),
-            inline_init(|r: &mut MockData| {
-                r.sync_buffer_rows = vec![row_a(), row_b(), row_c()];
-            }),
+            MockData {
+                sync_buffer_rows: vec![row_a(), row_b(), row_c()],
+                ..Default::default()
+            },
         )
         .await;
 

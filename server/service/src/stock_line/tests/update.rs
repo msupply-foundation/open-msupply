@@ -8,7 +8,6 @@ mod test {
         test_db::setup_all,
         StockLineRowRepository,
     };
-    use util::inline_init;
 
     use crate::{service_provider::ServiceProvider, stock_line::UpdateStockLine, NullableUpdate};
 
@@ -29,9 +28,10 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = "invalid".to_string();
-                })
+                UpdateStockLine {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::StockDoesNotExist)
         );
@@ -40,12 +40,13 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::LocationDoesNotExist)
         );
@@ -54,12 +55,13 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.item_variant_id = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    item_variant_id: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::ItemVariantDoesNotExist)
         );
@@ -114,12 +116,13 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::StockDoesNotBelongToStore)
         );
@@ -140,12 +143,13 @@ mod test {
         service
             .update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("location_1".to_string()),
-                    });
-                }),
+                    }),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -154,12 +158,10 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            stock_line,
-            inline_edit(&stock_line, |mut l| {
-                l.location_id = Some("location_1".to_string());
-                l
-            })
-        );
+        assert_eq!(stock_line, {
+            let mut l = stock_line.clone();
+            l.location_id = Some("location_1".to_string());
+            l
+        });
     }
 }

@@ -150,7 +150,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
+    
 
     type ServiceInput = InsertOutboundShipmentServiceLine;
     type ServiceError = InsertOutboundShipmentServiceLineError;
@@ -346,9 +346,13 @@ mod test {
                     note: Some("note".to_string())
                 }
             );
-            Ok(inline_init(|r: &mut InvoiceLine| {
-                r.invoice_line_row.id = "insert line id input".to_string();
-            }))
+            Ok(InvoiceLine {
+                invoice_line_row: InvoiceLineRow {
+                    id: "insert line id input".to_string(),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
         }));
 
         let variables = json!({

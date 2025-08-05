@@ -168,7 +168,6 @@ mod test_insert {
         test_db::{setup_all, setup_all_with_data},
         NameRow, RequisitionRowRepository,
     };
-    use util::inline_edit;
 
     #[actix_rt::test]
     async fn insert_request_requisition_errors() {
@@ -297,21 +296,18 @@ mod test_insert {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_row,
-            inline_edit(&new_row, |mut u| {
-                u.id = "new_request_requisition".to_string();
-                u.user_id = Some(mock_user_account_a().id);
-                u.name_link_id = mock_name_store_c().id;
-                u.colour = Some("new colour".to_string());
-                u.their_reference = Some("new their_reference".to_string());
-                u.comment = Some("new comment".to_string());
-                u.max_months_of_stock = 1.0;
-                u.min_months_of_stock = 0.5;
-                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
-                u
-            })
-        );
+        let mut expected = new_row.clone();
+        expected.id = "new_request_requisition".to_string();
+        expected.user_id = Some(mock_user_account_a().id);
+        expected.name_link_id = mock_name_store_c().id;
+        expected.colour = Some("new colour".to_string());
+        expected.their_reference = Some("new their_reference".to_string());
+        expected.comment = Some("new comment".to_string());
+        expected.max_months_of_stock = 1.0;
+        expected.min_months_of_stock = 0.5;
+        expected.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
+
+        assert_eq!(new_row, expected);
 
         assert!(
             new_row.created_datetime > before_insert && new_row.created_datetime < after_insert

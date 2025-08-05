@@ -299,7 +299,6 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
     };
-    use util::inline_init;
 
     use crate::BatchMutations;
 
@@ -487,39 +486,45 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 insert_requisition: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertRequestRequisition| {
-                        input.id = "id1".to_string()
-                    }),
+                    input: InsertRequestRequisition {
+                        id: "id1".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertRequestRequisitionError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertRequestRequisitionLine| {
-                        input.id = "id2".to_string()
-                    }),
+                    input: InsertRequestRequisitionLine {
+                        id: "id2".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertRequestRequisitionLineError::RequisitionDoesNotExist {}),
                 }],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateRequestRequisitionLine| {
-                        input.id = "id3".to_string()
-                    }),
+                    input: UpdateRequestRequisitionLine {
+                        id: "id3".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(UpdateRequestRequisitionLineError::RequisitionLineDoesNotExist {}),
                 }],
                 delete_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteRequestRequisitionLine| {
-                        input.id = "id4".to_string()
-                    }),
+                    input: DeleteRequestRequisitionLine {
+                        id: "id4".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(DeleteRequestRequisitionLineError::RequisitionLineDoesNotExist {}),
                 }],
                 update_requisition: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateRequestRequisition| {
-                        input.id = "id5".to_string()
-                    }),
+                    input: UpdateRequestRequisition {
+                        id: "id5".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(UpdateRequestRequisitionError::RequisitionDoesNotExist {}),
                 }],
                 delete_requisition: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteRequestRequisition| {
-                        input.id = "id6".to_string()
-                    }),
+                    input: DeleteRequestRequisition {
+                        id: "id6".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(DeleteRequestRequisitionError::RequisitionDoesNotExist {}),
                 }],
             })
@@ -537,24 +542,27 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 insert_requisition: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertRequestRequisition| {
-                        input.id = "id1".to_string()
-                    }),
+                    input: InsertRequestRequisition {
+                        id: "id1".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertRequestRequisitionError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertRequestRequisitionLine| {
-                        input.id = "id2".to_string()
-                    }),
+                    input: InsertRequestRequisitionLine {
+                        id: "id2".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertRequestRequisitionLineError::RequisitionDoesNotExist {}),
                 }],
                 update_line: vec![],
                 delete_line: vec![],
                 update_requisition: vec![],
                 delete_requisition: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteRequestRequisition| {
-                        input.id = "id6".to_string()
-                    }),
+                    input: DeleteRequestRequisition {
+                        id: "id6".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(DeleteRequestRequisitionError::NotARequestRequisition {}),
                 }],
             })
@@ -564,9 +572,10 @@ mod test {
             "input":
                 format!(
                     "{:#?}",
-                    inline_init(|input: &mut DeleteRequestRequisition| {
-                        input.id = "id6".to_string()
-                    })
+                    DeleteRequestRequisition {
+                        id: "id6".to_string(),
+                        ..Default::default()
+                    }
                 )
         });
         assert_standard_graphql_error!(
@@ -604,12 +613,17 @@ mod test {
                 insert_requisition: vec![],
                 insert_line: vec![],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateRequestRequisitionLine| {
-                        input.id = "id3".to_string()
+                    input: UpdateRequestRequisitionLine {
+                        id: "id3".to_string(),
+                        ..Default::default()
+                    },
+                    result: Ok(RequisitionLine {
+                        requisition_line_row: RequisitionLineRow {
+                            id: "id3".to_string(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
                     }),
-                    result: Ok(inline_init(|input: &mut RequisitionLine| {
-                        input.requisition_line_row.id = "id3".to_string()
-                    })),
                 }],
                 delete_line: vec![],
                 update_requisition: vec![],

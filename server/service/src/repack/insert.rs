@@ -102,7 +102,6 @@ mod test {
         InvoiceLineRow, InvoiceLineType, InvoiceRowRepository, LocationMovementRow,
         StockLineFilter, StockLineRepository, StockLineRow, StorageConnection,
     };
-    use util::inline_init;
 
     use super::{InsertRepack, InsertRepackError};
     type ServiceError = InsertRepackError;
@@ -122,9 +121,10 @@ mod test {
         assert_eq!(
             service.insert_repack(
                 &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = "invalid".to_string();
-                })
+                InsertRepack {
+                    stock_line_id: "invalid".to_string(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::StockLineDoesNotExist)
         );
@@ -133,9 +133,10 @@ mod test {
         assert_eq!(
             service.insert_repack(
                 &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id.clone_from(&mock_item_b_lines()[0].id);
-                })
+                InsertRepack {
+                    stock_line_id: mock_item_b_lines()[0].id.clone(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::NotThisStoreStockLine)
         );
@@ -144,11 +145,12 @@ mod test {
         assert_eq!(
             service.insert_repack(
                 &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id.clone_from(&mock_stock_line_a().id);
-                    r.number_of_packs = 9.0;
-                    r.new_pack_size = 2.0;
-                })
+                InsertRepack {
+                    stock_line_id: mock_stock_line_a().id.clone(),
+                    number_of_packs: 9.0,
+                    new_pack_size: 2.0,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::CannotHaveFractionalPack)
         );
@@ -165,11 +167,12 @@ mod test {
         assert_eq!(
             service.insert_repack(
                 &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id.clone_from(&mock_stock_line_b().id);
-                    r.number_of_packs = 40.0;
-                    r.new_pack_size = 2.0;
-                })
+                InsertRepack {
+                    stock_line_id: mock_stock_line_b().id.clone(),
+                    number_of_packs: 40.0,
+                    new_pack_size: 2.0,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))
         );
@@ -229,9 +232,10 @@ mod test {
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "insert_repack_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.stock_lines = vec![stock_line_a.clone()];
-            }),
+            MockData {
+                stock_lines: vec![stock_line_a.clone()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -247,11 +251,12 @@ mod test {
         let increased_pack_size = service
             .insert_repack(
                 &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id.clone_from(&mock_stock_line_a().id);
-                    r.number_of_packs = 8.0;
-                    r.new_pack_size = 2.0;
-                }),
+                InsertRepack {
+                    stock_line_id: mock_stock_line_a().id.clone(),
+                    number_of_packs: 8.0,
+                    new_pack_size: 2.0,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -342,11 +347,12 @@ mod test {
         let increased_pack_size = service
             .insert_repack(
                 &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id.clone_from(&stock_line_a.id);
-                    r.number_of_packs = 6.0;
-                    r.new_pack_size = 6.0;
-                }),
+                InsertRepack {
+                    stock_line_id: stock_line_a.id.clone(),
+                    number_of_packs: 6.0,
+                    new_pack_size: 6.0,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -389,11 +395,12 @@ mod test {
         let repack_all = service
             .insert_repack(
                 &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id.clone_from(&mock_stock_line_a().id);
-                    r.number_of_packs = 22.0;
-                    r.new_pack_size = 11.0;
-                }),
+                InsertRepack {
+                    stock_line_id: mock_stock_line_a().id.clone(),
+                    number_of_packs: 22.0,
+                    new_pack_size: 11.0,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -436,11 +443,12 @@ mod test {
         let decreased_pack_size_to_one = service
             .insert_repack(
                 &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id.clone_from(&mock_stock_line_si_d()[1].id);
-                    r.number_of_packs = 1.0;
-                    r.new_pack_size = 1.0;
-                }),
+                InsertRepack {
+                    stock_line_id: mock_stock_line_si_d()[1].id.clone(),
+                    number_of_packs: 1.0,
+                    new_pack_size: 1.0,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -457,11 +465,12 @@ mod test {
         } = sort_invoice_lines(&connection, &invoice.id);
 
         assert_eq!(
-            inline_edit(&new_stock, |mut s| {
+            {
+                let mut s = new_stock.clone();
                 s.sell_price_per_pack =
                     (mock_stock_line_si_d()[1].sell_price_per_pack / 3.0).round();
                 s
-            }),
+            },
             StockLineRow {
                 id: new_stock.id.clone(),
                 available_number_of_packs: 3.0,
@@ -485,12 +494,13 @@ mod test {
         let decreased_pack_size = service
             .insert_repack(
                 &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id.clone_from(&mock_stock_line_ci_c()[1].id);
-                    r.number_of_packs = 3.0;
-                    r.new_pack_size = 3.0;
-                    r.new_location_id = Some(mock_location_1().id);
-                }),
+                InsertRepack {
+                    stock_line_id: mock_stock_line_ci_c()[1].id.clone(),
+                    number_of_packs: 3.0,
+                    new_pack_size: 3.0,
+                    new_location_id: Some(mock_location_1().id),
+                    ..Default::default()
+                },
             )
             .unwrap();
 

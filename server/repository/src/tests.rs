@@ -2,51 +2,55 @@
 mod repository_test {
     mod data {
         use chrono::{DateTime, NaiveDate};
-        use util::inline_init;
 
         use crate::db_diesel::*;
 
         pub fn name_1() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "name1".to_string();
-                r.name = "name_1".to_string();
-                r.code = "code1".to_string();
-            })
+            NameRow {
+                id: "name1".to_string(),
+                name: "name_1".to_string(),
+                code: "code1".to_string(),
+                ..Default::default()
+            }
         }
 
         pub fn store_1() -> StoreRow {
-            inline_init(|s: &mut StoreRow| {
-                s.id = "store1".to_string();
-                s.name_link_id = "name1".to_string();
-                s.code = "code1".to_string();
-            })
+            StoreRow {
+                id: "store1".to_string(),
+                name_link_id: "name1".to_string(),
+                code: "code1".to_string(),
+                ..Default::default()
+            }
         }
 
         pub fn item_1() -> ItemRow {
-            inline_init(|r: &mut ItemRow| {
-                r.id = "item1".to_string();
-                r.name = "name1".to_string();
-                r.code = "code1".to_string();
-                r.r#type = ItemType::Stock;
-            })
+            ItemRow {
+                id: "item1".to_string(),
+                name: "name1".to_string(),
+                code: "code1".to_string(),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            }
         }
 
         pub fn item_2() -> ItemRow {
-            inline_init(|r: &mut ItemRow| {
-                r.id = "item2".to_string();
-                r.name = "item-2".to_string();
-                r.code = "code2".to_string();
-                r.r#type = ItemType::Stock;
-            })
+            ItemRow {
+                id: "item2".to_string(),
+                name: "item-2".to_string(),
+                code: "code2".to_string(),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            }
         }
 
         pub fn item_service_1() -> ItemRow {
-            inline_init(|r: &mut ItemRow| {
-                r.id = "item_service_1".to_string();
-                r.name = "item_service_name_1".to_string();
-                r.code = "item_service_code_1".to_string();
-                r.r#type = ItemType::Service;
-            })
+            ItemRow {
+                id: "item_service_1".to_string(),
+                name: "item_service_name_1".to_string(),
+                code: "item_service_code_1".to_string(),
+                r#type: ItemType::Service,
+                ..Default::default()
+            }
         }
 
         pub fn stock_line_1() -> StockLineRow {
@@ -118,32 +122,34 @@ mod repository_test {
         }
 
         pub fn invoice_1() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice1".to_string();
-                r.name_link_id = name_1().id.to_string();
-                r.store_id = store_1().id.to_string();
-                r.invoice_number = 12;
-                r.r#type = InvoiceType::InboundShipment;
-                r.status = InvoiceStatus::New;
-                r.comment = Some("".to_string());
-                r.their_reference = Some("".to_string());
+            InvoiceRow {
+                id: "invoice1".to_string(),
+                name_link_id: name_1().id.to_string(),
+                store_id: store_1().id.to_string(),
+                invoice_number: 12,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                comment: Some("".to_string()),
+                their_reference: Some("".to_string()),
                 // Note: keep nsecs small enough for Postgres which has limited precision;
-                r.created_datetime = DateTime::from_timestamp(1000, 0).unwrap().naive_utc();
-            })
+                created_datetime: DateTime::from_timestamp(1000, 0).unwrap().naive_utc(),
+                ..Default::default()
+            }
         }
 
         pub fn invoice_2() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice2".to_string();
-                r.name_link_id = name_1().id.to_string();
-                r.store_id = store_1().id.to_string();
-                r.invoice_number = 12;
-                r.r#type = InvoiceType::OutboundShipment;
-                r.status = InvoiceStatus::New;
-                r.comment = Some("".to_string());
-                r.their_reference = Some("".to_string());
-                r.created_datetime = DateTime::from_timestamp(2000, 0).unwrap().naive_utc();
-            })
+            InvoiceRow {
+                id: "invoice2".to_string(),
+                name_link_id: name_1().id.to_string(),
+                store_id: store_1().id.to_string(),
+                invoice_number: 12,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                comment: Some("".to_string()),
+                their_reference: Some("".to_string()),
+                created_datetime: DateTime::from_timestamp(2000, 0).unwrap().naive_utc(),
+                ..Default::default()
+            }
         }
 
         pub fn invoice_line_1() -> InvoiceLineRow {
@@ -291,7 +297,6 @@ mod repository_test {
     use crate::{DateFilter, EqualFilter, StringFilter};
     use chrono::Duration;
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
-    use util::inline_edit;
 
     #[actix_rt::test]
     async fn test_name_repository() {
@@ -765,16 +770,16 @@ mod repository_test {
             .unwrap();
         assert_eq!(
             stats_invoice_1,
-            inline_edit(&stats_invoice_1, |mut u| {
-                u.invoice_id = invoice_1_id;
-                u.total_before_tax = 13.0;
-                u.total_after_tax = 18.0;
-                u.stock_total_before_tax = 3.0;
-                u.stock_total_after_tax = 3.0;
-                u.service_total_before_tax = 10.0;
-                u.service_total_after_tax = 15.0;
-                u
-            })
+            InvoiceStatsRow {
+                invoice_id: invoice_1_id,
+                total_before_tax: 13.0,
+                total_after_tax: 18.0,
+                stock_total_before_tax: 3.0,
+                stock_total_after_tax: 3.0,
+                service_total_before_tax: 10.0,
+                service_total_after_tax: 15.0,
+                ..stats_invoice_1.clone()
+            }
         );
     }
 
@@ -1077,7 +1082,6 @@ mod repository_test {
     async fn test_tx_deadlock() {
         use crate::{ItemRow, RepositoryError, TransactionError};
         use std::time::SystemTime;
-        use util::inline_init;
 
         let (_, _, connection_manager, _) =
             test_db::setup_all("tx_deadlock", MockDataInserts::none()).await;
@@ -1159,10 +1163,11 @@ mod repository_test {
                         .expect("Time went backwards");
                     println!("A: Slept for {:?}", sleep_duration);
                     println!("A: writing");
-                    repo.upsert_one(&inline_init(|i: &mut ItemRow| {
-                        i.id = "tx_deadlock_id2".to_string();
-                        i.name = "name_a".to_string();
-                    }))?;
+                    repo.upsert_one(&ItemRow {
+                        id: "tx_deadlock_id2".to_string(),
+                        name: "name_a".to_string(),
+                        ..Default::default()
+                    })?;
                     println!("A: written");
                     Ok(())
                 });
@@ -1180,16 +1185,18 @@ mod repository_test {
                     let repo = ItemRowRepository::new(con);
                     let _ = repo.find_active_by_id("tx_deadlock_id")?;
                     println!("B: read");
-                    repo.upsert_one(&inline_init(|i: &mut ItemRow| {
-                        i.id = "tx_deadlock_id".to_string();
-                        i.name = "name_b".to_string();
-                    }))?;
+                    repo.upsert_one(&ItemRow {
+                        id: "tx_deadlock_id".to_string(),
+                        name: "name_b".to_string(),
+                        ..Default::default()
+                    })?;
                     println!("B: write 1");
 
-                    repo.upsert_one(&inline_init(|i: &mut ItemRow| {
-                        i.id = "tx_deadlock_id".to_string();
-                        i.name = "name_b_2".to_string();
-                    }))?;
+                    repo.upsert_one(&ItemRow {
+                        id: "tx_deadlock_id".to_string(),
+                        name: "name_b_2".to_string(),
+                        ..Default::default()
+                    })?;
                     println!("B: write 2");
                     Ok(())
                 });

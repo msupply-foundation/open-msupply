@@ -272,7 +272,6 @@ mod test {
         },
         InputWithResult,
     };
-    use util::inline_init;
 
     use crate::BatchMutations;
 
@@ -446,15 +445,17 @@ mod test {
             Ok(ServiceResult {
                 insert_stocktake: vec![],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertStocktakeLine| {
-                        input.id = "id2".to_string()
-                    }),
+                    input: InsertStocktakeLine {
+                        id: "id2".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertStocktakeLineError::CannotEditFinalised {}),
                 }],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateStocktakeLine| {
-                        input.id = "id3".to_string()
-                    }),
+                    input: UpdateStocktakeLine {
+                        id: "id3".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(UpdateStocktakeLineError::CannotEditFinalised {}),
                 }],
                 delete_line: vec![InputWithResult {
@@ -462,7 +463,10 @@ mod test {
                     result: Err(DeleteStocktakeLineError::CannotEditFinalised {}),
                 }],
                 update_stocktake: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateStocktake| input.id = "id5".to_string()),
+                    input: UpdateStocktake {
+                        id: "id5".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(UpdateStocktakeError::CannotEditFinalised {}),
                 }],
                 delete_stocktake: vec![InputWithResult {
@@ -485,9 +489,10 @@ mod test {
             Ok(ServiceResult {
                 insert_stocktake: vec![],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertStocktakeLine| {
-                        input.id = "id2".to_string()
-                    }),
+                    input: InsertStocktakeLine {
+                        id: "id2".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertStocktakeLineError::CannotEditFinalised {}),
                 }],
                 update_line: vec![],
@@ -536,12 +541,17 @@ mod test {
                 insert_stocktake: vec![],
                 insert_line: vec![],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateStocktakeLine| {
-                        input.id = "id3".to_string()
+                    input: UpdateStocktakeLine {
+                        id: "id3".to_string(),
+                        ..Default::default()
+                    },
+                    result: Ok(StocktakeLine {
+                        line: StocktakeLineRow {
+                            id: "id3".to_string(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
                     }),
-                    result: Ok(inline_init(|input: &mut StocktakeLine| {
-                        input.line.id = "id3".to_string()
-                    })),
                 }],
                 delete_line: vec![],
                 update_stocktake: vec![],

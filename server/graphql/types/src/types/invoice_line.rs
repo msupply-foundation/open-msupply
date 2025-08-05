@@ -351,7 +351,7 @@ mod test {
         LocationRow,
     };
     use serde_json::json;
-    use util::inline_init;
+    
 
     use crate::types::InvoiceLineNode;
 
@@ -373,25 +373,30 @@ mod test {
             pub async fn test_query(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
                     invoice_line: repository::InvoiceLine {
-                        invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
-                            r.id = "line_id".to_string();
-                            r.invoice_id = "line_invoice_id".to_string();
-                            r.r#type = InvoiceLineType::Service;
-                            r.item_link_id = "line_item_id".to_string();
-                            r.item_name = "line_item_name".to_string();
-                            r.item_code = "line_item_code".to_string();
-                            r.pack_size = 1.0;
-                            r.number_of_packs = 2.0;
-                            r.batch = Some("line_batch".to_string());
-                            r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
-                            r.location_id = Some("line_location_id".to_string());
-                            r.note = None;
-                        }),
+                        invoice_line_row: InvoiceLineRow {
+                            id: "line_id".to_string(),
+                            invoice_id: "line_invoice_id".to_string(),
+                            r#type: InvoiceLineType::Service,
+                            item_link_id: "line_item_id".to_string(),
+                            item_name: "line_item_name".to_string(),
+                            item_code: "line_item_code".to_string(),
+                            pack_size: 1.0,
+                            number_of_packs: 2.0,
+                            batch: Some("line_batch".to_string()),
+                            expiry_date: Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap()),
+                            location_id: Some("line_location_id".to_string()),
+                            note: None,
+                            ..Default::default()
+                        },
                         invoice_row: InvoiceRow::default(),
-                        item_row: inline_init(|r: &mut ItemRow| r.id = "line_item_id".to_string()),
-                        location_row_option: Some(inline_init(|r: &mut LocationRow| {
-                            r.name = "line_location_name".to_string();
-                        })),
+                        item_row: ItemRow {
+                            id: "line_item_id".to_string(),
+                            ..Default::default()
+                        },
+                        location_row_option: Some(LocationRow {
+                            name: "line_location_name".to_string(),
+                            ..Default::default()
+                        }),
                         stock_line_option: None,
                     },
                 }
@@ -459,38 +464,44 @@ mod test {
         impl TestQuery {
             pub async fn test_query_stock_in(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
-                    invoice_line: inline_init(|record: &mut InvoiceLine| {
-                        record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
-                            r.total_before_tax = 1.0;
-                            r.total_after_tax = 2.0;
-                            r.tax_percentage = Some(10.0);
-                            r.r#type = InvoiceLineType::StockIn
-                        })
-                    }),
+                    invoice_line: InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            total_before_tax: 1.0,
+                            total_after_tax: 2.0,
+                            tax_percentage: Some(10.0),
+                            r#type: InvoiceLineType::StockIn,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
             pub async fn test_query_stock_out(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
-                    invoice_line: inline_init(|record: &mut InvoiceLine| {
-                        record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
-                            r.total_before_tax = 1.0;
-                            r.total_after_tax = 2.0;
-                            r.tax_percentage = Some(5.0);
-                            r.r#type = InvoiceLineType::StockOut
-                        })
-                    }),
+                    invoice_line: InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            total_before_tax: 1.0,
+                            total_after_tax: 2.0,
+                            tax_percentage: Some(5.0),
+                            r#type: InvoiceLineType::StockOut,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
             pub async fn test_query_service(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
-                    invoice_line: inline_init(|record: &mut InvoiceLine| {
-                        record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
-                            r.total_before_tax = 1.0;
-                            r.total_after_tax = 2.0;
-                            r.tax_percentage = None;
-                            r.r#type = InvoiceLineType::Service
-                        })
-                    }),
+                    invoice_line: InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            total_before_tax: 1.0,
+                            total_after_tax: 2.0,
+                            tax_percentage: None,
+                            r#type: InvoiceLineType::Service,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
         }

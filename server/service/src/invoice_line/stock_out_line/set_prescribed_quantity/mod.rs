@@ -144,7 +144,6 @@ mod test {
         EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
         InvoiceLineRowRepository, InvoiceLineType,
     };
-    use util::inline_init;
 
     use crate::{
         invoice_line::stock_out_line::SetPrescribedQuantity, service_provider::ServiceProvider,
@@ -209,9 +208,10 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "set_prescribed_quantity_no_stock_line",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoice_lines = vec![mock_prescription_unallocated_invoice_line()]
-            }),
+            MockData {
+                invoice_lines: vec![mock_prescription_unallocated_invoice_line()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -297,13 +297,14 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "set_prescribed_quantity_existing_line_with_prescribed_quantity",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoice_lines = vec![
+            MockData {
+                invoice_lines: vec![
                     mock_prescription_invoice_line_a(),
                     mock_prescription_invoice_line_b(),
                     mock_prescription_invoice_line_c(),
-                ]
-            }),
+                ],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -361,14 +362,15 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "set_prescribed_quantity_multiple_lines_with_unallocated",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoice_lines = vec![
+            MockData {
+                invoice_lines: vec![
                     mock_prescription_unallocated_invoice_line(),
                     mock_prescription_invoice_line_a(),
                     mock_prescription_invoice_line_b(),
                     mock_prescription_invoice_line_c(),
-                ]
-            }),
+                ],
+                ..Default::default()
+            },
         )
         .await;
 

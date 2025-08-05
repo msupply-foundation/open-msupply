@@ -8,7 +8,7 @@ use chrono::NaiveDate;
 use repository::{GenderType, NameRow, NameRowType, NameStoreJoinRow, StoreMode, StoreRow};
 
 use serde_json::json;
-use util::inline_init;
+use util::uuid::uuid;
 
 pub(crate) struct PatientNameAndStoreAndNameStoreJoinTester;
 
@@ -16,13 +16,14 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
     fn test_step_data(&self, new_site_properties: &NewSiteProperties) -> Vec<TestStepData> {
         let mut result = Vec::new();
         // STEP 1 - insert
-        let facility_name_row = inline_init(|r: &mut NameRow| {
-            r.id = uuid();
-            r.r#type = NameRowType::Facility;
-            r.name = "facility".to_string();
-            r.is_customer = true;
-            r.is_supplier = true;
-        });
+        let facility_name_row = NameRow {
+            id: uuid(),
+            r#type: NameRowType::Facility,
+            name: "facility".to_string(),
+            is_customer: true,
+            is_supplier: true,
+            ..Default::default()
+        };
         let facility_name_json = json!({
             "ID": facility_name_row.id,
             "type": "facility",
@@ -50,15 +51,16 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             "created_date": "2021-01-01"
         });
 
-        let patient_name_row = inline_init(|r: &mut NameRow| {
-            r.id = uuid();
-            r.r#type = NameRowType::Patient;
-            r.first_name = Some("Random".to_string());
-            r.is_customer = true;
-            r.is_supplier = false;
-            r.gender = Some(GenderType::Male);
-            r.supplying_store_id = Some(store_row.id.clone());
-        });
+        let patient_name_row = NameRow {
+            id: uuid(),
+            r#type: NameRowType::Patient,
+            first_name: Some("Random".to_string()),
+            is_customer: true,
+            is_supplier: false,
+            gender: Some(GenderType::Male),
+            supplying_store_id: Some(store_row.id.clone()),
+            ..Default::default()
+        };
         let patient_name_json = json!({
             "ID": patient_name_row.id,
             "type": "patient",

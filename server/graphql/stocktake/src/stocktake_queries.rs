@@ -249,7 +249,6 @@ mod test {
         stocktake::StocktakeServiceTrait,
         ListError, ListResult,
     };
-    use util::inline_init;
 
     use crate::StocktakeQueries;
 
@@ -326,28 +325,29 @@ mod test {
         let test_service = TestService(Box::new(|_, _, _, _, _| {
             Ok(ListResult {
                 count: 1,
-                rows: vec![inline_init(|r: &mut StocktakeRow| {
-                    r.id = "id1".to_string();
-                    r.stocktake_number = 123;
-                    r.store_id = "store id".to_string();
-                    r.comment = Some("comment".to_string());
-                    r.description = Some("description".to_string());
-                    r.status = StocktakeStatus::Finalised;
-                    r.created_datetime = NaiveDate::from_ymd_opt(2022, 1, 22)
+                rows: vec![StocktakeRow {
+                    id: "id1".to_string(),
+                    stocktake_number: 123,
+                    store_id: "store id".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    status: StocktakeStatus::Finalised,
+                    created_datetime: NaiveDate::from_ymd_opt(2022, 1, 22)
                         .unwrap()
                         .and_hms_opt(15, 16, 0)
-                        .unwrap();
-                    r.stocktake_date = Some(NaiveDate::from_ymd_opt(2022, 1, 23).unwrap());
-                    r.is_locked = true;
-                    r.finalised_datetime = Some(
+                        .unwrap(),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2022, 1, 23).unwrap()),
+                    is_locked: true,
+                    finalised_datetime: Some(
                         NaiveDate::from_ymd_opt(2022, 1, 23)
                             .unwrap()
                             .and_hms_opt(15, 16, 0)
                             .unwrap(),
-                    );
-                    r.inventory_addition_id = Some("inv a id".to_string());
-                    r.inventory_reduction_id = Some("inv r id".to_string());
-                })],
+                    ),
+                    inventory_addition_id: Some("inv a id".to_string()),
+                    inventory_reduction_id: Some("inv r id".to_string()),
+                    ..Default::default()
+                }],
             })
         }));
         let variables = Some(json!({

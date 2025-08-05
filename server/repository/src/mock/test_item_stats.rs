@@ -1,5 +1,5 @@
 use chrono::{Duration, Utc};
-use util::{constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, inline_init, uuid::uuid};
+use util::{constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, uuid::uuid};
 
 use crate::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, ItemRow, ItemType, StockLineRow,
@@ -12,43 +12,48 @@ const ITEM2_INDEX: usize = 1;
 
 fn consumption_points() -> MockData {
     let invoice_id = uuid();
-    inline_init(|r: &mut MockData| {
-        r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
-            r.id.clone_from(&invoice_id);
-            r.store_id = mock_store_a().id;
-            r.name_link_id = mock_name_a().id;
-            r.r#type = InvoiceType::OutboundShipment;
-        })];
-        r.invoice_lines = vec![
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = format!("{}line1", invoice_id);
-                r.invoice_id.clone_from(&invoice_id);
-                r.item_link_id = item().id;
-                r.r#type = InvoiceLineType::StockOut;
-                r.pack_size = 1.0;
-            }),
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = format!("{}line2", invoice_id);
-                r.invoice_id.clone_from(&invoice_id);
-                r.item_link_id = item2().id;
-                r.r#type = InvoiceLineType::StockOut;
-                r.pack_size = 1.0;
-            }),
-        ];
-    })
+    MockData {
+        invoices: vec![InvoiceRow {
+            id: invoice_id.clone(),
+            store_id: mock_store_a().id,
+            name_link_id: mock_name_a().id,
+            r#type: InvoiceType::OutboundShipment,
+            ..Default::default()
+        }],
+        invoice_lines: vec![
+            InvoiceLineRow {
+                id: format!("{}line1", invoice_id),
+                invoice_id: invoice_id.clone(),
+                item_link_id: item().id,
+                r#type: InvoiceLineType::StockOut,
+                pack_size: 1.0,
+                ..Default::default()
+            },
+            InvoiceLineRow {
+                id: format!("{}line2", invoice_id),
+                invoice_id: invoice_id.clone(),
+                item_link_id: item2().id,
+                r#type: InvoiceLineType::StockOut,
+                pack_size: 1.0,
+                ..Default::default()
+            },
+        ],
+        ..Default::default()
+    }
 }
 
 pub fn mock_item_stats() -> MockData {
-    inline_init(|r: &mut MockData| {
-        r.items = vec![item(), item2()];
-        r.stock_lines = vec![
+    MockData {
+        items: vec![item(), item2()],
+        stock_lines: vec![
             stock_line1(),
             stock_line2(),
             stock_line3(),
             stock_line_1_store_b(),
             stock_line1_item2(),
-        ];
-    })
+        ],
+        ..Default::default()
+    }
     .join({
         let mut u = consumption_points();
         u.invoices[0].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(3));
@@ -106,51 +111,55 @@ pub fn item1_amc_3_months_store_b() -> f64 {
 
 pub fn item() -> ItemRow {
     let id = "item".to_string();
-    inline_init(|r: &mut ItemRow| {
-        r.id.clone_from(&id);
-        r.name.clone_from(&id);
-        r.code.clone_from(&id);
-        r.r#type = ItemType::Stock;
-    })
+    ItemRow {
+        id: id.clone(),
+        name: id.clone(),
+        code: id.clone(),
+        r#type: ItemType::Stock,
+        ..Default::default()
+    }
 }
 
 pub fn stock_line1() -> StockLineRow {
     let id = "stock_line1".to_string();
-    inline_init(|r: &mut StockLineRow| {
-        r.id.clone_from(&id);
-        r.item_link_id = item().id;
-        r.store_id = mock_store_a().id;
-        r.pack_size = 10.0;
-        r.available_number_of_packs = 1.0;
-        r.total_number_of_packs = 40.0;
-        r.supplier_link_id = Some(String::from("name_store_b"));
-    })
+    StockLineRow {
+        id: id.clone(),
+        item_link_id: item().id,
+        store_id: mock_store_a().id,
+        pack_size: 10.0,
+        available_number_of_packs: 1.0,
+        total_number_of_packs: 40.0,
+        supplier_link_id: Some(String::from("name_store_b")),
+        ..Default::default()
+    }
 }
 
 pub fn stock_line2() -> StockLineRow {
     let id = "stock_line2".to_string();
-    inline_init(|r: &mut StockLineRow| {
-        r.id.clone_from(&id);
-        r.item_link_id = item().id;
-        r.store_id = mock_store_a().id;
-        r.available_number_of_packs = 20.0;
-        r.pack_size = 10.0;
-        r.total_number_of_packs = 40.0;
-        r.supplier_link_id = Some(String::from("name_store_b"));
-    })
+    StockLineRow {
+        id: id.clone(),
+        item_link_id: item().id,
+        store_id: mock_store_a().id,
+        available_number_of_packs: 20.0,
+        pack_size: 10.0,
+        total_number_of_packs: 40.0,
+        supplier_link_id: Some(String::from("name_store_b")),
+        ..Default::default()
+    }
 }
 
 pub fn stock_line3() -> StockLineRow {
     let id = "stock_line3".to_string();
-    inline_init(|r: &mut StockLineRow| {
-        r.id.clone_from(&id);
-        r.item_link_id = item().id;
-        r.store_id = mock_store_a().id;
-        r.available_number_of_packs = 10.0;
-        r.pack_size = 1.0;
-        r.total_number_of_packs = 40.0;
-        r.supplier_link_id = Some(String::from("name_store_b"));
-    })
+    StockLineRow {
+        id: id.clone(),
+        item_link_id: item().id,
+        store_id: mock_store_a().id,
+        available_number_of_packs: 10.0,
+        pack_size: 1.0,
+        total_number_of_packs: 40.0,
+        supplier_link_id: Some(String::from("name_store_b")),
+        ..Default::default()
+    }
 }
 
 pub fn item_1_soh() -> f64 {
@@ -159,15 +168,16 @@ pub fn item_1_soh() -> f64 {
 
 pub fn stock_line_1_store_b() -> StockLineRow {
     let id = "stock_line_1_store_b".to_string();
-    inline_init(|r: &mut StockLineRow| {
-        r.id.clone_from(&id);
-        r.item_link_id = item().id;
-        r.store_id = mock_store_b().id;
-        r.available_number_of_packs = 1.0;
-        r.pack_size = 10.0;
-        r.total_number_of_packs = 40.0;
-        r.supplier_link_id = Some(String::from("name_store_b"));
-    })
+    StockLineRow {
+        id: id.clone(),
+        item_link_id: item().id,
+        store_id: mock_store_b().id,
+        available_number_of_packs: 1.0,
+        pack_size: 10.0,
+        total_number_of_packs: 40.0,
+        supplier_link_id: Some(String::from("name_store_b")),
+        ..Default::default()
+    }
 }
 
 pub fn item_1_store_b_soh() -> f64 {
@@ -176,25 +186,27 @@ pub fn item_1_store_b_soh() -> f64 {
 
 pub fn item2() -> ItemRow {
     let id = "item2".to_string();
-    inline_init(|r: &mut ItemRow| {
-        r.id.clone_from(&id);
-        r.name.clone_from(&id);
-        r.code.clone_from(&id);
-        r.r#type = ItemType::Stock;
-    })
+    ItemRow {
+        id: id.clone(),
+        name: id.clone(),
+        code: id.clone(),
+        r#type: ItemType::Stock,
+        ..Default::default()
+    }
 }
 
 pub fn stock_line1_item2() -> StockLineRow {
     let id = "stock_line1_item2".to_string();
-    inline_init(|r: &mut StockLineRow| {
-        r.id.clone_from(&id);
-        r.item_link_id = item2().id;
-        r.store_id = mock_store_a().id;
-        r.available_number_of_packs = 11.0;
-        r.pack_size = 2.0;
-        r.total_number_of_packs = 40.0;
-        r.supplier_link_id = Some(String::from("name_store_b"));
-    })
+    StockLineRow {
+        id: id.clone(),
+        item_link_id: item2().id,
+        store_id: mock_store_a().id,
+        available_number_of_packs: 11.0,
+        pack_size: 2.0,
+        total_number_of_packs: 40.0,
+        supplier_link_id: Some(String::from("name_store_b")),
+        ..Default::default()
+    }
 }
 
 pub fn item_2_soh() -> f64 {

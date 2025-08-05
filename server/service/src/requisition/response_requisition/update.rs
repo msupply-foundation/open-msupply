@@ -214,8 +214,6 @@ mod test_update {
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
     };
-    use util::inline_init;
-
     use crate::{
         requisition::response_requisition::{
             UpdateResponseRequisition, UpdateResponseRequisitionError as ServiceError,
@@ -301,9 +299,10 @@ mod test_update {
         assert_eq!(
             service.update_response_requisition(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisition| {
-                    r.id = mock_response_program_requisition().requisition.id;
-                })
+                UpdateResponseRequisition {
+                    id: mock_response_program_requisition().requisition.id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::CannotEditRequisition)
         );

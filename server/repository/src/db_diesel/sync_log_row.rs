@@ -202,7 +202,6 @@ impl SyncLogRow {
 #[cfg(test)]
 mod test {
     use strum::IntoEnumIterator;
-    use util::inline_init;
 
     use crate::{
         mock::MockDataInserts, test_db::setup_all, SyncApiErrorCode, SyncLogRow,
@@ -216,10 +215,11 @@ mod test {
         let repo = SyncLogRowRepository::new(&connection);
         // Try upsert all variants of SyncApiErrorCode, confirm that diesel enums match postgres
         for variant in SyncApiErrorCode::iter() {
-            let result = repo.upsert_one(&inline_init(|r: &mut SyncLogRow| {
-                r.id = "test".to_string();
-                r.error_code = Some(variant.clone());
-            }));
+            let result = repo.upsert_one(&SyncLogRow {
+                id: "test".to_string(),
+                error_code: Some(variant.clone()),
+                ..Default::default()
+            });
             assert_eq!(result, Ok(()));
 
             let result = repo.find_one_by_id("test").unwrap().unwrap();

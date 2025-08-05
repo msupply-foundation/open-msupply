@@ -361,7 +361,7 @@ mod test {
         mock::{insert_extra_mock_data, MockData, MockDataInserts},
         SyncLogRow, SyncLogRowRepository,
     };
-    use util::{assert_matches, inline_init};
+    use util::assert_matches;
 
     #[actix_rt::test]
     async fn initialisation_status() {
@@ -382,10 +382,11 @@ mod test {
         // started_datetime is not nullable in, thus if row exist, sync state should be Initialisation
 
         SyncLogRowRepository::new(&connection)
-            .upsert_one(&inline_init(|r: &mut SyncLogRow| {
-                r.id = "1".to_string();
-                r.started_datetime = Utc::now().naive_local();
-            }))
+            .upsert_one(&SyncLogRow {
+                id: "1".to_string(),
+                started_datetime: Utc::now().naive_local(),
+                ..Default::default()
+            })
             .unwrap();
 
         assert_eq!(
@@ -397,21 +398,25 @@ mod test {
 
         insert_extra_mock_data(
             &connection,
-            inline_init(|r: &mut MockData| {
-                r.sync_logs = vec![
-                    inline_init(|r: &mut SyncLogRow| {
-                        r.id = "1".to_string();
-                        r.error_message = Some("n/a".to_string())
-                    }),
-                    inline_init(|r: &mut SyncLogRow| {
-                        r.id = "2".to_string();
-                        r.finished_datetime = Some(Utc::now().naive_local())
-                    }),
-                    inline_init(|r: &mut SyncLogRow| {
-                        r.id = "3".to_string();
-                    }),
-                ]
-            }),
+            MockData {
+                sync_logs: vec![
+                    SyncLogRow {
+                        id: "1".to_string(),
+                        error_message: Some("n/a".to_string()),
+                        ..Default::default()
+                    },
+                    SyncLogRow {
+                        id: "2".to_string(),
+                        finished_datetime: Some(Utc::now().naive_local()),
+                        ..Default::default()
+                    },
+                    SyncLogRow {
+                        id: "3".to_string(),
+                        ..Default::default()
+                    },
+                ],
+                ..Default::default()
+            },
         );
 
         // Need to add sync settings so that Initialised returns site name
@@ -454,21 +459,25 @@ mod test {
 
         insert_extra_mock_data(
             &connection,
-            inline_init(|r: &mut MockData| {
-                r.sync_logs = vec![
-                    inline_init(|r: &mut SyncLogRow| {
-                        r.id = "1".to_string();
-                        r.error_message = Some("n/a".to_string())
-                    }),
-                    inline_init(|r: &mut SyncLogRow| {
-                        r.id = "2".to_string();
-                        r.prepare_initial_finished_datetime = Some(Utc::now().naive_local())
-                    }),
-                    inline_init(|r: &mut SyncLogRow| {
-                        r.id = "3".to_string();
-                    }),
-                ]
-            }),
+            MockData {
+                sync_logs: vec![
+                    SyncLogRow {
+                        id: "1".to_string(),
+                        error_message: Some("n/a".to_string()),
+                        ..Default::default()
+                    },
+                    SyncLogRow {
+                        id: "2".to_string(),
+                        prepare_initial_finished_datetime: Some(Utc::now().naive_local()),
+                        ..Default::default()
+                    },
+                    SyncLogRow {
+                        id: "3".to_string(),
+                        ..Default::default()
+                    },
+                ],
+                ..Default::default()
+            },
         );
 
         assert_eq!(

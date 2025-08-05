@@ -152,7 +152,6 @@ mod test_insert {
         test_db::{setup_all, setup_all_with_data},
         NameRow, RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType,
     };
-    use util::inline_edit;
 
     #[actix_rt::test]
     async fn insert_response_requisition_errors() {
@@ -277,16 +276,13 @@ mod test_insert {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_row,
-            inline_edit(&new_row, |mut u| {
-                u.id = "new_response_requisition".to_string();
-                u.user_id = Some(mock_user_account_a().id);
-                u.name_link_id = mock_name_store_b().id;
-                u.max_months_of_stock = 1.0;
-                u.min_months_of_stock = 0.5;
-                u
-            })
-        );
+        let mut expected = new_row.clone();
+        expected.id = "new_response_requisition".to_string();
+        expected.user_id = Some(mock_user_account_a().id);
+        expected.name_link_id = mock_name_store_b().id;
+        expected.max_months_of_stock = 1.0;
+        expected.min_months_of_stock = 0.5;
+
+        assert_eq!(new_row, expected);
     }
 }

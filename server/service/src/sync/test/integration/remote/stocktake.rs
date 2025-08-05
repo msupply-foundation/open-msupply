@@ -8,7 +8,7 @@ use chrono::NaiveDate;
 use rand::{thread_rng, Rng};
 use repository::*;
 use serde_json::json;
-use util::{inline_init, uuid::uuid};
+use util::uuid::uuid;
 
 fn gen_f64() -> f64 {
     format!("{:.6}", thread_rng().gen::<f64>()).parse().unwrap()
@@ -95,21 +95,23 @@ impl SyncRecordTester for StocktakeRecordTester {
             ..Default::default()
         });
         // STEP 2 - mutate
-        let invoice_row = inline_init(|r: &mut InvoiceRow| {
-            r.id = uuid();
-            r.name_link_id = new_site_properties.name_id.clone();
-            r.store_id = store_id.clone();
-            r.name_store_id = Some(store_id.clone());
-            r.tax_percentage = Some(0.0);
-            r.currency_id = Some(currency_row.id.clone());
-            r.currency_rate = 1.0;
-        });
+        let invoice_row = InvoiceRow {
+            id: uuid(),
+            name_link_id: new_site_properties.name_id.clone(),
+            store_id: store_id.clone(),
+            name_store_id: Some(store_id.clone()),
+            tax_percentage: Some(0.0),
+            currency_id: Some(currency_row.id.clone()),
+            currency_rate: 1.0,
+            ..Default::default()
+        };
 
-        let stock_line_row = inline_init(|r: &mut StockLineRow| {
-            r.id = uuid();
-            r.item_link_id = uuid();
-            r.store_id = store_id.clone();
-        });
+        let stock_line_row = StockLineRow {
+            id: uuid(),
+            item_link_id: uuid(),
+            store_id: store_id.clone(),
+            ..Default::default()
+        };
 
         let mut stocktake_row = stocktake_row.clone();
         stocktake_row.user_id = "test user 2".to_string();

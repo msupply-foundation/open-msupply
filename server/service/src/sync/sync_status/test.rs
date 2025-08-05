@@ -10,7 +10,6 @@ use repository::mock::{
     insert_extra_mock_data, ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
 };
 use tokio::sync::Mutex;
-use util::inline_init;
 
 use crate::{
     service_provider::ServiceProvider,
@@ -100,20 +99,21 @@ async fn sync_status() {
     // Insert some location rows to be pushed
     insert_extra_mock_data(
         &connection,
-        inline_init(|r: &mut MockData| {
-            r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
-                r.id = KeyType::SettingsSyncSiteId;
-                r.value_int = Some(mock_store_b().site_id);
-            })];
-            r.locations = (1..=3)
-                .map(|i| {
-                    inline_init(|r: &mut LocationRow| {
-                        r.id = i.to_string();
-                        r.store_id = mock_store_b().id;
-                    })
+        MockData {
+            key_value_store_rows: vec![KeyValueStoreRow {
+                id: KeyType::SettingsSyncSiteId,
+                value_int: Some(mock_store_b().site_id),
+                ..Default::default()
+            }],
+            locations: (1..=3)
+                .map(|i| LocationRow {
+                    id: i.to_string(),
+                    store_id: mock_store_b().id,
+                    ..Default::default()
                 })
-                .collect();
-        }),
+                .collect(),
+            ..Default::default()
+        },
     );
 
     let ctx = service_provider.basic_context().unwrap();

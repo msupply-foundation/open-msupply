@@ -168,19 +168,20 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
     let line2_id = format!("{}2", invoice_id);
 
     FullMockInvoice {
-        invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id.clone_from(&invoice_id);
-            r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_string();
-            r.invoice_number = 20;
-            r.r#type = InvoiceType::InboundShipment;
-            r.status = InvoiceStatus::New;
-            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+        invoice: InvoiceRow {
+            id: invoice_id.clone(),
+            name_link_id: mock_name_a().id,
+            store_id: "store_a".to_string(),
+            invoice_number: 20,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
+            created_datetime: NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
-                .unwrap();
-            r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
-        }),
+                .unwrap(),
+            requisition_id: Some(mock_request_draft_requisition_all_fields().requisition.id),
+            ..Default::default()
+        },
         lines: vec![
             FullMockInvoiceLine {
                 line: InvoiceLineRow {
@@ -269,19 +270,20 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
     let line1_id = format!("{}1", invoice_id);
 
     FullMockInvoice {
-        invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id.clone_from(&invoice_id);
-            r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_string();
-            r.invoice_number = 20;
-            r.r#type = InvoiceType::InboundShipment;
-            r.status = InvoiceStatus::New;
-            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+        invoice: InvoiceRow {
+            id: invoice_id.clone(),
+            name_link_id: mock_name_a().id,
+            store_id: "store_a".to_string(),
+            invoice_number: 20,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
+            created_datetime: NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
-                .unwrap();
-            r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
-        }),
+                .unwrap(),
+            requisition_id: Some(mock_request_draft_requisition_all_fields().requisition.id),
+            ..Default::default()
+        },
         lines: vec![FullMockInvoiceLine {
             line: InvoiceLineRow {
                 id: line1_id.clone(),
@@ -329,19 +331,20 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
     let line1_id = format!("{}1", invoice_id);
 
     FullMockInvoice {
-        invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id.clone_from(&invoice_id);
-            r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_string();
-            r.invoice_number = 20;
-            r.r#type = InvoiceType::OutboundShipment;
-            r.status = InvoiceStatus::New;
-            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+        invoice: InvoiceRow {
+            id: invoice_id.clone(),
+            name_link_id: mock_name_a().id,
+            store_id: "store_a".to_string(),
+            invoice_number: 20,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::New,
+            created_datetime: NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
-                .unwrap();
-            r.requisition_id = Some(mock_response_draft_requisition_all_fields().requisition.id);
-        }),
+                .unwrap(),
+            requisition_id: Some(mock_response_draft_requisition_all_fields().requisition.id),
+            ..Default::default()
+        },
         lines: vec![FullMockInvoiceLine {
             line: InvoiceLineRow {
                 id: line1_id.clone(),
