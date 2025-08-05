@@ -18,6 +18,7 @@ interface LocationSearchInputProps {
   autoFocus?: boolean;
   restrictedToLocationTypeId?: string | null;
   volumeRequired?: number;
+  fullWidth?: boolean;
 }
 
 interface LocationOption {
@@ -67,6 +68,7 @@ enum LocationFilter {
 export const LocationSearchInput = ({
   selectedLocation,
   width,
+  fullWidth,
   onChange,
   disabled,
   autoFocus = false,
@@ -101,10 +103,11 @@ export const LocationSearchInput = ({
   const filteredLocations = locations.filter(location => {
     switch (filter) {
       case LocationFilter.Empty:
-        // todo: change to be no stock lines
         return location.stock?.totalCount === 0;
+
       case LocationFilter.Available:
         return location.volume - location.volumeUsed >= (volumeRequired ?? 0);
+
       case LocationFilter.All:
       default:
         return true;
@@ -137,6 +140,7 @@ export const LocationSearchInput = ({
 
   return (
     <Autocomplete
+      fullWidth={fullWidth}
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
@@ -156,7 +160,7 @@ export const LocationSearchInput = ({
         paper:
           typeof volumeRequired === 'number'
             ? ({ children, ...paperProps }) => (
-                <Paper {...paperProps} sx={{ width: '250px' }}>
+                <Paper {...paperProps} sx={{ minWidth: '250px' }}>
                   <Box
                     sx={{
                       p: 1,

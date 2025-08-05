@@ -375,6 +375,7 @@ export const LocationTable = ({
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
+      // TODO: add location volume here (like inbound shipment once volumes are supported in stocktakes)
       getLocationInputColumn(restrictedToLocationTypeId),
       {
         width: 300,

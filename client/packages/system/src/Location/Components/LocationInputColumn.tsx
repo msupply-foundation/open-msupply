@@ -3,6 +3,7 @@ import {
   RecordWithId,
   ColumnDefinition,
   EnvUtils,
+  CellProps,
 } from '@openmsupply-client/common';
 import { LocationSearchInput } from './LocationSearchInput';
 import { LocationRowFragment } from '../api';
@@ -43,7 +44,16 @@ export const getLocationInputColumn = <T extends RecordWithId>(
       }
     }
   },
-  Cell: ({ rowData, column, columnIndex, rowIndex, isDisabled }) => {
+  Cell: ({
+    rowData,
+    column,
+    columnIndex,
+    rowIndex,
+    isDisabled,
+    getVolumeRequired,
+  }: CellProps<T> & {
+    getVolumeRequired?: (rowData: T) => number | undefined;
+  }) => {
     const value = column.accessor({
       rowData,
     }) as LocationRowFragment | null;
@@ -59,9 +69,10 @@ export const getLocationInputColumn = <T extends RecordWithId>(
         autoFocus={autoFocus}
         disabled={!!isDisabled}
         selectedLocation={value}
-        width={column.width}
+        fullWidth
         onChange={onChange}
         restrictedToLocationTypeId={restrictedLocationTypeId}
+        volumeRequired={getVolumeRequired?.(rowData)}
       />
     );
   },
