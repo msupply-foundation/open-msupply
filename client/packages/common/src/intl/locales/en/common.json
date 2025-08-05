@@ -711,6 +711,8 @@
   "label.cancelled": "Cancelled",
   "label.cannot-add-item-to-shipment": "Cannot add items to shipment",
   "label.cannot-edit-invoice": "Cannot edit invoice",
+  "label.cannot-edit-purchase-order": "Cannot edit purchase order",
+  "label.cannot-add-item-to-purchase-order": "Cannot add items to purchase order",
   "label.cant-change-location": "Can only change location of lines when status is New",
   "label.cant-delete-disabled": "Can only delete lines when status is New",
   "label.cant-delete-disabled-internal-order": "Can only delete lines when internal order is in Draft",
