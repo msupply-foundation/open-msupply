@@ -59,7 +59,9 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             Some(linked_invoice) => linked_invoice,
             None => return Ok(None),
         };
-        // 4.
+        // 4/5. Added extra condition to make sure that inbound invoice status is not changed back
+        // found use cases where supplier invoice in mSupply (mobile) store are 'nw' which were
+        // created from transfer customer invoices that had now 'cn' status
         if inbound_invoice.invoice_row.status != InvoiceStatus::Picked {
             return Ok(None);
         }
