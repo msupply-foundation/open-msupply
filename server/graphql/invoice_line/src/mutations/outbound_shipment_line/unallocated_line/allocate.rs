@@ -133,7 +133,8 @@ mod graphql {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, StockLine, StorageConnectionManager,
+        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, StockLine, StockLineRow,
+        StorageConnectionManager,
     };
     use serde_json::json;
 
@@ -147,7 +148,6 @@ mod graphql {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    
 
     use crate::InvoiceLineMutations;
 
@@ -338,7 +338,7 @@ mod graphql {
                 ],
                 skipped_expired_stock_lines: vec![StockLine {
                     stock_line_row: StockLineRow {
-                        id: "skpped_expired".to_string(),
+                        id: "skipped_expired".to_string(),
                         ..Default::default()
                     },
                     ..Default::default()
@@ -386,7 +386,7 @@ mod graphql {
                 },
                 "skippedExpiredStockLines": {
                     "nodes": [{
-                        "id": "skpped_expired"
+                        "id": "skipped_expired"
                     }]
                 },
                 "skippedOnHoldStockLines": {

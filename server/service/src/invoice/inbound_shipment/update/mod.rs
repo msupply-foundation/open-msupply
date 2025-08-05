@@ -214,7 +214,7 @@ impl UpdateInboundShipment {
 
 #[cfg(test)]
 mod test {
-    use chrono::{Duration, NaiveDate, Utc};
+    use chrono::{Duration, Utc};
     use repository::{
         mock::{
             mock_donor_a, mock_donor_b, mock_inbound_shipment_a,
@@ -229,7 +229,7 @@ mod test {
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
-        InvoiceType, NameRow, NameStoreJoinRow, StockLineRowRepository,
+        NameRow, NameStoreJoinRow, StockLineRowRepository,
     };
 
     use crate::{

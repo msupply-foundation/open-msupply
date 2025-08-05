@@ -288,7 +288,7 @@ mod repository_test {
         InvoiceType, ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyType,
         KeyValueStoreRepository, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
-        MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
+        MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType, PricingRow,
         RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
         RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
         StockLineFilter, StockLineRepository, StockLineRowRepository, StorageConnection,
@@ -770,7 +770,7 @@ mod repository_test {
             .unwrap();
         assert_eq!(
             stats_invoice_1,
-            InvoiceStatsRow {
+            PricingRow {
                 invoice_id: invoice_1_id,
                 total_before_tax: 13.0,
                 total_after_tax: 18.0,

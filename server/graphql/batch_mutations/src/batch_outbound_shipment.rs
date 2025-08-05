@@ -513,7 +513,8 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, RepositoryError, StorageConnectionManager,
+        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, RepositoryError,
+        StorageConnectionManager,
     };
     use serde_json::json;
     use service::{

@@ -2,8 +2,8 @@ use chrono::NaiveDate;
 
 use crate::{
     requisition_row::{RequisitionStatus, RequisitionType},
-    ApprovalStatusType, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, MasterListRow,
-    RequisitionLineRow, RequisitionRow,
+    ApprovalStatusType, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+    MasterListRow, RequisitionLineRow, RequisitionRow,
 };
 
 use super::{

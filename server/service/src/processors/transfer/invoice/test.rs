@@ -97,12 +97,13 @@ async fn invoice_transfers() {
             .items()
             .units()
             .currencies(),
-        |r: &mut MockData| {
-            r.names = vec![inbound_store_name.clone(), outbound_store_name.clone()];
-            r.stores = vec![inbound_store.clone(), outbound_store.clone()];
-            r.items = vec![item1.clone(), item2.clone(), service_item.clone()];
-            r.item_store_joins = vec![item1_store_properties];
-            r.key_value_store_rows = vec![site_id_settings];
+        MockData {
+            names: vec![inbound_store_name.clone(), outbound_store_name.clone()],
+            stores: vec![inbound_store.clone(), outbound_store.clone()],
+            items: vec![item1.clone(), item2.clone(), service_item.clone()],
+            item_store_joins: vec![item1_store_properties],
+            key_value_store_rows: vec![site_id_settings],
+            ..Default::default()
         },
     )
     .await;
@@ -349,17 +350,18 @@ async fn invoice_transfers_with_merged_name() {
             .items()
             .units()
             .currencies(),
-        |r: &mut MockData| {
-            r.names = vec![
+        MockData {
+            names: vec![
                 inbound_store_name.clone(),
                 outbound_store_name.clone(),
                 merge_name.clone(),
-            ];
-            r.stores = vec![inbound_store.clone(), outbound_store.clone()];
-            r.items = vec![item1.clone(), item2.clone(), service_item.clone()];
-            r.key_value_store_rows = vec![site_id_settings];
-            r.item_store_joins = vec![item1_store_properties];
-            r.name_links = vec![merge_name_link.clone()] // name_link is processed after the names. Updates the existing name link created for the name, effectively merging it.
+            ],
+            stores: vec![inbound_store.clone(), outbound_store.clone()],
+            items: vec![item1.clone(), item2.clone(), service_item.clone()],
+            key_value_store_rows: vec![site_id_settings],
+            item_store_joins: vec![item1_store_properties],
+            name_links: vec![merge_name_link.clone()],
+            ..Default::default()
         },
     )
     .await;

@@ -79,6 +79,7 @@ impl SyncTranslation for SyncFileReferenceTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]

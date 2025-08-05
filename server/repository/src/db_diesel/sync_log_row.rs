@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use std::sync::RwLock;
-use util::Defaults;
+
 
 use crate::RepositoryError;
 
@@ -104,7 +104,7 @@ impl Default for SyncLogRow {
     fn default() -> Self {
         Self {
             id: Default::default(),
-            started_datetime: Defaults::naive_date_time(),
+            started_datetime: Default::default(),
             finished_datetime: Default::default(),
             prepare_initial_started_datetime: Default::default(),
             prepare_initial_finished_datetime: Default::default(),

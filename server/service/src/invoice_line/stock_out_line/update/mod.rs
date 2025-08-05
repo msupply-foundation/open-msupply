@@ -1,10 +1,7 @@
 use super::StockOutType;
 use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
-    invoice_line::{
-        query::get_invoice_line, stock_out_line::update::generate::GenerateResult,
-        ShipmentTaxUpdate,
-    },
+    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
 };
 use repository::{
@@ -12,7 +9,9 @@ use repository::{
     InvoiceLineRowRepository, RepositoryError, StockLine, StockLineRowRepository,
 };
 
-use generate::generate;
+mod generate;
+use generate::{generate, GenerateResult};
+
 mod validate;
 use validate::validate;
 
@@ -385,7 +384,7 @@ mod test {
 
         assert_eq!(
             updated_invoice_line,
-            InvoiceLine {
+            InvoiceLineRow {
                 id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
                 note: Some("new note".to_string()),
                 ..mock_outbound_shipment_c_invoice_lines()[0].clone()
@@ -433,7 +432,7 @@ mod test {
 
         assert_eq!(
             outbound_line,
-            InvoiceLine {
+            InvoiceLineRow {
                 id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
                 number_of_packs: 2.0,
                 total_before_tax: 18.00,

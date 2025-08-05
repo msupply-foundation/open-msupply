@@ -6,8 +6,9 @@ use actix_web::{
     App, HttpServer, Responder,
 };
 use chrono::{NaiveDateTime, Utc};
-use repository::mock::{
-    insert_extra_mock_data, ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
+use repository::{
+    mock::{insert_extra_mock_data, mock_store_b, MockData, MockDataInserts},
+    ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
 };
 use tokio::sync::Mutex;
 

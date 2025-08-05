@@ -6,7 +6,7 @@ use crate::{
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use util::Defaults;
+
 
 /*
 -- Stock movement --
@@ -44,7 +44,7 @@ pub struct StockMovementRow {
 impl Default for StockMovementRow {
     fn default() -> Self {
         Self {
-            datetime: Defaults::naive_date_time(),
+            datetime: Default::default(),
             // Default
             id: Default::default(),
             item_id: Default::default(),

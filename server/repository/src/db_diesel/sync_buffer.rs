@@ -49,7 +49,7 @@ impl Default for SyncBufferRow {
     fn default() -> Self {
         Self {
             record_id: Default::default(),
-            received_datetime: Defaults::naive_date_time(),
+            received_datetime: Default::default(),
             integration_datetime: Default::default(),
             integration_error: Default::default(),
             table_name: Default::default(),
@@ -65,7 +65,6 @@ pub struct SyncBufferRowRepository<'a> {
 }
 
 use serde::{Deserialize, Serialize};
-use util::Defaults;
 
 impl<'a> SyncBufferRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -226,7 +225,6 @@ fn create_filtered_query(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQue
 
 #[cfg(test)]
 mod test {
-    use util::Defaults;
 
     use crate::{
         mock::{MockData, MockDataInserts},
@@ -237,7 +235,7 @@ mod test {
     pub fn row_a() -> SyncBufferRow {
         SyncBufferRow {
             record_id: "store_a".to_string(),
-            integration_datetime: Some(Defaults::naive_date_time()),
+            integration_datetime: Some(Default::default()),
             action: SyncAction::Upsert,
             ..Default::default()
         }

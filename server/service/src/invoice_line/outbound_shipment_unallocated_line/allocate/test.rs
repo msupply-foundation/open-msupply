@@ -147,15 +147,11 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line.number_of_packs, 10.0
-        );
-        assert_eq!(
-            new_line.pack_size, 2.0
-        );
+        assert_eq!(new_line.number_of_packs, 10.0);
+        assert_eq!(new_line.pack_size, 2.0);
     }
 
-    #[actactix_rt::test]
+    #[actix_rt::test]
     async fn allocate_unallocated_line_partial_allocate_and_fefo() {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
@@ -254,39 +250,31 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line1.stock_line_id, Some("first_expiring".to_string())
-        );
+        assert_eq!(new_line1.stock_line_id, Some("first_expiring".to_string()));
 
         let new_line2 = repo
             .find_one_by_id(&result.inserts[1].invoice_line_row.id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line2.stock_line_id, Some("second_expiring".to_string())
-        );
+        assert_eq!(new_line2.stock_line_id, Some("second_expiring".to_string()));
 
         let new_line3 = repo
             .find_one_by_id(&result.inserts[2].invoice_line_row.id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line3.stock_line_id, Some("non_expiring".to_string())
-        );
+        assert_eq!(new_line3.stock_line_id, Some("non_expiring".to_string()));
 
         let updated_unallocated_line = repo
             .find_one_by_id(&result.updates[0].invoice_line_row.id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            updated_unallocated_line.number_of_packs, 12.0
-        );
+        assert_eq!(updated_unallocated_line.number_of_packs, 12.0);
     }
 
-    #[actactix_rt::test]
+    #[actix_rt::test]
     async fn allocate_unallocated_line_allocate_alerts() {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
@@ -398,7 +386,7 @@ mod test {
                 invoices: vec![invoice()],
                 invoice_lines: vec![line()],
                 // make sure to insert in wrong order
-                r.stock_lines = vec![
+                stock_lines: vec![
                     stock_line_expiry_null(),
                     stock_line_not_expired(),
                     stock_line_on_hold(),
@@ -587,25 +575,15 @@ mod test {
         assert_eq!(result.updates.len(), 2);
 
         let update = result.updates[0].clone();
-        assert_eq!(
-            update.invoice_line_row.id, allocated_line().id
-        );
-        assert_eq!(
-            update.invoice_line_row.number_of_packs, 32.0
-        );
+        assert_eq!(update.invoice_line_row.id, allocated_line().id);
+        assert_eq!(update.invoice_line_row.number_of_packs, 32.0);
 
         let update = result.updates[1].clone();
-        assert_eq!(
-            update.invoice_line_row.id, allocated_line2().id
-        );
-        assert_eq!(
-            update.invoice_line_row.number_of_packs, 15.0
-        );
+        assert_eq!(update.invoice_line_row.id, allocated_line2().id);
+        assert_eq!(update.invoice_line_row.number_of_packs, 15.0);
 
         let insert = result.inserts[0].clone();
-        assert_eq!(
-            insert.invoice_line_row.number_of_packs, 15.0
-        );
+        assert_eq!(insert.invoice_line_row.number_of_packs, 15.0);
     }
 
     #[actix_rt::test]
@@ -683,12 +661,8 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line.number_of_packs, 1.0
-        );
-        assert_eq!(
-            new_line.pack_size, 3.0
-        );
+        assert_eq!(new_line.number_of_packs, 1.0);
+        assert_eq!(new_line.pack_size, 3.0);
     }
 
     #[actix_rt::test]

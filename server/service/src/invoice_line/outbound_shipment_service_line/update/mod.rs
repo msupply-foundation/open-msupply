@@ -92,7 +92,7 @@ mod test {
             mock_item_a, mock_item_service_item, mock_store_a, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository,
+        InvoiceLineRow, InvoiceLineRowRepository,
     };
     // ...existing code...
 
@@ -276,7 +276,7 @@ mod test {
 
         assert_eq!(
             line,
-            InvoiceLine {
+            InvoiceLineRow {
                 item_link_id: mock_item_service_item().id.clone(),
                 item_name: "modified name".to_string(),
                 total_before_tax: 1.0,

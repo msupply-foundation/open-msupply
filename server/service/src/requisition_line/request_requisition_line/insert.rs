@@ -174,7 +174,7 @@ mod test {
             mock_store_b, test_item_stats, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        RequisitionLineRowRepository,
+        RequisitionLineRow, RequisitionLineRowRepository,
     };
     // ...existing code...
 
@@ -350,7 +350,7 @@ mod test {
 
         assert_eq!(
             line,
-            RequisitionLine {
+            RequisitionLineRow {
                 available_stock_on_hand: test_item_stats::item_2_soh(),
                 average_monthly_consumption: test_item_stats::item2_amc_3_months(),
                 suggested_quantity: test_item_stats::item2_amc_3_months() * 10.0

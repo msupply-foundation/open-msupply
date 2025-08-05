@@ -367,7 +367,7 @@ mod test {
 
         assert_eq!(
             new_outbound_line,
-            InvoiceLine {
+            InvoiceLineRow {
                 id: "new outbound line id".to_string(),
                 item_link_id: mock_item_a().id.clone(),
                 pack_size: 1.0,
@@ -506,7 +506,7 @@ mod test {
 
         assert_eq!(
             new_prescription_line,
-            InvoiceLine {
+            InvoiceLineRow {
                 id: "new prescription line id".to_string(),
                 item_link_id: mock_item_a().id.clone(),
                 pack_size: 1.0,

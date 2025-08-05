@@ -92,7 +92,7 @@ mod test {
         test_db::setup_all_with_data,
         SyncAction, SyncBufferRow, SyncBufferRowRepository,
     };
-    use util::Defaults;
+    
 
     use crate::sync::{
         sync_buffer::SyncBufferSource,
@@ -105,7 +105,7 @@ mod test {
         SyncBufferRow {
             record_id: "1".to_string(),
             table_name: "transact".to_string(),
-            received_datetime: Defaults::naive_date_time(),
+            received_datetime: Default::default(),
             ..Default::default()
         }
     }
@@ -114,7 +114,7 @@ mod test {
         SyncBufferRow {
             record_id: "2".to_string(),
             table_name: "trans_line".to_string(),
-            received_datetime: Defaults::naive_date_time(),
+            received_datetime: Default::default(),
             ..Default::default()
         }
     }
@@ -123,7 +123,7 @@ mod test {
         SyncBufferRow {
             record_id: "3".to_string(),
             table_name: "store".to_string(),
-            received_datetime: Defaults::naive_date_time(),
+            received_datetime: Default::default(),
             ..Default::default()
         }
     }
@@ -132,7 +132,7 @@ mod test {
         SyncBufferRow {
             record_id: "4".to_string(),
             table_name: "name".to_string(),
-            received_datetime: Defaults::naive_date_time(),
+            received_datetime: Default::default(),
             ..Default::default()
         }
     }
@@ -141,7 +141,7 @@ mod test {
         SyncBufferRow {
             record_id: "5".to_string(),
             table_name: "list_master".to_string(),
-            received_datetime: Defaults::naive_date_time(),
+            received_datetime: Default::default(),
             action: SyncAction::Delete,
             ..Default::default()
         }
@@ -151,7 +151,7 @@ mod test {
         SyncBufferRow {
             record_id: "6".to_string(),
             table_name: "list_master_line".to_string(),
-            received_datetime: Defaults::naive_date_time(),
+            received_datetime: Default::default(),
             action: SyncAction::Delete,
             ..Default::default()
         }
@@ -160,7 +160,7 @@ mod test {
         SyncBufferRow {
             record_id: "1-1".to_string(),
             table_name: "list_master".to_string(),
-            received_datetime: Defaults::naive_date_time(),
+            received_datetime: Default::default(),
             action: SyncAction::Delete,
             source_site_id: Some(1),
             ..Default::default()
@@ -171,7 +171,7 @@ mod test {
         SyncBufferRow {
             record_id: "1-2".to_string(),
             table_name: "list_master_line".to_string(),
-            received_datetime: Defaults::naive_date_time(),
+            received_datetime: Default::default(),
             action: SyncAction::Delete,
             source_site_id: Some(1),
             ..Default::default()

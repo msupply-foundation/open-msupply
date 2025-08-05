@@ -3,7 +3,7 @@ use repository::{
     ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
-use util::Defaults;
+
 
 use crate::{
     cursor_controller::CursorController,
@@ -324,7 +324,7 @@ fn number_of_records_in_push_queue(
 impl Default for SyncStatus {
     fn default() -> Self {
         Self {
-            started: Defaults::naive_date_time(),
+            started: Default::default(),
             duration_in_seconds: Default::default(),
             finished: Default::default(),
         }
