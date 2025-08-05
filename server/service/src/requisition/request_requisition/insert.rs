@@ -168,22 +168,24 @@ mod test_insert {
         test_db::{setup_all, setup_all_with_data},
         NameRow, RequisitionRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_edit;
 
     #[actix_rt::test]
     async fn insert_request_requisition_errors() {
         fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
+            NameRow {
+                id: "not_visible".to_string(),
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_request_requisition_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible()];
-            }),
+            MockData {
+                names: vec![not_visible()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -197,9 +199,10 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = mock_request_draft_requisition().id;
-                }),
+                InsertRequestRequisition {
+                    id: mock_request_draft_requisition().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionAlreadyExists)
         );
@@ -209,10 +212,11 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_string();
-                    r.other_party_id.clone_from(&name_store_b.id);
-                }),
+                InsertRequestRequisition {
+                    id: "new_request_requisition".to_string(),
+                    other_party_id: name_store_b.id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -221,10 +225,11 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_id".to_string();
-                    r.other_party_id = not_visible().id;
-                })
+                InsertRequestRequisition {
+                    id: "new_id".to_string(),
+                    other_party_id: not_visible().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -233,10 +238,11 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_string();
-                    r.other_party_id = "invalid".to_string();
-                }),
+                InsertRequestRequisition {
+                    id: "new_request_requisition".to_string(),
+                    other_party_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -245,10 +251,11 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_string();
-                    r.other_party_id = mock_name_a().id;
-                }),
+                InsertRequestRequisition {
+                    id: "new_request_requisition".to_string(),
+                    other_party_id: mock_name_a().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyIsNotAStore)
         );

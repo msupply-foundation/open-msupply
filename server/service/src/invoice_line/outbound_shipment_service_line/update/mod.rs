@@ -94,7 +94,7 @@ mod test {
         test_db::setup_all,
         InvoiceLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    // ...existing code...
 
     use crate::{
         invoice_line::{
@@ -125,9 +125,10 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentServiceLine| {
-                    r.id = "invalid".to_string();
-                }),
+                UpdateOutboundShipmentServiceLine {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::LineDoesNotExist)
         );
@@ -136,9 +137,10 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentServiceLine| {
-                    r.id = mock_draft_inbound_service_line().id;
-                }),
+                UpdateOutboundShipmentServiceLine {
+                    id: mock_draft_inbound_service_line().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAnOutboundShipment)
         );
@@ -147,9 +149,10 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentServiceLine| {
-                    r.id = mock_draft_outbound_shipped_service_line().id;
-                }),
+                UpdateOutboundShipmentServiceLine {
+                    id: mock_draft_outbound_shipped_service_line().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditInvoice)
         );
@@ -158,10 +161,11 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentServiceLine| {
-                    r.id = mock_draft_outbound_service_line().id;
-                    r.item_id = Some("invalid".to_string())
-                }),
+                UpdateOutboundShipmentServiceLine {
+                    id: mock_draft_outbound_service_line().id.clone(),
+                    item_id: Some("invalid".to_string()),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -170,10 +174,11 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentServiceLine| {
-                    r.id = mock_draft_outbound_service_line().id;
-                    r.item_id = Some(mock_item_a().id)
-                }),
+                UpdateOutboundShipmentServiceLine {
+                    id: mock_draft_outbound_service_line().id.clone(),
+                    item_id: Some(mock_item_a().id.clone()),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAServiceItem)
         );
@@ -183,10 +188,11 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentServiceLine| {
-                    r.id = mock_draft_outbound_service_line().id;
-                    r.item_id = Some(mock_item_service_item().id)
-                }),
+                UpdateOutboundShipmentServiceLine {
+                    id: mock_draft_outbound_service_line().id.clone(),
+                    item_id: Some(mock_item_service_item().id.clone()),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -210,10 +216,11 @@ mod test {
         service
             .update_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentServiceLine| {
-                    r.id = mock_draft_outbound_service_line().id;
-                    r.item_id = Some(mock_item_service_item().id);
-                }),
+                UpdateOutboundShipmentServiceLine {
+                    id: mock_draft_outbound_service_line().id.clone(),
+                    item_id: Some(mock_item_service_item().id.clone()),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -228,11 +235,12 @@ mod test {
         service
             .update_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentServiceLine| {
-                    r.id = mock_draft_outbound_service_line().id;
-                    r.item_id = Some(mock_default_service_item().id);
-                    r.name = Some("name".to_string());
-                }),
+                UpdateOutboundShipmentServiceLine {
+                    id: mock_draft_outbound_service_line().id.clone(),
+                    item_id: Some(mock_default_service_item().id.clone()),
+                    name: Some("name".to_string()),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -268,14 +276,14 @@ mod test {
 
         assert_eq!(
             line,
-            inline_edit(&line, |mut u| {
-                u.item_link_id = mock_item_service_item().id;
-                u.item_name = "modified name".to_string();
-                u.total_before_tax = 1.0;
-                u.tax_percentage = Some(10.0);
-                u.note = Some("note".to_string());
-                u
-            })
+            InvoiceLine {
+                item_link_id: mock_item_service_item().id.clone(),
+                item_name: "modified name".to_string(),
+                total_before_tax: 1.0,
+                tax_percentage: Some(10.0),
+                note: Some("note".to_string()),
+                ..line.clone()
+            }
         );
     }
 }

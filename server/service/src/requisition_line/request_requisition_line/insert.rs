@@ -176,7 +176,7 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
         RequisitionLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    // ...existing code...
 
     use crate::{
         requisition_line::request_requisition_line::{
@@ -203,9 +203,12 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.id.clone_from(&mock_request_draft_requisition_calculation_test().lines[0].id);
-                }),
+                InsertRequestRequisitionLine {
+                    id: mock_request_draft_requisition_calculation_test().lines[0]
+                        .id
+                        .clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionLineAlreadyExists)
         );
@@ -214,15 +217,17 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = mock_request_draft_requisition_calculation_test()
+                InsertRequestRequisitionLine {
+                    requisition_id: mock_request_draft_requisition_calculation_test()
                         .requisition
-                        .id;
-                    r.id = "new requisition line id".to_string();
-                    r.item_id.clone_from(
-                        &mock_request_draft_requisition_calculation_test().lines[0].item_link_id,
-                    );
-                }),
+                        .id
+                        .clone(),
+                    id: "new requisition line id".to_string(),
+                    item_id: mock_request_draft_requisition_calculation_test().lines[0]
+                        .item_link_id
+                        .clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::ItemAlreadyExistInRequisition)
         );
@@ -231,9 +236,10 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = "invalid".to_string();
-                }),
+                InsertRequestRequisitionLine {
+                    requisition_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
         );
@@ -242,9 +248,10 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = mock_sent_request_requisition().id;
-                }),
+                InsertRequestRequisitionLine {
+                    requisition_id: mock_sent_request_requisition().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditRequisition)
         );
@@ -253,11 +260,13 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = mock_full_new_response_requisition_for_update_test()
+                InsertRequestRequisitionLine {
+                    requisition_id: mock_full_new_response_requisition_for_update_test()
                         .requisition
-                        .id;
-                }),
+                        .id
+                        .clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotARequestRequisition)
         );
@@ -266,12 +275,14 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = mock_request_draft_requisition_calculation_test()
+                InsertRequestRequisitionLine {
+                    requisition_id: mock_request_draft_requisition_calculation_test()
                         .requisition
-                        .id;
-                    r.item_id = "invalid".to_string();
-                }),
+                        .id
+                        .clone(),
+                    item_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::ItemDoesNotExist)
         );
@@ -281,9 +292,10 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = mock_draft_request_requisition_for_update_test().id;
-                }),
+                InsertRequestRequisitionLine {
+                    requisition_id: mock_draft_request_requisition_for_update_test().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
@@ -293,10 +305,11 @@ mod test {
         assert_eq!(
             service.insert_request_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.id = "some mock program line".to_string();
-                    r.requisition_id = mock_request_program_requisition().id;
-                }),
+                InsertRequestRequisitionLine {
+                    id: "some mock program line".to_string(),
+                    requisition_id: mock_request_program_requisition().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotAddItemToProgramRequisition),
         )
@@ -337,23 +350,24 @@ mod test {
 
         assert_eq!(
             line,
-            inline_edit(&line, |mut u| {
-                u.available_stock_on_hand = test_item_stats::item_2_soh();
-                u.average_monthly_consumption = test_item_stats::item2_amc_3_months();
-                u.suggested_quantity =
-                    test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh();
-                u
-            })
+            RequisitionLine {
+                available_stock_on_hand: test_item_stats::item_2_soh(),
+                average_monthly_consumption: test_item_stats::item2_amc_3_months(),
+                suggested_quantity: test_item_stats::item2_amc_3_months() * 10.0
+                    - test_item_stats::item_2_soh(),
+                ..line.clone()
+            }
         );
 
         // Check with item_c which exists in another requisition
         let result = service.insert_request_requisition_line(
             &context,
-            inline_init(|r: &mut InsertRequestRequisitionLine| {
-                r.requisition_id = mock_request_draft_requisition().id;
-                r.id = "new requisition line id2".to_string();
-                r.item_id = mock_item_c().id;
-            }),
+            InsertRequestRequisitionLine {
+                requisition_id: mock_request_draft_requisition().id.clone(),
+                id: "new requisition line id2".to_string(),
+                item_id: mock_item_c().id.clone(),
+                ..Default::default()
+            },
         );
 
         assert!(result.is_ok());

@@ -204,7 +204,6 @@ mod test {
         InvoiceRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
         StockLineRow, StockLineRowRepository,
     };
-    use util::inline_init;
 
     use crate::{
         invoice::prescription::{UpdatePrescription, UpdatePrescriptionStatus},
@@ -219,44 +218,47 @@ mod test {
     #[actix_rt::test]
     async fn update_prescription_errors() {
         fn prescription_no_stock() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = String::from("prescription_no_stock");
-                r.name_link_id = String::from("name_store_a");
-                r.store_id = String::from("store_a");
-                r.r#type = InvoiceType::Prescription;
-                r.status = InvoiceStatus::New;
-                r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 7)
+            InvoiceRow {
+                id: String::from("prescription_no_stock"),
+                name_link_id: String::from("name_store_a"),
+                store_id: String::from("store_a"),
+                r#type: InvoiceType::Prescription,
+                status: InvoiceStatus::New,
+                created_datetime: NaiveDate::from_ymd_opt(1970, 1, 7)
                     .unwrap()
                     .and_hms_milli_opt(15, 30, 0, 0)
-                    .unwrap();
-                r.allocated_datetime = Some(
+                    .unwrap(),
+                allocated_datetime: Some(
                     NaiveDate::from_ymd_opt(1970, 1, 7)
                         .unwrap()
                         .and_hms_milli_opt(15, 30, 0, 0)
                         .unwrap(),
-                );
-            })
+                ),
+                ..Default::default()
+            }
         }
 
         fn invoice_line_no_stock() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = String::from("prescription_no_stock_line_a");
-                r.invoice_id = String::from("prescription_no_stock");
-                r.item_link_id = String::from("item_a");
-                r.item_name = String::from("Item A");
-                r.item_code = String::from("item_a_code");
-                r.batch = None;
-                r.r#type = InvoiceLineType::StockOut;
-            })
+            InvoiceLineRow {
+                id: String::from("prescription_no_stock_line_a"),
+                invoice_id: String::from("prescription_no_stock"),
+                item_link_id: String::from("item_a"),
+                item_name: String::from("Item A"),
+                item_code: String::from("item_a_code"),
+                batch: None,
+                r#type: InvoiceLineType::StockOut,
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_prescription_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![prescription_no_stock()];
-                r.invoice_lines = vec![invoice_line_no_stock()];
-            }),
+            MockData {
+                invoices: vec![prescription_no_stock()],
+                invoice_lines: vec![invoice_line_no_stock()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -270,7 +272,10 @@ mod test {
         assert_eq!(
             service.update_prescription(
                 &context,
-                inline_init(|r: &mut UpdatePrescription| { r.id = "invalid".to_string() })
+                UpdatePrescription {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -278,10 +283,11 @@ mod test {
         assert_eq!(
             service.update_prescription(
                 &context,
-                inline_init(|r: &mut UpdatePrescription| {
-                    r.id = mock_prescription_verified().id;
-                    r.status = Some(UpdatePrescriptionStatus::Verified);
-                })
+                UpdatePrescription {
+                    id: mock_prescription_verified().id,
+                    status: Some(UpdatePrescriptionStatus::Verified),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::InvoiceIsNotEditable)
         );
@@ -289,7 +295,10 @@ mod test {
         assert_eq!(
             service.update_prescription(
                 &context,
-                inline_init(|r: &mut UpdatePrescription| { r.id = mock_inbound_shipment_a().id })
+                UpdatePrescription {
+                    id: mock_inbound_shipment_a().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::NotAPrescriptionInvoice)
         );
@@ -298,10 +307,11 @@ mod test {
         assert_eq!(
             service.update_prescription(
                 &context,
-                inline_init(|r: &mut UpdatePrescription| {
-                    r.id = prescription_no_stock().id;
-                    r.status = Some(UpdatePrescriptionStatus::Picked);
-                })
+                UpdatePrescription {
+                    id: prescription_no_stock().id,
+                    status: Some(UpdatePrescriptionStatus::Picked),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::InvoiceLineHasNoStockLine(
                 invoice_line_no_stock().id.clone()
@@ -312,12 +322,13 @@ mod test {
         assert_eq!(
             service.update_prescription(
                 &context,
-                inline_init(|r: &mut UpdatePrescription| {
-                    r.id = prescription_no_stock().id;
-                    r.clinician_id = Some(NullableUpdate {
+                UpdatePrescription {
+                    id: prescription_no_stock().id,
+                    clinician_id: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    })
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::ClinicianDoesNotExist)
         );
@@ -327,10 +338,11 @@ mod test {
         assert_eq!(
             service.update_prescription(
                 &context,
-                inline_init(|r: &mut UpdatePrescription| {
-                    r.id = mock_prescription_a().id;
-                    r.status = Some(UpdatePrescriptionStatus::Picked);
-                })
+                UpdatePrescription {
+                    id: mock_prescription_a().id,
+                    status: Some(UpdatePrescriptionStatus::Picked),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -339,21 +351,23 @@ mod test {
     #[actix_rt::test]
     async fn update_prescription_success() {
         fn prescription() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "test_prescription_pricing".to_string();
-                r.name_link_id = mock_patient().id;
-                r.store_id = mock_store_a().id;
-                r.r#type = InvoiceType::Prescription;
-            })
+            InvoiceRow {
+                id: "test_prescription_pricing".to_string(),
+                name_link_id: mock_patient().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::Prescription,
+                ..Default::default()
+            }
         }
         fn clinician() -> ClinicianRow {
-            inline_init(|r: &mut ClinicianRow| {
-                r.id = "test_clinician".to_string();
-                r.code = "test_clinician_code".to_string();
-                r.last_name = "test_clinician_last_name".to_string();
-                r.initials = "test_clinician_initials".to_string();
-                r.is_active = true;
-            })
+            ClinicianRow {
+                id: "test_clinician".to_string(),
+                code: "test_clinician_code".to_string(),
+                last_name: "test_clinician_last_name".to_string(),
+                initials: "test_clinician_initials".to_string(),
+                is_active: true,
+                ..Default::default()
+            }
         }
         fn clinician_store_join() -> ClinicianStoreJoinRow {
             ClinicianStoreJoinRow {
@@ -366,11 +380,12 @@ mod test {
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_prescription",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![prescription()];
-                r.clinicians = vec![clinician()];
-                r.clinician_store_joins = vec![clinician_store_join()];
-            }),
+            MockData {
+                invoices: vec![prescription()],
+                clinicians: vec![clinician()],
+                clinician_store_joins: vec![clinician_store_join()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -517,10 +532,11 @@ mod test {
         service
             .update_prescription(
                 &context,
-                inline_init(|r: &mut UpdatePrescription| {
-                    r.id = prescription().id;
-                    r.status = Some(UpdatePrescriptionStatus::Picked);
-                }),
+                UpdatePrescription {
+                    id: prescription().id,
+                    status: Some(UpdatePrescriptionStatus::Picked),
+                    ..Default::default()
+                },
             )
             .unwrap();
         assert_stock_line_totals(&invoice_lines, &expected_stock_line_totals);
@@ -543,18 +559,20 @@ mod test {
         // prevent future tests failing.
         let result = service.update_prescription(
             &context,
-            inline_init(|r: &mut UpdatePrescription| {
-                r.id = prescription().id;
-                r.status = Some(UpdatePrescriptionStatus::Verified);
-            }),
+            UpdatePrescription {
+                id: prescription().id,
+                status: Some(UpdatePrescriptionStatus::Verified),
+                ..Default::default()
+            },
         );
         assert!(result.is_ok());
         let result = service.update_prescription(
             &context,
-            inline_init(|r: &mut UpdatePrescription| {
-                r.id = prescription().id;
-                r.status = Some(UpdatePrescriptionStatus::Cancelled);
-            }),
+            UpdatePrescription {
+                id: prescription().id,
+                status: Some(UpdatePrescriptionStatus::Cancelled),
+                ..Default::default()
+            },
         );
         assert!(result.is_ok());
 

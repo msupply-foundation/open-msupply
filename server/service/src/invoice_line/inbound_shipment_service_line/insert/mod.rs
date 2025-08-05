@@ -89,7 +89,7 @@ mod test {
         test_db::setup_all,
         InvoiceLineRowRepository, ItemFilter, ItemRepository, StringFilter,
     };
-    use util::{constants::DEFAULT_SERVICE_ITEM_CODE, inline_edit, inline_init};
+    use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
     use crate::{
         invoice_line::inbound_shipment_service_line::InsertInboundShipmentServiceLine,

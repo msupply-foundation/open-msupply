@@ -231,7 +231,6 @@ mod test {
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, NameRow, NameStoreJoinRow, StockLineRowRepository,
     };
-    use util::inline_init;
 
     use crate::{
         invoice::inbound_shipment::{
@@ -252,33 +251,37 @@ mod test {
     #[actix_rt::test]
     async fn update_inbound_shipment_errors() {
         fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
+            NameRow {
+                id: "not_visible".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_supplier() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_a_supplier".to_string();
-            })
+            NameRow {
+                id: "not_a_supplier".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_supplier_join() -> NameStoreJoinRow {
-            inline_init(|r: &mut NameStoreJoinRow| {
-                r.id = "not_a_supplier_join".to_string();
-                r.name_link_id = not_a_supplier().id;
-                r.store_id = mock_store_a().id;
-                r.name_is_supplier = false;
-            })
+            NameStoreJoinRow {
+                id: "not_a_supplier_join".to_string(),
+                name_link_id: not_a_supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: false,
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible(), not_a_supplier()];
-                r.name_store_joins = vec![not_a_supplier_join()];
-            }),
+            MockData {
+                names: vec![not_visible(), not_a_supplier()],
+                name_store_joins: vec![not_a_supplier_join()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -292,10 +295,11 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = "invalid".to_string();
-                    r.other_party_id = Some(mock_name_a().id.clone());
-                })
+                UpdateInboundShipment {
+                    id: "invalid".to_string(),
+                    other_party_id: Some(mock_name_a().id.clone()),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -303,10 +307,11 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id.clone_from(&mock_outbound_shipment_e().id);
-                    r.other_party_id = Some(mock_name_a().id.clone());
-                })
+                UpdateInboundShipment {
+                    id: mock_outbound_shipment_e().id.clone(),
+                    other_party_id: Some(mock_name_a().id.clone()),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
@@ -314,10 +319,11 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id.clone_from(&mock_inbound_shipment_b().id);
-                    r.comment = Some("comment update".to_string());
-                })
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_b().id.clone(),
+                    comment: Some("comment update".to_string()),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::CannotEditFinalised)
         );
@@ -325,10 +331,11 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id.clone_from(&mock_inbound_shipment_e().id);
-                    r.status = Some(UpdateInboundShipmentStatus::Received);
-                })
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_e().id.clone(),
+                    status: Some(UpdateInboundShipmentStatus::Received),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
         );
@@ -336,10 +343,11 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some("invalid".to_string());
-                })
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_a().id.clone(),
+                    other_party_id: Some("invalid".to_string()),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -347,10 +355,11 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some(not_visible().id);
-                })
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_a().id.clone(),
+                    other_party_id: Some(not_visible().id),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -358,10 +367,11 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some(not_a_supplier().id);
-                })
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_a().id.clone(),
+                    other_party_id: Some(not_a_supplier().id),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -370,9 +380,10 @@ mod test {
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id.clone_from(&mock_inbound_shipment_c().id);
-                })
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_c().id.clone(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -382,80 +393,80 @@ mod test {
     #[actix_rt::test]
     async fn update_inbound_shipment_success() {
         fn supplier() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "supplier".to_string();
-            })
+            NameRow {
+                id: "supplier".to_string(),
+                ..Default::default()
+            }
         }
 
         fn supplier_join() -> NameStoreJoinRow {
-            inline_init(|r: &mut NameStoreJoinRow| {
-                r.id = "supplier_join".to_string();
-                r.name_link_id = supplier().id;
-                r.store_id = mock_store_a().id;
-                r.name_is_supplier = true;
-            })
+            NameStoreJoinRow {
+                id: "supplier_join".to_string(),
+                name_link_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
         }
 
         fn invoice_test() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice_test".to_string();
-                r.name_link_id = "supplier".to_string();
-                r.store_id = "store_a".to_string();
-                r.invoice_number = 123;
-                r.r#type = InvoiceType::InboundShipment;
-                r.status = InvoiceStatus::New;
-                r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
-                    .unwrap()
-                    .and_hms_milli_opt(20, 30, 0, 0)
-                    .unwrap();
-            })
+            InvoiceRow {
+                id: "invoice_test".to_string(),
+                name_link_id: "supplier".to_string(),
+                store_id: "store_a".to_string(),
+                ..Default::default()
+            }
         }
 
         fn invoice_line_for_test() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "invoice_line_for_test".to_string();
-                r.invoice_id = "invoice_test".to_string();
-                r.item_link_id = "item_a".to_string();
-                r.pack_size = 1.0;
-                r.number_of_packs = 1.0;
-                r.r#type = InvoiceLineType::StockIn;
-            })
+            InvoiceLineRow {
+                id: "invoice_line_for_test".to_string(),
+                invoice_id: "invoice_test".to_string(),
+                item_link_id: "item_a".to_string(),
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: InvoiceLineType::StockIn,
+                ..Default::default()
+            }
         }
         fn invoice_line_only_shipped_packs_for_test() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "invoice_line_only_shipped_packs_for_test".to_string();
-                r.invoice_id = "invoice_test".to_string();
-                r.item_link_id = "item_a".to_string();
-                r.pack_size = 1.0;
-                r.number_of_packs = 0.0;
-                r.shipped_number_of_packs = Some(5.0);
-                r.r#type = InvoiceLineType::StockIn;
-            })
+            InvoiceLineRow {
+                id: "invoice_line_only_shipped_packs_for_test".to_string(),
+                invoice_id: "invoice_test".to_string(),
+                item_link_id: "item_a".to_string(),
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: Some(5.0),
+                r#type: InvoiceLineType::StockIn,
+                ..Default::default()
+            }
         }
         fn invoice_line_placeholder_line_for_test() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "invoice_line_placeholder_line_for_test".to_string();
-                r.invoice_id = "invoice_test".to_string();
-                r.item_link_id = "item_a".to_string();
-                r.pack_size = 1.0;
-                r.number_of_packs = 0.0;
-                r.r#type = InvoiceLineType::StockIn;
-            })
+            InvoiceLineRow {
+                id: "invoice_line_placeholder_line_for_test".to_string(),
+                invoice_id: "invoice_test".to_string(),
+                item_link_id: "item_a".to_string(),
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                r#type: InvoiceLineType::StockIn,
+                ..Default::default()
+            }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![supplier()];
-                r.name_store_joins = vec![supplier_join()];
-                r.invoices = vec![invoice_test()];
-                r.invoice_lines = vec![
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                invoices: vec![invoice_test()],
+                invoice_lines: vec![
                     invoice_line_for_test(),
                     invoice_line_only_shipped_packs_for_test(),
                     invoice_line_placeholder_line_for_test(),
-                ];
-            }),
+                ],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -471,10 +482,11 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some(supplier().id);
-                }),
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_a().id,
+                    other_party_id: Some(supplier().id),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -496,12 +508,13 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = invoice_test().id;
-                    r.tax = Some(ShipmentTaxUpdate {
+                UpdateInboundShipment {
+                    id: invoice_test().id,
+                    tax: Some(ShipmentTaxUpdate {
                         percentage: Some(0.0),
-                    });
-                }),
+                    }),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -538,13 +551,14 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = invoice_test().id;
-                    r.status = Some(UpdateInboundShipmentStatus::Delivered);
-                    r.tax = Some(ShipmentTaxUpdate {
+                UpdateInboundShipment {
+                    id: invoice_test().id,
+                    status: Some(UpdateInboundShipmentStatus::Delivered),
+                    tax: Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
-                    });
-                }),
+                    }),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -650,13 +664,14 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = invoice_test().id;
-                    r.status = Some(UpdateInboundShipmentStatus::Verified);
-                    r.tax = Some(ShipmentTaxUpdate {
+                UpdateInboundShipment {
+                    id: invoice_test().id,
+                    status: Some(UpdateInboundShipmentStatus::Verified),
+                    tax: Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
-                    });
-                }),
+                    }),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -691,12 +706,13 @@ mod test {
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_success_currency",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![supplier()];
-                r.name_store_joins = vec![supplier_join()];
-                r.invoices = vec![invoice_test()];
-                r.invoice_lines = vec![invoice_line_for_test()];
-            }),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                invoices: vec![invoice_test()],
+                invoice_lines: vec![invoice_line_for_test()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -710,11 +726,12 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = invoice_test().id;
-                    r.currency_id = Some("currency_a".to_string());
-                    r.currency_rate = Some(1.0);
-                }),
+                UpdateInboundShipment {
+                    id: invoice_test().id,
+                    currency_id: Some("currency_a".to_string()),
+                    currency_rate: Some(1.0),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -764,12 +781,13 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = invoice_test().id;
-                    r.status = Some(UpdateInboundShipmentStatus::Received);
-                    r.currency_id = Some("currency_a".to_string());
-                    r.currency_rate = Some(1.0);
-                }),
+                UpdateInboundShipment {
+                    id: invoice_test().id,
+                    status: Some(UpdateInboundShipmentStatus::Received),
+                    currency_id: Some("currency_a".to_string()),
+                    currency_rate: Some(1.0),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -815,12 +833,13 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = invoice_test().id;
-                    r.status = Some(UpdateInboundShipmentStatus::Verified);
-                    r.currency_id = Some("currency_a".to_string());
-                    r.currency_rate = Some(1.0);
-                }),
+                UpdateInboundShipment {
+                    id: invoice_test().id,
+                    status: Some(UpdateInboundShipmentStatus::Verified),
+                    currency_id: Some("currency_a".to_string()),
+                    currency_rate: Some(1.0),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -886,10 +905,11 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_c().id;
-                    r.status = Some(UpdateInboundShipmentStatus::Received);
-                }),
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_c().id,
+                    status: Some(UpdateInboundShipmentStatus::Received),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -939,10 +959,11 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_c().id;
-                    r.other_party_id = Some(supplier().id);
-                }),
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_c().id,
+                    other_party_id: Some(supplier().id),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -958,10 +979,11 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some(mock_name_linked_to_store_join().name_link_id.clone());
-                }),
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_a().id,
+                    other_party_id: Some(mock_name_linked_to_store_join().name_link_id.clone()),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -982,11 +1004,11 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id =
-                        Some(mock_name_not_linked_to_store_join().name_link_id.clone());
-                }),
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_a().id,
+                    other_party_id: Some(mock_name_not_linked_to_store_join().name_link_id.clone()),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -1001,12 +1023,13 @@ mod test {
         service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some(supplier().id);
-                    r.status = Some(UpdateInboundShipmentStatus::Verified);
-                    r.on_hold = Some(true);
-                }),
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_a().id,
+                    other_party_id: Some(supplier().id),
+                    status: Some(UpdateInboundShipmentStatus::Verified),
+                    on_hold: Some(true),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -1054,9 +1077,10 @@ mod test {
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_donor_changes",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![mock_inbound_shipment_f()];
-            }),
+            MockData {
+                invoices: vec![mock_inbound_shipment_f()],
+                ..Default::default()
+            },
         )
         .await;
 

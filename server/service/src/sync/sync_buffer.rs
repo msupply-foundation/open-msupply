@@ -4,7 +4,6 @@ use repository::{
     SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository,
 };
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SyncBufferSource {
     Central(i32), // Central site ID (Includes all records with no source site ID)
@@ -93,7 +92,7 @@ mod test {
         test_db::setup_all_with_data,
         SyncAction, SyncBufferRow, SyncBufferRowRepository,
     };
-    use util::{inline_init, Defaults};
+    use util::Defaults;
 
     use crate::sync::{
         sync_buffer::SyncBufferSource,
@@ -103,72 +102,80 @@ mod test {
     use super::SyncBuffer;
 
     fn row_1() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "1".to_string();
-            r.table_name = "transact".to_string();
-            r.received_datetime = Defaults::naive_date_time();
-        })
+        SyncBufferRow {
+            record_id: "1".to_string(),
+            table_name: "transact".to_string(),
+            received_datetime: Defaults::naive_date_time(),
+            ..Default::default()
+        }
     }
 
     fn row_2() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "2".to_string();
-            r.table_name = "trans_line".to_string();
-            r.received_datetime = Defaults::naive_date_time();
-        })
+        SyncBufferRow {
+            record_id: "2".to_string(),
+            table_name: "trans_line".to_string(),
+            received_datetime: Defaults::naive_date_time(),
+            ..Default::default()
+        }
     }
 
     fn row_3() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "3".to_string();
-            r.table_name = "store".to_string();
-            r.received_datetime = Defaults::naive_date_time();
-        })
+        SyncBufferRow {
+            record_id: "3".to_string(),
+            table_name: "store".to_string(),
+            received_datetime: Defaults::naive_date_time(),
+            ..Default::default()
+        }
     }
 
     fn row_4() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "4".to_string();
-            r.table_name = "name".to_string();
-            r.received_datetime = Defaults::naive_date_time();
-        })
+        SyncBufferRow {
+            record_id: "4".to_string(),
+            table_name: "name".to_string(),
+            received_datetime: Defaults::naive_date_time(),
+            ..Default::default()
+        }
     }
 
     fn row_5() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "5".to_string();
-            r.table_name = "list_master".to_string();
-            r.received_datetime = Defaults::naive_date_time();
-            r.action = SyncAction::Delete;
-        })
+        SyncBufferRow {
+            record_id: "5".to_string(),
+            table_name: "list_master".to_string(),
+            received_datetime: Defaults::naive_date_time(),
+            action: SyncAction::Delete,
+            ..Default::default()
+        }
     }
 
     fn row_6() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "6".to_string();
-            r.table_name = "list_master_line".to_string();
-            r.received_datetime = Defaults::naive_date_time();
-            r.action = SyncAction::Delete;
-        })
+        SyncBufferRow {
+            record_id: "6".to_string(),
+            table_name: "list_master_line".to_string(),
+            received_datetime: Defaults::naive_date_time(),
+            action: SyncAction::Delete,
+            ..Default::default()
+        }
     }
     fn site_1_row_1() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "1-1".to_string();
-            r.table_name = "list_master".to_string();
-            r.received_datetime = Defaults::naive_date_time();
-            r.action = SyncAction::Delete;
-            r.source_site_id = Some(1);
-        })
+        SyncBufferRow {
+            record_id: "1-1".to_string(),
+            table_name: "list_master".to_string(),
+            received_datetime: Defaults::naive_date_time(),
+            action: SyncAction::Delete,
+            source_site_id: Some(1),
+            ..Default::default()
+        }
     }
 
     fn site_1_row_2() -> SyncBufferRow {
-        inline_init(|r: &mut SyncBufferRow| {
-            r.record_id = "1-2".to_string();
-            r.table_name = "list_master_line".to_string();
-            r.received_datetime = Defaults::naive_date_time();
-            r.action = SyncAction::Delete;
-            r.source_site_id = Some(1);
-        })
+        SyncBufferRow {
+            record_id: "1-2".to_string(),
+            table_name: "list_master_line".to_string(),
+            received_datetime: Defaults::naive_date_time(),
+            action: SyncAction::Delete,
+            source_site_id: Some(1),
+            ..Default::default()
+        }
     }
 
     #[actix_rt::test]
@@ -179,8 +186,8 @@ mod test {
         let (_, connection, _, _) = setup_all_with_data(
             "test_sync_buffer_service",
             MockDataInserts::none(),
-            inline_init(|r: &mut MockData| {
-                r.sync_buffer_rows = vec![
+            MockData {
+                sync_buffer_rows: vec![
                     row_1(),
                     row_2(),
                     row_3(),
@@ -189,8 +196,9 @@ mod test {
                     row_6(),
                     site_1_row_1(),
                     site_1_row_2(),
-                ];
-            }),
+                ],
+                ..Default::default()
+            },
         )
         .await;
 

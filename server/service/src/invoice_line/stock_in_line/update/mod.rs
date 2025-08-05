@@ -138,7 +138,7 @@ mod test {
         EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
         InvoiceStatus, InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
     };
-    use util::inline_init;
+    // ...existing code...
 
     use crate::{
         invoice_line::stock_in_line::{
