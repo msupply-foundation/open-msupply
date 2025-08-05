@@ -10,7 +10,7 @@ import {
   AppNavSection,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
-import { AppRoute, Environment } from '@openmsupply-client/config';
+import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
 export const ReplenishmentNav = ({
@@ -35,15 +35,13 @@ export const ReplenishmentNav = ({
       />
       <Collapse in={isActive}>
         <List>
-          {Environment.PURCHASE_ORDERS && (
-            <AppNavLink
-              end
-              to={RouteBuilder.create(AppRoute.Replenishment)
-                .addPart(AppRoute.PurchaseOrder)
-                .build()}
-              text={t('purchase-order')}
-            />
-          )}
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.PurchaseOrder)
+              .build()}
+            text={t('purchase-order')}
+          />
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
