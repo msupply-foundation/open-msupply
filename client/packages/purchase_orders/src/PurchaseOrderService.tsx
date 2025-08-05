@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { PurchaseOrderListView } from './ListView/ListView';
-import { PurchaseOrderDetailView } from './DetailView';
+import { PurchaseOrderListView } from './purchase_order/ListView/ListView';
+import { PurchaseOrderDetailView } from './purchase_order/DetailView';
 
 // --- New Goods Received placeholder components ---
 const GoodsReceivedListView: FC = () => (
