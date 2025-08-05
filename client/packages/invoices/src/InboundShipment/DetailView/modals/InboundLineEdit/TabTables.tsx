@@ -78,7 +78,6 @@ export const QuantityTableComponent = ({
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
-
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -224,17 +223,28 @@ export const QuantityTableComponent = ({
     columnDefinitions.push(...getInboundDosesColumns(format));
   }
 
-  columnDefinitions.push({
-    key: 'delete',
-    width: 50,
-    Cell: ({ rowData }) => (
-      <IconButton
-        label="Delete"
-        onClick={() => removeDraftLine(rowData.id)}
-        icon={<DeleteIcon fontSize="small" />}
-      />
-    ),
-  });
+  columnDefinitions.push(
+    {
+      key: 'volumePerPack',
+      label: t('label.volume-per-pack'),
+      Cell: NumberInputCell,
+      cellProps: { decimalLimit: 10 },
+      width: 100,
+      accessor: ({ rowData }) => rowData?.volumePerPack,
+      setter: updateDraftLine,
+    },
+    {
+      key: 'delete',
+      width: 50,
+      Cell: ({ rowData }) => (
+        <IconButton
+          label="Delete"
+          onClick={() => removeDraftLine(rowData.id)}
+          icon={<DeleteIcon fontSize="small" />}
+        />
+      ),
+    }
+  );
 
   const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
     updateDraftLine,

@@ -304,6 +304,8 @@ impl Synchroniser {
                 v6_sync.advance_push_cursor(&ctx.connection)?;
             }
             self.service_provider.site_is_initialised_trigger.trigger();
+            // Trigger ledger fix after initialisation
+            self.service_provider.ledger_fix_trigger.trigger();
         }
 
         ctx.processors_trigger

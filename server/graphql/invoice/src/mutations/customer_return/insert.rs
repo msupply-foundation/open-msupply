@@ -34,6 +34,7 @@ pub struct CustomerReturnLineInput {
     pub expiry_date: Option<NaiveDate>,
     pub item_variant_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -152,6 +153,7 @@ impl CustomerReturnLineInput {
             pack_size,
             item_variant_id,
             vvm_status_id,
+            volume_per_pack,
         }: CustomerReturnLineInput = self;
 
         CustomerReturnLineServiceInput {
@@ -164,8 +166,9 @@ impl CustomerReturnLineInput {
             batch,
             pack_size,
             item_variant_id,
-            stock_line_id: None,
             vvm_status_id,
+            volume_per_pack,
+            stock_line_id: None,
         }
     }
 }
