@@ -11,11 +11,12 @@ import {
   Box,
   CurrencyInput,
   Grid,
+  NumUtils,
   usePluginEvents,
   usePluginProvider,
 } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
-import { DateUtils, useTranslation } from '@common/intl';
+import { DateUtils, useCurrency, useTranslation } from '@common/intl';
 import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { useInsurancePolicies } from '@openmsupply-client/system/src';
 
@@ -31,6 +32,7 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   handleConfirm,
 }): ReactElement => {
   const t = useTranslation();
+  const { options: currencyOptions } = useCurrency();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const [insuranceId, setInsuranceId] = useState<string | null>();
@@ -64,8 +66,11 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
 
   const totalAfterTax = prescriptionData?.pricing.totalAfterTax ?? 0;
   const discountPercentage = selectedInsurance?.discountPercentage ?? 0;
-  const totalToBePaidByInsurance =
-    totalAfterTax * ((selectedInsurance?.discountPercentage ?? 0) / 100);
+
+  const totalToBePaidByInsurance = NumUtils.round(
+    totalAfterTax * ((selectedInsurance?.discountPercentage ?? 0) / 100),
+    currencyOptions.precision
+  );
   const totalToBePaidByPatient = totalAfterTax - totalToBePaidByInsurance;
 
   const onSave = async () => {

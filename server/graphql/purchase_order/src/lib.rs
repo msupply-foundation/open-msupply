@@ -10,6 +10,11 @@ use mutations::{
 };
 use purchase_order_queries::*;
 
+use crate::mutations::{
+    add_from_master_list::{add_from_master_list, AddFromMasterListResponse},
+    AddToPurchaseOrderFromMasterListInput,
+};
+
 #[derive(Default, Clone)]
 pub struct PurchaseOrderQueries;
 
@@ -48,6 +53,16 @@ impl PurchaseOrderMutations {
         input: InsertInput,
     ) -> Result<InsertResponse> {
         insert_purchase_order(ctx, &store_id, input)
+    }
+
+    // add to purchase order from master list
+    pub async fn add_to_purchase_order_from_master_list(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: AddToPurchaseOrderFromMasterListInput,
+    ) -> Result<AddFromMasterListResponse> {
+        add_from_master_list(ctx, &store_id, input)
     }
 
     pub async fn update_purchase_order(
