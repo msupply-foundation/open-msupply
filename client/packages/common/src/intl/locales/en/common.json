@@ -35,6 +35,7 @@
   "button.add-program": "Add Program",
   "button.add-status-entry": "Add Status Entry",
   "button.adjust": "Adjust",
+  "label.authorised-quantity": "Authorised Quantity",
   "button.allocate": "Allocate",
   "button.allocate-lines": "Allocate placeholder lines",
   "button.back": "Back",

@@ -43,6 +43,7 @@ export const PurchaseOrderLineEditModal = ({
     item &&
       updatePatch({
         ...draftLine,
+        itemId: item.id,
       });
     setCurrentLine({
       ...draftLine,

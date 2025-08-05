@@ -40,7 +40,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           disabled={isDisabled}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
-          onClick={onAddItem}
+          onClick={() => onAddItem()}
         />
         <ReportSelector
           context={ReportContext.PurchaseOrder}

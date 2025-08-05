@@ -30,9 +30,8 @@ export function usePurchaseOrderLine(id?: string) {
       usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
 
   const draft: DraftPurchaseOrderLine = data
-    ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], ...patch, itemId: data?.nodes[0]?.item.id ?? "" }
-    : { ...defaultPurchaseOrderLine, ...patch};
-
+    ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], itemId: data?.nodes[0]?.item.id ?? "", ...patch }
+    : { ...defaultPurchaseOrderLine, ...patch, itemId: "sa"};
 
   // UPDATE
   const {

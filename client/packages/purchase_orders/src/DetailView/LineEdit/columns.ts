@@ -11,46 +11,38 @@ export const usePurchaseOrderLineEditColumns = ({
 }) => {
     const columnDefinitions: ColumnDescription<DraftPurchaseOrderLine>[] = useMemo(
         () => [
-        {
-            Cell: NumberInputCell,
-            key: 'requestedPackSize',
-            label: 'Pack Size',
-            setter: patch => {
-                updatePatch({ ...patch });
+            {
+                Cell: NumberInputCell,
+                key: 'requestedPackSize',
+                label: 'label.pack-size',
+                setter: patch => {
+                    updatePatch({ ...patch });
+                },
             },
-        },
-        {
-            Cell: DateInputCell,
-            key: 'requestedDeliveryDate',
-            label: 'Requested delivery date',
-            setter: ({id, requestedDeliveryDate}) => {
-                updatePatch({ id, requestedDeliveryDate: Formatter.naiveDate(DateUtils.getNaiveDate(requestedDeliveryDate)) });
+            {   
+                Cell: NumberInputCell,
+                key: 'requestedNumberOfUnits',
+                label: 'label.requested-quantity',
+                setter: patch => {
+                    updatePatch({ ...patch });
+                },
             },
-        },
-        {   
-            Cell: DateInputCell,
-            key: 'expectedDeliveryDate',
-            label: 'Expected Delivery Date',
-            setter: ({id, expectedDeliveryDate}) => {
-                updatePatch({ id, expectedDeliveryDate: Formatter.naiveDate(DateUtils.getNaiveDate(expectedDeliveryDate)) });
+            {
+                Cell: DateInputCell,
+                key: 'requestedDeliveryDate',
+                label: 'Requested delivery date',
+                setter: ({id, requestedDeliveryDate}) => {
+                    updatePatch({ id, requestedDeliveryDate: Formatter.naiveDate(DateUtils.getNaiveDate(requestedDeliveryDate)) });
+                },
             },
-        },
-        {   
-            Cell: NumberInputCell,
-            key: 'requestedNumberOfUnits',
-            label: 'Requested number of units',
-            setter: patch => {
-                updatePatch({ ...patch });
+            {   
+                Cell: DateInputCell,
+                key: 'expectedDeliveryDate',
+                label: 'Expected Delivery Date',
+                setter: ({id, expectedDeliveryDate}) => {
+                    updatePatch({ id, expectedDeliveryDate: Formatter.naiveDate(DateUtils.getNaiveDate(expectedDeliveryDate)) });
+                },
             },
-        },
-        {
-            Cell: NumberInputCell,
-            key: 'authorisedNumberOfUnits',
-            label: 'authorised number of units',
-              setter: patch => {
-                updatePatch({ ...patch });
-            },
-        },
         ],
         [updatePatch]
     );

@@ -41,9 +41,9 @@ export const usePurchaseOrderColumns = () => {
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,
-      getSortValue: rowData =>
-        (rowData.requestedNumberOfUnits ?? 0) /
-        (rowData.requestedPackSize ?? 1),
+      accessor: rowData =>
+        Math.ceil((rowData.rowData.requestedNumberOfUnits ?? 0) /
+        ((rowData.rowData.requestedPackSize && rowData.rowData.requestedPackSize !== 0) ? rowData.rowData.requestedPackSize : 1)),
     },
     {
       key: 'packSize',
@@ -62,7 +62,7 @@ export const usePurchaseOrderColumns = () => {
     },
     {
       key: 'authorisedQuantity',
-      label: 'label.authorised',
+      label: 'label.authorised-quantity',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.authorisedNumberOfUnits,
       getSortValue: rowData => rowData.authorisedNumberOfUnits ?? 0,
