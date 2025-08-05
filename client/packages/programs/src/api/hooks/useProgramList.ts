@@ -9,8 +9,10 @@ import { LIST, PROGRAM } from './keys';
 
 export const useProgramList = ({
   isImmunisation,
+  itemId,
 }: {
   isImmunisation?: boolean;
+  itemId?: string;
 } = {}) => {
   const { api, storeId } = useProgramsGraphQL();
 
@@ -24,6 +26,7 @@ export const useProgramList = ({
       existsForStoreId: {
         equalTo: storeId,
       },
+      itemId: itemId ? { equalTo: itemId } : undefined,
     };
 
     const query = await api.programs({

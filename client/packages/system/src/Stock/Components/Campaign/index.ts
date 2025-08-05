@@ -1,2 +1,2 @@
-export * from './CampaignSelector';
-export * from './CampaignSelectorColumn';
+export * from './CampaignOrProgramSelector';
+export * from './CampaignOrProgramSelectorColumn';
