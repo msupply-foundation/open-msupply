@@ -1,5 +1,4 @@
 use crate::migrations::*;
-use anyhow::Context;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::Deserialize;
@@ -16,6 +15,7 @@ table! {
         data -> Text,
         action -> crate::migrations::v2_10_00::reintegrate_location_volume::SyncActionMapping,
         table_name -> Text,
+        integration_error -> Nullable<Text>,
     }
 }
 table! {
@@ -49,12 +49,27 @@ impl MigrationFragment for Migrate {
             .load::<(String, String)>(connection.lock().connection())?;
 
         for (id, data) in location_sync_buffer {
-            let legacy_row = serde_json::from_str::<LegacyLocationRow>(&data)
-                .with_context(|| format!("Cannot parse location sync buffer data: {data}"))?;
+            let legacy_location_volume = match serde_json::from_str::<LegacyLocationRow>(&data) {
+                Ok(row) => {
+                    if row.volume == 0.0 {
+                        continue; // Skip rows without a volume set
+                    }
+                    row.volume
+                }
+                Err(e) => {
+                    diesel::update(sync_buffer::table)
+                        .filter(sync_buffer::record_id.eq(&id))
+                        .set(sync_buffer::integration_error.eq(e.to_string()))
+                        .execute(connection.lock().connection())?;
+
+                    println!("Error parsing legacy location data for ID {}: {}", id, e);
+                    continue; // Skip rows with parsing errors
+                }
+            };
 
             diesel::update(location::table)
                 .filter(location::id.eq(id))
-                .set((location::volume.eq(legacy_row.volume),))
+                .set((location::volume.eq(legacy_location_volume),))
                 .execute(connection.lock().connection())?;
         }
 
