@@ -311,6 +311,9 @@ export const StockLineForm = ({
                   onUpdate({ location, locationId: location?.id });
                 }}
                 restrictedToLocationTypeId={draft.item.restrictedLocationTypeId}
+                volumeRequired={
+                  draft?.volumePerPack * draft?.totalNumberOfPacks
+                }
               />
             }
           />
