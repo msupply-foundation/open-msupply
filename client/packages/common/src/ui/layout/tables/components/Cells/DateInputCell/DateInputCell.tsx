@@ -3,7 +3,7 @@ import React from 'react';
 import { CellProps } from '../../../columns';
 import { RecordWithId } from '@common/types';
 import { DateUtils } from '@common/intl';
-import { getTextFieldSx } from 'packages/common/src/ui/components/inputs/DateTimePickers/styles';
+import { getTextFieldSx } from '@openmsupply-client/common/src/ui/components/inputs/DateTimePickers/styles';
 import { useAppTheme } from '@common/styles';
 
 export const DateInputCell = <T extends RecordWithId>({
