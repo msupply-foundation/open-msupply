@@ -70,6 +70,15 @@ export const LocationSearchInput = ({
   const t = useTranslation();
   const [filter, setFilter] = useState<'all' | 'empty' | 'available'>('all');
 
+  const handleFilterClick = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    filterType: 'all' | 'empty' | 'available'
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setFilter(filterType);
+  };
+
   const {
     query: { data, isLoading },
   } = useLocationList({
@@ -158,24 +167,27 @@ export const LocationSearchInput = ({
               <ButtonGroup variant="outlined" size="small" fullWidth>
                 <Button
                   variant={filter === 'all' ? 'contained' : 'outlined'}
-                  onClick={() => setFilter('all')}
+                  color="secondary"
+                  onMouseDown={e => handleFilterClick(e, 'all')}
                   size="small"
                 >
-                  All
+                  {t('label.all')}
                 </Button>
                 <Button
                   variant={filter === 'empty' ? 'contained' : 'outlined'}
-                  onClick={() => setFilter('empty')}
+                  color="secondary"
+                  onMouseDown={e => handleFilterClick(e, 'empty')}
                   size="small"
                 >
-                  Empty
+                  {t('label.empty')}
                 </Button>
                 <Button
                   variant={filter === 'available' ? 'contained' : 'outlined'}
-                  onClick={() => setFilter('available')}
+                  color="secondary"
+                  onMouseDown={e => handleFilterClick(e, 'available')}
                   size="small"
                 >
-                  Available
+                  {t('label.available')}
                 </Button>
               </ButtonGroup>
             </Box>
