@@ -37,6 +37,7 @@ table! {
         donor_link_id -> Nullable<Text>,
         reason_option_id -> Nullable<Text>,
         volume_per_pack -> Double,
+        campaign_id -> Nullable<Text>,
     }
 }
 
@@ -77,6 +78,7 @@ pub struct StocktakeLineRow {
     pub donor_link_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub volume_per_pack: f64,
+    pub campaign_id: Option<String>,
 }
 
 pub struct StocktakeLineRowRepository<'a> {
