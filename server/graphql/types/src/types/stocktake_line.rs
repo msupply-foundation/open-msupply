@@ -6,13 +6,14 @@ use service::usize_to_u32;
 
 use graphql_core::{
     loader::{
-        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, StockLineByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, ProgramByIdLoader,
+        StockLineByIdLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
-use crate::types::CampaignNode;
+use crate::types::{program_node::ProgramNode, CampaignNode};
 
 use super::{
     InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, ReasonOptionNode,
@@ -171,6 +172,24 @@ impl StocktakeLineNode {
 
         let result = loader.load_one(campaign_id.clone()).await?;
         Ok(result.map(CampaignNode::from_domain))
+    }
+
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let program_id = match &self.line.line.program_id {
+            Some(program_id) => program_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(program_id.clone())
+            .await?
+            .map(|program| ProgramNode {
+                program_row: program,
+            });
+
+        Ok(result)
     }
 }
 
