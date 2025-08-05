@@ -162,7 +162,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
               onChange={volume => onUpdate({ volume })}
               label={t('label.volume')}
               fullWidth
-              decimalLimit={4}
+              decimalLimit={10}
             />
             <NumericTextInput
               value={draft.volumeUsed}
