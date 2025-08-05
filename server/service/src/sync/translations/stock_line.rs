@@ -21,11 +21,14 @@ use super::{
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct StockLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub campaign_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub program_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -129,6 +132,12 @@ impl SyncTranslation for StockLineTranslation {
 
         let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
         let location_id = clear_invalid_location_id(connection, location_ID)?;
+
+        let StockLineRowOmsFields {
+            campaign_id,
+            program_id,
+        } = oms_fields.unwrap_or_default();
+
         let result = StockLineRow {
             id: ID,
             store_id: store_ID,
@@ -148,7 +157,8 @@ impl SyncTranslation for StockLineTranslation {
             item_variant_id,
             donor_link_id: donor_id,
             vvm_status_id,
-            campaign_id: oms_fields.and_then(|o| o.campaign_id),
+            campaign_id,
+            program_id,
             total_volume,
             volume_per_pack,
         };
@@ -193,6 +203,7 @@ impl SyncTranslation for StockLineTranslation {
                     donor_link_id,
                     vvm_status_id,
                     campaign_id,
+                    program_id,
                     total_volume,
                     volume_per_pack,
                 },
@@ -201,11 +212,11 @@ impl SyncTranslation for StockLineTranslation {
             ..
         } = stock_line;
 
-        let oms_fields = if campaign_id.is_some() {
-            Some(StockLineRowOmsFields { campaign_id })
-        } else {
-            None
-        };
+        let oms_fields = Some(StockLineRowOmsFields {
+            campaign_id,
+            program_id,
+        });
+
         let legacy_row = LegacyStockLineRow {
             ID: id,
             store_ID: store_id,

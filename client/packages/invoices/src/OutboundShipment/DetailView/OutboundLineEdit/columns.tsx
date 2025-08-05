@@ -140,7 +140,8 @@ export const useOutboundLineEditColumns = ({
     columnDefinitions.push({
       key: 'campaign',
       label: 'label.campaign',
-      accessor: ({ rowData }) => rowData?.campaign?.name,
+      accessor: ({ rowData }) =>
+        rowData?.campaign?.name ?? rowData?.program?.name ?? '',
     });
 
   columnDefinitions.push([

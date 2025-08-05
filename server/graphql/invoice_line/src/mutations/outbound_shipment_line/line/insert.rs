@@ -113,6 +113,7 @@ impl InsertInput {
             cost_price_per_pack: None,
             sell_price_per_pack: None,
             campaign_id: None,
+            program_id: None,
         }
     }
 }
@@ -548,15 +549,7 @@ mod test {
                     total_before_tax: None,
                     r#type: StockOutType::OutboundShipment,
                     tax_percentage: Some(5.0),
-                    note: None,
-                    location_id: None,
-                    batch: None,
-                    pack_size: None,
-                    expiry_date: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    campaign_id: None,
-                    vvm_status_id: None,
+                    ..Default::default()
                 }
             );
             Ok(InvoiceLine {

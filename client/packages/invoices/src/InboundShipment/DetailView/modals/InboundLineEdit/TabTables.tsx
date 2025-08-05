@@ -28,7 +28,7 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
-  getCampaignColumn,
+  getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemRowFragment,
@@ -55,6 +55,10 @@ interface TableProps {
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
   restrictedLocationTypeId?: string | null;
+  preferences?: {
+    allowTrackingOfStockByDonor?: boolean;
+    useCampaigns?: boolean;
+  };
 }
 
 interface QuantityTableProps extends TableProps {
@@ -397,12 +401,8 @@ export const LocationTableComponent = ({
   updateDraftLine,
   isDisabled,
   restrictedLocationTypeId,
+  preferences,
 }: TableProps) => {
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
-  );
-
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -426,7 +426,7 @@ export const LocationTableComponent = ({
           const note = patch.note === '' ? null : patch.note;
           updateDraftLine({ ...patch, note });
         },
-        accessor: ({ rowData }) => rowData.note,
+        accessor: ({ rowData }) => rowData.note ?? '',
       },
     ],
   ];
@@ -439,7 +439,9 @@ export const LocationTableComponent = ({
   }
 
   if (preferences?.useCampaigns) {
-    columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+    columnDescriptions.push(
+      getCampaignOrProgramColumn(patch => updateDraftLine(patch))
+    );
   }
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);

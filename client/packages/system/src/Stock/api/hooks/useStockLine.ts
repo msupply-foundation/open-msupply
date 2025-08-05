@@ -38,6 +38,7 @@ const defaultDraftStockLine: DraftStockLine = {
   },
   vvmStatus: null,
   campaign: null,
+  program: null,
   volumePerPack: 0,
   itemVariant: null,
   totalVolume: 0,
@@ -125,6 +126,7 @@ const useCreate = () => {
     itemVariant,
     donor,
     campaign,
+    program,
     vvmStatus,
     volumePerPack,
   }: DraftStockLine) => {
@@ -147,6 +149,7 @@ const useCreate = () => {
         vvmStatusId: vvmStatus?.id,
         donorId: donor?.id,
         campaignId: campaign?.id,
+        programId: program?.id,
         volumePerPack: volumePerPack,
       },
     });
@@ -174,6 +177,7 @@ const useUpdate = (id: string) => {
     vvmStatusId,
     donor,
     campaign,
+    program,
     volumePerPack,
   }: Partial<DraftStockLine>) => {
     const result = await stockApi.updateStockLine({
@@ -189,6 +193,7 @@ const useUpdate = (id: string) => {
         vvmStatusId,
         donorId: setNullableInput('id', donor),
         campaignId: setNullableInput('id', campaign),
+        programId: setNullableInput('id', program),
         volumePerPack,
       },
       storeId,

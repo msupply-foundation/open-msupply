@@ -36,6 +36,7 @@ pub struct UpdateInput {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
     pub note: Option<NullableUpdateInput<String>>,
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
@@ -109,6 +110,7 @@ impl UpdateInput {
             vvm_status_id,
             donor_id,
             campaign_id,
+            program_id,
             note,
             shipped_number_of_packs,
             volume_per_pack,
@@ -142,6 +144,9 @@ impl UpdateInput {
             }),
             campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
                 value: campaign_id.value,
+            }),
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
             }),
             shipped_number_of_packs,
             volume_per_pack,
@@ -192,6 +197,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
         | ServiceError::VVMStatusDoesNotExist
+        | ServiceError::ProgramNotVisible
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),

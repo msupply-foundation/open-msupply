@@ -54,6 +54,7 @@ pub fn generate(
             cost_price_per_pack: None,
             sell_price_per_pack: None,
             campaign_id: None,
+            program_id: None,
             vvm_status_id: None,
         })
         .collect();
@@ -72,6 +73,7 @@ pub fn generate(
             tax: None,
             total_before_tax: None,
             campaign_id: None,
+            program_id: None,
             vvm_status_id: None,
         })
         .collect();

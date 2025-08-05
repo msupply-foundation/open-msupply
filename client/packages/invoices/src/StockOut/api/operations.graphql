@@ -91,6 +91,10 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
     id
     name
   }
+  program {
+    name
+    id
+  }
   campaign {
     name
     id

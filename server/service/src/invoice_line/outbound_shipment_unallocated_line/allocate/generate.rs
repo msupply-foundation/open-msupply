@@ -194,6 +194,7 @@ fn generate_new_line(
         cost_price_per_pack: None,
         sell_price_per_pack: None,
         campaign_id: None,
+        program_id: None,
     }
 }
 
@@ -212,6 +213,7 @@ fn try_allocate_existing_line(
                 r#type: Some(StockOutType::OutboundShipment),
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
                 campaign_id: line_row.campaign_id,
+                program_id: line_row.program_id,
                 vvm_status_id: line_row.vvm_status_id,
                 prescribed_quantity: None,
                 stock_line_id: None,

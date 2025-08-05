@@ -3,18 +3,15 @@ import { StandardTextFieldProps } from '@mui/material/TextField';
 import { BasicTextInput } from '../TextInput';
 import { useBufferState } from '@common/hooks';
 
-export const BufferedTextArea = ({
-  value,
-  onChange,
-  maxRows = 4,
-  minRows = 4,
-  slotProps,
-  ...props
-}: StandardTextFieldProps) => {
+export const BufferedTextArea = React.forwardRef<
+  HTMLDivElement,
+  StandardTextFieldProps
+>(({ value, onChange, maxRows = 4, minRows = 4, slotProps, ...props }, ref) => {
   const [buffer, setBuffer] = useBufferState(value);
 
   return (
     <BasicTextInput
+      ref={ref}
       sx={{ width: '100%' }}
       slotProps={{
         input: {
@@ -39,4 +36,4 @@ export const BufferedTextArea = ({
       {...props}
     />
   );
-};
+});
