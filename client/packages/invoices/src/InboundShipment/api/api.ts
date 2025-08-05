@@ -126,6 +126,7 @@ const inboundParsers = {
       programId: line.program?.id,
       note: line.note,
       shippedNumberOfPacks: line.shippedNumberOfPacks,
+      volumePerPack: line.volumePerPack,
       shippedPackSize: line.shippedPackSize,
     };
   },
@@ -163,6 +164,7 @@ const inboundParsers = {
     }),
     note: setNullableInput('note', { note: line.note ?? null }),
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
+    volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {

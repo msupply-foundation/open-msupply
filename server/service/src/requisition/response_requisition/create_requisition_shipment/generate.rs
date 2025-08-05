@@ -119,6 +119,7 @@ pub fn generate_invoice_lines(
             // program of the requisition here
             program_id: None,
             shipped_number_of_packs: None,
+            volume_per_pack: 0.0,
             shipped_pack_size: None,
         });
     }

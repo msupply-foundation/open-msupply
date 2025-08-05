@@ -36,6 +36,7 @@ pub struct InsertInput {
     pub program_id: Option<String>,
     pub note: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
+    pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
 }
 
@@ -101,6 +102,7 @@ impl InsertInput {
             program_id,
             note,
             shipped_number_of_packs,
+            volume_per_pack,
             shipped_pack_size,
         } = self;
 
@@ -126,6 +128,7 @@ impl InsertInput {
             shipped_number_of_packs,
             campaign_id,
             program_id,
+            volume_per_pack,
             shipped_pack_size,
             note,
             // Default
@@ -251,6 +254,7 @@ mod test {
             "packSize": 0,
             "sellPricePerPack": 0,
             "totalBeforeTax": 0,
+            "volumePerPack": 0,
           }
         })
     }

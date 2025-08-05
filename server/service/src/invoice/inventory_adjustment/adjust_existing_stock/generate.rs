@@ -111,6 +111,7 @@ pub fn generate(
         vvm_status_id,
         campaign_id,
         program_id,
+        volume_per_pack,
         ..
     } = stock_line.stock_line_row.clone();
 
@@ -140,6 +141,7 @@ pub fn generate(
             vvm_status_id,
             campaign_id,
             program_id,
+            volume_per_pack: Some(volume_per_pack),
             // Default
             barcode: None,
             total_before_tax: None,

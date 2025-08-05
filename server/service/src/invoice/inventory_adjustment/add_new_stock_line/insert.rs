@@ -32,6 +32,7 @@ pub struct AddNewStockLine {
     pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

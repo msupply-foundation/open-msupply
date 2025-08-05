@@ -40,7 +40,7 @@ const ITEM_LINE_1: (&str, &str) = (
       "stock_on_hand_tot": 694,
       "store_ID": "store_a",
       "total_cost": 0,
-      "total_volume": 0,
+      "total_volume": 100,
       "user_1": "",
       "user_2": "",
       "user_3": "",
@@ -49,7 +49,7 @@ const ITEM_LINE_1: (&str, &str) = (
       "user_6_ID": "",
       "user_7_ID": "",
       "user_8_ID": "",
-      "volume_per_pack": 0,
+      "volume_per_pack": 10,
       "vvm_status_id": "",
       "weight_per_pack": 0,
       "oms_fields": {
@@ -83,6 +83,8 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             campaign_id: Some("campaign_a".to_string()),
             program_id: Some("program_a".to_string()),
+            volume_per_pack: 10.0,
+            total_volume: 100.0,
         },
     )
 }
@@ -113,6 +115,8 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: Some("campaign_a".to_string()),
                 program_id: Some("program_a".to_string()),
             }),
+            volume_per_pack: 10.0,
+            total_volume: 100.0,
         }),
     }
 }
@@ -187,6 +191,8 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             campaign_id: None,
             program_id: None,
+            total_volume: 0.0,
+            volume_per_pack: 0.0,
         },
     )
 }
@@ -217,6 +223,8 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
+            total_volume: 0.0,
         }),
     }
 }
@@ -291,6 +299,8 @@ fn item_line_3_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             campaign_id: None,
             program_id: None,
+            total_volume: 0.0,
+            volume_per_pack: 0.0,
         },
     )
 }
@@ -321,6 +331,8 @@ fn item_line_3_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
+            total_volume: 0.0,
         }),
     }
 }
@@ -395,6 +407,8 @@ fn item_line_4_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             campaign_id: None,
             program_id: None,
+            total_volume: 0.0,
+            volume_per_pack: 0.0,
         },
     )
 }
@@ -425,6 +439,8 @@ fn item_line_4_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
+            total_volume: 0.0,
         }),
     }
 }
@@ -498,6 +514,8 @@ fn item_line_5_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             campaign_id: None,
             program_id: None,
+            total_volume: 0.0,
+            volume_per_pack: 0.0,
         },
     )
 }
@@ -528,6 +546,8 @@ fn item_line_5_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
+            total_volume: 0.0,
         }),
     }
 }

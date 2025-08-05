@@ -63,7 +63,7 @@ const TRANS_LINE_1: (&str, &str) = (
         "user_7_ID": "",
         "user_8_ID": "",
         "vaccine_vial_monitor_status_ID": "",
-        "volume_per_pack": 0,
+        "volume_per_pack": 10,
         "om_item_variant_id": "",
         "donor_id": "donor_a",
         "oms_fields": ""
@@ -103,6 +103,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             campaign_id: None,
             program_id: None,
             shipped_number_of_packs: Some(0.0),
+            volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
         },
     )
@@ -142,6 +143,7 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
         }),
     }
@@ -239,6 +241,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             campaign_id: None,
             program_id: None,
             shipped_number_of_packs: Some(10.0),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
         },
     )
@@ -278,6 +281,7 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
         }),
     }
@@ -381,6 +385,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             campaign_id: Some("campaign_a".to_string()),
             program_id: Some("program_a".to_string()),
             shipped_number_of_packs: Some(0.0),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
         },
     )
@@ -420,6 +425,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
                 program_id: Some("program_a".to_string()),
             }),
             shipped_number_of_packs: Some(0.0),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
         }),
     }
@@ -520,6 +526,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             campaign_id: None,
             program_id: None,
             shipped_number_of_packs: Some(0.0),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
         },
     )
@@ -559,6 +566,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
         }),
     }
@@ -659,6 +667,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             campaign_id: None,
             program_id: None,
             shipped_number_of_packs: Some(0.0),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
         },
     )
@@ -698,6 +707,7 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
         }),
     }
@@ -799,6 +809,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             campaign_id: None,
             program_id: None,
             shipped_number_of_packs: Some(0.0),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
         },
     )
@@ -839,6 +850,7 @@ fn trans_line_prescribed_quantity_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
         }),
     }
@@ -938,6 +950,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             campaign_id: None,
             program_id: None,
             shipped_number_of_packs: Some(0.0),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
         },
     )
@@ -977,6 +990,7 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
         }),
     }
@@ -1076,6 +1090,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             campaign_id: None,
             program_id: None,
             shipped_number_of_packs: Some(0.0),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
         },
     )
@@ -1116,6 +1131,7 @@ fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
                 campaign_id: None,
                 program_id: None,
             }),
+            volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
         }),
     }

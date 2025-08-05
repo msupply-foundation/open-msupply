@@ -36,6 +36,7 @@ pub struct InsertInput {
     pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -108,6 +109,7 @@ impl InsertInput {
             donor_id,
             campaign_id,
             program_id,
+            volume_per_pack,
         } = self;
 
         AddNewStockLine {
@@ -130,13 +132,14 @@ impl InsertInput {
             donor_id,
             campaign_id,
             program_id,
+            volume_per_pack,
         }
     }
 }
 
 fn map_error(error: AddNewStockLineError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

@@ -9,6 +9,7 @@ import {
   getColumnLookupWithOverrides,
   getExpiryDateInputColumn,
   useColumns,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   ItemVariantInputCell,
@@ -29,6 +30,7 @@ export const QuantityReturnedTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
+  const t = useTranslation();
   const showItemVariantsColumn = useIsItemVariantsEnabled();
 
   const columnDefinitions = useMemo(() => {
@@ -98,16 +100,27 @@ export const QuantityReturnedTableComponent = ({
       ]);
     }
 
-    columnDefinitions.push([
-      'numberOfPacksReturned',
+    columnDefinitions.push(
+      [
+        'numberOfPacksReturned',
+        {
+          description: 'description.pack-quantity',
+          width: 100,
+          setter: updateLine,
+          getIsDisabled: () => isDisabled,
+          Cell: NumberOfPacksReturnedInputCell,
+        },
+      ],
       {
-        description: 'description.pack-quantity',
+        key: 'volumePerPack',
+        label: t('label.volume-per-pack'),
+        Cell: NumberInputCell,
+        cellProps: { decimalLimit: 2 },
         width: 100,
+        accessor: ({ rowData }) => rowData?.volumePerPack,
         setter: updateLine,
-        getIsDisabled: () => isDisabled,
-        Cell: NumberOfPacksReturnedInputCell,
-      },
-    ]);
+      }
+    );
     return columnDefinitions;
   }, [showItemVariantsColumn]);
 

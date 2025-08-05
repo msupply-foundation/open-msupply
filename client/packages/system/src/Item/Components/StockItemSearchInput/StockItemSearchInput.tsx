@@ -29,6 +29,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   filter: apiFilter = { isVisible: true },
   itemCategoryName,
   programId,
+  initialUpdate = false,
 }) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
@@ -73,6 +74,12 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   );
 
   useEffect(() => {
+    if (initialUpdate && currentItem) {
+      // If initialUpdate is true, we call onChange with the current item
+      // when the component mounts, so that the parent component can update
+      // its state with the current item.
+      onChange(currentItem);
+    }
     if (currentItem && search === '') setSearch(getOptionLabel(currentItem));
   }, [currentItem]);
 
