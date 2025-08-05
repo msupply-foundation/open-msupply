@@ -36,7 +36,7 @@ import {
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
 import { ItemVariantInput, useIsItemVariantsEnabled } from '../../Item';
-import { CampaignSelector } from './Campaign';
+import { CampaignOrProgramSelector } from './Campaign';
 
 interface StockLineFormProps {
   draft: DraftStockLine;
@@ -402,9 +402,13 @@ export const StockLineForm = ({
             <StyledInputRow
               label={t('label.campaign')}
               Input={
-                <CampaignSelector
-                  selected={draft.campaign}
-                  onChange={campaign => onUpdate({ campaign })}
+                <CampaignOrProgramSelector
+                  campaignId={draft.campaign?.id}
+                  programId={draft.program?.id}
+                  itemId={draft.itemId}
+                  onChange={({ campaign, program }) =>
+                    onUpdate({ campaign, program })
+                  }
                 />
               }
             />

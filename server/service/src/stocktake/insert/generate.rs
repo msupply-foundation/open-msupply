@@ -139,6 +139,8 @@ fn generate_stocktake_lines(
                          available_number_of_packs: _,
                          barcode_id: _,
                          vvm_status_id: _, // Todo?
+                         campaign_id: _,   // Todo #7893
+                         program_id: _,    // Todo #7893
                          volume_per_pack: _,
                          total_volume: _,
                      },

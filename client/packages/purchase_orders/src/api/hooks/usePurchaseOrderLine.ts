@@ -1,26 +1,30 @@
-import {  useMutation, usePatchState, useQuery } from "@openmsupply-client/common/src";
-import { usePurchaseOrderGraphQL } from "../usePurchaseOrderGraphQL";
-import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from "./keys";
-import { PurchaseOrderLineFragment } from "../operations.generated";
+import {
+  useMutation,
+  usePatchState,
+  useQuery,
+} from '@openmsupply-client/common/src';
+import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
+import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
+import { PurchaseOrderLineFragment } from '../operations.generated';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
-  "__typename"| "item"> & {
+  '__typename' | 'item'
+> & {
   purchaseOrderId: string;
   itemId: string;
-  }
+};
 
 const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
-    id: "",
-    purchaseOrderId: "",
-    itemId: "",
-    requestedPackSize: 0,
-    requestedNumberOfUnits: 0,
+  id: '',
+  purchaseOrderId: '',
+  itemId: '',
+  requestedPackSize: 0,
+  requestedNumberOfUnits: 0,
 };
 
 export function usePurchaseOrderLine(id?: string) {
-
- const { data, isLoading, error } = useGet(id ?? '');
+  const { data, isLoading, error } = useGet(id ?? '');
 
   const {
     mutateAsync: createMutation,
@@ -28,19 +32,19 @@ export function usePurchaseOrderLine(id?: string) {
     error: createError,
   } = useCreate();
 
-    const { patch, updatePatch, resetDraft, isDirty } =
-      usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
+  const { patch, updatePatch, resetDraft, isDirty } =
+    usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
 
-    const draft: DraftPurchaseOrderLine = data
-      ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], ...patch }
-      : { ...defaultPurchaseOrderLine, ...patch };
-    const create = async () => {
-      const result = await createMutation(draft);
-      resetDraft();
-      return result;
-    };
+  const draft: DraftPurchaseOrderLine = data
+    ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], ...patch }
+    : { ...defaultPurchaseOrderLine, ...patch };
+  const create = async () => {
+    const result = await createMutation(draft);
+    resetDraft();
+    return result;
+  };
 
-    return {
+  return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
     draft,
@@ -49,7 +53,6 @@ export function usePurchaseOrderLine(id?: string) {
     updatePatch,
   };
 }
-
 
 const useGet = (id: string) => {
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
@@ -89,7 +92,6 @@ const useCreate = () => {
         // TODO better way of handling non item id
         itemId: itemId,
         purchaseOrderId,
-        
       },
     });
   };
