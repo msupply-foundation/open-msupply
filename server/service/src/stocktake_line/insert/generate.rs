@@ -23,6 +23,7 @@ pub fn generate(
         item_variant_id,
         donor_id,
         reason_option_id,
+        campaign_id,
     }: InsertStocktakeLine,
 ) -> StocktakeLineRow {
     let snapshot_number_of_packs = if let Some(stock_line) = stock_line.clone() {
@@ -61,5 +62,6 @@ pub fn generate(
         donor_link_id: donor_id,
         reason_option_id,
         volume_per_pack: 0.0,
+        campaign_id,
     }
 }

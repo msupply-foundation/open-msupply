@@ -1,6 +1,7 @@
 use repository::{RepositoryError, StocktakeLine, StorageConnection};
 
 use crate::{
+    campaign::check_campaign_exists,
     check_location_exists,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
@@ -95,6 +96,15 @@ pub fn validate(
             stocktake_line_row.snapshot_number_of_packs,
         ) {
             return Err(SnapshotCountCurrentCountMismatchLine(stocktake_line));
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(ref campaign_id),
+    }) = &input.campaign_id
+    {
+        if !check_campaign_exists(connection, campaign_id)? {
+            return Err(CampaignDoesNotExist);
         }
     }
 

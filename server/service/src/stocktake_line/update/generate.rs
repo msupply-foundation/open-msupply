@@ -19,23 +19,19 @@ pub fn generate(
         item_variant_id,
         donor_id,
         reason_option_id,
+        campaign_id,
     }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
     let existing_line = existing.line;
 
     let item_variant_id: Option<String> = match item_variant_id {
-        Some(update) => match update.value {
-            Some(id) => Some(id),
-            None => None,
-        },
+        Some(update) => update.value,
         None => existing_line.item_variant_id,
     };
 
     let donor_link_id: Option<String> = match donor_id {
-        Some(update) => match update.value {
-            Some(id) => Some(id),
-            None => None,
-        },
+        Some(update) => update.value,
+
         None => existing_line.donor_link_id,
     };
 
@@ -64,5 +60,8 @@ pub fn generate(
         donor_link_id,
         reason_option_id: reason_option_id.or(existing_line.reason_option_id),
         volume_per_pack: 0.0,
+        campaign_id: campaign_id
+            .map(|c| c.value)
+            .unwrap_or(existing_line.campaign_id),
     })
 }

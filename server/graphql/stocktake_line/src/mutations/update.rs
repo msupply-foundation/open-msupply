@@ -39,6 +39,7 @@ pub struct UpdateInput {
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub reason_option_id: Option<String>,
+    pub campaign_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Union)]
@@ -112,6 +113,7 @@ impl UpdateInput {
             item_variant_id,
             donor_id,
             reason_option_id,
+            campaign_id,
         } = self;
 
         ServiceInput {
@@ -135,13 +137,16 @@ impl UpdateInput {
                 value: donor_id.value,
             }),
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
+            campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
+                value: campaign_id.value,
+            }),
         }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -177,6 +182,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
         ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };
@@ -300,6 +306,7 @@ mod test {
                     donor_link_id: None,
                     reason_option_id: None,
                     volume_per_pack: 0.0,
+                    campaign_id: None,
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),

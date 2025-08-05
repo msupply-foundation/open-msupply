@@ -29,6 +29,7 @@ pub struct InsertStocktakeLine {
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -48,6 +49,7 @@ pub enum InsertStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    CampaignDoesNotExist,
     StockLineReducedBelowZero(StockLine),
 }
 

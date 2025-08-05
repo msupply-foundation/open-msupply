@@ -1,9 +1,6 @@
-use repository::{
-    EqualFilter, ItemFilter, ItemRepository, RepositoryError, StockLine, StocktakeLineFilter,
-    StocktakeLineRepository, StorageConnection,
-};
-
+use super::{InsertStocktakeLine, InsertStocktakeLineError};
 use crate::{
+    campaign::check_campaign_exists,
     check_location_exists,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
@@ -13,8 +10,10 @@ use crate::{
     validate::check_store_id_matches,
     NullableUpdate,
 };
-
-use super::{InsertStocktakeLine, InsertStocktakeLineError};
+use repository::{
+    EqualFilter, ItemFilter, ItemRepository, RepositoryError, StockLine, StocktakeLineFilter,
+    StocktakeLineRepository, StorageConnection,
+};
 
 pub(crate) struct GenerateResult {
     pub(crate) stock_line: Option<StockLine>,
@@ -116,6 +115,12 @@ pub fn validate(
         if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
         {
             return Err(StockLineReducedBelowZero(stock_line));
+        }
+    }
+
+    if let Some(campaign_id) = &input.campaign_id {
+        if !check_campaign_exists(connection, campaign_id)? {
+            return Err(InsertStocktakeLineError::CampaignDoesNotExist);
         }
     }
 

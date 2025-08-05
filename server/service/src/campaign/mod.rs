@@ -3,6 +3,7 @@ mod query;
 mod upsert;
 mod validate;
 
+use crate::{service_provider::ServiceContext, ListError, ListResult};
 pub use delete::{delete_campaign, DeleteCampaign, DeleteCampaignError};
 pub use query::get_campaigns;
 use repository::{
@@ -10,8 +11,7 @@ use repository::{
     PaginationOption,
 };
 pub use upsert::{upsert_campaign, UpsertCampaign, UpsertCampaignError};
-
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+pub use validate::check_campaign_exists;
 
 pub trait CampaignServiceTrait: Send + Sync {
     fn get_campaigns(
