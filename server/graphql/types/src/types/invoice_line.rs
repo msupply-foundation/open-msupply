@@ -1,4 +1,4 @@
-use crate::types::VVMStatusNode;
+use crate::types::{program_node::ProgramNode, VVMStatusNode};
 
 use super::{
     CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
@@ -10,7 +10,8 @@ use dataloader::DataLoader;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByNameLinkIdLoader,
-        NameByNameLinkIdLoaderInput, ReasonOptionLoader, StockLineByIdLoader, VVMStatusByIdLoader,
+        NameByNameLinkIdLoaderInput, ProgramByIdLoader, ReasonOptionLoader, StockLineByIdLoader,
+        VVMStatusByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -281,6 +282,22 @@ impl InvoiceLineNode {
 
         let result = loader.load_one(campaign_id.clone()).await?;
         Ok(result.map(CampaignNode::from_domain))
+    }
+
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let program_id = match &self.row().program_id {
+            Some(program_id) => program_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(program_id.clone())
+            .await?
+            .map(|program_row| ProgramNode { program_row });
+
+        Ok(result)
     }
 
     pub async fn linked_invoice_id(&self) -> &Option<String> {
