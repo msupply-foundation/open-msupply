@@ -109,13 +109,6 @@ const ListView: FC = () => {
           getDeliveryStatusTranslator(t)(status as DeliveryStatus),
       },
       {
-        key: 'expectedDeliveryDate',
-        label: 'label.expected-delivery-date',
-        format: ColumnFormat.Date,
-        accessor: ({ rowData }) => rowData.expectedDeliveryDate,
-        sortable: true,
-      },
-      {
         key: 'deliveryDatetime',
         label: 'label.delivered',
         accessor: ({ rowData: _ }) => 'TODO: GOOD RECEIVED CALC', // rowData.deliveredDatetime,
