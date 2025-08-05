@@ -25,7 +25,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
-  getCampaignColumn,
+  getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemVariantInputCell,
@@ -63,6 +63,7 @@ const useDisableStocktakeRows = (rows?: DraftStocktakeLine[]) => {
       ?.filter(row => !row.countThisLine)
       .map(({ id }) => id);
     if (disabledRows) setDisabledRows(disabledRows);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 };
 
@@ -269,6 +270,7 @@ export const BatchTable = ({
     );
 
     return columnDefinitions;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     itemVariantsEnabled,
     errorsContext,
@@ -368,7 +370,7 @@ export const LocationTable = ({
     );
   }
   if (useCampaigns) {
-    columnDefinitions.push(getCampaignColumn(patch => update(patch)));
+    columnDefinitions.push(getCampaignOrProgramColumn(patch => update(patch)));
   }
 
   columnDefinitions.push([
