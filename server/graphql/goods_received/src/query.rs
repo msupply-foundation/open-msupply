@@ -1,13 +1,12 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{GoodsReceivedConnector, GoodsReceivedNode, GoodsReceivedNodeStatus};
 use repository::{DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
 use repository::{GoodsReceivedFilter, GoodsReceivedSort, GoodsReceivedSortField};
 use service::auth::{Resource, ResourceAccessRequest};
@@ -130,8 +129,6 @@ impl GoodsReceivedFilterInput {
             status: self
                 .status
                 .map(|t| map_filter!(t, GoodsReceivedNodeStatus::to_domain)),
-            supplier: self.supplier.map(StringFilter::from),
-            store_id: self.store_id.map(EqualFilter::from),
         }
     }
 }
