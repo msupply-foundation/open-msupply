@@ -10,11 +10,22 @@ use repository::{
     SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
+    zero_date_as_option,
+};
 
 use super::{
     utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+pub struct TransStocktakeLinRowOmsFields {
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -58,6 +69,9 @@ pub struct LegacyStocktakeLineRow {
     #[serde(default)]
     pub donor_id: Option<String>,
     pub volume_per_pack: f64,
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<TransStocktakeLinRowOmsFields>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -111,6 +125,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_variant_id,
             donor_id,
             volume_per_pack,
+            oms_fields,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
         // TODO is this correct?
@@ -131,9 +146,7 @@ impl SyncTranslation for StocktakeLineTranslation {
 
         if !is_stock_line_valid {
             log::warn!(
-                "Stock line is not valid, stocktake_line_id: {}, stock_line_id: {:?}",
-                ID,
-                item_line_ID
+                "Stock line is not valid, stocktake_line_id: {ID}, stock_line_id: {item_line_ID:?}"
             );
         }
 
@@ -161,6 +174,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_link_id: donor_id,
             reason_option_id,
             volume_per_pack,
+            campaign_id: oms_fields.and_then(|fields| fields.campaign_id.clone()),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -203,11 +217,18 @@ impl SyncTranslation for StocktakeLineTranslation {
                     donor_link_id: donor_id,
                     reason_option_id,
                     volume_per_pack,
+                    campaign_id,
                 },
             item,
             stock_line,
             ..
         } = stocktake_line;
+
+        let oms_fields = if campaign_id.is_some() {
+            Some(TransStocktakeLinRowOmsFields { campaign_id })
+        } else {
+            None
+        };
 
         let legacy_row = LegacyStocktakeLineRow {
             ID: id.clone(),
@@ -231,6 +252,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_variant_id,
             donor_id,
             volume_per_pack,
+            oms_fields,
         };
 
         Ok(PushTranslateResult::upsert(

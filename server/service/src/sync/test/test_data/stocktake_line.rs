@@ -1,6 +1,7 @@
 use super::TestSyncOutgoingRecord;
 use crate::sync::{
-    test::TestSyncIncomingRecord, translations::stocktake_line::LegacyStocktakeLineRow,
+    test::TestSyncIncomingRecord,
+    translations::stocktake_line::{LegacyStocktakeLineRow, TransStocktakeLinRowOmsFields},
 };
 use repository::{mock::mock_item_a, StocktakeLineRow};
 use serde_json::json;
@@ -31,7 +32,8 @@ const STOCKTAKE_LINE_1: (&str, &str) = (
       "stock_take_ID": "stocktake_a",
       "stock_take_qty": 700,
       "vaccine_vial_monitor_status_ID": "",
-      "volume_per_pack": 10.0
+      "volume_per_pack": 10.0,
+      "oms_fields": ""
     }"#,
 );
 
@@ -59,6 +61,7 @@ fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: Some("abc123_best_donor".to_string()),
             reason_option_id: None,
             volume_per_pack: 10.0,
+            campaign_id: None,
         },
     )
 }
@@ -87,6 +90,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: Some("abc123_best_donor".to_string()),
             volume_per_pack: 10.0,
+            oms_fields: None,
         }),
     }
 }
@@ -116,7 +120,10 @@ const STOCKTAKE_LINE_OM_FIELDS: (&str, &str) = (
       "stock_take_qty": 700,
       "vaccine_vial_monitor_status_ID": "",
       "om_note": "om note",
-      "volume_per_pack": 0
+      "volume_per_pack": 0,
+      "oms_fields": {
+        "campaign_id": "campaign_a"
+      }
     }"#,
 );
 fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
@@ -143,6 +150,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             reason_option_id: None,
             volume_per_pack: 0.0,
+            campaign_id: Some("campaign_a".to_string()),
         },
     )
 }
@@ -171,6 +179,9 @@ fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             volume_per_pack: 0.0,
+            oms_fields: Some(TransStocktakeLinRowOmsFields {
+                campaign_id: Some("campaign_a".to_string()),
+            }),
         }),
     }
 }
