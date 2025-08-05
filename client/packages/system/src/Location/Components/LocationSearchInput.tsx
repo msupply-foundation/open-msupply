@@ -58,6 +58,12 @@ const optionRenderer = (
   );
 };
 
+enum LocationFilter {
+  All = 'all',
+  Empty = 'empty',
+  Available = 'available',
+}
+
 export const LocationSearchInput = ({
   selectedLocation,
   width,
@@ -65,14 +71,14 @@ export const LocationSearchInput = ({
   disabled,
   autoFocus = false,
   restrictedToLocationTypeId,
-  volumeRequired = 0,
+  volumeRequired,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
-  const [filter, setFilter] = useState<'all' | 'empty' | 'available'>('all');
+  const [filter, setFilter] = useState<LocationFilter>(LocationFilter.All);
 
   const handleFilterClick = (
     e: React.MouseEvent<HTMLButtonElement>,
-    filterType: 'all' | 'empty' | 'available'
+    filterType: LocationFilter
   ) => {
     e.stopPropagation();
     e.preventDefault();
@@ -94,11 +100,12 @@ export const LocationSearchInput = ({
   // Filter locations based on selected filter
   const filteredLocations = locations.filter(location => {
     switch (filter) {
-      case 'empty':
-        return location.volumeUsed === 0;
-      case 'available':
-        return location.volume - location.volumeUsed > volumeRequired;
-      case 'all':
+      case LocationFilter.Empty:
+        // todo: change to be no stock lines
+        return location.stock?.totalCount === 0;
+      case LocationFilter.Available:
+        return location.volume - location.volumeUsed >= (volumeRequired ?? 0);
+      case LocationFilter.All:
       default:
         return true;
     }
@@ -118,20 +125,15 @@ export const LocationSearchInput = ({
     options.push({ value: null, label: t('label.remove') });
   }
 
-  // If the selected location doesn't match current filter, we need to handle this
-  const shouldShowSelectedLocation =
-    selectedLocation && !options.find(o => o.value === selectedLocation?.id);
-  if (shouldShowSelectedLocation) {
-    // Add the selected location to options even if it doesn't match filter
-    const selectedLocationOption: LocationOption = {
-      value: selectedLocation.id,
-      label: formatLocationLabel(selectedLocation),
-      code: selectedLocation.code,
-    };
-    options.unshift(selectedLocationOption);
-  }
-
-  const selectedOption = options.find(o => o.value === selectedLocation?.id);
+  // Define separately - even if the selected location doesn't match current
+  // filter, we still want to show it as the selected option
+  const selectedLocationOption: LocationOption | null = selectedLocation
+    ? {
+        value: selectedLocation.id,
+        label: formatLocationLabel(selectedLocation),
+        code: selectedLocation.code,
+      }
+    : null;
 
   return (
     <Autocomplete
@@ -140,7 +142,7 @@ export const LocationSearchInput = ({
       width={`${width}px`}
       popperMinWidth={Number(width)}
       clearable={false}
-      value={selectedOption || null}
+      value={selectedLocationOption}
       loading={isLoading}
       onChange={(_, option) => {
         onChange(locations.find(l => l.id === option?.value) || null);
@@ -151,49 +153,70 @@ export const LocationSearchInput = ({
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       slots={{
-        paper: ({ children, ...paperProps }) => (
-          <Paper {...paperProps}>
-            <Box
-              sx={{
-                p: 1,
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                position: 'sticky',
-                top: 0,
-                zIndex: 1,
-                backgroundColor: 'background.paper',
-              }}
-            >
-              <ButtonGroup variant="outlined" size="small" fullWidth>
-                <Button
-                  variant={filter === 'all' ? 'contained' : 'outlined'}
-                  color="secondary"
-                  onMouseDown={e => handleFilterClick(e, 'all')}
-                  size="small"
-                >
-                  {t('label.all')}
-                </Button>
-                <Button
-                  variant={filter === 'empty' ? 'contained' : 'outlined'}
-                  color="secondary"
-                  onMouseDown={e => handleFilterClick(e, 'empty')}
-                  size="small"
-                >
-                  {t('label.empty')}
-                </Button>
-                <Button
-                  variant={filter === 'available' ? 'contained' : 'outlined'}
-                  color="secondary"
-                  onMouseDown={e => handleFilterClick(e, 'available')}
-                  size="small"
-                >
-                  {t('label.available')}
-                </Button>
-              </ButtonGroup>
-            </Box>
-            {children}
-          </Paper>
-        ),
+        paper:
+          typeof volumeRequired === 'number'
+            ? ({ children, ...paperProps }) => (
+                <Paper {...paperProps} sx={{ width: '250px' }}>
+                  <Box
+                    sx={{
+                      p: 1,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 1,
+                      backgroundColor: 'background.paper',
+                    }}
+                  >
+                    <ButtonGroup variant="outlined" size="small" fullWidth>
+                      <Button
+                        variant={
+                          filter === LocationFilter.All
+                            ? 'contained'
+                            : 'outlined'
+                        }
+                        onMouseDown={e =>
+                          handleFilterClick(e, LocationFilter.All)
+                        }
+                        color="secondary"
+                        size="small"
+                      >
+                        {t('label.all')}
+                      </Button>
+                      <Button
+                        variant={
+                          filter === LocationFilter.Empty
+                            ? 'contained'
+                            : 'outlined'
+                        }
+                        onMouseDown={e =>
+                          handleFilterClick(e, LocationFilter.Empty)
+                        }
+                        color="secondary"
+                        size="small"
+                      >
+                        {t('label.empty')}
+                      </Button>
+                      <Button
+                        variant={
+                          filter === LocationFilter.Available
+                            ? 'contained'
+                            : 'outlined'
+                        }
+                        onMouseDown={e =>
+                          handleFilterClick(e, LocationFilter.Available)
+                        }
+                        color="secondary"
+                        size="small"
+                      >
+                        {t('label.available')}
+                      </Button>
+                    </ButtonGroup>
+                  </Box>
+                  {children}
+                </Paper>
+              )
+            : undefined,
       }}
     />
   );
