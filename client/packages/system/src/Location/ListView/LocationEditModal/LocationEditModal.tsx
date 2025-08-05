@@ -169,7 +169,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
               label={t('label.volume-used')}
               disabled
               fullWidth
-              decimalLimit={4}
+              decimalLimit={10}
             />
           </Box>
           <Grid alignSelf="center">
