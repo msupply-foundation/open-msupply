@@ -2,7 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_activity_log_volume_per_pack_changed;
-mod add_campaign_to_stocktake_line;
+mod add_campaign_and_program_to_stocktake_line;
 mod add_closed_vial_wastage_reason_option_type;
 mod add_contact_table;
 mod add_goods_received_line_table;
@@ -51,7 +51,7 @@ impl Migration for V2_10_00 {
             Box::new(add_more_dates_to_purchase_order::Migrate),
             Box::new(add_goods_received_line_table::Migrate),
             Box::new(add_closed_vial_wastage_reason_option_type::Migrate),
-            Box::new(add_campaign_to_stocktake_line::Migrate),
+            Box::new(add_campaign_and_program_to_stocktake_line::Migrate),
             Box::new(add_program_id_to_stock_and_invoice_lines::Migrate),
         ]
     }
