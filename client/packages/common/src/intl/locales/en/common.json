@@ -995,6 +995,7 @@
   "label.leave-as-pending": "Leave as pending",
   "label.ledger": "Ledger",
   "label.level": "Level",
+  "label.distribution-priority": "Distribution Priority",
   "label.line": "Line {{line, number}}",
   "label.line-number": "Line number",
   "label.line-total": "Line total",

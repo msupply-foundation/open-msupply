@@ -40,7 +40,7 @@ fragment StockLine on StockLineNode {
   vvmStatus {
     __typename
     id
-    level
+    priority
     unusable
     description
   }
