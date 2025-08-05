@@ -5,10 +5,14 @@ use repository::{location::Location, ReasonOption, StocktakeLine};
 use service::usize_to_u32;
 
 use graphql_core::{
-    loader::{ItemLoader, ItemVariantByItemVariantIdLoader, StockLineByIdLoader},
+    loader::{
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, StockLineByIdLoader,
+    },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+
+use crate::types::CampaignNode;
 
 use super::{
     InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, ReasonOptionNode,
@@ -155,6 +159,18 @@ impl StocktakeLineNode {
                 reason_option_row: row.clone(),
             })
         })
+    }
+
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+
+        let campaign_id = match &self.line.line.campaign_id {
+            Some(campaign_id) => campaign_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(campaign_id.clone()).await?;
+        Ok(result.map(CampaignNode::from_domain))
     }
 }
 
