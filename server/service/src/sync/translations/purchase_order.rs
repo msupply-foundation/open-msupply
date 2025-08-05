@@ -515,7 +515,7 @@ fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
     let legacy_status = match status {
         PurchaseOrderStatus::New => LegacyPurchaseOrderStatus::Nw,
         PurchaseOrderStatus::Confirmed => LegacyPurchaseOrderStatus::Cn,
-        PurchaseOrderStatus::Authorised => LegacyPurchaseOrderStatus::Cn, // should also set is_authorised to true
+        PurchaseOrderStatus::Authorised => LegacyPurchaseOrderStatus::Cn, // We will also set is_authorised to true (See check_is_authorised)
         PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Fn,
     };
     legacy_status
