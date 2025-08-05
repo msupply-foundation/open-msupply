@@ -7768,6 +7768,7 @@ export type ReasonOptionNode = {
 };
 
 export enum ReasonOptionNodeType {
+  ClosedVialWastage = 'CLOSED_VIAL_WASTAGE',
   NegativeInventoryAdjustment = 'NEGATIVE_INVENTORY_ADJUSTMENT',
   OpenVialWastage = 'OPEN_VIAL_WASTAGE',
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
@@ -9894,20 +9895,31 @@ export type UpdateProgramPatientInput = {
 export type UpdateProgramPatientResponse = PatientNode;
 
 export type UpdatePurchaseOrderInput = {
+  additionalInstructions?: InputMaybe<Scalars['String']['input']>;
   advancePaidDate?: InputMaybe<NullableDateUpdate>;
+  agentCommission?: InputMaybe<Scalars['Float']['input']>;
+  authorisingOfficer1?: InputMaybe<Scalars['String']['input']>;
+  authorisingOfficer2?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  communicationsCharge?: InputMaybe<Scalars['Float']['input']>;
   confirmedDatetime?: InputMaybe<NullableDatetimeUpdate>;
   contractSignedDate?: InputMaybe<NullableDateUpdate>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
+  documentCharge?: InputMaybe<Scalars['Float']['input']>;
   donorId?: InputMaybe<NullableStringUpdate>;
   foreignExchangeRate?: InputMaybe<Scalars['Float']['input']>;
+  freightCharge?: InputMaybe<Scalars['Float']['input']>;
+  freightConditions?: InputMaybe<Scalars['String']['input']>;
+  headingMessage?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  insuranceCharge?: InputMaybe<Scalars['Float']['input']>;
   receivedAtPortDate?: InputMaybe<NullableDateUpdate>;
   reference?: InputMaybe<Scalars['String']['input']>;
   requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   sentDatetime?: InputMaybe<NullableDatetimeUpdate>;
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<PurchaseOrderNodeType>;
+  supplierAgent?: InputMaybe<Scalars['String']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;
 };
