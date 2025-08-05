@@ -253,5 +253,27 @@ mutation updatePurchaseOrderLine(
     ... on IdResponse {
       id
     }
+    ... on UpdatePurchaseOrderLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on PurchaseOrderDoesNotExist {
+          __typename
+          description
+        }
+        ... on PurchaseOrderLineNotFound {
+          __typename
+          description
+        }
+        ... on UpdatedLineDoesNotExist {
+          __typename
+          description
+        }
+      }
+    }
   }
 }

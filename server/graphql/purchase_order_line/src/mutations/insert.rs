@@ -50,10 +50,10 @@ pub fn insert_purchase_order_line(
             resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
         },
-    );
+    )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user?.user_id)?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider

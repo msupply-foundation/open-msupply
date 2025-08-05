@@ -330,7 +330,14 @@ export type UpdatePurchaseOrderLineMutation = {
   __typename: 'Mutations';
   updatePurchaseOrderLine:
     | { __typename: 'IdResponse'; id: string }
-    | { __typename: 'UpdatePurchaseOrderLineError' };
+    | {
+        __typename: 'UpdatePurchaseOrderLineError';
+        error:
+          | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | { __typename: 'PurchaseOrderDoesNotExist'; description: string }
+          | { __typename: 'PurchaseOrderLineNotFound'; description: string }
+          | { __typename: 'UpdatedLineDoesNotExist'; description: string };
+      };
 };
 
 export const PurchaseOrderRowFragmentDoc = gql`
@@ -600,6 +607,28 @@ export const UpdatePurchaseOrderLineDocument = gql`
     updatePurchaseOrderLine(input: $input, storeId: $storeId) {
       ... on IdResponse {
         id
+      }
+      ... on UpdatePurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on CannotEditPurchaseOrder {
+            __typename
+            description
+          }
+          ... on PurchaseOrderDoesNotExist {
+            __typename
+            description
+          }
+          ... on PurchaseOrderLineNotFound {
+            __typename
+            description
+          }
+          ... on UpdatedLineDoesNotExist {
+            __typename
+            description
+          }
+        }
       }
     }
   }
