@@ -57,26 +57,6 @@ pub fn mock_stocktake_finalised_without_lines() -> StocktakeRow {
     }
 }
 
-pub fn mock_stocktake_finalised_without_lines() -> StocktakeRow {
-    StocktakeRow {
-        id: "mock_stocktake_finalised_no_lines".to_string(),
-        store_id: "store_a".to_string(),
-        stocktake_number: 3,
-        status: StocktakeStatus::Finalised,
-        created_datetime: NaiveDate::from_ymd_opt(2021, 12, 15)
-            .unwrap()
-            .and_hms_milli_opt(12, 30, 0, 0)
-            .unwrap(),
-        finalised_datetime: Some(
-            NaiveDate::from_ymd_opt(2021, 12, 21)
-                .unwrap()
-                .and_hms_milli_opt(10, 15, 10, 0)
-                .unwrap(),
-        ),
-        ..Default::default()
-    }
-}
-
 pub fn mock_stocktake_line_finalised() -> StocktakeLineRow {
     let stock_line = mock_stock_line_a();
     StocktakeLineRow {
@@ -114,29 +94,6 @@ pub fn mock_locked_stocktake_line() -> StocktakeLineRow {
 }
 
 // stock surplus
-
-pub fn mock_stocktake_stock_surplus() -> StocktakeRow {
-    StocktakeRow {
-        id: "mock_stocktake_stock_surplus".to_string(),
-        store_id: "store_a".to_string(),
-        stocktake_number: 4,
-        status: StocktakeStatus::Finalised,
-        created_datetime: NaiveDate::from_ymd_opt(2021, 12, 14)
-            .unwrap()
-            .and_hms_milli_opt(12, 30, 0, 0)
-            .unwrap(),
-        finalised_datetime: Some(
-            NaiveDate::from_ymd_opt(2021, 12, 20)
-                .unwrap()
-                .and_hms_milli_opt(10, 15, 10, 0)
-                .unwrap(),
-        ),
-        ..Default::default()
-    }
-}
-
-// stock surplus
-
 pub fn mock_stocktake_stock_surplus() -> StocktakeRow {
     StocktakeRow {
         id: "mock_stocktake_stock_surplus".to_string(),
@@ -249,29 +206,6 @@ pub fn mock_stocktake_no_lines() -> StocktakeRow {
 }
 
 // success: no count change should not generate shipment line
-
-pub fn mock_stocktake_no_count_change() -> StocktakeRow {
-    StocktakeRow {
-        id: "mock_stocktake_no_count_change".to_string(),
-        store_id: "store_a".to_string(),
-        stocktake_number: 6,
-        status: StocktakeStatus::Finalised,
-        created_datetime: NaiveDate::from_ymd_opt(2022, 1, 6)
-            .unwrap()
-            .and_hms_milli_opt(15, 31, 0, 0)
-            .unwrap(),
-        finalised_datetime: Some(
-            NaiveDate::from_ymd_opt(2022, 1, 6)
-                .unwrap()
-                .and_hms_milli_opt(16, 31, 0, 0)
-                .unwrap(),
-        ),
-        ..Default::default()
-    }
-}
-
-// success: no count change should not generate shipment line
-
 pub fn mock_stocktake_no_count_change() -> StocktakeRow {
     StocktakeRow {
         id: "mock_stocktake_no_count_change".to_string(),
