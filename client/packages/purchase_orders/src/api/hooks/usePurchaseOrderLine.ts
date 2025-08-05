@@ -71,7 +71,6 @@ export function usePurchaseOrderLine(id?: string) {
   };
 
   return {
-  return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
@@ -81,6 +80,7 @@ export function usePurchaseOrderLine(id?: string) {
     updatePatch,
   };
 }
+
 
 const useGet = (id: string) => {
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
