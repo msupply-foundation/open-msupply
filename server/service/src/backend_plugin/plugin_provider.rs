@@ -54,8 +54,8 @@ pub(crate) fn call_plugin<I, O>(
     plugin: &PluginInstance,
 ) -> PluginResult<O>
 where
-    I: Serialize,
-    O: DeserializeOwned,
+    I: Serialize + Send + Sync + 'static,
+    O: DeserializeOwned + Send + Sync + 'static,
 {
     let result = match &plugin.variant {
         PluginInstanceVariant::BoaJs(bundle) => boajs::call_method(
