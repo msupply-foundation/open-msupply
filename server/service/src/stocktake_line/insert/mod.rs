@@ -30,6 +30,7 @@ pub struct InsertStocktakeLine {
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]

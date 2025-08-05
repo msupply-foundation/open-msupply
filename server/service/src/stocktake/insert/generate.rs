@@ -132,6 +132,7 @@ fn generate_stocktake_lines(
                          item_variant_id,
                          donor_link_id,
                          campaign_id,
+                         program_id,
                          item_link_id: _,
                          supplier_link_id: _,
                          store_id: _,
@@ -139,8 +140,6 @@ fn generate_stocktake_lines(
                          available_number_of_packs: _,
                          barcode_id: _,
                          vvm_status_id: _, // Todo?
-                         campaign_id: _,   // Todo #7893
-                         program_id: _,    // Todo #7893
                          volume_per_pack: _,
                          total_volume: _,
                      },
@@ -168,6 +167,7 @@ fn generate_stocktake_lines(
                     item_variant_id,
                     donor_link_id,
                     campaign_id,
+                    program_id,
                     counted_number_of_packs: None,
                     comment: None,
                     reason_option_id: None,
@@ -220,6 +220,7 @@ fn generate_lines_initial_stocktake(
             reason_option_id: None,
             volume_per_pack: 0.0,
             campaign_id: None,
+            program_id: None,
         })
         .collect();
 
@@ -282,6 +283,7 @@ pub fn generate_lines_from_master_list(
                 donor_link_id: None,
                 volume_per_pack: 0.0,
                 campaign_id: None,
+                program_id: None,
             });
         } else {
             stock_lines.into_iter().for_each(|line| {
@@ -297,6 +299,7 @@ pub fn generate_lines_from_master_list(
                     expiry_date,
                     note,
                     campaign_id,
+                    program_id,
                     supplier_link_id: _,
                     store_id: _,
                     on_hold: _,
@@ -326,6 +329,7 @@ pub fn generate_lines_from_master_list(
                     item_variant_id,
                     donor_link_id,
                     campaign_id,
+                    program_id,
                     comment: None,
                     reason_option_id: None,
                     counted_number_of_packs: None,

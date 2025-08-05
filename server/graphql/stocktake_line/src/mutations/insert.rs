@@ -40,6 +40,7 @@ pub struct InsertInput {
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -162,6 +163,7 @@ impl InsertInput {
             donor_id,
             reason_option_id,
             campaign_id,
+            program_id,
         } = self;
 
         ServiceInput {
@@ -184,6 +186,7 @@ impl InsertInput {
             donor_id,
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
             campaign_id,
+            program_id,
         }
     }
 }
@@ -305,11 +308,7 @@ mod test {
                     cost_price_per_pack: Some(10.0),
                     sell_price_per_pack: Some(12.0),
                     note: Some("note".to_string()),
-                    item_variant_id: None,
-                    donor_link_id: None,
-                    reason_option_id: None,
-                    volume_per_pack: 0.0,
-                    campaign_id: None,
+                    ..Default::default()
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
