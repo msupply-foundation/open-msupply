@@ -21,7 +21,7 @@ use super::{
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
-pub struct TransStocktakeLinRowOmsFields {
+pub struct LegacyStocktakeLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub campaign_id: Option<String>,
@@ -74,7 +74,7 @@ pub struct LegacyStocktakeLineRow {
     pub volume_per_pack: f64,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
-    pub oms_fields: Option<TransStocktakeLinRowOmsFields>,
+    pub oms_fields: Option<LegacyStocktakeLineRowOmsFields>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -235,7 +235,7 @@ impl SyncTranslation for StocktakeLineTranslation {
 
         let oms_fields = match (&campaign_id, &program_id) {
             (None, None) => None,
-            _ => Some(TransStocktakeLinRowOmsFields {
+            _ => Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id,
                 program_id,
             }),

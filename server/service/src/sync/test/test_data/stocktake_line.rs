@@ -1,7 +1,7 @@
 use super::TestSyncOutgoingRecord;
 use crate::sync::{
     test::TestSyncIncomingRecord,
-    translations::stocktake_line::{LegacyStocktakeLineRow, TransStocktakeLinRowOmsFields},
+    translations::stocktake_line::{LegacyStocktakeLineRow, LegacyStocktakeLineRowOmsFields},
 };
 use repository::{mock::mock_item_a, StocktakeLineRow};
 use serde_json::json;
@@ -93,7 +93,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: Some("abc123_best_donor".to_string()),
             volume_per_pack: 10.0,
-            oms_fields: Some(TransStocktakeLinRowOmsFields {
+            oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 program_id: Some("program_test".to_string()),
                 campaign_id: None,
             })
@@ -187,7 +187,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             volume_per_pack: 0.0,
-            oms_fields: Some(TransStocktakeLinRowOmsFields {
+            oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id: Some("campaign_a".to_string()),
                 program_id: None,
             }),
