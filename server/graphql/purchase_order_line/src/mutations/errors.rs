@@ -23,11 +23,3 @@ impl PurchaseOrderDoesNotExist {
         "Purchase order does not exist"
     }
 }
-
-pub struct CannotEditPurchaseOrder;
-#[Object]
-impl CannotEditPurchaseOrder {
-    pub async fn description(&self) -> &str {
-        "Cannot edit purchase order"
-    }
-}

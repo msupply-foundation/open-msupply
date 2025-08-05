@@ -1,12 +1,8 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::{
-    standard_graphql_error::{
-        validate_auth,
-        StandardGraphqlError::{BadUserInput, InternalError},
-    },
-    ContextExt,
-};
+use graphql_core::simple_generic_errors::CannotEditPurchaseOrder;
+use graphql_core::standard_graphql_error::StandardGraphqlError::InternalError;
+use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::IdResponse;
 use repository::PurchaseOrderLine;
 use service::{
@@ -18,8 +14,7 @@ use service::{
 };
 
 use crate::mutations::errors::{
-    CannotEditPurchaseOrder, PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound,
-    UpdatedLineDoesNotExist,
+    PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound, UpdatedLineDoesNotExist,
 };
 
 #[derive(InputObject)]

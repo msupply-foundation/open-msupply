@@ -1121,10 +1121,11 @@ export type CannotEditInvoice =
     };
 
 export type CannotEditPurchaseOrder =
-  AddToPurchaseOrderFromMasterListErrorInterface & {
-    __typename: 'CannotEditPurchaseOrder';
-    description: Scalars['String']['output'];
-  };
+  AddToPurchaseOrderFromMasterListErrorInterface &
+    PurchaseOrderLineError & {
+      __typename: 'CannotEditPurchaseOrder';
+      description: Scalars['String']['output'];
+    };
 
 export type CannotEditRequisition = AddFromMasterListErrorInterface &
   CreateRequisitionShipmentErrorInterface &
@@ -6722,6 +6723,11 @@ export type PurchaseOrderConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type PurchaseOrderDoesNotExist = PurchaseOrderLineError & {
+  __typename: 'PurchaseOrderDoesNotExist';
+  description: Scalars['String']['output'];
+};
+
 export type PurchaseOrderFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -6734,6 +6740,10 @@ export type PurchaseOrderLineConnector = {
   __typename: 'PurchaseOrderLineConnector';
   nodes: Array<PurchaseOrderLineNode>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type PurchaseOrderLineError = {
+  description: Scalars['String']['output'];
 };
 
 export type PurchaseOrderLineFilterInput = {
@@ -6754,6 +6764,11 @@ export type PurchaseOrderLineNode = {
   requestedNumberOfUnits: Scalars['Float']['output'];
   requestedPackSize: Scalars['Float']['output'];
   stockOnHandInUnits: Scalars['Float']['output'];
+};
+
+export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
+  __typename: 'PurchaseOrderLineNotFound';
+  description: Scalars['String']['output'];
 };
 
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
@@ -7768,6 +7783,7 @@ export type ReasonOptionNode = {
 };
 
 export enum ReasonOptionNodeType {
+  ClosedVialWastage = 'CLOSED_VIAL_WASTAGE',
   NegativeInventoryAdjustment = 'NEGATIVE_INVENTORY_ADJUSTMENT',
   OpenVialWastage = 'OPEN_VIAL_WASTAGE',
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
@@ -9912,6 +9928,11 @@ export type UpdatePurchaseOrderInput = {
   supplierId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdatePurchaseOrderLineError = {
+  __typename: 'UpdatePurchaseOrderLineError';
+  error: PurchaseOrderLineError;
+};
+
 export type UpdatePurchaseOrderLineInput = {
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
@@ -9921,7 +9942,9 @@ export type UpdatePurchaseOrderLineInput = {
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
 
-export type UpdatePurchaseOrderLineResponse = IdResponse;
+export type UpdatePurchaseOrderLineResponse =
+  | IdResponse
+  | UpdatePurchaseOrderLineError;
 
 export type UpdatePurchaseOrderResponse = IdResponse;
 
@@ -10317,6 +10340,11 @@ export type UpdateVaccineCourseInput = {
 export type UpdateVaccineCourseResponse =
   | UpdateVaccineCourseError
   | VaccineCourseNode;
+
+export type UpdatedLineDoesNotExist = PurchaseOrderLineError & {
+  __typename: 'UpdatedLineDoesNotExist';
+  description: Scalars['String']['output'];
+};
 
 export type UploadedPluginError = {
   __typename: 'UploadedPluginError';
