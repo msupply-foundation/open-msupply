@@ -246,6 +246,24 @@ export type AddToOutboundShipmentFromMasterListResponse =
   | AddToOutboundShipmentFromMasterListError
   | InvoiceLineConnector;
 
+export type AddToPurchaseOrderFromMasterListError = {
+  __typename: 'AddToPurchaseOrderFromMasterListError';
+  error: AddToPurchaseOrderFromMasterListErrorInterface;
+};
+
+export type AddToPurchaseOrderFromMasterListErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type AddToPurchaseOrderFromMasterListInput = {
+  masterListId: Scalars['String']['input'];
+  purchaseOrderId: Scalars['String']['input'];
+};
+
+export type AddToPurchaseOrderFromMasterListResponse =
+  | AddToPurchaseOrderFromMasterListError
+  | PurchaseOrderLineConnector;
+
 export type AddToShipmentFromMasterListInput = {
   masterListId: Scalars['String']['input'];
   shipmentId: Scalars['String']['input'];
@@ -1101,6 +1119,12 @@ export type CannotEditInvoice =
       __typename: 'CannotEditInvoice';
       description: Scalars['String']['output'];
     };
+
+export type CannotEditPurchaseOrder =
+  AddToPurchaseOrderFromMasterListErrorInterface & {
+    __typename: 'CannotEditPurchaseOrder';
+    description: Scalars['String']['output'];
+  };
 
 export type CannotEditRequisition = AddFromMasterListErrorInterface &
   CreateRequisitionShipmentErrorInterface &
@@ -4917,7 +4941,8 @@ export type MasterListNotFoundForThisName =
   };
 
 export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface &
-  AddToInboundShipmentFromMasterListErrorInterface & {
+  AddToInboundShipmentFromMasterListErrorInterface &
+  AddToPurchaseOrderFromMasterListErrorInterface & {
     __typename: 'MasterListNotFoundForThisStore';
     description: Scalars['String']['output'];
   };
@@ -4960,6 +4985,7 @@ export type Mutations = {
   addToInboundShipmentFromMasterList: AddToInboundShipmentFromMasterListResponse;
   /** Add invoice lines from master item master list */
   addToOutboundShipmentFromMasterList: AddToOutboundShipmentFromMasterListResponse;
+  addToPurchaseOrderFromMasterList: AddToPurchaseOrderFromMasterListResponse;
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
   allocateProgramNumber: AllocateProgramNumberResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
@@ -5126,6 +5152,11 @@ export type MutationsAddToInboundShipmentFromMasterListArgs = {
 
 export type MutationsAddToOutboundShipmentFromMasterListArgs = {
   input: AddToShipmentFromMasterListInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsAddToPurchaseOrderFromMasterListArgs = {
+  input: AddToPurchaseOrderFromMasterListInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -7791,6 +7822,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface &
 export type RecordNotFound = AddFromMasterListErrorInterface &
   AddToInboundShipmentFromMasterListErrorInterface &
   AddToOutboundShipmentFromMasterListErrorInterface &
+  AddToPurchaseOrderFromMasterListErrorInterface &
   AllocateOutboundShipmentUnallocatedLineErrorInterface &
   CreateRequisitionShipmentErrorInterface &
   DeleteAssetCatalogueItemErrorInterface &

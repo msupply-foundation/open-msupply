@@ -3,16 +3,13 @@ import { SplitButton, SplitButtonOption } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { useNotification, useToggle } from '@common/hooks';
-import { AddFromInternalOrder } from './AddFromInternalOrder';
 import { PlusCircleIcon } from '@common/icons';
-import { InboundFragment } from '../api';
-import { InvoiceNodeStatus } from '@common/types';
-import { ScannedBarcode } from '../../types';
+import { PurchaseOrderFragment } from '../../api';
+import { PurchaseOrderNodeStatus } from '@common/types';
 
 interface AddButtonProps {
-  requisitionId: string;
-  invoice: InboundFragment | undefined;
-  onAddItem: (scannedBarcode?: ScannedBarcode) => void;
+  purchaseOrder: PurchaseOrderFragment | undefined;
+  onAddItem: (newState: boolean) => void;
   /** Disable the whole control */
   disable: boolean;
   disableAddFromMasterListButton: boolean;
@@ -20,42 +17,31 @@ interface AddButtonProps {
 }
 
 export const AddButton = ({
-  requisitionId,
-  invoice,
+  purchaseOrder,
   onAddItem,
   disable,
   disableAddFromMasterListButton,
-  disableAddFromInternalOrderButton,
 }: AddButtonProps) => {
   const t = useTranslation();
   const { info } = useNotification();
   const masterListModalController = useToggle();
-  const internalOrderModalController = useToggle();
 
-  const options: [
-    SplitButtonOption<string>,
-    SplitButtonOption<string>,
-    SplitButtonOption<string>,
-  ] = useMemo(
-    () => [
-      {
-        value: 'add-item',
-        label: t('button.add-item'),
-        isDisabled: disable,
-      },
-      {
-        value: 'add-from-master-list',
-        label: t('button.add-from-master-list'),
-        isDisabled: disableAddFromMasterListButton || disable,
-      },
-      {
-        value: 'add-from-internal-order',
-        label: t('button.add-from-internal-order'),
-        isDisabled: disableAddFromInternalOrderButton || disable,
-      },
-    ],
-    [disable, disableAddFromMasterListButton, disableAddFromInternalOrderButton]
-  );
+  const options: [SplitButtonOption<string>, SplitButtonOption<string>] =
+    useMemo(
+      () => [
+        {
+          value: 'add-item',
+          label: t('button.add-item'),
+          isDisabled: disable,
+        },
+        {
+          value: 'add-from-master-list',
+          label: t('button.add-from-master-list'),
+          isDisabled: disableAddFromMasterListButton || disable,
+        },
+      ],
+      [disable, disableAddFromMasterListButton]
+    );
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
@@ -68,15 +54,13 @@ export const AddButton = ({
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
       case 'add-item':
-        onAddItem();
+        onAddItem(true);
         break;
       case 'add-from-master-list':
-        invoice?.status === InvoiceNodeStatus.New
+        // Mimmicking OG behaviour where purchase orders can be edited when confirmed AND when authorised
+        purchaseOrder?.status !== PurchaseOrderNodeStatus.Finalised
           ? masterListModalController.toggleOn()
           : info(t('error.cannot-add-from-masterlist'))();
-        break;
-      case 'add-from-internal-order':
-        internalOrderModalController.toggleOn();
         break;
     }
   };
@@ -103,14 +87,6 @@ export const AddButton = ({
         <AddFromMasterListButton
           isOn={masterListModalController.isOn}
           toggleOff={masterListModalController.toggleOff}
-        />
-      )}
-      {internalOrderModalController.isOn && (
-        <AddFromInternalOrder
-          isOpen={internalOrderModalController.isOn}
-          onClose={internalOrderModalController.toggleOff}
-          requisitionId={requisitionId}
-          invoiceId={invoice?.id ?? ''}
         />
       )}
     </>

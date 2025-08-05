@@ -146,6 +146,7 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("purchase_order", "contract_signed_date"),
         ("purchase_order", "advance_paid_date"),
         ("goods_received", "received_date"),
+        ("goods_received_line", "expiry_date"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
