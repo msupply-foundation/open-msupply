@@ -31,7 +31,6 @@ pub fn generate(
 
     let donor_link_id: Option<String> = match donor_id {
         Some(update) => update.value,
-
         None => existing_line.donor_link_id,
     };
 
