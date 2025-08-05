@@ -66,6 +66,11 @@ fragment StocktakeLine on StocktakeLineNode {
     isActive
     id
   }
+
+  campaign {
+    id
+    name
+  }
 }
 
 fragment Stocktake on StocktakeNode {

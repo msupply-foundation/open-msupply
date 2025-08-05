@@ -3771,6 +3771,7 @@ export type InsertStocktakeLineErrorInterface = {
 
 export type InsertStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
@@ -7737,6 +7738,7 @@ export type ReasonOptionNode = {
 };
 
 export enum ReasonOptionNodeType {
+  ClosedVialWastage = 'CLOSED_VIAL_WASTAGE',
   NegativeInventoryAdjustment = 'NEGATIVE_INVENTORY_ADJUSTMENT',
   OpenVialWastage = 'OPEN_VIAL_WASTAGE',
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
@@ -8714,6 +8716,7 @@ export type StocktakeLineFilterInput = {
 export type StocktakeLineNode = {
   __typename: 'StocktakeLineNode';
   batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   comment?: Maybe<Scalars['String']['output']>;
   costPricePerPack?: Maybe<Scalars['Float']['output']>;
   countedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
@@ -10125,6 +10128,7 @@ export type UpdateStocktakeLineErrorInterface = {
 
 export type UpdateStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
