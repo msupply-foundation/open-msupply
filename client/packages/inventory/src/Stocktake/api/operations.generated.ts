@@ -65,6 +65,7 @@ export type StocktakeLineFragment = {
     id: string;
   } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
 };
 
 export type StocktakeFragment = {
@@ -141,6 +142,7 @@ export type StocktakeFragment = {
         id: string;
         name: string;
       } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -258,6 +260,11 @@ export type StocktakeQuery = {
               id: string;
               name: string;
             } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
           }>;
         };
       };
@@ -346,6 +353,11 @@ export type StocktakeByNumberQuery = {
               id: string;
               name: string;
             } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
           }>;
         };
       };
@@ -418,6 +430,7 @@ export type StocktakeLinesQuery = {
         id: string;
         name: string;
       } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -700,6 +713,10 @@ export const StocktakeLineFragmentDoc = gql`
       id
     }
     campaign {
+      id
+      name
+    }
+    program {
       id
       name
     }

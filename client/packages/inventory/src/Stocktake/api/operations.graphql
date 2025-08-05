@@ -71,6 +71,11 @@ fragment StocktakeLine on StocktakeLineNode {
     id
     name
   }
+
+  program {
+    id
+    name
+  }
 }
 
 fragment Stocktake on StocktakeNode {
