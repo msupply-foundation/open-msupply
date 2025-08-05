@@ -25,6 +25,9 @@ pub struct TransStocktakeLinRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub campaign_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub program_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -150,6 +153,10 @@ impl SyncTranslation for StocktakeLineTranslation {
             );
         }
 
+        let (campaign_id, program_id) = oms_fields
+            .map(|fields| (fields.campaign_id, fields.program_id))
+            .unwrap_or((None, None));
+
         let location_id = clear_invalid_location_id(connection, location_id)?;
         let result = StocktakeLineRow {
             id: ID,
@@ -174,7 +181,8 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_link_id: donor_id,
             reason_option_id,
             volume_per_pack,
-            campaign_id: oms_fields.and_then(|fields| fields.campaign_id.clone()),
+            campaign_id,
+            program_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -218,16 +226,19 @@ impl SyncTranslation for StocktakeLineTranslation {
                     reason_option_id,
                     volume_per_pack,
                     campaign_id,
+                    program_id,
                 },
             item,
             stock_line,
             ..
         } = stocktake_line;
 
-        let oms_fields = if campaign_id.is_some() {
-            Some(TransStocktakeLinRowOmsFields { campaign_id })
-        } else {
-            None
+        let oms_fields = match (&campaign_id, &program_id) {
+            (None, None) => None,
+            _ => Some(TransStocktakeLinRowOmsFields {
+                campaign_id,
+                program_id,
+            }),
         };
 
         let legacy_row = LegacyStocktakeLineRow {
