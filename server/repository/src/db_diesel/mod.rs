@@ -1,3 +1,4 @@
+pub mod goods_received;
 pub mod goods_received_row;
 use crate::repository_error::RepositoryError;
 
