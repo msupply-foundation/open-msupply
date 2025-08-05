@@ -35,6 +35,7 @@ pub struct InsertInput {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
     pub volume_per_pack: Option<f64>,
 }
 
@@ -107,6 +108,7 @@ impl InsertInput {
             vvm_status_id,
             donor_id,
             campaign_id,
+            program_id,
             volume_per_pack,
         } = self;
 
@@ -129,6 +131,7 @@ impl InsertInput {
             vvm_status_id,
             donor_id,
             campaign_id,
+            program_id,
             volume_per_pack,
         }
     }

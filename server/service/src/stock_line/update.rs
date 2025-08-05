@@ -30,6 +30,7 @@ pub struct UpdateStockLine {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub campaign_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
     pub volume_per_pack: Option<f64>,
 }
 
@@ -151,6 +152,7 @@ fn generate(
         vvm_status_id,
         donor_id,
         campaign_id,
+        program_id,
         volume_per_pack,
     }: UpdateStockLine,
 ) -> Result<GenerateResult, UpdateStockLineError> {
@@ -202,6 +204,7 @@ fn generate(
     existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
     existing.donor_link_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_link_id);
     existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
+    existing.program_id = program_id.map(|v| v.value).unwrap_or(existing.program_id);
     existing.volume_per_pack = volume_per_pack.unwrap_or(existing.volume_per_pack);
 
     if let Some(volume_per_pack) = volume_per_pack {
