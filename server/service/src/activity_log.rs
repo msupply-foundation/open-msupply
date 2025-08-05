@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use chrono::Utc;
 use repository::{
     activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
@@ -7,8 +9,8 @@ use repository::{
 };
 
 use repository::{PaginationOption, RepositoryError};
-use util::constants::SYSTEM_USER_ID;
 use util::uuid::uuid;
+use util::{constants::SYSTEM_USER_ID, format_error};
 
 use crate::service_provider::ServiceContext;
 
@@ -102,6 +104,30 @@ pub fn system_log_entry(
     };
 
     let _change_log_id = SystemLogRowRepository::new(connection).insert_one(log)?;
+    Ok(())
+}
+
+// Will also log in file/console
+pub fn system_error_log(
+    connection: &StorageConnection,
+    log_type: SystemLogType,
+    error: &impl Error,
+    context: &str,
+) -> Result<(), RepositoryError> {
+    let error_message = format_error(error);
+    log::error!("{context} - {} - {error_message}", log_type.to_string());
+    system_log_entry(connection, log_type, &error_message)?;
+    Ok(())
+}
+
+// Will also log in file/console
+pub fn system_log(
+    connection: &StorageConnection,
+    log_type: SystemLogType,
+    log: &str,
+) -> Result<(), RepositoryError> {
+    log::info!("{} {log}", log_type.to_string());
+    system_log_entry(connection, log_type, &log)?;
     Ok(())
 }
 
