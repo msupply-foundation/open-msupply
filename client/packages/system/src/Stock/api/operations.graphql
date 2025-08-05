@@ -6,7 +6,6 @@ fragment StockLineRow on StockLineNode {
   id
   itemId
   locationId
-  itemVariantId
   vvmStatusId
   locationName
   onHold
@@ -15,6 +14,8 @@ fragment StockLineRow on StockLineNode {
   storeId
   totalNumberOfPacks
   supplierName
+  volumePerPack
+  totalVolume
   location {
     ...LocationRow
   }
@@ -45,9 +46,24 @@ fragment StockLineRow on StockLineNode {
   donor(storeId: $storeId) {
     id
   }
+  program {
+    id
+    name
+  }
   campaign {
     id
     name
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
   }
 }
 

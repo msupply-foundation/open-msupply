@@ -36,7 +36,9 @@ pub struct UpdateStockInLine {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub campaign_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
     pub shipped_number_of_packs: Option<f64>,
+    pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
 }
 
@@ -104,6 +106,7 @@ pub enum UpdateStockInLineError {
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
     VVMStatusDoesNotExist,
+    ProgramNotVisible,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {
@@ -129,15 +132,16 @@ mod test {
     use repository::{
         mock::{
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
-            mock_item_a, mock_item_b, mock_name_store_b, mock_store_a, mock_store_b,
-            mock_supplier_return_a_invoice_line_a, mock_transferred_inbound_shipment_a,
-            mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, mock_vvm_status_b,
-            MockData, MockDataInserts,
+            mock_immunisation_program_a, mock_item_a, mock_item_b, mock_name_store_b, mock_store_a,
+            mock_store_b, mock_supplier_return_a_invoice_line_a,
+            mock_transferred_inbound_shipment_a, mock_user_account_a, mock_vaccine_item_a,
+            mock_vvm_status_a, mock_vvm_status_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
-        InvoiceStatus, InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
+        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+        InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+        StorePreferenceRow, StorePreferenceRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -307,6 +311,21 @@ mod test {
             Err(ServiceError::BatchIsReserved)
         );
 
+        // ProgramNotVisible
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    program_id: Some(NullableUpdate {
+                        value: Some(mock_immunisation_program_a().id)
+                    }), // Master list not visible to store_b
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ProgramNotVisible)
+        );
+
         // NotThisStoreInvoice
         context.store_id = mock_store_a().id;
         assert_eq!(
@@ -450,8 +469,45 @@ mod test {
 
         let vvm_log = vvm_status_logs.first().map(|log| log.status_id.clone());
 
-        // existing log should be updated
         assert_eq!(vvm_status_logs.len(), 1);
         assert_eq!(vvm_log, Some(mock_vvm_status_b().id));
+
+        // Volume per pack
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "volume_per_pack_invoice_line".to_string(),
+                invoice_id: mock_transferred_inbound_shipment_a().id,
+                item_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let result = update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: "volume_per_pack_invoice_line".to_string(),
+                r#type: StockInType::InboundShipment,
+                number_of_packs: Some(15.0),
+                volume_per_pack: Some(10.0),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(result.invoice_line_row.volume_per_pack, 10.0);
+
+        let invoice_line = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().id(EqualFilter::equal_to("volume_per_pack_invoice_line")),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+        let stock_line = invoice_line.stock_line_option.clone().unwrap();
+        assert_eq!(stock_line.volume_per_pack, 10.0);
+        assert_eq!(stock_line.total_volume, 150.0);
     }
 }

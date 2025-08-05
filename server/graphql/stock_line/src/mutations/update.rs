@@ -26,10 +26,11 @@ pub struct UpdateInput {
     pub on_hold: Option<bool>,
     /// Empty barcode will unlink barcode from StockLine
     pub barcode: Option<String>,
-    pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
+    pub volume_per_pack: Option<f64>,
 }
 
 #[derive(Interface)]
@@ -95,10 +96,11 @@ impl UpdateInput {
             batch,
             on_hold,
             barcode,
-            item_variant_id,
             vvm_status_id,
             donor_id,
             campaign_id,
+            program_id,
+            volume_per_pack,
         } = self;
 
         ServiceInput {
@@ -112,9 +114,6 @@ impl UpdateInput {
             batch,
             on_hold,
             barcode,
-            item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
-                value: item_variant_id.value,
-            }),
             donor_id: donor_id.map(|donor_id| NullableUpdate {
                 value: donor_id.value,
             }),
@@ -122,6 +121,10 @@ impl UpdateInput {
             campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
                 value: campaign_id.value,
             }),
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
+            }),
+            volume_per_pack,
         }
     }
 }

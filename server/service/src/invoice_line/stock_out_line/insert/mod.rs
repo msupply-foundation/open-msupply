@@ -34,6 +34,7 @@ pub struct InsertStockOutLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
     pub vvm_status_id: Option<String>,
 }
 
@@ -121,7 +122,8 @@ mod test {
             mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_c,
             mock_outbound_shipment_c_invoice_lines, mock_patient, mock_prescription_a,
             mock_stock_line_a, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
-            mock_stock_line_si_d, mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
+            mock_stock_line_si_d, mock_store_a, mock_store_b, mock_store_c, stock_line_with_volume,
+            MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
@@ -303,7 +305,6 @@ mod test {
     async fn insert_stock_out_line_success() {
         let (_, connection, connection_manager, _) =
             setup_all("insert_stock_out_line_success", MockDataInserts::all()).await;
-
         // helpers to compare total
         let stock_line_for_invoice_line = |invoice_line: &InvoiceLineRow| {
             let stock_line_id = invoice_line.stock_line_id.clone().unwrap();
@@ -361,6 +362,31 @@ mod test {
         assert_eq!(
             expected_available_stock,
             stock_line_for_invoice_line(&new_outbound_line).available_number_of_packs
+        );
+
+        // Total volume doesn't change
+        service
+            .insert_stock_out_line(
+                &context,
+                InsertStockOutLine {
+                    id: "new volume outbound line".to_string(),
+                    r#type: StockOutType::OutboundShipment,
+                    invoice_id: mock_outbound_shipment_c_invoice_lines()[0]
+                        .invoice_id
+                        .clone(),
+                    stock_line_id: stock_line_with_volume().id.clone(),
+                    number_of_packs: 1.0,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        let stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&stock_line_with_volume().id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            stock_line.total_volume,
+            stock_line_with_volume().total_volume
         );
 
         // New line on Allocated Invoice

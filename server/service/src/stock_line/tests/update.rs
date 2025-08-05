@@ -50,20 +50,6 @@ mod test {
             Err(ServiceError::LocationDoesNotExist)
         );
 
-        // ItemVariantDoesNotExist
-        assert_eq!(
-            service.update_stock_line(
-                &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.item_variant_id = Some(NullableUpdate {
-                        value: Some("invalid".to_string()),
-                    });
-                })
-            ),
-            Err(ServiceError::ItemVariantDoesNotExist)
-        );
-
         // DonorDoesNotExist
         assert_eq!(
             service.update_stock_line(
@@ -145,6 +131,9 @@ mod test {
                     r.location = Some(NullableUpdate {
                         value: Some("location_1".to_string()),
                     });
+                    r.program_id = Some(NullableUpdate {
+                        value: Some("program_a".to_string()),
+                    });
                 }),
             )
             .unwrap();
@@ -158,6 +147,7 @@ mod test {
             stock_line,
             inline_edit(&stock_line, |mut l| {
                 l.location_id = Some("location_1".to_string());
+                l.program_id = Some("program_a".to_string());
                 l
             })
         );

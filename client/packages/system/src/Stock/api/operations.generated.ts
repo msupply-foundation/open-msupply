@@ -13,7 +13,6 @@ export type StockLineRowFragment = {
   id: string;
   itemId: string;
   locationId?: string | null;
-  itemVariantId?: string | null;
   vvmStatusId?: string | null;
   locationName?: string | null;
   onHold: boolean;
@@ -22,6 +21,8 @@ export type StockLineRowFragment = {
   storeId: string;
   totalNumberOfPacks: number;
   supplierName?: string | null;
+  volumePerPack: number;
+  totalVolume: number;
   barcode?: string | null;
   location?: {
     __typename: 'LocationNode';
@@ -77,7 +78,18 @@ export type StockLineRowFragment = {
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
+  } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -219,7 +231,6 @@ export type StockLinesQuery = {
       id: string;
       itemId: string;
       locationId?: string | null;
-      itemVariantId?: string | null;
       vvmStatusId?: string | null;
       locationName?: string | null;
       onHold: boolean;
@@ -228,6 +239,8 @@ export type StockLinesQuery = {
       storeId: string;
       totalNumberOfPacks: number;
       supplierName?: string | null;
+      volumePerPack: number;
+      totalVolume: number;
       barcode?: string | null;
       location?: {
         __typename: 'LocationNode';
@@ -286,10 +299,21 @@ export type StockLinesQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
         name: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
     }>;
   };
@@ -314,7 +338,6 @@ export type StockLineQuery = {
       id: string;
       itemId: string;
       locationId?: string | null;
-      itemVariantId?: string | null;
       vvmStatusId?: string | null;
       locationName?: string | null;
       onHold: boolean;
@@ -323,6 +346,8 @@ export type StockLineQuery = {
       storeId: string;
       totalNumberOfPacks: number;
       supplierName?: string | null;
+      volumePerPack: number;
+      totalVolume: number;
       barcode?: string | null;
       location?: {
         __typename: 'LocationNode';
@@ -381,10 +406,21 @@ export type StockLineQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
         name: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
     }>;
   };
@@ -446,7 +482,6 @@ export type UpdateStockLineMutation = {
         id: string;
         itemId: string;
         locationId?: string | null;
-        itemVariantId?: string | null;
         vvmStatusId?: string | null;
         locationName?: string | null;
         onHold: boolean;
@@ -455,6 +490,8 @@ export type UpdateStockLineMutation = {
         storeId: string;
         totalNumberOfPacks: number;
         supplierName?: string | null;
+        volumePerPack: number;
+        totalVolume: number;
         barcode?: string | null;
         location?: {
           __typename: 'LocationNode';
@@ -513,10 +550,25 @@ export type UpdateStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        program?: {
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
           name: string;
+        } | null;
+        itemVariant?: {
+          __typename: 'ItemVariantNode';
+          id: string;
+          packagingVariants: Array<{
+            __typename: 'PackagingVariantNode';
+            id: string;
+            packSize?: number | null;
+            volumePerUnit?: number | null;
+          }>;
         } | null;
       }
     | { __typename: 'UpdateStockLineError' };
@@ -736,7 +788,6 @@ export type InsertStockLineMutation = {
         id: string;
         itemId: string;
         locationId?: string | null;
-        itemVariantId?: string | null;
         vvmStatusId?: string | null;
         locationName?: string | null;
         onHold: boolean;
@@ -745,6 +796,8 @@ export type InsertStockLineMutation = {
         storeId: string;
         totalNumberOfPacks: number;
         supplierName?: string | null;
+        volumePerPack: number;
+        totalVolume: number;
         barcode?: string | null;
         location?: {
           __typename: 'LocationNode';
@@ -803,10 +856,25 @@ export type InsertStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        program?: {
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
           name: string;
+        } | null;
+        itemVariant?: {
+          __typename: 'ItemVariantNode';
+          id: string;
+          packagingVariants: Array<{
+            __typename: 'PackagingVariantNode';
+            id: string;
+            packSize?: number | null;
+            volumePerUnit?: number | null;
+          }>;
         } | null;
       };
 };
@@ -891,7 +959,6 @@ export const StockLineRowFragmentDoc = gql`
     id
     itemId
     locationId
-    itemVariantId
     vvmStatusId
     locationName
     onHold
@@ -900,6 +967,8 @@ export const StockLineRowFragmentDoc = gql`
     storeId
     totalNumberOfPacks
     supplierName
+    volumePerPack
+    totalVolume
     location {
       ...LocationRow
     }
@@ -930,9 +999,23 @@ export const StockLineRowFragmentDoc = gql`
     donor(storeId: $storeId) {
       id
     }
+    program {
+      id
+      name
+    }
     campaign {
       id
       name
+    }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
     }
   }
   ${LocationRowFragmentDoc}

@@ -65,5 +65,6 @@ pub fn generate(
         donor_link_id,
         reason_option_id: reason_option_id.or(existing_line.reason_option_id),
         vvm_status_id: vvm_status_id.or(existing_line.vvm_status_id),
+        volume_per_pack: 0.0,
     })
 }

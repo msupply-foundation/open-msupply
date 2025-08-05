@@ -28,7 +28,7 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
-  getCampaignColumn,
+  getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemRowFragment,
@@ -55,6 +55,10 @@ interface TableProps {
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
   restrictedLocationTypeId?: string | null;
+  preferences?: {
+    allowTrackingOfStockByDonor?: boolean;
+    useCampaigns?: boolean;
+  };
 }
 
 interface QuantityTableProps extends TableProps {
@@ -78,7 +82,6 @@ export const QuantityTableComponent = ({
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
-
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -224,17 +227,28 @@ export const QuantityTableComponent = ({
     columnDefinitions.push(...getInboundDosesColumns(format));
   }
 
-  columnDefinitions.push({
-    key: 'delete',
-    width: 50,
-    Cell: ({ rowData }) => (
-      <IconButton
-        label="Delete"
-        onClick={() => removeDraftLine(rowData.id)}
-        icon={<DeleteIcon fontSize="small" />}
-      />
-    ),
-  });
+  columnDefinitions.push(
+    {
+      key: 'volumePerPack',
+      label: t('label.volume-per-pack'),
+      Cell: NumberInputCell,
+      cellProps: { decimalLimit: 10 },
+      width: 100,
+      accessor: ({ rowData }) => rowData?.volumePerPack,
+      setter: updateDraftLine,
+    },
+    {
+      key: 'delete',
+      width: 50,
+      Cell: ({ rowData }) => (
+        <IconButton
+          label="Delete"
+          onClick={() => removeDraftLine(rowData.id)}
+          icon={<DeleteIcon fontSize="small" />}
+        />
+      ),
+    }
+  );
 
   const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
     updateDraftLine,
@@ -387,12 +401,8 @@ export const LocationTableComponent = ({
   updateDraftLine,
   isDisabled,
   restrictedLocationTypeId,
+  preferences,
 }: TableProps) => {
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
-  );
-
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -416,7 +426,7 @@ export const LocationTableComponent = ({
           const note = patch.note === '' ? null : patch.note;
           updateDraftLine({ ...patch, note });
         },
-        accessor: ({ rowData }) => rowData.note,
+        accessor: ({ rowData }) => rowData.note ?? '',
       },
     ],
   ];
@@ -429,7 +439,9 @@ export const LocationTableComponent = ({
   }
 
   if (preferences?.useCampaigns) {
-    columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+    columnDescriptions.push(
+      getCampaignOrProgramColumn(patch => updateDraftLine(patch))
+    );
   }
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);

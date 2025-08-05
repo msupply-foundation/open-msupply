@@ -62,6 +62,7 @@ pub struct LegacyStocktakeLineRow {
     #[serde(rename = "vaccine_vial_monitor_status_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
+    pub volume_per_pack: f64,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -116,6 +117,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_variant_id,
             donor_id,
             vvm_status_id,
+            volume_per_pack,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
         // TODO is this correct?
@@ -166,6 +168,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_link_id: donor_id,
             reason_option_id,
             vvm_status_id,
+            volume_per_pack,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -208,6 +211,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     donor_link_id: donor_id,
                     reason_option_id,
                     vvm_status_id,
+                    volume_per_pack,
                 },
             item,
             stock_line,
@@ -236,6 +240,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_variant_id,
             donor_id,
             vvm_status_id,
+            volume_per_pack,
         };
 
         Ok(PushTranslateResult::upsert(

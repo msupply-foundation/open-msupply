@@ -30,7 +30,8 @@ const STOCKTAKE_LINE_1: (&str, &str) = (
       "spare": 0,
       "stock_take_ID": "stocktake_a",
       "stock_take_qty": 700,
-      "vaccine_vial_monitor_status_ID": "VVM_STATUS_1"
+      "vaccine_vial_monitor_status_ID": "VVM_STATUS_1",
+      "volume_per_pack": 10.0
     }"#,
 );
 
@@ -58,6 +59,7 @@ fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: Some("abc123_best_donor".to_string()),
             reason_option_id: None,
             vvm_status_id: Some("VVM_STATUS_1".to_string()),
+            volume_per_pack: 10.0,
         },
     )
 }
@@ -86,6 +88,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: Some("abc123_best_donor".to_string()),
             vvm_status_id: Some("VVM_STATUS_1".to_string()),
+            volume_per_pack: 10.0,
         }),
     }
 }
@@ -114,7 +117,8 @@ const STOCKTAKE_LINE_OM_FIELDS: (&str, &str) = (
       "stock_take_ID": "stocktake_a",
       "stock_take_qty": 700,
       "vaccine_vial_monitor_status_ID": "",
-      "om_note": "om note"
+      "om_note": "om note",
+      "volume_per_pack": 0
     }"#,
 );
 fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
@@ -141,6 +145,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             reason_option_id: None,
             vvm_status_id: None,
+            volume_per_pack: 0.0,
         },
     )
 }
@@ -169,6 +174,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             vvm_status_id: None,
+            volume_per_pack: 0.0,
         }),
     }
 }
