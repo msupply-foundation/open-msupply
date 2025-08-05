@@ -49,11 +49,15 @@ impl CentralDataSynchroniser {
         loop {
             let start_cursor = cursor_controller.get(connection)?;
 
+            log::info!("Start central data pull step {start_cursor}");
+
             let CentralSyncBatchV5 { max_cursor, data } = self
                 .sync_api_v5
                 .get_central_records(start_cursor, batch_size)
                 .await?;
             let batch_length = data.len();
+
+            log::info!("Finish central data pull api call {batch_length}");
 
             logger.progress(SyncStepProgress::PullCentral, max_cursor - start_cursor)?;
 
@@ -77,6 +81,8 @@ impl CentralDataSynchroniser {
                 // There is a chance that max_cursor is lower the last cursor in batch
                 max_cursor - cmp::min(max_cursor, last_cursor_in_batch),
             )?;
+
+            log::info!("Finishing central data pull step {last_cursor_in_batch} of {max_cursor}");
 
             match (batch_length, last_cursor_in_batch < max_cursor) {
                 (0, false) => break,
