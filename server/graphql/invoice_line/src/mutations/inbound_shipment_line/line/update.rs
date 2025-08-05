@@ -6,6 +6,7 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_types::generic_errors::IncorrectLocationType;
 use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
@@ -88,6 +89,7 @@ pub enum UpdateErrorInterface {
     CannotEditInvoice(CannotEditInvoice),
     NotAnInboundShipment(NotAnInboundShipment),
     BatchIsReserved(BatchIsReserved),
+    IncorrectLocationType(IncorrectLocationType),
 }
 
 impl UpdateInput {
@@ -192,6 +194,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

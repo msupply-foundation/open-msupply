@@ -10,7 +10,7 @@ use util::uuid::uuid;
 use crate::{
     activity_log::activity_log_entry,
     barcode::{self, BarcodeInput},
-    check_item_variant_exists, check_location_exists,
+    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
@@ -48,6 +48,7 @@ pub enum UpdateStockLineError {
     UpdatedStockNotFound,
     StockMovementNotFound,
     VVMStatusDoesNotExist,
+    IncorrectLocationType,
 }
 
 pub fn update_stock_line(
@@ -107,8 +108,15 @@ fn validate(
         value: Some(ref location),
     }) = &input.location
     {
-        if !check_location_exists(connection, store_id, location)? {
+        if !check_location_exists(connection, store_id, &location.clone())? {
             return Err(LocationDoesNotExist);
+        }
+
+        if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id {
+            if !check_location_type_is_valid(connection, store_id, &location, item_restricted_type)?
+            {
+                return Err(IncorrectLocationType);
+            }
         }
     }
 

@@ -110,6 +110,7 @@ pub enum InsertStockInLineError {
     NumberOfPacksBelowZero,
     NewlyCreatedLineDoesNotExist,
     VVMStatusDoesNotExist,
+    IncorrectLocationType,
 }
 
 impl From<RepositoryError> for InsertStockInLineError {

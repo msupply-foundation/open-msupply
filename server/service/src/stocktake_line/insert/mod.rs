@@ -49,6 +49,7 @@ pub enum InsertStocktakeLineError {
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
     StockLineReducedBelowZero(StockLine),
+    IncorrectLocationType,
 }
 
 pub fn insert_stocktake_line(

@@ -5,6 +5,7 @@ use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_types::generic_errors::IncorrectLocationType;
 use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
@@ -76,6 +77,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 pub enum InsertErrorInterface {
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),
+    IncorrectLocationType(IncorrectLocationType),
 }
 
 impl InsertInput {
@@ -178,6 +180,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)
         }
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

@@ -1,7 +1,7 @@
 use repository::{RepositoryError, StocktakeLine, StorageConnection};
 
 use crate::{
-    check_location_exists,
+    check_location_exists, check_location_type_is_valid,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
@@ -43,6 +43,22 @@ pub fn validate(
         return Err(InvalidStore);
     }
 
+    let stock_line = if let Some(stock_line_id) = &stocktake_line_row.stock_line_id {
+        Some(
+            check_stock_line_exists(connection, store_id, stock_line_id).map_err(
+                |err| match err {
+                    CommonStockLineError::DatabaseError(RepositoryError::NotFound) => {
+                        StockLineDoesNotExist
+                    }
+                    CommonStockLineError::StockLineDoesNotBelongToStore => InvalidStore,
+                    CommonStockLineError::DatabaseError(error) => DatabaseError(error),
+                },
+            )?,
+        )
+    } else {
+        None
+    };
+
     if let Some(NullableUpdate {
         value: Some(ref location),
     }) = &input.location
@@ -50,7 +66,16 @@ pub fn validate(
         if !check_location_exists(connection, store_id, location)? {
             return Err(LocationDoesNotExist);
         }
+        if let Some(item_restricted_type) = &stocktake_line.item.restricted_location_type_id {
+            if !check_location_type_is_valid(connection, store_id, &location, item_restricted_type)?
+            {
+                if let Some(ref stock_line) = stock_line {
+                    return Err(IncorrectLocationType(stock_line.clone()));
+                }
+            }
+        }
     }
+
     let stocktake_reduction_amount =
         stocktake_reduction_amount(&input.counted_number_of_packs, stocktake_line_row);
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
@@ -71,20 +96,9 @@ pub fn validate(
         return Err(AdjustmentReasonNotValid);
     }
 
-    if let (Some(counted_number_of_packs), Some(stock_line_id)) = (
-        input.counted_number_of_packs,
-        &stocktake_line_row.stock_line_id,
-    ) {
-        let stock_line = check_stock_line_exists(connection, store_id, stock_line_id).map_err(
-            |err| match err {
-                CommonStockLineError::DatabaseError(RepositoryError::NotFound) => {
-                    StockLineDoesNotExist
-                }
-                CommonStockLineError::StockLineDoesNotBelongToStore => InvalidStore,
-                CommonStockLineError::DatabaseError(error) => DatabaseError(error),
-            },
-        )?;
-
+    if let (Some(counted_number_of_packs), Some(stock_line)) =
+        (input.counted_number_of_packs, stock_line.as_ref())
+    {
         if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
         {
             return Err(StockLineReducedBelowZero(stock_line.clone()));
@@ -97,7 +111,6 @@ pub fn validate(
             return Err(SnapshotCountCurrentCountMismatchLine(stocktake_line));
         }
     }
-
     Ok(stocktake_line)
 }
 

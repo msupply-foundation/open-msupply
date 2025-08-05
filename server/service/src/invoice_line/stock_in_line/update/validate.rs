@@ -1,5 +1,6 @@
 use crate::{
-    check_item_variant_exists, check_location_exists, check_vvm_status_exists,
+    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
+    check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         stock_in_line::{check_batch, check_pack_size},
@@ -55,6 +56,13 @@ pub fn validate(
     {
         if !check_location_exists(connection, store_id, location)? {
             return Err(LocationDoesNotExist);
+        }
+
+        if let Some(item_restricted_type) = &line.item_row.restricted_location_type_id {
+            if !check_location_type_is_valid(connection, store_id, &location, item_restricted_type)?
+            {
+                return Err(IncorrectLocationType);
+            }
         }
     }
     if let Some(NullableUpdate {
