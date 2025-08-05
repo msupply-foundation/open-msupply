@@ -29,6 +29,7 @@ pub struct UpdateStocktakeLine {
     pub donor_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
     pub campaign_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]

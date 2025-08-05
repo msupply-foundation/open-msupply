@@ -20,6 +20,7 @@ pub fn generate(
         donor_id,
         reason_option_id,
         campaign_id,
+        program_id,
     }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
     let existing_line = existing.line;
@@ -62,5 +63,8 @@ pub fn generate(
         campaign_id: campaign_id
             .map(|c| c.value)
             .unwrap_or(existing_line.campaign_id),
+        program_id: program_id
+            .map(|p| p.value)
+            .unwrap_or(existing_line.program_id),
     })
 }

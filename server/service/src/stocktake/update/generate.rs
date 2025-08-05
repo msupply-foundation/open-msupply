@@ -105,10 +105,11 @@ fn generate_stock_in_out_or_update(
 
     // If item_variant_id is null on the stocktake_line, we need to set the stock_line item_variant_id to null too.
     // Without this, we'd wouldn't be able to clear it...
-    let item_variant_id = stocktake_line.line.item_variant_id.clone();
-    let campaign_id = stocktake_line.line.campaign_id.clone();
-    let donor_link_id = stocktake_line.line.donor_link_id.clone();
+    let item_variant_id = row.item_variant_id.clone();
+    let campaign_id = row.campaign_id.clone();
+    let donor_link_id = row.donor_link_id.clone();
     let vvm_status_id = stock_line_row.vvm_status_id.clone();
+    let program_id = row.program_id.clone();
 
     log_stock_changes(ctx, stock_line_row.clone(), row.clone())?;
 
@@ -125,6 +126,7 @@ fn generate_stock_in_out_or_update(
             campaign_id,
             donor_link_id,
             vvm_status_id,
+            program_id,
             ..stock_line_row
         }
         .to_owned();
@@ -160,6 +162,7 @@ fn generate_stock_in_out_or_update(
             campaign_id,
             donor_id: donor_link_id,
             vvm_status_id,
+            program_id,
             // From existing stock line
             stock_line_id: Some(stock_line_row.id),
             item_id: stock_line_row.item_link_id,
@@ -189,6 +192,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack: Some(cost_price_per_pack),
             sell_price_per_pack: Some(sell_price_per_pack),
             campaign_id: row.campaign_id,
+            program_id: row.program_id,
             vvm_status_id: stock_line_row.vvm_status_id,
             total_before_tax: None,
             tax_percentage: None,
@@ -342,6 +346,7 @@ fn generate_new_stock_line(
         item_variant_id: row.item_variant_id.clone(),
         donor_id: row.donor_link_id.clone(),
         campaign_id: row.campaign_id.clone(),
+        program_id: row.program_id.clone(),
         // Default
         stock_on_hold: false,
         barcode: None,
