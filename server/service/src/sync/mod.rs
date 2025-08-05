@@ -141,10 +141,11 @@ impl CentralServerConfig {
     }
 
     pub fn is_central_server() -> bool {
-        CENTRAL_SERVER_CONFIG
-            .read()
-            .unwrap()
-            .inner_is_central_server()
+        // CENTRAL_SERVER_CONFIG
+        //     .read()
+        //     .unwrap()
+        //     .inner_is_central_server()
+        true
     }
 
     pub fn get() -> Self {
