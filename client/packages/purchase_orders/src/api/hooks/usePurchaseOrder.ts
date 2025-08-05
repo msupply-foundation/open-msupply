@@ -3,9 +3,12 @@ import {
   InsertPurchaseOrderInput,
   PurchaseOrderNodeType,
   SortUtils,
+  useConfirmationModal,
   useMutation,
+  useNotification,
   useParams,
   useQuery,
+  useTranslation,
   useUrlQuery,
   setNullableInput,
 } from '@openmsupply-client/common';
@@ -39,7 +42,7 @@ export const usePurchaseOrder = (id?: string) => {
 
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
-  const queryKey = [PURCHASE_ORDER, LIST, storeId, purchaseOrderId];
+  const queryKey = [PURCHASE_ORDER, LIST, storeId];
 
   // QUERY
   const queryFn = async (): Promise<PurchaseOrderFragment | undefined> => {
@@ -92,11 +95,14 @@ export const usePurchaseOrder = (id?: string) => {
     return result;
   };
 
+  const { addFromMasterList, isLoading: isAdding } = useAddFromMasterList();
+
   return {
     query: { data, isLoading, isError },
     lines: { sortedAndFilteredLines, itemFilter, setItemFilter },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
+    masterList: { addFromMasterList, isAdding },
   };
 };
 
@@ -185,4 +191,69 @@ const useFilteredAndSortedLines = (
   }, [data, columns, sortBy, itemFilter]);
 
   return { sortedAndFilteredLines, itemFilter, setItemFilter };
+};
+
+const useAddFromMasterList = () => {
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+  const t = useTranslation();
+  const { error } = useNotification();
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-add-from-master-list'),
+  });
+
+  const mutationState = useMutation(
+    purchaseOrderApi.addToPurchaseOrderFromMasterList,
+    {
+      onSuccess: () =>
+        queryClient.invalidateQueries([PURCHASE_ORDER, LIST, storeId]),
+    }
+  );
+
+  const addFromMasterList = async (
+    masterListId: string,
+    purchaseOrderId: string
+  ) => {
+    getConfirmation({
+      onConfirm: async () => {
+        try {
+          const result = await mutationState.mutateAsync({
+            input: {
+              masterListId,
+              purchaseOrderId,
+            },
+            storeId,
+          });
+          if (
+            result.addToPurchaseOrderFromMasterList.__typename ===
+            'AddToPurchaseOrderFromMasterListError'
+          ) {
+            const errorType =
+              result.addToPurchaseOrderFromMasterList.error.__typename;
+
+            switch (errorType) {
+              case 'CannotEditPurchaseOrder': {
+                return error(t('label.cannot-edit-purchase-order'))();
+              }
+              case 'RecordNotFound': {
+                return error(t('messages.record-not-found'))();
+              }
+              case 'MasterListNotFoundForThisStore': {
+                return error(t('error.master-list-not-found'))();
+              }
+              default:
+                return error(t('label.cannot-add-item-to-purchase-order'))();
+            }
+          }
+        } catch (e) {
+          // for non structured errors
+          console.error('Mutation error:', e);
+          return error(t('label.cannot-add-item-to-purchase-order'))();
+        }
+      },
+    });
+  };
+
+  return { ...mutationState, addFromMasterList };
 };
