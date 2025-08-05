@@ -1,5 +1,8 @@
 import React, { ReactElement, SyntheticEvent } from 'react';
-import { useCampaigns } from '@openmsupply-client/system/src/Manage/Campaigns/api';
+import {
+  CampaignRowFragment,
+  useCampaigns,
+} from '@openmsupply-client/system/src/Manage/Campaigns/api';
 import { Autocomplete, AutocompleteOption } from '@common/components';
 import { CampaignNode } from '@common/types';
 import { useTranslation } from '@common/intl';
@@ -10,12 +13,12 @@ interface CampaignOption {
 }
 
 interface CampaignSelectorProps {
-  campaignId?: string;
+  selected?: CampaignRowFragment | null;
   onChange: (value: CampaignNode | null) => void;
 }
 
 export const CampaignSelector = ({
-  campaignId,
+  selected,
   onChange,
 }: CampaignSelectorProps): ReactElement => {
   const t = useTranslation();
@@ -33,13 +36,7 @@ export const CampaignSelector = ({
     })
   );
 
-  const selectedCampaign = campaigns.find(({ id }) => id === campaignId);
-
-  if (
-    campaigns.length > 0 &&
-    selectedCampaign != null &&
-    selectedCampaign !== undefined
-  ) {
+  if (campaigns.length > 0 && selected != null && selected !== undefined) {
     options.push({ label: t('label.remove'), value: null });
   }
 
@@ -58,8 +55,8 @@ export const CampaignSelector = ({
       options={options}
       getOptionLabel={option => option.label}
       value={{
-        label: selectedCampaign?.name ?? '',
-        value: selectedCampaign?.id ?? '',
+        label: selected?.name ?? '',
+        value: selected?.id ?? '',
       }}
       onChange={handleChange}
       noOptionsText={t('messages.no-campaigns')}

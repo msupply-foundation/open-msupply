@@ -1,9 +1,13 @@
 import React from 'react';
-import { CellProps, ColumnDescription } from '@openmsupply-client/common';
+import {
+  CampaignNode,
+  CellProps,
+  ColumnDescription,
+  RecordWithId,
+} from '@openmsupply-client/common';
 import { CampaignSelector } from './CampaignSelector';
-import { DraftInboundLine } from '@openmsupply-client/invoices/src/types';
 
-export const getCampaignColumn = <T extends DraftInboundLine>(
+export const getCampaignColumn = <T extends RecordWithId>(
   update: (patch: Partial<T> & { id: string }) => void
 ): ColumnDescription<T> => {
   return {
@@ -15,14 +19,17 @@ export const getCampaignColumn = <T extends DraftInboundLine>(
   };
 };
 
-const CampaignCell = <T extends DraftInboundLine>({
+const CampaignCell = <T extends RecordWithId>({
   rowData,
   column,
-}: CellProps<T>): JSX.Element => (
-  <CampaignSelector
-    campaignId={rowData.campaign?.id ?? undefined}
-    onChange={campaign =>
-      column.setter({ ...rowData, campaign: campaign ?? null })
-    }
-  />
-);
+}: CellProps<T>): JSX.Element => {
+  const selected = column.accessor({ rowData }) as CampaignNode | null;
+
+  const onChange = (campaign?: CampaignNode | null) => {
+    column.setter({ ...rowData, campaign });
+  };
+
+  return (
+    <CampaignSelector selected={selected ?? undefined} onChange={onChange} />
+  );
+};

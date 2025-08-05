@@ -403,7 +403,7 @@ export const StockLineForm = ({
               label={t('label.campaign')}
               Input={
                 <CampaignSelector
-                  campaignId={draft.campaign?.id}
+                  selected={draft.campaign}
                   onChange={campaign => onUpdate({ campaign })}
                 />
               }
