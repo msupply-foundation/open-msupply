@@ -11,6 +11,7 @@ mod add_purchase_order_to_number_type;
 mod add_restricted_location_type_id_to_item;
 mod add_supplier_discount_percentage_to_purchase_order;
 mod delete_unused_number_type;
+mod rename_cold_storage_type_fk;
 mod rename_cold_storage_type_to_location_type;
 
 pub(crate) struct V2_10_00;
@@ -37,6 +38,7 @@ impl Migration for V2_10_00 {
             Box::new(add_restricted_location_type_id_to_item::Migrate),
             Box::new(add_goods_received_table::Migrate),
             Box::new(add_supplier_discount_percentage_to_purchase_order::Migrate),
+            Box::new(rename_cold_storage_type_fk::Migrate),
         ]
     }
 }
