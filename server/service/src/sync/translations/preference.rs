@@ -42,11 +42,10 @@ impl SyncTranslation for PreferenceTranslator {
         row: &ChangelogRow,
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
-        match r#type {
-            ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
-                self.change_log_type().as_ref() == Some(&row.table_name)
-            }
-            _ => false,
+        if let ToSyncRecordTranslationType::PullFromOmSupplyCentral = r#type {
+            self.change_log_type().as_ref() == Some(&row.table_name)
+        } else {
+            false
         }
     }
 
