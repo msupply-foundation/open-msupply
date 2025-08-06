@@ -55,7 +55,7 @@ export type StockLineFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
@@ -371,7 +371,7 @@ export type ItemFragment = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
@@ -575,7 +575,7 @@ export type ItemsWithStockLinesQuery = {
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
-            level: number;
+            priority: number;
             unusable: boolean;
             description: string;
           } | null;
@@ -897,7 +897,7 @@ export type ItemByIdQuery = {
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
-            level: number;
+            priority: number;
             unusable: boolean;
             description: string;
           } | null;
@@ -1170,7 +1170,7 @@ export type GetHistoricalStockLinesQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
@@ -1554,7 +1554,7 @@ export const StockLineFragmentDoc = gql`
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }
