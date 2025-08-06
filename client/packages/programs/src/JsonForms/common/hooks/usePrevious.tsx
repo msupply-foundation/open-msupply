@@ -46,8 +46,6 @@ export const usePrevious = (
 
   const { defaultToPrevious, displayPrevious, previousPath } = options;
 
-  console.log('path:', path);
-
   useEffect(() => {
     if (!displayPrevious && !defaultToPrevious) return;
 
