@@ -95,6 +95,8 @@ impl SyncTranslation for StocktakeLineTranslation {
             ItemTranslation.table_name(),
             LocationTranslation.table_name(),
             ReasonTranslation.table_name(),
+            CampaignTranslation.table_name(),
+            ProgramTranslation.table_name(),
         ]
     }
 
