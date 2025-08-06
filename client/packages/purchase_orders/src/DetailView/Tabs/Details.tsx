@@ -33,21 +33,36 @@ export const Details = ({
   if (!draft)
     return <NothingHere body={t('messages.no-purchase-order-details')} />;
 
+  const chargeFields = [
+    { key: 'agentCommission', label: t('label.agent-commission') },
+    { key: 'documentCharge', label: t('label.document-charge') },
+    {
+      key: 'communicationsCharge',
+      label: t('label.communication-charge'),
+    },
+    { key: 'insuranceCharge', label: t('label.insurance-charge') },
+    { key: 'freightCharge', label: t('label.freight-charge') },
+  ];
+
   return (
     <DetailContainer>
-      <Box sx={{ width: '100%' }}>
-        <Stack direction="row" spacing={2} sx={{ height: '100%' }}>
+      <Box
+        sx={{
+          width: '100%',
+          p: 4,
+        }}
+      >
+        <Stack direction="row" spacing={3}>
           <Stack
             spacing={3}
             sx={{
               flex: 1,
-              height: '100%',
-              p: 2,
+              p: 2.5,
             }}
           >
             <InputWithLabelRow
               label={t('label.authorising-officer-1')}
-              labelWidth={'150px'}
+              labelWidth={'160px'}
               Input={
                 <BasicTextInput
                   value={draft.authorisingOfficer1 ?? ''}
@@ -61,7 +76,7 @@ export const Details = ({
             />
             <InputWithLabelRow
               label={t('label.authorising-officer-2')}
-              labelWidth={'150px'}
+              labelWidth={'160px'}
               Input={
                 <BasicTextInput
                   value={draft.authorisingOfficer2 ?? ''}
@@ -75,7 +90,7 @@ export const Details = ({
             />
             <InputWithLabelRow
               label={t('label.additional-instructions')}
-              labelWidth={'150px'}
+              labelWidth={'160px'}
               Input={
                 <TextArea
                   value={draft.additionalInstructions ?? ''}
@@ -95,12 +110,12 @@ export const Details = ({
             spacing={3}
             sx={{
               flex: 1,
-              height: '100%',
-              p: 2,
+              p: 2.5,
             }}
           >
             <InputWithLabelRow
               label={t('label.supplier-agent')}
+              labelWidth={'140px'}
               Input={
                 <BasicTextInput
                   value={draft?.supplierAgent ?? ''}
@@ -114,6 +129,7 @@ export const Details = ({
             />
             <InputWithLabelRow
               label={t('label.heading-message')}
+              labelWidth={'140px'}
               Input={
                 <BasicTextInput
                   value={draft?.headingMessage ?? ''}
@@ -127,6 +143,7 @@ export const Details = ({
             />
             <InputWithLabelRow
               label={t('label.freight-condition')}
+              labelWidth={'140px'}
               Input={
                 <TextArea
                   value={draft.freightConditions ?? ''}
@@ -143,78 +160,32 @@ export const Details = ({
             />
           </Stack>
           <Stack
-            spacing={3}
+            spacing={2.5}
             sx={{
               flex: 1,
-              height: '100%',
-              p: 2,
+              p: 2.5,
             }}
           >
-            <InputWithLabelRow
-              label={t('label.agent-commission')}
-              Input={
-                <CurrencyInput
-                  value={draft?.agentCommission ?? 0}
-                  onChangeNumber={value =>
-                    handleFieldChange({
-                      agentCommission: value,
-                    })
-                  }
-                />
-              }
-            />
-            <InputWithLabelRow
-              label={t('label.document-charge')}
-              Input={
-                <CurrencyInput
-                  value={draft?.documentCharge ?? 0}
-                  onChangeNumber={value =>
-                    handleFieldChange({
-                      documentCharge: value,
-                    })
-                  }
-                />
-              }
-            />
-            <InputWithLabelRow
-              label={t('label.communication-charge')}
-              Input={
-                <CurrencyInput
-                  value={draft?.communicationsCharge ?? 0}
-                  onChangeNumber={value =>
-                    handleFieldChange({
-                      communicationsCharge: value,
-                    })
-                  }
-                />
-              }
-            />
-            <InputWithLabelRow
-              label={t('label.insurance-charge')}
-              Input={
-                <CurrencyInput
-                  value={draft?.insuranceCharge ?? 0}
-                  onChangeNumber={value =>
-                    handleFieldChange({
-                      insuranceCharge: value,
-                    })
-                  }
-                />
-              }
-            />
-            <InputWithLabelRow
-              label={t('label.freight-charge')}
-              Input={
-                <CurrencyInput
-                  value={draft?.freightCharge ?? 0}
-                  onChangeNumber={value =>
-                    handleFieldChange({
-                      freightCharge: value,
-                    })
-                  }
-                />
-              }
-            />
+            {chargeFields.map(({ key, label }) => (
+              <InputWithLabelRow
+                key={key}
+                label={label}
+                labelWidth={'150px'}
+                Input={
+                  <CurrencyInput
+                    value={
+                      (draft?.[key as keyof PurchaseOrderFragment] as number) ??
+                      0
+                    }
+                    onChangeNumber={value =>
+                      handleFieldChange({
+                        [key]: value,
+                      } as Partial<PurchaseOrderFragment>)
+                    }
+                  />
+                }
+              />
+            ))}
           </Stack>
         </Stack>
       </Box>
