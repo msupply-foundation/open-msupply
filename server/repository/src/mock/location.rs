@@ -57,6 +57,17 @@ pub fn mock_location_in_another_store() -> LocationRow {
     }
 }
 
+pub fn mock_location_with_restricted_location_type_a() -> LocationRow {
+    LocationRow {
+        id: "location_with_restricted_location_type".to_owned(),
+        code: "code_restricted_location_type_location".to_owned(),
+        name: "name_restricted_location_type_location".to_owned(),
+        on_hold: false,
+        store_id: "store_a".to_string(),
+        location_type_id: Some("location_type_a_id".to_owned()),
+    }
+}
+
 pub fn mock_locations() -> Vec<LocationRow> {
     vec![
         mock_location_1(),
@@ -64,5 +75,6 @@ pub fn mock_locations() -> Vec<LocationRow> {
         mock_location_2(),
         mock_location_3(),
         mock_location_in_another_store(),
+        mock_location_with_restricted_location_type_a(),
     ]
 }

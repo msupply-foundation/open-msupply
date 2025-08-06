@@ -95,9 +95,11 @@ mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_donor_a, mock_item_a, mock_item_a_lines, mock_locked_stocktake,
-            mock_new_stock_line_for_stocktake_a, mock_stock_line_b, mock_stock_line_si_d,
-            mock_stocktake_a, mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
+            mock_donor_a, mock_item_a, mock_item_a_lines,
+            mock_location_with_restricted_location_type_a, mock_locked_stocktake,
+            mock_new_stock_line_for_stocktake_a, mock_stock_line_b,
+            mock_stock_line_restricted_location_type_b, mock_stock_line_si_d, mock_stocktake_a,
+            mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
             program_master_list_store, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
@@ -113,6 +115,7 @@ mod stocktake_line_test {
     };
 
     #[actix_rt::test]
+
     async fn insert_stocktake_line() {
         let (_, _, connection_manager, _) =
             setup_all("insert_stocktake_line", MockDataInserts::all()).await;
@@ -178,7 +181,7 @@ mod stocktake_line_test {
             InsertStocktakeLineError::StockLineAlreadyExistsInStocktake
         );
 
-        // error LocationDoesNotExist
+        // error LocationDoesNotExist: location id does not exist in DB
         let stocktake_a = mock_stocktake_a();
         let stock_line = mock_new_stock_line_for_stocktake_a();
         let error = service
@@ -186,10 +189,10 @@ mod stocktake_line_test {
                 &context,
                 InsertStocktakeLine {
                     id: uuid(),
-                    stocktake_id: stocktake_a.id,
-                    stock_line_id: Some(stock_line.id),
+                    stocktake_id: stocktake_a.id.clone(),
+                    stock_line_id: Some(stock_line.id.clone()),
                     location: Some(NullableUpdate {
-                        value: Some("invalid".to_string()),
+                        value: Some("nonexistent_location_id".to_string()),
                     }),
                     counted_number_of_packs: Some(17.0),
                     ..Default::default()
@@ -197,6 +200,27 @@ mod stocktake_line_test {
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::LocationDoesNotExist);
+
+        // error IncorrectLocationType
+        let stocktake_a = mock_stocktake_a();
+        let stock_line = mock_stock_line_restricted_location_type_b();
+        let incorrect_location_id = mock_location_with_restricted_location_type_a().id;
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id.clone(),
+                    stock_line_id: Some(stock_line.id.clone()),
+                    location: Some(NullableUpdate {
+                        value: Some(incorrect_location_id),
+                    }),
+                    counted_number_of_packs: Some(17.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::IncorrectLocationType);
 
         // error StocktakeLineAlreadyExists
         let stocktake_a = mock_stocktake_a();

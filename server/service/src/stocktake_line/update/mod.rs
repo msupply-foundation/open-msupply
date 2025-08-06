@@ -83,14 +83,15 @@ mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_donor_a, mock_item_a, mock_item_a_variant_1, mock_locations,
-            mock_locked_stocktake_line, mock_stock_line_b, mock_stocktake_line_a,
+            mock_donor_a, mock_item_a, mock_item_a_variant_1, mock_item_restricted_location_type_b,
+            mock_location_with_restricted_location_type_a, mock_locations,
+            mock_locked_stocktake_line, mock_stock_line_b, mock_stocktake_a, mock_stocktake_line_a,
             mock_stocktake_line_finalised, mock_store_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ReasonOptionRow,
         ReasonOptionRowRepository, ReasonOptionType, StockLineFilter, StockLineRepository,
-        StockLineRowRepository, StocktakeLineRow,
+        StockLineRowRepository, StocktakeLineRow, Upsert,
     };
     use util::inline_init;
 
@@ -255,6 +256,29 @@ mod stocktake_line_test {
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::LocationDoesNotExist);
+
+        // error: IncorrectLocationType
+        let stocktake_line = StocktakeLineRow {
+            id: "restricted_location_type_line".to_string(),
+            item_link_id: mock_item_restricted_location_type_b().id,
+            stocktake_id: mock_stocktake_a().id,
+            ..Default::default()
+        };
+
+        stocktake_line.upsert(&context.connection).unwrap();
+
+        let error = service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line.id;
+                    r.location = Some(NullableUpdate {
+                        value: Some(mock_location_with_restricted_location_type_a().id),
+                    });
+                }),
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::IncorrectLocationType);
 
         // error CannotEditFinalised
         let stocktake_line_a = mock_stocktake_line_finalised();
