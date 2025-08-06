@@ -92,7 +92,6 @@ mod test {
         test_db::setup_all_with_data,
         InvoiceRow, InvoiceRowRepository, NameRow, NameRowType, NameStoreJoinRow,
     };
-    // ...existing code...
 
     use crate::{invoice::prescription::InsertPrescription, service_provider::ServiceProvider};
 
