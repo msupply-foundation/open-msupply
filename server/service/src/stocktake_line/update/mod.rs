@@ -29,6 +29,8 @@ pub struct UpdateStocktakeLine {
     pub donor_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
     pub volume_per_pack: Option<f64>,
+    pub campaign_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -43,6 +45,8 @@ pub enum UpdateStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    CampaignDoesNotExist,
+    ProgramDoesNotExist,
     SnapshotCountCurrentCountMismatchLine(StocktakeLine),
     StockLineReducedBelowZero(StockLine),
 }
@@ -364,13 +368,7 @@ mod stocktake_line_test {
                 counted_number_of_packs: Some(14.0),
                 item_link_id: stocktake_line_a.item_link_id,
                 item_name: stocktake_line_a.item_name,
-                expiry_date: None,
-                pack_size: None,
-                note: None,
-                item_variant_id: None,
-                donor_link_id: None,
-                reason_option_id: None,
-                volume_per_pack: 0.0,
+                ..Default::default()
             }
         );
 

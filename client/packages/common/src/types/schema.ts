@@ -3334,6 +3334,7 @@ export type InsertLocationInput = {
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  volume?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
@@ -3799,6 +3800,7 @@ export type InsertStocktakeLineErrorInterface = {
 
 export type InsertStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
@@ -3812,6 +3814,7 @@ export type InsertStocktakeLineInput = {
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  programId?: InputMaybe<Scalars['String']['input']>;
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
@@ -4767,6 +4770,8 @@ export type LocationNode = {
   name: Scalars['String']['output'];
   onHold: Scalars['Boolean']['output'];
   stock: StockLineConnector;
+  volume: Scalars['Float']['output'];
+  volumeUsed: Scalars['Float']['output'];
 };
 
 export type LocationNotFound = InsertOutboundShipmentLineErrorInterface &
@@ -7775,6 +7780,7 @@ export type ReasonOptionNode = {
 };
 
 export enum ReasonOptionNodeType {
+  ClosedVialWastage = 'CLOSED_VIAL_WASTAGE',
   NegativeInventoryAdjustment = 'NEGATIVE_INVENTORY_ADJUSTMENT',
   OpenVialWastage = 'OPEN_VIAL_WASTAGE',
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
@@ -8754,6 +8760,7 @@ export type StocktakeLineFilterInput = {
 export type StocktakeLineNode = {
   __typename: 'StocktakeLineNode';
   batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   comment?: Maybe<Scalars['String']['output']>;
   costPricePerPack?: Maybe<Scalars['Float']['output']>;
   countedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
@@ -8773,6 +8780,7 @@ export type StocktakeLineNode = {
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
+  program?: Maybe<ProgramNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
   sellPricePerPack?: Maybe<Scalars['Float']['output']>;
   snapshotNumberOfPacks: Scalars['Float']['output'];
@@ -9607,6 +9615,7 @@ export type UpdateLocationInput = {
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  volume?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateLocationResponse = LocationNode | UpdateLocationError;
@@ -10169,6 +10178,7 @@ export type UpdateStocktakeLineErrorInterface = {
 
 export type UpdateStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
@@ -10181,6 +10191,7 @@ export type UpdateStocktakeLineInput = {
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  programId?: InputMaybe<NullableStringUpdate>;
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
@@ -10749,7 +10760,7 @@ export type VvmstatusNode = {
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
-  level: Scalars['Int']['output'];
+  priority: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   unusable: Scalars['Boolean']['output'];
 };

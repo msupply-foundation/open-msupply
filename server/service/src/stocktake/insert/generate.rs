@@ -132,6 +132,8 @@ fn generate_stocktake_lines(
                          item_variant_id,
                          volume_per_pack,
                          donor_link_id,
+                         campaign_id,
+                         program_id,
                          item_link_id: _,
                          supplier_link_id: _,
                          store_id: _,
@@ -139,8 +141,6 @@ fn generate_stocktake_lines(
                          available_number_of_packs: _,
                          barcode_id: _,
                          vvm_status_id: _, // Todo?
-                         campaign_id: _,   // Todo #7893
-                         program_id: _,    // Todo #7893
                          total_volume: _,
                      },
                  item_row,
@@ -167,6 +167,8 @@ fn generate_stocktake_lines(
                     item_variant_id,
                     donor_link_id,
                     volume_per_pack,
+                    campaign_id,
+                    program_id,
                     counted_number_of_packs: None,
                     comment: None,
                     reason_option_id: None,
@@ -217,6 +219,8 @@ fn generate_lines_initial_stocktake(
             donor_link_id: None,
             reason_option_id: None,
             volume_per_pack: 0.0,
+            campaign_id: None,
+            program_id: None,
         })
         .collect();
 
@@ -278,6 +282,8 @@ pub fn generate_lines_from_master_list(
                 item_variant_id: None,
                 donor_link_id: None,
                 volume_per_pack: 0.0,
+                campaign_id: None,
+                program_id: None,
             });
         } else {
             stock_lines.into_iter().for_each(|line| {
@@ -293,6 +299,8 @@ pub fn generate_lines_from_master_list(
                     expiry_date,
                     note,
                     volume_per_pack,
+                    campaign_id,
+                    program_id,
                     supplier_link_id: _,
                     store_id: _,
                     on_hold: _,
@@ -300,8 +308,7 @@ pub fn generate_lines_from_master_list(
                     barcode_id: _,
                     item_variant_id,
                     donor_link_id,
-                    campaign_id: _, // TODO: #7893
-                    program_id: _,  // TODO: #7893
+                    vvm_status_id: _, // Not currently included in stocktakes?
                     total_volume: _,
                     vvm_status_id: _, // Todo?
                 } = line.stock_line_row;
@@ -323,8 +330,8 @@ pub fn generate_lines_from_master_list(
                     item_variant_id,
                     donor_link_id,
                     volume_per_pack,
-                    // campaign_id,
-                    // program_id,
+                    campaign_id,
+                    program_id,
                     comment: None,
                     reason_option_id: None,
                     counted_number_of_packs: None,
