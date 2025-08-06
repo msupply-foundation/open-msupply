@@ -1,9 +1,7 @@
-use repository::{RepositoryError, StocktakeLine, StorageConnection};
-
 use crate::{
     campaign::check_campaign_exists,
     check_location_exists,
-    common_stock::{check_stock_line_exists, CommonStockLineError},
+    common::{check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
         check_active_adjustment_reasons, check_reason_is_valid,
@@ -13,6 +11,7 @@ use crate::{
     validate::check_store_id_matches,
     NullableUpdate,
 };
+use repository::{RepositoryError, StocktakeLine, StorageConnection};
 
 use super::{UpdateStocktakeLine, UpdateStocktakeLineError};
 
