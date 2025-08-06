@@ -1,5 +1,4 @@
 import {
-  PurchaseOrderNodeType,
   useConfirmationModal,
   useNotification,
   useTranslation,
@@ -37,8 +36,7 @@ export const useStatusChangeButton = () => {
   const handleConfirm = async () => {
     if (!selectedOption) return null;
     try {
-      const status = selectedOption.value as PurchaseOrderNodeType | undefined;
-      await update({ status });
+      await update({ status: selectedOption.value });
       success(t('messages.purchase-order-saved'))();
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();
