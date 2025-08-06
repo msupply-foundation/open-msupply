@@ -17,7 +17,9 @@ mod add_purchase_order_to_number_type;
 mod add_restricted_location_type_id_to_item;
 mod add_stock_volume;
 mod add_supplier_discount_percentage_to_purchase_order;
+mod add_volume_to_location;
 mod delete_unused_number_type;
+mod reintegrate_location_volume;
 mod rename_cold_storage_type_to_location_type;
 mod rename_vvm_status_level_to_priority;
 mod stock_volume_sync_buffer;
@@ -55,6 +57,8 @@ impl Migration for V2_10_00 {
             Box::new(add_campaign_and_program_to_stocktake_line::Migrate),
             Box::new(rename_vvm_status_level_to_priority::Migrate),
             Box::new(add_program_id_to_stock_and_invoice_lines::Migrate),
+            Box::new(add_volume_to_location::Migrate),
+            Box::new(reintegrate_location_volume::Migrate),
         ]
     }
 }

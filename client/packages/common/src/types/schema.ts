@@ -3333,6 +3333,7 @@ export type InsertLocationInput = {
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  volume?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
@@ -4767,6 +4768,8 @@ export type LocationNode = {
   name: Scalars['String']['output'];
   onHold: Scalars['Boolean']['output'];
   stock: StockLineConnector;
+  volume: Scalars['Float']['output'];
+  volumeUsed: Scalars['Float']['output'];
 };
 
 export type LocationNotFound = InsertOutboundShipmentLineErrorInterface &
@@ -9609,6 +9612,7 @@ export type UpdateLocationInput = {
   locationTypeId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  volume?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateLocationResponse = LocationNode | UpdateLocationError;
