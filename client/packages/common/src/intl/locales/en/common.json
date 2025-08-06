@@ -1904,6 +1904,7 @@
   "preference.showContactTracing": "Show contact tracing",
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
+  "preference.preventTransfersMonthsBeforeInitialisation": "Prevent transfers from this many months before initialisation of this site",
   "preference.useCampaigns": "Use Campaigns",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
   "prescription": "Prescriptions",

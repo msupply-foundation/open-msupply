@@ -30,7 +30,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_contact_tracing,
             use_campaigns,
             sync_records_display_threshold,
-
+            prevent_transfers_months_before_initialisation,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -52,13 +52,18 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(gender_options, &mut prefs, &input)?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(use_campaigns, &mut prefs, &input)?;
+        append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
+        append_if_type(
+            prevent_transfers_months_before_initialisation,
+            &mut prefs,
+            &input,
+        )?;
         // Store preferences
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
         append_if_type(order_in_packs, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
-        append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
 
         Ok(prefs)
     }
