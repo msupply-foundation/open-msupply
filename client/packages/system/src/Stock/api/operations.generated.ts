@@ -30,6 +30,8 @@ export type StockLineRowFragment = {
     name: string;
     onHold: boolean;
     code: string;
+    volume: number;
+    volumeUsed: number;
     locationType?: {
       __typename: 'LocationTypeNode';
       id: string;
@@ -66,14 +68,14 @@ export type StockLineRowFragment = {
         id: string;
         description: string;
         code: string;
-        level: number;
+        priority: number;
       } | null;
     }>;
   } | null;
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
@@ -102,6 +104,8 @@ export type RepackStockLineFragment = {
     name: string;
     onHold: boolean;
     code: string;
+    volume: number;
+    volumeUsed: number;
     locationType?: {
       __typename: 'LocationTypeNode';
       id: string;
@@ -127,6 +131,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
+      volume: number;
+      volumeUsed: number;
       locationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -146,6 +152,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
+      volume: number;
+      volumeUsed: number;
       locationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -204,7 +212,7 @@ export type VvmStatusLogRowFragment = {
     id: string;
     description: string;
     code: string;
-    level: number;
+    priority: number;
   } | null;
 };
 
@@ -248,6 +256,8 @@ export type StockLinesQuery = {
         name: string;
         onHold: boolean;
         code: string;
+        volume: number;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -287,14 +297,14 @@ export type StockLinesQuery = {
             id: string;
             description: string;
             code: string;
-            level: number;
+            priority: number;
           } | null;
         }>;
       } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
@@ -355,6 +365,8 @@ export type StockLineQuery = {
         name: string;
         onHold: boolean;
         code: string;
+        volume: number;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -394,14 +406,14 @@ export type StockLineQuery = {
             id: string;
             description: string;
             code: string;
-            level: number;
+            priority: number;
           } | null;
         }>;
       } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
@@ -499,6 +511,8 @@ export type UpdateStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
+          volume: number;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -538,14 +552,14 @@ export type UpdateStockLineMutation = {
               id: string;
               description: string;
               code: string;
-              level: number;
+              priority: number;
             } | null;
           }>;
         } | null;
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
-          level: number;
+          priority: number;
           unusable: boolean;
           description: string;
         } | null;
@@ -598,6 +612,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
+            volume: number;
+            volumeUsed: number;
             locationType?: {
               __typename: 'LocationTypeNode';
               id: string;
@@ -617,6 +633,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
+            volume: number;
+            volumeUsed: number;
             locationType?: {
               __typename: 'LocationTypeNode';
               id: string;
@@ -654,6 +672,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
+          volume: number;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -673,6 +693,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
+          volume: number;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -698,7 +720,7 @@ export type VvmStatusQuery = {
       __typename: 'VvmstatusNode';
       description: string;
       id: string;
-      level: number;
+      priority: number;
       reasonId?: string | null;
       unusable: boolean;
     }>;
@@ -805,6 +827,8 @@ export type InsertStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
+          volume: number;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -844,14 +868,14 @@ export type InsertStockLineMutation = {
               id: string;
               description: string;
               code: string;
-              level: number;
+              priority: number;
             } | null;
           }>;
         } | null;
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
-          level: number;
+          priority: number;
           unusable: boolean;
           description: string;
         } | null;
@@ -883,7 +907,7 @@ export type VvmStatusFragment = {
   __typename: 'VvmstatusNode';
   description: string;
   id: string;
-  level: number;
+  priority: number;
   reasonId?: string | null;
   unusable: boolean;
 };
@@ -900,7 +924,7 @@ export type ActiveVvmStatusesQuery = {
       __typename: 'VvmstatusNode';
       description: string;
       id: string;
-      level: number;
+      priority: number;
       reasonId?: string | null;
       unusable: boolean;
     }>;
@@ -944,7 +968,7 @@ export const VvmStatusLogRowFragmentDoc = gql`
       id
       description
       code
-      level
+      priority
     }
     createdDatetime
     comment
@@ -992,7 +1016,7 @@ export const StockLineRowFragmentDoc = gql`
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }
@@ -1081,7 +1105,7 @@ export const VvmStatusFragmentDoc = gql`
     __typename
     description
     id
-    level
+    priority
     reasonId
     unusable
   }
