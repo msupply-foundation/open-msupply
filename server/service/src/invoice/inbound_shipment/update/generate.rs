@@ -379,6 +379,7 @@ pub fn generate_lines_and_stock_lines(
             note,
             vvm_status_id,
             campaign_id,
+            program_id,
             reason_option_id: _,
             volume_per_pack,
             ..
@@ -403,6 +404,7 @@ pub fn generate_lines_and_stock_lines(
                 donor_link_id,
                 vvm_status_id,
                 campaign_id,
+                program_id,
                 volume_per_pack,
                 total_volume: volume_per_pack * number_of_packs,
                 on_hold: false,

@@ -26,6 +26,7 @@ export type InboundLineFragment = {
   linkedInvoiceId?: string | null;
   volumePerPack: number;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   item: {
     __typename: 'ItemNode';
@@ -147,6 +148,7 @@ export type InboundFragment = {
       linkedInvoiceId?: string | null;
       volumePerPack: number;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -392,6 +394,11 @@ export type InvoiceQuery = {
             linkedInvoiceId?: string | null;
             volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
@@ -570,6 +577,11 @@ export type InboundByNumberQuery = {
             linkedInvoiceId?: string | null;
             volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
@@ -1122,6 +1134,10 @@ export const InboundLineFragmentDoc = gql`
     linkedInvoiceId
     volumePerPack
     donor(storeId: $storeId) {
+      id
+      name
+    }
+    program {
       id
       name
     }

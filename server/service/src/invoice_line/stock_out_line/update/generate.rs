@@ -136,6 +136,7 @@ fn generate_line(
         cost_price_per_pack: invoice_line_cost_price_per_pack,
         donor_link_id,
         campaign_id,
+        program_id,
         shipped_number_of_packs,
         shipped_pack_size,
         ..
@@ -189,6 +190,7 @@ fn generate_line(
         vvm_status_id: input.vvm_status_id.or(vvm_status_id),
         donor_link_id,
         campaign_id,
+        program_id,
         shipped_number_of_packs,
         volume_per_pack,
         shipped_pack_size,

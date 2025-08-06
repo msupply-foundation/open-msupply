@@ -13,6 +13,8 @@ import {
   useAppTheme,
   useMediaQuery,
   Alert,
+  PreferenceKey,
+  usePreference,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
@@ -60,6 +62,11 @@ export const TabLayout = ({
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const [packRoundingMessage, setPackRoundingMessage] = useState<string>(
     () => ''
+  );
+
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.UseCampaigns
   );
 
   if (draftLines.length === 0)
@@ -159,6 +166,7 @@ export const TabLayout = ({
             lines={draftLines}
             updateDraftLine={updateDraftLine}
             restrictedLocationTypeId={item?.restrictedLocationTypeId}
+            preferences={preferences}
           />
         </InboundLineEditPanel>
       </TableContainer>
