@@ -72,6 +72,14 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const reversedDraftLines = [...draftLines].reverse();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
+  const hasInvalidLocationLines = draftLines.some(d => {
+    return (
+      currentItem?.restrictedLocationTypeId &&
+      !!d.location &&
+      d.location?.locationType?.id !== currentItem?.restrictedLocationTypeId
+    );
+  });
+
   const onNext = async () => {
     if (isSaving) return;
     const { errorMessages } = await save();
@@ -228,6 +236,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                 items={items}
                 onChangeItem={setCurrentItem}
                 mode={mode}
+                hasInvalidLocationLines={hasInvalidLocationLines}
               />
               {!currentItem ? (
                 <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
