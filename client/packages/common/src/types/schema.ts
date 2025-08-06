@@ -1594,6 +1594,7 @@ export type CustomerReturnLineNode = {
   item: ItemNode;
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
@@ -3799,6 +3800,7 @@ export type InsertStocktakeLineErrorInterface = {
 
 export type InsertStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
@@ -3812,10 +3814,12 @@ export type InsertStocktakeLineInput = {
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  programId?: InputMaybe<Scalars['String']['input']>;
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   stocktakeId: Scalars['String']['input'];
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -8757,6 +8761,7 @@ export type StocktakeLineFilterInput = {
 export type StocktakeLineNode = {
   __typename: 'StocktakeLineNode';
   batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   comment?: Maybe<Scalars['String']['output']>;
   costPricePerPack?: Maybe<Scalars['Float']['output']>;
   countedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
@@ -8776,11 +8781,13 @@ export type StocktakeLineNode = {
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
+  program?: Maybe<ProgramNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
   sellPricePerPack?: Maybe<Scalars['Float']['output']>;
   snapshotNumberOfPacks: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
   stocktakeId: Scalars['String']['output'];
+  volumePerPack: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
 };
 
@@ -10131,6 +10138,7 @@ export type UpdateStockLineInput = {
   donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
@@ -10172,6 +10180,7 @@ export type UpdateStocktakeLineErrorInterface = {
 
 export type UpdateStocktakeLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
@@ -10184,9 +10193,11 @@ export type UpdateStocktakeLineInput = {
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  programId?: InputMaybe<NullableStringUpdate>;
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 

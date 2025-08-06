@@ -32,6 +32,7 @@ export type StocktakeLineFragment = {
   sellPricePerPack?: number | null;
   costPricePerPack?: number | null;
   comment?: string | null;
+  volumePerPack: number;
   donorId?: string | null;
   donorName?: string | null;
   itemVariantId?: string | null;
@@ -62,9 +63,19 @@ export type StocktakeLineFragment = {
     __typename: 'VvmstatusNode';
     description: string;
     id: string;
-    level: number;
+    priority: number;
     reasonId?: string | null;
     unusable: boolean;
+  } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
   } | null;
   reasonOption?: {
     __typename: 'ReasonOptionNode';
@@ -73,6 +84,8 @@ export type StocktakeLineFragment = {
     isActive: boolean;
     id: string;
   } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
 };
 
 export type StocktakeFragment = {
@@ -111,6 +124,7 @@ export type StocktakeFragment = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      volumePerPack: number;
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
@@ -141,9 +155,19 @@ export type StocktakeFragment = {
         __typename: 'VvmstatusNode';
         description: string;
         id: string;
-        level: number;
+        priority: number;
         reasonId?: string | null;
         unusable: boolean;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -152,6 +176,12 @@ export type StocktakeFragment = {
         isActive: boolean;
         id: string;
       } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -231,6 +261,7 @@ export type StocktakeQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            volumePerPack: number;
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
@@ -261,9 +292,19 @@ export type StocktakeQuery = {
               __typename: 'VvmstatusNode';
               description: string;
               id: string;
-              level: number;
+              priority: number;
               reasonId?: string | null;
               unusable: boolean;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
             } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -271,6 +312,16 @@ export type StocktakeQuery = {
               type: Types.ReasonOptionNodeType;
               isActive: boolean;
               id: string;
+            } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
             } | null;
           }>;
         };
@@ -322,6 +373,7 @@ export type StocktakeByNumberQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            volumePerPack: number;
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
@@ -352,9 +404,19 @@ export type StocktakeByNumberQuery = {
               __typename: 'VvmstatusNode';
               description: string;
               id: string;
-              level: number;
+              priority: number;
               reasonId?: string | null;
               unusable: boolean;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
             } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -362,6 +424,16 @@ export type StocktakeByNumberQuery = {
               type: Types.ReasonOptionNodeType;
               isActive: boolean;
               id: string;
+            } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
             } | null;
           }>;
         };
@@ -397,6 +469,7 @@ export type StocktakeLinesQuery = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      volumePerPack: number;
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
@@ -427,9 +500,19 @@ export type StocktakeLinesQuery = {
         __typename: 'VvmstatusNode';
         description: string;
         id: string;
-        level: number;
+        priority: number;
         reasonId?: string | null;
         unusable: boolean;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -438,6 +521,12 @@ export type StocktakeLinesQuery = {
         isActive: boolean;
         id: string;
       } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -685,6 +774,7 @@ export const StocktakeLineFragmentDoc = gql`
     sellPricePerPack
     costPricePerPack
     comment
+    volumePerPack
     donorId
     donorName
     location {
@@ -716,11 +806,29 @@ export const StocktakeLineFragmentDoc = gql`
     vvmStatus {
       ...VVMStatus
     }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
+    }
     reasonOption {
       reason
       type
       isActive
       id
+    }
+    campaign {
+      id
+      name
+    }
+    program {
+      id
+      name
     }
   }
   ${VvmStatusFragmentDoc}

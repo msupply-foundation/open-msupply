@@ -40,6 +40,9 @@ pub struct InsertInput {
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
+    pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -96,7 +99,7 @@ pub fn map_response(from: Result<StocktakeLine, ServiceError>) -> Result<InsertR
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -129,11 +132,13 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::StockLineAlreadyExistsInStocktake
         | ServiceError::LocationDoesNotExist
         | ServiceError::StocktakeIsLocked
+        | ServiceError::CampaignDoesNotExist
+        | ServiceError::ProgramDoesNotExist
         | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
+
         ServiceError::StockLineXOrItem => BadUserInput(format!(
-            "Either a stock line id or item id must be set (not both), {}",
-            formatted_error
+            "Either a stock line id or item id must be set (not both), {formatted_error}"
         )),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
@@ -163,6 +168,9 @@ impl InsertInput {
             donor_id,
             reason_option_id,
             vvm_status_id,
+            volume_per_pack,
+            campaign_id,
+            program_id,
         } = self;
 
         ServiceInput {
@@ -185,6 +193,9 @@ impl InsertInput {
             donor_id,
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
             vvm_status_id,
+            volume_per_pack,
+            campaign_id,
+            program_id,
         }
     }
 }

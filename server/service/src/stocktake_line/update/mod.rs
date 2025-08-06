@@ -29,6 +29,9 @@ pub struct UpdateStocktakeLine {
     pub donor_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
+    pub campaign_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -43,6 +46,8 @@ pub enum UpdateStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    CampaignDoesNotExist,
+    ProgramDoesNotExist,
     SnapshotCountCurrentCountMismatchLine(StocktakeLine),
     StockLineReducedBelowZero(StockLine),
     VvmStatusDoesNotExist,

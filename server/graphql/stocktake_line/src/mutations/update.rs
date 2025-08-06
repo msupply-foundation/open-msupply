@@ -40,6 +40,9 @@ pub struct UpdateInput {
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
+    pub campaign_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Union)]
@@ -114,6 +117,9 @@ impl UpdateInput {
             donor_id,
             reason_option_id,
             vvm_status_id,
+            volume_per_pack,
+            campaign_id,
+            program_id,
         } = self;
 
         ServiceInput {
@@ -138,13 +144,20 @@ impl UpdateInput {
                 value: donor_id.value,
             }),
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
+            volume_per_pack,
+            campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
+                value: campaign_id.value,
+            }),
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
+            }),
         }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -173,14 +186,15 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 SnapshotCountCurrentCountMismatchLine::from_domain(line),
             ))
         }
-        // Standard Graphql Errors
-        // TODO some are structured errors (where can be changed concurrently)
+        // Standard GraphQL Errors
         ServiceError::InvalidStore
         | ServiceError::StocktakeLineDoesNotExist
         | ServiceError::StockLineDoesNotExist
         | ServiceError::LocationDoesNotExist
+        | ServiceError::StocktakeIsLocked
+        | ServiceError::CampaignDoesNotExist
         | ServiceError::VvmStatusDoesNotExist
-        | ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };

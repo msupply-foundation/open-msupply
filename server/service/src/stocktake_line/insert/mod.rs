@@ -30,6 +30,9 @@ pub struct InsertStocktakeLine {
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
+    pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -50,6 +53,8 @@ pub enum InsertStocktakeLineError {
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
     VvmStatusDoesNotExist,
+    CampaignDoesNotExist,
+    ProgramDoesNotExist,
     StockLineReducedBelowZero(StockLine),
 }
 

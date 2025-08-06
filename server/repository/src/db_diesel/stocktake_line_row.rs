@@ -38,6 +38,8 @@ table! {
         reason_option_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
         volume_per_pack -> Double,
+        campaign_id -> Nullable<Text>,
+        program_id -> Nullable<Text>,
     }
 }
 
@@ -79,6 +81,8 @@ pub struct StocktakeLineRow {
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: f64,
+    pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 pub struct StocktakeLineRowRepository<'a> {

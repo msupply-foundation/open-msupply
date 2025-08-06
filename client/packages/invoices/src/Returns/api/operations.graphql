@@ -179,6 +179,7 @@ fragment CustomerReturnLine on InvoiceLineNode {
     unitName
     defaultPackSize
   }
+  volumePerPack
 }
 
 query supplierReturns(
@@ -290,6 +291,16 @@ fragment GenerateCustomerReturnLine on CustomerReturnLineNode {
     isActive
     reason
     type
+  }
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
   }
 }
 

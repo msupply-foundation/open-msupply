@@ -1,5 +1,6 @@
 use crate::sync::translations::{
-    item::ItemTranslation, location::LocationTranslation, reason::ReasonTranslation,
+    campaign::CampaignTranslation, item::ItemTranslation, location::LocationTranslation,
+    master_list::MasterListTranslation, reason::ReasonTranslation,
     stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
     vvm_status::VVMStatusTranslation,
 };
@@ -11,11 +12,25 @@ use repository::{
     SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option};
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
+    zero_date_as_option,
+};
 
 use super::{
     utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+pub struct LegacyStocktakeLineRowOmsFields {
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub program_id: Option<String>,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -63,6 +78,9 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: f64,
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<LegacyStocktakeLineRowOmsFields>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -84,6 +102,8 @@ impl SyncTranslation for StocktakeLineTranslation {
             LocationTranslation.table_name(),
             ReasonTranslation.table_name(),
             VVMStatusTranslation.table_name(),
+            CampaignTranslation.table_name(),
+            MasterListTranslation.table_name(),
         ]
     }
 
@@ -118,6 +138,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            oms_fields,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
         // TODO is this correct?
@@ -138,11 +159,13 @@ impl SyncTranslation for StocktakeLineTranslation {
 
         if !is_stock_line_valid {
             log::warn!(
-                "Stock line is not valid, stocktake_line_id: {}, stock_line_id: {:?}",
-                ID,
-                item_line_ID
+                "Stock line is not valid, stocktake_line_id: {ID}, stock_line_id: {item_line_ID:?}"
             );
         }
+
+        let (campaign_id, program_id) = oms_fields
+            .map(|fields| (fields.campaign_id, fields.program_id))
+            .unwrap_or((None, None));
 
         let location_id = clear_invalid_location_id(connection, location_id)?;
         let result = StocktakeLineRow {
@@ -169,6 +192,8 @@ impl SyncTranslation for StocktakeLineTranslation {
             reason_option_id,
             vvm_status_id,
             volume_per_pack,
+            campaign_id,
+            program_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -212,11 +237,21 @@ impl SyncTranslation for StocktakeLineTranslation {
                     reason_option_id,
                     vvm_status_id,
                     volume_per_pack,
+                    campaign_id,
+                    program_id,
                 },
             item,
             stock_line,
             ..
         } = stocktake_line;
+
+        let oms_fields = match (&campaign_id, &program_id) {
+            (None, None) => None,
+            _ => Some(LegacyStocktakeLineRowOmsFields {
+                campaign_id,
+                program_id,
+            }),
+        };
 
         let legacy_row = LegacyStocktakeLineRow {
             ID: id.clone(),
@@ -241,6 +276,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            oms_fields,
         };
 
         Ok(PushTranslateResult::upsert(
