@@ -123,19 +123,21 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
-        ServiceError::InvalidStore => BadUserInput(formatted_error),
-        ServiceError::StocktakeDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StocktakeLineAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StockLineAlreadyExistsInStocktake => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        ServiceError::InvalidStore
+        | ServiceError::StocktakeDoesNotExist
+        | ServiceError::StocktakeLineAlreadyExists
+        | ServiceError::StockLineDoesNotExist
+        | ServiceError::StockLineAlreadyExistsInStocktake
+        | ServiceError::LocationDoesNotExist
+        | ServiceError::StocktakeIsLocked
+        | ServiceError::CampaignDoesNotExist
+        | ServiceError::ProgramDoesNotExist
+        | ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
+
         ServiceError::StockLineXOrItem => BadUserInput(format!(
             "Either a stock line id or item id must be set (not both), {formatted_error}"
         )),
-        ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
+
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };

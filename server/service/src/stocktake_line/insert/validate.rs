@@ -125,7 +125,7 @@ pub fn validate(
     }
 
     if let Some(program_id) = &input.program_id {
-        if check_program_exists(connection, &program_id)?.is_none() {
+        if check_program_exists(connection, program_id)?.is_none() {
             return Err(InsertStocktakeLineError::ProgramDoesNotExist);
         }
     }

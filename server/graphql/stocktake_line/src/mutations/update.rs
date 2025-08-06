@@ -180,14 +180,14 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 SnapshotCountCurrentCountMismatchLine::from_domain(line),
             ))
         }
-        // Standard Graphql Errors
-        // TODO some are structured errors (where can be changed concurrently)
-        ServiceError::InvalidStore => BadUserInput(formatted_error),
-        ServiceError::StocktakeLineDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
-        ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
+        // Standard GraphQL Errors
+        ServiceError::InvalidStore
+        | ServiceError::StocktakeLineDoesNotExist
+        | ServiceError::StockLineDoesNotExist
+        | ServiceError::LocationDoesNotExist
+        | ServiceError::StocktakeIsLocked
+        | ServiceError::CampaignDoesNotExist
+        | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };
