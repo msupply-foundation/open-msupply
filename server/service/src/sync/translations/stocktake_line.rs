@@ -1,5 +1,6 @@
 use crate::sync::translations::{
-    item::ItemTranslation, location::LocationTranslation, reason::ReasonTranslation,
+    campaign::CampaignTranslation, item::ItemTranslation, location::LocationTranslation,
+    master_list::MasterListTranslation, reason::ReasonTranslation,
     stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
 };
 
@@ -96,7 +97,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             LocationTranslation.table_name(),
             ReasonTranslation.table_name(),
             CampaignTranslation.table_name(),
-            ProgramTranslation.table_name(),
+            MasterListTranslation.table_name(),
         ]
     }
 
