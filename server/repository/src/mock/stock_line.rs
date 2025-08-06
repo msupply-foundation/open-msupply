@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::StockLineRow;
+use crate::{mock::mock_item_restricted_location_type_b, StockLineRow};
 
 use super::mock_vaccine_item_a;
 
@@ -254,6 +254,17 @@ pub fn mock_vaccine_stock_lines() -> Vec<StockLineRow> {
     ]
 }
 
+pub fn mock_stock_line_restricted_location_type_b() -> StockLineRow {
+    inline_init(|r: &mut StockLineRow| {
+        r.id = "stock_line_restricted_location_type".to_string();
+        r.item_link_id = mock_item_restricted_location_type_b().id;
+        r.store_id = "store_a".to_string();
+        r.available_number_of_packs = 100.0;
+        r.pack_size = 1.0;
+        r.total_number_of_packs = 100.0;
+    })
+}
+
 pub fn mock_stock_lines() -> Vec<StockLineRow> {
     let mut mock_stock_lines: Vec<StockLineRow> = Vec::new();
 
@@ -267,5 +278,6 @@ pub fn mock_stock_lines() -> Vec<StockLineRow> {
     mock_stock_lines.extend(mock_stock_line_on_hold());
     mock_stock_lines.extend(mock_stock_line_location_is_on_hold());
     mock_stock_lines.extend(mock_vaccine_stock_lines());
+    mock_stock_lines.extend(vec![mock_stock_line_restricted_location_type_b()]);
     mock_stock_lines
 }
