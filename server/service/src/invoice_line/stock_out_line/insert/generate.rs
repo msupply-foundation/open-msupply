@@ -94,6 +94,9 @@ fn generate_batch_update(
         sell_price_per_pack,
         number_of_packs,
         vvm_status_id,
+        volume_per_pack,
+        campaign_id,
+        program_id,
         prescribed_quantity: _,
         note: _,
         id: _,
@@ -102,17 +105,17 @@ fn generate_batch_update(
         stock_line_id: _,
         total_before_tax: _,
         tax_percentage: _,
-        campaign_id: _,
-        program_id: _,
     }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
 ) -> StockLineRow {
     let available_reduction = number_of_packs;
+    let volume_per_pack = volume_per_pack.unwrap_or(batch.volume_per_pack);
+
     let (total_reduction, total_volume) = if adjust_total_number_of_packs {
         (
             number_of_packs,
-            batch.total_volume - (batch.volume_per_pack * number_of_packs),
+            batch.total_volume - (volume_per_pack * number_of_packs),
         )
     } else {
         (0.0, batch.total_volume)
@@ -128,6 +131,9 @@ fn generate_batch_update(
         cost_price_per_pack: cost_price_per_pack.unwrap_or(batch.cost_price_per_pack),
         sell_price_per_pack: sell_price_per_pack.unwrap_or(batch.sell_price_per_pack),
         vvm_status_id: vvm_status_id.or(batch.vvm_status_id),
+        volume_per_pack,
+        program_id: program_id.or(batch.program_id),
+        campaign_id: campaign_id.or(batch.campaign_id),
         total_volume,
         ..batch
     }
@@ -146,6 +152,7 @@ fn generate_line(
         note,
         campaign_id,
         program_id,
+        volume_per_pack: input_volume_per_pack,
         tax_percentage: _,
         location_id: _,
         batch: _,
@@ -223,7 +230,7 @@ fn generate_line(
         vvm_status_id: input_vvm_status_id.or(vvm_status_id),
         campaign_id,
         program_id,
-        volume_per_pack,
+        volume_per_pack: input_volume_per_pack.unwrap_or(volume_per_pack),
         shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
             .then_some(number_of_packs),
         shipped_pack_size: (r#type == StockOutType::OutboundShipment).then_some(pack_size),

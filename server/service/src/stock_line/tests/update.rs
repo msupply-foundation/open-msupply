@@ -66,6 +66,21 @@ mod test {
             Err(ServiceError::DonorDoesNotExist)
         );
 
+        // ItemVariantDoesNotExist
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    item_variant_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::ItemVariantDoesNotExist)
+        );
+
         // DonorNotVisible
         assert_eq!(
             service.update_stock_line(

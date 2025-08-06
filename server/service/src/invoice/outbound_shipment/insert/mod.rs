@@ -242,7 +242,7 @@ mod test {
             .insert_outbound_shipment(
                 &context,
                 InsertOutboundShipment {
-                    id: "new_id".to_string(),
+                    id: "new_outbound_id".to_string(),
                     other_party_id: customer().id,
                     ..Default::default()
                 },
@@ -250,7 +250,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("new_id")
+            .find_one_by_id("new_outbound_id")
             .unwrap()
             .unwrap();
 
