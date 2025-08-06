@@ -169,12 +169,12 @@ fn generate_stock_in_out_or_update(
             donor_id: donor_link_id,
             vvm_status_id,
             program_id,
+            note: stocktake_line_row.note,
+            item_variant_id,
             // From existing stock line
             stock_line_id: Some(stock_line_row.id),
             item_id: stock_line_row.item_link_id,
             stock_on_hold: stock_line_row.on_hold,
-            note: stock_line_row.note,
-            item_variant_id: stock_line_row.item_variant_id,
             barcode: stock_line_row.barcode_id,
             // Default
             total_before_tax: None,
