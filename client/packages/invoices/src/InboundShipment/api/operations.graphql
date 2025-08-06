@@ -27,6 +27,10 @@ fragment InboundLine on InvoiceLineNode {
     name
   }
 
+  program {
+    id
+    name
+  }
   campaign {
     id
     name

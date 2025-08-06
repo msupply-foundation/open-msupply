@@ -246,6 +246,24 @@ export type AddToOutboundShipmentFromMasterListResponse =
   | AddToOutboundShipmentFromMasterListError
   | InvoiceLineConnector;
 
+export type AddToPurchaseOrderFromMasterListError = {
+  __typename: 'AddToPurchaseOrderFromMasterListError';
+  error: AddToPurchaseOrderFromMasterListErrorInterface;
+};
+
+export type AddToPurchaseOrderFromMasterListErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type AddToPurchaseOrderFromMasterListInput = {
+  masterListId: Scalars['String']['input'];
+  purchaseOrderId: Scalars['String']['input'];
+};
+
+export type AddToPurchaseOrderFromMasterListResponse =
+  | AddToPurchaseOrderFromMasterListError
+  | PurchaseOrderLineConnector;
+
 export type AddToShipmentFromMasterListInput = {
   masterListId: Scalars['String']['input'];
   shipmentId: Scalars['String']['input'];
@@ -1101,6 +1119,12 @@ export type CannotEditInvoice =
       __typename: 'CannotEditInvoice';
       description: Scalars['String']['output'];
     };
+
+export type CannotEditPurchaseOrder =
+  AddToPurchaseOrderFromMasterListErrorInterface & {
+    __typename: 'CannotEditPurchaseOrder';
+    description: Scalars['String']['output'];
+  };
 
 export type CannotEditRequisition = AddFromMasterListErrorInterface &
   CreateRequisitionShipmentErrorInterface &
@@ -2408,6 +2432,7 @@ export type DraftStockOutLineNode = {
   location?: Maybe<LocationNode>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
+  program?: Maybe<ProgramNode>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
@@ -3217,6 +3242,7 @@ export type InsertInboundShipmentLineInput = {
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
+  programId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -3741,6 +3767,7 @@ export type InsertStockLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   onHold: Scalars['Boolean']['input'];
   packSize: Scalars['Float']['input'];
+  programId?: InputMaybe<Scalars['String']['input']>;
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -4129,6 +4156,7 @@ export type InvoiceLineNode = {
   packSize: Scalars['Float']['output'];
   prescribedQuantity?: Maybe<Scalars['Float']['output']>;
   pricing: PricingNode;
+  program?: Maybe<ProgramNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
@@ -4916,7 +4944,8 @@ export type MasterListNotFoundForThisName =
   };
 
 export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface &
-  AddToInboundShipmentFromMasterListErrorInterface & {
+  AddToInboundShipmentFromMasterListErrorInterface &
+  AddToPurchaseOrderFromMasterListErrorInterface & {
     __typename: 'MasterListNotFoundForThisStore';
     description: Scalars['String']['output'];
   };
@@ -4959,6 +4988,7 @@ export type Mutations = {
   addToInboundShipmentFromMasterList: AddToInboundShipmentFromMasterListResponse;
   /** Add invoice lines from master item master list */
   addToOutboundShipmentFromMasterList: AddToOutboundShipmentFromMasterListResponse;
+  addToPurchaseOrderFromMasterList: AddToPurchaseOrderFromMasterListResponse;
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
   allocateProgramNumber: AllocateProgramNumberResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
@@ -5125,6 +5155,11 @@ export type MutationsAddToInboundShipmentFromMasterListArgs = {
 
 export type MutationsAddToOutboundShipmentFromMasterListArgs = {
   input: AddToShipmentFromMasterListInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsAddToPurchaseOrderFromMasterListArgs = {
+  input: AddToPurchaseOrderFromMasterListInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6050,6 +6085,7 @@ export type OutboundShipmentLineInput = {
   campaignId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
+  programId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -7790,6 +7826,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface &
 export type RecordNotFound = AddFromMasterListErrorInterface &
   AddToInboundShipmentFromMasterListErrorInterface &
   AddToOutboundShipmentFromMasterListErrorInterface &
+  AddToPurchaseOrderFromMasterListErrorInterface &
   AllocateOutboundShipmentUnallocatedLineErrorInterface &
   CreateRequisitionShipmentErrorInterface &
   DeleteAssetCatalogueItemErrorInterface &
@@ -8617,6 +8654,7 @@ export type StockLineNode = {
   note?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
   packSize: Scalars['Float']['output'];
+  program?: Maybe<ProgramNode>;
   sellPricePerPack: Scalars['Float']['output'];
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
@@ -9452,6 +9490,7 @@ export type UpdateInboundShipmentLineInput = {
   note?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  programId?: InputMaybe<NullableStringUpdate>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -10091,6 +10130,7 @@ export type UpdateStockLineInput = {
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  programId?: InputMaybe<NullableStringUpdate>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
