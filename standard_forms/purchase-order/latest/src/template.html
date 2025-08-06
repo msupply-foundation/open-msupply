@@ -9,10 +9,15 @@
       <!-- TO DO: add missing supplier code field in the cell below, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
       <th>{{ t(k="report.item-code",f="Item code") }}</th>
       <th>{{ t(k="report.item-name",f="Item name") }}</th>
-      <th>{{ t(k="report.pack-quantity", f="Pack Quantity") }}</th>
+      <th>
+        {{ t(k="label.requested-number-of-units", f="Requested number of units")
+        }}
+      </th>
+      <th>{{ t(k="label.unit-name", f="Unit name") }}</th>
       <th>{{ t(k="report.pack-size", f="Pack size") }}</th>
-      <th>{{ t(k="label.unit", f="Unit") }}</th>
-      <th>{{ t(k="label.total-quantity", f="Total quantity") }}</th>
+      <th>
+        {{ t(k="label.expected-delivery-date", f="Expected delivery date")}}
+      </th>
       <!-- TO DO: add missing cost, line total cost, and comment fields, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
     </tr>
   </thead>
@@ -22,10 +27,10 @@
     <!-- TO DO: add missing supplier code field in the cell below, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
     <td>{{line.item.code}}</td>
     <td>{{line.item.name}}</td>
-    <td>{{line.numberOfPacks}}</td>
-    <td>{{line.packSize}}</td>
+    <td>{{line.requestedNumberOfUnits}}</td>
     <td>{{line.item.unitName}}</td>
-    <td>{{line.requestedQuantity}}</td>
+    <td>{{line.requestedPackSize}}</td>
+    <td>{{line.expectedDeliveryDate}}</td>
     <!-- TO DO: add missing cost, line total cost, and comment fields, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
   </tr>
   {%- endfor %}
