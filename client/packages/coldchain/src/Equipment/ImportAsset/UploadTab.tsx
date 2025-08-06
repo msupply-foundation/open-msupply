@@ -17,8 +17,8 @@ import {
   useNotification,
   UploadFile,
   useExportCSV,
+  ImportPanel,
 } from '@openmsupply-client/common';
-import { ImportPanel } from './ImportPanel';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
 import { importEquipmentToCsv, parseStatusFromString } from '../utils';

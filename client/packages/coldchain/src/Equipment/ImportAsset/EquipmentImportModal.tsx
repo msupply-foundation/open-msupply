@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { EquipmentReviewTab } from './ReviewTab';
 import { EquipmentUploadTab } from './UploadTab';
-import { EquipmentImportTab } from './ImportTab';
 import {
   QueryParamsProvider,
   createQueryParamsStore,
@@ -20,6 +19,7 @@ import {
   useIsCentralServerApi,
   StatusType,
   useExportCSV,
+  ImportTab,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useAssets } from '../api';
@@ -332,7 +332,7 @@ export const EquipmentImportModal = ({
               tab={Tabs.Review}
               uploadedRows={bufferedEquipment}
             />
-            <EquipmentImportTab
+            <ImportTab
               tab={Tabs.Import}
               importProgress={importProgress}
               importErrorCount={importErrorCount}

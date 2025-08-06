@@ -7,12 +7,12 @@ import {
   Alert,
   ClickableStepper,
   UpdateNamePropertiesInput,
+  ImportTab,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { UploadTab } from './UploadTab';
 import { ReviewTab } from './ReviewTab';
 import { useNameProperties } from '../../api/hooks/document/useNameProperties';
-import { ImportTab } from './ImportTab';
 import { useName } from '../../api';
 
 interface PropertiesImportModalProps {

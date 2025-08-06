@@ -4,6 +4,7 @@ import {
   ClickableStepper,
   Alert,
   TabContext,
+  ImportTab,
 } from '@common/components';
 import {
   useNotification,
@@ -17,7 +18,6 @@ import { StoreRowFragment } from '@openmsupply-client/system/src';
 import React, { useState } from 'react';
 import { UploadTab } from './UploadTab';
 import { ReviewTab } from './ReviewTab';
-import { ImportTab } from './ImportTab';
 import {
   PurchaseOrderLineInsertFromCsvInput,
   usePurchaseOrder,

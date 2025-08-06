@@ -4,6 +4,7 @@ import { styled, TabPanel, Box } from '@openmsupply-client/common';
 
 const StyledTabPanel = styled(TabPanel)({
   height: '100%',
+  width: '100%',
 });
 
 const StyledTabContainer = styled(Box)(({ theme }) => ({
@@ -19,10 +20,8 @@ export interface ImportPanel {
 export const ImportPanel: FC<PropsWithChildren<ImportPanel>> = ({
   tab,
   children,
-}) => {
-  return (
-    <StyledTabPanel value={tab}>
-      <StyledTabContainer>{children}</StyledTabContainer>
-    </StyledTabPanel>
-  );
-};
+}) => (
+  <StyledTabPanel value={tab}>
+    <StyledTabContainer>{children}</StyledTabContainer>
+  </StyledTabPanel>
+);

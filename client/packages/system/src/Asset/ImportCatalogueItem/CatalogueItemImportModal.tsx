@@ -1,7 +1,6 @@
 import React, { FC, useState } from 'react';
 import { AssetItemReviewTab } from './ReviewTab';
 import { AssetItemUploadTab } from './UploadTab';
-import { AssetItemImportTab } from './ImportTab';
 import { useDialog, useNotification } from '@common/hooks';
 import {
   DialogButton,
@@ -15,6 +14,7 @@ import {
   UniqueCombinationKey,
   InsertAssetCatalogueItemInput,
   useExportCSV,
+  ImportTab,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { importRowToCsv } from '../utils';
@@ -332,7 +332,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
               tab={Tabs.Review}
               uploadedRows={bufferedAssetItem}
             />
-            <AssetItemImportTab
+            <ImportTab
               tab={Tabs.Import}
               importProgress={importProgress}
               importErrorCount={importErrorCount}

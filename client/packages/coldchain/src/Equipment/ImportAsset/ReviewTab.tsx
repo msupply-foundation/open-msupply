@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { ImportPanel } from './ImportPanel';
 import { ImportRow } from './EquipmentImportModal';
 import { ImportReviewDataTable } from './ImportReviewDataTable';
 

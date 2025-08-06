@@ -13,10 +13,10 @@ import {
   useNotification,
   UploadFile,
   useExportCSV,
+  ImportPanel,
 } from '@openmsupply-client/common';
 import {} from '@openmsupply-client/system';
 import { ImportRow } from './PurchaseOrderLineImportModal';
-import { ImportPanel } from './ImportPanel';
 import * as PurchaseOrderLineImportModal from './PurchaseOrderLineImportModal';
 import { importPurchaseOrderLinesToCsv } from '../utils';
 
