@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, RepositoryError, StockLine, StockLineFilter, StockLineRepository,
-    StorageConnection,
+    EqualFilter, ProgramRow, ProgramRowRepository, RepositoryError, StockLine, StockLineFilter,
+    StockLineRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq)]
@@ -37,6 +37,13 @@ pub fn check_stock_line_does_not_exist(
         .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_to(id)), None)?;
 
     Ok(stock_lines.is_empty())
+}
+
+pub fn check_program_exists(
+    connection: &StorageConnection,
+    program_id: &str,
+) -> Result<Option<ProgramRow>, RepositoryError> {
+    ProgramRowRepository::new(connection).find_one_by_id(program_id)
 }
 
 impl From<RepositoryError> for CommonStockLineError {

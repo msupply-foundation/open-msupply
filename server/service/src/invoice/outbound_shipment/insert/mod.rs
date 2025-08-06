@@ -232,14 +232,14 @@ mod test {
             .insert_outbound_shipment(
                 &context,
                 inline_init(|r: &mut InsertOutboundShipment| {
-                    r.id = "new_id".to_string();
+                    r.id = "new_outbound_id".to_string();
                     r.other_party_id = customer().id;
                 }),
             )
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("new_id")
+            .find_one_by_id("new_outbound_id")
             .unwrap()
             .unwrap();
 

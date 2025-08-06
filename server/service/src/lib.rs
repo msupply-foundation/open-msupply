@@ -32,7 +32,7 @@ pub mod barcode;
 pub mod catalogue;
 pub mod clinician;
 pub mod cold_chain;
-mod common_stock;
+mod common;
 pub mod contact;
 pub mod contact_form;
 pub mod currency;

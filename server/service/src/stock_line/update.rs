@@ -3,7 +3,7 @@ use crate::{
     activity_log::activity_log_entry,
     barcode::{self, BarcodeInput},
     check_location_exists,
-    common_stock::{check_stock_line_exists, CommonStockLineError},
+    common::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate, SingleRecordError,
