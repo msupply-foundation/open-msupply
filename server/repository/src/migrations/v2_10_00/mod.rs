@@ -19,6 +19,7 @@ mod add_stock_volume;
 mod add_supplier_discount_percentage_to_purchase_order;
 mod delete_unused_number_type;
 mod rename_cold_storage_type_to_location_type;
+mod rename_vvm_status_level_to_priority;
 mod stock_volume_sync_buffer;
 
 pub(crate) struct V2_10_00;
@@ -52,6 +53,7 @@ impl Migration for V2_10_00 {
             Box::new(add_goods_received_line_table::Migrate),
             Box::new(add_closed_vial_wastage_reason_option_type::Migrate),
             Box::new(add_campaign_and_program_to_stocktake_line::Migrate),
+            Box::new(rename_vvm_status_level_to_priority::Migrate),
             Box::new(add_program_id_to_stock_and_invoice_lines::Migrate),
         ]
     }

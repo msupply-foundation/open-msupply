@@ -10751,7 +10751,7 @@ export type VvmstatusNode = {
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
-  level: Scalars['Int']['output'];
+  priority: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   unusable: Scalars['Boolean']['output'];
 };
