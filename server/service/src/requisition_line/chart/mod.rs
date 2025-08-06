@@ -320,6 +320,7 @@ mod test {
                 stores: vec![store()],
                 requisitions: vec![requisition()],
                 requisition_lines: vec![requisition_line()],
+
                 ..Default::default()
             }
             .join({
