@@ -30,13 +30,11 @@ export const DetailViewInner = () => {
 
   const {
     query: { data, isLoading },
-    update: { update },
     lines: { sortedAndFilteredLines },
+    draft,
+    handleDraftChange,
+    handleDebounceUpdate,
   } = usePurchaseOrder();
-
-  useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.number]);
 
   const {
     onOpen,
@@ -74,7 +72,13 @@ export const DetailViewInner = () => {
       value: 'General',
     },
     {
-      Component: data && <Details data={data} update={update} />,
+      Component: (
+        <Details
+          draft={draft}
+          onDraftChange={handleDraftChange}
+          onDebounceUpdate={handleDebounceUpdate}
+        />
+      ),
       value: 'Details',
     },
   ];

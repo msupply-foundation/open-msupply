@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement } from 'react';
 import {
   Grid,
   useTranslation,
@@ -6,12 +6,13 @@ import {
   PanelRow,
   PanelLabel,
   NumericTextInput,
-  useDebounceCallback,
   useNotification,
 } from '@openmsupply-client/common';
-import { CurrencyAutocomplete } from '@openmsupply-client/system';
+import {
+  CurrencyAutocomplete,
+  CurrencyRowFragment,
+} from '@openmsupply-client/system';
 import { PurchaseOrderFragment } from '../../api';
-import { UpdatePurchaseOrderInput } from '../../api/hooks/usePurchaseOrder';
 
 const slotProps = {
   input: {
@@ -27,41 +28,44 @@ const slotProps = {
   },
 };
 
-const DEBOUNCED_TIME = 1000;
-
 interface SupplierDetailSectionProps {
-  data?: PurchaseOrderFragment;
-  onUpdate: (input: Partial<UpdatePurchaseOrderInput>) => void;
+  draft?: PurchaseOrderFragment;
+  onDraftChange: (input: Partial<PurchaseOrderFragment>) => void;
+  onDebounceUpdate: (input: Partial<PurchaseOrderFragment>) => void;
 }
 
 export const SupplierDetailSection = ({
-  data,
-  onUpdate,
+  draft,
+  onDraftChange,
+  onDebounceUpdate,
 }: SupplierDetailSectionProps): ReactElement => {
   const t = useTranslation();
   const { warning } = useNotification();
-  const [currencyId, setCurrencyId] = useState(data?.currencyId);
-  const [foreignExchangeRate, setForeignExchangeRate] = useState(
-    data?.foreignExchangeRate ?? 0
-  );
-  const [supplierDiscountPercentage, setSupplierDiscountPercentage] = useState(
-    data?.supplierDiscountPercentage ?? 0
-  );
 
-  const handleDebouncedUpdate = useDebounceCallback(
-    onUpdate,
-    [],
-    DEBOUNCED_TIME
-  );
+  const handleSupplierDiscountChange = (value: number | undefined) => {
+    if (value == null || value === draft?.supplierDiscountPercentage) return;
+    onDraftChange({ supplierDiscountPercentage: value });
+    onDebounceUpdate({ supplierDiscountPercentage: value });
+  };
 
-  const handleForeignExchangeRateChange = useDebounceCallback(
-    value => {
+  const handleCurrencyChange = (currency: CurrencyRowFragment | null) => {
+    if (!currency) return;
+    const input = {
+      currencyId: currency.id,
+      foreignExchangeRate: currency.rate,
+    };
+    onDraftChange(input);
+    onDebounceUpdate(input);
+  };
+
+  const handleForeignExchangeRateChange = (value: number | undefined) => {
+    if (value == null || value === draft?.foreignExchangeRate) return;
+    if (draft?.foreignExchangeRate !== value) {
+      onDraftChange({ foreignExchangeRate: value });
       warning(t('warning.foreign-exchange-rate-different'))();
-      onUpdate(value);
-    },
-    [],
-    DEBOUNCED_TIME
-  );
+      onDebounceUpdate({ foreignExchangeRate: value });
+    }
+  };
 
   return (
     <DetailPanelSection title={t('label.supplier-details')}>
@@ -69,22 +73,16 @@ export const SupplierDetailSection = ({
         <PanelRow>
           <PanelLabel>{t('label.supplier-discount-percentage')}</PanelLabel>
           <NumericTextInput
-            value={supplierDiscountPercentage}
+            value={draft?.supplierDiscountPercentage ?? 0}
             max={100}
-            onChange={value => {
-              if (value == null || value === supplierDiscountPercentage) return;
-              setSupplierDiscountPercentage(value);
-              handleDebouncedUpdate({
-                supplierDiscountPercentage: value,
-              });
-            }}
+            onChange={handleSupplierDiscountChange}
             slotProps={slotProps}
           />
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.supplier-discount-amount')}</PanelLabel>
           <NumericTextInput
-            value={data?.supplierDiscountAmount ?? 0}
+            value={draft?.supplierDiscountAmount ?? 0}
             max={100}
             disabled
             slotProps={slotProps}
@@ -93,40 +91,25 @@ export const SupplierDetailSection = ({
         <PanelRow>
           <PanelLabel>{t('label.currency')}</PanelLabel>
           <CurrencyAutocomplete
-            currencyId={currencyId}
-            onChange={currency => {
-              if (currency == null) return;
-              setCurrencyId(currency.id);
-              setForeignExchangeRate(currency.rate);
-              handleDebouncedUpdate({
-                currencyId: currency.id,
-                foreignExchangeRate: currency.rate,
-              });
-            }}
+            currencyId={draft?.currencyId}
+            onChange={handleCurrencyChange}
             width={100}
             sx={{
               '& .MuiInputBase-root': {
                 backgroundColor: 'white',
               },
             }}
-            disabled={!!data?.confirmedDatetime}
+            disabled={!!draft?.confirmedDatetime}
           />
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.foreign-exchange-rate')}</PanelLabel>
           <NumericTextInput
-            value={foreignExchangeRate}
-            onChange={value => {
-              if (value == null || value === foreignExchangeRate) return;
-              if (foreignExchangeRate !== value)
-                handleForeignExchangeRateChange({
-                  foreignExchangeRate: value,
-                });
-              setForeignExchangeRate(value);
-            }}
+            value={draft?.foreignExchangeRate ?? 0}
+            onChange={handleForeignExchangeRateChange}
             decimalLimit={4}
             slotProps={slotProps}
-            disabled={!!data?.confirmedDatetime}
+            disabled={!!draft?.confirmedDatetime}
           />
         </PanelRow>
       </Grid>

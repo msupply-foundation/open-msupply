@@ -412,6 +412,9 @@ export const PurchaseOrderFragmentDoc = gql`
     requestedDeliveryDate
     authorisedDatetime
     finalisedDatetime
+    donor {
+      id
+    }
   }
   ${PurchaseOrderLineFragmentDoc}
 `;
