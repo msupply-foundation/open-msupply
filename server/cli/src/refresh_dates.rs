@@ -681,11 +681,13 @@ mod tests {
             .unwrap()
             .unwrap();
 
-        assert_eq!(stock_line1_result, {
-            let mut u = stock_line1_result.clone();
-            u.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 2, 11).unwrap());
-            u
-        });
+        assert_eq!(
+            stock_line1_result,
+            StockLineRow {
+                expiry_date: Some(NaiveDate::from_ymd_opt(2023, 2, 11).unwrap()),
+                ..stock_line1_result.clone()
+            }
+        );
     }
 
     #[derive(QueryableByName, Debug, PartialEq)]

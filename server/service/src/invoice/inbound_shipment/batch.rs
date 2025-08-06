@@ -102,12 +102,7 @@ pub fn batch_inbound_shipment(
 
             let mutations_processor = BatchMutationsProcessor::new(ctx);
 
-            let delete_shipment_input = DeleteInboundShipment {
-                id: "delete_id".to_string(),
-                ..Default::default()
-            };
             // Insert Shipment
-
             let (has_errors, result) = mutations_processor
                 .do_mutations_with_user_id(input.insert_shipment, insert_inbound_shipment);
             results.insert_shipment = result;

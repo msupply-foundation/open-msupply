@@ -311,66 +311,41 @@ mod test {
 
         fn stock_line_expired() -> StockLineRow {
             StockLineRow {
-                id: "stock_line_expired".to_string(),
-                store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
-                pack_size: 1.0,
-                available_number_of_packs: 1.0,
                 expiry_date: Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap()),
-                ..Default::default()
+                ..base_stock_line("stock_line_expired")
             }
         }
 
         fn stock_line_expiring_soon() -> StockLineRow {
             StockLineRow {
-                id: "stock_line_expiring_soon".to_string(),
-                store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
-                pack_size: 1.0,
-                available_number_of_packs: 1.0,
                 expiry_date: Some(date_now_with_offset(
                     stock_line_expiring_soon_offset() - Duration::days(1),
                 )),
-                ..Default::default()
+                ..base_stock_line("stock_line_expiring_soon")
             }
         }
 
         fn stock_line_on_hold() -> StockLineRow {
             StockLineRow {
-                id: "stock_line_on_hold".to_string(),
-                store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
-                pack_size: 1.0,
-                available_number_of_packs: 1.0,
                 expiry_date: Some(date_now()),
                 on_hold: true,
-                ..Default::default()
+                ..base_stock_line("stock_line_on_hold")
             }
         }
 
         fn stock_line_not_expired() -> StockLineRow {
             StockLineRow {
-                id: "stock_line_not_expired".to_string(),
-                store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
-                pack_size: 1.0,
-                available_number_of_packs: 1.0,
                 expiry_date: Some(date_now_with_offset(
                     stock_line_expiring_soon_offset() + Duration::days(1),
                 )),
-                ..Default::default()
+                ..base_stock_line("stock_line_not_expired")
             }
         }
 
         fn stock_line_expiry_null() -> StockLineRow {
             StockLineRow {
-                id: "stock_line_expiry_null".to_string(),
-                store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
-                pack_size: 1.0,
-                available_number_of_packs: 1.0,
                 expiry_date: None,
-                ..Default::default()
+                ..base_stock_line("stock_line_expiry_null")
             }
         }
 
