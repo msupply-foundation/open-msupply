@@ -144,9 +144,8 @@ impl StocktakeLineNode {
     pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
 
-        let item_variant_id = match &self.line.line.item_variant_id {
-            None => return Ok(None),
-            Some(item_variant_id) => item_variant_id,
+        let Some(item_variant_id) = &self.line.line.item_variant_id else {
+            return Ok(None);
         };
 
         let result = loader.load_one(item_variant_id.clone()).await?;
@@ -165,9 +164,8 @@ impl StocktakeLineNode {
     pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
         let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
 
-        let campaign_id = match &self.line.line.campaign_id {
-            Some(campaign_id) => campaign_id,
-            None => return Ok(None),
+        let Some(campaign_id) = &self.line.line.campaign_id else {
+            return Ok(None);
         };
 
         let result = loader.load_one(campaign_id.clone()).await?;
@@ -177,9 +175,8 @@ impl StocktakeLineNode {
     pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
         let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
 
-        let program_id = match &self.line.line.program_id {
-            Some(program_id) => program_id,
-            None => return Ok(None),
+        let Some(program_id) = &self.line.line.program_id else {
+            return Ok(None);
         };
 
         let result = loader
