@@ -26,6 +26,11 @@ interface Options {
    * (or use) as it requires.
    */
   displayPrevious?: boolean;
+  /**
+   * Normally the component will fetch the previous data for its own path, but
+   * if this value is specified it can pull from another field
+   */
+  previousPath?: string;
 }
 
 export const usePrevious = (
@@ -39,25 +44,29 @@ export const usePrevious = (
   >();
   const { config } = useJsonForms();
 
-  const { defaultToPrevious, displayPrevious } = options;
+  const { defaultToPrevious, displayPrevious, previousPath } = options;
+
+  console.log('path:', path);
 
   useEffect(() => {
     if (!displayPrevious && !defaultToPrevious) return;
 
     if (config.previous) {
-      config.previous.getPrevious?.(path).then((prev: PreviousData) => {
-        if (prev !== undefined && prev !== previousValue) {
-          setPreviousValue(prev);
+      config.previous
+        .getPrevious?.(previousPath ?? path)
+        .then((prev: PreviousData) => {
+          if (prev !== undefined && prev !== previousValue) {
+            setPreviousValue(prev);
 
-          if (defaultToPrevious && data === undefined && setValue) {
-            // Using a timeout here is very hacky, but, unless we wait for the
-            // JSON Forms data to fully initialise before resetting, results in
-            // an infinite data update loop. Needs proper debugging and
-            // refactoring at some point.
-            setTimeout(() => setValue(prev.previousValue), 250);
+            if (defaultToPrevious && data === undefined && setValue) {
+              // Using a timeout here is very hacky, but, unless we wait for the
+              // JSON Forms data to fully initialise before resetting, results in
+              // an infinite data update loop. Needs proper debugging and
+              // refactoring at some point.
+              setTimeout(() => setValue(prev.previousValue), 250);
+            }
           }
-        }
-      });
+        });
     }
   }, [displayPrevious, defaultToPrevious]);
 
