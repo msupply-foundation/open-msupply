@@ -112,7 +112,7 @@ fn generate_stock_in_out_or_update(
     let item_variant_id = stocktake_line_row.item_variant_id.clone();
     let campaign_id = stocktake_line_row.campaign_id.clone();
     let donor_link_id = stocktake_line_row.donor_link_id.clone();
-    let vvm_status_id = stocktake_line_row.vvm_status_id.clone();
+    let vvm_status_id = stock_line.vvm_status_id.clone();
     let program_id = stocktake_line_row.program_id.clone();
 
     log_stock_changes(ctx, stock_line_row.clone(), stocktake_line_row.clone())?;
@@ -166,7 +166,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
-            volume_per_pack: Some(row.volume_per_pack),
+            volume_per_pack: Some(stocktake_line_row.volume_per_pack),
             campaign_id,
             donor_id: donor_link_id,
             vvm_status_id,
@@ -198,7 +198,7 @@ fn generate_stock_in_out_or_update(
             expiry_date: stocktake_line_row.expiry_date,
             cost_price_per_pack: Some(cost_price_per_pack),
             sell_price_per_pack: Some(sell_price_per_pack),
-            volume_per_pack: Some(row.volume_per_pack),
+            volume_per_pack: Some(stocktake_line_row.volume_per_pack),
             campaign_id,
             program_id,
             vvm_status_id,

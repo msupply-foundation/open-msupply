@@ -55,7 +55,6 @@ pub fn generate(
             .unwrap_or(existing_line.donor_link_id),
         reason_option_id: reason_option_id.or(existing_line.reason_option_id),
         volume_per_pack: volume_per_pack.unwrap_or(existing_line.volume_per_pack),
-        volume_per_pack: 0.0,
         campaign_id: campaign_id
             .map(|c| c.value)
             .unwrap_or(existing_line.campaign_id),

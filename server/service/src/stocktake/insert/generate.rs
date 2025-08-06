@@ -310,7 +310,6 @@ pub fn generate_lines_from_master_list(
                     donor_link_id,
                     vvm_status_id: _, // Not currently included in stocktakes?
                     total_volume: _,
-                    vvm_status_id: _, // Todo?
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {

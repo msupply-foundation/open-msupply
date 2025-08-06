@@ -2,7 +2,7 @@ use super::query::get_stock_line;
 use crate::{
     activity_log::activity_log_entry,
     barcode::{self, BarcodeInput},
-    check_location_exists,
+    check_item_variant_exists, check_location_exists,
     common::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
