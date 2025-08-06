@@ -89,7 +89,7 @@ fn generate_stocktake_lines(
                 });
             }
         };
-        return generate_lines_from_master_list(connection, store_id, &id, &master_list_id);
+        return generate_lines_from_master_list(connection, store_id, id, &master_list_id);
     }
 
     let mut stock_line_filter: StockLineFilter = StockLineFilter::new()
@@ -303,6 +303,7 @@ pub fn generate_lines_from_master_list(
                     campaign_id: _, // TODO: #7893
                     program_id: _,  // TODO: #7893
                     total_volume: _,
+                    vvm_status_id: _, // Todo?
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
