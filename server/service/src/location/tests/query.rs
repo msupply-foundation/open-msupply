@@ -4,7 +4,7 @@ mod query {
         location::{LocationFilter, LocationSortField},
         mock::{mock_asset_b, mock_location_1, stock_line_with_volume, MockDataInserts},
         test_db::setup_all,
-        StockLineRow, Upsert,
+        LocationRow, StockLineRow, Upsert,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
 
@@ -234,21 +234,30 @@ mod query {
         let (_mock_data, connection, _, _) =
             setup_all("test_location_get_volume_used", MockDataInserts::all()).await;
 
-        let result = get_volume_used(&connection, &mock_location_1()).unwrap();
+        // Insert a new empty location
+        let location_with_no_stock_lines = LocationRow {
+            id: "location_with_no_stock_lines".to_owned(),
+            store_id: "store_a".to_owned(),
+            ..Default::default()
+        };
+        location_with_no_stock_lines.upsert(&connection).unwrap();
 
-        assert_eq!(result, 0.0);
+        // Confirm handles location with no stock lines
+        let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();
+        // Should return 0.0 for no stock lines (using bits to ensure 0.0 and not -0.0)
+        assert_eq!(result.to_bits(), 0.0f64.to_bits());
 
+        // Insert some stock lines for the location
         StockLineRow {
             id: "line1".to_owned(),
-            location_id: Some(mock_location_1().id),
+            location_id: Some(location_with_no_stock_lines.id.clone()),
             ..stock_line_with_volume() // total volume is 1000.0
         }
         .upsert(&connection)
         .unwrap();
-
         StockLineRow {
             id: "line2".to_owned(),
-            location_id: Some(mock_location_1().id),
+            location_id: Some(location_with_no_stock_lines.id.clone()),
             total_volume: 500.0,
             ..stock_line_with_volume()
         }
@@ -256,7 +265,7 @@ mod query {
         .unwrap();
 
         // Adds volumes correctly
-        let result = get_volume_used(&connection, &mock_location_1()).unwrap();
+        let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();
         assert_eq!(result, 1500.0);
     }
 }

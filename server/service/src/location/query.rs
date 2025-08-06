@@ -51,6 +51,10 @@ pub fn get_volume_used(
         Some(location.store_id.clone()),
     )?;
 
+    if lines.is_empty() {
+        return Ok(0.0);
+    }
+
     // Sum their total volumes
     Ok(lines
         .iter()
