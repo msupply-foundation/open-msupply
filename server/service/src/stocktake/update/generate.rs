@@ -113,14 +113,16 @@ fn generate_stock_in_out_or_update(
         .unwrap_or(stock_line_row.sell_price_per_pack);
 
     let previous_vvm_status_id = stock_line_row.vvm_status_id.clone();
-    let vvm_status_id = row.vvm_status_id.clone().or(previous_vvm_status_id.clone());
+    let vvm_status_id = stocktake_line_row
+        .vvm_status_id
+        .clone()
+        .or(previous_vvm_status_id.clone());
 
     // If item_variant_id is null on the stocktake_line, we need to set the stock_line item_variant_id to null too.
     // Without this, we'd wouldn't be able to clear it...
     let item_variant_id = stocktake_line_row.item_variant_id.clone();
     let campaign_id = stocktake_line_row.campaign_id.clone();
     let donor_link_id = stocktake_line_row.donor_link_id.clone();
-    let vvm_status_id = stock_line.vvm_status_id.clone();
     let program_id = stocktake_line_row.program_id.clone();
 
     log_stock_changes(ctx, stock_line_row.clone(), stocktake_line_row.clone())?;
@@ -384,7 +386,7 @@ fn generate_new_stock_line(
         note: stocktake_line_row.note,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
         donor_id: stocktake_line.line.donor_link_id.clone(),
-        vvm_status_id: row.vvm_status_id,
+        vvm_status_id: stocktake_line.line.vvm_status_id.clone(),
         volume_per_pack: Some(stocktake_line.line.volume_per_pack),
         program_id: stocktake_line_row.program_id.clone(),
         campaign_id: stocktake_line_row.campaign_id.clone(),
