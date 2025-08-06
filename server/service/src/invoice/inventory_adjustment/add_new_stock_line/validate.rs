@@ -1,10 +1,7 @@
-use repository::StorageConnection;
-
-use crate::common_stock::check_stock_line_does_not_exist;
-
-use crate::stocktake_line::validate::{check_active_adjustment_reasons, check_reason_is_valid};
-
 use super::insert::{AddNewStockLine, AddNewStockLineError};
+use crate::common::check_stock_line_does_not_exist;
+use crate::stocktake_line::validate::{check_active_adjustment_reasons, check_reason_is_valid};
+use repository::StorageConnection;
 
 pub fn validate(
     connection: &StorageConnection,
