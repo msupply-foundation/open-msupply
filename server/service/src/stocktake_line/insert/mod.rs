@@ -51,6 +51,7 @@ pub enum InsertStocktakeLineError {
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
     CampaignDoesNotExist,
+    ProgramDoesNotExist,
     StockLineReducedBelowZero(StockLine),
 }
 

@@ -134,6 +134,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             "Either a stock line id or item id must be set (not both), {formatted_error}"
         )),
         ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
         ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),

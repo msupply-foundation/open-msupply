@@ -45,6 +45,7 @@ pub enum UpdateStocktakeLineError {
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
     CampaignDoesNotExist,
+    ProgramDoesNotExist,
     SnapshotCountCurrentCountMismatchLine(StocktakeLine),
     StockLineReducedBelowZero(StockLine),
 }

@@ -2,7 +2,7 @@ use super::{InsertStocktakeLine, InsertStocktakeLineError};
 use crate::{
     campaign::check_campaign_exists,
     check_location_exists,
-    common_stock::{check_stock_line_exists, CommonStockLineError},
+    common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
         check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
@@ -121,6 +121,12 @@ pub fn validate(
     if let Some(campaign_id) = &input.campaign_id {
         if !check_campaign_exists(connection, campaign_id)? {
             return Err(InsertStocktakeLineError::CampaignDoesNotExist);
+        }
+    }
+
+    if let Some(program_id) = &input.program_id {
+        if check_program_exists(connection, &program_id)?.is_none() {
+            return Err(InsertStocktakeLineError::ProgramDoesNotExist);
         }
     }
 
