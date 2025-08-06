@@ -102,6 +102,7 @@ impl UpdateInput {
             total_before_tax: None,
             tax: None,
             campaign_id: None,
+            program_id: None,
             vvm_status_id: None,
         }
     }
@@ -544,11 +545,7 @@ mod test {
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
                     note: Some("some note".to_string()),
-                    prescribed_quantity: None,
-                    total_before_tax: None,
-                    tax: None,
-                    campaign_id: None,
-                    vvm_status_id: None,
+                    ..Default::default()
                 }
             );
             Ok(InvoiceLine {

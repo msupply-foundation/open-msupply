@@ -26,6 +26,7 @@ export type InboundLineFragment = {
   linkedInvoiceId?: string | null;
   volumePerPack: number;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   item: {
     __typename: 'ItemNode';
@@ -68,7 +69,7 @@ export type InboundLineFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
@@ -147,6 +148,7 @@ export type InboundFragment = {
       linkedInvoiceId?: string | null;
       volumePerPack: number;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -193,7 +195,7 @@ export type InboundFragment = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
@@ -392,6 +394,11 @@ export type InvoiceQuery = {
             linkedInvoiceId?: string | null;
             volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
@@ -438,7 +445,7 @@ export type InvoiceQuery = {
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
-              level: number;
+              priority: number;
               unusable: boolean;
               description: string;
             } | null;
@@ -570,6 +577,11 @@ export type InboundByNumberQuery = {
             linkedInvoiceId?: string | null;
             volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
@@ -616,7 +628,7 @@ export type InboundByNumberQuery = {
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
-              level: number;
+              priority: number;
               unusable: boolean;
               description: string;
             } | null;
@@ -1125,6 +1137,10 @@ export const InboundLineFragmentDoc = gql`
       id
       name
     }
+    program {
+      id
+      name
+    }
     campaign {
       id
       name
@@ -1169,7 +1185,7 @@ export const InboundLineFragmentDoc = gql`
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }
