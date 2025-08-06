@@ -9,10 +9,7 @@ import {
   useQuery,
   useTranslation,
   useUrlQuery,
-  setNullableInput,
   RecordPatch,
-  PurchaseOrderNodeStatus,
-  PurchaseOrderNodeType,
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
@@ -20,6 +17,7 @@ import { LIST, PURCHASE_ORDER } from './keys';
 import { PurchaseOrderFragment } from '../operations.generated';
 import { useMemo, useState, useEffect } from 'react';
 import { usePurchaseOrderColumns } from '../../DetailView/columns';
+import { parseUpdateInput } from './utils';
 
 const DEBOUNCED_TIME = 1000;
 
@@ -128,38 +126,9 @@ const useCreate = () => {
 const useUpdate = () => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
-  const mapStatus = (
-    status?: PurchaseOrderNodeStatus
-  ): PurchaseOrderNodeType | undefined => {
-    switch (status) {
-      case PurchaseOrderNodeStatus.New:
-        return PurchaseOrderNodeType.New;
-      case PurchaseOrderNodeStatus.Authorised:
-        return PurchaseOrderNodeType.Authorised;
-      case PurchaseOrderNodeStatus.Confirmed:
-        return PurchaseOrderNodeType.Confirmed;
-      case PurchaseOrderNodeStatus.Finalised:
-        return PurchaseOrderNodeType.Finalised;
-      default:
-        return undefined;
-    }
-  };
-
-  const parseInput = (input: RecordPatch<PurchaseOrderFragment>) => ({
-    ...input,
-    status: mapStatus(input.status),
-    donorId: setNullableInput('id', input.donor),
-    confirmedDatetime: setNullableInput('confirmedDatetime', input),
-    contractSignedDate: setNullableInput('contractSignedDate', input),
-    advancePaidDate: setNullableInput('advancePaidDate', input),
-    receivedAtPortDate: setNullableInput('receivedAtPortDate', input),
-    sentDatetime: setNullableInput('sentDatetime', input),
-    requestedDeliveryDate: setNullableInput('requestedDeliveryDate', input),
-  });
-
   const mutationFn = async (input: RecordPatch<PurchaseOrderFragment>) => {
     return await purchaseOrderApi.updatePurchaseOrder({
-      input: parseInput(input),
+      input: parseUpdateInput(input),
       storeId,
     });
   };
