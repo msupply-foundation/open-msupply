@@ -6,7 +6,7 @@ use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::{
-    IncorrectLocationType, SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
+    SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
 };
 use graphql_types::types::{
     AdjustmentReasonNotProvided, AdjustmentReasonNotValid, StocktakeLineNode,
@@ -57,7 +57,6 @@ pub enum UpdateErrorInterface {
     AdjustmentReasonNotProvided(AdjustmentReasonNotProvided),
     AdjustmentReasonNotValid(AdjustmentReasonNotValid),
     SnapshotCountCurrentCountMismatchLine(SnapshotCountCurrentCountMismatchLine),
-    IncorrectLocationType(IncorrectLocationType),
 }
 
 #[derive(SimpleObject)]
@@ -171,11 +170,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 SnapshotCountCurrentCountMismatchLine::from_domain(line),
             ))
         }
-        ServiceError::IncorrectLocationType(line) => {
-            return Ok(UpdateErrorInterface::IncorrectLocationType(
-                IncorrectLocationType::from_domain(line),
-            ))
-        }
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
         ServiceError::InvalidStore => BadUserInput(formatted_error),
@@ -183,6 +177,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
         ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };

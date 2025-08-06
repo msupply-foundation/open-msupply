@@ -6,7 +6,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::{generic_errors::IncorrectLocationType, types::StockLineNode};
+use graphql_types::types::StockLineNode;
 use repository::StockLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -37,7 +37,6 @@ pub struct UpdateInput {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
-    IncorrectLocationType(IncorrectLocationType),
 }
 
 #[derive(SimpleObject)]

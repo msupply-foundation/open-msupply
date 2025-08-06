@@ -75,10 +75,14 @@ pub fn validate(
     let item_id = check_stock_line_xor_item(&stock_line, input)
         .ok_or(InsertStocktakeLineError::StockLineXOrItem)?;
 
-    let item_name = if input.item_id.is_some() {
-        check_item_exists_and_get_item_name(connection, store_id, &item_id)?
+    let (item_name, item_restricted_location_type) = if input.item_id.is_some() {
+        check_item_exists_and_get_item_details(connection, store_id, &item_id)?
     } else {
-        stock_line.as_ref().unwrap().item_row.name.clone()
+        let sl = stock_line.as_ref().unwrap();
+        (
+            sl.item_row.name.clone(),
+            sl.item_row.restricted_location_type_id.clone(),
+        )
     };
 
     if let Some(NullableUpdate {
@@ -89,13 +93,25 @@ pub fn validate(
             return Err(LocationDoesNotExist);
         }
 
-        if let Some(item_restricted_type) = stock_line
-            .as_ref()
-            .and_then(|sl| sl.item_row.restricted_location_type_id.as_ref())
-        {
-            if !check_location_type_is_valid(connection, store_id, &location, item_restricted_type)?
+        // Stocktake line might be for an item which should only live in a certain location type
+        if let Some(item_restricted_type) = &item_restricted_location_type {
+            // If we are changing to a different location than the stock line was previously in
+            // Allow stock to remain in incorrect location during stocktake (don't force stock move during stock count)
+            // - we flag in frontend but don't prevent saving the lines
+            if stock_line
+                .as_ref()
+                .and_then(|sl| sl.item_row.restricted_location_type_id.clone())
+                != Some(location.to_string())
             {
-                return Err(IncorrectLocationType);
+                // Check Whether the type of the new location is valid for the item
+                if !check_location_type_is_valid(
+                    connection,
+                    store_id,
+                    &location,
+                    item_restricted_type,
+                )? {
+                    return Err(IncorrectLocationType);
+                }
             }
         }
     }
@@ -200,11 +216,11 @@ pub fn stocktake_reduction_amount(
     }
 }
 
-pub fn check_item_exists_and_get_item_name(
+pub fn check_item_exists_and_get_item_details(
     connection: &StorageConnection,
     store_id: &str,
     item_id: &str,
-) -> Result<String, InsertStocktakeLineError> {
+) -> Result<(String, Option<String>), InsertStocktakeLineError> {
     let item = ItemRepository::new(connection)
         .query_by_filter(
             ItemFilter::new().id(EqualFilter::equal_to(item_id)),
@@ -213,5 +229,8 @@ pub fn check_item_exists_and_get_item_name(
         .pop()
         .ok_or(InsertStocktakeLineError::ItemDoesNotExist)?;
 
-    Ok(item.item_row.name)
+    Ok((
+        item.item_row.name,
+        item.item_row.restricted_location_type_id,
+    ))
 }

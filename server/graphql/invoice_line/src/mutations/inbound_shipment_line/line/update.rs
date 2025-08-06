@@ -6,7 +6,6 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::generic_errors::IncorrectLocationType;
 use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
@@ -89,7 +88,6 @@ pub enum UpdateErrorInterface {
     CannotEditInvoice(CannotEditInvoice),
     NotAnInboundShipment(NotAnInboundShipment),
     BatchIsReserved(BatchIsReserved),
-    IncorrectLocationType(IncorrectLocationType),
 }
 
 impl UpdateInput {

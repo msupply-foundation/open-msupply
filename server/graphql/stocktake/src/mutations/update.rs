@@ -5,7 +5,7 @@ use graphql_core::simple_generic_errors::{CannotEditStocktake, StocktakeIsLocked
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::{
-    IncorrectLocationType, SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
+    SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
 };
 use graphql_types::types::StocktakeNode;
 use repository::{StockLine, Stocktake, StocktakeLine};
@@ -65,22 +65,6 @@ impl StockLinesReducedBelowZero {
             .collect()
     }
 }
-pub struct IncorrectLocationTypes(pub Vec<StockLine>);
-
-#[Object]
-impl IncorrectLocationTypes {
-    pub async fn description(&self) -> &str {
-        "Stock lines cannot be moved to this location. "
-    }
-
-    pub async fn errors(&self) -> Vec<IncorrectLocationType> {
-        self.0
-            .clone()
-            .into_iter()
-            .map(IncorrectLocationType::from_domain)
-            .collect()
-    }
-}
 
 #[derive(Interface)]
 #[graphql(name = "UpdateStocktakeErrorInterface")]
@@ -90,7 +74,6 @@ pub enum UpdateErrorInterface {
     StocktakeIsLocked(StocktakeIsLocked),
     CannotEditStocktake(CannotEditStocktake),
     StockLinesReducedBelowZero(StockLinesReducedBelowZero),
-    IncorrectLocationTypes(IncorrectLocationTypes),
 }
 
 #[derive(SimpleObject)]
@@ -160,11 +143,7 @@ fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
                 StockLinesReducedBelowZero(lines),
             ))
         }
-        ServiceError::IncorrectLocationTypes(lines) => {
-            return Ok(UpdateErrorInterface::IncorrectLocationTypes(
-                IncorrectLocationTypes(lines),
-            ))
-        }
+
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
         ServiceError::InvalidStore => BadUserInput(formatted_error),
