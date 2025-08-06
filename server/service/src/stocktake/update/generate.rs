@@ -76,7 +76,7 @@ fn generate_stock_in_out_or_update(
     stocktake_line: &StocktakeLine,
     stock_line: &StockLineRow,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
-    let row = stocktake_line.line.to_owned();
+    let row: StocktakeLineRow = stocktake_line.line.to_owned();
 
     let counted_number_of_packs = match row.counted_number_of_packs {
         Some(counted_number_of_packs) => counted_number_of_packs,
@@ -119,6 +119,7 @@ fn generate_stock_in_out_or_update(
             sell_price_per_pack,
             expiry_date,
             item_variant_id,
+            volume_per_pack: row.volume_per_pack,
             ..stock_line_row
         }
         .to_owned();
@@ -151,6 +152,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            volume_per_pack: Some(row.volume_per_pack),
             // From existing stock line
             stock_line_id: Some(stock_line_row.id),
             item_id: stock_line_row.item_link_id,
@@ -161,7 +163,6 @@ fn generate_stock_in_out_or_update(
             donor_id: stock_line_row.donor_link_id,
             vvm_status_id: stock_line_row.vvm_status_id,
             campaign_id: stock_line_row.campaign_id,
-            volume_per_pack: Some(stock_line_row.volume_per_pack),
             program_id: stock_line_row.program_id,
             // Default
             total_before_tax: None,
@@ -186,6 +187,7 @@ fn generate_stock_in_out_or_update(
             campaign_id: stock_line_row.campaign_id,
             program_id: stock_line_row.program_id,
             vvm_status_id: stock_line_row.vvm_status_id, // TODO: #8365
+            volume_per_pack: Some(row.volume_per_pack),
             total_before_tax: None,
             tax_percentage: None,
             prescribed_quantity: None,
