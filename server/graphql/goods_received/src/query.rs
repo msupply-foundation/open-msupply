@@ -1,23 +1,21 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
-    map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
-use repository::{GoodsReceivedFilter, GoodsReceivedSort, GoodsReceivedSortField};
+use repository::goods_received::{GoodsReceivedFilter, GoodsReceivedSort, GoodsReceivedSortField};
+use repository::{EqualFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
+
+use crate::types::{GoodsReceivedConnector, GoodsReceivedNode, GoodsReceivedNodeStatus};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum GoodsReceivedSortFieldInput {
-    Number,
     CreatedDatetime,
-    Status,
-    DeliveryDate,
 }
 
 #[derive(InputObject)]
@@ -70,7 +68,7 @@ pub fn get_goods_received(
 
     match service_provider
         .goods_received_service
-        .get_goods_received(&service_context, &store_id, id)
+        .get_one_goods_received(&service_context, store_id, id)
         .map_err(StandardGraphqlError::from_repository_error)
     {
         Ok(order) => {
@@ -125,10 +123,6 @@ impl GoodsReceivedFilterInput {
     pub fn to_domain(self) -> GoodsReceivedFilter {
         GoodsReceivedFilter {
             id: self.id.map(EqualFilter::from),
-            created_datetime: self.created_datetime.map(DatetimeFilter::from),
-            status: self
-                .status
-                .map(|t| map_filter!(t, GoodsReceivedNodeStatus::to_domain)),
         }
     }
 }
@@ -138,9 +132,6 @@ impl GoodsReceivedSortInput {
         use GoodsReceivedSortField as to;
         use GoodsReceivedSortFieldInput as from;
         let key = match self.key {
-            from::Number => to::Number,
-            from::DeliveryDate => to::DeliveryDate,
-            from::Status => to::Status,
             from::CreatedDatetime => to::CreatedDatetime,
         };
 
