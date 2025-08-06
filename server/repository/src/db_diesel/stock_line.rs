@@ -91,7 +91,7 @@ impl<'a> StockLineRepository<'a> {
         filter: Option<StockLineFilter>,
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
-        let mut query = create_filtered_query(filter.clone());
+        let mut query = Self::create_filtered_query(filter.clone());
         query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         Ok(query
@@ -114,7 +114,7 @@ impl<'a> StockLineRepository<'a> {
         sort: Option<StockLineSort>,
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        let mut query = create_filtered_query(filter.clone());
+        let mut query = Self::create_filtered_query(filter.clone());
         query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         if let Some(sort) = sort {
@@ -148,11 +148,11 @@ impl<'a> StockLineRepository<'a> {
                     // Complex sort, not using apply_sort
                     query = match sort.desc {
                         Some(true) => query
-                            .order(vvm_status::level.desc_nulls_first())
+                            .order(vvm_status::priority.desc_nulls_first())
                             .then_order_by(stock_line::expiry_date.desc_nulls_first()),
                         _ => query
-                            // VVM level 1 should be before level 2, then oldest expiry first
-                            .order(vvm_status::level.asc_nulls_last())
+                            // VVM priority 1 should be before priority 2, then oldest expiry first
+                            .order(vvm_status::priority.asc_nulls_last())
                             .then_order_by(stock_line::expiry_date.asc_nulls_last()),
                     };
                 }
@@ -174,6 +174,77 @@ impl<'a> StockLineRepository<'a> {
         let result = final_query.load::<StockLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
+    }
+
+    pub fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
+        let mut query = stock_line::table
+            .inner_join(item_link::table.inner_join(item::table))
+            .left_join(item_variant::table)
+            .left_join(location::table)
+            .left_join(
+                name_link::table
+                    .on(stock_line::supplier_link_id.eq(name_link::id.nullable()))
+                    .inner_join(name::table),
+            )
+            .left_join(barcode::table)
+            .left_join(vvm_status::table)
+            .into_boxed();
+
+        if let Some(f) = filter {
+            let StockLineFilter {
+                expiry_date,
+                id,
+                is_available,
+                item_code_or_name: _,
+                item_id,
+                location_id,
+                store_id,
+                has_packs_in_store,
+                location,
+                master_list,
+                is_active,
+            } = f;
+
+            apply_equal_filter!(query, id, stock_line::id);
+            apply_equal_filter!(query, item_id, item::id);
+            apply_equal_filter!(query, location_id, stock_line::location_id);
+            apply_date_filter!(query, expiry_date, stock_line::expiry_date);
+            apply_equal_filter!(query, store_id, stock_line::store_id);
+
+            if let Some(is_active) = is_active {
+                query = query.filter(item::is_active.eq(is_active));
+            }
+
+            query = match has_packs_in_store {
+                Some(true) => query.filter(stock_line::total_number_of_packs.gt(0.0)),
+                Some(false) => query.filter(stock_line::total_number_of_packs.le(0.0)),
+                None => query,
+            };
+
+            query = match is_available {
+                Some(true) => query.filter(stock_line::available_number_of_packs.gt(0.0)),
+                Some(false) => query.filter(stock_line::available_number_of_packs.le(0.0)),
+                None => query,
+            };
+
+            if location.is_some() {
+                let location_ids = LocationRepository::create_filtered_query(location)
+                    .select(location::id.nullable());
+                query = query.filter(stock_line::location_id.eq_any(location_ids));
+            }
+
+            if master_list.is_some() {
+                let item_ids = MasterListLineRepository::create_filtered_query(Some(
+                    MasterListLineFilter::new().master_list(master_list.unwrap()),
+                ))
+                .unwrap()
+                .select(item::id);
+
+                query = query.filter(item::id.eq_any(item_ids));
+            }
+        }
+
+        query
     }
 }
 
@@ -198,77 +269,6 @@ type BoxedStockLineQuery = IntoBoxed<
     >,
     DBType,
 >;
-
-fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
-    let mut query = stock_line::table
-        .inner_join(item_link::table.inner_join(item::table))
-        .left_join(item_variant::table)
-        .left_join(location::table)
-        .left_join(
-            name_link::table
-                .on(stock_line::supplier_link_id.eq(name_link::id.nullable()))
-                .inner_join(name::table),
-        )
-        .left_join(barcode::table)
-        .left_join(vvm_status::table)
-        .into_boxed();
-
-    if let Some(f) = filter {
-        let StockLineFilter {
-            expiry_date,
-            id,
-            is_available,
-            item_code_or_name: _,
-            item_id,
-            location_id,
-            store_id,
-            has_packs_in_store,
-            location,
-            master_list,
-            is_active,
-        } = f;
-
-        apply_equal_filter!(query, id, stock_line::id);
-        apply_equal_filter!(query, item_id, item::id);
-        apply_equal_filter!(query, location_id, stock_line::location_id);
-        apply_date_filter!(query, expiry_date, stock_line::expiry_date);
-        apply_equal_filter!(query, store_id, stock_line::store_id);
-
-        if let Some(is_active) = is_active {
-            query = query.filter(item::is_active.eq(is_active));
-        }
-
-        query = match has_packs_in_store {
-            Some(true) => query.filter(stock_line::total_number_of_packs.gt(0.0)),
-            Some(false) => query.filter(stock_line::total_number_of_packs.le(0.0)),
-            None => query,
-        };
-
-        query = match is_available {
-            Some(true) => query.filter(stock_line::available_number_of_packs.gt(0.0)),
-            Some(false) => query.filter(stock_line::available_number_of_packs.le(0.0)),
-            None => query,
-        };
-
-        if location.is_some() {
-            let location_ids =
-                LocationRepository::create_filtered_query(location).select(location::id.nullable());
-            query = query.filter(stock_line::location_id.eq_any(location_ids));
-        }
-
-        if master_list.is_some() {
-            let item_ids = MasterListLineRepository::create_filtered_query(Some(
-                MasterListLineFilter::new().master_list(master_list.unwrap()),
-            ))
-            .unwrap()
-            .select(item::id);
-
-            query = query.filter(item::id.eq_any(item_ids));
-        }
-    }
-
-    query
-}
 
 fn apply_item_filter(
     query: BoxedStockLineQuery,

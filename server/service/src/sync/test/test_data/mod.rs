@@ -23,6 +23,8 @@ pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod frontend_plugin;
+pub(crate) mod goods_received;
+pub(crate) mod goods_received_line;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -123,6 +125,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut asset_category::test_pull_upsert_records());
     test_records.append(&mut asset_type::test_pull_upsert_records());
     test_records.append(&mut contact::test_pull_upsert_records());
+    test_records.append(&mut goods_received::test_pull_upsert_records());
     test_records.append(&mut asset_catalogue_item::test_pull_upsert_records());
     test_records.append(&mut asset::test_pull_upsert_records());
     test_records.append(&mut asset_log::test_pull_upsert_records());
@@ -178,6 +181,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut sync_message::test_pull_upsert_records());
     test_records.append(&mut purchase_order::test_pull_upsert_records());
     test_records.append(&mut purchase_order_line::test_pull_upsert_records());
+    test_records.append(&mut goods_received_line::test_pull_upsert_records());
 
     // Open mSupply central
     test_records.append(&mut rnr_form::test_pull_upsert_records());
@@ -246,6 +250,8 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut clinician_store_join::test_push_records());
     test_records.append(&mut purchase_order::test_push_records());
     test_records.append(&mut purchase_order_line::test_push_records());
+    test_records.append(&mut goods_received::test_push_records());
+    test_records.append(&mut goods_received_line::test_push_records());
 
     test_records
 }

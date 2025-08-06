@@ -2,7 +2,7 @@ use crate::{
     check_item_variant_exists, check_location_exists, check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::{check_batch, check_pack_size},
+        stock_in_line::{check_batch, check_pack_size, check_program_visible_to_store},
         validate::{
             check_item_exists, check_line_belongs_to_invoice, check_line_exists,
             check_number_of_packs,
@@ -74,6 +74,12 @@ pub fn validate(
 
     if !check_line_belongs_to_invoice(line_row, &invoice) {
         return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
+    }
+
+    if let Some(program_id) = &input.program_id {
+        if !check_program_visible_to_store(connection, store_id, &program_id.value)? {
+            return Err(ProgramNotVisible);
+        }
     }
 
     Ok((line, item, invoice))

@@ -6,7 +6,7 @@ mod test {
             mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        StockLineRowRepository,
+        StockLineRow, StockLineRowRepository,
     };
 
     use crate::{service_provider::ServiceProvider, stock_line::UpdateStockLine, NullableUpdate};
@@ -49,21 +49,6 @@ mod test {
                 }
             ),
             Err(ServiceError::LocationDoesNotExist)
-        );
-
-        // ItemVariantDoesNotExist
-        assert_eq!(
-            service.update_stock_line(
-                &context,
-                UpdateStockLine {
-                    id: mock_stock_line_a().id,
-                    item_variant_id: Some(NullableUpdate {
-                        value: Some("invalid".to_string()),
-                    }),
-                    ..Default::default()
-                }
-            ),
-            Err(ServiceError::ItemVariantDoesNotExist)
         );
 
         // DonorDoesNotExist
@@ -148,6 +133,9 @@ mod test {
                     location: Some(NullableUpdate {
                         value: Some("location_1".to_string()),
                     }),
+                    program_id: Some(NullableUpdate {
+                        value: Some("program_a".to_string()),
+                    }),
                     ..Default::default()
                 },
             )
@@ -158,10 +146,13 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(stock_line, {
-            let mut l = stock_line.clone();
-            l.location_id = Some("location_1".to_string());
-            l
-        });
+        assert_eq!(
+            stock_line,
+            StockLineRow {
+                location_id: Some("location_1".to_string()),
+                program_id: Some("program_a".to_string()),
+                ..stock_line.clone()
+            }
+        );
     }
 }

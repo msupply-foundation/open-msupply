@@ -13,7 +13,8 @@ pub struct LegacyVVMStatusRow {
     ID: String,
     description: String,
     code: String,
-    level: i32,
+    #[serde(rename = "level")]
+    priority: i32,
     is_active: bool,
     #[serde(default)]
     unusable: bool,
@@ -47,7 +48,7 @@ impl SyncTranslation for VVMStatusTranslation {
             id: data.ID,
             description: data.description,
             code: data.code,
-            level: data.level,
+            priority: data.priority,
             is_active: data.is_active,
             unusable: data.unusable,
             reason_id: data.option_id,

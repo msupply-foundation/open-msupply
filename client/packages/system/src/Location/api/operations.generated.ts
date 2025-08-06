@@ -9,6 +9,8 @@ export type LocationRowFragment = {
   name: string;
   onHold: boolean;
   code: string;
+  volume: number;
+  volumeUsed: number;
   locationType?: {
     __typename: 'LocationTypeNode';
     id: string;
@@ -39,6 +41,8 @@ export type LocationsQuery = {
       name: string;
       onHold: boolean;
       code: string;
+      volume: number;
+      volumeUsed: number;
       locationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -84,6 +88,8 @@ export type InsertLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
+        volume: number;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -108,6 +114,8 @@ export type UpdateLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
+        volume: number;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -186,6 +194,8 @@ export const LocationRowFragmentDoc = gql`
     name
     onHold
     code
+    volume
+    volumeUsed
     locationType {
       id
       name

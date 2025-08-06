@@ -1,3 +1,4 @@
+pub mod goods_received_row;
 use crate::repository_error::RepositoryError;
 
 pub mod abbreviation;
@@ -46,6 +47,7 @@ mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
 mod frontend_plugin_row;
+pub mod goods_received_line_row;
 pub mod indicator_column;
 mod indicator_column_row;
 pub mod indicator_line;
@@ -130,6 +132,7 @@ pub mod sensor;
 mod sensor_row;
 pub mod stock_line;
 pub mod stock_line_ledger;
+pub mod stock_line_ledger_discrepancy;
 mod stock_line_row;
 pub mod stock_movement;
 pub mod stock_on_hand;
@@ -202,6 +205,7 @@ pub use filter_sort_pagination::*;
 pub use form_schema::*;
 pub use form_schema_row::*;
 pub use frontend_plugin_row::*;
+pub use goods_received_line_row::*;
 pub use indicator_column_row::*;
 pub use indicator_line_row::*;
 pub use indicator_value_row::*;

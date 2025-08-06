@@ -94,8 +94,8 @@ mod test {
         location_movement::{LocationMovement, LocationMovementFilter, LocationMovementRepository},
         mock::{
             mock_item_b_lines, mock_location_1, mock_stock_line_a, mock_stock_line_b,
-            mock_stock_line_ci_c, mock_stock_line_si_d, mock_store_a, mock_user_account_a,
-            MockData, MockDataInserts,
+            mock_stock_line_ci_c, mock_stock_line_si_d, mock_store_a, mock_store_c,
+            mock_user_account_a, stock_line_with_volume, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         ActivityLogRow, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRepository,
@@ -240,7 +240,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id.to_string())
             .unwrap();
         let service = service_provider.repack_service;
@@ -581,6 +581,56 @@ mod test {
                     changed_to: None
                 }
             }
-        )
+        );
+
+        // Repack with volume
+        context.store_id = mock_store_c().id.clone();
+        let volume_stock_line = service
+            .insert_repack(
+                &context,
+                InsertRepack {
+                    stock_line_id: stock_line_with_volume().id,
+                    number_of_packs: 12.0,
+                    new_pack_size: 4.0,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let invoice = invoice_repo
+            .find_one_by_id(&volume_stock_line.invoice_row.id)
+            .unwrap()
+            .unwrap();
+        let SortedInvoiceAndStock {
+            in_line: _,
+            out_line: _,
+            updated_stock,
+            new_stock,
+        } = sort_invoice_lines(&connection, &invoice.id);
+
+        assert_eq!(
+            new_stock,
+            StockLineRow {
+                id: new_stock.id.clone(),
+                item_link_id: stock_line_with_volume().item_link_id,
+                store_id: stock_line_with_volume().store_id,
+                batch: Some("batch".to_string()),
+                pack_size: 4.0,
+                available_number_of_packs: 30.0,
+                total_number_of_packs: 30.0,
+                volume_per_pack: 20.0,
+                total_volume: 600.0,
+                ..Default::default()
+            }
+        );
+        assert_eq!(
+            updated_stock,
+            StockLineRow {
+                available_number_of_packs: 8.0,
+                total_number_of_packs: 8.0,
+                total_volume: 400.0,
+                ..stock_line_with_volume()
+            }
+        );
     }
 }

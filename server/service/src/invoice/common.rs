@@ -129,6 +129,7 @@ pub fn generate_batches_total_number_of_packs_update(
         )?;
 
         stock_line.total_number_of_packs -= invoice_line_row.number_of_packs;
+        stock_line.total_volume -= stock_line.volume_per_pack * invoice_line_row.number_of_packs;
         result.push(stock_line);
     }
     Ok(result)

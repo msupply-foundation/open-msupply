@@ -29,6 +29,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   filter: apiFilter = { isVisible: true },
   itemCategoryName,
   programId,
+  initialUpdate = false,
 }) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
@@ -73,6 +74,12 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   );
 
   useEffect(() => {
+    if (initialUpdate && currentItem) {
+      // If initialUpdate is true, we call onChange with the current item
+      // when the component mounts, so that the parent component can update
+      // its state with the current item.
+      onChange(currentItem);
+    }
     if (currentItem && search === '') setSearch(getOptionLabel(currentItem));
   }, [currentItem]);
 
@@ -83,10 +90,21 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     if (openOnFocus) {
       setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
     }
+
+    // Force focus after component mounts (this can conflict with openOnFocus)
+    if (autoFocus) {
+      setTimeout(() => {
+        const input = document.querySelector<HTMLInputElement>(
+          'input[id="stock-item-search-input"]'
+        );
+        input?.focus();
+      }, 50);
+    }
   }, []);
 
   return (
     <Autocomplete
+      id="stock-item-search-input"
       pages={data?.pages ?? []}
       pageNumber={pageNumber}
       rowsPerPage={ROWS_PER_PAGE}
