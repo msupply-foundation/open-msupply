@@ -32,24 +32,6 @@ impl StockLineReducedBelowZero {
         &self.0
     }
 }
-pub struct IncorrectLocationType(pub StockLineNode);
-
-impl IncorrectLocationType {
-    pub fn from_domain(line: StockLine) -> Self {
-        IncorrectLocationType(StockLineNode::from_domain(line))
-    }
-}
-
-#[Object]
-impl IncorrectLocationType {
-    pub async fn description(&self) -> &str {
-        "Stock line is in an invalid location type."
-    }
-
-    pub async fn stock_line(&self) -> &StockLineNode {
-        &self.0
-    }
-}
 
 pub struct RequisitionReasonNotProvided(pub RequisitionLineNode);
 

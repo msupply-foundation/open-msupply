@@ -65,7 +65,6 @@ pub enum UpdateStocktakeError {
     /// Holds list of affected stock lines
     SnapshotCountCurrentCountMismatch(Vec<StocktakeLine>),
     StockLinesReducedBelowZero(Vec<StockLine>),
-    IncorrectLocationTypes(Vec<StockLine>),
 }
 
 pub fn update_stocktake(

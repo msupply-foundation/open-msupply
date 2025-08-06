@@ -66,11 +66,25 @@ pub fn validate(
         if !check_location_exists(connection, store_id, location)? {
             return Err(LocationDoesNotExist);
         }
+
+        // Stocktake line might be for an item which should only live in a certain location type
         if let Some(item_restricted_type) = &stocktake_line.item.restricted_location_type_id {
-            if !check_location_type_is_valid(connection, store_id, &location, item_restricted_type)?
+            // If we are changing to a different location than the stock line was previously in
+            // Allow stock to remain in incorrect location during stocktake (don't force stock move during stock count)
+            // - we flag in frontend but don't prevent saving the lines
+            if stock_line
+                .as_ref()
+                .and_then(|s| s.stock_line_row.location_id.clone())
+                != Some(location.to_string())
             {
-                if let Some(ref stock_line) = stock_line {
-                    return Err(IncorrectLocationType(stock_line.clone()));
+                // Check Whether the type of the new location is valid for the item
+                if !check_location_type_is_valid(
+                    connection,
+                    store_id,
+                    &location,
+                    item_restricted_type,
+                )? {
+                    return Err(IncorrectLocationType);
                 }
             }
         }
