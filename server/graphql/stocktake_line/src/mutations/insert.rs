@@ -39,6 +39,7 @@ pub struct InsertInput {
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
 }
@@ -165,6 +166,7 @@ impl InsertInput {
             item_variant_id,
             donor_id,
             reason_option_id,
+            volume_per_pack,
             campaign_id,
             program_id,
         } = self;
@@ -188,6 +190,7 @@ impl InsertInput {
             item_variant_id,
             donor_id,
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
+            volume_per_pack,
             campaign_id,
             program_id,
         }

@@ -176,6 +176,7 @@ impl InsertInput {
             sell_price_per_pack: None,
             campaign_id: None,
             program_id: None,
+            volume_per_pack: None,
         }
     }
 }

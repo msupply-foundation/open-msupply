@@ -55,7 +55,23 @@ export const QuantityReturnedTableComponent = ({
         key: 'itemVariantId',
         label: 'label.item-variant',
         width: 170,
-        setter: updateLine,
+        setter: patch => {
+          const { packSize, itemVariant } = patch;
+
+          if (itemVariant) {
+            const packaging = itemVariant.packagingVariants.find(
+              p => p.packSize === packSize
+            );
+            // Item variants save volume in L, but it is saved in m3 everywhere else
+            updateLine({
+              ...patch,
+              volumePerPack:
+                ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
+            });
+          } else {
+            updateLine(patch);
+          }
+        },
         Cell: props => (
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),

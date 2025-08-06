@@ -33,6 +33,7 @@ fragment StockLine on StockLineNode {
   storeId
   totalNumberOfPacks
   itemVariantId
+  volumePerPack
 
   donor(storeId: $storeId) {
     id

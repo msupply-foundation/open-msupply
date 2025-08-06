@@ -159,6 +159,7 @@ pub fn generate(
             vvm_status_id,
             campaign_id,
             program_id,
+            volume_per_pack: Some(volume_per_pack),
             // Default
             prescribed_quantity: None,
             total_before_tax: None,

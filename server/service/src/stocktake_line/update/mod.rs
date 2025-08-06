@@ -28,6 +28,7 @@ pub struct UpdateStocktakeLine {
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
     pub campaign_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
 }

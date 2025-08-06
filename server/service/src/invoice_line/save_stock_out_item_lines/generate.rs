@@ -100,6 +100,7 @@ pub fn generate(
                 location_id: None,
                 cost_price_per_pack: None,
                 sell_price_per_pack: None,
+                volume_per_pack: None,
             },
         )
         .collect();

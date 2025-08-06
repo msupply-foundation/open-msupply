@@ -182,6 +182,7 @@ fn generate_new_line(
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
         vvm_status_id: stock_line_row.vvm_status_id.clone(),
+        volume_per_pack: Some(stock_line_row.volume_per_pack),
         // Default
         prescribed_quantity: None,
         total_before_tax: None,
