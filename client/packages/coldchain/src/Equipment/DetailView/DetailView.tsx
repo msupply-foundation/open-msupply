@@ -210,7 +210,9 @@ export const EquipmentDetailView = () => {
 
 // Displays location with storage name if present, e.g. "ABC (Cold store)".
 // If not present, just displays the code alone
-export const formatLocationLabel = (location: LocationRowFragment) => {
+export const formatLocationLabel = (
+  location: Pick<LocationRowFragment, 'code' | 'locationType'>
+) => {
   const { code, locationType } = location;
   return `${code}${locationType ? ` (${locationType.name})` : ''}`;
 };

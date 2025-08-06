@@ -17,7 +17,6 @@ impl MigrationFragment for Migrate {
                     ALTER TABLE item_variant RENAME COLUMN cold_storage_type_id TO location_type_id;
                 "#
         )?;
-        // if cfg!(feature = "postgres") {}
 
         Ok(())
     }

@@ -50,6 +50,7 @@ pub struct UpdateLocationInput {
     pub name: Option<String>,
     pub on_hold: Option<bool>,
     pub location_type_id: Option<String>,
+    pub volume: Option<f64>,
 }
 
 impl From<UpdateLocationInput> for UpdateLocation {
@@ -60,6 +61,7 @@ impl From<UpdateLocationInput> for UpdateLocation {
             name,
             on_hold,
             location_type_id,
+            volume,
         }: UpdateLocationInput,
     ) -> Self {
         UpdateLocation {
@@ -67,7 +69,8 @@ impl From<UpdateLocationInput> for UpdateLocation {
             code,
             name,
             on_hold,
-            location_type_id: location_type_id,
+            location_type_id,
+            volume,
         }
     }
 }
