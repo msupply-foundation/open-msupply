@@ -130,6 +130,7 @@ fn generate_stocktake_lines(
                          expiry_date,
                          note,
                          item_variant_id,
+                         volume_per_pack,
                          donor_link_id,
                          campaign_id,
                          program_id,
@@ -140,7 +141,6 @@ fn generate_stocktake_lines(
                          available_number_of_packs: _,
                          barcode_id: _,
                          vvm_status_id: _, // Todo?
-                         volume_per_pack: _,
                          total_volume: _,
                      },
                  item_row,
@@ -166,12 +166,12 @@ fn generate_stocktake_lines(
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
                     donor_link_id,
+                    volume_per_pack,
                     campaign_id,
                     program_id,
                     counted_number_of_packs: None,
                     comment: None,
                     reason_option_id: None,
-                    volume_per_pack: 0.0,
                 }
             },
         )
@@ -298,6 +298,7 @@ pub fn generate_lines_from_master_list(
                     total_number_of_packs,
                     expiry_date,
                     note,
+                    volume_per_pack,
                     campaign_id,
                     program_id,
                     supplier_link_id: _,
@@ -308,7 +309,6 @@ pub fn generate_lines_from_master_list(
                     item_variant_id,
                     donor_link_id,
                     vvm_status_id: _, // Not currently included in stocktakes?
-                    volume_per_pack: _,
                     total_volume: _,
                 } = line.stock_line_row;
 
@@ -328,12 +328,12 @@ pub fn generate_lines_from_master_list(
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
                     donor_link_id,
+                    volume_per_pack,
                     campaign_id,
                     program_id,
                     comment: None,
                     reason_option_id: None,
                     counted_number_of_packs: None,
-                    volume_per_pack: 0.0,
                 });
             });
         }

@@ -31,6 +31,7 @@ export type StocktakeLineFragment = {
   sellPricePerPack?: number | null;
   costPricePerPack?: number | null;
   comment?: string | null;
+  volumePerPack: number;
   donorId?: string | null;
   donorName?: string | null;
   itemVariantId?: string | null;
@@ -57,6 +58,16 @@ export type StocktakeLineFragment = {
       defaultSellPricePerPack: number;
     } | null;
   };
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
+  } | null;
   reasonOption?: {
     __typename: 'ReasonOptionNode';
     reason: string;
@@ -104,6 +115,7 @@ export type StocktakeFragment = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      volumePerPack: number;
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
@@ -130,6 +142,16 @@ export type StocktakeFragment = {
           defaultSellPricePerPack: number;
         } | null;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
+      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -222,6 +244,7 @@ export type StocktakeQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            volumePerPack: number;
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
@@ -248,6 +271,16 @@ export type StocktakeQuery = {
                 defaultSellPricePerPack: number;
               } | null;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
+            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -315,6 +348,7 @@ export type StocktakeByNumberQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            volumePerPack: number;
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
@@ -341,6 +375,16 @@ export type StocktakeByNumberQuery = {
                 defaultSellPricePerPack: number;
               } | null;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
+            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -392,6 +436,7 @@ export type StocktakeLinesQuery = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      volumePerPack: number;
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
@@ -418,6 +463,16 @@ export type StocktakeLinesQuery = {
           defaultSellPricePerPack: number;
         } | null;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
+      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -678,6 +733,7 @@ export const StocktakeLineFragmentDoc = gql`
     sellPricePerPack
     costPricePerPack
     comment
+    volumePerPack
     donorId
     donorName
     location {
@@ -706,6 +762,16 @@ export const StocktakeLineFragmentDoc = gql`
       }
     }
     itemVariantId
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
+    }
     reasonOption {
       reason
       type
