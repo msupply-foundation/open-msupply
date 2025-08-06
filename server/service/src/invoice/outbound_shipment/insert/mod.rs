@@ -232,7 +232,7 @@ mod test {
             .insert_outbound_shipment(
                 &context,
                 inline_init(|r: &mut InsertOutboundShipment| {
-                    r.id = "new_id".to_string();
+                    r.id = "new_outbound_id".to_string();
                     r.other_party_id = customer().id;
                 }),
             )
