@@ -45,28 +45,28 @@ describe('SortUtils', () => {
       { id: 'vvm_none_2023_04_01', expiryDate: '2023/04/01' }, // no vvmStatus
       {
         id: 'vvm2_2023_05_01',
-        vvmStatus: { level: 2 },
+        vvmStatus: { priority: 2 },
         expiryDate: '2023/05/01',
       },
       {
         id: 'vvm1_none',
-        vvmStatus: { level: 1 },
+        vvmStatus: { priority: 1 },
       },
       {
         id: 'vvm1_2023_06_01',
-        vvmStatus: { level: 1 },
+        vvmStatus: { priority: 1 },
         expiryDate: '2023/06/01',
       },
       {
         id: 'vvm1_2024_03_01',
-        vvmStatus: { level: 1 },
+        vvmStatus: { priority: 1 },
         expiryDate: '2023/03/01',
       },
     ];
 
-    it('sorts by vvmStatus.level ascending, then expiryDate', () => {
+    it('sorts by vvmStatus.priority ascending, then expiryDate', () => {
       const sorted = entities.sort(SortUtils.byVVMStatusAsc);
-      // vvmStatus.level 1, then 2, then none
+      // vvmStatus.priority 1, then 2, then none
       // then sort by expiryDate
       // No expiryDate goes to the end
       expect(sorted.map(e => e.id)).toEqual([
@@ -83,7 +83,7 @@ describe('SortUtils', () => {
     it('puts items with vvmStatus before those without', () => {
       const testEntities = [
         { id: 'a', expiryDate: '2023/01/01' },
-        { id: 'b', vvmStatus: { level: 3 }, expiryDate: '2023/01/01' },
+        { id: 'b', vvmStatus: { priority: 3 }, expiryDate: '2023/01/01' },
       ];
       const sorted = testEntities.sort(SortUtils.byVVMStatusAsc);
       expect(sorted.map(e => e.id)).toEqual(['b', 'a']);
@@ -98,10 +98,10 @@ describe('SortUtils', () => {
       expect(sorted.map(e => e.id)).toEqual(['b', 'a']);
     });
 
-    it('sorts by expiryDate if vvmStatus.level is equal', () => {
+    it('sorts by expiryDate if vvmStatus.priority is equal', () => {
       const testEntities = [
-        { id: 'a', vvmStatus: { level: 2 }, expiryDate: '2023/01/01' },
-        { id: 'b', vvmStatus: { level: 2 }, expiryDate: '2022/01/01' },
+        { id: 'a', vvmStatus: { priority: 2 }, expiryDate: '2023/01/01' },
+        { id: 'b', vvmStatus: { priority: 2 }, expiryDate: '2022/01/01' },
       ];
       const sorted = testEntities.sort(SortUtils.byVVMStatusAsc);
       expect(sorted.map(e => e.id)).toEqual(['b', 'a']);

@@ -86,7 +86,7 @@ export type DraftStockOutLineFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
@@ -151,7 +151,7 @@ export type GetOutboundEditLinesQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
@@ -250,7 +250,7 @@ export const DraftStockOutLineFragmentDoc = gql`
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }

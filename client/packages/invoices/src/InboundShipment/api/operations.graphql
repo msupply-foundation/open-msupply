@@ -79,7 +79,7 @@ fragment InboundLine on InvoiceLineNode {
   vvmStatus {
     __typename
     id
-    level
+    priority
     unusable
     description
   }

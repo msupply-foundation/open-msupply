@@ -69,7 +69,7 @@ export type InboundLineFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
@@ -195,7 +195,7 @@ export type InboundFragment = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
@@ -445,7 +445,7 @@ export type InvoiceQuery = {
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
-              level: number;
+              priority: number;
               unusable: boolean;
               description: string;
             } | null;
@@ -628,7 +628,7 @@ export type InboundByNumberQuery = {
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
-              level: number;
+              priority: number;
               unusable: boolean;
               description: string;
             } | null;
@@ -1185,7 +1185,7 @@ export const InboundLineFragmentDoc = gql`
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }

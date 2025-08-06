@@ -7773,6 +7773,7 @@ export type ReasonOptionNode = {
 };
 
 export enum ReasonOptionNodeType {
+  ClosedVialWastage = 'CLOSED_VIAL_WASTAGE',
   NegativeInventoryAdjustment = 'NEGATIVE_INVENTORY_ADJUSTMENT',
   OpenVialWastage = 'OPEN_VIAL_WASTAGE',
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
@@ -10744,7 +10745,7 @@ export type VvmstatusNode = {
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
-  level: Scalars['Int']['output'];
+  priority: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   unusable: Scalars['Boolean']['output'];
 };
