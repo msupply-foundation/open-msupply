@@ -8,7 +8,7 @@ use chrono::NaiveDate;
 use repository::{GenderType, NameRow, NameRowType, NameStoreJoinRow, StoreMode, StoreRow};
 
 use serde_json::json;
-use util::uuid::uuid;
+use util::uuid::{small_uuid, uuid};
 
 pub(crate) struct PatientNameAndStoreAndNameStoreJoinTester;
 
