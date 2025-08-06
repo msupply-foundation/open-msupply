@@ -1,11 +1,11 @@
-query purchaseOrderQuery($dataId: String!, $storeId: String!) {
+query PurchaseOrder($dataId: String!, $storeId: String!) {
   purchaseOrder(storeId: $storeId, id: $dataId) {
     ... on PurchaseOrderNode {
       id
       store {
         storeName
         logo
-        name(storeId: "") {
+        name(storeId: $storeId) {
           address1
           address2
           phone
@@ -30,6 +30,10 @@ query purchaseOrderQuery($dataId: String!, $storeId: String!) {
           expectedDeliveryDate
           requestedNumberOfUnits
           requestedPackSize
+          pricePerUnitAfterDiscount
+          pricePerUnitBeforeDiscount
+          supplierItemCode
+          comment
         }
       }
       foreignExchangeRate
