@@ -9,6 +9,9 @@ fragment StockLine on StockLineNode {
     id
     name
     onHold
+    locationType {
+      id
+    }
   }
   item {
     name

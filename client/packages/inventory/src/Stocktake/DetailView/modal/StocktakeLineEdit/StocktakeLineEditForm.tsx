@@ -6,6 +6,7 @@ import {
   useTranslation,
   ModalMode,
   BasicTextInput,
+  Alert,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -18,6 +19,7 @@ interface StocktakeLineEditProps {
   item: ItemRowFragment | null;
   items: StocktakeSummaryItem[];
   mode: ModalMode | null;
+  hasInvalidLocationLines: boolean;
   onChangeItem: (item: ItemStockOnHandFragment | null) => void;
 }
 
@@ -25,6 +27,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
   item,
   items,
   mode,
+  hasInvalidLocationLines,
   onChangeItem,
 }) => {
   const t = useTranslation();
@@ -58,6 +61,13 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
             sx={{ width: 150 }}
             value={item.unitName ?? ''}
           />
+        </ModalRow>
+      )}
+      {hasInvalidLocationLines && (
+        <ModalRow margin={3}>
+          <Alert severity="warning" sx={{ maxWidth: 800 }}>
+            {t('messages.stock-location-invalid-many')}
+          </Alert>
         </ModalRow>
       )}
     </>

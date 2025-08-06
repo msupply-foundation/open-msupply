@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   TextInputCell,
   alpha,
@@ -22,7 +22,6 @@ import {
   ReasonOptionNode,
   usePreference,
   PreferenceKey,
-  Alert,
   Box,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
@@ -353,18 +352,11 @@ export const LocationTable = ({
   const t = useTranslation();
   useDisableStocktakeRows(batches);
 
-  const [invalidLocationRowIds, setInvalidLocationRowIds] = useState<string[]>(
-    []
-  );
-
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
-      getLocationInputColumn({
-        setInvalidLocationRowIds,
-        restrictedToLocationTypeId,
-      }),
+      getLocationInputColumn(restrictedToLocationTypeId),
       {
         width: 300,
         setter: patch => update({ ...patch, countThisLine: true }),
@@ -402,11 +394,6 @@ export const LocationTable = ({
 
   return (
     <Box display="flex" flexDirection="column" width="100%">
-      {invalidLocationRowIds.length > 0 && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          {t('messages.stock-location-invalid-many')}
-        </Alert>
-      )}
       <DataTable
         id="stocktake-location"
         isDisabled={isDisabled}

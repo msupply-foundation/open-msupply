@@ -40,6 +40,7 @@ export type StocktakeLineFragment = {
     name: string;
     code: string;
     onHold: boolean;
+    locationType?: { __typename: 'LocationTypeNode'; id: string } | null;
   } | null;
   stockLine?: { __typename: 'StockLineNode'; id: string } | null;
   item: {
@@ -111,6 +112,7 @@ export type StocktakeFragment = {
         name: string;
         code: string;
         onHold: boolean;
+        locationType?: { __typename: 'LocationTypeNode'; id: string } | null;
       } | null;
       stockLine?: { __typename: 'StockLineNode'; id: string } | null;
       item: {
@@ -223,6 +225,10 @@ export type StocktakeQuery = {
               name: string;
               code: string;
               onHold: boolean;
+              locationType?: {
+                __typename: 'LocationTypeNode';
+                id: string;
+              } | null;
             } | null;
             stockLine?: { __typename: 'StockLineNode'; id: string } | null;
             item: {
@@ -306,6 +312,10 @@ export type StocktakeByNumberQuery = {
               name: string;
               code: string;
               onHold: boolean;
+              locationType?: {
+                __typename: 'LocationTypeNode';
+                id: string;
+              } | null;
             } | null;
             stockLine?: { __typename: 'StockLineNode'; id: string } | null;
             item: {
@@ -373,6 +383,7 @@ export type StocktakeLinesQuery = {
         name: string;
         code: string;
         onHold: boolean;
+        locationType?: { __typename: 'LocationTypeNode'; id: string } | null;
       } | null;
       stockLine?: { __typename: 'StockLineNode'; id: string } | null;
       item: {
@@ -652,6 +663,9 @@ export const StocktakeLineFragmentDoc = gql`
       name
       code
       onHold
+      locationType {
+        id
+      }
     }
     stockLine {
       __typename

@@ -403,7 +403,7 @@ export const LocationTableComponent = ({
     [
       'location',
       {
-        ...getLocationInputColumn({ restrictedToLocationTypeId }),
+        ...getLocationInputColumn(restrictedToLocationTypeId),
         setter: updateDraftLine,
         width: 530,
       },
