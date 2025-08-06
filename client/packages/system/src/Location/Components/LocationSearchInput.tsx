@@ -182,7 +182,7 @@ export const LocationSearchInput = ({
                         onMouseDown={e =>
                           handleFilterClick(e, LocationFilter.All)
                         }
-                        color="secondary"
+                        color="gray"
                         size="small"
                       >
                         {t('label.all')}
@@ -196,7 +196,7 @@ export const LocationSearchInput = ({
                         onMouseDown={e =>
                           handleFilterClick(e, LocationFilter.Empty)
                         }
-                        color="secondary"
+                        color="gray"
                         size="small"
                       >
                         {t('label.empty')}
@@ -210,7 +210,7 @@ export const LocationSearchInput = ({
                         onMouseDown={e =>
                           handleFilterClick(e, LocationFilter.Available)
                         }
-                        color="secondary"
+                        color="gray"
                         size="small"
                       >
                         {t('label.available')}
