@@ -1,144 +1,82 @@
 {
-  "data": {
-    "AMCTwelve": [
-      {
-        "quantity": 150.8,
-        "item_id": "101"
-      },
-      {
-        "quantity": 92.4,
-        "item_id": "102"
-      },
-      {
-        "quantity": 200.5,
-        "item_id": "103"
-      }
-    ],
-    "AMCTwentyFour": [
-      {
-        "quantity": 250.8,
-        "item_id": "101"
-      },
-      {
-        "quantity": 192.4,
-        "item_id": "102"
-      },
-      {
-        "quantity": 300.5,
-        "item_id": "103"
-      }
-    ],
-    "expiringInSixMonths": [
-      {
-        "id": 201,
-        "item_id": "101",
-        "quantity": 150
-      },
-      {
-        "id": 202,
-        "item_id": "102",
-        "quantity": 75
-      }
-    ],
-    "expiringInTwelveMonths": [
-      {
-        "id": 201,
-        "item_id": "101",
-        "quantity": 170
-      },
-      {
-        "id": 202,
-        "item_id": "102",
-        "quantity": 92
-      },
-      {
-        "id": 203,
-        "item_id": "103",
-        "quantity": 400
-      }
-    ],
-    "thisMonthConsumption": [
-      {
-        "quantity": 200,
-        "item_id": "101"
-      },
-      {
-        "quantity": 150,
-        "item_id": "102"
-      },
-      {
-        "quantity": 300,
-        "item_id": "103"
-      }
-    ],
-    "lastMonthConsumption": [
-      {
-        "quantity": 500,
-        "item_id": "101"
-      },
-      {
-        "quantity": 300,
-        "item_id": "102"
-      },
-      {
-        "quantity": 450,
-        "item_id": "103"
-      }
-    ],
-    "twoMonthsAgoConsumption": [
-      {
-        "quantity": 123,
-        "item_id": "101"
-      },
-      {
-        "quantity": 421,
-        "item_id": "102"
-      },
-      {
-        "quantity": 152,
-        "item_id": "103"
-      }
-    ],
-    "stockOnOrder": [
-      {
-        "quantity": 5,
-        "item_id": "101"
-      },
-      {
-        "quantity": -2,
-        "item_id": "102"
-      },
-      {
-        "quantity": 1,
-        "item_id": "103"
-      }
-    ],
-    "items": {
-      "nodes": [
-        {
-          "id": "101",
-          "code": "ITEM002",
-          "name": "Item ab",
-          "stats": {
-            "totalConsumption": 1200,
-            "availableMonthsOfStockOnHand": 4.5,
-            "stockOnHand": 300.902,
-            "averageMonthlyConsumption": 266.7
-          }
-        },
-        {
-          "id": "102",
-          "code": "ITEM001",
-          "name": "item Aa",
-          "stats": {
-            "totalConsumption": 100,
-            "availableMonthsOfStockOnHand": 4.5,
-            "stockOnHand": 200,
-            "averageMonthlyConsumption": 20
-          }
-        }
-      ]
-    }
+  "arguments": {
+    "monthlyConsumptionLookBackPeriod": 3,
+    "monthsItemsExpire": 3,
+    "monthsOverstock": 6,
+    "monthsUnderstock": 3,
+    "timezone": "Pacific/Auckland"
   },
-  "arguments": {}
+  "data": {
+    "purchaseOrder": {
+      "confirmedDatetime": "2025-07-28T00:00:00",
+      "foreignExchangeRate": 1,
+      "id": "AA2E9B330AEF425980D711CD0CD7351D",
+      "lines": {
+        "nodes": {
+          "0": {
+            "comment": "Second PO comment dolutegravir.",
+            "expectedDeliveryDate": "2026-09-02",
+            "item": {
+              "code": "AR33328",
+              "name": "DOLUTEGRAVIR /LAMIVUDINE/TENOFOVIR 50/300/300 mg comp.",
+              "unitName": "Comprime"
+            },
+            "lineNumber": 2,
+            "pricePerUnitAfterDiscount": 1.98,
+            "requestedNumberOfUnits": 242,
+            "requestedPackSize": 11,
+            "supplierItemCode": null
+          },
+          "1": {
+            "comment": "Third PO comment salbutamol.",
+            "expectedDeliveryDate": "2026-09-02",
+            "item": {
+              "code": "89893",
+              "name": "Salbutamol Inhaler",
+              "unitName": null
+            },
+            "lineNumber": 3,
+            "pricePerUnitAfterDiscount": 4.9,
+            "requestedNumberOfUnits": 250,
+            "requestedPackSize": 5,
+            "supplierItemCode": null
+          },
+          "2": {
+            "comment": "This is a PO comment.",
+            "expectedDeliveryDate": "2026-09-02",
+            "item": {
+              "code": "030453",
+              "name": "Amoxicillin 250mg tabs",
+              "unitName": "Tab"
+            },
+            "lineNumber": 1,
+            "pricePerUnitAfterDiscount": 0.95,
+            "requestedNumberOfUnits": 10000,
+            "requestedPackSize": 1000,
+            "supplierItemCode": null
+          },
+          "length": 3
+        }
+      },
+      "number": 3,
+      "orderTotalAfterDiscount": 298.06,
+      "status": "CONFIRMED",
+      "store": {
+        "logo": null,
+        "name": {
+          "address1": null,
+          "address2": null,
+          "email": null,
+          "phone": null
+        },
+        "storeName": "Kamo Regional Warehouse"
+      },
+      "supplier": {
+        "address1": null,
+        "address2": null,
+        "code": "123456",
+        "name": "Test Name"
+      }
+    }
+  }
 }

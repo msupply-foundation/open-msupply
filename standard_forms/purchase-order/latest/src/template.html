@@ -6,7 +6,7 @@
   <thead>
     <tr class="body_column_label">
       <th>{{ t(k="report.line", f="Line") }}</th>
-      <!-- TO DO: add missing supplier code field in the cell below, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
+      <th>{{ t(k="report.supplier-item-code", f="Supplier's item code") }}</th>
       <th>{{ t(k="report.item-code",f="Item code") }}</th>
       <th>{{ t(k="report.item-name",f="Item name") }}</th>
       <th>
@@ -16,23 +16,50 @@
       <th>{{ t(k="label.unit-name", f="Unit name") }}</th>
       <th>{{ t(k="report.pack-size", f="Pack size") }}</th>
       <th>
-        {{ t(k="label.expected-delivery-date", f="Expected delivery date")}}
+        {{ t(k="label.expected-delivery-date", f="Expected delivery date") }}
       </th>
-      <!-- TO DO: add missing cost, line total cost, and comment fields, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
+      <th>{{ t(k="label.comment", f="Comment") }}</th>
+      <th>{{ t(k="label.line-cost", f="Line cost") }}</th>
     </tr>
   </thead>
   {% for line in data.purchaseOrder.lines.nodes -%}
   <tr class="body_value">
     <td>{{ line.lineNumber }}</td>
-    <!-- TO DO: add missing supplier code field in the cell below, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
-    <td>{{line.item.code}}</td>
-    <td>{{line.item.name}}</td>
-    <td>{{line.requestedNumberOfUnits}}</td>
-    <td>{{line.item.unitName}}</td>
-    <td>{{line.requestedPackSize}}</td>
-    <td>{{line.expectedDeliveryDate}}</td>
-    <!-- TO DO: add missing cost, line total cost, and comment fields, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
+    <td>{{line.supplierItemCode | default(value="")}}</td>
+    <td>{{line.item.code | default(value="")}}</td>
+    <td>{{line.item.name | default(value="")}}</td>
+    <td>{{line.requestedNumberOfUnits | default(value="")}}</td>
+    <td>{{line.item.unitName | default(value="")}}</td>
+    <td>{{line.requestedPackSize | default(value="")}}</td>
+    <td>{{line.expectedDeliveryDate | default(value="")}}</td>
+    <td>{{line.comment | default(value="")}}</td>
+    <td>{{line.lineCost | default(value="")}}</td>
   </tr>
   {%- endfor %}
 </table>
-<!-- TO DO: add missing authorisation field, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
+
+<table class="right-aligned-table">
+  <tr>
+    <td>{{t(k="label.total-cost", f="Total cost")}}:</td>
+    <td>{{data.purchaseOrder.orderTotalAfterDiscount | default(value="")}}</td>
+  </tr>
+  <tr>
+    <td>{{t(k="label.exchange-rate", f="Exchange rate")}}:</td>
+    <td>{{data.purchaseOrder.foreignExchangeRate | default(value="")}}</td>
+  </tr>
+  <tr>
+    <td>
+      {{t(k="label.total-cost-in-local-currency", f="Total cost in local
+      currency")}}:
+    </td>
+    <td>
+      {{data.purchaseOrder.orderTotalAfterDiscount *
+      data.purchaseOrder.foreignExchangeRate | default(value="")}}
+    </td>
+  </tr>
+</table>
+
+<div class="watermark">
+  {%if data.purchaseOrder.status == "AUTHORISED" or data.purchaseOrder.status ==
+  "FINALISED" %} AUTHORISED {% else %} UNAUTHORISED {% endif %}
+</div>

@@ -31,7 +31,6 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
           requestedNumberOfUnits
           requestedPackSize
           pricePerUnitAfterDiscount
-          pricePerUnitBeforeDiscount
           supplierItemCode
           comment
         }
@@ -39,6 +38,7 @@ query PurchaseOrder($dataId: String!, $storeId: String!) {
       foreignExchangeRate
       status
       confirmedDatetime
+      orderTotalAfterDiscount
     }
   }
 }
