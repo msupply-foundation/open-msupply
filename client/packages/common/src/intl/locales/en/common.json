@@ -1516,6 +1516,7 @@
   "messages.cannot-delete-transfer-requisition": "Cannot delete transfer requisition",
   "messages.cannot-perform-action": "This action cannot be performed on one or more lines",
   "messages.cannot-view-vaccine-card": "You cannot view this patient's Vaccination Card from this store, because they were enrolled in the {{ programName }} by another store",
+  "messages.cant-change-campaign-or-program-on-finalised-invoice": "Cannot change campaign or program on a finalised invoice",
   "messages.cant-delete-generic": "You cannot delete one or more of the selected items",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "messages.cant-delete-transferred": "You cannot delete items that have been transferred from another store. Please reduce those lines to zero instead.",

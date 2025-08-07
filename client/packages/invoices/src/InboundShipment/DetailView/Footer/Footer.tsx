@@ -16,6 +16,9 @@ import {
   ArrowRightIcon,
   useEditModal,
   useTableStore,
+  usePreference,
+  PreferenceKey,
+  useNotification,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
@@ -26,6 +29,7 @@ import {
 import { InboundFragment, InboundLineFragment, useInbound } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
+import { useIsInboundDisabled } from '../../api/hooks/utils/useIsInboundDisabled';
 
 const createStatusLog = (invoice: InboundFragment) => {
   const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
@@ -71,14 +75,17 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
   const { clearSelected } = useTableStore();
+  const { info } = useNotification();
   const changeCampaignOrProgramModal = useEditModal();
 
   const { data } = useInbound.document.get();
   const onDelete = useInbound.lines.deleteSelected();
   const onZeroQuantities = useInbound.lines.zeroQuantities();
   const selectedLines = useInbound.utils.selectedLines();
+  const { data: preference } = usePreference(PreferenceKey.UseCampaigns);
   const { onChangeCampaignOrProgram } =
     useInbound.lines.changeCampaignOrProgram(selectedLines);
+  const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
 
   const actions: Action[] = [
@@ -87,12 +94,26 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
       icon: <DeleteIcon />,
       onClick: onDelete,
     },
-    {
-      label: t('button.change-campaign-or-program'),
-      icon: <ArrowRightIcon />,
-      onClick: () => changeCampaignOrProgramModal.onOpen(),
-      shouldShrink: false,
-    },
+    ...(preference?.useCampaigns
+      ? [
+          {
+            label: t('button.change-campaign-or-program'),
+            icon: <ArrowRightIcon />,
+            onClick: () => {
+              if (isDisabled) {
+                info(
+                  t(
+                    'messages.cant-change-campaign-or-program-on-finalised-invoice'
+                  )
+                )();
+              } else {
+                changeCampaignOrProgramModal.onOpen();
+              }
+            },
+            shouldShrink: false,
+          },
+        ]
+      : []),
     {
       label: t('button.zero-line-quantity'),
       icon: <RewindIcon />,
