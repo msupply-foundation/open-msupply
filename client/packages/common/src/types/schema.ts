@@ -8630,6 +8630,7 @@ export type StockLineFilterInput = {
   locationId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
+  vvmStatusId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface &

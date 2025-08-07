@@ -95,6 +95,9 @@ export const CreateStocktakeModal = ({
     expiryDate: expiryDate && {
       beforeOrEqualTo: Formatter.naiveDate(expiryDate),
     },
+    vvmStatusId: vvmStatus && {
+      equalTo: vvmStatus.id,
+    },
   };
 
   const { data } = useStockListCount(stockFilter);
