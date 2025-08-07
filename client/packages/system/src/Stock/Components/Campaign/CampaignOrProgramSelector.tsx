@@ -25,6 +25,7 @@ interface CampaignOrProgramSelectorProps {
     program: ProgramFragment | null;
   }) => void;
   enableProgramAPI?: boolean;
+  fullWidth?: boolean;
 }
 
 export const CampaignOrProgramSelector = ({
@@ -33,6 +34,7 @@ export const CampaignOrProgramSelector = ({
   itemId,
   onChange,
   enableProgramAPI,
+  fullWidth = false,
 }: CampaignOrProgramSelectorProps): ReactElement => {
   const t = useTranslation();
   const {
@@ -106,6 +108,7 @@ export const CampaignOrProgramSelector = ({
       noOptionsText={t('messages.no-campaigns')}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       width={'160px'}
+      fullWidth={fullWidth}
     />
   );
 };

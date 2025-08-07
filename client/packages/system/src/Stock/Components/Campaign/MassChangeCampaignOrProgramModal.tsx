@@ -74,9 +74,14 @@ export const ChangeCampaignOrProgramConfirmationModal = <
         </>
       }
     >
-      <Box gap={1} display="flex" flexDirection="column">
+      <Box
+        gap={1}
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+      >
         {hasMissingPrograms && (
-          <Alert severity="warning" sx={{ width: 320 }}>
+          <Alert severity="warning">
             {t('messages.campaign-or-program-restricted')}
           </Alert>
         )}
@@ -93,6 +98,7 @@ export const ChangeCampaignOrProgramConfirmationModal = <
                 setProgram(program);
               }}
               enableProgramAPI={!!commonItemId}
+              fullWidth
             />
           }
         />
