@@ -10,7 +10,6 @@ use repository::{
     ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
     RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
 };
-use util::inline_edit;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpdateRequestRequisitionLine {
@@ -115,12 +114,12 @@ fn generate(
         option_id,
     }: UpdateRequestRequisitionLine,
 ) -> RequisitionLineRow {
-    inline_edit(&existing, |mut u| {
-        u.requested_quantity = updated_requested_quantity.unwrap_or(u.requested_quantity);
-        u.comment = updated_comment.or(u.comment);
-        u.option_id = option_id.or(u.option_id);
-        u
-    })
+    RequisitionLineRow {
+        requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
+        comment: updated_comment.or(existing.comment),
+        option_id: option_id.or(existing.option_id),
+        ..existing
+    }
 }
 
 impl From<RepositoryError> for UpdateRequestRequisitionLineError {

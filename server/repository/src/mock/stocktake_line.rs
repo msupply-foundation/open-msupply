@@ -7,22 +7,11 @@ pub fn mock_stocktake_line_a() -> StocktakeLineRow {
         id: "stocktake_line_a".to_string(),
         stocktake_id: "stocktake_a".to_string(),
         stock_line_id: Some("item_a_line_a".to_string()),
-        location_id: None,
-        comment: None,
         snapshot_number_of_packs: 40.0,
         counted_number_of_packs: Some(8.0),
         item_link_id: "item_a".to_string(),
         item_name: mock_item_a().name,
-        expiry_date: None,
-        batch: None,
-        pack_size: None,
-        cost_price_per_pack: None,
-        sell_price_per_pack: None,
-        note: None,
-        item_variant_id: None,
-        donor_link_id: None,
-        reason_option_id: None,
-        volume_per_pack: 0.0,
+        ..Default::default()
     }
 }
 
@@ -31,22 +20,10 @@ pub fn mock_stocktake_line_b() -> StocktakeLineRow {
         id: "stocktake_line_b".to_string(),
         stocktake_id: "stocktake_b".to_string(),
         stock_line_id: Some("item_a_line_a".to_string()),
-        location_id: None,
-        comment: None,
         snapshot_number_of_packs: 10.0,
-        counted_number_of_packs: None,
         item_link_id: "item_b".to_string(),
         item_name: mock_item_b().name,
-        expiry_date: None,
-        batch: None,
-        pack_size: None,
-        cost_price_per_pack: None,
-        sell_price_per_pack: None,
-        note: None,
-        item_variant_id: None,
-        donor_link_id: None,
-        reason_option_id: None,
-        volume_per_pack: 0.0,
+        ..Default::default()
     }
 }
 

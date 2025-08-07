@@ -39,6 +39,9 @@ pub struct InsertInput {
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
+    pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -95,7 +98,7 @@ pub fn map_response(from: Result<StocktakeLine, ServiceError>) -> Result<InsertR
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -121,18 +124,21 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
-        ServiceError::InvalidStore => BadUserInput(formatted_error),
-        ServiceError::StocktakeDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StocktakeLineAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StockLineAlreadyExistsInStocktake => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        ServiceError::InvalidStore
+        | ServiceError::StocktakeDoesNotExist
+        | ServiceError::StocktakeLineAlreadyExists
+        | ServiceError::StockLineDoesNotExist
+        | ServiceError::StockLineAlreadyExistsInStocktake
+        | ServiceError::LocationDoesNotExist
+        | ServiceError::StocktakeIsLocked
+        | ServiceError::CampaignDoesNotExist
+        | ServiceError::ProgramDoesNotExist
+        | ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
+
         ServiceError::StockLineXOrItem => BadUserInput(format!(
-            "Either a stock line id or item id must be set (not both), {}",
-            formatted_error
+            "Either a stock line id or item id must be set (not both), {formatted_error}"
         )),
-        ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
+
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };
@@ -160,6 +166,9 @@ impl InsertInput {
             item_variant_id,
             donor_id,
             reason_option_id,
+            volume_per_pack,
+            campaign_id,
+            program_id,
         } = self;
 
         ServiceInput {
@@ -181,6 +190,9 @@ impl InsertInput {
             item_variant_id,
             donor_id,
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
+            volume_per_pack,
+            campaign_id,
+            program_id,
         }
     }
 }
@@ -302,10 +314,7 @@ mod test {
                     cost_price_per_pack: Some(10.0),
                     sell_price_per_pack: Some(12.0),
                     note: Some("note".to_string()),
-                    item_variant_id: None,
-                    donor_link_id: None,
-                    reason_option_id: None,
-                    volume_per_pack: 0.0,
+                    ..Default::default()
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),

@@ -1,14 +1,8 @@
 use crate::{
     activity_log::activity_log_entry,
+    common::check_program_exists,
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
-};
-
-use chrono::Utc;
-use repository::{
-    ActivityLogType, EqualFilter, PeriodRow, RepositoryError, RnRForm, RnRFormFilter,
-    RnRFormLineRow, RnRFormLineRowRepository, RnRFormRepository, RnRFormRow, RnRFormRowRepository,
-    RnRFormStatus,
 };
 
 use super::{
@@ -16,9 +10,15 @@ use super::{
     query::get_rnr_form,
     schedules_with_periods::get_schedules_with_periods_by_program,
     validate::{
-        check_master_list_exists, check_period_exists, check_program_exists,
-        check_rnr_form_already_exists_for_period, check_rnr_form_does_not_exist,
+        check_master_list_exists, check_period_exists, check_rnr_form_already_exists_for_period,
+        check_rnr_form_does_not_exist,
     },
+};
+use chrono::Utc;
+use repository::{
+    ActivityLogType, EqualFilter, PeriodRow, RepositoryError, RnRForm, RnRFormFilter,
+    RnRFormLineRow, RnRFormLineRowRepository, RnRFormRepository, RnRFormRow, RnRFormRowRepository,
+    RnRFormStatus,
 };
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct InsertRnRForm {

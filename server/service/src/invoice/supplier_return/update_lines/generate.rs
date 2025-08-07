@@ -56,6 +56,7 @@ pub fn generate(
             campaign_id: None,
             program_id: None,
             vvm_status_id: None,
+            volume_per_pack: None,
         })
         .collect();
 

@@ -6,9 +6,8 @@ mod test {
             mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        StockLineRowRepository,
+        StockLineRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
 
     use crate::{service_provider::ServiceProvider, stock_line::UpdateStockLine, NullableUpdate};
 
@@ -29,9 +28,10 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = "invalid".to_string();
-                })
+                UpdateStockLine {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::StockDoesNotExist)
         );
@@ -40,12 +40,13 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::LocationDoesNotExist)
         );
@@ -63,6 +64,21 @@ mod test {
                 }
             ),
             Err(ServiceError::DonorDoesNotExist)
+        );
+
+        // ItemVariantDoesNotExist
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    item_variant_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::ItemVariantDoesNotExist)
         );
 
         // DonorNotVisible
@@ -100,12 +116,13 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::StockDoesNotBelongToStore)
         );
@@ -126,15 +143,16 @@ mod test {
         service
             .update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("location_1".to_string()),
-                    });
-                    r.program_id = Some(NullableUpdate {
+                    }),
+                    program_id: Some(NullableUpdate {
                         value: Some("program_a".to_string()),
-                    });
-                }),
+                    }),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -145,11 +163,11 @@ mod test {
 
         assert_eq!(
             stock_line,
-            inline_edit(&stock_line, |mut l| {
-                l.location_id = Some("location_1".to_string());
-                l.program_id = Some("program_a".to_string());
-                l
-            })
+            StockLineRow {
+                location_id: Some("location_1".to_string()),
+                program_id: Some("program_a".to_string()),
+                ..stock_line.clone()
+            }
         );
     }
 }
