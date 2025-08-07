@@ -46,38 +46,8 @@ export const ChangeCampaignOrProgramConfirmationModal = <
 
   const [campaign, setCampaign] = useState<CampaignNode | null>(null);
   const [program, setProgram] = useState<ProgramFragment | null>(null);
-
-  const findCommonProgramItem = (): string | null => {
-    if (rows.length === 0) return null;
-    if (rows.length === 1) return rows[0]?.item?.id ?? null;
-
-    const allPrograms = rows.map(row => row?.item?.programs ?? []);
-
-    const commonPrograms = allPrograms.reduce(
-      (intersection, currentPrograms) => {
-        return intersection.filter(program =>
-          currentPrograms.some(
-            currentProgram => currentProgram.id === program.id
-          )
-        );
-      }
-    );
-
-    if (commonPrograms.length === 0) return null;
-
-    for (const row of rows) {
-      const rowPrograms = row?.item?.programs ?? [];
-      const hasAllCommonPrograms = commonPrograms.every(commonProgram =>
-        rowPrograms.some(rowProgram => rowProgram.id === commonProgram.id)
-      );
-
-      if (hasAllCommonPrograms) {
-        return row?.item?.id ?? null;
-      }
-    }
-
-    return null;
-  };
+  const { itemId: commonItemId, hasMissingPrograms } =
+    findCommonProgramItem(rows);
 
   return (
     <ConfirmationModalLayout
@@ -105,7 +75,7 @@ export const ChangeCampaignOrProgramConfirmationModal = <
       }
     >
       <Box gap={1} display="flex" flexDirection="column">
-        {!findCommonProgramItem() && (
+        {hasMissingPrograms && (
           <Alert severity="warning" sx={{ width: 320 }}>
             {t('messages.campaign-or-program-restricted')}
           </Alert>
@@ -117,16 +87,53 @@ export const ChangeCampaignOrProgramConfirmationModal = <
             <CampaignOrProgramSelector
               campaignId={campaign?.id ?? undefined}
               programId={program?.id ?? undefined}
-              itemId={findCommonProgramItem() ?? ''}
+              itemId={commonItemId ?? ''}
               onChange={async ({ campaign, program }) => {
                 setCampaign(campaign);
                 setProgram(program);
               }}
-              enableProgramAPI={!!findCommonProgramItem()}
+              enableProgramAPI={!!commonItemId}
             />
           }
         />
       </Box>
     </ConfirmationModalLayout>
   );
+};
+
+export const findCommonProgramItem = <
+  T extends {
+    item?: { id: string; programs?: ProgramFragment[] | null } | null;
+  },
+>(
+  rows: T[]
+): { itemId: string | null; hasMissingPrograms: boolean } => {
+  if (rows.length === 0) return { itemId: null, hasMissingPrograms: false };
+  if (rows.length === 1)
+    return { itemId: rows[0]?.item?.id ?? null, hasMissingPrograms: false };
+
+  const allPrograms = rows.map(row => row?.item?.programs ?? []);
+
+  const commonPrograms = allPrograms.reduce((intersection, currentPrograms) => {
+    return intersection.filter(program =>
+      currentPrograms.some(currentProgram => currentProgram.id === program.id)
+    );
+  });
+
+  const hasMissingPrograms = allPrograms.some(
+    programs => programs.length !== commonPrograms.length
+  );
+
+  for (const row of rows) {
+    const rowPrograms = row?.item?.programs ?? [];
+    const hasAllCommonPrograms = commonPrograms.every(commonProgram =>
+      rowPrograms.some(rowProgram => rowProgram.id === commonProgram.id)
+    );
+
+    if (hasAllCommonPrograms) {
+      return { itemId: row?.item?.id ?? null, hasMissingPrograms };
+    }
+  }
+
+  return { itemId: null, hasMissingPrograms: true };
 };
