@@ -120,17 +120,22 @@ export const findCommonProgramItem = <
     );
   });
 
+  if (commonPrograms.length === 0)
+    return { itemId: null, hasMissingPrograms: true };
+
   const hasMissingPrograms = allPrograms.some(
     programs => programs.length !== commonPrograms.length
   );
 
   for (const row of rows) {
     const rowPrograms = row?.item?.programs ?? [];
-    const hasAllCommonPrograms = commonPrograms.every(commonProgram =>
-      rowPrograms.some(rowProgram => rowProgram.id === commonProgram.id)
-    );
+    const hasCommon =
+      rowPrograms.length === commonPrograms.length &&
+      commonPrograms.every(commonProgram =>
+        rowPrograms.some(rowProgram => rowProgram.id === commonProgram.id)
+      );
 
-    if (hasAllCommonPrograms) {
+    if (hasCommon) {
       return { itemId: row?.item?.id ?? null, hasMissingPrograms };
     }
   }
