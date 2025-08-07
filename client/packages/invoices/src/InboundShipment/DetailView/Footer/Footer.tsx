@@ -13,7 +13,11 @@ import {
   RewindIcon,
   Action,
   ActionsFooter,
+  ArrowRightIcon,
+  useEditModal,
+  useTableStore,
 } from '@openmsupply-client/common';
+import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
   getStatusTranslator,
   inboundStatuses,
@@ -66,12 +70,16 @@ interface FooterComponentProps {
 export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
+  const { clearSelected } = useTableStore();
+  const changeCampaignOrProgramModal = useEditModal();
 
   const { data } = useInbound.document.get();
-  const isManuallyCreated = !data?.linkedShipment?.id;
   const onDelete = useInbound.lines.deleteSelected();
   const onZeroQuantities = useInbound.lines.zeroQuantities();
   const selectedLines = useInbound.utils.selectedLines();
+  const { onChangeCampaignOrProgram } =
+    useInbound.lines.changeCampaignOrProgram(selectedLines);
+  const isManuallyCreated = !data?.linkedShipment?.id;
 
   const actions: Action[] = [
     {
@@ -80,15 +88,21 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
       onClick: onDelete,
     },
     {
-      label: t('button.return-lines'),
-      icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedLines),
+      label: t('button.change-campaign-or-program'),
+      icon: <ArrowRightIcon />,
+      onClick: () => changeCampaignOrProgramModal.onOpen(),
       shouldShrink: false,
     },
     {
       label: t('button.zero-line-quantity'),
       icon: <RewindIcon />,
       onClick: onZeroQuantities,
+      shouldShrink: false,
+    },
+    {
+      label: t('button.return-lines'),
+      icon: <ArrowLeftIcon />,
+      onClick: () => onReturnLines(selectedLines),
       shouldShrink: false,
     },
   ];
@@ -135,6 +149,15 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
               </Box>
             </Box>
           ) : null}
+          {
+            <ChangeCampaignOrProgramConfirmationModal
+              isOpen={changeCampaignOrProgramModal.isOpen}
+              onCancel={changeCampaignOrProgramModal.onClose}
+              clearSelected={clearSelected}
+              rows={selectedLines}
+              onChange={onChangeCampaignOrProgram}
+            />
+          }
         </>
       }
     />
