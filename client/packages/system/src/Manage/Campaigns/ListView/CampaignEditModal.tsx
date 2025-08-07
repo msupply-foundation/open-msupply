@@ -7,7 +7,6 @@ import {
   DialogButton,
   InputWithLabelRow,
   BasicTextInput,
-  DateUtils,
   DateTimePickerInput,
 } from '@openmsupply-client/common';
 import { DraftCampaign, defaultDraftCampaign } from '../api';
@@ -66,7 +65,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
             Input={
               <DateTimePickerInput
                 width={250}
-                value={DateUtils.getNaiveDate(startDate)}
+                value={new Date(startDate ?? '')}
                 onChange={startDate => updateDraft({ startDate })}
               />
             }
@@ -77,7 +76,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
             Input={
               <DateTimePickerInput
                 width={250}
-                value={DateUtils.getNaiveDate(endDate)}
+                value={new Date(endDate ?? '')}
                 onChange={endDate => updateDraft({ endDate })}
               />
             }
