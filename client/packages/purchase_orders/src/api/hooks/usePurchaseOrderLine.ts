@@ -121,6 +121,7 @@ const useCreate = () => {
         id: draft.id,
         itemId: draft.itemId,
         purchaseOrderId: draft.purchaseOrderId,
+        packSize: draft.packSize,
         requestedQuantity: draft.requestedNumberOfUnits,
         requestedDeliveryDate: draft.requestedDeliveryDate,
         expectedDeliveryDate: draft.expectedDeliveryDate,

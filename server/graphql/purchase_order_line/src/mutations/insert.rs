@@ -16,7 +16,8 @@ pub struct InsertInput {
     pub id: String,
     pub purchase_order_id: String,
     pub item_id: String,
-    pub requested_quantity: Option<f64>,
+    pub requested_pack_size: Option<f64>,
+    pub requested_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
 }
@@ -27,7 +28,8 @@ impl InsertInput {
             id,
             purchase_order_id,
             item_id,
-            requested_quantity,
+            requested_pack_size,
+            requested_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
         } = self;
@@ -36,7 +38,8 @@ impl InsertInput {
             id,
             purchase_order_id,
             item_id,
-            requested_quantity,
+            requested_pack_size,
+            requested_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
         }

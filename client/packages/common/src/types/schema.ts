@@ -3608,7 +3608,8 @@ export type InsertPurchaseOrderLineInput = {
   itemId: Scalars['String']['input'];
   purchaseOrderId: Scalars['String']['input'];
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
-  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+  requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
+  requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertPurchaseOrderLineResponse = IdResponse;
@@ -9940,9 +9941,9 @@ export type UpdatePurchaseOrderLineInput = {
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
-  packSize?: InputMaybe<Scalars['Float']['input']>;
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
-  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
+  requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
+  requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdatePurchaseOrderLineResponse =

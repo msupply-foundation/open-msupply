@@ -22,8 +22,8 @@ use crate::mutations::errors::{
 pub struct UpdateInput {
     pub id: String,
     pub item_id: Option<String>,
-    pub pack_size: Option<f64>,
-    pub requested_quantity: Option<f64>,
+    pub requested_pack_size: Option<f64>,
+    pub requested_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
 }
@@ -33,8 +33,8 @@ impl UpdateInput {
         let UpdateInput {
             id,
             item_id,
-            pack_size,
-            requested_quantity,
+            requested_pack_size,
+            requested_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
         } = self;
@@ -42,8 +42,8 @@ impl UpdateInput {
         ServiceInput {
             id,
             item_id,
-            requested_pack_size: pack_size,
-            requested_number_of_units: requested_quantity,
+            requested_pack_size,
+            requested_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
         }
