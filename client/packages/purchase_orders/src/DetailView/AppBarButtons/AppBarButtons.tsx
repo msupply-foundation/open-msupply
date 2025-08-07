@@ -32,12 +32,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        {/* <ButtonWithIcon
-          disabled={isDisabled}
-          label={t('button.add-item')}
-          Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem()}
-        /> */}
         <ReportSelector
           context={ReportContext.PurchaseOrder}
           dataId={data?.id ?? ''}
@@ -45,13 +39,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         />
         <AddButton
           purchaseOrder={data ?? undefined}
-          onAddItem={() => onAddItem()}
+          onAddItem={onAddItem}
           disable={isDisabled}
           disableAddFromMasterListButton={isLoading}
           disableAddFromInternalOrderButton={isLoading}
         />
-        {/* <AddFromMasterListButton /> */}
-        {/* <UseSuggestedQuantityButton /> */}
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>
