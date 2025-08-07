@@ -1,13 +1,17 @@
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use chrono::{DateTime, NaiveDate, Utc};
+use graphql_core::loader::{NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader};
 use graphql_core::ContextExt;
+use graphql_types::types::{purchase_order, NameNode};
 use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
-// use repository::{GoodsReceivedRow, GoodsReceivedStatus};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
 pub struct GoodsReceivedNode {
     pub goods_received: GoodsReceivedRow,
 }
+
 #[derive(SimpleObject)]
 pub struct GoodsReceivedConnector {
     pub total_count: u32,
@@ -19,6 +23,7 @@ impl GoodsReceivedNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
+
     pub async fn number(&self) -> &i64 {
         &self.row().goods_received_number
     }
@@ -30,6 +35,50 @@ impl GoodsReceivedNode {
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
     }
+
+    pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
+        let po_loader = ctx.get_loader::<DataLoader<PurchaseOrderByIdLoader>>();
+        let purchase_order = po_loader
+            .load_one(self.row().id.clone())
+            .await?
+            .map(purchase_order::PurchaseOrderNode::from_domain);
+
+        if let Some(po) = purchase_order {
+            let name_loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+            let name = name_loader
+                .load_one(NameByIdLoaderInput::new(
+                    &po.row().store_id,
+                    &po.row().supplier_name_link_id,
+                ))
+                .await?
+                .map(NameNode::from_domain);
+            return Ok(name);
+        }
+        return Ok(None);
+    }
+
+    pub async fn purchase_order_number(&self) -> &Option<String> {
+        &self.row().purchase_order_id
+    }
+
+    pub async fn supplier_reference(&self) -> &Option<String> {
+        &self.row().supplier_reference
+    }
+
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::from_naive_utc_and_offset(self.row().created_datetime, Utc)
+    }
+
+    pub async fn received_datetime(&self) -> Option<NaiveDate> {
+        self.row().received_date
+    }
+}
+
+// Add a simple supplier node for the supplier field
+#[derive(SimpleObject)]
+pub struct SupplierNode {
+    pub id: String,
+    pub name: String,
 }
 
 impl GoodsReceivedNode {

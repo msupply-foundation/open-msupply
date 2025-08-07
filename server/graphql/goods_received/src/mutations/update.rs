@@ -75,7 +75,7 @@ pub enum UpdateResponse {
 pub fn update_goods_received(
     ctx: &Context<'_>,
     store_id: &str,
-    input: UpdateInput,
+    _input: UpdateInput,
 ) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
@@ -86,7 +86,7 @@ pub fn update_goods_received(
     );
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user?.user_id)?;
+    let _service_context = service_provider.context(store_id.to_string(), user?.user_id)?;
 
     // map_response(
     //     service_provider

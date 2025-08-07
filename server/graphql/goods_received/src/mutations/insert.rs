@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::validate_auth;
-use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
+// use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
 use graphql_types::types::IdResponse;
 // use repository::GoodsReceivedRow;
@@ -38,7 +38,7 @@ pub enum InsertResponse {
 pub fn insert_goods_received(
     ctx: &Context<'_>,
     store_id: &str,
-    input: InsertInput,
+    _input: InsertInput,
 ) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
@@ -48,7 +48,7 @@ pub fn insert_goods_received(
         },
     )?;
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let _service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     // TODO: Implement the actual insertion logic
     // map_response(

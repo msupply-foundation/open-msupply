@@ -7,12 +7,16 @@ export type GoodsReceivedRowFragment = {
   __typename: 'GoodsReceivedNode';
   id: string;
   number: number;
+  status: Types.GoodsReceivedNodeStatus;
+  comment?: string | null;
 };
 
 export type GoodsReceivedFragment = {
   __typename: 'GoodsReceivedNode';
   id: string;
   number: number;
+  status: Types.GoodsReceivedNodeStatus;
+  comment?: string | null;
 };
 
 export type GoodsReceivedListQueryVariables = Types.Exact<{
@@ -33,6 +37,8 @@ export type GoodsReceivedListQuery = {
       __typename: 'GoodsReceivedNode';
       id: string;
       number: number;
+      status: Types.GoodsReceivedNodeStatus;
+      comment?: string | null;
     }>;
   };
 };
@@ -45,7 +51,13 @@ export type GoodsReceivedByIdQueryVariables = Types.Exact<{
 export type GoodsReceivedByIdQuery = {
   __typename: 'Queries';
   goodsReceived:
-    | { __typename: 'GoodsReceivedNode'; id: string; number: number }
+    | {
+        __typename: 'GoodsReceivedNode';
+        id: string;
+        number: number;
+        status: Types.GoodsReceivedNodeStatus;
+        comment?: string | null;
+      }
     | { __typename: 'RecordNotFound'; description: string };
 };
 
@@ -53,6 +65,8 @@ export const GoodsReceivedRowFragmentDoc = gql`
   fragment GoodsReceivedRow on GoodsReceivedNode {
     id
     number
+    status
+    comment
   }
 `;
 export const GoodsReceivedFragmentDoc = gql`
@@ -60,6 +74,8 @@ export const GoodsReceivedFragmentDoc = gql`
     __typename
     id
     number
+    status
+    comment
   }
 `;
 export const GoodsReceivedListDocument = gql`
