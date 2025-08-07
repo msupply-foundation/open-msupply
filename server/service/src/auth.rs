@@ -157,6 +157,10 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
+    // Goods Received
+    MutateGoodsReceived,
+    QueryGoodsReceived,
+    AuthoriseGoodsReceived,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -699,6 +703,21 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::AuthorisePurchaseOrder,
         PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
     );
+
+    // TODO: Map the Goods Received permissions from Legacy
+    map.insert(
+        Resource::QueryGoodsReceived,
+        PermissionDSL::HasPermission(PermissionType::PurchaseOrderQuery),
+    );
+    map.insert(
+        Resource::MutateGoodsReceived,
+        PermissionDSL::HasPermission(PermissionType::PurchaseOrderMutate),
+    );
+    map.insert(
+        Resource::AuthoriseGoodsReceived,
+        PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+    );
+    // End TODO: Map the Goods Received permissions from Legacy
 
     map
 }

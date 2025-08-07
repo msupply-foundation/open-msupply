@@ -25,7 +25,7 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
     fn get_purchase_order(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
+        store_id: Option<&str>,
         id: &str,
     ) -> Result<Option<PurchaseOrderRow>, RepositoryError> {
         get_purchase_order(ctx, store_id, id)
@@ -34,7 +34,7 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
     fn get_purchase_orders(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
+        store_id: Option<&str>,
         pagination: Option<PaginationOption>,
         filter: Option<PurchaseOrderFilter>,
         sort: Option<PurchaseOrderSort>,

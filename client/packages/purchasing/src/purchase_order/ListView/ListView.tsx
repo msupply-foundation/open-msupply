@@ -22,7 +22,7 @@ import {
   DeliveryStatus,
   getDeliveryStatusTranslator,
   getStatusTranslator,
-} from '../utils';
+} from '../../utils';
 
 const ListView: FC = () => {
   const t = useTranslation();

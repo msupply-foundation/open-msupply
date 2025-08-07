@@ -1,6 +1,9 @@
 import { LocaleKey, useTranslation } from '@common/intl';
-import { PurchaseOrderNodeStatus } from '@common/types';
-import { PurchaseOrderFragment } from './api';
+import {
+  PurchaseOrderNodeStatus,
+  GoodsReceivedNodeStatus,
+} from '@common/types';
+import { PurchaseOrderFragment } from './purchase_order/api';
 
 const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
   NEW: 'label.new',
@@ -21,6 +24,16 @@ const deliveryStatusTranslation: Record<DeliveryStatus, LocaleKey> = {
   FULLY_DELIVERED: 'label.fully-delivered',
 };
 
+const goodsReceivedStatusTranslation: Record<
+  GoodsReceivedNodeStatus,
+  LocaleKey
+> = {
+  NEW: 'label.new',
+  CONFIRMED: 'label.confirmed',
+  AUTHORISED: 'label.authorised',
+  FINALISED: 'label.finalised',
+};
+
 export const getStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
   (currentStatus: PurchaseOrderNodeStatus): string => {
@@ -36,6 +49,16 @@ export const getDeliveryStatusTranslator =
     return t(
       deliveryStatusTranslation[currentStatus] ??
         deliveryStatusTranslation[DeliveryStatus.NotDelivered]
+    );
+  };
+
+export const getGoodsReceivedStatusTranslator =
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: unknown): string => {
+    const status = currentStatus as GoodsReceivedNodeStatus;
+    return t(
+      goodsReceivedStatusTranslation[status] ??
+        goodsReceivedStatusTranslation[GoodsReceivedNodeStatus.New]
     );
   };
 
