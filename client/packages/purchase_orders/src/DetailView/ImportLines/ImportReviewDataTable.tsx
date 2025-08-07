@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ColumnDescription,
   DataTable,
@@ -17,10 +17,10 @@ interface ImportReviewDataTableProps {
   importRows: ImportRow[];
   showWarnings: boolean;
 }
-export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
+export const ImportReviewDataTable = ({
   importRows,
   showWarnings,
-}) => {
+}: ImportReviewDataTableProps) => {
   const t = useTranslation();
   const { height } = useWindowDimensions();
 

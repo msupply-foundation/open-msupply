@@ -153,12 +153,23 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   };
 
   const importSteps = [
-    { label: t('label.upload'), description: '', clickable: true },
-    { label: t('label.review'), description: '', clickable: false },
+    {
+      label: t('label.upload'),
+      description: '',
+      clickable: true,
+      tab: Tabs.Upload,
+    },
+    {
+      label: t('label.review'),
+      description: '',
+      clickable: false,
+      tab: Tabs.Review,
+    },
     {
       label: t('label.import'),
       description: '',
       clickable: false,
+      tab: Tabs.Import,
     },
   ];
 

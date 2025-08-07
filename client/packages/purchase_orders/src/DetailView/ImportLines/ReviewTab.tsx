@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { ImportRow } from './PurchaseOrderLineImportModal';
 import { ImportReviewDataTable } from './ImportReviewDataTable';
 import { ImportPanel } from '@common/components';
@@ -8,11 +8,11 @@ interface ReviewTabProps {
   showWarnings: boolean;
 }
 
-export const ReviewTab: FC<ImportPanel & ReviewTabProps> = ({
+export const ReviewTab = ({
   showWarnings,
   tab,
   uploadedRows,
-}) => (
+}: ImportPanel & ReviewTabProps) => (
   <ImportPanel tab={tab}>
     <ImportReviewDataTable
       importRows={uploadedRows}

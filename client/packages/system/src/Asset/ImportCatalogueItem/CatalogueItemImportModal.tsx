@@ -222,13 +222,13 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
     }
   };
 
-  const onClickStep = (tabName: string) => {
+  const onClickStep = (tabName: Tabs) => {
     switch (tabName) {
       case Tabs.Upload:
-        changeTab(tabName as Tabs);
+        changeTab(tabName);
         break;
       case Tabs.Review:
-        changeTab(tabName as Tabs);
+        changeTab(tabName);
         break;
       case Tabs.Import:
         // Do nothing, user can't get to the import page without clicking the import button
@@ -264,12 +264,23 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   );
 
   const importSteps = [
-    { label: t('label.upload'), description: '', clickable: true },
-    { label: t('label.review'), description: '', clickable: true },
+    {
+      label: t('label.upload'),
+      description: '',
+      clickable: true,
+      tab: Tabs.Upload,
+    },
+    {
+      label: t('label.review'),
+      description: '',
+      clickable: true,
+      tab: Tabs.Review,
+    },
     {
       label: t('label.import'),
       description: '',
       clickable: false,
+      tab: Tabs.Import,
     },
   ];
 
