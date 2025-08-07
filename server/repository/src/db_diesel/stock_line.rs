@@ -57,6 +57,7 @@ pub struct StockLineFilter {
     pub item_code_or_name: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
+    pub vvm_status_id: Option<EqualFilter<String>>,
     pub is_available: Option<bool>,
     pub expiry_date: Option<DateFilter>,
     pub store_id: Option<EqualFilter<String>>,
@@ -198,6 +199,7 @@ impl<'a> StockLineRepository<'a> {
                 item_code_or_name: _,
                 item_id,
                 location_id,
+                vvm_status_id,
                 store_id,
                 has_packs_in_store,
                 location,
@@ -210,6 +212,7 @@ impl<'a> StockLineRepository<'a> {
             apply_equal_filter!(query, location_id, stock_line::location_id);
             apply_date_filter!(query, expiry_date, stock_line::expiry_date);
             apply_equal_filter!(query, store_id, stock_line::store_id);
+            apply_equal_filter!(query, vvm_status_id, stock_line::vvm_status_id);
 
             if let Some(is_active) = is_active {
                 query = query.filter(item::is_active.eq(is_active));
@@ -332,6 +335,11 @@ impl StockLineFilter {
 
     pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
         self.location_id = Some(filter);
+        self
+    }
+
+    pub fn vvm_status_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.vvm_status_id = Some(filter);
         self
     }
 
