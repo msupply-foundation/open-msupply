@@ -2895,9 +2895,14 @@ export type GoodsReceivedListResponse = GoodsReceivedConnector;
 export type GoodsReceivedNode = {
   __typename: 'GoodsReceivedNode';
   comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   number: Scalars['Int']['output'];
+  purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;
+  receivedDatetime?: Maybe<Scalars['NaiveDate']['output']>;
   status: GoodsReceivedNodeStatus;
+  supplier?: Maybe<NameNode>;
+  supplierReference?: Maybe<Scalars['String']['output']>;
 };
 
 export enum GoodsReceivedNodeStatus {

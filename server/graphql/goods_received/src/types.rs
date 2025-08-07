@@ -37,9 +37,14 @@ impl GoodsReceivedNode {
     }
 
     pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
+        let po_id = match self.row().purchase_order_id {
+            Some(ref id) => id,
+            None => return Ok(None),
+        };
+
         let po_loader = ctx.get_loader::<DataLoader<PurchaseOrderByIdLoader>>();
         let purchase_order = po_loader
-            .load_one(self.row().id.clone())
+            .load_one(po_id.clone())
             .await?
             .map(purchase_order::PurchaseOrderNode::from_domain);
 
@@ -57,8 +62,22 @@ impl GoodsReceivedNode {
         return Ok(None);
     }
 
-    pub async fn purchase_order_number(&self) -> &Option<String> {
-        &self.row().purchase_order_id
+    pub async fn purchase_order_number(&self, ctx: &Context<'_>) -> Result<Option<i64>> {
+        let po_id = match self.row().purchase_order_id {
+            Some(ref id) => id,
+            None => return Ok(None),
+        };
+
+        let po_loader = ctx.get_loader::<DataLoader<PurchaseOrderByIdLoader>>();
+        let purchase_order = po_loader
+            .load_one(po_id.clone())
+            .await?
+            .map(purchase_order::PurchaseOrderNode::from_domain);
+
+        match purchase_order {
+            Some(po) => Ok(Some(po.row().purchase_order_number)),
+            None => Ok(None),
+        }
     }
 
     pub async fn supplier_reference(&self) -> &Option<String> {
@@ -72,13 +91,6 @@ impl GoodsReceivedNode {
     pub async fn received_datetime(&self) -> Option<NaiveDate> {
         self.row().received_date
     }
-}
-
-// Add a simple supplier node for the supplier field
-#[derive(SimpleObject)]
-pub struct SupplierNode {
-    pub id: String,
-    pub name: String,
 }
 
 impl GoodsReceivedNode {

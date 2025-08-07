@@ -3,12 +3,14 @@ fragment GoodsReceivedRow on GoodsReceivedNode {
   number
   status
   comment
-  # Fields that need to be added to GraphQL schema:
-  # supplier { id name }
-  # purchaseOrderNumber
-  # supplierReference
-  # createdDatetime
-  # receivedDatetime
+  createdDatetime
+  receivedDatetime
+  purchaseOrderNumber
+  supplierReference
+  supplier {
+    id
+    name
+  }
 }
 
 fragment GoodsReceived on GoodsReceivedNode {
@@ -17,12 +19,14 @@ fragment GoodsReceived on GoodsReceivedNode {
   number
   status
   comment
-  # Fields that need to be added to GraphQL schema:
-  # supplier { id name }
-  # purchaseOrderNumber
-  # supplierReference
-  # createdDatetime
-  # receivedDatetime
+  createdDatetime
+  receivedDatetime
+  purchaseOrderNumber
+  supplierReference
+  supplier {
+    id
+    name
+  }
 }
 
 query goodsReceivedList(
