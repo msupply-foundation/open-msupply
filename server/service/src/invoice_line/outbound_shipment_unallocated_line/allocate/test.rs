@@ -12,10 +12,8 @@ mod test {
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceType,
         PreferenceRow, PreferenceRowRepository, StockLine, StockLineRow,
     };
-    use util::{
-        constants::stock_line_expiring_soon_offset, date_now, date_now_with_offset, inline_edit,
-        inline_init,
-    };
+    use util::constants::stock_line_expiring_soon_offset;
+    use util::{date_now, date_now_with_offset};
 
     use crate::{
         invoice_line::AllocateOutboundShipmentUnallocatedLineError as ServiceError,
@@ -53,55 +51,60 @@ mod test {
     #[actix_rt::test]
     async fn allocate_unallocated_line_basic_success() {
         fn invoice() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice".to_string();
-                r.store_id = mock_store_a().id;
-                r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceType::OutboundShipment;
-            })
+            InvoiceRow {
+                id: "invoice".to_string(),
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            }
         }
 
         fn line() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "line".to_string();
-                r.invoice_id = invoice().id;
-                r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineType::UnallocatedStock;
-                r.number_of_packs = 20.0;
-                r.pack_size = 1.0;
-            })
+            InvoiceLineRow {
+                id: "line".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 20.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
         }
 
         fn stock_line() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 2.0;
-                r.available_number_of_packs = 30.0;
-            })
+            StockLineRow {
+                id: "stock_line".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 2.0,
+                available_number_of_packs: 30.0,
+                ..Default::default()
+            }
         }
 
         // Stock line belonging to another store
         fn stock_line2() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line2".to_string();
-                r.store_id = mock_store_b().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 2.0;
-                r.available_number_of_packs = 30.0;
-            })
+            StockLineRow {
+                id: "stock_line2".to_string(),
+                store_id: mock_store_b().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 2.0,
+                available_number_of_packs: 30.0,
+                ..Default::default()
+            }
         }
 
         // Stock line belonging to another item
         fn stock_line3() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line3".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_b().id;
-                r.pack_size = 2.0;
-                r.available_number_of_packs = 30.0;
-            })
+            StockLineRow {
+                id: "stock_line3".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_b().id,
+                pack_size: 2.0,
+                available_number_of_packs: 30.0,
+                ..Default::default()
+            }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
@@ -112,11 +115,12 @@ mod test {
                 .names()
                 .units()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice()];
-                r.invoice_lines = vec![line()];
-                r.stock_lines = vec![stock_line(), stock_line2(), stock_line3()];
-            }),
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![line()],
+                stock_lines: vec![stock_line(), stock_line2(), stock_line3()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -143,69 +147,68 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line,
-            inline_edit(&new_line, |mut u| {
-                u.number_of_packs = 10.0;
-                u.pack_size = 2.0;
-                u
-            })
-        );
+        assert_eq!(new_line.number_of_packs, 10.0);
+        assert_eq!(new_line.pack_size, 2.0);
     }
 
     #[actix_rt::test]
     async fn allocate_unallocated_line_partial_allocate_and_fefo() {
         fn invoice() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice".to_string();
-                r.store_id = mock_store_a().id;
-                r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceType::OutboundShipment;
-            })
+            InvoiceRow {
+                id: "invoice".to_string(),
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            }
         }
 
         fn line() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "line".to_string();
-                r.invoice_id = invoice().id;
-                r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineType::UnallocatedStock;
-                r.number_of_packs = 50.0;
-                r.pack_size = 1.0;
-            })
+            InvoiceLineRow {
+                id: "line".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 50.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
         }
 
         fn stock_line() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "first_expiring".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 3.0;
-                r.available_number_of_packs = 10.0;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 1, 1).unwrap());
-            })
+            StockLineRow {
+                id: "first_expiring".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 3.0,
+                available_number_of_packs: 10.0,
+                expiry_date: Some(NaiveDate::from_ymd_opt(3021, 1, 1).unwrap()),
+                ..Default::default()
+            }
         }
 
         fn stock_line2() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "second_expiring".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 3.0;
-                r.available_number_of_packs = 2.0;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
-            })
+            StockLineRow {
+                id: "second_expiring".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 3.0,
+                available_number_of_packs: 2.0,
+                expiry_date: Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap()),
+                ..Default::default()
+            }
         }
 
         fn stock_line3() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "non_expiring".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 1.0;
-                r.available_number_of_packs = 2.0;
-                r.expiry_date = None;
-            })
+            StockLineRow {
+                id: "non_expiring".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 2.0,
+                expiry_date: None,
+                ..Default::default()
+            }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
@@ -216,12 +219,13 @@ mod test {
                 .names()
                 .units()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice()];
-                r.invoice_lines = vec![line()];
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![line()],
                 // make sure to insert in wrong order
-                r.stock_lines = vec![stock_line3(), stock_line2(), stock_line()];
-            }),
+                stock_lines: vec![stock_line3(), stock_line2(), stock_line()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -246,130 +250,103 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line1,
-            InvoiceLineRow {
-                stock_line_id: Some("first_expiring".to_string()),
-                number_of_packs: 10.0,
-                pack_size: 3.0,
-                ..new_line1.clone()
-            }
-        );
+        assert_eq!(new_line1.stock_line_id, Some("first_expiring".to_string()));
 
         let new_line2 = repo
             .find_one_by_id(&result.inserts[1].invoice_line_row.id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line2,
-            InvoiceLineRow {
-                stock_line_id: Some("second_expiring".to_string()),
-                number_of_packs: 2.0,
-                pack_size: 3.0,
-                ..new_line2.clone()
-            }
-        );
+        assert_eq!(new_line2.stock_line_id, Some("second_expiring".to_string()));
 
         let new_line3 = repo
             .find_one_by_id(&result.inserts[2].invoice_line_row.id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line3,
-            InvoiceLineRow {
-                stock_line_id: Some("non_expiring".to_string()),
-                number_of_packs: 2.0,
-                pack_size: 1.0,
-                ..new_line3.clone()
-            }
-        );
+        assert_eq!(new_line3.stock_line_id, Some("non_expiring".to_string()));
 
         let updated_unallocated_line = repo
             .find_one_by_id(&result.updates[0].invoice_line_row.id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            updated_unallocated_line,
-            inline_edit(&updated_unallocated_line, |mut u| {
-                u.number_of_packs = 12.0;
-                u
-            })
-        );
+        assert_eq!(updated_unallocated_line.number_of_packs, 12.0);
     }
 
     #[actix_rt::test]
     async fn allocate_unallocated_line_allocate_alerts() {
         fn invoice() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice".to_string();
-                r.store_id = mock_store_a().id;
-                r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceType::OutboundShipment;
-            })
+            InvoiceRow {
+                id: "invoice".to_string(),
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            }
         }
 
         fn line() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "line".to_string();
-                r.invoice_id = invoice().id;
-                r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineType::UnallocatedStock;
-                r.number_of_packs = 3.0;
-                r.pack_size = 1.0;
-            })
+            InvoiceLineRow {
+                id: "line".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 3.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
         }
 
         fn base_stock_line(id: &str) -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = id.to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 1.0;
-                r.available_number_of_packs = 1.0;
-            })
+            StockLineRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 1.0,
+                ..Default::default()
+            }
         }
 
         fn stock_line_expired() -> StockLineRow {
-            inline_edit(&base_stock_line("stock_line_expired"), |mut u| {
-                u.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
-                u
-            })
+            StockLineRow {
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap()),
+                ..base_stock_line("stock_line_expired")
+            }
         }
 
         fn stock_line_expiring_soon() -> StockLineRow {
-            inline_edit(&base_stock_line("stock_line_expiring_soon"), |mut u| {
-                u.expiry_date = Some(date_now_with_offset(
+            StockLineRow {
+                expiry_date: Some(date_now_with_offset(
                     stock_line_expiring_soon_offset() - Duration::days(1),
-                ));
-                u
-            })
+                )),
+                ..base_stock_line("stock_line_expiring_soon")
+            }
         }
 
         fn stock_line_on_hold() -> StockLineRow {
-            inline_edit(&base_stock_line("stock_line_on_hold"), |mut u| {
-                u.expiry_date = Some(date_now());
-                u.on_hold = true;
-                u
-            })
+            StockLineRow {
+                expiry_date: Some(date_now()),
+                on_hold: true,
+                ..base_stock_line("stock_line_on_hold")
+            }
         }
 
         fn stock_line_not_expired() -> StockLineRow {
-            inline_edit(&base_stock_line("stock_line_not_expired"), |mut u| {
-                u.expiry_date = Some(date_now_with_offset(
+            StockLineRow {
+                expiry_date: Some(date_now_with_offset(
                     stock_line_expiring_soon_offset() + Duration::days(1),
-                ));
-                u
-            })
+                )),
+                ..base_stock_line("stock_line_not_expired")
+            }
         }
 
         fn stock_line_expiry_null() -> StockLineRow {
-            inline_edit(&base_stock_line("stock_line_expiry_null"), |mut u| {
-                u.expiry_date = None;
-                u
-            })
+            StockLineRow {
+                expiry_date: None,
+                ..base_stock_line("stock_line_expiry_null")
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
@@ -380,18 +357,19 @@ mod test {
                 .names()
                 .units()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice()];
-                r.invoice_lines = vec![line()];
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![line()],
                 // make sure to insert in wrong order
-                r.stock_lines = vec![
+                stock_lines: vec![
                     stock_line_expiry_null(),
                     stock_line_not_expired(),
                     stock_line_on_hold(),
                     stock_line_expiring_soon(),
                     stock_line_expired(),
-                ];
-            }),
+                ],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -430,104 +408,114 @@ mod test {
 
         assert_eq!(
             result.skipped_expired_stock_lines[0],
-            inline_init(|r: &mut StockLine| {
-                r.stock_line_row = stock_line_expired();
-                r.item_row = mock_item_a();
-            })
+            StockLine {
+                stock_line_row: stock_line_expired(),
+                item_row: mock_item_a(),
+                ..Default::default()
+            }
         );
 
         assert_eq!(
             result.skipped_on_hold_stock_lines[0],
-            inline_init(|r: &mut StockLine| {
-                r.stock_line_row = stock_line_on_hold();
-                r.item_row = mock_item_a();
-            })
+            StockLine {
+                stock_line_row: stock_line_on_hold(),
+                item_row: mock_item_a(),
+                ..Default::default()
+            }
         );
 
         assert_eq!(
             result.issued_expiring_soon_stock_lines[0],
-            inline_init(|r: &mut StockLine| {
-                r.stock_line_row = stock_line_expiring_soon();
-                r.item_row = mock_item_a();
-            })
+            StockLine {
+                stock_line_row: stock_line_expiring_soon(),
+                item_row: mock_item_a(),
+                ..Default::default()
+            }
         );
     }
 
     #[actix_rt::test]
     async fn allocate_unallocated_line_add_to_existing_lines() {
         fn invoice() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice".to_string();
-                r.store_id = mock_store_a().id;
-                r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceType::OutboundShipment;
-            })
+            InvoiceRow {
+                id: "invoice".to_string(),
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            }
         }
 
         fn line() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "line".to_string();
-                r.invoice_id = invoice().id;
-                r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineType::UnallocatedStock;
-                r.number_of_packs = 50.0;
-                r.pack_size = 1.0;
-            })
+            InvoiceLineRow {
+                id: "line".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 50.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
         }
 
         fn stock_line() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 1.0;
-                r.available_number_of_packs = 30.0;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
-            })
+            StockLineRow {
+                id: "stock_line".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 30.0,
+                expiry_date: Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap()),
+                ..Default::default()
+            }
         }
 
         fn allocated_line() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "allocated_line".to_string();
-                r.invoice_id = invoice().id;
-                r.item_link_id = mock_item_a().id;
-                r.stock_line_id = Some(stock_line().id);
-                r.r#type = InvoiceLineType::StockOut;
-                r.number_of_packs = 2.0;
-                r.pack_size = 1.0;
-            })
+            InvoiceLineRow {
+                id: "allocated_line".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: mock_item_a().id,
+                stock_line_id: Some(stock_line().id),
+                r#type: InvoiceLineType::StockOut,
+                number_of_packs: 2.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
         }
 
         fn stock_line2() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line2".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 1.0;
-                r.available_number_of_packs = 5.0;
-            })
+            StockLineRow {
+                id: "stock_line2".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 5.0,
+                ..Default::default()
+            }
         }
 
         fn allocated_line2() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "allocated_line2".to_string();
-                r.invoice_id = invoice().id;
-                r.item_link_id = mock_item_a().id;
-                r.stock_line_id = Some(stock_line2().id);
-                r.r#type = InvoiceLineType::StockOut;
-                r.number_of_packs = 10.0;
-                r.pack_size = 1.0;
-            })
+            InvoiceLineRow {
+                id: "allocated_line2".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: mock_item_a().id,
+                stock_line_id: Some(stock_line2().id),
+                r#type: InvoiceLineType::StockOut,
+                number_of_packs: 10.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
         }
 
         fn stock_line3() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line3".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 1.0;
-                r.available_number_of_packs = 100.0;
-            })
+            StockLineRow {
+                id: "stock_line3".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 100.0,
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
@@ -538,11 +526,12 @@ mod test {
                 .names()
                 .units()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice()];
-                r.invoice_lines = vec![line(), allocated_line(), allocated_line2()];
-                r.stock_lines = vec![stock_line(), stock_line2(), stock_line3()];
-            }),
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![line(), allocated_line(), allocated_line2()],
+                stock_lines: vec![stock_line(), stock_line2(), stock_line3()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -561,65 +550,50 @@ mod test {
         assert_eq!(result.updates.len(), 2);
 
         let update = result.updates[0].clone();
-        assert_eq!(
-            update,
-            inline_edit(&update, |mut u| {
-                u.invoice_line_row.id = allocated_line().id;
-                u.invoice_line_row.number_of_packs = 32.0;
-                u
-            })
-        );
+        assert_eq!(update.invoice_line_row.id, allocated_line().id);
+        assert_eq!(update.invoice_line_row.number_of_packs, 32.0);
 
         let update = result.updates[1].clone();
-        assert_eq!(
-            update,
-            inline_edit(&update, |mut u| {
-                u.invoice_line_row.id = allocated_line2().id;
-                u.invoice_line_row.number_of_packs = 15.0;
-                u
-            })
-        );
+        assert_eq!(update.invoice_line_row.id, allocated_line2().id);
+        assert_eq!(update.invoice_line_row.number_of_packs, 15.0);
 
         let insert = result.inserts[0].clone();
-        assert_eq!(
-            insert,
-            inline_edit(&insert, |mut u| {
-                u.invoice_line_row.number_of_packs = 15.0;
-                u
-            })
-        );
+        assert_eq!(insert.invoice_line_row.number_of_packs, 15.0);
     }
 
     #[actix_rt::test]
     async fn allocate_unallocated_line_round_up() {
         fn invoice() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice".to_string();
-                r.store_id = mock_store_a().id;
-                r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceType::OutboundShipment;
-            })
+            InvoiceRow {
+                id: "invoice".to_string(),
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            }
         }
 
         fn line() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "line".to_string();
-                r.invoice_id = invoice().id;
-                r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineType::UnallocatedStock;
-                r.number_of_packs = 1.0;
-                r.pack_size = 1.0;
-            })
+            InvoiceLineRow {
+                id: "line".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 1.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
         }
 
         fn stock_line() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.pack_size = 3.0;
-                r.available_number_of_packs = 3.0;
-            })
+            StockLineRow {
+                id: "stock_line".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 3.0,
+                available_number_of_packs: 3.0,
+                ..Default::default()
+            }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
@@ -630,11 +604,12 @@ mod test {
                 .names()
                 .units()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice()];
-                r.invoice_lines = vec![line()];
-                r.stock_lines = vec![stock_line()];
-            }),
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![line()],
+                stock_lines: vec![stock_line()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -661,14 +636,8 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_line,
-            inline_edit(&new_line, |mut u| {
-                u.number_of_packs = 1.0;
-                u.pack_size = 3.0;
-                u
-            })
-        );
+        assert_eq!(new_line.number_of_packs, 1.0);
+        assert_eq!(new_line.pack_size, 3.0);
     }
 
     #[actix_rt::test]

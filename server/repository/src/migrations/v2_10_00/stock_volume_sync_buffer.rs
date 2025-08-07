@@ -170,7 +170,6 @@ async fn migration_stock_volume() {
     use crate::migrations::*;
     use crate::test_db::*;
     use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
-    use util::*;
 
     let previous_version = v2_09_01::V2_09_01.version();
     let version = v2_10_00::V2_10_00.version();
@@ -248,7 +247,7 @@ async fn migration_stock_volume() {
             ('stock_line_id', $1, 'item_line', 'UPSERT', '{stock_line_sync_buffer_data}');
         "#
         ))
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -262,7 +261,7 @@ async fn migration_stock_volume() {
             ('invoice_line_id', $1, 'trans_line', 'UPSERT', '{invoice_line_sync_buffer_data}');
         "#
         ))
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -276,7 +275,7 @@ async fn migration_stock_volume() {
             ('stocktake_line_id', $1, 'Stock_take_lines', 'UPSERT', '{stocktake_line_sync_buffer_data}');
         "#
         ))
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 

@@ -143,7 +143,7 @@ mod test {
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
         StorePreferenceRow, StorePreferenceRowRepository,
     };
-    use util::{inline_edit, inline_init};
+   
 
     use crate::{
         invoice_line::stock_in_line::{
@@ -196,9 +196,10 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = "invalid".to_string();
-                }),
+                UpdateStockInLine {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::LineDoesNotExist)
         );
@@ -207,12 +208,13 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_customer_return_a_invoice_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                }),
+                    }),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::LocationDoesNotExist)
         );
@@ -221,12 +223,13 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_customer_return_a_invoice_line_a().id;
-                    r.item_variant_id = Some(NullableUpdate {
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    item_variant_id: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                }),
+                    }),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::ItemVariantDoesNotExist)
         );
@@ -235,10 +238,11 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_customer_return_a_invoice_line_a().id;
-                    r.pack_size = Some(0.0);
-                }),
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    pack_size: Some(0.0),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::PackSizeBelowOne)
         );
@@ -247,11 +251,12 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_customer_return_a_invoice_line_a().id;
-                    r.pack_size = Some(1.0);
-                    r.number_of_packs = Some(-1.0);
-                }),
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    pack_size: Some(1.0),
+                    number_of_packs: Some(-1.0),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NumberOfPacksBelowZero)
         );
@@ -260,12 +265,13 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_customer_return_a_invoice_line_a().id;
-                    r.item_id = Some("invalid".to_string());
-                    r.pack_size = Some(1.0);
-                    r.number_of_packs = Some(1.0);
-                }),
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    item_id: Some("invalid".to_string()),
+                    pack_size: Some(1.0),
+                    number_of_packs: Some(1.0),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -274,11 +280,12 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_supplier_return_a_invoice_line_a().id;
-                    r.pack_size = Some(1.0);
-                    r.number_of_packs = Some(1.0);
-                }),
+                UpdateStockInLine {
+                    id: mock_supplier_return_a_invoice_line_a().id,
+                    pack_size: Some(1.0),
+                    number_of_packs: Some(1.0),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAStockIn)
         );
@@ -287,12 +294,13 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = verified_return_line().id;
-                    r.item_id = Some(mock_item_a().id.clone());
-                    r.pack_size = Some(1.0);
-                    r.number_of_packs = Some(1.0);
-                }),
+                UpdateStockInLine {
+                    id: verified_return_line().id,
+                    item_id: Some(mock_item_a().id.clone()),
+                    pack_size: Some(1.0),
+                    number_of_packs: Some(1.0),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditFinalised)
         );
@@ -301,12 +309,13 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_customer_return_a_invoice_line_b().id; // line number_of_packs and stock_line available_number_of_packs are different
-                    r.item_id = Some(mock_item_b().id);
-                    r.pack_size = Some(1.0);
-                    r.number_of_packs = Some(1.0);
-                }),
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_b().id, // line number_of_packs and stock_line available_number_of_packs are different
+                    item_id: Some(mock_item_b().id),
+                    pack_size: Some(1.0),
+                    number_of_packs: Some(1.0),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::BatchIsReserved)
         );
@@ -331,12 +340,13 @@ mod test {
         assert_eq!(
             update_stock_in_line(
                 &context,
-                inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_customer_return_a_invoice_line_a().id;
-                    r.item_id = Some(mock_item_a().id);
-                    r.pack_size = Some(1.0);
-                    r.number_of_packs = Some(1.0);
-                }),
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    item_id: Some(mock_item_a().id),
+                    pack_size: Some(1.0),
+                    number_of_packs: Some(1.0),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -356,11 +366,12 @@ mod test {
 
         update_stock_in_line(
             &context,
-            inline_init(|r: &mut UpdateStockInLine| {
-                r.id.clone_from(&return_line_id);
-                r.pack_size = Some(2.0);
-                r.number_of_packs = Some(3.0);
-            }),
+            UpdateStockInLine {
+                id: return_line_id.clone(),
+                pack_size: Some(2.0),
+                number_of_packs: Some(3.0),
+                ..Default::default()
+            },
         )
         .unwrap();
 
@@ -369,15 +380,8 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            inbound_line_update,
-            inline_edit(&inbound_line_update, |mut u| {
-                u.id.clone_from(&return_line_id);
-                u.pack_size = 2.0;
-                u.number_of_packs = 3.0;
-                u
-            })
-        );
+        assert_eq!(inbound_line_update.pack_size, 2.0);
+        assert_eq!(inbound_line_update.number_of_packs, 3.0);
 
         // pack to one preference is set
         let pack_to_one = StorePreferenceRow {
@@ -391,13 +395,14 @@ mod test {
 
         update_stock_in_line(
             &context,
-            inline_init(|r: &mut UpdateStockInLine| {
-                r.id.clone_from(&return_line_id);
-                r.pack_size = Some(20.0);
-                r.number_of_packs = Some(20.0);
-                r.sell_price_per_pack = Some(100.0);
-                r.cost_price_per_pack = Some(60.0);
-            }),
+            UpdateStockInLine {
+                id: return_line_id.clone(),
+                pack_size: Some(20.0),
+                number_of_packs: Some(20.0),
+                sell_price_per_pack: Some(100.0),
+                cost_price_per_pack: Some(60.0),
+                ..Default::default()
+            },
         )
         .unwrap();
 
@@ -406,17 +411,10 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            inbound_line,
-            inline_edit(&inbound_line, |mut u| {
-                u.id = return_line_id;
-                u.pack_size = 1.0;
-                u.number_of_packs = 400.0;
-                u.sell_price_per_pack = 5.0;
-                u.cost_price_per_pack = 3.0;
-                u
-            })
-        );
+        assert_eq!(inbound_line.pack_size, 1.0);
+        assert_eq!(inbound_line.number_of_packs, 400.0);
+        assert_eq!(inbound_line.sell_price_per_pack, 5.0);
+        assert_eq!(inbound_line.cost_price_per_pack, 3.0);
 
         // Check vvm status id is updated on an inbound shipment with status: Delivered
         insert_stock_in_line(

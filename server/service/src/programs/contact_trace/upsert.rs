@@ -254,10 +254,7 @@ mod test {
         FormSchemaRowRepository, StringFilter,
     };
     use serde_json::json;
-    use util::{
-        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-        inline_init,
-    };
+    use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use crate::{
         programs::{
@@ -397,13 +394,13 @@ mod test {
         matches!(err, UpsertContactTraceError::InvalidDataSchema(_));
 
         // InvalidContactPatientId
-        let contact_trace = inline_init(|v: &mut SchemaContactTrace| {
-            let contact = RelatedPerson {
+        let contact_trace = SchemaContactTrace {
+            contact: Some(RelatedPerson {
                 id: Some("Invalid patient id".to_string()),
                 ..RelatedPerson::default()
-            };
-            v.contact = Some(contact);
-        });
+            }),
+            ..SchemaContactTrace::default()
+        };
         let err = service
             .upsert_contact_trace(
                 &ctx,
@@ -424,10 +421,11 @@ mod test {
 
         // success insert
 
-        let program = inline_init(|v: &mut SchemaContactTrace| {
-            v.datetime = Utc::now().with_nanosecond(0).unwrap().to_rfc3339();
-            v.contact_trace_id = Some("patient id 1".to_string());
-        });
+        let program = SchemaContactTrace {
+            datetime: Utc::now().with_nanosecond(0).unwrap().to_rfc3339(),
+            contact_trace_id: Some("patient id 1".to_string()),
+            ..SchemaContactTrace::default()
+        };
         let v0 = service
             .upsert_contact_trace(
                 &ctx,

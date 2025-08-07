@@ -85,7 +85,6 @@ pub(crate) mod test {
         mock::{mock_item_a, mock_store_a, MockData, MockDataInserts},
         InvoiceStatus, KeyValueStoreRepository, StockLineRow,
     };
-    use util::inline_edit;
 
     pub(crate) fn mock_data() -> MockData {
         let nothing_matches = StockLineRow {
@@ -107,14 +106,11 @@ pub(crate) mod test {
             make_movements(nothing_matches, vec![(2, 10), (4, -10), (5, 30), (6, -7)]);
 
         // Add reserved not picked
-        nothing_matches.invoices[3] = inline_edit(&nothing_matches.invoices[3], |mut u| {
-            u.status = InvoiceStatus::Allocated;
-            u.picked_datetime = None;
-            u.shipped_datetime = None;
-            u.received_datetime = None;
-            u.verified_datetime = None;
-            u
-        });
+        nothing_matches.invoices[3].status = InvoiceStatus::Allocated;
+        nothing_matches.invoices[3].picked_datetime = None;
+        nothing_matches.invoices[3].shipped_datetime = None;
+        nothing_matches.invoices[3].received_datetime = None;
+        nothing_matches.invoices[3].verified_datetime = None;
 
         mock_data.join(nothing_matches)
     }
@@ -147,11 +143,11 @@ pub(crate) mod test {
             .unwrap();
         assert_eq!(
             stock_line,
-            inline_edit(&stock_line, |mut u| {
-                u.total_number_of_packs = 12.0; // 5 available + 7 reserved not picked
-                u.available_number_of_packs = 5.0; // remains the same
-                u
-            })
+            StockLineRow {
+                total_number_of_packs: 12.0,    // 5 available + 7 reserved not picked
+                available_number_of_packs: 5.0, // remains the same
+                ..stock_line.clone()
+            }
         );
 
         assert_eq!(

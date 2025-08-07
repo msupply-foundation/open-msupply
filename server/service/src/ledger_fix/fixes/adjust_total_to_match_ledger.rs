@@ -69,7 +69,6 @@ pub(crate) mod test {
         mock::{mock_item_a, mock_store_a, MockData, MockDataInserts},
         InvoiceStatus, KeyValueStoreRepository, StockLineRow,
     };
-    use util::inline_edit;
 
     pub(crate) fn mock_data() -> MockData {
         let total_does_not_match = StockLineRow {
@@ -108,15 +107,11 @@ pub(crate) mod test {
         );
 
         // Add reserved not picked
-        allocated_not_picked_movements.invoices[3] =
-            inline_edit(&allocated_not_picked_movements.invoices[3], |mut u| {
-                u.status = InvoiceStatus::Allocated;
-                u.picked_datetime = None;
-                u.shipped_datetime = None;
-                u.received_datetime = None;
-                u.verified_datetime = None;
-                u
-            });
+        allocated_not_picked_movements.invoices[3].status = InvoiceStatus::Allocated;
+        allocated_not_picked_movements.invoices[3].picked_datetime = None;
+        allocated_not_picked_movements.invoices[3].shipped_datetime = None;
+        allocated_not_picked_movements.invoices[3].received_datetime = None;
+        allocated_not_picked_movements.invoices[3].verified_datetime = None;
 
         mock_data.join(allocated_not_picked_movements)
     }

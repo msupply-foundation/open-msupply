@@ -86,7 +86,6 @@ pub(crate) mod test {
         mock::{mock_item_a, mock_store_a, MockData, MockDataInserts},
         InvoiceType, KeyValueStoreRepository, StockLineRow,
     };
-    use util::inline_edit;
 
     pub(crate) fn mock_data() -> MockData {
         let cancellation = StockLineRow {
@@ -114,33 +113,20 @@ pub(crate) mod test {
             cancellation,
             vec![(2, 5), (3, -3), (4, -1), (4, 1), (5, -1)],
         );
-
         // Adjust to cancellation
-        with_cancellation.invoices[3] = inline_edit(&with_cancellation.invoices[3], |mut u| {
-            u.status = InvoiceStatus::Cancelled;
-            u.r#type = InvoiceType::Prescription;
-            u
-        });
+        with_cancellation.invoices[3].status = InvoiceStatus::Cancelled;
+        with_cancellation.invoices[3].r#type = InvoiceType::Prescription;
 
         let mut with_multiple_cancellations = make_movements(
             multiple_cancellations,
             vec![(2, 7), (2, -1), (2, 1), (3, -3), (4, -1), (4, 1), (5, -1)],
         );
-
         // Adjust to cancellation
-        with_multiple_cancellations.invoices[2] =
-            inline_edit(&with_multiple_cancellations.invoices[2], |mut u| {
-                u.status = InvoiceStatus::Cancelled;
-                u.r#type = InvoiceType::Prescription;
-                u
-            });
+        with_multiple_cancellations.invoices[2].status = InvoiceStatus::Cancelled;
+        with_multiple_cancellations.invoices[2].r#type = InvoiceType::Prescription;
 
-        with_multiple_cancellations.invoices[5] =
-            inline_edit(&with_multiple_cancellations.invoices[5], |mut u| {
-                u.status = InvoiceStatus::Cancelled;
-                u.r#type = InvoiceType::Prescription;
-                u
-            });
+        with_multiple_cancellations.invoices[5].status = InvoiceStatus::Cancelled;
+        with_multiple_cancellations.invoices[5].r#type = InvoiceType::Prescription;
 
         mock_data
             .join(with_cancellation)

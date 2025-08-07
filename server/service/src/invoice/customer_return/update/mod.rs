@@ -151,7 +151,6 @@ mod test {
         InvoiceLineRepository, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
         StockLineRowRepository,
     };
-    use util::inline_init;
 
     use crate::{
         invoice::customer_return::{UpdateCustomerReturn, UpdateCustomerReturnStatus},
@@ -165,24 +164,27 @@ mod test {
     #[actix_rt::test]
     async fn update_customer_return_errors() {
         fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
+            NameRow {
+                id: "not_visible".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_supplier() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_a_supplier".to_string();
-            })
+            NameRow {
+                id: "not_a_supplier".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_supplier_join() -> NameStoreJoinRow {
-            inline_init(|r: &mut NameStoreJoinRow| {
-                r.id = "not_a_supplier_join".to_string();
-                r.name_link_id = not_a_supplier().id;
-                r.store_id = mock_store_a().id;
-                r.name_is_supplier = false;
-            })
+            NameStoreJoinRow {
+                id: "not_a_supplier_join".to_string(),
+                name_link_id: not_a_supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: false,
+                ..Default::default()
+            }
         }
 
         fn verified_return() -> InvoiceRow {
@@ -212,11 +214,12 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_customer_return_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible(), not_a_supplier()];
-                r.name_store_joins = vec![not_a_supplier_join()];
-                r.invoices = vec![verified_return(), on_hold_return()];
-            }),
+            MockData {
+                names: vec![not_visible(), not_a_supplier()],
+                name_store_joins: vec![not_a_supplier_join()],
+                invoices: vec![verified_return(), on_hold_return()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -230,9 +233,10 @@ mod test {
         assert_eq!(
             service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateCustomerReturn| {
-                    r.id = "invalid".to_string();
-                })
+                UpdateCustomerReturn {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -241,9 +245,10 @@ mod test {
         assert_eq!(
             service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateCustomerReturn| {
-                    r.id = mock_customer_return_a().id; // store b invoice
-                })
+                UpdateCustomerReturn {
+                    id: mock_customer_return_a().id, // store b invoice
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -252,9 +257,10 @@ mod test {
         assert_eq!(
             service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateCustomerReturn| {
-                    r.id = mock_outbound_shipment_e().id;
-                })
+                UpdateCustomerReturn {
+                    id: mock_outbound_shipment_e().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::NotACustomerReturn)
         );
@@ -263,9 +269,10 @@ mod test {
         assert_eq!(
             service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateCustomerReturn| {
-                    r.id = verified_return().id;
-                })
+                UpdateCustomerReturn {
+                    id: verified_return().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::ReturnIsNotEditable)
         );
@@ -274,10 +281,11 @@ mod test {
         assert_eq!(
             service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateCustomerReturn| {
-                    r.id = on_hold_return().id;
-                    r.status = Some(UpdateCustomerReturnStatus::Received);
-                })
+                UpdateCustomerReturn {
+                    id: on_hold_return().id,
+                    status: Some(UpdateCustomerReturnStatus::Received),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
         );
@@ -316,10 +324,11 @@ mod test {
         let updated_return = service
             .update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateCustomerReturn| {
-                    r.id.clone_from(&invoice_id);
-                    r.status = Some(UpdateCustomerReturnStatus::Received);
-                }),
+                UpdateCustomerReturn {
+                    id: invoice_id.clone(),
+                    status: Some(UpdateCustomerReturnStatus::Received),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -369,10 +378,11 @@ mod test {
         let updated_return = service
             .update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateCustomerReturn| {
-                    r.id = invoice_id;
-                    r.status = Some(UpdateCustomerReturnStatus::Verified);
-                }),
+                UpdateCustomerReturn {
+                    id: invoice_id,
+                    status: Some(UpdateCustomerReturnStatus::Verified),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -438,10 +448,11 @@ mod test {
         let updated_return = service
             .update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateCustomerReturn| {
-                    r.id.clone_from(&invoice_id);
-                    r.status = Some(UpdateCustomerReturnStatus::Verified);
-                }),
+                UpdateCustomerReturn {
+                    id: invoice_id.clone(),
+                    status: Some(UpdateCustomerReturnStatus::Verified),
+                    ..Default::default()
+                },
             )
             .unwrap();
 

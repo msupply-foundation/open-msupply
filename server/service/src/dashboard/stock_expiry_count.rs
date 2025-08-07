@@ -51,36 +51,37 @@ mod stock_count_test {
         test_db::setup_all_with_data,
         StockLineRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
 
     use crate::service_provider::ServiceProvider;
 
     fn expired_stock_a() -> StockLineRow {
-        inline_init(|r: &mut StockLineRow| {
-            r.id = "expired_stock_a".to_string();
-            r.item_link_id = mock_item_a().id;
-            r.store_id = mock_store_a().id;
-            r.available_number_of_packs = 100.0;
-            r.total_number_of_packs = 100.0;
-            r.expiry_date = Utc::now()
+        StockLineRow {
+            id: "expired_stock_a".to_string(),
+            item_link_id: mock_item_a().id,
+            store_id: mock_store_a().id,
+            available_number_of_packs: 100.0,
+            total_number_of_packs: 100.0,
+            expiry_date: Utc::now()
                 .naive_utc()
                 .date()
-                .checked_sub_days(Days::new(20));
-        })
+                .checked_sub_days(Days::new(20)),
+            ..Default::default()
+        }
     }
 
     fn expired_stock_b() -> StockLineRow {
-        inline_init(|r: &mut StockLineRow| {
-            r.id = "expired_stock_b".to_string();
-            r.item_link_id = mock_item_a().id;
-            r.store_id = mock_store_a().id;
-            r.available_number_of_packs = 500.0;
-            r.total_number_of_packs = 500.0;
-            r.expiry_date = Utc::now()
+        StockLineRow {
+            id: "expired_stock_b".to_string(),
+            item_link_id: mock_item_a().id,
+            store_id: mock_store_a().id,
+            available_number_of_packs: 500.0,
+            total_number_of_packs: 500.0,
+            expiry_date: Utc::now()
                 .naive_utc()
                 .date()
-                .checked_sub_days(Days::new(10));
-        })
+                .checked_sub_days(Days::new(10)),
+            ..Default::default()
+        }
     }
 
     #[actix_rt::test]
@@ -88,9 +89,10 @@ mod stock_count_test {
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "test_stock_expiry_count",
             MockDataInserts::none().items().stores().names().units(),
-            inline_init(|r: &mut MockData| {
-                r.stock_lines = vec![expired_stock_a(), expired_stock_b()]
-            }),
+            MockData {
+                stock_lines: vec![expired_stock_a(), expired_stock_b()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -108,11 +110,12 @@ mod stock_count_test {
         assert_eq!(expired_stock_count, 2);
 
         // Update one of the stock lines to have 0 packs
-        let expired_stock_a: StockLineRow = inline_edit(&expired_stock_a(), |mut r| {
-            r.available_number_of_packs = 0.0;
-            r.total_number_of_packs = 20.0;
-            r
-        });
+        let expired_stock_a: StockLineRow = {
+            let mut updated = expired_stock_a();
+            updated.available_number_of_packs = 0.0;
+            updated.total_number_of_packs = 20.0;
+            updated
+        };
 
         StockLineRowRepository::new(&connection)
             .upsert_one(&expired_stock_a)

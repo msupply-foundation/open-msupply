@@ -148,7 +148,6 @@ mod test {
         ApprovalStatusType, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
         RequisitionRowRepository,
     };
-    use util::inline_edit;
 
     use crate::{
         requisition::{
@@ -261,13 +260,10 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            requisition,
-            inline_edit(&requisition, |mut u| {
-                u.user_id = Some(mock_user_account_b().id);
-                u
-            })
-        );
+        let mut expected = requisition.clone();
+        expected.user_id = Some(mock_user_account_b().id);
+
+        assert_eq!(requisition, expected);
 
         // With approval status
 

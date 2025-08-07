@@ -20,7 +20,6 @@ use diesel::{
     dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
-use util::inline_init;
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Invoice {
@@ -309,29 +308,47 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
 
 impl InvoiceStatus {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 
     pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 
     pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
+        EqualFilter {
+            equal_any: Some(value),
+            ..Default::default()
+        }
     }
 }
 
 impl InvoiceType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 
     pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 
     pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
+        EqualFilter {
+            equal_any: Some(value),
+            ..Default::default()
+        }
     }
 }
 

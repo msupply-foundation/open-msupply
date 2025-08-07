@@ -139,7 +139,9 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
 
-    use repository::{mock::MockDataInserts, InvoiceLine, StorageConnectionManager};
+    use repository::{
+        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, StorageConnectionManager,
+    };
     use serde_json::json;
     use service::{
         invoice_line::{
@@ -150,7 +152,6 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
 
     type ServiceInput = InsertInboundShipmentServiceLine;
     type ServiceError = InsertInboundShipmentServiceLineError;
@@ -346,9 +347,13 @@ mod test {
                     note: Some("note".to_string())
                 }
             );
-            Ok(inline_init(|r: &mut InvoiceLine| {
-                r.invoice_line_row.id = "insert line id input".to_string();
-            }))
+            Ok(InvoiceLine {
+                invoice_line_row: InvoiceLineRow {
+                    id: "insert line id input".to_string(),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
         }));
 
         let variables = json!({

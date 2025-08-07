@@ -162,7 +162,6 @@ mod test {
         mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
         ActivityLogType, InvoiceRow, InvoiceStatus, InvoiceType,
     };
-    use util::inline_init;
 
     use super::get_activity_logs;
 
@@ -175,15 +174,17 @@ mod test {
         } = setup_all_with_data_and_service_provider(
             "invoice_log",
             MockDataInserts::none().names().stores().currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
-                    r.id = "test".to_string();
-                    r.name_link_id = mock_name_a().id;
-                    r.store_id = mock_store_a().id;
-                    r.r#type = InvoiceType::OutboundShipment;
-                    r.status = InvoiceStatus::Allocated;
-                })]
-            }),
+            MockData {
+                invoices: vec![InvoiceRow {
+                    id: "test".to_string(),
+                    name_link_id: mock_name_a().id,
+                    store_id: mock_store_a().id,
+                    r#type: InvoiceType::OutboundShipment,
+                    status: InvoiceStatus::Allocated,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -196,10 +197,11 @@ mod test {
             .invoice_service
             .update_outbound_shipment(
                 &ctx,
-                inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = "test".to_string();
-                    r.status = Some(UpdateOutboundShipmentStatus::Allocated)
-                }),
+                UpdateOutboundShipment {
+                    id: "test".to_string(),
+                    status: Some(UpdateOutboundShipmentStatus::Allocated),
+                    ..Default::default()
+                },
             )
             .unwrap();
         // Status did not change expect no logs
@@ -216,10 +218,11 @@ mod test {
             .invoice_service
             .update_outbound_shipment(
                 &ctx,
-                inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = "test".to_string();
-                    r.status = Some(UpdateOutboundShipmentStatus::Picked)
-                }),
+                UpdateOutboundShipment {
+                    id: "test".to_string(),
+                    status: Some(UpdateOutboundShipmentStatus::Picked),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -227,11 +230,12 @@ mod test {
             .invoice_service
             .update_outbound_shipment(
                 &ctx,
-                inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = "test".to_string();
+                UpdateOutboundShipment {
+                    id: "test".to_string(),
                     // Picked again
-                    r.status = Some(UpdateOutboundShipmentStatus::Picked)
-                }),
+                    status: Some(UpdateOutboundShipmentStatus::Picked),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -239,10 +243,11 @@ mod test {
             .invoice_service
             .update_outbound_shipment(
                 &ctx,
-                inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = "test".to_string();
-                    r.status = Some(UpdateOutboundShipmentStatus::Shipped)
-                }),
+                UpdateOutboundShipment {
+                    id: "test".to_string(),
+                    status: Some(UpdateOutboundShipmentStatus::Shipped),
+                    ..Default::default()
+                },
             )
             .unwrap();
 

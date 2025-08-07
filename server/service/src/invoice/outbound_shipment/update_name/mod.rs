@@ -95,7 +95,6 @@ mod test {
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, NameRow, NameStoreJoinRow,
     };
-    use util::{inline_edit, inline_init};
 
     use crate::{
         invoice::outbound_shipment::update_name::UpdateOutboundShipmentName,
@@ -109,33 +108,37 @@ mod test {
     #[actix_rt::test]
     async fn update_outbound_shipment_name_errors() {
         fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
+            NameRow {
+                id: "not_visible".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_customer() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_a_customer".to_string();
-            })
+            NameRow {
+                id: "not_a_customer".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_customer_join() -> NameStoreJoinRow {
-            inline_init(|r: &mut NameStoreJoinRow| {
-                r.id = "not_a_customer_join".to_string();
-                r.name_link_id = not_a_customer().id;
-                r.store_id = mock_store_b().id;
-                r.name_is_customer = false;
-            })
+            NameStoreJoinRow {
+                id: "not_a_customer_join".to_string(),
+                name_link_id: not_a_customer().id,
+                store_id: mock_store_b().id,
+                name_is_customer: false,
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_outbound_shipment_name_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible(), not_a_customer()];
-                r.name_store_joins = vec![not_a_customer_join()];
-            }),
+            MockData {
+                names: vec![not_visible(), not_a_customer()],
+                name_store_joins: vec![not_a_customer_join()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -149,7 +152,10 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentName| { r.id = "invalid".to_string() })
+                UpdateOutboundShipmentName {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -157,9 +163,10 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentName| {
-                    r.id = mock_outbound_shipment_b().id;
-                })
+                UpdateOutboundShipmentName {
+                    id: mock_outbound_shipment_b().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::InvoiceIsNotEditable)
         );
@@ -168,9 +175,10 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentName| {
-                    r.id = mock_inbound_shipment_a().id
-                })
+                UpdateOutboundShipmentName {
+                    id: mock_inbound_shipment_a().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::NotAnOutboundShipment)
         );
@@ -178,9 +186,10 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentName| {
-                    r.id = mock_outbound_shipment_c().id;
-                })
+                UpdateOutboundShipmentName {
+                    id: mock_outbound_shipment_c().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -189,10 +198,11 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentName| {
-                    r.id = mock_outbound_shipment_a().id;
-                    r.other_party_id = Some("invalid".to_string());
-                })
+                UpdateOutboundShipmentName {
+                    id: mock_outbound_shipment_a().id,
+                    other_party_id: Some("invalid".to_string()),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -200,10 +210,11 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentName| {
-                    r.id = mock_outbound_shipment_a().id;
-                    r.other_party_id = Some(not_visible().id);
-                })
+                UpdateOutboundShipmentName {
+                    id: mock_outbound_shipment_a().id,
+                    other_party_id: Some(not_visible().id),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -211,10 +222,11 @@ mod test {
         assert_eq!(
             service.update_outbound_shipment_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentName| {
-                    r.id = mock_outbound_shipment_a().id;
-                    r.other_party_id = Some(not_a_customer().id);
-                })
+                UpdateOutboundShipmentName {
+                    id: mock_outbound_shipment_a().id,
+                    other_party_id: Some(not_a_customer().id),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotACustomer)
         );
@@ -223,61 +235,67 @@ mod test {
     #[actix_rt::test]
     async fn update_outbound_shipment_name_success() {
         fn invoice() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "test_invoice_pricing".to_string();
-                r.name_link_id = mock_name_a().id;
-                r.store_id = mock_store_c().id;
-                r.r#type = InvoiceType::OutboundShipment;
-                r.status = InvoiceStatus::Picked;
-            })
+            InvoiceRow {
+                id: "test_invoice_pricing".to_string(),
+                name_link_id: mock_name_a().id,
+                store_id: mock_store_c().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::Picked,
+                ..Default::default()
+            }
         }
 
         fn invoice_line_a() -> InvoiceLineRow {
-            inline_init(|l: &mut InvoiceLineRow| {
-                l.id = "some_invoice_line_id_a".to_string();
-                l.invoice_id = invoice().id;
-                l.item_link_id = "item_a".to_string();
-                l.location_id = None;
-                l.stock_line_id = Some("stock_line_ci_d_siline_a".to_string());
-                l.batch = Some("stock_line_ci_d_siline_a".to_string());
-            })
+            InvoiceLineRow {
+                id: "some_invoice_line_id_a".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: "item_a".to_string(),
+                location_id: None,
+                stock_line_id: Some("stock_line_ci_d_siline_a".to_string()),
+                batch: Some("stock_line_ci_d_siline_a".to_string()),
+                ..Default::default()
+            }
         }
 
         fn invoice_line_b() -> InvoiceLineRow {
-            inline_init(|l: &mut InvoiceLineRow| {
-                l.id = "some_invoice_line_id_b".to_string();
-                l.invoice_id = invoice().id;
-                l.item_link_id = "item_b".to_string();
-                l.location_id = None;
-                l.stock_line_id = Some("item_b_line_a".to_string());
-                l.batch = Some("item_b_line_a".to_string());
-            })
+            InvoiceLineRow {
+                id: "some_invoice_line_id_b".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: "item_b".to_string(),
+                location_id: None,
+                stock_line_id: Some("item_b_line_a".to_string()),
+                batch: Some("item_b_line_a".to_string()),
+                ..Default::default()
+            }
         }
 
         fn customer() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "customer".to_string();
-            })
+            NameRow {
+                id: "customer".to_string(),
+                ..Default::default()
+            }
         }
 
         fn customer_join() -> NameStoreJoinRow {
-            inline_init(|r: &mut NameStoreJoinRow| {
-                r.id = "customer_join".to_string();
-                r.name_link_id = customer().id;
-                r.store_id = mock_store_c().id;
-                r.name_is_customer = true;
-            })
+            NameStoreJoinRow {
+                id: "customer_join".to_string(),
+                name_link_id: customer().id,
+                store_id: mock_store_c().id,
+                name_is_customer: true,
+                ..Default::default()
+            }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_outbound_shipment_name_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice()];
-                r.invoice_lines = vec![invoice_line_a(), invoice_line_b()];
-                r.names = vec![customer()];
-                r.name_store_joins = vec![customer_join()];
-            }),
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![invoice_line_a(), invoice_line_b()],
+                names: vec![customer()],
+                name_store_joins: vec![customer_join()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -326,16 +344,16 @@ mod test {
         assert_eq!(
             updated_lines,
             vec![
-                inline_edit(&invoice_line_a(), |mut l| {
-                    l.id.clone_from(&updated_lines[0].id);
-                    l.invoice_id.clone_from(&updated_invoice.invoice_row.id);
-                    l
-                }),
-                inline_edit(&invoice_line_b(), |mut l| {
-                    l.id.clone_from(&updated_lines[1].id);
-                    l.invoice_id.clone_from(&updated_invoice.invoice_row.id);
-                    l
-                })
+                InvoiceLineRow {
+                    id: updated_lines[0].id.clone(),
+                    invoice_id: updated_invoice.invoice_row.id.clone(),
+                    ..invoice_line_a()
+                },
+                InvoiceLineRow {
+                    id: updated_lines[1].id.clone(),
+                    invoice_id: updated_invoice.invoice_row.id.clone(),
+                    ..invoice_line_b()
+                }
             ]
         );
     }
