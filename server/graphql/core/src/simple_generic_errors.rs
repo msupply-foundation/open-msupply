@@ -223,14 +223,6 @@ impl CannotEditRequisition {
     }
 }
 
-pub struct CannotEditPurchaseOrder;
-#[Object]
-impl CannotEditPurchaseOrder {
-    pub async fn description(&self) -> &str {
-        "Cannot edit purchase order"
-    }
-}
-
 pub struct OrderingTooManyItems(pub i32);
 #[Object]
 impl OrderingTooManyItems {
