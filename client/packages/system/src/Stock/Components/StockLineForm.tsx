@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Checkbox,
   Grid,
@@ -30,6 +30,7 @@ import {
 import { DraftStockLine } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import {
+  checkInvalidLocationLines,
   DonorSearchInput,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
@@ -72,8 +73,6 @@ export const StockLineForm = ({
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
-
-  const [invalidLocationAlert, setInvalidLocationAlert] = useState<string>('');
 
   const showVVMStatus =
     draft?.item?.isVaccine &&
@@ -132,14 +131,20 @@ export const StockLineForm = ({
       },
     };
   };
+  const restrictedLocationTypeId = draft.item.restrictedLocationTypeId ?? null;
+
+  const isInvalidLocation = checkInvalidLocationLines(
+    restrictedLocationTypeId,
+    [draft]
+  );
 
   return (
     <DetailContainer>
       <Grid container direction="column" spacing={2}>
-        {invalidLocationAlert && (
+        {isInvalidLocation && (
           <Grid container justifyContent="center">
             <Alert severity="warning" sx={{ maxWidth: 800 }}>
-              {invalidLocationAlert}
+              {t('messages.stock-location-invalid')}
             </Alert>
           </Grid>
         )}
@@ -325,9 +330,6 @@ export const StockLineForm = ({
                   }}
                   restrictedToLocationTypeId={
                     draft.item.restrictedLocationTypeId
-                  }
-                  onInvalidLocation={(_invalid, message) =>
-                    setInvalidLocationAlert(message)
                   }
                 />
               }
