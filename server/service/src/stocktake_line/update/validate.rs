@@ -1,6 +1,6 @@
 use crate::{
     campaign::check_campaign_exists,
-    check_location_exists,
+    check_location_exists, check_location_type_is_valid,
     common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
@@ -43,6 +43,22 @@ pub fn validate(
         return Err(InvalidStore);
     }
 
+    let stock_line = if let Some(stock_line_id) = &stocktake_line_row.stock_line_id {
+        Some(
+            check_stock_line_exists(connection, store_id, stock_line_id).map_err(
+                |err| match err {
+                    CommonStockLineError::DatabaseError(RepositoryError::NotFound) => {
+                        StockLineDoesNotExist
+                    }
+                    CommonStockLineError::StockLineDoesNotBelongToStore => InvalidStore,
+                    CommonStockLineError::DatabaseError(error) => DatabaseError(error),
+                },
+            )?,
+        )
+    } else {
+        None
+    };
+
     if let Some(NullableUpdate {
         value: Some(ref location),
     }) = &input.location
@@ -50,7 +66,30 @@ pub fn validate(
         if !check_location_exists(connection, store_id, location)? {
             return Err(LocationDoesNotExist);
         }
+
+        // Stocktake line might be for an item which should only live in a certain location type
+        if let Some(item_restricted_type) = &stocktake_line.item.restricted_location_type_id {
+            // If we are changing to a different location than the stock line was previously in
+            // Allow stock to remain in incorrect location during stocktake (don't force stock move during stock count)
+            // - we flag in frontend but don't prevent saving the lines
+            if stock_line
+                .as_ref()
+                .and_then(|s| s.stock_line_row.location_id.clone())
+                != Some(location.to_string())
+            {
+                // Check Whether the type of the new location is valid for the item
+                if !check_location_type_is_valid(
+                    connection,
+                    store_id,
+                    &location,
+                    item_restricted_type,
+                )? {
+                    return Err(IncorrectLocationType);
+                }
+            }
+        }
     }
+
     let stocktake_reduction_amount =
         stocktake_reduction_amount(&input.counted_number_of_packs, stocktake_line_row);
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
@@ -71,20 +110,9 @@ pub fn validate(
         return Err(AdjustmentReasonNotValid);
     }
 
-    if let (Some(counted_number_of_packs), Some(stock_line_id)) = (
-        input.counted_number_of_packs,
-        &stocktake_line_row.stock_line_id,
-    ) {
-        let stock_line = check_stock_line_exists(connection, store_id, stock_line_id).map_err(
-            |err| match err {
-                CommonStockLineError::DatabaseError(RepositoryError::NotFound) => {
-                    StockLineDoesNotExist
-                }
-                CommonStockLineError::StockLineDoesNotBelongToStore => InvalidStore,
-                CommonStockLineError::DatabaseError(error) => DatabaseError(error),
-            },
-        )?;
-
+    if let (Some(counted_number_of_packs), Some(stock_line)) =
+        (input.counted_number_of_packs, stock_line.as_ref())
+    {
         if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
         {
             return Err(StockLineReducedBelowZero(stock_line.clone()));

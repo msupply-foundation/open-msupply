@@ -4,9 +4,11 @@ import {
   AutocompleteOption,
   CloseIcon,
   MenuItem,
+  useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
+import { checkInvalidLocationLines } from '../utils';
 
 interface LocationSearchInputProps {
   selectedLocation: LocationRowFragment | null;
@@ -15,6 +17,7 @@ interface LocationSearchInputProps {
   disabled: boolean;
   autoFocus?: boolean;
   restrictedToLocationTypeId?: string | null;
+  enableAPI?: boolean;
 }
 
 interface LocationOption {
@@ -62,17 +65,24 @@ export const LocationSearchInput = ({
   disabled,
   autoFocus = false,
   restrictedToLocationTypeId,
+  enableAPI = true,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
+  const theme = useTheme();
+
   const {
     query: { data, isLoading },
-  } = useLocationList({
-    sortBy: {
-      direction: 'asc',
-      key: 'name',
+  } = useLocationList(
+    {
+      sortBy: {
+        direction: 'asc',
+        key: 'name',
+      },
+      filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
     },
-    filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
-  });
+    undefined,
+    enableAPI
+  );
 
   const locations = data?.nodes || [];
   const options: AutocompleteOption<LocationOption>[] = locations.map(l => ({
@@ -91,14 +101,37 @@ export const LocationSearchInput = ({
 
   const selectedOption = options.find(o => o.value === selectedLocation?.id);
 
+  const isInvalidLocation = !!selectedLocation?.locationType?.id
+    ? checkInvalidLocationLines(restrictedToLocationTypeId ?? null, [
+        { location: selectedLocation },
+      ])
+    : null;
+
+  // Invalid location no longer a part of options
+  const locationValue = selectedLocation
+    ? {
+        value: selectedLocation.id,
+        label: formatLocationLabel(selectedLocation),
+        code: selectedLocation.code,
+      }
+    : selectedOption || null;
+
+  const errorStyles = {
+    borderColor: theme.palette.error.main,
+    borderWidth: '2px',
+    borderStyle: 'solid',
+    borderRadius: '8px',
+  };
+
   return (
     <Autocomplete
+      sx={!!isInvalidLocation ? errorStyles : undefined}
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
       popperMinWidth={Number(width)}
       clearable={false}
-      value={selectedOption || null}
+      value={locationValue}
       loading={isLoading}
       onChange={(_, option) => {
         onChange(locations.find(l => l.id === option?.value) || null);

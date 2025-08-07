@@ -143,6 +143,7 @@ fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
                 StockLinesReducedBelowZero(lines),
             ))
         }
+
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
         ServiceError::InvalidStore => BadUserInput(formatted_error),

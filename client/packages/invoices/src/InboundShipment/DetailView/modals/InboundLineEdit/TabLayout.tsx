@@ -165,7 +165,7 @@ export const TabLayout = ({
             isDisabled={isDisabled}
             lines={draftLines}
             updateDraftLine={updateDraftLine}
-            restrictedLocationTypeId={item?.restrictedLocationTypeId}
+            restrictedToLocationTypeId={item?.restrictedLocationTypeId}
             preferences={preferences}
           />
         </InboundLineEditPanel>
