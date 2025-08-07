@@ -9,7 +9,7 @@ fragment GoodsReceived on GoodsReceivedNode {
   number
 }
 
-query GoodsReceivedList(
+query goodsReceivedList(
   $first: Int
   $offset: Int
   $key: GoodsReceivedSortFieldInput!
@@ -33,7 +33,7 @@ query GoodsReceivedList(
   }
 }
 
-query GoodsReceivedById($GoodsReceivedId: String!, $storeId: String!) {
+query goodsReceivedById($GoodsReceivedId: String!, $storeId: String!) {
   goodsReceived(id: $GoodsReceivedId, storeId: $storeId) {
     __typename
     ... on RecordNotFound {

@@ -1,2 +1,3 @@
 // Query keys for Goods Received
-export const GOODS_RECEIVED_LIST_KEY = 'goodsReceivedList';
+export const LIST = 'list';
+export const GOODS_RECEIVED = 'goodsReceived';

@@ -6,11 +6,7 @@ import {
   useTranslation,
   AppFooterPortal,
 } from '@openmsupply-client/common';
-// import { ListParams, useGoodsReceivedList } from '../api'; // To be implemented
-
-// Placeholder for list params and hook
-type ListParams = any;
-const useGoodsReceivedList = (listParams: ListParams) => ({ selectedRows: [] });
+import { ListParams, useGoodsReceivedList } from '../api'; // To be implemented
 
 export const FooterComponent: FC<{ listParams: ListParams }> = ({
   listParams,
@@ -24,7 +20,7 @@ export const FooterComponent: FC<{ listParams: ListParams }> = ({
       icon: <DeleteIcon />,
       onClick: () => {
         // eslint-disable-next-line
-        console.log('TO-DO: Delete goods received...');
+        alert('TO-DO: Delete goods received...');
       },
     },
   ];
