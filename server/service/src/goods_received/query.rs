@@ -46,7 +46,7 @@ pub fn get_goods_received(
 mod test {
     use crate::service_provider::ServiceProvider;
     use repository::mock::{mock_purchase_order_a, mock_store_a};
-    use repository::{EqualFilter, Upsert};
+    use repository::Upsert;
 
     use repository::goods_received::{GoodsReceivedFilter, GoodsReceivedRepository};
     use repository::{

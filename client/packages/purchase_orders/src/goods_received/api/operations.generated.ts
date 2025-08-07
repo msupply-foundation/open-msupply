@@ -63,7 +63,7 @@ export const GoodsReceivedFragmentDoc = gql`
   }
 `;
 export const GoodsReceivedListDocument = gql`
-  query GoodsReceivedList(
+  query goodsReceivedList(
     $first: Int
     $offset: Int
     $key: GoodsReceivedSortFieldInput!
@@ -89,7 +89,7 @@ export const GoodsReceivedListDocument = gql`
   ${GoodsReceivedRowFragmentDoc}
 `;
 export const GoodsReceivedByIdDocument = gql`
-  query GoodsReceivedById($GoodsReceivedId: String!, $storeId: String!) {
+  query goodsReceivedById($GoodsReceivedId: String!, $storeId: String!) {
     goodsReceived(id: $GoodsReceivedId, storeId: $storeId) {
       __typename
       ... on RecordNotFound {
@@ -123,7 +123,7 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    GoodsReceivedList(
+    goodsReceivedList(
       variables: GoodsReceivedListQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<GoodsReceivedListQuery> {
@@ -134,12 +134,12 @@ export function getSdk(
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'GoodsReceivedList',
+        'goodsReceivedList',
         'query',
         variables
       );
     },
-    GoodsReceivedById(
+    goodsReceivedById(
       variables: GoodsReceivedByIdQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<GoodsReceivedByIdQuery> {
@@ -150,7 +150,7 @@ export function getSdk(
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'GoodsReceivedById',
+        'goodsReceivedById',
         'query',
         variables
       );
