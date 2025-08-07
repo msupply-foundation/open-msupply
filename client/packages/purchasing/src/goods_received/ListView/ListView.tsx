@@ -10,32 +10,13 @@ import {
   useUrlQueryParams,
   GenericColumnKey,
   ColumnFormat,
-  LocaleKey,
-  GoodsReceivedNodeStatus,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedList } from '../api';
 import { GoodsReceivedRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
-
-const statusTranslation: Record<GoodsReceivedNodeStatus, LocaleKey> = {
-  NEW: 'label.new',
-  CONFIRMED: 'label.confirmed',
-  AUTHORISED: 'label.authorised',
-  FINALISED: 'label.finalised',
-};
-
-// Helper function to format status
-const getStatusTranslator =
-  (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: unknown): string => {
-    const status = currentStatus as GoodsReceivedNodeStatus;
-    return t(
-      statusTranslation[status] ??
-        statusTranslation[GoodsReceivedNodeStatus.New]
-    );
-  };
+import { getGoodsReceivedStatusTranslator } from '../../utils';
 
 const ListView: FC = () => {
   const t = useTranslation();
@@ -79,7 +60,7 @@ const ListView: FC = () => {
         key: 'status',
         label: 'label.status',
         accessor: ({ rowData }) => rowData.status,
-        formatter: getStatusTranslator(t),
+        formatter: getGoodsReceivedStatusTranslator(t),
         sortable: false, // Will be true once sorting is added
       },
       {
@@ -92,7 +73,8 @@ const ListView: FC = () => {
       {
         key: 'purchaseOrderNumber',
         label: 'label.purchase-order-number',
-        accessor: ({ rowData }) => rowData.purchaseOrderNumber?.toString() ?? '',
+        accessor: ({ rowData }) =>
+          rowData.purchaseOrderNumber?.toString() ?? '',
         sortable: false,
       },
       {
@@ -133,7 +115,7 @@ const ListView: FC = () => {
         data={data?.nodes ?? []}
         isError={isError}
         isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-purchase-orders')} />}
+        noDataElement={<NothingHere body={t('error.no-items')} />}
         onRowClick={row => {
           navigate(row.id);
         }}

@@ -12,21 +12,21 @@ pub trait GoodsReceivedServiceTrait: Sync + Send {
     fn get_one_goods_received(
         &self,
         ctx: &ServiceContext,
-        _store_id: &str, // TODO?
+        store_id: &str,
         id: &str,
     ) -> Result<Option<GoodsReceivedRow>, RepositoryError> {
-        get_goods_received(ctx, id)
+        get_goods_received(ctx, store_id, id)
     }
 
     fn get_goods_received_list(
         &self,
         ctx: &ServiceContext,
-        _store_id: &str, // TODO?
+        store_id: &str,
         pagination: Option<PaginationOption>,
         filter: Option<GoodsReceivedFilter>,
         sort: Option<GoodsReceivedSort>,
     ) -> Result<ListResult<GoodsReceivedRow>, ListError> {
-        get_goods_received_list(ctx, pagination, filter, sort)
+        get_goods_received_list(ctx, store_id, pagination, filter, sort)
     }
 }
 

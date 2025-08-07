@@ -12,7 +12,7 @@ pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_goods_received_list(
     ctx: &ServiceContext,
-    // store_id: &str,
+    store_id: &str,
     pagination: Option<PaginationOption>,
     filter: Option<GoodsReceivedFilter>,
     sort: Option<GoodsReceivedSort>,
@@ -20,23 +20,24 @@ pub fn get_goods_received_list(
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = GoodsReceivedRepository::new(&ctx.connection);
 
-    // TODO: Check how we usually handle store_id in filters
-    // let mut filter = filter.unwrap_or_default();
-    // filter.store_id = Some(store_id).map(EqualFilter::equal_to);
+    let mut filter = filter.unwrap_or_default();
+    filter.store_id = Some(EqualFilter::equal_to(store_id));
 
     Ok(ListResult {
-        rows: repository.query(pagination, filter.clone(), sort)?,
-        count: i64_to_u32(repository.count(filter)?),
+        rows: repository.query(pagination, Some(filter.clone()), sort)?,
+        count: i64_to_u32(repository.count(Some(filter))?),
     })
 }
 
 pub fn get_goods_received(
     ctx: &ServiceContext,
-    // store_id: &str,
+    store_id: &str,
     id: &str,
 ) -> Result<Option<GoodsReceivedRow>, RepositoryError> {
     let repository = GoodsReceivedRepository::new(&ctx.connection);
-    let filter = GoodsReceivedFilter::new().id(EqualFilter::equal_to(id));
+    let filter = GoodsReceivedFilter::new()
+        .id(EqualFilter::equal_to(id))
+        .store_id(EqualFilter::equal_to(store_id));
 
     Ok(repository.query_by_filter(filter)?.pop())
 }
