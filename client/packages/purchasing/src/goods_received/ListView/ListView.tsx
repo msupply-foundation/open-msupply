@@ -9,6 +9,9 @@ import {
   NothingHere,
   useUrlQueryParams,
   GenericColumnKey,
+  ColumnFormat,
+  LocaleKey,
+  GoodsReceivedNodeStatus,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedList } from '../api';
 import { GoodsReceivedRowFragment } from '../api/operations.generated';
@@ -16,22 +19,22 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 
+const statusTranslation: Record<GoodsReceivedNodeStatus, LocaleKey> = {
+  NEW: 'label.new',
+  CONFIRMED: 'label.confirmed',
+  AUTHORISED: 'label.authorised',
+  FINALISED: 'label.finalised',
+};
+
 // Helper function to format status
 const getStatusTranslator =
-  (t: ReturnType<typeof useTranslation>) => (status: unknown) => {
-    const statusStr = String(status);
-    switch (statusStr) {
-      case 'NEW':
-        return t('label.new');
-      case 'CONFIRMED':
-        return t('label.confirmed');
-      case 'AUTHORISED':
-        return t('label.authorised');
-      case 'FINALISED':
-        return t('label.finalised');
-      default:
-        return statusStr;
-    }
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: unknown): string => {
+    const status = currentStatus as GoodsReceivedNodeStatus;
+    return t(
+      statusTranslation[status] ??
+        statusTranslation[GoodsReceivedNodeStatus.New]
+    );
   };
 
 const ListView: FC = () => {
@@ -69,8 +72,8 @@ const ListView: FC = () => {
       {
         key: 'supplier',
         label: 'label.supplier',
-        accessor: ({ rowData: _ }) => 'TODO: Add supplier to GraphQL', // rowData.supplier?.name
-        sortable: false, // Will be true once added to GraphQL
+        accessor: ({ rowData }) => rowData.supplier?.name ?? '',
+        sortable: false, // Will be true once added to sort enum
       },
       {
         key: 'status',
@@ -89,27 +92,27 @@ const ListView: FC = () => {
       {
         key: 'purchaseOrderNumber',
         label: 'label.purchase-order-number',
-        accessor: ({ rowData: _ }) => 'TODO: Add PO number to GraphQL', // rowData.purchaseOrderNumber
+        accessor: ({ rowData }) => rowData.purchaseOrderNumber?.toString() ?? '',
         sortable: false,
       },
       {
         key: 'supplierReference',
         label: 'label.supplier-reference',
-        accessor: ({ rowData: _ }) => 'TODO: Add supplier ref to GraphQL', // rowData.supplierReference
+        accessor: ({ rowData }) => rowData.supplierReference ?? '',
         sortable: false,
       },
       {
         key: 'createdDatetime',
         label: 'label.created',
-        accessor: ({ rowData: _ }) => 'TODO: Add created date to GraphQL', // rowData.createdDatetime
-        // format: ColumnFormat.Date, // Uncomment once field is added
-        sortable: false, // Will be true once added (already in sort enum)
+        accessor: ({ rowData }) => rowData.createdDatetime,
+        format: ColumnFormat.Date,
+        sortable: true, // Available in sort enum
       },
       {
         key: 'receivedDatetime',
         label: 'label.received',
-        accessor: ({ rowData: _ }) => 'TODO: Add received date to GraphQL', // rowData.receivedDatetime
-        // format: ColumnFormat.Date, // Uncomment once field is added
+        accessor: ({ rowData }) => rowData.receivedDatetime ?? '',
+        format: ColumnFormat.Date,
         sortable: false,
       },
     ],

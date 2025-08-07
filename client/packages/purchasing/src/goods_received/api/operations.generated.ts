@@ -9,6 +9,11 @@ export type GoodsReceivedRowFragment = {
   number: number;
   status: Types.GoodsReceivedNodeStatus;
   comment?: string | null;
+  createdDatetime: string;
+  receivedDatetime?: string | null;
+  purchaseOrderNumber?: number | null;
+  supplierReference?: string | null;
+  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
 };
 
 export type GoodsReceivedFragment = {
@@ -17,6 +22,11 @@ export type GoodsReceivedFragment = {
   number: number;
   status: Types.GoodsReceivedNodeStatus;
   comment?: string | null;
+  createdDatetime: string;
+  receivedDatetime?: string | null;
+  purchaseOrderNumber?: number | null;
+  supplierReference?: string | null;
+  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
 };
 
 export type GoodsReceivedListQueryVariables = Types.Exact<{
@@ -39,6 +49,11 @@ export type GoodsReceivedListQuery = {
       number: number;
       status: Types.GoodsReceivedNodeStatus;
       comment?: string | null;
+      createdDatetime: string;
+      receivedDatetime?: string | null;
+      purchaseOrderNumber?: number | null;
+      supplierReference?: string | null;
+      supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -57,6 +72,11 @@ export type GoodsReceivedByIdQuery = {
         number: number;
         status: Types.GoodsReceivedNodeStatus;
         comment?: string | null;
+        createdDatetime: string;
+        receivedDatetime?: string | null;
+        purchaseOrderNumber?: number | null;
+        supplierReference?: string | null;
+        supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       }
     | { __typename: 'RecordNotFound'; description: string };
 };
@@ -67,6 +87,14 @@ export const GoodsReceivedRowFragmentDoc = gql`
     number
     status
     comment
+    createdDatetime
+    receivedDatetime
+    purchaseOrderNumber
+    supplierReference
+    supplier {
+      id
+      name
+    }
   }
 `;
 export const GoodsReceivedFragmentDoc = gql`
@@ -76,6 +104,14 @@ export const GoodsReceivedFragmentDoc = gql`
     number
     status
     comment
+    createdDatetime
+    receivedDatetime
+    purchaseOrderNumber
+    supplierReference
+    supplier {
+      id
+      name
+    }
   }
 `;
 export const GoodsReceivedListDocument = gql`
