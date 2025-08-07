@@ -715,7 +715,7 @@
   "label.business": "Entreprises",
   "label.calculate-demand": "Inclure dans les calculs GAPS",
   "label.calculated-demand": "Demande calculée",
-  "label.campaign": "Campagne",
+  "label.campaign": "Campagne / Programme",
   "label.cancel-prescription": "Annulé prescription",
   "label.cancelled": "Annulé",
   "label.cannot-add-item-to-purchase-order": "Impossible d'ajouter des articles au bon de commande",
@@ -1799,7 +1799,7 @@
   "messages.no-available-periods": "Aucune période disponible trouvée pour le calendrier",
   "messages.no-batch-selected": "Vous n'avez pas sélectionné un lot pour cette vaccination. Aucune transaction de stock ne sera créée. Êtes-vous sûr de vouloir continuer ?",
   "messages.no-bundled-items": "Pas d'articles groupés configurés",
-  "messages.no-campaigns": "Aucune campagne de disponible",
+  "messages.no-campaigns": "Aucune campagne ou programme de disponible",
   "messages.no-contact-traces": "Ce patient n'a aucun contact répertorié.",
   "messages.no-data-available": "Aucune donnée disponible",
   "messages.no-data-found": "Aucune donnée trouvée",
@@ -2232,5 +2232,8 @@
   "warning.field-not-parsed": "{{field}} non analysé",
   "warning.foreign-exchange-rate-different": "Ce taux ne correspond pas à la devise.",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
+  "label.volume": "Volume (m³)",
+  "label.volume-used": "Volume utilisé",
+  "label.distribution-priority": "Priorité de Distribution"
 }
