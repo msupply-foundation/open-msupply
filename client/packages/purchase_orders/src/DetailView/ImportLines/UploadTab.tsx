@@ -1,12 +1,9 @@
-import React, { useState } from 'react';
+import React, { Dispatch, SetStateAction, useState } from 'react';
 import Papa, { ParseResult } from 'papaparse';
 import {
   Grid,
   Stack,
   Link,
-  FnUtils,
-  LocaleKey,
-  TypedTFunction,
   useTranslation,
   InlineProgress,
   Typography,
@@ -19,195 +16,16 @@ import {} from '@openmsupply-client/system';
 import { ImportRow } from './PurchaseOrderLineImportModal';
 import * as PurchaseOrderLineImportModal from './PurchaseOrderLineImportModal';
 import { importPurchaseOrderLinesToCsv } from '../utils';
+import { getImportHelpers, ParsedLine } from './utils';
 
 interface UploadTabProps {
-  setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
-  setErrorMessage: (value: React.SetStateAction<string>) => void;
-  setWarningMessage: (value: React.SetStateAction<string>) => void;
+  setEquipment: Dispatch<SetStateAction<ImportRow[]>>;
+  setErrorMessage: (value: SetStateAction<string>) => void;
+  setWarningMessage: (value: SetStateAction<string>) => void;
   onUploadComplete: () => void;
 }
 
 // introduce new interface to accommodate dynamic keys of parsed result
-interface ParsedAsset {
-  id: string;
-  [key: string]: string | undefined;
-}
-
-function getImportHelpers<T, P>(
-  row: P,
-  rows: T[],
-  index: number,
-  t: TypedTFunction<LocaleKey>
-) {
-  const importRow = {
-    id: FnUtils.generateUUID(),
-    properties: {},
-  } as T;
-  const rowErrors: string[] = [];
-  const rowWarnings: string[] = [];
-
-  const addCell = (
-    key: keyof T,
-    localeKey: LocaleKey,
-    formatter?: (value: string) => unknown
-  ) => {
-    const prop = t(localeKey) as keyof P;
-    const value = row[prop] ?? '';
-    if (value !== undefined) {
-      (importRow[key] as unknown) = formatter
-        ? formatter(value as string)
-        : value;
-    }
-  };
-
-  const addRequired = (
-    key: keyof T,
-    localeKey: LocaleKey,
-    formatter?: (value: string) => unknown
-  ) => {
-    const prop = t(localeKey) as keyof P;
-    const value = row[prop] ?? '';
-
-    if (value === undefined || (value as string).trim() === '') {
-      rowErrors.push(
-        t('error.field-must-be-specified', {
-          field: t(localeKey),
-        })
-      );
-      return;
-    }
-
-    addCell(key, localeKey, formatter);
-  };
-
-  const addSoftRequired = (
-    key: keyof T,
-    localeKey: LocaleKey,
-    formatter?: (value: string) => unknown
-  ) => {
-    const prop = t(localeKey) as keyof P;
-    const value = row[prop] ?? '';
-
-    if (value === undefined || (value as string).trim() === '') {
-      rowWarnings.push(
-        t('warning.field-not-parsed', {
-          field: t(localeKey),
-        })
-      );
-      return;
-    }
-
-    if (
-      formatter &&
-      value &&
-      (formatter(value as string) === undefined ||
-        formatter(value as string) === null)
-    ) {
-      rowWarnings.push(
-        t('warning.field-not-parsed', {
-          field: t(localeKey),
-        })
-      );
-      return;
-    }
-    addCell(key, localeKey, formatter);
-  };
-
-  const addUnique = (
-    key: keyof T,
-    localeKey: LocaleKey,
-    formatter?: (value: string) => unknown
-  ) => {
-    const prop = t(localeKey) as keyof P;
-    const value = row[prop] ?? '';
-
-    addRequired(key, localeKey, formatter);
-
-    // check for duplicates
-    if (rows.some((r, i) => r[key] === value && index !== i)) {
-      rowErrors.push(
-        t('error.duplicated-field', {
-          field: t(localeKey),
-        })
-      );
-    }
-  };
-
-  const addUniqueCombination = (
-    inputs: {
-      key: keyof T;
-      localeKey: LocaleKey;
-      formatter?: (value: string) => unknown;
-    }[]
-  ) => {
-    // add all column values in the row
-    inputs.forEach(({ key, localeKey, formatter }) => {
-      addCell(key, localeKey, formatter);
-    });
-
-    // TODO add mapping check with hash maps for optimisation
-
-    if (
-      rows.some((r, i) => {
-        return inputs.every(({ key, localeKey, formatter }) => {
-          const prop = t(localeKey) as keyof P;
-          const value = row[prop] ?? '';
-          const rValue = r[key] as string | undefined;
-          return (
-            rValue !== undefined &&
-            rValue === (formatter ? formatter(value as string) : value) &&
-            index !== i
-          );
-        });
-      })
-    ) {
-      rowErrors.push(
-        t('error.duplicated-combination', {
-          fields: inputs.map(({ localeKey }) => t(localeKey)).join(', '),
-        })
-      );
-    }
-  };
-
-  function addLookup<K>(
-    key: keyof T,
-    lookupData: K[],
-    lookupFn: (item: K) => string | null | undefined,
-    localeKey: LocaleKey,
-    required: boolean,
-    formatter?: (value: string) => unknown
-  ) {
-    const prop = t(localeKey) as keyof P;
-    const value = row[prop] ?? '';
-    if (value === undefined || (value as string).trim() === '') {
-      if (required) {
-        rowErrors.push(
-          t('error.field-must-be-specified', {
-            field: t(localeKey),
-          })
-        );
-      }
-      return;
-    }
-    if (lookupData.filter(l => lookupFn(l) === value).length === 0) {
-      rowErrors.push(t('error.code-no-match', { field: t(localeKey) }));
-      return;
-    }
-    addCell(key, localeKey, formatter);
-  }
-
-  return {
-    addLookup,
-    addCell,
-    addRequired,
-    addSoftRequired,
-    addUnique,
-    addUniqueCombination,
-    importRow,
-    rowErrors,
-    rowWarnings,
-  };
-}
 
 export const UploadTab = ({
   tab,
@@ -263,7 +81,7 @@ export const UploadTab = ({
     error(t('messages.error-no-file-selected'));
   };
 
-  const processUploadedDataChunk = (data: ParseResult<ParsedAsset>) => {
+  const processUploadedDataChunk = (data: ParseResult<ParsedLine>) => {
     if (!data.data || !Array.isArray(data.data)) {
       setErrorMessage(t('messages.import-error'));
     }

@@ -139,23 +139,31 @@ export const PurchaseOrderLineImportModal = ({
         });
       }
       if (importErrorRows.length === 0) {
-        const importMessage = t('messages.import-generic', {
-          count: numberImportRecords,
-        });
-        const successSnack = success(importMessage);
-        successSnack();
-        onChangeTab(Tabs.Upload);
-        setBufferedLines([]);
-        setErrorMessage('');
-        onClose();
+        handleImportSuccess(numberImportRecords);
       } else {
-        // Load the error rows in to the component for review
-        setErrorMessage(t('messages.import-error'));
-        setBufferedLines(importErrorRows);
-        setImportErrorCount(importErrorRows.length);
-        onChangeTab(Tabs.Review);
+        handleImportFailure();
       }
     }
+  };
+
+  const handleImportSuccess = (numberImportRecords: number) => {
+    const importMessage = t('messages.import-generic', {
+      count: numberImportRecords,
+    });
+    const successSnack = success(importMessage);
+    successSnack();
+    onChangeTab(Tabs.Upload);
+    setBufferedLines([]);
+    setErrorMessage('');
+    onClose();
+  };
+
+  const handleImportFailure = () => {
+    // Load the error rows in to the component for review
+    setErrorMessage(t('messages.import-error'));
+    setBufferedLines(importErrorRows);
+    setImportErrorCount(importErrorRows.length);
+    onChangeTab(Tabs.Review);
   };
 
   const onClickStep = (tabName: Tabs) => {
