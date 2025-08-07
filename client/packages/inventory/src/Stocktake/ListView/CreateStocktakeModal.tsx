@@ -138,7 +138,6 @@ export const CreateStocktakeModal = ({
         })
       );
     }
-    // todo comment for vvm status
 
     if (filterComments.length === 0) return undefined;
     if (filterComments.length === 1)
@@ -286,7 +285,7 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <DateTimePickerInput
-                    width={'100%'}
+                    width="100%"
                     disabled={
                       !!createBlankStocktake || includeAllMasterListItems
                     }
