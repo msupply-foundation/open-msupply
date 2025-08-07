@@ -93,7 +93,9 @@ pub fn update_goods_received(
     //         .goods_received_service
     //         .update_goods_received(&service_context, store_id, input.to_domain()),
     // )
-    Ok(UpdateResponse::Response(IdResponse("".to_string())))
+    Ok(UpdateResponse::Response(IdResponse(
+        "NOTIMPLEMENTED".to_string(),
+    )))
 }
 
 // fn map_response(from: Result<GoodsReceivedRow, ServiceError>) -> Result<UpdateResponse> {
