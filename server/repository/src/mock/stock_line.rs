@@ -287,14 +287,15 @@ pub fn mock_vaccine_stock_lines() -> Vec<StockLineRow> {
 }
 
 pub fn mock_stock_line_restricted_location_type_b() -> StockLineRow {
-    inline_init(|r: &mut StockLineRow| {
-        r.id = "stock_line_restricted_location_type".to_string();
-        r.item_link_id = mock_item_restricted_location_type_b().id;
-        r.store_id = "store_a".to_string();
-        r.available_number_of_packs = 100.0;
-        r.pack_size = 1.0;
-        r.total_number_of_packs = 100.0;
-    })
+    StockLineRow {
+        id: "stock_line_restricted_location_type".to_string(),
+        item_link_id: mock_item_restricted_location_type_b().id,
+        store_id: "store_a".to_string(),
+        available_number_of_packs: 100.0,
+        pack_size: 1.0,
+        total_number_of_packs: 100.0,
+        ..Default::default()
+    }
 }
 
 pub fn mock_stock_lines() -> Vec<StockLineRow> {
