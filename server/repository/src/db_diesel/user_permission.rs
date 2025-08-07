@@ -9,7 +9,6 @@ use crate::{
 use crate::{EqualFilter, Pagination, Sort};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
-use util::inline_init;
 
 pub type UserPermission = UserPermissionRow;
 
@@ -155,6 +154,9 @@ impl UserPermissionFilter {
 
 impl PermissionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }

@@ -20,11 +20,17 @@ fragment InboundLine on InvoiceLineNode {
   itemName
   itemVariantId
   linkedInvoiceId
+  volumePerPack
+
   donor(storeId: $storeId) {
     id
     name
   }
 
+  program {
+    id
+    name
+  }
   campaign {
     id
     name
@@ -73,9 +79,20 @@ fragment InboundLine on InvoiceLineNode {
   vvmStatus {
     __typename
     id
-    level
+    priority
     unusable
     description
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
   }
 }
 

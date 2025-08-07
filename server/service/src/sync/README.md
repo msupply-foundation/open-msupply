@@ -165,7 +165,7 @@ to match the server. For example:
 
 When change allows for previous version to still work without logical or syntax errors. For example:
 
-- adding a new optional field or a field where default value can be deduced
+- adding a new optional field or a field in OG or OMS central where default value can be deduced
 - adding a new table
 - adding new optional header
 

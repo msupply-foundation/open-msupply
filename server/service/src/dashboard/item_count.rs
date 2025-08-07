@@ -82,7 +82,6 @@ mod item_count_service_test {
         InvoiceRowRepository, InvoiceType, ItemRow, ItemType, MasterListLineRow,
         MasterListNameJoinRow, MasterListRow, StockLineRow, StockLineRowRepository,
     };
-    use util::inline_init;
 
     use crate::{
         dashboard::item_count::{ItemCountServiceTrait, ItemServiceCount},
@@ -449,25 +448,27 @@ mod item_count_service_test {
         let invoice_repository = InvoiceRowRepository::new(&service_context.connection);
         let invoice_line_repository = InvoiceLineRowRepository::new(&service_context.connection);
         invoice_repository
-            .upsert_one(&inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice2".to_string();
-                r.name_link_id = "name_store_a".to_string();
-                r.name_store_id = Some("store_a".to_string());
-                r.store_id = "store_b".to_string();
-                r.picked_datetime = Some(Utc::now().naive_utc() - Duration::days(10));
-                r.r#type = InvoiceType::OutboundShipment;
-            }))
+            .upsert_one(&InvoiceRow {
+                id: "invoice2".to_string(),
+                name_link_id: "name_store_a".to_string(),
+                name_store_id: Some("store_a".to_string()),
+                store_id: "store_b".to_string(),
+                picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            })
             .unwrap();
 
         invoice_line_repository
-            .upsert_one(&inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "invoice_line_row_2".to_string();
-                r.invoice_id = "invoice2".to_string();
-                r.item_link_id = "item1".to_string();
-                r.number_of_packs = 20.0;
-                r.pack_size = 1.0;
-                r.r#type = InvoiceLineType::StockOut;
-            }))
+            .upsert_one(&InvoiceLineRow {
+                id: "invoice_line_row_2".to_string(),
+                invoice_id: "invoice2".to_string(),
+                item_link_id: "item1".to_string(),
+                number_of_packs: 20.0,
+                pack_size: 1.0,
+                r#type: InvoiceLineType::StockOut,
+                ..Default::default()
+            })
             .unwrap();
 
         let counts = service

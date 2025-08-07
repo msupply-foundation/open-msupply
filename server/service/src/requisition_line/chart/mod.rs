@@ -178,9 +178,7 @@ mod test {
         InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, NameRow, RequisitionRow,
         StockLineRow, StoreRow,
     };
-    use util::{
-        constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_now, inline_edit, inline_init, uuid::uuid,
-    };
+    use util::{constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_now, uuid::uuid};
 
     type ServiceError = RequisitionLineChartError;
 
@@ -242,80 +240,91 @@ mod test {
     #[actix_rt::test]
     async fn get_requisition_line_chart_consumption() {
         fn name() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "name".to_string();
-            })
+            NameRow {
+                id: "name".to_string(),
+                ..Default::default()
+            }
         }
 
         fn store() -> StoreRow {
-            inline_init(|s: &mut StoreRow| {
-                s.id = "store".to_string();
-                s.name_link_id = name().id;
-                s.code = "n/a".to_string();
-            })
+            StoreRow {
+                id: "store".to_string(),
+                name_link_id: name().id,
+                code: "n/a".to_string(),
+                ..Default::default()
+            }
         }
 
         fn requisition() -> RequisitionRow {
-            inline_init(|r: &mut RequisitionRow| {
-                r.id = "requisition".to_string();
-                r.store_id = store().id;
-                r.name_link_id = mock_name_a().id;
-                r.expected_delivery_date = Some(date_now());
-                r.r#type = RequisitionType::Request;
-            })
+            RequisitionRow {
+                id: "requisition".to_string(),
+                store_id: store().id,
+                name_link_id: mock_name_a().id,
+                expected_delivery_date: Some(date_now()),
+                r#type: RequisitionType::Request,
+                ..Default::default()
+            }
         }
 
         fn requisition_line() -> RequisitionLineRow {
-            inline_init(|r: &mut RequisitionLineRow| {
-                r.id = "requisition_line".to_string();
-                r.requisition_id = requisition().id;
-                r.item_link_id = mock_item_a().id;
-                r.snapshot_datetime = Some(
+            RequisitionLineRow {
+                id: "requisition_line".to_string(),
+                requisition_id: requisition().id,
+                item_link_id: mock_item_a().id,
+                snapshot_datetime: Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
-                );
-                r.average_monthly_consumption = 333.0;
-            })
+                ),
+                average_monthly_consumption: 333.0,
+                ..Default::default()
+            }
         }
 
         fn consumption_point() -> MockData {
             let invoice_id = uuid();
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
-                    r.id.clone_from(&invoice_id);
-                    r.store_id = store().id;
-                    r.name_link_id = mock_name_a().id;
-                    r.r#type = InvoiceType::OutboundShipment;
-                })];
-                r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
-                    r.id = format!("{}line", invoice_id);
-                    r.invoice_id.clone_from(&invoice_id);
-                    r.item_link_id = mock_item_a().id;
-                    r.r#type = InvoiceLineType::StockOut;
-                    r.stock_line_id = Some(format!("{}stock_line", invoice_id));
-                    r.pack_size = 1.0;
-                })];
-                r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
-                    r.id = format!("{}stock_line", invoice_id);
-                    r.store_id = store().id;
-                    r.item_link_id = mock_item_a().id;
-                    r.pack_size = 1.0;
-                })];
-            })
+            MockData {
+                invoices: vec![InvoiceRow {
+                    id: invoice_id.clone(),
+                    store_id: store().id,
+                    name_link_id: mock_name_a().id,
+                    r#type: InvoiceType::OutboundShipment,
+                    ..Default::default()
+                }],
+                invoice_lines: vec![InvoiceLineRow {
+                    id: format!("{}line", invoice_id),
+                    invoice_id: invoice_id.clone(),
+                    item_link_id: mock_item_a().id,
+                    r#type: InvoiceLineType::StockOut,
+                    stock_line_id: Some(format!("{}stock_line", invoice_id)),
+                    pack_size: 1.0,
+                    ..Default::default()
+                }],
+                stock_lines: vec![StockLineRow {
+                    id: format!("{}stock_line", invoice_id),
+                    store_id: store().id,
+                    item_link_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "get_requisition_line_chart_consumption",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![name()];
-                r.stores = vec![store()];
-                r.requisitions = vec![requisition()];
-                r.requisition_lines = vec![requisition_line()];
-            })
-            .join(inline_edit(&consumption_point(), |mut u| {
+            MockData {
+                names: vec![name()],
+                stores: vec![store()],
+                requisitions: vec![requisition()],
+                requisition_lines: vec![requisition_line()],
+
+                ..Default::default()
+            }
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
@@ -324,8 +333,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 12, 4)
                         .unwrap()
@@ -334,8 +344,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 11, 30)
                         .unwrap()
@@ -344,8 +355,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 30.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 10, 10)
                         .unwrap()
@@ -354,8 +366,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 40.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 10, 11)
                         .unwrap()
@@ -364,8 +377,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 5.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 9, 25)
                         .unwrap()
@@ -374,8 +388,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 5.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 9, 10)
                         .unwrap()
@@ -384,8 +399,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 8, 7)
                         .unwrap()
@@ -394,8 +410,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 15.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 7, 3)
                         .unwrap()
@@ -404,8 +421,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 40.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 6, 20)
                         .unwrap()
@@ -414,7 +432,7 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 30.0;
                 u
-            })),
+            }),
         )
         .await;
 
@@ -486,82 +504,92 @@ mod test {
     #[actix_rt::test]
     async fn get_requisition_line_chart_stock_evolution() {
         fn name() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "name".to_string();
-            })
+            NameRow {
+                id: "name".to_string(),
+                ..Default::default()
+            }
         }
 
         fn store() -> StoreRow {
-            inline_init(|s: &mut StoreRow| {
-                s.id = "store".to_string();
-                s.name_link_id = name().id;
-                s.code = "n/a".to_string();
-            })
+            StoreRow {
+                id: "store".to_string(),
+                name_link_id: name().id,
+                code: "n/a".to_string(),
+                ..Default::default()
+            }
         }
 
         fn requisition() -> RequisitionRow {
-            inline_init(|r: &mut RequisitionRow| {
-                r.id = "requisition".to_string();
-                r.store_id = store().id;
-                r.name_link_id = mock_name_a().id;
-                r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 1, 5).unwrap());
-                r.r#type = RequisitionType::Request;
-            })
+            RequisitionRow {
+                id: "requisition".to_string(),
+                store_id: store().id,
+                name_link_id: mock_name_a().id,
+                expected_delivery_date: Some(NaiveDate::from_ymd_opt(2021, 1, 5).unwrap()),
+                r#type: RequisitionType::Request,
+                ..Default::default()
+            }
         }
 
         fn requisition_line() -> RequisitionLineRow {
-            inline_init(|r: &mut RequisitionLineRow| {
-                r.id = "requisition_line".to_string();
-                r.requisition_id = requisition().id;
-                r.item_link_id = mock_item_a().id;
-                r.snapshot_datetime = Some(
+            RequisitionLineRow {
+                id: "requisition_line".to_string(),
+                requisition_id: requisition().id,
+                item_link_id: mock_item_a().id,
+                snapshot_datetime: Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
                         .and_hms_opt(12, 10, 11)
                         .unwrap(),
-                );
-                r.average_monthly_consumption = 25.0 * AVG_NUMBER_OF_DAYS_IN_A_MONTH;
-                r.available_stock_on_hand = 30.0;
-                r.requested_quantity = 100.0;
-            })
+                ),
+                average_monthly_consumption: 25.0 * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
+                available_stock_on_hand: 30.0,
+                requested_quantity: 100.0,
+                ..Default::default()
+            }
         }
 
         fn consumption_point() -> MockData {
             let invoice_id = uuid();
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
-                    r.id.clone_from(&invoice_id);
-                    r.store_id = store().id;
-                    r.name_link_id = mock_name_a().id;
-                    r.r#type = InvoiceType::OutboundShipment;
-                })];
-                r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
-                    r.id = format!("{}line", invoice_id);
-                    r.invoice_id.clone_from(&invoice_id);
-                    r.item_link_id = mock_item_a().id;
-                    r.r#type = InvoiceLineType::StockOut;
-                    r.stock_line_id = Some(format!("{}stock_line", invoice_id));
-                    r.pack_size = 1.0;
-                })];
-                r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
-                    r.id = format!("{}stock_line", invoice_id);
-                    r.store_id = store().id;
-                    r.item_link_id = mock_item_a().id;
-                    r.pack_size = 1.0;
-                })];
-            })
+            MockData {
+                invoices: vec![InvoiceRow {
+                    id: invoice_id.clone(),
+                    store_id: store().id,
+                    name_link_id: mock_name_a().id,
+                    r#type: InvoiceType::OutboundShipment,
+                    ..Default::default()
+                }],
+                invoice_lines: vec![InvoiceLineRow {
+                    id: format!("{}line", invoice_id),
+                    invoice_id: invoice_id.clone(),
+                    item_link_id: mock_item_a().id,
+                    r#type: InvoiceLineType::StockOut,
+                    stock_line_id: Some(format!("{}stock_line", invoice_id)),
+                    pack_size: 1.0,
+                    ..Default::default()
+                }],
+                stock_lines: vec![StockLineRow {
+                    id: format!("{}stock_line", invoice_id),
+                    store_id: store().id,
+                    item_link_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "get_requisition_line_chart_stock_evolution",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![name()];
-                r.stores = vec![store()];
-                r.requisitions = vec![requisition()];
-                r.requisition_lines = vec![requisition_line()];
-            })
-            .join(inline_edit(&consumption_point(), |mut u| {
+            MockData {
+                names: vec![name()],
+                stores: vec![store()],
+                requisitions: vec![requisition()],
+                requisition_lines: vec![requisition_line()],
+                ..Default::default()
+            }
+            .join({
+                let mut u = consumption_point().clone();
                 // + 10 (Inbound Shipment)
                 u.invoices[0].received_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
@@ -573,8 +601,9 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 // - 20 (Outbound Shipment)
                 u.invoices[0].picked_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
@@ -584,8 +613,9 @@ mod test {
                 );
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 // + 15 (Inventory Adjustment)
                 u.invoices[0].verified_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 1)
@@ -597,8 +627,9 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 15.0;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 // + 7 (Inbound Shipment)
                 u.invoices[0].received_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 1)
@@ -610,8 +641,9 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 7.0;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 // - 11 (Inventory Adjustment)
                 u.invoices[0].verified_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 1)
@@ -623,8 +655,9 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 11.0;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockOut;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 // Not Counted
                 u.invoices[0].received_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 3)
@@ -636,8 +669,9 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u
-            }))
-            .join(inline_edit(&consumption_point(), |mut u| {
+            })
+            .join({
+                let mut u = consumption_point().clone();
                 // Not Counted
                 u.invoices[0].verified_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 12, 31)
@@ -649,7 +683,7 @@ mod test {
                 u.invoice_lines[0].number_of_packs = 11.0;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockOut;
                 u
-            })),
+            }),
         )
         .await;
 

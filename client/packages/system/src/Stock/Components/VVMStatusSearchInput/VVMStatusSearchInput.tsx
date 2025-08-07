@@ -24,7 +24,7 @@ export const VVMStatusSearchInput = ({
   const { data, isLoading } = useVvmStatusesEnabled();
 
   const defaultOption =
-    useDefault && data ? getHighestVvmStatusLevel(data) : null;
+    useDefault && data ? getHighestVvmStatusPriority(data) : null;
   useMemo(() => {
     if (useDefault && !selected && defaultOption) {
       const defaultVvm = data?.find(status => status.id === defaultOption?.id);
@@ -58,8 +58,8 @@ export const VVMStatusSearchInput = ({
   );
 };
 
-const getHighestVvmStatusLevel = (statuses: VvmStatusFragment[]) => {
+const getHighestVvmStatusPriority = (statuses: VvmStatusFragment[]) => {
   const usableStatuses = statuses.filter(status => !status.unusable);
-  usableStatuses.sort((a, b) => a.level - b.level);
+  usableStatuses.sort((a, b) => a.priority - b.priority);
   return usableStatuses[usableStatuses.length - 1];
 };

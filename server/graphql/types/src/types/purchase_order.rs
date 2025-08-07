@@ -153,6 +153,12 @@ impl PurchaseOrderNode {
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage
     }
+    pub async fn authorised_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().authorised_datetime
+    }
+    pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().finalised_datetime
+    }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<PurchaseOrderLineConnector> {
         let loader = ctx.get_loader::<DataLoader<PurchaseOrderLinesByPurchaseOrderIdLoader>>();

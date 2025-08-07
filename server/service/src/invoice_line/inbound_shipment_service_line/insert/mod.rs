@@ -89,7 +89,7 @@ mod test {
         test_db::setup_all,
         InvoiceLineRowRepository, ItemFilter, ItemRepository, StringFilter,
     };
-    use util::{constants::DEFAULT_SERVICE_ITEM_CODE, inline_edit, inline_init};
+    use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
     use crate::{
         invoice_line::inbound_shipment_service_line::InsertInboundShipmentServiceLine,
@@ -118,9 +118,10 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
-                    r.id = mock_draft_inbound_service_line().id
-                }),
+                InsertInboundShipmentServiceLine {
+                    id: mock_draft_inbound_service_line().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::LineAlreadyExists)
         );
@@ -129,9 +130,10 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
-                    r.invoice_id = "invalid".to_string();
-                }),
+                InsertInboundShipmentServiceLine {
+                    invoice_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -140,9 +142,10 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
-                    r.invoice_id = mock_draft_inbound_verified_with_service_lines().id;
-                }),
+                InsertInboundShipmentServiceLine {
+                    invoice_id: mock_draft_inbound_verified_with_service_lines().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditInvoice)
         );
@@ -151,10 +154,11 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-                    r.item_id = Some("invalid".to_string())
-                }),
+                InsertInboundShipmentServiceLine {
+                    invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
+                    item_id: Some("invalid".to_string()),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -163,10 +167,11 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-                    r.item_id = Some(mock_item_a().id)
-                }),
+                InsertInboundShipmentServiceLine {
+                    invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
+                    item_id: Some(mock_item_a().id),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAServiceItem)
         );
@@ -176,9 +181,10 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
-                    r.invoice_id = mock_outbound_shipment_c().id;
-                }),
+                InsertInboundShipmentServiceLine {
+                    invoice_id: mock_outbound_shipment_c().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
@@ -187,11 +193,12 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-                    r.item_id = Some(mock_item_service_item().id);
-                    r.note = Some("abc".to_string());
-                }),
+                InsertInboundShipmentServiceLine {
+                    invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
+                    item_id: Some(mock_item_service_item().id),
+                    note: Some("abc".to_string()),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -215,10 +222,11 @@ mod test {
         service
             .insert_inbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut InsertInboundShipmentServiceLine| {
-                    r.id = "new_line_id".to_string();
-                    r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-                }),
+                InsertInboundShipmentServiceLine {
+                    id: "new_line_id".to_string(),
+                    invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -238,11 +246,12 @@ mod test {
             .unwrap();
         assert_eq!(
             line,
-            inline_edit(&line, |mut u| {
-                u.item_link_id = default_service_item.item_row.id;
-                u.item_name = default_service_item.item_row.name;
-                u
-            })
+            {
+                let mut expected_line = line.clone();
+                expected_line.item_link_id = default_service_item.item_row.id;
+                expected_line.item_name = default_service_item.item_row.name;
+                expected_line
+            }
         );
 
         // Specified service line
@@ -268,16 +277,17 @@ mod test {
 
         assert_eq!(
             line,
-            inline_edit(&line, |mut u| {
-                u.id = "new_line2_id".to_string();
-                u.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-                u.item_link_id = mock_item_service_item().id;
-                u.item_name = "modified name".to_string();
-                u.total_before_tax = 0.3;
-                u.tax_percentage = Some(10.0);
-                u.note = Some("note".to_string());
-                u
-            })
+            {
+                let mut expected_line = line.clone();
+                expected_line.id = "new_line2_id".to_string();
+                expected_line.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
+                expected_line.item_link_id = mock_item_service_item().id;
+                expected_line.item_name = "modified name".to_string();
+                expected_line.total_before_tax = 0.3;
+                expected_line.tax_percentage = Some(10.0);
+                expected_line.note = Some("note".to_string());
+                expected_line
+            }
         );
     }
 }

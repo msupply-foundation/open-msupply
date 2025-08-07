@@ -6,7 +6,6 @@ fragment StockLineRow on StockLineNode {
   id
   itemId
   locationId
-  itemVariantId
   vvmStatusId
   locationName
   onHold
@@ -15,6 +14,8 @@ fragment StockLineRow on StockLineNode {
   storeId
   totalNumberOfPacks
   supplierName
+  volumePerPack
+  totalVolume
   location {
     ...LocationRow
   }
@@ -38,16 +39,31 @@ fragment StockLineRow on StockLineNode {
   vvmStatus {
     __typename
     id
-    level
+    priority
     unusable
     description
   }
   donor(storeId: $storeId) {
     id
   }
+  program {
+    id
+    name
+  }
   campaign {
     id
     name
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
   }
 }
 
@@ -112,7 +128,7 @@ fragment VVMStatusLogRow on VvmstatusLogNode {
     id
     description
     code
-    level
+    priority
   }
   createdDatetime
   comment
@@ -302,7 +318,7 @@ fragment VVMStatus on VvmstatusNode {
   __typename
   description
   id
-  level
+  priority
   reasonId
   unusable
 }

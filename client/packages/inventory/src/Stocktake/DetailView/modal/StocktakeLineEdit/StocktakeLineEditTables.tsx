@@ -26,6 +26,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
+  getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemVariantInputCell,
@@ -47,6 +48,7 @@ interface StocktakeLineEditTableProps {
   isInitialStocktake?: boolean;
   trackStockDonor?: boolean;
   restrictedToLocationTypeId?: string | null;
+  useCampaigns?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -62,6 +64,7 @@ const useDisableStocktakeRows = (rows?: DraftStocktakeLine[]) => {
       ?.filter(row => !row.countThisLine)
       .map(({ id }) => id);
     if (disabledRows) setDisabledRows(disabledRows);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 };
 
@@ -136,11 +139,6 @@ const getInventoryAdjustmentReasonInputColumn = (
       const isInventoryReduction =
         rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
 
-      const required =
-        typeof rowData.countedNumberOfPacks === 'number' &&
-        rowData.countThisLine &&
-        rowData.snapshotNumberOfPacks !== rowData.countedNumberOfPacks;
-
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
       // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
       return (
@@ -156,8 +154,6 @@ const getInventoryAdjustmentReasonInputColumn = (
           inputProps={{
             error: isAdjustmentReasonError,
           }}
-          disabled={!required}
-          required={required}
           initialStocktake={initialStocktake}
           reasonOptions={reasonOptions}
           loading={isLoading}
@@ -205,7 +201,23 @@ export const BatchTable = ({
         Cell: props => (
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
-        setter: patch => update({ ...patch }),
+        setter: patch => {
+          const { packSize, itemVariant } = patch;
+
+          if (itemVariant) {
+            const packaging = itemVariant.packagingVariants.find(
+              p => p.packSize === packSize
+            );
+            // Item variants save volume in L, but it is saved in m3 everywhere else
+            update({
+              ...patch,
+              volumePerPack:
+                ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
+            });
+          } else {
+            update(patch);
+          }
+        },
       });
     }
     columnDefinitions.push(
@@ -265,6 +277,15 @@ export const BatchTable = ({
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
       },
+      {
+        key: 'volumePerPack',
+        label: t('label.volume-per-pack'),
+        Cell: NumberInputCell,
+        cellProps: { decimalLimit: 10 },
+        width: 100,
+        accessor: ({ rowData }) => rowData?.volumePerPack,
+        setter: patch => update({ ...patch, countThisLine: true }),
+      },
       getInventoryAdjustmentReasonInputColumn(
         update,
         errorsContext,
@@ -275,6 +296,7 @@ export const BatchTable = ({
     );
 
     return columnDefinitions;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     itemVariantsEnabled,
     errorsContext,
@@ -347,9 +369,10 @@ export const LocationTable = ({
   isDisabled,
   trackStockDonor,
   restrictedToLocationTypeId,
+  useCampaigns,
 }: StocktakeLineEditTableProps) => {
-  const theme = useTheme();
   const t = useTranslation();
+  const theme = useTheme();
   useDisableStocktakeRows(batches);
 
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -375,6 +398,10 @@ export const LocationTable = ({
       )
     );
   }
+  if (useCampaigns) {
+    columnDefinitions.push(getCampaignOrProgramColumn(patch => update(patch)));
+  }
+
   columnDefinitions.push([
     'comment',
     {

@@ -22,6 +22,7 @@ pub mod apis;
 pub mod app_data;
 pub mod boajs;
 pub mod campaign;
+pub mod ledger_fix;
 
 pub mod asset;
 pub mod auth;
@@ -31,7 +32,7 @@ pub mod barcode;
 pub mod catalogue;
 pub mod clinician;
 pub mod cold_chain;
-mod common_stock;
+mod common;
 pub mod contact;
 pub mod contact_form;
 pub mod currency;

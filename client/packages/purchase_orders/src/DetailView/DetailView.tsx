@@ -32,6 +32,10 @@ export const DetailViewInner = () => {
     lines: { sortedAndFilteredLines },
   } = usePurchaseOrder();
 
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.number]);
+
   const {
     onOpen,
     onClose,

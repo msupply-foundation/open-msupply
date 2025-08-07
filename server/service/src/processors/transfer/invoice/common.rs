@@ -54,7 +54,9 @@ pub(crate) fn generate_inbound_lines(
                     donor_link_id,
                     vvm_status_id,
                     campaign_id,
+                    program_id,
                     shipped_number_of_packs,
+                    volume_per_pack,
                     shipped_pack_size,
                 },
                 ItemRow {
@@ -105,7 +107,9 @@ pub(crate) fn generate_inbound_lines(
                     vvm_status_id,
                     donor_link_id,
                     campaign_id,
+                    program_id,
                     shipped_number_of_packs,
+                    volume_per_pack,
                     sell_price_per_pack: default_sell_price_per_pack,
                     shipped_pack_size,
                     // Default
@@ -133,6 +137,7 @@ pub(crate) fn convert_invoice_line_to_single_pack(
 
             line.number_of_packs *= line.pack_size;
             line.cost_price_per_pack /= line.pack_size;
+            line.volume_per_pack /= line.pack_size;
             line.sell_price_per_pack /= line.pack_size;
             line.pack_size = 1.0;
             line.shipped_number_of_packs = Some(line.number_of_packs);
