@@ -5,7 +5,7 @@ import { useTranslation, Box } from '@openmsupply-client/common';
 import React, { useState } from 'react';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { createDraftPurchaseOrderLine } from './utils';
 interface PurchaseOrderLineEditModalProps {
   lineId: string | null;
@@ -38,7 +38,7 @@ export const PurchaseOrderLineEditModal = ({
     updatePatch,
   } = usePurchaseOrderLine(currentLine?.id);
 
-  const onChangeItem = (item: ItemWithStatsFragment) => {
+  const onChangeItem = (item: ItemStockOnHandFragment) => {
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
     item &&
       updatePatch({

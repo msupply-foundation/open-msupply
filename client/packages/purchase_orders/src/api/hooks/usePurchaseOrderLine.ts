@@ -114,18 +114,16 @@ const useGet = (id: string) => {
 const useCreate = () => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
-  const mutationFn = async ({
-    purchaseOrderId,
-    itemId,
-    id,
-  }: DraftPurchaseOrderLine) => {
+  const mutationFn = async (draft: DraftPurchaseOrderLine) => {
     return await purchaseOrderApi.insertPurchaseOrderLine({
       storeId,
       input: {
-        id,
-        // TODO better way of handling non item id
-        itemId: itemId,
-        purchaseOrderId,
+        id: draft.id,
+        itemId: draft.itemId,
+        purchaseOrderId: draft.purchaseOrderId,
+        requestedQuantity: draft.requestedNumberOfUnits,
+        requestedDeliveryDate: draft.requestedDeliveryDate,
+        expectedDeliveryDate: draft.expectedDeliveryDate,
       },
     });
   };

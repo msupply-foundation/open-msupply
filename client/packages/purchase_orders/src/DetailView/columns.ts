@@ -42,8 +42,13 @@ export const usePurchaseOrderColumns = () => {
       width: 150,
       Cell: PackQuantityCell,
       accessor: rowData =>
-        Math.ceil((rowData.rowData.requestedNumberOfUnits ?? 0) /
-        ((rowData.rowData.requestedPackSize && rowData.rowData.requestedPackSize !== 0) ? rowData.rowData.requestedPackSize : 1)),
+        Math.ceil(
+          (rowData.rowData.requestedNumberOfUnits ?? 0) /
+            (rowData.rowData.requestedPackSize &&
+            rowData.rowData.requestedPackSize !== 0
+              ? rowData.rowData.requestedPackSize
+              : 1)
+        ),
     },
     {
       key: 'packSize',
@@ -54,14 +59,14 @@ export const usePurchaseOrderColumns = () => {
       defaultHideOnMobile: true,
     },
     {
-      key: 'requestedQuantity',
+      key: 'requestedNumberOfUnits',
       label: 'label.requested-quantity',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.requestedNumberOfUnits,
       getSortValue: rowData => rowData.requestedNumberOfUnits ?? 0,
     },
     {
-      key: 'authorisedQuantity',
+      key: 'authorisedNumberOfUnits',
       label: 'label.authorised-quantity',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.authorisedNumberOfUnits,

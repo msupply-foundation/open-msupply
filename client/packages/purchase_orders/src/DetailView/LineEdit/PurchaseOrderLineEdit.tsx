@@ -8,8 +8,8 @@ import {
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
-  ItemWithStatsFragment,
-  StockItemSearchInputWithStats,
+  ItemStockOnHandFragment,
+  StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { min } from 'lodash';
@@ -19,7 +19,7 @@ export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
   currentLine?: PurchaseOrderLineFragment;
-  onChangeItem: (item: ItemWithStatsFragment) => void;
+  onChangeItem: (item: ItemStockOnHandFragment) => void;
   draft?: DraftPurchaseOrderLine | null;
   updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
 }
@@ -60,14 +60,12 @@ export const PurchaseOrderLineEdit = ({
             fullWidth
           />
         )) || (
-          <StockItemSearchInputWithStats
+          <StockItemSearchInput
             autoFocus={!currentLine}
             openOnFocus={!currentLine}
-            disabled={false}
+            disabled={isUpdateMode}
             currentItemId={currentLine?.item.id}
-            onChange={(newItem: ItemWithStatsFragment | null) =>
-              newItem && onChangeItem(newItem)
-            }
+            onChange={newItem => newItem && onChangeItem(newItem)}
           />
         )}
       </Grid>

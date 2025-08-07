@@ -63,6 +63,8 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     .flatMap(page => page.data.nodes)
     .find(item => item.id === currentItemId);
 
+  console.log('Current item:', currentItem);
+
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
 
   const filterOptions = useCallback(
