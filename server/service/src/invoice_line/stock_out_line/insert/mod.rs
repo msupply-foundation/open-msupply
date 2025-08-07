@@ -32,6 +32,8 @@ pub struct InsertStockOutLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub campaign_id: Option<String>,
+    pub item_variant_id: Option<String>,
+    pub donor_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
