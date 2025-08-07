@@ -40,7 +40,11 @@ export type StocktakeLineFragment = {
     name: string;
     code: string;
     onHold: boolean;
-    locationType?: { __typename: 'LocationTypeNode'; id: string } | null;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+    } | null;
   } | null;
   stockLine?: { __typename: 'StockLineNode'; id: string } | null;
   item: {
@@ -112,7 +116,11 @@ export type StocktakeFragment = {
         name: string;
         code: string;
         onHold: boolean;
-        locationType?: { __typename: 'LocationTypeNode'; id: string } | null;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       stockLine?: { __typename: 'StockLineNode'; id: string } | null;
       item: {
@@ -228,6 +236,7 @@ export type StocktakeQuery = {
               locationType?: {
                 __typename: 'LocationTypeNode';
                 id: string;
+                name: string;
               } | null;
             } | null;
             stockLine?: { __typename: 'StockLineNode'; id: string } | null;
@@ -315,6 +324,7 @@ export type StocktakeByNumberQuery = {
               locationType?: {
                 __typename: 'LocationTypeNode';
                 id: string;
+                name: string;
               } | null;
             } | null;
             stockLine?: { __typename: 'StockLineNode'; id: string } | null;
@@ -383,7 +393,11 @@ export type StocktakeLinesQuery = {
         name: string;
         code: string;
         onHold: boolean;
-        locationType?: { __typename: 'LocationTypeNode'; id: string } | null;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       stockLine?: { __typename: 'StockLineNode'; id: string } | null;
       item: {
@@ -665,6 +679,7 @@ export const StocktakeLineFragmentDoc = gql`
       onHold
       locationType {
         id
+        name
       }
     }
     stockLine {
