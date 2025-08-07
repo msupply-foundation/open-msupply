@@ -139,6 +139,7 @@ export const StocktakeLineEdit = ({
         batches={reversedDraftLines}
         update={update}
         isInitialStocktake={isInitialStocktake}
+        isVaccineItem={currentItem?.isVaccine ?? false}
       />
       <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
         <ButtonWithIcon
@@ -161,6 +162,7 @@ export const StocktakeLineEdit = ({
               batches={reversedDraftLines}
               update={update}
               isInitialStocktake={isInitialStocktake}
+              isVaccineItem={currentItem?.isVaccine ?? false}
             />
           </StyledTabContainer>
         </StyledTabPanel>

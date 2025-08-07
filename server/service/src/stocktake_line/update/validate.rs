@@ -1,6 +1,6 @@
 use crate::{
     campaign::check_campaign_exists,
-    check_location_exists,
+    check_location_exists, check_vvm_status_exists,
     common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
@@ -51,6 +51,13 @@ pub fn validate(
             return Err(LocationDoesNotExist);
         }
     }
+
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VvmStatusDoesNotExist);
+        }
+    }
+
     let stocktake_reduction_amount =
         stocktake_reduction_amount(&input.counted_number_of_packs, stocktake_line_row);
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()

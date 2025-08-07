@@ -6,7 +6,8 @@ use generate::*;
 
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, ActivityLogType,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLine, StockLineRowRepository, Stocktake,
     StocktakeLine, StocktakeLineRowRepository, StocktakeRowRepository,
 };
@@ -84,6 +85,7 @@ pub fn update_stocktake(
             let stocktake_line_repo = StocktakeLineRowRepository::new(connection);
             let invoice_row_repo = InvoiceRowRepository::new(connection);
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
+            let vvm_status_log_repo = VVMStatusLogRowRepository::new(connection);
 
             // write updated stock lines (stock line info has changed, but no inventory adjustment)
             for stock_line in result.stock_lines {
@@ -152,6 +154,10 @@ pub fn update_stocktake(
                 for location_movement in location_movements {
                     location_movement_repo.upsert_one(&location_movement)?;
                 }
+            }
+
+            for vvm_status_log in result.vvm_status_logs {
+                vvm_status_log_repo.upsert_one(&vvm_status_log)?;
             }
 
             if status_changed {
