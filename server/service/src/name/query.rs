@@ -3,7 +3,7 @@ use repository::PaginationOption;
 use repository::{Name, NameFilter, NameSort};
 
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 
 pub const MAX_LIMIT: u32 = u32::MAX;
@@ -16,7 +16,7 @@ pub fn get_names(
     filter: Option<NameFilter>,
     sort: Option<NameSort>,
 ) -> Result<ListResult<Name>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = NameRepository::new(&ctx.connection);
 
     Ok(ListResult {

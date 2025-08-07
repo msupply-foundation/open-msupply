@@ -354,7 +354,8 @@ pub struct Sort<T> {
     pub desc: Option<bool>,
 }
 
-pub const DEFAULT_PAGINATION_LIMIT: u32 = 100;
+pub const DEFAULT_PAGINATION_MIN_LIMIT: u32 = 1;
+pub const DEFAULT_PAGINATION_MAX_LIMIT: u32 = u32::MAX;
 
 #[derive(Debug, PartialEq, Default)]
 pub struct PaginationOption {

@@ -5,11 +5,9 @@ use repository::{
 };
 
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
+ 
 
 #[derive(Debug, PartialEq)]
 pub enum GetStocktakeLinesError {
@@ -38,7 +36,7 @@ pub fn get_stocktake_lines(
     let filter = filter
         .unwrap_or_default()
         .stocktake_id(EqualFilter::equal_to(stocktake_id));
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
+    let pagination = get_pagination_or_default(pagination, MAX_LIMIT, MIN_LIMIT)
         .map_err(GetStocktakeLinesError::ListError)?;
     let repository = StocktakeLineRepository::new(&ctx.connection);
 
