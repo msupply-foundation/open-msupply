@@ -24,7 +24,6 @@ pub enum PurchaseOrderSortField {
     CreatedDatetime,
     Status,
     TargetMonths,
-    ExpectedDeliveryDate,
 }
 
 pub type PurchaseOrderSort = Sort<PurchaseOrderSortField>;
@@ -72,9 +71,6 @@ impl<'a> PurchaseOrderRepository<'a> {
                 }
                 PurchaseOrderSortField::TargetMonths => {
                     apply_sort!(query, sort, purchase_order::target_months)
-                }
-                PurchaseOrderSortField::ExpectedDeliveryDate => {
-                    apply_sort!(query, sort, purchase_order::expected_delivery_date)
                 }
             }
         } else {

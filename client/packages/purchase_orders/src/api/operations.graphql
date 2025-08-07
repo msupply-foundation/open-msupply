@@ -12,7 +12,6 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   status
   targetMonths
   # deliveredDatetime
-  expectedDeliveryDate
   lines {
     totalCount
   }

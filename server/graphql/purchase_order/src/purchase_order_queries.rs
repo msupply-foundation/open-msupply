@@ -19,7 +19,6 @@ pub enum PurchaseOrderSortFieldInput {
     CreatedDatetime,
     Status,
     TargetMonths,
-    DeliveryDate,
 }
 
 #[derive(InputObject)]
@@ -97,7 +96,6 @@ pub fn get_purchase_orders(
     filter: Option<PurchaseOrderFilterInput>,
     sort: Option<Vec<PurchaseOrderSortInput>>,
 ) -> Result<PurchaseOrdersResponse> {
-
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -147,7 +145,6 @@ impl PurchaseOrderSortInput {
         let key = match self.key {
             from::Number => to::Number,
             from::TargetMonths => to::TargetMonths,
-            from::DeliveryDate => to::ExpectedDeliveryDate,
             from::Status => to::Status,
             from::CreatedDatetime => to::CreatedDatetime,
         };
