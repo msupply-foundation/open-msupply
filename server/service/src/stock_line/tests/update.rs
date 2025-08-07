@@ -56,12 +56,13 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id.clone_from(&mock_stock_line_restricted_location_type_b().id);
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_restricted_location_type_b().id.clone(),
+                    location: Some(NullableUpdate {
                         value: Some(mock_location_with_restricted_location_type_a().id),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::IncorrectLocationType)
         );
@@ -70,12 +71,13 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.item_variant_id = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id.clone(),
+                    item_variant_id: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::ItemVariantDoesNotExist)
         );

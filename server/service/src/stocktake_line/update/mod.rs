@@ -286,12 +286,13 @@ mod stocktake_line_test {
         let error = service
             .update_stocktake_line(
                 &context,
-                inline_init(|r: &mut UpdateStocktakeLine| {
-                    r.id = stocktake_line.id;
-                    r.location = Some(NullableUpdate {
+                UpdateStocktakeLine {
+                    id: stocktake_line.id.clone(),
+                    location: Some(NullableUpdate {
                         value: Some(mock_location_with_restricted_location_type_a().id),
-                    });
-                }),
+                    }),
+                    ..Default::default()
+                },
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::IncorrectLocationType);

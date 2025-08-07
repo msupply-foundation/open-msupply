@@ -264,19 +264,21 @@ mod test {
             ),
             Err(ServiceError::LocationDoesNotExist)
         );
+
         // IncorrectLocationType
         assert_eq!(
             insert_stock_in_line(
                 &context,
-                inline_init(|r: &mut InsertStockInLine| {
-                    r.id = "new invoice line id".to_string();
-                    r.pack_size = 1.0;
-                    r.number_of_packs = 1.0;
-                    r.item_id = mock_item_restricted_location_type_b().id;
-                    r.location = Some(NullableUpdate {
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_restricted_location_type_b().id,
+                    location: Some(NullableUpdate {
                         value: Some(mock_location_with_restricted_location_type_a().id),
-                    });
-                }),
+                    }),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::IncorrectLocationType)
         );
