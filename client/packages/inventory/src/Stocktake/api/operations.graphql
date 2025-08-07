@@ -38,6 +38,7 @@ fragment StocktakeLine on StocktakeLineNode {
     onHold
     locationType {
       id
+      name
     }
   }
 
