@@ -218,7 +218,7 @@ mod user_account_test {
         test_db::{self, setup_all},
         PermissionType,
     };
-    use util::{assert_matches, inline_edit};
+    use util::assert_matches;
 
     use crate::service_provider::ServiceProvider;
 
@@ -298,10 +298,11 @@ mod user_account_test {
         let user_service = UserAccountService::new(&context.connection);
         user_service
             .upsert_user(
-                inline_edit(&mock_user_account_a(), |mut u| {
+                {
+                    let mut u = mock_user_account_a().clone();
                     u.hashed_password = "changedpassword".to_string();
                     u
-                }),
+                },
                 vec![StorePermissions {
                     user_store_join: UserStoreJoinRow {
                         id: "new_user_store_join".to_string(),

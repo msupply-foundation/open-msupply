@@ -16,7 +16,6 @@ use repository::{
     test_db, ChangelogRepository, KeyType, KeyValueStoreRow, SyncBufferRow,
     SyncBufferRowRepository,
 };
-use util::inline_init;
 
 use super::{
     insert_all_extra_data,
@@ -34,13 +33,15 @@ async fn test_sync_pull_and_push() {
     let (_, connection, _, _) = test_db::setup_all_with_data(
         "test_sync_pull_and_push",
         MockDataInserts::all(),
-        inline_init(|r: &mut MockData| {
-            r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
-                r.id = KeyType::SettingsSyncSiteId;
+        MockData {
+            key_value_store_rows: vec![KeyValueStoreRow {
+                id: KeyType::SettingsSyncSiteId,
                 // This is needed for invoice line, since we check if it belongs to current site in translator
-                r.value_int = Some(mock_store_b().site_id);
-            })]
-        }),
+                value_int: Some(mock_store_b().site_id),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
     )
     .await;
 

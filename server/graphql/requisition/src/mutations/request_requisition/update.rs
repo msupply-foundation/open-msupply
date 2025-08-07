@@ -214,7 +214,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
+    
 
     use crate::RequisitionMutations;
 
@@ -431,9 +431,10 @@ mod test {
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap())
                 }
             );
-            Ok(inline_init(|r: &mut Requisition| {
-                r.requisition_row = mock_request_draft_requisition()
-            }))
+            Ok(Requisition {
+                requisition_row: mock_request_draft_requisition(),
+                ..Default::default()
+            })
         }));
 
         let variables = json!({

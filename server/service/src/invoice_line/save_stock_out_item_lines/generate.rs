@@ -78,6 +78,7 @@ pub fn generate(
                  number_of_packs,
                  stock_line_id,
                  campaign_id,
+                 program_id,
                  vvm_status_id,
              }| InsertStockOutLine {
                 id,
@@ -87,6 +88,7 @@ pub fn generate(
                 number_of_packs,
                 vvm_status_id,
                 campaign_id,
+                program_id,
                 // Default (use None so the stock line values are used)
                 batch: None,
                 pack_size: None,
@@ -98,6 +100,7 @@ pub fn generate(
                 location_id: None,
                 cost_price_per_pack: None,
                 sell_price_per_pack: None,
+                volume_per_pack: None,
             },
         )
         .collect();
@@ -112,6 +115,7 @@ pub fn generate(
                  number_of_packs,
                  stock_line_id,
                  campaign_id,
+                 program_id,
                  vvm_status_id,
              }| UpdateStockOutLine {
                 id,
@@ -119,6 +123,7 @@ pub fn generate(
                 number_of_packs: Some(number_of_packs),
                 r#type: Some(stock_out_type.clone()),
                 campaign_id,
+                program_id,
                 vvm_status_id,
                 // Default
                 prescribed_quantity: None,
@@ -216,15 +221,13 @@ mod tests {
                 id: "newA".to_string(),
                 number_of_packs: 1.0,
                 stock_line_id: "A".to_string(),
-                campaign_id: None,
-                vvm_status_id: None,
+                ..Default::default()
             },
             SaveStockOutInvoiceLine {
                 id: "newB".to_string(),
                 number_of_packs: 2.0,
                 stock_line_id: "B".to_string(),
-                campaign_id: None,
-                vvm_status_id: None,
+                ..Default::default()
             },
         ];
 

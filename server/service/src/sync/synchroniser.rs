@@ -304,6 +304,8 @@ impl Synchroniser {
                 v6_sync.advance_push_cursor(&ctx.connection)?;
             }
             self.service_provider.site_is_initialised_trigger.trigger();
+            // Trigger ledger fix after initialisation
+            self.service_provider.ledger_fix_trigger.trigger();
         }
 
         ctx.processors_trigger
@@ -423,7 +425,6 @@ pub fn integrate_and_translate_sync_buffer(
 #[cfg(test)]
 mod tests {
     use repository::mock::MockDataInserts;
-    use util::inline_init;
 
     use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
 
@@ -440,7 +441,10 @@ mod tests {
         let ctx = service_provider.basic_context().unwrap();
         let service = &service_provider.settings;
         let s = Synchroniser::new(
-            inline_init(|r: &mut SyncSettings| r.url = "http://0.0.0.0:0".to_string()),
+            SyncSettings {
+                url: "http://0.0.0.0:0".to_string(),
+                ..Default::default()
+            },
             service_provider.clone(),
         )
         .unwrap();

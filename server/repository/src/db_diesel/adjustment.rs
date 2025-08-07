@@ -17,7 +17,6 @@ table! {
 }
 
 use chrono::NaiveDate;
-use util::Defaults;
 
 #[derive(Clone, Queryable, Debug, PartialEq)]
 pub struct AdjustmentRow {
@@ -31,7 +30,7 @@ pub struct AdjustmentRow {
 impl Default for AdjustmentRow {
     fn default() -> Self {
         Self {
-            date: Defaults::naive_date(),
+            date: Default::default(),
             // Default
             id: Default::default(),
             item_id: Default::default(),

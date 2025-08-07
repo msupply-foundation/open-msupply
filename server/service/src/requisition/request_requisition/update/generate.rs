@@ -12,7 +12,6 @@ use repository::{
     EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, StorageConnection,
 };
-use util::inline_edit;
 
 pub struct GenerateResult {
     pub(crate) updated_requisition_row: RequisitionRow,
@@ -36,40 +35,41 @@ pub fn generate(
     }: UpdateRequestRequisition,
 ) -> Result<GenerateResult, RepositoryError> {
     let keep_requisition_lines_with_zero_requested_quantity_on_finalised =
-        get_store_preferences(connection, &existing.store_id)?
+        get_store_preferences(connection, &existing.store_id.clone())?
             .keep_requisition_lines_with_zero_requested_quantity_on_finalised;
 
     // Recalculate lines only if max_months_of_stock or min_months_of_stock changed
     let update_threshold_months_of_stock =
-        update_threshold_months_of_stock.unwrap_or(existing.min_months_of_stock);
+        update_threshold_months_of_stock.unwrap_or(existing.min_months_of_stock.clone());
     let update_max_months_of_stock =
-        update_max_months_of_stock.unwrap_or(existing.max_months_of_stock);
+        update_max_months_of_stock.unwrap_or(existing.max_months_of_stock.clone());
 
-    let should_recalculate = update_threshold_months_of_stock != existing.min_months_of_stock
-        || update_max_months_of_stock != existing.max_months_of_stock;
+    let should_recalculate = update_threshold_months_of_stock
+        != existing.min_months_of_stock.clone()
+        || update_max_months_of_stock != existing.max_months_of_stock.clone();
 
-    let updated_requisition_row = inline_edit(&existing, |mut u| {
+    let updated_requisition_row = RequisitionRow {
         // Only sent status is available in UpdateRequestRequisitionStatus
-        u.status = if update_status.is_some() {
+        status: if update_status.is_some() {
             RequisitionStatus::Sent
         } else {
-            u.status
-        };
-        u.sent_datetime = if update_status.is_some() {
+            existing.status.clone()
+        },
+        sent_datetime: if update_status.is_some() {
             Some(Utc::now().naive_utc())
         } else {
-            u.sent_datetime
-        };
-        u.colour = update_colour.or(u.colour);
-        u.comment = update_comment.or(u.comment);
-        u.their_reference = update_their_reference.or(u.their_reference);
-        u.min_months_of_stock = update_threshold_months_of_stock;
-        u.max_months_of_stock = update_max_months_of_stock;
-        u.name_link_id = update_other_party_id.unwrap_or(u.name_link_id);
-        u.expected_delivery_date = update_expected_delivery_date.or(u.expected_delivery_date);
-
-        u
-    });
+            existing.sent_datetime.clone()
+        },
+        colour: update_colour.or(existing.colour.clone()),
+        comment: update_comment.or(existing.comment.clone()),
+        their_reference: update_their_reference.or(existing.their_reference.clone()),
+        min_months_of_stock: update_threshold_months_of_stock,
+        max_months_of_stock: update_max_months_of_stock,
+        name_link_id: update_other_party_id.unwrap_or(existing.name_link_id.clone()),
+        expected_delivery_date: update_expected_delivery_date
+            .or(existing.expected_delivery_date.clone()),
+        ..existing.clone()
+    };
 
     let updated_requisition_lines = if should_recalculate {
         generate_updated_lines(connection, &updated_requisition_row)?
@@ -80,7 +80,7 @@ pub fn generate(
     let empty_lines_to_trim = if keep_requisition_lines_with_zero_requested_quantity_on_finalised {
         None
     } else {
-        empty_lines_to_trim(connection, &existing, &update_status)?
+        empty_lines_to_trim(connection, &existing.clone(), &update_status)?
     };
 
     Ok(GenerateResult {

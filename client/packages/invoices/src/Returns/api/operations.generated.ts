@@ -151,6 +151,7 @@ export type CustomerReturnLineFragment = {
   expiryDate?: string | null;
   numberOfPacks: number;
   packSize: number;
+  volumePerPack: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -297,6 +298,7 @@ export type GenerateCustomerReturnLineFragment = {
   itemName: string;
   itemCode: string;
   itemVariantId?: string | null;
+  volumePerPack: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -310,6 +312,16 @@ export type GenerateCustomerReturnLineFragment = {
     isActive: boolean;
     reason: string;
     type: Types.ReasonOptionNodeType;
+  } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
   } | null;
 };
 
@@ -336,6 +348,7 @@ export type GenerateCustomerReturnLinesQuery = {
       itemName: string;
       itemCode: string;
       itemVariantId?: string | null;
+      volumePerPack: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -349,6 +362,16 @@ export type GenerateCustomerReturnLinesQuery = {
         isActive: boolean;
         reason: string;
         type: Types.ReasonOptionNodeType;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
     }>;
   };
@@ -541,6 +564,7 @@ export type CustomerReturnByNumberQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             packSize: number;
+            volumePerPack: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -617,6 +641,7 @@ export type CustomerReturnByIdQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             packSize: number;
+            volumePerPack: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -966,6 +991,7 @@ export const CustomerReturnLineFragmentDoc = gql`
       unitName
       defaultPackSize
     }
+    volumePerPack
   }
 `;
 export const GenerateSupplierReturnLineFragmentDoc = gql`
@@ -1007,6 +1033,7 @@ export const GenerateCustomerReturnLineFragmentDoc = gql`
     itemName
     itemCode
     itemVariantId
+    volumePerPack
     item {
       id
       unitName
@@ -1018,6 +1045,16 @@ export const GenerateCustomerReturnLineFragmentDoc = gql`
       isActive
       reason
       type
+    }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
     }
   }
 `;

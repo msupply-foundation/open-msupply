@@ -407,22 +407,22 @@ mod test_insert {
         EqualFilter, NameRow, RequisitionLineFilter, RequisitionLineRepository,
         RequisitionRowRepository,
     };
-    use util::inline_init;
-
     #[actix_rt::test]
     async fn insert_program_request_requisition_errors() {
         fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
+            NameRow {
+                id: "not_visible".to_string(),
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_program_request_requisition_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible()];
-            }),
+            MockData {
+                names: vec![not_visible()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -448,12 +448,13 @@ mod test_insert {
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition".to_string();
-                    r.other_party_id.clone_from(&mock_name_store_b().id);
-                    r.program_order_type_id = "does_not_exist".to_string();
-                    r.period_id = mock_period().id;
-                })
+                InsertProgramRequestRequisition {
+                    id: "new_program_request_requisition".to_string(),
+                    other_party_id: mock_name_store_b().id.clone(),
+                    program_order_type_id: "does_not_exist".to_string(),
+                    period_id: mock_period().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::ProgramOrderTypeDoesNotExist)
         );
@@ -462,12 +463,13 @@ mod test_insert {
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition".to_string();
-                    r.other_party_id = "invalid".to_string();
-                    r.program_order_type_id = mock_program_order_types_a().id;
-                    r.period_id = mock_period().id;
-                })
+                InsertProgramRequestRequisition {
+                    id: "new_program_request_requisition".to_string(),
+                    other_party_id: "invalid".to_string(),
+                    program_order_type_id: mock_program_order_types_a().id,
+                    period_id: mock_period().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::SupplierNotValid)
         );
@@ -490,12 +492,13 @@ mod test_insert {
         let result = service
             .insert_program_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition".to_string();
-                    r.other_party_id.clone_from(&mock_name_store_b().id);
-                    r.program_order_type_id = mock_program_order_types_a().id;
-                    r.period_id = mock_period().id;
-                }),
+                InsertProgramRequestRequisition {
+                    id: "new_program_request_requisition".to_string(),
+                    other_party_id: mock_name_store_b().id.clone(),
+                    program_order_type_id: mock_program_order_types_a().id,
+                    period_id: mock_period().id,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -519,12 +522,13 @@ mod test_insert {
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "error_program_requisition".to_string();
-                    r.other_party_id.clone_from(&mock_name_store_b().id);
-                    r.program_order_type_id = mock_program_order_types_a().id;
-                    r.period_id = mock_period().id;
-                }),
+                InsertProgramRequestRequisition {
+                    id: "error_program_requisition".to_string(),
+                    other_party_id: mock_name_store_b().id.clone(),
+                    program_order_type_id: mock_program_order_types_a().id,
+                    period_id: mock_period().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::MaxOrdersReachedForPeriod)
         );

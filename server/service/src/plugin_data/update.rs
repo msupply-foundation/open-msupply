@@ -124,14 +124,12 @@ where
 
 #[cfg(test)]
 mod test {
+    use crate::{plugin_data::UpdatePluginData, service_provider::ServiceProvider};
     use repository::{
         mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
         test_db::setup_all_with_data,
         PluginDataRow,
     };
-    use util::{inline_edit, inline_init};
-
-    use crate::{plugin_data::UpdatePluginData, service_provider::ServiceProvider};
 
     #[actix_rt::test]
     async fn update_plugin_success() {
@@ -149,9 +147,10 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_plugin_data_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.plugin_data = vec![plugin_data_donor()];
-            }),
+            MockData {
+                plugin_data: vec![plugin_data_donor()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -184,13 +183,9 @@ mod test {
             .unwrap()
             .plugin_data;
         let donor = plugin_data_donor();
+        let mut expected = donor.clone();
+        expected.data = "hogwarts".to_string();
 
-        assert_eq!(
-            plugin_data,
-            inline_edit(&donor, |mut u| {
-                u.data = "hogwarts".to_string();
-                u
-            })
-        );
+        assert_eq!(plugin_data, expected);
     }
 }

@@ -192,7 +192,6 @@ mod test {
         StocktakeRow,
     };
     use serde_json::json;
-    use util::inline_init;
 
     use crate::types::StocktakeNode;
 
@@ -213,16 +212,18 @@ mod test {
         impl TestQuery {
             pub async fn test_query_user_exists(&self) -> StocktakeNode {
                 StocktakeNode {
-                    stocktake: inline_init(|r: &mut StocktakeRow| {
-                        r.user_id = mock_user_account_a().id;
-                    }),
+                    stocktake: StocktakeRow {
+                        user_id: mock_user_account_a().id,
+                        ..Default::default()
+                    },
                 }
             }
             pub async fn test_query_user_does_not_exist(&self) -> StocktakeNode {
                 StocktakeNode {
-                    stocktake: inline_init(|r: &mut StocktakeRow| {
-                        r.user_id = "does not exist".to_string()
-                    }),
+                    stocktake: StocktakeRow {
+                        user_id: "does not exist".to_string(),
+                        ..Default::default()
+                    },
                 }
             }
         }

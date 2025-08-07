@@ -12,7 +12,7 @@ mod test {
         requisition::RequisitionServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
+    
 
     use crate::RequisitionQueries;
 
@@ -87,10 +87,11 @@ mod test {
 
         // Found
         let test_service = TestService(Box::new(|_, _| {
-            Ok(Some(inline_init(|r: &mut Requisition| {
-                r.requisition_row = mock_request_draft_requisition();
-                r.name_row = mock_name_a();
-            })))
+            Ok(Some(Requisition {
+                requisition_row: mock_request_draft_requisition(),
+                name_row: mock_name_a(),
+                ..Default::default()
+            }))
         }));
 
         let expected = json!({

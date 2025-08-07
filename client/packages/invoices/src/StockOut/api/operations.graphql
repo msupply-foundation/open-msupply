@@ -83,13 +83,17 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
   vvmStatus {
     __typename
     id
-    level
+    priority
     unusable
     description
   }
   donor(storeId: $storeId) {
     id
     name
+  }
+  program {
+    name
+    id
   }
   campaign {
     name

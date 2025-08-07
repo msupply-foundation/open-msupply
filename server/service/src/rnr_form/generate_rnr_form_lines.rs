@@ -10,7 +10,8 @@ use repository::{
     StockMovementRepository, StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
 use util::{
-    constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_now, date_with_offset, uuid::uuid,
+    constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_now, date_with_offset, pos_zero,
+    uuid::uuid,
 };
 
 use crate::{
@@ -133,7 +134,7 @@ pub fn generate_rnr_form_lines(
                 requisition_line_id: None,
                 previous_monthly_consumption_values,
                 average_monthly_consumption,
-                initial_balance,
+                initial_balance: pos_zero(initial_balance),
 
                 snapshot_quantity_received: usage.replenished,
                 snapshot_quantity_consumed: usage.consumed,
@@ -145,7 +146,7 @@ pub fn generate_rnr_form_lines(
 
                 stock_out_duration,
                 adjusted_quantity_consumed,
-                final_balance,
+                final_balance: pos_zero(final_balance),
                 maximum_quantity,
                 minimum_quantity,
                 expiry_date: earliest_expiry,

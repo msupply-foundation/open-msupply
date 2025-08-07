@@ -54,4 +54,5 @@ export type ScannedBarcode = {
   itemId?: string;
   gtin: string;
   batch?: string;
+  expiryDate?: string;
 };

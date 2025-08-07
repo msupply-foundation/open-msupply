@@ -48,6 +48,8 @@ table! {
         order_total_after_discount -> Double,
         supplier_discount_amount -> Double,
         supplier_discount_percentage -> Nullable<Double>,
+        authorised_datetime -> Nullable<Timestamp>,
+        finalised_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -96,6 +98,8 @@ pub struct PurchaseOrderRow {
     pub order_total_after_discount: f64,
     pub supplier_discount_amount: f64,
     pub supplier_discount_percentage: Option<f64>,
+    pub authorised_datetime: Option<NaiveDateTime>,
+    pub finalised_datetime: Option<NaiveDateTime>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

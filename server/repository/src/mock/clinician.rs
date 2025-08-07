@@ -1,35 +1,36 @@
-use util::inline_init;
-
 use crate::ClinicianRow;
 
 pub fn clinician_a() -> ClinicianRow {
-    inline_init(|r: &mut ClinicianRow| {
-        r.id = String::from("clinician_a");
-        r.code = String::from("Clinician A");
-        r.last_name = String::from("Clinician A");
-        r.initials = String::from("CA");
-        r.is_active = true;
-    })
+    ClinicianRow {
+        id: String::from("clinician_a"),
+        code: String::from("Clinician A"),
+        last_name: String::from("Clinician A"),
+        initials: String::from("CA"),
+        is_active: true,
+        ..Default::default()
+    }
 }
 
 pub fn clinician_b() -> ClinicianRow {
-    inline_init(|r: &mut ClinicianRow| {
-        r.id = String::from("clinician_b");
-        r.code = String::from("Clinician B");
-        r.last_name = String::from("Clinician B");
-        r.initials = String::from("CB");
-        r.is_active = true;
-    })
+    ClinicianRow {
+        id: String::from("clinician_b"),
+        code: String::from("Clinician B"),
+        last_name: String::from("Clinician B"),
+        initials: String::from("CB"),
+        is_active: true,
+        ..Default::default()
+    }
 }
 
 pub fn clinician_c() -> ClinicianRow {
-    inline_init(|r: &mut ClinicianRow| {
-        r.id = String::from("clinician_c");
-        r.code = String::from("Clinician C");
-        r.last_name = String::from("Clinician C");
-        r.initials = String::from("CC");
-        r.is_active = true;
-    })
+    ClinicianRow {
+        id: String::from("clinician_c"),
+        code: String::from("Clinician C"),
+        last_name: String::from("Clinician C"),
+        initials: String::from("CC"),
+        is_active: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_clinicians() -> Vec<ClinicianRow> {

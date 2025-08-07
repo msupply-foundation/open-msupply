@@ -24,6 +24,7 @@ pub(crate) mod document_registry;
 pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
 pub(crate) mod goods_received;
+pub(crate) mod goods_received_line;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -214,6 +215,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         purchase_order_line::boxed(),
         // Goods Receiving
         goods_received::boxed(),
+        // Goods Received
+        goods_received_line::boxed(),
     ]
 }
 

@@ -1,6 +1,5 @@
 use repository::db_diesel::sync_file_reference_row::SyncFileReferenceRow;
 use serde_json::json;
-use util::Defaults;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
@@ -27,7 +26,10 @@ fn sync_file_reference1() -> SyncFileReferenceRow {
         mime_type: Some("image/jpeg".to_string()),
         uploaded_bytes: 0,
         total_bytes: 0,
-        created_datetime: Defaults::naive_date_time(),
+        created_datetime: chrono::NaiveDate::from_ymd_opt(2020, 01, 22)
+            .unwrap()
+            .and_hms_opt(15, 16, 0)
+            .unwrap(),
         deleted_datetime: None,
         ..Default::default()
     }

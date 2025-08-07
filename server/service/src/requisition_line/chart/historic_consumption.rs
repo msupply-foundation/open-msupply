@@ -162,7 +162,6 @@ fn within_range(from_date: &NaiveDate, to_date: &NaiveDate, date: &NaiveDate) ->
 #[cfg(test)]
 mod tests {
     use super::*;
-    use util::inline_init;
 
     #[test]
     fn test_generate_series() {
@@ -216,50 +215,61 @@ mod tests {
                     end_of_amc_lookup: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
                 },
                 &vec![
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2021, 2, 1).unwrap();
-                        r.quantity = 1000.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2021, 1, 31).unwrap();
-                        r.quantity = 10.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2021, 1, 20).unwrap();
-                        r.quantity = 10.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2020, 12, 3).unwrap();
-                        r.quantity = 10.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2020, 12, 2).unwrap();
-                        r.quantity = 10.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2020, 11, 11).unwrap();
-                        r.quantity = 10.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2020, 10, 5).unwrap();
-                        r.quantity = 10.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2020, 10, 7).unwrap();
-                        r.quantity = 10.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2020, 10, 1).unwrap();
-                        r.quantity = 10.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2020, 9, 30).unwrap();
-                        r.quantity = 1000.0;
-                    }),
-                    inline_init(|r: &mut ConsumptionRow| {
-                        r.date = NaiveDate::from_ymd_opt(2020, 2, 10).unwrap();
-                        r.quantity = 1000.0;
-                    })
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2021, 2, 1).unwrap(),
+                        quantity: 1000.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
+                        quantity: 10.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2021, 1, 20).unwrap(),
+                        quantity: 10.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2020, 12, 3).unwrap(),
+                        quantity: 10.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2020, 12, 2).unwrap(),
+                        quantity: 10.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2020, 11, 11).unwrap(),
+                        quantity: 10.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2020, 10, 5).unwrap(),
+                        quantity: 10.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2020, 10, 7).unwrap(),
+                        quantity: 10.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2020, 10, 1).unwrap(),
+                        quantity: 10.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2020, 9, 30).unwrap(),
+                        quantity: 1000.0,
+                        ..Default::default()
+                    },
+                    ConsumptionRow {
+                        date: NaiveDate::from_ymd_opt(2020, 2, 10).unwrap(),
+                        quantity: 1000.0,
+                        ..Default::default()
+                    }
                 ]
             ),
             ConsumptionHistory {

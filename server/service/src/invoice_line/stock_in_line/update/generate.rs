@@ -138,7 +138,9 @@ fn generate_line(
         vvm_status_id,
         donor_id,
         campaign_id,
+        program_id,
         shipped_number_of_packs,
+        volume_per_pack,
         shipped_pack_size,
         id: _,
         item_id: _,
@@ -201,9 +203,15 @@ fn generate_line(
         .map(|c| c.value)
         .unwrap_or(update_line.campaign_id);
 
+    update_line.program_id = program_id
+        .map(|c| c.value)
+        .unwrap_or(update_line.program_id);
+
     update_line.shipped_number_of_packs =
         shipped_number_of_packs.or(update_line.shipped_number_of_packs);
     update_line.shipped_pack_size = shipped_pack_size.or(update_line.shipped_pack_size);
+
+    update_line.volume_per_pack = volume_per_pack.unwrap_or(update_line.volume_per_pack);
 
     Ok(update_line)
 }

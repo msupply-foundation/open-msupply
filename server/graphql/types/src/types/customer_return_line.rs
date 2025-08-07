@@ -1,12 +1,14 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{ItemLoader, ReasonOptionLoader},
+    loader::{ItemLoader, ItemVariantByItemVariantIdLoader, ReasonOptionLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::ItemRow;
 use service::{invoice::customer_return::generate_lines::CustomerReturnLine, ListResult};
+
+use crate::types::ItemVariantNode;
 
 use super::{ItemNode, ReasonOptionNode};
 
@@ -119,5 +121,21 @@ impl CustomerReturnLineNode {
 
         let result = loader.load_one(reason_option_id.clone()).await?;
         Ok(result.map(ReasonOptionNode::from_domain))
+    }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        self.return_line.volume_per_pack
+    }
+
+    pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
+
+        let item_variant_id = match &self.return_line.item_variant_id {
+            None => return Ok(None),
+            Some(item_variant_id) => item_variant_id.clone(),
+        };
+
+        let result = loader.load_one(item_variant_id).await?;
+        Ok(result.map(ItemVariantNode::from_domain))
     }
 }

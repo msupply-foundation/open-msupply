@@ -104,7 +104,6 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceRow, InvoiceStatus, RequisitionLineRowRepository,
     };
-    use util::inline_init;
 
     use crate::{
         requisition_line::response_requisition_line::{
@@ -144,10 +143,11 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "delete_response_requisition_line_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice_linked_to_req()];
-                r.invoice_lines = vec![invoice_line_linked_to_requisition_line()];
-            }),
+            MockData {
+                invoices: vec![invoice_linked_to_req()],
+                invoice_lines: vec![invoice_line_linked_to_requisition_line()],
+                ..Default::default()
+            },
         )
         .await;
 

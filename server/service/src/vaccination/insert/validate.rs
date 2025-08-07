@@ -1,7 +1,5 @@
-use repository::{ProgramEnrolmentRow, RepositoryError, StockLine, StorageConnection};
-
 use crate::{
-    common_stock::{check_stock_line_exists, CommonStockLineError},
+    common::{check_stock_line_exists, CommonStockLineError},
     invoice_line::validate::check_item_exists,
     name::validate::check_name_exists,
     vaccination::validate::{
@@ -10,6 +8,7 @@ use crate::{
         check_vaccination_exists, check_vaccine_course_dose_exists, get_related_vaccinations,
     },
 };
+use repository::{ProgramEnrolmentRow, RepositoryError, StockLine, StorageConnection};
 
 use super::{InsertVaccination, InsertVaccinationError};
 

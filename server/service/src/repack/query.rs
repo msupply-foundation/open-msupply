@@ -123,7 +123,6 @@ mod test {
         InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
         StockLineRowRepository,
     };
-    use util::inline_init;
 
     #[actix_rt::test]
     async fn query_repacks() {
@@ -222,14 +221,15 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "repack_query",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice.clone()];
-                r.stock_lines = vec![
+            MockData {
+                invoices: vec![invoice.clone()],
+                stock_lines: vec![
                     invoice_line_a_stock_line_a.clone(),
                     original_stock_line.clone(),
-                ];
-                r.invoice_lines = vec![invoice_line_a.clone(), invoice_line_b.clone()];
-            }),
+                ],
+                invoice_lines: vec![invoice_line_a.clone(), invoice_line_b.clone()],
+                ..Default::default()
+            },
         )
         .await;
 
