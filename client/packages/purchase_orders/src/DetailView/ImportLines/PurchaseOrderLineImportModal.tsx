@@ -252,7 +252,7 @@ export const PurchaseOrderLineImportModal = ({
           activeStep={activeStep}
           onClickStep={onClickStep}
         />
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
         <TabContext value={currentTab}>
           <Grid container flex={1} flexDirection="column" gap={1}>
             <QueryParamsProvider
