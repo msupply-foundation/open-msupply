@@ -56,7 +56,9 @@ pub fn insert_goods_received(
     //         .goods_received_service
     //         .insert_goods_received(&service_context, store_id, input.to_domain()),
     // )
-    Ok(InsertResponse::Response(IdResponse("".to_string())))
+    Ok(InsertResponse::Response(IdResponse(
+        "NOTIMPLEMENTED".to_string(),
+    )))
 }
 
 // fn map_response(from: Result<GoodsReceivedRow, ServiceError>) -> Result<InsertResponse> {
