@@ -15,14 +15,9 @@ const hasRequiredFields = (
 ): variableToCheck is LocationObject =>
   'location' in (variableToCheck as LocationObject);
 
-export interface LocationInputColumnOptions {
-  setInvalidLocationRowIds?: React.Dispatch<React.SetStateAction<string[]>>;
-  restrictedToLocationTypeId?: string | null;
-}
 export const getLocationInputColumn = <T extends RecordWithId>(
-  options: LocationInputColumnOptions = {}
+  restrictedToLocationTypeId?: string | null
 ): ColumnDefinition<T> => {
-  const { setInvalidLocationRowIds, restrictedToLocationTypeId } = options;
   return {
     key: 'locationInput',
     label: 'label.location',
@@ -58,22 +53,6 @@ export const getLocationInputColumn = <T extends RecordWithId>(
 
       const autoFocus = columnIndex === 0 && rowIndex === 0;
 
-      // Updates the invalid location row id array for row errors
-      const handleInvalidLocationChange = (invalid: boolean) => {
-        if (setInvalidLocationRowIds) {
-          setInvalidLocationRowIds(prev => {
-            const prevSet = new Set(prev);
-            if (invalid) {
-              if (prevSet.has(rowData.id)) return prev;
-              return [...prev, rowData.id];
-            } else {
-              if (!prevSet.has(rowData.id)) return prev;
-              return prev.filter(id => id !== rowData.id);
-            }
-          });
-        }
-      };
-
       return (
         <LocationSearchInput
           autoFocus={autoFocus}
@@ -82,11 +61,6 @@ export const getLocationInputColumn = <T extends RecordWithId>(
           width={column.width}
           onChange={onChange}
           restrictedToLocationTypeId={restrictedToLocationTypeId}
-          onInvalidLocation={
-            setInvalidLocationRowIds
-              ? invalid => handleInvalidLocationChange(invalid)
-              : undefined
-          }
         />
       );
     },

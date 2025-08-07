@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   Autocomplete,
   AutocompleteOption,
@@ -8,6 +8,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
+import { checkInvalidLocationLines } from '../utils';
 
 interface LocationSearchInputProps {
   selectedLocation: LocationRowFragment | null;
@@ -16,7 +17,6 @@ interface LocationSearchInputProps {
   disabled: boolean;
   autoFocus?: boolean;
   restrictedToLocationTypeId?: string | null;
-  onInvalidLocation?: (invalid: boolean, message: string) => void;
   enableAPI?: boolean;
 }
 
@@ -65,7 +65,6 @@ export const LocationSearchInput = ({
   disabled,
   autoFocus = false,
   restrictedToLocationTypeId,
-  onInvalidLocation,
   enableAPI = true,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
@@ -102,27 +101,20 @@ export const LocationSearchInput = ({
 
   const selectedOption = options.find(o => o.value === selectedLocation?.id);
 
-  const isInvalidLocation =
-    !!selectedLocation &&
-    !options.some(option => option.value === selectedLocation.id);
+  const isInvalidLocation = !!selectedLocation?.locationType?.id
+    ? checkInvalidLocationLines(restrictedToLocationTypeId ?? null, [
+        { location: selectedLocation },
+      ])
+    : null;
 
   // Invalid location no longer a part of options
-  const locationValue =
-    isInvalidLocation && selectedLocation
-      ? {
-          value: selectedLocation.id,
-          label: formatLocationLabel(selectedLocation),
-          code: selectedLocation.code,
-        }
-      : selectedOption || null;
-
-  useEffect(() => {
-    onInvalidLocation?.(
-      isInvalidLocation,
-      isInvalidLocation ? t('messages.stock-location-invalid') : ''
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInvalidLocation]);
+  const locationValue = selectedLocation
+    ? {
+        value: selectedLocation.id,
+        label: formatLocationLabel(selectedLocation),
+        code: selectedLocation.code,
+      }
+    : selectedOption || null;
 
   const errorStyles = {
     borderColor: theme.palette.error.main,
@@ -133,7 +125,7 @@ export const LocationSearchInput = ({
 
   return (
     <Autocomplete
-      sx={!!isInvalidLocation && onInvalidLocation ? errorStyles : undefined}
+      sx={!!isInvalidLocation ? errorStyles : undefined}
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
