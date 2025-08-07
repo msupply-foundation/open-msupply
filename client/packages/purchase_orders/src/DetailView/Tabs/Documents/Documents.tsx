@@ -14,7 +14,7 @@ import { Footer } from './Footer';
 
 // TODO:
 // SyncFileReference missing fields: createdBy, modifiedBy, versionNumber
-// Functionalities: Upload, Download, Delete
+// If same file is uploaded, version number should be incremented through backend
 
 interface DocumentsProps {
   purchaseOrderId?: string;

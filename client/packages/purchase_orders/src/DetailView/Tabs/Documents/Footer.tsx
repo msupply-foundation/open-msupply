@@ -41,11 +41,6 @@ const FooterComponent = ({
     state => documents?.filter(({ id }) => state.rowState[id]?.isSelected) || []
   );
 
-  const handleSuccess = () => {
-    success(t('success'))();
-    queryClient.invalidateQueries([PURCHASE_ORDER]);
-  };
-
   const handleFileDelete = async (id: string) => {
     const url = `${Environment.SYNC_FILES_URL}/purchase_order/${purchaseOrderId}/${id}`;
     const response = await fetch(url, {
@@ -62,7 +57,8 @@ const FooterComponent = ({
     try {
       const deleteRequests = ids.map(handleFileDelete);
       await Promise.all(deleteRequests);
-      handleSuccess();
+      success(t('success'))();
+      queryClient.invalidateQueries([PURCHASE_ORDER]);
     } catch (e) {
       console.error(e);
       error(t('error.an-error-occurred', { message: (e as Error).message }))();
@@ -73,8 +69,8 @@ const FooterComponent = ({
     // Sequential downloads are better than Promise.all() to avoid browser limits
     for (const file of selectedRows) {
       try {
-        const url = `${Environment.FILE_URL}${file.id}`;
-        await downloadFile(url);
+        const url = `${Environment.SYNC_FILES_URL}/purchase_order/${purchaseOrderId}/${file.id}`;
+        await downloadFile(url, { credentials: 'include' });
       } catch (e) {
         console.error(e);
         error(
