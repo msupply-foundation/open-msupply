@@ -36,6 +36,7 @@ export const useInbound = {
     save: Lines.useSaveInboundLines,
 
     zeroQuantities: Lines.useZeroInboundLinesQuantity,
+    changeCampaignOrProgram: Lines.useChangeLinesCampaignOrProgram,
   },
   utils: {
     addFromMasterList: Utils.useAddFromMasterList,
