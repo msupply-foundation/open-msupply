@@ -297,7 +297,9 @@ export type InsertPurchaseOrderLineMutationVariables = Types.Exact<{
 
 export type InsertPurchaseOrderLineMutation = {
   __typename: 'Mutations';
-  insertPurchaseOrderLine: { __typename: 'IdResponse'; id: string };
+  insertPurchaseOrderLine:
+    | { __typename: 'IdResponse'; id: string }
+    | { __typename: 'InsertPurchaseOrderLineError' };
 };
 
 export type AddToPurchaseOrderFromMasterListMutationVariables = Types.Exact<{
@@ -319,6 +321,34 @@ export type AddToPurchaseOrderFromMasterListMutation = {
           | { __typename: 'RecordNotFound'; description: string };
       }
     | { __typename: 'PurchaseOrderLineConnector' };
+};
+
+export type InsertPurchaseOrderLineFromCsvMutationVariables = Types.Exact<{
+  input: Types.InsertPurchaseOrderLineFromCsvInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InsertPurchaseOrderLineFromCsvMutation = {
+  __typename: 'Mutations';
+  insertPurchaseOrderLineFromCsv:
+    | { __typename: 'IdResponse'; id: string }
+    | {
+        __typename: 'InsertPurchaseOrderLineError';
+        error:
+          | { __typename: 'CannnotFindItemByCode'; description: string }
+          | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | { __typename: 'ForeignKeyError'; description: string }
+          | {
+              __typename: 'PackSizeCodeCombinationExists';
+              description: string;
+              itemCode: string;
+              requestedPackSize: number;
+            }
+          | {
+              __typename: 'PurchaseOrderLineWithIdExists';
+              description: string;
+            };
+      };
 };
 
 export const PurchaseOrderRowFragmentDoc = gql`
@@ -353,6 +383,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
       name
       unitName
     }
+    purchaseOrderId
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
@@ -580,6 +611,46 @@ export const AddToPurchaseOrderFromMasterListDocument = gql`
     }
   }
 `;
+export const InsertPurchaseOrderLineFromCsvDocument = gql`
+  mutation insertPurchaseOrderLineFromCSV(
+    $input: InsertPurchaseOrderLineFromCSVInput!
+    $storeId: String!
+  ) {
+    insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+      ... on InsertPurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on CannnotFindItemByCode {
+            __typename
+            description
+          }
+          ... on CannotEditPurchaseOrder {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+          }
+          ... on PackSizeCodeCombinationExists {
+            __typename
+            description
+            itemCode
+            requestedPackSize
+          }
+          ... on PurchaseOrderLineWithIdExists {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -740,6 +811,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'addToPurchaseOrderFromMasterList',
+        'mutation',
+        variables
+      );
+    },
+    insertPurchaseOrderLineFromCSV(
+      variables: InsertPurchaseOrderLineFromCsvMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertPurchaseOrderLineFromCsvMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertPurchaseOrderLineFromCsvMutation>(
+            InsertPurchaseOrderLineFromCsvDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertPurchaseOrderLineFromCSV',
         'mutation',
         variables
       );
