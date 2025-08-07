@@ -15,7 +15,6 @@ export type DraftPurchaseOrderLine = Omit<
   '__typename' | 'item'
 > & {
   purchaseOrderId: string;
-  // TODO remove itemId - can extract from item
   itemId: string;
 };
 
@@ -43,7 +42,7 @@ export function usePurchaseOrderLine(id?: string) {
         itemId: data?.nodes[0]?.item.id ?? '',
         ...patch,
       }
-    : { ...defaultPurchaseOrderLine, ...patch, itemId: 'sa' };
+    : { ...defaultPurchaseOrderLine, ...patch, itemId: '' };
 
   // UPDATE
   const {
