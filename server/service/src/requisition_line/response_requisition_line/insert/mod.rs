@@ -70,8 +70,6 @@ mod test {
         RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionStatus,
         RequisitionType,
     };
-    use util::inline_init;
-
     use crate::{
         requisition_line::response_requisition_line::{
             InsertResponseRequisitionLine, InsertResponseRequisitionLineError as ServiceError,
@@ -116,10 +114,11 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_response_requisition_line_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.requisitions = vec![new_request_requisition(), program_requisition()];
-                r.requisition_lines = vec![new_response_requisition_line()];
-            }),
+            MockData {
+                requisitions: vec![new_request_requisition(), program_requisition()],
+                requisition_lines: vec![new_response_requisition_line()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -133,9 +132,10 @@ mod test {
         assert_eq!(
             service.insert_response_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisitionLine| {
-                    r.id = new_response_requisition_line().id.clone();
-                }),
+                InsertResponseRequisitionLine {
+                    id: new_response_requisition_line().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionLineAlreadyExists)
         );
@@ -144,11 +144,12 @@ mod test {
         assert_eq!(
             service.insert_response_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisitionLine| {
-                    r.requisition_id = new_response_requisition().id;
-                    r.id = "test".to_string();
-                    r.item_id = mock_item_a().id;
-                }),
+                InsertResponseRequisitionLine {
+                    requisition_id: new_response_requisition().id,
+                    id: "test".to_string(),
+                    item_id: mock_item_a().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::ItemAlreadyExistInRequisition)
         );
@@ -157,9 +158,10 @@ mod test {
         assert_eq!(
             service.insert_response_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisitionLine| {
-                    r.requisition_id = "invalid".to_string();
-                }),
+                InsertResponseRequisitionLine {
+                    requisition_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
         );
@@ -168,9 +170,10 @@ mod test {
         assert_eq!(
             service.insert_response_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisitionLine| {
-                    r.requisition_id = mock_finalised_response_requisition().id;
-                }),
+                InsertResponseRequisitionLine {
+                    requisition_id: mock_finalised_response_requisition().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditRequisition)
         );
@@ -179,9 +182,10 @@ mod test {
         assert_eq!(
             service.insert_response_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisitionLine| {
-                    r.requisition_id = new_request_requisition().id;
-                }),
+                InsertResponseRequisitionLine {
+                    requisition_id: new_request_requisition().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAResponseRequisition)
         );
@@ -190,10 +194,11 @@ mod test {
         assert_eq!(
             service.insert_response_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisitionLine| {
-                    r.requisition_id = new_response_requisition().id;
-                    r.item_id = "invalid".to_string();
-                }),
+                InsertResponseRequisitionLine {
+                    requisition_id: new_response_requisition().id,
+                    item_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::ItemDoesNotExist)
         );
@@ -203,9 +208,10 @@ mod test {
         assert_eq!(
             service.insert_response_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisitionLine| {
-                    r.requisition_id = new_response_requisition().id;
-                }),
+                InsertResponseRequisitionLine {
+                    requisition_id: new_response_requisition().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
@@ -215,10 +221,11 @@ mod test {
         assert_eq!(
             service.insert_response_requisition_line(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisitionLine| {
-                    r.id = "some mock program line".to_string();
-                    r.requisition_id = program_requisition().id;
-                }),
+                InsertResponseRequisitionLine {
+                    id: "some mock program line".to_string(),
+                    requisition_id: program_requisition().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotAddItemToProgramRequisition),
         )

@@ -131,7 +131,6 @@ mod test {
         EqualFilter, InvoiceRowRepository, InvoiceStatus, ReasonOptionRow, ReasonOptionType,
         StockLineFilter, StockLineRepository, StockLineRowRepository,
     };
-    use util::inline_edit;
 
     use crate::{
         invoice::inventory_adjustment::{
@@ -338,14 +337,12 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            retrieved_invoice,
-            inline_edit(&retrieved_invoice, |mut u| {
-                u.id = created_invoice.invoice_row.id;
-                u.status = InvoiceStatus::Verified;
-                u
-            })
-        );
+        assert_eq!(retrieved_invoice, {
+            let mut u = retrieved_invoice.clone();
+            u.id = created_invoice.invoice_row.id;
+            u.status = InvoiceStatus::Verified;
+            u
+        });
 
         assert_eq!(
             updated_stockline.available_number_of_packs,
@@ -380,14 +377,12 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            retrieved_invoice,
-            inline_edit(&retrieved_invoice, |mut u| {
-                u.id = created_invoice.invoice_row.id;
-                u.status = InvoiceStatus::Verified;
-                u
-            })
-        );
+        assert_eq!(retrieved_invoice, {
+            let mut u = retrieved_invoice.clone();
+            u.id = created_invoice.invoice_row.id;
+            u.status = InvoiceStatus::Verified;
+            u
+        });
 
         assert_eq!(
             updated_stockline.available_number_of_packs,

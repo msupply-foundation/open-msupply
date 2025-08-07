@@ -84,7 +84,6 @@ mod test {
         InvoiceRow, InvoiceType, NumberRowType, RepositoryError, RequisitionRow, RequisitionType,
         TransactionError,
     };
-    use util::inline_init;
 
     #[cfg(not(feature = "memory"))]
     const TEST_SLEEP_TIME: u64 = 100;
@@ -95,22 +94,24 @@ mod test {
     #[actix_rt::test]
     async fn test_number_service() {
         fn invoice1() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice1".to_string();
-                r.name_link_id = mock_name_c().id;
-                r.store_id = mock_store_c().id;
-                r.r#type = InvoiceType::OutboundShipment;
-                r.invoice_number = 100;
-            })
+            InvoiceRow {
+                id: "invoice1".to_string(),
+                name_link_id: mock_name_c().id,
+                store_id: mock_store_c().id,
+                r#type: InvoiceType::OutboundShipment,
+                invoice_number: 100,
+                ..Default::default()
+            }
         }
         fn unassigned_requisition() -> RequisitionRow {
-            inline_init(|r: &mut RequisitionRow| {
-                r.id = "unassigned_requisition".to_string();
-                r.name_link_id = mock_name_a().id;
-                r.store_id = mock_store_c().id;
-                r.r#type = RequisitionType::Response;
-                r.requisition_number = -1;
-            })
+            RequisitionRow {
+                id: "unassigned_requisition".to_string(),
+                name_link_id: mock_name_a().id,
+                store_id: mock_store_c().id,
+                r#type: RequisitionType::Response,
+                requisition_number: -1,
+                ..Default::default()
+            }
         }
 
         let (_, connection, _, _) = setup_all_with_data(
@@ -120,10 +121,11 @@ mod test {
                 .names()
                 .numbers()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice1()];
-                r.requisitions = vec![unassigned_requisition()];
-            }),
+            MockData {
+                invoices: vec![invoice1()],
+                requisitions: vec![unassigned_requisition()],
+                ..Default::default()
+            },
         )
         .await;
 
