@@ -7,20 +7,15 @@ import {
   useTranslation,
   SearchBar,
   Tooltip,
-  useDebounceCallback,
   DateTimePickerInput,
   DateUtils,
   Formatter,
   useNotification,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
-import {
-  UpdatePurchaseOrderInput,
-  usePurchaseOrder,
-} from '../api/hooks/usePurchaseOrder';
+import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
-
-const DEBOUNCED_TIME = 1000;
+import { PurchaseOrderFragment } from '../api';
 
 interface ToolbarProps {
   isDisabled?: boolean;
@@ -33,25 +28,20 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     query: { data, isLoading },
     lines: { itemFilter, setItemFilter },
     update: { update },
+    handleDebounceUpdate,
   } = usePurchaseOrder();
 
   const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
     DateUtils.getDateOrNull(data?.requestedDeliveryDate)
   );
 
-  const handleUpdate = (input: Partial<UpdatePurchaseOrderInput>) => {
+  const handleUpdate = (input: Partial<PurchaseOrderFragment>) => {
     try {
       update(input);
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();
     }
   };
-
-  const handleDebouncedUpdate = useDebounceCallback(
-    handleUpdate,
-    [],
-    DEBOUNCED_TIME
-  );
 
   return (
     <AppBarContentPortal
@@ -73,7 +63,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   value={(data?.supplier as NameFragment) ?? null}
                   onChange={supplier => {
                     if (!supplier) return;
-                    handleUpdate({ supplierId: supplier?.id });
+                    handleUpdate({ supplier: supplier });
                   }}
                 />
               }
@@ -89,7 +79,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   sx={{ width: 250 }}
                   value={data?.reference ?? null}
                   onChange={e => {
-                    handleDebouncedUpdate({ reference: e.target.value });
+                    handleDebounceUpdate({ reference: e.target.value });
                   }}
                 />
               </Tooltip>

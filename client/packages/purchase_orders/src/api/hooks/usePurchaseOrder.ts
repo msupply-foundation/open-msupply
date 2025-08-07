@@ -1,7 +1,6 @@
 import {
   FnUtils,
   InsertPurchaseOrderInput,
-  PurchaseOrderNodeType,
   SortUtils,
   useConfirmationModal,
   useMutation,
@@ -10,32 +9,17 @@ import {
   useQuery,
   useTranslation,
   useUrlQuery,
-  setNullableInput,
+  RecordPatch,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { LIST, PURCHASE_ORDER } from './keys';
 import { PurchaseOrderFragment } from '../operations.generated';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { usePurchaseOrderColumns } from '../../DetailView/columns';
+import { parseUpdateInput } from './utils';
 
-export type UpdatePurchaseOrderInput = {
-  advancePaidDate?: string | null;
-  comment?: string | null;
-  confirmedDatetime?: string | null;
-  contractSignedDate?: string | null;
-  currencyId?: string | null;
-  donorId?: string | null;
-  foreignExchangeRate?: number | null;
-  id: string;
-  receivedAtPortDate?: string | null;
-  reference?: string | null;
-  requestedDeliveryDate?: string | null;
-  sentDatetime?: string | null;
-  shippingMethod?: string | null;
-  status?: PurchaseOrderNodeType | null;
-  supplierDiscountPercentage?: number | null;
-  supplierId?: string | null;
-};
+const DEBOUNCED_TIME = 1000;
 
 export const usePurchaseOrder = (id?: string) => {
   const { purchaseOrderId = id } = useParams();
@@ -69,6 +53,18 @@ export const usePurchaseOrder = (id?: string) => {
   const { sortedAndFilteredLines, itemFilter, setItemFilter } =
     useFilteredAndSortedLines(data);
 
+  // DRAFT STATE
+  const [draft, setDraft] = useState<PurchaseOrderFragment | undefined>();
+
+  useEffect(() => {
+    if (data) setDraft(data);
+  }, [data]);
+
+  const handleDraftChange = (input: Partial<PurchaseOrderFragment>) => {
+    if (!draft) return;
+    setDraft({ ...draft, ...input });
+  };
+
   // UPDATE
   const {
     mutateAsync: updateMutation,
@@ -76,11 +72,13 @@ export const usePurchaseOrder = (id?: string) => {
     error: updateError,
   } = useUpdate();
 
-  const update = async (input: Omit<UpdatePurchaseOrderInput, 'id'>) => {
+  const update = async (input: Partial<PurchaseOrderFragment>) => {
     if (!purchaseOrderId) return;
     const result = await updateMutation({ id: purchaseOrderId, ...input });
     return result;
   };
+
+  const handleDebounceUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
 
   // CREATE
   const {
@@ -103,6 +101,9 @@ export const usePurchaseOrder = (id?: string) => {
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     masterList: { addFromMasterList, isAdding },
+    draft,
+    handleDraftChange,
+    handleDebounceUpdate,
   };
 };
 
@@ -125,18 +126,9 @@ const useCreate = () => {
 const useUpdate = () => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
-  const mutationFn = async (input: UpdatePurchaseOrderInput) => {
+  const mutationFn = async (input: RecordPatch<PurchaseOrderFragment>) => {
     return await purchaseOrderApi.updatePurchaseOrder({
-      input: {
-        ...input,
-        donorId: setNullableInput('donorId', input),
-        confirmedDatetime: setNullableInput('confirmedDatetime', input),
-        contractSignedDate: setNullableInput('contractSignedDate', input),
-        advancePaidDate: setNullableInput('advancePaidDate', input),
-        receivedAtPortDate: setNullableInput('receivedAtPortDate', input),
-        sentDatetime: setNullableInput('sentDatetime', input),
-        requestedDeliveryDate: setNullableInput('requestedDeliveryDate', input),
-      },
+      input: parseUpdateInput(input),
       storeId,
     });
   };
