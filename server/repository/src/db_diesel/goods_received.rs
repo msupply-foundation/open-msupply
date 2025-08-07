@@ -8,11 +8,15 @@ use diesel::{prelude::*, RunQueryDsl};
 #[derive(Clone, Default)]
 pub struct GoodsReceivedFilter {
     pub id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum GoodsReceivedSortField {
     CreatedDatetime,
+    Number,
+    Status,
+    ReceivedDate,
 }
 
 pub type GoodsReceivedSort = Sort<GoodsReceivedSortField>;
@@ -52,6 +56,15 @@ impl<'a> GoodsReceivedRepository<'a> {
                 GoodsReceivedSortField::CreatedDatetime => {
                     apply_sort!(query, sort, goods_received::created_datetime)
                 }
+                GoodsReceivedSortField::Number => {
+                    apply_sort!(query, sort, goods_received::goods_received_number)
+                }
+                GoodsReceivedSortField::Status => {
+                    apply_sort!(query, sort, goods_received::status)
+                }
+                GoodsReceivedSortField::ReceivedDate => {
+                    apply_sort!(query, sort, goods_received::received_date)
+                }
             }
         } else {
             query = query.order(goods_received::created_datetime.desc())
@@ -72,8 +85,9 @@ fn create_filtered_query(filter: Option<GoodsReceivedFilter>) -> BoxedGoodsRecei
     let mut query = goods_received::table.into_boxed();
 
     if let Some(f) = filter {
-        let GoodsReceivedFilter { id } = f;
+        let GoodsReceivedFilter { id, store_id } = f;
         apply_equal_filter!(query, id, goods_received::id);
+        apply_equal_filter!(query, store_id, goods_received::store_id);
     }
 
     query
@@ -86,6 +100,11 @@ impl GoodsReceivedFilter {
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }

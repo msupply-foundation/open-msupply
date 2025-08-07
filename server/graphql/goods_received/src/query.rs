@@ -123,6 +123,7 @@ impl GoodsReceivedFilterInput {
     pub fn to_domain(self) -> GoodsReceivedFilter {
         GoodsReceivedFilter {
             id: self.id.map(EqualFilter::from),
+            store_id: None, // This is mapped from the store_id param in the graphql
         }
     }
 }
