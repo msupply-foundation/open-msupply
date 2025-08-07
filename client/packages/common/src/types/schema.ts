@@ -4491,6 +4491,7 @@ export type ItemNode = {
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  programs: Array<ProgramNode>;
   restrictedLocationType?: Maybe<LocationTypeNode>;
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
@@ -4518,6 +4519,10 @@ export type ItemNodeItemStorePropertiesArgs = {
 };
 
 export type ItemNodeMasterListsArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type ItemNodeProgramsArgs = {
   storeId: Scalars['String']['input'];
 };
 

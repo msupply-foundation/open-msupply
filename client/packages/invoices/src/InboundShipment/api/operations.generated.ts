@@ -42,13 +42,7 @@ export type InboundLineFragment = {
       __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
     } | null;
-    masterLists?: Array<{
-      __typename: 'MasterListNode';
-      id: string;
-      name: string;
-      code: string;
-      description: string;
-    }> | null;
+    programs: Array<{ __typename: 'ProgramNode'; id: string; name: string }>;
   };
   location?: {
     __typename: 'LocationNode';
@@ -175,13 +169,11 @@ export type InboundFragment = {
           __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
         } | null;
-        masterLists?: Array<{
-          __typename: 'MasterListNode';
+        programs: Array<{
+          __typename: 'ProgramNode';
           id: string;
           name: string;
-          code: string;
-          description: string;
-        }> | null;
+        }>;
       };
       location?: {
         __typename: 'LocationNode';
@@ -432,13 +424,11 @@ export type InvoiceQuery = {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
-              masterLists?: Array<{
-                __typename: 'MasterListNode';
+              programs: Array<{
+                __typename: 'ProgramNode';
                 id: string;
                 name: string;
-                code: string;
-                description: string;
-              }> | null;
+              }>;
             };
             location?: {
               __typename: 'LocationNode';
@@ -622,13 +612,11 @@ export type InboundByNumberQuery = {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
-              masterLists?: Array<{
-                __typename: 'MasterListNode';
+              programs: Array<{
+                __typename: 'ProgramNode';
                 id: string;
                 name: string;
-                code: string;
-                description: string;
-              }> | null;
+              }>;
             };
             location?: {
               __typename: 'LocationNode';
@@ -1186,11 +1174,9 @@ export const InboundLineFragmentDoc = gql`
       itemStoreProperties(storeId: $storeId) {
         defaultSellPricePerPack
       }
-      masterLists(storeId: $storeId) {
+      programs(storeId: $storeId) {
         id
         name
-        code
-        description
       }
     }
     location {
