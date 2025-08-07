@@ -42,6 +42,13 @@ export type InboundLineFragment = {
       __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
     } | null;
+    masterLists?: Array<{
+      __typename: 'MasterListNode';
+      id: string;
+      name: string;
+      code: string;
+      description: string;
+    }> | null;
   };
   location?: {
     __typename: 'LocationNode';
@@ -168,6 +175,13 @@ export type InboundFragment = {
           __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
         } | null;
+        masterLists?: Array<{
+          __typename: 'MasterListNode';
+          id: string;
+          name: string;
+          code: string;
+          description: string;
+        }> | null;
       };
       location?: {
         __typename: 'LocationNode';
@@ -418,6 +432,13 @@ export type InvoiceQuery = {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
+              masterLists?: Array<{
+                __typename: 'MasterListNode';
+                id: string;
+                name: string;
+                code: string;
+                description: string;
+              }> | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -601,6 +622,13 @@ export type InboundByNumberQuery = {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
+              masterLists?: Array<{
+                __typename: 'MasterListNode';
+                id: string;
+                name: string;
+                code: string;
+                description: string;
+              }> | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -1157,6 +1185,12 @@ export const InboundLineFragmentDoc = gql`
       restrictedLocationTypeId
       itemStoreProperties(storeId: $storeId) {
         defaultSellPricePerPack
+      }
+      masterLists(storeId: $storeId) {
+        id
+        name
+        code
+        description
       }
     }
     location {
