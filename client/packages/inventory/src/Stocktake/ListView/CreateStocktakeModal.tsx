@@ -131,6 +131,14 @@ export const CreateStocktakeModal = ({
         })
       );
     }
+    if (!!vvmStatus) {
+      filterComments.push(
+        t('stocktake.vvm-status-template', {
+          vvmStatus: vvmStatus.description,
+        })
+      );
+    }
+    // todo comment for vvm status
 
     if (filterComments.length === 0) return undefined;
     if (filterComments.length === 1)
