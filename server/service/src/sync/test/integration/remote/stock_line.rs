@@ -7,7 +7,7 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{LocationRow, StockLineRow, StockLineRowDelete};
 use serde_json::json;
-use util::{inline_edit, uuid::uuid};
+use util::uuid::uuid;
 pub struct StockLineRecordTester;
 impl SyncRecordTester for StockLineRecordTester {
     fn test_step_data(&self, new_site_properties: &NewSiteProperties) -> Vec<TestStepData> {
@@ -56,21 +56,20 @@ impl SyncRecordTester for StockLineRecordTester {
             ..Default::default()
         });
         // STEP 2 - mutate
-        let stock_line_row = inline_edit(&stock_line_row, |mut d| {
-            d.item_link_id = uuid();
-            d.location_id = None;
-            d.batch = Some("some remote sync test batch 2".to_string());
-            d.pack_size = 10.0;
-            d.cost_price_per_pack = 15.0;
-            d.sell_price_per_pack = 20.0;
-            d.available_number_of_packs = 110.393939;
-            d.total_number_of_packs = 160.2190;
-            d.expiry_date = NaiveDate::from_ymd_opt(2021, 03, 22);
-            d.on_hold = false;
-            d.note = Some("some remote sync test note 2".to_string());
-            d.supplier_link_id = None;
-            d
-        });
+        let mut stock_line_row = stock_line_row.clone();
+        stock_line_row.item_link_id = uuid();
+        stock_line_row.location_id = None;
+        stock_line_row.batch = Some("some remote sync test batch 2".to_string());
+        stock_line_row.pack_size = 10.0;
+        stock_line_row.cost_price_per_pack = 15.0;
+        stock_line_row.sell_price_per_pack = 20.0;
+        stock_line_row.available_number_of_packs = 110.393939;
+        stock_line_row.total_number_of_packs = 160.2190;
+        stock_line_row.expiry_date = NaiveDate::from_ymd_opt(2021, 03, 22);
+        stock_line_row.on_hold = false;
+        stock_line_row.note = Some("some remote sync test note 2".to_string());
+        stock_line_row.supplier_link_id = None;
+
         result.push(TestStepData {
             central_upsert: json!({"item": [{
                 "ID": stock_line_row.item_link_id,

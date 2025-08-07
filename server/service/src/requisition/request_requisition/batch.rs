@@ -136,8 +136,6 @@ mod test {
         test_db::setup_all,
         RequisitionLineRowRepository, RequisitionRowRepository,
     };
-    use util::inline_init;
-
     use crate::{
         requisition::request_requisition::{
             BatchRequestRequisition, DeleteRequestRequisition, DeleteRequestRequisitionError,
@@ -159,24 +157,25 @@ mod test {
             .unwrap();
         let service = service_provider.requisition_service;
 
-        let delete_requisition_input = inline_init(|input: &mut DeleteRequestRequisition| {
-            input.id = mock_full_new_response_requisition_for_update_test()
+        let delete_requisition_input = DeleteRequestRequisition {
+            id: mock_full_new_response_requisition_for_update_test()
                 .requisition
-                .id;
-        });
+                .id,
+            ..Default::default()
+        };
 
         let mut input = BatchRequestRequisition {
-            insert_requisition: Some(vec![inline_init(|input: &mut InsertRequestRequisition| {
-                input.id = "new_id".to_string();
-                input.other_party_id = mock_name_store_c().id;
-            })]),
-            insert_line: Some(vec![inline_init(
-                |input: &mut InsertRequestRequisitionLine| {
-                    input.requisition_id = "new_id".to_string();
-                    input.id = "new_line_id".to_string();
-                    input.item_id = mock_item_a().id;
-                },
-            )]),
+            insert_requisition: Some(vec![InsertRequestRequisition {
+                id: "new_id".to_string(),
+                other_party_id: mock_name_store_c().id,
+                ..Default::default()
+            }]),
+            insert_line: Some(vec![InsertRequestRequisitionLine {
+                requisition_id: "new_id".to_string(),
+                id: "new_line_id".to_string(),
+                item_id: mock_item_a().id,
+                ..Default::default()
+            }]),
             update_line: None,
             delete_line: None,
             update_requisition: None,

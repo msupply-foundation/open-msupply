@@ -31,7 +31,7 @@ const STOCKTAKE_LINE_1: (&str, &str) = (
       "spare": 0,
       "stock_take_ID": "stocktake_a",
       "stock_take_qty": 700,
-      "vaccine_vial_monitor_status_ID": "",
+      "vaccine_vial_monitor_status_ID": "VVM_STATUS_1",
       "volume_per_pack": 10.0,
       "oms_fields": {
         "program_id": "program_test"
@@ -62,6 +62,7 @@ fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             donor_link_id: Some("abc123_best_donor".to_string()),
             reason_option_id: None,
+            vvm_status_id: Some("VVM_STATUS_1".to_string()),
             volume_per_pack: 10.0,
             campaign_id: None,
             program_id: Some("program_test".to_string()),
@@ -92,6 +93,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
             reason_option_id: None,
             item_variant_id: None,
             donor_id: Some("abc123_best_donor".to_string()),
+            vvm_status_id: Some("VVM_STATUS_1".to_string()),
             volume_per_pack: 10.0,
             oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 program_id: Some("program_test".to_string()),
@@ -156,6 +158,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             donor_link_id: None,
             reason_option_id: None,
+            vvm_status_id: None,
             volume_per_pack: 0.0,
             campaign_id: Some("campaign_a".to_string()),
             program_id: None,
@@ -186,6 +189,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
             reason_option_id: None,
             item_variant_id: None,
             donor_id: None,
+            vvm_status_id: None,
             volume_per_pack: 0.0,
             oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id: Some("campaign_a".to_string()),

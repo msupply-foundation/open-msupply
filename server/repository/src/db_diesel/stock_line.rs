@@ -401,7 +401,7 @@ impl StockLine {
 #[cfg(test)]
 mod test {
     use chrono::NaiveDate;
-    use util::inline_init;
+    
 
     use crate::{
         mock::MockDataInserts,
@@ -411,49 +411,54 @@ mod test {
     };
 
     fn from_row(stock_line_row: StockLineRow, item_row: ItemRow) -> StockLine {
-        inline_init(|r: &mut StockLine| {
-            r.stock_line_row = stock_line_row;
-            r.item_row = item_row;
-        })
+        StockLine {
+            stock_line_row,
+            item_row,
+            ..Default::default()
+        }
     }
 
     #[actix_rt::test]
     async fn test_stock_line_sort() {
         // expiry one
         fn line1() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "line1".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
-            })
+            StockLineRow {
+                id: "line1".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap()),
+                ..Default::default()
+            }
         }
         // expiry two
         fn line2() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "line2".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap());
-            })
+            StockLineRow {
+                id: "line2".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap()),
+                ..Default::default()
+            }
         }
         // expiry one (expiry null)
         fn line3() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "line3".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.expiry_date = None;
-            })
+            StockLineRow {
+                id: "line3".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                expiry_date: None,
+                ..Default::default()
+            }
         }
 
         let (_, connection, _, _) = test_db::setup_all_with_data(
             "test_stock_line_sort",
             MockDataInserts::none().stores().items().names().units(),
-            inline_init(|r: &mut MockData| {
+            MockData {
                 // make sure to insert in wrong order
-                r.stock_lines = vec![line3(), line2(), line1()];
-            }),
+                stock_lines: vec![line3(), line2(), line1()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -494,32 +499,35 @@ mod test {
     async fn test_stock_line_is_available() {
         // Stock not available
         fn line1() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "line1".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
-                r.available_number_of_packs = 0.0;
-            })
+            StockLineRow {
+                id: "line1".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap()),
+                available_number_of_packs: 0.0,
+                ..Default::default()
+            }
         }
 
         // Stock available
         fn line2() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "line2".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap());
-                r.available_number_of_packs = 1.0;
-            })
+            StockLineRow {
+                id: "line2".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap()),
+                available_number_of_packs: 1.0,
+                ..Default::default()
+            }
         }
 
         let (_, connection, _, _) = test_db::setup_all_with_data(
             "test_stock_line_is_available",
             MockDataInserts::none().stores().items().names().units(),
-            inline_init(|r: &mut MockData| {
-                r.stock_lines = vec![line1(), line2()];
-            }),
+            MockData {
+                stock_lines: vec![line1(), line2()],
+                ..Default::default()
+            },
         )
         .await;
 

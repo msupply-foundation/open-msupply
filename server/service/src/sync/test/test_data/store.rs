@@ -1,7 +1,6 @@
 use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
 use chrono::NaiveDate;
 use repository::{StoreRow, StoreRowDelete, SyncBufferRow};
-use util::inline_init;
 
 const TABLE_NAME: &str = "store";
 
@@ -54,14 +53,15 @@ fn store_1() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STORE_1,
-        inline_init(|s: &mut StoreRow| {
-            s.id = STORE_1.0.to_string();
-            s.name_link_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
-            s.code = "GEN".to_string();
-            s.site_id = 1;
-            s.logo = Some("No logo".to_string());
-            s.created_date = NaiveDate::from_ymd_opt(2021, 9, 3);
-        }),
+        StoreRow {
+            id: STORE_1.0.to_string(),
+            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            code: "GEN".to_string(),
+            site_id: 1,
+            logo: Some("No logo".to_string()),
+            created_date: NaiveDate::from_ymd_opt(2021, 9, 3),
+            ..Default::default()
+        },
     )
 }
 
@@ -114,11 +114,12 @@ const STORE_2: (&str, &str) = (
 fn store_2() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
         translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
-        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TABLE_NAME.to_string();
-            r.record_id = STORE_2.0.to_string();
-            r.data = STORE_2.1.to_string();
-        }),
+        sync_buffer_row: SyncBufferRow {
+            table_name: TABLE_NAME.to_string(),
+            record_id: STORE_2.0.to_string(),
+            data: STORE_2.1.to_string(),
+            ..Default::default()
+        },
         extra_data: None,
     }
 }
@@ -172,11 +173,12 @@ const STORE_3: (&str, &str) = (
 fn store_3() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
         translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
-        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TABLE_NAME.to_string();
-            r.record_id = STORE_3.0.to_string();
-            r.data = STORE_3.1.to_string();
-        }),
+        sync_buffer_row: SyncBufferRow {
+            table_name: TABLE_NAME.to_string(),
+            record_id: STORE_3.0.to_string(),
+            data: STORE_3.1.to_string(),
+            ..Default::default()
+        },
         extra_data: None,
     }
 }
@@ -230,11 +232,12 @@ const STORE_4: (&str, &str) = (
 fn store_4() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
         translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
-        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TABLE_NAME.to_string();
-            r.record_id = STORE_4.0.to_string();
-            r.data = STORE_4.1.to_string();
-        }),
+        sync_buffer_row: SyncBufferRow {
+            table_name: TABLE_NAME.to_string(),
+            record_id: STORE_4.0.to_string(),
+            data: STORE_4.1.to_string(),
+            ..Default::default()
+        },
         extra_data: None,
     }
 }

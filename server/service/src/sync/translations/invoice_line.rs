@@ -500,7 +500,6 @@ mod tests {
         ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
     };
     use serde_json::json;
-    use util::inline_init;
 
     #[actix_rt::test]
     async fn test_invoice_line_translation() {
@@ -517,13 +516,15 @@ mod tests {
                 .locations()
                 .stock_lines()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![mock_outbound_shipment_a()];
-                r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
-                    r.id = KeyType::SettingsSyncSiteId;
-                    r.value_int = Some(mock_store_b().site_id);
-                })]
-            }),
+            MockData {
+                invoices: vec![mock_outbound_shipment_a()],
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_b().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
         )
         .await;
 

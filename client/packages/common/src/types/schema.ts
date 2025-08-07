@@ -3821,6 +3821,7 @@ export type InsertStocktakeLineInput = {
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   stocktakeId: Scalars['String']['input'];
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStocktakeLineResponse =
@@ -8788,6 +8789,7 @@ export type StocktakeLineNode = {
   stockLine?: Maybe<StockLineNode>;
   stocktakeId: Scalars['String']['output'];
   volumePerPack: Scalars['Float']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
 };
 
 export enum StocktakeLineSortFieldInput {
@@ -10197,6 +10199,7 @@ export type UpdateStocktakeLineInput = {
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateStocktakeLineResponse =

@@ -7,7 +7,7 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{LocationMovementRow, LocationRow, StockLineRow};
 use serde_json::json;
-use util::{inline_edit, uuid::uuid};
+use util::uuid::uuid;
 
 pub struct LocationMovementRecordTester;
 impl SyncRecordTester for LocationMovementRecordTester {
@@ -66,22 +66,20 @@ impl SyncRecordTester for LocationMovementRecordTester {
         });
 
         // STEP 2 - mutate
-        let location_movement = inline_edit(&location_movement_row, |mut d| {
-            d.location_id = Some(location_row.id.clone());
-            d.enter_datetime = Some(
-                NaiveDate::from_ymd_opt(2023, 5, 2)
-                    .unwrap()
-                    .and_hms_opt(23, 16, 10)
-                    .unwrap(),
-            );
-            d.exit_datetime = Some(
-                NaiveDate::from_ymd_opt(2023, 5, 3)
-                    .unwrap()
-                    .and_hms_opt(13, 26, 12)
-                    .unwrap(),
-            );
-            d
-        });
+        let mut location_movement = location_movement_row.clone();
+        location_movement.location_id = Some(location_row.id.clone());
+        location_movement.enter_datetime = Some(
+            NaiveDate::from_ymd_opt(2023, 5, 2)
+                .unwrap()
+                .and_hms_opt(23, 16, 10)
+                .unwrap(),
+        );
+        location_movement.exit_datetime = Some(
+            NaiveDate::from_ymd_opt(2023, 5, 3)
+                .unwrap()
+                .and_hms_opt(13, 26, 12)
+                .unwrap(),
+        );
         result.push(TestStepData {
             integration_records: vec![IntegrationOperation::upsert(location_movement.clone())],
             ..Default::default()

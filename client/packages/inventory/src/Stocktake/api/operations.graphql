@@ -61,6 +61,10 @@ fragment StocktakeLine on StocktakeLineNode {
 
   itemVariantId
 
+  vvmStatus {
+    ...VVMStatus
+  }
+
   itemVariant {
     __typename
     id

@@ -130,7 +130,6 @@ mod test {
             StocktakeServiceTrait, {InsertStocktake, InsertStocktakeError},
         },
     };
-    use util::inline_init;
 
     use crate::StocktakeMutations;
 
@@ -190,7 +189,10 @@ mod test {
                 }
             );
             // StocktakeNode result is checked in queries
-            Ok(inline_init(|r: &mut StocktakeRow| r.id = "id1".to_string()))
+            Ok(StocktakeRow {
+                id: "id1".to_string(),
+                ..Default::default()
+            })
         }));
         let variables = Some(json!({
             "storeId": "store id",

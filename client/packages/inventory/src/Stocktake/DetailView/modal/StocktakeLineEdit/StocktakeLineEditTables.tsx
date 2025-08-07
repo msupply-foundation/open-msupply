@@ -34,6 +34,7 @@ import {
   ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
   useReasonOptions,
+  VVMStatusInputCell,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
@@ -47,6 +48,7 @@ interface StocktakeLineEditTableProps {
   isInitialStocktake?: boolean;
   trackStockDonor?: boolean;
   restrictedToLocationTypeId?: string | null;
+  isVaccineItem?: boolean;
   useCampaigns?: boolean;
 }
 
@@ -167,18 +169,20 @@ export const BatchTable = ({
   update,
   isDisabled = false,
   isInitialStocktake,
+  isVaccineItem = false,
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
+    PreferenceKey.ManageVvmStatusForStock
   );
   useDisableStocktakeRows(batches);
   const { data: reasonOptions, isLoading } = useReasonOptions();
   const errorsContext = useStocktakeLineErrorContext();
 
-  const displayInDoses = !!preferences?.manageVaccinesInDoses;
+  const showVVMStatusColumn =
+    (preferences?.manageVvmStatusForStock && isVaccineItem) ?? false;
 
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -217,6 +221,19 @@ export const BatchTable = ({
             update(patch);
           }
         },
+      });
+    }
+
+    if (showVVMStatusColumn) {
+      columnDefinitions.push({
+        key: 'vvmStatus',
+        label: 'label.vvm-status',
+        width: 170,
+        cellProps: {
+          useDefault: true,
+        },
+        Cell: props => <VVMStatusInputCell {...props} />,
+        setter: patch => update({ ...patch }),
       });
     }
     columnDefinitions.push(
@@ -302,7 +319,7 @@ export const BatchTable = ({
     reasonOptions,
     isLoading,
     isInitialStocktake,
-    displayInDoses,
+    showVVMStatusColumn,
   ]);
 
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
