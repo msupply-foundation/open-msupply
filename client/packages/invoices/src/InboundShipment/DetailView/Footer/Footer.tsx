@@ -88,6 +88,16 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
   const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
 
+  const handleCampaignClick = () => {
+    if (isDisabled) {
+      info(
+        t('messages.cant-change-campaign-or-program-on-finalised-invoice')
+      )();
+    } else {
+      changeCampaignOrProgramModal.onOpen();
+    }
+  };
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
@@ -99,17 +109,7 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
           {
             label: t('button.change-campaign-or-program'),
             icon: <ArrowRightIcon />,
-            onClick: () => {
-              if (isDisabled) {
-                info(
-                  t(
-                    'messages.cant-change-campaign-or-program-on-finalised-invoice'
-                  )
-                )();
-              } else {
-                changeCampaignOrProgramModal.onOpen();
-              }
-            },
+            onClick: () => handleCampaignClick,
             shouldShrink: false,
           },
         ]
