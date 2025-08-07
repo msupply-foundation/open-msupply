@@ -3,13 +3,15 @@ use async_graphql::*;
 use chrono::{NaiveDate, NaiveDateTime};
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, PurchaseOrderLinesByPurchaseOrderIdLoader,
-    StoreByIdLoader, UserLoader,
+    StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::ContextExt;
 use repository::{PurchaseOrderRow, PurchaseOrderStatus};
 use service::ListResult;
 
-use crate::types::{NameNode, PurchaseOrderLineConnector, StoreNode, UserNode};
+use crate::types::{
+    NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
+};
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderNode {
@@ -158,6 +160,16 @@ impl PurchaseOrderNode {
     }
     pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
         &self.row().finalised_datetime
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let purchase_order_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(purchase_order_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<PurchaseOrderLineConnector> {
