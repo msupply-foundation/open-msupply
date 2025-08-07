@@ -42,9 +42,6 @@ describe('findCommonProgramItem', () => {
   });
 
   it('should return item id and true when some programs are missing', () => {
-    // Item A: ProgramA, ProgramB, ProgramC
-    // Item B: ProgramA
-    // Item C: ProgramA, ProgramB
     // Common program: ProgramA
     const rows = [
       createRow('itemA', [ProgramA, ProgramB, ProgramC]),
@@ -66,9 +63,6 @@ describe('findCommonProgramItem', () => {
   });
 
   it('should handle complex scenario with overlapping programs', () => {
-    // Item A: ProgramA, ProgramB, ProgramC
-    // Item B: ProgramA, ProgramB
-    // Item C: ProgramA, ProgramB, ProgramD
     // Common programs: ProgramA, ProgramB
     const rows = [
       createRow('itemA', [ProgramA, ProgramB, ProgramC]),
