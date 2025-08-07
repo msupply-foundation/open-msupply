@@ -7,7 +7,7 @@ import { PurchaseOrderDetailView } from './purchase_order/DetailView';
 import { GoodsReceivedListView } from './goods_received/ListView';
 import { GoodsReceivedDetailView } from './goods_received/DetailView';
 
-const PurchaseOrderService: FC = () => {
+const PurchasingService: FC = () => {
   const purchaseOrdersRoute = RouteBuilder.create(
     AppRoute.PurchaseOrder
   ).build();
@@ -39,4 +39,4 @@ const PurchaseOrderService: FC = () => {
   );
 };
 
-export default PurchaseOrderService;
+export default PurchasingService;
