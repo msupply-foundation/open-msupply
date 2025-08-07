@@ -136,8 +136,6 @@ impl Extension for LoggerExtension {
             let info = info.inner.lock().await;
             let query_id = info.id;
 
-            // TODO: Log our structured errors too!
-
             // Log errors to the info level
             if resp.is_err() {
                 for err in &resp.errors {
