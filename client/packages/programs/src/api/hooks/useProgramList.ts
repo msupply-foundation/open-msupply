@@ -10,13 +10,15 @@ import { LIST, PROGRAM } from './keys';
 export const useProgramList = ({
   isImmunisation,
   itemId,
+  clearCache = true,
 }: {
   isImmunisation?: boolean;
   itemId?: string;
+  clearCache?: boolean;
 } = {}) => {
   const { api, storeId } = useProgramsGraphQL();
 
-  const queryKey = [PROGRAM, LIST];
+  const queryKey = [PROGRAM, LIST, clearCache];
   const queryFn = async (): Promise<{
     nodes: ProgramFragment[];
     totalCount: number;

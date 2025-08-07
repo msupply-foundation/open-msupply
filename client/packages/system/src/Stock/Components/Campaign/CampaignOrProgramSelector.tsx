@@ -24,6 +24,7 @@ interface CampaignOrProgramSelectorProps {
     campaign: CampaignNode | null;
     program: ProgramFragment | null;
   }) => void;
+  clearProgram?: boolean;
 }
 
 export const CampaignOrProgramSelector = ({
@@ -31,6 +32,7 @@ export const CampaignOrProgramSelector = ({
   programId,
   itemId,
   onChange,
+  clearProgram = true,
 }: CampaignOrProgramSelectorProps): ReactElement => {
   const t = useTranslation();
   const {
@@ -40,6 +42,7 @@ export const CampaignOrProgramSelector = ({
   });
   const { data: programData } = useProgramList({
     itemId,
+    clearCache: clearProgram,
   });
 
   const campaigns = campaignData?.nodes ?? [];
