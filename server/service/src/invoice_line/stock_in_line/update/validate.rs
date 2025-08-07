@@ -83,8 +83,11 @@ pub fn validate(
         }
     }
 
-    if let Some(campaign_id) = &input.campaign_id {
-        if !check_campaign_exists(connection, campaign_id.value.as_deref().unwrap_or(""))? {
+    if let Some(NullableUpdate {
+        value: Some(campaign_id),
+    }) = &input.campaign_id
+    {
+        if !check_campaign_exists(connection, campaign_id)? {
             return Err(CampaignDoesNotExist);
         }
     }

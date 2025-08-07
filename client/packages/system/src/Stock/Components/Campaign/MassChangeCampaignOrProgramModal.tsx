@@ -134,7 +134,6 @@ export const findCommonProgramItem = <
       commonPrograms.every(commonProgram =>
         rowPrograms.some(rowProgram => rowProgram.id === commonProgram.id)
       );
-
     if (hasCommon) {
       return { itemId: row?.item?.id ?? null, hasMissingPrograms };
     }
