@@ -15,14 +15,18 @@ import {
   MasterListSearchInput,
   MasterListRowFragment,
   useMasterListLineCount,
+  VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import {
   Box,
   Formatter,
+  PreferenceKey,
   StockLineFilterInput,
   useNavigate,
+  usePreference,
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
+import { VvmStatusFragment } from 'packages/system/src/Stock/api';
 
 const LABEL_FLEX = '0 0 150px';
 interface NewStocktakeModalProps {
@@ -39,6 +43,7 @@ interface ModalState {
   expiryDate: Date | null;
   createBlankStocktake: boolean;
   includeAllMasterListItems: boolean;
+  vvmStatus: VvmStatusFragment | null;
 }
 
 export const CreateStocktakeModal = ({
@@ -50,15 +55,22 @@ export const CreateStocktakeModal = ({
 }: NewStocktakeModalProps) => {
   const navigate = useNavigate();
   const t = useTranslation();
+
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVvmStatusForStock
+  );
+
   const { Modal } = useDialog({
     isOpen: open,
     onClose,
     disableBackdrop: true,
   });
+
   const [
     {
       location,
       masterList,
+      vvmStatus,
       expiryDate,
       createBlankStocktake,
       includeAllMasterListItems,
@@ -66,6 +78,7 @@ export const CreateStocktakeModal = ({
     setState,
   ] = useState<ModalState>({
     location: null,
+    vvmStatus: null,
     masterList: null,
     expiryDate: null,
     createBlankStocktake: false,
@@ -137,6 +150,7 @@ export const CreateStocktakeModal = ({
     const args: CreateStocktakeInput = {
       masterListId: masterList?.id,
       locationId: location?.id,
+      vvmStatusId: vvmStatus?.id,
       createBlankStocktake,
       expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
       isInitialStocktake: false,
@@ -190,13 +204,13 @@ export const CreateStocktakeModal = ({
                     style={{ paddingLeft: 0 }}
                     checked={!!createBlankStocktake}
                     onChange={e =>
-                      setState(prev => ({
-                        ...prev,
+                      setState(() => ({
                         createBlankStocktake: e.target.checked,
                         masterList: null,
                         includeAllMasterListItems: false,
                         location: null,
                         expiryDate: null,
+                        vvmStatus: null,
                       }))
                     }
                   />
@@ -230,6 +244,7 @@ export const CreateStocktakeModal = ({
                         setState(prev => ({
                           ...prev,
                           includeAllMasterListItems: e.target.checked,
+                          vvmStatus: null,
                           location: null,
                           expiryDate: null,
                         }))
@@ -260,6 +275,7 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <DateTimePickerInput
+                    width={'100%'}
                     disabled={
                       !!createBlankStocktake || includeAllMasterListItems
                     }
@@ -271,6 +287,29 @@ export const CreateStocktakeModal = ({
                 }
                 label={t('label.items-expiring-before')}
               />
+
+              {preferences?.manageVvmStatusForStock && (
+                <InputWithLabelRow
+                  label={t('label.vvm-status')}
+                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                  Input={
+                    <VVMStatusSearchInput
+                      disabled={
+                        !!createBlankStocktake || includeAllMasterListItems
+                      }
+                      onChange={vvmStatus =>
+                        setState(prev => ({
+                          ...prev,
+                          vvmStatus: vvmStatus ?? null,
+                        }))
+                      }
+                      width={380}
+                      selected={vvmStatus}
+                    />
+                  }
+                />
+              )}
+
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={estimatedLineCount}
