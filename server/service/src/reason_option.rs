@@ -11,7 +11,7 @@ pub fn get_reason_options(
     filter: Option<ReasonOptionFilter>,
     sort: Option<ReasonOptionSort>,
 ) -> Result<ListResult<ReasonOption>, ListError> {
-    let pagination = get_pagination_or_default(pagination, u32::MAX, 1)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let connection = connection_manager.connection()?;
     let repository = ReasonOptionRepository::new(&connection);
 

@@ -381,8 +381,7 @@ fn query_all_report_versions(
     sort: Option<ReportSort>,
     pagination: Option<PaginationOption>,
 ) -> Result<ListResult<Report>, GetReportsError> {
-    let pagination = get_pagination_or_default(pagination, MAX_LIMIT, MIN_LIMIT)
-        .map_err(GetReportsError::ListError)?;
+    let pagination = get_pagination_or_default(pagination).map_err(GetReportsError::ListError)?;
 
     let repo = ReportRepository::new(&ctx.connection);
 
