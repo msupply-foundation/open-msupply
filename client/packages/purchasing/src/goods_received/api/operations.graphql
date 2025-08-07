@@ -1,12 +1,28 @@
 fragment GoodsReceivedRow on GoodsReceivedNode {
   id
   number
+  status
+  comment
+  # Fields that need to be added to GraphQL schema:
+  # supplier { id name }
+  # purchaseOrderNumber
+  # supplierReference
+  # createdDatetime
+  # receivedDatetime
 }
 
 fragment GoodsReceived on GoodsReceivedNode {
   __typename
   id
   number
+  status
+  comment
+  # Fields that need to be added to GraphQL schema:
+  # supplier { id name }
+  # purchaseOrderNumber
+  # supplierReference
+  # createdDatetime
+  # receivedDatetime
 }
 
 query goodsReceivedList(
