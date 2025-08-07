@@ -78,7 +78,6 @@ impl Loader<ProgramsByItemIdLoaderInput> for ProgramsByItemIdLoader {
                         .exists_for_store_id(EqualFilter::equal_to(&store_id))
                         .item_id(EqualFilter::equal_to(&item_id)),
                 )?;
-                println!("Found {program:?} programs for store_id: {store_id}, item_id: {item_id}");
 
                 let entry = output.entry(ProgramsByItemIdLoaderInput {
                     primary_id: store_id.clone(),

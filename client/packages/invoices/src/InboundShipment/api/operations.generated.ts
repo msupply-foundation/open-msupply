@@ -42,7 +42,11 @@ export type InboundLineFragment = {
       __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
     } | null;
-    programs: Array<{ __typename: 'ProgramNode'; id: string; name: string }>;
+    programs?: Array<{
+      __typename: 'ProgramNode';
+      id: string;
+      name: string;
+    }> | null;
   };
   location?: {
     __typename: 'LocationNode';
@@ -169,11 +173,11 @@ export type InboundFragment = {
           __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
         } | null;
-        programs: Array<{
+        programs?: Array<{
           __typename: 'ProgramNode';
           id: string;
           name: string;
-        }>;
+        }> | null;
       };
       location?: {
         __typename: 'LocationNode';
@@ -424,11 +428,11 @@ export type InvoiceQuery = {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
-              programs: Array<{
+              programs?: Array<{
                 __typename: 'ProgramNode';
                 id: string;
                 name: string;
-              }>;
+              }> | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -612,11 +616,11 @@ export type InboundByNumberQuery = {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
-              programs: Array<{
+              programs?: Array<{
                 __typename: 'ProgramNode';
                 id: string;
                 name: string;
-              }>;
+              }> | null;
             };
             location?: {
               __typename: 'LocationNode';

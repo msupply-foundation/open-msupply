@@ -268,19 +268,22 @@ impl ItemNode {
         )))
     }
 
-    pub async fn programs(&self, ctx: &Context<'_>, store_id: String) -> Result<Vec<ProgramNode>> {
+    pub async fn programs(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<Vec<ProgramNode>>> {
         let loader = ctx.get_loader::<DataLoader<ProgramsByItemIdLoader>>();
         let result = loader
             .load_one(ProgramsByItemIdLoaderInput::new(&store_id, &self.row().id))
-            .await?
-            .unwrap_or_default();
+            .await?;
 
-        Ok(result
-            .into_iter()
-            .map(|program| ProgramNode {
-                program_row: program,
-            })
-            .collect())
+        Ok(result.map(|programs| {
+            programs
+                .into_iter()
+                .map(|program_row| ProgramNode { program_row })
+                .collect()
+        }))
     }
 }
 
