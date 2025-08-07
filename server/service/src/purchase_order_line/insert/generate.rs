@@ -21,6 +21,9 @@ pub fn generate(
         purchase_order_id: input.purchase_order_id,
         line_number,
         item_link_id: input.item_id,
+        requested_pack_size: input.requested_quantity.unwrap_or(Default::default()),
+        requested_delivery_date: input.requested_delivery_date,
+        expected_delivery_date: input.expected_delivery_date,
         ..Default::default()
     })
 }

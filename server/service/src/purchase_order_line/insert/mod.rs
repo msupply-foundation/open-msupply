@@ -1,4 +1,5 @@
 use crate::service_provider::ServiceContext;
+use chrono::NaiveDate;
 use repository::{
     PurchaseOrderLineRow, PurchaseOrderLineRowRepository, RepositoryError, TransactionError,
 };
@@ -24,6 +25,9 @@ pub struct InsertPurchaseOrderLineInput {
     pub id: String,
     pub purchase_order_id: String,
     pub item_id: String,
+    pub requested_quantity: Option<f64>,
+    pub requested_delivery_date: Option<NaiveDate>,
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 pub fn insert_purchase_order_line(

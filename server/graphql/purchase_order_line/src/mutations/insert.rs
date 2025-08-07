@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::NaiveDate;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
@@ -15,6 +16,9 @@ pub struct InsertInput {
     pub id: String,
     pub purchase_order_id: String,
     pub item_id: String,
+    pub requested_quantity: Option<f64>,
+    pub requested_delivery_date: Option<NaiveDate>,
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 impl InsertInput {
@@ -23,12 +27,18 @@ impl InsertInput {
             id,
             purchase_order_id,
             item_id,
+            requested_quantity,
+            requested_delivery_date,
+            expected_delivery_date,
         } = self;
 
         ServiceInput {
             id,
             purchase_order_id,
             item_id,
+            requested_quantity,
+            requested_delivery_date,
+            expected_delivery_date,
         }
     }
 }

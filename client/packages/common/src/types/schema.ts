@@ -3603,9 +3603,12 @@ export type InsertPurchaseOrderInput = {
 };
 
 export type InsertPurchaseOrderLineInput = {
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   purchaseOrderId: Scalars['String']['input'];
+  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertPurchaseOrderLineResponse = IdResponse;
