@@ -73,6 +73,11 @@ export const CommonOptions = z
      * available)
      */
     defaultToPrevious: z.boolean().optional(),
+    /**
+     * If using "previous" data, you can specify a path to get previous data
+     * from a different field
+     */
+    previousPath: z.string().optional(),
   })
   .strict();
 
