@@ -32,7 +32,7 @@ const STOCKTAKE_LINE_1: (&str, &str) = (
       "stock_take_ID": "stocktake_a",
       "stock_take_qty": 700,
       "vaccine_vial_monitor_status_ID": "VVM_STATUS_1",
-      "volume_per_pack": 10.0
+      "volume_per_pack": 10.0,
       "oms_fields": {
         "program_id": "program_test"
       }
