@@ -1,3 +1,4 @@
+import React, { ReactElement } from 'react';
 import {
   Box,
   AppFooterPortal,
@@ -7,12 +8,11 @@ import {
   ActionsFooter,
   PurchaseOrderNodeStatus,
   StatusCrumbs,
+  useTableStore,
 } from '@openmsupply-client/common';
-import React, { FC } from 'react';
-import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
-import { StatusChangeButton } from './StatusChangeButton';
+import { usePurchaseOrder, PurchaseOrderFragment } from '../../api';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
-import { PurchaseOrderFragment } from '../../api';
+import { StatusChangeButton } from './StatusChangeButton';
 
 const createStatusLog = (purchaseOrder: PurchaseOrderFragment) => {
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
@@ -26,13 +26,23 @@ const createStatusLog = (purchaseOrder: PurchaseOrderFragment) => {
   return statusLog;
 };
 
-export const Footer: FC = () => {
+interface FooterProps {
+  showStatusBar: boolean;
+}
+
+export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
   const {
     query: { data },
   } = usePurchaseOrder();
   const t = useTranslation();
 
-  const selectedRows = [];
+  const selectedRows = useTableStore(state => {
+    const selectedLines =
+      data?.lines.nodes.filter(line => state.rowState[line.id]?.isSelected) ||
+      [];
+    return selectedLines;
+  });
+
   const confirmAndDelete = () => {};
 
   const actions: Action[] = [
@@ -53,7 +63,7 @@ export const Footer: FC = () => {
               selectedRowCount={selectedRows.length}
             />
           )}
-          {data && selectedRows.length === 0 ? (
+          {data && selectedRows.length === 0 && showStatusBar ? (
             <Box
               gap={2}
               display="flex"
