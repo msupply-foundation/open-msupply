@@ -63,6 +63,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             item_id: f.item_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
+            vvm_status_id: None,
             has_packs_in_store: f.has_packs_in_store,
             location: f.location.map(LocationFilter::from),
             master_list: f.master_list.map(|f| f.to_domain()),
