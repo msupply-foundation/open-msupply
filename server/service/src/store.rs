@@ -2,7 +2,7 @@ use repository::{PaginationOption, RepositoryError, Store};
 use repository::{StoreFilter, StoreRepository, StoreSort};
 
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 
 pub fn get_stores(
@@ -11,7 +11,7 @@ pub fn get_stores(
     filter: Option<StoreFilter>,
     sort: Option<StoreSort>,
 ) -> Result<ListResult<Store>, ListError> {
-    let pagination = get_default_pagination(pagination, u32::MAX, 1)?;
+    let pagination = get_pagination_or_default(pagination, u32::MAX, 1)?;
     let repository = StoreRepository::new(&ctx.connection);
 
     Ok(ListResult {

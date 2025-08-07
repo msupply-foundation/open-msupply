@@ -454,7 +454,7 @@ mod tests {
             MockDataInserts,
         },
         test_db, NameFilter, NameLinkRow, NameRepository, NameRow, NameRowRepository, Pagination,
-        StringFilter, DEFAULT_PAGINATION_LIMIT,
+        StringFilter, DEFAULT_PAGINATION_MAX_LIMIT,
     };
 
     use std::convert::TryFrom;
@@ -506,7 +506,7 @@ mod tests {
                 .unwrap();
         }
 
-        let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
+        let default_page_size = usize::try_from(DEFAULT_PAGINATION_MAX_LIMIT).unwrap();
         let store_id = "store_a";
 
         // Test
@@ -536,7 +536,7 @@ mod tests {
                 store_id,
                 Pagination {
                     offset: 10,
-                    limit: DEFAULT_PAGINATION_LIMIT,
+                    limit: DEFAULT_PAGINATION_MAX_LIMIT,
                 },
                 None,
                 None,

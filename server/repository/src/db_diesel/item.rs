@@ -384,7 +384,7 @@ mod tests {
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
         MasterListRowRepository, NameRow, NameRowRepository, Pagination, StockLineRow,
         StockLineRowRepository, StoreRow, StoreRowRepository, StringFilter,
-        DEFAULT_PAGINATION_LIMIT,
+        DEFAULT_PAGINATION_MAX_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -424,7 +424,7 @@ mod tests {
                 .unwrap();
         }
 
-        let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
+        let default_page_size = usize::try_from(DEFAULT_PAGINATION_MAX_LIMIT).unwrap();
         let item_query_repository = ItemRepository::new(&storage_connection);
 
         // Test
@@ -448,7 +448,7 @@ mod tests {
             .query(
                 Pagination {
                     offset: 10,
-                    limit: DEFAULT_PAGINATION_LIMIT,
+                    limit: DEFAULT_PAGINATION_MAX_LIMIT,
                 },
                 None,
                 None,
