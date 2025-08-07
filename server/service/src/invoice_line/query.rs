@@ -5,7 +5,6 @@ use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineSort,
     PaginationOption, RepositoryError,
 };
- 
 
 #[derive(Debug, PartialEq)]
 pub enum GetInvoiceLinesError {
@@ -42,8 +41,8 @@ pub fn get_invoice_lines(
     let filter = filter
         .unwrap_or_default()
         .store_id(EqualFilter::equal_to(store_id));
-    let pagination = get_pagination_or_default(pagination, MAX_LIMIT, MIN_LIMIT)
-        .map_err(GetInvoiceLinesError::ListError)?;
+    let pagination =
+        get_pagination_or_default(pagination).map_err(GetInvoiceLinesError::ListError)?;
 
     let repository = InvoiceLineRepository::new(&ctx.connection);
 

@@ -11,7 +11,7 @@ pub fn get_stores(
     filter: Option<StoreFilter>,
     sort: Option<StoreSort>,
 ) -> Result<ListResult<Store>, ListError> {
-    let pagination = get_pagination_or_default(pagination, u32::MAX, 1)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = StoreRepository::new(&ctx.connection);
 
     Ok(ListResult {
