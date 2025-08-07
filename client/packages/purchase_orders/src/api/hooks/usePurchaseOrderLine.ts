@@ -7,7 +7,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common/src';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
-import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
+import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
 import { PurchaseOrderLineFragment } from '../operations.generated';
 
 export type DraftPurchaseOrderLine = Omit<
@@ -57,9 +57,9 @@ export function usePurchaseOrderLine(id?: string) {
       id: draft.id,
       expectedDeliveryDate: draft.expectedDeliveryDate,
       itemId: draft.itemId,
-      packSize: draft.requestedPackSize,
+      requestedPackSize: draft.requestedPackSize,
       requestedDeliveryDate: draft.requestedDeliveryDate,
-      requestedQuantity: draft.requestedNumberOfUnits,
+      requestedNumberOfUnits: draft.requestedNumberOfUnits,
     };
     return await updatePurchaseOrderLine(input);
   };
@@ -103,7 +103,7 @@ const useGet = (id: string) => {
   };
 
   const query = useQuery({
-    queryKey: [PURCHASE_ORDER_LINE, id],
+    queryKey: [PURCHASE_ORDER, PURCHASE_ORDER_LINE, id],
     queryFn,
     enabled: id !== '',
   });
@@ -121,8 +121,8 @@ const useCreate = () => {
         id: draft.id,
         itemId: draft.itemId,
         purchaseOrderId: draft.purchaseOrderId,
-        packSize: draft.packSize,
-        requestedQuantity: draft.requestedNumberOfUnits,
+        requestedPackSize: draft.requestedPackSize,
+        requestedNumberOfUnits: draft.requestedNumberOfUnits,
         requestedDeliveryDate: draft.requestedDeliveryDate,
         expectedDeliveryDate: draft.expectedDeliveryDate,
       },
@@ -131,8 +131,7 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () =>
-      queryClient.invalidateQueries([PURCHASE_ORDER, LIST, storeId]),
+    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   });
 };
 
@@ -141,10 +140,7 @@ const useUpdate = () => {
   const t = useTranslation();
   const { error } = useNotification();
 
-  const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine, {
-    onSuccess: () =>
-      queryClient.invalidateQueries([PURCHASE_ORDER, LIST, storeId]),
-  });
+  const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine);
 
   const updatePurchaseOrderLine = async (
     input: UpdatePurchaseOrderLineInput
@@ -174,6 +170,7 @@ const useUpdate = () => {
             return error(t('label.cannot-update-purchase-order-line'))();
         }
       }
+      queryClient.invalidateQueries([PURCHASE_ORDER]);
     } catch (e) {
       console.error('Error updating purchase order line:', e);
       return error(t('label.cannot-update-purchase-order-line'))();
