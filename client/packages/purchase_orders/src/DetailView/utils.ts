@@ -4,39 +4,29 @@ import {
   TypedTFunction,
   Formatter,
 } from '@openmsupply-client/common';
-import { ImportRow, LineNumber } from './ImportLines/PurchaseOrderLineImportModal';
+import {
+  ImportRow,
+  LineNumber,
+} from './ImportLines/PurchaseOrderLineImportModal';
 
 function basePurchaseOrderLineFields(t: TypedTFunction<LocaleKey>) {
-  return [
-    t('label.code'),
-    t('label.pack-size'),
-    t('label.requested'),
-  ];
+  return [t('label.code'), t('label.pack-size'), t('label.requested')];
 }
 
 export const purchaseOrderLinesToCsv = (
   items: PurchaseOrderLineFragment[],
-  t: TypedTFunction<LocaleKey>,
+  t: TypedTFunction<LocaleKey>
 ) => {
-
   const fields: string[] = ['id'];
-
 
   fields.push(
     ...basePurchaseOrderLineFields(t),
     t('label.created-datetime-UTC'),
-    t('label.modified-datetime-UTC'),
+    t('label.modified-datetime-UTC')
   );
 
   const data = items.map(node => {
-
-
-
-    return [
-      node.id,
-      node.purchaseOrderId,
-      node.item.id,
-    ];
+    return [node.id, node.purchaseOrderId, node.item.id];
   });
 
   return Formatter.csv({ fields, data });
@@ -44,9 +34,8 @@ export const purchaseOrderLinesToCsv = (
 
 export const importPurchaseOrderLinesToCSVWithErrors = (
   purchaseOrderLines: Partial<ImportRow & LineNumber>[],
-  t: TypedTFunction<LocaleKey>,
+  t: TypedTFunction<LocaleKey>
 ) => {
-
   const fields: string[] = [];
 
   fields.push(
@@ -61,7 +50,7 @@ export const importPurchaseOrderLinesToCSVWithErrors = (
       node.requestedPackSize,
       node.requestedNumberOfUnits,
       node.lineNumber,
-      node.errorMessage
+      node.errorMessage,
     ];
 
     return mapped;
@@ -71,13 +60,15 @@ export const importPurchaseOrderLinesToCSVWithErrors = (
 
 export const importPurchaseOrderLinesToCsv = (
   purchaseOrderLines: Partial<ImportRow>[],
-  t: TypedTFunction<LocaleKey>,
+  t: TypedTFunction<LocaleKey>
 ) => {
-
-  const fields: string[] = [t('label.code'), t('label.pack-size'), t('label.requested')];
+  const fields: string[] = [
+    t('label.code'),
+    t('label.pack-size'),
+    t('label.requested'),
+  ];
 
   const data = purchaseOrderLines.map(node => {
-
     const row = [
       node.itemCode,
       node.requestedPackSize,
@@ -89,8 +80,6 @@ export const importPurchaseOrderLinesToCsv = (
 
   return Formatter.csv({ fields, data });
 };
-
-
 
 export const base64ToBlob = (base64: string, contentType: string) => {
   const byteCharacters = atob(base64);
