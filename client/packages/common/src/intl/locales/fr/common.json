@@ -839,6 +839,7 @@
   "label.discount-rate": "Taux de remise",
   "label.dispensing-date": "Date de dispensation",
   "label.distance": "Votre distance (km)",
+  "label.distribution-priority": "Priorité de Distribution",
   "label.document-edit-history": "Historique de Modifications du Document",
   "label.documents": "Documents",
   "label.donor": "Donateur",
@@ -1402,9 +1403,11 @@
   "label.visit-end": "Fin",
   "label.visit-notes": "Notes",
   "label.visit-start": "Début",
+  "label.volume": "Volume (m³)",
   "label.volume-per-outer-pack": "Volume par emballage externe",
   "label.volume-per-pack": "Volume par conditionnement (m³)",
   "label.volume-per-unit": "Volume par unité (L)",
+  "label.volume-used": "Volume utilisé",
   "label.vvm-status": "Statut VVM",
   "label.vvm-type": "Type VVM",
   "label.ward": "Service",
@@ -2232,8 +2235,5 @@
   "warning.field-not-parsed": "{{field}} non analysé",
   "warning.foreign-exchange-rate-different": "Ce taux ne correspond pas à la devise.",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "label.volume": "Volume (m³)",
-  "label.volume-used": "Volume utilisé",
-  "label.distribution-priority": "Priorité de Distribution"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
