@@ -33,6 +33,7 @@ fragment StockLine on StockLineNode {
   storeId
   totalNumberOfPacks
   itemVariantId
+  volumePerPack
 
   donor(storeId: $storeId) {
     id
@@ -40,7 +41,7 @@ fragment StockLine on StockLineNode {
   vvmStatus {
     __typename
     id
-    level
+    priority
     unusable
     description
   }

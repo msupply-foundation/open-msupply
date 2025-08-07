@@ -1,80 +1,74 @@
-import {    useMutation, usePatchState, useQuery, useTranslation } from "@openmsupply-client/common/src";
-import { usePurchaseOrderGraphQL } from "../usePurchaseOrderGraphQL";
-import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from "./keys";
-import { PurchaseOrderLineFragment } from "../operations.generated";
+import {
+  useMutation,
+  usePatchState,
+  useQuery,
+  useTranslation,
+} from '@openmsupply-client/common/src';
+import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
+import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
+import { PurchaseOrderLineFragment } from '../operations.generated';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
-  "__typename"| "item"> & {
+  '__typename' | 'item'
+> & {
   purchaseOrderId: string;
   itemId: string;
   requestedPackSize: number | undefined;
   requestedNumberOfUnits: number | undefined;
-}
-
-export type DraftPurchaseOrderLineFromCSV = Omit<
-DraftPurchaseOrderLine,
-"id" | "itemId"> & {
-  itemCode: string;
-}
-
-
-
-const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
-    id: "",
-    purchaseOrderId: "",
-    itemId: "",
-    requestedPackSize: 0,
-    requestedNumberOfUnits: 0,
 };
 
+export type DraftPurchaseOrderLineFromCSV = Omit<
+  DraftPurchaseOrderLine,
+  'id' | 'itemId'
+> & {
+  itemCode: string;
+};
 
+const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
+  id: '',
+  purchaseOrderId: '',
+  itemId: '',
+  requestedPackSize: 0,
+  requestedNumberOfUnits: 0,
+};
 
 export function usePurchaseOrderLine(id?: string) {
+  const { data, isLoading, error } = useGet(id ?? '');
 
- const { data, isLoading, error } = useGet(id ?? '');
-
-
- // CREATE
+  // CREATE
   const {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
   } = useCreate();
 
+  const { patch, updatePatch, resetDraft, isDirty } =
+    usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
 
+  const draft: DraftPurchaseOrderLine = data
+    ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], ...patch }
+    : { ...defaultPurchaseOrderLine, ...patch };
+  const create = async () => {
+    const result = await createMutation(draft);
+    resetDraft();
+    return result;
+  };
 
-    const { patch, updatePatch, resetDraft, isDirty } =
-      usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
+  // CREATE FROM CSV
 
-    const draft: DraftPurchaseOrderLine = data
-      ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], ...patch }
-      : { ...defaultPurchaseOrderLine, ...patch };
-    const create = async () => {
-      const result = await createMutation(draft);
-      resetDraft();
-      return result;
-    };
+  const { mutateAsync, invalidateQueries } = useLineInsertFromCSV();
 
-    // CREATE FROM CSV
-
-  const {
-    mutateAsync,
-    invalidateQueries,
-  } = useLineInsertFromCSV();
-
-
-    return {
+  return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
-    createFromCSV: {mutateAsync, invalidateQueries},
+    createFromCSV: { mutateAsync, invalidateQueries },
     draft,
     resetDraft,
     isDirty,
     updatePatch,
   };
 }
-
 
 const useGet = (id: string) => {
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
@@ -125,30 +119,30 @@ const useCreate = () => {
   });
 };
 
-
-
 export const useLineInsertFromCSV = () => {
-    const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
-    const  t = useTranslation();
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+  const t = useTranslation();
 
-  const { mutateAsync } = useMutation(async (line: Partial<DraftPurchaseOrderLineFromCSV>) => {
-    const result = await purchaseOrderApi.insertPurchaseOrderLineFromCSV({
-    storeId,
-    input:  {
-      itemCode: line.itemCode ?? "",
-      purchaseOrderId: line.purchaseOrderId ?? "",
-      requestedPackSize: line.requestedPackSize ?? 0.0,
-      requestedNumberOfUnits: line.requestedNumberOfUnits ?? 0,
-    },
-    });
-    if (result.insertPurchaseOrderLineFromCsv.__typename === 'IdResponse') {
-      return result.insertPurchaseOrderLineFromCsv.id;
-    } 
+  const { mutateAsync } = useMutation(
+    async (line: Partial<DraftPurchaseOrderLineFromCSV>) => {
+      const result = await purchaseOrderApi.insertPurchaseOrderLineFromCSV({
+        storeId,
+        input: {
+          itemCode: line.itemCode ?? '',
+          purchaseOrderId: line.purchaseOrderId ?? '',
+          requestedPackSize: line.requestedPackSize ?? 0.0,
+          requestedNumberOfUnits: line.requestedNumberOfUnits ?? 0,
+        },
+      });
+      if (result.insertPurchaseOrderLineFromCsv.__typename === 'IdResponse') {
+        return result.insertPurchaseOrderLineFromCsv.id;
+      }
 
       switch (result.insertPurchaseOrderLineFromCsv.error.__typename) {
         case 'PackSizeCodeCombinationExists':
           const itemCode = result.insertPurchaseOrderLineFromCsv.error.itemCode;
-          const requestedPackSize = result.insertPurchaseOrderLineFromCsv.error.requestedPackSize;
+          const requestedPackSize =
+            result.insertPurchaseOrderLineFromCsv.error.requestedPackSize;
           throw new Error(
             t('error.line-combination-error', { itemCode, requestedPackSize })
           );
@@ -163,14 +157,12 @@ export const useLineInsertFromCSV = () => {
         default:
           throw new Error(t('error.unknown-insert-error'));
       }
-  });
+    }
+  );
 
   return {
-  mutateAsync,
-  invalidateQueries: () => queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
+    mutateAsync,
+    invalidateQueries: () =>
+      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
   };
-
-}
-
-
-
+};

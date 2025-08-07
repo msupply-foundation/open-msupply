@@ -13,6 +13,7 @@ export type InboundLineFragment = {
   expiryDate?: string | null;
   numberOfPacks: number;
   shippedNumberOfPacks?: number | null;
+  shippedPackSize?: number | null;
   packSize: number;
   note?: string | null;
   invoiceId: string;
@@ -23,7 +24,9 @@ export type InboundLineFragment = {
   itemName: string;
   itemVariantId?: string | null;
   linkedInvoiceId?: string | null;
+  volumePerPack: number;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   item: {
     __typename: 'ItemNode';
@@ -66,9 +69,19 @@ export type InboundLineFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
+  } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
   } | null;
 };
 
@@ -122,6 +135,7 @@ export type InboundFragment = {
       expiryDate?: string | null;
       numberOfPacks: number;
       shippedNumberOfPacks?: number | null;
+      shippedPackSize?: number | null;
       packSize: number;
       note?: string | null;
       invoiceId: string;
@@ -132,7 +146,9 @@ export type InboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       linkedInvoiceId?: string | null;
+      volumePerPack: number;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -179,9 +195,19 @@ export type InboundFragment = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
     }>;
   };
@@ -355,6 +381,7 @@ export type InvoiceQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
+            shippedPackSize?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -365,7 +392,13 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             linkedInvoiceId?: string | null;
+            volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
@@ -412,9 +445,19 @@ export type InvoiceQuery = {
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
-              level: number;
+              priority: number;
               unusable: boolean;
               description: string;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
             } | null;
           }>;
         };
@@ -521,6 +564,7 @@ export type InboundByNumberQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
+            shippedPackSize?: number | null;
             packSize: number;
             note?: string | null;
             invoiceId: string;
@@ -531,7 +575,13 @@ export type InboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             linkedInvoiceId?: string | null;
+            volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
@@ -578,9 +628,19 @@ export type InboundByNumberQuery = {
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
-              level: number;
+              priority: number;
               unusable: boolean;
               description: string;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
             } | null;
           }>;
         };
@@ -1060,6 +1120,7 @@ export const InboundLineFragmentDoc = gql`
     expiryDate
     numberOfPacks
     shippedNumberOfPacks
+    shippedPackSize
     packSize
     note
     type
@@ -1071,7 +1132,12 @@ export const InboundLineFragmentDoc = gql`
     itemName
     itemVariantId
     linkedInvoiceId
+    volumePerPack
     donor(storeId: $storeId) {
+      id
+      name
+    }
+    program {
       id
       name
     }
@@ -1119,9 +1185,19 @@ export const InboundLineFragmentDoc = gql`
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
+    }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
     }
   }
 `;

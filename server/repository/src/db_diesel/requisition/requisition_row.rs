@@ -15,7 +15,7 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-use util::Defaults;
+
 
 table! {
     requisition (id) {
@@ -116,7 +116,7 @@ impl Default for RequisitionRow {
         Self {
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
-            created_datetime: Defaults::naive_date_time(),
+            created_datetime: Default::default(),
             // Defaults
             id: Default::default(),
             user_id: Default::default(),

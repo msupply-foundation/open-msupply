@@ -9,6 +9,8 @@ export interface CreateDraftInboundLineParams {
   invoiceId: string;
   seed?: InboundLineFragment;
   type?: InvoiceLineNodeType;
+  batch?: string;
+  expiryDate?: string;
 }
 
 const createDraftInboundLine = ({
@@ -16,8 +18,10 @@ const createDraftInboundLine = ({
   invoiceId,
   seed,
   type = InvoiceLineNodeType.StockIn,
+  batch,
+  expiryDate,
 }: CreateDraftInboundLineParams): DraftInboundLine => {
-  const { defaultPackSize = 1, itemStoreProperties, name } = item || {};
+  const { defaultPackSize = 1, itemStoreProperties } = item || {};
   const draftLine: DraftInboundLine = {
     __typename: 'InvoiceLineNode',
     totalAfterTax: 0,
@@ -31,11 +35,14 @@ const createDraftInboundLine = ({
     costPricePerPack: 0,
     numberOfPacks: 0,
     isCreated: !seed,
-    expiryDate: undefined,
+    expiryDate,
+    batch,
     location: undefined,
     type,
     item,
-    itemName: name,
+    itemName: item.name,
+    volumePerPack: 0.0,
+    shippedPackSize: defaultPackSize,
     ...seed,
   };
 

@@ -48,6 +48,8 @@ export type PurchaseOrderFragment = {
   advancePaidDate?: string | null;
   receivedAtPortDate?: string | null;
   requestedDeliveryDate?: string | null;
+  authorisedDatetime?: string | null;
+  finalisedDatetime?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'PurchaseOrderLineConnector';
@@ -161,6 +163,8 @@ export type PurchaseOrderByIdQuery = {
         advancePaidDate?: string | null;
         receivedAtPortDate?: string | null;
         requestedDeliveryDate?: string | null;
+        authorisedDatetime?: string | null;
+        finalisedDatetime?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'PurchaseOrderLineConnector';
@@ -293,37 +297,28 @@ export type InsertPurchaseOrderLineMutationVariables = Types.Exact<{
 
 export type InsertPurchaseOrderLineMutation = {
   __typename: 'Mutations';
-  insertPurchaseOrderLine:
-    | { __typename: 'IdResponse'; id: string }
-    | { __typename: 'InsertPurchaseOrderLineError' };
+  insertPurchaseOrderLine: { __typename: 'IdResponse'; id: string };
 };
 
-export type InsertPurchaseOrderLineFromCsvMutationVariables = Types.Exact<{
-  input: Types.InsertPurchaseOrderLineFromCsvInput;
+export type AddToPurchaseOrderFromMasterListMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
+  input: Types.AddToPurchaseOrderFromMasterListInput;
 }>;
 
-export type InsertPurchaseOrderLineFromCsvMutation = {
+export type AddToPurchaseOrderFromMasterListMutation = {
   __typename: 'Mutations';
-  insertPurchaseOrderLineFromCsv:
-    | { __typename: 'IdResponse'; id: string }
+  addToPurchaseOrderFromMasterList:
     | {
-        __typename: 'InsertPurchaseOrderLineError';
+        __typename: 'AddToPurchaseOrderFromMasterListError';
         error:
-          | { __typename: 'CannnotFindItemByCode'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
-          | { __typename: 'ForeignKeyError'; description: string }
           | {
-              __typename: 'PackSizeCodeCombinationExists';
+              __typename: 'MasterListNotFoundForThisStore';
               description: string;
-              itemCode: string;
-              requestedPackSize: number;
             }
-          | {
-              __typename: 'PurchaseOrderLineWithIdExists';
-              description: string;
-            };
-      };
+          | { __typename: 'RecordNotFound'; description: string };
+      }
+    | { __typename: 'PurchaseOrderLineConnector' };
 };
 
 export const PurchaseOrderRowFragmentDoc = gql`
@@ -358,7 +353,6 @@ export const PurchaseOrderLineFragmentDoc = gql`
       name
       unitName
     }
-    purchaseOrderId
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
@@ -416,6 +410,8 @@ export const PurchaseOrderFragmentDoc = gql`
     advancePaidDate
     receivedAtPortDate
     requestedDeliveryDate
+    authorisedDatetime
+    finalisedDatetime
   }
   ${PurchaseOrderLineFragmentDoc}
 `;
@@ -551,41 +547,34 @@ export const InsertPurchaseOrderLineDocument = gql`
     }
   }
 `;
-export const InsertPurchaseOrderLineFromCsvDocument = gql`
-  mutation insertPurchaseOrderLineFromCSV(
-    $input: InsertPurchaseOrderLineFromCSVInput!
+export const AddToPurchaseOrderFromMasterListDocument = gql`
+  mutation addToPurchaseOrderFromMasterList(
     $storeId: String!
+    $input: AddToPurchaseOrderFromMasterListInput!
   ) {
-    insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
-      ... on IdResponse {
-        id
+    addToPurchaseOrderFromMasterList(storeId: $storeId, input: $input) {
+      ... on AddToPurchaseOrderFromMasterListResponse {
+        ... on PurchaseOrderLineConnector {
+          __typename
+          totalCount
+        }
       }
-      ... on InsertPurchaseOrderLineError {
+      ... on AddToPurchaseOrderFromMasterListError {
         __typename
         error {
-          description
-          ... on CannnotFindItemByCode {
-            __typename
-            description
-          }
           ... on CannotEditPurchaseOrder {
             __typename
             description
           }
-          ... on ForeignKeyError {
+          ... on MasterListNotFoundForThisStore {
             __typename
             description
           }
-          ... on PackSizeCodeCombinationExists {
-            __typename
-            description
-            itemCode
-            requestedPackSize
-          }
-          ... on PurchaseOrderLineWithIdExists {
+          ... on RecordNotFound {
             __typename
             description
           }
+          description
         }
       }
     }
@@ -739,18 +728,18 @@ export function getSdk(
         variables
       );
     },
-    insertPurchaseOrderLineFromCSV(
-      variables: InsertPurchaseOrderLineFromCsvMutationVariables,
+    addToPurchaseOrderFromMasterList(
+      variables: AddToPurchaseOrderFromMasterListMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<InsertPurchaseOrderLineFromCsvMutation> {
+    ): Promise<AddToPurchaseOrderFromMasterListMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertPurchaseOrderLineFromCsvMutation>(
-            InsertPurchaseOrderLineFromCsvDocument,
+          client.request<AddToPurchaseOrderFromMasterListMutation>(
+            AddToPurchaseOrderFromMasterListDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'insertPurchaseOrderLineFromCSV',
+        'addToPurchaseOrderFromMasterList',
         'mutation',
         variables
       );

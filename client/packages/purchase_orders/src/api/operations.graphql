@@ -72,6 +72,8 @@ fragment PurchaseOrder on PurchaseOrderNode {
   advancePaidDate
   receivedAtPortDate
   requestedDeliveryDate
+  authorisedDatetime
+  finalisedDatetime
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
@@ -208,6 +210,38 @@ mutation insertPurchaseOrderLine(
   insertPurchaseOrderLine(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
+    }
+  }
+}
+
+mutation addToPurchaseOrderFromMasterList(
+  $storeId: String!
+  $input: AddToPurchaseOrderFromMasterListInput!
+) {
+  addToPurchaseOrderFromMasterList(storeId: $storeId, input: $input) {
+    ... on AddToPurchaseOrderFromMasterListResponse {
+      ... on PurchaseOrderLineConnector {
+        __typename
+        totalCount
+      }
+    }
+    ... on AddToPurchaseOrderFromMasterListError {
+      __typename
+      error {
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
     }
   }
 }

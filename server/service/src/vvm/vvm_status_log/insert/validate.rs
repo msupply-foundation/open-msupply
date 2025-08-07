@@ -1,7 +1,7 @@
 use repository::StorageConnection;
 
 use crate::{
-    common_stock::check_stock_line_does_not_exist,
+    common::check_stock_line_does_not_exist,
     vvm::vvm_status_log::validate::{check_vvm_status_exists, get_vvm_status_log},
 };
 

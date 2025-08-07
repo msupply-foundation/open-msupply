@@ -19,6 +19,7 @@ export type StockLineFragment = {
   storeId: string;
   totalNumberOfPacks: number;
   itemVariantId?: string | null;
+  volumePerPack: number;
   location?: {
     __typename: 'LocationNode';
     code: string;
@@ -55,7 +56,7 @@ export type StockLineFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
@@ -335,6 +336,7 @@ export type ItemFragment = {
       storeId: string;
       totalNumberOfPacks: number;
       itemVariantId?: string | null;
+      volumePerPack: number;
       location?: {
         __typename: 'LocationNode';
         code: string;
@@ -371,7 +373,7 @@ export type ItemFragment = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
@@ -539,6 +541,7 @@ export type ItemsWithStockLinesQuery = {
           storeId: string;
           totalNumberOfPacks: number;
           itemVariantId?: string | null;
+          volumePerPack: number;
           location?: {
             __typename: 'LocationNode';
             code: string;
@@ -575,7 +578,7 @@ export type ItemsWithStockLinesQuery = {
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
-            level: number;
+            priority: number;
             unusable: boolean;
             description: string;
           } | null;
@@ -861,6 +864,7 @@ export type ItemByIdQuery = {
           storeId: string;
           totalNumberOfPacks: number;
           itemVariantId?: string | null;
+          volumePerPack: number;
           location?: {
             __typename: 'LocationNode';
             code: string;
@@ -897,7 +901,7 @@ export type ItemByIdQuery = {
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
-            level: number;
+            priority: number;
             unusable: boolean;
             description: string;
           } | null;
@@ -1134,6 +1138,7 @@ export type GetHistoricalStockLinesQuery = {
       storeId: string;
       totalNumberOfPacks: number;
       itemVariantId?: string | null;
+      volumePerPack: number;
       location?: {
         __typename: 'LocationNode';
         code: string;
@@ -1170,7 +1175,7 @@ export type GetHistoricalStockLinesQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
@@ -1548,13 +1553,14 @@ export const StockLineFragmentDoc = gql`
     storeId
     totalNumberOfPacks
     itemVariantId
+    volumePerPack
     donor(storeId: $storeId) {
       id
     }
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }

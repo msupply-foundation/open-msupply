@@ -92,10 +92,8 @@ export const DateField = ({
         value={DateUtils.getDateOrNull(value)}
         format="P"
         onChange={handleChange}
-        sx={{ flex: 2 }}
         textFieldSx={{
           backgroundColor: 'white',
-          width: 170,
         }}
         actions={['cancel', 'accept', 'clear']}
       />
