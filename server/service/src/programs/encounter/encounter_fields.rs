@@ -20,9 +20,6 @@ pub struct EncounterFieldsResult {
     pub fields: Vec<serde_json::Value>,
 }
 
-const MAX_LIMIT: u32 = 1000;
-const MIN_LIMIT: u32 = 1;
-
 pub(crate) fn encounter_fields(
     ctx: &ServiceContext,
     input: EncounterFields,
