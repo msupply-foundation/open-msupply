@@ -152,7 +152,7 @@ impl Upsert for AssetRow {
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
-        use pretty_assertions::assert_eq;
+        
 
         assert_eq!(
             AssetRowRepository::new(con).find_one_by_id(&self.id),

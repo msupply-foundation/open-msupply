@@ -91,7 +91,6 @@ mod tests {
     async fn test_contact_form_translation() {
         use crate::sync::test::test_data::contact_form as test_data;
         let translator = ContactFormTranslation;
-        use pretty_assertions::assert_eq;
 
         let (_, connection, _, _) =
             setup_all("test_contact_form_translation", MockDataInserts::none()).await;
