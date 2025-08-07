@@ -39,6 +39,7 @@ pub struct UpdateInput {
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub reason_option_id: Option<String>,
+    pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
@@ -115,6 +116,7 @@ impl UpdateInput {
             item_variant_id,
             donor_id,
             reason_option_id,
+            vvm_status_id,
             volume_per_pack,
             campaign_id,
             program_id,
@@ -134,6 +136,7 @@ impl UpdateInput {
             cost_price_per_pack,
             sell_price_per_pack,
             note,
+            vvm_status_id,
             item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
                 value: item_variant_id.value,
             }),
@@ -190,6 +193,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::LocationDoesNotExist
         | ServiceError::StocktakeIsLocked
         | ServiceError::CampaignDoesNotExist
+        | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
