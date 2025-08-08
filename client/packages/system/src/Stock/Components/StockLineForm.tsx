@@ -311,9 +311,7 @@ export const StockLineForm = ({
                   onUpdate({ location, locationId: location?.id });
                 }}
                 restrictedToLocationTypeId={draft.item.restrictedLocationTypeId}
-                volumeRequired={
-                  draft?.volumePerPack * draft?.totalNumberOfPacks
-                }
+                volumeRequired={draft.volumePerPack * draft.totalNumberOfPacks}
               />
             }
           />
@@ -323,7 +321,7 @@ export const StockLineForm = ({
               Input={
                 <ItemVariantInput
                   itemId={draft.itemId}
-                  selectedId={draft?.itemVariant?.id}
+                  selectedId={draft.itemVariant?.id}
                   width={160}
                   onChange={variant => {
                     const packaging = variant?.packagingVariants.find(
@@ -331,7 +329,7 @@ export const StockLineForm = ({
                     );
                     const volumePerPack =
                       ((packaging?.volumePerUnit ?? 0) / 1000) *
-                      (draft?.packSize ?? 1);
+                      (draft.packSize ?? 1);
 
                     onUpdate({
                       itemVariant: variant,
