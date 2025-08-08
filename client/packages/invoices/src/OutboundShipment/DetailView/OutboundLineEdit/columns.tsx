@@ -39,7 +39,7 @@ import {
   AllocateInOption,
   AllocateInType,
 } from '../../../StockOut';
-import { VvmStatusFragment } from 'packages/system/src/Stock/api';
+import { VvmStatusFragment } from '@openmsupply-client/system/src/Stock/api';
 
 type AllocateFn = (
   key: string,
