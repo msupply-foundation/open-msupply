@@ -1,18 +1,18 @@
-const path = require('path');
+const path = require("path");
 
 module.exports = {
-  mode: 'production',
-  entry: './src/convert_data.js',
+  mode: "production",
+  entry: "./src/convert_data.js",
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'convert_data.js',
+    path: path.resolve(__dirname, "dist"),
+    filename: "convert_data.js",
     library: {
-      type: 'module',
+      type: "module",
     },
     clean: true,
   },
   resolve: {
-    extensions: ['.js'],
+    extensions: [".js"],
   },
   optimization: {
     usedExports: true,
@@ -20,5 +20,17 @@ module.exports = {
   },
   experiments: {
     outputModule: true,
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(ts|tsx)$/,
+        exclude: /node_modules/,
+        resolve: {
+          extensions: [".ts", ".tsx", ".js", ".json"],
+        },
+        use: "ts-loader",
+      },
+    ],
   },
 };
