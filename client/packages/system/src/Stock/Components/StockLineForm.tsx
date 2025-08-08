@@ -361,7 +361,7 @@ export const StockLineForm = ({
                   disabled
                   width={160}
                   decimalLimit={10}
-                  value={draft?.volumePerPack * draft?.totalNumberOfPacks}
+                  value={(draft.volumePerPack ?? 0) * draft.totalNumberOfPacks}
                 />
               }
             />
