@@ -138,6 +138,15 @@ const getInventoryAdjustmentReasonInputColumn = (
       const isInventoryReduction =
         rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
 
+      // Disable reasons if:
+      const disabled =
+        // Haven't entered a count for this line yet
+        typeof rowData.countedNumberOfPacks !== 'number' ||
+        // Aren't counting this line
+        !rowData.countThisLine ||
+        // Count and snapshot packs are equal
+        rowData.snapshotNumberOfPacks === rowData.countedNumberOfPacks;
+
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
       // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
       return (
@@ -153,6 +162,7 @@ const getInventoryAdjustmentReasonInputColumn = (
           inputProps={{
             error: isAdjustmentReasonError,
           }}
+          disabled={disabled}
           initialStocktake={initialStocktake}
           reasonOptions={reasonOptions}
           loading={isLoading}
@@ -375,11 +385,15 @@ export const LocationTable = ({
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
-      // TODO: add location volume here (like inbound shipment once volumes are supported in stocktakes)
       getLocationInputColumn(restrictedToLocationTypeId),
       {
         width: 300,
         setter: patch => update({ ...patch, countThisLine: true }),
+        cellProps: {
+          getVolumeRequired: (rowData: DraftStocktakeLine) =>
+            rowData.volumePerPack *
+            (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks),
+        },
       },
     ],
   ];
