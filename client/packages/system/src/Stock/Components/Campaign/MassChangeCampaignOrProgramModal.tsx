@@ -46,8 +46,7 @@ export const ChangeCampaignOrProgramConfirmationModal = <
 
   const [campaign, setCampaign] = useState<CampaignNode | null>(null);
   const [program, setProgram] = useState<ProgramFragment | null>(null);
-  const { itemId: commonItemId, hasMissingPrograms } =
-    findCommonProgramItem(rows);
+  const { programs, hasMissingPrograms } = findCommonPrograms(rows);
 
   return (
     <ConfirmationModalLayout
@@ -92,12 +91,11 @@ export const ChangeCampaignOrProgramConfirmationModal = <
             <CampaignOrProgramSelector
               campaignId={campaign?.id ?? undefined}
               programId={program?.id ?? undefined}
-              itemId={commonItemId ?? ''}
+              programOptions={programs}
               onChange={async ({ campaign, program }) => {
                 setCampaign(campaign);
                 setProgram(program);
               }}
-              enableProgramAPI={!!commonItemId}
               fullWidth
             />
           }
@@ -107,17 +105,25 @@ export const ChangeCampaignOrProgramConfirmationModal = <
   );
 };
 
-export const findCommonProgramItem = <
+export const findCommonPrograms = <
   T extends {
     item?: { id: string; programs?: ProgramFragment[] | null } | null;
   },
 >(
+  // E.g. invoice lines - each line has an item with programs
   rows: T[]
-): { itemId: string | null; hasMissingPrograms: boolean } => {
-  if (rows.length === 0) return { itemId: null, hasMissingPrograms: false };
-  if (rows.length === 1)
-    return { itemId: rows[0]?.item?.id ?? null, hasMissingPrograms: false };
+): { programs: ProgramFragment[]; hasMissingPrograms: boolean } => {
+  // No lines, no programs
+  if (rows.length === 0) return { programs: [], hasMissingPrograms: false };
 
+  // If only one line, return its programs
+  if (rows.length === 1)
+    return {
+      programs: rows[0]?.item?.programs ?? [],
+      hasMissingPrograms: false,
+    };
+
+  // Loop through all rows to find common programs
   const allPrograms = rows.map(row => row?.item?.programs ?? []);
 
   const commonPrograms = allPrograms.reduce((intersection, currentPrograms) => {
@@ -126,24 +132,14 @@ export const findCommonProgramItem = <
     );
   });
 
+  // If no common programs, return empty array
   if (commonPrograms.length === 0)
-    return { itemId: null, hasMissingPrograms: true };
+    return { programs: [], hasMissingPrograms: true };
 
+  // Otherwise, return the common programs, and alert if some have been omitted
   const hasMissingPrograms = allPrograms.some(
     programs => programs.length !== commonPrograms.length
   );
 
-  for (const row of rows) {
-    const rowPrograms = row?.item?.programs ?? [];
-    const hasCommon =
-      rowPrograms.length === commonPrograms.length &&
-      commonPrograms.every(commonProgram =>
-        rowPrograms.some(rowProgram => rowProgram.id === commonProgram.id)
-      );
-    if (hasCommon) {
-      return { itemId: row?.item?.id ?? null, hasMissingPrograms };
-    }
-  }
-
-  return { itemId: null, hasMissingPrograms: true };
+  return { programs: commonPrograms, hasMissingPrograms };
 };

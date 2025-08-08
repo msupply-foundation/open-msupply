@@ -1,4 +1,4 @@
-import { findCommonProgramItem } from './MassChangeCampaignOrProgramModal';
+import { findCommonPrograms } from './MassChangeCampaignOrProgramModal';
 import { ProgramFragment } from '@openmsupply-client/programs';
 
 const createProgram = (id: string, name: string): ProgramFragment => ({
@@ -19,47 +19,53 @@ const createRow = (itemId: string, programs: ProgramFragment[]) => ({
   },
 });
 
-describe('findCommonProgramItem', () => {
-  it('should return null and false for empty array', () => {
-    const result = findCommonProgramItem([]);
-    expect(result).toEqual({ itemId: null, hasMissingPrograms: false });
+describe('findCommonPrograms', () => {
+  it('should return empty array and false for empty array', () => {
+    const result = findCommonPrograms([]);
+    expect(result).toEqual({ programs: [], hasMissingPrograms: false });
   });
 
-  it('should return item id and false for single item', () => {
+  it('should return all programs and false for single item', () => {
     const rows = [createRow('item1', [ProgramA, ProgramB])];
-    const result = findCommonProgramItem(rows);
-    expect(result).toEqual({ itemId: 'item1', hasMissingPrograms: false });
+    const result = findCommonPrograms(rows);
+    expect(result).toEqual({
+      programs: [ProgramA, ProgramB],
+      hasMissingPrograms: false,
+    });
   });
 
-  it('should return null and true when no common programs exist', () => {
+  it('should return empty array and true when no common programs exist', () => {
     const rows = [
       createRow('itemA', [ProgramA, ProgramB, ProgramC]),
       createRow('itemB', [ProgramA]),
       createRow('itemC', [ProgramC]),
     ];
-    const result = findCommonProgramItem(rows);
-    expect(result).toEqual({ itemId: null, hasMissingPrograms: true });
+    const result = findCommonPrograms(rows);
+    expect(result).toEqual({ programs: [], hasMissingPrograms: true });
   });
 
-  it('should return item id and true when some programs are missing', () => {
+  it('should return common programs and true when some programs are missing', () => {
     // Common program: ProgramA
     const rows = [
       createRow('itemA', [ProgramA, ProgramB, ProgramC]),
       createRow('itemB', [ProgramA]),
       createRow('itemC', [ProgramA, ProgramB]),
     ];
-    const result = findCommonProgramItem(rows);
-    expect(result).toEqual({ itemId: 'itemB', hasMissingPrograms: true });
+    const result = findCommonPrograms(rows);
+    expect(result).toEqual({ programs: [ProgramA], hasMissingPrograms: true });
   });
 
-  it('should return item id and false when all items have identical programs', () => {
+  it('should return all programs and false when all items have identical programs', () => {
     const rows = [
       createRow('itemA', [ProgramA, ProgramB]),
       createRow('itemB', [ProgramA, ProgramB]),
       createRow('itemC', [ProgramA, ProgramB]),
     ];
-    const result = findCommonProgramItem(rows);
-    expect(result).toEqual({ itemId: 'itemA', hasMissingPrograms: false });
+    const result = findCommonPrograms(rows);
+    expect(result).toEqual({
+      programs: [ProgramA, ProgramB],
+      hasMissingPrograms: false,
+    });
   });
 
   it('should handle complex scenario with overlapping programs', () => {
@@ -69,7 +75,20 @@ describe('findCommonProgramItem', () => {
       createRow('itemB', [ProgramA, ProgramB]),
       createRow('itemC', [ProgramA, ProgramB, ProgramD]),
     ];
-    const result = findCommonProgramItem(rows);
-    expect(result).toEqual({ itemId: 'itemB', hasMissingPrograms: true });
+    const result = findCommonPrograms(rows);
+    expect(result).toEqual({
+      programs: [ProgramA, ProgramB],
+      hasMissingPrograms: true,
+    });
+  });
+
+  it('should handle partially overlapping programs', () => {
+    // Common programs: ProgramB
+    const rows = [
+      createRow('itemA', [ProgramA, ProgramB]),
+      createRow('itemB', [ProgramB, ProgramC]),
+    ];
+    const result = findCommonPrograms(rows);
+    expect(result).toEqual({ programs: [ProgramB], hasMissingPrograms: true });
   });
 });

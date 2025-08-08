@@ -28,7 +28,7 @@ const CampaignCell = <T extends CampaignRowData>({
   <CampaignOrProgramSelector
     campaignId={rowData.campaign?.id ?? undefined}
     programId={rowData.program?.id ?? undefined}
-    itemId={rowData.item.id}
+    programOptions={{ filterByItemId: rowData.item.id }}
     onChange={({ campaign, program }) =>
       column.setter({
         ...rowData,
