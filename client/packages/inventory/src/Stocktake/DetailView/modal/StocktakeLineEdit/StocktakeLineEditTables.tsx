@@ -18,10 +18,12 @@ import {
   NumberInputCell,
   ColumnAlign,
   NumberCell,
-  getReasonOptionType,
+  getReasonOptionTypes,
   ReasonOptionNode,
   usePreference,
   PreferenceKey,
+  useAuthContext,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -122,6 +124,8 @@ const getInventoryAdjustmentReasonInputColumn = (
     width: 120,
     accessor: ({ rowData }) => rowData.reasonOption || '',
     Cell: ({ rowData, column, columnIndex, rowIndex }) => {
+      const { store } = useAuthContext();
+
       const value = column.accessor({
         rowData,
       }) as ReasonOptionRowFragment | null;
@@ -148,10 +152,11 @@ const getInventoryAdjustmentReasonInputColumn = (
           value={value}
           width={Number(column.width)}
           onChange={onChange}
-          type={getReasonOptionType(
+          type={getReasonOptionTypes({
             isInventoryReduction,
-            rowData.item.isVaccine
-          )}
+            isVaccine: rowData.item.isVaccine,
+            isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
+          })}
           inputProps={{
             error: isAdjustmentReasonError,
           }}
