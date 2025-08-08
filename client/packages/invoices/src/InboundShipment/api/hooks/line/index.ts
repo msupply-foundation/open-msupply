@@ -7,7 +7,6 @@ import { useInboundServiceLines } from './useInboundServiceLines';
 import { useLinesFromInternalOrder } from './useLinesFromInternalOrder';
 import { useSaveInboundLines } from './useSaveInboundLines';
 import { useZeroInboundLinesQuantity } from './useZeroInboundLinesQuantity';
-import { useChangeLinesCampaignOrProgram } from './useChangeLinesCampaignOrProgram';
 
 export const Lines = {
   useDeleteInboundLines,
@@ -19,5 +18,4 @@ export const Lines = {
   useSaveInboundLines,
   useZeroInboundLinesQuantity,
   useLinesFromInternalOrder,
-  useChangeLinesCampaignOrProgram,
 };

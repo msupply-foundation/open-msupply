@@ -83,8 +83,7 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
   const onZeroQuantities = useInbound.lines.zeroQuantities();
   const selectedLines = useInbound.utils.selectedLines();
   const { data: preference } = usePreference(PreferenceKey.UseCampaigns);
-  const { onChangeCampaignOrProgram } =
-    useInbound.lines.changeCampaignOrProgram(selectedLines);
+  const { mutateAsync } = useInbound.lines.save();
   const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
 
@@ -176,7 +175,7 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
               onCancel={changeCampaignOrProgramModal.onClose}
               clearSelected={clearSelected}
               rows={selectedLines}
-              onChange={onChangeCampaignOrProgram}
+              onChange={mutateAsync}
             />
           }
         </>
