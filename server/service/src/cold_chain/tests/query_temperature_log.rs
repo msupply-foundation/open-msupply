@@ -22,19 +22,6 @@ mod query {
             service.get_temperature_logs(
                 &connection,
                 Some(PaginationOption {
-                    limit: Some(2000),
-                    offset: None
-                }),
-                None,
-                None,
-            ),
-            Err(ListError::LimitAboveMax(1000))
-        );
-
-        assert_eq!(
-            service.get_temperature_logs(
-                &connection,
-                Some(PaginationOption {
                     limit: Some(0),
                     offset: None,
                 }),

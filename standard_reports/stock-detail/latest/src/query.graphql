@@ -1,7 +1,6 @@
 query StockDetail($storeId: String, $itemCodeOrName: String) {
   stockLines(
     storeId: $storeId
-    page: { first: 5000 }
     filter: {
       itemCodeOrName: { like: $itemCodeOrName }
       hasPacksInStore: true

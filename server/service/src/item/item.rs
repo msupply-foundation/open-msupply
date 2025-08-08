@@ -3,7 +3,7 @@ use repository::{
     StorageConnection, StorageConnectionManager,
 };
 
-use crate::{get_default_pagination, i64_to_u32, ListError, ListResult};
+use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
 
 pub const MAX_LIMIT: u32 = 5000;
 pub const MIN_LIMIT: u32 = 1;
@@ -15,7 +15,7 @@ pub fn get_items(
     sort: Option<ItemSort>,
     store_id: &str,
 ) -> Result<ListResult<Item>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let connection = connection_manager.connection()?;
     let repository = ItemRepository::new(&connection);
 
