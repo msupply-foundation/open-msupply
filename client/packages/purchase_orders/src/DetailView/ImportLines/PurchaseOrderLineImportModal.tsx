@@ -262,7 +262,7 @@ export const PurchaseOrderLineImportModal = ({
             >
               <UploadTab
                 tab={Tabs.Upload}
-                setEquipment={setBufferedLines}
+                setLines={setBufferedLines}
                 setErrorMessage={setErrorMessage}
                 setWarningMessage={setWarningMessage}
                 onUploadComplete={() => {

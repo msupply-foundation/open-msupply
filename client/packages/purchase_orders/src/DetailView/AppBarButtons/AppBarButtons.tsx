@@ -9,6 +9,8 @@ import {
   UploadIcon,
   useCallbackWithPermission,
   UserPermission,
+  useTranslation,
+  ButtonWithIcon,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 import { AddButton } from './AddButton';
@@ -26,6 +28,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   isDisabled,
 }) => {
   const { OpenButton } = useDetailPanel();
+  const t = useTranslation();
 
   const {
     queryParams: { sortBy },

@@ -19,7 +19,7 @@ import { importPurchaseOrderLinesToCsv } from '../utils';
 import { getImportHelpers, ParsedLine } from './utils';
 
 interface UploadTabProps {
-  setEquipment: Dispatch<SetStateAction<ImportRow[]>>;
+  setLines: Dispatch<SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: SetStateAction<string>) => void;
   setWarningMessage: (value: SetStateAction<string>) => void;
   onUploadComplete: () => void;
@@ -31,7 +31,7 @@ export const UploadTab = ({
   tab,
   setErrorMessage,
   setWarningMessage,
-  setEquipment,
+  setLines,
   onUploadComplete,
 }: ImportPanel & UploadTabProps) => {
   const t = useTranslation();
@@ -50,7 +50,7 @@ export const UploadTab = ({
       },
     ];
     const csv = importPurchaseOrderLinesToCsv(exampleRows, t);
-    exportCSV(csv, t('filename.cce'));
+    exportCSV(csv, t('filename.pol'));
   };
 
   const csvImport = <T extends File>(files: T[]) => {
@@ -72,13 +72,14 @@ export const UploadTab = ({
         chunkSize: 100 * 1024, // 100kb
         chunk: processUploadedDataChunk,
         complete: () => {
-          setEquipment(LineBuffer);
+          setLines(LineBuffer);
           setIsLoading(false);
           onUploadComplete();
         },
       });
+    } else {
+      error(t('messages.error-no-file-selected'))();
     }
-    error(t('messages.error-no-file-selected'));
   };
 
   const processUploadedDataChunk = (data: ParseResult<ParsedLine>) => {

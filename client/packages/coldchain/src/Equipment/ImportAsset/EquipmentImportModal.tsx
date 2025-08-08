@@ -262,12 +262,23 @@ export const EquipmentImportModal = ({
   const showWarnings = errorMessage.length == 0 && warningMessage.length > 0;
 
   const importSteps = [
-    { label: t('label.upload'), description: '', clickable: true },
-    { label: t('label.review'), description: '', clickable: true },
+    {
+      label: t('label.upload'),
+      description: '',
+      clickable: true,
+      tab: Tabs.Upload,
+    },
+    {
+      label: t('label.review'),
+      description: '',
+      clickable: true,
+      tab: Tabs.Review,
+    },
     {
       label: t('label.import'),
       description: '',
       clickable: false,
+      tab: Tabs.Import,
     },
   ];
 

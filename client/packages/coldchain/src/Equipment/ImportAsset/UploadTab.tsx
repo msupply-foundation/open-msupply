@@ -234,7 +234,7 @@ export const EquipmentUploadTab = ({
       isCentralServer,
       properties ? properties.map(p => p.key) : []
     );
-    exportCSV(csv, t('filename.pol'));
+    exportCSV(csv, t('filename.cce'));
   };
 
   const csvImport = <T extends File>(files: T[]) => {
@@ -261,8 +261,9 @@ export const EquipmentUploadTab = ({
           onUploadComplete();
         },
       });
+    } else {
+      error(t('messages.error-no-file-selected'))();
     }
-    error(t('messages.error-no-file-selected'));
   };
 
   const processUploadedDataChunk = (data: ParseResult<ParsedAsset>) => {
