@@ -1,0 +1,17 @@
+{
+  "name": "convert_data_js",
+  "version": "1.0.0",
+  "main": "convert_data.js",
+  "scripts": {
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "webpack": "^5.76.2",
+    "webpack-cli": "^5.0.1"
+  }
+}

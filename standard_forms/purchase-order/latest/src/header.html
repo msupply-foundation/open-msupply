@@ -9,7 +9,7 @@ date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
     </th>
     <th style="text-align: left; width: 20%">
       <span style="font-weight: bold">
-        {{ data.purchaseOrder.store.name.name }}
+        {{ data.purchaseOrder.store.storeName }}
       </span>
       <br />
       <span style="font-size: 6pt">
@@ -77,9 +77,7 @@ date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
       if data.purchaseOrder.supplier.address2 %},
       {{ data.purchaseOrder.supplier.address2 }} {% endif %} {% endif %}
     </span>
-    <span id="date">
-        {{ t(k="label.expected-delivery-date", f="Expected delivery date") }}: 
-        {{self::dateOrNA(datetime=data.purchaseOrder.expectedDeliveryDatetime)}}
+    <span>
     </span>
   </div>
 </div>

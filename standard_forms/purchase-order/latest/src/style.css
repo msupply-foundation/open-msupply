@@ -13,6 +13,7 @@ body > table {
 .body_section,
 .body_total_section {
   width: 100%;
+  border-bottom: 0.5px solid black;
 }
 
 .header_supplied_section {
@@ -43,4 +44,33 @@ body > table {
 .body_value td {
   font-family: Tahoma;
   font-size: 8pt;
+}
+
+.watermark {
+  font-family: Tahoma;
+  font-size: 60pt;
+  position: fixed;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -35%) rotate(-25deg);
+  color: #b0b0b0;
+  opacity: 0.25;
+  pointer-events: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.right-aligned-table {
+  font-family: Tahoma;
+  font-size: 8pt;
+  text-align: right;
+  border-spacing: 20pt 0; /* Adds horizontal space between columns */
+  margin-left: auto;
+  margin-right: 0; /* Aligns table to the right */
+  padding: 0;
+  padding-top: 20pt;
+}
+/* Make left column of right-aligned-table bold */
+.right-aligned-table td:first-child {
+  font-weight: bold;
 }
