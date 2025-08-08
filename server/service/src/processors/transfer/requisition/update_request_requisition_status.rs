@@ -80,6 +80,6 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionStatusProcessor {
             updated_request_requisition.id, response_requisition.requisition_row.id
         );
 
-        Ok(RequisitionTransferOutput::Generated(result))
+        Ok(RequisitionTransferOutput::Processed(result))
     }
 }

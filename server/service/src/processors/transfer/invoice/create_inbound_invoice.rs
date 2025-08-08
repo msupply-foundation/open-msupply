@@ -185,7 +185,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
             outbound_invoice.invoice_row.id
         );
 
-        Ok(InvoiceTransferOutput::Generated(result))
+        Ok(InvoiceTransferOutput::Processed(result))
     }
 }
 
@@ -386,7 +386,7 @@ mod test {
             .try_process_record(&connection, &invoice_transfer_new)
             .unwrap();
         assert!(
-            matches!(result, InvoiceTransferOutput::Generated(_)),
+            matches!(result, InvoiceTransferOutput::Processed(_)),
             "The new invoice should have had a transfer generated, skipped because: {:?}",
             result
         );

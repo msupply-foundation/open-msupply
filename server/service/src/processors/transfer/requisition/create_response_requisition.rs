@@ -177,7 +177,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
             request_requisition.requisition_row.id
         );
 
-        Ok(RequisitionTransferOutput::Generated(result))
+        Ok(RequisitionTransferOutput::Processed(result))
     }
 }
 
@@ -480,7 +480,7 @@ mod test {
         let result = processor
             .try_process_record(&connection, &requisition_transfer_new)
             .unwrap();
-        assert!(matches!(result, RequisitionTransferOutput::Generated(_)), 
+        assert!(matches!(result, RequisitionTransferOutput::Processed(_)), 
         "The new requisition should have had a transfer generated as it is less than 3 months before initialisation date. Got: {:?}", result);
     }
 }

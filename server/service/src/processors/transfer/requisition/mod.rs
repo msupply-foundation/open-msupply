@@ -162,7 +162,7 @@ pub(crate) struct ProcessorError(String, RepositoryError);
 #[derive(Debug)]
 enum RequisitionTransferOutput {
     // Success!!
-    Generated(String),
+    Processed(String),
     // Reasons for skipping
     NotRequest,
     NotSent,
@@ -185,18 +185,20 @@ trait RequisitionTransferProcessor {
         connection: &StorageConnection,
         record: &RequisitionTransferProcessorRecord,
     ) -> Result<Option<String>, ProcessorError> {
-        let transfer_output = connection
+        let output = connection
             .transaction_sync(|connection| self.try_process_record(connection, record))
             .map_err(|e| ProcessorError(self.get_description(), e.to_inner_error()))?;
 
-        let result = match transfer_output {
-            RequisitionTransferOutput::Generated(msg) => Some(msg),
-            _ => None,
+        let result = match output {
+            RequisitionTransferOutput::Processed(msg) => {
+                log::info!("{} - processed: {}", self.get_description(), msg);
+                Some(msg)
+            }
+            other => {
+                log::info!("{} - skipped: {:?}", self.get_description(), other);
+                None
+            }
         };
-
-        if let Some(result) = &result {
-            log::info!("{} - {}", self.get_description(), result);
-        }
 
         Ok(result)
     }

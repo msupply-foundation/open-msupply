@@ -71,6 +71,6 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
             updated_outbound_invoice.id, inbound_invoice.invoice_row.id
         );
 
-        Ok(InvoiceTransferOutput::Generated(result))
+        Ok(InvoiceTransferOutput::Processed(result))
     }
 }

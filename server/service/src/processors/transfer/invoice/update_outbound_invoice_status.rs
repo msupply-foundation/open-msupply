@@ -116,6 +116,6 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             updated_outbound_invoice.status
         );
 
-        Ok(InvoiceTransferOutput::Generated(result))
+        Ok(InvoiceTransferOutput::Processed(result))
     }
 }

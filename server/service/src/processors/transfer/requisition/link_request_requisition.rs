@@ -66,6 +66,6 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
             linked_request_requisition.id, response_requisition.requisition_row.id
         );
 
-        Ok(RequisitionTransferOutput::Generated(result))
+        Ok(RequisitionTransferOutput::Processed(result))
     }
 }

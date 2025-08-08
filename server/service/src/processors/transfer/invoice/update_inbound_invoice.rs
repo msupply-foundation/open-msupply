@@ -160,6 +160,6 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
                 .collect::<Vec<String>>(),
         );
 
-        Ok(InvoiceTransferOutput::Generated(result))
+        Ok(InvoiceTransferOutput::Processed(result))
     }
 }

@@ -93,6 +93,6 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
                 .map(|r| r.invoice_line_row.id),
         );
 
-        Ok(InvoiceTransferOutput::Generated(result))
+        Ok(InvoiceTransferOutput::Processed(result))
     }
 }

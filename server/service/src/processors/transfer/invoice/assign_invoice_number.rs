@@ -97,6 +97,6 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
             updated_invoice_row.id, updated_invoice_row.invoice_number
         );
 
-        Ok(InvoiceTransferOutput::Generated(result))
+        Ok(InvoiceTransferOutput::Processed(result))
     }
 }

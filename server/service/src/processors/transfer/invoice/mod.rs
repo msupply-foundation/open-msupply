@@ -275,7 +275,7 @@ fn get_delete_operation(
 #[allow(dead_code)] // The "Wrong" variants with fields don't use the fields yet. Be warned allowing dead_code here silences when we never use a particular variant as well.
 enum InvoiceTransferOutput {
     // Success
-    Generated(String),
+    Processed(String),
     // Reasons for skipping
     BeforeInitialisationMonths,
     WrongOperation(Operation),
@@ -307,13 +307,15 @@ trait InvoiceTransferProcessor {
             .map_err(|e| ProcessorError(self.get_description(), e.to_inner_error()))?;
 
         let result = match output {
-            InvoiceTransferOutput::Generated(msg) => Some(msg),
-            _ => None,
+            InvoiceTransferOutput::Processed(msg) => {
+                log::info!("{} - processed: {}", self.get_description(), msg);
+                Some(msg)
+            }
+            other => {
+                log::info!("{} - skipped: {:?}", self.get_description(), other);
+                None
+            }
         };
-
-        if let Some(result) = &result {
-            log::info!("{} - {}", self.get_description(), result);
-        }
 
         Ok(result)
     }

@@ -105,6 +105,6 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             &updated_request_requisition.id,
         )?;
 
-        Ok(RequisitionTransferOutput::Generated(result))
+        Ok(RequisitionTransferOutput::Processed(result))
     }
 }
