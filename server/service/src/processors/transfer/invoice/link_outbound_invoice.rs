@@ -2,6 +2,8 @@ use repository::{
     InvoiceRow, InvoiceRowRepository, InvoiceType, RepositoryError, StorageConnection,
 };
 
+use crate::processors::transfer::invoice::InvoiceTransferOutput;
+
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
 
 const DESCRIPTION: &str = "Link outbound invoice to inbound invoice";
@@ -26,7 +28,7 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
         &self,
         connection: &StorageConnection,
         record_for_processing: &InvoiceTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
         let (inbound_invoice, linked_invoice) = match &record_for_processing.operation {
             Operation::Upsert {
@@ -34,23 +36,25 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
                 linked_invoice,
                 ..
             } => (invoice, linked_invoice),
-            _ => return Ok(None),
+            operation => return Ok(InvoiceTransferOutput::WrongOperation(operation.to_owned())),
         };
         // 2.
         if !matches!(
             inbound_invoice.invoice_row.r#type,
             InvoiceType::InboundShipment | InvoiceType::CustomerReturn
         ) {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongType(
+                inbound_invoice.invoice_row.r#type.to_owned(),
+            ));
         }
         // 3.
         let outbound_invoice = match &linked_invoice {
             Some(linked_invoice) => linked_invoice,
-            None => return Ok(None),
+            None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
         // 4.
         if outbound_invoice.invoice_row.linked_invoice_id.is_some() {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::AlreadyLinked);
         }
 
         // Execute
@@ -67,6 +71,6 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
             updated_outbound_invoice.id, inbound_invoice.invoice_row.id
         );
 
-        Ok(Some(result))
+        Ok(InvoiceTransferOutput::Generated(result))
     }
 }

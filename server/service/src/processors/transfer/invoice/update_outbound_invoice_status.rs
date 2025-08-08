@@ -5,7 +5,7 @@ use repository::{
 
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
-    processors::transfer::invoice::Operation,
+    processors::transfer::invoice::{InvoiceTransferOutput, Operation},
 };
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord};
@@ -37,7 +37,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
         &self,
         connection: &StorageConnection,
         record_for_processing: &InvoiceTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
         let (inbound_invoice, linked_invoice) = match &record_for_processing.operation {
             Operation::Upsert {
@@ -45,31 +45,35 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
                 linked_invoice,
                 ..
             } => (invoice, linked_invoice),
-            _ => return Ok(None),
+            operation => return Ok(InvoiceTransferOutput::WrongOperation(operation.to_owned())),
         };
         // 2.
         if !matches!(
             inbound_invoice.invoice_row.r#type,
             InvoiceType::InboundShipment | InvoiceType::CustomerReturn
         ) {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongType(
+                inbound_invoice.invoice_row.r#type.to_owned(),
+            ));
         }
         // 3.
         let outbound_invoice = match &linked_invoice {
             Some(linked_invoice) => linked_invoice,
-            None => return Ok(None),
+            None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
         // 4.
         if outbound_invoice.invoice_row.status == InvoiceStatus::Verified {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::AlreadyVerified);
         }
         // 5.
         if outbound_invoice.invoice_row.status == inbound_invoice.invoice_row.status {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::StatusesAlreadyMatch);
         }
         // 6.
         if inbound_invoice.invoice_row.status == InvoiceStatus::New {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongInboundStatus(
+                inbound_invoice.invoice_row.status.to_owned(),
+            ));
         }
         // 7.
         // Original unknown but we did have om system user updated outbound back to picked
@@ -79,7 +83,11 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             | InvoiceStatus::Picked
             | InvoiceStatus::Shipped
             | InvoiceStatus::Allocated
-            | InvoiceStatus::Cancelled => return Ok(None),
+            | InvoiceStatus::Cancelled => {
+                return Ok(InvoiceTransferOutput::WrongInboundStatus(
+                    inbound_invoice.invoice_row.status.to_owned(),
+                ))
+            }
         }
 
         // Execute
@@ -108,6 +116,6 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             updated_outbound_invoice.status
         );
 
-        Ok(Some(result))
+        Ok(InvoiceTransferOutput::Generated(result))
     }
 }

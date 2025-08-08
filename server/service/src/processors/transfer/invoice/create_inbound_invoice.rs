@@ -11,6 +11,7 @@ use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
     preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
+    processors::transfer::invoice::InvoiceTransferOutput,
     store_preference::get_store_preferences,
 };
 
@@ -49,7 +50,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         &self,
         connection: &StorageConnection,
         record_for_processing: &InvoiceTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
         let (outbound_invoice, linked_invoice, request_requisition, original_shipment) =
             match &record_for_processing.operation {
@@ -64,28 +65,32 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                     request_requisition,
                     original_shipment,
                 ),
-                _ => return Ok(None),
+                operation => {
+                    return Ok(InvoiceTransferOutput::WrongOperation(operation.to_owned()))
+                }
             };
 
         // 2.
         // Also get type for new invoice
-        let new_invoice_type = match outbound_invoice.invoice_row.r#type {
+        let new_invoice_type = match &outbound_invoice.invoice_row.r#type {
             InvoiceType::OutboundShipment => InboundInvoiceType::InboundShipment,
             InvoiceType::SupplierReturn => InboundInvoiceType::CustomerReturn,
-            _ => return Ok(None),
+            other => return Ok(InvoiceTransferOutput::WrongType(other.to_owned())),
         };
 
         // 3.
         if !matches!(
-            outbound_invoice.invoice_row.status,
+            &outbound_invoice.invoice_row.status,
             InvoiceStatus::Shipped | InvoiceStatus::Picked
         ) {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongOutboundStatus(
+                outbound_invoice.invoice_row.status.to_owned(),
+            ));
         }
 
         // 4.
         if linked_invoice.is_some() {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::NoLinkedInvoice);
         }
 
         // 5.
@@ -97,7 +102,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                 NaiveDateTime::new(created_date - Duration::days(30), Default::default());
             let invoice_created_datetime = outbound_invoice.invoice_row.created_datetime;
             if invoice_created_datetime < store_created_datetime {
-                return Ok(None);
+                return Ok(InvoiceTransferOutput::InvoiceCreatedBeforeStore);
             }
         }
 
@@ -128,7 +133,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                                 .checked_sub_months(Months::new(pref_months as u32))
                             {
                                 if picked_date < cutoff_date {
-                                    return Ok(None);
+                                    return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
                                 }
                             }
                         }
@@ -180,7 +185,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
             outbound_invoice.invoice_row.id
         );
 
-        Ok(Some(result))
+        Ok(InvoiceTransferOutput::Generated(result))
     }
 }
 
@@ -371,11 +376,19 @@ mod test {
         let result = processor
             .try_process_record(&connection, &invoice_transfer_old)
             .unwrap();
-        assert!(result.is_none(), "The old invoice should not have had a transfer generated as it is more than 3 months before initialisation date");
+        assert!(
+            matches!(result, InvoiceTransferOutput::BeforeInitialisationMonths),
+            "The old invoice was skipped for wrong reason: {:?}",
+            result
+        );
 
         let result = processor
             .try_process_record(&connection, &invoice_transfer_new)
             .unwrap();
-        assert!(result.is_some(), "The new invoice should have had a transfer generated as it is less than 3 months before initialisation date");
+        assert!(
+            matches!(result, InvoiceTransferOutput::Generated(_)),
+            "The new invoice should have had a transfer generated, skipped because: {:?}",
+            result
+        );
     }
 }

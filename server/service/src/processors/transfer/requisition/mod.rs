@@ -163,7 +163,7 @@ pub(crate) struct ProcessorError(String, RepositoryError);
 enum RequisitionTransferOutput {
     // Success!!
     Generated(String),
-    // All the reasons it did not generate
+    // Reasons for skipping
     NotRequest,
     NotSent,
     HasResponse,

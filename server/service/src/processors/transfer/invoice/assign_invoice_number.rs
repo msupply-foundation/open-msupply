@@ -3,7 +3,10 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use crate::{activity_log::system_activity_log_entry, number::next_number};
+use crate::{
+    activity_log::system_activity_log_entry, number::next_number,
+    processors::transfer::invoice::InvoiceTransferOutput,
+};
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
 
@@ -33,7 +36,7 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
         &self,
         connection: &StorageConnection,
         record_for_processing: &InvoiceTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
         let (outbound_invoice, linked_invoice) = match &record_for_processing.operation {
             Operation::Upsert {
@@ -41,30 +44,34 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
                 linked_invoice,
                 ..
             } => (outbound_invoice, linked_invoice),
-            _ => return Ok(None),
+            other => return Ok(InvoiceTransferOutput::WrongOperation(other.to_owned())),
         };
         // 2.
         if !matches!(
             outbound_invoice.invoice_row.r#type,
             InvoiceType::OutboundShipment | InvoiceType::SupplierReturn
         ) {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongType(
+                outbound_invoice.invoice_row.r#type.to_owned(),
+            ));
         }
         // 3.
         if !matches!(
             outbound_invoice.invoice_row.status,
             InvoiceStatus::Shipped | InvoiceStatus::Picked
         ) {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongOutboundStatus(
+                outbound_invoice.invoice_row.status.to_owned(),
+            ));
         }
         // 4.
         let inbound_invoice = match linked_invoice {
             Some(linked_invoice) => linked_invoice,
-            None => return Ok(None),
+            None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
         // 5.
         if inbound_invoice.invoice_row.invoice_number != -1 {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::InvoiceNumberAlreadyAllocated);
         }
 
         // Execute
@@ -90,6 +97,6 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
             updated_invoice_row.id, updated_invoice_row.invoice_number
         );
 
-        Ok(Some(result))
+        Ok(InvoiceTransferOutput::Generated(result))
     }
 }
