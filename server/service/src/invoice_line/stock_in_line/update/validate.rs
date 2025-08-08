@@ -1,4 +1,5 @@
 use crate::{
+    campaign::check_campaign_exists,
     check_item_variant_exists, check_location_exists, check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
@@ -79,6 +80,15 @@ pub fn validate(
     if let Some(program_id) = &input.program_id {
         if !check_program_visible_to_store(connection, store_id, &program_id.value)? {
             return Err(ProgramNotVisible);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(campaign_id),
+    }) = &input.campaign_id
+    {
+        if !check_campaign_exists(connection, campaign_id)? {
+            return Err(CampaignDoesNotExist);
         }
     }
 
