@@ -28,7 +28,7 @@ export const getImportHelpers = (
     formatter?: (value: string) => unknown
   ) => {
     const prop = t(localeKey) as keyof ImportRow;
-    const value = row[prop] ?? '';
+    const value = row[prop];
     if (value !== undefined) {
       (importRow[key] as unknown) = formatter
         ? formatter(value as string)
