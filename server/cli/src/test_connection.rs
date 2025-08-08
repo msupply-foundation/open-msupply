@@ -226,7 +226,7 @@ impl Test for LoginTest {
             username,
             password,
             login_type: LoginUserTypeV4::User,
-            site_name: None,
+            site_name: Some("null".to_string()),
         };
 
         let _info = login_api
@@ -512,7 +512,7 @@ impl TestState {
 }
 
 fn get_url(config: &service::settings::Settings) -> Result<Url> {
-    let address = config.server.address();
+    let address = config.server.address().replace("0.0.0.0", "localhost");
     let scheme = match config.server.danger_allow_http | is_develop() {
         true => "http",
         false => "https",
