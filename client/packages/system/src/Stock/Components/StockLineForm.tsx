@@ -30,7 +30,6 @@ import { DraftStockLine } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import {
   DonorSearchInput,
-  ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
   VVMStatusSearchInput,
 } from '../..';
@@ -45,7 +44,6 @@ interface StockLineFormProps {
   pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
   packEditable?: boolean;
   isNewModal?: boolean;
-  reasonOptions?: ReasonOptionRowFragment[];
 }
 export const StockLineForm = ({
   draft,
@@ -54,7 +52,6 @@ export const StockLineForm = ({
   pluginEvents,
   packEditable,
   isNewModal = false,
-  reasonOptions,
 }: StockLineFormProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -259,8 +256,6 @@ export const StockLineForm = ({
                   type={ReasonOptionNodeType.PositiveInventoryAdjustment}
                   value={draft.reasonOption}
                   onChange={reason => onUpdate({ reasonOption: reason })}
-                  reasonOptions={reasonOptions ?? []}
-                  loading={loading}
                   disabled={draft?.totalNumberOfPacks === 0}
                 />
               }
