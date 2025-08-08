@@ -46,6 +46,7 @@ mod stock_line;
 mod stocktake;
 mod stocktake_line;
 mod store;
+mod sync_log;
 mod temperature_breach;
 mod temperature_breach_config;
 mod temperature_log;
@@ -116,6 +117,7 @@ pub use stock_line::*;
 pub use stocktake::*;
 pub use stocktake_line::*;
 pub use store::*;
+pub use sync_log::*;
 pub use temperature_breach::*;
 pub use temperature_breach_config::*;
 pub use temperature_log::*;
@@ -241,6 +243,7 @@ pub struct MockData {
     pub reason_options: Vec<ReasonOptionRow>,
     pub vvm_statuses: Vec<VVMStatusRow>,
     pub campaigns: Vec<CampaignRow>,
+    pub preferences: Vec<PreferenceRow>,
 }
 
 impl MockData {
@@ -329,6 +332,7 @@ pub struct MockDataInserts {
     pub reason_options: bool,
     pub vvm_statuses: bool,
     pub campaigns: bool,
+    pub preferences: bool,
 }
 
 impl MockDataInserts {
@@ -406,6 +410,7 @@ impl MockDataInserts {
             store_preferences: true,
             reason_options: true,
             campaigns: true,
+            preferences: true,
         }
     }
 
@@ -755,6 +760,11 @@ impl MockDataInserts {
         self.vvm_statuses = true;
         self
     }
+
+    pub fn preferences(mut self) -> Self {
+        self.preferences = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -851,6 +861,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             printer: mock_printers(),
             vvm_statuses: mock_vvm_statuses(),
             campaigns: mock_campaigns(),
+            sync_logs: mock_sync_logs(),
             ..Default::default()
         },
     );
@@ -1408,6 +1419,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.preferences {
+            let repo = PreferenceRowRepository::new(connection);
+            for row in &mock_data.preferences {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1488,6 +1505,7 @@ impl MockData {
             mut reason_options,
             mut vvm_statuses,
             mut campaigns,
+            mut preferences,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1562,6 +1580,7 @@ impl MockData {
         self.store_preferences.append(&mut store_preferences);
         self.vvm_statuses.append(&mut vvm_statuses);
         self.campaigns.append(&mut campaigns);
+        self.preferences.append(&mut preferences);
         self
     }
 }

@@ -16,4 +16,8 @@ impl Preference for PreventTransfersMonthsBeforeInitialisation {
     fn value_type(&self) -> PreferenceValueType {
         PreferenceValueType::Integer
     }
+
+    fn default_value(&self) -> i32 {
+        3
+    }
 }
