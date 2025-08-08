@@ -3,7 +3,7 @@ mod query {
     use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
     use repository::{
-        programOptionsOrFilter, ProgramRow, ProgramRowRepository, ProgramSort, ProgramSortField,
+        ProgramFilter, ProgramRow, ProgramRowRepository, ProgramSort, ProgramSortField,
         StringFilter,
     };
     use util::constants::IMMUNISATION_CONTEXT_ID;
@@ -83,7 +83,7 @@ mod query {
             .get_programs(
                 &connection,
                 None,
-                Some(programOptionsOrFilter::new().name(StringFilter::like("program_name_a"))),
+                Some(ProgramFilter::new().name(StringFilter::like("program_name_a"))),
                 Some(ProgramSort {
                     key: ProgramSortField::Name,
                     desc: Some(false),

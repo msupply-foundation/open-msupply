@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, PeriodRow, programOptionsOrFilter, ProgramRepository, ProgramRequisitionOrderTypeRow,
+    EqualFilter, PeriodRow, ProgramFilter, ProgramRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionSettings, RepositoryError, RequisitionsInPeriod, StorageConnection,
 };
 use util::date_now;
@@ -84,7 +84,7 @@ pub(crate) fn get_program_ids(
                 .collect();
             ProgramRepository::new(connection)
                 .query_by_filter(
-                    programOptionsOrFilter::new().elmis_code(EqualFilter::equal_any(elmis_codes)),
+                    ProgramFilter::new().elmis_code(EqualFilter::equal_any(elmis_codes)),
                 )?
                 .iter()
                 .map(|p| p.id.clone())

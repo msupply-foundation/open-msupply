@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, Pagination, PaginationOption, PeriodFilter, PeriodRepository, PeriodRow,
-    programOptionsOrFilter, ProgramRepository, ProgramRequisitionSettingsRowRepository, ProgramRow,
+    ProgramFilter, ProgramRepository, ProgramRequisitionSettingsRowRepository, ProgramRow,
     ProgramSort, StorageConnection,
 };
 
@@ -15,7 +15,7 @@ pub const MIN_LIMIT: u32 = 1;
 pub fn get_programs(
     connection: &StorageConnection,
     pagination: Option<PaginationOption>,
-    filter: Option<programOptionsOrFilter>,
+    filter: Option<ProgramFilter>,
     sort: Option<ProgramSort>,
 ) -> Result<ListResult<ProgramRow>, ListError> {
     let pagination: Pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
@@ -34,7 +34,7 @@ pub fn get_program(
     let repository = ProgramRepository::new(connection);
 
     let mut result =
-        repository.query_by_filter(programOptionsOrFilter::new().id(EqualFilter::equal_to(&id)))?;
+        repository.query_by_filter(ProgramFilter::new().id(EqualFilter::equal_to(&id)))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

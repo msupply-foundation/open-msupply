@@ -2,7 +2,7 @@ use chrono::Utc;
 use repository::{
     Document, DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter,
     DocumentRegistryRepository, DocumentRepository, DocumentStatus, EqualFilter, PatientFilter,
-    PatientRepository, programOptionsOrFilter, ProgramRepository, ProgramRow, RepositoryError,
+    PatientRepository, ProgramFilter, ProgramRepository, ProgramRow, RepositoryError,
     TransactionError,
 };
 
@@ -174,7 +174,7 @@ fn validate_program(
     context_id: &str,
 ) -> Result<Option<ProgramRow>, RepositoryError> {
     ProgramRepository::new(&ctx.connection)
-        .query_one(programOptionsOrFilter::new().context_id(EqualFilter::equal_to(context_id)))
+        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(context_id)))
 }
 
 fn validate_parent_doc_exists(
