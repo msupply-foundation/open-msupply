@@ -8,9 +8,11 @@ import {
   useNotification,
   AdjustmentTypeInput,
   useDialog,
-  getReasonOptionType,
+  getReasonOptionTypes,
   Checkbox,
   NumericTextDisplay,
+  useAuthContext,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput, useReasonOptions } from '../../..';
@@ -29,6 +31,7 @@ export const InventoryAdjustmentModal = ({
 }: InventoryAdjustmentModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
+  const { store } = useAuthContext();
   const { Modal } = useDialog({ isOpen, onClose });
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
@@ -96,10 +99,12 @@ export const InventoryAdjustmentModal = ({
                   disabled={draft.adjustment === 0}
                   onChange={reason => setDraft(state => ({ ...state, reason }))}
                   value={draft.reason}
-                  type={getReasonOptionType(
+                  type={getReasonOptionTypes({
                     isInventoryReduction,
-                    stockLine.item.isVaccine
-                  )}
+                    isVaccine: stockLine.item.isVaccine,
+                    isDispensary:
+                      store?.storeMode === StoreModeNodeType.Dispensary,
+                  })}
                   width={INPUT_WIDTH}
                   reasonOptions={data?.nodes ?? []}
                   loading={isLoading}
