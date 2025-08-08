@@ -1,7 +1,7 @@
 use repository::{
-    Document, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
-    DocumentRepository, EncounterFilter, EncounterRepository, EqualFilter, ProgramFilter,
-    ProgramRepository, RepositoryError, StorageConnection, Upsert,
+    programOptionsOrFilter, Document, DocumentRegistryCategory, DocumentRegistryFilter,
+    DocumentRegistryRepository, DocumentRepository, EncounterFilter, EncounterRepository,
+    EqualFilter, ProgramRepository, RepositoryError, StorageConnection, Upsert,
 };
 
 use crate::{
@@ -84,7 +84,9 @@ fn update_program_enrolment(
         RepositoryError::as_db_error(&format!("Invalid program enrolment data: {}", err), "")
     })?;
     let program_row = ProgramRepository::new(con)
-        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .query_one(
+            programOptionsOrFilter::new().context_id(EqualFilter::equal_to(&document.context_id)),
+        )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_program_enrolment_row(con, patient_id, document, program_enrolment, program_row)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
@@ -116,7 +118,9 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         .as_ref()
         .and_then(|c| c.id.clone());
     let program_row = ProgramRepository::new(con)
-        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .query_one(
+            programOptionsOrFilter::new().context_id(EqualFilter::equal_to(&document.context_id)),
+        )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     encounter_updated::update_encounter_row_and_events(
         con,
@@ -148,7 +152,9 @@ fn update_contact_trace(
             RepositoryError::as_db_error(&format!("Invalid contact trace data: {}", err), "")
         })?;
     let program_row = ProgramRepository::new(con)
-        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .query_one(
+            programOptionsOrFilter::new().context_id(EqualFilter::equal_to(&document.context_id)),
+        )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_contact_trace_row(con, patient_id, document, contact_trace, program_row)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;

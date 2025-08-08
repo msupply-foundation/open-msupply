@@ -17,7 +17,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 pub type Program = ProgramRow;
 
 #[derive(Clone, Default, PartialEq, Debug)]
-pub struct ProgramFilter {
+pub struct programOptionsOrFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub context_id: Option<EqualFilter<String>>,
@@ -43,7 +43,7 @@ impl<'a> ProgramRepository<'a> {
         ProgramRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<ProgramFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<programOptionsOrFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
         Ok(query
@@ -51,18 +51,18 @@ impl<'a> ProgramRepository<'a> {
             .get_result(self.connection.lock().connection())?)
     }
 
-    pub fn query_by_filter(&self, filter: ProgramFilter) -> Result<Vec<Program>, RepositoryError> {
+    pub fn query_by_filter(&self, filter: programOptionsOrFilter) -> Result<Vec<Program>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
-    pub fn query_one(&self, filter: ProgramFilter) -> Result<Option<Program>, RepositoryError> {
+    pub fn query_one(&self, filter: programOptionsOrFilter) -> Result<Option<Program>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
         &self,
         pagination: Pagination,
-        filter: Option<ProgramFilter>,
+        filter: Option<programOptionsOrFilter>,
         sort: Option<ProgramSort>,
     ) -> Result<Vec<Program>, RepositoryError> {
         let mut query = Self::create_filtered_query(filter);
@@ -91,12 +91,12 @@ impl<'a> ProgramRepository<'a> {
         Ok(result)
     }
 
-    pub fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery {
+    pub fn create_filtered_query(filter: Option<programOptionsOrFilter>) -> BoxedUserProgramQuery {
         let mut query = program::table.into_boxed();
         query = query.filter(program::deleted_datetime.is_null());
 
         if let Some(f) = filter {
-            let ProgramFilter {
+            let programOptionsOrFilter {
                 id,
                 name,
                 context_id,
@@ -164,9 +164,9 @@ impl<'a> ProgramRepository<'a> {
 
 type BoxedUserProgramQuery = IntoBoxed<'static, program::table, DBType>;
 
-impl ProgramFilter {
+impl programOptionsOrFilter {
     pub fn new() -> Self {
-        ProgramFilter::default()
+        programOptionsOrFilter::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -204,7 +204,7 @@ impl ProgramFilter {
 
 #[cfg(test)]
 mod tests {
-    use crate::{mock::MockDataInserts, test_db, EqualFilter, ProgramFilter, ProgramRepository};
+    use crate::{mock::MockDataInserts, test_db, EqualFilter, programOptionsOrFilter, ProgramRepository};
 
     #[actix_rt::test]
     async fn test_program_repository() {
@@ -214,7 +214,7 @@ mod tests {
 
         let programs = program_repository
             .query_by_filter(
-                ProgramFilter::new().item_id(EqualFilter::equal_to("item_query_test1")),
+                programOptionsOrFilter::new().item_id(EqualFilter::equal_to("item_query_test1")),
             )
             .unwrap();
 

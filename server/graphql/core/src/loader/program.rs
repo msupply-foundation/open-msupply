@@ -2,7 +2,7 @@ use crate::loader::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use repository::{EqualFilter, Pagination, Program, ProgramFilter, ProgramRepository};
+use repository::{EqualFilter, Pagination, Program, programOptionsOrFilter, ProgramRepository};
 use repository::{RepositoryError, StorageConnectionManager};
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
@@ -24,7 +24,7 @@ impl Loader<String> for ProgramByIdLoader {
                     limit: keys.len() as u32,
                     offset: 0,
                 },
-                Some(ProgramFilter::new().id(EqualFilter::equal_any(keys.to_vec()))),
+                Some(programOptionsOrFilter::new().id(EqualFilter::equal_any(keys.to_vec()))),
                 None,
             )?
             .into_iter()
@@ -74,7 +74,7 @@ impl Loader<ProgramsByItemIdLoaderInput> for ProgramsByItemIdLoader {
         for (store_id, item_ids) in store_item_map {
             for item_id in item_ids {
                 let program = ProgramRepository::new(&connection).query_by_filter(
-                    ProgramFilter::new()
+                    programOptionsOrFilter::new()
                         .exists_for_store_id(EqualFilter::equal_to(&store_id))
                         .item_id(EqualFilter::equal_to(&item_id)),
                 )?;

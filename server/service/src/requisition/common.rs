@@ -4,7 +4,7 @@ use repository::{
 };
 use repository::{
     ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
-    ProgramFilter, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
+    programOptionsOrFilter, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
     RequisitionType,
 };
@@ -71,7 +71,7 @@ pub fn check_emergency_order_within_max_items_limit(
 ) -> Result<(bool, i32), OrderTypeNotFoundError> {
     let program_settings_ids = ProgramRequisitionSettingsRepository::new(connection)
         .query(Some(ProgramRequisitionSettingsFilter::new().program(
-            ProgramFilter::new().id(EqualFilter::equal_to(program_id)),
+            programOptionsOrFilter::new().id(EqualFilter::equal_to(program_id)),
         )))?
         .iter()
         .map(|settings| settings.program_settings_row.id.clone())

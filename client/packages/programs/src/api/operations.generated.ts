@@ -58,7 +58,7 @@ export type ProgramsQueryVariables = Types.Exact<{
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.ProgramSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
+  filter?: Types.InputMaybe<Types.programOptionsOrFilterInput>;
 }>;
 
 export type ProgramsQuery = {
@@ -1385,7 +1385,7 @@ export type ImmunisationProgramsQueryVariables = Types.Exact<{
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.ProgramSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
+  filter?: Types.InputMaybe<Types.programOptionsOrFilterInput>;
 }>;
 
 export type ImmunisationProgramsQuery = {
@@ -1917,7 +1917,7 @@ export const ProgramsDocument = gql`
     $offset: Int
     $key: ProgramSortFieldInput!
     $desc: Boolean
-    $filter: ProgramFilterInput
+    $filter: programOptionsOrFilterInput
   ) {
     programs(
       storeId: $storeId
@@ -2372,7 +2372,7 @@ export const ImmunisationProgramsDocument = gql`
     $offset: Int
     $key: ProgramSortFieldInput!
     $desc: Boolean
-    $filter: ProgramFilterInput
+    $filter: programOptionsOrFilterInput
   ) {
     programs(
       storeId: $storeId

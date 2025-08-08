@@ -109,7 +109,7 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
           {
             label: t('button.change-campaign-or-program'),
             icon: <ArrowRightIcon />,
-            onClick: () => handleCampaignClick,
+            onClick: handleCampaignClick,
             shouldShrink: false,
           },
         ]

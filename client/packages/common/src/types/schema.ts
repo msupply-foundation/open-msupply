@@ -6623,7 +6623,7 @@ export type ProgramEventSortInput = {
   key: ProgramEventSortFieldInput;
 };
 
-export type ProgramFilterInput = {
+export type programOptionsOrFilterInput = {
   contextId?: InputMaybe<EqualFilterStringInput>;
   elmisCode?: InputMaybe<EqualFilterStringInput>;
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
@@ -7523,7 +7523,7 @@ export type QueriesProgramRequisitionSettingsByCustomerArgs = {
 };
 
 export type QueriesProgramsArgs = {
-  filter?: InputMaybe<ProgramFilterInput>;
+  filter?: InputMaybe<programOptionsOrFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
   storeId: Scalars['String']['input'];

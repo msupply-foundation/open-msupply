@@ -9,7 +9,7 @@ use crate::{
     NameTagRow, ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
 };
 
-use super::{ProgramFilter, ProgramRepository};
+use super::{programOptionsOrFilter, ProgramRepository};
 
 pub type ProgramRequisitionSettingsJoin = (
     ProgramRequisitionSettingsRow,
@@ -30,7 +30,7 @@ pub struct ProgramRequisitionSettings {
 pub struct ProgramRequisitionSettingsFilter {
     pub name_tag: Option<NameTagFilter>,
     pub master_list: Option<MasterListFilter>,
-    pub program: Option<ProgramFilter>,
+    pub program: Option<programOptionsOrFilter>,
 }
 
 pub struct ProgramRequisitionSettingsRepository<'a> {
@@ -123,7 +123,7 @@ impl ProgramRequisitionSettingsFilter {
         self
     }
 
-    pub fn program(mut self, filter: ProgramFilter) -> Self {
+    pub fn program(mut self, filter: programOptionsOrFilter) -> Self {
         self.program = Some(filter);
         self
     }

@@ -1,5 +1,5 @@
 import {
-  ProgramFilterInput,
+  programOptionsOrFilterInput,
   ProgramSortFieldInput,
   useQuery,
 } from '@openmsupply-client/common';
@@ -23,7 +23,7 @@ export const useProgramList = ({
     nodes: ProgramFragment[];
     totalCount: number;
   }> => {
-    const filter: ProgramFilterInput = {
+    const filter: programOptionsOrFilterInput = {
       isImmunisation,
       existsForStoreId: {
         equalTo: storeId,
