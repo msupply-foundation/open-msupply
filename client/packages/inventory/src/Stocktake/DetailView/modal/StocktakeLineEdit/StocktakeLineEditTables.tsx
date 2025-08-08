@@ -19,7 +19,6 @@ import {
   ColumnAlign,
   NumberCell,
   getReasonOptionTypes,
-  ReasonOptionNode,
   usePreference,
   PreferenceKey,
   useAuthContext,
@@ -113,8 +112,6 @@ const getCountThisLineColumn = (
 const getInventoryAdjustmentReasonInputColumn = (
   setter: DraftLineSetter,
   { getError }: UseStocktakeLineErrors,
-  reasonOptions: ReasonOptionNode[],
-  isLoading: boolean,
   initialStocktake?: boolean
 ): ColumnDescription<DraftStocktakeLine> => {
   return {
@@ -161,8 +158,6 @@ const getInventoryAdjustmentReasonInputColumn = (
             error: isAdjustmentReasonError,
           }}
           initialStocktake={initialStocktake}
-          reasonOptions={reasonOptions}
-          loading={isLoading}
         />
       );
     },
@@ -310,8 +305,6 @@ export const BatchTable = ({
       getInventoryAdjustmentReasonInputColumn(
         update,
         errorsContext,
-        reasonOptions?.nodes ?? [],
-        isLoading,
         isInitialStocktake
       )
     );
