@@ -8,6 +8,7 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
         // check when adding new views.
         r#"
       DROP VIEW IF EXISTS stock_line_ledger_discrepancy;
+      DROP VIEW IF EXISTS purchase_order_stats;
       DROP VIEW IF EXISTS invoice_stats;
       DROP VIEW IF EXISTS consumption;
       DROP VIEW IF EXISTS replenishment;
@@ -640,6 +641,28 @@ CREATE VIEW vaccination_course AS
         GROUP BY
 	        invoice_line.invoice_id;
 
+    CREATE VIEW purchase_order_stats AS
+        SELECT
+            pol.purchase_order_id,
+            COALESCE(SUM(
+                CASE 
+                    WHEN pol.authorised_number_of_units IS NOT NULL 
+                    THEN pol.authorised_number_of_units * pol.price_per_unit_before_discount
+                    ELSE pol.requested_number_of_units * pol.price_per_unit_before_discount
+                END
+            ), 0) AS total_before_discount,
+            COALESCE(SUM(
+                CASE 
+                    WHEN pol.authorised_number_of_units IS NOT NULL 
+                    THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
+                    ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
+                END
+            ), 0) AS total_after_discount
+        FROM
+            purchase_order_line pol
+        GROUP BY
+            pol.purchase_order_id;
+
     CREATE VIEW contact_trace_name_link_view AS
       SELECT 
         ct.id AS id,
@@ -683,6 +706,28 @@ CREATE VIEW vaccination_course AS
 	        invoice_line
         GROUP BY
 	        invoice_line.invoice_id;
+
+    CREATE VIEW purchase_order_stats AS
+        SELECT
+            pol.purchase_order_id,
+            COALESCE(SUM(
+                CASE 
+                    WHEN pol.authorised_number_of_units IS NOT NULL 
+                    THEN pol.authorised_number_of_units * pol.price_per_unit_before_discount
+                    ELSE pol.requested_number_of_units * pol.price_per_unit_before_discount
+                END
+            ), 0) AS total_before_discount,
+            COALESCE(SUM(
+                CASE 
+                    WHEN pol.authorised_number_of_units IS NOT NULL 
+                    THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
+                    ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
+                END
+            ), 0) AS total_after_discount
+        FROM
+            purchase_order_line pol
+        GROUP BY
+            pol.purchase_order_id;
 
     CREATE VIEW contact_trace_name_link_view AS
       SELECT 
