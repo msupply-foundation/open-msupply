@@ -18,10 +18,11 @@ import {
   NumberInputCell,
   ColumnAlign,
   NumberCell,
-  getReasonOptionType,
-  ReasonOptionNode,
+  getReasonOptionTypes,
   usePreference,
   PreferenceKey,
+  useAuthContext,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -111,8 +112,6 @@ const getCountThisLineColumn = (
 const getInventoryAdjustmentReasonInputColumn = (
   setter: DraftLineSetter,
   { getError }: UseStocktakeLineErrors,
-  reasonOptions: ReasonOptionNode[],
-  isLoading: boolean,
   initialStocktake?: boolean
 ): ColumnDescription<DraftStocktakeLine> => {
   return {
@@ -122,6 +121,8 @@ const getInventoryAdjustmentReasonInputColumn = (
     width: 120,
     accessor: ({ rowData }) => rowData.reasonOption || '',
     Cell: ({ rowData, column, columnIndex, rowIndex }) => {
+      const { store } = useAuthContext();
+
       const value = column.accessor({
         rowData,
       }) as ReasonOptionRowFragment | null;
@@ -148,16 +149,15 @@ const getInventoryAdjustmentReasonInputColumn = (
           value={value}
           width={Number(column.width)}
           onChange={onChange}
-          type={getReasonOptionType(
+          type={getReasonOptionTypes({
             isInventoryReduction,
-            rowData.item.isVaccine
-          )}
+            isVaccine: rowData.item.isVaccine,
+            isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
+          })}
           inputProps={{
             error: isAdjustmentReasonError,
           }}
           initialStocktake={initialStocktake}
-          reasonOptions={reasonOptions}
-          loading={isLoading}
         />
       );
     },
@@ -305,8 +305,6 @@ export const BatchTable = ({
       getInventoryAdjustmentReasonInputColumn(
         update,
         errorsContext,
-        reasonOptions?.nodes ?? [],
-        isLoading,
         isInitialStocktake
       )
     );
