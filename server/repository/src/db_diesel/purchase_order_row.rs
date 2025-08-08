@@ -11,6 +11,22 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 table! {
+    purchase_order_stats (purchase_order_id) {
+        purchase_order_id -> Text,
+        total_before_discount -> Double,
+        total_after_discount -> Double,
+    }
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
+#[diesel(table_name = purchase_order_stats)]
+pub struct PurchaseOrderStatsRow {
+    pub purchase_order_id: String,
+    pub total_before_discount: f64,
+    pub total_after_discount: f64,
+}
+
+table! {
     purchase_order (id) {
         id ->  Text,
         store_id -> Text,
@@ -52,6 +68,9 @@ table! {
     }
 }
 
+joinable!(purchase_order -> purchase_order_stats (id));
+
+allow_tables_to_appear_in_same_query!(purchase_order_stats, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order, item);
 
