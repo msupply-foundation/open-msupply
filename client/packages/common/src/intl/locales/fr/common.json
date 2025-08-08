@@ -193,6 +193,7 @@
   "description.customer-reference": "Ref. Client",
   "description.customer-soh": "Stock client",
   "description.default-pack-size": "Conditionnement par défaut",
+  "description.doses-quantity": "Avec la préférence '$t(preference.manageVaccinesInDoses)' activée, vous verrez également la valeur en nombre de doses par exemple (100 $t(label.doses-short)) pour les articles de vaccins.",
   "description.entered": "La date de création",
   "description.expiry": "La date de péremption la plus proche du stock disponible",
   "description.fc-cost-price": "Prix d'achat par conditionnement (devise étrangère)",
@@ -2163,6 +2164,7 @@
   "stocktake.expires-before-template": "qui périment avant {{date}}",
   "stocktake.location-template": "dans emplacement {{location}}",
   "stocktake.master-list-template": "dans la liste maîtresse {{masterList}}",
+  "stocktake.vvm-status-template": "avec le statut VVM {{vvmStatus}}",
   "stocktakes": "Inventaires",
   "store-details": "Code dépôt : {{code}}",
   "stores": "Dépôts",
@@ -2235,7 +2237,5 @@
   "warning.field-not-parsed": "{{field}} non analysé",
   "warning.foreign-exchange-rate-different": "Ce taux ne correspond pas à la devise.",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "description.doses-quantity": "Avec la préférence '$t(preference.manageVaccinesInDoses)' activée, vous verrez également la valeur en nombre de doses par exemple (100 $t(label.doses-short)) pour les articles de vaccins.",
-  "stocktake.vvm-status-template": "avec le statut VVM {{vvmStatus}}"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
