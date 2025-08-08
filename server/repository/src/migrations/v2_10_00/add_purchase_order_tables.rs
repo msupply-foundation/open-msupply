@@ -89,8 +89,7 @@ impl MigrationFragment for Migrate {
                     stock_on_hand_in_units {DOUBLE} NOT NULL DEFAULT 0.0,
                     supplier_item_code TEXT,
                     price_per_unit_before_discount {DOUBLE} NOT NULL DEFAULT 0.0,
-                    price_per_unit_after_discount {DOUBLE} NOT NULL DEFAULT 0.0,
-                    comment TEXT
+                    price_per_unit_after_discount {DOUBLE} NOT NULL DEFAULT 0.0
                 );
             "#
         )?;
