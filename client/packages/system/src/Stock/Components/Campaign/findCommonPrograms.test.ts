@@ -22,14 +22,14 @@ const createRow = (itemId: string, programs: ProgramFragment[]) => ({
 describe('findCommonPrograms', () => {
   it('should return empty array and false for empty array', () => {
     const result = findCommonPrograms([]);
-    expect(result).toEqual({ programs: [], hasMissingPrograms: false });
+    expect(result).toEqual({ validPrograms: [], hasMissingPrograms: false });
   });
 
   it('should return all programs and false for single item', () => {
     const rows = [createRow('item1', [ProgramA, ProgramB])];
     const result = findCommonPrograms(rows);
     expect(result).toEqual({
-      programs: [ProgramA, ProgramB],
+      validPrograms: [ProgramA, ProgramB],
       hasMissingPrograms: false,
     });
   });
@@ -41,7 +41,7 @@ describe('findCommonPrograms', () => {
       createRow('itemC', [ProgramC]),
     ];
     const result = findCommonPrograms(rows);
-    expect(result).toEqual({ programs: [], hasMissingPrograms: true });
+    expect(result).toEqual({ validPrograms: [], hasMissingPrograms: true });
   });
 
   it('should return common programs and true when some programs are missing', () => {
@@ -53,7 +53,7 @@ describe('findCommonPrograms', () => {
     ];
     const result = findCommonPrograms(rows);
     expect(result).toEqual({
-      programs: [ProgramA, ProgramB],
+      validPrograms: [ProgramA],
       hasMissingPrograms: true,
     });
   });
@@ -66,7 +66,7 @@ describe('findCommonPrograms', () => {
     ];
     const result = findCommonPrograms(rows);
     expect(result).toEqual({
-      programs: [ProgramA, ProgramB],
+      validPrograms: [ProgramA, ProgramB],
       hasMissingPrograms: false,
     });
   });
@@ -79,7 +79,7 @@ describe('findCommonPrograms', () => {
     ];
     const result = findCommonPrograms(rows);
     expect(result).toEqual({
-      programs: [ProgramA, ProgramB],
+      validPrograms: [ProgramA, ProgramB],
       hasMissingPrograms: true,
     });
   });
@@ -91,6 +91,9 @@ describe('findCommonPrograms', () => {
       createRow('itemB', [ProgramB, ProgramC]),
     ];
     const result = findCommonPrograms(rows);
-    expect(result).toEqual({ programs: [ProgramB], hasMissingPrograms: true });
+    expect(result).toEqual({
+      validPrograms: [ProgramB],
+      hasMissingPrograms: true,
+    });
   });
 });
