@@ -345,9 +345,7 @@ mod test {
         };
         let invoice_new = Invoice {
             invoice_row: invoice_row_new.clone(),
-            name_row: mock_name_b(),
-            store_row: mock_store_b(),
-            clinician_row: None,
+            ..invoice_old.clone()
         };
         let invoice_transfer_new = InvoiceTransferProcessorRecord {
             operation: Operation::Upsert {
