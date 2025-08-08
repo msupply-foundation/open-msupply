@@ -47,7 +47,9 @@ pub fn get_volume_used(
     let stock_line_repo = StockLineRepository::new(connection);
 
     let lines = stock_line_repo.query_by_filter(
-        StockLineFilter::new().location_id(EqualFilter::equal_to(&location.id)),
+        StockLineFilter::new()
+            .location_id(EqualFilter::equal_to(&location.id))
+            .has_packs_in_store(true),
         Some(location.store_id.clone()),
     )?;
 

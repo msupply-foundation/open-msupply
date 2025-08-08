@@ -25,7 +25,9 @@ impl Loader<String> for StockLineByLocationIdLoader {
         let repo = StockLineRepository::new(&connection);
 
         let result = repo.query_by_filter(
-            StockLineFilter::new().location_id(EqualFilter::equal_any(location_ids.to_owned())),
+            StockLineFilter::new()
+                .location_id(EqualFilter::equal_any(location_ids.to_owned()))
+                .has_packs_in_store(true),
             None,
         )?;
 

@@ -244,6 +244,7 @@ export function Autocomplete<T>({
       }}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       slots={{
+        ...restOfAutocompleteProps.slots,
         popper: popper,
       }}
       sx={{

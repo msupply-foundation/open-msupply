@@ -32,6 +32,7 @@ const createNewLocation = (
   onHold: false,
   volume: 0,
   volumeUsed: 0,
+  stock: { __typename: 'StockLineConnector', totalCount: 0 },
   ...seed,
 });
 

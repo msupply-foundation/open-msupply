@@ -272,14 +272,12 @@ export const NumericTextInput = React.forwardRef<
     // Display values when the input is disabled
     // uses the input decimalLimit or defaults to 2dp
     const rounded = round(value, decimalLimit ? decimalLimit : 2);
-    const disabledValue = !!NumUtils.hasMoreThanDp(
-      value ?? 0,
-      decimalLimit ?? 2
-    )
+
+    const asMaxDp = NumUtils.round(value ?? 0, 10);
+    const disabledValue = !!NumUtils.hasMoreThanDp(asMaxDp, decimalLimit ?? 2)
       ? `${rounded}...`
       : rounded;
-    const tooltipDisplay =
-      value && props.disabled ? round(value ?? undefined, 10) : null;
+    const tooltipDisplay = value && props.disabled ? asMaxDp : null;
 
     return (
       <Tooltip title={tooltipDisplay}>

@@ -76,6 +76,12 @@ declare module '@mui/material/Switch' {
   }
 }
 
+declare module '@mui/material/Button' {
+  interface ButtonPropsColorOverrides {
+    gray: true;
+  }
+}
+
 declare module '@mui/material/styles/zIndex' {
   interface ZIndex {
     tableHeader: number;
@@ -205,6 +211,7 @@ export const themeOptions = {
       light: '#c7c9d9',
       dark: '#555770',
       pale: '#ccddff',
+      contrastText: '#fff',
     },
     border: '#e4e4eb',
     primary: {

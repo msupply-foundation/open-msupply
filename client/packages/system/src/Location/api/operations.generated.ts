@@ -18,6 +18,7 @@ export type LocationRowFragment = {
     maxTemperature: number;
     minTemperature: number;
   } | null;
+  stock: { __typename: 'StockLineConnector'; totalCount: number };
 };
 
 export type LocationsQueryVariables = Types.Exact<{
@@ -50,6 +51,7 @@ export type LocationsQuery = {
         maxTemperature: number;
         minTemperature: number;
       } | null;
+      stock: { __typename: 'StockLineConnector'; totalCount: number };
     }>;
   };
 };
@@ -97,6 +99,7 @@ export type InsertLocationMutation = {
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       };
 };
 
@@ -123,6 +126,7 @@ export type UpdateLocationMutation = {
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       }
     | {
         __typename: 'UpdateLocationError';
@@ -201,6 +205,11 @@ export const LocationRowFragmentDoc = gql`
       name
       maxTemperature
       minTemperature
+    }
+    stock {
+      ... on StockLineConnector {
+        totalCount
+      }
     }
   }
 `;
