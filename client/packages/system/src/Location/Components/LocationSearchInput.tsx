@@ -78,15 +78,6 @@ export const LocationSearchInput = ({
   const t = useTranslation();
   const [filter, setFilter] = useState<LocationFilter>(LocationFilter.All);
 
-  const handleFilterClick = (
-    e: React.MouseEvent<HTMLButtonElement>,
-    filterType: LocationFilter
-  ) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setFilter(filterType);
-  };
-
   const {
     query: { data, isLoading },
   } = useLocationList({
@@ -160,7 +151,41 @@ export const LocationSearchInput = ({
         paper:
           typeof volumeRequired === 'number'
             ? ({ children, ...paperProps }) => (
-                <Paper {...paperProps} sx={{ minWidth: '250px' }}>
+                <Paper {...paperProps} sx={{ minWidth: '300px' }}>
+                  <LocationFilters filter={filter} setFilter={setFilter} />
+                  {children}
+                </Paper>
+              )
+            : undefined,
+      }}
+    />
+  );
+};
+
+export const formatLocationLabel = (location: LocationRowFragment) => {
+  const { name, locationType } = location;
+  return `${name}${locationType ? ` (${locationType.name})` : ''}`;
+};
+
+const LocationFilters = ({
+  filter,
+  setFilter,
+}: {
+  filter: LocationFilter;
+  setFilter: (filter: LocationFilter) => void;
+}) => {
+  const t = useTranslation();
+
+  const handleFilterClick = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    filterType: LocationFilter
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setFilter(filterType);
+  };
+
+  return (
                   <Box
                     sx={{
                       p: 1,
@@ -174,28 +199,16 @@ export const LocationSearchInput = ({
                   >
                     <ButtonGroup variant="outlined" size="small" fullWidth>
                       <Button
-                        variant={
-                          filter === LocationFilter.All
-                            ? 'contained'
-                            : 'outlined'
-                        }
-                        onMouseDown={e =>
-                          handleFilterClick(e, LocationFilter.All)
-                        }
+          variant={filter === LocationFilter.All ? 'contained' : 'outlined'}
+          onMouseDown={e => handleFilterClick(e, LocationFilter.All)}
                         color="gray"
                         size="small"
                       >
                         {t('label.all')}
                       </Button>
                       <Button
-                        variant={
-                          filter === LocationFilter.Empty
-                            ? 'contained'
-                            : 'outlined'
-                        }
-                        onMouseDown={e =>
-                          handleFilterClick(e, LocationFilter.Empty)
-                        }
+          variant={filter === LocationFilter.Empty ? 'contained' : 'outlined'}
+          onMouseDown={e => handleFilterClick(e, LocationFilter.Empty)}
                         color="gray"
                         size="small"
                       >
@@ -203,13 +216,9 @@ export const LocationSearchInput = ({
                       </Button>
                       <Button
                         variant={
-                          filter === LocationFilter.Available
-                            ? 'contained'
-                            : 'outlined'
+            filter === LocationFilter.Available ? 'contained' : 'outlined'
                         }
-                        onMouseDown={e =>
-                          handleFilterClick(e, LocationFilter.Available)
-                        }
+          onMouseDown={e => handleFilterClick(e, LocationFilter.Available)}
                         color="gray"
                         size="small"
                       >
@@ -217,16 +226,5 @@ export const LocationSearchInput = ({
                       </Button>
                     </ButtonGroup>
                   </Box>
-                  {children}
-                </Paper>
-              )
-            : undefined,
-      }}
-    />
   );
-};
-
-export const formatLocationLabel = (location: LocationRowFragment) => {
-  const { name, locationType } = location;
-  return `${name}${locationType ? ` (${locationType.name})` : ''}`;
 };
