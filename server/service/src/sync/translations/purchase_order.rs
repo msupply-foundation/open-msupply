@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
+use repository::PurchaseOrderStatsRow;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository,
     PurchaseOrderRow, PurchaseOrderStatus, StorageConnection, SyncBufferRow,
@@ -381,6 +382,13 @@ impl SyncTranslation for PurchaseOrderTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let purchase_order = PurchaseOrderRepository::new(connection)
+            .query_by_filter(
+                PurchaseOrderFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .pop()
+            .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
+
         let PurchaseOrderRow {
             id,
             store_id,
@@ -415,16 +423,17 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
-            order_total_before_discount,
-            order_total_after_discount,
+            order_total_before_discount: _deleteme_order_total_before_discount,
+            order_total_after_discount: _deleteme_order_total_after_discount,
             authorised_datetime,
             finalised_datetime,
-        } = PurchaseOrderRepository::new(connection)
-            .query_by_filter(
-                PurchaseOrderFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
-            )?
-            .pop()
-            .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
+        } = purchase_order.purchase_order_row;
+
+        let PurchaseOrderStatsRow {
+            purchase_order_id: _,
+            total_before_discount,
+            total_after_discount,
+        } = purchase_order.purchase_order_stats_row.unwrap_or_default();
 
         let oms_fields = PurchaseOrderOmsFields {
             created_datetime,
@@ -471,8 +480,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             creation_date: created_datetime.date(),
             confirm_date: confirmed_datetime.map(|d| d.date()),
             curr_rate: foreign_exchange_rate,
-            order_total_before_discount,
-            order_total_after_discount,
+            order_total_before_discount: total_before_discount,
+            order_total_after_discount: total_after_discount,
             donor_id,
             is_authorised: check_is_authorised(&status),
             oms_fields: Some(oms_fields),

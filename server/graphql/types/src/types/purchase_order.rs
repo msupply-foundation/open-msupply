@@ -6,7 +6,7 @@ use graphql_core::loader::{
     StoreByIdLoader, UserLoader,
 };
 use graphql_core::ContextExt;
-use repository::{PurchaseOrderRow, PurchaseOrderStatus};
+use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus};
 use service::ListResult;
 
 use crate::types::{NameNode, PurchaseOrderLineConnector, StoreNode, UserNode};
@@ -14,6 +14,7 @@ use crate::types::{NameNode, PurchaseOrderLineConnector, StoreNode, UserNode};
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderNode {
     pub purchase_order: PurchaseOrderRow,
+    pub stats: Option<PurchaseOrderStatsRow>,
 }
 #[derive(SimpleObject)]
 pub struct PurchaseOrderConnector {
@@ -167,8 +168,11 @@ impl PurchaseOrderNode {
 }
 
 impl PurchaseOrderNode {
-    pub fn from_domain(purchase_order: PurchaseOrderRow) -> PurchaseOrderNode {
-        PurchaseOrderNode { purchase_order }
+    pub fn from_domain(purchase_order: PurchaseOrder) -> PurchaseOrderNode {
+        PurchaseOrderNode {
+            purchase_order: purchase_order.purchase_order_row,
+            stats: purchase_order.purchase_order_stats_row,
+        }
     }
 }
 
@@ -209,7 +213,7 @@ impl PurchaseOrderNodeStatus {
 }
 
 impl PurchaseOrderConnector {
-    pub fn from_domain(purchase_orders: ListResult<PurchaseOrderRow>) -> PurchaseOrderConnector {
+    pub fn from_domain(purchase_orders: ListResult<PurchaseOrder>) -> PurchaseOrderConnector {
         PurchaseOrderConnector {
             total_count: purchase_orders.count,
             nodes: purchase_orders
