@@ -23,16 +23,13 @@ interface ChangeCampaignOrProgramConfirmationModalProps<
   onCancel: () => void;
   clearSelected: () => void;
   rows: T[];
-  onChange: (
-    campaign?: CampaignNode | null,
-    program?: ProgramFragment | null
-  ) => Promise<void>;
+  onChange: (rows: T[]) => Promise<{ errorMessage?: string }>;
 }
 
 export const ChangeCampaignOrProgramConfirmationModal = <
   T extends {
     campaign?: CampaignNode | null;
-    programs?: ProgramFragment | null;
+    program?: ProgramFragment | null;
     item?: { id: string; programs?: ProgramFragment[] | null } | null;
   },
 >({
@@ -46,7 +43,7 @@ export const ChangeCampaignOrProgramConfirmationModal = <
 
   const [campaign, setCampaign] = useState<CampaignNode | null>(null);
   const [program, setProgram] = useState<ProgramFragment | null>(null);
-  const { programs, hasMissingPrograms } = findCommonPrograms(rows);
+  const { validPrograms, hasMissingPrograms } = findCommonPrograms(rows);
 
   return (
     <ConfirmationModalLayout
@@ -62,7 +59,14 @@ export const ChangeCampaignOrProgramConfirmationModal = <
             <DialogButton
               variant="ok"
               onClick={async () => {
-                await onChange(campaign, program);
+                await onChange(
+                  rows.map(row => ({
+                    ...row,
+                    campaign: campaign,
+                    program: program,
+                    isUpdated: true,
+                  }))
+                );
                 setCampaign(null);
                 setProgram(null);
                 clearSelected();
@@ -91,8 +95,8 @@ export const ChangeCampaignOrProgramConfirmationModal = <
             <CampaignOrProgramSelector
               campaignId={campaign?.id ?? undefined}
               programId={program?.id ?? undefined}
-              programOptionsOrFilter={programs}
-              onChange={async ({ campaign, program }) => {
+              programOptionsOrFilter={validPrograms}
+              onChange={({ campaign, program }) => {
                 setCampaign(campaign);
                 setProgram(program);
               }}
@@ -111,12 +115,13 @@ export const findCommonPrograms = <
   },
 >(
   rows: T[]
-): { programs: ProgramFragment[]; hasMissingPrograms: boolean } => {
-  if (rows.length === 0) return { programs: [], hasMissingPrograms: false };
+): { validPrograms: ProgramFragment[]; hasMissingPrograms: boolean } => {
+  if (rows.length === 0)
+    return { validPrograms: [], hasMissingPrograms: false };
 
   if (rows.length === 1)
     return {
-      programs: rows[0]?.item?.programs ?? [],
+      validPrograms: rows[0]?.item?.programs ?? [],
       hasMissingPrograms: false,
     };
 
@@ -129,11 +134,11 @@ export const findCommonPrograms = <
   });
 
   if (commonPrograms.length === 0)
-    return { programs: [], hasMissingPrograms: true };
+    return { validPrograms: [], hasMissingPrograms: true };
 
   const hasMissingPrograms = allPrograms.some(
     programs => programs.length !== commonPrograms.length
   );
 
-  return { programs: commonPrograms, hasMissingPrograms };
+  return { validPrograms: commonPrograms, hasMissingPrograms };
 };
