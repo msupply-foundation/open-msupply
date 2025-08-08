@@ -1,3 +1,5 @@
+use crate::processors::transfer::requisition::RequisitionTransferOutput;
+
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use repository::{
     RepositoryError, RequisitionRow, RequisitionRowRepository, RequisitionType, StorageConnection,
@@ -25,7 +27,7 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
         &self,
         connection: &StorageConnection,
         record_for_processing: &RequisitionTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<RequisitionTransferOutput, RepositoryError> {
         // Check can execute
         let RequisitionTransferProcessorRecord {
             linked_requisition,
@@ -34,12 +36,12 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
         } = &record_for_processing;
         // 2.
         if response_requisition.requisition_row.r#type != RequisitionType::Response {
-            return Ok(None);
+            return Ok(RequisitionTransferOutput::NotResponse);
         }
         // 3.
         let request_requisition = match &linked_requisition {
             Some(linked_requisition) => linked_requisition,
-            None => return Ok(None),
+            None => return Ok(RequisitionTransferOutput::NoLinkedRequisition),
         };
         // 4.
         if request_requisition
@@ -47,7 +49,7 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
             .linked_requisition_id
             .is_some()
         {
-            return Ok(None);
+            return Ok(RequisitionTransferOutput::LinkedRequisitionNotLinked);
         }
 
         // Execute
@@ -64,6 +66,6 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
             linked_request_requisition.id, response_requisition.requisition_row.id
         );
 
-        Ok(Some(result))
+        Ok(RequisitionTransferOutput::Generated(result))
     }
 }

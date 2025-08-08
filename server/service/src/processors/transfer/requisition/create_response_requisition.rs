@@ -2,6 +2,7 @@ use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
     preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
+    processors::transfer::requisition::RequisitionTransferOutput,
     requisition::common::get_lines_for_requisition,
     store_preference::get_store_preferences,
 };
@@ -40,7 +41,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         &self,
         connection: &StorageConnection,
         record_for_processing: &RequisitionTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<RequisitionTransferOutput, RepositoryError> {
         // Check can execute
         let RequisitionTransferProcessorRecord {
             linked_requisition: response_requisition,
@@ -49,15 +50,15 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         } = &record_for_processing;
         // 2.
         if request_requisition.requisition_row.r#type != RequisitionType::Request {
-            return Ok(None);
+            return Ok(RequisitionTransferOutput::NotRequest);
         }
         // 3.
         if request_requisition.requisition_row.status != RequisitionStatus::Sent {
-            return Ok(None);
+            return Ok(RequisitionTransferOutput::NotSent);
         }
         // 4.
         if response_requisition.is_some() {
-            return Ok(None);
+            return Ok(RequisitionTransferOutput::HasResponse);
         }
         // 5.
         if let Some(sent_datetime) = request_requisition.requisition_row.sent_datetime {
@@ -85,7 +86,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
                             initialisation_date.checked_sub_months(Months::new(pref_months as u32))
                         {
                             if sent_datetime < cutoff_date {
-                                return Ok(None);
+                                return Ok(RequisitionTransferOutput::BeforeInitialisationMonths);
                             }
                         }
                     }
@@ -176,7 +177,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
             request_requisition.requisition_row.id
         );
 
-        Ok(Some(result))
+        Ok(RequisitionTransferOutput::Generated(result))
     }
 }
 
@@ -468,11 +469,18 @@ mod test {
         let result = processor
             .try_process_record(&connection, &requisition_transfer_old)
             .unwrap();
-        assert!(result.is_none(), "The old requisition should not have had a transfer generated as it is more than 3 months before initialisation date");
+        assert!(
+            matches!(
+                result,
+                RequisitionTransferOutput::BeforeInitialisationMonths
+            ),
+            "The old requisition should have been skipped due to initialisation months check, got: {:?}", result
+        );
 
         let result = processor
             .try_process_record(&connection, &requisition_transfer_new)
             .unwrap();
-        assert!(result.is_some(), "The new requisition should have had a transfer generated as it is less than 3 months before initialisation date");
+        assert!(matches!(result, RequisitionTransferOutput::Generated(_)), 
+        "The new requisition should have had a transfer generated as it is less than 3 months before initialisation date. Got: {:?}", result);
     }
 }

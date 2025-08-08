@@ -4,7 +4,10 @@ use repository::{
     RequisitionRowRepository, StorageConnection,
 };
 
-use crate::activity_log::system_activity_log_entry;
+use crate::{
+    activity_log::system_activity_log_entry,
+    processors::transfer::requisition::RequisitionTransferOutput,
+};
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 
@@ -31,7 +34,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
         &self,
         connection: &StorageConnection,
         record_for_processing: &RequisitionTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<RequisitionTransferOutput, RepositoryError> {
         // Check can execute
         let RequisitionTransferProcessorRecord {
             linked_requisition,
@@ -40,26 +43,26 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
         } = &record_for_processing;
         // 2.
         if response_requisition.requisition_row.r#type != RequisitionType::Response {
-            return Ok(None);
+            return Ok(RequisitionTransferOutput::NotResponse);
         }
         // 3.
         let request_requisition = match &linked_requisition {
             Some(linked_requisition) => linked_requisition,
-            None => return Ok(None),
+            None => return Ok(RequisitionTransferOutput::NoLinkedRequisition),
         };
         // 4.
         if let Some(approval_status) = request_requisition.requisition_row.approval_status.clone() {
             if approval_status.is_approved() {
-                return Ok(None);
+                return Ok(RequisitionTransferOutput::RequestAlreadyApproved);
             }
         };
         // 5.
         let approval_status = match response_requisition.requisition_row.approval_status.clone() {
             Some(approval_status) => approval_status,
-            None => return Ok(None),
+            None => return Ok(RequisitionTransferOutput::ResponseNotApproved),
         };
         if !approval_status.is_approved() {
-            return Ok(None);
+            return Ok(RequisitionTransferOutput::ResponseNotApproved);
         }
 
         let requisition_line_repository = RequisitionLineRepository::new(connection);
@@ -102,6 +105,6 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             &updated_request_requisition.id,
         )?;
 
-        Ok(Some(result))
+        Ok(RequisitionTransferOutput::Generated(result))
     }
 }
