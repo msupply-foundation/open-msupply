@@ -3,7 +3,7 @@ use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 use graphql_types::types::program_node::ProgramNode;
 use repository::{
-    EqualFilter, ProgramFilter, ProgramRow, ProgramSort, ProgramSortField, StringFilter,
+    EqualFilter, programOptionsOrFilter, ProgramRow, ProgramSort, ProgramSortField, StringFilter,
 };
 use service::ListResult;
 
@@ -47,7 +47,7 @@ impl ProgramSortInput {
 }
 
 #[derive(InputObject, Clone)]
-pub struct ProgramFilterInput {
+pub struct programOptionsOrFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<StringFilterInput>,
     pub context_id: Option<EqualFilterStringInput>,
@@ -56,9 +56,9 @@ pub struct ProgramFilterInput {
     pub elmis_code: Option<EqualFilterStringInput>,
     pub item_id: Option<EqualFilterStringInput>,
 }
-impl From<ProgramFilterInput> for ProgramFilter {
-    fn from(f: ProgramFilterInput) -> Self {
-        ProgramFilter {
+impl From<programOptionsOrFilterInput> for programOptionsOrFilter {
+    fn from(f: programOptionsOrFilterInput) -> Self {
+        programOptionsOrFilter {
             id: f.id.map(EqualFilter::from),
             name: f.name.map(StringFilter::from),
             context_id: f.context_id.map(EqualFilter::from),

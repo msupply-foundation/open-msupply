@@ -1,6 +1,7 @@
 use repository::{
+    programOptionsOrFilter,
     vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-    EqualFilter, InvoiceLineRow, ProgramFilter, ProgramRepository, RepositoryError, StockLineRow,
+    EqualFilter, InvoiceLineRow, ProgramRepository, RepositoryError, StockLineRow,
     StockLineRowRepository, StorageConnection,
 };
 
@@ -55,7 +56,7 @@ pub fn check_program_visible_to_store(
     if let Some(program_id) = program_id {
         let repo = ProgramRepository::new(connection);
         let matching_programs = repo.query_by_filter(
-            ProgramFilter::new()
+            programOptionsOrFilter::new()
                 .id(EqualFilter::equal_to(program_id))
                 .exists_for_store_id(EqualFilter::equal_to(store_id)),
         )?;

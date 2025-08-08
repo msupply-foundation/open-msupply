@@ -1,7 +1,7 @@
 use super::{ListError, ListResult};
 use crate::SingleRecordError;
 
-use repository::{PaginationOption, ProgramFilter, ProgramRow, ProgramSort, StorageConnection};
+use repository::{PaginationOption, programOptionsOrFilter, ProgramRow, ProgramSort, StorageConnection};
 
 pub mod query;
 
@@ -15,7 +15,7 @@ pub trait ProgramServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         pagination: Option<PaginationOption>,
-        filter: Option<ProgramFilter>,
+        filter: Option<programOptionsOrFilter>,
         sort: Option<ProgramSort>,
     ) -> Result<ListResult<ProgramRow>, ListError> {
         get_programs(connection, pagination, filter, sort)

@@ -4,6 +4,7 @@ import { Autocomplete, AutocompleteOption } from '@common/components';
 import { CampaignNode } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
+import { isArray } from 'lodash';
 
 enum OptionType {
   Campaign = 'campaign',
@@ -19,21 +20,19 @@ interface CampaignOrProgramOption {
 interface CampaignOrProgramSelectorProps {
   campaignId?: string;
   programId?: string;
-  itemId: string;
   onChange: (value: {
     campaign: CampaignNode | null;
     program: ProgramFragment | null;
   }) => void;
-  enableProgramAPI?: boolean;
+  programOptionsOrFilter: ProgramFragment[] | { filterByItemId: string };
   fullWidth?: boolean;
 }
 
 export const CampaignOrProgramSelector = ({
   campaignId,
   programId,
-  itemId,
   onChange,
-  enableProgramAPI,
+  programOptionsOrFilter,
   fullWidth = false,
 }: CampaignOrProgramSelectorProps): ReactElement => {
   const t = useTranslation();
@@ -42,13 +41,19 @@ export const CampaignOrProgramSelector = ({
   } = useCampaigns({
     sortBy: { key: 'name', direction: 'asc' },
   });
-  const { data: programData } = useProgramList({
-    itemId,
-    enabled: enableProgramAPI,
-  });
+  const { data: programData } = useProgramList(
+    isArray(programOptionsOrFilter)
+      ? { enabled: false }
+      : {
+          itemId: programOptionsOrFilter.filterByItemId,
+          enabled: true,
+        }
+  );
 
   const campaigns = campaignData?.nodes ?? [];
-  const programs = programData?.nodes ?? [];
+  const programs = isArray(programOptionsOrFilter)
+    ? programOptionsOrFilter
+    : (programData?.nodes ?? []);
 
   const options: AutocompleteOption<CampaignOrProgramOption>[] = campaigns
     .map(({ id, name }) => ({
