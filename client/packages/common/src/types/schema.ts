@@ -7962,6 +7962,7 @@ export enum ReportContext {
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE',
+  GoodsReceived = 'GOODS_RECEIVED',
 }
 
 export type ReportFilterInput = {

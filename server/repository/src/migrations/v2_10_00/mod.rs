@@ -6,6 +6,7 @@ mod add_campaign_and_program_to_stocktake_line;
 mod add_closed_vial_wastage_reason_option_type;
 mod add_contact_table;
 mod add_goods_received_line_table;
+mod add_goods_received_report_context;
 mod add_goods_received_table;
 mod add_item_store_join;
 mod add_more_dates_to_purchase_order;
@@ -61,6 +62,7 @@ impl Migration for V2_10_00 {
             Box::new(add_volume_to_location::Migrate),
             Box::new(reintegrate_location_volume::Migrate),
             Box::new(add_vvm_status_to_stocktake_line::Migrate),
+            Box::new(add_goods_received_report_context::Migrate),
         ]
     }
 }
