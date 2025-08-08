@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   AlertModal,
   createQueryParamsStore,
   createTableStore,
+  DetailTabs,
   DetailViewSkeleton,
   PurchaseOrderNodeStatus,
   RouteBuilder,
@@ -12,20 +13,21 @@ import {
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { AppRoute } from 'packages/config/src';
 import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea } from './ContentArea';
+import { ContentArea, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
-import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
+import { PurchaseOrderLineEditModal } from './LineEdit';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const [showStatusBar, setShowStatusBar] = useState(true);
 
   const {
     query: { data, isLoading },
@@ -59,6 +61,30 @@ export const DetailViewInner = () => {
 
   const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
 
+  const tabs = [
+    {
+      Component: (
+        <ContentArea
+          lines={sortedAndFilteredLines}
+          isDisabled={isDisabled}
+          onAddItem={onOpen}
+          onRowClick={!isDisabled ? onRowClick : null}
+        />
+      ),
+      value: 'General',
+    },
+    {
+      Component: (
+        <Documents
+          purchaseOrderId={data?.id}
+          documents={data?.documents?.nodes}
+          setShowStatusBar={setShowStatusBar}
+        />
+      ),
+      value: 'Documents',
+    },
+  ];
+
   return (
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
@@ -67,13 +93,8 @@ export const DetailViewInner = () => {
         <>
           <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
           <Toolbar isDisabled={isDisabled} />
-          <ContentArea
-            lines={sortedAndFilteredLines}
-            isDisabled={isDisabled}
-            onAddItem={onOpen}
-            onRowClick={!isDisabled ? onRowClick : null}
-          />
-          <Footer />
+          <DetailTabs tabs={tabs} />
+          <Footer showStatusBar={showStatusBar} />
           <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal
