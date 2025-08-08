@@ -71,7 +71,7 @@ use queries::contact_trace::contact_traces;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::programs::patient::patient_search_central;
-use types::program::programOptionsOrFilterInput;
+use types::program::ProgramFilterInput;
 use types::program::ProgramSortInput;
 use types::program::ProgramsResponse;
 use types::r_and_r_form::RnRFormResponse;
@@ -261,7 +261,7 @@ impl ProgramsQueries {
         ctx: &Context<'_>,
         store_id: String,
         page: Option<PaginationInput>,
-        filter: Option<programOptionsOrFilterInput>,
+        filter: Option<ProgramFilterInput>,
         sort: Option<ProgramSortInput>,
     ) -> Result<ProgramsResponse> {
         programs(ctx, store_id, page, filter, sort)

@@ -6,21 +6,21 @@ use graphql_core::{
 };
 
 use graphql_types::types::{PeriodConnector, PeriodFilterInput, PeriodsResponse};
-use repository::{PaginationOption, programOptionsOrFilter};
+use repository::{PaginationOption, ProgramFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     program::query::get_periods,
 };
 
 use crate::types::program::{
-    ProgramConnector, programOptionsOrFilterInput, ProgramSortInput, ProgramsResponse,
+    ProgramConnector, ProgramFilterInput, ProgramSortInput, ProgramsResponse,
 };
 
 pub fn programs(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
-    filter: Option<programOptionsOrFilterInput>,
+    filter: Option<ProgramFilterInput>,
     sort: Option<ProgramSortInput>,
 ) -> Result<ProgramsResponse> {
     let user = validate_auth(
@@ -38,7 +38,7 @@ pub fn programs(
         .get_programs(
             &context.connection,
             page.map(PaginationOption::from),
-            filter.map(programOptionsOrFilter::from),
+            filter.map(ProgramFilter::from),
             sort.map(ProgramSortInput::to_domain),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
