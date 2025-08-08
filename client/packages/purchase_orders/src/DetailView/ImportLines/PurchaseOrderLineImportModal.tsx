@@ -88,13 +88,13 @@ export const PurchaseOrderLineImportModal = ({
     query: { data },
   } = usePurchaseOrder();
 
-  const [errorMessage, setErrorMessage] = useState<string>(() => '');
-  const [warningMessage, setWarningMessage] = useState<string>(() => '');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [warningMessage, setWarningMessage] = useState<string>('');
 
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
 
-  const [bufferedLines, setBufferedLines] = useState<ImportRow[]>(() => []);
+  const [bufferedLines, setBufferedLines] = useState<ImportRow[]>([]);
 
   const csvExport = async () => {
     const csv = importPurchaseOrderLinesToCSVWithErrors(

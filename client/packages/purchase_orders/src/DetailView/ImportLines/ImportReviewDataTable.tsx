@@ -27,7 +27,7 @@ export const ImportReviewDataTable = ({
   const { pagination, updateUserPreferencePagination } =
     useUserPreferencePagination();
 
-  const [searchString, setSearchString] = useState<string>(() => '');
+  const [searchString, setSearchString] = useState<string>('');
   const columnDescriptions: ColumnDescription<ImportRow>[] = [];
 
   columnDescriptions.push(
