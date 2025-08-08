@@ -7,7 +7,7 @@ import {
   Box,
   Button,
 } from '@openmsupply-client/common';
-import { ButtonGroup, Paper } from '@mui/material';
+import { ButtonGroup, Paper, Typography } from '@mui/material';
 import { LocationRowFragment, useLocationList } from '../api';
 
 interface LocationSearchInputProps {
@@ -25,6 +25,7 @@ interface LocationOption {
   label: string;
   value: string | null;
   code?: string;
+  volumeUsed: string;
 }
 
 const getOptionLabel = (option: LocationOption) =>
@@ -53,8 +54,27 @@ const optionRenderer = (
       <CloseIcon sx={{ color: 'gray.dark' }} />
     </MenuItem>
   ) : (
-    <MenuItem {...props} key={location.label}>
-      <span style={{ whiteSpace: 'nowrap' }}>{getOptionLabel(location)}</span>
+    <MenuItem
+      {...props}
+      key={location.label}
+      sx={{ justifyContent: 'space-between !important' }}
+    >
+      <span
+        style={{
+          whiteSpace: 'nowrap',
+          maxWidth: '80%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {getOptionLabel(location)}
+      </span>
+      <Typography
+        component="span"
+        sx={{ color: 'gray.dark', fontSize: 'smaller' }}
+      >
+        {location.volumeUsed}
+      </Typography>
     </MenuItem>
   );
 };
@@ -109,6 +129,7 @@ export const LocationSearchInput = ({
     value: l.id,
     label: formatLocationLabel(l),
     code: l.code,
+    volumeUsed: t('label.percent-used', { value: l.volumeUsed }),
   }));
 
   if (
@@ -116,7 +137,7 @@ export const LocationSearchInput = ({
     selectedLocation !== null &&
     selectedLocation !== undefined
   ) {
-    options.push({ value: null, label: t('label.remove') });
+    options.push({ value: null, label: t('label.remove'), volumeUsed: '0' });
   }
 
   // Define separately - even if the selected location doesn't match current
@@ -126,6 +147,9 @@ export const LocationSearchInput = ({
         value: selectedLocation.id,
         label: formatLocationLabel(selectedLocation),
         code: selectedLocation.code,
+        volumeUsed: t('label.percent-used', {
+          value: selectedLocation.volumeUsed,
+        }),
       }
     : null;
 
@@ -186,45 +210,45 @@ const LocationFilters = ({
   };
 
   return (
-                  <Box
-                    sx={{
-                      p: 1,
-                      borderBottom: '1px solid',
-                      borderColor: 'divider',
-                      position: 'sticky',
-                      top: 0,
-                      zIndex: 1,
-                      backgroundColor: 'background.paper',
-                    }}
-                  >
-                    <ButtonGroup variant="outlined" size="small" fullWidth>
-                      <Button
+    <Box
+      sx={{
+        p: 1,
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1,
+        backgroundColor: 'background.paper',
+      }}
+    >
+      <ButtonGroup variant="outlined" size="small" fullWidth>
+        <Button
           variant={filter === LocationFilter.All ? 'contained' : 'outlined'}
           onMouseDown={e => handleFilterClick(e, LocationFilter.All)}
-                        color="gray"
-                        size="small"
-                      >
-                        {t('label.all')}
-                      </Button>
-                      <Button
+          color="gray"
+          size="small"
+        >
+          {t('label.all')}
+        </Button>
+        <Button
           variant={filter === LocationFilter.Empty ? 'contained' : 'outlined'}
           onMouseDown={e => handleFilterClick(e, LocationFilter.Empty)}
-                        color="gray"
-                        size="small"
-                      >
-                        {t('label.empty')}
-                      </Button>
-                      <Button
-                        variant={
+          color="gray"
+          size="small"
+        >
+          {t('label.empty')}
+        </Button>
+        <Button
+          variant={
             filter === LocationFilter.Available ? 'contained' : 'outlined'
-                        }
+          }
           onMouseDown={e => handleFilterClick(e, LocationFilter.Available)}
-                        color="gray"
-                        size="small"
-                      >
-                        {t('label.available')}
-                      </Button>
-                    </ButtonGroup>
-                  </Box>
+          color="gray"
+          size="small"
+        >
+          {t('label.available')}
+        </Button>
+      </ButtonGroup>
+    </Box>
   );
 };

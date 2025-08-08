@@ -1142,6 +1142,7 @@
   "label.payment-amount-to-be-paid": "Amount to be paid",
   "label.payment-change": "Change",
   "label.payment-type": "Payment Type",
+  "label.percent-used": "{{value}}% used",
   "label.percentage": "Percentage",
   "label.period": "Period",
   "label.personal": "Personal",
