@@ -7,12 +7,12 @@ import {
   Alert,
   ClickableStepper,
   UpdateNamePropertiesInput,
+  ImportTab,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { UploadTab } from './UploadTab';
 import { ReviewTab } from './ReviewTab';
 import { useNameProperties } from '../../api/hooks/document/useNameProperties';
-import { ImportTab } from './ImportTab';
 import { useName } from '../../api';
 
 interface PropertiesImportModalProps {
@@ -153,12 +153,23 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   };
 
   const importSteps = [
-    { label: t('label.upload'), description: '', clickable: true },
-    { label: t('label.review'), description: '', clickable: false },
+    {
+      label: t('label.upload'),
+      description: '',
+      clickable: true,
+      tab: Tabs.Upload,
+    },
+    {
+      label: t('label.review'),
+      description: '',
+      clickable: false,
+      tab: Tabs.Review,
+    },
     {
       label: t('label.import'),
       description: '',
       clickable: false,
+      tab: Tabs.Import,
     },
   ];
 

@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod update {
     use repository::{
-        mock::{mock_item_a, mock_item_b, mock_store_a, MockDataInserts},
+        mock::{mock_item_a, mock_item_c, mock_item_d, mock_store_a, MockDataInserts},
         test_db::setup_all,
     };
 
     use crate::{
         purchase_order_line::{
-            insert::InsertPurchaseOrderLineInput,
+            insert::{InsertPurchaseOrderLineInput, PackSizeCodeCombination},
             update::{UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError},
         },
         service_provider::ServiceProvider,
@@ -19,18 +19,19 @@ mod update {
             setup_all("update_purchase_order_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id.clone(), "".to_string())
+            .unwrap();
         let service = service_provider.purchase_order_line_service;
 
         // Create a purchase order line
         service
             .insert_purchase_order_line(
                 &context,
-                &mock_store_a().id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id: mock_item_c().id.to_string(),
                 },
             )
             .unwrap();
@@ -39,7 +40,7 @@ mod update {
         assert_eq!(
             service.update_purchase_order_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_a().id.clone(),
                 UpdatePurchaseOrderLineInput {
                     id: "non_existent_line_id".to_string(),
                     item_id: None,
@@ -51,6 +52,31 @@ mod update {
             ),
             Err(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)
         );
+
+        // Cannot update to the same item and pack size combination
+
+        assert_eq!(
+            service.update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
+                    requested_delivery_date: None,
+                    expected_delivery_date: None,
+                }
+            ),
+            Err(
+                UpdatePurchaseOrderLineInputError::PackSizeCodeCombinationExists(
+                    PackSizeCodeCombination {
+                        item_code: mock_item_a().code.clone(),
+                        requested_pack_size: 0.0,
+                    }
+                )
+            )
+        );
     }
 
     #[actix_rt::test]
@@ -59,18 +85,19 @@ mod update {
             setup_all("update_purchase_order_line_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let context = service_provider
+            .context(mock_store_a().id.clone(), "".to_string())
+            .unwrap();
         let service = service_provider.purchase_order_line_service;
 
         // Create a purchase order line
         service
             .insert_purchase_order_line(
                 &context,
-                &mock_store_a().id,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id: mock_item_c().id.to_string(),
                 },
             )
             .unwrap();
@@ -79,10 +106,10 @@ mod update {
         let result = service
             .update_purchase_order_line(
                 &context,
-                &mock_store_a().id,
+                &mock_store_a().id.clone(),
                 UpdatePurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
-                    item_id: Some(mock_item_b().id.to_string()),
+                    item_id: Some(mock_item_d().id.to_string()),
                     requested_pack_size: Some(10.0),
                     requested_number_of_units: Some(5.0),
                     requested_delivery_date: None,
@@ -95,6 +122,6 @@ mod update {
             result.purchase_order_line_row.id,
             "purchase_order_line_id_1"
         );
-        assert_eq!(result.item_row.id, mock_item_b().id.clone())
+        assert_eq!(result.item_row.id, mock_item_d().id.clone())
     }
 }

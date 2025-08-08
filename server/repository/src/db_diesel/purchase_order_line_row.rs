@@ -127,6 +127,19 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_purchase_order_id_and_item_id(
+        &self,
+        purchase_order_id: &str,
+        item_id: &str,
+    ) -> Result<Option<PurchaseOrderLineRow>, RepositoryError> {
+        let result = purchase_order_line::table
+            .filter(purchase_order_line::purchase_order_id.eq(purchase_order_id))
+            .filter(purchase_order_line::item_link_id.eq(item_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_purchase_order_ids(
         &self,
         purchase_order_ids: &[String],

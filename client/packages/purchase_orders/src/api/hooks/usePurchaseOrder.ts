@@ -1,6 +1,7 @@
 import {
   FnUtils,
   InsertPurchaseOrderInput,
+  PurchaseOrderLineNode,
   PurchaseOrderNodeType,
   SortUtils,
   useConfirmationModal,
@@ -36,6 +37,10 @@ export type UpdatePurchaseOrderInput = {
   supplierDiscountPercentage?: number | null;
   supplierId?: string | null;
 };
+
+export type PurchaseOrderLineInsertFromCsvInput = Partial<
+  PurchaseOrderLineNode & { purchaseOrderId: string; itemCode: string }
+>;
 
 export const usePurchaseOrder = (id?: string) => {
   const { purchaseOrderId = id } = useParams();

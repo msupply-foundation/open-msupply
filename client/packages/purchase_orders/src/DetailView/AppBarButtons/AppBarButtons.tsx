@@ -40,9 +40,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <AddButton
           purchaseOrder={data ?? undefined}
           onAddItem={onAddItem}
-          disable={isDisabled}
-          disableAddFromMasterListButton={isLoading}
-          disableAddFromInternalOrderButton={isLoading}
+          disable={isDisabled || isLoading}
         />
         {/* <AddFromMasterListButton /> */}
         {/* <UseSuggestedQuantityButton /> */}

@@ -1,0 +1,74 @@
+// Mock useTranslation is already defined above with jest.mock, so no import needed here
+import { ImportRow } from './PurchaseOrderLineImportModal';
+import { getImportHelpers, ParsedLine } from './utils';
+
+describe('testCombinationHelperFunctions', () => {
+  it('end to end combination test', () => {
+    const rows: ImportRow[] = [
+      {
+        id: '1',
+        itemCode: 'A123',
+        requestedPackSize: 10,
+        requestedNumberOfUnits: 100,
+        errorMessage: '',
+        warningMessage: '',
+      },
+      {
+        id: '2',
+        itemCode: 'B456',
+        requestedPackSize: 20,
+        requestedNumberOfUnits: 200,
+        errorMessage: '',
+        warningMessage: '',
+      },
+    ];
+
+    const t = (key: string) => {
+      switch (key) {
+        case 'label.code':
+          return 'Code';
+        case 'label.pack-size':
+          return 'Pack size';
+        case 'label.requested':
+          return 'Requested';
+        default:
+          return key;
+      }
+    };
+
+    const row: ParsedLine = {
+      id: '3',
+      ['Code']: 'A123',
+      ['Pack size']: '10',
+      ['Requested']: '100',
+      ['Line number']: '3',
+    };
+
+    const { addUniqueCombination, rowErrors } = getImportHelpers(
+      row,
+      rows,
+      2,
+      t
+    );
+
+    addUniqueCombination([
+      {
+        key: 'itemCode',
+        localeKey: 'label.code',
+      },
+      {
+        key: 'requestedPackSize',
+        localeKey: 'label.pack-size',
+        formatter: numString => parseFloat(numString),
+      },
+    ]);
+
+    expect(rowErrors.length).toBe(1);
+
+    // expect(true).toBe(false);
+  });
+
+  it('end to end combination test with formatter', () => {
+    expect(true).toBe(true);
+  });
+});

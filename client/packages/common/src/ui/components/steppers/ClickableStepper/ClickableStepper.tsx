@@ -9,17 +9,18 @@ import StepConnector, {
 } from '@mui/material/StepConnector';
 import { StepIconProps, styled, useTheme } from '@mui/material';
 
-interface StepDefinition {
+interface StepDefinition<TabEnum extends string> {
   label: string;
+  tab: TabEnum;
   description: string;
   clickable?: boolean;
 }
 
-interface StepperProps {
+interface StepperProps<TabEnum extends string> {
   activeStep: number;
-  steps: StepDefinition[];
+  steps: StepDefinition<TabEnum>[];
   alternativeLabel?: boolean;
-  onClickStep?: (stepName: string) => void;
+  onClickStep?: (stepEnum: TabEnum) => void;
 }
 
 const StyledConnector = styled(StepConnector)(({ theme }) => ({
@@ -78,12 +79,12 @@ const Circle: FC<StepIconProps> = ({ active, completed, icon }) => {
   return <div style={style}>{icon}</div>;
 };
 
-export const ClickableStepper: FC<StepperProps> = ({
+export const ClickableStepper = <TabEnum extends string>({
   activeStep,
   steps,
   alternativeLabel,
   onClickStep,
-}) => (
+}: StepperProps<TabEnum>) => (
   <Box flex={1}>
     <Stepper
       connector={<StyledConnector />}
@@ -103,7 +104,7 @@ export const ClickableStepper: FC<StepperProps> = ({
         return (
           <Step
             data-testid={testId}
-            key={step.label}
+            key={step.tab}
             active={isActive}
             completed={isCompleted}
             sx={
@@ -117,7 +118,7 @@ export const ClickableStepper: FC<StepperProps> = ({
             }
             onClick={() => {
               if (onClickStep && step.clickable) {
-                onClickStep(step.label);
+                onClickStep(step.tab);
               }
             }}
           >

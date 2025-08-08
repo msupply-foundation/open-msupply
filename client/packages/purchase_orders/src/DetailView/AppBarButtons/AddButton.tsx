@@ -5,43 +5,57 @@ import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { useNotification, useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
 import { PurchaseOrderFragment } from '../../api';
-import { PurchaseOrderNodeStatus } from '@common/types';
+import { PurchaseOrderNodeStatus, UserPermission } from '@common/types';
+import { PurchaseOrderLineImportModal } from '../ImportLines/PurchaseOrderLineImportModal';
+import {
+  NonEmptyArray,
+  useCallbackWithPermission,
+} from '@openmsupply-client/common/src';
+import { isPurchaseOrderEditable } from '../../utils';
 
 interface AddButtonProps {
   purchaseOrder: PurchaseOrderFragment | undefined;
   onAddItem: (newState: boolean) => void;
   /** Disable the whole control */
   disable: boolean;
-  disableAddFromMasterListButton: boolean;
-  disableAddFromInternalOrderButton: boolean;
 }
 
 export const AddButton = ({
   purchaseOrder,
   onAddItem,
   disable,
-  disableAddFromMasterListButton,
 }: AddButtonProps) => {
   const t = useTranslation();
   const { info } = useNotification();
   const masterListModalController = useToggle();
+  const importModalController = useToggle();
 
-  const options: [SplitButtonOption<string>, SplitButtonOption<string>] =
-    useMemo(
-      () => [
-        {
-          value: 'add-item',
-          label: t('button.add-item'),
-          isDisabled: disable,
-        },
-        {
-          value: 'add-from-master-list',
-          label: t('button.add-from-master-list'),
-          isDisabled: disableAddFromMasterListButton || disable,
-        },
-      ],
-      [disable, disableAddFromMasterListButton]
-    );
+  const handleUploadPurchaseOrderLines = useCallbackWithPermission(
+    UserPermission.PurchaseOrderMutate,
+    importModalController.toggleOn,
+    t('error.no-purchase-order-import-permission')
+  );
+
+  const options: NonEmptyArray<SplitButtonOption<string>> = useMemo(
+    () => [
+      {
+        value: 'add-item',
+        label: t('button.add-item'),
+        isDisabled: disable,
+      },
+      {
+        value: 'add-from-master-list',
+        label: t('button.add-from-master-list'),
+        isDisabled: disable,
+      },
+      {
+        value: 'import-from-csv',
+        label: t('button.upload-purchase-order-lines'),
+        isDisabled: disable,
+      },
+    ],
+    [disable]
+  );
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
@@ -57,11 +71,18 @@ export const AddButton = ({
         onAddItem(true);
         break;
       case 'add-from-master-list':
-        // Mimmicking OG behaviour where purchase orders can be edited when confirmed AND when authorised
-        purchaseOrder?.status !== PurchaseOrderNodeStatus.Finalised
+        isPurchaseOrderEditable(
+          purchaseOrder?.status ?? PurchaseOrderNodeStatus.New
+        )
           ? masterListModalController.toggleOn()
           : info(t('error.cannot-add-from-masterlist'))();
         break;
+      case 'import-from-csv':
+        isPurchaseOrderEditable(
+          purchaseOrder?.status ?? PurchaseOrderNodeStatus.New
+        )
+          ? handleUploadPurchaseOrderLines()
+          : info(t('error.cannot-import'))();
     }
   };
 
@@ -81,12 +102,19 @@ export const AddButton = ({
         isDisabled={disable}
         openFrom="bottom"
         Icon={<PlusCircleIcon />}
+        staticLabel={t('button.add')}
       />
 
       {masterListModalController.isOn && (
         <AddFromMasterListButton
           isOn={masterListModalController.isOn}
           toggleOff={masterListModalController.toggleOff}
+        />
+      )}
+      {importModalController.isOn && (
+        <PurchaseOrderLineImportModal
+          isOpen={importModalController.isOn}
+          onClose={importModalController.toggleOff}
         />
       )}
     </>

@@ -86,6 +86,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     name
     unitName
   }
+  purchaseOrderId
   requestedPackSize
   requestedDeliveryDate
   requestedNumberOfUnits
@@ -239,6 +240,45 @@ mutation addToPurchaseOrderFromMasterList(
           description
         }
         description
+      }
+    }
+  }
+}
+
+mutation insertPurchaseOrderLineFromCSV(
+  $input: InsertPurchaseOrderLineFromCSVInput!
+  $storeId: String!
+) {
+  insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+    ... on InsertPurchaseOrderLineError {
+      __typename
+      error {
+        description
+        ... on CannnotFindItemByCode {
+          __typename
+          description
+        }
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+        }
+        ... on PackSizeCodeCombinationExists {
+          __typename
+          description
+          itemCode
+          requestedPackSize
+        }
+        ... on PurchaseOrderLineWithIdExists {
+          __typename
+          description
+        }
       }
     }
   }

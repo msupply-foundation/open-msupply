@@ -32,6 +32,8 @@ pub struct PurchaseOrderLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub purchase_order_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub requested_pack_size: Option<EqualFilter<f64>>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 pub enum PurchaseOrderLineSortField {
@@ -142,11 +144,19 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             purchase_order_id,
             id,
             store_id,
+            requested_pack_size,
+            item_id,
         } = f;
 
         apply_equal_filter!(query, purchase_order_id, purchase_order::id);
         apply_equal_filter!(query, id, purchase_order_line::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
+        apply_equal_filter!(
+            query,
+            requested_pack_size,
+            purchase_order_line::requested_pack_size
+        );
+        apply_equal_filter!(query, item_id, item_link::item_id);
     }
 
     query
