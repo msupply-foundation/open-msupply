@@ -10,7 +10,6 @@ import {
   useBreadcrumbs,
   useEditModal,
   useNavigate,
-  useToggle,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
@@ -22,7 +21,6 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
-import { PurchaseOrderLineImportModal } from './ImportLines/PurchaseOrderLineImportModal';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -33,8 +31,6 @@ export const DetailViewInner = () => {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
   } = usePurchaseOrder();
-
-  const importModalController = useToggle();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
@@ -69,11 +65,7 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons
-            importModalController={importModalController}
-            isDisabled={isDisabled}
-            onAddItem={onOpen}
-          />
+          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
           <Toolbar isDisabled={isDisabled} />
           <ContentArea
             lines={sortedAndFilteredLines}
@@ -92,10 +84,6 @@ export const DetailViewInner = () => {
               purchaseOrder={data}
             />
           )}
-          <PurchaseOrderLineImportModal
-            isOpen={importModalController.isOn}
-            onClose={importModalController.toggleOff}
-          />
         </>
       ) : (
         <AlertModal

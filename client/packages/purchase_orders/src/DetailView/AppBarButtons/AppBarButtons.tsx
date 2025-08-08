@@ -5,30 +5,21 @@ import {
   useDetailPanel,
   ReportContext,
   useUrlQueryParams,
-  ToggleState,
-  UploadIcon,
-  useCallbackWithPermission,
-  UserPermission,
-  useTranslation,
-  ButtonWithIcon,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 import { AddButton } from './AddButton';
 import { ReportSelector } from '@openmsupply-client/system';
 
 interface AppBarButtonProps {
-  importModalController: ToggleState;
   isDisabled: boolean;
   onAddItem: () => void;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
-  importModalController,
   onAddItem,
   isDisabled,
 }) => {
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation();
 
   const {
     queryParams: { sortBy },
@@ -38,20 +29,9 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     query: { data, isLoading },
   } = usePurchaseOrder();
 
-  const handleUploadPurchaseOrderLines = useCallbackWithPermission(
-    UserPermission.PurchaseOrderMutate,
-    importModalController.toggleOn,
-    t('error.no-purchase-order-import-permission')
-  );
-
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<UploadIcon />}
-          label={t('button.upload-purchase-order-lines')}
-          onClick={handleUploadPurchaseOrderLines}
-        />
         <ReportSelector
           context={ReportContext.PurchaseOrder}
           dataId={data?.id ?? ''}
@@ -60,9 +40,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <AddButton
           purchaseOrder={data ?? undefined}
           onAddItem={onAddItem}
-          disable={isDisabled}
-          disableAddFromMasterListButton={isLoading}
-          disableAddFromInternalOrderButton={isLoading}
+          disable={isDisabled || isLoading}
         />
         {/* <AddFromMasterListButton /> */}
         {/* <UseSuggestedQuantityButton /> */}
