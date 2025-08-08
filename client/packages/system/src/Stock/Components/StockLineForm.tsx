@@ -405,7 +405,7 @@ export const StockLineForm = ({
                 <CampaignOrProgramSelector
                   campaignId={draft.campaign?.id}
                   programId={draft.program?.id}
-                  itemId={draft.itemId}
+                  programOptionsOrFilter={{ filterByItemId: draft.itemId }}
                   onChange={({ campaign, program }) =>
                     onUpdate({ campaign, program })
                   }

@@ -9,10 +9,10 @@ import { useInboundApi } from '../utils/useInboundApi';
 import { DraftInboundLine } from '../../../../types';
 
 export const useSaveInboundLines = () => {
+  const t = useTranslation();
   const queryClient = useQueryClient();
   const invoiceId = useInboundId();
   const api = useInboundApi();
-  const t = useTranslation();
 
   return useMutation(
     async (lines: DraftInboundLine[]): Promise<{ errorMessage?: string }> => {

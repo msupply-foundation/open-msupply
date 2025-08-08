@@ -107,6 +107,7 @@ pub enum UpdateStockInLineError {
     NotThisInvoiceLine(String),
     VVMStatusDoesNotExist,
     ProgramNotVisible,
+    CampaignDoesNotExist,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {
@@ -143,7 +144,6 @@ mod test {
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
         StorePreferenceRow, StorePreferenceRowRepository,
     };
-   
 
     use crate::{
         invoice_line::stock_in_line::{
