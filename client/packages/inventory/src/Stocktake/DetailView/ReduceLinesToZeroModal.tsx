@@ -31,7 +31,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
 
   const onZeroQuantities = useStocktakeOld.line.zeroQuantities();
 
-  const { data: reasonOptions, isLoading } = useReasonOptions();
+  const { data: reasonOptions } = useReasonOptions();
   const reasonIsRequired = reasonOptions?.totalCount !== 0;
 
   return (
@@ -67,8 +67,6 @@ export const ReduceLinesToZeroConfirmationModal = ({
               type={ReasonOptionNodeType.NegativeInventoryAdjustment}
               value={reason}
               onChange={reason => setReason(reason)}
-              reasonOptions={reasonOptions?.nodes ?? []}
-              loading={isLoading}
               width={160}
             />
           }
