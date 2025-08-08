@@ -1,18 +1,21 @@
 use crate::{
-    activity_log::system_activity_log_entry, number::next_number,
-    requisition::common::get_lines_for_requisition, store_preference::get_store_preferences,
+    activity_log::system_activity_log_entry,
+    number::next_number,
+    preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
+    requisition::common::get_lines_for_requisition,
+    store_preference::get_store_preferences,
 };
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
-use chrono::Utc;
+use chrono::{Months, Utc};
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     ActivityLogType, ApprovalStatusType, EqualFilter, IndicatorValueRow,
     IndicatorValueRowRepository, ItemRow, MasterListFilter, MasterListLineFilter,
-    MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError, Requisition,
-    RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection, StoreFilter,
-    StoreRepository,
+    MasterListLineRepository, MasterListRepository, NumberRowType, Pagination, RepositoryError,
+    Requisition, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionStatus, RequisitionType, Sort, StorageConnection,
+    StoreFilter, StoreRepository, SyncLogRepository, SyncLogSortField,
 };
 use util::uuid::uuid;
 
@@ -55,6 +58,39 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         // 4.
         if response_requisition.is_some() {
             return Ok(None);
+        }
+        // 5.
+        if let Some(sent_datetime) = request_requisition.requisition_row.sent_datetime {
+            let pref_months = PreventTransfersMonthsBeforeInitialisation {}
+                .load(connection, None)
+                .map_err(|e| RepositoryError::DBError {
+                    msg: e.to_string(),
+                    extra: "".to_string(),
+                })?;
+            if pref_months > 0 {
+                let sort = Sort {
+                    key: SyncLogSortField::DoneDatetime,
+                    desc: None,
+                };
+
+                let latest_log_sorted_by_finished_datetime = SyncLogRepository::new(connection)
+                    .query(Pagination::one(), None, Some(sort))?
+                    .pop();
+
+                if let Some(log) = latest_log_sorted_by_finished_datetime {
+                    if let Some(initialisation_date) =
+                        log.sync_log_row.integration_finished_datetime
+                    {
+                        if let Some(cutoff_date) =
+                            initialisation_date.checked_sub_months(Months::new(pref_months as u32))
+                        {
+                            if sent_datetime < cutoff_date {
+                                return Ok(None);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Execute
@@ -358,4 +394,85 @@ fn generate_response_requisition_indicator_values(
         return Ok(response_indicator_values);
     }
     Ok(vec![])
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use chrono::{NaiveDate, NaiveDateTime};
+    use repository::{
+        mock::{
+            mock_name_b, mock_request_draft_requisition, mock_store_b, MockData, MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+    };
+
+    #[actix_rt::test]
+    async fn test_create_inbound_requisition_picked_cutoff() {
+        let requisition_row_old = RequisitionRow {
+            id: "requisition_row_old".to_string(),
+            status: RequisitionStatus::Sent,
+            created_datetime: NaiveDateTime::new(
+                NaiveDate::from_ymd_opt(2020, 6, 6).unwrap(),
+                Default::default(),
+            ),
+            sent_datetime: Some(NaiveDateTime::new(
+                NaiveDate::from_ymd_opt(2020, 6, 6).unwrap(),
+                Default::default(),
+            )),
+            ..mock_request_draft_requisition()
+        };
+        let requisition_old = Requisition {
+            requisition_row: requisition_row_old.clone(),
+            name_row: mock_name_b(),
+            store_row: mock_store_b(),
+            program: None,
+            period: None,
+        };
+        let requisition_transfer_old = RequisitionTransferProcessorRecord {
+            other_party_store_id: "store_a".to_string(),
+            requisition: requisition_old.clone(),
+            linked_requisition: None,
+        };
+
+        let requisition_row_new = RequisitionRow {
+            id: "requisition_row_new".to_string(),
+            sent_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 8, 7)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            ..requisition_row_old.clone()
+        };
+        let requisition_new = Requisition {
+            requisition_row: requisition_row_new.clone(),
+            ..requisition_old
+        };
+        let requisition_transfer_new = RequisitionTransferProcessorRecord {
+            requisition: requisition_new.clone(),
+            ..requisition_transfer_old.clone()
+        };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_create_inbound_requisition_picked_cutoff",
+            MockDataInserts::none().stores().sync_logs(),
+            MockData {
+                requisitions: vec![requisition_row_old, requisition_row_new],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let processor = CreateResponseRequisitionProcessor {};
+        let result = processor
+            .try_process_record(&connection, &requisition_transfer_old)
+            .unwrap();
+        assert!(result.is_none(), "The old requisition should not have had a transfer generated as it is more than 3 months before initialisation date");
+
+        let result = processor
+            .try_process_record(&connection, &requisition_transfer_new)
+            .unwrap();
+        assert!(result.is_some(), "The new requisition should have had a transfer generated as it is less than 3 months before initialisation date");
+    }
 }
