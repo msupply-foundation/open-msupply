@@ -40,7 +40,7 @@ query programs(
   $offset: Int
   $key: ProgramSortFieldInput!
   $desc: Boolean
-  $filter: programOptionsOrFilterInput
+  $filter: ProgramFilterInput
 ) {
   programs(
     storeId: $storeId
@@ -667,7 +667,7 @@ query immunisationPrograms(
   $offset: Int
   $key: ProgramSortFieldInput!
   $desc: Boolean
-  $filter: programOptionsOrFilterInput
+  $filter: ProgramFilterInput
 ) {
   programs(
     storeId: $storeId
