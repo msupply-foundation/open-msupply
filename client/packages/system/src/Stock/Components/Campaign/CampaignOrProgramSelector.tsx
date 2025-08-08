@@ -97,8 +97,7 @@ export const CampaignOrProgramSelector = ({
       case OptionType.Program:
         onChange({
           campaign: null,
-          program:
-            programData?.nodes.find(({ id }) => id === option.value) ?? null,
+          program: programs.find(({ id }) => id === option.value) ?? null,
         });
     }
   };
