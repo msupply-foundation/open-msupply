@@ -2135,6 +2135,7 @@
   "stocktake.expires-before-template": "that expire before {{date}}",
   "stocktake.location-template": "in location {{location}}",
   "stocktake.master-list-template": "in master list {{masterList}}",
+  "stocktake.vvm-status-template": "with VVM status {{vvmStatus}}",
   "stocktakes": "Stocktakes",
   "store-details": "Store code: {{code}}",
   "stores": "Stores",

@@ -3787,6 +3787,7 @@ export type InsertStocktakeInput = {
   isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStocktakeLineError = {
@@ -8629,6 +8630,7 @@ export type StockLineFilterInput = {
   locationId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
+  vvmStatusId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface &
