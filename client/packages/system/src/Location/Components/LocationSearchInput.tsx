@@ -6,6 +6,8 @@ import {
   useTranslation,
   Box,
   Button,
+  UNDEFINED_STRING_VALUE,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { ButtonGroup, Paper, Typography } from '@mui/material';
 import { LocationRowFragment, useLocationList } from '../api';
@@ -96,6 +98,8 @@ export const LocationSearchInput = ({
   volumeRequired,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
+  const { round } = useFormatNumber();
+
   const [filter, setFilter] = useState<LocationFilter>(LocationFilter.All);
 
   const {
@@ -125,11 +129,24 @@ export const LocationSearchInput = ({
     }
   });
 
+  const getVolumeUsedLabel = (location: LocationRowFragment) => {
+    const volumeUsed =
+      // If some stock lines associated, but volume used is 0, show as undefined
+      //
+      location.stock?.totalCount > 0 && location.volumeUsed === 0
+        ? UNDEFINED_STRING_VALUE
+        : round(location.volumeUsed, 2);
+
+    return t('label.percent-used', {
+      value: volumeUsed,
+    });
+  };
+
   const options: LocationOption[] = filteredLocations.map(l => ({
     value: l.id,
     label: formatLocationLabel(l),
     code: l.code,
-    volumeUsed: t('label.percent-used', { value: l.volumeUsed }),
+    volumeUsed: getVolumeUsedLabel(l),
   }));
 
   if (
@@ -147,9 +164,7 @@ export const LocationSearchInput = ({
         value: selectedLocation.id,
         label: formatLocationLabel(selectedLocation),
         code: selectedLocation.code,
-        volumeUsed: t('label.percent-used', {
-          value: selectedLocation.volumeUsed,
-        }),
+        volumeUsed: getVolumeUsedLabel(selectedLocation),
       }
     : null;
 
