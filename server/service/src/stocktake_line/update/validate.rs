@@ -43,20 +43,16 @@ pub fn validate(
         return Err(InvalidStore);
     }
 
-    let stock_line = if let Some(stock_line_id) = &stocktake_line_row.stock_line_id {
-        Some(
-            check_stock_line_exists(connection, store_id, stock_line_id).map_err(
-                |err| match err {
-                    CommonStockLineError::DatabaseError(RepositoryError::NotFound) => {
-                        StockLineDoesNotExist
-                    }
-                    CommonStockLineError::StockLineDoesNotBelongToStore => InvalidStore,
-                    CommonStockLineError::DatabaseError(error) => DatabaseError(error),
-                },
-            )?,
-        )
-    } else {
-        None
+    let stock_line = match &stocktake_line_row.stock_line_id {
+        Some(stock_line_id) => match check_stock_line_exists(connection, store_id, stock_line_id) {
+            Ok(stock_line) => Some(stock_line),
+            Err(CommonStockLineError::DatabaseError(RepositoryError::NotFound)) => {
+                return Err(StockLineDoesNotExist)
+            }
+            Err(CommonStockLineError::StockLineDoesNotBelongToStore) => return Err(InvalidStore),
+            Err(CommonStockLineError::DatabaseError(error)) => return Err(DatabaseError(error)),
+        },
+        None => None,
     };
 
     if let Some(NullableUpdate {
@@ -69,19 +65,18 @@ pub fn validate(
 
         // Stocktake line might be for an item which should only live in a certain location type
         if let Some(item_restricted_type) = &stocktake_line.item.restricted_location_type_id {
-            // If we are changing to a different location than the stock line was previously in
-            // Allow stock to remain in incorrect location during stocktake (don't force stock move during stock count)
-            // - we flag in frontend but don't prevent saving the lines
-            if stock_line
+            let current_location_type = stock_line
                 .as_ref()
-                .and_then(|s| s.stock_line_row.location_id.clone())
-                != Some(location.to_string())
-            {
-                // Check Whether the type of the new location is valid for the item
+                .and_then(|sl| sl.item_row.restricted_location_type_id.clone());
+
+            // Only check location type if changing to a different location than the stock line was previously in
+            if current_location_type != Some(location.to_string()) {
+                // Allow stock to remain in incorrect location during stocktake (don't force stock move during stock count)
+                // - we flag in frontend but don't prevent saving the lines
                 if !check_location_type_is_valid(
                     connection,
                     store_id,
-                    &location,
+                    location,
                     item_restricted_type,
                 )? {
                     return Err(IncorrectLocationType);

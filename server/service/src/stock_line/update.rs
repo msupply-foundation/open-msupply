@@ -113,7 +113,7 @@ fn validate(
         }
 
         if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id {
-            if !check_location_type_is_valid(connection, store_id, &location, item_restricted_type)?
+            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
             {
                 return Err(IncorrectLocationType);
             }
