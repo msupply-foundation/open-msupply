@@ -33,8 +33,8 @@ export const useGoodsReceivedList = (queryParams: ListParams) => {
   } = queryParams;
 
   const queryKey = [
-    LIST,
     GOODS_RECEIVED,
+    LIST,
     storeId,
     sortBy,
     first,
