@@ -132,7 +132,6 @@ export const StockLineForm = ({
     };
   };
   const restrictedLocationTypeId = draft.item.restrictedLocationTypeId ?? null;
-
   const isInvalidLocation = checkInvalidLocationLines(
     restrictedLocationTypeId,
     [draft]
@@ -148,7 +147,6 @@ export const StockLineForm = ({
             </Alert>
           </Grid>
         )}
-        {/* <Grid container></Grid> */}
         <Grid
           flex={1}
           container

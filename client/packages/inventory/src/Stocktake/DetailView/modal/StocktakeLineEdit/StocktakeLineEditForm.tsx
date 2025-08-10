@@ -65,7 +65,10 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
       )}
       {hasInvalidLocationLines && (
         <ModalRow margin={3}>
-          <Alert severity="warning" sx={{ maxWidth: 800 }}>
+          <Alert
+            severity="warning"
+            sx={{ maxWidth: 800, margin: '0 auto', mt: 0.5 }}
+          >
             {t('messages.stock-location-invalid-many')}
           </Alert>
         </ModalRow>

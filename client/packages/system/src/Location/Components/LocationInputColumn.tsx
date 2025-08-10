@@ -46,12 +46,11 @@ export const getLocationInputColumn = <T extends RecordWithId>(
     },
     Cell: ({ rowData, column, columnIndex, rowIndex, isDisabled }) => {
       const value = column.accessor({ rowData }) as LocationRowFragment | null;
+      const autoFocus = columnIndex === 0 && rowIndex === 0;
 
       const onChange = (location: LocationRowFragment | null) => {
         column.setter({ ...rowData, location });
       };
-
-      const autoFocus = columnIndex === 0 && rowIndex === 0;
 
       return (
         <LocationSearchInput
