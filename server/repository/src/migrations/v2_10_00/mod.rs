@@ -10,6 +10,7 @@ mod add_goods_received_table;
 mod add_item_store_join;
 mod add_more_dates_to_purchase_order;
 mod add_program_id_to_stock_and_invoice_lines;
+mod add_purchase_order_activity_logs;
 mod add_purchase_order_permission_enum_values;
 mod add_purchase_order_report_context;
 mod add_purchase_order_tables;
@@ -61,6 +62,7 @@ impl Migration for V2_10_00 {
             Box::new(add_volume_to_location::Migrate),
             Box::new(reintegrate_location_volume::Migrate),
             Box::new(add_vvm_status_to_stocktake_line::Migrate),
+            Box::new(add_purchase_order_activity_logs::Migrate),
         ]
     }
 }

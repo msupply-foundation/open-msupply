@@ -1,6 +1,9 @@
 use repository::{PurchaseOrderRow, PurchaseOrderRowRepository, RepositoryError, TransactionError};
 
-use crate::service_provider::ServiceContext;
+use crate::{
+    activity_log::{activity_log_entry, log_type_from_purchase_order_status},
+    service_provider::ServiceContext,
+};
 
 mod generate;
 use generate::generate;
@@ -34,6 +37,14 @@ pub fn insert_purchase_order(
 
             let purchase_order = generate(connection, store_id, &ctx.user_id, input.clone())?;
             PurchaseOrderRowRepository::new(connection).upsert_one(&purchase_order)?;
+
+            activity_log_entry(
+                ctx,
+                log_type_from_purchase_order_status(&purchase_order.status, None),
+                Some(purchase_order.id.to_owned()),
+                None,
+                None,
+            )?;
 
             Ok(purchase_order)
         })

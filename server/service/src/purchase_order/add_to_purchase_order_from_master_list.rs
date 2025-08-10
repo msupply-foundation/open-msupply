@@ -1,11 +1,13 @@
+use crate::activity_log::activity_log_entry;
 use crate::invoice::common::check_master_list_for_store;
 use crate::purchase_order::common::get_lines_for_purchase_order;
 use crate::purchase_order::generate::generate_empty_purchase_order_lines;
 use crate::purchase_order::validate::check_purchase_order_exists;
 use crate::service_provider::ServiceContext;
 use repository::{
-    EqualFilter, ItemType, PurchaseOrderLine, PurchaseOrderLineFilter, PurchaseOrderLineRepository,
-    PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderRow, PurchaseOrderStatus,
+    ActivityLogType, EqualFilter, ItemType, PurchaseOrderLine, PurchaseOrderLineFilter,
+    PurchaseOrderLineRepository, PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
+    PurchaseOrderRow, PurchaseOrderStatus,
 };
 use repository::{
     MasterListLineFilter, MasterListLineRepository, RepositoryError, StorageConnection,
@@ -47,13 +49,29 @@ pub fn add_from_master_list(
             let purchase_order_line_row_repository =
                 PurchaseOrderLineRowRepository::new(connection);
 
-            for purchase_order_line_row in new_purchase_order_line_rows {
-                purchase_order_line_row_repository.upsert_one(&purchase_order_line_row)?;
+            let new_line_ids = new_purchase_order_line_rows
+                .iter()
+                .map(|line| line.id.clone())
+                .collect::<Vec<String>>();
+
+            if !new_purchase_order_line_rows.is_empty() {
+                for purchase_order_line_row in new_purchase_order_line_rows {
+                    purchase_order_line_row_repository.upsert_one(&purchase_order_line_row)?;
+
+                    activity_log_entry(
+                        &ctx,
+                        ActivityLogType::PurchaseOrderLineCreated,
+                        Some(purchase_order_line_row.id),
+                        None,
+                        None,
+                    )?;
+                }
             }
 
             match PurchaseOrderLineRepository::new(connection).query_by_filter(
                 PurchaseOrderLineFilter::new()
-                    .purchase_order_id(EqualFilter::equal_to(&input.purchase_order_id)),
+                    .purchase_order_id(EqualFilter::equal_to(&input.purchase_order_id))
+                    .id(EqualFilter::equal_any(new_line_ids)),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(InError::DatabaseError(error)),

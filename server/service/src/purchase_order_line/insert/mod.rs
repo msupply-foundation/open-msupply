@@ -1,6 +1,7 @@
-use crate::service_provider::ServiceContext;
+use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use repository::{
-    PurchaseOrderLineRow, PurchaseOrderLineRowRepository, RepositoryError, TransactionError,
+    ActivityLogType, PurchaseOrderLineRow, PurchaseOrderLineRowRepository, RepositoryError,
+    TransactionError,
 };
 
 mod generate;
@@ -35,6 +36,14 @@ pub fn insert_purchase_order_line(
         .connection
         .transaction_sync(|connection| {
             validate(store_id, &input, connection)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::PurchaseOrderLineCreated,
+                Some(input.id.clone()),
+                None,
+                None,
+            )?;
 
             let new_purchase_order_line = generate(connection, store_id, input.clone())?;
             PurchaseOrderLineRowRepository::new(connection).upsert_one(&new_purchase_order_line)?;

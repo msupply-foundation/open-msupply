@@ -5,7 +5,8 @@ mod insert {
             mock_name_a, mock_name_store_b, mock_store_a, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
+        ActivityLogRowRepository, ActivityLogType, PurchaseOrderRow, PurchaseOrderRowRepository,
+        PurchaseOrderStatus,
     };
 
     use crate::{
@@ -105,6 +106,14 @@ mod insert {
             .unwrap()
             .unwrap();
 
-        assert_eq!(result.id, purchase_order.id)
+        assert_eq!(result.id, purchase_order.id);
+
+        // Check logging of insertion
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_one_by_id("purchase_order_id")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderCreated);
     }
 }

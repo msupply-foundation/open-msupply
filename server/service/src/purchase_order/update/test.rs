@@ -6,7 +6,7 @@ mod update {
             mock_name_a, mock_name_store_b, mock_store_a, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        PurchaseOrderRowRepository, PurchaseOrderStatus,
+        ActivityLogRowRepository, ActivityLogType, PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
 
     use crate::{
@@ -133,7 +133,7 @@ mod update {
                     id: "purchase_order_id".to_string(),
                     supplier_discount_percentage: Some(discount_percentage),
                     comment: Some("Updated comment".to_string()),
-                    status: Some(PurchaseOrderStatus::Confirmed),
+                    status: Some(PurchaseOrderStatus::Authorised),
                     received_at_port_date: Some(NullableUpdate {
                         value: Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap()),
                     }),
@@ -161,10 +161,31 @@ mod update {
             expected_total_after_discount
         );
         assert_eq!(result.comment, Some("Updated comment".to_string()));
-        assert_eq!(result.status, PurchaseOrderStatus::Confirmed);
+        assert_eq!(result.status, PurchaseOrderStatus::Authorised);
         assert_eq!(
             result.received_at_port_date,
             Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap())
         );
+
+        // test activity log for updated
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_one_by_id("purchase_order_id")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderAuthorised);
+
+        // Set purchase order back to new status from authorised
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: "purchase_order_id".to_string(),
+                    status: Some(PurchaseOrderStatus::New),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
     }
 }
