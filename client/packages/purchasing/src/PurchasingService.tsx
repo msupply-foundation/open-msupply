@@ -16,7 +16,6 @@ const PurchasingService: FC = () => {
     .addPart(':purchaseOrderId')
     .build();
 
-  // New routes for Goods Received
   const goodsReceivedRoute = RouteBuilder.create(
     AppRoute.GoodsReceived
   ).build();
