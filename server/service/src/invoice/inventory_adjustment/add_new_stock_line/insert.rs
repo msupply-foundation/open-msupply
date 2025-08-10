@@ -31,6 +31,8 @@ pub struct AddNewStockLine {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -128,7 +130,6 @@ mod test {
         EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
         InvoiceStatus, ReasonOptionRow, ReasonOptionType,
     };
-    use util::inline_edit;
 
     use crate::{
         invoice::inventory_adjustment::add_new_stock_line::AddNewStockLine,
@@ -268,16 +269,10 @@ mod test {
             .unwrap();
 
         let stock_line_row = new_stock_line.stock_line_row;
-        assert_eq!(
-            stock_line_row,
-            inline_edit(&stock_line_row, |mut u| {
-                u.available_number_of_packs = 2.0;
-                u.total_number_of_packs = 2.0;
-                u.location_id = Some(mock_location_1().id);
-                u.on_hold = true;
-                u
-            })
-        );
+        assert_eq!(stock_line_row.available_number_of_packs, 2.0);
+        assert_eq!(stock_line_row.total_number_of_packs, 2.0);
+        assert_eq!(stock_line_row.location_id, Some(mock_location_1().id));
+        assert_eq!(stock_line_row.on_hold, true);
         let mut invoices = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().stock_line_id(stock_line_row.id))
             .unwrap();
@@ -299,21 +294,12 @@ mod test {
         let invoice_line = invoice_lines.pop().unwrap();
         let invoice_line_row = invoice_line.invoice_line_row;
 
-        assert_eq!(
-            invoice_row,
-            inline_edit(&invoice_row, |mut u| {
-                u.status = InvoiceStatus::Verified;
-                u
-            })
-        );
+        assert_eq!(invoice_row.status, InvoiceStatus::Verified);
 
+        assert_eq!(invoice_line_row.number_of_packs, 2.0);
         assert_eq!(
-            invoice_line_row,
-            inline_edit(&invoice_line_row, |mut u| {
-                u.number_of_packs = 2.0;
-                u.reason_option_id = Some(addition_reason().id);
-                u
-            })
+            invoice_line_row.reason_option_id,
+            Some(addition_reason().id)
         );
 
         let new_stock_line = service

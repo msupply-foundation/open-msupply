@@ -15,7 +15,7 @@ import {
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
-import { StockItemSearchInput, useReasonOptions } from '../..';
+import { StockItemSearchInput } from '../..';
 import { AppRoute } from '@openmsupply-client/config';
 
 interface NewStockLineModalProps {
@@ -33,7 +33,6 @@ export const NewStockLineModal = ({
   const pluginEvents = usePluginEvents({
     isDirty: false,
   });
-  const { data: reasonOptions } = useReasonOptions();
 
   const { Modal } = useDialog({
     isOpen,
@@ -131,6 +130,8 @@ export const NewStockLineModal = ({
                     dosesPerUnit: newItem.doses,
                   },
                   packSize: newItem.defaultPackSize,
+                  sellPricePerPack:
+                    newItem.itemStoreProperties?.defaultSellPricePerPack ?? 0,
                 })
               }
             />
@@ -147,7 +148,6 @@ export const NewStockLineModal = ({
               packEditable
               isNewModal
               pluginEvents={pluginEvents}
-              reasonOptions={reasonOptions?.nodes}
             />
           </Grid>
         )}

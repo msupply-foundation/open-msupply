@@ -152,33 +152,35 @@ mod test_insert {
         test_db::{setup_all, setup_all_with_data},
         NameRow, RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType,
     };
-    use util::{inline_edit, inline_init};
 
     #[actix_rt::test]
     async fn insert_response_requisition_errors() {
         fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
+            NameRow {
+                id: "not_visible".to_string(),
+                ..Default::default()
+            }
         }
 
         fn draft_response_requisition() -> RequisitionRow {
-            inline_init(|r: &mut RequisitionRow| {
-                r.id = "draft_response_requisition".to_string();
-                r.status = RequisitionStatus::Draft;
-                r.r#type = RequisitionType::Response;
-                r.name_link_id = mock_name_store_b().id;
-                r.store_id = mock_store_a().id.to_string();
-            })
+            RequisitionRow {
+                id: "draft_response_requisition".to_string(),
+                status: RequisitionStatus::Draft,
+                r#type: RequisitionType::Response,
+                name_link_id: mock_name_store_b().id,
+                store_id: mock_store_a().id.to_string(),
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_response_requisition_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible()];
-                r.requisitions = vec![draft_response_requisition()];
-            }),
+            MockData {
+                names: vec![not_visible()],
+                requisitions: vec![draft_response_requisition()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -192,9 +194,10 @@ mod test_insert {
         assert_eq!(
             service.insert_response_requisition(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisition| {
-                    r.id = draft_response_requisition().id;
-                }),
+                InsertResponseRequisition {
+                    id: draft_response_requisition().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionAlreadyExists)
         );
@@ -204,10 +207,11 @@ mod test_insert {
         assert_eq!(
             service.insert_response_requisition(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisition| {
-                    r.id = "new_response_requisition".to_string();
-                    r.other_party_id.clone_from(&name_store_c.id);
-                }),
+                InsertResponseRequisition {
+                    id: "new_response_requisition".to_string(),
+                    other_party_id: name_store_c.id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyNotACustomer)
         );
@@ -216,10 +220,11 @@ mod test_insert {
         assert_eq!(
             service.insert_response_requisition(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisition| {
-                    r.id = "new_id".to_string();
-                    r.other_party_id = not_visible().id;
-                })
+                InsertResponseRequisition {
+                    id: "new_id".to_string(),
+                    other_party_id: not_visible().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -228,10 +233,11 @@ mod test_insert {
         assert_eq!(
             service.insert_response_requisition(
                 &context,
-                inline_init(|r: &mut InsertResponseRequisition| {
-                    r.id = "new_response_requisition".to_string();
-                    r.other_party_id = "invalid".to_string();
-                }),
+                InsertResponseRequisition {
+                    id: "new_response_requisition".to_string(),
+                    other_party_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -270,16 +276,13 @@ mod test_insert {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_row,
-            inline_edit(&new_row, |mut u| {
-                u.id = "new_response_requisition".to_string();
-                u.user_id = Some(mock_user_account_a().id);
-                u.name_link_id = mock_name_store_b().id;
-                u.max_months_of_stock = 1.0;
-                u.min_months_of_stock = 0.5;
-                u
-            })
-        );
+        let mut expected = new_row.clone();
+        expected.id = "new_response_requisition".to_string();
+        expected.user_id = Some(mock_user_account_a().id);
+        expected.name_link_id = mock_name_store_b().id;
+        expected.max_months_of_stock = 1.0;
+        expected.min_months_of_stock = 0.5;
+
+        assert_eq!(new_row, expected);
     }
 }

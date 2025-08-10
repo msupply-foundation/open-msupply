@@ -1,7 +1,6 @@
 use chrono::{NaiveDate, NaiveTime};
 use repository::{SyncBufferRow, SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType};
 use serde_json::json;
-use util::inline_init;
 
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
@@ -44,11 +43,12 @@ pub fn message_1() -> TestSyncIncomingRecord {
 
     TestSyncIncomingRecord {
         translated_record: PullTranslateResult::upsert(row),
-        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TABLE_NAME.to_string();
-            r.record_id = MESSAGE_1.0.to_string();
-            r.data = MESSAGE_1.1.to_string();
-        }),
+        sync_buffer_row: SyncBufferRow {
+            table_name: TABLE_NAME.to_string(),
+            record_id: MESSAGE_1.0.to_string(),
+            data: MESSAGE_1.1.to_string(),
+            ..Default::default()
+        },
         extra_data: None,
     }
 }

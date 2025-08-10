@@ -22,6 +22,7 @@ pub struct RnRFormLine {
 #[derive(Clone, Default)]
 pub struct RnRFormLineFilter {
     pub rnr_form_id: Option<EqualFilter<String>>,
+    pub requisition_line_id: Option<EqualFilter<String>>,
 }
 
 pub enum RnRFormLineSortField {
@@ -119,9 +120,17 @@ fn create_filtered_query(filter: Option<RnRFormLineFilter>) -> BoxedRnRFormLineQ
         .into_boxed();
 
     if let Some(f) = filter {
-        let RnRFormLineFilter { rnr_form_id } = f;
+        let RnRFormLineFilter {
+            rnr_form_id,
+            requisition_line_id,
+        } = f;
 
         apply_equal_filter!(query, rnr_form_id, rnr_form_line::rnr_form_id);
+        apply_equal_filter!(
+            query,
+            requisition_line_id,
+            rnr_form_line::requisition_line_id
+        );
     }
     query
 }
@@ -133,6 +142,11 @@ impl RnRFormLineFilter {
 
     pub fn rnr_form_id(mut self, filter: EqualFilter<String>) -> Self {
         self.rnr_form_id = Some(filter);
+        self
+    }
+
+    pub fn requisition_line_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.requisition_line_id = Some(filter);
         self
     }
 }

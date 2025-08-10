@@ -368,7 +368,6 @@ impl PatientFilter {
 #[cfg(test)]
 mod tests {
     use chrono::{NaiveDate, Utc};
-    use util::inline_init;
 
     use crate::{
         mock::{mock_program_a, MockDataInserts},
@@ -393,12 +392,13 @@ mod tests {
             .unwrap();
         assert_eq!(result.first(), None);
 
-        let patient_row = inline_init(|row: &mut NameRow| {
-            row.id = "patient_1".to_string();
-            row.r#type = NameRowType::Patient;
-            row.code = "codePatient".to_string();
-            row.national_health_number = Some("nhnPatient".to_string());
-        });
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            r#type: NameRowType::Patient,
+            code: "codePatient".to_string(),
+            national_health_number: Some("nhnPatient".to_string()),
+            ..Default::default()
+        };
         NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();
@@ -477,41 +477,45 @@ mod tests {
 
         // add name and name_store_join
 
-        let patient_row = inline_init(|row: &mut NameRow| {
-            row.id = "patient_1".to_string();
-            row.name = "test_name".to_string();
-            row.r#type = NameRowType::Patient;
-            row.code = "codePatient".to_string();
-            row.national_health_number = Some("nhnPatient".to_string());
-        });
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            name: "test_name".to_string(),
+            r#type: NameRowType::Patient,
+            code: "codePatient".to_string(),
+            national_health_number: Some("nhnPatient".to_string()),
+            ..Default::default()
+        };
         NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();
 
         // test identifier OR
-        let patient_row_a = inline_init(|row: &mut NameRow| {
-            row.id = "patient_a".to_string();
-            row.name = "patient_a_name".to_string();
-            row.r#type = NameRowType::Patient;
-            row.code = "example111".to_string();
-            row.national_health_number = Some("patient_a_nhn".to_string());
-        });
+        let patient_row_a = NameRow {
+            id: "patient_a".to_string(),
+            name: "patient_a_name".to_string(),
+            r#type: NameRowType::Patient,
+            code: "example111".to_string(),
+            national_health_number: Some("patient_a_nhn".to_string()),
+            ..Default::default()
+        };
 
-        let patient_row_b = inline_init(|row: &mut NameRow| {
-            row.id = "patient_b".to_string();
-            row.name = "patient_b_name".to_string();
-            row.r#type = NameRowType::Patient;
-            row.code = "patient_b_code".to_string();
-            row.national_health_number = Some("example222".to_string());
-        });
+        let patient_row_b = NameRow {
+            id: "patient_b".to_string(),
+            name: "patient_b_name".to_string(),
+            r#type: NameRowType::Patient,
+            code: "patient_b_code".to_string(),
+            national_health_number: Some("example222".to_string()),
+            ..Default::default()
+        };
 
-        let patient_row_c = inline_init(|row: &mut NameRow| {
-            row.id = "patient_c".to_string();
-            row.name = "example_name".to_string();
-            row.r#type = NameRowType::Patient;
-            row.code = "code333".to_string();
-            row.national_health_number = Some("patient_c_nhn".to_string());
-        });
+        let patient_row_c = NameRow {
+            id: "patient_c".to_string(),
+            name: "example_name".to_string(),
+            r#type: NameRowType::Patient,
+            code: "code333".to_string(),
+            national_health_number: Some("patient_c_nhn".to_string()),
+            ..Default::default()
+        };
         NameRowRepository::new(&connection)
             .upsert_one(&patient_row_a)
             .unwrap();
@@ -621,12 +625,13 @@ mod tests {
         .await;
 
         // add name and name_store_join
-        let patient_row = inline_init(|row: &mut NameRow| {
-            row.id = "patient_1".to_string();
-            row.r#type = NameRowType::Patient;
-            row.code = "codePatient".to_string();
-            row.national_health_number = Some("nhnPatient".to_string());
-        });
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            r#type: NameRowType::Patient,
+            code: "codePatient".to_string(),
+            national_health_number: Some("nhnPatient".to_string()),
+            ..Default::default()
+        };
         NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();
@@ -667,10 +672,11 @@ mod tests {
         let (_, connection, _, _) =
             test_db::setup_all("test_name_date_of_death", MockDataInserts::none()).await;
 
-        let patient_row = inline_init(|row: &mut NameRow| {
-            row.id = "patient_1".to_string();
-            row.r#type = NameRowType::Patient;
-        });
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
         NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();
@@ -687,11 +693,12 @@ mod tests {
         assert_eq!(result.len(), 1);
 
         // Add date of death
-        let patient_row = inline_init(|row: &mut NameRow| {
-            row.id = "patient_1".to_string();
-            row.r#type = NameRowType::Patient;
-            row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 9, 20).unwrap())
-        });
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            r#type: NameRowType::Patient,
+            date_of_death: Some(NaiveDate::from_ymd_opt(2023, 9, 20).unwrap()),
+            ..Default::default()
+        };
         NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();

@@ -1,6 +1,5 @@
 use repository::{asset_log_reason_row::AssetLogReasonRow, asset_log_row::AssetLogStatus};
 use serde_json::json;
-use util::Defaults;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
@@ -40,7 +39,10 @@ fn asset_log_reason2() -> AssetLogReasonRow {
         id: ASSET_LOG_REASON2.0.to_string(),
         asset_log_status: AssetLogStatus::Functioning,
         reason: "test_reason_for_deleted".to_string(),
-        deleted_datetime: Some(Defaults::naive_date_time()),
+        deleted_datetime: Some(
+            chrono::NaiveDateTime::parse_from_str("2020-01-22T15:16:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap(),
+        ),
     }
 }
 

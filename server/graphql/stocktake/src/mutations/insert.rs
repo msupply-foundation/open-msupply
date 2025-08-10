@@ -18,6 +18,7 @@ pub struct InsertInput {
     pub master_list_id: Option<String>,
     pub include_all_master_list_items: Option<bool>,
     pub location_id: Option<String>,
+    pub vvm_status_id: Option<String>,
     pub expires_before: Option<NaiveDate>,
     pub is_initial_stocktake: Option<bool>,
     pub create_blank_stocktake: Option<bool>,
@@ -93,6 +94,7 @@ impl InsertInput {
             id,
             location_id,
             master_list_id,
+            vvm_status_id,
             include_all_master_list_items,
             expires_before,
             create_blank_stocktake,
@@ -106,6 +108,7 @@ impl InsertInput {
             comment,
             location_id,
             master_list_id,
+            vvm_status_id,
             include_all_master_list_items,
             expires_before,
             is_initial_stocktake,
@@ -127,7 +130,6 @@ mod test {
             StocktakeServiceTrait, {InsertStocktake, InsertStocktakeError},
         },
     };
-    use util::inline_init;
 
     use crate::StocktakeMutations;
 
@@ -187,7 +189,10 @@ mod test {
                 }
             );
             // StocktakeNode result is checked in queries
-            Ok(inline_init(|r: &mut StocktakeRow| r.id = "id1".to_string()))
+            Ok(StocktakeRow {
+                id: "id1".to_string(),
+                ..Default::default()
+            })
         }));
         let variables = Some(json!({
             "storeId": "store id",

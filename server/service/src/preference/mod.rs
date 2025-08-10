@@ -30,6 +30,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_contact_tracing,
             use_campaigns,
             custom_translations,
+            sync_records_display_threshold,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -53,6 +54,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(use_campaigns, &mut prefs, &input)?;
         append_if_type(custom_translations, &mut prefs, &input)?;
+        append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
         // Store preferences
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;

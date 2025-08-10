@@ -2,13 +2,15 @@ import React, { useMemo } from 'react';
 import {
   Autocomplete,
   LocaleKey,
+  RegexUtils,
   useIntl,
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
+import { findMatchingPluralisationKeys } from './helpers';
 
 interface TranslationSearchInputProps {
-  onChange: (option: TranslationOption | null) => void;
+  onChange: (option: TranslationOption[]) => void;
   existingKeys: string[];
 }
 
@@ -44,10 +46,19 @@ export const TranslationSearchInput = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingKeys.length]);
 
+  const handleSelect = (option: TranslationOption | null) => {
+    if (!option) return;
+    const matchingOptions = findMatchingPluralisationKeys(
+      option,
+      nonTranslatedOptions
+    );
+    onChange(matchingOptions);
+  };
+
   return (
     <Autocomplete
       onChange={(_, option) => {
-        onChange(option);
+        handleSelect(option);
       }}
       options={nonTranslatedOptions}
       sx={{ width: '100%' }}
@@ -59,10 +70,11 @@ export const TranslationSearchInput = ({
       )}
       filterOptions={(options, { inputValue }) =>
         options.filter(o => {
-          const caseInsensitive = new RegExp(inputValue, 'i');
+          const searchTerm = RegexUtils.escapeChars(inputValue);
           return (
             // Search by key or default translation
-            o.key.match(caseInsensitive) || o.default.match(caseInsensitive)
+            RegexUtils.includes(searchTerm, o.key) ||
+            RegexUtils.includes(searchTerm, o.default)
           );
         })
       }

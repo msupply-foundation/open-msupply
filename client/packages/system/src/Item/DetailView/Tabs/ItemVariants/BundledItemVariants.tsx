@@ -17,6 +17,7 @@ import {
   RouteBuilder,
   Link,
   Tooltip,
+  Box,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -39,7 +40,7 @@ export const BundledItemVariants = ({
   const isBundledOnOtherVariants = variant.bundlesWith.length > 0;
 
   return (
-    <>
+    <Box>
       {isOpen && (
         <BundledItemModal onClose={onClose} bundle={entity} variant={variant} />
       )}
@@ -72,7 +73,7 @@ export const BundledItemVariants = ({
           <BundledOn variant={variant} />
         </>
       )}
-    </>
+    </Box>
   );
 };
 

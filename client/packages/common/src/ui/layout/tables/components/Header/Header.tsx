@@ -1,5 +1,11 @@
 import React, { FC, PropsWithChildren } from 'react';
-import { TableCell, TableRow, TableSortLabel, Tooltip } from '@mui/material';
+import {
+  SxProps,
+  TableCell,
+  TableRow,
+  TableSortLabel,
+  Tooltip,
+} from '@mui/material';
 import { Column } from '../../columns/types';
 import { InfoOutlineIcon, SortDescIcon } from '@common/icons';
 import { RecordWithId } from '@common/types';
@@ -11,14 +17,14 @@ import {
 } from '@common/intl';
 import { tooltipPlacement } from '../tooltipPlacement';
 
-export const HeaderRow: FC<PropsWithChildren<{ dense?: boolean }>> = ({
-  dense,
-  ...props
-}) => (
+export const HeaderRow: FC<
+  PropsWithChildren<{ dense?: boolean; sx?: SxProps }>
+> = ({ dense, sx, ...props }) => (
   <TableRow
     {...props}
     sx={{
       height: !!dense ? '40px' : '60px',
+      ...sx,
     }}
   />
 );

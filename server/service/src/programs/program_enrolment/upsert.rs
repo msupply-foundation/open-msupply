@@ -220,7 +220,6 @@ mod test {
     use serde_json::json;
     use util::{
         constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-        inline_init,
     };
 
     use crate::{
@@ -359,10 +358,11 @@ mod test {
 
         // success insert
 
-        let program = inline_init(|v: &mut SchemaProgramEnrolment| {
-            v.enrolment_datetime = Utc::now().with_nanosecond(0).unwrap().to_rfc3339();
-            v.program_enrolment_id = Some("patient id 1".to_string());
-        });
+        let program = SchemaProgramEnrolment {
+            enrolment_datetime: Utc::now().with_nanosecond(0).unwrap().to_rfc3339(),
+            program_enrolment_id: Some("patient id 1".to_string()),
+            ..Default::default()
+        };
 
         service
             .upsert_program_enrolment(

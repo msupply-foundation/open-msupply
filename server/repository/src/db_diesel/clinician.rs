@@ -249,7 +249,6 @@ mod tests {
         ClinicianRowRepositoryTrait, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository,
         StringFilter,
     };
-    use util::inline_init;
 
     #[actix_rt::test]
     async fn test_clinician_repository() {
@@ -261,16 +260,18 @@ mod tests {
         .await;
 
         ClinicianRowRepository::new(&storage_connection)
-            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
-                r.id = "clinician_store_a".to_string();
-                r.first_name = Some("First".to_string());
-            }))
+            .upsert_one(&ClinicianRow {
+                id: "clinician_store_a".to_string(),
+                first_name: Some("First".to_string()),
+                ..Default::default()
+            })
             .unwrap();
         ClinicianRowRepository::new(&storage_connection)
-            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
-                r.id = "clinician_store_b".to_string();
-                r.first_name = Some("First".to_string());
-            }))
+            .upsert_one(&ClinicianRow {
+                id: "clinician_store_b".to_string(),
+                first_name: Some("First".to_string()),
+                ..Default::default()
+            })
             .unwrap();
 
         // no store join no results:

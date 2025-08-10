@@ -133,7 +133,8 @@ mod graphql {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, StockLine, StorageConnectionManager,
+        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, StockLine, StockLineRow,
+        StorageConnectionManager,
     };
     use serde_json::json;
 
@@ -147,7 +148,6 @@ mod graphql {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
 
     use crate::InvoiceLineMutations;
 
@@ -312,33 +312,58 @@ mod graphql {
         let test_service = TestService(Box::new(|line_id| {
             assert_eq!(line_id, "unallocated_line");
             Ok(ServiceResult {
-                inserts: vec![inline_init(|r: &mut InvoiceLine| {
-                    r.invoice_line_row =
-                        inline_init(|r: &mut InvoiceLineRow| r.id = "insert1".to_string())
-                })],
+                inserts: vec![InvoiceLine {
+                    invoice_line_row: InvoiceLineRow {
+                        id: "insert1".to_string(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }],
                 deletes: vec!["delete1".to_string()],
                 updates: vec![
-                    inline_init(|r: &mut InvoiceLine| {
-                        r.invoice_line_row =
-                            inline_init(|r: &mut InvoiceLineRow| r.id = "update1".to_string())
-                    }),
-                    inline_init(|r: &mut InvoiceLine| {
-                        r.invoice_line_row =
-                            inline_init(|r: &mut InvoiceLineRow| r.id = "update2".to_string())
-                    }),
+                    InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            id: "update1".to_string(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
+                    InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            id: "update2".to_string(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 ],
-                skipped_expired_stock_lines: vec![inline_init(|r: &mut StockLine| {
-                    r.stock_line_row.id = "skpped_expired".to_string();
-                })],
-                skipped_on_hold_stock_lines: vec![inline_init(|r: &mut StockLine| {
-                    r.stock_line_row.id = "skipped_on_hold".to_string();
-                })],
-                skipped_unusable_vvm_status_lines: vec![inline_init(|r: &mut StockLine| {
-                    r.stock_line_row.id = "skipped_unusable".to_string();
-                })],
-                issued_expiring_soon_stock_lines: vec![inline_init(|r: &mut StockLine| {
-                    r.stock_line_row.id = "expiring_soon".to_string();
-                })],
+                skipped_expired_stock_lines: vec![StockLine {
+                    stock_line_row: StockLineRow {
+                        id: "skipped_expired".to_string(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }],
+                skipped_on_hold_stock_lines: vec![StockLine {
+                    stock_line_row: StockLineRow {
+                        id: "skipped_on_hold".to_string(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }],
+                skipped_unusable_vvm_status_lines: vec![StockLine {
+                    stock_line_row: StockLineRow {
+                        id: "skipped_unusable".to_string(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }],
+                issued_expiring_soon_stock_lines: vec![StockLine {
+                    stock_line_row: StockLineRow {
+                        id: "expiring_soon".to_string(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }],
             })
         }));
 
@@ -361,7 +386,7 @@ mod graphql {
                 },
                 "skippedExpiredStockLines": {
                     "nodes": [{
-                        "id": "skpped_expired"
+                        "id": "skipped_expired"
                     }]
                 },
                 "skippedOnHoldStockLines": {

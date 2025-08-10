@@ -360,7 +360,6 @@ mod test {
         Requisition, RequisitionRow,
     };
     use serde_json::json;
-    use util::inline_init;
 
     use crate::types::RequisitionNode;
 
@@ -381,27 +380,35 @@ mod test {
         impl TestQuery {
             pub async fn test_query_user_exists(&self) -> RequisitionNode {
                 RequisitionNode {
-                    requisition: inline_init(|r: &mut Requisition| {
-                        r.requisition_row = inline_init(|r: &mut RequisitionRow| {
-                            r.user_id = Some(mock_user_account_a().id);
-                        })
-                    }),
+                    requisition: Requisition {
+                        requisition_row: RequisitionRow {
+                            user_id: Some(mock_user_account_a().id),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
             pub async fn test_query_user_does_not_exist(&self) -> RequisitionNode {
                 RequisitionNode {
-                    requisition: inline_init(|r: &mut Requisition| {
-                        r.requisition_row = inline_init(|r: &mut RequisitionRow| {
-                            r.user_id = Some("does not exist".to_string());
-                        })
-                    }),
+                    requisition: Requisition {
+                        requisition_row: RequisitionRow {
+                            user_id: Some("does not exist".to_string()),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
             pub async fn test_query_user_not_associated(&self) -> RequisitionNode {
                 RequisitionNode {
-                    requisition: inline_init(|r: &mut Requisition| {
-                        r.requisition_row = inline_init(|r: &mut RequisitionRow| r.user_id = None)
-                    }),
+                    requisition: Requisition {
+                        requisition_row: RequisitionRow {
+                            user_id: None,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
         }
@@ -458,9 +465,10 @@ mod test {
         impl TestQuery {
             pub async fn test_query(&self) -> RequisitionNode {
                 RequisitionNode {
-                    requisition: inline_init(|r: &mut Requisition| {
-                        r.requisition_row = TestData::requisition()
-                    }),
+                    requisition: Requisition {
+                        requisition_row: TestData::requisition(),
+                        ..Default::default()
+                    },
                 }
             }
         }

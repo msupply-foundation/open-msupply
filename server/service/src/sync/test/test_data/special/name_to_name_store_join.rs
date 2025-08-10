@@ -1,6 +1,5 @@
 use repository::{mock::MockData, NameRow, NameStoreJoinRow, StoreRow, SyncBufferRow};
 use serde_json::json;
-use util::{inline_edit, inline_init};
 
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
@@ -112,22 +111,25 @@ const NAME_1: (&str, &str) = (
 );
 
 pub fn name1() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = NAME_1.0.to_string();
-    })
+    NameRow {
+        id: NAME_1.0.to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn name2() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "609F9BAB7313424CB05A3B3D26F4E6FA".to_string();
-    })
+    NameRow {
+        id: "609F9BAB7313424CB05A3B3D26F4E6FA".to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn store() -> StoreRow {
-    inline_init(|r: &mut StoreRow| {
-        r.id = "8576512519B44CCF840E191BABA89596".to_string();
-        r.name_link_id = name2().id;
-    })
+    StoreRow {
+        id: "8576512519B44CCF840E191BABA89596".to_string(),
+        name_link_id: name2().id,
+        ..Default::default()
+    }
 }
 
 pub fn name_store_join1() -> NameStoreJoinRow {
@@ -163,27 +165,31 @@ pub fn name_store_join3() -> NameStoreJoinRow {
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord {
         translated_record: PullTranslateResult::upserts(vec![
-            inline_edit(&name_store_join1(), |mut r| {
+            {
+                let mut r = name_store_join1().clone();
                 r.name_is_customer = true;
                 r.name_is_supplier = false;
                 r
-            }),
-            inline_edit(&name_store_join2(), |mut r| {
+            },
+            {
+                let mut r = name_store_join2().clone();
                 r.name_is_customer = true;
                 r.name_is_supplier = false;
                 r
-            }),
+            },
         ]),
-        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = "name".to_string();
-            r.record_id = NAME_1.0.to_string();
-            r.data = NAME_1.1.to_string();
+        sync_buffer_row: SyncBufferRow {
+            table_name: "name".to_string(),
+            record_id: NAME_1.0.to_string(),
+            data: NAME_1.1.to_string(),
+            ..Default::default()
+        },
+        extra_data: Some(MockData {
+            stores: vec![store()],
+            names: vec![name1(), name2()],
+            name_store_joins: vec![name_store_join1(), name_store_join2(), name_store_join3()],
+            ..Default::default()
         }),
-        extra_data: Some(inline_init(|r: &mut MockData| {
-            r.stores = vec![store()];
-            r.names = vec![name1(), name2()];
-            r.name_store_joins = vec![name_store_join1(), name_store_join2(), name_store_join3()]
-        })),
     }]
 }
 

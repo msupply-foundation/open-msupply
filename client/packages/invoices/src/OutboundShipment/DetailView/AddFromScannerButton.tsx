@@ -12,17 +12,16 @@ import {
   Box,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
-import { isOutboundDisabled } from '../../utils';
 import { ScannedBarcode } from '../../types';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
+  disabled,
 }: {
   onAddItem: (scannedBarcode?: ScannedBarcode) => void;
+  disabled: boolean;
 }) => {
   const t = useTranslation();
-  const { data: outbound } = useOutbound.document.get();
-  const isDisabled = !!outbound && isOutboundDisabled(outbound);
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
@@ -31,17 +30,17 @@ export const AddFromScannerButtonComponent = ({
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
-      const { content, gtin, batch } = result;
+      const { content, gtin, batch, expiryDate } = result;
       const value = gtin ?? content;
       const barcode = await getBarcode(value);
 
       // Barcode exists
       if (barcode?.__typename === 'BarcodeNode') {
-        onAddItem({ ...barcode, batch });
+        onAddItem({ ...barcode, batch, expiryDate: expiryDate ?? undefined });
       } else {
         warning(t('error.no-matching-item'))();
 
-        onAddItem({ gtin: value, batch });
+        onAddItem({ gtin: value, batch, expiryDate: expiryDate ?? undefined });
       }
     }
   };
@@ -87,7 +86,7 @@ export const AddFromScannerButtonComponent = ({
       <Box>
         <ButtonWithIcon
           ref={buttonRef}
-          disabled={isDisabled || !isConnected}
+          disabled={disabled || !isConnected}
           onClick={handleClick}
           Icon={
             isScanning ? (

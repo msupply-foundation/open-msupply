@@ -19,8 +19,8 @@ pub fn generate(
     Ok(PurchaseOrderRow {
         id: input.id,
         store_id: store_id.to_string(),
-        user_id: Some(user_id.to_string()),
-        supplier_name_link_id: Some(input.supplier_id),
+        created_by: Some(user_id.to_string()),
+        supplier_name_link_id: input.supplier_id,
         purchase_order_number,
         created_datetime,
         status: PurchaseOrderStatus::New,

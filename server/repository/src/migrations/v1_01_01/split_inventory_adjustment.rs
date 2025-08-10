@@ -75,7 +75,7 @@ async fn split_inventory_adjustment() {
                 ('invoice3', {default}, $1, 'INVENTORY_ADJUSTMENT');
         "#
         ))
-        .bind::<Timestamp, _>(util::Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -89,7 +89,7 @@ async fn split_inventory_adjustment() {
                 ('stocktake1', 1, 'store_id', '', $1, 'NEW', 'invoice1')
         "#
         ).to_string())
-        .bind::<Timestamp, _>(util::Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -107,7 +107,7 @@ async fn split_inventory_adjustment() {
                 ('invoice4', {default}, $1, 'INVENTORY_REDUCTION');
         "#
         ))
-        .bind::<Timestamp, _>(util::Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 

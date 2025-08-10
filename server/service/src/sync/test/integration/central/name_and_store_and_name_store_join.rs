@@ -11,7 +11,7 @@ use repository::{
 
 use serde_json::json;
 use util::{
-    inline_init, merge_json,
+    merge_json,
     uuid::{small_uuid, uuid},
 };
 
@@ -83,12 +83,13 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "custom_data": {"check":"check"},
         });
 
-        let name_row2 = inline_init(|r: &mut NameRow| {
-            r.id = uuid();
-            r.r#type = NameRowType::Facility;
-            r.is_customer = true;
-            r.is_supplier = false;
-        });
+        let name_row2 = NameRow {
+            id: uuid(),
+            r#type: NameRowType::Facility,
+            is_customer: true,
+            is_supplier: false,
+            ..Default::default()
+        };
         let mut name_json2 = json!({
             "ID": name_row2.id,
             "type": "facility",

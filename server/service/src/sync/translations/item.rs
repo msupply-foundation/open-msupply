@@ -8,7 +8,10 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
-    translations::{category::CategoryTranslation, unit::UnitTranslation},
+    translations::{
+        category::CategoryTranslation, location_type::LocationTypeTranslation,
+        unit::UnitTranslation,
+    },
     CentralServerConfig,
 };
 
@@ -41,6 +44,8 @@ pub struct LegacyItemRow {
     doses: i32,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     category_ID: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    restricted_location_type_ID: Option<String>,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemType {
@@ -97,7 +102,10 @@ impl SyncTranslation for ItemTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        let mut deps = vec![UnitTranslation.table_name()];
+        let mut deps = vec![
+            UnitTranslation.table_name(),
+            LocationTypeTranslation.table_name(),
+        ];
         deps.extend(CategoryTranslation.table_names());
 
         deps
@@ -129,6 +137,7 @@ impl SyncTranslation for ItemTranslation {
             strength: data.strength,
             ven_category: to_ven_category(data.VEN_category),
             vaccine_doses: data.doses,
+            restricted_location_type_id: data.restricted_location_type_ID,
         };
 
         integration_operations.push(IntegrationOperation::upsert(item_row));
@@ -185,6 +194,7 @@ impl SyncTranslation for ItemTranslation {
             strength,
             ven_category,
             vaccine_doses,
+            restricted_location_type_id,
         } = item;
 
         let legacy_row = LegacyItemRow {
@@ -202,6 +212,7 @@ impl SyncTranslation for ItemTranslation {
             // Probably better to move management of categories to OMS Central than
             // build out the syncing back and forth of categories to OG!
             category_ID: None,
+            restricted_location_type_ID: restricted_location_type_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;

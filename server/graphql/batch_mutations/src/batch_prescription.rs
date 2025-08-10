@@ -293,7 +293,8 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, RepositoryError, StorageConnectionManager,
+        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, RepositoryError,
+        StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -313,7 +314,6 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
     };
-    use util::inline_init;
 
     use crate::BatchMutations;
 
@@ -485,27 +485,31 @@ mod test {
             Ok(BatchPrescriptionResult {
                 insert_prescription: vec![],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertStockOutLine| {
-                        input.id = "id2".to_string()
-                    }),
+                    input: InsertStockOutLine {
+                        id: "id2".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertStockOutLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateStockOutLine| {
-                        input.id = "id3".to_string()
-                    }),
+                    input: UpdateStockOutLine {
+                        id: "id3".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(UpdateStockOutLineError::LineDoesNotExist {}),
                 }],
                 delete_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteStockOutLine| {
-                        input.id = "id4".to_string()
-                    }),
+                    input: DeleteStockOutLine {
+                        id: "id4".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(DeleteStockOutLineError::LineDoesNotExist {}),
                 }],
                 update_prescription: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdatePrescription| {
-                        input.id = "id12".to_string()
-                    }),
+                    input: UpdatePrescription {
+                        id: "id12".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(UpdatePrescriptionError::InvoiceDoesNotExist {}),
                 }],
                 delete_prescription: vec![InputWithResult {
@@ -513,9 +517,10 @@ mod test {
                     result: Err(DeletePrescriptionError::InvoiceDoesNotExist {}),
                 }],
                 set_prescribed_quantity: vec![InputWithResult {
-                    input: inline_init(|input: &mut SetPrescribedQuantity| {
-                        input.invoice_id = "id15".to_string()
-                    }),
+                    input: SetPrescribedQuantity {
+                        invoice_id: "id15".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(SetPrescribedQuantityError::InvoiceDoesNotExist),
                 }],
             })
@@ -545,9 +550,10 @@ mod test {
                     result: Err(InsertPrescriptionError::PatientDoesNotExist),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertStockOutLine| {
-                        input.id = "id2".to_string()
-                    }),
+                    input: InsertStockOutLine {
+                        id: "id2".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertStockOutLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![],
@@ -597,13 +603,18 @@ mod test {
                 insert_prescription: vec![],
                 insert_line: vec![],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateStockOutLine| {
-                        input.id = "id3".to_string();
-                        input.r#type = Some(StockOutType::Prescription)
+                    input: UpdateStockOutLine {
+                        id: "id3".to_string(),
+                        r#type: Some(StockOutType::Prescription),
+                        ..Default::default()
+                    },
+                    result: Ok(InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            id: "id3".to_string(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
                     }),
-                    result: Ok(inline_init(|input: &mut InvoiceLine| {
-                        input.invoice_line_row.id = "id3".to_string()
-                    })),
                 }],
                 delete_line: vec![],
                 update_prescription: vec![],

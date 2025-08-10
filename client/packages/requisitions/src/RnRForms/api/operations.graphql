@@ -4,6 +4,9 @@ fragment RnRForm on RnRFormNode {
   periodId
   periodName
   periodLength
+  period {
+    ...Period
+  }
   programId
   programName
   supplierName

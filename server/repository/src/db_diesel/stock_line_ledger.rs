@@ -129,6 +129,13 @@ impl<'a> StockLineLedgerRepository<'a> {
         StockLineLedgerRepository { connection }
     }
 
+    pub fn query_by_filter(
+        &self,
+        filter: StockLineLedgerFilter,
+    ) -> Result<Vec<StockLineLedgerRow>, RepositoryError> {
+        self.query(Pagination::all(), Some(filter), None)
+    }
+
     pub fn count(&self, filter: Option<StockLineLedgerFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(query

@@ -13,7 +13,6 @@ export type StockLineRowFragment = {
   id: string;
   itemId: string;
   locationId?: string | null;
-  itemVariantId?: string | null;
   vvmStatusId?: string | null;
   locationName?: string | null;
   onHold: boolean;
@@ -22,6 +21,8 @@ export type StockLineRowFragment = {
   storeId: string;
   totalNumberOfPacks: number;
   supplierName?: string | null;
+  volumePerPack: number;
+  totalVolume: number;
   barcode?: string | null;
   location?: {
     __typename: 'LocationNode';
@@ -29,8 +30,10 @@ export type StockLineRowFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    volume: number;
+    volumeUsed: number;
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -43,6 +46,7 @@ export type StockLineRowFragment = {
     name: string;
     unitName?: string | null;
     isVaccine: boolean;
+    restrictedLocationTypeId?: string | null;
     dosesPerUnit: number;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
@@ -64,19 +68,30 @@ export type StockLineRowFragment = {
         id: string;
         description: string;
         code: string;
-        level: number;
+        priority: number;
       } | null;
     }>;
   } | null;
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
+  } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -89,8 +104,10 @@ export type RepackStockLineFragment = {
     name: string;
     onHold: boolean;
     code: string;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    volume: number;
+    volumeUsed: number;
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       maxTemperature: number;
@@ -114,8 +131,10 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      volume: number;
+      volumeUsed: number;
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -133,8 +152,10 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      volume: number;
+      volumeUsed: number;
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -191,7 +212,7 @@ export type VvmStatusLogRowFragment = {
     id: string;
     description: string;
     code: string;
-    level: number;
+    priority: number;
   } | null;
 };
 
@@ -218,7 +239,6 @@ export type StockLinesQuery = {
       id: string;
       itemId: string;
       locationId?: string | null;
-      itemVariantId?: string | null;
       vvmStatusId?: string | null;
       locationName?: string | null;
       onHold: boolean;
@@ -227,6 +247,8 @@ export type StockLinesQuery = {
       storeId: string;
       totalNumberOfPacks: number;
       supplierName?: string | null;
+      volumePerPack: number;
+      totalVolume: number;
       barcode?: string | null;
       location?: {
         __typename: 'LocationNode';
@@ -234,8 +256,10 @@ export type StockLinesQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        volume: number;
+        volumeUsed: number;
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -248,6 +272,7 @@ export type StockLinesQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
@@ -272,22 +297,33 @@ export type StockLinesQuery = {
             id: string;
             description: string;
             code: string;
-            level: number;
+            priority: number;
           } | null;
         }>;
       } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
         name: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
     }>;
   };
@@ -312,7 +348,6 @@ export type StockLineQuery = {
       id: string;
       itemId: string;
       locationId?: string | null;
-      itemVariantId?: string | null;
       vvmStatusId?: string | null;
       locationName?: string | null;
       onHold: boolean;
@@ -321,6 +356,8 @@ export type StockLineQuery = {
       storeId: string;
       totalNumberOfPacks: number;
       supplierName?: string | null;
+      volumePerPack: number;
+      totalVolume: number;
       barcode?: string | null;
       location?: {
         __typename: 'LocationNode';
@@ -328,8 +365,10 @@ export type StockLineQuery = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        volume: number;
+        volumeUsed: number;
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
@@ -342,6 +381,7 @@ export type StockLineQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
@@ -366,22 +406,33 @@ export type StockLineQuery = {
             id: string;
             description: string;
             code: string;
-            level: number;
+            priority: number;
           } | null;
         }>;
       } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
         name: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
     }>;
   };
@@ -443,7 +494,6 @@ export type UpdateStockLineMutation = {
         id: string;
         itemId: string;
         locationId?: string | null;
-        itemVariantId?: string | null;
         vvmStatusId?: string | null;
         locationName?: string | null;
         onHold: boolean;
@@ -452,6 +502,8 @@ export type UpdateStockLineMutation = {
         storeId: string;
         totalNumberOfPacks: number;
         supplierName?: string | null;
+        volumePerPack: number;
+        totalVolume: number;
         barcode?: string | null;
         location?: {
           __typename: 'LocationNode';
@@ -459,8 +511,10 @@ export type UpdateStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          volume: number;
+          volumeUsed: number;
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -473,6 +527,7 @@ export type UpdateStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
           dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
@@ -497,22 +552,37 @@ export type UpdateStockLineMutation = {
               id: string;
               description: string;
               code: string;
-              level: number;
+              priority: number;
             } | null;
           }>;
         } | null;
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
-          level: number;
+          priority: number;
           unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        program?: {
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
           name: string;
+        } | null;
+        itemVariant?: {
+          __typename: 'ItemVariantNode';
+          id: string;
+          packagingVariants: Array<{
+            __typename: 'PackagingVariantNode';
+            id: string;
+            packSize?: number | null;
+            volumePerUnit?: number | null;
+          }>;
         } | null;
       }
     | { __typename: 'UpdateStockLineError' };
@@ -542,8 +612,10 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            volume: number;
+            volumeUsed: number;
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -561,8 +633,10 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            volume: number;
+            volumeUsed: number;
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -598,8 +672,10 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          volume: number;
+          volumeUsed: number;
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -617,8 +693,10 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          volume: number;
+          volumeUsed: number;
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -642,7 +720,7 @@ export type VvmStatusQuery = {
       __typename: 'VvmstatusNode';
       description: string;
       id: string;
-      level: number;
+      priority: number;
       reasonId?: string | null;
       unusable: boolean;
     }>;
@@ -732,7 +810,6 @@ export type InsertStockLineMutation = {
         id: string;
         itemId: string;
         locationId?: string | null;
-        itemVariantId?: string | null;
         vvmStatusId?: string | null;
         locationName?: string | null;
         onHold: boolean;
@@ -741,6 +818,8 @@ export type InsertStockLineMutation = {
         storeId: string;
         totalNumberOfPacks: number;
         supplierName?: string | null;
+        volumePerPack: number;
+        totalVolume: number;
         barcode?: string | null;
         location?: {
           __typename: 'LocationNode';
@@ -748,8 +827,10 @@ export type InsertStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          volume: number;
+          volumeUsed: number;
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -762,6 +843,7 @@ export type InsertStockLineMutation = {
           name: string;
           unitName?: string | null;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
           dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
@@ -786,22 +868,37 @@ export type InsertStockLineMutation = {
               id: string;
               description: string;
               code: string;
-              level: number;
+              priority: number;
             } | null;
           }>;
         } | null;
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
-          level: number;
+          priority: number;
           unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        program?: {
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
           name: string;
+        } | null;
+        itemVariant?: {
+          __typename: 'ItemVariantNode';
+          id: string;
+          packagingVariants: Array<{
+            __typename: 'PackagingVariantNode';
+            id: string;
+            packSize?: number | null;
+            volumePerUnit?: number | null;
+          }>;
         } | null;
       };
 };
@@ -810,7 +907,7 @@ export type VvmStatusFragment = {
   __typename: 'VvmstatusNode';
   description: string;
   id: string;
-  level: number;
+  priority: number;
   reasonId?: string | null;
   unusable: boolean;
 };
@@ -827,7 +924,7 @@ export type ActiveVvmStatusesQuery = {
       __typename: 'VvmstatusNode';
       description: string;
       id: string;
-      level: number;
+      priority: number;
       reasonId?: string | null;
       unusable: boolean;
     }>;
@@ -871,7 +968,7 @@ export const VvmStatusLogRowFragmentDoc = gql`
       id
       description
       code
-      level
+      priority
     }
     createdDatetime
     comment
@@ -886,7 +983,6 @@ export const StockLineRowFragmentDoc = gql`
     id
     itemId
     locationId
-    itemVariantId
     vvmStatusId
     locationName
     onHold
@@ -895,6 +991,8 @@ export const StockLineRowFragmentDoc = gql`
     storeId
     totalNumberOfPacks
     supplierName
+    volumePerPack
+    totalVolume
     location {
       ...LocationRow
     }
@@ -907,6 +1005,7 @@ export const StockLineRowFragmentDoc = gql`
       }
       isVaccine
       dosesPerUnit: doses
+      restrictedLocationTypeId
     }
     barcode
     vvmStatusLogs {
@@ -917,16 +1016,30 @@ export const StockLineRowFragmentDoc = gql`
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }
     donor(storeId: $storeId) {
       id
     }
+    program {
+      id
+      name
+    }
     campaign {
       id
       name
+    }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
     }
   }
   ${LocationRowFragmentDoc}
@@ -992,7 +1105,7 @@ export const VvmStatusFragmentDoc = gql`
     __typename
     description
     id
-    level
+    priority
     reasonId
     unusable
   }

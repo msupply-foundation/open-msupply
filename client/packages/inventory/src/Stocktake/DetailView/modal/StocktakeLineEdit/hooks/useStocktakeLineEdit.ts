@@ -3,21 +3,21 @@ import {
   ArrayUtils,
   getErrorMessage,
 } from '@openmsupply-client/common';
-import { StocktakeLineFragment, useStocktakeOld } from './../../../../api';
+import { useStocktakeOld } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
 interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
-  update: (patch: RecordPatch<StocktakeLineFragment>) => void;
+  update: (patch: RecordPatch<DraftStocktakeLine>) => void;
   addLine: () => void;
   save: () => Promise<{ errorMessages?: string[] }>;
   isSaving: boolean;
-  nextItem: StocktakeLineFragment['item'] | null;
+  nextItem: DraftStocktakeLine['item'] | null;
 }
 
 export const useStocktakeLineEdit = (
-  item: StocktakeLineFragment['item'] | null
+  item: DraftStocktakeLine['item'] | null
 ): useStocktakeLineEditController => {
   const { id } = useStocktakeOld.document.fields('id');
   const { items } = useStocktakeOld.line.rows();

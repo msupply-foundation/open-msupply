@@ -1,16 +1,15 @@
-use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError,
-    StockLine, StockLineRow, StorageConnection, Vaccination, VaccinationRow,
-};
-
 use crate::{
-    common_stock::{check_stock_line_exists, CommonStockLineError},
+    common::{check_stock_line_exists, CommonStockLineError},
     invoice_line::validate::check_item_exists,
     name::validate::check_name_exists,
     vaccination::validate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
         check_vaccination_exists, get_related_vaccinations,
     },
+};
+use repository::{
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError,
+    StockLine, StorageConnection, Vaccination, VaccinationRow,
 };
 
 use super::{UpdateVaccination, UpdateVaccinationError};
@@ -30,19 +29,17 @@ pub struct ChangeToGiven {
 
 pub struct ChangeToNotGiven {
     pub existing_vaccination: VaccinationRow,
-    pub patient_id: String,
-    pub existing_prescription: Option<PrescriptionAndStockLine>,
+    pub existing_prescription: Option<VaccinationPrescription>,
 }
 
-pub struct PrescriptionAndStockLine {
+pub struct VaccinationPrescription {
     pub prescription_line: InvoiceLine,
-    pub stock_line_row: StockLineRow,
 }
 
 pub struct ChangeStockLine {
     pub existing_vaccination: VaccinationRow,
     pub patient_id: String,
-    pub existing_prescription: Option<PrescriptionAndStockLine>,
+    pub existing_prescription: Option<VaccinationPrescription>,
     pub new_stock_line: Option<StockLine>,
 }
 
@@ -128,10 +125,8 @@ pub fn validate(
 
             ValidateResult::ChangeToNotGiven(ChangeToNotGiven {
                 existing_vaccination: vaccination_row.clone(),
-                patient_id: encounter.patient_link_id,
                 existing_prescription: validate_existing_prescription(
                     connection,
-                    store_id,
                     &vaccination_row.invoice_id,
                 )?,
             })
@@ -146,7 +141,6 @@ pub fn validate(
                     patient_id: encounter.patient_link_id,
                     existing_prescription: validate_existing_prescription(
                         connection,
-                        store_id,
                         &vaccination_row.invoice_id,
                     )?,
                     new_stock_line: validate_new_stock_line(
@@ -168,9 +162,8 @@ pub fn validate(
 
 fn validate_existing_prescription(
     connection: &StorageConnection,
-    store_id: &str,
     invoice_id: &Option<String>,
-) -> Result<Option<PrescriptionAndStockLine>, UpdateVaccinationError> {
+) -> Result<Option<VaccinationPrescription>, UpdateVaccinationError> {
     // Get prescription line
     let prescription_line = match invoice_id {
         Some(invoice_id) => {
@@ -182,19 +175,7 @@ fn validate_existing_prescription(
         None => return Ok(None),
     };
 
-    let stock_line = match prescription_line.stock_line_option.clone().map(|s| s.id) {
-        Some(stock_line_id) => {
-            let stock_line = check_stock_line_exists(connection, store_id, &stock_line_id)?;
-            check_doses_defined(&stock_line.item_row)?;
-            stock_line
-        }
-        None => return Err(UpdateVaccinationError::StockLineDoesNotExist),
-    };
-
-    Ok(Some(PrescriptionAndStockLine {
-        prescription_line,
-        stock_line_row: stock_line.stock_line_row,
-    }))
+    Ok(Some(VaccinationPrescription { prescription_line }))
 }
 
 fn validate_new_stock_line(

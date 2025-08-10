@@ -261,7 +261,7 @@ impl TranslationAndIntegrationResults {
 mod test {
     use super::*;
     use repository::mock::MockDataInserts;
-    use util::{assert_matches, inline_init, uuid::uuid};
+    use util::{assert_matches, uuid::uuid};
 
     #[actix_rt::test]
     async fn test_fall_through_inner_transaction() {
@@ -278,9 +278,10 @@ mod test {
                     connection,
                     &[(
                         None,
-                        IntegrationOperation::upsert(inline_init(|r: &mut UnitRow| {
-                            r.id = "unit".to_string();
-                        })),
+                        IntegrationOperation::upsert(UnitRow {
+                            id: "unit".to_string(),
+                            ..Default::default()
+                        }),
                     )],
                 );
 
@@ -291,10 +292,11 @@ mod test {
                     connection,
                     &[(
                         None,
-                        IntegrationOperation::upsert(inline_init(|r: &mut ItemRow| {
-                            r.id = "item".to_string();
-                            r.unit_id = Some("invalid".to_string());
-                        })),
+                        IntegrationOperation::upsert(ItemRow {
+                            id: "item".to_string(),
+                            unit_id: Some("invalid".to_string()),
+                            ..Default::default()
+                        }),
                     )],
                 );
 
@@ -326,9 +328,9 @@ mod test {
         let insert_batch = |with_error: bool, n: i32, parent_tx: bool, nested_tx: bool| {
             let mut records = vec![];
             for i in 0..n {
-                records.push(inline_init(|r: &mut ItemRow| {
-                    r.id = uuid();
-                    r.unit_id = if with_error {
+                records.push(ItemRow {
+                    id: uuid(),
+                    unit_id: if with_error {
                         // Create invalid ItemRow
                         if i % 20 == 0 {
                             None
@@ -337,8 +339,9 @@ mod test {
                         }
                     } else {
                         None
-                    };
-                }));
+                    },
+                    ..Default::default()
+                });
             }
             let insert = |connection: &StorageConnection| {
                 for record in records {

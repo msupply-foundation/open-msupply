@@ -8,8 +8,6 @@ import {
   DropdownMenuItem,
   TextArea,
   InputWithLabelRow,
-  usePreference,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 import { AccordionPanelSection } from './PanelSection';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
@@ -32,28 +30,24 @@ export const PrescriptionLineEditForm = ({
   isNew,
 }: PrescriptionLineEditFormProps) => {
   const t = useTranslation();
-  const { data: prefs } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.SortByVvmStatusThenExpiry
-  );
 
-  const { draftLines, item, note, allocatedQuantity, setNote } =
+  const { draftLines, item, note, allocatedQuantity, allocateInType, setNote } =
     useAllocationContext(state => ({
       draftLines: state.draftLines,
       item: state.item,
       note: state.note,
       setNote: state.setNote,
       allocatedQuantity: getAllocatedQuantity(state),
+      allocateInType: state.allocateIn.type,
     }));
 
   const [defaultDirection, setDefaultDirection] = useState('');
   const [abbreviation, setAbbreviation] = useState('');
 
   const isDirectionsDisabled = !allocatedQuantity;
-  const displayInDoses = !!prefs?.manageVaccinesInDoses && !!item?.isVaccine;
 
   const { data: options = [] } = useAbbreviations();
-  const { summarise, dosesSummary } = useClosedSummary();
+  const summarise = useClosedSummary();
 
   const saveAbbreviation = () => {
     if (!abbreviation) return;
@@ -79,11 +73,12 @@ export const PrescriptionLineEditForm = ({
 
         <AccordionPanelSection
           title={t('label.quantity')}
-          closedSummary={
-            displayInDoses
-              ? dosesSummary(t, draftLines)
-              : summarise(t, item.unitName ?? t('label.unit'), draftLines)
-          }
+          closedSummary={summarise(
+            t,
+            draftLines,
+            allocateInType,
+            item.unitName
+          )}
           defaultExpanded={isNew && !disabled}
         >
           <Grid

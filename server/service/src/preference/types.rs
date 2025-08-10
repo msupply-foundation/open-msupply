@@ -18,6 +18,7 @@ pub enum PrefKey {
     ShowContactTracing,
     UseCampaigns,
     CustomTranslations,
+    SyncRecordsDisplayThreshold,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,

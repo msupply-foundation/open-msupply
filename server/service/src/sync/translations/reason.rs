@@ -18,6 +18,8 @@ pub enum LegacyOptionsType {
     ReturnReason,
     #[serde(rename = "requisitionLineVariance")]
     RequisitionLineVariance,
+    #[serde(rename = "closedVialWastage")]
+    ClosedVialWastage,
 }
 
 #[allow(non_snake_case)]
@@ -66,6 +68,7 @@ impl SyncTranslation for ReasonTranslation {
             LegacyOptionsType::RequisitionLineVariance => ReasonOptionType::RequisitionLineVariance,
             LegacyOptionsType::ReturnReason => ReasonOptionType::ReturnReason,
             LegacyOptionsType::OpenVialWastage => ReasonOptionType::OpenVialWastage,
+            LegacyOptionsType::ClosedVialWastage => ReasonOptionType::ClosedVialWastage,
         };
 
         let result = PullTranslateResult::upsert(ReasonOptionRow {

@@ -160,7 +160,6 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
     };
-    use util::inline_init;
 
     use crate::BatchMutations;
 
@@ -263,15 +262,17 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 delete_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteResponseRequisitionLine| {
-                        input.id = "id4".to_string()
-                    }),
+                    input: DeleteResponseRequisitionLine {
+                        id: "id4".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(DeleteResponseRequisitionLineError::RequisitionLineDoesNotExist {}),
                 }],
                 delete_requisition: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteResponseRequisition| {
-                        input.id = "id7".to_string()
-                    }),
+                    input: DeleteResponseRequisition {
+                        id: "id7".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(DeleteResponseRequisitionError::RequisitionDoesNotExist {}),
                 }],
             })
@@ -302,9 +303,10 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(ServiceResult {
                 delete_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteResponseRequisitionLine| {
-                        input.id = "id3".to_string()
-                    }),
+                    input: DeleteResponseRequisitionLine {
+                        id: "id3".to_string(),
+                        ..Default::default()
+                    },
                     result: Ok("id3".to_string()),
                 }],
                 delete_requisition: Vec::new(),

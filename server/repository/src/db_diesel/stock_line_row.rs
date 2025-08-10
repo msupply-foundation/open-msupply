@@ -34,6 +34,9 @@ table! {
         donor_link_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
         campaign_id -> Nullable<Text>,
+        program_id -> Nullable<Text>,
+        total_volume -> Double,
+        volume_per_pack -> Double,
     }
 }
 
@@ -73,6 +76,9 @@ pub struct StockLineRow {
     pub donor_link_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
+    pub total_volume: f64,
+    pub volume_per_pack: f64,
 }
 
 pub struct StockLineRowRepository<'a> {

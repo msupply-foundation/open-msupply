@@ -15,7 +15,7 @@ pub fn generate(
         id,
         name,
         item_id,
-        cold_storage_type_id,
+        location_type_id,
         manufacturer_id,
         packaging_variants: _, // Mapped separately
         vvm_type,
@@ -33,7 +33,7 @@ pub fn generate(
         id,
         name,
         item_link_id: item_id,
-        cold_storage_type_id: cold_storage_type_id.map(|l| l.value).unwrap_or_default(),
+        location_type_id: location_type_id.map(|l| l.value).unwrap_or_default(),
         manufacturer_link_id: manufacturer_id
             .map(|manufacturer_id| manufacturer_id.value)
             .unwrap_or_default(),
@@ -63,17 +63,17 @@ pub fn generate_logs(
             )?;
         }
 
-        if existing_item_variant.cold_storage_type_id != updated_item_variant.cold_storage_type_id {
+        if existing_item_variant.location_type_id != updated_item_variant.location_type_id {
             let existing_variant_name: Option<String> = existing_variant
-                .cold_storage_type_row
+                .location_type_row
                 .map(|row| row.name.clone());
             let updated_variant_name = updated_variant
-                .cold_storage_type_row
+                .location_type_row
                 .map(|row| row.name.clone());
 
             activity_log_entry(
                 ctx,
-                ActivityLogType::ItemVariantUpdateColdStorageType,
+                ActivityLogType::ItemVariantUpdateLocationType,
                 Some(existing_item_variant.id.clone()),
                 existing_variant_name,
                 updated_variant_name,

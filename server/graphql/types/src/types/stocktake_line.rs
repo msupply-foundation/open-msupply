@@ -5,10 +5,17 @@ use repository::{location::Location, ReasonOption, StocktakeLine};
 use service::usize_to_u32;
 
 use graphql_core::{
-    loader::{ItemLoader, ItemVariantByItemVariantIdLoader, StockLineByIdLoader},
+    loader::{
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, ProgramByIdLoader,
+        StockLineByIdLoader, VVMStatusByIdLoader,
+    },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+
+use crate::types::VVMStatusNode;
+
+use crate::types::{program_node::ProgramNode, CampaignNode};
 
 use super::{
     InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, ReasonOptionNode,
@@ -139,9 +146,8 @@ impl StocktakeLineNode {
     pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
 
-        let item_variant_id = match &self.line.line.item_variant_id {
-            None => return Ok(None),
-            Some(item_variant_id) => item_variant_id,
+        let Some(item_variant_id) = &self.line.line.item_variant_id else {
+            return Ok(None);
         };
 
         let result = loader.load_one(item_variant_id.clone()).await?;
@@ -155,6 +161,52 @@ impl StocktakeLineNode {
                 reason_option_row: row.clone(),
             })
         })
+    }
+
+    pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
+        let status_id = match self.line.line.vvm_status_id.clone() {
+            Some(status_id) => status_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
+
+        Ok(loader
+            .load_one(status_id)
+            .await?
+            .map(VVMStatusNode::from_domain))
+    }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        self.line.line.volume_per_pack
+    }
+
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+
+        let Some(campaign_id) = &self.line.line.campaign_id else {
+            return Ok(None);
+        };
+
+        let result = loader.load_one(campaign_id.clone()).await?;
+        Ok(result.map(CampaignNode::from_domain))
+    }
+
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let Some(program_id) = &self.line.line.program_id else {
+            return Ok(None);
+        };
+
+        let result = loader
+            .load_one(program_id.clone())
+            .await?
+            .map(|program| ProgramNode {
+                program_row: program,
+            });
+
+        Ok(result)
     }
 }
 

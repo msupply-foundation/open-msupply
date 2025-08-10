@@ -226,7 +226,7 @@ By default, running this command will generate and open an html file of the repo
 
 Reports need certain parameters and arguments. Copy the `test-config.example.json` file to `test-config.json` in this directory, and update it with your desired parameters.
 
-Use the `--config` flag to use a config file from a different location.
+A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json` file.
 
 ### Toggle Report
 

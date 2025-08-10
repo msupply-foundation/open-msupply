@@ -1,7 +1,6 @@
 use crate::{mock::mock_prescription_a, InvoiceLineRow, InvoiceLineType};
 
 use chrono::NaiveDate;
-use util::inline_init;
 
 use super::{
     mock_customer_return_a, mock_customer_return_b, mock_item_a, mock_item_b, mock_item_b_lines,
@@ -131,6 +130,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         r#type: InvoiceLineType::StockOut,
         number_of_packs: 3.0,
         shipped_number_of_packs: Some(3.0),
+        shipped_pack_size: Some(3.0),
         ..Default::default()
     };
 
@@ -488,114 +488,122 @@ pub fn mock_transferred_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow
 }
 
 pub fn mock_prescription_a_invoice_line_a() -> InvoiceLineRow {
-    inline_init(|l: &mut InvoiceLineRow| {
-        l.id = "prescription_a_invoice_line_a".to_string();
-        l.invoice_id = mock_prescription_a().id;
-        l.item_link_id = "item_a".to_string();
-        l.item_code = "item_a_code".to_string();
-        l.item_name = "Item A".to_string();
-        l.stock_line_id = Some(mock_stock_line_si_d()[0].id.clone());
-        l.batch.clone_from(&mock_stock_line_si_d()[0].batch);
-        l.pack_size = 1.0;
-        l.cost_price_per_pack = 2.0;
-        l.sell_price_per_pack = 18.0;
-        l.number_of_packs = 5.0;
-        l.total_before_tax = 10.0;
-        l.total_after_tax = 10.0;
-        l.r#type = InvoiceLineType::StockOut
-    })
+    InvoiceLineRow {
+        id: "prescription_a_invoice_line_a".to_string(),
+        invoice_id: mock_prescription_a().id,
+        item_link_id: "item_a".to_string(),
+        item_code: "item_a_code".to_string(),
+        item_name: "Item A".to_string(),
+        stock_line_id: Some(mock_stock_line_si_d()[0].id.clone()),
+        batch: mock_stock_line_si_d()[0].batch.clone(),
+        pack_size: 1.0,
+        cost_price_per_pack: 2.0,
+        sell_price_per_pack: 18.0,
+        number_of_packs: 5.0,
+        total_before_tax: 10.0,
+        total_after_tax: 10.0,
+        r#type: InvoiceLineType::StockOut,
+        ..Default::default()
+    }
 }
 
 pub fn mock_prescription_a_invoice_line_b() -> InvoiceLineRow {
-    inline_init(|l: &mut InvoiceLineRow| {
-        l.id = "prescription_a_invoice_line_b".to_string();
-        l.invoice_id = mock_prescription_a().id;
-        l.item_link_id = "item_b".to_string();
-        l.item_code = "item_b_code".to_string();
-        l.stock_line_id = Some("stock_line_si_d_siline_b".to_string());
-        l.pack_size = 1.0;
-        l.cost_price_per_pack = 3.0;
-        l.sell_price_per_pack = 5.0;
-        l.number_of_packs = 10.0;
-        l.total_before_tax = 50.0;
-        l.total_after_tax = 50.0;
-        l.r#type = InvoiceLineType::StockOut
-    })
+    InvoiceLineRow {
+        id: "prescription_a_invoice_line_b".to_string(),
+        invoice_id: mock_prescription_a().id,
+        item_link_id: "item_b".to_string(),
+        item_code: "item_b_code".to_string(),
+        stock_line_id: Some("stock_line_si_d_siline_b".to_string()),
+        pack_size: 1.0,
+        cost_price_per_pack: 3.0,
+        sell_price_per_pack: 5.0,
+        number_of_packs: 10.0,
+        total_before_tax: 50.0,
+        total_after_tax: 50.0,
+        r#type: InvoiceLineType::StockOut,
+        ..Default::default()
+    }
 }
 
 pub fn mock_supplier_return_a_invoice_line_a() -> InvoiceLineRow {
-    inline_init(|l: &mut InvoiceLineRow| {
-        l.id = "supplier_return_a_invoice_line_a".to_string();
-        l.invoice_id = mock_supplier_return_a().id;
-        l.item_link_id = "item_b".to_string();
-        l.stock_line_id = Some(mock_stock_line_a().id);
-        l.item_code = "item_b_code".to_string();
-        l.note = Some("return_comment".to_string());
-        l.number_of_packs = 4.0;
-        l.r#type = InvoiceLineType::StockOut
-    })
+    InvoiceLineRow {
+        id: "supplier_return_a_invoice_line_a".to_string(),
+        invoice_id: mock_supplier_return_a().id,
+        item_link_id: "item_b".to_string(),
+        stock_line_id: Some(mock_stock_line_a().id),
+        item_code: "item_b_code".to_string(),
+        note: Some("return_comment".to_string()),
+        number_of_packs: 4.0,
+        r#type: InvoiceLineType::StockOut,
+        ..Default::default()
+    }
 }
 pub fn mock_supplier_return_a_invoice_line_b() -> InvoiceLineRow {
-    inline_init(|l: &mut InvoiceLineRow| {
-        l.id = "supplier_return_a_invoice_line_b".to_string();
-        l.invoice_id = mock_supplier_return_a().id;
-        l.item_link_id = "item_b".to_string();
-        l.stock_line_id = Some(mock_stock_line_b().id);
-        l.item_code = "item_b_code".to_string();
-        l.note = Some("return_comment".to_string());
-        l.r#type = InvoiceLineType::StockOut
-    })
+    InvoiceLineRow {
+        id: "supplier_return_a_invoice_line_b".to_string(),
+        invoice_id: mock_supplier_return_a().id,
+        item_link_id: "item_b".to_string(),
+        stock_line_id: Some(mock_stock_line_b().id),
+        item_code: "item_b_code".to_string(),
+        note: Some("return_comment".to_string()),
+        r#type: InvoiceLineType::StockOut,
+        ..Default::default()
+    }
 }
 pub fn mock_supplier_return_b_invoice_line_a() -> InvoiceLineRow {
-    inline_init(|l: &mut InvoiceLineRow| {
-        l.id = "supplier_return_b_invoice_line_a".to_string();
-        l.invoice_id = mock_supplier_return_b().id;
-        l.item_link_id = "item_a".to_string();
-        l.stock_line_id = Some(mock_stock_line_a().id);
-        l.item_code = "item_a_code".to_string();
-        l.note = Some("return_comment".to_string());
-        l.number_of_packs = 5.0;
-        l.r#type = InvoiceLineType::StockOut
-    })
+    InvoiceLineRow {
+        id: "supplier_return_b_invoice_line_a".to_string(),
+        invoice_id: mock_supplier_return_b().id,
+        item_link_id: "item_a".to_string(),
+        stock_line_id: Some(mock_stock_line_a().id),
+        item_code: "item_a_code".to_string(),
+        note: Some("return_comment".to_string()),
+        number_of_packs: 5.0,
+        r#type: InvoiceLineType::StockOut,
+        ..Default::default()
+    }
 }
 
 pub fn mock_customer_return_a_invoice_line_a() -> InvoiceLineRow {
-    inline_init(|l: &mut InvoiceLineRow| {
-        l.id = "customer_return_a_invoice_line_a".to_string();
-        l.invoice_id = mock_customer_return_a().id;
-        l.item_link_id = mock_item_a().id;
-        l.item_code = mock_item_a().code;
-        l.stock_line_id = Some(mock_stock_line_a().id);
-        l.note = Some("return_comment_line_a".to_string());
-        l.number_of_packs = 30.0;
-        l.r#type = InvoiceLineType::StockIn
-    })
+    InvoiceLineRow {
+        id: "customer_return_a_invoice_line_a".to_string(),
+        invoice_id: mock_customer_return_a().id,
+        item_link_id: mock_item_a().id,
+        item_code: mock_item_a().code,
+        stock_line_id: Some(mock_stock_line_a().id),
+        note: Some("return_comment_line_a".to_string()),
+        number_of_packs: 30.0,
+        r#type: InvoiceLineType::StockIn,
+        ..Default::default()
+    }
 }
 
 pub fn mock_customer_return_a_invoice_line_b() -> InvoiceLineRow {
-    inline_init(|l: &mut InvoiceLineRow| {
-        l.id = "customer_return_a_invoice_line_b".to_string();
-        l.invoice_id = mock_customer_return_a().id;
-        l.item_link_id = mock_item_b().id;
-        l.item_code = mock_item_b().code;
-        l.stock_line_id = Some(mock_item_b_lines()[0].id.clone());
-        l.note = Some("return_comment_line_b".to_string());
-        l.number_of_packs = 1.0;
-        l.r#type = InvoiceLineType::StockIn
-    })
+    InvoiceLineRow {
+        id: "customer_return_a_invoice_line_b".to_string(),
+        invoice_id: mock_customer_return_a().id,
+        item_link_id: mock_item_b().id,
+        item_code: mock_item_b().code,
+        stock_line_id: Some(mock_item_b_lines()[0].id.clone()),
+        note: Some("return_comment_line_b".to_string()),
+        number_of_packs: 1.0,
+        r#type: InvoiceLineType::StockIn,
+        ..Default::default()
+    }
 }
 
 pub fn mock_customer_return_b_invoice_line_a() -> InvoiceLineRow {
-    inline_init(|l: &mut InvoiceLineRow| {
-        l.id = "customer_return_b_invoice_line_a".to_string();
-        l.invoice_id = mock_customer_return_b().id;
-        l.item_link_id = mock_item_a().id;
-        l.item_code = mock_item_a().code;
-        l.note = Some("return_comment_line_a".to_string());
-        l.number_of_packs = 5.0;
-        l.batch = Some("test_batch".to_string());
-        l.r#type = InvoiceLineType::StockIn
-    })
+    InvoiceLineRow {
+        id: "customer_return_b_invoice_line_a".to_string(),
+        invoice_id: mock_customer_return_b().id,
+        item_link_id: mock_item_a().id,
+        item_code: mock_item_a().code,
+        note: Some("return_comment_line_a".to_string()),
+        number_of_packs: 5.0,
+        batch: Some("test_batch".to_string()),
+        r#type: InvoiceLineType::StockIn,
+        ..Default::default()
+    }
 }
 
 pub fn mock_supplier_return_a_invoice_lines() -> Vec<InvoiceLineRow> {

@@ -30,13 +30,12 @@ import { DraftStockLine } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import {
   DonorSearchInput,
-  ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
   VVMStatusSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
 import { ItemVariantInput, useIsItemVariantsEnabled } from '../../Item';
-import { CampaignSelector } from './Campaign';
+import { CampaignOrProgramSelector } from './Campaign';
 
 interface StockLineFormProps {
   draft: DraftStockLine;
@@ -45,7 +44,6 @@ interface StockLineFormProps {
   pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
   packEditable?: boolean;
   isNewModal?: boolean;
-  reasonOptions?: ReasonOptionRowFragment[];
 }
 export const StockLineForm = ({
   draft,
@@ -54,7 +52,6 @@ export const StockLineForm = ({
   pluginEvents,
   packEditable,
   isNewModal = false,
-  reasonOptions,
 }: StockLineFormProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -148,11 +145,7 @@ export const StockLineForm = ({
                 autoFocus
                 disabled={!packEditable}
                 width={160}
-                value={
-                  draft.totalNumberOfPacks
-                    ? parseFloat(draft.totalNumberOfPacks.toFixed(2))
-                    : 0
-                }
+                value={draft.totalNumberOfPacks ? draft.totalNumberOfPacks : 0}
                 onChange={totalNumberOfPacks =>
                   onUpdate({ totalNumberOfPacks })
                 }
@@ -223,6 +216,37 @@ export const StockLineForm = ({
               />
             }
           />
+          <StyledInputRow
+            label={t('label.barcode')}
+            Input={
+              <Box style={{ width: 162 }}>
+                <BufferedTextInput
+                  value={draft.barcode ?? ''}
+                  onChange={e => onUpdate({ barcode: e.target.value })}
+                />
+                {isEnabled && (
+                  <Tooltip
+                    title={isConnected ? '' : t('error.scanner-not-connected')}
+                  >
+                    <Box>
+                      <IconButton
+                        disabled={isScanning || !isConnected}
+                        onClick={scanBarcode}
+                        icon={
+                          isScanning ? (
+                            <CircularProgress size={20} color="secondary" />
+                          ) : (
+                            <ScanIcon />
+                          )
+                        }
+                        label={t('button.scan')}
+                      />
+                    </Box>
+                  </Tooltip>
+                )}
+              </Box>
+            }
+          />
           {isNewModal && (
             <StyledInputRow
               label={t('label.reason')}
@@ -232,22 +256,7 @@ export const StockLineForm = ({
                   type={ReasonOptionNodeType.PositiveInventoryAdjustment}
                   value={draft.reasonOption}
                   onChange={reason => onUpdate({ reasonOption: reason })}
-                  reasonOptions={reasonOptions ?? []}
-                  loading={loading}
                   disabled={draft?.totalNumberOfPacks === 0}
-                />
-              }
-            />
-          )}
-          {showItemVariantsInput && (
-            <StyledInputRow
-              label={t('label.item-variant')}
-              Input={
-                <ItemVariantInput
-                  itemId={draft.itemId}
-                  selectedId={draft.itemVariantId ?? null}
-                  width={160}
-                  onChange={variant => onUpdate({ itemVariantId: variant?.id })}
                 />
               }
             />
@@ -296,40 +305,61 @@ export const StockLineForm = ({
                 onChange={location => {
                   onUpdate({ location, locationId: location?.id });
                 }}
+                restrictedToLocationTypeId={draft.item.restrictedLocationTypeId}
               />
             }
           />
-          <StyledInputRow
-            label={t('label.barcode')}
-            Input={
-              <Box style={{ width: 162 }}>
-                <BufferedTextInput
-                  value={draft.barcode ?? ''}
-                  onChange={e => onUpdate({ barcode: e.target.value })}
+          {showItemVariantsInput && (
+            <StyledInputRow
+              label={t('label.item-variant')}
+              Input={
+                <ItemVariantInput
+                  itemId={draft.itemId}
+                  selectedId={draft?.itemVariant?.id}
+                  width={160}
+                  onChange={variant => {
+                    const packaging = variant?.packagingVariants.find(
+                      p => p.packSize === draft.packSize
+                    );
+                    const volumePerPack =
+                      ((packaging?.volumePerUnit ?? 0) / 1000) *
+                      (draft?.packSize ?? 1);
+
+                    onUpdate({
+                      itemVariant: variant,
+                      volumePerPack,
+                    });
+                  }}
                 />
-                {isEnabled && (
-                  <Tooltip
-                    title={isConnected ? '' : t('error.scanner-not-connected')}
-                  >
-                    <Box>
-                      <IconButton
-                        disabled={isScanning || !isConnected}
-                        onClick={scanBarcode}
-                        icon={
-                          isScanning ? (
-                            <CircularProgress size={20} color="secondary" />
-                          ) : (
-                            <ScanIcon />
-                          )
-                        }
-                        label={t('button.scan')}
-                      />
-                    </Box>
-                  </Tooltip>
-                )}
-              </Box>
+              }
+            />
+          )}
+          <StyledInputRow
+            label={t('label.volume-per-pack')}
+            Input={
+              <NumericTextInput
+                autoFocus
+                width={160}
+                value={draft.volumePerPack ?? 0}
+                decimalLimit={10}
+                onChange={volumePerPack => onUpdate({ volumePerPack })}
+              />
             }
           />
+          {!packEditable && (
+            <StyledInputRow
+              label={t('label.total-volume')}
+              Input={
+                <NumericTextInput
+                  autoFocus
+                  disabled
+                  width={160}
+                  decimalLimit={10}
+                  value={draft?.volumePerPack * draft?.totalNumberOfPacks}
+                />
+              }
+            />
+          )}
           <TextWithLabelRow
             label={t('label.supplier')}
             text={String(supplierName)}
@@ -367,9 +397,13 @@ export const StockLineForm = ({
             <StyledInputRow
               label={t('label.campaign')}
               Input={
-                <CampaignSelector
+                <CampaignOrProgramSelector
                   campaignId={draft.campaign?.id}
-                  onChange={campaign => onUpdate({ campaign })}
+                  programId={draft.program?.id}
+                  programOptionsOrFilter={{ filterByItemId: draft.itemId }}
+                  onChange={({ campaign, program }) =>
+                    onUpdate({ campaign, program })
+                  }
                 />
               }
             />

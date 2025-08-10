@@ -2,39 +2,15 @@ import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useTranslation,
-  MiniTable,
-  createQueryParamsStore,
   NothingHere,
   useRowStyle,
   placeholderRowStyle,
   useUrlQueryParams,
   BasicSpinner,
 } from '@openmsupply-client/common';
-import { useStocktakeColumns, useExpansionColumns } from './columns';
+import { useStocktakeColumns } from './columns';
 import { StocktakeLineFragment, useStocktakeOld } from '../../api';
 import { StocktakeSummaryItem } from '../../../types';
-
-const Expando = ({
-  rowData,
-}: {
-  rowData: StocktakeSummaryItem | StocktakeLineFragment;
-}) => {
-  const expandoColumns = useExpansionColumns();
-
-  if ('lines' in rowData && rowData.lines.length > 1) {
-    return (
-      <MiniTable
-        rows={rowData.lines}
-        columns={expandoColumns}
-        queryParamsStore={createQueryParamsStore<StocktakeLineFragment>({
-          initialSortBy: { key: 'expiryDate' },
-        })}
-      />
-    );
-  } else {
-    return null;
-  }
-};
 
 interface ContentAreaProps {
   onAddItem: () => void;
@@ -106,7 +82,6 @@ export const ContentArea: FC<ContentAreaProps> = ({
   ) : (
     <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
       onRowClick={onRowClick}
-      ExpandContent={Expando}
       isRowAnimated={true}
       columns={columns}
       data={lines}

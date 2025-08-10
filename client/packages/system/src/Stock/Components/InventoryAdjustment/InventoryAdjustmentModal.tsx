@@ -8,12 +8,14 @@ import {
   useNotification,
   AdjustmentTypeInput,
   useDialog,
-  useFormatNumber,
-  getReasonOptionType,
+  getReasonOptionTypes,
   Checkbox,
+  NumericTextDisplay,
+  useAuthContext,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
-import { ReasonOptionsSearchInput, useReasonOptions } from '../../..';
+import { ReasonOptionsSearchInput } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
 import { INPUT_WIDTH, StyledInputRow } from '../StyledInputRow';
 
@@ -29,11 +31,10 @@ export const InventoryAdjustmentModal = ({
 }: InventoryAdjustmentModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
+  const { store } = useAuthContext();
   const { Modal } = useDialog({ isOpen, onClose });
-  const { round } = useFormatNumber();
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
-  const { data, isLoading } = useReasonOptions();
 
   const packUnit = String(stockLine.packSize);
   const saveDisabled = draft.adjustment === 0 || stockLine.onHold;
@@ -97,13 +98,13 @@ export const InventoryAdjustmentModal = ({
                   disabled={draft.adjustment === 0}
                   onChange={reason => setDraft(state => ({ ...state, reason }))}
                   value={draft.reason}
-                  type={getReasonOptionType(
+                  type={getReasonOptionTypes({
                     isInventoryReduction,
-                    stockLine.item.isVaccine
-                  )}
+                    isVaccine: stockLine.item.isVaccine,
+                    isDispensary:
+                      store?.storeMode === StoreModeNodeType.Dispensary,
+                  })}
                   width={INPUT_WIDTH}
-                  reasonOptions={data?.nodes ?? []}
-                  loading={isLoading}
                 />
               </Box>
             }
@@ -120,17 +121,15 @@ export const InventoryAdjustmentModal = ({
           paddingTop={2}
           flex={1}
         >
-          <TextWithLabelRow
+          <StyledInputRow
             label={t('label.pack-quantity')}
-            text={round(stockLine.totalNumberOfPacks, 2)}
-            textProps={{ textAlign: 'end' }}
-            labelProps={{ sx: { textWrap: 'wrap' } }}
+            Input={<NumericTextDisplay value={stockLine.totalNumberOfPacks} />}
           />
-          <TextWithLabelRow
+          <StyledInputRow
             label={t('label.available-packs')}
-            text={round(stockLine.availableNumberOfPacks, 2)}
-            textProps={{ textAlign: 'end' }}
-            labelProps={{ sx: { textWrap: 'wrap' } }}
+            Input={
+              <NumericTextDisplay value={stockLine.availableNumberOfPacks} />
+            }
           />
           <StyledInputRow
             label={t('label.adjust-by')}
@@ -159,14 +158,12 @@ export const InventoryAdjustmentModal = ({
               <NumericTextInput
                 width={INPUT_WIDTH}
                 disabled={true}
-                value={parseFloat(
-                  (
-                    stockLine.totalNumberOfPacks +
-                    (draft.adjustmentType === AdjustmentTypeInput.Addition
-                      ? draft.adjustment
-                      : -draft.adjustment)
-                  ).toFixed(2)
-                )}
+                value={
+                  stockLine.totalNumberOfPacks +
+                  (draft.adjustmentType === AdjustmentTypeInput.Addition
+                    ? draft.adjustment
+                    : -draft.adjustment)
+                }
               />
             }
           />

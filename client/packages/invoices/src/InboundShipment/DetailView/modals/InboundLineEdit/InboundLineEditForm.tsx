@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   ModalRow,
   ModalLabel,
@@ -20,11 +20,11 @@ interface InboundLineEditProps {
   onChangeItem: (item: ItemStockOnHandFragment | null) => void;
 }
 
-export const InboundLineEditForm: FC<InboundLineEditProps> = ({
+export const InboundLineEditForm = ({
   item,
   disabled,
   onChangeItem,
-}) => {
+}: InboundLineEditProps) => {
   const t = useTranslation();
   const { data: items } = useInbound.lines.items();
 
@@ -47,6 +47,10 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
                 ? undefined
                 : item => !items?.some(({ id }) => id === item.id)
             }
+            // A scanned-in item will only have an ID, not a full item object,
+            // so this flag makes the StockItemSearchInput component update the
+            // current item on initial load from the API
+            initialUpdate={!item?.name}
           />
         </Grid>
       </ModalRow>

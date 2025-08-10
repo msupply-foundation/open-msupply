@@ -1,14 +1,12 @@
 use super::{
     query::get_vaccine_course,
     update::{VaccineCourseDoseInput, VaccineCourseItemInput},
-    validate::{
-        check_dose_min_ages_are_in_order, check_program_exists,
-        check_vaccine_course_name_exists_for_program,
-    },
+    validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
 };
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext,
-    vaccine_course::validate::check_vaccine_course_exists, SingleRecordError,
+    activity_log::activity_log_entry, common::check_program_exists,
+    service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
+    SingleRecordError,
 };
 
 use repository::{
@@ -90,7 +88,7 @@ pub fn validate(
         return Err(InsertVaccineCourseError::VaccineCourseAlreadyExists);
     }
 
-    if check_program_exists(&input.program_id, connection)?.is_none() {
+    if check_program_exists(connection, &input.program_id)?.is_none() {
         return Err(InsertVaccineCourseError::ProgramDoesNotExist);
     }
 

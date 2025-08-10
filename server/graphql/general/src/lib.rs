@@ -423,17 +423,17 @@ impl GeneralQueries {
         reason_options(ctx, page, filter, sort)
     }
 
-    /// Query omSupply "cold_storage_type" entries
-    pub async fn cold_storage_types(
+    /// Query omSupply "location_type" entries
+    pub async fn location_types(
         &self,
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<ColdStorageTypeFilterInput>,
+        #[graphql(desc = "Filter option")] filter: Option<LocationTypeFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<ColdStorageTypeSortInput>>,
-    ) -> Result<ColdStorageTypesResponse> {
-        cold_storage_types(ctx, store_id, page, filter, sort)
+        sort: Option<Vec<LocationTypeSortInput>>,
+    ) -> Result<LocationTypesResponse> {
+        location_types(ctx, store_id, page, filter, sort)
     }
 
     pub async fn diagnoses_active(&self, ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {

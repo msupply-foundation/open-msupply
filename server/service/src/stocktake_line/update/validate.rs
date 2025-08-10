@@ -1,8 +1,7 @@
-use repository::{RepositoryError, StocktakeLine, StorageConnection};
-
 use crate::{
-    check_location_exists,
-    common_stock::{check_stock_line_exists, CommonStockLineError},
+    campaign::check_campaign_exists,
+    check_location_exists, check_vvm_status_exists,
+    common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
         check_active_adjustment_reasons, check_reason_is_valid,
@@ -12,6 +11,7 @@ use crate::{
     validate::check_store_id_matches,
     NullableUpdate,
 };
+use repository::{RepositoryError, StocktakeLine, StorageConnection};
 
 use super::{UpdateStocktakeLine, UpdateStocktakeLineError};
 
@@ -51,6 +51,13 @@ pub fn validate(
             return Err(LocationDoesNotExist);
         }
     }
+
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VvmStatusDoesNotExist);
+        }
+    }
+
     let stocktake_reduction_amount =
         stocktake_reduction_amount(&input.counted_number_of_packs, stocktake_line_row);
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
@@ -95,6 +102,24 @@ pub fn validate(
             stocktake_line_row.snapshot_number_of_packs,
         ) {
             return Err(SnapshotCountCurrentCountMismatchLine(stocktake_line));
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(ref campaign_id),
+    }) = &input.campaign_id
+    {
+        if !check_campaign_exists(connection, campaign_id)? {
+            return Err(CampaignDoesNotExist);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(ref program_id),
+    }) = &input.program_id
+    {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
         }
     }
 

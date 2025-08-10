@@ -32,6 +32,18 @@ import { PickersActionBarAction } from '@mui/x-date-pickers';
 const Options = z
   .object({
     hideClear: z.boolean().optional(),
+    /**
+     * Component assumes that the 'dateOfBirth' property is named "dateOfBirth"
+     * in the schema, which is not necessarily the case. Set the correct name
+     * here if required.
+     */
+    dobFieldName: z.string().optional(),
+    /**
+     * Component assumes that the 'dateOfBirthIsEstimated' property is named
+     * "dateOfBirthIsEstimated" in the schema, which is not necessarily the
+     * case. Set the correct name here if required.
+     */
+    dobIsEstimatedFieldName: z.string().optional(),
   })
   .strict()
   .optional();
@@ -56,8 +68,12 @@ const UIComponent = (props: ControlProps) => {
     ? ['accept']
     : ['clear', 'accept'];
 
-  const dobPath = composePaths(path, 'dateOfBirth');
-  const estimatedPath = composePaths(path, 'dateOfBirthIsEstimated');
+  const dobPath = composePaths(path, options?.dobFieldName ?? 'dateOfBirth');
+  const estimatedPath = composePaths(
+    path,
+    options?.dobIsEstimatedFieldName ?? 'dateOfBirthIsEstimated'
+  );
+
   const onChangeDoB = (dob: Date | null) => {
     const dateOfBirth = DateUtils.getDateOrNull(dob);
     // if dob is invalid, clear age and don't update all the form data
@@ -84,14 +100,16 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (!data) return;
-    const naiveDoB = DateUtils.getNaiveDate(data.dateOfBirth);
+    const naiveDoB = DateUtils.getNaiveDate(
+      data[options?.dobFieldName ?? 'dateOfBirth']
+    );
     setDoB(naiveDoB);
     if (naiveDoB === null) {
       setAge(undefined);
       return;
     }
     setAge(DateUtils.age(naiveDoB));
-  }, [data]);
+  }, [data, options?.dobFieldName]);
 
   if (!props.visible) {
     return null;

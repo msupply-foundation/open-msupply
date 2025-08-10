@@ -4,7 +4,6 @@ import {
   ReasonOptionsSearchInput,
   RequestFragment,
   StockItemSearchInputWithStats,
-  useReasonOptions,
 } from '@openmsupply-client/system';
 import {
   useTranslation,
@@ -14,7 +13,6 @@ import {
   usePluginProvider,
   Typography,
   BufferedTextArea,
-  useFormatNumber,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -72,8 +70,6 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { round } = useFormatNumber();
-  const { data: reasonOptions, isLoading } = useReasonOptions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 
@@ -173,8 +169,6 @@ export const RequestLineEdit = ({
                 fullWidth
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
-                reasonOptions={reasonOptions?.nodes ?? []}
-                loading={isLoading}
                 textSx={
                   disableReasons
                     ? {
@@ -254,13 +248,13 @@ export const RequestLineEdit = ({
               {isPacksEnabled && (
                 <InfoRow
                   label={t('label.default-pack-size')}
-                  value={round(currentItem?.defaultPackSize)}
+                  value={currentItem?.defaultPackSize}
                 />
               )}
               {displayVaccinesInDoses && currentItem?.doses ? (
                 <InfoRow
                   label={t('label.doses-per-unit')}
-                  value={round(currentItem?.doses)}
+                  value={currentItem?.doses}
                 />
               ) : null}
               {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}

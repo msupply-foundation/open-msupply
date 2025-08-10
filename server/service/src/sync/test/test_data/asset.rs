@@ -1,6 +1,5 @@
 use repository::asset_row::AssetRow;
 use serde_json::json;
-use util::Defaults;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
@@ -19,6 +18,10 @@ const ASSET1: (&str, &str) = (
 );
 
 fn asset1() -> AssetRow {
+    let datetime = chrono::NaiveDate::from_ymd_opt(2020, 01, 22)
+        .unwrap()
+        .and_hms_opt(15, 16, 0)
+        .unwrap();
     AssetRow {
         id: ASSET1.0.to_string(),
         asset_number: Some("AT1".to_string()),
@@ -31,8 +34,8 @@ fn asset1() -> AssetRow {
         asset_type_id: None,
         installation_date: None,
         replacement_date: None,
-        created_datetime: Defaults::naive_date_time(),
-        modified_datetime: Defaults::naive_date_time(),
+        created_datetime: datetime,
+        modified_datetime: datetime,
         deleted_datetime: None,
         ..Default::default()
     }

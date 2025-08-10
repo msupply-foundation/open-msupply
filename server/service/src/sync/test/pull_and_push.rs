@@ -16,7 +16,6 @@ use repository::{
     test_db, ChangelogRepository, KeyType, KeyValueStoreRow, SyncBufferRow,
     SyncBufferRowRepository,
 };
-use util::inline_init;
 
 use super::{
     insert_all_extra_data,
@@ -34,13 +33,15 @@ async fn test_sync_pull_and_push() {
     let (_, connection, _, _) = test_db::setup_all_with_data(
         "test_sync_pull_and_push",
         MockDataInserts::all(),
-        inline_init(|r: &mut MockData| {
-            r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
-                r.id = KeyType::SettingsSyncSiteId;
+        MockData {
+            key_value_store_rows: vec![KeyValueStoreRow {
+                id: KeyType::SettingsSyncSiteId,
                 // This is needed for invoice line, since we check if it belongs to current site in translator
-                r.value_int = Some(mock_store_b().site_id);
-            })]
-        }),
+                value_int: Some(mock_store_b().site_id),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
     )
     .await;
 
@@ -109,16 +110,33 @@ async fn test_sync_pull_and_push() {
         other => other,
     });
 
+    let changelog_translated_records_id_and_table_name = translated
+        .iter()
+        .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))
+        .collect::<Vec<(String, String)>>();
+
+    let test_outgoing_sync_records_id_and_table_name = test_records
+        .iter()
+        .map(|r| (r.record_id.clone(), r.table_name.clone()))
+        .collect::<Vec<(String, String)>>();
+
+    let mut i = 0;
+    for translated_record in changelog_translated_records_id_and_table_name.clone() {
+        let test_record = &test_outgoing_sync_records_id_and_table_name[i];
+        if &translated_record != test_record {
+            println!(
+                "First mismatched record changelog: {:?} and test_data: {:?}",
+                translated_record, test_record
+            );
+            break;
+        }
+        i += 1;
+    }
+
     // Test ids and table names
     assert_eq!(
-        translated
-            .iter()
-            .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))
-            .collect::<Vec<(String, String)>>(),
-        test_records
-            .iter()
-            .map(|r| (r.record_id.clone(), r.table_name.clone()))
-            .collect::<Vec<(String, String)>>()
+        changelog_translated_records_id_and_table_name,
+        test_outgoing_sync_records_id_and_table_name
     );
     // Test data
     for (index, test_record) in test_records.iter().enumerate() {

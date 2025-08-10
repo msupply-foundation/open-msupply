@@ -20,8 +20,8 @@ impl VVMStatusNode {
         &self.row().code
     }
 
-    pub async fn level(&self) -> &i32 {
-        &self.row().level
+    pub async fn priority(&self) -> &i32 {
+        &self.row().priority
     }
 
     pub async fn is_active(&self) -> &bool {

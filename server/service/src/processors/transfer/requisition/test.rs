@@ -8,7 +8,7 @@ use repository::{
     RequisitionLineRowRepository, RequisitionRepository, RequisitionRow, RequisitionRowRepository,
     RequisitionStatus, RequisitionType, StorageConnection, StoreRow,
 };
-use util::{inline_edit, inline_init, uuid::uuid};
+use util::uuid::uuid;
 
 use crate::{
     processors::test_helpers::exec_concurrent,
@@ -26,40 +26,47 @@ use crate::{
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn requisition_transfer() {
     let site_id = 25;
-    let request_store_name = inline_init(|r: &mut NameRow| {
-        r.id = uuid();
-        r.name = uuid();
-    });
+    let request_store_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
 
-    let request_store = inline_init(|r: &mut StoreRow| {
-        r.id = uuid();
-        r.name_link_id.clone_from(&request_store_name.id);
-        r.site_id = site_id;
-    });
+    let request_store = StoreRow {
+        id: uuid(),
+        name_link_id: request_store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
 
-    let response_store_name = inline_init(|r: &mut NameRow| {
-        r.id = uuid();
-        r.name = uuid();
-    });
+    let response_store_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
 
-    let response_store = inline_init(|r: &mut StoreRow| {
-        r.id = uuid();
-        r.name_link_id.clone_from(&response_store_name.id);
-        r.site_id = site_id;
-    });
+    let response_store = StoreRow {
+        id: uuid(),
+        name_link_id: response_store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
 
-    let item1 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
+    let item1 = ItemRow {
+        id: uuid(),
+        ..Default::default()
+    };
 
-    let item2 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
+    let item2 = ItemRow {
+        id: uuid(),
+        ..Default::default()
+    };
 
-    let site_id_settings = inline_init(|r: &mut KeyValueStoreRow| {
-        r.id = KeyType::SettingsSyncSiteId;
-        r.value_int = Some(site_id);
-    });
+    let site_id_settings = KeyValueStoreRow {
+        id: KeyType::SettingsSyncSiteId,
+        value_int: Some(site_id),
+        ..Default::default()
+    };
 
     let ServiceTestContext {
         service_provider,
@@ -68,12 +75,13 @@ async fn requisition_transfer() {
     } = setup_all_with_data_and_service_provider(
         "requisition_transfer",
         MockDataInserts::none().stores().names().items().units(),
-        inline_init(|r: &mut MockData| {
-            r.names = vec![request_store_name.clone(), response_store_name.clone()];
-            r.stores = vec![request_store.clone(), response_store.clone()];
-            r.items = vec![item1.clone(), item2.clone()];
-            r.key_value_store_rows = vec![site_id_settings];
-        }),
+        MockData {
+            names: vec![request_store_name.clone(), response_store_name.clone()],
+            stores: vec![request_store.clone(), response_store.clone()],
+            items: vec![item1.clone(), item2.clone()],
+            key_value_store_rows: vec![site_id_settings],
+            ..Default::default()
+        },
     )
     .await;
 
@@ -161,16 +169,18 @@ pub(crate) struct RequisitionTransferTester {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn stock_on_deleted_requisitions() {
     let site_id = 25;
-    let store_name = inline_init(|r: &mut NameRow| {
-        r.id = uuid();
-        r.name = uuid();
-    });
+    let store_name = NameRow {
+        id: uuid(),
+        name: uuid(),
+        ..Default::default()
+    };
 
-    let store = inline_init(|r: &mut StoreRow| {
-        r.id = uuid();
-        r.name_link_id.clone_from(&store_name.id);
-        r.site_id = site_id;
-    });
+    let store = StoreRow {
+        id: uuid(),
+        name_link_id: store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
 
     let requisition = RequisitionRow {
         id: uuid(),
@@ -181,10 +191,11 @@ async fn stock_on_deleted_requisitions() {
         ..RequisitionRow::default()
     };
 
-    let site_id_settings = inline_init(|r: &mut KeyValueStoreRow| {
-        r.id = KeyType::SettingsSyncSiteId;
-        r.value_int = Some(site_id);
-    });
+    let site_id_settings = KeyValueStoreRow {
+        id: KeyType::SettingsSyncSiteId,
+        value_int: Some(site_id),
+        ..Default::default()
+    };
 
     let ServiceTestContext {
         service_provider,
@@ -194,12 +205,13 @@ async fn stock_on_deleted_requisitions() {
     } = setup_all_with_data_and_service_provider(
         "stock_on_deleted_requisitions",
         MockDataInserts::none().stores().names().items().units(),
-        inline_init(|r: &mut MockData| {
-            r.names = vec![store_name.clone()];
-            r.stores = vec![store.clone()];
-            r.requisitions = vec![requisition.clone()];
-            r.key_value_store_rows = vec![site_id_settings];
-        }),
+        MockData {
+            names: vec![store_name.clone()],
+            stores: vec![store.clone()],
+            requisitions: vec![requisition.clone()],
+            key_value_store_rows: vec![site_id_settings],
+            ..Default::default()
+        },
     )
     .await;
 
@@ -236,56 +248,59 @@ impl RequisitionTransferTester {
         item2: &ItemRow,
         thread_number: u32,
     ) -> RequisitionTransferTester {
-        let request_requisition = inline_init(|r: &mut RequisitionRow| {
-            r.id = format!("{}_request_requisition_{}", thread_number, uuid());
-            r.requisition_number = 3;
-            r.name_link_id.clone_from(&response_store.name_link_id);
-            r.store_id.clone_from(&request_store.id);
-            r.r#type = RequisitionType::Request;
-            r.status = RequisitionStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+        let request_requisition = RequisitionRow {
+            id: format!("{}_request_requisition_{}", thread_number, uuid()),
+            requisition_number: 3,
+            name_link_id: response_store.name_link_id.clone(),
+            store_id: request_store.id.clone(),
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Draft,
+            created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
-                .unwrap();
-            r.sent_datetime = None;
-            r.their_reference = Some("some reference".to_string());
-            r.comment = Some("some comment".to_string());
-            r.max_months_of_stock = 10.0;
-            r.min_months_of_stock = 5.0;
-        });
+                .unwrap(),
+            sent_datetime: None,
+            their_reference: Some("some reference".to_string()),
+            comment: Some("some comment".to_string()),
+            max_months_of_stock: 10.0,
+            min_months_of_stock: 5.0,
+            ..Default::default()
+        };
 
-        let request_requisition_line1 = inline_init(|r: &mut RequisitionLineRow| {
-            r.id = format!("{}_request_requisition_line_1_{}", thread_number, uuid());
-            r.requisition_id.clone_from(&request_requisition.id);
-            r.item_link_id.clone_from(&item1.id);
-            r.requested_quantity = 2.0;
-            r.suggested_quantity = 3.0;
-            r.comment = Some("line comment".to_string());
-            r.available_stock_on_hand = 1.0;
-            r.average_monthly_consumption = 10.0;
-            r.snapshot_datetime = Some(
+        let request_requisition_line1 = RequisitionLineRow {
+            id: format!("{}_request_requisition_line_1_{}", thread_number, uuid()),
+            requisition_id: request_requisition.id.clone(),
+            item_link_id: item1.id.clone(),
+            requested_quantity: 2.0,
+            suggested_quantity: 3.0,
+            comment: Some("line comment".to_string()),
+            available_stock_on_hand: 1.0,
+            average_monthly_consumption: 10.0,
+            snapshot_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
                     .and_hms_opt(1, 0, 0)
                     .unwrap(),
-            );
-        });
+            ),
+            ..Default::default()
+        };
 
-        let request_requisition_line2 = inline_init(|r: &mut RequisitionLineRow| {
-            r.id = format!("{}_request_requisition_line_2_{}", thread_number, uuid());
-            r.requisition_id.clone_from(&request_requisition.id);
-            r.item_link_id.clone_from(&item2.id);
-            r.requested_quantity = 10.0;
-            r.suggested_quantity = 20.0;
-            r.available_stock_on_hand = 30.0;
-            r.average_monthly_consumption = 10.0;
-            r.snapshot_datetime = Some(
+        let request_requisition_line2 = RequisitionLineRow {
+            id: format!("{}_request_requisition_line_2_{}", thread_number, uuid()),
+            requisition_id: request_requisition.id.clone(),
+            item_link_id: item2.id.clone(),
+            requested_quantity: 10.0,
+            suggested_quantity: 20.0,
+            available_stock_on_hand: 30.0,
+            average_monthly_consumption: 10.0,
+            snapshot_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
                     .and_hms_opt(2, 0, 0)
                     .unwrap(),
-            );
-        });
+            ),
+            ..Default::default()
+        };
 
         RequisitionTransferTester {
             request_store: request_store.clone(),
@@ -302,13 +317,14 @@ impl RequisitionTransferTester {
     pub(crate) fn insert_request_requisition(&self, connection: &StorageConnection) {
         insert_extra_mock_data(
             connection,
-            inline_init(|r: &mut MockData| {
-                r.requisitions = vec![self.request_requisition.clone()];
-                r.requisition_lines = vec![
+            MockData {
+                requisitions: vec![self.request_requisition.clone()],
+                requisition_lines: vec![
                     self.request_requisition_line1.clone(),
                     self.request_requisition_line2.clone(),
-                ]
-            }),
+                ],
+                ..Default::default()
+            },
         )
     }
 
@@ -329,10 +345,11 @@ impl RequisitionTransferTester {
             .requisition_service
             .update_request_requisition(
                 &ctx,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id.clone_from(&self.request_requisition.id);
-                    r.status = Some(UpdateRequestRequisitionStatus::Sent);
-                }),
+                UpdateRequestRequisition {
+                    id: self.request_requisition.id.clone(),
+                    status: Some(UpdateRequestRequisitionStatus::Sent),
+                    ..Default::default()
+                },
             )
             .unwrap();
     }
@@ -478,13 +495,11 @@ impl RequisitionTransferTester {
         assert!(request_requisition.is_some());
         let request_requisition = request_requisition.unwrap();
 
-        assert_eq!(
-            request_requisition,
-            inline_edit(&request_requisition, |mut r| {
-                r.approval_status = Some(ApprovalStatusType::Approved);
-                r
-            })
-        );
+        assert_eq!(request_requisition, {
+            let mut expected = request_requisition.clone();
+            expected.approval_status = Some(ApprovalStatusType::Approved);
+            expected
+        });
 
         let request_requisition_line1 = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&self.request_requisition_line1.id)
@@ -525,10 +540,11 @@ impl RequisitionTransferTester {
             .requisition_service
             .update_response_requisition(
                 &ctx,
-                inline_init(|r: &mut UpdateResponseRequisition| {
-                    r.id = self.response_requisition.clone().map(|r| r.id).unwrap();
-                    r.status = Some(UpdateResponseRequisitionStatus::Finalised);
-                }),
+                UpdateResponseRequisition {
+                    id: self.response_requisition.clone().map(|r| r.id).unwrap(),
+                    status: Some(UpdateResponseRequisitionStatus::Finalised),
+                    ..Default::default()
+                },
             )
             .unwrap();
         self.response_requisition = Some(response_requisition.requisition_row);
@@ -542,18 +558,16 @@ impl RequisitionTransferTester {
         assert!(request_requisition.is_some());
         let request_requisition = request_requisition.unwrap();
 
-        assert_eq!(
-            request_requisition,
-            inline_edit(&request_requisition, |mut r| {
-                r.status = RequisitionStatus::Finalised;
-                r.finalised_datetime = self
-                    .response_requisition
-                    .clone()
-                    .map(|r| r.finalised_datetime)
-                    .unwrap();
-                r
-            })
-        );
+        assert_eq!(request_requisition, {
+            let mut expected = request_requisition.clone();
+            expected.status = RequisitionStatus::Finalised;
+            expected.finalised_datetime = self
+                .response_requisition
+                .clone()
+                .map(|r| r.finalised_datetime)
+                .unwrap();
+            expected
+        });
     }
 }
 

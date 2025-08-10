@@ -137,7 +137,6 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
         MasterListLineRow, MasterListNameJoinRow, MasterListRow,
     };
-    use util::inline_init;
 
     #[actix_rt::test]
     async fn add_from_master_list_errors() {
@@ -268,9 +267,10 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "os_add_from_master_list_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.full_master_lists = vec![master_list()];
-            }),
+            MockData {
+                full_master_lists: vec![master_list()],
+                ..Default::default()
+            },
         )
         .await;
 

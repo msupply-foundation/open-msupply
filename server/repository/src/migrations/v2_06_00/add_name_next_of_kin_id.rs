@@ -70,7 +70,6 @@ mod tests {
         test_db::*,
     };
     use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
-    use util::*;
 
     fn setup_test_dependencies(connection: &StorageConnection) {
         let run = |sql: &str| {
@@ -100,7 +99,7 @@ mod tests {
                 "#,
                 name_id, sync_data
             ))
-            .bind::<Timestamp, _>(Defaults::naive_date_time()),
+            .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
         )
         .unwrap();
     }

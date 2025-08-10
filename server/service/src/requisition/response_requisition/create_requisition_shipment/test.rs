@@ -10,8 +10,6 @@ mod test_update {
         test_db::setup_all,
         InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
     };
-    use util::inline_init;
-
     use crate::{
         requisition::response_requisition::{
             CreateRequisitionShipment, CreateRequisitionShipmentError as ServiceError,
@@ -144,10 +142,11 @@ mod test_update {
             .requisition_line_service
             .update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id.clone_from(&mock_new_response_requisition_test().lines[0].id);
-                    r.supply_quantity = Some(100.0);
-                }),
+                UpdateResponseRequisitionLine {
+                    id: mock_new_response_requisition_test().lines[0].id.clone(),
+                    supply_quantity: Some(100.0),
+                    ..Default::default()
+                },
             )
             .unwrap();
 

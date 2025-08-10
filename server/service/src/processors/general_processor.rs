@@ -127,7 +127,7 @@ pub(crate) async fn process_records(
             for log in logs {
                 // Try record against all of the processors
                 let result = processor
-                    .try_process_record_common(&ctx, &service_provider, &log)
+                    .try_process_record_common(&ctx, service_provider, &log)
                     .await;
                 if let Err(e) = result {
                     log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
@@ -187,8 +187,7 @@ pub(super) trait Processor: Sync + Send {
         // TODO: should be in a transaction, we need to support transaction_async
         let result = self
             .try_process_record(ctx, service_provider, changelog)
-            .await
-            .map_err(ProcessorError::from)?;
+            .await?;
 
         if let Some(result) = &result {
             log::info!("{} - {}", self.get_description(), result);

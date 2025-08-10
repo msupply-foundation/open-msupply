@@ -149,7 +149,6 @@ mod test {
         UserAccountRowRepository,
     };
     use strum::IntoEnumIterator;
-    use util::inline_init;
 
     #[actix_rt::test]
     async fn user_row_language_enum() {
@@ -160,10 +159,11 @@ mod test {
         // Try upsert all variants of Language, confirm that diesel enums match postgres
         for variant in LanguageType::iter() {
             let id = format!("{:?}", variant);
-            let result = repo.insert_one(&inline_init(|r: &mut UserAccountRow| {
-                r.id.clone_from(&id);
-                r.language = variant.clone();
-            }));
+            let result = repo.insert_one(&UserAccountRow {
+                id: id.clone(),
+                language: variant.clone(),
+                ..Default::default()
+            });
             assert_eq!(result, Ok(()));
 
             let result = repo.find_one_by_id(&id).unwrap().unwrap();

@@ -2,6 +2,7 @@ import { ReactNode, FC } from 'react';
 import { RecordWithId } from '@common/types';
 import { Pagination, SortRule } from '@common/hooks';
 import { Column } from './columns/types';
+import { SxProps } from '@common/styles';
 
 export interface QueryProps<D> {
   first: number;
@@ -38,6 +39,7 @@ export interface TableProps<T extends RecordWithId> {
     | 'initial'
     | 'unset';
   width?: string | number;
+  headerSx?: SxProps;
   pagination?: Pagination & { total?: number };
   onChangePage?: (page: number) => void;
   onRowClick?: null | ((row: T) => void);

@@ -40,6 +40,7 @@ const useCreate = () => {
     isInitialStocktake,
     comment,
     description,
+    vvmStatusId,
   }: CreateStocktakeInput) => {
     return await stocktakeApi.insertStocktake({
       storeId,
@@ -53,6 +54,7 @@ const useCreate = () => {
         isInitialStocktake,
         comment,
         description,
+        vvmStatusId,
       },
     });
   };

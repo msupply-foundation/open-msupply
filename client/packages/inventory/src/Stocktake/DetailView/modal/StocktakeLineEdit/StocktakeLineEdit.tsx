@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import {
   BasicSpinner,
@@ -14,7 +14,6 @@ import {
   useRowHighlight,
   useMediaQuery,
   useNotification,
-  useIsGrouped,
   useUrlQueryParams,
   useSimplifiedTabletUI,
   ButtonWithIcon,
@@ -43,16 +42,18 @@ interface StocktakeLineEditProps {
   isOpen: boolean;
   isInitialStocktake: boolean;
   enableDonorTracking: boolean;
+  useCampaigns?: boolean;
 }
 
-export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
+export const StocktakeLineEdit = ({
   item,
   mode,
   onClose,
   isOpen,
   isInitialStocktake,
   enableDonorTracking,
-}) => {
+  useCampaigns = false,
+}: StocktakeLineEditProps) => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentItem, setCurrentItem] = useState(item);
@@ -63,7 +64,6 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const t = useTranslation();
   const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
-  const { isGrouped } = useIsGrouped('stocktake');
   const {
     updatePaginationQuery,
     queryParams: { first, offset, page },
@@ -116,13 +116,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
       return;
     }
 
-    if (item) {
-      const rowIds = draftLines.map(line =>
-        isGrouped ? line.itemId : line.id
-      );
-
-      highlightRows({ rowIds });
-    }
+    const rowIds = draftLines.map(line => line.id);
+    highlightRows({ rowIds });
     onClose();
   };
 
@@ -144,6 +139,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         batches={reversedDraftLines}
         update={update}
         isInitialStocktake={isInitialStocktake}
+        isVaccineItem={currentItem?.isVaccine ?? false}
       />
       <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
         <ButtonWithIcon
@@ -166,6 +162,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
               batches={reversedDraftLines}
               update={update}
               isInitialStocktake={isInitialStocktake}
+              isVaccineItem={currentItem?.isVaccine ?? false}
             />
           </StyledTabContainer>
         </StyledTabPanel>
@@ -192,6 +189,10 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                 batches={reversedDraftLines}
                 update={update}
                 trackStockDonor={enableDonorTracking}
+                restrictedToLocationTypeId={
+                  currentItem?.restrictedLocationTypeId
+                }
+                useCampaigns={useCampaigns}
               />
             </QueryParamsProvider>
           </StyledTabContainer>

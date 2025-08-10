@@ -41,6 +41,7 @@ export const InboundListView: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
+    initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },

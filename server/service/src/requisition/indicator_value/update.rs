@@ -130,24 +130,24 @@ mod test {
         test_db::setup_all_with_data,
         IndicatorValueRow, RequisitionRow, RequisitionStatus, RequisitionType,
     };
-    use util::inline_init;
 
     fn response_program_req() -> RequisitionRow {
-        inline_init(|r: &mut RequisitionRow| {
-            r.id = "response_program_req".to_string();
-            r.requisition_number = 3;
-            r.name_link_id = mock_name_store_b().id;
-            r.store_id = mock_store_a().id;
-            r.r#type = RequisitionType::Response;
-            r.status = RequisitionStatus::New;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+        RequisitionRow {
+            id: "response_program_req".to_string(),
+            requisition_number: 3,
+            name_link_id: mock_name_store_b().id,
+            store_id: mock_store_a().id,
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
+            created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
-                .unwrap();
-            r.max_months_of_stock = 1.0;
-            r.min_months_of_stock = 0.9;
-            r.period_id = Some(mock_period().id);
-        })
+                .unwrap(),
+            max_months_of_stock: 1.0,
+            min_months_of_stock: 0.9,
+            period_id: Some(mock_period().id),
+            ..Default::default()
+        }
     }
 
     fn test_indicator_value() -> IndicatorValueRow {
@@ -167,10 +167,11 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_indicator_value_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.requisitions = vec![response_program_req()];
-                r.indicator_values = vec![test_indicator_value()];
-            }),
+            MockData {
+                requisitions: vec![response_program_req()],
+                indicator_values: vec![test_indicator_value()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -184,10 +185,11 @@ mod test {
         assert_eq!(
             service.update_indicator_value(
                 &context,
-                inline_init(|r: &mut UpdateIndicatorValue| {
-                    r.id = "invalid_id".to_string();
-                    r.value = "new_value".to_string();
-                }),
+                UpdateIndicatorValue {
+                    id: "invalid_id".to_string(),
+                    value: "new_value".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(UpdateIndicatorValueError::IndicatorValueDoesNotExist)
         );
@@ -196,10 +198,11 @@ mod test {
         assert_eq!(
             service.update_indicator_value(
                 &context,
-                inline_init(|r: &mut UpdateIndicatorValue| {
-                    r.id = test_indicator_value().id;
-                    r.value = "new value".to_string();
-                }),
+                UpdateIndicatorValue {
+                    id: test_indicator_value().id,
+                    value: "new value".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(UpdateIndicatorValueError::ValueTypeNotCorrect)
         );
@@ -209,10 +212,11 @@ mod test {
         assert_eq!(
             service.update_indicator_value(
                 &context,
-                inline_init(|r: &mut UpdateIndicatorValue| {
-                    r.id = mock_indicator_value_a().id;
-                    r.value = "new value".to_string();
-                }),
+                UpdateIndicatorValue {
+                    id: mock_indicator_value_a().id,
+                    value: "new value".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(UpdateIndicatorValueError::NotThisStoreValue)
         );
@@ -223,10 +227,11 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_indicator_value_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.requisitions = vec![response_program_req()];
-                r.indicator_values = vec![test_indicator_value()];
-            }),
+            MockData {
+                requisitions: vec![response_program_req()],
+                indicator_values: vec![test_indicator_value()],
+                ..Default::default()
+            },
         )
         .await;
 

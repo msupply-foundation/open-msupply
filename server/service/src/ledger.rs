@@ -53,7 +53,6 @@ mod test {
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
     };
-    use util::inline_init;
 
     use crate::{
         invoice::{UpdatePrescription, UpdatePrescriptionStatus},
@@ -155,11 +154,12 @@ mod test {
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "test_item_ledger_service",
             MockDataInserts::none().stores().names().units().items(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice1(), invoice2(), prescription1()];
-                r.invoice_lines = vec![invoice1line(), invoice2line(), prescription1line()];
-                r.stock_lines = vec![stock_line()];
-            }),
+            MockData {
+                invoices: vec![invoice1(), invoice2(), prescription1()],
+                invoice_lines: vec![invoice1line(), invoice2line(), prescription1line()],
+                stock_lines: vec![stock_line()],
+                ..Default::default()
+            },
         )
         .await;
 

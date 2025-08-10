@@ -1,37 +1,32 @@
 import React from 'react';
-import {
-  ButtonWithIcon,
-  useTranslation,
-  useToggle,
-  PlusCircleIcon,
-  useAuthContext,
-} from '@openmsupply-client/common';
+import { useAuthContext } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
+import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 
-export const AddFromMasterListButtonComponent = () => {
-  const t = useTranslation();
-
-  const modalController = useToggle();
+export const AddFromMasterListButtonComponent = ({
+  isOn,
+  toggleOff,
+}: {
+  isOn: boolean;
+  toggleOff: () => void;
+}) => {
   const { storeId } = useAuthContext();
+
+  const {
+    query: { data: purchaseOrder },
+    masterList: { addFromMasterList },
+  } = usePurchaseOrder();
 
   return (
     <>
       <MasterListSearchModal
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
+        open={isOn}
+        onClose={toggleOff}
         onChange={masterList => {
-          modalController.toggleOff();
-          // eslint-disable-next-line no-console
-          console.log('TO-DO: Add from master list', masterList);
-          // addFromMasterList(masterList);
+          addFromMasterList(masterList.id, purchaseOrder?.id ?? '');
+          toggleOff();
         }}
-        filterBy={{ isProgram: false, existsForStoreId: { equalTo: storeId } }}
-      />
-      <ButtonWithIcon
-        // disabled={isDisabled || isProgram}
-        Icon={<PlusCircleIcon />}
-        label={t('button.add-from-master-list')}
-        onClick={modalController.toggleOn}
+        filterBy={{ existsForStoreId: { equalTo: storeId } }}
       />
     </>
   );

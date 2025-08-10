@@ -106,8 +106,12 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
             original_shipment,
             new_invoice_type,
         )?;
-        let new_inbound_lines =
-            generate_inbound_lines(connection, &new_inbound_invoice.id, outbound_invoice)?;
+        let new_inbound_lines = generate_inbound_lines(
+            connection,
+            &new_inbound_invoice.id,
+            &new_inbound_invoice.store_id,
+            outbound_invoice,
+        )?;
         let store_preferences = get_store_preferences(connection, &new_inbound_invoice.store_id)?;
 
         let new_inbound_lines = match store_preferences.pack_to_one {

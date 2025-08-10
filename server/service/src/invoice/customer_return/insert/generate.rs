@@ -103,10 +103,11 @@ pub fn generate(
                  batch,
                  pack_size,
                  number_of_packs,
-                 reason_id: _,
                  note,
                  item_variant_id,
                  vvm_status_id,
+                 volume_per_pack,
+                 reason_id: _,
              }| InsertStockInLine {
                 id,
                 expiry_date,
@@ -119,6 +120,7 @@ pub fn generate(
                 r#type: StockInType::CustomerReturn,
                 item_variant_id,
                 vvm_status_id,
+                volume_per_pack,
                 // Default
                 location: None,
                 cost_price_per_pack: 0.0,
@@ -130,7 +132,9 @@ pub fn generate(
                 stock_on_hold: false,
                 donor_id: None,
                 campaign_id: None,
+                program_id: None,
                 shipped_number_of_packs: None,
+                shipped_pack_size: None,
             },
         )
         .collect();

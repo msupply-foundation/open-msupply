@@ -1,5 +1,3 @@
-use util::inline_init;
-
 use crate::{NameRow, NameRowType, NameStoreJoinRow, StoreRow};
 
 use super::MockData;
@@ -33,21 +31,23 @@ pub fn mock_test_name_store_id() -> MockData {
 }
 
 pub fn mock_name_linked_to_store() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "name_linked_to_store_id".to_string();
-        r.name = "Name linked to store".to_string();
-        r.code = "name_linked_to_store_code".to_string();
-        r.is_customer = true;
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: "name_linked_to_store_id".to_string(),
+        name: "Name linked to store".to_string(),
+        code: "name_linked_to_store_code".to_string(),
+        is_customer: true,
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_store_linked_to_name() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "name_store_id".to_string();
-        s.name_link_id = "name_linked_to_store_id".to_string();
-        s.code = "name_store_code".to_string();
-    })
+    StoreRow {
+        id: "name_store_id".to_string(),
+        name_link_id: "name_linked_to_store_id".to_string(),
+        code: "name_store_code".to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_linked_to_store_join() -> NameStoreJoinRow {
@@ -61,21 +61,23 @@ pub fn mock_name_linked_to_store_join() -> NameStoreJoinRow {
 }
 
 pub fn mock_name_linked_to_store_a() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "name_linked_to_store_a_id".to_string();
-        r.name = "Name linked to store a".to_string();
-        r.code = "name_linked_to_store_code_a".to_string();
-        r.is_customer = true;
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: "name_linked_to_store_a_id".to_string(),
+        name: "Name linked to store a".to_string(),
+        code: "name_linked_to_store_code_a".to_string(),
+        is_customer: true,
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_store_linked_to_name_a() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "name_store_a_id".to_string();
-        s.name_link_id = "name_linked_to_store_a_id".to_string();
-        s.code = "name_store_code_a".to_string();
-    })
+    StoreRow {
+        id: "name_store_a_id".to_string(),
+        name_link_id: "name_linked_to_store_a_id".to_string(),
+        code: "name_store_code_a".to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_linked_to_store_join_a() -> NameStoreJoinRow {
@@ -89,13 +91,14 @@ pub fn mock_name_linked_to_store_join_a() -> NameStoreJoinRow {
 }
 
 pub fn mock_name_not_linked_to_store() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "name_not_linked_to_store_id".to_string();
-        r.name = "Name not linked to store".to_string();
-        r.code = "name_not_linked_to_store_code".to_string();
-        r.is_customer = true;
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: "name_not_linked_to_store_id".to_string(),
+        name: "Name not linked to store".to_string(),
+        code: "name_not_linked_to_store_code".to_string(),
+        is_customer: true,
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_not_linked_to_store_join() -> NameStoreJoinRow {
@@ -109,13 +112,14 @@ pub fn mock_name_not_linked_to_store_join() -> NameStoreJoinRow {
 }
 
 pub fn mock_name_not_linked_to_store_a() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "name_not_linked_to_store_a_id".to_string();
-        r.name = "Name not linked to store".to_string();
-        r.code = "name_not_linked_to_store_a_code".to_string();
-        r.is_customer = true;
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: "name_not_linked_to_store_a_id".to_string(),
+        name: "Name not linked to store".to_string(),
+        code: "name_not_linked_to_store_a_code".to_string(),
+        is_customer: true,
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_not_linked_to_store_join_a() -> NameStoreJoinRow {
@@ -129,20 +133,22 @@ pub fn mock_name_not_linked_to_store_join_a() -> NameStoreJoinRow {
 }
 
 pub fn mock_patient_linked_to_store() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "patient_linked_to_store_id".to_string();
-        r.name = "Patient linked to store".to_string();
-        r.code = "mock_patient_linked_to_store_code".to_string();
-        r.is_customer = true;
-        r.is_supplier = true;
-        r.r#type = NameRowType::Patient;
-    })
+    NameRow {
+        id: "patient_linked_to_store_id".to_string(),
+        name: "Patient linked to store".to_string(),
+        code: "mock_patient_linked_to_store_code".to_string(),
+        is_customer: true,
+        is_supplier: true,
+        r#type: NameRowType::Patient,
+        ..Default::default()
+    }
 }
 
 pub fn mock_store_linked_to_patient() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "patient_store_id".to_string();
-        s.name_link_id = "patient_linked_to_store_id".to_string();
-        s.code = "patient_store_code".to_string();
-    })
+    StoreRow {
+        id: "patient_store_id".to_string(),
+        name_link_id: "patient_linked_to_store_id".to_string(),
+        code: "patient_store_code".to_string(),
+        ..Default::default()
+    }
 }

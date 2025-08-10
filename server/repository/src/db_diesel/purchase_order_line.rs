@@ -36,11 +36,10 @@ pub struct PurchaseOrderLineFilter {
 
 pub enum PurchaseOrderLineSortField {
     ItemName,
-    NumberOfPacks,
     LineNumber,
-    RequestedQuantity,
-    AuthorisedQuantity,
-    TotalReceived,
+    // RequestedQuantity, // TODO: Bring back sorting as needed by frontend
+    // AuthorisedQuantity,
+    // TotalReceived,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
 }
@@ -91,21 +90,10 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                 PurchaseOrderLineSortField::ItemName => {
                     apply_sort_no_case!(query, sort, item::name);
                 }
-                PurchaseOrderLineSortField::NumberOfPacks => {
-                    apply_sort!(query, sort, purchase_order_line::number_of_packs);
-                }
                 PurchaseOrderLineSortField::LineNumber => {
                     apply_sort!(query, sort, purchase_order_line::line_number);
                 }
-                PurchaseOrderLineSortField::RequestedQuantity => {
-                    apply_sort!(query, sort, purchase_order_line::requested_quantity);
-                }
-                PurchaseOrderLineSortField::AuthorisedQuantity => {
-                    apply_sort!(query, sort, purchase_order_line::authorised_quantity);
-                }
-                PurchaseOrderLineSortField::TotalReceived => {
-                    apply_sort!(query, sort, purchase_order_line::total_received);
-                }
+
                 PurchaseOrderLineSortField::RequestedDeliveryDate => {
                     apply_sort!(query, sort, purchase_order_line::requested_delivery_date);
                 }

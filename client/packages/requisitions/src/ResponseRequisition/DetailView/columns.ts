@@ -242,7 +242,7 @@ export const useResponseColumns = (manageVaccinesInDoses: boolean = false) => {
     columnDefinitions.push({
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
-      sortable: false,
+      sortable: true,
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => rowData.approvedQuantity,
     });

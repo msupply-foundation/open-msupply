@@ -1,15 +1,14 @@
 use repository::contact_form_row::{ContactFormRow, ContactType};
 use serde_json::json;
-use util::Defaults;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &str = "contact_form";
 
 const CONTACT_FORM1: (&str, &str) = (
-    "test_id",
+    "contact_form_test_id",
     r#"{
-        "id": "test_id",
+        "id": "contact_form_test_id",
         "reply_email": "test@email.com",
         "body": "Help description",
         "created_datetime": "2020-01-22T15:16:00",
@@ -25,7 +24,10 @@ fn contact_form1() -> ContactFormRow {
         id: CONTACT_FORM1.0.to_string(),
         reply_email: "test@email.com".to_string(),
         body: "Help description".to_string(),
-        created_datetime: Defaults::naive_date_time(),
+        created_datetime: chrono::NaiveDate::from_ymd_opt(2020, 01, 22)
+            .unwrap()
+            .and_hms_opt(15, 16, 0)
+            .unwrap(),
         user_id: String::from("user1"),
         username: String::from("user1"),
         store_id: "store_a".to_string(),

@@ -14,6 +14,7 @@ use diesel::{dsl::max, prelude::*};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+use strum::Display;
 
 table! {
     invoice (id) {
@@ -65,7 +66,9 @@ joinable!(invoice -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
 allow_tables_to_appear_in_same_query!(invoice, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, PartialOrd, Ord)]
+#[derive(
+    DbEnum, Debug, Display, Clone, PartialEq, Eq, Serialize, Deserialize, Default, PartialOrd, Ord,
+)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceType {

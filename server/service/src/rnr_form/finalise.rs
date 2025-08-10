@@ -1,5 +1,6 @@
 use crate::{
     activity_log::activity_log_entry, number::next_number, service_provider::ServiceContext,
+    store_preference::get_store_preferences,
 };
 
 use chrono::Utc;
@@ -122,6 +123,9 @@ fn generate(
         period_row,
         ..
     } = rnr_form;
+
+    let store_preferences = get_store_preferences(&ctx.connection, &rnr_form_row.store_id)?;
+
     // Create an internal order based on the RnR form
     // Internal Orders are known as requisitions in the code base
     let requisition_row = RequisitionRow {
@@ -142,9 +146,9 @@ fn generate(
         expected_delivery_date: None,
         colour: None,
         comment: Some("Automatically created from R&R Form".to_string()),
-        max_months_of_stock: 0.0,
+        max_months_of_stock: store_preferences.months_overstock,
         their_reference: rnr_form_row.their_reference.clone(),
-        min_months_of_stock: 0.0,
+        min_months_of_stock: store_preferences.months_understock,
         approval_status: None,
         linked_requisition_id: None,
         program_id: Some(rnr_form_row.program_id.clone()),
@@ -196,14 +200,20 @@ fn generate(
                     snapshot_datetime: rnr_form_closing_datetime,
                     approved_quantity: 0.0,
                     approval_comment: None,
-                    comment: None,
-                    initial_stock_on_hand_units: 0.0,
-                    incoming_units: 0.0,
-                    outgoing_units: 0.0,
-                    loss_in_units: 0.0,
-                    addition_in_units: 0.0,
+                    comment: rnr_form_line_row.comment,
+                    initial_stock_on_hand_units: rnr_form_line_row.initial_balance,
+                    incoming_units: rnr_form_line_row
+                        .entered_quantity_received
+                        .unwrap_or(rnr_form_line_row.snapshot_quantity_received),
+                    outgoing_units: rnr_form_line_row
+                        .entered_quantity_consumed
+                        .unwrap_or(rnr_form_line_row.snapshot_quantity_consumed),
+                    loss_in_units: rnr_form_line_row.entered_losses.unwrap_or(0.0),
+                    addition_in_units: rnr_form_line_row
+                        .entered_adjustments
+                        .unwrap_or(rnr_form_line_row.snapshot_adjustments),
                     expiring_units: 0.0,
-                    days_out_of_stock: 0.0,
+                    days_out_of_stock: rnr_form_line_row.stock_out_duration as f64,
                     option_id: None,
                 };
 

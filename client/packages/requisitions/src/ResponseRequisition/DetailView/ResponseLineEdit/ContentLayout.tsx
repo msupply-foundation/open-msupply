@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   NumUtils,
@@ -83,7 +83,8 @@ export const NumInputRow = ({
     }
   };
 
-  const valueInDoses = React.useMemo(
+  // doses always rounded to display in whole numbers
+  const valueInDoses = useMemo(
     () =>
       displayVaccinesInDoses
         ? round(
@@ -92,8 +93,7 @@ export const NumInputRow = ({
               defaultPackSize,
               dosesPerUnit,
               valueInUnitsOrPacks
-            ),
-            2
+            )
           )
         : undefined,
     [

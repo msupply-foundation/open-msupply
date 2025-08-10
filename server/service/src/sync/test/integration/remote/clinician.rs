@@ -7,10 +7,7 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{ClinicianRow, ClinicianStoreJoinRow, GenderType, StoreMode, StoreRow};
 use serde_json::json;
-use util::{
-    inline_edit,
-    uuid::{small_uuid, uuid},
-};
+use util::uuid::{small_uuid, uuid};
 
 pub struct ClinicianRecordTester;
 impl SyncRecordTester for ClinicianRecordTester {
@@ -87,22 +84,20 @@ impl SyncRecordTester for ClinicianRecordTester {
         });
 
         // STEP 2 - mutate
-        let row = inline_edit(&clinician_row, |mut d| {
-            d.code = "code2".to_string();
-            d.last_name = "last2".to_string();
-            d.initials = "initials2".to_string();
-            d.first_name = Some("first".to_string());
-            d.address1 = Some("address1".to_string());
-            d.address2 = Some("address2".to_string());
-            d.phone = Some("phone".to_string());
-            d.mobile = Some("mobile".to_string());
-            d.email = Some("email".to_string());
-            d.gender = Some(GenderType::Female);
-            d
-        });
+        let mut d = clinician_row.clone();
+        d.code = "code2".to_string();
+        d.last_name = "last2".to_string();
+        d.initials = "initials2".to_string();
+        d.first_name = Some("first".to_string());
+        d.address1 = Some("address1".to_string());
+        d.address2 = Some("address2".to_string());
+        d.phone = Some("phone".to_string());
+        d.mobile = Some("mobile".to_string());
+        d.email = Some("email".to_string());
+        d.gender = Some(GenderType::Female);
 
         result.push(TestStepData {
-            integration_records: vec![IntegrationOperation::upsert(row)],
+            integration_records: vec![IntegrationOperation::upsert(d)],
             ..Default::default()
         });
         result

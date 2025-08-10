@@ -38,6 +38,7 @@ mod v2_08_00;
 mod v2_08_03;
 mod v2_09_00;
 mod v2_09_01;
+mod v2_09_02;
 mod v2_10_00;
 mod version;
 mod views;
@@ -148,6 +149,7 @@ pub fn migrate(
         Box::new(v2_08_03::V2_08_03),
         Box::new(v2_09_00::V2_09_00),
         Box::new(v2_09_01::V2_09_01),
+        Box::new(v2_09_02::V2_09_02),
         Box::new(v2_10_00::V2_10_00),
     ];
 
@@ -203,7 +205,7 @@ pub fn migrate(
 
         // Run one time migrations only if we're on the last version, if we're in a test case checking an old creating migrations might fail
         if migration_version > database_version {
-            log::info!("Running one time database migration {}", migration_version);
+            log::info!("Running one time database migration {migration_version}");
             migration
                 .migrate(connection)
                 .map_err(|source| MigrationError::MigrationError {
@@ -216,7 +218,7 @@ pub fn migrate(
         // Run fragment migrations (can run on current version)
         if migration_version >= database_version {
             for fragment in migration.migrate_fragments() {
-                if migration_fragment_log_repo.has_run(&migration, &fragment)? {
+                if migration_fragment_log_repo.has_run(migration, &fragment)? {
                     continue;
                 }
 
@@ -228,7 +230,7 @@ pub fn migrate(
                     }
                 })?;
 
-                migration_fragment_log_repo.insert(&migration, &fragment)?;
+                migration_fragment_log_repo.insert(migration, &fragment)?;
             }
         }
     }
@@ -245,9 +247,7 @@ pub fn migrate(
         rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
     } else {
         log::warn!(
-            "Not recreating views, database version is {}, last version in migration vec is {}",
-            final_database_version,
-            last_version_in_migration_vec
+            "Not recreating views, database version is {final_database_version}, last version in migration vec is {last_version_in_migration_vec}"
         );
     }
 

@@ -1,4 +1,4 @@
-use crate::loader::*;
+use crate::loader::{location::VolumeUsedByLocationLoader, *};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;
@@ -408,7 +408,7 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
-        ColdStorageTypeLoader {
+        LocationTypeLoader {
             connection_manager: connection_manager.clone(),
         },
         tokio::spawn,
@@ -507,6 +507,24 @@ pub async fn get_loaders(
     loaders.insert(DataLoader::new(
         CampaignByIdLoader {
             connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ItemStoreJoinLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        VolumeUsedByLocationLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ProgramsByItemIdLoader {
+            service_provider: service_provider.clone(),
         },
         tokio::spawn,
     ));

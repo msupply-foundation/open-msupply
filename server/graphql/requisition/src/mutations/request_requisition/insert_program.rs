@@ -156,7 +156,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
+    
 
     use crate::RequisitionMutations;
 
@@ -259,9 +259,10 @@ mod test {
                     period_id: "period_id".to_string(),
                 }
             );
-            Ok(inline_init(|r: &mut Requisition| {
-                r.requisition_row = mock_program_request_draft_requisition()
-            }))
+            Ok(Requisition {
+                requisition_row: mock_program_request_draft_requisition(),
+                ..Default::default()
+            })
         }));
 
         let variables = json!({

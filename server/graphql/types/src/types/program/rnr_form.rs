@@ -7,6 +7,7 @@ use serde::Serialize;
 use service::rnr_form::get_period_length;
 
 use super::rnr_form_line::RnRFormLineNode;
+use crate::types::PeriodNode;
 
 pub struct RnRFormNode {
     pub rnr_form_row: RnRFormRow,
@@ -45,12 +46,18 @@ impl RnRFormNode {
         &self.program_row.name
     }
 
+    #[graphql(deprecation = "Since 2.9.1. Use period.id instead")]
     pub async fn period_id(&self) -> &str {
         &self.rnr_form_row.period_id
     }
 
+    #[graphql(deprecation = "Since 2.9.1. Use period.name instead")]
     pub async fn period_name(&self) -> &str {
         &self.period_row.name
+    }
+
+    pub async fn period(&self) -> PeriodNode {
+        PeriodNode::from_domain(self.period_row.clone())
     }
 
     pub async fn period_length(&self) -> i64 {

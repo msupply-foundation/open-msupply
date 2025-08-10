@@ -305,11 +305,23 @@ export const useInboundShipmentColumns = ({
     columns.push({
       key: 'campaign',
       label: 'label.campaign',
-      accessor: ({ rowData }) =>
-        getColumnProperty(rowData, [
+      accessor: ({ rowData }) => {
+        // Campaign or program could be selected
+
+        // Check for campaign name first
+        const campaignName = getColumnProperty(rowData, [
           { path: ['lines', 'campaign', 'name'] },
-          { path: ['campaign', 'name'], default: '' },
-        ]),
+          { path: ['campaign', 'name'] },
+        ]);
+
+        if (!!campaignName) return campaignName;
+
+        // Otherwise, check for program name
+        return getColumnProperty(rowData, [
+          { path: ['lines', 'program', 'name'] },
+          { path: ['program', 'name'], default: '' },
+        ]);
+      },
       defaultHideOnMobile: true,
     });
   }
@@ -323,13 +335,12 @@ export const useInboundShipmentColumns = ({
 };
 
 export const useExpansionColumns = (
-  withDoseColumns?: boolean
+  withDoseColumns?: boolean,
+  preferences?: {
+    allowTrackingOfStockByDonor?: boolean;
+    useCampaigns?: boolean;
+  }
 ): Column<InboundLineFragment>[] => {
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
-  );
-
   const columns: ColumnDescription<InboundLineFragment>[] = [
     'batch',
     'expiryDate',
@@ -381,7 +392,8 @@ export const useExpansionColumns = (
       key: 'campaign',
       label: 'label.campaign',
       width: 100,
-      accessor: ({ rowData }) => rowData.campaign?.name,
+      accessor: ({ rowData }) =>
+        rowData.campaign?.name ?? rowData.program?.name ?? '',
       defaultHideOnMobile: true,
     });
   }

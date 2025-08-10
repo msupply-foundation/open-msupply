@@ -1,5 +1,4 @@
 use repository::{MasterListLineRow, SyncBufferRow};
-use util::inline_init;
 
 use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
 
@@ -43,11 +42,12 @@ fn master_list_line_a() -> TestSyncIncomingRecord {
 fn master_list_line_b() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
         translated_record: PullTranslateResult::Ignored("Missing master list".to_string()),
-        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = "list_master_line".to_string();
-            r.record_id = MASTER_LIST_LINE_2.0.to_string();
-            r.data = MASTER_LIST_LINE_2.1.to_string();
-        }),
+        sync_buffer_row: SyncBufferRow {
+            table_name: "list_master_line".to_string(),
+            record_id: MASTER_LIST_LINE_2.0.to_string(),
+            data: MASTER_LIST_LINE_2.1.to_string(),
+            ..Default::default()
+        },
         extra_data: None,
     }
 }

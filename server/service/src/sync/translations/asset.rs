@@ -79,6 +79,7 @@ impl SyncTranslation for AssetTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]

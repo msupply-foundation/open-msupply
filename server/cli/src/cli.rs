@@ -40,7 +40,6 @@ use std::{
     sync::{Arc, RwLock},
 };
 use tokio::task::spawn_blocking;
-use util::inline_init;
 
 mod backup;
 use backup::*;
@@ -456,11 +455,12 @@ async fn main() -> anyhow::Result<()> {
             let service = &service_provider.settings;
             service.update_sync_settings(
                 &ctx,
-                &inline_init(|r: &mut SyncSettings| {
-                    r.url = "http://0.0.0.0:0".to_string();
-                    r.interval_seconds = 100000000;
-                    r.username = "Sync is disabled (datafile initialise from file".to_string();
-                }),
+                &SyncSettings {
+                    url: "http://0.0.0.0:0".to_string(),
+                    interval_seconds: 100000000,
+                    username: "Sync is disabled (datafile initialise from file".to_string(),
+                    ..Default::default()
+                },
             )?;
             service.disable_sync(&ctx)?;
 

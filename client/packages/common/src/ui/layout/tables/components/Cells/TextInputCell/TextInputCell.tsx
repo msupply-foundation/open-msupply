@@ -3,6 +3,7 @@ import { CellProps } from '../../../columns';
 import { BasicTextInput } from '@common/components';
 import { RecordWithId } from '@common/types';
 import { useBufferState, useDebounceCallback } from '@common/hooks';
+import { SxProps, Theme } from '@common/styles';
 
 export const TextInputCell = <T extends RecordWithId>({
   rowData,
@@ -15,9 +16,13 @@ export const TextInputCell = <T extends RecordWithId>({
   fullWidth,
   isRequired,
   debounceTime = 500,
-}: CellProps<T> & { fullWidth?: boolean }): React.ReactElement<
-  CellProps<T>
-> => {
+  multiline,
+  sx,
+}: CellProps<T> & {
+  fullWidth?: boolean;
+  multiline?: boolean;
+  sx?: SxProps<Theme>;
+}): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
   const updater = useDebounceCallback(
     column.setter,
@@ -35,10 +40,12 @@ export const TextInputCell = <T extends RecordWithId>({
 
   return (
     <BasicTextInput
+      sx={sx}
       fullWidth={fullWidth}
       disabled={isDisabled}
       autoFocus={autoFocus}
       required={isRequired}
+      multiline={multiline}
       slotProps={{
         input: {
           inputProps: {

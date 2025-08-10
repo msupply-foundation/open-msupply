@@ -13,7 +13,7 @@ mod test_update {
         ActivityLogRowRepository, ActivityLogType, NameRow, NameStoreJoinRow,
         RequisitionLineRowRepository, RequisitionRowRepository,
     };
-    use util::{inline_edit, inline_init};
+
 
     use crate::{
         requisition::request_requisition::{
@@ -26,33 +26,37 @@ mod test_update {
     #[actix_rt::test]
     async fn update_request_requisition_errors() {
         fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
+            NameRow {
+                id: "not_visible".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_supplier() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_a_supplier".to_string();
-            })
+            NameRow {
+                id: "not_a_supplier".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_supplier_join() -> NameStoreJoinRow {
-            inline_init(|r: &mut NameStoreJoinRow| {
-                r.id = "not_a_supplier_join".to_string();
-                r.name_link_id = not_a_supplier().id;
-                r.store_id = mock_store_a().id;
-                r.name_is_supplier = false;
-            })
+            NameStoreJoinRow {
+                id: "not_a_supplier_join".to_string(),
+                name_link_id: not_a_supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: false,
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_request_requisition_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible(), not_a_supplier()];
-                r.name_store_joins = vec![not_a_supplier_join()];
-            }),
+            MockData {
+                names: vec![not_visible(), not_a_supplier()],
+                name_store_joins: vec![not_a_supplier_join()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -66,9 +70,10 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = "invalid".to_string();
-                }),
+                UpdateRequestRequisition {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
         );
@@ -77,9 +82,10 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_sent_request_requisition().id;
-                }),
+                UpdateRequestRequisition {
+                    id: mock_sent_request_requisition().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditRequisition)
         );
@@ -88,11 +94,12 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_full_new_response_requisition_for_update_test()
+                UpdateRequestRequisition {
+                    id: mock_full_new_response_requisition_for_update_test()
                         .requisition
-                        .id;
-                }),
+                        .id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotARequestRequisition)
         );
@@ -101,10 +108,11 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_draft_request_requisition_for_update_test().id;
-                    r.other_party_id = Some("invalid".to_string());
-                })
+                UpdateRequestRequisition {
+                    id: mock_draft_request_requisition_for_update_test().id,
+                    other_party_id: Some("invalid".to_string()),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -112,10 +120,11 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_draft_request_requisition_for_update_test().id;
-                    r.other_party_id = Some(not_visible().id);
-                })
+                UpdateRequestRequisition {
+                    id: mock_draft_request_requisition_for_update_test().id,
+                    other_party_id: Some(not_visible().id),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -123,10 +132,11 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_draft_request_requisition_for_update_test().id;
-                    r.other_party_id = Some(not_a_supplier().id);
-                })
+                UpdateRequestRequisition {
+                    id: mock_draft_request_requisition_for_update_test().id,
+                    other_party_id: Some(not_a_supplier().id),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -136,9 +146,10 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_draft_request_requisition_for_update_test().id;
-                }),
+                UpdateRequestRequisition {
+                    id: mock_draft_request_requisition_for_update_test().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
@@ -148,10 +159,11 @@ mod test_update {
         assert_eq!(
             service.update_request_requisition(
                 &context,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_request_program_requisition().id;
-                    r.max_months_of_stock = Some(5.0);
-                }),
+                UpdateRequestRequisition {
+                    id: mock_request_program_requisition().id,
+                    max_months_of_stock: Some(5.0),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditProgramRequisitionInformation)
         );
@@ -197,15 +209,16 @@ mod test_update {
 
         assert_eq!(
             updated_row,
-            inline_edit(&updated_row, |mut u| {
-                u.colour = Some("new colour".to_string());
-                u.status = RequisitionStatus::Sent;
-                u.their_reference = Some("new their_reference".to_string());
-                u.comment = Some("new comment".to_string());
-                u.name_link_id = mock_name_store_c().id;
-                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
-                u
-            })
+            {
+                let mut expected = updated_row.clone();
+                expected.colour = Some("new colour".to_string());
+                expected.status = RequisitionStatus::Sent;
+                expected.their_reference = Some("new their_reference".to_string());
+                expected.comment = Some("new comment".to_string());
+                expected.name_link_id = mock_name_store_c().id;
+                expected.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
+                expected
+            }
         );
 
         let sent_datetime = updated_row.sent_datetime.unwrap();
@@ -226,10 +239,11 @@ mod test_update {
         service
             .update_request_requisition(
                 &context,
-                inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id.clone_from(&calculation_requisition.requisition.id);
-                    r.max_months_of_stock = Some(20.0);
-                }),
+                UpdateRequestRequisition {
+                    id: calculation_requisition.requisition.id.clone(),
+                    max_months_of_stock: Some(20.0),
+                    ..Default::default()
+                },
             )
             .unwrap();
 

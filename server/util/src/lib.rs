@@ -9,9 +9,6 @@ mod logger;
 
 pub use logger::*;
 
-mod inline_init;
-pub use inline_init::*;
-
 mod number_operations;
 pub use number_operations::*;
 

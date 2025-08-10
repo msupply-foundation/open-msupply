@@ -21,7 +21,7 @@ pub struct UpsertItemVariantInput {
     pub id: String,
     pub item_id: String,
     pub name: String,
-    pub cold_storage_type_id: Option<NullableUpdateInput<String>>,
+    pub location_type_id: Option<NullableUpdateInput<String>>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub packaging_variants: Vec<PackagingVariantInput>,
     pub vvm_type: Option<NullableUpdateInput<String>>,
@@ -83,7 +83,7 @@ impl UpsertItemVariantInput {
             id,
             item_id,
             name,
-            cold_storage_type_id,
+            location_type_id,
             manufacturer_id,
             packaging_variants,
             vvm_type,
@@ -93,8 +93,8 @@ impl UpsertItemVariantInput {
             id: id.clone(),
             item_id,
             name,
-            cold_storage_type_id: cold_storage_type_id.map(|cold_storage_type_id| NullableUpdate {
-                value: cold_storage_type_id.value,
+            location_type_id: location_type_id.map(|location_type_id| NullableUpdate {
+                value: location_type_id.value,
             }),
             manufacturer_id: manufacturer_id.map(|manufacturer_id| NullableUpdate {
                 value: manufacturer_id.value,
@@ -155,7 +155,7 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
         // Generic errors
         ServiceError::ItemDoesNotExist
         | ServiceError::CantChangeItem
-        | ServiceError::ColdStorageTypeDoesNotExist
+        | ServiceError::LocationTypeDoesNotExist
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::OtherPartyNotVisible
         | ServiceError::OtherPartyNotAManufacturer => BadUserInput(formatted_error),

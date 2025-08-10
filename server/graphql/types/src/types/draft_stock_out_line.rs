@@ -3,11 +3,14 @@ use chrono::NaiveDate;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader,
-        NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, VVMStatusByIdLoader,
+        NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, ProgramByIdLoader,
+        VVMStatusByIdLoader,
     },
     ContextExt,
 };
 use service::invoice_line::get_draft_outbound_lines::DraftStockOutLine;
+
+use crate::types::program_node::ProgramNode;
 
 use super::{CampaignNode, ItemVariantNode, LocationNode, NameNode, VVMStatusNode};
 
@@ -127,6 +130,17 @@ impl DraftStockOutLineNode {
 
         let result = loader.load_one(campaign_id.clone()).await?;
         Ok(result.map(CampaignNode::from_domain))
+    }
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let program_id = match &self.shipment_line.program_id {
+            Some(program_id) => program_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(program_id.clone()).await?;
+        Ok(result.map(|program_row| ProgramNode { program_row }))
     }
 
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {

@@ -86,11 +86,12 @@ pub enum ActivityLogNodeType {
     ItemVariantCreated,
     ItemVariantDeleted,
     ItemVariantUpdatedName,
-    ItemVariantUpdateColdStorageType,
+    ItemVariantUpdateLocationType,
     ItemVariantUpdateManufacturer,
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
     VVMStatusLogUpdated,
+    VolumePerPackChanged,
 }
 
 #[Object]
@@ -231,12 +232,13 @@ impl ActivityLogNodeType {
             from::ItemVariantCreated => to::ItemVariantCreated,
             from::ItemVariantDeleted => to::ItemVariantDeleted,
             from::ItemVariantUpdatedName => to::ItemVariantUpdatedName,
-            from::ItemVariantUpdateColdStorageType => to::ItemVariantUpdateColdStorageType,
+            from::ItemVariantUpdateLocationType => to::ItemVariantUpdateLocationType,
             from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
             from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
             from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
             from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
             from::InvoiceStatusReceived => to::InvoiceStatusReceived,
+            from::VolumePerPackChanged => to::VolumePerPackChanged,
         }
     }
 
@@ -308,11 +310,12 @@ impl ActivityLogNodeType {
             from::ItemVariantCreated => to::ItemVariantCreated,
             from::ItemVariantDeleted => to::ItemVariantDeleted,
             from::ItemVariantUpdatedName => to::ItemVariantUpdatedName,
-            from::ItemVariantUpdateColdStorageType => to::ItemVariantUpdateColdStorageType,
+            from::ItemVariantUpdateLocationType => to::ItemVariantUpdateLocationType,
             from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
             from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
             from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
             from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
+            from::VolumePerPackChanged => to::VolumePerPackChanged,
         }
     }
 }

@@ -163,7 +163,7 @@ mod test {
         stocktake_line::{query::GetStocktakeLinesError, StocktakeLineServiceTrait},
         ListResult,
     };
-    use util::inline_init;
+    
 
     use crate::StocktakeLineQueries;
 
@@ -265,16 +265,18 @@ mod test {
 
         let test_service = TestService(Box::new(|_, _, _, _, _, _| {
             Ok(ListResult {
-                rows: vec![inline_init(|r: &mut StocktakeLine| {
-                    r.line = inline_init(|l: &mut StocktakeLineRow| {
-                        l.id = "id".to_string();
-                        l.batch = Some("batch".to_string());
-                        l.expiry_date = Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap());
-                        l.stocktake_id = "stocktake_id".to_string();
-                        l.item_link_id = mock_stocktake_line_a().item_link_id;
-                    });
-                    r.item = mock_item_a()
-                })],
+                rows: vec![StocktakeLine {
+                    line: StocktakeLineRow {
+                        id: "id".to_string(),
+                        batch: Some("batch".to_string()),
+                        expiry_date: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
+                        stocktake_id: "stocktake_id".to_string(),
+                        item_link_id: mock_stocktake_line_a().item_link_id,
+                        ..Default::default()
+                    },
+                    item: mock_item_a(),
+                    ..Default::default()
+                }],
                 count: 1,
             })
         }));

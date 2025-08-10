@@ -18,6 +18,7 @@ import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
 import { extractProperty, getGenderTranslationKey } from '@common/utils';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
+import { usePrevious } from '../hooks/usePrevious';
 
 export const selectTester = rankWith(4, isEnumControl);
 
@@ -73,6 +74,11 @@ const Options = z
       })
       .optional(),
     preferenceKey: z.nativeEnum(PreferenceKey).optional(),
+    /**
+     * If true, the value will be pre-populated with the previous value (if
+     * available)
+     */
+    defaultToPrevious: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -279,6 +285,8 @@ const UIComponent = (props: ControlProps) => {
   useEffect(() => {
     setCustomError(validationError);
   }, [validationError]);
+
+  usePrevious(path, data, schemaOptions, value => handleChange(path, value));
 
   if (!props.visible) {
     return null;

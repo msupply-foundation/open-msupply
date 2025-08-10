@@ -40,6 +40,8 @@ pub fn generate(
         vvm_status_id,
         donor_id,
         campaign_id,
+        program_id,
+        volume_per_pack,
     }: AddNewStockLine,
 ) -> Result<GenerateResult, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
@@ -108,15 +110,18 @@ pub fn generate(
         number_of_packs,
         stock_on_hold: on_hold,
         r#type: StockInType::InventoryAddition,
-        note: None,
-        total_before_tax: None,
-        tax_percentage: None,
         barcode,
         item_variant_id,
         donor_id,
         vvm_status_id,
         campaign_id,
+        program_id,
+        volume_per_pack,
+        total_before_tax: None,
+        tax_percentage: None,
+        note: None,
         shipped_number_of_packs: None,
+        shipped_pack_size: None,
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {

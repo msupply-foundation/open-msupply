@@ -869,8 +869,8 @@ query SyncInfo {
                     Err(e) => println!("Error parsing SyncInfo: {}", e),
                 };
             } else {
-                dbg!(&response);
-                dbg!(&response.text().await.unwrap());
+                // dbg!(&response);
+                // dbg!(&response.text().await.unwrap());
             }
         }
     }

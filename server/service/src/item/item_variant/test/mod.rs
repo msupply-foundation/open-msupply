@@ -288,14 +288,14 @@ mod query {
         );
         assert_eq!(result.unwrap_err(), UpsertItemVariantError::CantChangeItem);
 
-        // Test that we can't create/update a record with an invalid cold_storage_id
+        // Test that we can't create/update a record with an invalid location_type_id
         let result = service.upsert_item_variant(
             &context,
             UpsertItemVariantWithPackaging {
                 id: test_item_a_variant_id.to_string(),
                 item_id: mock_item_a().id,
                 name: "Variant 1".to_string(),
-                cold_storage_type_id: Some(NullableUpdate {
+                location_type_id: Some(NullableUpdate {
                     value: Some(uuid()),
                 }),
                 ..Default::default()
@@ -303,7 +303,7 @@ mod query {
         );
         assert_eq!(
             result.unwrap_err(),
-            UpsertItemVariantError::ColdStorageTypeDoesNotExist
+            UpsertItemVariantError::LocationTypeDoesNotExist
         );
 
         // Test: name should be unique for an item

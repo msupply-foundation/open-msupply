@@ -95,7 +95,7 @@ mod graphql {
     use repository::mock::{MockData, MockDataInserts};
     use repository::{InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType};
     use serde_json::json;
-    use util::inline_init;
+    
 
     use crate::{InvoiceMutations, InvoiceQueries};
 
@@ -106,54 +106,57 @@ mod graphql {
             InvoiceMutations,
             "omsupply-database-gql-outbound_shipment_delete",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![shipped_outbound_shipment(), outbound_shipment_no_lines()];
-            }),
+            MockData {
+                invoices: vec![shipped_outbound_shipment(), outbound_shipment_no_lines()],
+                ..Default::default()
+            },
         )
         .await;
 
         fn shipped_outbound_shipment() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "shipped_outbound_shipment".to_string();
-                r.name_link_id = String::from("name_store_a");
-                r.store_id = String::from("store_a");
-                r.invoice_number = 3;
-                r.r#type = InvoiceType::OutboundShipment;
-                r.status = InvoiceStatus::Shipped;
-                r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
+            InvoiceRow {
+                id: "shipped_outbound_shipment".to_string(),
+                name_link_id: String::from("name_store_a"),
+                store_id: String::from("store_a"),
+                invoice_number: 3,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::Shipped,
+                created_datetime: NaiveDate::from_ymd_opt(1970, 1, 5)
                     .unwrap()
                     .and_hms_milli_opt(15, 30, 0, 0)
-                    .unwrap();
-                r.picked_datetime = Some(Utc::now().naive_utc());
-                r.shipped_datetime = Some(Utc::now().naive_utc());
-                r.allocated_datetime = Some(
+                    .unwrap(),
+                picked_datetime: Some(Utc::now().naive_utc()),
+                shipped_datetime: Some(Utc::now().naive_utc()),
+                allocated_datetime: Some(
                     NaiveDate::from_ymd_opt(1970, 1, 5)
                         .unwrap()
                         .and_hms_milli_opt(15, 30, 0, 0)
                         .unwrap(),
-                );
-            })
+                ),
+                ..Default::default()
+            }
         }
 
         fn outbound_shipment_no_lines() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = String::from("outbound_shipment_no_lines_test");
-                r.name_link_id = String::from("name_store_a");
-                r.store_id = String::from("store_a");
-                r.r#type = InvoiceType::OutboundShipment;
-                r.status = InvoiceStatus::Picked;
-                r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 6)
+            InvoiceRow {
+                id: String::from("outbound_shipment_no_lines_test"),
+                name_link_id: String::from("name_store_a"),
+                store_id: String::from("store_a"),
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::Picked,
+                created_datetime: NaiveDate::from_ymd_opt(1970, 1, 6)
                     .unwrap()
                     .and_hms_milli_opt(15, 30, 0, 0)
-                    .unwrap();
-                r.picked_datetime = Some(Utc::now().naive_utc());
-                r.allocated_datetime = Some(
+                    .unwrap(),
+                picked_datetime: Some(Utc::now().naive_utc()),
+                allocated_datetime: Some(
                     NaiveDate::from_ymd_opt(1970, 1, 6)
                         .unwrap()
                         .and_hms_milli_opt(15, 30, 0, 0)
                         .unwrap(),
-                );
-            })
+                ),
+                ..Default::default()
+            }
         }
 
         let query = r#"mutation DeleteOutboundShipment($id: String!) {

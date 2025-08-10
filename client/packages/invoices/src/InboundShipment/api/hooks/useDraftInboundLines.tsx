@@ -7,12 +7,16 @@ import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
 import { useTranslation } from '@common/intl';
+import { ScannedBatchData } from '../../DetailView';
 
 type InboundLineItem = InboundLineFragment['item'];
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
-export const useDraftInboundLines = (item: InboundLineItem | null) => {
+export const useDraftInboundLines = (
+  item: InboundLineItem | null,
+  scannedBatchData?: ScannedBatchData
+) => {
   const t = useTranslation();
   const { error } = useNotification();
 
@@ -27,8 +31,6 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
     'inbound-shipment-line-edit'
   );
 
-  const defaultPackSize = item?.defaultPackSize || 1;
-
   useEffect(() => {
     if (lines && item) {
       const drafts = lines.map(line =>
@@ -36,25 +38,32 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
           item: line.item,
           invoiceId: line.invoiceId,
           seed: line,
-          defaultPackSize,
+          // From scanned barcode:
+          batch: scannedBatchData?.batch,
+          expiryDate: scannedBatchData?.expiryDate,
         })
       );
       if (drafts.length === 0)
         drafts.push(
-          CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize })
+          CreateDraft.stockInLine({
+            item,
+            invoiceId: id,
+            // From scanned barcode:
+            batch: scannedBatchData?.batch,
+            expiryDate: scannedBatchData?.expiryDate,
+          })
         );
       setDraftLines(drafts);
     } else {
       setDraftLines([]);
     }
-  }, [lines, item, id, defaultPackSize]);
+  }, [lines, item, id]);
 
   const addDraftLine = () => {
     if (item) {
       const newLine = CreateDraft.stockInLine({
         item,
         invoiceId: id,
-        defaultPackSize,
       });
       setIsDirty(true);
       setDraftLines(draftLines => [...draftLines, newLine]);
@@ -85,9 +94,7 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
       setDraftLines(draftLines => {
         const newLines = draftLines.filter(line => line.id !== id);
         if (newLines.length === 0 && item) {
-          return [
-            CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize }),
-          ];
+          return [CreateDraft.stockInLine({ item, invoiceId: id })];
         }
         return newLines;
       });

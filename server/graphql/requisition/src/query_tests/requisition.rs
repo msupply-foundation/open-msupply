@@ -18,7 +18,7 @@ mod graphql {
         service_provider::{ServiceContext, ServiceProvider},
         ListError, ListResult,
     };
-    use util::inline_init;
+    
 
     use crate::RequisitionQueries;
 
@@ -254,10 +254,11 @@ mod graphql {
             assert_eq!(comment, Some(StringFilter::equal_to("equal_to_comment")));
 
             Ok(ListResult {
-                rows: vec![inline_init(|r: &mut Requisition| {
-                    r.requisition_row = mock_request_draft_requisition_all_fields().requisition;
-                    r.name_row = mock_name_a();
-                })],
+                rows: vec![Requisition {
+                    requisition_row: mock_request_draft_requisition_all_fields().requisition,
+                    name_row: mock_name_a(),
+                    ..Default::default()
+                }],
                 count: 1,
             })
         }));

@@ -1,7 +1,7 @@
 use super::{DBType, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection};
 use crate::db_diesel::name_row::name;
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
 };
 use crate::purchase_order_row::purchase_order::{self};
 
@@ -20,12 +20,10 @@ pub struct PurchaseOrderFilter {
 
 #[derive(PartialEq, Debug)]
 pub enum PurchaseOrderSortField {
-    Supplier,
     Number,
     CreatedDatetime,
     Status,
     TargetMonths,
-    DeliveryDate,
 }
 
 pub type PurchaseOrderSort = Sort<PurchaseOrderSortField>;
@@ -62,9 +60,6 @@ impl<'a> PurchaseOrderRepository<'a> {
         let mut query = create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
-                PurchaseOrderSortField::Supplier => {
-                    apply_sort_no_case!(query, sort, purchase_order::supplier_name_link_id)
-                }
                 PurchaseOrderSortField::Number => {
                     apply_sort!(query, sort, purchase_order::purchase_order_number)
                 }
@@ -76,9 +71,6 @@ impl<'a> PurchaseOrderRepository<'a> {
                 }
                 PurchaseOrderSortField::TargetMonths => {
                     apply_sort!(query, sort, purchase_order::target_months)
-                }
-                PurchaseOrderSortField::DeliveryDate => {
-                    apply_sort!(query, sort, purchase_order::delivered_datetime)
                 }
             }
         } else {
@@ -118,7 +110,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
         if let Some(supplier_string) = supplier {
             let mut sub_query = name_link::table
                 .inner_join(name::table)
-                .select(name_link::id.nullable())
+                .select(name_link::id)
                 .into_boxed();
             apply_string_filter!(sub_query, Some(supplier_string), name::name_);
 

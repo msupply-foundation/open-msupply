@@ -5,20 +5,23 @@ import {
   useIntlUtils,
 } from '@common/intl';
 import { NumUtils } from '@common/utils';
-import { DraftStockOutLineFragment } from 'packages/invoices/src/StockOut';
+import {
+  AllocateInType,
+  DraftStockOutLineFragment,
+} from '../../../../../invoices/src/StockOut';
 
 export const useClosedSummary = () => {
-  const formatNumber = useFormatNumber();
+  const { round } = useFormatNumber();
   const { getPlural } = useIntlUtils();
 
   const getDisplayValue = (value: number) => {
-    const formatted = formatNumber.round(value, 2);
+    const formatted = round(value, 2);
     return NumUtils.hasMoreThanTwoDp(value)
       ? `${formatted}... `
       : `${formatted} `;
   };
 
-  const summarise = (
+  const unitsSummary = (
     t: TypedTFunction<LocaleKey>,
     unitName: string,
     lines: DraftStockOutLineFragment[]
@@ -55,21 +58,21 @@ export const useClosedSummary = () => {
           packWord,
           unitWord,
         });
-        const tooltip = formatNumber.format(numUnits / packSize);
+        const tooltip = round(numUnits / packSize, 10);
         const displayValue = getDisplayValue(totalPacks);
 
         summary.push({ displayValue, text, tooltip });
       } else {
         const unitType = getPlural(unitName, numUnits);
         const text = t('label.packs-of-1', { numUnits, unitType });
-        const tooltip = formatNumber.format(numUnits);
+        const tooltip = round(numUnits, 10);
         const displayValue = getDisplayValue(numUnits);
         summary.push({ displayValue, text, tooltip });
       }
     });
     return summary;
   };
-
+  //
   const dosesSummary = (
     t: TypedTFunction<LocaleKey>,
     lines: DraftStockOutLineFragment[]
@@ -80,14 +83,25 @@ export const useClosedSummary = () => {
       0
     );
 
-    const displayValue = getDisplayValue(totalDoses);
+    const displayValue = `${round(totalDoses)} `;
     const unitWord = t('label.doses-plural', {
       count: totalDoses,
     });
-    const tooltip = formatNumber.format(totalDoses);
 
-    return [{ displayValue, text: unitWord, tooltip }];
+    return [{ displayValue, text: unitWord }];
   };
 
-  return { summarise, dosesSummary };
+  const summarise = (
+    t: TypedTFunction<LocaleKey>,
+    lines: DraftStockOutLineFragment[],
+    allocationInType: AllocateInType,
+    unitName?: string | null
+  ) => {
+    if (allocationInType === AllocateInType.Doses) {
+      return dosesSummary(t, lines);
+    }
+    return unitsSummary(t, unitName ?? t('label.unit'), lines);
+  };
+
+  return summarise;
 };

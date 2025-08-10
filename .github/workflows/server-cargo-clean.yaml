@@ -1,34 +1,17 @@
-on: 
-  workflow_dispatch: 
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 7 * * 0" # Every Sunday at 7:30 PM UTC - equivalent to 7:30 AM NZST
 
 name: Manual Cargo Clean
 
-jobs: 
-  build_and_test: 
+jobs:
+  build_and_test:
     name: Run cargo clean against self-hosted
     runs-on: self-hosted
     timeout-minutes: 25
-    steps: 
-      - name: Update PATH
-        run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
-      - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with: 
-          toolchain: stable
-      - name: Clean SQLite Artifacts
-        env:
-          CARGO_TARGET_DIR: /tmp/target/sqlite
-        uses: actions-rs/cargo@v1
-        with: 
-          command: clean
-          args: --manifest-path server/Cargo.toml
-      - name: Clean PostgreSQL artifacts
-        env:
-          CARGO_TARGET_DIR: /tmp/target/postgres
-        uses: actions-rs/cargo@v1
-        with: 
-          command: clean
-          args: --manifest-path server/Cargo.toml
-
-
-      
+    steps:
+      - name: Delete Postgres CARGO_TARGET_DIR
+        run: rm -r /tmp/target/postgres
+      - name: Delete Sqlite CARGO_TARGET_DIR
+        run: rm -r /tmp/target/sqlite

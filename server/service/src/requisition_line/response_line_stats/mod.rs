@@ -77,7 +77,6 @@ mod test {
         ApprovalStatusType, RequisitionLineRow, RequisitionRow, RequisitionStatus,
         StorePreferenceRow, StorePreferenceRowRepository,
     };
-    use util::inline_init;
 
     type ServiceError = ResponseRequisitionStatsError;
 
@@ -122,176 +121,191 @@ mod test {
     }
 
     fn requisition_one() -> RequisitionRow {
-        inline_init(|r: &mut RequisitionRow| {
-            r.id = "requisition_one".to_string();
-            r.requisition_number = 1;
-            r.store_id = mock_store_a().id;
-            r.name_link_id = "name_a".to_string();
-            r.r#type = RequisitionType::Response;
-            r.status = RequisitionStatus::New;
-            r.approval_status = Some(ApprovalStatusType::Approved);
-            r.created_datetime = Utc::now().naive_utc();
-            r.max_months_of_stock = 3.0;
-        })
+        RequisitionRow {
+            id: "requisition_one".to_string(),
+            requisition_number: 1,
+            store_id: mock_store_a().id,
+            name_link_id: "name_a".to_string(),
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
+            approval_status: Some(ApprovalStatusType::Approved),
+            created_datetime: Utc::now().naive_utc(),
+            max_months_of_stock: 3.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_line_one_a() -> RequisitionLineRow {
-        inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "requisition_line_one_a".to_string();
-            r.requisition_id = "requisition_one".to_string();
-            r.item_link_id = "item_d".to_string();
-            r.requested_quantity = 20.0;
-            r.approved_quantity = 12.0;
-        })
+        RequisitionLineRow {
+            id: "requisition_line_one_a".to_string(),
+            requisition_id: "requisition_one".to_string(),
+            item_link_id: "item_d".to_string(),
+            requested_quantity: 20.0,
+            approved_quantity: 12.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_line_one_b() -> RequisitionLineRow {
-        inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "requisition_line_one_b".to_string();
-            r.requisition_id = "requisition_one".to_string();
-            r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 15.0;
-            r.available_stock_on_hand = 10.0;
-            r.average_monthly_consumption = 50.0;
-            r.approved_quantity = 12.0;
-        })
+        RequisitionLineRow {
+            id: "requisition_line_one_b".to_string(),
+            requisition_id: "requisition_one".to_string(),
+            item_link_id: "item_e".to_string(),
+            requested_quantity: 15.0,
+            available_stock_on_hand: 10.0,
+            average_monthly_consumption: 50.0,
+            approved_quantity: 12.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_two() -> RequisitionRow {
-        inline_init(|r: &mut RequisitionRow| {
-            r.id = "requisition_two".to_string();
-            r.requisition_number = 3;
-            r.store_id = mock_store_a().id;
-            r.name_link_id = "name_b".to_string();
-            r.r#type = RequisitionType::Response;
-            r.status = RequisitionStatus::New;
-            r.approval_status = Some(ApprovalStatusType::Approved);
-            r.created_datetime = Utc::now().naive_utc();
-            r.max_months_of_stock = 6.0;
-        })
+        RequisitionRow {
+            id: "requisition_two".to_string(),
+            requisition_number: 3,
+            store_id: mock_store_a().id,
+            name_link_id: "name_b".to_string(),
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
+            approval_status: Some(ApprovalStatusType::Approved),
+            created_datetime: Utc::now().naive_utc(),
+            max_months_of_stock: 6.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_line_two_a() -> RequisitionLineRow {
-        inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "requisition_line_two_a".to_string();
-            r.requisition_id = "requisition_two".to_string();
-            r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 20.0;
-            r.approved_quantity = 10.0;
-        })
+        RequisitionLineRow {
+            id: "requisition_line_two_a".to_string(),
+            requisition_id: "requisition_two".to_string(),
+            item_link_id: "item_e".to_string(),
+            requested_quantity: 20.0,
+            approved_quantity: 10.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_three() -> RequisitionRow {
-        inline_init(|r: &mut RequisitionRow| {
-            r.id = "requisition_three".to_string();
-            r.requisition_number = 4;
-            r.store_id = mock_store_a().id;
-            r.name_link_id = "name_b".to_string();
-            r.r#type = RequisitionType::Response;
-            r.status = RequisitionStatus::New;
-            r.approval_status = Some(ApprovalStatusType::Approved);
-            r.created_datetime = Utc::now().naive_utc();
-            r.max_months_of_stock = 6.0;
-        })
+        RequisitionRow {
+            id: "requisition_three".to_string(),
+            requisition_number: 4,
+            store_id: mock_store_a().id,
+            name_link_id: "name_b".to_string(),
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
+            approval_status: Some(ApprovalStatusType::Approved),
+            created_datetime: Utc::now().naive_utc(),
+            max_months_of_stock: 6.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_line_three_a() -> RequisitionLineRow {
-        inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "requisition_line_three_a".to_string();
-            r.requisition_id = "requisition_three".to_string();
-            r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 25.0;
-            r.approved_quantity = 18.0;
-        })
+        RequisitionLineRow {
+            id: "requisition_line_three_a".to_string(),
+            requisition_id: "requisition_three".to_string(),
+            item_link_id: "item_e".to_string(),
+            requested_quantity: 25.0,
+            approved_quantity: 18.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_four() -> RequisitionRow {
-        inline_init(|r: &mut RequisitionRow| {
-            r.id = "requisition_four".to_string();
-            r.requisition_number = 5;
-            r.store_id = mock_store_a().id;
-            r.name_link_id = "name_b".to_string();
-            r.r#type = RequisitionType::Response;
-            r.status = RequisitionStatus::New;
-            r.approval_status = Some(ApprovalStatusType::Denied);
-            r.created_datetime = Utc::now().naive_utc();
-            r.max_months_of_stock = 6.0;
-        })
+        RequisitionRow {
+            id: "requisition_four".to_string(),
+            requisition_number: 5,
+            store_id: mock_store_a().id,
+            name_link_id: "name_b".to_string(),
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
+            approval_status: Some(ApprovalStatusType::Denied),
+            created_datetime: Utc::now().naive_utc(),
+            max_months_of_stock: 6.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_line_four_a() -> RequisitionLineRow {
-        inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "requisition_line_four_a".to_string();
-            r.requisition_id = "requisition_four".to_string();
-            r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 10.0;
-        })
+        RequisitionLineRow {
+            id: "requisition_line_four_a".to_string(),
+            requisition_id: "requisition_four".to_string(),
+            item_link_id: "item_e".to_string(),
+            requested_quantity: 10.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_five() -> RequisitionRow {
-        inline_init(|r: &mut RequisitionRow| {
-            r.id = "requisition_five".to_string();
-            r.requisition_number = 5;
-            r.store_id = mock_store_a().id;
-            r.name_link_id = "name_b".to_string();
-            r.r#type = RequisitionType::Response;
-            r.status = RequisitionStatus::New;
-            r.created_datetime = Utc::now().naive_utc();
-            r.max_months_of_stock = 6.0;
-        })
+        RequisitionRow {
+            id: "requisition_five".to_string(),
+            requisition_number: 5,
+            store_id: mock_store_a().id,
+            name_link_id: "name_b".to_string(),
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
+            created_datetime: Utc::now().naive_utc(),
+            max_months_of_stock: 6.0,
+            ..Default::default()
+        }
     }
 
     fn requisition_line_five_a() -> RequisitionLineRow {
-        inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "requisition_line_five_a".to_string();
-            r.requisition_id = "requisition_five".to_string();
-            r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 6.0;
-        })
+        RequisitionLineRow {
+            id: "requisition_line_five_a".to_string(),
+            requisition_id: "requisition_five".to_string(),
+            item_link_id: "item_e".to_string(),
+            requested_quantity: 6.0,
+            ..Default::default()
+        }
     }
 
     fn request_requisition_a() -> RequisitionRow {
-        inline_init(|r: &mut RequisitionRow| {
-            r.id = "request_requisition_a".to_string();
-            r.requisition_number = 4;
-            r.store_id = mock_store_a().id;
-            r.name_link_id = "name_b".to_string();
-            r.r#type = RequisitionType::Request;
-            r.status = RequisitionStatus::Sent;
-            r.created_datetime = Utc::now().naive_utc();
-            r.max_months_of_stock = 5.0;
-        })
+        RequisitionRow {
+            id: "request_requisition_a".to_string(),
+            requisition_number: 4,
+            store_id: mock_store_a().id,
+            name_link_id: "name_b".to_string(),
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Sent,
+            created_datetime: Utc::now().naive_utc(),
+            max_months_of_stock: 5.0,
+            ..Default::default()
+        }
     }
 
     fn request_requisition_a_line_a() -> RequisitionLineRow {
-        inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "request_requisition_a_line_a".to_string();
-            r.requisition_id = "request_requisition_a".to_string();
-            r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 100.0;
-        })
+        RequisitionLineRow {
+            id: "request_requisition_a_line_a".to_string(),
+            requisition_id: "request_requisition_a".to_string(),
+            item_link_id: "item_e".to_string(),
+            requested_quantity: 100.0,
+            ..Default::default()
+        }
     }
 
     fn request_requisition_b() -> RequisitionRow {
-        inline_init(|r: &mut RequisitionRow| {
-            r.id = "request_requisition_b".to_string();
-            r.requisition_number = 4;
-            r.store_id = mock_store_a().id;
-            r.name_link_id = "name_b".to_string();
-            r.r#type = RequisitionType::Request;
-            r.status = RequisitionStatus::New;
-            r.created_datetime = Utc::now().naive_utc();
-            r.max_months_of_stock = 5.0;
-        })
+        RequisitionRow {
+            id: "request_requisition_b".to_string(),
+            requisition_number: 4,
+            store_id: mock_store_a().id,
+            name_link_id: "name_b".to_string(),
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::New,
+            created_datetime: Utc::now().naive_utc(),
+            max_months_of_stock: 5.0,
+            ..Default::default()
+        }
     }
 
     fn request_requisition_b_line_a() -> RequisitionLineRow {
-        inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "request_requisition_b_line_a".to_string();
-            r.requisition_id = "request_requisition_b".to_string();
-            r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 100.0;
-        })
+        RequisitionLineRow {
+            id: "request_requisition_b_line_a".to_string(),
+            requisition_id: "request_requisition_b".to_string(),
+            item_link_id: "item_e".to_string(),
+            requested_quantity: 100.0,
+            ..Default::default()
+        }
     }
 
     #[actix_rt::test]
@@ -299,8 +313,8 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "get_response_requisition_line_stats_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.requisitions = vec![
+            MockData {
+                requisitions: vec![
                     requisition_one(),
                     requisition_two(),
                     requisition_three(),
@@ -308,8 +322,8 @@ mod test {
                     requisition_five(),
                     request_requisition_a(),
                     request_requisition_b(),
-                ];
-                r.requisition_lines = vec![
+                ],
+                requisition_lines: vec![
                     requisition_line_one_a(),
                     requisition_line_one_b(),
                     requisition_line_two_a(),
@@ -318,8 +332,9 @@ mod test {
                     requisition_line_five_a(),
                     request_requisition_a_line_a(),
                     request_requisition_b_line_a(),
-                ]
-            }),
+                ],
+                ..Default::default()
+            },
         )
         .await;
 

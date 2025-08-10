@@ -138,7 +138,6 @@ mod test {
         test_db::setup_all,
         InvoiceLineRowRepository, InvoiceRowRepository,
     };
-    use util::inline_init;
 
     use crate::{
         invoice::{BatchPrescription, DeletePrescriptionError, InsertPrescription},
@@ -161,17 +160,19 @@ mod test {
         let delete_shipment_input = mock_inbound_shipment_a().id;
 
         let mut input = BatchPrescription {
-            insert_prescription: Some(vec![inline_init(|input: &mut InsertPrescription| {
-                input.id = "new_id".to_string();
-                input.patient_id = mock_patient().id;
-            })]),
-            insert_line: Some(vec![inline_init(|input: &mut InsertStockOutLine| {
-                input.invoice_id = "new_id".to_string();
-                input.r#type = StockOutType::Prescription;
-                input.id = "new_line_id".to_string();
-                input.stock_line_id = mock_stock_line_a().id;
-                input.number_of_packs = 1.0
-            })]),
+            insert_prescription: Some(vec![InsertPrescription {
+                id: "new_id".to_string(),
+                patient_id: mock_patient().id,
+                ..Default::default()
+            }]),
+            insert_line: Some(vec![InsertStockOutLine {
+                invoice_id: "new_id".to_string(),
+                r#type: StockOutType::Prescription,
+                id: "new_line_id".to_string(),
+                stock_line_id: mock_stock_line_a().id,
+                number_of_packs: 1.0,
+                ..Default::default()
+            }]),
             update_line: None,
             delete_line: None,
             update_prescription: None,

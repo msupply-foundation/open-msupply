@@ -414,7 +414,8 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, RepositoryError, StorageConnectionManager,
+        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, RepositoryError,
+        StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -433,7 +434,6 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
     };
-    use util::inline_init;
 
     use crate::BatchMutations;
 
@@ -621,40 +621,46 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(BatchInboundShipmentResult {
                 insert_shipment: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertInboundShipment| {
-                        input.id = "id1".to_string()
-                    }),
+                    input: InsertInboundShipment {
+                        id: "id1".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertInboundShipmentError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertStockInLine| {
-                        input.id = "id2".to_string()
-                    }),
+                    input: InsertStockInLine {
+                        id: "id2".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertStockInLineError::InvoiceDoesNotExist {}),
                 }],
                 insert_from_internal_order_lines: vec![],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateStockInLine| {
-                        input.id = "id3".to_string()
-                    }),
+                    input: UpdateStockInLine {
+                        id: "id3".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(UpdateStockInLineError::LineDoesNotExist {}),
                 }],
                 delete_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteStockInLine| {
-                        input.id = "id4".to_string()
-                    }),
+                    input: DeleteStockInLine {
+                        id: "id4".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(DeleteStockInLineError::LineDoesNotExist {}),
                 }],
                 update_shipment: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateInboundShipment| {
-                        input.id = "id5".to_string()
-                    }),
+                    input: UpdateInboundShipment {
+                        id: "id5".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(UpdateInboundShipmentError::InvoiceDoesNotExist {}),
                 }],
                 delete_shipment: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteInboundShipment| {
-                        input.id = "id6".to_string()
-                    }),
+                    input: DeleteInboundShipment {
+                        id: "id6".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(DeleteInboundShipmentError::InvoiceDoesNotExist {}),
                 }],
                 insert_service_line: vec![],
@@ -675,15 +681,17 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(BatchInboundShipmentResult {
                 insert_shipment: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertInboundShipment| {
-                        input.id = "id1".to_string()
-                    }),
+                    input: InsertInboundShipment {
+                        id: "id1".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertInboundShipmentError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertStockInLine| {
-                        input.id = "id2".to_string()
-                    }),
+                    input: InsertStockInLine {
+                        id: "id2".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(InsertStockInLineError::InvoiceDoesNotExist {}),
                 }],
                 insert_from_internal_order_lines: vec![],
@@ -691,9 +699,10 @@ mod test {
                 delete_line: vec![],
                 update_shipment: vec![],
                 delete_shipment: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteInboundShipment| {
-                        input.id = "id6".to_string()
-                    }),
+                    input: DeleteInboundShipment {
+                        id: "id6".to_string(),
+                        ..Default::default()
+                    },
                     result: Err(DeleteInboundShipmentError::NotAnInboundShipment {}),
                 }],
                 insert_service_line: vec![],
@@ -706,9 +715,10 @@ mod test {
             "input":
                 format!(
                     "{:#?}",
-                    inline_init(|input: &mut DeleteInboundShipment| {
-                        input.id = "id6".to_string()
-                    })
+                    DeleteInboundShipment {
+                        id: "id6".to_string(),
+                        ..Default::default()
+                    }
                 )
         });
         assert_standard_graphql_error!(
@@ -746,12 +756,17 @@ mod test {
                 insert_shipment: vec![],
                 insert_line: vec![],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateStockInLine| {
-                        input.id = "id3".to_string()
+                    input: UpdateStockInLine {
+                        id: "id3".to_string(),
+                        ..Default::default()
+                    },
+                    result: Ok(InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            id: "id3".to_string(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
                     }),
-                    result: Ok(inline_init(|input: &mut InvoiceLine| {
-                        input.invoice_line_row.id = "id3".to_string()
-                    })),
                 }],
                 insert_from_internal_order_lines: vec![],
                 delete_line: vec![],

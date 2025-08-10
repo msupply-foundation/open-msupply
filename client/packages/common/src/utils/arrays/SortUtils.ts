@@ -49,20 +49,20 @@ const getSortByExpiry =
 const getSortByVVMStatus =
   () =>
   (
-    a: { vvmStatus?: { level?: number } | null; expiryDate?: string | null },
-    b: { vvmStatus?: { level?: number } | null; expiryDate?: string | null }
+    a: { vvmStatus?: { priority?: number } | null; expiryDate?: string | null },
+    b: { vvmStatus?: { priority?: number } | null; expiryDate?: string | null }
   ) => {
-    // VVM level is the priority order of issuing (1 first)
-    // This does not match VVM Status Stage (e.g. Stage 2 should be issued first, i.e. would be level 1)
-    const aLevel = a.vvmStatus?.level;
-    const bLevel = b.vvmStatus?.level;
+    // VVM priority is the priority order of issuing (1 first)
+    // This does not match VVM Status Stage (e.g. Stage 2 should be issued first, i.e. would be priority 1)
+    const aPriority = a.vvmStatus?.priority;
+    const bPriority = b.vvmStatus?.priority;
 
-    if (aLevel !== undefined && bLevel !== undefined) {
-      if (aLevel < bLevel) return -1;
-      if (aLevel > bLevel) return 1;
-    } else if (aLevel !== undefined) {
+    if (aPriority !== undefined && bPriority !== undefined) {
+      if (aPriority < bPriority) return -1;
+      if (aPriority > bPriority) return 1;
+    } else if (aPriority !== undefined) {
       return -1;
-    } else if (bLevel !== undefined) {
+    } else if (bPriority !== undefined) {
       return 1;
     }
 

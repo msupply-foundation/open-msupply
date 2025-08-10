@@ -129,7 +129,7 @@ export type PrescriptionRowFragment = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
-          level: number;
+          priority: number;
           unusable: boolean;
           description: string;
         } | null;
@@ -260,7 +260,7 @@ export type PrescriptionLineFragment = {
     vvmStatus?: {
       __typename: 'VvmstatusNode';
       id: string;
-      level: number;
+      priority: number;
       unusable: boolean;
       description: string;
     } | null;
@@ -466,7 +466,7 @@ export type PrescriptionsQuery = {
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
-              level: number;
+              priority: number;
               unusable: boolean;
               description: string;
             } | null;
@@ -648,7 +648,7 @@ export type PrescriptionByNumberQuery = {
               vvmStatus?: {
                 __typename: 'VvmstatusNode';
                 id: string;
-                level: number;
+                priority: number;
                 unusable: boolean;
                 description: string;
               } | null;
@@ -839,7 +839,7 @@ export type PrescriptionByIdQuery = {
               vvmStatus?: {
                 __typename: 'VvmstatusNode';
                 id: string;
-                level: number;
+                priority: number;
                 unusable: boolean;
                 description: string;
               } | null;
@@ -1304,7 +1304,7 @@ export const PrescriptionLineFragmentDoc = gql`
       vvmStatus {
         __typename
         id
-        level
+        priority
         unusable
         description
       }

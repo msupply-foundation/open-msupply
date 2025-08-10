@@ -1,5 +1,3 @@
-use util::inline_init;
-
 use crate::{NameRow, NameStoreJoinRow, StoreRow};
 
 use super::MockData;
@@ -23,27 +21,30 @@ pub fn mock_test_name_query() -> MockData {
 }
 
 pub fn mock_test_name_query_store_1() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "mock_test_name_query_store_1".to_string();
-        s.name_link_id = mock_name_1().id;
-        s.code = "mock_test_name_query_store_1_code".to_string();
-    })
+    StoreRow {
+        id: "mock_test_name_query_store_1".to_string(),
+        name_link_id: mock_name_1().id,
+        code: "mock_test_name_query_store_1_code".to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn mock_test_name_query_store_2() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "mock_test_name_query_store_2".to_string();
-        s.name_link_id = mock_name_2().id;
-        s.code = "mock_test_name_query_store_2_code".to_string();
-    })
+    StoreRow {
+        id: "mock_test_name_query_store_2".to_string(),
+        name_link_id: mock_name_2().id,
+        code: "mock_test_name_query_store_2_code".to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_1() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "name1".to_string();
-        r.name = "name_1".to_string();
-        r.code = "code1".to_string();
-    })
+    NameRow {
+        id: "name1".to_string(),
+        name: "name_1".to_string(),
+        code: "code1".to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_1_join() -> NameStoreJoinRow {
@@ -57,12 +58,13 @@ pub fn mock_name_1_join() -> NameStoreJoinRow {
 }
 
 pub fn mock_name_2() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "name2".to_string();
-        r.name = "name_2".to_string();
-        r.code = "code2".to_string();
-        r.national_health_number = Some("nhn2".to_string());
-    })
+    NameRow {
+        id: "name2".to_string(),
+        name: "name_2".to_string(),
+        code: "code2".to_string(),
+        national_health_number: Some("nhn2".to_string()),
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_2_join() -> NameStoreJoinRow {
@@ -76,11 +78,12 @@ pub fn mock_name_2_join() -> NameStoreJoinRow {
 }
 
 pub fn mock_name_3() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "name3".to_string();
-        r.name = "name_3".to_string();
-        r.code = "code3".to_string();
-    })
+    NameRow {
+        id: "name3".to_string(),
+        name: "name_3".to_string(),
+        code: "code3".to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_3_join() -> NameStoreJoinRow {
@@ -104,11 +107,12 @@ pub fn mock_name_3_join2() -> NameStoreJoinRow {
 }
 
 pub fn name_a_umlaut() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = "name_äÄ_umlaut".to_string();
-        r.name = "a_umlaut_äÄ_name".to_string();
-        r.code = "a_umlaut_äÄ_code".to_string();
-    })
+    NameRow {
+        id: "name_äÄ_umlaut".to_string(),
+        name: "a_umlaut_äÄ_name".to_string(),
+        code: "a_umlaut_äÄ_code".to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn name_a_umlaut_join() -> NameStoreJoinRow {

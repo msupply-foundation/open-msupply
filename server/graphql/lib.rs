@@ -50,7 +50,7 @@ use graphql_preference::{PreferenceMutations, PreferenceQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
-use graphql_purchase_order_line::PurchaseOrderLineQueries;
+use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
@@ -255,6 +255,7 @@ pub struct Mutations(
     pub VVMMutations,
     pub ClinicianMutations,
     pub PurchaseOrderMutations,
+    pub PurchaseOrderLineMutations,
 );
 
 impl Mutations {
@@ -284,6 +285,7 @@ impl Mutations {
             VVMMutations,
             ClinicianMutations,
             PurchaseOrderMutations,
+            PurchaseOrderLineMutations,
         )
     }
 }

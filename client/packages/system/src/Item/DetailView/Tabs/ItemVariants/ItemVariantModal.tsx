@@ -1,26 +1,17 @@
 import React from 'react';
 
 import {
-  BasicTextInput,
   DialogButton,
-  InputWithLabelRow,
-  Typography,
-  Box,
   useTranslation,
   useDialog,
-  QueryParamsProvider,
-  createQueryParamsStore,
   useNotification,
 } from '@openmsupply-client/common';
-import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import {
   ItemRowFragment,
   ItemVariantFragment,
-  PackagingVariantFragment,
   useItemVariant,
 } from '../../../api';
-import { ManufacturerSearchInput } from '@openmsupply-client/system';
-import { ColdStorageTypeInput } from '../../../Components/ColdStorageTypeInput';
+import { ItemVariantForm } from './ItemVariantForm';
 
 export const ItemVariantModal = ({
   item,
@@ -78,108 +69,12 @@ export const ItemVariantModal = ({
       width={1000}
       slideAnimation={false}
     >
-      <QueryParamsProvider
-        createStore={createQueryParamsStore({ initialSortBy: { key: 'name' } })}
-      >
-        <ItemVariantForm
-          updateVariant={updateDraft}
-          updatePackagingVariant={updatePackagingVariant}
-          variant={draft}
-          isVaccine={isVaccine}
-        />
-      </QueryParamsProvider>
+      <ItemVariantForm
+        updateVariant={updateDraft}
+        updatePackagingVariant={updatePackagingVariant}
+        variant={draft}
+        isVaccine={isVaccine}
+      />
     </Modal>
-  );
-};
-
-const ItemVariantForm = ({
-  variant,
-  updateVariant,
-  updatePackagingVariant,
-  isVaccine,
-}: {
-  variant: ItemVariantFragment;
-  updateVariant: (patch: Partial<ItemVariantFragment>) => void;
-  updatePackagingVariant: (patch: Partial<PackagingVariantFragment>) => void;
-  isVaccine?: boolean;
-}) => {
-  const t = useTranslation();
-
-  return (
-    <Box justifyContent="center" display="flex" gap={3}>
-      <Box display="flex" flexDirection="column" gap={1} flex={1}>
-        <InputWithLabelRow
-          label={t('label.name')}
-          labelWidth="200"
-          Input={
-            <BasicTextInput
-              autoFocus
-              value={variant.name}
-              onChange={event => {
-                updateVariant({ name: event.target.value });
-              }}
-              fullWidth
-            />
-          }
-        />
-
-        <InputWithLabelRow
-          label={t('label.cold-storage-type')}
-          labelWidth="200"
-          Input={
-            <Box width="100%">
-              <ColdStorageTypeInput
-                value={variant.coldStorageType ?? null}
-                onChange={coldStorageType => {
-                  updateVariant({
-                    coldStorageType,
-                    coldStorageTypeId: coldStorageType?.id ?? null,
-                  });
-                }}
-              />
-            </Box>
-          }
-        />
-        <InputWithLabelRow
-          label={t('label.manufacturer')}
-          labelWidth="200"
-          Input={
-            <Box width="100%">
-              <ManufacturerSearchInput
-                value={variant.manufacturer ?? null}
-                onChange={manufacturer =>
-                  updateVariant({
-                    manufacturer,
-                    manufacturerId: manufacturer?.id ?? null,
-                  })
-                }
-              />
-            </Box>
-          }
-        />
-        {isVaccine && (
-          <InputWithLabelRow
-            label={t('label.vvm-type')}
-            labelWidth="200"
-            Input={
-              <BasicTextInput
-                value={variant.vvmType}
-                onChange={event => {
-                  updateVariant({ vvmType: event.target.value });
-                }}
-                fullWidth
-              />
-            }
-          />
-        )}
-      </Box>
-      <Box flex={1}>
-        <Typography fontWeight="bold">{t('title.packaging')}</Typography>
-        <ItemPackagingVariantsTable
-          data={variant.packagingVariants}
-          update={v => updatePackagingVariant(v)}
-        />
-      </Box>
-    </Box>
   );
 };
