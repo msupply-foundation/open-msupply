@@ -55,18 +55,11 @@ pub fn generate(
     updated_order.reference = reference.or(updated_order.reference);
     updated_order.comment = comment.or(updated_order.comment);
 
-    // Updated through Purchase Order Lines
-    let order_total_before_discount = purchase_order.order_total_before_discount;
-
     let supplier_discount_percentage = supplier_discount_percentage
         .or(purchase_order.supplier_discount_percentage)
         .unwrap_or(0.0);
 
     updated_order.supplier_discount_percentage = Some(supplier_discount_percentage);
-    updated_order.supplier_discount_amount =
-        order_total_before_discount * (supplier_discount_percentage / 100.0);
-    updated_order.order_total_after_discount =
-        order_total_before_discount - updated_order.supplier_discount_amount;
 
     Ok(updated_order)
 }

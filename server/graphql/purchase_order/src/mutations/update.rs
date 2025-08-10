@@ -154,10 +154,12 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
 
     let graphql_error = match error {
         ServiceError::SupplierDoesNotExist
-        | ServiceError::UpdatedRecordNotFound
+        | ServiceError::PurchaseOrderDoesNotExist
         | ServiceError::NotASupplier
         | ServiceError::DonorDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

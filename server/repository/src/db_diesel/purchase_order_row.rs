@@ -13,8 +13,9 @@ use serde::{Deserialize, Serialize};
 table! {
     purchase_order_stats (purchase_order_id) {
         purchase_order_id -> Text,
-        total_before_discount -> Double,
-        total_after_discount -> Double,
+        line_total_before_discount -> Double,
+        line_total_after_discount -> Double,
+        order_total_after_discount -> Double,
     }
 }
 
@@ -22,8 +23,9 @@ table! {
 #[diesel(table_name = purchase_order_stats)]
 pub struct PurchaseOrderStatsRow {
     pub purchase_order_id: String,
-    pub total_before_discount: f64,
-    pub total_after_discount: f64,
+    pub line_total_before_discount: f64,
+    pub line_total_after_discount: f64,
+    pub order_total_after_discount: f64,
 }
 
 table! {
@@ -59,9 +61,6 @@ table! {
         insurance_charge ->  Nullable<Double>,
         freight_charge ->  Nullable<Double>,
         freight_conditions -> Nullable<Text>,
-        order_total_before_discount -> Double,
-        order_total_after_discount -> Double,
-        supplier_discount_amount -> Double,
         supplier_discount_percentage -> Nullable<Double>,
         authorised_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
@@ -111,9 +110,6 @@ pub struct PurchaseOrderRow {
     pub insurance_charge: Option<f64>,
     pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
-    pub order_total_before_discount: f64,
-    pub order_total_after_discount: f64,
-    pub supplier_discount_amount: f64,
     pub supplier_discount_percentage: Option<f64>,
     pub authorised_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
