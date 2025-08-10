@@ -32,7 +32,6 @@ fragment PurchaseOrders on PurchaseOrderNode {
   confirmedDatetime
   status
   targetMonths
-  expectedDeliveryDate
   comment
   lines {
     totalCount

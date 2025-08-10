@@ -108,6 +108,7 @@ pub enum UpdateStockInLineError {
     VVMStatusDoesNotExist,
     ProgramNotVisible,
     IncorrectLocationType,
+    CampaignDoesNotExist,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {

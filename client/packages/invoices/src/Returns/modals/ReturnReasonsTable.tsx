@@ -9,7 +9,6 @@ import {
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
   INPUT_WIDTH,
-  useReasonOptions,
 } from '@openmsupply-client/system';
 import React from 'react';
 
@@ -29,7 +28,6 @@ const ReturnReasonCell = ({
   column,
   isDisabled,
 }: CellProps<ReturnWithReason>): JSX.Element => {
-  const { data: reasonOptions, isLoading } = useReasonOptions();
   return (
     <ReasonOptionsSearchInput
       type={ReasonOptionNodeType.ReturnReason}
@@ -38,8 +36,6 @@ const ReturnReasonCell = ({
       autoFocus={rowIndex === 0}
       width={INPUT_WIDTH}
       value={rowData.reasonOption}
-      reasonOptions={reasonOptions?.nodes ?? []}
-      loading={isLoading}
     />
   );
 };

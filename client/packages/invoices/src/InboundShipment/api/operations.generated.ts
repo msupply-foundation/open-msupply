@@ -42,6 +42,11 @@ export type InboundLineFragment = {
       __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
     } | null;
+    programs?: Array<{
+      __typename: 'ProgramNode';
+      id: string;
+      name: string;
+    }> | null;
   };
   location?: {
     __typename: 'LocationNode';
@@ -168,6 +173,11 @@ export type InboundFragment = {
           __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
         } | null;
+        programs?: Array<{
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        }> | null;
       };
       location?: {
         __typename: 'LocationNode';
@@ -418,6 +428,11 @@ export type InvoiceQuery = {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
+              programs?: Array<{
+                __typename: 'ProgramNode';
+                id: string;
+                name: string;
+              }> | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -601,6 +616,11 @@ export type InboundByNumberQuery = {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
               } | null;
+              programs?: Array<{
+                __typename: 'ProgramNode';
+                id: string;
+                name: string;
+              }> | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -1157,6 +1177,10 @@ export const InboundLineFragmentDoc = gql`
       restrictedLocationTypeId
       itemStoreProperties(storeId: $storeId) {
         defaultSellPricePerPack
+      }
+      programs(storeId: $storeId) {
+        id
+        name
       }
     }
     location {

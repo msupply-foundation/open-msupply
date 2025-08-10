@@ -1,6 +1,6 @@
 use crate::{
     campaign::check_campaign_exists,
-    check_location_exists, check_location_type_is_valid,
+    check_location_exists, check_location_type_is_valid, check_vvm_status_exists,
     common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
@@ -82,6 +82,12 @@ pub fn validate(
                     return Err(IncorrectLocationType);
                 }
             }
+        }
+    }
+
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VvmStatusDoesNotExist);
         }
     }
 

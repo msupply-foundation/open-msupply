@@ -35,5 +35,9 @@ export const useZeroStocktakeLines = () => {
     }
   };
 
-  return onZeroQuantities;
+  const allSelectedItemsAreVaccines = selectedRows.every(
+    row => row.item.isVaccine
+  );
+
+  return { onZeroQuantities, allSelectedItemsAreVaccines };
 };
