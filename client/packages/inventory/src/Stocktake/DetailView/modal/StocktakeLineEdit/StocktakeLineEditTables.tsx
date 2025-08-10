@@ -21,6 +21,7 @@ import {
   getReasonOptionTypes,
   usePreference,
   PreferenceKey,
+  Box,
   useAuthContext,
   StoreModeNodeType,
 } from '@openmsupply-client/common';
@@ -342,6 +343,8 @@ export const PricingTable = ({
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
+  useDisableStocktakeRows(batches);
+
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
@@ -385,6 +388,7 @@ export const LocationTable = ({
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
+  useDisableStocktakeRows(batches);
 
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
@@ -428,16 +432,18 @@ export const LocationTable = ({
     },
   ]);
 
-  const columns = useColumns(columnDefinitions);
+  const columns = useColumns(columnDefinitions, {}, [columnDefinitions]);
 
   return (
-    <DataTable
-      id="stocktake-location"
-      isDisabled={isDisabled}
-      columns={columns}
-      data={batches}
-      noDataMessage={t('label.add-new-line')}
-      dense
-    />
+    <Box display="flex" flexDirection="column" width="100%">
+      <DataTable
+        id="stocktake-location"
+        isDisabled={isDisabled}
+        columns={columns}
+        data={batches}
+        noDataMessage={t('label.add-new-line')}
+        dense
+      />
+    </Box>
   );
 };

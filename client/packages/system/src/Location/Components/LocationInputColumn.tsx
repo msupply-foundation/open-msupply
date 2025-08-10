@@ -16,19 +16,20 @@ const hasRequiredFields = (
   'location' in (variableToCheck as LocationObject);
 
 export const getLocationInputColumn = <T extends RecordWithId>(
-  restrictedLocationTypeId?: string | null
-): ColumnDefinition<T> => ({
-  key: 'locationInput',
-  label: 'label.location',
-  sortable: false,
-  width: 600,
-  accessor: ({ rowData }) => {
-    if (hasRequiredFields(rowData)) {
-      return rowData.location;
-    } else {
-      if (!EnvUtils.isProduction()) {
-        // TODO: Bugsnag during prod
-        throw new Error(`
+  restrictedToLocationTypeId?: string | null
+): ColumnDefinition<T> => {
+  return {
+    key: 'locationInput',
+    label: 'label.location',
+    sortable: false,
+    width: 600,
+    accessor: ({ rowData }) => {
+      if (hasRequiredFields(rowData)) {
+        return rowData.location;
+      } else {
+        if (!EnvUtils.isProduction()) {
+          // TODO: Bugsnag during prod
+          throw new Error(`
         The default accessor for the location input column has been called with row data
         that does not have a 'location' field.
 
@@ -38,31 +39,29 @@ export const getLocationInputColumn = <T extends RecordWithId>(
         Have you forgotten to provide a custom accessor to return the location object? i.e.
         [ getLocationInputColumn(), { accessor: ({rowData}) => ({ location: rowData.item.location }) }]
         `);
-      } else {
-        return null;
+        } else {
+          return null;
+        }
       }
-    }
-  },
-  Cell: ({ rowData, column, columnIndex, rowIndex, isDisabled }) => {
-    const value = column.accessor({
-      rowData,
-    }) as LocationRowFragment | null;
+    },
+    Cell: ({ rowData, column, columnIndex, rowIndex, isDisabled }) => {
+      const value = column.accessor({ rowData }) as LocationRowFragment | null;
+      const autoFocus = columnIndex === 0 && rowIndex === 0;
 
-    const onChange = (location: LocationRowFragment | null) => {
-      column.setter({ ...rowData, location });
-    };
+      const onChange = (location: LocationRowFragment | null) => {
+        column.setter({ ...rowData, location });
+      };
 
-    const autoFocus = columnIndex === 0 && rowIndex === 0;
-
-    return (
-      <LocationSearchInput
-        autoFocus={autoFocus}
-        disabled={!!isDisabled}
-        selectedLocation={value}
-        width={column.width}
-        onChange={onChange}
-        restrictedToLocationTypeId={restrictedLocationTypeId}
-      />
-    );
-  },
-});
+      return (
+        <LocationSearchInput
+          autoFocus={autoFocus}
+          disabled={!!isDisabled}
+          selectedLocation={value}
+          width={column.width}
+          onChange={onChange}
+          restrictedToLocationTypeId={restrictedToLocationTypeId}
+        />
+      );
+    },
+  };
+};

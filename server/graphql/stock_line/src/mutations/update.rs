@@ -156,6 +156,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ItemVariantDoesNotExist => BadUserInput(formatted_error),
         ServiceError::UpdatedStockNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
