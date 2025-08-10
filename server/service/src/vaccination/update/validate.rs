@@ -1,16 +1,15 @@
-use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError,
-    StockLine, StorageConnection, Vaccination, VaccinationRow,
-};
-
 use crate::{
-    common_stock::{check_stock_line_exists, CommonStockLineError},
+    common::{check_stock_line_exists, CommonStockLineError},
     invoice_line::validate::check_item_exists,
     name::validate::check_name_exists,
     vaccination::validate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
         check_vaccination_exists, get_related_vaccinations,
     },
+};
+use repository::{
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError,
+    StockLine, StorageConnection, Vaccination, VaccinationRow,
 };
 
 use super::{UpdateVaccination, UpdateVaccinationError};

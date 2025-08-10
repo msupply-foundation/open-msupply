@@ -32,7 +32,7 @@ pub mod barcode;
 pub mod catalogue;
 pub mod clinician;
 pub mod cold_chain;
-mod common_stock;
+mod common;
 pub mod contact;
 pub mod contact_form;
 pub mod currency;
@@ -340,6 +340,30 @@ fn check_location_exists(
             .store_id(EqualFilter::equal_to(store_id)),
     ))?;
     Ok(count > 0)
+}
+
+// Checks if the input location is of the correct type for the item
+fn check_location_type_is_valid(
+    connection: &StorageConnection,
+    store_id: &str,
+    location_id: &str,
+    restricted_location_type_id: &str,
+) -> Result<bool, RepositoryError> {
+    let location = LocationRepository::new(connection)
+        .query_by_filter(
+            LocationFilter::new()
+                .id(EqualFilter::equal_to(location_id))
+                .store_id(EqualFilter::equal_to(store_id)),
+        )?
+        .pop();
+
+    match location {
+        Some(location) => {
+            Ok(location.location_row.location_type_id
+                == Some(restricted_location_type_id.to_owned()))
+        }
+        None => Ok(false),
+    }
 }
 
 fn check_item_variant_exists(

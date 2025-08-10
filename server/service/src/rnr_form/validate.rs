@@ -1,7 +1,7 @@
 use repository::{
     EqualFilter, MasterListFilter, MasterListRepository, Period, PeriodFilter, PeriodRepository,
-    PeriodRow, PeriodRowRepository, ProgramRow, ProgramRowRepository, RepositoryError, RnRForm,
-    RnRFormFilter, RnRFormRepository, StorageConnection,
+    PeriodRow, PeriodRowRepository, RepositoryError, RnRForm, RnRFormFilter, RnRFormRepository,
+    StorageConnection,
 };
 
 pub fn check_rnr_form_exists(
@@ -18,13 +18,6 @@ pub fn check_rnr_form_does_not_exist(
 ) -> Result<bool, RepositoryError> {
     let existing = check_rnr_form_exists(connection, rnr_form_id)?;
     Ok(existing.is_none())
-}
-
-pub fn check_program_exists(
-    connection: &StorageConnection,
-    program_id: &str,
-) -> Result<Option<ProgramRow>, RepositoryError> {
-    ProgramRowRepository::new(connection).find_one_by_id(program_id)
 }
 
 pub fn check_period_exists(

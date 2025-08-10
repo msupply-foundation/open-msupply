@@ -88,7 +88,7 @@ pub use item_store_join::*;
 pub use item_variant::*;
 pub use json_schema::*;
 pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};
-pub use location::LocationByIdLoader;
+pub use location::*;
 pub use location_type::*;
 pub use master_list::*;
 pub use name::*;

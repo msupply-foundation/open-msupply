@@ -191,7 +191,7 @@ mod test {
                         code: "test_code".to_owned(),
                         on_hold: true,
                         store_id: "store_a".to_owned(),
-                        location_type_id: None,
+                        ..Default::default()
                     },
                 }],
                 count: 1,

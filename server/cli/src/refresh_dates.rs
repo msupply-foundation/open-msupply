@@ -139,7 +139,6 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("campaign", "start_date"),
         ("campaign", "end_date"),
         ("purchase_order", "received_at_port_date"),
-        ("purchase_order", "expected_delivery_date"),
         ("purchase_order", "requested_delivery_date"),
         ("purchase_order_line", "requested_delivery_date"),
         ("purchase_order_line", "expected_delivery_date"),
@@ -404,49 +403,51 @@ mod tests {
         test_db::setup_all_with_data,
         InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
 
     use super::*;
 
     #[actix_rt::test]
     async fn refresh_dates() {
         fn invoice1() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice1".to_string();
-                r.name_link_id = mock_name_a().id;
-                r.store_id = mock_store_a().id;
-                r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+            InvoiceRow {
+                id: "invoice1".to_string(),
+                name_link_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
                     .and_hms_opt(00, 00, 00)
-                    .unwrap();
-            })
+                    .unwrap(),
+                ..Default::default()
+            }
         }
 
         fn invoice2() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice2".to_string();
-                r.name_link_id = mock_name_a().id;
-                r.store_id = mock_store_a().id;
-                r.created_datetime = NaiveDate::from_ymd_opt(2021, 2, 1)
+            InvoiceRow {
+                id: "invoice2".to_string(),
+                name_link_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                created_datetime: NaiveDate::from_ymd_opt(2021, 2, 1)
                     .unwrap()
                     .and_hms_opt(00, 00, 00)
-                    .unwrap();
-                r.shipped_datetime = Some(
+                    .unwrap(),
+                shipped_datetime: Some(
                     NaiveDate::from_ymd_opt(2021, 1, 1)
                         .unwrap()
                         .and_hms_opt(00, 00, 00)
                         .unwrap(),
-                );
-            })
+                ),
+                ..Default::default()
+            }
         }
 
         fn stock_line1() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line1".to_string();
-                r.item_link_id = mock_item_link_from_item(&mock_item_a()).id;
-                r.store_id = mock_store_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 2, 1).unwrap());
-            })
+            StockLineRow {
+                id: "stock_line1".to_string(),
+                item_link_id: mock_item_link_from_item(&mock_item_a()).id,
+                store_id: mock_store_a().id,
+                expiry_date: Some(NaiveDate::from_ymd_opt(2023, 2, 1).unwrap()),
+                ..Default::default()
+            }
         }
 
         let (_, connection, _, _) = setup_all_with_data(
@@ -457,10 +458,11 @@ mod tests {
                 .items()
                 .units()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice1(), invoice2()];
-                r.stock_lines = vec![stock_line1()];
-            }),
+            MockData {
+                invoices: vec![invoice1(), invoice2()],
+                stock_lines: vec![stock_line1()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -650,38 +652,34 @@ mod tests {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            invoice1_result,
-            inline_edit(&invoice1_result, |mut u| {
-                u.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 11)
-                    .unwrap()
-                    .and_hms_opt(00, 00, 00)
-                    .unwrap();
-                u
-            })
-        );
+        assert_eq!(invoice1_result, {
+            let mut u = invoice1_result.clone();
+            u.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 11)
+                .unwrap()
+                .and_hms_opt(00, 00, 00)
+                .unwrap();
+            u
+        });
 
         let invoice2_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice2().id)
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            invoice2_result,
-            inline_edit(&invoice2_result, |mut u| {
-                u.created_datetime = NaiveDate::from_ymd_opt(2021, 2, 11)
+        assert_eq!(invoice2_result, {
+            let mut u = invoice2_result.clone();
+            u.created_datetime = NaiveDate::from_ymd_opt(2021, 2, 11)
+                .unwrap()
+                .and_hms_opt(00, 00, 00)
+                .unwrap();
+            u.shipped_datetime = Some(
+                NaiveDate::from_ymd_opt(2021, 1, 11)
                     .unwrap()
                     .and_hms_opt(00, 00, 00)
-                    .unwrap();
-                u.shipped_datetime = Some(
-                    NaiveDate::from_ymd_opt(2021, 1, 11)
-                        .unwrap()
-                        .and_hms_opt(00, 00, 00)
-                        .unwrap(),
-                );
-                u
-            })
-        );
+                    .unwrap(),
+            );
+            u
+        });
 
         let stock_line1_result = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line1().id)
@@ -690,10 +688,10 @@ mod tests {
 
         assert_eq!(
             stock_line1_result,
-            inline_edit(&stock_line1_result, |mut u| {
-                u.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 2, 11).unwrap());
-                u
-            })
+            StockLineRow {
+                expiry_date: Some(NaiveDate::from_ymd_opt(2023, 2, 11).unwrap()),
+                ..stock_line1_result.clone()
+            }
         );
     }
 

@@ -30,6 +30,8 @@ export type StockLineRowFragment = {
     name: string;
     onHold: boolean;
     code: string;
+    volume: number;
+    volumeUsed: number;
     locationType?: {
       __typename: 'LocationTypeNode';
       id: string;
@@ -37,6 +39,7 @@ export type StockLineRowFragment = {
       maxTemperature: number;
       minTemperature: number;
     } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
   } | null;
   item: {
     __typename: 'ItemNode';
@@ -66,18 +69,19 @@ export type StockLineRowFragment = {
         id: string;
         description: string;
         code: string;
-        level: number;
+        priority: number;
       } | null;
     }>;
   } | null;
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   itemVariant?: {
     __typename: 'ItemVariantNode';
@@ -101,6 +105,8 @@ export type RepackStockLineFragment = {
     name: string;
     onHold: boolean;
     code: string;
+    volume: number;
+    volumeUsed: number;
     locationType?: {
       __typename: 'LocationTypeNode';
       id: string;
@@ -108,6 +114,7 @@ export type RepackStockLineFragment = {
       maxTemperature: number;
       minTemperature: number;
     } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
   } | null;
 };
 
@@ -126,6 +133,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
+      volume: number;
+      volumeUsed: number;
       locationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -133,6 +142,7 @@ export type RepackFragment = {
         maxTemperature: number;
         minTemperature: number;
       } | null;
+      stock: { __typename: 'StockLineConnector'; totalCount: number };
     } | null;
   };
   to: {
@@ -145,6 +155,8 @@ export type RepackFragment = {
       name: string;
       onHold: boolean;
       code: string;
+      volume: number;
+      volumeUsed: number;
       locationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -152,6 +164,7 @@ export type RepackFragment = {
         maxTemperature: number;
         minTemperature: number;
       } | null;
+      stock: { __typename: 'StockLineConnector'; totalCount: number };
     } | null;
   };
 };
@@ -203,7 +216,7 @@ export type VvmStatusLogRowFragment = {
     id: string;
     description: string;
     code: string;
-    level: number;
+    priority: number;
   } | null;
 };
 
@@ -247,6 +260,8 @@ export type StockLinesQuery = {
         name: string;
         onHold: boolean;
         code: string;
+        volume: number;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -254,6 +269,7 @@ export type StockLinesQuery = {
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -286,18 +302,19 @@ export type StockLinesQuery = {
             id: string;
             description: string;
             code: string;
-            level: number;
+            priority: number;
           } | null;
         }>;
       } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -353,6 +370,8 @@ export type StockLineQuery = {
         name: string;
         onHold: boolean;
         code: string;
+        volume: number;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -360,6 +379,7 @@ export type StockLineQuery = {
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -392,18 +412,19 @@ export type StockLineQuery = {
             id: string;
             description: string;
             code: string;
-            level: number;
+            priority: number;
           } | null;
         }>;
       } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -496,6 +517,8 @@ export type UpdateStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
+          volume: number;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -503,6 +526,7 @@ export type UpdateStockLineMutation = {
             maxTemperature: number;
             minTemperature: number;
           } | null;
+          stock: { __typename: 'StockLineConnector'; totalCount: number };
         } | null;
         item: {
           __typename: 'ItemNode';
@@ -535,18 +559,23 @@ export type UpdateStockLineMutation = {
               id: string;
               description: string;
               code: string;
-              level: number;
+              priority: number;
             } | null;
           }>;
         } | null;
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
-          level: number;
+          priority: number;
           unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        program?: {
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
@@ -590,6 +619,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
+            volume: number;
+            volumeUsed: number;
             locationType?: {
               __typename: 'LocationTypeNode';
               id: string;
@@ -597,6 +628,7 @@ export type RepackQuery = {
               maxTemperature: number;
               minTemperature: number;
             } | null;
+            stock: { __typename: 'StockLineConnector'; totalCount: number };
           } | null;
         };
         to: {
@@ -609,6 +641,8 @@ export type RepackQuery = {
             name: string;
             onHold: boolean;
             code: string;
+            volume: number;
+            volumeUsed: number;
             locationType?: {
               __typename: 'LocationTypeNode';
               id: string;
@@ -616,6 +650,7 @@ export type RepackQuery = {
               maxTemperature: number;
               minTemperature: number;
             } | null;
+            stock: { __typename: 'StockLineConnector'; totalCount: number };
           } | null;
         };
       };
@@ -646,6 +681,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
+          volume: number;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -653,6 +690,7 @@ export type RepacksByStockLineQuery = {
             maxTemperature: number;
             minTemperature: number;
           } | null;
+          stock: { __typename: 'StockLineConnector'; totalCount: number };
         } | null;
       };
       to: {
@@ -665,6 +703,8 @@ export type RepacksByStockLineQuery = {
           name: string;
           onHold: boolean;
           code: string;
+          volume: number;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -672,6 +712,7 @@ export type RepacksByStockLineQuery = {
             maxTemperature: number;
             minTemperature: number;
           } | null;
+          stock: { __typename: 'StockLineConnector'; totalCount: number };
         } | null;
       };
     }>;
@@ -690,7 +731,7 @@ export type VvmStatusQuery = {
       __typename: 'VvmstatusNode';
       description: string;
       id: string;
-      level: number;
+      priority: number;
       reasonId?: string | null;
       unusable: boolean;
     }>;
@@ -797,6 +838,8 @@ export type InsertStockLineMutation = {
           name: string;
           onHold: boolean;
           code: string;
+          volume: number;
+          volumeUsed: number;
           locationType?: {
             __typename: 'LocationTypeNode';
             id: string;
@@ -804,6 +847,7 @@ export type InsertStockLineMutation = {
             maxTemperature: number;
             minTemperature: number;
           } | null;
+          stock: { __typename: 'StockLineConnector'; totalCount: number };
         } | null;
         item: {
           __typename: 'ItemNode';
@@ -836,18 +880,23 @@ export type InsertStockLineMutation = {
               id: string;
               description: string;
               code: string;
-              level: number;
+              priority: number;
             } | null;
           }>;
         } | null;
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
-          level: number;
+          priority: number;
           unusable: boolean;
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        program?: {
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
@@ -870,7 +919,7 @@ export type VvmStatusFragment = {
   __typename: 'VvmstatusNode';
   description: string;
   id: string;
-  level: number;
+  priority: number;
   reasonId?: string | null;
   unusable: boolean;
 };
@@ -887,7 +936,7 @@ export type ActiveVvmStatusesQuery = {
       __typename: 'VvmstatusNode';
       description: string;
       id: string;
-      level: number;
+      priority: number;
       reasonId?: string | null;
       unusable: boolean;
     }>;
@@ -931,7 +980,7 @@ export const VvmStatusLogRowFragmentDoc = gql`
       id
       description
       code
-      level
+      priority
     }
     createdDatetime
     comment
@@ -979,12 +1028,16 @@ export const StockLineRowFragmentDoc = gql`
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }
     donor(storeId: $storeId) {
       id
+    }
+    program {
+      id
+      name
     }
     campaign {
       id
@@ -1064,7 +1117,7 @@ export const VvmStatusFragmentDoc = gql`
     __typename
     description
     id
-    level
+    priority
     reasonId
     unusable
   }
