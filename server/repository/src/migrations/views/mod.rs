@@ -730,6 +730,7 @@ CREATE VIEW vaccination_course AS
                     THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
                 END
+
             ), 0) AS line_total_after_discount,
             COALESCE(SUM(
                 CASE 
@@ -737,7 +738,7 @@ CREATE VIEW vaccination_course AS
                     THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
                 END
-            ), 0) * (1-(supplier_discount_percentage/100)) AS order_total_after_discount
+            ), 0) * (1-(COALESCE(po.supplier_discount_percentage, 0)/100)) AS order_total_after_discount
         FROM
             purchase_order po JOIN purchase_order_line pol on po.id = pol.purchase_order_id
         GROUP BY
