@@ -348,17 +348,20 @@ fn check_location_type_is_valid(
     location_id: &str,
     restricted_location_type_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let locations = LocationRepository::new(connection).query_by_filter(
-        LocationFilter::new()
-            .id(EqualFilter::equal_to(location_id))
-            .store_id(EqualFilter::equal_to(store_id)),
-    )?;
-    if let Some(location) = locations.first() {
-        let location_type_id = &location.location_row.location_type_id;
-        Ok(Some(restricted_location_type_id.to_string()) == *location_type_id)
-    } else {
-        // Location not found, treat as invalid
-        Ok(false)
+    let location = LocationRepository::new(connection)
+        .query_by_filter(
+            LocationFilter::new()
+                .id(EqualFilter::equal_to(location_id))
+                .store_id(EqualFilter::equal_to(store_id)),
+        )?
+        .pop();
+
+    match location {
+        Some(location) => {
+            Ok(location.location_row.location_type_id
+                == Some(restricted_location_type_id.to_owned()))
+        }
+        None => Ok(false),
     }
 }
 
