@@ -5,7 +5,7 @@ import {
 } from '@common/types';
 import { PurchaseOrderFragment } from './purchase_order/api';
 
-const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
+const purchaseOrderStatusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
   NEW: 'label.new',
   AUTHORISED: 'label.authorised',
   CONFIRMED: 'label.confirmed',
@@ -34,12 +34,12 @@ const goodsReceivedStatusTranslation: Record<
   FINALISED: 'label.finalised',
 };
 
-export const getStatusTranslator =
+export const getPurchaseOrderStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
   (currentStatus: PurchaseOrderNodeStatus): string => {
     return t(
-      statusTranslation[currentStatus] ??
-        statusTranslation[PurchaseOrderNodeStatus.New]
+      purchaseOrderStatusTranslation[currentStatus] ??
+        purchaseOrderStatusTranslation[PurchaseOrderNodeStatus.New]
     );
   };
 

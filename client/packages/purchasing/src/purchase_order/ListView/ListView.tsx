@@ -21,7 +21,7 @@ import { Footer } from './Footer';
 import {
   DeliveryStatus,
   getDeliveryStatusTranslator,
-  getStatusTranslator,
+  getPurchaseOrderStatusTranslator,
 } from '../../utils';
 
 const ListView: FC = () => {
@@ -98,7 +98,7 @@ const ListView: FC = () => {
         'status',
         {
           formatter: status =>
-            getStatusTranslator(t)(status as PurchaseOrderNodeStatus),
+            getPurchaseOrderStatusTranslator(t)(status as PurchaseOrderNodeStatus),
         },
       ],
       {
