@@ -56,7 +56,6 @@ mod test {
         mock::{mock_item_a, mock_store_a, mock_store_b, MockData, MockDataInserts},
         InvoiceStatus, KeyValueStoreRepository, StockLineRow,
     };
-    use util::inline_edit;
 
     fn mock_data() -> MockData {
         let negative_balance = StockLineRow {
@@ -124,15 +123,11 @@ mod test {
             ],
         );
 
-        allocated_not_picked_movements.invoices[2] =
-            inline_edit(&allocated_not_picked_movements.invoices[2], |mut u| {
-                u.status = InvoiceStatus::Allocated;
-                u.picked_datetime = None;
-                u.shipped_datetime = None;
-                u.received_datetime = None;
-                u.verified_datetime = None;
-                u
-            });
+        allocated_not_picked_movements.invoices[2].status = InvoiceStatus::Allocated;
+        allocated_not_picked_movements.invoices[2].picked_datetime = None;
+        allocated_not_picked_movements.invoices[2].shipped_datetime = None;
+        allocated_not_picked_movements.invoices[2].received_datetime = None;
+        allocated_not_picked_movements.invoices[2].verified_datetime = None;
 
         mock_data
             .join(allocated_not_picked_movements)

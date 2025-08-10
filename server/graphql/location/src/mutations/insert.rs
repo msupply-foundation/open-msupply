@@ -48,6 +48,7 @@ pub struct InsertLocationInput {
     pub name: Option<String>,
     pub on_hold: Option<bool>,
     pub location_type_id: Option<String>,
+    pub volume: Option<f64>,
 }
 
 impl From<InsertLocationInput> for InsertLocation {
@@ -58,6 +59,7 @@ impl From<InsertLocationInput> for InsertLocation {
             name,
             on_hold,
             location_type_id,
+            volume,
         }: InsertLocationInput,
     ) -> Self {
         InsertLocation {
@@ -65,7 +67,8 @@ impl From<InsertLocationInput> for InsertLocation {
             code,
             name,
             on_hold,
-            location_type_id: location_type_id,
+            location_type_id,
+            volume,
         }
     }
 }
@@ -294,7 +297,7 @@ mod test {
                     code: "code".to_owned(),
                     on_hold: true,
                     store_id: "store_a".to_owned(),
-                    location_type_id: None,
+                    ..Default::default()
                 },
             })
         }));

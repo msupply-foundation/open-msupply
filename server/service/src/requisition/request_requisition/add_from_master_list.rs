@@ -181,8 +181,6 @@ mod test {
         test_db::{setup_all, setup_all_with_data},
         MasterListLineRow, MasterListNameJoinRow, MasterListRow,
     };
-    use util::inline_init;
-
     use crate::{
         requisition::{
             common::get_lines_for_requisition,
@@ -315,9 +313,10 @@ mod test {
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "add_from_master_list_success",
             MockDataInserts::all(),
-            test_item_stats::mock_item_stats().join(inline_init(|r: &mut MockData| {
-                r.full_master_lists = vec![master_list()];
-            })),
+            test_item_stats::mock_item_stats().join(MockData {
+                full_master_lists: vec![master_list()],
+                ..Default::default()
+            }),
         )
         .await;
 

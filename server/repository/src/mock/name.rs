@@ -1,167 +1,181 @@
-use util::{
-    constants::{INVENTORY_ADJUSTMENT_NAME_CODE, REPACK_NAME_CODE},
-    inline_init,
-};
+use util::constants::{INVENTORY_ADJUSTMENT_NAME_CODE, REPACK_NAME_CODE};
 
 use crate::{NameLinkRow, NameRow, NameRowType};
 
 pub fn mock_name_store_a() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("name_store_a");
-        r.name = String::from("Store A");
-        r.code = String::from("code");
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: String::from("name_store_a"),
+        name: String::from("Store A"),
+        code: String::from("code"),
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_store_b() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("name_store_b");
-        r.name = String::from("Store B");
-        r.code = String::from("code");
-        r.is_manufacturer = true;
-    })
+    NameRow {
+        id: String::from("name_store_b"),
+        name: String::from("Store B"),
+        code: String::from("code"),
+        is_manufacturer: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_store_c() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("name_store_c");
-        r.name = String::from("Store C");
-        r.code = String::from("code");
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: String::from("name_store_c"),
+        name: String::from("Store C"),
+        code: String::from("code"),
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_store_e() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("name_store_e");
-        r.name = String::from("Store E");
-        r.code = String::from("code");
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: String::from("name_store_e"),
+        name: String::from("Store E"),
+        code: String::from("code"),
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_a() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("name_a");
-        r.name = String::from("name_a");
-        r.code = String::from("name_a");
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: String::from("name_a"),
+        name: String::from("name_a"),
+        code: String::from("name_a"),
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 // Not visible in store_a
 pub fn mock_name_b() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("name_b");
-        r.name = String::from("name_b");
-        r.code = String::from("name_b");
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: String::from("name_b"),
+        name: String::from("name_b"),
+        code: String::from("name_b"),
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_c() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("name_c");
-        r.name = String::from("name_c");
-        r.code = String::from("name_c");
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: String::from("name_c"),
+        name: String::from("name_c"),
+        code: String::from("name_c"),
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 pub fn mock_name_customer_a() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("name_customer_a");
-        r.name = String::from("name_customer_a");
-        r.code = String::from("name_customer_a");
-        r.is_customer = true;
-    })
+    NameRow {
+        id: String::from("name_customer_a"),
+        name: String::from("name_customer_a"),
+        code: String::from("name_customer_a"),
+        is_customer: true,
+        ..Default::default()
+    }
 }
 
 // Inventory adjustment name
 pub fn mock_name_invad() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = INVENTORY_ADJUSTMENT_NAME_CODE.to_string();
-        r.name = String::from("Inventory adjustments");
-        r.code = INVENTORY_ADJUSTMENT_NAME_CODE.to_string();
-    })
+    NameRow {
+        id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
+        name: String::from("Inventory adjustments"),
+        code: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_master_list_filter_test() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("id_master_list_filter_test");
-        r.name = String::from("name_master_list_filter_test");
-        r.code = String::from("master_list_filter_test");
-        r.is_supplier = true;
-        r.is_customer = true;
-    })
+    NameRow {
+        id: String::from("id_master_list_filter_test"),
+        name: String::from("name_master_list_filter_test"),
+        code: String::from("master_list_filter_test"),
+        is_supplier: true,
+        is_customer: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_program_master_list_test() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("program_master_list_test");
-        r.name = String::from("program_master_list_test");
-        r.code = String::from("program_master_list_test");
-        r.is_supplier = true;
-        r.is_customer = true;
-    })
+    NameRow {
+        id: String::from("program_master_list_test"),
+        name: String::from("program_master_list_test"),
+        code: String::from("program_master_list_test"),
+        is_supplier: true,
+        is_customer: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_name_repack() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = REPACK_NAME_CODE.to_string();
-        r.name = REPACK_NAME_CODE.to_string();
-        r.code = REPACK_NAME_CODE.to_string();
-        r.r#type = NameRowType::Repack;
-    })
+    NameRow {
+        id: REPACK_NAME_CODE.to_string(),
+        name: REPACK_NAME_CODE.to_string(),
+        code: REPACK_NAME_CODE.to_string(),
+        r#type: NameRowType::Repack,
+        ..Default::default()
+    }
 }
 
 pub fn mock_donor_a() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("donor_a");
-        r.name = String::from("donor_a");
-        r.code = String::from("donor_a");
-        r.is_donor = true;
-    })
+    NameRow {
+        id: String::from("donor_a"),
+        name: String::from("donor_a"),
+        code: String::from("donor_a"),
+        is_donor: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_donor_b() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("donor_b");
-        r.name = String::from("donor_b");
-        r.code = String::from("donor_b");
-        r.is_donor = true;
-    })
+    NameRow {
+        id: String::from("donor_b"),
+        name: String::from("donor_b"),
+        code: String::from("donor_b"),
+        is_donor: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_patient() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("testId");
-        r.name = String::from("testId");
-        r.code = String::from("testId");
-        r.is_customer = true;
-        r.r#type = NameRowType::Patient;
-    })
+    NameRow {
+        id: String::from("testId"),
+        name: String::from("testId"),
+        code: String::from("testId"),
+        is_customer: true,
+        r#type: NameRowType::Patient,
+        ..Default::default()
+    }
 }
 
 pub fn mock_patient_b() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("patient2");
-        r.name = String::from("patient2");
-        r.code = String::from("patient2");
-        r.is_customer = true;
-        r.r#type = NameRowType::Patient;
-    })
+    NameRow {
+        id: String::from("patient2"),
+        name: String::from("patient2"),
+        code: String::from("patient2"),
+        is_customer: true,
+        r#type: NameRowType::Patient,
+        ..Default::default()
+    }
 }
 
 // Deleted through a merge
 fn mock_merged_patient() -> NameRow {
-    inline_init(|r: &mut NameRow| {
-        r.id = String::from("softdeleted");
-        r.name = String::from("softdeleted");
-        r.code = String::from("softdeleted");
-        r.is_customer = true;
-        r.r#type = NameRowType::Patient;
-    })
+    NameRow {
+        id: String::from("softdeleted"),
+        name: String::from("softdeleted"),
+        code: String::from("softdeleted"),
+        is_customer: true,
+        r#type: NameRowType::Patient,
+        ..Default::default()
+    }
 }
 
 pub fn mock_merged_patient_name_link() -> NameLinkRow {

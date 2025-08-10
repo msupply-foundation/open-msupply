@@ -28,7 +28,7 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
-  getCampaignColumn,
+  getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemRowFragment,
@@ -54,7 +54,11 @@ interface TableProps {
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
-  restrictedLocationTypeId?: string | null;
+  restrictedToLocationTypeId?: string | null;
+  preferences?: {
+    allowTrackingOfStockByDonor?: boolean;
+    useCampaigns?: boolean;
+  };
 }
 
 interface QuantityTableProps extends TableProps {
@@ -396,13 +400,9 @@ export const LocationTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled,
-  restrictedLocationTypeId,
+  restrictedToLocationTypeId,
+  preferences,
 }: TableProps) => {
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
-  );
-
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -413,9 +413,13 @@ export const LocationTableComponent = ({
     [
       'location',
       {
-        ...getLocationInputColumn(restrictedLocationTypeId),
+        ...getLocationInputColumn(restrictedToLocationTypeId),
         setter: updateDraftLine,
         width: 530,
+        cellProps: {
+          getVolumeRequired: (rowData: DraftInboundLine) =>
+            rowData.volumePerPack * rowData.numberOfPacks,
+        },
       },
     ],
     [
@@ -426,7 +430,7 @@ export const LocationTableComponent = ({
           const note = patch.note === '' ? null : patch.note;
           updateDraftLine({ ...patch, note });
         },
-        accessor: ({ rowData }) => rowData.note,
+        accessor: ({ rowData }) => rowData.note ?? '',
       },
     ],
   ];
@@ -439,7 +443,9 @@ export const LocationTableComponent = ({
   }
 
   if (preferences?.useCampaigns) {
-    columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+    columnDescriptions.push(
+      getCampaignOrProgramColumn(patch => updateDraftLine(patch))
+    );
   }
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);

@@ -49,7 +49,7 @@ mod test {
 
     use repository::PurchaseOrderRowRepository;
     use repository::{db_diesel::PurchaseOrderRow, mock::MockDataInserts, test_db::setup_all};
-    use util::inline_init;
+    
     #[actix_rt::test]
     async fn purchase_order_service_queries() {
         let (_, connection, connection_manager, _) = setup_all(
@@ -66,14 +66,15 @@ mod test {
         let result = repo.find_all().unwrap();
         assert!(result.is_empty());
 
-        let po = inline_init(|p: &mut PurchaseOrderRow| {
-            p.id = "test_po_1".to_string();
-            p.store_id = mock_store_a().id;
-            p.supplier_name_link_id = mock_name_c().id;
-            p.created_datetime = chrono::Utc::now().naive_utc();
-            p.status = repository::PurchaseOrderStatus::New;
-            p.purchase_order_number = 1;
-        });
+        let po = PurchaseOrderRow {
+            id: "test_po_1".to_string(),
+            store_id: mock_store_a().id,
+            supplier_name_link_id: mock_name_c().id,
+            created_datetime: chrono::Utc::now().naive_utc(),
+            status: repository::PurchaseOrderStatus::New,
+            purchase_order_number: 1,
+            ..Default::default()
+        };
         repo.upsert_one(&po).unwrap();
 
         // Test querying by ID

@@ -3,7 +3,6 @@ use super::{
     DBType, StorageConnection,
 };
 use diesel::prelude::*;
-use util::inline_init;
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -125,10 +124,16 @@ impl ReasonOptionFilter {
 
 impl ReasonOptionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 
     pub fn equal_any(&self, values: Vec<Self>) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(values))
+        EqualFilter {
+            equal_any: Some(values),
+            ..Default::default()
+        }
     }
 }

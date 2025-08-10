@@ -118,7 +118,8 @@ const DetailViewComponent = ({
 export const DetailView = () => {
   const { data: stocktake, isLoading } = useStocktakeOld.document.get();
   const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.UseCampaigns
   );
 
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
@@ -169,6 +170,7 @@ export const DetailView = () => {
             enableDonorTracking={
               preferences?.[PreferenceKey.AllowTrackingOfStockByDonor] ?? false
             }
+            useCampaigns={preferences?.[PreferenceKey.UseCampaigns] ?? false}
           />
         )}
       </TableProvider>

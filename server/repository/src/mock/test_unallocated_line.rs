@@ -1,5 +1,4 @@
 use chrono::NaiveDate;
-use util::inline_init;
 
 use crate::{InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType};
 
@@ -20,18 +19,19 @@ pub fn mock_test_unallocated_line() -> MockData {
 }
 
 pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
-    inline_init(|r: &mut InvoiceRow| {
-        r.id = "unallocated_line_new_invoice".to_string();
-        r.name_link_id = "name_store_a".to_string();
-        r.store_id = "store_c".to_string();
-        r.invoice_number = 1;
-        r.r#type = InvoiceType::OutboundShipment;
-        r.status = InvoiceStatus::New;
-        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
+    InvoiceRow {
+        id: "unallocated_line_new_invoice".to_string(),
+        name_link_id: "name_store_a".to_string(),
+        store_id: "store_c".to_string(),
+        invoice_number: 1,
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::New,
+        created_datetime: NaiveDate::from_ymd_opt(1970, 1, 5)
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
-            .unwrap();
-    })
+            .unwrap(),
+        ..Default::default()
+    }
 }
 
 pub fn mock_unallocated_line() -> InvoiceLineRow {
@@ -60,18 +60,19 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
 // Used to test successfull insert where another invoice has row with the item id in unallocated line
 // to make sure filtering for `UnallocatedLineForItemAlreadyExistsInInvoice` is done for invoice (not globally)
 pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
-    inline_init(|r: &mut InvoiceRow| {
-        r.id = "unallocated_line_new_invoice2".to_string();
-        r.name_link_id = "name_store_a".to_string();
-        r.store_id = "store_a".to_string();
-        r.invoice_number = 2;
-        r.r#type = InvoiceType::OutboundShipment;
-        r.status = InvoiceStatus::New;
-        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
+    InvoiceRow {
+        id: "unallocated_line_new_invoice2".to_string(),
+        name_link_id: "name_store_a".to_string(),
+        store_id: "store_a".to_string(),
+        invoice_number: 2,
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::New,
+        created_datetime: NaiveDate::from_ymd_opt(1970, 1, 5)
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
-            .unwrap();
-    })
+            .unwrap(),
+        ..Default::default()
+    }
 }
 
 pub fn mock_unallocated_line2() -> InvoiceLineRow {
@@ -98,22 +99,23 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
 }
 
 pub fn mock_allocated_invoice() -> InvoiceRow {
-    inline_init(|r: &mut InvoiceRow| {
-        r.id = "unallocated_line_allocated_invoice".to_string();
-        r.name_link_id = "name_store_a".to_string();
-        r.store_id = "store_a".to_string();
-        r.invoice_number = 1;
-        r.r#type = InvoiceType::OutboundShipment;
-        r.status = InvoiceStatus::Allocated;
-        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
+    InvoiceRow {
+        id: "unallocated_line_allocated_invoice".to_string(),
+        name_link_id: "name_store_a".to_string(),
+        store_id: "store_a".to_string(),
+        invoice_number: 1,
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::Allocated,
+        created_datetime: NaiveDate::from_ymd_opt(1970, 1, 5)
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
-            .unwrap();
-        r.allocated_datetime = Some(
+            .unwrap(),
+        allocated_datetime: Some(
             NaiveDate::from_ymd_opt(1970, 1, 5)
                 .unwrap()
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
-        );
-    })
+        ),
+        ..Default::default()
+    }
 }

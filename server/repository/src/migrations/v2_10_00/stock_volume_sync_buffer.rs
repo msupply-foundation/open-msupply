@@ -1,8 +1,7 @@
 use crate::migrations::*;
-use anyhow::Context;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
-use serde::Deserialize;
+use serde::{de::DeserializeOwned, Deserialize};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -74,8 +73,14 @@ impl MigrationFragment for Migrate {
             .load::<(String, String)>(connection.lock().connection())?;
 
         for (id, data) in stock_line_sync_buffer {
-            let legacy_row = serde_json::from_str::<LegacyStockLineRow>(&data)
-                .with_context(|| format!("Cannot parse stock line sync buffer data: {data}"))?;
+            let legacy_row =
+                match parse_or_integration_error::<LegacyStockLineRow>(connection, &id, &data)? {
+                    Some(row) => row,
+                    None => {
+                        println!("Could not parse legacy stock line data for ID: {}", id);
+                        continue;
+                    }
+                };
 
             diesel::update(stock_line::table)
                 .filter(stock_line::id.eq(id))
@@ -96,8 +101,14 @@ impl MigrationFragment for Migrate {
             .load::<(String, String)>(connection.lock().connection())?;
 
         for (id, data) in invoice_line_sync_buffer {
-            let legacy_row = serde_json::from_str::<LegacyTransLineRow>(&data)
-                .with_context(|| format!("Cannot parse invoice line sync buffer data: {data}"))?;
+            let legacy_row =
+                match parse_or_integration_error::<LegacyTransLineRow>(connection, &id, &data)? {
+                    Some(row) => row,
+                    None => {
+                        println!("Could not parse legacy invoice line data for ID: {}", id);
+                        continue;
+                    }
+                };
             diesel::update(invoice_line::table)
                 .filter(invoice_line::id.eq(id))
                 .set(invoice_line::volume_per_pack.eq(legacy_row.volume_per_pack))
@@ -114,8 +125,15 @@ impl MigrationFragment for Migrate {
             .load::<(String, String)>(connection.lock().connection())?;
 
         for (id, data) in stocktake_line_sync_buffer {
-            let legacy_row = serde_json::from_str::<LegacyStocktakeLineRow>(&data)
-                .with_context(|| format!("Cannot parse stocktake line sync buffer data: {data}"))?;
+            let legacy_row =
+                match parse_or_integration_error::<LegacyStocktakeLineRow>(connection, &id, &data)?
+                {
+                    Some(row) => row,
+                    None => {
+                        println!("Could not parse legacy stocktake line data for ID: {}", id);
+                        continue;
+                    }
+                };
             diesel::update(stocktake_line::table)
                 .filter(stocktake_line::id.eq(id))
                 .set(stocktake_line::volume_per_pack.eq(legacy_row.volume_per_pack))
@@ -126,13 +144,32 @@ impl MigrationFragment for Migrate {
     }
 }
 
+fn parse_or_integration_error<T: DeserializeOwned>(
+    connection: &StorageConnection,
+    id: &str,
+    data: &str,
+) -> Result<Option<T>, RepositoryError> {
+    let result = match serde_json::from_str::<T>(&data) {
+        Ok(legacy_row) => Some(legacy_row),
+        Err(e) => {
+            diesel::update(sync_buffer::table)
+                .filter(sync_buffer::record_id.eq(id))
+                .set(sync_buffer::integration_error.eq(e.to_string()))
+                .execute(connection.lock().connection())?;
+
+            None
+        }
+    };
+
+    Ok(result)
+}
+
 #[cfg(test)]
 #[actix_rt::test]
 async fn migration_stock_volume() {
     use crate::migrations::*;
     use crate::test_db::*;
     use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
-    use util::*;
 
     let previous_version = v2_09_01::V2_09_01.version();
     let version = v2_10_00::V2_10_00.version();
@@ -210,7 +247,7 @@ async fn migration_stock_volume() {
             ('stock_line_id', $1, 'item_line', 'UPSERT', '{stock_line_sync_buffer_data}');
         "#
         ))
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -224,7 +261,7 @@ async fn migration_stock_volume() {
             ('invoice_line_id', $1, 'trans_line', 'UPSERT', '{invoice_line_sync_buffer_data}');
         "#
         ))
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -238,7 +275,7 @@ async fn migration_stock_volume() {
             ('stocktake_line_id', $1, 'Stock_take_lines', 'UPSERT', '{stocktake_line_sync_buffer_data}');
         "#
         ))
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 

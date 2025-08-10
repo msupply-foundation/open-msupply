@@ -34,6 +34,7 @@ export const DraftLine = {
       packSize: item.defaultPackSize,
       location: null,
       itemName: item.name,
+      volumePerPack: 0,
       item: {
         __typename: 'ItemNode',
         id: item.id,
@@ -68,8 +69,8 @@ export const DraftLine = {
       expiryDate: stockLine.expiryDate ? stockLine.expiryDate : null,
       id: FnUtils.generateUUID(),
       itemName: stockLine.item.name,
-      itemVariantId: stockLine.itemVariantId,
       donorId: stockLine.donor?.id,
+      volumePerPack: stockLine.volumePerPack ?? 0,
       item: {
         __typename: 'ItemNode',
         id: stockLine.itemId,

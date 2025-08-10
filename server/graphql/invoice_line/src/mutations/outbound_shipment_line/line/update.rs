@@ -111,6 +111,7 @@ impl UpdateInput {
             total_before_tax: None,
             note: None,
             campaign_id: None,
+            program_id: None,
         }
     }
 }
@@ -556,11 +557,7 @@ mod test {
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(1.0),
                     }),
-                    prescribed_quantity: None,
-                    total_before_tax: None,
-                    note: None,
-                    campaign_id: None,
-                    vvm_status_id: None,
+                    ..Default::default()
                 }
             );
             Ok(InvoiceLine {

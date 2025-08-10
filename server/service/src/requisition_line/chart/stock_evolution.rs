@@ -203,7 +203,6 @@ fn within_range(within_date: NaiveDate, datetime: NaiveDateTime) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use util::inline_init;
 
     #[test]
     fn test_generate_series() {
@@ -253,50 +252,56 @@ mod tests {
                     NaiveDate::from_ymd_opt(2021, 1, 2).unwrap(),
                 ],
                 vec![
-                    inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = 10.0;
-                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 2)
+                    StockMovementRow {
+                        quantity: 10.0,
+                        datetime: NaiveDate::from_ymd_opt(2021, 1, 2)
                             .unwrap()
                             .and_hms_opt(10, 0, 0)
-                            .unwrap();
-                    }),
-                    inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = -20.0;
-                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 2)
+                            .unwrap(),
+                        ..Default::default()
+                    },
+                    StockMovementRow {
+                        quantity: -20.0,
+                        datetime: NaiveDate::from_ymd_opt(2021, 1, 2)
                             .unwrap()
                             .and_hms_opt(7, 0, 0)
-                            .unwrap();
-                    }),
-                    inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = 15.0;
-                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+                            .unwrap(),
+                        ..Default::default()
+                    },
+                    StockMovementRow {
+                        quantity: 15.0,
+                        datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                             .unwrap()
                             .and_hms_opt(2, 0, 0)
-                            .unwrap();
-                    }),
-                    inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = 7.0;
-                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+                            .unwrap(),
+                        ..Default::default()
+                    },
+                    StockMovementRow {
+                        quantity: 7.0,
+                        datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                             .unwrap()
                             .and_hms_opt(2, 0, 0)
-                            .unwrap();
-                    }),
+                            .unwrap(),
+                        ..Default::default()
+                    },
                     // Not counted
-                    inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = -20.0;
-                        r.datetime = NaiveDate::from_ymd_opt(2020, 12, 31)
+                    StockMovementRow {
+                        quantity: -20.0,
+                        datetime: NaiveDate::from_ymd_opt(2020, 12, 31)
                             .unwrap()
                             .and_hms_opt(2, 0, 0)
-                            .unwrap();
-                    }),
+                            .unwrap(),
+                        ..Default::default()
+                    },
                     // Not counted
-                    inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = -100.0;
-                        r.datetime = NaiveDate::from_ymd_opt(2021, 1, 3)
+                    StockMovementRow {
+                        quantity: -100.0,
+                        datetime: NaiveDate::from_ymd_opt(2021, 1, 3)
                             .unwrap()
                             .and_hms_opt(2, 0, 0)
-                            .unwrap();
-                    })
+                            .unwrap(),
+                        ..Default::default()
+                    }
                 ]
             ),
             vec![

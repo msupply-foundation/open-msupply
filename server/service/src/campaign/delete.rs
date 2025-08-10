@@ -27,7 +27,7 @@ pub fn delete_campaign(
                 return Err(DeleteCampaignError::CampaignDoesNotExist);
             }
 
-            CampaignRowRepository::new(connection).delete(&input.id)?;
+            CampaignRowRepository::new(connection).mark_deleted(&input.id)?;
             Ok(input.id.clone())
         })
         .map_err(|error| error.to_inner_error())?;

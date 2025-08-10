@@ -123,6 +123,7 @@ const inboundParsers = {
       vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
       donorId: line.donor?.id,
       campaignId: line.campaign?.id,
+      programId: line.program?.id,
       note: line.note,
       shippedNumberOfPacks: line.shippedNumberOfPacks,
       volumePerPack: line.volumePerPack,
@@ -157,6 +158,9 @@ const inboundParsers = {
     donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
     campaignId: setNullableInput('campaignId', {
       campaignId: line.campaign?.id ?? null,
+    }),
+    programId: setNullableInput('programId', {
+      programId: line.program?.id ?? null,
     }),
     note: setNullableInput('note', { note: line.note ?? null }),
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,

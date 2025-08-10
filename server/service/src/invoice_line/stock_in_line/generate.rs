@@ -48,6 +48,7 @@ pub fn generate_batch(
         donor_link_id,
         vvm_status_id,
         campaign_id,
+        program_id,
         volume_per_pack,
         // Ignore other fields, this might be a problem when new fields are added
         ..
@@ -110,6 +111,7 @@ pub fn generate_batch(
         donor_link_id,
         vvm_status_id,
         campaign_id,
+        program_id,
         volume_per_pack,
         total_volume: total_number_of_packs * volume_per_pack,
     };

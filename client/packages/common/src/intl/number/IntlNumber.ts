@@ -27,12 +27,17 @@ export const useFormatNumber = () => {
     ) => {
       if (value === undefined || value === null) return '';
       const locale = options?.locale ?? currentLanguage;
+
       return intlNumberFormat(locale, {
         maximumFractionDigits: MAX_FRACTION_DIGITS,
         ...options,
       }).format(value);
     },
     round: (value?: number, dp?: number): string => {
+      if (value === undefined || value === null || typeof value !== 'number')
+        return '';
+
+      const newVal = dp !== undefined ? parseFloat(value.toFixed(dp)) : value;
       const intl = intlNumberFormat(currentLanguage, {
         // not strictly necessary perhaps - but if you specify a minimumFractionDigits
         // outside of the range 0,20 then an error is thrown
@@ -41,7 +46,7 @@ export const useFormatNumber = () => {
           Math.min(dp ?? 0, MAX_FRACTION_DIGITS)
         ),
       });
-      return intl.format(value ?? 0);
+      return intl.format(newVal ?? 0);
     },
     parse: (numberString: string, decimalChar: string = decimal) => {
       const negative = numberString.startsWith('-') ? -1 : 1;

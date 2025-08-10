@@ -234,7 +234,6 @@ mod test {
     use repository::mock::MockDataInserts;
     use repository::{GenderType as GenderRepo, NameLinkRow, NameRowType};
     use serde_json::json;
-    use util::inline_init;
 
     use super::*;
 
@@ -256,32 +255,33 @@ mod test {
             pub async fn test_query(&self) -> NameNode {
                 NameNode {
                     name: Name {
-                        name_row: inline_init(|r: &mut NameRow| {
-                            r.r#type = NameRowType::Store;
-                            r.code = "some code".to_string();
-                            r.first_name = Some("first_name".to_string());
-                            r.last_name = Some("last_name".to_string());
-                            r.gender = Some(GenderRepo::Female);
-                            r.phone = Some("0218738201".to_string());
-                            r.charge_code = Some("test".to_string());
-                            r.comment = Some("name comment".to_string());
-                            r.country = Some("name country".to_string());
-                            r.email = Some("name email".to_string());
-                            r.website = Some("name website".to_string());
-                            r.is_manufacturer = true;
-                            r.is_donor = false;
-                            r.on_hold = true;
-                            r.address1 = Some("address1".to_string());
-                            r.address2 = Some("address2".to_string());
-                            r.created_datetime = Some(
+                        name_row: NameRow {
+                            r#type: NameRowType::Store,
+                            code: "some code".to_string(),
+                            first_name: Some("first_name".to_string()),
+                            last_name: Some("last_name".to_string()),
+                            gender: Some(GenderRepo::Female),
+                            phone: Some("0218738201".to_string()),
+                            charge_code: Some("test".to_string()),
+                            comment: Some("name comment".to_string()),
+                            country: Some("name country".to_string()),
+                            email: Some("name email".to_string()),
+                            website: Some("name website".to_string()),
+                            is_manufacturer: true,
+                            is_donor: false,
+                            on_hold: true,
+                            address1: Some("address1".to_string()),
+                            address2: Some("address2".to_string()),
+                            created_datetime: Some(
                                 NaiveDate::from_ymd_opt(2022, 5, 18)
                                     .unwrap()
                                     .and_hms_opt(12, 7, 12)
                                     .unwrap(),
-                            );
-                            r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 5, 15).unwrap());
-                            r.custom_data_string = Some(r#"{"check": "check"}"#.to_string());
-                        }),
+                            ),
+                            date_of_birth: Some(NaiveDate::from_ymd_opt(1995, 5, 15).unwrap()),
+                            custom_data_string: Some(r#"{"check": "check"}"#.to_string()),
+                            ..Default::default()
+                        },
                         name_link_row: NameLinkRow {
                             id: "test_id".to_string(),
                             name_id: "test_id".to_string(),

@@ -89,7 +89,6 @@ mod tests {
         test_db::*,
     };
     use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
-    use util::*;
 
     // --- Test Data Setup Helpers --- //
     fn setup_test_dependencies(connection: &StorageConnection) {
@@ -150,7 +149,7 @@ mod tests {
                 "#,
                 invoice_line_id, sync_data
             ))
-            .bind::<Timestamp, _>(Defaults::naive_date_time()),
+            .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
         )
         .unwrap();
     }

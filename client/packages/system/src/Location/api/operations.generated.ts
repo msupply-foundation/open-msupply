@@ -9,6 +9,8 @@ export type LocationRowFragment = {
   name: string;
   onHold: boolean;
   code: string;
+  volume: number;
+  volumeUsed: number;
   locationType?: {
     __typename: 'LocationTypeNode';
     id: string;
@@ -16,6 +18,7 @@ export type LocationRowFragment = {
     maxTemperature: number;
     minTemperature: number;
   } | null;
+  stock: { __typename: 'StockLineConnector'; totalCount: number };
 };
 
 export type LocationsQueryVariables = Types.Exact<{
@@ -39,6 +42,8 @@ export type LocationsQuery = {
       name: string;
       onHold: boolean;
       code: string;
+      volume: number;
+      volumeUsed: number;
       locationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -46,6 +51,7 @@ export type LocationsQuery = {
         maxTemperature: number;
         minTemperature: number;
       } | null;
+      stock: { __typename: 'StockLineConnector'; totalCount: number };
     }>;
   };
 };
@@ -84,6 +90,8 @@ export type InsertLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
+        volume: number;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -91,6 +99,7 @@ export type InsertLocationMutation = {
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       };
 };
 
@@ -108,6 +117,8 @@ export type UpdateLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
+        volume: number;
+        volumeUsed: number;
         locationType?: {
           __typename: 'LocationTypeNode';
           id: string;
@@ -115,6 +126,7 @@ export type UpdateLocationMutation = {
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       }
     | {
         __typename: 'UpdateLocationError';
@@ -186,11 +198,18 @@ export const LocationRowFragmentDoc = gql`
     name
     onHold
     code
+    volume
+    volumeUsed
     locationType {
       id
       name
       maxTemperature
       minTemperature
+    }
+    stock {
+      ... on StockLineConnector {
+        totalCount
+      }
     }
   }
 `;

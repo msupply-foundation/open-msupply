@@ -165,7 +165,7 @@ fragment PrescriptionLine on InvoiceLineNode {
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }

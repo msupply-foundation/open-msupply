@@ -18,7 +18,6 @@ use diesel::{
     dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
-use util::inline_init;
 
 table! {
     invoice_stats (invoice_id) {
@@ -422,9 +421,15 @@ impl InvoiceLine {
 
 impl InvoiceLineType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
     pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }

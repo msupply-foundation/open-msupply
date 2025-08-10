@@ -4,7 +4,7 @@ use super::StockLineConnector;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::LocationTypeLoader;
+use graphql_core::loader::{LocationTypeLoader, VolumeUsedByLocationLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
 use repository::StringFilter;
@@ -81,6 +81,17 @@ impl LocationNode {
 
     pub async fn on_hold(&self) -> bool {
         self.row().on_hold
+    }
+
+    pub async fn volume(&self) -> f64 {
+        self.row().volume
+    }
+
+    pub async fn volume_used(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<VolumeUsedByLocationLoader>>();
+
+        let result = loader.load_one(self.row().id.clone()).await?.unwrap_or(0.0);
+        Ok(result)
     }
 
     pub async fn stock(&self, ctx: &Context<'_>) -> Result<StockLineConnector> {

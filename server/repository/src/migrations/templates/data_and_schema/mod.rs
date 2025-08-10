@@ -76,7 +76,6 @@ async fn migration_1_00_07() {
     use crate::migrations::*;
     use crate::test_db::*;
     use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
-    use util::*;
     // For data migrations we want to insert data then do the migration, thus setup with version - 1
     // Then insert data and upgrade to this version
 
@@ -126,7 +125,7 @@ async fn migration_1_00_07() {
         "#
             .to_string(),
         )
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -141,7 +140,7 @@ async fn migration_1_00_07() {
         "#)
             .to_string(),
         )
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -156,7 +155,7 @@ async fn migration_1_00_07() {
         "#)
             .to_string(),
         )
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -171,7 +170,7 @@ async fn migration_1_00_07() {
         "#)
             .to_string(),
         )
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 
@@ -186,7 +185,7 @@ async fn migration_1_00_07() {
         "#)
             .to_string(),
         )
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 

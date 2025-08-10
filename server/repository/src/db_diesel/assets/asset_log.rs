@@ -1,7 +1,6 @@
 use super::super::user_row::user_account;
 use super::asset_log_row::{asset_log, AssetLogRow};
 use diesel::{dsl::IntoBoxed, prelude::*};
-use util::inline_init;
 
 use crate::asset_log_row::{latest_asset_log, AssetLogStatus};
 use crate::{
@@ -187,7 +186,10 @@ fn create_latest_filtered_query(filter: Option<AssetLogFilter>) -> BoxedLatestAs
 
 impl AssetLogStatus {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }
 
