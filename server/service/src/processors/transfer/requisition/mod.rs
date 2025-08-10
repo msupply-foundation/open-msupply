@@ -195,7 +195,7 @@ trait RequisitionTransferProcessor {
                 Some(msg)
             }
             other => {
-                log::info!("{} - skipped: {:?}", self.get_description(), other);
+                log::debug!("{} - skipped: {:?}", self.get_description(), other);
                 None
             }
         };
