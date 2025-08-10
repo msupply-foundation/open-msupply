@@ -328,8 +328,7 @@ export const StockLineForm = ({
                       p => p.packSize === draft.packSize
                     );
                     const volumePerPack =
-                      ((packaging?.volumePerUnit ?? 0) / 1000) *
-                      (draft.packSize ?? 1);
+                      ((packaging?.volumePerUnit ?? 0) / 1000) * draft.packSize;
 
                     onUpdate({
                       itemVariant: variant,
@@ -361,6 +360,7 @@ export const StockLineForm = ({
                   disabled
                   width={160}
                   decimalLimit={10}
+                  // Need to coalesce to 0 to avoid NaN while user is editing volumePerPack!
                   value={(draft.volumePerPack ?? 0) * draft.totalNumberOfPacks}
                 />
               }

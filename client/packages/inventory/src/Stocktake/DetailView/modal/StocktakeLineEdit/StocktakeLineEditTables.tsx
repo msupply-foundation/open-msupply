@@ -138,13 +138,10 @@ const getInventoryAdjustmentReasonInputColumn = (
       const isInventoryReduction =
         rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
 
-      // Disable reasons if:
       const disabled =
         // Haven't entered a count for this line yet
         typeof rowData.countedNumberOfPacks !== 'number' ||
-        // Aren't counting this line
         !rowData.countThisLine ||
-        // Count and snapshot packs are equal
         rowData.snapshotNumberOfPacks === rowData.countedNumberOfPacks;
 
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
