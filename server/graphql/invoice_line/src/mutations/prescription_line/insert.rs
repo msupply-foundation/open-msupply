@@ -549,7 +549,9 @@ mod test {
                     expiry_date: None,
                     cost_price_per_pack: None,
                     sell_price_per_pack: None,
-                    campaign_id: None
+                    campaign_id: None,
+                    donor_id: None,
+                    item_variant_id: None,
                 }
             );
             Ok(InvoiceLine {
