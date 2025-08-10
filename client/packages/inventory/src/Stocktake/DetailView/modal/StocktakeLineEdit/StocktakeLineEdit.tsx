@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { LocationRowFragment } from '@openmsupply-client/system';
+import {
+  checkInvalidLocationLines,
+  LocationRowFragment,
+} from '@openmsupply-client/system';
 import {
   BasicSpinner,
   Breakpoints,
@@ -74,6 +77,13 @@ export const StocktakeLineEdit = ({
   const reversedDraftLines = [...draftLines].reverse();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
+  const restrictedLocationTypeId =
+    currentItem?.restrictedLocationTypeId ?? null;
+
+  const hasInvalidLocationLines = !!currentItem
+    ? checkInvalidLocationLines(restrictedLocationTypeId, draftLines)
+    : null;
+
   const onNext = async () => {
     if (isSaving) return;
     const { errorMessages } = await save();
@@ -139,6 +149,7 @@ export const StocktakeLineEdit = ({
         batches={reversedDraftLines}
         update={update}
         isInitialStocktake={isInitialStocktake}
+        isVaccineItem={currentItem?.isVaccine ?? false}
       />
       <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
         <ButtonWithIcon
@@ -161,6 +172,7 @@ export const StocktakeLineEdit = ({
               batches={reversedDraftLines}
               update={update}
               isInitialStocktake={isInitialStocktake}
+              isVaccineItem={currentItem?.isVaccine ?? false}
             />
           </StyledTabContainer>
         </StyledTabPanel>
@@ -231,6 +243,7 @@ export const StocktakeLineEdit = ({
                 items={items}
                 onChangeItem={setCurrentItem}
                 mode={mode}
+                hasInvalidLocationLines={hasInvalidLocationLines ?? false}
               />
               {!currentItem ? (
                 <Box sx={{ height: isMediumScreen ? 400 : 500 }} />

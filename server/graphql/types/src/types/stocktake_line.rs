@@ -7,11 +7,13 @@ use service::usize_to_u32;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, ProgramByIdLoader,
-        StockLineByIdLoader,
+        StockLineByIdLoader, VVMStatusByIdLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+
+use crate::types::VVMStatusNode;
 
 use crate::types::{program_node::ProgramNode, CampaignNode};
 
@@ -159,6 +161,20 @@ impl StocktakeLineNode {
                 reason_option_row: row.clone(),
             })
         })
+    }
+
+    pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
+        let status_id = match self.line.line.vvm_status_id.clone() {
+            Some(status_id) => status_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
+
+        Ok(loader
+            .load_one(status_id)
+            .await?
+            .map(VVMStatusNode::from_domain))
     }
 
     pub async fn volume_per_pack(&self) -> f64 {

@@ -83,7 +83,6 @@ async fn migration_location_volume() {
     use crate::migrations::*;
     use crate::test_db::*;
     use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
-    use util::*;
 
     let previous_version = v2_09_01::V2_09_01.version();
     let version = v2_10_00::V2_10_00.version();
@@ -128,7 +127,7 @@ async fn migration_location_volume() {
             ('location_id', $1, 'Location', 'UPSERT', '{location_sync_buffer_data}');
         "#
         ))
-        .bind::<Timestamp, _>(Defaults::naive_date_time()),
+        .bind::<Timestamp, _>(chrono::Utc::now().naive_utc()),
     )
     .unwrap();
 

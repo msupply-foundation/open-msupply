@@ -3,6 +3,7 @@ import {
   Autocomplete,
   CloseIcon,
   MenuItem,
+  useTheme,
   useTranslation,
   Box,
   Button,
@@ -11,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { ButtonGroup, Paper, Typography } from '@mui/material';
 import { LocationRowFragment, useLocationList } from '../api';
-import { getVolumeUsedPercentage } from './utils';
+import { checkInvalidLocationLines, getVolumeUsedPercentage } from '../utils';
 
 interface LocationSearchInputProps {
   selectedLocation: LocationRowFragment | null;
@@ -22,6 +23,7 @@ interface LocationSearchInputProps {
   restrictedToLocationTypeId?: string | null;
   volumeRequired?: number;
   fullWidth?: boolean;
+  enableAPI?: boolean;
 }
 
 interface LocationOption {
@@ -97,21 +99,27 @@ export const LocationSearchInput = ({
   autoFocus = false,
   restrictedToLocationTypeId,
   volumeRequired,
+  enableAPI = true,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
+  const theme = useTheme();
   const { round } = useFormatNumber();
 
   const [filter, setFilter] = useState<LocationFilter>(LocationFilter.All);
 
   const {
     query: { data, isLoading },
-  } = useLocationList({
-    sortBy: {
-      direction: 'asc',
-      key: 'name',
+  } = useLocationList(
+    {
+      sortBy: {
+        direction: 'asc',
+        key: 'name',
+      },
+      filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
     },
-    filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
-  });
+    undefined,
+    enableAPI
+  );
 
   const locations = data?.nodes || [];
 
@@ -155,6 +163,7 @@ export const LocationSearchInput = ({
 
   // Define separately - even if the selected location doesn't match current
   // filter, we still want to show it as the selected option
+  // Same goes if the location is not valid given the location type restriction
   const selectedLocationOption: LocationOption | null = selectedLocation
     ? {
         value: selectedLocation.id,
@@ -164,9 +173,23 @@ export const LocationSearchInput = ({
       }
     : null;
 
+  const isInvalidLocation = !!selectedLocation?.locationType?.id
+    ? checkInvalidLocationLines(restrictedToLocationTypeId ?? null, [
+        { location: selectedLocation },
+      ])
+    : null;
+
+  const errorStyles = {
+    borderColor: theme.palette.error.main,
+    borderWidth: '2px',
+    borderStyle: 'solid',
+    borderRadius: '8px',
+  };
+
   return (
     <Autocomplete
       fullWidth={fullWidth}
+      sx={!!isInvalidLocation ? errorStyles : undefined}
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}

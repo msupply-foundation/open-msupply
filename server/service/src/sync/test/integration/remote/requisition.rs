@@ -10,7 +10,7 @@ use repository::{
     RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow, RequisitionRowDelete,
 };
 use serde_json::json;
-use util::{inline_edit, uuid::uuid};
+use util::uuid::uuid;
 
 pub(crate) struct RequisitionRecordTester;
 impl SyncRecordTester for RequisitionRecordTester {
@@ -71,22 +71,18 @@ impl SyncRecordTester for RequisitionRecordTester {
             option_id: None,
         };
 
-        let requisition_row_2 = inline_edit(&base_requisition_row, |mut d| {
-            d.id = uuid();
-            d.r#type = RequisitionType::Response;
-            d.status = RequisitionStatus::New;
-            d
-        });
-        let requisition_row_3 = inline_edit(&base_requisition_row, |mut d| {
-            d.id = uuid();
-            d.status = RequisitionStatus::Sent;
-            d
-        });
-        let requisition_row_4 = inline_edit(&base_requisition_row, |mut d| {
-            d.id = uuid();
-            d.status = RequisitionStatus::Finalised;
-            d
-        });
+        let mut requisition_row_2 = base_requisition_row.clone();
+        requisition_row_2.id = uuid();
+        requisition_row_2.r#type = RequisitionType::Response;
+        requisition_row_2.status = RequisitionStatus::New;
+
+        let mut requisition_row_3 = base_requisition_row.clone();
+        requisition_row_3.id = uuid();
+        requisition_row_3.status = RequisitionStatus::Sent;
+
+        let mut requisition_row_4 = base_requisition_row.clone();
+        requisition_row_4.id = uuid();
+        requisition_row_4.status = RequisitionStatus::Finalised;
 
         result.push(TestStepData {
             central_upsert: json!({
@@ -110,50 +106,44 @@ impl SyncRecordTester for RequisitionRecordTester {
         });
 
         // STEP 2 - mutate
-        let requisition_row_1 = inline_edit(&requisition_row_1, |mut d| {
-            d.user_id = Some("test user 2".to_string());
-            d.r#type = RequisitionType::Response;
-            d.status = RequisitionStatus::Finalised;
-            d.comment = Some("requisition comment".to_string());
-            d.their_reference = Some("requisition their ref".to_string());
-            d.colour = Some("#1A1919".to_string());
-            d.sent_datetime = NaiveDate::from_ymd_opt(2022, 03, 24)
-                .unwrap()
-                .and_hms_opt(8, 53, 0);
-            d.finalised_datetime = NaiveDate::from_ymd_opt(2022, 03, 25)
-                .unwrap()
-                .and_hms_opt(8, 53, 0);
-            d.expected_delivery_date = NaiveDate::from_ymd_opt(2022, 03, 28);
-            d.max_months_of_stock = 15.0;
-            d.min_months_of_stock = 10.0;
-            d.linked_requisition_id = Some(requisition_row_2.id.clone());
-            d
-        });
+        let mut requisition_row_1 = requisition_row_1.clone();
+        requisition_row_1.user_id = Some("test user 2".to_string());
+        requisition_row_1.r#type = RequisitionType::Response;
+        requisition_row_1.status = RequisitionStatus::Finalised;
+        requisition_row_1.comment = Some("requisition comment".to_string());
+        requisition_row_1.their_reference = Some("requisition their ref".to_string());
+        requisition_row_1.colour = Some("#1A1919".to_string());
+        requisition_row_1.sent_datetime = NaiveDate::from_ymd_opt(2022, 03, 24)
+            .unwrap()
+            .and_hms_opt(8, 53, 0);
+        requisition_row_1.finalised_datetime = NaiveDate::from_ymd_opt(2022, 03, 25)
+            .unwrap()
+            .and_hms_opt(8, 53, 0);
+        requisition_row_1.expected_delivery_date = NaiveDate::from_ymd_opt(2022, 03, 28);
+        requisition_row_1.max_months_of_stock = 15.0;
+        requisition_row_1.min_months_of_stock = 10.0;
+        requisition_row_1.linked_requisition_id = Some(requisition_row_2.id.clone());
 
-        let requisition_row_2 = inline_edit(&requisition_row_2, |mut d| {
-            d.linked_requisition_id = Some(requisition_row_1.id.clone());
-            d
-        });
+        let mut requisition_row_2 = requisition_row_2.clone();
+        requisition_row_2.linked_requisition_id = Some(requisition_row_1.id.clone());
 
-        let requisition_line_row_1 = inline_edit(&requisition_line_row_1, |mut d| {
-            d.requested_quantity = 55.0;
-            d.suggested_quantity = 15.0;
-            d.supply_quantity = 15.0;
-            d.available_stock_on_hand = 15.0;
-            d.average_monthly_consumption = 10.0;
-            d.comment = Some("some comment".to_string());
-            d.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
-                .unwrap()
-                .and_hms_opt(12, 13, 14);
-            d.initial_stock_on_hand_units = 5.0;
-            d.incoming_units = 5.0;
-            d.outgoing_units = 5.0;
-            d.loss_in_units = 5.0;
-            d.addition_in_units = 5.0;
-            d.expiring_units = 5.0;
-            d.days_out_of_stock = 5.0;
-            d
-        });
+        let mut requisition_line_row_1 = requisition_line_row_1.clone();
+        requisition_line_row_1.requested_quantity = 55.0;
+        requisition_line_row_1.suggested_quantity = 15.0;
+        requisition_line_row_1.supply_quantity = 15.0;
+        requisition_line_row_1.available_stock_on_hand = 15.0;
+        requisition_line_row_1.average_monthly_consumption = 10.0;
+        requisition_line_row_1.comment = Some("some comment".to_string());
+        requisition_line_row_1.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
+            .unwrap()
+            .and_hms_opt(12, 13, 14);
+        requisition_line_row_1.initial_stock_on_hand_units = 5.0;
+        requisition_line_row_1.incoming_units = 5.0;
+        requisition_line_row_1.outgoing_units = 5.0;
+        requisition_line_row_1.loss_in_units = 5.0;
+        requisition_line_row_1.addition_in_units = 5.0;
+        requisition_line_row_1.expiring_units = 5.0;
+        requisition_line_row_1.days_out_of_stock = 5.0;
 
         result.push(TestStepData {
             integration_records: vec![
@@ -164,10 +154,8 @@ impl SyncRecordTester for RequisitionRecordTester {
             ..Default::default()
         });
         // STEP 3 - delete
-        let requisition_row_2 = inline_edit(&requisition_row_2, |mut d| {
-            d.linked_requisition_id = None;
-            d
-        });
+        let mut requisition_row_2 = requisition_row_2.clone();
+        requisition_row_2.linked_requisition_id = None;
         result.push(TestStepData {
             integration_records: vec![
                 IntegrationOperation::upsert(requisition_row_2),

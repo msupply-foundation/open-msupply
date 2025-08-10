@@ -134,7 +134,6 @@ mod test {
         mock::{mock_store_a, mock_store_c, mock_test_not_store_a_master_list, MockDataInserts},
         test_db::setup_all,
     };
-    use util::inline_init;
 
     #[actix_rt::test]
     async fn add_from_master_list_errors() {
@@ -205,9 +204,10 @@ mod test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "purchase_order_add_from_master_list_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.full_master_lists = vec![mock_master_list_program()];
-            }),
+            MockData {
+                full_master_lists: vec![mock_master_list_program()],
+                ..Default::default()
+            },
         )
         .await;
 

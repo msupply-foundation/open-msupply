@@ -89,7 +89,6 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
     use serde_json::json;
-    use util::inline_init;
 
     use super::*;
 
@@ -111,13 +110,12 @@ mod test {
             pub async fn test_query(&self) -> BarcodeNode {
                 BarcodeNode {
                     barcode: Barcode {
-                        barcode_row: {
-                            inline_init(|r: &mut BarcodeRow| {
-                                r.id = "CB81F6CD62C1476F9411362053D49E84".to_string();
-                                r.gtin = "0123456789".to_string();
-                                r.item_id = "AA460A207402434A89B1F6EEAC08DA43".to_string();
-                                r.pack_size = Some(1.0);
-                            })
+                        barcode_row: BarcodeRow {
+                            id: "CB81F6CD62C1476F9411362053D49E84".to_string(),
+                            gtin: "0123456789".to_string(),
+                            item_id: "AA460A207402434A89B1F6EEAC08DA43".to_string(),
+                            pack_size: Some(1.0),
+                            ..Default::default()
                         },
                         manufacturer_name_row: None,
                     },
