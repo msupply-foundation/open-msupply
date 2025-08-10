@@ -68,6 +68,7 @@ fn generate_stocktake_lines(
         description: _,
         create_blank_stocktake,
         include_all_master_list_items,
+        vvm_status_id,
     }: InsertStocktake,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     if let Some(true) = create_blank_stocktake {
@@ -106,6 +107,10 @@ fn generate_stocktake_lines(
             .location(LocationFilter::new().id(EqualFilter::equal_to(&location_id)))
     }
 
+    if let Some(vvm_status_id) = vvm_status_id {
+        stock_line_filter = stock_line_filter.vvm_status_id(EqualFilter::equal_to(&vvm_status_id));
+    }
+
     if let Some(expires_before_date) = expires_before {
         stock_line_filter =
             stock_line_filter.expiry_date(DateFilter::before_or_equal_to(expires_before_date))
@@ -134,13 +139,13 @@ fn generate_stocktake_lines(
                          donor_link_id,
                          campaign_id,
                          program_id,
+                         vvm_status_id,
                          item_link_id: _,
                          supplier_link_id: _,
                          store_id: _,
                          on_hold: _,
                          available_number_of_packs: _,
                          barcode_id: _,
-                         vvm_status_id: _, // Todo?
                          total_volume: _,
                      },
                  item_row,
@@ -166,6 +171,7 @@ fn generate_stocktake_lines(
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
                     donor_link_id,
+                    vvm_status_id,
                     volume_per_pack,
                     campaign_id,
                     program_id,
@@ -218,6 +224,7 @@ fn generate_lines_initial_stocktake(
             item_variant_id: None,
             donor_link_id: None,
             reason_option_id: None,
+            vvm_status_id: None,
             volume_per_pack: 0.0,
             campaign_id: None,
             program_id: None,
@@ -281,6 +288,7 @@ pub fn generate_lines_from_master_list(
                 reason_option_id: None,
                 item_variant_id: None,
                 donor_link_id: None,
+                vvm_status_id: None,
                 volume_per_pack: 0.0,
                 campaign_id: None,
                 program_id: None,
@@ -301,14 +309,14 @@ pub fn generate_lines_from_master_list(
                     volume_per_pack,
                     campaign_id,
                     program_id,
+                    item_variant_id,
+                    donor_link_id,
+                    vvm_status_id,
                     supplier_link_id: _,
                     store_id: _,
                     on_hold: _,
                     available_number_of_packs: _,
                     barcode_id: _,
-                    item_variant_id,
-                    donor_link_id,
-                    vvm_status_id: _, // Not currently included in stocktakes?
                     total_volume: _,
                 } = line.stock_line_row;
 
@@ -328,6 +336,7 @@ pub fn generate_lines_from_master_list(
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
                     donor_link_id,
+                    vvm_status_id,
                     volume_per_pack,
                     campaign_id,
                     program_id,

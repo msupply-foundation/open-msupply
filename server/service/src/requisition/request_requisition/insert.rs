@@ -168,22 +168,23 @@ mod test_insert {
         test_db::{setup_all, setup_all_with_data},
         NameRow, RequisitionRowRepository,
     };
-    use util::{inline_edit, inline_init};
 
     #[actix_rt::test]
     async fn insert_request_requisition_errors() {
         fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
+            NameRow {
+                id: "not_visible".to_string(),
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_request_requisition_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible()];
-            }),
+            MockData {
+                names: vec![not_visible()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -197,9 +198,10 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = mock_request_draft_requisition().id;
-                }),
+                InsertRequestRequisition {
+                    id: mock_request_draft_requisition().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionAlreadyExists)
         );
@@ -209,10 +211,11 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_string();
-                    r.other_party_id.clone_from(&name_store_b.id);
-                }),
+                InsertRequestRequisition {
+                    id: "new_request_requisition".to_string(),
+                    other_party_id: name_store_b.id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -221,10 +224,11 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_id".to_string();
-                    r.other_party_id = not_visible().id;
-                })
+                InsertRequestRequisition {
+                    id: "new_id".to_string(),
+                    other_party_id: not_visible().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -233,10 +237,11 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_string();
-                    r.other_party_id = "invalid".to_string();
-                }),
+                InsertRequestRequisition {
+                    id: "new_request_requisition".to_string(),
+                    other_party_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -245,10 +250,11 @@ mod test_insert {
         assert_eq!(
             service.insert_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_string();
-                    r.other_party_id = mock_name_a().id;
-                }),
+                InsertRequestRequisition {
+                    id: "new_request_requisition".to_string(),
+                    other_party_id: mock_name_a().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyIsNotAStore)
         );
@@ -290,21 +296,18 @@ mod test_insert {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            new_row,
-            inline_edit(&new_row, |mut u| {
-                u.id = "new_request_requisition".to_string();
-                u.user_id = Some(mock_user_account_a().id);
-                u.name_link_id = mock_name_store_c().id;
-                u.colour = Some("new colour".to_string());
-                u.their_reference = Some("new their_reference".to_string());
-                u.comment = Some("new comment".to_string());
-                u.max_months_of_stock = 1.0;
-                u.min_months_of_stock = 0.5;
-                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
-                u
-            })
-        );
+        let mut expected = new_row.clone();
+        expected.id = "new_request_requisition".to_string();
+        expected.user_id = Some(mock_user_account_a().id);
+        expected.name_link_id = mock_name_store_c().id;
+        expected.colour = Some("new colour".to_string());
+        expected.their_reference = Some("new their_reference".to_string());
+        expected.comment = Some("new comment".to_string());
+        expected.max_months_of_stock = 1.0;
+        expected.min_months_of_stock = 0.5;
+        expected.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
+
+        assert_eq!(new_row, expected);
 
         assert!(
             new_row.created_datetime > before_insert && new_row.created_datetime < after_insert

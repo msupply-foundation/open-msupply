@@ -63,13 +63,10 @@ mod test {
         test_db::setup_all,
         InvoiceLineRowRepository,
     };
-    use util::inline_init;
 
     use crate::{
         invoice_line::stock_out_line::delete::DeleteStockOutLine, service_provider::ServiceProvider,
-    };
-
-    use super::DeleteOutboundShipmentServiceLineError;
+    };    use super::DeleteOutboundShipmentServiceLineError;
 
     type ServiceError = DeleteOutboundShipmentServiceLineError;
 
@@ -91,9 +88,10 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteStockOutLine| {
-                    r.id = "invalid".to_string();
-                }),
+                DeleteStockOutLine {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::LineDoesNotExist)
         );
@@ -102,9 +100,10 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteStockOutLine| {
-                    r.id = mock_draft_inbound_service_line().id;
-                }),
+                DeleteStockOutLine {
+                    id: mock_draft_inbound_service_line().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAnOutboundShipment)
         );
@@ -113,9 +112,10 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteStockOutLine| {
-                    r.id = mock_draft_outbound_shipped_service_line().id;
-                }),
+                DeleteStockOutLine {
+                    id: mock_draft_outbound_shipped_service_line().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditInvoice)
         );
@@ -125,9 +125,10 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteStockOutLine| {
-                    r.id = mock_draft_outbound_service_line().id;
-                }),
+                DeleteStockOutLine {
+                    id: mock_draft_outbound_service_line().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -150,9 +151,10 @@ mod test {
         service
             .delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteStockOutLine| {
-                    r.id = mock_draft_outbound_service_line().id;
-                }),
+                DeleteStockOutLine {
+                    id: mock_draft_outbound_service_line().id,
+                    ..Default::default()
+                },
             )
             .unwrap();
 

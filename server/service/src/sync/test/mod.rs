@@ -6,7 +6,6 @@ pub(crate) mod test_data;
 
 use super::translations::{IntegrationOperation, PullTranslateResult};
 use repository::{mock::MockData, *};
-use util::inline_init;
 
 #[derive(Debug)]
 pub(crate) struct TestSyncIncomingRecord {
@@ -30,12 +29,13 @@ impl TestSyncIncomingRecord {
     {
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::upsert(upsert),
-            sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = table_name.to_string();
-                r.record_id = id_and_data.0.to_string();
-                r.data = id_and_data.1.to_string();
-                r.action = SyncAction::Upsert;
-            }),
+            sync_buffer_row: SyncBufferRow {
+                table_name: table_name.to_string(),
+                record_id: id_and_data.0.to_string(),
+                data: id_and_data.1.to_string(),
+                action: SyncAction::Upsert,
+                ..Default::default()
+            },
             extra_data: None,
         }
     }
@@ -52,12 +52,13 @@ impl TestSyncIncomingRecord {
     {
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::deletes(deletes),
-            sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = table_name.to_string();
-                r.record_id = id.to_string();
-                r.data = "{}".to_string();
-                r.action = SyncAction::Delete;
-            }),
+            sync_buffer_row: SyncBufferRow {
+                table_name: table_name.to_string(),
+                record_id: id.to_string(),
+                data: "{}".to_string(),
+                action: SyncAction::Delete,
+                ..Default::default()
+            },
             extra_data: None,
         }
     }

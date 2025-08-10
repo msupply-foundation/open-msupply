@@ -1,5 +1,3 @@
-use util::inline_init;
-
 use crate::{DateFilter, DatetimeFilter, EqualFilter, Sort, StringFilter};
 
 pub mod requisition;
@@ -185,16 +183,25 @@ impl RequisitionFilter {
 
 impl RequisitionStatus {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 
     pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }
 
 impl RequisitionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }

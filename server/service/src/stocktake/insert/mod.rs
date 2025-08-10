@@ -19,6 +19,7 @@ pub struct InsertStocktake {
     pub create_blank_stocktake: Option<bool>,
     pub is_initial_stocktake: Option<bool>,
     pub location_id: Option<String>,
+    pub vvm_status_id: Option<String>,
     pub master_list_id: Option<String>,
     pub include_all_master_list_items: Option<bool>,
     pub expires_before: Option<NaiveDate>,
@@ -89,8 +90,8 @@ mod test {
             item_query_test1, mock_item_a, mock_item_b, mock_location_1,
             mock_master_list_item_query_test1, mock_master_list_master_list_line_filter_test,
             mock_master_list_program_b, mock_program_master_list_test, mock_stocktake_a,
-            mock_store_a, mock_store_b, mock_user_account_a, program_master_list_store, MockData,
-            MockDataInserts,
+            mock_store_a, mock_store_b, mock_user_account_a, mock_vvm_status_a,
+            program_master_list_store, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRow,
@@ -375,6 +376,82 @@ mod test {
         assert_eq!(
             stock_line_row.unwrap().line.stock_line_id,
             Some("stock_line_row_1".to_string())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn insert_stocktake_with_vvm_status() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_stocktake_with_vvm_status", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.stocktake_service;
+        let vvm_status_id = mock_vvm_status_a().id;
+
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_with_vvm_filter".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    vvm_status_id: Some(vvm_status_id.clone()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // check that no rows were created for the stocktake
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("stocktake_with_vvm_filter")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(stocktake_rows.len(), 0);
+
+        // add a stock_line with that VVM Status and try again
+        let _ = StockLineRowRepository::new(&connection).upsert_one({
+            &StockLineRow {
+                id: "vvm_stock_line_row".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                total_number_of_packs: 100.0,
+                vvm_status_id: Some(vvm_status_id.clone()),
+                ..Default::default()
+            }
+        });
+
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_with_vvm_filter_2".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    vvm_status_id: Some(vvm_status_id.clone()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("stocktake_with_vvm_filter_2")),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(stocktake_rows.len(), 1);
+        // and that it does have a stock_line linked
+        assert_eq!(
+            stocktake_rows[0].line.stock_line_id,
+            Some("vvm_stock_line_row".to_string())
         );
     }
 

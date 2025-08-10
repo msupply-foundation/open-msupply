@@ -96,9 +96,8 @@ mod test {
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow, NameStoreJoinRow,
+        InvoiceRow, InvoiceRowRepository, NameRow, NameStoreJoinRow,
     };
-    use util::{inline_edit, inline_init};
 
     use crate::{
         invoice::inbound_shipment::InsertInboundShipment, service_provider::ServiceProvider,
@@ -111,33 +110,37 @@ mod test {
     #[actix_rt::test]
     async fn insert_inbound_shipment_errors() {
         fn not_visible() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_visible".to_string();
-            })
+            NameRow {
+                id: "not_visible".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_supplier() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "not_a_supplier".to_string();
-            })
+            NameRow {
+                id: "not_a_supplier".to_string(),
+                ..Default::default()
+            }
         }
 
         fn not_a_supplier_join() -> NameStoreJoinRow {
-            inline_init(|r: &mut NameStoreJoinRow| {
-                r.id = "not_a_supplier_join".to_string();
-                r.name_link_id = not_a_supplier().id;
-                r.store_id = mock_store_a().id;
-                r.name_is_supplier = false;
-            })
+            NameStoreJoinRow {
+                id: "not_a_supplier_join".to_string(),
+                name_link_id: not_a_supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: false,
+                ..Default::default()
+            }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_inbound_shipment_errors",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![not_visible(), not_a_supplier()];
-                r.name_store_joins = vec![not_a_supplier_join()];
-            }),
+            MockData {
+                names: vec![not_visible(), not_a_supplier()],
+                name_store_joins: vec![not_a_supplier_join()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -151,10 +154,11 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                inline_init(|r: &mut InsertInboundShipment| {
-                    r.id.clone_from(&mock_inbound_shipment_c().id);
-                    r.other_party_id.clone_from(&mock_name_a().id);
-                })
+                InsertInboundShipment {
+                    id: mock_inbound_shipment_c().id.clone(),
+                    other_party_id: mock_name_a().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::InvoiceAlreadyExists)
         );
@@ -162,10 +166,11 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                inline_init(|r: &mut InsertInboundShipment| {
-                    r.id = "new_id".to_string();
-                    r.other_party_id = "invalid".to_string();
-                })
+                InsertInboundShipment {
+                    id: "new_id".to_string(),
+                    other_party_id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -173,10 +178,11 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                inline_init(|r: &mut InsertInboundShipment| {
-                    r.id = "new_id".to_string();
-                    r.other_party_id = not_visible().id;
-                })
+                InsertInboundShipment {
+                    id: "new_id".to_string(),
+                    other_party_id: not_visible().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -184,10 +190,11 @@ mod test {
         assert_eq!(
             service.insert_inbound_shipment(
                 &context,
-                inline_init(|r: &mut InsertInboundShipment| {
-                    r.id = "new_id".to_string();
-                    r.other_party_id = not_a_supplier().id;
-                })
+                InsertInboundShipment {
+                    id: "new_id".to_string(),
+                    other_party_id: not_a_supplier().id,
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -198,27 +205,30 @@ mod test {
     #[actix_rt::test]
     async fn insert_inbound_shipment_success() {
         fn supplier() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "supplier".to_string();
-            })
+            NameRow {
+                id: "supplier".to_string(),
+                ..Default::default()
+            }
         }
 
         fn supplier_join() -> NameStoreJoinRow {
-            inline_init(|r: &mut NameStoreJoinRow| {
-                r.id = "supplier_join".to_string();
-                r.name_link_id = supplier().id;
-                r.store_id = mock_store_a().id;
-                r.name_is_supplier = true;
-            })
+            NameStoreJoinRow {
+                id: "supplier_join".to_string(),
+                name_link_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "insert_inbound_shipment_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.names = vec![supplier()];
-                r.name_store_joins = vec![supplier_join()];
-            }),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -232,10 +242,11 @@ mod test {
         service
             .insert_inbound_shipment(
                 &context,
-                inline_init(|r: &mut InsertInboundShipment| {
-                    r.id = "new_id".to_string();
-                    r.other_party_id = supplier().id;
-                }),
+                InsertInboundShipment {
+                    id: "new_id".to_string(),
+                    other_party_id: supplier().id,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -246,23 +257,24 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_link_id = supplier().id;
-                u.user_id = Some(mock_user_account_a().id);
-                u.currency_id = Some(currency_a().id);
-                u
-            })
+            InvoiceRow {
+                name_link_id: supplier().id,
+                user_id: Some(mock_user_account_a().id),
+                currency_id: Some(currency_a().id),
+                ..invoice.clone()
+            }
         );
 
         //Test success On Hold
         service
             .insert_inbound_shipment(
                 &context,
-                inline_init(|r: &mut InsertInboundShipment| {
-                    r.id = "test_on_hold".to_string();
-                    r.other_party_id = supplier().id;
-                    r.on_hold = Some(true);
-                }),
+                InsertInboundShipment {
+                    id: "test_on_hold".to_string(),
+                    other_party_id: supplier().id,
+                    on_hold: Some(true),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -273,22 +285,22 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_link_id = supplier().id;
-                u.on_hold = true;
-                u
-            })
+            InvoiceRow {
+                name_link_id: supplier().id,
+                on_hold: true,
+                ..invoice.clone()
+            }
         );
 
         //Test success name_store_id linked to store
         service
             .insert_inbound_shipment(
                 &context,
-                inline_init(|r: &mut InsertInboundShipment| {
-                    r.id = "test_name_store_id_linked".to_string();
-                    r.other_party_id
-                        .clone_from(&mock_name_linked_to_store_join().name_link_id);
-                }),
+                InsertInboundShipment {
+                    id: "test_name_store_id_linked".to_string(),
+                    other_party_id: mock_name_linked_to_store_join().name_link_id.clone(),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -299,21 +311,21 @@ mod test {
 
         assert_eq!(
             invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_store_id = Some(mock_store_linked_to_name().id.clone());
-                u
-            })
+            InvoiceRow {
+                name_store_id: Some(mock_store_linked_to_name().id),
+                ..invoice.clone()
+            }
         );
 
         //Test success name_store_id, not linked to store
         service
             .insert_inbound_shipment(
                 &context,
-                inline_init(|r: &mut InsertInboundShipment| {
-                    r.id = "test_name_store_id_not_linked".to_string();
-                    r.other_party_id
-                        .clone_from(&mock_name_not_linked_to_store().id);
-                }),
+                InsertInboundShipment {
+                    id: "test_name_store_id_not_linked".to_string(),
+                    other_party_id: mock_name_not_linked_to_store().id.clone(),
+                    ..Default::default()
+                },
             )
             .unwrap();
 

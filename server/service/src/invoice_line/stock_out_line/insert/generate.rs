@@ -66,7 +66,8 @@ pub fn generate(
                 stock_line_id: update_batch.id.clone(),
                 invoice_line_id: new_line.id.clone(),
                 comment: Some(format!(
-                    "Updated from Outbound Shipment #{}",
+                    "Updated from {} #{}",
+                    invoice.r#type.to_string(),
                     invoice.invoice_number
                 )),
             }))

@@ -212,10 +212,7 @@ pub mod test {
         Pagination, PatientFilter, PatientRepository, StringFilter,
     };
     use serde_json::json;
-    use util::{
-        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-        inline_init,
-    };
+    use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use crate::{
         programs::patient::{
@@ -243,15 +240,16 @@ pub mod test {
             region: None,
             zip_code: None,
         };
-        inline_init(|p: &mut SchemaPatient| {
-            p.id = "updatePatientId1".to_string();
-            p.code = Some("national_id".to_string());
-            p.contact_details = Some(vec![contact_details.clone()]);
-            p.date_of_birth = Some("2000-03-04".to_string());
-            p.first_name = Some("firstname".to_string());
-            p.last_name = Some("lastname".to_string());
-            p.gender = Some(Gender::TransgenderFemale);
-        })
+        SchemaPatient {
+            id: "updatePatientId1".to_string(),
+            code: Some("national_id".to_string()),
+            contact_details: Some(vec![contact_details.clone()]),
+            date_of_birth: Some("2000-03-04".to_string()),
+            first_name: Some("firstname".to_string()),
+            last_name: Some("lastname".to_string()),
+            gender: Some(Gender::TransgenderFemale),
+            ..SchemaPatient::default()
+        }
     }
 
     #[actix_rt::test]

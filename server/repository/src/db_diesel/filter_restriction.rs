@@ -20,7 +20,7 @@ impl EqualFilter<String> {
 
 #[cfg(test)]
 mod tests {
-    use util::inline_init;
+    
 
     use crate::{
         mock::{mock_name_a, MockData, MockDataInserts},
@@ -28,39 +28,43 @@ mod tests {
     };
 
     fn mock_invoice_a() -> InvoiceRow {
-        inline_init(|r: &mut InvoiceRow| {
-            r.id = "invoice1".to_string();
-            r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_string();
-            r.user_id = Some("A".to_string());
-        })
+        InvoiceRow {
+            id: "invoice1".to_string(),
+            name_link_id: mock_name_a().id,
+            store_id: "store_a".to_string(),
+            user_id: Some("A".to_string()),
+            ..Default::default()
+        }
     }
 
     fn mock_invoice_b() -> InvoiceRow {
-        inline_init(|r: &mut InvoiceRow| {
-            r.id = "invoice2".to_string();
-            r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_string();
-            r.user_id = Some("B".to_string());
-        })
+        InvoiceRow {
+            id: "invoice2".to_string(),
+            name_link_id: mock_name_a().id,
+            store_id: "store_a".to_string(),
+            user_id: Some("B".to_string()),
+            ..Default::default()
+        }
     }
 
     fn mock_invoice_excluded() -> InvoiceRow {
-        inline_init(|r: &mut InvoiceRow| {
-            r.id = "invoice3".to_string();
-            r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_string();
-            r.user_id = Some("Excluded".to_string());
-        })
+        InvoiceRow {
+            id: "invoice3".to_string(),
+            name_link_id: mock_name_a().id,
+            store_id: "store_a".to_string(),
+            user_id: Some("Excluded".to_string()),
+            ..Default::default()
+        }
     }
 
     fn mock_invoice_none() -> InvoiceRow {
-        inline_init(|r: &mut InvoiceRow| {
-            r.id = "invoice4".to_string();
-            r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_string();
-            r.user_id = None;
-        })
+        InvoiceRow {
+            id: "invoice4".to_string(),
+            name_link_id: mock_name_a().id,
+            store_id: "store_a".to_string(),
+            user_id: None,
+            ..Default::default()
+        }
     }
 
     #[actix_rt::test]
@@ -73,14 +77,15 @@ mod tests {
                 .stores()
                 .locations()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![
+            MockData {
+                invoices: vec![
                     mock_invoice_a(),
                     mock_invoice_b(),
                     mock_invoice_excluded(),
                     mock_invoice_none(),
-                ];
-            }),
+                ],
+                ..Default::default()
+            },
         )
         .await;
         let repository = InvoiceRepository::new(&storage_connection);

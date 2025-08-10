@@ -333,7 +333,7 @@ mod test {
         RequisitionLine,
     };
     use serde_json::json;
-    use util::inline_init;
+    
 
     use crate::types::RequisitionLineNode;
 
@@ -355,41 +355,45 @@ mod test {
         impl TestQuery {
             pub async fn test_query1(&self) -> RequisitionLineNode {
                 RequisitionLineNode {
-                    requisition_line: inline_init(|r: &mut RequisitionLine| {
-                        r.requisition_line_row = TestData::line_to_supply_q5();
-                        r.requisition_row = TestData::requisition();
-                        r.item_row = mock_item_a();
-                    }),
+                    requisition_line: RequisitionLine {
+                        requisition_line_row: TestData::line_to_supply_q5(),
+                        requisition_row: TestData::requisition(),
+                        item_row: mock_item_a(),
+                        ..Default::default()
+                    },
                 }
             }
 
             pub async fn test_query2(&self) -> RequisitionLineNode {
                 RequisitionLineNode {
-                    requisition_line: inline_init(|r: &mut RequisitionLine| {
-                        r.requisition_line_row = TestData::line_to_supply_q2();
-                        r.requisition_row = TestData::requisition();
-                        r.item_row = mock_item_b();
-                    }),
+                    requisition_line: RequisitionLine {
+                        requisition_line_row: TestData::line_to_supply_q2(),
+                        requisition_row: TestData::requisition(),
+                        item_row: mock_item_b(),
+                        ..Default::default()
+                    },
                 }
             }
 
             pub async fn test_query3(&self) -> RequisitionLineNode {
                 RequisitionLineNode {
-                    requisition_line: inline_init(|r: &mut RequisitionLine| {
-                        r.requisition_line_row = TestData::line_to_supply_q1();
-                        r.requisition_row = TestData::requisition();
-                        r.item_row = mock_item_c();
-                    }),
+                    requisition_line: RequisitionLine {
+                        requisition_line_row: TestData::line_to_supply_q1(),
+                        requisition_row: TestData::requisition(),
+                        item_row: mock_item_c(),
+                        ..Default::default()
+                    },
                 }
             }
 
             pub async fn test_query4(&self) -> RequisitionLineNode {
                 RequisitionLineNode {
-                    requisition_line: inline_init(|r: &mut RequisitionLine| {
-                        r.requisition_line_row = TestData::line_to_supply_q0();
-                        r.requisition_row = TestData::requisition();
-                        r.item_row = mock_item_d();
-                    }),
+                    requisition_line: RequisitionLine {
+                        requisition_line_row: TestData::line_to_supply_q0(),
+                        requisition_row: TestData::requisition(),
+                        item_row: mock_item_d(),
+                        ..Default::default()
+                    },
                 }
             }
         }

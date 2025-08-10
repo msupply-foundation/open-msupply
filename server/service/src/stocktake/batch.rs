@@ -115,7 +115,6 @@ mod test {
         test_db::setup_all,
         StocktakeLineRowRepository, StocktakeRowRepository,
     };
-    use util::inline_init;
 
     use crate::{
         service_provider::ServiceProvider, stocktake::*, stocktake_line::InsertStocktakeLine,
@@ -136,14 +135,16 @@ mod test {
         let delete_stocktake_input = mock_stocktake_finalised().id;
 
         let mut input = BatchStocktake {
-            insert_stocktake: Some(vec![inline_init(|input: &mut InsertStocktake| {
-                input.id = "new_id".to_string();
-            })]),
-            insert_line: Some(vec![inline_init(|input: &mut InsertStocktakeLine| {
-                input.stocktake_id = "new_id".to_string();
-                input.id = "new_line_id".to_string();
-                input.item_id = Some(mock_item_a().id);
-            })]),
+            insert_stocktake: Some(vec![InsertStocktake {
+                id: "new_id".to_string(),
+                ..Default::default()
+            }]),
+            insert_line: Some(vec![InsertStocktakeLine {
+                stocktake_id: "new_id".to_string(),
+                id: "new_line_id".to_string(),
+                item_id: Some(mock_item_a().id),
+                ..Default::default()
+            }]),
             update_line: None,
             delete_line: None,
             update_stocktake: None,

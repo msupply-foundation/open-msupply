@@ -6,7 +6,7 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{ActivityLogRow, ActivityLogRowDelete, ActivityLogType};
-use util::{inline_edit, uuid::uuid};
+use util::uuid::uuid;
 
 pub struct ActivityLogRecordTester;
 impl SyncRecordTester for ActivityLogRecordTester {
@@ -29,22 +29,18 @@ impl SyncRecordTester for ActivityLogRecordTester {
             changed_from: Some("to".to_string()),
         };
 
-        let log_2 = inline_edit(&log_1, |mut l| {
-            l.id = uuid();
-            l.r#type = ActivityLogType::InvoiceStatusAllocated;
-            l.record_id = Some("inbound_shipment_a".to_string());
-            l.changed_to = None;
-            l.changed_from = None;
-            l
-        });
+        let mut log_2 = log_1.clone();
+        log_2.id = uuid();
+        log_2.r#type = ActivityLogType::InvoiceStatusAllocated;
+        log_2.record_id = Some("inbound_shipment_a".to_string());
+        log_2.changed_to = None;
+        log_2.changed_from = None;
 
-        let log_3 = inline_edit(&log_1, |mut l| {
-            l.id = uuid();
-            l.r#type = ActivityLogType::UserLoggedIn;
-            l.store_id = None;
-            l.record_id = None;
-            l
-        });
+        let mut log_3 = log_1.clone();
+        log_3.id = uuid();
+        log_3.r#type = ActivityLogType::UserLoggedIn;
+        log_3.store_id = None;
+        log_3.record_id = None;
 
         result.push(TestStepData {
             integration_records: vec![

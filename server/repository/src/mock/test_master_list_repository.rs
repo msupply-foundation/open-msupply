@@ -1,5 +1,3 @@
-use util::inline_init;
-
 use crate::{MasterListNameJoinRow, MasterListRow, NameRow, StoreRow};
 
 use super::{common::FullMockMasterList, MockData};
@@ -24,43 +22,47 @@ pub fn mock_test_master_list_repository() -> MockData {
 
 pub fn mock_test_master_list_name1() -> NameRow {
     let id = "mock_test_master_list_name1".to_owned();
-    inline_init(|r: &mut NameRow| {
-        r.id.clone_from(&id);
-        r.name.clone_from(&id);
-        r.code.clone_from(&id);
-        r.is_customer = true;
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: id.clone(),
+        name: id.clone(),
+        code: id.clone(),
+        is_customer: true,
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_test_master_list_name2() -> NameRow {
     let id = "mock_test_master_list_name2".to_owned();
-    inline_init(|r: &mut NameRow| {
-        r.id.clone_from(&id);
-        r.name.clone_from(&id);
-        r.code.clone_from(&id);
-        r.is_customer = true;
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: id.clone(),
+        name: id.clone(),
+        code: id.clone(),
+        is_customer: true,
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_test_master_list_name3() -> NameRow {
     let id = "mock_test_master_list_name3".to_owned();
-    inline_init(|r: &mut NameRow| {
-        r.id.clone_from(&id);
-        r.name.clone_from(&id);
-        r.code.clone_from(&id);
-        r.is_customer = true;
-        r.is_supplier = true;
-    })
+    NameRow {
+        id: id.clone(),
+        name: id.clone(),
+        code: id.clone(),
+        is_customer: true,
+        is_supplier: true,
+        ..Default::default()
+    }
 }
 
 pub fn mock_test_master_list_store1() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "mock_test_master_list_store1".to_string();
-        s.name_link_id = mock_test_master_list_name3().id;
-        s.code = "mock_test_master_list_store1".to_string();
-    })
+    StoreRow {
+        id: "mock_test_master_list_store1".to_string(),
+        name_link_id: mock_test_master_list_name3().id,
+        code: "mock_test_master_list_store1".to_string(),
+        ..Default::default()
+    }
 }
 
 // For name 1 and 2

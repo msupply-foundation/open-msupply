@@ -8,7 +8,7 @@ use repository::{
     ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
     RequisitionType,
 };
-use util::inline_edit;
+
 
 pub fn check_requisition_row_exists(
     connection: &StorageConnection,
@@ -41,11 +41,9 @@ pub fn generate_requisition_user_id_update(
 ) -> Option<RequisitionRow> {
     let user_id_option = Some(user_id.to_string());
     let user_id_has_changed = existing_requisition_row.user_id != user_id_option;
-    user_id_has_changed.then(|| {
-        inline_edit(&existing_requisition_row, |mut u| {
-            u.user_id = user_id_option;
-            u
-        })
+    user_id_has_changed.then(|| RequisitionRow {
+        user_id: user_id_option,
+        ..existing_requisition_row
     })
 }
 

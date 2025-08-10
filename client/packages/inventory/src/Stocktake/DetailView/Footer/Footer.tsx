@@ -97,6 +97,7 @@ export const Footer = () => {
                   isOpen={changeLocationModal.isOpen}
                   onCancel={changeLocationModal.onClose}
                   clearSelected={clearSelected}
+                  rows={selectedRows}
                 />
               )}
             </>
