@@ -291,11 +291,11 @@ fn generate_new_stock_line(
     inventory_addition_id: &str,
     stocktake_line: &StocktakeLine,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
-    let stocktake_line = stocktake_line.line.to_owned();
-    let item_id = stocktake_line.id.to_owned();
+    let stocktake_line_row = stocktake_line.line.to_owned();
+    let item_id = stocktake_line.item.id.to_owned();
     let stock_line_id = uuid();
 
-    let counted_number_of_packs = stocktake_line.counted_number_of_packs.unwrap_or(0.0);
+    let counted_number_of_packs = stocktake_line_row.counted_number_of_packs.unwrap_or(0.0);
 
     // If no counted packs, we shouldn't create a stock line
     if counted_number_of_packs == 0.0 {
@@ -310,17 +310,17 @@ fn generate_new_stock_line(
     // We're creating a new stock line, so need to update the stocktake line to link to the new stock line
     let updated_stocktake_line = StocktakeLineRow {
         stock_line_id: Some(stock_line_id.clone()),
-        ..stocktake_line.clone()
+        ..stocktake_line_row.clone()
     };
 
-    let pack_size = stocktake_line.pack_size.unwrap_or(0.0);
-    let cost_price_per_pack = stocktake_line.cost_price_per_pack.unwrap_or(0.0);
-    let sell_price_per_pack = stocktake_line.sell_price_per_pack.unwrap_or(0.0);
+    let pack_size = stocktake_line_row.pack_size.unwrap_or(0.0);
+    let cost_price_per_pack = stocktake_line_row.cost_price_per_pack.unwrap_or(0.0);
+    let sell_price_per_pack = stocktake_line_row.sell_price_per_pack.unwrap_or(0.0);
     let invoice_line_id = uuid();
 
     let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
         invoice_line_id.clone(),
-        stocktake_line.reason_option_id,
+        stocktake_line_row.reason_option_id,
     );
 
     let stock_in_line = StockChange::StockIn(InsertStockInLine {
@@ -328,20 +328,20 @@ fn generate_new_stock_line(
         id: invoice_line_id,
         invoice_id: inventory_addition_id.to_string(),
         number_of_packs: counted_number_of_packs,
-        location: stocktake_line
+        location: stocktake_line_row
             .location_id
             .clone()
             .map(|id| NullableUpdate { value: Some(id) }),
         pack_size,
-        batch: stocktake_line.batch,
+        batch: stocktake_line_row.batch,
         cost_price_per_pack,
         sell_price_per_pack,
-        expiry_date: stocktake_line.expiry_date,
+        expiry_date: stocktake_line_row.expiry_date,
         stock_line_id: Some(stock_line_id.clone()),
         item_id,
-        note: stocktake_line.note,
-        item_variant_id: stocktake_line.item_variant_id.clone(),
-        donor_id: stocktake_line.donor_link_id.clone(),
+        note: stocktake_line_row.note,
+        item_variant_id: stocktake_line_row.item_variant_id.clone(),
+        donor_id: stocktake_line_row.donor_link_id.clone(),
         // Default
         stock_on_hold: false,
         barcode: None,
@@ -354,11 +354,11 @@ fn generate_new_stock_line(
     });
 
     // If new stock line has a location, create location movement
-    let location_movement = if stocktake_line.location_id.is_some() {
+    let location_movement = if stocktake_line_row.location_id.is_some() {
         Some(generate_enter_location_movements(
             store_id.to_owned(),
             stock_line_id,
-            stocktake_line.location_id,
+            stocktake_line_row.location_id,
         ))
     } else {
         None
