@@ -18,7 +18,10 @@ impl MigrationFragment for Migrate {
 "#
             );
             if result.is_err() {
-                log::warn!("Failed to drop FK constraint on user_id column of vaccination table, please check name of constraint");
+                log::warn!(
+                    "Failed to drop FK constraint on location and item_variant tables: {:?}",
+                    result
+                );
             }
 
             sql!(
