@@ -11,6 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { ButtonGroup, Paper, Typography } from '@mui/material';
 import { LocationRowFragment, useLocationList } from '../api';
+import { getVolumeUsedPercentage } from './utils';
 
 interface LocationSearchInputProps {
   selectedLocation: LocationRowFragment | null;
@@ -130,15 +131,10 @@ export const LocationSearchInput = ({
   });
 
   const getVolumeUsedLabel = (location: LocationRowFragment) => {
-    const volumeUsed =
-      // If some stock lines associated, but volume used is 0, show as undefined
-      //
-      location.stock?.totalCount > 0 && location.volumeUsed === 0
-        ? UNDEFINED_STRING_VALUE
-        : round(location.volumeUsed, 2);
+    const volumeUsed = getVolumeUsedPercentage(location);
 
     return t('label.percent-used', {
-      value: volumeUsed,
+      value: volumeUsed ? round(volumeUsed, 2) : UNDEFINED_STRING_VALUE,
     });
   };
 
