@@ -1,1 +1,1 @@
-export { default as PurchasingService } from './PurchasingService';
+export * from './PurchasingService';
