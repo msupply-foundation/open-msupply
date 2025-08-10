@@ -52,7 +52,6 @@ impl MigrationFragment for Migrate {
                     advance_paid_date {DATE},
                     received_at_port_date {DATE},
                     requested_delivery_date {DATE},
-                    expected_delivery_date {DATE},
                     supplier_agent TEXT,
                     authorising_officer_1 TEXT,
                     authorising_officer_2 TEXT,

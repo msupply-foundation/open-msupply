@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { VvmStatusFragmentDoc } from '../../../../system/src/Stock/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StocktakeRowFragment = {
   __typename: 'StocktakeNode';
@@ -58,6 +59,14 @@ export type StocktakeLineFragment = {
       defaultSellPricePerPack: number;
     } | null;
   };
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    description: string;
+    id: string;
+    priority: number;
+    reasonId?: string | null;
+    unusable: boolean;
+  } | null;
   itemVariant?: {
     __typename: 'ItemVariantNode';
     id: string;
@@ -142,6 +151,14 @@ export type StocktakeFragment = {
           defaultSellPricePerPack: number;
         } | null;
       };
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        description: string;
+        id: string;
+        priority: number;
+        reasonId?: string | null;
+        unusable: boolean;
+      } | null;
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
@@ -271,6 +288,14 @@ export type StocktakeQuery = {
                 defaultSellPricePerPack: number;
               } | null;
             };
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              description: string;
+              id: string;
+              priority: number;
+              reasonId?: string | null;
+              unusable: boolean;
+            } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
@@ -375,6 +400,14 @@ export type StocktakeByNumberQuery = {
                 defaultSellPricePerPack: number;
               } | null;
             };
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              description: string;
+              id: string;
+              priority: number;
+              reasonId?: string | null;
+              unusable: boolean;
+            } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
@@ -463,6 +496,14 @@ export type StocktakeLinesQuery = {
           defaultSellPricePerPack: number;
         } | null;
       };
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        description: string;
+        id: string;
+        priority: number;
+        reasonId?: string | null;
+        unusable: boolean;
+      } | null;
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
@@ -762,6 +803,9 @@ export const StocktakeLineFragmentDoc = gql`
       }
     }
     itemVariantId
+    vvmStatus {
+      ...VVMStatus
+    }
     itemVariant {
       __typename
       id
@@ -787,6 +831,7 @@ export const StocktakeLineFragmentDoc = gql`
       name
     }
   }
+  ${VvmStatusFragmentDoc}
 `;
 export const StocktakeFragmentDoc = gql`
   fragment Stocktake on StocktakeNode {

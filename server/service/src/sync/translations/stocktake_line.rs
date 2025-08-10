@@ -2,6 +2,7 @@ use crate::sync::translations::{
     campaign::CampaignTranslation, item::ItemTranslation, location::LocationTranslation,
     master_list::MasterListTranslation, reason::ReasonTranslation,
     stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
+    vvm_status::VVMStatusTranslation,
 };
 
 use chrono::NaiveDate;
@@ -72,6 +73,10 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub donor_id: Option<String>,
+
+    #[serde(rename = "vaccine_vial_monitor_status_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub vvm_status_id: Option<String>,
     pub volume_per_pack: f64,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
@@ -96,6 +101,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             ItemTranslation.table_name(),
             LocationTranslation.table_name(),
             ReasonTranslation.table_name(),
+            VVMStatusTranslation.table_name(),
             CampaignTranslation.table_name(),
             MasterListTranslation.table_name(),
         ]
@@ -130,6 +136,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             reason_option_id,
             item_variant_id,
             donor_id,
+            vvm_status_id,
             volume_per_pack,
             oms_fields,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
@@ -183,6 +190,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_variant_id,
             donor_link_id: donor_id,
             reason_option_id,
+            vvm_status_id,
             volume_per_pack,
             campaign_id,
             program_id,
@@ -227,6 +235,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     item_variant_id,
                     donor_link_id: donor_id,
                     reason_option_id,
+                    vvm_status_id,
                     volume_per_pack,
                     campaign_id,
                     program_id,
@@ -265,6 +274,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             reason_option_id,
             item_variant_id,
             donor_id,
+            vvm_status_id,
             volume_per_pack,
             oms_fields,
         };

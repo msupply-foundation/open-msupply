@@ -41,8 +41,6 @@ pub enum LegacyPurchaseOrderStatus {
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct PurchaseOrderOmsFields {
     #[serde(default)]
-    pub expected_delivery_date: Option<NaiveDate>,
-    #[serde(default)]
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     pub confirmed_datetime: Option<NaiveDateTime>,
@@ -357,7 +355,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             advance_paid_date,
             received_at_port_date,
             requested_delivery_date,
-            expected_delivery_date: oms_fields.clone().and_then(|o| o.expected_delivery_date),
             supplier_agent,
             authorising_officer_1,
             authorising_officer_2,
@@ -406,7 +403,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
-            expected_delivery_date,
             requested_delivery_date,
             supplier_agent,
             authorising_officer_1,
@@ -431,7 +427,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
 
         let oms_fields = PurchaseOrderOmsFields {
-            expected_delivery_date,
             created_datetime,
             confirmed_datetime,
             sent_datetime,

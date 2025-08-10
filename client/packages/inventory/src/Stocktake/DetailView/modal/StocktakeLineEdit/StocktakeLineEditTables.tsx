@@ -18,10 +18,11 @@ import {
   NumberInputCell,
   ColumnAlign,
   NumberCell,
-  getReasonOptionType,
-  ReasonOptionNode,
+  getReasonOptionTypes,
   usePreference,
   PreferenceKey,
+  useAuthContext,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -34,6 +35,7 @@ import {
   ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
   useReasonOptions,
+  VVMStatusInputCell,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
@@ -47,6 +49,7 @@ interface StocktakeLineEditTableProps {
   isInitialStocktake?: boolean;
   trackStockDonor?: boolean;
   restrictedToLocationTypeId?: string | null;
+  isVaccineItem?: boolean;
   useCampaigns?: boolean;
 }
 
@@ -109,8 +112,6 @@ const getCountThisLineColumn = (
 const getInventoryAdjustmentReasonInputColumn = (
   setter: DraftLineSetter,
   { getError }: UseStocktakeLineErrors,
-  reasonOptions: ReasonOptionNode[],
-  isLoading: boolean,
   initialStocktake?: boolean
 ): ColumnDescription<DraftStocktakeLine> => {
   return {
@@ -120,6 +121,8 @@ const getInventoryAdjustmentReasonInputColumn = (
     width: 120,
     accessor: ({ rowData }) => rowData.reasonOption || '',
     Cell: ({ rowData, column, columnIndex, rowIndex }) => {
+      const { store } = useAuthContext();
+
       const value = column.accessor({
         rowData,
       }) as ReasonOptionRowFragment | null;
@@ -146,16 +149,15 @@ const getInventoryAdjustmentReasonInputColumn = (
           value={value}
           width={Number(column.width)}
           onChange={onChange}
-          type={getReasonOptionType(
+          type={getReasonOptionTypes({
             isInventoryReduction,
-            rowData.item.isVaccine
-          )}
+            isVaccine: rowData.item.isVaccine,
+            isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
+          })}
           inputProps={{
             error: isAdjustmentReasonError,
           }}
           initialStocktake={initialStocktake}
-          reasonOptions={reasonOptions}
-          loading={isLoading}
         />
       );
     },
@@ -167,18 +169,20 @@ export const BatchTable = ({
   update,
   isDisabled = false,
   isInitialStocktake,
+  isVaccineItem = false,
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
+    PreferenceKey.ManageVvmStatusForStock
   );
   useDisableStocktakeRows(batches);
   const { data: reasonOptions, isLoading } = useReasonOptions();
   const errorsContext = useStocktakeLineErrorContext();
 
-  const displayInDoses = !!preferences?.manageVaccinesInDoses;
+  const showVVMStatusColumn =
+    (preferences?.manageVvmStatusForStock && isVaccineItem) ?? false;
 
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -217,6 +221,19 @@ export const BatchTable = ({
             update(patch);
           }
         },
+      });
+    }
+
+    if (showVVMStatusColumn) {
+      columnDefinitions.push({
+        key: 'vvmStatus',
+        label: 'label.vvm-status',
+        width: 170,
+        cellProps: {
+          useDefault: true,
+        },
+        Cell: props => <VVMStatusInputCell {...props} />,
+        setter: patch => update({ ...patch }),
       });
     }
     columnDefinitions.push(
@@ -288,8 +305,6 @@ export const BatchTable = ({
       getInventoryAdjustmentReasonInputColumn(
         update,
         errorsContext,
-        reasonOptions?.nodes ?? [],
-        isLoading,
         isInitialStocktake
       )
     );
@@ -302,7 +317,7 @@ export const BatchTable = ({
     reasonOptions,
     isLoading,
     isInitialStocktake,
-    displayInDoses,
+    showVVMStatusColumn,
   ]);
 
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [

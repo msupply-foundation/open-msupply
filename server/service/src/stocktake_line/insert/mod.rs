@@ -29,6 +29,7 @@ pub struct InsertStocktakeLine {
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
+    pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
@@ -51,6 +52,7 @@ pub enum InsertStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    VvmStatusDoesNotExist,
     CampaignDoesNotExist,
     ProgramDoesNotExist,
     StockLineReducedBelowZero(StockLine),
@@ -201,6 +203,22 @@ mod stocktake_line_test {
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::LocationDoesNotExist);
+
+        // error VvmStatusDoesNotExist
+        let stocktake_a = mock_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    vvm_status_id: Some("invalid".to_string()),
+                    counted_number_of_packs: Some(17.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::VvmStatusDoesNotExist);
 
         // error StocktakeLineAlreadyExists
         let stocktake_a = mock_stocktake_a();

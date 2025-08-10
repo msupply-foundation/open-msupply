@@ -3787,6 +3787,7 @@ export type InsertStocktakeInput = {
   isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStocktakeLineError = {
@@ -3820,6 +3821,7 @@ export type InsertStocktakeLineInput = {
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   stocktakeId: Scalars['String']['input'];
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStocktakeLineResponse =
@@ -4491,6 +4493,7 @@ export type ItemNode = {
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  programs?: Maybe<Array<ProgramNode>>;
   restrictedLocationType?: Maybe<LocationTypeNode>;
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
@@ -4518,6 +4521,10 @@ export type ItemNodeItemStorePropertiesArgs = {
 };
 
 export type ItemNodeMasterListsArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type ItemNodeProgramsArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -8628,6 +8635,7 @@ export type StockLineFilterInput = {
   locationId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
+  vvmStatusId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface &
@@ -8787,6 +8795,7 @@ export type StocktakeLineNode = {
   stockLine?: Maybe<StockLineNode>;
   stocktakeId: Scalars['String']['output'];
   volumePerPack: Scalars['Float']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
 };
 
 export enum StocktakeLineSortFieldInput {
@@ -10196,6 +10205,7 @@ export type UpdateStocktakeLineInput = {
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateStocktakeLineResponse =
