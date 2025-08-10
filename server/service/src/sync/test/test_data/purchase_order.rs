@@ -74,7 +74,6 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "delivery_method": "sea",
         "curr_rate": 1.6,
         "oms_fields": { 
-            "expected_delivery_date": "2025-01-22",
             "created_datetime": "2021-01-22T00:00:00",
             "confirmed_datetime": "2021-07-11T01:02:03",
             "sent_datetime": "2025-01-15T01:02:03",
@@ -124,7 +123,6 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             contract_signed_date: Some(NaiveDate::from_ymd_opt(2021, 1, 22).unwrap()),
             advance_paid_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
             received_at_port_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
-            expected_delivery_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
             requested_delivery_date: Some(NaiveDate::from_ymd_opt(2021, 8, 15).unwrap()),
             supplier_agent: Some("some agent".to_string()),
             authorising_officer_1: Some("agent".to_string()),
@@ -196,7 +194,6 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
             curr_rate: Some(1.6),
             is_authorised: true,
             oms_fields: Some(PurchaseOrderOmsFields {
-                expected_delivery_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
@@ -334,7 +331,6 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: Some(NaiveDate::from_ymd_opt(2021, 3, 15).unwrap()),
             supplier_agent: None,
             authorising_officer_1: None,
@@ -467,7 +463,6 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: None,
             supplier_agent: None,
             authorising_officer_1: None,
@@ -529,7 +524,6 @@ fn purchase_order_3_empty_string_push_record() -> TestSyncOutgoingRecord {
             received_at_port_date: None,
             is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
-                expected_delivery_date: None,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
@@ -590,7 +584,6 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: None,
             supplier_agent: None,
             authorising_officer_1: None,
@@ -709,7 +702,6 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: None,
             supplier_agent: None,
             authorising_officer_1: None,
@@ -828,7 +820,6 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: None,
             supplier_agent: None,
             authorising_officer_1: None,

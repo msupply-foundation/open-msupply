@@ -107,9 +107,6 @@ impl PurchaseOrderNode {
     pub async fn received_at_port_date(&self) -> &Option<NaiveDate> {
         &self.row().received_at_port_date
     }
-    pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
-        &self.row().expected_delivery_date
-    }
     pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().requested_delivery_date
     }

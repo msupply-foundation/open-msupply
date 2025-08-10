@@ -28,6 +28,7 @@ pub struct UpdateStocktakeLine {
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
+    pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
     pub campaign_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
@@ -50,6 +51,7 @@ pub enum UpdateStocktakeLineError {
     SnapshotCountCurrentCountMismatchLine(StocktakeLine),
     StockLineReducedBelowZero(StockLine),
     IncorrectLocationType,
+    VvmStatusDoesNotExist,
 }
 
 pub fn update_stocktake_line(
@@ -272,6 +274,20 @@ mod stocktake_line_test {
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::LocationDoesNotExist);
+
+        // error: VvmStatusDoesNotExist
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: stocktake_line_a.id,
+                    vvm_status_id: Some("invalid".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::VvmStatusDoesNotExist);
 
         // error: IncorrectLocationType
         let stocktake_line = StocktakeLineRow {

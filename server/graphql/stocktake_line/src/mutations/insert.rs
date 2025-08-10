@@ -39,6 +39,7 @@ pub struct InsertInput {
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
+    pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
@@ -133,12 +134,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::StocktakeIsLocked
         | ServiceError::CampaignDoesNotExist
         | ServiceError::ProgramDoesNotExist
+        | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::StockLineXOrItem => BadUserInput(format!(
             "Either a stock line id or item id must be set (not both), {formatted_error}"
         )),
-
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
         ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
@@ -167,6 +168,7 @@ impl InsertInput {
             item_variant_id,
             donor_id,
             reason_option_id,
+            vvm_status_id,
             volume_per_pack,
             campaign_id,
             program_id,
@@ -191,6 +193,7 @@ impl InsertInput {
             item_variant_id,
             donor_id,
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
+            vvm_status_id,
             volume_per_pack,
             campaign_id,
             program_id,
