@@ -520,6 +520,7 @@ fn check_is_authorised(status: &PurchaseOrderStatus) -> bool {
     matches!(
         status,
         PurchaseOrderStatus::Authorised | PurchaseOrderStatus::Finalised // Assuming Finalised is always authorised, but the action might be skipped if authorisation is not required due to global preference
+// N.B. if this logic changes, update the Purchase Order form's logic (the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
     )
 }
 
