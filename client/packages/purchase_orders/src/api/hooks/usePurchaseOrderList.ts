@@ -2,6 +2,7 @@ import {
   FilterByWithBoolean,
   PurchaseOrderSortFieldInput,
   SortBy,
+  useMutation,
   useQuery,
   useTableStore,
 } from '@openmsupply-client/common';
@@ -20,7 +21,7 @@ export type ListParams = {
 };
 
 export const usePurchaseOrderList = (queryParams: ListParams) => {
-  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
   const {
     sortBy = {
@@ -78,8 +79,33 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
       .filter(Boolean) as PurchaseOrderFragment[],
   }));
 
+  const deleteMutationFn = async (ids: string[]) => {
+    const response = await (async () => []);
+    // await purchaseOrderApi.deletePurchaseOrders({
+    //   storeId,
+    //   ids,
+    // });
+    // return response?.deletePurchaseOrders;
+  };
+
+  const {
+    mutate: deletePurchaseOrders,
+    isLoading: isDeleting,
+    isError: deleteError,
+  } = useMutation({
+    mutationFn: deleteMutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]);
+    },
+  });
+
   return {
     query: { data, isLoading, isError },
     selectedRows,
+    delete: {
+      deletePurchaseOrders,
+      isDeleting,
+      deleteError,
+    },
   };
 };
