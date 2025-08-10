@@ -16,7 +16,6 @@
   "auth.timeout-message": "You have been logged out of your session due to inactivity. Click OK to return to the login screen.",
   "auth.timeout-title": "Session Timed Out",
   "auth.unauthenticated-message": "You are not currently logged in. Click OK to return to the login screen.",
-  "authorisePurchaseOrder": "Authorise Purchase Orders",
   "breadcrumb.item": "#{{id}}",
   "button-save-as-visited": "Save as Visited",
   "button.acknowledge": "Press to acknowledge this breach",
