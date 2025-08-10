@@ -15,7 +15,7 @@ impl MigrationFragment for Migrate {
                 r#"
                     ALTER TABLE location DROP CONSTRAINT IF EXISTS location_cold_storage_type_id_fkey;
                     ALTER TABLE item_variant DROP CONSTRAINT IF EXISTS item_variant_cold_storage_type_id_fkey;
-"#
+                "#
             );
             if result.is_err() {
                 log::warn!(
@@ -27,9 +27,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-
                     ALTER TABLE location ADD CONSTRAINT location_location_type_id_fkey FOREIGN KEY (location_type_id) REFERENCES location_type(id);
-
                     ALTER TABLE item_variant ADD CONSTRAINT item_variant_location_type_id_fkey FOREIGN KEY (location_type_id) REFERENCES location_type(id);
                 "#
             )?;
