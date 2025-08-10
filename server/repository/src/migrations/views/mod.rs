@@ -643,25 +643,32 @@ CREATE VIEW vaccination_course AS
 
     CREATE VIEW purchase_order_stats AS
         SELECT
-            pol.purchase_order_id,
+            po.id AS purchase_order_id,
             COALESCE(SUM(
                 CASE 
                     WHEN pol.authorised_number_of_units IS NOT NULL 
                     THEN pol.authorised_number_of_units * pol.price_per_unit_before_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_before_discount
                 END
-            ), 0) AS total_before_discount,
+            ), 0) AS line_total_before_discount,
             COALESCE(SUM(
                 CASE 
                     WHEN pol.authorised_number_of_units IS NOT NULL 
                     THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
                 END
-            ), 0) AS total_after_discount
+            ), 0) AS line_total_after_discount,
+            COALESCE(SUM(
+                CASE 
+                    WHEN pol.authorised_number_of_units IS NOT NULL 
+                    THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
+                    ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
+                END
+            ), 0) * (1-(supplier_discount_percentage/100)) AS order_total_after_discount
         FROM
-            purchase_order_line pol
+            purchase_order po JOIN purchase_order_line pol on po.id = pol.purchase_order_id
         GROUP BY
-            pol.purchase_order_id;
+            po.id;
 
     CREATE VIEW contact_trace_name_link_view AS
       SELECT 
@@ -707,27 +714,34 @@ CREATE VIEW vaccination_course AS
         GROUP BY
 	        invoice_line.invoice_id;
 
-    CREATE VIEW purchase_order_stats AS
+     CREATE VIEW purchase_order_stats AS
         SELECT
-            pol.purchase_order_id,
+            po.id AS purchase_order_id,
             COALESCE(SUM(
                 CASE 
                     WHEN pol.authorised_number_of_units IS NOT NULL 
                     THEN pol.authorised_number_of_units * pol.price_per_unit_before_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_before_discount
                 END
-            ), 0) AS total_before_discount,
+            ), 0) AS line_total_before_discount,
             COALESCE(SUM(
                 CASE 
                     WHEN pol.authorised_number_of_units IS NOT NULL 
                     THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
                 END
-            ), 0) AS total_after_discount
+            ), 0) AS line_total_after_discount,
+            COALESCE(SUM(
+                CASE 
+                    WHEN pol.authorised_number_of_units IS NOT NULL 
+                    THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
+                    ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
+                END
+            ), 0) * (1-(supplier_discount_percentage/100)) AS order_total_after_discount
         FROM
-            purchase_order_line pol
+            purchase_order po JOIN purchase_order_line pol on po.id = pol.purchase_order_id
         GROUP BY
-            pol.purchase_order_id;
+            po.id;
 
     CREATE VIEW contact_trace_name_link_view AS
       SELECT 

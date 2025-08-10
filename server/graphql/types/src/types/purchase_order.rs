@@ -146,7 +146,14 @@ impl PurchaseOrderNode {
     }
 
     pub async fn supplier_discount_amount(&self) -> f64 {
-        self.row().supplier_discount_amount
+        let line_total_after_discount = match &self.stats {
+            Some(stats) => stats.line_total_after_discount,
+            None => 0.0,
+        };
+
+        let discount_percentage = self.row().supplier_discount_percentage.unwrap_or(0.0) / 100.0;
+
+        line_total_after_discount * discount_percentage
     }
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage
