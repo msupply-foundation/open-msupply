@@ -37,6 +37,14 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
+    pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .prevent_transfers_months_before_initialisation,
+        )
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -109,6 +117,7 @@ pub enum PreferenceKey {
     ShowContactTracing,
     UseCampaigns,
     SyncRecordsDisplayThreshold,
+    PreventTransfersMonthsBeforeInitialisation,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -126,6 +135,9 @@ impl PreferenceKey {
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
             PrefKey::SyncRecordsDisplayThreshold => PreferenceKey::SyncRecordsDisplayThreshold,
+            PrefKey::PreventTransfersMonthsBeforeInitialisation => {
+                PreferenceKey::PreventTransfersMonthsBeforeInitialisation
+            }
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,

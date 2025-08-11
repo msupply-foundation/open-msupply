@@ -18,6 +18,8 @@ pub mod order_in_packs;
 pub use order_in_packs::*;
 pub mod sync_records_display_threshold;
 pub use sync_records_display_threshold::*;
+pub mod prevent_transfers_months_before_initialisation;
+pub use prevent_transfers_months_before_initialisation::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -26,6 +28,7 @@ pub struct PreferenceProvider {
     pub show_contact_tracing: ShowContactTracing,
     pub use_campaigns: UseCampaigns,
     pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
+    pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -42,6 +45,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         show_contact_tracing: ShowContactTracing,
         use_campaigns: UseCampaigns,
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
+        prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,

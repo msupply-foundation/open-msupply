@@ -1841,7 +1841,7 @@
   "messages.zero-line-quantities_one": "A quantidade de 1 linha foi definida para 0",
   "messages.zero-line-quantities_other": "A quantidade de {{count}} linhas foi definida para 0",
   "messages.zero-return-quantity-will-delete-lines": "Não foram especificadas quantidades para devolução. Clique OK novamente para confirmar e eliminar estas linhas de devolução.",
-  "messsages.reports-installed-successfully": "Relatórios adicionados com sucesso",
+  "messages.reports-installed-successfully": "Relatórios adicionados com sucesso",
   "monitoring": "Monitorando",
   "multiple": "[multiple]",
   "outbound-shipment": "Saídas",
