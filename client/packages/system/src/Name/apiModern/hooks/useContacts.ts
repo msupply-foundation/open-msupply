@@ -12,7 +12,7 @@ export const useContacts = (nameId: string) => {
   };
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: [CONTACTS],
+    queryKey: [CONTACTS,storeId,nameId],
     queryFn,
   });
 
