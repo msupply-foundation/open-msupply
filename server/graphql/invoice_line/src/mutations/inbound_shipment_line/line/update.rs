@@ -168,7 +168,7 @@ pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<UpdateRes
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -198,9 +198,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ItemVariantDoesNotExist
         | ServiceError::VVMStatusDoesNotExist
         | ServiceError::ProgramNotVisible
+        | ServiceError::CampaignDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

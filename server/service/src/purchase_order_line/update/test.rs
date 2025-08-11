@@ -31,7 +31,8 @@ mod update {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
-                    item_id: mock_item_c().id.to_string(),
+                    item_id: mock_item_a().id.to_string(),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -46,11 +47,36 @@ mod update {
                     item_id: None,
                     requested_pack_size: Some(10.0),
                     requested_number_of_units: Some(5.0),
+
+                    ..Default::default()
+                }
+            ),
+            Err(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)
+        );
+
+        // Cannot update to the same item and pack size combination
+
+        assert_eq!(
+            service.update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
                     requested_delivery_date: None,
                     expected_delivery_date: None,
                 }
             ),
-            Err(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)
+            Err(
+                UpdatePurchaseOrderLineInputError::PackSizeCodeCombinationExists(
+                    PackSizeCodeCombination {
+                        item_code: mock_item_a().code.clone(),
+                        requested_pack_size: 0.0,
+                    }
+                )
+            )
         );
 
         // Cannot update to the same item and pack size combination
@@ -97,7 +123,8 @@ mod update {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
-                    item_id: mock_item_c().id.to_string(),
+                    item_id: mock_item_a().id.to_string(),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -112,8 +139,7 @@ mod update {
                     item_id: Some(mock_item_d().id.to_string()),
                     requested_pack_size: Some(10.0),
                     requested_number_of_units: Some(5.0),
-                    requested_delivery_date: None,
-                    expected_delivery_date: None,
+                    ..Default::default()
                 },
             )
             .unwrap();

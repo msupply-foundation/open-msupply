@@ -2,7 +2,7 @@ use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
     WarningNode,
 };
-use crate::types::{ItemStorePropertiesNode, LocationTypeNode};
+use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode};
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
@@ -11,7 +11,8 @@ use graphql_core::{
         ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
         ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
         ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
-        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, ProgramsByItemIdLoader,
+        ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
@@ -265,6 +266,24 @@ impl ItemNode {
         Ok(Some(ItemStorePropertiesNode::from_domain(
             result.first().cloned().unwrap(),
         )))
+    }
+
+    pub async fn programs(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<Vec<ProgramNode>>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramsByItemIdLoader>>();
+        let result = loader
+            .load_one(ProgramsByItemIdLoaderInput::new(&store_id, &self.row().id))
+            .await?;
+
+        Ok(result.map(|programs| {
+            programs
+                .into_iter()
+                .map(|program_row| ProgramNode { program_row })
+                .collect()
+        }))
     }
 }
 

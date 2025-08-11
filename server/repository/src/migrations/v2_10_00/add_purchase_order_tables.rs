@@ -41,18 +41,16 @@ impl MigrationFragment for Migrate {
                     confirmed_datetime {DATETIME},
                     target_months {DOUBLE},
                     comment TEXT,
-                    supplier_discount_amount {DOUBLE},
                     donor_link_id TEXT REFERENCES name_link(id),
                     reference TEXT,
                     currency_id TEXT REFERENCES currency(id),
-                    foreign_exchange_rate {DOUBLE},
+                    foreign_exchange_rate {DOUBLE} NOT NULL DEFAULT 1.0,
                     shipping_method TEXT,
                     sent_datetime {DATETIME},
                     contract_signed_date {DATE},
                     advance_paid_date {DATE},
                     received_at_port_date {DATE},
                     requested_delivery_date {DATE},
-                    expected_delivery_date {DATE},
                     supplier_agent TEXT,
                     authorising_officer_1 TEXT,
                     authorising_officer_2 TEXT,
@@ -63,10 +61,8 @@ impl MigrationFragment for Migrate {
                     communications_charge {DOUBLE},
                     insurance_charge {DOUBLE},
                     freight_charge {DOUBLE},
-                    freight_conditions TEXT,
-                    order_total_before_discount {DOUBLE},
-                    order_total_after_discount {DOUBLE}
-                );
+                    freight_conditions TEXT
+                    );
             "#
         )?;
 

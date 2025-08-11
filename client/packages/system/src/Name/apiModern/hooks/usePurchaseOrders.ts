@@ -15,7 +15,7 @@ export const usePurchaseOrders = (supplierName: string) => {
   };
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: [PURCHASE_ORDERS],
+    queryKey: [PURCHASE_ORDERS, storeId, supplierName],
     queryFn,
   });
 

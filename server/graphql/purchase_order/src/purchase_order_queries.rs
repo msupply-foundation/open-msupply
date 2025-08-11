@@ -19,7 +19,6 @@ pub enum PurchaseOrderSortFieldInput {
     CreatedDatetime,
     Status,
     TargetMonths,
-    DeliveryDate,
 }
 
 #[derive(InputObject)]
@@ -74,7 +73,7 @@ pub fn get_purchase_order(
 
     match service_provider
         .purchase_order_service
-        .get_purchase_order(&service_context, &store_id, id)
+        .get_purchase_order(&service_context, Some(&store_id), id)
         .map_err(StandardGraphqlError::from_repository_error)
     {
         Ok(order) => {
@@ -97,7 +96,6 @@ pub fn get_purchase_orders(
     filter: Option<PurchaseOrderFilterInput>,
     sort: Option<Vec<PurchaseOrderSortInput>>,
 ) -> Result<PurchaseOrdersResponse> {
-
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -113,7 +111,7 @@ pub fn get_purchase_orders(
         .purchase_order_service
         .get_purchase_orders(
             &service_context,
-            &store_id,
+            Some(&store_id),
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())
@@ -147,7 +145,6 @@ impl PurchaseOrderSortInput {
         let key = match self.key {
             from::Number => to::Number,
             from::TargetMonths => to::TargetMonths,
-            from::DeliveryDate => to::ExpectedDeliveryDate,
             from::Status => to::Status,
             from::CreatedDatetime => to::CreatedDatetime,
         };
