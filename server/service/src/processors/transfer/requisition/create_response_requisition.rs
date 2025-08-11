@@ -10,7 +10,13 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::{Months, Utc};
 use repository::{
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository}, ActivityLogType, ApprovalStatusType, DatetimeFilter, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, ItemRow, MasterListFilter, MasterListLineFilter, MasterListLineRepository, MasterListRepository, NumberRowType, Pagination, RepositoryError, Requisition, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType, Sort, StorageConnection, StoreFilter, StoreRepository, SyncLogFilter, SyncLogRepository, SyncLogSortField
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
+    ActivityLogType, ApprovalStatusType, DatetimeFilter, EqualFilter, IndicatorValueRow,
+    IndicatorValueRowRepository, ItemRow, MasterListFilter, MasterListLineFilter,
+    MasterListLineRepository, MasterListRepository, NumberRowType, Pagination, RepositoryError,
+    Requisition, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionStatus, RequisitionType, Sort, StorageConnection,
+    StoreFilter, StoreRepository, SyncLogFilter, SyncLogRepository, SyncLogSortField,
 };
 use util::uuid::uuid;
 
@@ -398,7 +404,8 @@ mod test {
         mock::{
             mock_name_b, mock_request_draft_requisition, mock_store_b, MockData, MockDataInserts,
         },
-        test_db::setup_all_with_data, SyncLogRow,
+        test_db::setup_all_with_data,
+        SyncLogRow,
     };
 
     #[actix_rt::test]
@@ -502,7 +509,7 @@ mod test {
         let result = processor
             .try_process_record(&connection, &requisition_transfer_new)
             .unwrap();
-        assert!(matches!(result, RequisitionTransferOutput::Processed(_)), 
+        assert!(matches!(result, RequisitionTransferOutput::Processed(_)),
         "The new requisition should have had a transfer generated as it is less than 3 months before initialisation date. Got: {:?}", result);
     }
 }
