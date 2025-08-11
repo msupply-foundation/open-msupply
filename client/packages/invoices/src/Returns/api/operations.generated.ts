@@ -151,6 +151,7 @@ export type CustomerReturnLineFragment = {
   expiryDate?: string | null;
   numberOfPacks: number;
   packSize: number;
+  volumePerPack: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -312,6 +313,16 @@ export type GenerateCustomerReturnLineFragment = {
     reason: string;
     type: Types.ReasonOptionNodeType;
   } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
+  } | null;
 };
 
 export type GenerateCustomerReturnLinesQueryVariables = Types.Exact<{
@@ -351,6 +362,16 @@ export type GenerateCustomerReturnLinesQuery = {
         isActive: boolean;
         reason: string;
         type: Types.ReasonOptionNodeType;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
     }>;
   };
@@ -543,6 +564,7 @@ export type CustomerReturnByNumberQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             packSize: number;
+            volumePerPack: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -619,6 +641,7 @@ export type CustomerReturnByIdQuery = {
             expiryDate?: string | null;
             numberOfPacks: number;
             packSize: number;
+            volumePerPack: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -968,6 +991,7 @@ export const CustomerReturnLineFragmentDoc = gql`
       unitName
       defaultPackSize
     }
+    volumePerPack
   }
 `;
 export const GenerateSupplierReturnLineFragmentDoc = gql`
@@ -1021,6 +1045,16 @@ export const GenerateCustomerReturnLineFragmentDoc = gql`
       isActive
       reason
       type
+    }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
     }
   }
 `;

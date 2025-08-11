@@ -1,6 +1,5 @@
 use repository::{rnr_form_row::RnRFormRow, RnRFormDelete, RnRFormStatus};
 use serde_json::json;
-use util::Defaults;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
@@ -27,7 +26,10 @@ fn rnr_form1() -> RnRFormRow {
         name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
         period_id: "period_1".to_string(),
         program_id: "program_test".to_string(),
-        created_datetime: Defaults::naive_date_time(),
+        created_datetime: chrono::NaiveDate::from_ymd_opt(2020, 01, 22)
+            .unwrap()
+            .and_hms_opt(15, 16, 0)
+            .unwrap(),
         finalised_datetime: None,
         status: RnRFormStatus::Draft,
         linked_requisition_id: None,

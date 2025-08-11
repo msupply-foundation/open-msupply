@@ -2,7 +2,7 @@ use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
     WarningNode,
 };
-use crate::types::{ItemStorePropertiesNode, LocationTypeNode};
+use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode};
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
@@ -11,7 +11,8 @@ use graphql_core::{
         ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
         ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
         ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
-        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, ProgramsByItemIdLoader,
+        ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
@@ -266,6 +267,24 @@ impl ItemNode {
             result.first().cloned().unwrap(),
         )))
     }
+
+    pub async fn programs(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<Vec<ProgramNode>>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramsByItemIdLoader>>();
+        let result = loader
+            .load_one(ProgramsByItemIdLoaderInput::new(&store_id, &self.row().id))
+            .await?;
+
+        Ok(result.map(|programs| {
+            programs
+                .into_iter()
+                .map(|program_row| ProgramNode { program_row })
+                .collect()
+        }))
+    }
 }
 
 #[derive(Union)]
@@ -398,7 +417,6 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
     use serde_json::json;
-    use util::inline_init;
 
     use super::*;
 
@@ -419,9 +437,9 @@ mod test {
         impl TestQuery {
             pub async fn test_query(&self) -> ItemNode {
                 ItemNode {
-                    item: inline_init(|r: &mut Item| {
-                        r.item_row = inline_init(|r: &mut ItemRow| {
-                            r.legacy_record = r#"{
+                    item: Item {
+                        item_row: ItemRow {
+                            legacy_record: r#"{
                                 "ID": "AA460A207402434A89B1F6EEAC08DA43",
                                 "item_name": "test_item",
                                 "start_of_year_date": "0000-00-00",
@@ -496,9 +514,11 @@ mod test {
                                 "is_vaccine": true,
                                 "restricted_location_type_ID": "84AA2B7A18694A2AB1E84DCABAD19617"
                             }"#
-                            .to_string();
-                        });
-                    }),
+                            .to_string(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
         }

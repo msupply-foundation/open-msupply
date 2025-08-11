@@ -152,6 +152,8 @@ impl Upsert for AssetRow {
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
+        
+
         assert_eq!(
             AssetRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

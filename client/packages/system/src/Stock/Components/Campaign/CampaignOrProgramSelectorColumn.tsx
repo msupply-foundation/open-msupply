@@ -1,9 +1,15 @@
 import React from 'react';
 import { CellProps, ColumnDescription } from '@openmsupply-client/common';
 import { CampaignOrProgramSelector } from './CampaignOrProgramSelector';
-import { DraftInboundLine } from '@openmsupply-client/invoices/src/types';
 
-export const getCampaignOrProgramColumn = <T extends DraftInboundLine>(
+interface CampaignRowData {
+  id: string;
+  campaign?: { id: string } | null;
+  program?: { id: string } | null;
+  item: { id: string };
+}
+
+export const getCampaignOrProgramColumn = <T extends CampaignRowData>(
   update: (patch: Partial<T> & { id: string }) => void
 ): ColumnDescription<T> => {
   return {
@@ -15,14 +21,14 @@ export const getCampaignOrProgramColumn = <T extends DraftInboundLine>(
   };
 };
 
-const CampaignCell = <T extends DraftInboundLine>({
+const CampaignCell = <T extends CampaignRowData>({
   rowData,
   column,
 }: CellProps<T>): JSX.Element => (
   <CampaignOrProgramSelector
     campaignId={rowData.campaign?.id ?? undefined}
     programId={rowData.program?.id ?? undefined}
-    itemId={rowData.item.id}
+    programOptionsOrFilter={{ filterByItemId: rowData.item.id }}
     onChange={({ campaign, program }) =>
       column.setter({
         ...rowData,
