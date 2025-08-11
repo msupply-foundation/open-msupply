@@ -7,6 +7,131 @@ use graphql_types::types::{purchase_order, NameNode};
 use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
 use service::ListResult;
 
+// use chrono::NaiveDate;
+// use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
+// use repository::{ItemRow, PurchaseOrderLine, PurchaseOrderLineRow};
+// use service::{usize_to_u32, ListResult};
+// use crate::types::ItemNode;
+
+use async_graphql::{dataloader::DataLoader, *};
+use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
+use repository::{GoodsReceivedLineRow, ItemRow};
+
+use crate::types::ItemNode;
+
+#[derive(PartialEq, Debug)]
+pub struct GoodsReceivedLineNode {
+    pub goods_received_line: GoodsReceivedLineRow,
+    pub item: ItemRow,
+}
+
+#[derive(SimpleObject)]
+pub struct GoodsReceivedLineConnector {
+    pub total_count: u32,
+    pub nodes: Vec<GoodsReceivedLineNode>,
+}
+
+#[Object]
+impl GoodsReceivedLineNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+    pub async fn goods_received_id(&self) -> &str {
+        &self.row().goods_received_id
+    }
+    pub async fn purchase_order_line_id(&self) -> &str {
+        &self.row().purchase_order_line_id
+    }
+    pub async fn received_pack_size(&self) -> f64 {
+        self.row().received_pack_size
+    }
+    pub async fn number_of_packs_received(&self) -> f64 {
+        self.row().number_of_packs_received
+    }
+    pub async fn batch(&self) -> &Option<String> {
+        &self.row().batch
+    }
+    pub async fn weight_per_pack(&self) -> &Option<f64> {
+        &self.row().weight_per_pack
+    }
+    pub async fn expiry_date(&self) -> &Option<NaiveDate> {
+        &self.row().expiry_date
+    }
+    pub async fn line_number(&self) -> i64 {
+        &self.row().line_number
+    }
+    pub async fn item_link_id(&self) -> &str {
+        &self.row().item_link_id
+    }
+    pub async fn item_name(&self) -> &str {
+        &self.row().item_name
+    }
+    pub async fn location_id(&self) -> &Option<String> {
+        &self.row().location_id
+    }
+    pub async fn volume_per_pack(&self) -> &Option<f64> {
+        &self.row().volume_per_pack
+    }
+    pub async fn manufacturer_link_id(&self) -> &Option<String> {
+        &self.row().manufacturer_link_id
+    }
+    pub async fn status(&self) -> &GoodsReceivedLineStatus {
+        &self.row().status
+    }
+    pub async fn comment(&self) -> &Option<String> {
+        &self.row().comment
+    }
+    pub async fn item(&self) -> Result<ItemNode> {
+        self.line.item.as_ref().map(|row| {
+            ItemNode::from_domain(Item {
+                item_row: row.clone(),
+            })
+        })
+    }
+}
+
+impl GoodsReceivedLineNode {
+    pub fn from_domain(goods_received_line: GoodsReceivedLine) -> GoodsReceivedLineNode {
+        GoodsReceivedLineNode {
+            goods_received_line: goods_received_line.goods_received_line_row,
+            item: goods_received_line.item_row,
+        }
+    }
+}
+
+impl GoodsReceivedLineConnector {
+    pub fn from_vec(purchase_order_lines: Vec<GoodsReceivedLine>) -> GoodsReceivedLineConnector {
+        GoodsReceivedLineConnector {
+            total_count: usize_to_u32(purchase_order_lines.len()),
+            nodes: purchase_order_lines
+                .into_iter()
+                .map(GoodsReceivedLineNode::from_domain)
+                .collect(),
+        }
+    }
+}
+
+impl GoodsReceivedLineNode {
+    pub fn row(&self) -> &GoodsReceivedLineRow {
+        &self.goods_received_line
+    }
+}
+
+impl GoodsReceivedLineConnector {
+    pub fn from_domain(
+        goods_receipts: ListResult<GoodsReceivedLine>,
+    ) -> GoodsReceivedLineConnector {
+        GoodsReceivedLineConnector {
+            total_count: goods_receipts.count,
+            nodes: goods_receipts
+                .rows
+                .into_iter()
+                .map(GoodsReceivedLineNode::from_domain)
+                .collect(),
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct GoodsReceivedNode {
     pub goods_received: GoodsReceivedRow,
@@ -90,6 +215,14 @@ impl GoodsReceivedNode {
 
     pub async fn received_datetime(&self) -> Option<NaiveDate> {
         self.row().received_date
+    }
+
+    pub async fn lines(&self, ctx: &Context<'_>) -> Result<GoodsReceivedLineConnector> {
+        let loader = ctx.get_loader::<DataLoader<GoodsReceivedLinesByGoodsReceivedIdLoader>>();
+        let result_option = loader.load_one(self.row().id.clone()).await?;
+
+        let result = result_option.unwrap_or(vec![]);
+        Ok(GoodsReceivedLineConnector::from_vec(result))
     }
 }
 

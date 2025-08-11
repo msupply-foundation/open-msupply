@@ -2,7 +2,7 @@ use self::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{NaiveDate, NaiveDateTime};
 use graphql_core::loader::{
-    NameByIdLoader, NameByIdLoaderInput, PurchaseOrderLinesByPurchaseOrderIdLoader,
+    NameByIdLoader, NameByIdLoaderInput,
     StoreByIdLoader, UserLoader,
 };
 use graphql_core::ContextExt;
