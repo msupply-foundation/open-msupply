@@ -77,8 +77,7 @@ export const useOutboundLineEditColumns = ({
   const { data: prefs } = usePreference(
     PreferenceKey.SortByVvmStatusThenExpiry,
     PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
 
   const packSize =
@@ -136,23 +135,24 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  if (prefs?.useCampaigns)
-    columnDefinitions.push({
+  columnDefinitions.push(
+    {
       key: 'campaign',
       label: 'label.campaign',
       accessor: ({ rowData }) =>
         rowData?.campaign?.name ?? rowData?.program?.name ?? '',
-    });
-
-  columnDefinitions.push([
-    'location',
-    {
-      accessor: ({ rowData }) => rowData.location?.code,
-      width: 85,
-      Cell: LocationCell,
-      defaultHideOnMobile: true,
     },
-  ]);
+    [
+      'location',
+      {
+        accessor: ({ rowData }) => rowData.location?.code,
+        width: 85,
+        Cell: LocationCell,
+        defaultHideOnMobile: true,
+      },
+    ]
+  );
+
   if (prefs?.allowTrackingOfStockByDonor) {
     columnDefinitions.push({
       key: 'donor',
