@@ -32,8 +32,7 @@ export const DetailViewInner = () => {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
     draft,
-    handleDraftChange,
-    handleDebounceUpdate,
+    handleChange,
   } = usePurchaseOrder();
 
   const {
@@ -72,13 +71,7 @@ export const DetailViewInner = () => {
       value: 'General',
     },
     {
-      Component: (
-        <Details
-          draft={draft}
-          onDraftChange={handleDraftChange}
-          onDebounceUpdate={handleDebounceUpdate}
-        />
-      ),
+      Component: <Details draft={draft} onChange={handleChange} />,
       value: 'Details',
     },
   ];

@@ -81,6 +81,12 @@ export const usePurchaseOrder = (id?: string) => {
 
   const handleDebounceUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
 
+  const handleChange = (input: Partial<PurchaseOrderFragment>) => {
+    if (!draft) return;
+    handleDraftChange(input);
+    handleDebounceUpdate(input);
+  };
+
   // CREATE
   const {
     mutateAsync: createMutation,
@@ -103,8 +109,7 @@ export const usePurchaseOrder = (id?: string) => {
     update: { update, isUpdating, updateError },
     masterList: { addFromMasterList, isAdding },
     draft,
-    handleDraftChange,
-    handleDebounceUpdate,
+    handleChange,
   };
 };
 

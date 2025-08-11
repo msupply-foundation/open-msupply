@@ -14,16 +14,14 @@ import { PurchaseOrderFragment } from '../../api';
 
 interface OtherSectionProps {
   draft?: PurchaseOrderFragment;
-  onDraftChange: (input: Partial<PurchaseOrderFragment>) => void;
   onUpdate: (input: Partial<PurchaseOrderFragment>) => void;
-  onDebounceUpdate: (input: Partial<PurchaseOrderFragment>) => void;
+  onChange: (input: Partial<PurchaseOrderFragment>) => void;
 }
 
 export const OtherSection = ({
   draft,
-  onDraftChange,
   onUpdate,
-  onDebounceUpdate,
+  onChange,
 }: OtherSectionProps): ReactElement => {
   const t = useTranslation();
 
@@ -52,8 +50,7 @@ export const OtherSection = ({
           value={draft?.comment ?? ''}
           onChange={e => {
             const value = e.target.value;
-            onDraftChange({ comment: value });
-            onDebounceUpdate({ comment: value });
+            onChange({ comment: value });
           }}
           slotProps={{
             input: { sx: { backgroundColor: 'background.paper' } },

@@ -28,7 +28,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     query: { data, isLoading },
     lines: { itemFilter, setItemFilter },
     update: { update },
-    handleDebounceUpdate,
+    handleChange,
   } = usePurchaseOrder();
 
   const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
@@ -79,7 +79,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   sx={{ width: 250 }}
                   value={data?.reference ?? null}
                   onChange={e => {
-                    handleDebounceUpdate({ reference: e.target.value });
+                    handleChange({ reference: e.target.value });
                   }}
                 />
               </Tooltip>

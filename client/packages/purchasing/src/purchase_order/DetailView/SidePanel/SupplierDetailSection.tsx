@@ -30,40 +30,34 @@ const slotProps = {
 
 interface SupplierDetailSectionProps {
   draft?: PurchaseOrderFragment;
-  onDraftChange: (input: Partial<PurchaseOrderFragment>) => void;
-  onDebounceUpdate: (input: Partial<PurchaseOrderFragment>) => void;
+  onChange: (input: Partial<PurchaseOrderFragment>) => void;
 }
 
 export const SupplierDetailSection = ({
   draft,
-  onDraftChange,
-  onDebounceUpdate,
+  onChange,
 }: SupplierDetailSectionProps): ReactElement => {
   const t = useTranslation();
   const { warning } = useNotification();
 
   const handleSupplierDiscountChange = (value: number | undefined) => {
     if (value == null || value === draft?.supplierDiscountPercentage) return;
-    onDraftChange({ supplierDiscountPercentage: value });
-    onDebounceUpdate({ supplierDiscountPercentage: value });
+    onChange({ supplierDiscountPercentage: value });
   };
 
   const handleCurrencyChange = (currency: CurrencyRowFragment | null) => {
     if (!currency) return;
-    const input = {
+    onChange({
       currencyId: currency.id,
       foreignExchangeRate: currency.rate,
-    };
-    onDraftChange(input);
-    onDebounceUpdate(input);
+    });
   };
 
   const handleForeignExchangeRateChange = (value: number | undefined) => {
     if (value == null || value === draft?.foreignExchangeRate) return;
     if (draft?.foreignExchangeRate !== value) {
-      onDraftChange({ foreignExchangeRate: value });
       warning(t('warning.foreign-exchange-rate-different'))();
-      onDebounceUpdate({ foreignExchangeRate: value });
+      onChange({ foreignExchangeRate: value });
     }
   };
 

@@ -14,21 +14,11 @@ import { PurchaseOrderFragment } from '../../api';
 
 interface DetailsProps {
   draft?: PurchaseOrderFragment;
-  onDraftChange: (input: Partial<PurchaseOrderFragment>) => void;
-  onDebounceUpdate: (input: Partial<PurchaseOrderFragment>) => void;
+  onChange: (input: Partial<PurchaseOrderFragment>) => void;
 }
 
-export const Details = ({
-  draft,
-  onDraftChange,
-  onDebounceUpdate,
-}: DetailsProps): ReactElement => {
+export const Details = ({ draft, onChange }: DetailsProps): ReactElement => {
   const t = useTranslation();
-
-  const handleFieldChange = (input: Partial<PurchaseOrderFragment>) => {
-    onDraftChange(input);
-    onDebounceUpdate(input);
-  };
 
   if (!draft)
     return <NothingHere body={t('messages.no-purchase-order-details')} />;
@@ -67,7 +57,7 @@ export const Details = ({
                 <BasicTextInput
                   value={draft.authorisingOfficer1 ?? ''}
                   onChange={event => {
-                    handleFieldChange({
+                    onChange({
                       authorisingOfficer1: event.target.value,
                     });
                   }}
@@ -81,7 +71,7 @@ export const Details = ({
                 <BasicTextInput
                   value={draft.authorisingOfficer2 ?? ''}
                   onChange={event =>
-                    handleFieldChange({
+                    onChange({
                       authorisingOfficer2: event.target.value,
                     })
                   }
@@ -95,7 +85,7 @@ export const Details = ({
                 <TextArea
                   value={draft.additionalInstructions ?? ''}
                   onChange={event =>
-                    handleFieldChange({
+                    onChange({
                       additionalInstructions: event.target.value,
                     })
                   }
@@ -120,7 +110,7 @@ export const Details = ({
                 <BasicTextInput
                   value={draft?.supplierAgent ?? ''}
                   onChange={event =>
-                    handleFieldChange({
+                    onChange({
                       supplierAgent: event.target.value,
                     })
                   }
@@ -134,7 +124,7 @@ export const Details = ({
                 <BasicTextInput
                   value={draft?.headingMessage ?? ''}
                   onChange={event =>
-                    handleFieldChange({
+                    onChange({
                       headingMessage: event.target.value,
                     })
                   }
@@ -148,7 +138,7 @@ export const Details = ({
                 <TextArea
                   value={draft.freightConditions ?? ''}
                   onChange={event =>
-                    handleFieldChange({
+                    onChange({
                       freightConditions: event.target.value,
                     })
                   }
@@ -178,7 +168,7 @@ export const Details = ({
                       0
                     }
                     onChangeNumber={value =>
-                      handleFieldChange({
+                      onChange({
                         [key]: value,
                       } as Partial<PurchaseOrderFragment>)
                     }

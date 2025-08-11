@@ -16,8 +16,7 @@ export const SidePanel = (): ReactElement => {
   const {
     update: { update },
     draft,
-    handleDraftChange,
-    handleDebounceUpdate,
+    handleChange,
   } = usePurchaseOrder();
 
   const handleUpdate = async (input: Partial<PurchaseOrderFragment>) => {
@@ -30,17 +29,12 @@ export const SidePanel = (): ReactElement => {
 
   return (
     <DetailPanelPortal>
-      <SupplierDetailSection
-        draft={draft}
-        onDraftChange={handleDraftChange}
-        onDebounceUpdate={handleDebounceUpdate}
-      />
+      <SupplierDetailSection draft={draft} onChange={handleChange} />
       <DateSection draft={draft} onUpdate={handleUpdate} />
       <OtherSection
         draft={draft}
-        onDraftChange={handleDraftChange}
         onUpdate={handleUpdate}
-        onDebounceUpdate={handleDebounceUpdate}
+        onChange={handleChange}
       />
     </DetailPanelPortal>
   );
