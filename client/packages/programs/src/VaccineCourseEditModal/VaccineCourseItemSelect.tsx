@@ -4,7 +4,7 @@ import {
   FnUtils,
   AutocompleteMulti,
 } from '@openmsupply-client/common';
-import { useVaccineItems } from '@openmsupply-client/system';
+import { useItems } from '@openmsupply-client/system';
 import {
   DraftVaccineCourse,
   DraftVaccineCourseItem,
@@ -40,7 +40,9 @@ export const VaccineItemSelect = ({
   onChange,
   draft,
 }: VaccineItemSelectProps) => {
-  const { data } = useVaccineItems();
+  const {
+    vaccineItems: { data },
+  } = useItems();
 
   const onChangeSelectedItems = (selectedItems: DraftVaccineCourseItem[]) => {
     onChange({ vaccineCourseItems: selectedItems });
