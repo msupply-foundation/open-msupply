@@ -6930,6 +6930,7 @@ export type PurchaseOrderNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   currencyId?: Maybe<Scalars['String']['output']>;
   documentCharge?: Maybe<Scalars['Float']['output']>;
+  documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   foreignExchangeRate?: Maybe<Scalars['Float']['output']>;

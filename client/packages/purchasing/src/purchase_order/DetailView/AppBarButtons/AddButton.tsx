@@ -6,6 +6,7 @@ import { useNotification, useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
 import { PurchaseOrderFragment } from '../../api';
 import { PurchaseOrderNodeStatus, UserPermission } from '@common/types';
+import { AddDocumentModal } from './AddDocumentModal';
 import { PurchaseOrderLineImportModal } from '../ImportLines/PurchaseOrderLineImportModal';
 import {
   NonEmptyArray,
@@ -28,6 +29,7 @@ export const AddButton = ({
   const t = useTranslation();
   const { info } = useNotification();
   const masterListModalController = useToggle();
+  const uploadDocumentController = useToggle();
   const importModalController = useToggle();
 
   const handleUploadPurchaseOrderLines = useCallbackWithPermission(
@@ -53,8 +55,12 @@ export const AddButton = ({
         label: t('button.upload-purchase-order-lines'),
         isDisabled: disable,
       },
+      {
+        value: 'upload-document',
+        label: t('label.upload-document'),
+      },
     ],
-    [disable]
+    [disable, disableAddFromMasterListButton, t]
   );
 
   const [selectedOption, setSelectedOption] = useState<
@@ -76,6 +82,9 @@ export const AddButton = ({
         )
           ? masterListModalController.toggleOn()
           : info(t('error.cannot-add-from-masterlist'))();
+        break;
+      case 'upload-document':
+        uploadDocumentController.toggleOn();
         break;
       case 'import-from-csv':
         isPurchaseOrderEditable(
@@ -109,6 +118,13 @@ export const AddButton = ({
         <AddFromMasterListButton
           isOn={masterListModalController.isOn}
           toggleOff={masterListModalController.toggleOff}
+        />
+      )}
+      {uploadDocumentController.isOn && (
+        <AddDocumentModal
+          isOn={uploadDocumentController.isOn}
+          toggleOff={uploadDocumentController.toggleOff}
+          purchaseOrderId={purchaseOrder?.id}
         />
       )}
       {importModalController.isOn && (
