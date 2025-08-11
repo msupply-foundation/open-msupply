@@ -21,6 +21,9 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   itemId: '',
   requestedPackSize: 0,
   requestedNumberOfUnits: 0,
+  adjustedNumberOfUnits: null,
+  requestedDeliveryDate: null,
+  expectedDeliveryDate: null,
 };
 
 export function usePurchaseOrderLine(id?: string) {
@@ -32,14 +35,31 @@ export function usePurchaseOrderLine(id?: string) {
     error: createError,
   } = useCreate();
 
+  const {
+    mutateAsync: updateMutation,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate();
+
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
 
   const draft: DraftPurchaseOrderLine = data
     ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], ...patch }
     : { ...defaultPurchaseOrderLine, ...patch };
+  
   const create = async () => {
     const result = await createMutation(draft);
+    resetDraft();
+    return result;
+  };
+
+  const update = async () => {
+    if (!data?.nodes[0]?.id) return;
+    const result = await updateMutation({
+      id: data.nodes[0].id,
+      ...patch,
+    });
     resetDraft();
     return result;
   };
@@ -47,6 +67,7 @@ export function usePurchaseOrderLine(id?: string) {
   return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
+    update: { update, isUpdating, updateError },
     draft,
     resetDraft,
     isDirty,
@@ -92,6 +113,39 @@ const useCreate = () => {
         // TODO better way of handling non item id
         itemId: itemId,
         purchaseOrderId,
+      },
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () =>
+      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
+  });
+};
+
+const useUpdate = () => {
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+
+  const mutationFn = async ({
+    id,
+    requestedPackSize,
+    requestedNumberOfUnits,
+    adjustedNumberOfUnits,
+    requestedDeliveryDate,
+    expectedDeliveryDate,
+    itemId,
+  }: Partial<DraftPurchaseOrderLine> & { id: string }) => {
+    return await purchaseOrderApi.updatePurchaseOrderLine({
+      storeId,
+      input: {
+        id,
+        itemId,
+        packSize: requestedPackSize,
+        requestedQuantity: requestedNumberOfUnits,
+        adjustedQuantity: adjustedNumberOfUnits,
+        requestedDeliveryDate,
+        expectedDeliveryDate,
       },
     });
   };

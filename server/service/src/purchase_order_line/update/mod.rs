@@ -27,6 +27,7 @@ pub struct UpdatePurchaseOrderLineInput {
     pub item_id: Option<String>,
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
+    pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
 }

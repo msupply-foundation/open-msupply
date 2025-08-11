@@ -6756,7 +6756,7 @@ export type PurchaseOrderLineFilterInput = {
 
 export type PurchaseOrderLineNode = {
   __typename: 'PurchaseOrderLineNode';
-  authorisedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
+  adjustedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   item: ItemNode;
@@ -6802,7 +6802,6 @@ export type PurchaseOrderNode = {
   currencyId?: Maybe<Scalars['String']['output']>;
   documentCharge?: Maybe<Scalars['Float']['output']>;
   donor?: Maybe<NameNode>;
-  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
   freightCharge?: Maybe<Scalars['Float']['output']>;
@@ -6845,7 +6844,6 @@ export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
 
 export enum PurchaseOrderSortFieldInput {
   CreatedDatetime = 'createdDatetime',
-  DeliveryDate = 'deliveryDate',
   Number = 'number',
   Status = 'status',
   TargetMonths = 'targetMonths',
@@ -9934,6 +9932,7 @@ export type UpdatePurchaseOrderInput = {
 };
 
 export type UpdatePurchaseOrderLineInput = {
+  adjustedQuantity?: InputMaybe<Scalars['Float']['input']>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;

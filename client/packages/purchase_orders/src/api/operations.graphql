@@ -89,7 +89,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedPackSize
   requestedDeliveryDate
   requestedNumberOfUnits
-  authorisedNumberOfUnits
+  adjustedNumberOfUnits
 }
 
 query purchaseOrders(
@@ -206,6 +206,17 @@ mutation insertPurchaseOrderLine(
   $storeId: String!
 ) {
   insertPurchaseOrderLine(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation updatePurchaseOrderLine(
+  $input: UpdatePurchaseOrderLineInput!
+  $storeId: String!
+) {
+  updatePurchaseOrderLine(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
     }

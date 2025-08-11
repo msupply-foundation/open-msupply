@@ -1844,6 +1844,7 @@
   "messages.properties-download-example": "Download a template CSV",
   "messages.properties-template-download-text": " with the facilities' current properties ",
   "messages.purchase-order-saved": "Purchase order saved 🥳",
+  "messages.purchase-order-confirmed-new-lines": "For confirmed purchase orders, new lines can only have adjusted quantities.",
   "messages.record-not-found": "Record not found",
   "messages.recorded-on": "Recorded on {{datetime}}",
   "messages.reduced-to-zero_one": "Reduced 1 line to quantity of 0",

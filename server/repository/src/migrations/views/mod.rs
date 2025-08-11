@@ -646,22 +646,22 @@ CREATE VIEW vaccination_course AS
             po.id AS purchase_order_id,
             COALESCE(SUM(
                 CASE 
-                    WHEN pol.authorised_number_of_units IS NOT NULL 
-                    THEN pol.authorised_number_of_units * pol.price_per_unit_before_discount
+                    WHEN pol.adjusted_number_of_units IS NOT NULL 
+                    THEN pol.adjusted_number_of_units * pol.price_per_unit_before_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_before_discount
                 END
             ), 0) AS line_total_before_discount,
             COALESCE(SUM(
                 CASE 
-                    WHEN pol.authorised_number_of_units IS NOT NULL 
-                    THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
+                    WHEN pol.adjusted_number_of_units IS NOT NULL 
+                    THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
                 END
             ), 0) AS line_total_after_discount,
             COALESCE(SUM(
                 CASE 
-                    WHEN pol.authorised_number_of_units IS NOT NULL 
-                    THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
+                    WHEN pol.adjusted_number_of_units IS NOT NULL 
+                    THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
                 END
             ), 0) * (1-(COALESCE(po.supplier_discount_percentage, 0)/100)) AS order_total_after_discount
@@ -719,23 +719,23 @@ CREATE VIEW vaccination_course AS
             po.id AS purchase_order_id,
             COALESCE(SUM(
                 CASE 
-                    WHEN pol.authorised_number_of_units IS NOT NULL 
-                    THEN pol.authorised_number_of_units * pol.price_per_unit_before_discount
+                    WHEN pol.adjusted_number_of_units IS NOT NULL 
+                    THEN pol.adjusted_number_of_units * pol.price_per_unit_before_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_before_discount
                 END
             ), 0) AS line_total_before_discount,
             COALESCE(SUM(
                 CASE 
-                    WHEN pol.authorised_number_of_units IS NOT NULL 
-                    THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
+                    WHEN pol.adjusted_number_of_units IS NOT NULL 
+                    THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
                 END
 
             ), 0) AS line_total_after_discount,
             COALESCE(SUM(
                 CASE 
-                    WHEN pol.authorised_number_of_units IS NOT NULL 
-                    THEN pol.authorised_number_of_units * pol.price_per_unit_after_discount
+                    WHEN pol.adjusted_number_of_units IS NOT NULL 
+                    THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
                 END
             ), 0) * (1-(COALESCE(po.supplier_discount_percentage, 0)/100)) AS order_total_after_discount

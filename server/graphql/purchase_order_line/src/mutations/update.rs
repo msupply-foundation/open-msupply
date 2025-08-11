@@ -24,6 +24,7 @@ pub struct UpdateInput {
     pub item_id: Option<String>,
     pub pack_size: Option<f64>,
     pub requested_quantity: Option<f64>,
+    pub adjusted_quantity: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
 }
@@ -35,6 +36,7 @@ impl UpdateInput {
             item_id,
             pack_size,
             requested_quantity,
+            adjusted_quantity,
             requested_delivery_date,
             expected_delivery_date,
         } = self;
@@ -44,6 +46,7 @@ impl UpdateInput {
             item_id,
             requested_pack_size: pack_size,
             requested_number_of_units: requested_quantity,
+            adjusted_number_of_units: adjusted_quantity,
             requested_delivery_date,
             expected_delivery_date,
         }

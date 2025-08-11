@@ -42,7 +42,7 @@ pub fn generate_empty_purchase_order_lines(
                     expected_delivery_date: None,
                     requested_pack_size: item.default_pack_size,
                     requested_number_of_units: 0.0,
-                    authorised_number_of_units: None,
+                    adjusted_number_of_units: None,
                     received_number_of_units: 0.0,
                     stock_on_hand_in_units: stock_on_hand,
                     supplier_item_code: None,
