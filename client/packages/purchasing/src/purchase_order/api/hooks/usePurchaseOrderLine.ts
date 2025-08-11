@@ -48,7 +48,7 @@ export function usePurchaseOrderLine(id?: string) {
   const draft: DraftPurchaseOrderLine = data
     ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], ...patch }
     : { ...defaultPurchaseOrderLine, ...patch };
-  
+
   const create = async () => {
     const result = await createMutation(draft);
     resetDraft();
@@ -154,6 +154,6 @@ const useUpdate = () => {
   return useMutation({
     mutationFn,
     onSuccess: () =>
-      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
+      queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY, storeId]),
   });
 };
