@@ -7,23 +7,50 @@ import {
   Grid,
   useTranslation,
   useToggle,
+  useNavigate,
+  RouteBuilder,
+  UserPermission,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { PurchaseOrderSearchModal } from '../../purchase_order/Components';
 import { PurchaseOrderRowFragment } from '../../purchase_order/api';
+import { useGoodsReceived } from '../api';
 
 export const AppBarButtons: React.FC = () => {
   const t = useTranslation();
   const modalController = useToggle();
+  const navigate = useNavigate();
+  
+  const {
+    create: { create, isCreating },
+  } = useGoodsReceived();
 
   const handleExport = () => {
     // eslint-disable-next-line
     console.log('TO-DO: Export goods received...');
   };
 
-  const handlePurchaseOrderSelected = (selected: PurchaseOrderRowFragment) => {
-    // TODO: Create goods received from purchase order
-    // eslint-disable-next-line no-console
-    console.log('Selected purchase order:', selected);
+  const openModal = useCallbackWithPermission(
+    UserPermission.PurchaseOrderMutate,
+    modalController.toggleOn
+  );
+
+  const handlePurchaseOrderSelected = async (selected: PurchaseOrderRowFragment) => {
+    try {
+      const result = await create(selected.id);
+      const goodsReceivedId = result?.insertGoodsReceived?.id;
+      
+      if (goodsReceivedId) {
+        const detailRoute = RouteBuilder.create(AppRoute.GoodsReceived)
+          .addPart(goodsReceivedId)
+          .build();
+        navigate(detailRoute);
+      }
+    } catch (error) {
+      console.error('Failed to create goods received:', error);
+    }
+    
     modalController.toggleOff();
   };
 
@@ -33,7 +60,8 @@ export const AppBarButtons: React.FC = () => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-goods-received')}
-          onClick={modalController.toggleOn}
+          onClick={openModal}
+          loading={isCreating}
         />
         <ButtonWithIcon
           Icon={<DownloadIcon />}
