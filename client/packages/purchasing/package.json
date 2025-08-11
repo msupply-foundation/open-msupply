@@ -1,5 +1,5 @@
 {
-  "name": "@openmsupply-client/purchase_orders",
+  "name": "@openmsupply-client/purchasing",
   "version": "0.0.0",
   "sideEffects": false,
   "private": true,

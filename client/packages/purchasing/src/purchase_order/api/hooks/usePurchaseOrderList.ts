@@ -1,5 +1,6 @@
 import {
   FilterByWithBoolean,
+  LIST_KEY,
   PurchaseOrderSortFieldInput,
   SortBy,
   useMutation,
@@ -7,7 +8,7 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
-import { LIST, PURCHASE_ORDER } from './keys';
+import { PURCHASE_ORDER } from './keys';
 import {
   PurchaseOrderFragment,
   PurchaseOrderRowFragment,
@@ -34,8 +35,8 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
   } = queryParams;
 
   const queryKey = [
-    LIST,
     PURCHASE_ORDER,
+    LIST_KEY,
     storeId,
     sortBy,
     first,
