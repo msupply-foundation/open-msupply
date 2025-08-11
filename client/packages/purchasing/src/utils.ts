@@ -5,7 +5,10 @@ import {
 } from '@common/types';
 import { PurchaseOrderFragment } from './purchase_order/api';
 
-const purchaseOrderStatusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
+const purchaseOrderStatusTranslation: Record<
+  PurchaseOrderNodeStatus,
+  LocaleKey
+> = {
   NEW: 'label.new',
   AUTHORISED: 'label.authorised',
   CONFIRMED: 'label.confirmed',
@@ -71,9 +74,10 @@ export const isPurchaseOrderDisabled = (
 export const isPurchaseOrderConfirmed = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
-  return purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
-         purchaseOrder.status === PurchaseOrderNodeStatus.Authorised ||
-         purchaseOrder.status === PurchaseOrderNodeStatus.Finalised;
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
+  );
 };
 
 export const canEditOriginalQuantity = (
@@ -87,8 +91,10 @@ export const canEditAdjustedQuantity = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
   // Can edit adjusted quantity when confirmed but not finalised
-  return purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
-         purchaseOrder.status === PurchaseOrderNodeStatus.Authorised;
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Authorised
+  );
 };
 
 export const canAddNewLines = (
