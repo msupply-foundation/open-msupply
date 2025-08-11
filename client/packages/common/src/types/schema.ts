@@ -1064,6 +1064,11 @@ export type CanOnlyChangeToPickedWhenNoUnallocatedLines =
     invoiceLines: InvoiceLineConnector;
   };
 
+export type CannotAdjustRequestedQuantity = PurchaseOrderLineError & {
+  __typename: 'CannotAdjustRequestedQuantity';
+  description: Scalars['String']['output'];
+};
+
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
   UpdateInboundShipmentErrorInterface & {
     __typename: 'CannotChangeStatusOfInvoiceOnHold';
@@ -6830,7 +6835,7 @@ export type PurchaseOrderLineFilterInput = {
 
 export type PurchaseOrderLineNode = {
   __typename: 'PurchaseOrderLineNode';
-  authorisedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
+  adjustedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
@@ -6884,6 +6889,7 @@ export type PurchaseOrderNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   currencyId?: Maybe<Scalars['String']['output']>;
   documentCharge?: Maybe<Scalars['Float']['output']>;
+  documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
@@ -10047,6 +10053,7 @@ export type UpdatePurchaseOrderLineError = {
 };
 
 export type UpdatePurchaseOrderLineInput = {
+  adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
