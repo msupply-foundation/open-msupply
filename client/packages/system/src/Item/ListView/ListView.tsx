@@ -31,7 +31,9 @@ const ItemListComponent = () => {
     initialSort: { key: 'name', dir: 'asc' },
     filters: [{ key: 'codeOrName' }],
   });
-  const { data, isError, isLoading } = useItems();
+  const {
+    items: { data, isError, isLoading },
+  } = useItems();
   const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
   const pagination = { page, first, offset };
 
