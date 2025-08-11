@@ -19,12 +19,14 @@ interface AddButtonProps {
   onAddItem: () => void;
   /** Disable the whole control */
   disable: boolean;
+  disableAddFromMasterListButton: boolean;
 }
 
 export const AddButton = ({
   purchaseOrder,
   onAddItem,
   disable,
+  disableAddFromMasterListButton,
 }: AddButtonProps) => {
   const t = useTranslation();
   const { info } = useNotification();
