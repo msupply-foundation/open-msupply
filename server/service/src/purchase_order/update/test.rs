@@ -85,6 +85,20 @@ mod update {
             ),
             Err(UpdatePurchaseOrderError::DonorDoesNotExist)
         );
+
+        // AuthorisationPreferenceNotSet
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: "purchase_order_id".to_string(),
+                    status: Some(PurchaseOrderStatus::Authorised),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdatePurchaseOrderError::AuthorisationPreferenceNotSet)
+        );
     }
 
     #[actix_rt::test]

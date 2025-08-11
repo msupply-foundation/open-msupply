@@ -9,29 +9,53 @@ import { purchaseOrderStatuses, statusTranslation } from '../utils';
 export type PurchaseOrderStatusOption =
   SplitButtonOption<PurchaseOrderNodeStatus>;
 
+export const enableNextOptions = (
+  options: PurchaseOrderStatusOption[],
+  currentStatus: PurchaseOrderNodeStatus,
+  requiresAuthorisation: boolean
+): void => {
+  const enableStatusOption = (status: PurchaseOrderNodeStatus) => {
+    const option = options.find(option => option.value === status);
+    if (option) option.isDisabled = false;
+  };
+
+  switch (currentStatus) {
+    case PurchaseOrderNodeStatus.New:
+      if (requiresAuthorisation)
+        enableStatusOption(PurchaseOrderNodeStatus.Authorised);
+      else enableStatusOption(PurchaseOrderNodeStatus.Confirmed);
+      break;
+    case PurchaseOrderNodeStatus.Authorised:
+      enableStatusOption(PurchaseOrderNodeStatus.Confirmed);
+      break;
+    case PurchaseOrderNodeStatus.Confirmed:
+      enableStatusOption(PurchaseOrderNodeStatus.Finalised);
+      break;
+  }
+};
+
 export const getStatusOptions = (
   currentStatus: PurchaseOrderNodeStatus | undefined,
-  getButtonLabel: (status: PurchaseOrderNodeStatus) => string
+  getButtonLabel: (status: PurchaseOrderNodeStatus) => string,
+  requiresAuthorisation: boolean
 ): PurchaseOrderStatusOption[] => {
   if (!currentStatus) return [];
 
-  const options: [
-    PurchaseOrderStatusOption,
-    PurchaseOrderStatusOption,
-    PurchaseOrderStatusOption,
-    PurchaseOrderStatusOption,
-  ] = [
+  const options: PurchaseOrderStatusOption[] = [
     {
       value: PurchaseOrderNodeStatus.New,
       label: getButtonLabel(PurchaseOrderNodeStatus.New),
       isDisabled: true,
     },
-    // TODO: Authorised should only be considered if pref is on?
-    {
-      value: PurchaseOrderNodeStatus.Authorised,
-      label: getButtonLabel(PurchaseOrderNodeStatus.Authorised),
-      isDisabled: true,
-    },
+    ...(requiresAuthorisation
+      ? [
+          {
+            value: PurchaseOrderNodeStatus.Authorised,
+            label: getButtonLabel(PurchaseOrderNodeStatus.Authorised),
+            isDisabled: true,
+          },
+        ]
+      : []),
     {
       value: PurchaseOrderNodeStatus.Confirmed,
       label: getButtonLabel(PurchaseOrderNodeStatus.Confirmed),
@@ -44,35 +68,35 @@ export const getStatusOptions = (
     },
   ];
 
-  if (currentStatus === PurchaseOrderNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-  }
-
-  if (currentStatus === PurchaseOrderNodeStatus.Authorised) {
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
-  }
-
-  if (currentStatus === PurchaseOrderNodeStatus.Confirmed) {
-    options[3].isDisabled = false;
-  }
+  enableNextOptions(options, currentStatus, requiresAuthorisation);
 
   return options;
 };
 
 export const getNextStatusOption = (
   status: PurchaseOrderNodeStatus | undefined,
-  options: PurchaseOrderStatusOption[]
+  options: PurchaseOrderStatusOption[],
+  requiresAuthorisation: boolean
 ): PurchaseOrderStatusOption | null => {
   if (!status) return options[0] ?? null;
 
-  const currentIndex = purchaseOrderStatuses.findIndex(
-    currentStatus => currentStatus === status
-  );
-  const nextStatus = purchaseOrderStatuses[currentIndex + 1];
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-  return nextStatusOption || null;
+  // Handles case where status is Authorised but requiresAuthorisation is false (got turned off)
+  if (status === PurchaseOrderNodeStatus.Authorised && !requiresAuthorisation) {
+    return (
+      options.find(
+        option => option.value === PurchaseOrderNodeStatus.Confirmed
+      ) || null
+    );
+  }
+
+  const filteredStatuses = requiresAuthorisation
+    ? purchaseOrderStatuses
+    : purchaseOrderStatuses.filter(
+        status => status !== PurchaseOrderNodeStatus.Authorised
+      );
+
+  const nextStatus = filteredStatuses[filteredStatuses.indexOf(status) + 1];
+  return options.find(option => option.value === nextStatus) || null;
 };
 
 export const getButtonLabel =
