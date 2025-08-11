@@ -74,8 +74,10 @@ mod delete {
 
         // test activity log for deleted
         let log = ActivityLogRowRepository::new(&context.connection)
-            .find_one_by_id(&id.clone())
+            .find_many_by_record_id("test_purchase_order_a")
             .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderLineDeleted)
             .unwrap();
 
         assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineDeleted);

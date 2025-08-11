@@ -170,19 +170,20 @@ mod update {
             Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap())
         );
 
-        // test activity log for updated
-        let log = ActivityLogRowRepository::new(&context.connection)
-            .find_one_by_id(&purchase_order_id.clone())
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderAuthorised);
-
+        // test activity log for created then updated status to authorised
         let logs = ActivityLogRowRepository::new(&context.connection)
             .find_many_by_record_id(&purchase_order_id.clone())
             .unwrap();
 
         assert_eq!(logs.len(), 2);
+
+        let log = logs
+            .clone()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderAuthorised)
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderAuthorised);
 
         let authorised_logs: Vec<_> = logs
             .into_iter()

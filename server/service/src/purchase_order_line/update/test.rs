@@ -99,7 +99,7 @@ mod update {
         assert_eq!(result.item_row.id, mock_item_b().id.clone());
 
         let log = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id(&result.purchase_order_line_row.id)
+            .find_many_by_record_id(&result.purchase_order_line_row.purchase_order_id)
             .unwrap()
             .into_iter()
             .find(|l| l.r#type == ActivityLogType::PurchaseOrderLineUpdated)

@@ -214,12 +214,14 @@ mod insert {
         assert_eq!(result_2_1.id, purchase_order_lines_2_1.id);
         assert_eq!(result_2_2.id, purchase_order_lines_2_2.id);
 
-        // test activity log for deleted
+        // test activity log for created
         let log = ActivityLogRowRepository::new(&context.connection)
-            .find_one_by_id("purchase_order_line_id_1_1")
+            .find_many_by_record_id("purchase_order_id_1")
             .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderLineCreated)
             .unwrap();
 
-        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineDeleted);
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineCreated);
     }
 }

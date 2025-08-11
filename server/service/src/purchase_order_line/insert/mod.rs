@@ -40,7 +40,7 @@ pub fn insert_purchase_order_line(
             activity_log_entry(
                 &ctx,
                 ActivityLogType::PurchaseOrderLineCreated,
-                Some(input.id.clone()),
+                Some(input.purchase_order_id.clone()),
                 None,
                 None,
             )?;

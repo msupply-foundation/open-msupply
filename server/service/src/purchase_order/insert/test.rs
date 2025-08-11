@@ -109,10 +109,10 @@ mod insert {
         assert_eq!(result.id, purchase_order.id);
 
         // Check logging of insertion
-        let log = ActivityLogRowRepository::new(&context.connection)
-            .find_one_by_id("purchase_order_id")
-            .unwrap()
+        let logs = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id("purchase_order_id")
             .unwrap();
+        let log = logs.first().unwrap();
 
         assert_eq!(log.r#type, ActivityLogType::PurchaseOrderCreated);
     }
