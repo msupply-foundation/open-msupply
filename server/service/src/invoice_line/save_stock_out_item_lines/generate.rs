@@ -84,6 +84,7 @@ pub fn generate(
                 r#type: stock_out_type.clone(),
                 stock_line_id,
                 number_of_packs,
+                campaign_id,
                 // Default (use None so the stock line values are used)
                 batch: None,
                 pack_size: None,
@@ -95,7 +96,8 @@ pub fn generate(
                 location_id: None,
                 cost_price_per_pack: None,
                 sell_price_per_pack: None,
-                campaign_id,
+                item_variant_id: None,
+                donor_id: None,
             },
         )
         .collect();
