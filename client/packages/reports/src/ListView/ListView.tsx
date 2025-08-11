@@ -9,7 +9,12 @@ import {
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
-import { BarIcon, InvoiceIcon, TrendingDownIcon } from '@common/icons';
+import {
+  BarIcon,
+  InvoiceIcon,
+  TrendingDownIcon,
+  TruckIcon,
+} from '@common/icons';
 import {
   useReportList,
   ReportRowFragment,
@@ -78,50 +83,60 @@ export const ListView = () => {
       <Grid
         container
         sx={{
-          backgroundColor: 'background.toolbar',
           paddingBottom: '32px',
           width: '100%',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridAutoRows: 'minmax(300px, auto)',
+          gap: 2,
+          m: 2,
         }}
-        justifyContent="space-evenly"
       >
         <ReportWidget
           title={t('heading.stock-and-items')}
           Icon={BarIcon}
           reports={categorisedReports.stockAndItems}
           onReportClick={onReportClick}
-          hasReports={categorisedReports.stockAndItems?.length !== 0}
+          hasReports={!!categorisedReports.stockAndItems.length}
+        />
+        <ReportWidget
+          title={t('distribution')}
+          Icon={TruckIcon}
+          reports={categorisedReports.distribution}
+          onReportClick={onReportClick}
+          hasReports={!!categorisedReports.distribution.length}
+        />
+        <ReportWidget
+          title={t('label.programs')}
+          Icon={InvoiceIcon}
+          reports={programReports}
+          onReportClick={onReportClick}
+          hasReports={
+            !!store?.preferences?.omProgramModule && !!programReports.length
+          }
         />
         <ReportWidget
           title={t('heading.expiring')}
           Icon={TrendingDownIcon}
           reports={categorisedReports.expiring}
           onReportClick={onReportClick}
-          hasReports={categorisedReports.expiring?.length !== 0}
+          hasReports={!!categorisedReports.expiring.length}
         />
         <ReportWidget
           title={t('heading.other')}
           Icon={InvoiceIcon}
           reports={categorisedReports.other}
           onReportClick={onReportClick}
-          hasReports={categorisedReports.other?.length !== 0}
-        />
-        {store?.preferences?.omProgramModule && (
-          <ReportWidget
-            title={t('label.programs')}
-            Icon={InvoiceIcon}
-            reports={programReports}
-            onReportClick={onReportClick}
-            hasReports={programReports?.length !== 0}
-          />
-        )}
-        <ReportArgumentsModal
-          key={reportWithArgs?.id}
-          report={reportWithArgs}
-          onReset={() => setReportWithArgs(undefined)}
-          onArgumentsSelected={reportArgs}
+          hasReports={!!categorisedReports.other.length}
         />
       </Grid>
 
+      <ReportArgumentsModal
+        key={reportWithArgs?.id}
+        report={reportWithArgs}
+        onReset={() => setReportWithArgs(undefined)}
+        onArgumentsSelected={reportArgs}
+      />
       <AppBarButtons />
       <SidePanel />
     </>
