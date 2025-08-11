@@ -1,0 +1,36 @@
+pub mod query;
+use repository::GoodsReceivedLine;
+use repository::GoodsReceivedLineFilter;
+use repository::GoodsReceivedLineSort;
+use repository::{PaginationOption, RepositoryError};
+
+use crate::{
+    goods_received_line::query::{get_goods_received_line, get_goods_received_lines},
+    service_provider::ServiceContext,
+    ListError, ListResult,
+};
+
+pub trait GoodsReceivedLineServiceTrait: Sync + Send {
+    fn get_goods_received_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id_option: Option<&str>,
+        id: &str,
+    ) -> Result<Option<GoodsReceivedLine>, RepositoryError> {
+        get_goods_received_line(ctx, store_id_option, id)
+    }
+
+    fn get_goods_received_lines(
+        &self,
+        ctx: &ServiceContext,
+        store_id_option: Option<&str>,
+        pagination: Option<PaginationOption>,
+        filter: Option<GoodsReceivedLineFilter>,
+        sort: Option<GoodsReceivedLineSort>,
+    ) -> Result<ListResult<GoodsReceivedLine>, ListError> {
+        get_goods_received_lines(ctx, store_id_option, pagination, filter, sort)
+    }
+}
+
+pub struct GoodsReceivedLineService;
+impl GoodsReceivedLineServiceTrait for GoodsReceivedLineService {}
