@@ -53,7 +53,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
       }}
     >
       <Grid container gap={2} flexWrap="nowrap">
-        <Grid display="flex" flex={1} flexDirection="column" gap={1}>
+        <Grid display="flex" flexDirection="column" gap={1}>
           {data?.supplier && (
             <InputWithLabelRow
               label={t('label.supplier-name')}
@@ -85,6 +85,8 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
               </Tooltip>
             }
           />
+        </Grid>
+        <Grid display="flex" flexGrow={1} flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('label.requested-delivery-date')}
             Input={
