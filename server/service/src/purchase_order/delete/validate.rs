@@ -1,6 +1,6 @@
 use super::DeletePurchaseOrderError;
-use crate::purchase_order::validate::{check_purchase_order_exists, purchase_order_is_editable};
-use repository::{PurchaseOrderRow, StorageConnection};
+use crate::purchase_order::validate::check_purchase_order_exists;
+use repository::{PurchaseOrderRow, PurchaseOrderStatus, StorageConnection};
 
 pub fn validate(
     id: &str,
@@ -16,8 +16,9 @@ pub fn validate(
         return Err(NotThisStorePurchaseOrder);
     }
 
-    if !purchase_order_is_editable(&purchase_order) {
-        return Err(CannotEditFinalised);
+    // Only allow deletion of purchase orders with NEW status
+    if purchase_order.status != PurchaseOrderStatus::New {
+        return Err(CannotDeleteNonNewPurchaseOrder);
     }
 
     Ok(purchase_order)

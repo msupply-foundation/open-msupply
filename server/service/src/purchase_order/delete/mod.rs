@@ -47,7 +47,7 @@ pub enum DeletePurchaseOrderError {
     PurchaseOrderDoesNotExist,
     DatabaseError(RepositoryError),
     NotThisStorePurchaseOrder,
-    CannotEditFinalised,
+    CannotDeleteNonNewPurchaseOrder,
     LineDeleteError {
         line_id: String,
         error: DeletePurchaseOrderLineError,
@@ -94,7 +94,7 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all,
-        PurchaseOrderRowRepository,
+        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
 
     use crate::{
@@ -104,7 +104,7 @@ mod test {
 
     #[actix_rt::test]
     async fn delete_purchase_order_errors() {
-        let (_, _, connection_manager, _) =
+        let (_, connection, connection_manager, _) =
             setup_all("delete_purchase_order_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
@@ -125,10 +125,34 @@ mod test {
             Err(ServiceError::NotThisStorePurchaseOrder)
         );
 
-        // CannotEditFinalised
+        // CannotDeleteNonNewPurchaseOrder - test with a FINALISED status purchase order
         assert_eq!(
             service.delete_purchase_order(&context, &mock_store_a().id, mock_purchase_order_c().id),
-            Err(ServiceError::CannotEditFinalised)
+            Err(ServiceError::CannotDeleteNonNewPurchaseOrder)
+        );
+
+        // CannotDeleteNonNewPurchaseOrder - test with a CONFIRMED status purchase order
+        let confirmed_purchase_order = PurchaseOrderRow {
+            id: "test_purchase_order_confirmed".to_string(),
+            store_id: mock_store_a().id,
+            status: PurchaseOrderStatus::Confirmed,
+            supplier_name_link_id: "name_a".to_string(),
+            purchase_order_number: 1111111111,
+            ..Default::default()
+        };
+
+        // Insert the confirmed purchase order for testing
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&confirmed_purchase_order)
+            .unwrap();
+
+        assert_eq!(
+            service.delete_purchase_order(
+                &context,
+                &mock_store_a().id,
+                confirmed_purchase_order.id
+            ),
+            Err(ServiceError::CannotDeleteNonNewPurchaseOrder)
         );
     }
 
