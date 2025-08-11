@@ -3,6 +3,7 @@ import {
   AlertModal,
   createQueryParamsStore,
   createTableStore,
+  DetailTabs,
   DetailViewSkeleton,
   PurchaseOrderNodeStatus,
   RouteBuilder,
@@ -21,6 +22,7 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
+import { ActivityLogList } from 'packages/system/src';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -59,6 +61,24 @@ export const DetailViewInner = () => {
 
   const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
 
+  const tabs = [
+    {
+      Component: (
+        <ContentArea
+          lines={sortedAndFilteredLines}
+          isDisabled={isDisabled}
+          onAddItem={onOpen}
+          onRowClick={!isDisabled ? onRowClick : null}
+        />
+      ),
+      value: 'Details',
+    },
+    {
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
+      value: 'Log',
+    },
+  ];
+
   return (
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
@@ -67,12 +87,7 @@ export const DetailViewInner = () => {
         <>
           <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
           <Toolbar isDisabled={isDisabled} />
-          <ContentArea
-            lines={sortedAndFilteredLines}
-            isDisabled={isDisabled}
-            onAddItem={onOpen}
-            onRowClick={!isDisabled ? onRowClick : null}
-          />
+          <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />
           {isOpen && (
