@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod add_activity_log_volume_per_pack_changed;
 mod add_campaign_and_program_to_stocktake_line;
 mod add_closed_vial_wastage_reason_option_type;
+mod add_comment_to_purchase_order_line;
 mod add_contact_table;
 mod add_goods_received_line_table;
 mod add_goods_received_table;
@@ -21,9 +22,10 @@ mod add_volume_to_location;
 mod add_vvm_status_to_stocktake_line;
 mod delete_unused_number_type;
 mod reintegrate_location_volume;
+mod rename_authorised_to_adjusted;
+mod rename_cold_storage_type_fk;
 mod rename_cold_storage_type_to_location_type;
 mod rename_vvm_status_level_to_priority;
-mod rename_authorised_to_adjusted;
 mod stock_volume_sync_buffer;
 
 pub(crate) struct V2_10_00;
@@ -61,7 +63,9 @@ impl Migration for V2_10_00 {
             Box::new(add_program_id_to_stock_and_invoice_lines::Migrate),
             Box::new(add_volume_to_location::Migrate),
             Box::new(reintegrate_location_volume::Migrate),
+            Box::new(rename_cold_storage_type_fk::Migrate),
             Box::new(add_vvm_status_to_stocktake_line::Migrate),
+            Box::new(add_comment_to_purchase_order_line::Migrate),
             Box::new(rename_authorised_to_adjusted::Migrate),
         ]
     }

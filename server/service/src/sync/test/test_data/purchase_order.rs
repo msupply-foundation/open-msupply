@@ -421,6 +421,7 @@ const PURCHASE_ORDER_3: (&str, &str) = (
         "serial_number": 1,
         "store_ID": "store_b",
         "confirm_date": "0000-00-00",
+        "curr_rate": 1.0,
         "Date_contract_signed": "0000-00-00",
         "Date_advance_payment": "0000-00-00",
         "po_sent_date": "0000-00-00",
@@ -450,7 +451,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: None,
+            foreign_exchange_rate: Some(1.0),
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
@@ -501,7 +502,7 @@ fn purchase_order_3_empty_string_push_record() -> TestSyncOutgoingRecord {
             insurance_charge: None,
             freight_charge: None,
             supplier_discount_amount: 0.0,
-            curr_rate: None,
+            curr_rate: Some(1.0),
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             donor_id: None,
@@ -538,6 +539,7 @@ const PURCHASE_ORDER_4: (&str, &str) = (
         "serial_number": 1,
         "store_ID": "store_b",
         "confirm_date": "0000-00-00",
+        "curr_rate": 1.0,
         "received_at_port_date": "0000-00-00",
         "Date_contract_signed": "0000-00-00",
         "Date_advance_payment": "0000-00-00",
@@ -568,7 +570,7 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: None,
+            foreign_exchange_rate: Some(1.0),
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
@@ -618,7 +620,7 @@ fn purchase_order_4_empty_object_push_record() -> TestSyncOutgoingRecord {
             insurance_charge: None,
             freight_charge: None,
             supplier_discount_amount: 0.0,
-            curr_rate: None,
+            curr_rate: Some(1.0),
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             donor_id: None,
@@ -652,6 +654,7 @@ const PURCHASE_ORDER_5: (&str, &str) = (
         "status": "nw",
         "serial_number": 1,
         "store_ID": "store_b",
+        "curr_rate": 1.0,
         "confirm_date": "0000-00-00",
         "received_at_port_date": "0000-00-00",
         "Date_contract_signed": "0000-00-00",
@@ -677,6 +680,7 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
+            foreign_exchange_rate: Some(1.0),
             ..Default::default()
         },
     )
@@ -709,7 +713,7 @@ fn purchase_order_5_null_push_record() -> TestSyncOutgoingRecord {
             insurance_charge: None,
             freight_charge: None,
             supplier_discount_amount: 0.0,
-            curr_rate: None,
+            curr_rate: Some(1.0),
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             donor_id: None,
@@ -742,6 +746,7 @@ const PURCHASE_ORDER_6: (&str, &str) = (
         "status": "nw",
         "serial_number": 1,
         "store_ID": "store_b",
+        "curr_rate": 1.0,
         "confirm_date": "0000-00-00",
         "received_at_port_date": "0000-00-00",
         "Date_contract_signed": "0000-00-00",
@@ -766,6 +771,7 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
+            foreign_exchange_rate: Some(1.0),
             ..Default::default()
         },
     )
@@ -797,7 +803,7 @@ fn purchase_order_6_no_fields_push_record() -> TestSyncOutgoingRecord {
             insurance_charge: None,
             freight_charge: None,
             supplier_discount_amount: 0.0,
-            curr_rate: None,
+            curr_rate: Some(1.0),
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             donor_id: None,

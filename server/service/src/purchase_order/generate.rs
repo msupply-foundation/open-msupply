@@ -48,6 +48,7 @@ pub fn generate_empty_purchase_order_lines(
                     supplier_item_code: None,
                     price_per_unit_before_discount: 0.0,
                     price_per_unit_after_discount: 0.0,
+                    comment: None,
                 });
             }
             Ok(None) => {}

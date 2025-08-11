@@ -107,6 +107,8 @@ pub enum UpdateStockInLineError {
     NotThisInvoiceLine(String),
     VVMStatusDoesNotExist,
     ProgramNotVisible,
+    IncorrectLocationType,
+    CampaignDoesNotExist,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {
@@ -132,8 +134,9 @@ mod test {
     use repository::{
         mock::{
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
-            mock_immunisation_program_a, mock_item_a, mock_item_b, mock_name_store_b, mock_store_a,
-            mock_store_b, mock_supplier_return_a_invoice_line_a,
+            mock_immunisation_program_a, mock_inbound_shipment_a, mock_item_a, mock_item_b,
+            mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
+            mock_name_store_b, mock_store_a, mock_store_b, mock_supplier_return_a_invoice_line_a,
             mock_transferred_inbound_shipment_a, mock_user_account_a, mock_vaccine_item_a,
             mock_vvm_status_a, mock_vvm_status_b, MockData, MockDataInserts,
         },
@@ -143,7 +146,6 @@ mod test {
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
         StorePreferenceRow, StorePreferenceRowRepository,
     };
-   
 
     use crate::{
         invoice_line::stock_in_line::{
@@ -176,12 +178,25 @@ mod test {
                 ..Default::default()
             }
         }
+        fn item_line_with_restricted_location_type_b() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "item_line_with_restricted_location_type_b".to_string(),
+                invoice_id: mock_inbound_shipment_a().id,
+                item_link_id: mock_item_restricted_location_type_b().id,
+                r#type: InvoiceLineType::StockIn,
+                number_of_packs: 30.0,
+                ..Default::default()
+            }
+        }
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_stock_in_line_errors",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![verified_return()],
-                invoice_lines: vec![verified_return_line()],
+                invoice_lines: vec![
+                    verified_return_line(),
+                    item_line_with_restricted_location_type_b(),
+                ],
                 ..Default::default()
             },
         )
@@ -349,6 +364,22 @@ mod test {
                 },
             ),
             Err(ServiceError::NotThisStoreInvoice)
+        );
+
+        // IncorrectLocationType
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: item_line_with_restricted_location_type_b().id,
+                    r#type: StockInType::InboundShipment,
+                    location: Some(NullableUpdate {
+                        value: Some(mock_location_with_restricted_location_type_a().id),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::IncorrectLocationType)
         );
     }
 

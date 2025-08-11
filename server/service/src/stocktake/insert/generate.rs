@@ -68,6 +68,7 @@ fn generate_stocktake_lines(
         description: _,
         create_blank_stocktake,
         include_all_master_list_items,
+        vvm_status_id,
     }: InsertStocktake,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     if let Some(true) = create_blank_stocktake {
@@ -104,6 +105,10 @@ fn generate_stocktake_lines(
     if let Some(location_id) = location_id {
         stock_line_filter = stock_line_filter
             .location(LocationFilter::new().id(EqualFilter::equal_to(&location_id)))
+    }
+
+    if let Some(vvm_status_id) = vvm_status_id {
+        stock_line_filter = stock_line_filter.vvm_status_id(EqualFilter::equal_to(&vvm_status_id));
     }
 
     if let Some(expires_before_date) = expires_before {

@@ -2611,6 +2611,12 @@ export type EqualFilterGenderType = {
   notEqualTo?: InputMaybe<GenderType>;
 };
 
+export type EqualFilterGoodsReceivedStatusInput = {
+  equalAny?: InputMaybe<Array<GoodsReceivedNodeStatus>>;
+  equalTo?: InputMaybe<GoodsReceivedNodeStatus>;
+  notEqualTo?: InputMaybe<GoodsReceivedNodeStatus>;
+};
+
 export type EqualFilterInventoryAdjustmentReasonTypeInput = {
   equalAny?: InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
   equalTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
@@ -2872,6 +2878,52 @@ export type GeneratedCustomerReturnLineConnector = {
   __typename: 'GeneratedCustomerReturnLineConnector';
   nodes: Array<CustomerReturnLineNode>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type GoodsReceivedConnector = {
+  __typename: 'GoodsReceivedConnector';
+  nodes: Array<GoodsReceivedNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type GoodsReceivedFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterGoodsReceivedStatusInput>;
+};
+
+export type GoodsReceivedListResponse = GoodsReceivedConnector;
+
+export type GoodsReceivedNode = {
+  __typename: 'GoodsReceivedNode';
+  comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  number: Scalars['Int']['output'];
+  purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;
+  receivedDatetime?: Maybe<Scalars['NaiveDate']['output']>;
+  status: GoodsReceivedNodeStatus;
+  supplier?: Maybe<NameNode>;
+  supplierReference?: Maybe<Scalars['String']['output']>;
+};
+
+export enum GoodsReceivedNodeStatus {
+  Authorised = 'AUTHORISED',
+  Confirmed = 'CONFIRMED',
+  Finalised = 'FINALISED',
+  New = 'NEW',
+}
+
+export type GoodsReceivedResponse = GoodsReceivedNode | RecordNotFound;
+
+export enum GoodsReceivedSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+}
+
+export type GoodsReceivedSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: GoodsReceivedSortFieldInput;
 };
 
 export type Gs1DataElement = {
@@ -3787,6 +3839,7 @@ export type InsertStocktakeInput = {
   isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStocktakeLineError = {
@@ -4492,6 +4545,7 @@ export type ItemNode = {
   msupplyUniversalName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
+  programs?: Maybe<Array<ProgramNode>>;
   restrictedLocationType?: Maybe<LocationTypeNode>;
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
@@ -4519,6 +4573,10 @@ export type ItemNodeItemStorePropertiesArgs = {
 };
 
 export type ItemNodeMasterListsArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type ItemNodeProgramsArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -6360,6 +6418,7 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
+  AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   CustomTranslations = 'customTranslations',
   GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
@@ -6397,6 +6456,7 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  authorisePurchaseOrder: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
   genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
@@ -6940,6 +7000,8 @@ export type Queries = {
    */
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
   getVvmStatusLogByStockLine: VvmstatusLogResponse;
+  goodsReceived: GoodsReceivedResponse;
+  goodsReceivedList: GoodsReceivedListResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
@@ -7307,6 +7369,18 @@ export type QueriesGenerateSupplierReturnLinesArgs = {
 
 export type QueriesGetVvmStatusLogByStockLineArgs = {
   stockLineId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesGoodsReceivedArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesGoodsReceivedListArgs = {
+  filter?: InputMaybe<GoodsReceivedFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<GoodsReceivedSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -8627,6 +8701,7 @@ export type StockLineFilterInput = {
   locationId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
+  vvmStatusId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface &
@@ -10427,6 +10502,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   genderOptions?: InputMaybe<Array<GenderType>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
