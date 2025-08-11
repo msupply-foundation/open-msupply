@@ -3,14 +3,14 @@ import {
   AppBarContentPortal,
   FilterMenu,
   Box,
-  useTranslation,
+  // useTranslation,
 } from '@openmsupply-client/common';
 
 // Placeholder for filters
 const filters: any[] = [];
 
 export const Toolbar: React.FC = () => {
-  const t = useTranslation();
+  // const t = useTranslation();
   return (
     <AppBarContentPortal
       sx={{
