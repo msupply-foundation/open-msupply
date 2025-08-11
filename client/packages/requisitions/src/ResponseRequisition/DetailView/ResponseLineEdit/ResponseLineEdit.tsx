@@ -13,7 +13,6 @@ import {
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
   StockItemSearchInputWithStats,
-  useReasonOptions,
 } from '@openmsupply-client/system';
 import { ResponseFragment, ResponseLineFragment } from '../../api';
 import {
@@ -60,7 +59,6 @@ export const ResponseLineEdit = ({
   setIsEditingSupply,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
-  const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
@@ -201,8 +199,6 @@ export const ResponseLineEdit = ({
                 }}
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
-                reasonOptions={reasonOptions?.nodes ?? []}
-                loading={isLoading}
                 inputProps={{
                   error: isReasonsError,
                 }}

@@ -185,6 +185,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)
         }
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

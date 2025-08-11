@@ -27,6 +27,7 @@ mod item_store_join;
 mod item_variant;
 pub mod ledger;
 mod location;
+mod location_type;
 mod name;
 mod name_store_join;
 mod name_tag;
@@ -100,6 +101,7 @@ pub use item::*;
 pub use item_store_join::*;
 pub use item_variant::*;
 pub use location::*;
+pub use location_type::*;
 pub use name::*;
 pub use name_store_join::*;
 pub use name_tag::*;
@@ -250,6 +252,7 @@ pub struct MockData {
     pub item_store_joins: Vec<ItemStoreJoinRow>,
     pub purchase_order: Vec<PurchaseOrderRow>,
     pub purchase_order_line: Vec<PurchaseOrderLineRow>,
+    pub location_types: Vec<LocationTypeRow>,
 }
 
 impl MockData {
@@ -341,6 +344,7 @@ pub struct MockDataInserts {
     pub item_store_joins: bool,
     pub purchase_order: bool,
     pub purchase_order_line: bool,
+    pub location_types: bool,
 }
 
 impl MockDataInserts {
@@ -421,6 +425,7 @@ impl MockDataInserts {
             item_store_joins: true,
             purchase_order: true,
             purchase_order_line: true,
+            location_types: true,
         }
     }
     pub fn none() -> Self {
@@ -490,12 +495,14 @@ impl MockDataInserts {
     }
 
     pub fn items(mut self) -> Self {
+        self.location_types = true;
         self.units = true;
         self.items = true;
         self
     }
 
     pub fn item_store_joins(mut self) -> Self {
+        self.location_types = true;
         self.units = true;
         self.items = true;
         self.names = true;
@@ -505,6 +512,7 @@ impl MockDataInserts {
     }
 
     pub fn item_variants(mut self) -> Self {
+        self.location_types = true;
         self.units = true;
         self.items = true;
         self.item_variants = true;
@@ -512,6 +520,7 @@ impl MockDataInserts {
     }
 
     pub fn locations(mut self) -> Self {
+        self.location_types = true;
         self.locations = true;
         self
     }
@@ -787,6 +796,7 @@ impl MockDataInserts {
         self
     }
     pub fn purchase_order_line(mut self) -> Self {
+        self.location_types = true;
         self.names = true;
         self.units = true;
         self.items = true;
@@ -794,6 +804,11 @@ impl MockDataInserts {
         self.currencies = true;
         self.purchase_order = true;
         self.purchase_order_line = true;
+        self
+    }
+
+    pub fn location_types(mut self) -> Self {
+        self.location_types = true;
         self
     }
 }
@@ -895,6 +910,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             item_store_joins: mock_item_store_joins(),
             purchase_order: mock_purchase_orders(),
             purchase_order_line: mock_purchase_order_lines(),
+            location_types: mock_location_types(),
             ..Default::default()
         },
     );
@@ -1038,6 +1054,13 @@ pub fn insert_mock_data(
         if inserts.currencies {
             let repo = crate::CurrencyRowRepository::new(connection);
             for row in &mock_data.currencies {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.location_types {
+            let repo = LocationTypeRowRepository::new(connection);
+            for row in &mock_data.location_types {
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1553,6 +1576,7 @@ impl MockData {
             mut item_store_joins,
             mut purchase_order,
             mut purchase_order_line,
+            mut location_types,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1630,6 +1654,7 @@ impl MockData {
         self.item_store_joins.append(&mut item_store_joins);
         self.purchase_order.append(&mut purchase_order);
         self.purchase_order_line.append(&mut purchase_order_line);
+        self.location_types.append(&mut location_types);
         self
     }
 }

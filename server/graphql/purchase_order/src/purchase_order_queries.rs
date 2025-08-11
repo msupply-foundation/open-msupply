@@ -73,7 +73,7 @@ pub fn get_purchase_order(
 
     match service_provider
         .purchase_order_service
-        .get_purchase_order(&service_context, &store_id, id)
+        .get_purchase_order(&service_context, Some(&store_id), id)
         .map_err(StandardGraphqlError::from_repository_error)
     {
         Ok(order) => {
@@ -111,7 +111,7 @@ pub fn get_purchase_orders(
         .purchase_order_service
         .get_purchase_orders(
             &service_context,
-            &store_id,
+            Some(&store_id),
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())
