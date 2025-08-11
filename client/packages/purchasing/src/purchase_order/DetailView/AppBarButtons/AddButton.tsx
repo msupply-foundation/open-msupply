@@ -9,7 +9,7 @@ import { PurchaseOrderNodeStatus } from '@common/types';
 
 interface AddButtonProps {
   purchaseOrder: PurchaseOrderFragment | undefined;
-  onAddItem: (newState: boolean) => void;
+  onAddItem: () => void;
   /** Disable the whole control */
   disable: boolean;
   disableAddFromMasterListButton: boolean;
@@ -54,7 +54,7 @@ export const AddButton = ({
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
       case 'add-item':
-        onAddItem(true);
+        onAddItem();
         break;
       case 'add-from-master-list':
         // Mimmicking OG behaviour where purchase orders can be edited when confirmed AND when authorised

@@ -98,7 +98,9 @@ const ListView: FC = () => {
         'status',
         {
           formatter: status =>
-            getPurchaseOrderStatusTranslator(t)(status as PurchaseOrderNodeStatus),
+            getPurchaseOrderStatusTranslator(t)(
+              status as PurchaseOrderNodeStatus
+            ),
         },
       ],
       {
