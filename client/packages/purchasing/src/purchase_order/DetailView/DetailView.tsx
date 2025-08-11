@@ -13,10 +13,10 @@ import {
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { AppRoute } from 'packages/config/src';
 import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea } from './ContentArea';
+import { ContentArea, Details } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -32,23 +32,21 @@ export const DetailViewInner = () => {
   const {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
+    draft,
+    handleChange,
   } = usePurchaseOrder();
-
-  useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.number]);
 
   const {
     onOpen,
     onClose,
     mode,
-    entity: itemId,
+    entity: lineId,
     isOpen,
   } = useEditModal<string | null>();
 
   const onRowClick = useCallback(
     (line: PurchaseOrderLineFragment) => {
-      onOpen(line.item.id);
+      onOpen(line.id);
     },
     [onOpen]
   );
@@ -71,6 +69,10 @@ export const DetailViewInner = () => {
           onRowClick={!isDisabled ? onRowClick : null}
         />
       ),
+      value: 'General',
+    },
+    {
+      Component: <Details draft={draft} onChange={handleChange} />,
       value: 'Details',
     },
     {
@@ -95,7 +97,7 @@ export const DetailViewInner = () => {
               isOpen={isOpen}
               onClose={onClose}
               mode={mode}
-              itemId={itemId}
+              lineId={lineId}
               purchaseOrder={data}
             />
           )}
