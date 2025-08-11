@@ -285,6 +285,7 @@
   "error.encounter-not-found": "Encounter not found.",
   "error.estimated-delivery-before-shipped-date": "Estimated delivery date must be after the shipped date",
   "error.facility-not-found": "Facility not found",
+  "error.failed-to-create-goods-received": "Failed to create Goods Received!",
   "error.failed-to-create-outbound": "Failed to create Outbound Shipment",
   "error.failed-to-create-prescription": "Failed to create prescription!",
   "error.failed-to-create-purchase-order": "Failed to create Purchase order!",
