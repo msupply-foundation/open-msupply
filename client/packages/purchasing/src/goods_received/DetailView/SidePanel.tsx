@@ -2,14 +2,13 @@ import React, { ReactElement } from 'react';
 import {
   useTranslation,
   DetailPanelPortal,
+  DetailPanelSection,
   Grid,
   PanelRow,
   PanelLabel,
-  NumericTextInput,
-  DateTimePickerInput,
+  PanelField,
   DateUtils,
   TextArea,
-  BasicTextInput,
 } from '@openmsupply-client/common';
 import { DonorSearchInput } from '@openmsupply-client/system/src';
 import { useGoodsReceived } from '../api/hooks';
@@ -22,78 +21,84 @@ export const SidePanel = (): ReactElement => {
 
   return (
     <DetailPanelPortal>
-      <Grid
-        container
-        gap={4}
-        key="goods-received-side-panel"
-        sx={{
-          padding: 2,
-        }}
-      >
-        <PanelRow>
-          <PanelLabel>{t('label.goods-received-number')}</PanelLabel>
-          <NumericTextInput value={data?.number} disabled />
-        </PanelRow>
+      <DetailPanelSection title={t('heading.details')}>
+        <Grid container gap={1} key="goods-received-details">
+          <PanelRow>
+            <PanelLabel>{t('label.goods-received-number')}</PanelLabel>
+            <PanelField>{data?.number ?? ''}</PanelField>
+          </PanelRow>
 
-        <PanelRow>
-          <PanelLabel>{t('label.purchase-order-number')}</PanelLabel>
-          <NumericTextInput value={data?.purchaseOrderNumber ?? 0} disabled />
-        </PanelRow>
+          <PanelRow>
+            <PanelLabel>{t('label.purchase-order-number')}</PanelLabel>
+            <PanelField>{data?.purchaseOrderNumber ?? ''}</PanelField>
+          </PanelRow>
 
-        {/* TODO: Extend backend to have loader for inbound shipment? */}
-        <PanelRow>
-          <PanelLabel>{t('label.inbound-shipment')}</PanelLabel>
-          <BasicTextInput value={'Inbound Shipment ID'} disabled />
-        </PanelRow>
+          <PanelRow>
+            <PanelLabel>{t('label.inbound-shipment')}</PanelLabel>
+            <PanelField>Inbound Shipment</PanelField>
+          </PanelRow>
 
-        <PanelRow>
-          <PanelLabel>{t('label.status')}</PanelLabel>
-          <NumericTextInput value={data?.number} disabled />
-        </PanelRow>
+          <PanelRow>
+            <PanelLabel>{t('label.status')}</PanelLabel>
+            <PanelField>{data?.number ?? ''}</PanelField>
+          </PanelRow>
+        </Grid>
+      </DetailPanelSection>
 
-        <PanelRow>
-          <PanelLabel>{t('label.created-by')}</PanelLabel>
-          <NumericTextInput value={data?.number} disabled />
-        </PanelRow>
+      <DetailPanelSection title={t('heading.additional-info')}>
+        <Grid container gap={1} key="additional-info">
+          <PanelRow>
+            <PanelLabel>{t('label.created-by')}</PanelLabel>
+            <PanelField>{data?.number ?? ''}</PanelField>
+          </PanelRow>
+          <PanelRow>
+            <PanelLabel>{t('label.created-datetime')}</PanelLabel>
+            <PanelField>
+              {data?.createdDatetime
+                ? DateUtils.getDateOrNull(
+                    data.createdDatetime
+                  )?.toLocaleDateString()
+                : ''}
+            </PanelField>
+          </PanelRow>
 
-        <PanelRow>
-          <PanelLabel>{t('label.created-datetime')}</PanelLabel>
-          <DateTimePickerInput
-            disabled
-            value={DateUtils.getDateOrNull(data?.createdDatetime)}
-            format="P"
-            onChange={() => {}}
-            textFieldSx={{
-              backgroundColor: 'white',
+          <PanelRow
+            sx={{
+              '& .MuiInputBase-root': {
+                backgroundColor: theme => theme.palette.background.white,
+                fontSize: '12px',
+                borderRadius: '4px',
+              },
             }}
-            actions={['cancel']}
-          />
-        </PanelRow>
+          >
+            <PanelLabel>{t('label.donor')}</PanelLabel>
+            <DonorSearchInput
+              donorId={''}
+              onChange={donor =>
+                console.info('TODO: Handle donor change', donor)
+              }
+            />
+          </PanelRow>
+        </Grid>
+      </DetailPanelSection>
 
-        <PanelRow
-          sx={{
-            '.MuiInputBase-root': {
-              backgroundColor: 'white',
-            },
-          }}
-        >
-          {/* TODO: Extend backend to have loader for donor*/}
-          <PanelLabel>{t('label.donor')}</PanelLabel>
-          <DonorSearchInput
-            donorId={''}
-            onChange={donor => console.info('TODO: Handle donor change', donor)}
-          />
-        </PanelRow>
-
-        <PanelLabel>{t('label.comment')}</PanelLabel>
+      <DetailPanelSection title={t('heading.comment')}>
         <TextArea
           fullWidth
           value={data?.comment ?? ''}
           onChange={e =>
             console.info('TODO: Handle comment change', e.target.value)
           }
+          sx={{
+            '& .MuiInputBase-root': {
+              backgroundColor: theme => theme.palette.background.white,
+              fontSize: '12px',
+              borderRadius: '4px',
+              minHeight: '80px',
+            },
+          }}
         />
-      </Grid>
+      </DetailPanelSection>
     </DetailPanelPortal>
   );
 };
