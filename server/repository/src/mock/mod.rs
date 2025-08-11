@@ -46,7 +46,6 @@ mod stock_line;
 mod stocktake;
 mod stocktake_line;
 mod store;
-mod sync_log;
 mod temperature_breach;
 mod temperature_breach_config;
 mod temperature_log;
@@ -117,7 +116,6 @@ pub use stock_line::*;
 pub use stocktake::*;
 pub use stocktake_line::*;
 pub use store::*;
-pub use sync_log::*;
 pub use temperature_breach::*;
 pub use temperature_breach_config::*;
 pub use temperature_log::*;
@@ -861,7 +859,6 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             printer: mock_printers(),
             vvm_statuses: mock_vvm_statuses(),
             campaigns: mock_campaigns(),
-            sync_logs: mock_sync_logs(),
             ..Default::default()
         },
     );
