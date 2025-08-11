@@ -253,6 +253,7 @@ pub struct MockData {
     pub purchase_order: Vec<PurchaseOrderRow>,
     pub purchase_order_line: Vec<PurchaseOrderLineRow>,
     pub location_types: Vec<LocationTypeRow>,
+    pub preferences: Vec<PreferenceRow>,
 }
 
 impl MockData {
@@ -345,6 +346,7 @@ pub struct MockDataInserts {
     pub purchase_order: bool,
     pub purchase_order_line: bool,
     pub location_types: bool,
+    pub preferences: bool,
 }
 
 impl MockDataInserts {
@@ -426,6 +428,7 @@ impl MockDataInserts {
             purchase_order: true,
             purchase_order_line: true,
             location_types: true,
+            preferences: true,
         }
     }
     pub fn none() -> Self {
@@ -809,6 +812,10 @@ impl MockDataInserts {
 
     pub fn location_types(mut self) -> Self {
         self.location_types = true;
+    }
+
+    pub fn preferences(mut self) -> Self {
+        self.preferences = true;
         self
     }
 }
@@ -1493,6 +1500,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.preferences {
+            let repo = PreferenceRowRepository::new(connection);
+            for row in &mock_data.preferences {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1577,6 +1591,7 @@ impl MockData {
             mut purchase_order,
             mut purchase_order_line,
             mut location_types,
+            mut preferences,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1655,6 +1670,7 @@ impl MockData {
         self.purchase_order.append(&mut purchase_order);
         self.purchase_order_line.append(&mut purchase_order_line);
         self.location_types.append(&mut location_types);
+        self.preferences.append(&mut preferences);
         self
     }
 }
