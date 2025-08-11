@@ -3,7 +3,7 @@ mod insert {
     use repository::{
         mock::{mock_item_a, mock_name_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
-        PurchaseOrderLineRowRepository,
+        ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineRowRepository,
     };
 
     use crate::{
@@ -213,5 +213,13 @@ mod insert {
         assert_eq!(result_1_2.id, purchase_order_lines_1_2.id);
         assert_eq!(result_2_1.id, purchase_order_lines_2_1.id);
         assert_eq!(result_2_2.id, purchase_order_lines_2_2.id);
+
+        // test activity log for deleted
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_one_by_id("purchase_order_line_id_1_1")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineDeleted);
     }
 }

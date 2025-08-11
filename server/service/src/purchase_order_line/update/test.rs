@@ -3,6 +3,7 @@ mod update {
     use repository::{
         mock::{mock_item_a, mock_item_b, mock_store_a, MockDataInserts},
         test_db::setup_all,
+        ActivityLogRowRepository, ActivityLogType,
     };
 
     use crate::{
@@ -95,6 +96,15 @@ mod update {
             result.purchase_order_line_row.id,
             "purchase_order_line_id_1"
         );
-        assert_eq!(result.item_row.id, mock_item_b().id.clone())
+        assert_eq!(result.item_row.id, mock_item_b().id.clone());
+
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&result.purchase_order_line_row.id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderLineUpdated)
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineUpdated);
     }
 }

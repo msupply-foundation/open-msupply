@@ -31,12 +31,14 @@ mod update {
 
         let store_id = &mock_store_a().id;
 
+        let purchase_order_id = "purchase_order_id".to_string();
+
         service
             .insert_purchase_order(
                 &context,
                 &mock_store_a().id,
                 InsertPurchaseOrderInput {
-                    id: "purchase_order_id".to_string(),
+                    id: purchase_order_id.clone(),
                     supplier_id: mock_name_a().id.to_string(),
                 },
             )
@@ -48,7 +50,7 @@ mod update {
                 &context,
                 store_id,
                 UpdatePurchaseOrderInput {
-                    id: "purchase_order_id".to_string(),
+                    id: purchase_order_id.clone(),
                     supplier_id: Some("non_existent_supplier".to_string()),
                     ..Default::default()
                 }
@@ -62,7 +64,7 @@ mod update {
                 &context,
                 store_id,
                 UpdatePurchaseOrderInput {
-                    id: "purchase_order_id".to_string(),
+                    id: purchase_order_id.clone(),
                     supplier_id: Some(mock_name_store_b().id.to_string()),
                     ..Default::default()
                 }
@@ -76,7 +78,7 @@ mod update {
                 &context,
                 store_id,
                 UpdatePurchaseOrderInput {
-                    id: "purchase_order_id".to_string(),
+                    id: purchase_order_id.clone(),
                     donor_id: Some(NullableUpdate {
                         value: Some("non_existent_donor".to_string())
                     }),
@@ -99,6 +101,7 @@ mod update {
         let service = service_provider.purchase_order_service;
 
         let store_id = &mock_store_a().id;
+        let purchase_order_id = "purchase_order_id".to_string();
 
         // Create a purchase order row with a valid supplier
         service
@@ -106,7 +109,7 @@ mod update {
                 &context,
                 store_id,
                 InsertPurchaseOrderInput {
-                    id: "purchase_order_id".to_string(),
+                    id: purchase_order_id.clone(),
                     supplier_id: mock_name_a().id.to_string(),
                 },
             )
@@ -114,7 +117,7 @@ mod update {
 
         let order_total_before_discount = 1000.0;
         let mut purchase_order = PurchaseOrderRowRepository::new(&context.connection)
-            .find_one_by_id("purchase_order_id")
+            .find_one_by_id(&purchase_order_id.clone())
             .unwrap()
             .unwrap();
 
@@ -130,7 +133,7 @@ mod update {
                 &context,
                 store_id,
                 UpdatePurchaseOrderInput {
-                    id: "purchase_order_id".to_string(),
+                    id: purchase_order_id.clone(),
                     supplier_discount_percentage: Some(discount_percentage),
                     comment: Some("Updated comment".to_string()),
                     status: Some(PurchaseOrderStatus::Authorised),
@@ -143,7 +146,7 @@ mod update {
             .unwrap();
 
         let purchase_order = PurchaseOrderRowRepository::new(&context.connection)
-            .find_one_by_id("purchase_order_id")
+            .find_one_by_id(&purchase_order_id.clone())
             .unwrap()
             .unwrap();
 
@@ -169,7 +172,7 @@ mod update {
 
         // test activity log for updated
         let log = ActivityLogRowRepository::new(&context.connection)
-            .find_one_by_id("purchase_order_id")
+            .find_one_by_id(&purchase_order_id.clone())
             .unwrap()
             .unwrap();
 
@@ -181,11 +184,91 @@ mod update {
                 &context,
                 store_id,
                 UpdatePurchaseOrderInput {
-                    id: "purchase_order_id".to_string(),
+                    id: purchase_order_id.clone(),
                     status: Some(PurchaseOrderStatus::New),
                     ..Default::default()
                 },
             )
             .unwrap();
+
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderUnauthorised)
+            .unwrap();
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderUnauthorised);
+
+        // Authorise purchase order again
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(PurchaseOrderStatus::Authorised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let logs = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
+            .unwrap();
+
+        assert_eq!(logs.len(), 3);
+
+        let authorised_logs: Vec<_> = logs
+            .into_iter()
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderAuthorised)
+            .collect();
+
+        assert_eq!(authorised_logs.len(), 2);
+
+        // set purchase order to confirmed
+
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(PurchaseOrderStatus::Confirmed),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderConfirmed)
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderConfirmed);
+
+        // Set purchase order to finalised
+
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(PurchaseOrderStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderFinalised)
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderFinalised);
     }
 }
