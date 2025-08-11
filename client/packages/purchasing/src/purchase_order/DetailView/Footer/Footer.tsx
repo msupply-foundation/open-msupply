@@ -7,6 +7,8 @@ import {
   ActionsFooter,
   PurchaseOrderNodeStatus,
   StatusCrumbs,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
@@ -14,11 +16,16 @@ import { StatusChangeButton } from './StatusChangeButton';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 import { PurchaseOrderFragment } from '../../api';
 
-const createStatusLog = (purchaseOrder: PurchaseOrderFragment) => {
+const createStatusLog = (
+  purchaseOrder: PurchaseOrderFragment,
+  requiresAuthorisation: boolean
+) => {
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
       [PurchaseOrderNodeStatus.New]: purchaseOrder.createdDatetime,
-      [PurchaseOrderNodeStatus.Authorised]: purchaseOrder.authorisedDatetime,
+      [PurchaseOrderNodeStatus.Authorised]: requiresAuthorisation
+        ? purchaseOrder.authorisedDatetime
+        : null,
       [PurchaseOrderNodeStatus.Confirmed]: purchaseOrder.confirmedDatetime,
       [PurchaseOrderNodeStatus.Finalised]: purchaseOrder.finalisedDatetime,
     };
@@ -27,10 +34,13 @@ const createStatusLog = (purchaseOrder: PurchaseOrderFragment) => {
 };
 
 export const Footer: FC = () => {
+  const t = useTranslation();
   const {
     query: { data },
   } = usePurchaseOrder();
-  const t = useTranslation();
+  const { data: preferences } = usePreference(
+    PreferenceKey.AuthorisePurchaseOrder
+  );
 
   const selectedRows = [];
   const confirmAndDelete = () => {};
@@ -42,6 +52,13 @@ export const Footer: FC = () => {
       onClick: confirmAndDelete,
     },
   ];
+
+  const requiresAuthorisation = preferences?.authorisePurchaseOrder ?? false;
+  const filteredStatuses = requiresAuthorisation
+    ? purchaseOrderStatuses
+    : purchaseOrderStatuses.filter(
+        status => status !== PurchaseOrderNodeStatus.Authorised
+      );
 
   return (
     <AppFooterPortal
@@ -62,8 +79,11 @@ export const Footer: FC = () => {
               height={64}
             >
               <StatusCrumbs
-                statuses={purchaseOrderStatuses}
-                statusLog={createStatusLog(data)}
+                statuses={filteredStatuses}
+                statusLog={createStatusLog(
+                  data,
+                  preferences?.authorisePurchaseOrder ?? false
+                )}
                 statusFormatter={getStatusTranslator(t)}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
