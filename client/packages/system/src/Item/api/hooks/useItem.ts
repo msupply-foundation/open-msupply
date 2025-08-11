@@ -1,17 +1,29 @@
 import { useParams, useQuery } from '@openmsupply-client/common';
 import { useItemGraphQL } from '../useItemGraphQL';
 import { ITEM } from '../keys';
+import { useItems } from './useItems';
 
 export function useItem(id?: string) {
   const { data, isLoading, error } = useGetById(id);
   const { data: stockLinesFromItem, isLoading: stockLinesIsLoading } =
     useStockLinesFromItem(id);
 
+  const {
+    serviceItems: { data: serviceItems, isLoading: serviceItemsLoading },
+  } = useItems();
+  const defaultServiceItem =
+    serviceItems?.nodes.find(({ code }) => code === 'service') ??
+    serviceItems?.nodes?.[0];
+
   return {
     byId: { data, isLoading, error },
     stockLinesFromItem: {
       data: stockLinesFromItem,
       isLoading: stockLinesIsLoading,
+    },
+    serviceItem: {
+      data: defaultServiceItem,
+      isLoading: serviceItemsLoading,
     },
   };
 }
