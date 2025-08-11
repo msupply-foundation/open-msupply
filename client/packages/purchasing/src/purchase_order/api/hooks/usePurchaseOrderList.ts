@@ -96,7 +96,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
   } = useMutation({
     mutationFn: deleteMutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]);
+      queryClient.invalidateQueries([LIST_KEY, PURCHASE_ORDER, storeId]);
     },
   });
 
