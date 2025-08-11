@@ -73,6 +73,9 @@ fragment PurchaseOrder on PurchaseOrderNode {
   requestedDeliveryDate
   authorisedDatetime
   finalisedDatetime
+  donor {
+    id
+  }
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
@@ -239,6 +242,39 @@ mutation addToPurchaseOrderFromMasterList(
           description
         }
         description
+      }
+    }
+  }
+}
+
+mutation updatePurchaseOrderLine(
+  $input: UpdatePurchaseOrderLineInput!
+  $storeId: String!
+) {
+  updatePurchaseOrderLine(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+    ... on UpdatePurchaseOrderLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on PurchaseOrderDoesNotExist {
+          __typename
+          description
+        }
+        ... on PurchaseOrderLineNotFound {
+          __typename
+          description
+        }
+        ... on UpdatedLineDoesNotExist {
+          __typename
+          description
+        }
       }
     }
   }
