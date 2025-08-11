@@ -8,7 +8,7 @@ import {
   QueryParamsProvider,
   createQueryParamsStore,
 } from '@openmsupply-client/common';
-import { ItemRowFragment, useServiceItems } from '../../api';
+import { ItemRowFragment, useItems } from '../../api';
 
 interface ItemSearchInputProps {
   onChange: (item: ItemRowFragment | null) => void;
@@ -47,7 +47,10 @@ const ServiceItemSearchComponent: FC<ItemSearchInputProps> = ({
   autoFocus = false,
   refetchOnMount = true,
 }) => {
-  const { data, isLoading } = useServiceItems({ refetchOnMount });
+  // const { data, isLoading } = useServiceItems({ refetchOnMount });
+  const {
+    serviceItems: { data, isLoading },
+  } = useItems(refetchOnMount);
   const t = useTranslation();
   const selectControl = useToggle();
 
