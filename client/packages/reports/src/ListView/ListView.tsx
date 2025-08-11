@@ -71,10 +71,7 @@ export const ListView = () => {
     return <BasicSpinner messageKey="loading" />;
   }
 
-  if (
-    !categorisedReports.stockAndItems?.length &&
-    !categorisedReports.expiring?.length
-  ) {
+  if (!categorisedReports.stockAndItems?.length) {
     return <NothingHere body={t('message.contact-support')} />;
   }
 
@@ -100,13 +97,6 @@ export const ListView = () => {
           hasReports={!!categorisedReports.stockAndItems.length}
         />
         <ReportWidget
-          title={t('distribution')}
-          Icon={TruckIcon}
-          reports={categorisedReports.distribution}
-          onReportClick={onReportClick}
-          hasReports={!!categorisedReports.distribution.length}
-        />
-        <ReportWidget
           title={t('label.programs')}
           Icon={InvoiceIcon}
           reports={programReports}
@@ -114,13 +104,6 @@ export const ListView = () => {
           hasReports={
             !!store?.preferences?.omProgramModule && !!programReports.length
           }
-        />
-        <ReportWidget
-          title={t('heading.expiring')}
-          Icon={TrendingDownIcon}
-          reports={categorisedReports.expiring}
-          onReportClick={onReportClick}
-          hasReports={!!categorisedReports.expiring.length}
         />
         <ReportWidget
           title={t('heading.other')}
