@@ -1,10 +1,11 @@
 import {
+  LIST_KEY,
   useMutation,
   usePatchState,
   useQuery,
 } from '@openmsupply-client/common/src';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
-import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
+import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
 import { PurchaseOrderLineFragment } from '../operations.generated';
 
 export type DraftPurchaseOrderLine = Omit<
@@ -99,6 +100,6 @@ const useCreate = () => {
   return useMutation({
     mutationFn,
     onSuccess: () =>
-      queryClient.invalidateQueries([LIST, PURCHASE_ORDER, storeId]),
+      queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY, storeId]),
   });
 };

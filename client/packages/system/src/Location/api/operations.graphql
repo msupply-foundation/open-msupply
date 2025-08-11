@@ -12,6 +12,11 @@ fragment LocationRow on LocationNode {
     maxTemperature
     minTemperature
   }
+  stock {
+    ... on StockLineConnector {
+      totalCount
+    }
+  }
 }
 
 query locations(

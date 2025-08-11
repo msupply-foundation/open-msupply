@@ -29,6 +29,7 @@ table! {
         supplier_item_code -> Nullable<Text>,
         price_per_unit_before_discount -> Double,
         price_per_unit_after_discount -> Double,
+        comment -> Nullable<Text>,
     }
 }
 
@@ -60,6 +61,7 @@ pub struct PurchaseOrderLineRow {
     pub supplier_item_code: Option<String>,
     pub price_per_unit_before_discount: f64,
     pub price_per_unit_after_discount: f64,
+    pub comment: Option<String>,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {

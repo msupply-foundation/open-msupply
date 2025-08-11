@@ -334,6 +334,9 @@ export const StockLineForm = ({
                   restrictedToLocationTypeId={
                     draft.item.restrictedLocationTypeId
                   }
+                  volumeRequired={
+                    draft.volumePerPack * draft.totalNumberOfPacks
+                  }
                 />
               }
             />
@@ -381,7 +384,10 @@ export const StockLineForm = ({
                     disabled
                     width={160}
                     decimalLimit={10}
-                    value={draft?.volumePerPack * draft?.totalNumberOfPacks}
+                    // Need to coalesce to 0 to avoid NaN while user is editing volumePerPack!
+                    value={
+                      (draft.volumePerPack ?? 0) * draft.totalNumberOfPacks
+                    }
                   />
                 }
               />

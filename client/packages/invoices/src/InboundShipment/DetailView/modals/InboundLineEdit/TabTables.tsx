@@ -416,6 +416,10 @@ export const LocationTableComponent = ({
         ...getLocationInputColumn(restrictedToLocationTypeId),
         setter: updateDraftLine,
         width: 530,
+        cellProps: {
+          getVolumeRequired: (rowData: DraftInboundLine) =>
+            rowData.volumePerPack * rowData.numberOfPacks,
+        },
       },
     ],
     [
