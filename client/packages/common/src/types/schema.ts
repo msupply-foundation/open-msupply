@@ -2897,6 +2897,7 @@ export type GoodsReceivedListResponse = GoodsReceivedConnector;
 export type GoodsReceivedNode = {
   __typename: 'GoodsReceivedNode';
   comment?: Maybe<Scalars['String']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   number: Scalars['Int']['output'];
@@ -6817,16 +6818,20 @@ export type PurchaseOrderLineFilterInput = {
 export type PurchaseOrderLineNode = {
   __typename: 'PurchaseOrderLineNode';
   authorisedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
+  pricePerUnitAfterDiscount: Scalars['Float']['output'];
+  pricePerUnitBeforeDiscount: Scalars['Float']['output'];
   purchaseOrderId: Scalars['String']['output'];
   receivedNumberOfUnits: Scalars['Float']['output'];
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   requestedNumberOfUnits: Scalars['Float']['output'];
   requestedPackSize: Scalars['Float']['output'];
   stockOnHandInUnits: Scalars['Float']['output'];
+  supplierItemCode?: Maybe<Scalars['String']['output']>;
 };
 
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
@@ -6862,7 +6867,6 @@ export type PurchaseOrderNode = {
   currencyId?: Maybe<Scalars['String']['output']>;
   documentCharge?: Maybe<Scalars['Float']['output']>;
   donor?: Maybe<NameNode>;
-  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
   freightCharge?: Maybe<Scalars['Float']['output']>;
@@ -6872,6 +6876,7 @@ export type PurchaseOrderNode = {
   insuranceCharge?: Maybe<Scalars['Float']['output']>;
   lines: PurchaseOrderLineConnector;
   number: Scalars['Int']['output'];
+  orderTotalAfterDiscount: Scalars['Float']['output'];
   receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -6905,7 +6910,6 @@ export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
 
 export enum PurchaseOrderSortFieldInput {
   CreatedDatetime = 'createdDatetime',
-  DeliveryDate = 'deliveryDate',
   Number = 'number',
   Status = 'status',
   TargetMonths = 'targetMonths',
