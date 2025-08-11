@@ -98,6 +98,7 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::PurchaseOrderLineNotFound
         | ServiceError::UpdatedLineDoesNotExist
         | ServiceError::PurchaseOrderDoesNotExist
+        | ServiceError::CannotAdjustRequestedQuantity
         | ServiceError::CannotEditPurchaseOrder => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
