@@ -20,6 +20,7 @@ import { SidePanel } from './SidePanel';
 import { ReportWidget } from '../components';
 import { JsonData } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
+import { categoriseReports } from './utils';
 
 export const ListView = () => {
   const t = useTranslation();
@@ -37,23 +38,12 @@ export const ListView = () => {
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
-  const stockAndItemReports = data?.nodes?.filter(
-    report => report?.subContext === 'StockAndItems'
-  );
-  const expiringReports = data?.nodes?.filter(
-    report => report?.subContext === 'Expiring'
-  );
-  const programReports = data?.nodes?.filter(
-    report =>
-      report?.context === ReportContext.Dispensary &&
-      store?.preferences?.omProgramModule &&
-      (report?.subContext === 'HIVCareProgram' ||
-        report.subContext === 'Vaccinations' ||
-        report.subContext === 'Encounters')
-  );
-  const otherReports = data?.nodes?.filter(
-    report => report?.subContext === 'Other'
-  );
+
+  const categorisedReports = categoriseReports(data?.nodes || []);
+  const programReports = store?.preferences?.omProgramModule
+    ? categorisedReports.programs
+    : [];
+
   const onReportClick = (report: ReportRowFragment) => {
     if (report.argumentSchema) {
       setReportWithArgs(report);
@@ -76,7 +66,10 @@ export const ListView = () => {
     return <BasicSpinner messageKey="loading" />;
   }
 
-  if (!stockAndItemReports?.length && !expiringReports?.length) {
+  if (
+    !categorisedReports.stockAndItems?.length &&
+    !categorisedReports.expiring?.length
+  ) {
     return <NothingHere body={t('message.contact-support')} />;
   }
 
@@ -94,23 +87,23 @@ export const ListView = () => {
         <ReportWidget
           title={t('heading.stock-and-items')}
           Icon={BarIcon}
-          reports={stockAndItemReports}
+          reports={categorisedReports.stockAndItems}
           onReportClick={onReportClick}
-          hasReports={stockAndItemReports?.length !== 0}
+          hasReports={categorisedReports.stockAndItems?.length !== 0}
         />
         <ReportWidget
           title={t('heading.expiring')}
           Icon={TrendingDownIcon}
-          reports={expiringReports}
+          reports={categorisedReports.expiring}
           onReportClick={onReportClick}
-          hasReports={expiringReports?.length !== 0}
+          hasReports={categorisedReports.expiring?.length !== 0}
         />
         <ReportWidget
           title={t('heading.other')}
           Icon={InvoiceIcon}
-          reports={otherReports}
+          reports={categorisedReports.other}
           onReportClick={onReportClick}
-          hasReports={otherReports?.length !== 0}
+          hasReports={categorisedReports.other?.length !== 0}
         />
         {store?.preferences?.omProgramModule && (
           <ReportWidget
