@@ -31,6 +31,7 @@ mod update {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -45,9 +46,7 @@ mod update {
                     item_id: None,
                     requested_pack_size: Some(10.0),
                     requested_number_of_units: Some(5.0),
-                    adjusted_number_of_units: None,
-                    requested_delivery_date: None,
-                    expected_delivery_date: None,
+                    ..Default::default()
                 }
             ),
             Err(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)
@@ -72,6 +71,7 @@ mod update {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -86,9 +86,7 @@ mod update {
                     item_id: Some(mock_item_b().id.to_string()),
                     requested_pack_size: Some(10.0),
                     requested_number_of_units: Some(5.0),
-                    adjusted_number_of_units: None,
-                    requested_delivery_date: None,
-                    expected_delivery_date: None,
+                    ..Default::default()
                 },
             )
             .unwrap();

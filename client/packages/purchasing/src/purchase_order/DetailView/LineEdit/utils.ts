@@ -1,9 +1,9 @@
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import { ItemStockOnHandFragment } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { FnUtils } from '@common/utils';
 
 export const createDraftPurchaseOrderLine = (
-  item: ItemWithStatsFragment,
+  item: ItemStockOnHandFragment,
   purchaseOrderId: string
 ): DraftPurchaseOrderLine => {
   return {

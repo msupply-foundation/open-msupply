@@ -1,44 +1,48 @@
 import React from 'react';
 import {
   BasicTextInput,
+  Box,
+  DataTable,
+  Divider,
   Grid,
-  NumericTextInput,
-  Typography,
-  useTranslation,
 } from '@openmsupply-client/common';
-import { PurchaseOrderLineFragment, PurchaseOrderFragment } from '../../api';
+import { PurchaseOrderLineFragment } from '../../api';
 import {
-  ItemWithStatsFragment,
-  StockItemSearchInputWithStats,
+  ItemStockOnHandFragment,
+  StockItemSearchInput,
 } from '@openmsupply-client/system/src';
-import {
-  canEditOriginalQuantity,
-  canEditAdjustedQuantity,
-  isPurchaseOrderConfirmed,
-} from '../../../utils';
+import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
+import { min } from 'lodash';
+import { usePurchaseOrderLineEditColumns } from './columns';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
-  currentItem?: PurchaseOrderLineFragment;
-  lines: PurchaseOrderLineFragment[];
-  purchaseOrder: PurchaseOrderFragment;
-  onChangeItem: (item: ItemWithStatsFragment) => void;
-  onUpdate: (patch: Partial<PurchaseOrderLineFragment>) => void;
+  currentLine?: PurchaseOrderLineFragment;
+  onChangeItem: (item: ItemStockOnHandFragment) => void;
+  draft?: DraftPurchaseOrderLine | null;
+  updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
 }
 
 export const PurchaseOrderLineEdit = ({
   isUpdateMode,
-  currentItem,
-  lines,
-  purchaseOrder,
+  currentLine,
   onChangeItem,
-  onUpdate,
+  draft,
+  updatePatch,
 }: PurchaseOrderLineEditProps) => {
-  const t = useTranslation();
-  const canEditOriginal = canEditOriginalQuantity(purchaseOrder);
-  const canEditAdjusted = canEditAdjustedQuantity(purchaseOrder);
-  const isConfirmed = isPurchaseOrderConfirmed(purchaseOrder);
+  const showContent = !!draft && !!currentLine;
+
+  const lines: DraftPurchaseOrderLine[] = [];
+  if (draft) {
+    lines.push(draft);
+  }
+
+  const columns = usePurchaseOrderLineEditColumns({
+    draft,
+    updatePatch,
+  });
+
   return (
     <Grid
       container
@@ -51,140 +55,41 @@ export const PurchaseOrderLineEdit = ({
       <Grid size={12} sx={{ mb: 2 }}>
         {(isUpdateMode && (
           <BasicTextInput
-            value={`${currentItem?.item?.code}     ${currentItem?.item?.name}`}
+            value={`${currentLine?.item?.code}     ${currentLine?.item?.name}`}
             disabled
             fullWidth
           />
         )) || (
-          <StockItemSearchInputWithStats
-            autoFocus={!currentItem}
-            openOnFocus={!currentItem}
-            disabled={false}
-            currentItemId={currentItem?.id}
-            onChange={(newItem: ItemWithStatsFragment | null) =>
-              newItem && onChangeItem(newItem)
-            }
-            extraFilter={item => !lines.some(line => line.item.id === item.id)}
+          <StockItemSearchInput
+            autoFocus={!currentLine}
+            openOnFocus={!currentLine}
+            disabled={isUpdateMode}
+            currentItemId={currentLine?.item.id}
+            onChange={newItem => newItem && onChangeItem(newItem)}
           />
         )}
       </Grid>
-      <Grid size={12} container spacing={2}>
-        {isUpdateMode && currentItem && (
-          <>
-            {/* Pack Size */}
-            <Grid size={6}>
-              <NumericTextInput
-                fullWidth
-                label="Pack Size"
-                value={currentItem.requestedPackSize ?? 0}
-                onChange={value => onUpdate({ requestedPackSize: value })}
-                disabled={!canEditOriginal}
-              />
-            </Grid>
-
-            {/* Original/Requested Quantity */}
-            <Grid size={6}>
-              <NumericTextInput
-                fullWidth
-                label="Requested Quantity"
-                value={currentItem.requestedNumberOfUnits ?? 0}
-                onChange={value => onUpdate({ requestedNumberOfUnits: value })}
-                disabled={!canEditOriginal}
-              />
-            </Grid>
-
-            {/* Adjusted Quantity - only show for confirmed POs */}
-            {isConfirmed && (
-              <Grid size={6}>
-                <NumericTextInput
-                  fullWidth
-                  label="Adjusted Quantity"
-                  value={currentItem.adjustedNumberOfUnits ?? 0}
-                  onChange={value => onUpdate({ adjustedNumberOfUnits: value })}
-                  disabled={!canEditAdjusted}
-                />
-              </Grid>
-            )}
-
-            {/* Show pack size and quantity for new items */}
-            {!isUpdateMode && currentItem && (
-              <>
-                <Grid size={6}>
-                  <NumericTextInput
-                    fullWidth
-                    label="Pack Size"
-                    value={currentItem.requestedPackSize ?? 0}
-                    onChange={value => onUpdate({ requestedPackSize: value })}
-                    disabled={isConfirmed && !canEditOriginal}
-                  />
-                </Grid>
-                {isConfirmed ? (
-                  <>
-                    <Grid size={12}>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('messages.purchase-order-confirmed-new-lines')}
-                      </Typography>
-                    </Grid>
-                    <Grid size={6}>
-                      <NumericTextInput
-                        fullWidth
-                        label="Adjusted Quantity"
-                        value={currentItem.adjustedNumberOfUnits ?? 0}
-                        onChange={value =>
-                          onUpdate({
-                            adjustedNumberOfUnits: value,
-                            requestedNumberOfUnits: 0,
-                          })
-                        }
-                        disabled={!canEditAdjusted}
-                      />
-                    </Grid>
-                  </>
-                ) : (
-                  <Grid size={6}>
-                    <NumericTextInput
-                      fullWidth
-                      label="Requested Quantity"
-                      value={currentItem.requestedNumberOfUnits ?? 0}
-                      onChange={value =>
-                        onUpdate({ requestedNumberOfUnits: value })
-                      }
-                    />
-                  </Grid>
-                )}
-              </>
-            )}
-
-            {/* Requested Delivery Date */}
-            <Grid size={6}>
-              <BasicTextInput
-                fullWidth
-                label="Requested Delivery Date"
-                type="date"
-                value={currentItem.requestedDeliveryDate || ''}
-                onChange={e =>
-                  onUpdate({ requestedDeliveryDate: e.target.value || null })
-                }
-                disabled={isConfirmed && !canEditAdjusted}
-              />
-            </Grid>
-
-            {/* Expected Delivery Date */}
-            <Grid size={6}>
-              <BasicTextInput
-                fullWidth
-                label="Expected Delivery Date"
-                type="date"
-                value={currentItem.expectedDeliveryDate || ''}
-                onChange={e =>
-                  onUpdate({ expectedDeliveryDate: e.target.value || null })
-                }
-                disabled={isConfirmed && !canEditAdjusted}
-              />
-            </Grid>
-          </>
-        )}
-      </Grid>
+      {showContent && currentLine && (
+        <Box style={{ width: '100%' }}>
+          <Divider margin={10} />
+          <Box
+            style={{
+              maxHeight: min([screen.height - 570, 325]),
+              display: 'flex',
+              flexDirection: 'column',
+              overflowX: 'hidden',
+              overflowY: 'auto',
+            }}
+          >
+            <DataTable
+              id="purchase-order-line-edit"
+              columns={columns}
+              data={lines}
+              dense
+            />
+          </Box>
+        </Box>
+      )}
     </Grid>
   );
 };

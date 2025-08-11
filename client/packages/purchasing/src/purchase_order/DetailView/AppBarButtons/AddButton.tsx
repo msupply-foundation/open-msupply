@@ -5,9 +5,8 @@ import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
 
-
 interface AddButtonProps {
-  onAddItem: (newState: boolean) => void;
+  onAddItem: () => void;
   /** Disable the whole control */
   disable: boolean;
   disableAddFromMasterListButton: boolean;
@@ -50,7 +49,7 @@ export const AddButton = ({
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
       case 'add-item':
-        onAddItem(true);
+        onAddItem();
         break;
       case 'add-from-master-list':
         masterListModalController.toggleOn();

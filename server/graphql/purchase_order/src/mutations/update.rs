@@ -68,6 +68,17 @@ pub struct UpdateInput {
     pub advance_paid_date: Option<NullableUpdateInput<NaiveDate>>,
     pub received_at_port_date: Option<NullableUpdateInput<NaiveDate>>,
     pub requested_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub supplier_agent: Option<String>,
+    pub authorising_officer_1: Option<String>,
+    pub authorising_officer_2: Option<String>,
+    pub additional_instructions: Option<String>,
+    pub heading_message: Option<String>,
+    pub agent_commission: Option<f64>,
+    pub document_charge: Option<f64>,
+    pub communications_charge: Option<f64>,
+    pub insurance_charge: Option<f64>,
+    pub freight_charge: Option<f64>,
+    pub freight_conditions: Option<String>,
 }
 
 impl UpdateInput {
@@ -89,6 +100,17 @@ impl UpdateInput {
             advance_paid_date,
             received_at_port_date,
             requested_delivery_date,
+            supplier_agent,
+            authorising_officer_1,
+            authorising_officer_2,
+            additional_instructions,
+            heading_message,
+            agent_commission,
+            document_charge,
+            communications_charge,
+            insurance_charge,
+            freight_charge,
+            freight_conditions,
         } = self;
 
         ServiceInput {
@@ -109,6 +131,17 @@ impl UpdateInput {
             received_at_port_date: received_at_port_date.map(|r| NullableUpdate { value: r.value }),
             requested_delivery_date: requested_delivery_date
                 .map(|r| NullableUpdate { value: r.value }),
+            supplier_agent,
+            authorising_officer_1,
+            authorising_officer_2,
+            additional_instructions,
+            heading_message,
+            agent_commission,
+            document_charge,
+            communications_charge,
+            insurance_charge,
+            freight_charge,
+            freight_conditions,
         }
     }
 }
