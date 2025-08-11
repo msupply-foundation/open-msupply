@@ -163,10 +163,20 @@ pub fn update_purchase_order(
             resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
         },
-    );
+    )?;
+
+    if input.status == Some(PurchaseOrderNodeType::Authorised) {
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::AuthorisePurchaseOrder,
+                store_id: Some(store_id.to_string()),
+            },
+        )?;
+    }
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user?.user_id)?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
@@ -189,7 +199,8 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::SupplierDoesNotExist
         | ServiceError::UpdatedRecordNotFound
         | ServiceError::NotASupplier
-        | ServiceError::DonorDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::DonorDoesNotExist
+        | ServiceError::AuthorisationPreferenceNotSet => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

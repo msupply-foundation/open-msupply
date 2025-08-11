@@ -19,6 +19,7 @@ pub enum UpdatePurchaseOrderError {
     UpdatedRecordNotFound,
     NotASupplier,
     DonorDoesNotExist,
+    AuthorisationPreferenceNotSet,
     DatabaseError(RepositoryError),
 }
 

@@ -6418,6 +6418,7 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
+  AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   CustomTranslations = 'customTranslations',
   GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
@@ -6455,6 +6456,7 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  authorisePurchaseOrder: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
   genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
@@ -10512,6 +10514,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   genderOptions?: InputMaybe<Array<GenderType>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
