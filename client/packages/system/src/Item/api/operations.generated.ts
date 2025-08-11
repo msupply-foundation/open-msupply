@@ -26,6 +26,11 @@ export type StockLineFragment = {
     id: string;
     name: string;
     onHold: boolean;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+    } | null;
   } | null;
   item: {
     __typename: 'ItemNode';
@@ -343,6 +348,11 @@ export type ItemFragment = {
         id: string;
         name: string;
         onHold: boolean;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -548,6 +558,11 @@ export type ItemsWithStockLinesQuery = {
             id: string;
             name: string;
             onHold: boolean;
+            locationType?: {
+              __typename: 'LocationTypeNode';
+              id: string;
+              name: string;
+            } | null;
           } | null;
           item: {
             __typename: 'ItemNode';
@@ -871,6 +886,11 @@ export type ItemByIdQuery = {
             id: string;
             name: string;
             onHold: boolean;
+            locationType?: {
+              __typename: 'LocationTypeNode';
+              id: string;
+              name: string;
+            } | null;
           } | null;
           item: {
             __typename: 'ItemNode';
@@ -1145,6 +1165,11 @@ export type GetHistoricalStockLinesQuery = {
         id: string;
         name: string;
         onHold: boolean;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -1529,6 +1554,10 @@ export const StockLineFragmentDoc = gql`
       id
       name
       onHold
+      locationType {
+        id
+        name
+      }
     }
     item {
       name

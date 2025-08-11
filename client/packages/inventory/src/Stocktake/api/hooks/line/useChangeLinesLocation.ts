@@ -6,7 +6,7 @@ import { useSelectedRows } from '../utils/useSelectedRows';
 export const useChangeLinesLocation = () => {
   const { saveAndMapStructuredErrors } = useSaveStocktakeLines();
   const t = useTranslation();
-  const { error, success } = useNotification();
+  const { error, success, errorWithDetail } = useNotification();
 
   const selectedRows = useSelectedRows();
 
@@ -28,7 +28,7 @@ export const useChangeLinesLocation = () => {
 
       success(t('messages.changed-location', { count: selectedRows.length }))();
     } catch (err) {
-      throw err;
+      errorWithDetail(String(err))();
     }
   };
 

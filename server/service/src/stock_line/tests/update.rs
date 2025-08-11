@@ -2,7 +2,8 @@
 mod test {
     use repository::{
         mock::{
-            mock_name_b, mock_name_customer_a, mock_stock_line_a, mock_store_a,
+            mock_location_with_restricted_location_type_a, mock_name_b, mock_name_customer_a,
+            mock_stock_line_a, mock_stock_line_restricted_location_type_b, mock_store_a,
             mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
@@ -36,7 +37,7 @@ mod test {
             Err(ServiceError::StockDoesNotExist)
         );
 
-        // LocationDoesNotExist
+        // LocationDoesNotExist: location id does not exist in DB
         assert_eq!(
             service.update_stock_line(
                 &context,
@@ -49,6 +50,36 @@ mod test {
                 }
             ),
             Err(ServiceError::LocationDoesNotExist)
+        );
+
+        // IncorrectLocationType
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_restricted_location_type_b().id.clone(),
+                    location: Some(NullableUpdate {
+                        value: Some(mock_location_with_restricted_location_type_a().id),
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::IncorrectLocationType)
+        );
+
+        // ItemVariantDoesNotExist
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id.clone(),
+                    item_variant_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::ItemVariantDoesNotExist)
         );
 
         // DonorDoesNotExist

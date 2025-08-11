@@ -195,6 +195,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CampaignDoesNotExist
         | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };

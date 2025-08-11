@@ -156,6 +156,13 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
+    let purchase_order_by_id_loader = DataLoader::new(
+        PurchaseOrderByIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    );
+
     let requisition_line_by_linked_requisition_line_id_loader = DataLoader::new(
         LinkedRequisitionLineLoader {
             service_provider: service_provider.clone(),
@@ -272,6 +279,7 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_by_requisition_id_loader);
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
     loaders.insert(purchase_order_line_by_purchase_order_id_loader);
+    loaders.insert(purchase_order_by_id_loader);
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
     loaders.insert(requisition_line_supply_status_loader);
@@ -519,6 +527,12 @@ pub async fn get_loaders(
     loaders.insert(DataLoader::new(
         VolumeUsedByLocationLoader {
             connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ProgramsByItemIdLoader {
+            service_provider: service_provider.clone(),
         },
         tokio::spawn,
     ));

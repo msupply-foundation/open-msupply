@@ -82,15 +82,13 @@ impl<'a> CampaignRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, campaign_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, campaign_id: &str) -> Result<i64, RepositoryError> {
         diesel::update(campaign::table.filter(campaign::id.eq(campaign_id)))
             .set(campaign::deleted_datetime.eq(chrono::Utc::now().naive_utc()))
             .execute(self.connection.lock().connection())?;
 
-        // diesel::delete(campaign::table.filter(campaign::id.eq(campaign_id)))
-        //     .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(campaign_id.to_owned(), RowActionType::Delete)
+        // Upsert row action as this is a soft delete, not actual delete
+        self.insert_changelog(campaign_id.to_owned(), RowActionType::Upsert)
     }
 }
 

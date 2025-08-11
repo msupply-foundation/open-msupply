@@ -1,30 +1,30 @@
 import {
   FilterByWithBoolean,
-  PurchaseOrderSortFieldInput,
+  GoodsReceivedSortFieldInput,
   SortBy,
   useQuery,
   useTableStore,
 } from '@openmsupply-client/common';
-import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
-import { LIST, PURCHASE_ORDER } from './keys';
+import { useGoodsReceivedGraphQL } from '../useGoodsReceivedGraphQL';
+import { LIST, GOODS_RECEIVED } from './keys';
 import {
-  PurchaseOrderFragment,
-  PurchaseOrderRowFragment,
+  GoodsReceivedFragment,
+  GoodsReceivedRowFragment,
 } from '../operations.generated';
 
 export type ListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<PurchaseOrderFragment>;
+  sortBy?: SortBy<GoodsReceivedFragment>;
   filterBy: FilterByWithBoolean | null;
 };
 
-export const usePurchaseOrderList = (queryParams: ListParams) => {
-  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
+export const useGoodsReceivedList = (queryParams: ListParams) => {
+  const { goodsReceivedApi, storeId } = useGoodsReceivedGraphQL();
 
   const {
     sortBy = {
-      key: 'number',
+      key: 'createdDatetime',
       direction: 'desc',
     },
     first,
@@ -33,8 +33,8 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
   } = queryParams;
 
   const queryKey = [
+    GOODS_RECEIVED,
     LIST,
-    PURCHASE_ORDER,
     storeId,
     sortBy,
     first,
@@ -42,30 +42,29 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     filterBy,
   ];
 
-  const sortFieldMap: Record<string, PurchaseOrderSortFieldInput> = {
-    createdDatetime: PurchaseOrderSortFieldInput.CreatedDatetime,
-    status: PurchaseOrderSortFieldInput.Status,
-    number: PurchaseOrderSortFieldInput.Number,
+  const sortFieldMap: Record<string, GoodsReceivedSortFieldInput> = {
+    createdDatetime: GoodsReceivedSortFieldInput.CreatedDatetime,
     // Add more as required
   };
 
   const queryFn = async (): Promise<{
-    nodes: PurchaseOrderRowFragment[];
+    nodes: GoodsReceivedRowFragment[];
     totalCount: number;
   }> => {
     const filter = {
       ...filterBy,
     };
 
-    const query = await purchaseOrderApi.purchaseOrders({
+    const query = await goodsReceivedApi.goodsReceivedList({
       storeId,
       first: first,
       offset: offset,
-      key: sortFieldMap[sortBy.key] ?? PurchaseOrderSortFieldInput.Status,
+      key:
+        sortFieldMap[sortBy.key] ?? GoodsReceivedSortFieldInput.CreatedDatetime,
       desc: sortBy.direction === 'desc',
       filter,
     });
-    const { nodes, totalCount } = query?.purchaseOrders;
+    const { nodes, totalCount } = query?.goodsReceivedList;
     return { nodes, totalCount };
   };
 
@@ -75,7 +74,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as PurchaseOrderFragment[],
+      .filter(Boolean) as GoodsReceivedFragment[],
   }));
 
   return {
