@@ -80,8 +80,6 @@ mod test {
         test_db::setup_all,
         RequisitionLineRowRepository,
     };
-    use util::inline_init;
-
     use crate::{
         requisition::response_requisition::BatchResponseRequisition,
         requisition_line::response_requisition_line::DeleteResponseRequisitionLine,
@@ -104,9 +102,10 @@ mod test {
             .clone();
 
         let delete_requisition_lines_input = BatchResponseRequisition {
-            delete_line: Some(vec![inline_init(
-                |input: &mut DeleteResponseRequisitionLine| input.id = line_id.clone(),
-            )]),
+            delete_line: Some(vec![DeleteResponseRequisitionLine {
+                id: line_id.clone(),
+                ..Default::default()
+            }]),
             continue_on_error: None,
             delete_requisition: None,
         };

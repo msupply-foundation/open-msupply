@@ -120,7 +120,7 @@ pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<UpdateRespo
 
 fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", err);
+    let formatted_error = format!("{err:#?}");
     let graphql_error = match err {
         // Structured Errors
         ServiceError::SnapshotCountCurrentCountMismatch(lines) => {
@@ -143,6 +143,7 @@ fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
                 StockLinesReducedBelowZero(lines),
             ))
         }
+
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
         ServiceError::InvalidStore => BadUserInput(formatted_error),

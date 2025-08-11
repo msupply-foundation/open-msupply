@@ -19,25 +19,13 @@ pub fn generate(
         item_variant_id,
         donor_id,
         reason_option_id,
+        vvm_status_id,
+        volume_per_pack,
+        campaign_id,
+        program_id,
     }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
     let existing_line = existing.line;
-
-    let item_variant_id: Option<String> = match item_variant_id {
-        Some(update) => match update.value {
-            Some(id) => Some(id),
-            None => None,
-        },
-        None => existing_line.item_variant_id,
-    };
-
-    let donor_link_id: Option<String> = match donor_id {
-        Some(update) => match update.value {
-            Some(id) => Some(id),
-            None => None,
-        },
-        None => existing_line.donor_link_id,
-    };
 
     Ok(StocktakeLineRow {
         id: existing_line.id,
@@ -60,9 +48,20 @@ pub fn generate(
         cost_price_per_pack: cost_price_per_pack.or(existing_line.cost_price_per_pack),
         sell_price_per_pack: sell_price_per_pack.or(existing_line.sell_price_per_pack),
         note: note.or(existing_line.note),
-        item_variant_id,
-        donor_link_id,
+        item_variant_id: item_variant_id
+            .map(|v| v.value)
+            .unwrap_or(existing_line.item_variant_id),
+        donor_link_id: donor_id
+            .map(|d| d.value)
+            .unwrap_or(existing_line.donor_link_id),
         reason_option_id: reason_option_id.or(existing_line.reason_option_id),
-        volume_per_pack: 0.0,
+        vvm_status_id: vvm_status_id.or(existing_line.vvm_status_id),
+        volume_per_pack: volume_per_pack.unwrap_or(existing_line.volume_per_pack),
+        campaign_id: campaign_id
+            .map(|c| c.value)
+            .unwrap_or(existing_line.campaign_id),
+        program_id: program_id
+            .map(|p| p.value)
+            .unwrap_or(existing_line.program_id),
     })
 }

@@ -48,6 +48,10 @@ impl PurchaseOrderNode {
         return Ok(None);
     }
 
+    pub async fn order_total_after_discount(&self) -> f64 {
+        self.row().order_total_after_discount
+    }
+
     pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
         let name = loader
@@ -108,9 +112,6 @@ impl PurchaseOrderNode {
     }
     pub async fn received_at_port_date(&self) -> &Option<NaiveDate> {
         &self.row().received_at_port_date
-    }
-    pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
-        &self.row().expected_delivery_date
     }
     pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().requested_delivery_date

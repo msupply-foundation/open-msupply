@@ -103,7 +103,6 @@ pub fn batch_inbound_shipment(
             let mutations_processor = BatchMutationsProcessor::new(ctx);
 
             // Insert Shipment
-
             let (has_errors, result) = mutations_processor
                 .do_mutations_with_user_id(input.insert_shipment, insert_inbound_shipment);
             results.insert_shipment = result;
@@ -211,7 +210,6 @@ mod test {
         test_db::setup_all,
         InvoiceLineRowRepository, InvoiceRowRepository,
     };
-    use util::inline_init;
 
     use crate::{
         invoice::inbound_shipment::{
@@ -234,23 +232,26 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let delete_shipment_input = inline_init(|input: &mut DeleteInboundShipment| {
-            input.id = mock_outbound_shipment_b().id;
-        });
+        let delete_shipment_input = DeleteInboundShipment {
+            id: mock_outbound_shipment_b().id,
+            ..Default::default()
+        };
 
         let mut input = BatchInboundShipment {
-            insert_shipment: Some(vec![inline_init(|input: &mut InsertInboundShipment| {
-                input.id = "new_id".to_string();
-                input.other_party_id = mock_name_a().id;
-            })]),
-            insert_line: Some(vec![inline_init(|input: &mut InsertStockInLine| {
-                input.invoice_id = "new_id".to_string();
-                input.id = "new_line_id".to_string();
-                input.item_id = mock_item_a().id;
-                input.pack_size = 1.0;
-                input.number_of_packs = 1.0;
-                input.r#type = StockInType::InboundShipment;
-            })]),
+            insert_shipment: Some(vec![InsertInboundShipment {
+                id: "new_id".to_string(),
+                other_party_id: mock_name_a().id,
+                ..Default::default()
+            }]),
+            insert_line: Some(vec![InsertStockInLine {
+                invoice_id: "new_id".to_string(),
+                id: "new_line_id".to_string(),
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            }]),
             insert_from_internal_order_lines: None,
             update_line: None,
             delete_line: None,

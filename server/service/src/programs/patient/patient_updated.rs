@@ -281,7 +281,6 @@ mod test {
     };
     use util::{
         constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-        inline_init,
     };
 
     use crate::{
@@ -340,14 +339,15 @@ mod test {
             region: None,
             zip_code: None,
         };
-        let patient = inline_init(|p: &mut SchemaPatient| {
-            p.id = "testId".to_string();
-            p.contact_details = Some(vec![contact_details.clone()]);
-            p.date_of_birth = Some("2000-03-04".to_string());
-            p.first_name = Some("firstname".to_string());
-            p.last_name = Some("lastname".to_string());
-            p.gender = Some(Gender::TransgenderFemale);
-        });
+        let patient = SchemaPatient {
+            id: "testId".to_string(),
+            contact_details: Some(vec![contact_details.clone()]),
+            date_of_birth: Some("2000-03-04".to_string()),
+            first_name: Some("firstname".to_string()),
+            last_name: Some("lastname".to_string()),
+            gender: Some(Gender::TransgenderFemale),
+            ..Default::default()
+        };
 
         service
             .upsert_program_patient(
@@ -444,15 +444,16 @@ mod test {
             region: None,
             zip_code: None,
         };
-        let patient = inline_init(|p: &mut SchemaPatient| {
-            p.id = "testId".to_string();
-            p.contact_details = Some(vec![contact_details, contact_details_2]);
-            p.date_of_birth = Some("2000-03-04".to_string());
-            p.date_of_death = Some("2023-03-04".to_string());
-            p.first_name = Some("firstname".to_string());
-            p.last_name = Some("lastname".to_string());
-            p.gender = Some(Gender::TransgenderFemale);
-        });
+        let patient = SchemaPatient {
+            id: "testId".to_string(),
+            contact_details: Some(vec![contact_details, contact_details_2]),
+            date_of_birth: Some("2000-03-04".to_string()),
+            date_of_death: Some("2023-03-04".to_string()),
+            first_name: Some("firstname".to_string()),
+            last_name: Some("lastname".to_string()),
+            gender: Some(Gender::TransgenderFemale),
+            ..Default::default()
+        };
 
         let now = Utc::now();
         // Derive a name_row from the original patient

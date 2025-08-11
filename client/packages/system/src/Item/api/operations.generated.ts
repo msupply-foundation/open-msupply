@@ -19,12 +19,18 @@ export type StockLineFragment = {
   storeId: string;
   totalNumberOfPacks: number;
   itemVariantId?: string | null;
+  volumePerPack: number;
   location?: {
     __typename: 'LocationNode';
     code: string;
     id: string;
     name: string;
     onHold: boolean;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+    } | null;
   } | null;
   item: {
     __typename: 'ItemNode';
@@ -335,12 +341,18 @@ export type ItemFragment = {
       storeId: string;
       totalNumberOfPacks: number;
       itemVariantId?: string | null;
+      volumePerPack: number;
       location?: {
         __typename: 'LocationNode';
         code: string;
         id: string;
         name: string;
         onHold: boolean;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -539,12 +551,18 @@ export type ItemsWithStockLinesQuery = {
           storeId: string;
           totalNumberOfPacks: number;
           itemVariantId?: string | null;
+          volumePerPack: number;
           location?: {
             __typename: 'LocationNode';
             code: string;
             id: string;
             name: string;
             onHold: boolean;
+            locationType?: {
+              __typename: 'LocationTypeNode';
+              id: string;
+              name: string;
+            } | null;
           } | null;
           item: {
             __typename: 'ItemNode';
@@ -861,12 +879,18 @@ export type ItemByIdQuery = {
           storeId: string;
           totalNumberOfPacks: number;
           itemVariantId?: string | null;
+          volumePerPack: number;
           location?: {
             __typename: 'LocationNode';
             code: string;
             id: string;
             name: string;
             onHold: boolean;
+            locationType?: {
+              __typename: 'LocationTypeNode';
+              id: string;
+              name: string;
+            } | null;
           } | null;
           item: {
             __typename: 'ItemNode';
@@ -1134,12 +1158,18 @@ export type GetHistoricalStockLinesQuery = {
       storeId: string;
       totalNumberOfPacks: number;
       itemVariantId?: string | null;
+      volumePerPack: number;
       location?: {
         __typename: 'LocationNode';
         code: string;
         id: string;
         name: string;
         onHold: boolean;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -1524,6 +1554,10 @@ export const StockLineFragmentDoc = gql`
       id
       name
       onHold
+      locationType {
+        id
+        name
+      }
     }
     item {
       name
@@ -1548,6 +1582,7 @@ export const StockLineFragmentDoc = gql`
     storeId
     totalNumberOfPacks
     itemVariantId
+    volumePerPack
     donor(storeId: $storeId) {
       id
     }

@@ -1,11 +1,8 @@
-use repository::{
-    EqualFilter, ItemFilter, ItemRepository, RepositoryError, StockLine, StocktakeLineFilter,
-    StocktakeLineRepository, StorageConnection,
-};
-
+use super::{InsertStocktakeLine, InsertStocktakeLineError};
 use crate::{
-    check_location_exists,
-    common_stock::{check_stock_line_exists, CommonStockLineError},
+    campaign::check_campaign_exists,
+    check_location_exists, check_location_type_is_valid, check_vvm_status_exists,
+    common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
         check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
@@ -13,8 +10,10 @@ use crate::{
     validate::check_store_id_matches,
     NullableUpdate,
 };
-
-use super::{InsertStocktakeLine, InsertStocktakeLineError};
+use repository::{
+    EqualFilter, ItemFilter, ItemRepository, RepositoryError, StockLine, StocktakeLineFilter,
+    StocktakeLineRepository, StorageConnection,
+};
 
 pub(crate) struct GenerateResult {
     pub(crate) stock_line: Option<StockLine>,
@@ -47,6 +46,12 @@ pub fn validate(
         return Err(StocktakeIsLocked);
     }
 
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VvmStatusDoesNotExist);
+        }
+    }
+
     let stock_line = if let Some(stock_line_id) = &input.stock_line_id {
         Some(
             check_stock_line_exists(connection, store_id, stock_line_id).map_err(
@@ -75,10 +80,14 @@ pub fn validate(
     let item_id = check_stock_line_xor_item(&stock_line, input)
         .ok_or(InsertStocktakeLineError::StockLineXOrItem)?;
 
-    let item_name = if input.item_id.is_some() {
-        check_item_exists_and_get_item_name(connection, store_id, &item_id)?
+    let (item_name, item_restricted_location_type) = if input.item_id.is_some() {
+        check_item_exists_and_get_item_details(connection, store_id, &item_id)?
     } else {
-        stock_line.as_ref().unwrap().item_row.name.clone()
+        let sl = stock_line.as_ref().unwrap();
+        (
+            sl.item_row.name.clone(),
+            sl.item_row.restricted_location_type_id.clone(),
+        )
     };
 
     if let Some(NullableUpdate {
@@ -87,6 +96,27 @@ pub fn validate(
     {
         if !check_location_exists(connection, store_id, location)? {
             return Err(LocationDoesNotExist);
+        }
+
+        // Stocktake line might be for an item which should only live in a certain location type
+        if let Some(item_restricted_type) = &item_restricted_location_type {
+            let current_location_type = stock_line
+                .as_ref()
+                .and_then(|sl| sl.item_row.restricted_location_type_id.clone());
+
+            // Only check location type if changing to a different location than the stock line was previously in
+            if current_location_type != Some(location.to_string()) {
+                // Allow stock to remain in incorrect location during stocktake (don't force stock move during stock count)
+                // - we flag in frontend but don't prevent saving the lines
+                if !check_location_type_is_valid(
+                    connection,
+                    store_id,
+                    location,
+                    item_restricted_type,
+                )? {
+                    return Err(IncorrectLocationType);
+                }
+            }
         }
     }
 
@@ -116,6 +146,18 @@ pub fn validate(
         if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
         {
             return Err(StockLineReducedBelowZero(stock_line));
+        }
+    }
+
+    if let Some(campaign_id) = &input.campaign_id {
+        if !check_campaign_exists(connection, campaign_id)? {
+            return Err(InsertStocktakeLineError::CampaignDoesNotExist);
+        }
+    }
+
+    if let Some(program_id) = &input.program_id {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(InsertStocktakeLineError::ProgramDoesNotExist);
         }
     }
 
@@ -190,11 +232,11 @@ pub fn stocktake_reduction_amount(
     }
 }
 
-pub fn check_item_exists_and_get_item_name(
+pub fn check_item_exists_and_get_item_details(
     connection: &StorageConnection,
     store_id: &str,
     item_id: &str,
-) -> Result<String, InsertStocktakeLineError> {
+) -> Result<(String, Option<String>), InsertStocktakeLineError> {
     let item = ItemRepository::new(connection)
         .query_by_filter(
             ItemFilter::new().id(EqualFilter::equal_to(item_id)),
@@ -203,5 +245,8 @@ pub fn check_item_exists_and_get_item_name(
         .pop()
         .ok_or(InsertStocktakeLineError::ItemDoesNotExist)?;
 
-    Ok(item.item_row.name)
+    Ok((
+        item.item_row.name,
+        item.item_row.restricted_location_type_id,
+    ))
 }
