@@ -89,7 +89,6 @@ pub fn generate(
                 vvm_status_id,
                 campaign_id,
                 program_id,
-                campaign_id,
                 // Default (use None so the stock line values are used)
                 batch: None,
                 pack_size: None,

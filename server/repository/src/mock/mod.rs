@@ -431,6 +431,7 @@ impl MockDataInserts {
             preferences: true,
         }
     }
+
     pub fn none() -> Self {
         MockDataInserts::default()
     }
@@ -812,6 +813,7 @@ impl MockDataInserts {
 
     pub fn location_types(mut self) -> Self {
         self.location_types = true;
+        self
     }
 
     pub fn preferences(mut self) -> Self {
