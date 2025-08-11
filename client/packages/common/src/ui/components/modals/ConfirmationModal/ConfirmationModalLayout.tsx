@@ -34,7 +34,7 @@ export const ConfirmationModalLayout = ({
         <Grid>
           <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
         </Grid>
-        <Grid margin={2}>{children}</Grid>
+        <Grid>{children}</Grid>
         <Grid
           container
           gap={1}

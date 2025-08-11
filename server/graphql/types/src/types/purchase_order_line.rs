@@ -29,7 +29,18 @@ impl PurchaseOrderLineNode {
     pub async fn line_number(&self) -> i64 {
         self.row().line_number
     }
-
+    pub async fn price_per_unit_before_discount(&self) -> f64 {
+        self.row().price_per_unit_before_discount
+    }
+    pub async fn price_per_unit_after_discount(&self) -> f64 {
+        self.row().price_per_unit_after_discount
+    }
+    pub async fn comment(&self) -> &Option<String> {
+        &self.row().comment
+    }
+    pub async fn supplier_item_code(&self) -> &Option<String> {
+        &self.row().supplier_item_code
+    }
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 

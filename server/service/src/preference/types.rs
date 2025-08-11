@@ -19,6 +19,7 @@ pub enum PrefKey {
     UseCampaigns,
     CustomTranslations,
     SyncRecordsDisplayThreshold,
+    AuthorisePurchaseOrder,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,

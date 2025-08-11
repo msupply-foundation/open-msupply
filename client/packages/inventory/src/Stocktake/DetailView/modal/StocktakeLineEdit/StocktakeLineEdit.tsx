@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { LocationRowFragment } from '@openmsupply-client/system';
+import {
+  checkInvalidLocationLines,
+  LocationRowFragment,
+} from '@openmsupply-client/system';
 import {
   BasicSpinner,
   Breakpoints,
@@ -73,6 +76,13 @@ export const StocktakeLineEdit = ({
   // added to the top of the stocktake list instead of the bottom
   const reversedDraftLines = [...draftLines].reverse();
   const simplifiedTabletView = useSimplifiedTabletUI();
+
+  const restrictedLocationTypeId =
+    currentItem?.restrictedLocationTypeId ?? null;
+
+  const hasInvalidLocationLines = !!currentItem
+    ? checkInvalidLocationLines(restrictedLocationTypeId, draftLines)
+    : null;
 
   const onNext = async () => {
     if (isSaving) return;
@@ -233,6 +243,7 @@ export const StocktakeLineEdit = ({
                 items={items}
                 onChangeItem={setCurrentItem}
                 mode={mode}
+                hasInvalidLocationLines={hasInvalidLocationLines ?? false}
               />
               {!currentItem ? (
                 <Box sx={{ height: isMediumScreen ? 400 : 500 }} />

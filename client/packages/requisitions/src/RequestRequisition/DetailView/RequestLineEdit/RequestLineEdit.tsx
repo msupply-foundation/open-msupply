@@ -4,7 +4,6 @@ import {
   ReasonOptionsSearchInput,
   RequestFragment,
   StockItemSearchInputWithStats,
-  useReasonOptions,
 } from '@openmsupply-client/system';
 import {
   useTranslation,
@@ -71,7 +70,6 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { data: reasonOptions, isLoading } = useReasonOptions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 
@@ -171,8 +169,6 @@ export const RequestLineEdit = ({
                 fullWidth
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
-                reasonOptions={reasonOptions?.nodes ?? []}
-                loading={isLoading}
                 textSx={
                   disableReasons
                     ? {

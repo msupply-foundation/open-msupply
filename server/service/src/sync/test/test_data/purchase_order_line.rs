@@ -18,7 +18,7 @@ const PURCHASE_ORDER_LINE_1: (&str, &str) = (
 	"item_name": "Item A",
     "store_ID": "store_a",
     "batch": "",
-    "comment": "",
+    "comment": "comment a!",
     "cost_from_invoice": 4,
     "cost_local": 0,
     "delivery_date_expected": "0000-00-00",
@@ -71,6 +71,7 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
             price_per_unit_before_discount: 4.0,
             price_per_unit_after_discount: 2.0,
             store_id: "store_a".to_string(),
+            comment: Some("comment a!".to_string()),
         },
     )
 }
@@ -96,6 +97,7 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             supplier_item_code: None,
             price_extension_expected: 4.0,
             price_expected_after_discount: 2.0,
+            comment: Some("comment a!".to_string()),
         }),
     }
 }

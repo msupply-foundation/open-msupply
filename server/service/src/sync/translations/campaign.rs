@@ -68,14 +68,6 @@ impl SyncTranslation for CampaignTranslation {
             serde_json::to_value(row)?,
         ))
     }
-
-    fn try_translate_to_delete_sync_record(
-        &self,
-        _: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        Ok(PushTranslateResult::delete(changelog, self.table_name()))
-    }
 }
 
 #[cfg(test)]

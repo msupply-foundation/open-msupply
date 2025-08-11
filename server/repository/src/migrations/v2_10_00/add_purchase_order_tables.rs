@@ -44,7 +44,7 @@ impl MigrationFragment for Migrate {
                     donor_link_id TEXT REFERENCES name_link(id),
                     reference TEXT,
                     currency_id TEXT REFERENCES currency(id),
-                    foreign_exchange_rate {DOUBLE},
+                    foreign_exchange_rate {DOUBLE} NOT NULL DEFAULT 1.0,
                     shipping_method TEXT,
                     sent_datetime {DATETIME},
                     contract_signed_date {DATE},

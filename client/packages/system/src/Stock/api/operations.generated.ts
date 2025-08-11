@@ -39,6 +39,7 @@ export type StockLineRowFragment = {
       maxTemperature: number;
       minTemperature: number;
     } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
   } | null;
   item: {
     __typename: 'ItemNode';
@@ -113,6 +114,7 @@ export type RepackStockLineFragment = {
       maxTemperature: number;
       minTemperature: number;
     } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
   } | null;
 };
 
@@ -140,6 +142,7 @@ export type RepackFragment = {
         maxTemperature: number;
         minTemperature: number;
       } | null;
+      stock: { __typename: 'StockLineConnector'; totalCount: number };
     } | null;
   };
   to: {
@@ -161,6 +164,7 @@ export type RepackFragment = {
         maxTemperature: number;
         minTemperature: number;
       } | null;
+      stock: { __typename: 'StockLineConnector'; totalCount: number };
     } | null;
   };
 };
@@ -265,6 +269,7 @@ export type StockLinesQuery = {
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -374,6 +379,7 @@ export type StockLineQuery = {
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -520,6 +526,7 @@ export type UpdateStockLineMutation = {
             maxTemperature: number;
             minTemperature: number;
           } | null;
+          stock: { __typename: 'StockLineConnector'; totalCount: number };
         } | null;
         item: {
           __typename: 'ItemNode';
@@ -621,6 +628,7 @@ export type RepackQuery = {
               maxTemperature: number;
               minTemperature: number;
             } | null;
+            stock: { __typename: 'StockLineConnector'; totalCount: number };
           } | null;
         };
         to: {
@@ -642,6 +650,7 @@ export type RepackQuery = {
               maxTemperature: number;
               minTemperature: number;
             } | null;
+            stock: { __typename: 'StockLineConnector'; totalCount: number };
           } | null;
         };
       };
@@ -681,6 +690,7 @@ export type RepacksByStockLineQuery = {
             maxTemperature: number;
             minTemperature: number;
           } | null;
+          stock: { __typename: 'StockLineConnector'; totalCount: number };
         } | null;
       };
       to: {
@@ -702,6 +712,7 @@ export type RepacksByStockLineQuery = {
             maxTemperature: number;
             minTemperature: number;
           } | null;
+          stock: { __typename: 'StockLineConnector'; totalCount: number };
         } | null;
       };
     }>;
@@ -836,6 +847,7 @@ export type InsertStockLineMutation = {
             maxTemperature: number;
             minTemperature: number;
           } | null;
+          stock: { __typename: 'StockLineConnector'; totalCount: number };
         } | null;
         item: {
           __typename: 'ItemNode';
