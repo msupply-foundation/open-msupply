@@ -9,7 +9,6 @@ import {
 import { ReportSelector } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 import { AddButton } from './AddButton';
-import { AddDocumentButton } from './AddDocumentButton';
 
 interface AppBarButtonProps {
   isDisabled: boolean;
@@ -33,7 +32,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <AddDocumentButton purchaseOrderId={data?.id} />
         <ReportSelector
           context={ReportContext.PurchaseOrder}
           dataId={data?.id ?? ''}

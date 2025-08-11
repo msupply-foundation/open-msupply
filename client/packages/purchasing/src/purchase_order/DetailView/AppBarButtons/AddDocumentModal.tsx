@@ -1,36 +1,42 @@
-import React from 'react';
-import { useDialog, useNotification, useToggle } from '@common/hooks';
+import React, { useState } from 'react';
 import {
-  ButtonWithIcon,
   DialogButton,
   UploadFile,
-  UploadIcon,
   useQueryClient,
   useTranslation,
+  useDialog,
+  useNotification,
+  Box,
+  CircularProgress,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { PURCHASE_ORDER } from '../../api/hooks/keys';
 
-interface AddDocumentButtonProps {
+interface AddDocumentModalProps {
+  isOn: boolean;
+  toggleOff: () => void;
   purchaseOrderId?: string;
 }
 
-export const AddDocumentButton = ({
+export const AddDocumentModal = ({
+  isOn,
+  toggleOff,
   purchaseOrderId,
-}: AddDocumentButtonProps) => {
+}: AddDocumentModalProps) => {
   const t = useTranslation();
   const { error, success } = useNotification();
   const queryClient = useQueryClient();
-
-  const uploadDocumentController = useToggle();
+  const [isUploading, setIsUploading] = useState(false);
 
   const { Modal } = useDialog({
-    isOpen: uploadDocumentController.isOn,
-    onClose: uploadDocumentController.toggleOff,
+    isOpen: isOn,
+    onClose: toggleOff,
   });
 
   const handleUpload = async (files: File[]) => {
     if (!purchaseOrderId) return;
+
+    setIsUploading(true);
 
     const url = `${Environment.SYNC_FILES_URL}/purchase_order/${purchaseOrderId}`;
     const formData = new FormData();
@@ -39,6 +45,9 @@ export const AddDocumentButton = ({
     });
 
     try {
+      // Add fake delay for testing purposes
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -51,39 +60,46 @@ export const AddDocumentButton = ({
       if (response.ok) {
         success(t('success'))();
         queryClient.invalidateQueries([PURCHASE_ORDER]);
+        toggleOff();
       } else {
         error(t('error.an-error-occurred', { message: response.statusText }))();
       }
     } catch (e) {
       console.error(e);
       error(t('error.an-error-occurred', { message: (e as Error).message }))();
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
-    <>
-      <ButtonWithIcon
-        Icon={<UploadIcon />}
-        label={t('label.upload-document')}
-        onClick={uploadDocumentController.toggleOn}
-      />
-      <Modal
-        title={t('label.upload-document')}
-        okButton={
-          <DialogButton
-            variant="ok"
-            onClick={uploadDocumentController.toggleOff}
-          />
-        }
-        cancelButton={
-          <DialogButton
-            variant="cancel"
-            onClick={uploadDocumentController.toggleOff}
-          />
-        }
-      >
+    <Modal
+      title={t('label.upload-document')}
+      okButton={
+        <DialogButton variant="ok" onClick={toggleOff} disabled={isUploading} />
+      }
+      cancelButton={
+        <DialogButton
+          variant="cancel"
+          onClick={toggleOff}
+          disabled={isUploading}
+        />
+      }
+    >
+      {isUploading ? (
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          minHeight={200}
+          gap={2}
+        >
+          <CircularProgress />
+        </Box>
+      ) : (
         <UploadFile onUpload={handleUpload} />
-      </Modal>
-    </>
+      )}
+    </Modal>
   );
 };
