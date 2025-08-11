@@ -16,7 +16,6 @@ pub enum PrefKey {
     AllowTrackingOfStockByDonor,
     GenderOptions,
     ShowContactTracing,
-    UseCampaigns,
     CustomTranslations,
     SyncRecordsDisplayThreshold,
     AuthorisePurchaseOrder,
