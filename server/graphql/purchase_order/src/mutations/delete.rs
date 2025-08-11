@@ -1,6 +1,6 @@
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
-    simple_generic_errors::{CannotEditPurchaseOrder, RecordNotFound},
+    simple_generic_errors::{CannotDeleteNonNewPurchaseOrder, RecordNotFound},
     ContextExt,
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
@@ -56,7 +56,7 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
 #[graphql(field(name = "description", ty = "&str"))]
 pub enum DeletePurchaseOrderErrorInterface {
     RecordNotFound(RecordNotFound),
-    CannotEditPurchaseOrder(CannotEditPurchaseOrder),
+    CannotDeleteNonNewPurchaseOrder(CannotDeleteNonNewPurchaseOrder),
 }
 
 fn map_error(error: ServiceError) -> Result<DeletePurchaseOrderErrorInterface> {
@@ -70,17 +70,15 @@ fn map_error(error: ServiceError) -> Result<DeletePurchaseOrderErrorInterface> {
                 RecordNotFound {},
             ))
         }
-        ServiceError::NotThisStorePurchaseOrder => {
-            return Ok(DeletePurchaseOrderErrorInterface::CannotEditPurchaseOrder(
-                CannotEditPurchaseOrder {},
-            ))
-        }
         ServiceError::CannotDeleteNonNewPurchaseOrder => {
-            return Ok(DeletePurchaseOrderErrorInterface::CannotEditPurchaseOrder(
-                CannotEditPurchaseOrder {},
-            ))
+            return Ok(
+                DeletePurchaseOrderErrorInterface::CannotDeleteNonNewPurchaseOrder(
+                    CannotDeleteNonNewPurchaseOrder {},
+                ),
+            )
         }
-        // Catch-all
+        // Standard Graphql Errors
+        ServiceError::NotThisStorePurchaseOrder => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::LineDeleteError { .. } => InternalError(formatted_error),
     };
@@ -136,14 +134,14 @@ mod graphql {
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        // CannotEditRecord (trying to delete finalized purchase order)
+        // CannotDeleteNonNewPurchaseOrder (trying to delete finalized purchase order)
         let variables = Some(json!({
-          "id": "purchase_order_c"
+          "id": "test_purchase_order_c"
         }));
         let expected = json!({
             "deletePurchaseOrder": {
               "error": {
-                "__typename": "CannotEditRecord"
+                "__typename": "CannotDeleteNonNewPurchaseOrder"
               }
             }
           }
@@ -152,7 +150,7 @@ mod graphql {
 
         // NotThisStorePurchaseOrder
         let variables = Some(json!({
-          "id": "purchase_order_d"
+          "id": "test_purchase_order_d"
         }));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
