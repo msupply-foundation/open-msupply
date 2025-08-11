@@ -241,6 +241,7 @@ pub struct MockData {
     pub reason_options: Vec<ReasonOptionRow>,
     pub vvm_statuses: Vec<VVMStatusRow>,
     pub campaigns: Vec<CampaignRow>,
+    pub preferences: Vec<PreferenceRow>,
 }
 
 impl MockData {
@@ -329,6 +330,7 @@ pub struct MockDataInserts {
     pub reason_options: bool,
     pub vvm_statuses: bool,
     pub campaigns: bool,
+    pub preferences: bool,
 }
 
 impl MockDataInserts {
@@ -406,6 +408,7 @@ impl MockDataInserts {
             store_preferences: true,
             reason_options: true,
             campaigns: true,
+            preferences: true,
         }
     }
 
@@ -753,6 +756,11 @@ impl MockDataInserts {
 
     pub fn vvm_statuses(mut self) -> Self {
         self.vvm_statuses = true;
+        self
+    }
+
+    pub fn preferences(mut self) -> Self {
+        self.preferences = true;
         self
     }
 }
@@ -1408,6 +1416,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.preferences {
+            let repo = PreferenceRowRepository::new(connection);
+            for row in &mock_data.preferences {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1488,6 +1502,7 @@ impl MockData {
             mut reason_options,
             mut vvm_statuses,
             mut campaigns,
+            mut preferences,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1562,6 +1577,7 @@ impl MockData {
         self.store_preferences.append(&mut store_preferences);
         self.vvm_statuses.append(&mut vvm_statuses);
         self.campaigns.append(&mut campaigns);
+        self.preferences.append(&mut preferences);
         self
     }
 }
