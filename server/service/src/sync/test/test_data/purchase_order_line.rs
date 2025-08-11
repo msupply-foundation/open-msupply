@@ -96,7 +96,7 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             quan_adjusted_order: None,
             supplier_item_code: None,
             price_extension_expected: 4.0,
-            price_expected_after_discount: 2.0,,
+            price_expected_after_discount: 2.0,
             comment: Some("comment a!".to_string()),
         }),
     }
