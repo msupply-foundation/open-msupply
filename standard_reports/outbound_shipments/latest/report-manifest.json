@@ -1,0 +1,15 @@
+{
+  "is_custom": false,
+  "version": "2.10.0",
+  "code": "outbound-shipments",
+  "context": "REPORT",
+  "sub_context": "Distribution",
+  "name": "Outbound shipments",
+  "queries": {
+    "gql": "query.graphql"
+  },
+  "arguments": {
+    "schema": "argument_schemas/arguments.json",
+    "ui": "argument_schemas/arguments_ui.json"
+  }
+}
