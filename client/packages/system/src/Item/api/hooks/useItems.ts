@@ -9,6 +9,11 @@ import { useItemGraphQL } from '../useItemGraphQL';
 import { ITEM } from '../keys';
 import { ItemRowFragment } from '../operations.generated';
 
+const baseFilter = {
+  isActive: true,
+  isVisible: true,
+};
+
 export function useItems(refetchOnMount?: boolean) {
   const { data, isLoading, isError } = useGet();
   const { data: vaccine } = useGetVaccineItems();
@@ -75,9 +80,8 @@ const useGetVaccineItems = () => {
       desc: false,
       storeId,
       filter: {
+        ...baseFilter,
         isVaccine: true,
-        isActive: true,
-        isVisible: true,
       },
     });
 
@@ -103,9 +107,8 @@ const useServiceItems = (refetchOnMount?: boolean) => {
       desc: false,
       storeId,
       filter: {
+        ...baseFilter,
         type: { equalTo: ItemNodeType.Service },
-        isActive: true,
-        isVisible: true,
       },
     });
 
