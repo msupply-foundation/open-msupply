@@ -5,11 +5,9 @@ use repository::{
 use repository::{EqualFilter, PaginationOption};
 
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
+ 
 
 pub fn get_requisitions(
     ctx: &ServiceContext,
@@ -18,7 +16,7 @@ pub fn get_requisitions(
     filter: Option<RequisitionFilter>,
     sort: Option<RequisitionSort>,
 ) -> Result<ListResult<Requisition>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = RequisitionRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
