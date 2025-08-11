@@ -473,6 +473,16 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::AuthorisePurchaseOrders => {
                 output.insert(PermissionType::PurchaseOrderAuthorise);
             }
+            // goods received
+            Permissions::ViewGoodsReceived => {
+                output.insert(PermissionType::GoodsReceivedQuery);
+            }
+            Permissions::AddEditGoodsReceived => {
+                output.insert(PermissionType::GoodsReceivedMutate);
+            }
+            Permissions::AuthoriseGoodsReceived => {
+                output.insert(PermissionType::GoodsReceivedAuthorise);
+            }
             // reports
             Permissions::ViewReports => {
                 output.insert(PermissionType::Report);
