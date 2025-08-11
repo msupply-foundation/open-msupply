@@ -1,8 +1,11 @@
 import {
+  UpdatePurchaseOrderLineInput,
   LIST_KEY,
   useMutation,
+  useNotification,
   usePatchState,
   useQuery,
+  useTranslation,
 } from '@openmsupply-client/common/src';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
@@ -22,23 +25,52 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   itemId: '',
   requestedPackSize: 0,
   requestedNumberOfUnits: 0,
+  expectedDeliveryDate: null,
+  requestedDeliveryDate: null,
+  authorisedNumberOfUnits: null,
 };
 
 export function usePurchaseOrderLine(id?: string) {
   const { data, isLoading, error } = useGet(id ?? '');
 
+  const { patch, updatePatch, resetDraft, isDirty } =
+    usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
+
+  const draft: DraftPurchaseOrderLine = data
+    ? {
+        ...defaultPurchaseOrderLine,
+        ...data?.nodes[0],
+        itemId: data?.nodes[0]?.item.id ?? '',
+        ...patch,
+      }
+    : { ...defaultPurchaseOrderLine, ...patch, itemId: '' };
+
+  // UPDATE
+  const {
+    updatePurchaseOrderLine,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate();
+
+  const update = async () => {
+    const input: UpdatePurchaseOrderLineInput = {
+      id: draft.id,
+      expectedDeliveryDate: draft.expectedDeliveryDate,
+      itemId: draft.itemId,
+      requestedPackSize: draft.requestedPackSize,
+      requestedDeliveryDate: draft.requestedDeliveryDate,
+      requestedNumberOfUnits: draft.requestedNumberOfUnits,
+    };
+    return await updatePurchaseOrderLine(input);
+  };
+
+  // CREATE
   const {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
   } = useCreate();
 
-  const { patch, updatePatch, resetDraft, isDirty } =
-    usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
-
-  const draft: DraftPurchaseOrderLine = data
-    ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], ...patch }
-    : { ...defaultPurchaseOrderLine, ...patch };
   const create = async () => {
     const result = await createMutation(draft);
     resetDraft();
@@ -48,6 +80,7 @@ export function usePurchaseOrderLine(id?: string) {
   return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
+    update: { update, isUpdating, updateError },
     draft,
     resetDraft,
     isDirty,
@@ -70,7 +103,7 @@ const useGet = (id: string) => {
   };
 
   const query = useQuery({
-    queryKey: [PURCHASE_ORDER_LINE, id],
+    queryKey: [PURCHASE_ORDER, PURCHASE_ORDER_LINE, id],
     queryFn,
     enabled: id !== '',
   });
@@ -81,18 +114,17 @@ const useGet = (id: string) => {
 const useCreate = () => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
-  const mutationFn = async ({
-    purchaseOrderId,
-    itemId,
-    id,
-  }: DraftPurchaseOrderLine) => {
+  const mutationFn = async (draft: DraftPurchaseOrderLine) => {
     return await purchaseOrderApi.insertPurchaseOrderLine({
       storeId,
       input: {
-        id,
-        // TODO better way of handling non item id
-        itemId: itemId,
-        purchaseOrderId,
+        id: draft.id,
+        itemId: draft.itemId,
+        purchaseOrderId: draft.purchaseOrderId,
+        requestedPackSize: draft.requestedPackSize,
+        requestedNumberOfUnits: draft.requestedNumberOfUnits,
+        requestedDeliveryDate: draft.requestedDeliveryDate,
+        expectedDeliveryDate: draft.expectedDeliveryDate,
       },
     });
   };
@@ -102,4 +134,49 @@ const useCreate = () => {
     onSuccess: () =>
       queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY, storeId]),
   });
+};
+
+const useUpdate = () => {
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+  const t = useTranslation();
+  const { error } = useNotification();
+
+  const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine);
+
+  const updatePurchaseOrderLine = async (
+    input: UpdatePurchaseOrderLineInput
+  ) => {
+    try {
+      const result = await purchaseOrderApi.updatePurchaseOrderLine({
+        storeId,
+        input: {
+          ...input,
+        },
+      });
+      if (
+        result.updatePurchaseOrderLine.__typename ===
+        'UpdatePurchaseOrderLineError'
+      ) {
+        const errorType = result.updatePurchaseOrderLine.error.__typename;
+        switch (errorType) {
+          case 'CannotEditPurchaseOrder':
+            return error(t('label.cannot-edit-purchase-order'))();
+          case 'PurchaseOrderDoesNotExist':
+            return error(t('label.purchase-order-does-not-exist'))();
+          case 'PurchaseOrderLineNotFound':
+            return error(t('label.purchase-order-line-not-found'))();
+          case 'UpdatedLineDoesNotExist':
+            return error(t('label.updated-line-does-not-exist'))();
+          default:
+            return error(t('label.cannot-update-purchase-order-line'))();
+        }
+      }
+      queryClient.invalidateQueries([PURCHASE_ORDER]);
+    } catch (e) {
+      console.error('Error updating purchase order line:', e);
+      return error(t('label.cannot-update-purchase-order-line'))();
+    }
+  };
+
+  return { ...mutationState, updatePurchaseOrderLine };
 };

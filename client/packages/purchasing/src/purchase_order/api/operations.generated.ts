@@ -16,6 +16,32 @@ export type PurchaseOrderRowFragment = {
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
 };
 
+export type SyncFileReferenceFragment = {
+  __typename: 'SyncFileReferenceNode';
+  id: string;
+  fileName: string;
+  recordId: string;
+  createdDatetime: string;
+};
+
+export type PurchaseOrderLineFragment = {
+  __typename: 'PurchaseOrderLineNode';
+  id: string;
+  expectedDeliveryDate?: string | null;
+  purchaseOrderId: string;
+  requestedPackSize: number;
+  requestedDeliveryDate?: string | null;
+  requestedNumberOfUnits: number;
+  authorisedNumberOfUnits?: number | null;
+  item: {
+    __typename: 'ItemNode';
+    id: string;
+    code: string;
+    name: string;
+    unitName?: string | null;
+  };
+};
+
 export type PurchaseOrderFragment = {
   __typename: 'PurchaseOrderNode';
   id: string;
@@ -73,23 +99,15 @@ export type PurchaseOrderFragment = {
   };
   store?: { __typename: 'StoreNode'; id: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
-};
-
-export type PurchaseOrderLineFragment = {
-  __typename: 'PurchaseOrderLineNode';
-  id: string;
-  expectedDeliveryDate?: string | null;
-  purchaseOrderId: string;
-  requestedPackSize: number;
-  requestedDeliveryDate?: string | null;
-  requestedNumberOfUnits: number;
-  authorisedNumberOfUnits?: number | null;
-  item: {
-    __typename: 'ItemNode';
-    id: string;
-    code: string;
-    name: string;
-    unitName?: string | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
   };
 };
 
@@ -187,6 +205,16 @@ export type PurchaseOrderByIdQuery = {
         };
         store?: { __typename: 'StoreNode'; id: string } | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
       }
     | { __typename: 'RecordNotFound'; description: string };
 };
@@ -319,6 +347,25 @@ export type AddToPurchaseOrderFromMasterListMutation = {
     | { __typename: 'PurchaseOrderLineConnector' };
 };
 
+export type UpdatePurchaseOrderLineMutationVariables = Types.Exact<{
+  input: Types.UpdatePurchaseOrderLineInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdatePurchaseOrderLineMutation = {
+  __typename: 'Mutations';
+  updatePurchaseOrderLine:
+    | { __typename: 'IdResponse'; id: string }
+    | {
+        __typename: 'UpdatePurchaseOrderLineError';
+        error:
+          | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | { __typename: 'PurchaseOrderDoesNotExist'; description: string }
+          | { __typename: 'PurchaseOrderLineNotFound'; description: string }
+          | { __typename: 'UpdatedLineDoesNotExist'; description: string };
+      };
+};
+
 export const PurchaseOrderRowFragmentDoc = gql`
   fragment PurchaseOrderRow on PurchaseOrderNode {
     id
@@ -354,6 +401,15 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedDeliveryDate
     requestedNumberOfUnits
     authorisedNumberOfUnits
+  }
+`;
+export const SyncFileReferenceFragmentDoc = gql`
+  fragment SyncFileReference on SyncFileReferenceNode {
+    __typename
+    id
+    fileName
+    recordId
+    createdDatetime
   }
 `;
 export const PurchaseOrderFragmentDoc = gql`
@@ -409,11 +465,15 @@ export const PurchaseOrderFragmentDoc = gql`
     requestedDeliveryDate
     authorisedDatetime
     finalisedDatetime
-    donor {
-      id
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
     }
   }
   ${PurchaseOrderLineFragmentDoc}
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const PurchaseOrdersDocument = gql`
   query purchaseOrders(
@@ -580,6 +640,40 @@ export const AddToPurchaseOrderFromMasterListDocument = gql`
     }
   }
 `;
+export const UpdatePurchaseOrderLineDocument = gql`
+  mutation updatePurchaseOrderLine(
+    $input: UpdatePurchaseOrderLineInput!
+    $storeId: String!
+  ) {
+    updatePurchaseOrderLine(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+      ... on UpdatePurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on CannotEditPurchaseOrder {
+            __typename
+            description
+          }
+          ... on PurchaseOrderDoesNotExist {
+            __typename
+            description
+          }
+          ... on PurchaseOrderLineNotFound {
+            __typename
+            description
+          }
+          ... on UpdatedLineDoesNotExist {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -740,6 +834,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'addToPurchaseOrderFromMasterList',
+        'mutation',
+        variables
+      );
+    },
+    updatePurchaseOrderLine(
+      variables: UpdatePurchaseOrderLineMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdatePurchaseOrderLineMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePurchaseOrderLineMutation>(
+            UpdatePurchaseOrderLineDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updatePurchaseOrderLine',
         'mutation',
         variables
       );

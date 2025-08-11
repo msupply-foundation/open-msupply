@@ -18,6 +18,31 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   comment
 }
 
+fragment SyncFileReference on SyncFileReferenceNode {
+  __typename
+  id
+  fileName
+  recordId
+  createdDatetime
+}
+
+fragment PurchaseOrderLine on PurchaseOrderLineNode {
+  __typename
+  id
+  expectedDeliveryDate
+  purchaseOrderId
+  item {
+    id
+    code
+    name
+    unitName
+  }
+  requestedPackSize
+  requestedDeliveryDate
+  requestedNumberOfUnits
+  authorisedNumberOfUnits
+}
+
 fragment PurchaseOrder on PurchaseOrderNode {
   __typename
   id
@@ -73,26 +98,12 @@ fragment PurchaseOrder on PurchaseOrderNode {
   requestedDeliveryDate
   authorisedDatetime
   finalisedDatetime
-  donor {
-    id
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
   }
-}
-
-fragment PurchaseOrderLine on PurchaseOrderLineNode {
-  __typename
-  id
-  expectedDeliveryDate
-  purchaseOrderId
-  item {
-    id
-    code
-    name
-    unitName
-  }
-  requestedPackSize
-  requestedDeliveryDate
-  requestedNumberOfUnits
-  authorisedNumberOfUnits
 }
 
 query purchaseOrders(
@@ -242,6 +253,39 @@ mutation addToPurchaseOrderFromMasterList(
           description
         }
         description
+      }
+    }
+  }
+}
+
+mutation updatePurchaseOrderLine(
+  $input: UpdatePurchaseOrderLineInput!
+  $storeId: String!
+) {
+  updatePurchaseOrderLine(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+    ... on UpdatePurchaseOrderLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on PurchaseOrderDoesNotExist {
+          __typename
+          description
+        }
+        ... on PurchaseOrderLineNotFound {
+          __typename
+          description
+        }
+        ... on UpdatedLineDoesNotExist {
+          __typename
+          description
+        }
       }
     }
   }
