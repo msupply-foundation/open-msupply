@@ -137,6 +137,17 @@ pub fn mock_default_service_item() -> ItemRow {
     }
 }
 
+pub fn mock_item_restricted_location_type_b() -> ItemRow {
+    ItemRow {
+        id: String::from("restricted_location_type_item"),
+        name: String::from("name_restricted_location_type_item"),
+        code: String::from("restricted_location_type"),
+        r#type: ItemType::Stock,
+        restricted_location_type_id: Some(String::from("location_type_b_id")),
+        ..Default::default()
+    }
+}
+
 pub fn mock_items() -> Vec<ItemRow> {
     vec![
         mock_item_a(),
@@ -151,5 +162,6 @@ pub fn mock_items() -> Vec<ItemRow> {
         item_query_test2(),
         mock_item_service_item(),
         mock_default_service_item(),
+        mock_item_restricted_location_type_b(),
     ]
 }

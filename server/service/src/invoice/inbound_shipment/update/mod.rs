@@ -452,6 +452,27 @@ mod test {
                 ..Default::default()
             }
         }
+        fn invoice_line_only_shipped_packs_for_test() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line_only_shipped_packs_for_test".to_string();
+                r.invoice_id = "invoice_test".to_string();
+                r.item_link_id = "item_a".to_string();
+                r.pack_size = 1.0;
+                r.number_of_packs = 0.0;
+                r.shipped_number_of_packs = Some(5.0);
+                r.r#type = InvoiceLineType::StockIn;
+            })
+        }
+        fn invoice_line_placeholder_line_for_test() -> InvoiceLineRow {
+            inline_init(|r: &mut InvoiceLineRow| {
+                r.id = "invoice_line_placeholder_line_for_test".to_string();
+                r.invoice_id = "invoice_test".to_string();
+                r.item_link_id = "item_a".to_string();
+                r.pack_size = 1.0;
+                r.number_of_packs = 0.0;
+                r.r#type = InvoiceLineType::StockIn;
+            })
+        }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_success",

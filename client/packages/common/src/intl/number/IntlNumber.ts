@@ -34,7 +34,8 @@ export const useFormatNumber = () => {
       }).format(value);
     },
     round: (value?: number, dp?: number): string => {
-      if (value === undefined || value === null) return '';
+      if (value === undefined || value === null || typeof value !== 'number')
+        return '';
 
       const newVal = dp !== undefined ? parseFloat(value.toFixed(dp)) : value;
       const intl = intlNumberFormat(currentLanguage, {
