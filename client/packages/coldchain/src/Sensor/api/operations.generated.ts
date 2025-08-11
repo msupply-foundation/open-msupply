@@ -28,6 +28,7 @@ export type SensorFragment = {
       maxTemperature: number;
       minTemperature: number;
     } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
   } | null;
   latestTemperatureLog?: {
     __typename: 'TemperatureLogConnector';
@@ -85,6 +86,7 @@ export type SensorsQuery = {
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       } | null;
       latestTemperatureLog?: {
         __typename: 'TemperatureLogConnector';
@@ -140,6 +142,7 @@ export type UpdateSensorMutation = {
             maxTemperature: number;
             minTemperature: number;
           } | null;
+          stock: { __typename: 'StockLineConnector'; totalCount: number };
         } | null;
         latestTemperatureLog?: {
           __typename: 'TemperatureLogConnector';

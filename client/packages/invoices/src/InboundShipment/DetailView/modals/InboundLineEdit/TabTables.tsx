@@ -54,7 +54,7 @@ interface TableProps {
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
-  restrictedLocationTypeId?: string | null;
+  restrictedToLocationTypeId?: string | null;
   preferences?: {
     allowTrackingOfStockByDonor?: boolean;
     useCampaigns?: boolean;
@@ -400,7 +400,7 @@ export const LocationTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled,
-  restrictedLocationTypeId,
+  restrictedToLocationTypeId,
   preferences,
 }: TableProps) => {
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
@@ -413,9 +413,13 @@ export const LocationTableComponent = ({
     [
       'location',
       {
-        ...getLocationInputColumn(restrictedLocationTypeId),
+        ...getLocationInputColumn(restrictedToLocationTypeId),
         setter: updateDraftLine,
         width: 530,
+        cellProps: {
+          getVolumeRequired: (rowData: DraftInboundLine) =>
+            rowData.volumePerPack * rowData.numberOfPacks,
+        },
       },
     ],
     [

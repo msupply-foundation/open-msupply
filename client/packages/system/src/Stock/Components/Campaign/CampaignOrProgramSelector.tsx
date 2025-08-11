@@ -4,6 +4,7 @@ import { Autocomplete, AutocompleteOption } from '@common/components';
 import { CampaignNode } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
+import { isArray } from 'lodash';
 
 enum OptionType {
   Campaign = 'campaign',
@@ -19,18 +20,20 @@ interface CampaignOrProgramOption {
 interface CampaignOrProgramSelectorProps {
   campaignId?: string;
   programId?: string;
-  itemId: string;
   onChange: (value: {
     campaign: CampaignNode | null;
     program: ProgramFragment | null;
   }) => void;
+  programOptionsOrFilter: ProgramFragment[] | { filterByItemId: string };
+  fullWidth?: boolean;
 }
 
 export const CampaignOrProgramSelector = ({
   campaignId,
   programId,
-  itemId,
   onChange,
+  programOptionsOrFilter,
+  fullWidth = false,
 }: CampaignOrProgramSelectorProps): ReactElement => {
   const t = useTranslation();
   const {
@@ -38,12 +41,19 @@ export const CampaignOrProgramSelector = ({
   } = useCampaigns({
     sortBy: { key: 'name', direction: 'asc' },
   });
-  const { data: programData } = useProgramList({
-    itemId,
-  });
+  const { data: programData } = useProgramList(
+    isArray(programOptionsOrFilter)
+      ? { enabled: false }
+      : {
+          itemId: programOptionsOrFilter.filterByItemId,
+          enabled: true,
+        }
+  );
 
   const campaigns = campaignData?.nodes ?? [];
-  const programs = programData?.nodes ?? [];
+  const programs = isArray(programOptionsOrFilter)
+    ? programOptionsOrFilter
+    : (programData?.nodes ?? []);
 
   const options: AutocompleteOption<CampaignOrProgramOption>[] = campaigns
     .map(({ id, name }) => ({
@@ -87,8 +97,7 @@ export const CampaignOrProgramSelector = ({
       case OptionType.Program:
         onChange({
           campaign: null,
-          program:
-            programData?.nodes.find(({ id }) => id === option.value) ?? null,
+          program: programs.find(({ id }) => id === option.value) ?? null,
         });
     }
   };
@@ -103,6 +112,7 @@ export const CampaignOrProgramSelector = ({
       noOptionsText={t('messages.no-campaigns')}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       width={'160px'}
+      fullWidth={fullWidth}
     />
   );
 };

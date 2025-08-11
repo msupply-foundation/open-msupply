@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   ModalRow,
   ModalLabel,
@@ -20,11 +20,11 @@ interface InboundLineEditProps {
   onChangeItem: (item: ItemStockOnHandFragment | null) => void;
 }
 
-export const InboundLineEditForm: FC<InboundLineEditProps> = ({
+export const InboundLineEditForm = ({
   item,
   disabled,
   onChangeItem,
-}) => {
+}: InboundLineEditProps) => {
   const t = useTranslation();
   const { data: items } = useInbound.lines.items();
 
