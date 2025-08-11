@@ -57,7 +57,7 @@ export const useStatusChangeButton = () => {
       return info(t('error.no-purchase-order-authorisation-permission'))();
 
     try {
-      await update({ status });
+      await update({ status: selectedOption.value });
       success(t('messages.purchase-order-saved'))();
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();

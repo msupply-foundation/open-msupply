@@ -1,12 +1,8 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::{
-    standard_graphql_error::{
-        validate_auth,
-        StandardGraphqlError::{BadUserInput, InternalError},
-    },
-    ContextExt,
-};
+use graphql_core::simple_generic_errors::CannotEditPurchaseOrder;
+use graphql_core::standard_graphql_error::StandardGraphqlError::InternalError;
+use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::IdResponse;
 use repository::PurchaseOrderLine;
 use service::{
@@ -17,14 +13,18 @@ use service::{
     },
 };
 
+use crate::mutations::errors::{
+    PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound, UpdatedLineDoesNotExist,
+};
+
 #[derive(InputObject)]
 #[graphql(name = "UpdatePurchaseOrderLineInput")]
 pub struct UpdateInput {
     pub id: String,
     pub item_id: Option<String>,
-    pub pack_size: Option<f64>,
-    pub requested_quantity: Option<f64>,
-    pub adjusted_quantity: Option<f64>,
+    pub requested_pack_size: Option<f64>,
+    pub requested_number_of_units: Option<f64>,
+    pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
 }
@@ -34,9 +34,9 @@ impl UpdateInput {
         let UpdateInput {
             id,
             item_id,
-            pack_size,
-            requested_quantity,
-            adjusted_quantity,
+            requested_pack_size,
+            requested_number_of_units,
+            adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
         } = self;
@@ -44,8 +44,8 @@ impl UpdateInput {
         ServiceInput {
             id,
             item_id,
-            requested_pack_size: pack_size,
-            requested_number_of_units: requested_quantity,
+            requested_pack_size,
+            requested_number_of_units,
             adjusted_number_of_units: adjusted_quantity,
             requested_delivery_date,
             expected_delivery_date,
@@ -53,9 +53,24 @@ impl UpdateInput {
     }
 }
 
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum PurchaseOrderLineError {
+    PurchaseOrderLineNotFound(PurchaseOrderLineNotFound),
+    UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
+    PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
+    CannotEditPurchaseOrder(CannotEditPurchaseOrder),
+}
+
+#[derive(SimpleObject)]
+pub struct UpdatePurchaseOrderLineError {
+    pub error: PurchaseOrderLineError,
+}
+
 #[derive(Union)]
 #[graphql(name = "UpdatePurchaseOrderLineResponse")]
 pub enum UpdateResponse {
+    Error(UpdatePurchaseOrderLineError),
     Response(IdResponse),
 }
 
@@ -70,10 +85,10 @@ pub fn update_purchase_order_line(
             resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
         },
-    );
+    )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user?.user_id)?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider
@@ -95,11 +110,27 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::PurchaseOrderLineNotFound
-        | ServiceError::UpdatedLineDoesNotExist
-        | ServiceError::PurchaseOrderDoesNotExist
+        ServiceError::PurchaseOrderLineNotFound => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::PurchaseOrderLineNotFound(PurchaseOrderLineNotFound),
+            }))
+        }
+        ServiceError::UpdatedLineDoesNotExist => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
+            }))
+        }
+        ServiceError::PurchaseOrderDoesNotExist => {
         | ServiceError::CannotAdjustRequestedQuantity
-        | ServiceError::CannotEditPurchaseOrder => BadUserInput(formatted_error),
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
+            }))
+        }
+        ServiceError::CannotEditPurchaseOrder => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::CannotEditPurchaseOrder(CannotEditPurchaseOrder),
+            }))
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

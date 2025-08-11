@@ -9,8 +9,8 @@ import {
   LIST_KEY,
   useMutation,
 } from '@openmsupply-client/common';
-import {  ALLREPORTVERSIONS } from './keys';
-import { ReportRowFragment } from 'packages/system/src/Report/index.js';
+import { ALLREPORTVERSIONS } from './keys';
+import { ReportRowFragment } from '@openmsupply-client/system/src/Report/index.js';
 import { useAllReportVersionsGraphQL as useCentralServerReportsGraphqQL } from '../../api/useReportsGraphQL';
 
 export interface ReportListParams {
@@ -18,28 +18,27 @@ export interface ReportListParams {
   sortBy?: SortBy<ReportRowFragment>;
   first?: number;
   offset?: number;
-};
+}
 
 export const useCentralReports = ({
   queryParams,
 }: {
   queryParams?: ReportListParams;
 }) => {
-    // QUERY
-    const { data, isLoading, isError } = useGetList(queryParams);
+  // QUERY
+  const { data, isLoading, isError } = useGetList(queryParams);
 
-    
-    // INSTALL
-    const {
-      mutateAsync: installMutation,
-      isLoading: installLoading,
-      error: installError
-    } = useInstallUploadedReports();
+  // INSTALL
+  const {
+    mutateAsync: installMutation,
+    isLoading: installLoading,
+    error: installError,
+  } = useInstallUploadedReports();
 
-    return {
-        query: {data, isLoading, isError},
-        install: { installMutation, installLoading, installError }
-    };
+  return {
+    query: { data, isLoading, isError },
+    install: { installMutation, installLoading, installError },
+  };
 };
 
 const useGetList = (queryParams?: ReportListParams) => {
@@ -57,7 +56,15 @@ const useGetList = (queryParams?: ReportListParams) => {
     offset,
     first,
   } = queryParams ?? {};
-    const queryKey = [ALLREPORTVERSIONS, storeId, LIST_KEY, sortBy, filterBy, offset, first];
+  const queryKey = [
+    ALLREPORTVERSIONS,
+    storeId,
+    LIST_KEY,
+    sortBy,
+    filterBy,
+    offset,
+    first,
+  ];
 
   const queryFn = async () => {
     try {
@@ -87,7 +94,6 @@ const useGetList = (queryParams?: ReportListParams) => {
               key: query.allReportVersions.error.description,
             });
             break;
-
         }
         error(errorMessage)();
         console.error(errorMessage);
@@ -108,11 +114,11 @@ const useGetList = (queryParams?: ReportListParams) => {
 };
 
 const useInstallUploadedReports = () => {
-  const {reportApi, queryClient} = useCentralServerReportsGraphqQL();
+  const { reportApi, queryClient } = useCentralServerReportsGraphqQL();
 
   const mutationFn = async (fileId: string) => {
-      const result = await reportApi.installUploadedReports({ fileId });
-      return result?.centralServer?.reports.installUploadedReports;
+    const result = await reportApi.installUploadedReports({ fileId });
+    return result?.centralServer?.reports.installUploadedReports;
   };
 
   const mutation = useMutation({
@@ -121,5 +127,5 @@ const useInstallUploadedReports = () => {
     onError: e => console.error(e),
   });
 
-  return mutation
-}
+  return mutation;
+};

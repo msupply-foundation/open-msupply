@@ -5,10 +5,10 @@ import { useTranslation, Box } from '@openmsupply-client/common';
 import React, { useState } from 'react';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { createDraftPurchaseOrderLine } from './utils';
 interface PurchaseOrderLineEditModalProps {
-  itemId: string | null;
+  lineId: string | null;
   purchaseOrder: PurchaseOrderFragment;
   mode: ModalMode | null;
   isOpen: boolean;
@@ -16,7 +16,7 @@ interface PurchaseOrderLineEditModalProps {
 }
 
 export const PurchaseOrderLineEditModal = ({
-  itemId,
+  lineId,
   purchaseOrder,
   mode,
   isOpen,
@@ -27,8 +27,8 @@ export const PurchaseOrderLineEditModal = ({
 
   const lines = purchaseOrder.lines.nodes;
 
-  const [currentItem, setCurrentItem] = useState(
-    lines.find(line => line.item.id === itemId) ?? undefined
+  const [currentLine, setCurrentLine] = useState(
+    lines.find(line => line.id === lineId) ?? undefined
   );
 
   const {
@@ -36,15 +36,16 @@ export const PurchaseOrderLineEditModal = ({
     update: { update, isUpdating },
     draft,
     updatePatch,
-  } = usePurchaseOrderLine(currentItem?.id);
+  } = usePurchaseOrderLine(currentLine?.id);
 
-  const onChangeItem = (item: ItemWithStatsFragment) => {
+  const onChangeItem = (item: ItemStockOnHandFragment) => {
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
     item &&
       updatePatch({
         ...draftLine,
+        itemId: item.id,
       });
-    setCurrentItem({
+    setCurrentLine({
       ...draftLine,
       __typename: 'PurchaseOrderLineNode',
       item: item,
@@ -53,14 +54,12 @@ export const PurchaseOrderLineEditModal = ({
 
   const handleSave = async () => {
     try {
-      if (mode === ModalMode.Update) {
-        await update();
-      } else {
+      if (mode === ModalMode.Create) {
         await create();
+      } else if (mode === ModalMode.Update) {
+        await update();
       }
-      updatePatch(draft);
       return true;
-      // TODO add proper error handling by returning type errors from API
     } catch (e: unknown) {
       if (e instanceof Error) {
         error(e.message)();
@@ -70,17 +69,6 @@ export const PurchaseOrderLineEditModal = ({
       return false;
     }
   };
-
-  // TODO handle next item workflow
-  // const onSave = async () => {
-  //   const success = await handleSave();
-  //   if (!success) return false;
-  //   // if (mode === ModalMode.Update && false setCurrentItem(next);
-  //   // else if (mode === ModalMode.Create) setCurrentItem(undefined);
-  //   // else onClose();
-  //   onClose();
-  //   return true;
-  // };
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
@@ -92,12 +80,10 @@ export const PurchaseOrderLineEditModal = ({
           : t('heading.edit-item')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      // TODO add next button functionality
-      // nextButton={<DialogButton variant="next-and-ok" onClick={onSave} />}
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem}
+          disabled={!currentLine}
           onClick={async () => {
             const success = await handleSave();
             if (success) onClose();
@@ -120,18 +106,13 @@ export const PurchaseOrderLineEditModal = ({
         </Box>
       ) : (
         <PurchaseOrderLineEdit
-          currentItem={currentItem}
+          currentLine={currentLine}
           isUpdateMode={mode === ModalMode.Update}
           lines={lines}
           purchaseOrder={purchaseOrder}
           onChangeItem={onChangeItem}
-          onUpdate={patch => {
-            if (currentItem) {
-              const updatedItem = { ...currentItem, ...patch };
-              setCurrentItem(updatedItem);
-              updatePatch(patch);
-            }
-          }}
+          draft={draft}
+          updatePatch={updatePatch}
         />
       )}
     </Modal>
