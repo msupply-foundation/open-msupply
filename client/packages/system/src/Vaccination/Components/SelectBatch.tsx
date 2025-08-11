@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import {
   BasicSpinner,
   Checkbox,
@@ -11,8 +12,7 @@ import {
   useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { useEffect } from 'react';
-import { StockLineFragment, useStockLines } from '../../Item';
+import { StockLineFragment, useItem } from '../../Item';
 import { VaccinationStockLine } from '../api';
 
 interface SelectBatchProps {
@@ -28,7 +28,9 @@ export const SelectBatch = ({
   stockLine,
   setStockLine,
 }: SelectBatchProps) => {
-  const { data, isLoading } = useStockLines(itemId);
+  const {
+    stockLinesFromItem: { data, isLoading },
+  } = useItem(itemId);
 
   // Auto-select if there is only one stock line (and not already selected)
   useEffect(() => {

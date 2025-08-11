@@ -1,6 +1,8 @@
 import { useItem } from '../useItem';
 
 export const useItemFields = () => {
-  const { data } = useItem();
+  const {
+    byId: { data },
+  } = useItem();
   return { ...data };
 };
