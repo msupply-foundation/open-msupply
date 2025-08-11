@@ -226,7 +226,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack: Some(cost_price_per_pack),
             sell_price_per_pack: Some(sell_price_per_pack),
             volume_per_pack: Some(stocktake_line_row.volume_per_pack),
-            stock_line_id: Some(stock_line_row.id.clone()),
+            stock_line_id: stock_line_row.id.clone(),
             item_variant_id,
             donor_id: donor_link_id,
             campaign_id,

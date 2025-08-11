@@ -57,7 +57,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(custom_translations, &mut prefs, &input)?;
         append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
         append_if_type(authorise_purchase_order, &mut prefs, &input)?;
-        append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
         append_if_type(
             prevent_transfers_months_before_initialisation,
             &mut prefs,
