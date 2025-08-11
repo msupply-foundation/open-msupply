@@ -16,6 +16,7 @@ use validate::validate;
 #[derive(PartialEq, Debug)]
 pub enum UpdatePurchaseOrderError {
     SupplierDoesNotExist,
+    PurchaseOrderDoesNotExist,
     UpdatedRecordNotFound,
     NotASupplier,
     DonorDoesNotExist,
