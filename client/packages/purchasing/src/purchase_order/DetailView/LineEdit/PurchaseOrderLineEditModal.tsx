@@ -125,7 +125,7 @@ export const PurchaseOrderLineEditModal = ({
           lines={lines}
           purchaseOrder={purchaseOrder}
           onChangeItem={onChangeItem}
-          onUpdate={(patch) => {
+          onUpdate={patch => {
             if (currentItem) {
               const updatedItem = { ...currentItem, ...patch };
               setCurrentItem(updatedItem);
