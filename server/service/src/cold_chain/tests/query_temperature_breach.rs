@@ -22,19 +22,6 @@ mod query {
             service.temperature_breaches(
                 &connection,
                 Some(PaginationOption {
-                    limit: Some(2000),
-                    offset: None
-                }),
-                None,
-                None,
-            ),
-            Err(ListError::LimitAboveMax(1000))
-        );
-
-        assert_eq!(
-            service.temperature_breaches(
-                &connection,
-                Some(PaginationOption {
                     limit: Some(0),
                     offset: None,
                 }),

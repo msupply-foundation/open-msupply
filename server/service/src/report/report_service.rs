@@ -13,7 +13,7 @@ use util::{format_error, uuid::uuid};
 
 use crate::{
     boajs::{call_method, BoaJsError},
-    get_default_pagination, i64_to_u32,
+    get_pagination_or_default, i64_to_u32,
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     settings::Settings,
@@ -310,9 +310,6 @@ fn format_html_document(document: GeneratedReport) -> String {
 pub struct ReportService;
 impl ReportServiceTrait for ReportService {}
 
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
-
 #[derive(Debug)]
 pub enum GetReportError {
     TranslationError(TranslationError),
@@ -384,8 +381,7 @@ fn query_all_report_versions(
     sort: Option<ReportSort>,
     pagination: Option<PaginationOption>,
 ) -> Result<ListResult<Report>, GetReportsError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
-        .map_err(GetReportsError::ListError)?;
+    let pagination = get_pagination_or_default(pagination).map_err(GetReportsError::ListError)?;
 
     let repo = ReportRepository::new(&ctx.connection);
 
