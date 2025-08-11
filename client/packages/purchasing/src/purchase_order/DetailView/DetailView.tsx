@@ -16,7 +16,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea, Documents } from './Tabs';
+import { ContentArea, Details, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -32,11 +32,9 @@ export const DetailViewInner = () => {
   const {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
+    draft,
+    handleChange,
   } = usePurchaseOrder();
-
-  useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.number]);
 
   const {
     onOpen,
@@ -72,6 +70,10 @@ export const DetailViewInner = () => {
         />
       ),
       value: 'General',
+    },
+    {
+      Component: <Details draft={draft} onChange={handleChange} />,
+      value: 'Details',
     },
     {
       Component: (

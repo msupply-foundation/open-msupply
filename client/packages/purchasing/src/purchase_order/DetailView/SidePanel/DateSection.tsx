@@ -10,15 +10,14 @@ import {
   Formatter,
 } from '@openmsupply-client/common';
 import { PurchaseOrderFragment } from '../../api';
-import { UpdatePurchaseOrderInput } from '../../api/hooks/usePurchaseOrder';
 
 interface DateSectionProps {
-  data?: PurchaseOrderFragment;
-  onUpdate: (input: Partial<UpdatePurchaseOrderInput>) => void;
+  draft?: PurchaseOrderFragment;
+  onUpdate: (input: Partial<PurchaseOrderFragment>) => void;
 }
 
 export const DateSection = ({
-  data,
+  draft,
   onUpdate,
 }: DateSectionProps): ReactElement => {
   const t = useTranslation();
@@ -29,29 +28,29 @@ export const DateSection = ({
         <DateField
           type="datetime"
           label={t('label.confirmed')}
-          value={data?.confirmedDatetime}
+          value={draft?.confirmedDatetime}
           onChange={() => {}}
           disabled
         />
         <DateField
           type="datetime"
           label={t('label.po-sent')}
-          value={data?.sentDatetime}
+          value={draft?.sentDatetime}
           onChange={date => onUpdate({ sentDatetime: date })}
         />
         <DateField
           label={t('label.contract-signed')}
-          value={data?.contractSignedDate}
+          value={draft?.contractSignedDate}
           onChange={date => onUpdate({ contractSignedDate: date })}
         />
         <DateField
           label={t('label.advanced-paid')}
-          value={data?.advancePaidDate}
+          value={draft?.advancePaidDate}
           onChange={date => onUpdate({ advancePaidDate: date })}
         />
         <DateField
           label={t('label.received-at-port')}
-          value={data?.receivedAtPortDate}
+          value={draft?.receivedAtPortDate}
           onChange={date => onUpdate({ receivedAtPortDate: date })}
         />
       </Grid>
