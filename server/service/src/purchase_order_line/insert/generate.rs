@@ -24,7 +24,7 @@ pub fn generate(
         requested_number_of_units: input
             .requested_number_of_units
             .unwrap_or(Default::default()),
-        requested_pack_size: input.requested_pack_size.unwrap_or(Default::default()),
+        requested_pack_size: input.requested_pack_size.unwrap_or_default(),
         requested_delivery_date: input.requested_delivery_date,
         expected_delivery_date: input.expected_delivery_date,
         ..Default::default()

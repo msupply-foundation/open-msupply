@@ -39,5 +39,5 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::ItemDoesNotExist);
     }
 
-    Ok(())
+    Ok(pur)
 }
