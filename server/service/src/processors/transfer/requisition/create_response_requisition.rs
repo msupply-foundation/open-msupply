@@ -10,13 +10,7 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::{Months, Utc};
 use repository::{
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    ActivityLogType, ApprovalStatusType, EqualFilter, IndicatorValueRow,
-    IndicatorValueRowRepository, ItemRow, MasterListFilter, MasterListLineFilter,
-    MasterListLineRepository, MasterListRepository, NumberRowType, Pagination, RepositoryError,
-    Requisition, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, RequisitionStatus, RequisitionType, Sort, StorageConnection,
-    StoreFilter, StoreRepository, SyncLogRepository, SyncLogSortField,
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository}, ActivityLogType, ApprovalStatusType, DatetimeFilter, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, ItemRow, MasterListFilter, MasterListLineFilter, MasterListLineRepository, MasterListRepository, NumberRowType, Pagination, RepositoryError, Requisition, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType, Sort, StorageConnection, StoreFilter, StoreRepository, SyncLogFilter, SyncLogRepository, SyncLogSortField
 };
 use util::uuid::uuid;
 
@@ -74,22 +68,21 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
                     desc: None,
                 };
 
-                let latest_log_sorted_by_finished_datetime = SyncLogRepository::new(connection)
-                    .query(Pagination::one(), None, Some(sort))?
+                let filter = SyncLogFilter::new()
+                    .integration_finished_datetime(DatetimeFilter::is_null(false));
+
+                let first_initialisation_log = SyncLogRepository::new(connection)
+                    .query(Pagination::one(), Some(filter), Some(sort))?
                     .pop();
 
-                if let Some(log) = latest_log_sorted_by_finished_datetime {
-                    if let Some(initialisation_date) =
-                        log.sync_log_row.integration_finished_datetime
-                    {
-                        if let Some(cutoff_date) =
-                            initialisation_date.checked_sub_months(Months::new(pref_months as u32))
-                        {
-                            if sent_datetime < cutoff_date {
-                                return Ok(RequisitionTransferOutput::BeforeInitialisationMonths);
-                            }
-                        }
-                    }
+                if first_initialisation_log
+                    .and_then(|log| log.sync_log_row.integration_finished_datetime)
+                    .and_then(|initialisation_date| {
+                        initialisation_date.checked_sub_months(Months::new(pref_months as u32))
+                    })
+                    .map_or(false, |cutoff_date| sent_datetime < cutoff_date)
+                {
+                    return Ok(RequisitionTransferOutput::BeforeInitialisationMonths);
                 }
             }
         }
@@ -405,11 +398,39 @@ mod test {
         mock::{
             mock_name_b, mock_request_draft_requisition, mock_store_b, MockData, MockDataInserts,
         },
-        test_db::setup_all_with_data,
+        test_db::setup_all_with_data, SyncLogRow,
     };
 
     #[actix_rt::test]
     async fn test_create_inbound_requisition_picked_cutoff() {
+        let log_1 = SyncLogRow {
+            id: "sync_log_1".to_string(),
+            integration_finished_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 01, 01)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            ..Default::default()
+        };
+
+        let log_2 = SyncLogRow {
+            id: "sync_log_2".to_string(),
+            integration_finished_datetime: Some(
+                NaiveDate::from_ymd_opt(2024, 01, 01)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            ..Default::default()
+        };
+
+        let log_3 = SyncLogRow {
+            id: "sync_log_3".to_string(),
+            integration_finished_datetime: None,
+            ..Default::default()
+        };
+
         let requisition_row_old = RequisitionRow {
             id: "requisition_row_old".to_string(),
             status: RequisitionStatus::Sent,
@@ -456,10 +477,11 @@ mod test {
         };
 
         let (_, connection, _, _) = setup_all_with_data(
-            "test_create_inbound_requisition_picked_cutoff",
-            MockDataInserts::none().stores().sync_logs(),
+            "test_create_response_requisition_picked_cutoff",
+            MockDataInserts::none().stores(),
             MockData {
                 requisitions: vec![requisition_row_old, requisition_row_new],
+                sync_logs: vec![log_1, log_2, log_3],
                 ..Default::default()
             },
         )

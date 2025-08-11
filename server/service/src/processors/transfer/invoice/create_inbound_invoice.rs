@@ -1,9 +1,9 @@
 use chrono::{Duration, Months, NaiveDateTime, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow,
+    ActivityLogType, DatetimeFilter, EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow,
     InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType, Pagination, RepositoryError,
     Requisition, Sort, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
-    SyncLogRepository, SyncLogSortField,
+    SyncLogFilter, SyncLogRepository, SyncLogSortField,
 };
 use util::uuid::uuid;
 
@@ -121,22 +121,21 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                         desc: None,
                     };
 
-                    let latest_log_sorted_by_finished_datetime = SyncLogRepository::new(connection)
-                        .query(Pagination::one(), None, Some(sort))?
+                    let filter = SyncLogFilter::new()
+                        .integration_finished_datetime(DatetimeFilter::is_null(false));
+
+                    let first_initialisation_log = SyncLogRepository::new(connection)
+                        .query(Pagination::one(), Some(filter), Some(sort))?
                         .pop();
 
-                    if let Some(log) = latest_log_sorted_by_finished_datetime {
-                        if let Some(initialisation_date) =
-                            log.sync_log_row.integration_finished_datetime
-                        {
-                            if let Some(cutoff_date) = initialisation_date
-                                .checked_sub_months(Months::new(pref_months as u32))
-                            {
-                                if picked_date < cutoff_date {
-                                    return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
-                                }
-                            }
-                        }
+                    if first_initialisation_log
+                        .and_then(|log| log.sync_log_row.integration_finished_datetime)
+                        .and_then(|initialisation_date| {
+                            initialisation_date.checked_sub_months(Months::new(pref_months as u32))
+                        })
+                        .map_or(false, |cutoff_date| picked_date < cutoff_date)
+                    {
+                        return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
                     }
                 }
             }
@@ -305,10 +304,39 @@ mod test {
     use repository::{
         mock::{mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         test_db::setup_all_with_data,
+        SyncLogRow,
     };
 
     #[actix_rt::test]
     async fn test_create_inbound_invoice_picked_cutoff() {
+        let log_1 = SyncLogRow {
+            id: "sync_log_1".to_string(),
+            integration_finished_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 01, 01)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            ..Default::default()
+        };
+
+        let log_2 = SyncLogRow {
+            id: "sync_log_2".to_string(),
+            integration_finished_datetime: Some(
+                NaiveDate::from_ymd_opt(2024, 01, 01)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            ..Default::default()
+        };
+
+        let log_3 = SyncLogRow {
+            id: "sync_log_3".to_string(),
+            integration_finished_datetime: None,
+            ..Default::default()
+        };
+
         let invoice_row_old = InvoiceRow {
             id: "invoice_row_old".to_string(),
             status: InvoiceStatus::Picked,
@@ -364,9 +392,10 @@ mod test {
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_create_inbound_invoice_picked_cutoff",
-            MockDataInserts::none().stores().sync_logs(),
+            MockDataInserts::none().stores(),
             MockData {
                 invoices: vec![invoice_row_old, invoice_row_new],
+                sync_logs: vec![log_1, log_2, log_3],
                 ..Default::default()
             },
         )
