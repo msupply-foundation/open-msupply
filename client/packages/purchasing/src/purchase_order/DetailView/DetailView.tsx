@@ -3,6 +3,7 @@ import {
   AlertModal,
   createQueryParamsStore,
   createTableStore,
+  DetailTabs,
   DetailViewSkeleton,
   PurchaseOrderNodeStatus,
   RouteBuilder,
@@ -12,15 +13,15 @@ import {
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { AppRoute } from 'packages/config/src';
 import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea } from './ContentArea';
+import { ContentArea, Details } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
-import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
+import { PurchaseOrderLineEditModal } from './LineEdit';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -30,11 +31,9 @@ export const DetailViewInner = () => {
   const {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
+    draft,
+    handleChange,
   } = usePurchaseOrder();
-
-  useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.number]);
 
   const {
     onOpen,
@@ -59,6 +58,24 @@ export const DetailViewInner = () => {
 
   const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
 
+  const tabs = [
+    {
+      Component: (
+        <ContentArea
+          lines={sortedAndFilteredLines}
+          isDisabled={isDisabled}
+          onAddItem={onOpen}
+          onRowClick={!isDisabled ? onRowClick : null}
+        />
+      ),
+      value: 'General',
+    },
+    {
+      Component: <Details draft={draft} onChange={handleChange} />,
+      value: 'Details',
+    },
+  ];
+
   return (
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
@@ -67,12 +84,7 @@ export const DetailViewInner = () => {
         <>
           <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
           <Toolbar isDisabled={isDisabled} />
-          <ContentArea
-            lines={sortedAndFilteredLines}
-            isDisabled={isDisabled}
-            onAddItem={onOpen}
-            onRowClick={!isDisabled ? onRowClick : null}
-          />
+          <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />
           {isOpen && (

@@ -73,6 +73,9 @@ fragment PurchaseOrder on PurchaseOrderNode {
   requestedDeliveryDate
   authorisedDatetime
   finalisedDatetime
+  donor {
+    id
+  }
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
