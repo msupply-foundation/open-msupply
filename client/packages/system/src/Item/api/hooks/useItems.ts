@@ -10,12 +10,16 @@ import { ItemRowFragment } from '../operations.generated';
 
 export function useItems() {
   const { data, isLoading, isError } = useGet();
+  const { data: vaccineItemsData } = useGetVaccineItems();
 
   return {
     items: {
       data,
       isLoading,
       isError,
+    },
+    vaccineItems: {
+      data: vaccineItemsData,
     },
   };
 }
@@ -47,11 +51,38 @@ const useGet = () => {
     }
   };
 
-  const query = useQuery({
+  return useQuery({
     queryKey: [ITEM, queryParams],
     queryFn,
   });
-  return query;
+};
+
+const useGetVaccineItems = () => {
+  const { api, storeId } = useItemGraphQL();
+
+  const queryFn = async () => {
+    const result = await api.items({
+      first: 1000,
+      offset: 0,
+      key: ItemSortFieldInput.Name,
+      desc: false,
+      storeId,
+      filter: {
+        isVaccine: true,
+        isActive: true,
+        isVisible: true,
+      },
+    });
+
+    if (result.items.__typename === 'ItemConnector') {
+      return result.items;
+    }
+  };
+
+  return useQuery({
+    queryKey: [ITEM],
+    queryFn,
+  });
 };
 
 const toSortField = (sortBy: SortBy<ItemRowFragment>) => {
