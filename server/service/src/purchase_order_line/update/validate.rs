@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    purchase_order::validate::purchase_order_is_editable,
+    purchase_order::validate::{can_adjust_requested_quantity, purchase_order_is_editable},
     purchase_order_line::update::{
         UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
     },
@@ -31,6 +31,18 @@ pub fn validate(
 
     if !purchase_order_is_editable(&purchase_order) {
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrder);
+    }
+
+    // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
+    match input.requested_number_of_units {
+        Some(requested_units) => {
+            if requested_units != purchase_order_line.requested_number_of_units
+                && !can_adjust_requested_quantity(&purchase_order)
+            {
+                return Err(UpdatePurchaseOrderLineInputError::CannotAdjustRequestedQuantity);
+            }
+        }
+        None => {} // Nothing to check :)
     }
 
     Ok(purchase_order_line)
