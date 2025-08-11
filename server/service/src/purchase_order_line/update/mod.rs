@@ -17,6 +17,7 @@ pub enum UpdatePurchaseOrderLineInputError {
     PurchaseOrderLineNotFound,
     PurchaseOrderDoesNotExist,
     CannotEditPurchaseOrder,
+    CannotAdjustRequestedQuantity,
     UpdatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }
