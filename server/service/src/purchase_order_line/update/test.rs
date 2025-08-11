@@ -45,6 +45,7 @@ mod update {
                     item_id: None,
                     requested_pack_size: Some(10.0),
                     requested_number_of_units: Some(5.0),
+                    adjusted_number_of_units: None,
                     requested_delivery_date: None,
                     expected_delivery_date: None,
                 }
@@ -85,6 +86,7 @@ mod update {
                     item_id: Some(mock_item_b().id.to_string()),
                     requested_pack_size: Some(10.0),
                     requested_number_of_units: Some(5.0),
+                    adjusted_number_of_units: None,
                     requested_delivery_date: None,
                     expected_delivery_date: None,
                 },

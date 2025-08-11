@@ -61,7 +61,7 @@ export type PurchaseOrderFragment = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      authorisedNumberOfUnits?: number | null;
+      adjustedNumberOfUnits?: number | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -83,7 +83,7 @@ export type PurchaseOrderLineFragment = {
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
-  authorisedNumberOfUnits?: number | null;
+  adjustedNumberOfUnits?: number | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -175,7 +175,7 @@ export type PurchaseOrderByIdQuery = {
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
-            authorisedNumberOfUnits?: number | null;
+            adjustedNumberOfUnits?: number | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -233,7 +233,7 @@ export type PurchaseOrderLinesQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      authorisedNumberOfUnits?: number | null;
+      adjustedNumberOfUnits?: number | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -263,7 +263,7 @@ export type PurchaseOrderLineQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      authorisedNumberOfUnits?: number | null;
+      adjustedNumberOfUnits?: number | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -296,6 +296,16 @@ export type InsertPurchaseOrderLineMutationVariables = Types.Exact<{
 export type InsertPurchaseOrderLineMutation = {
   __typename: 'Mutations';
   insertPurchaseOrderLine: { __typename: 'IdResponse'; id: string };
+};
+
+export type UpdatePurchaseOrderLineMutationVariables = Types.Exact<{
+  input: Types.UpdatePurchaseOrderLineInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdatePurchaseOrderLineMutation = {
+  __typename: 'Mutations';
+  updatePurchaseOrderLine: { __typename: 'IdResponse'; id: string };
 };
 
 export type AddToPurchaseOrderFromMasterListMutationVariables = Types.Exact<{
@@ -353,7 +363,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
-    authorisedNumberOfUnits
+    adjustedNumberOfUnits
   }
 `;
 export const PurchaseOrderFragmentDoc = gql`
@@ -544,6 +554,18 @@ export const InsertPurchaseOrderLineDocument = gql`
     }
   }
 `;
+export const UpdatePurchaseOrderLineDocument = gql`
+  mutation updatePurchaseOrderLine(
+    $input: UpdatePurchaseOrderLineInput!
+    $storeId: String!
+  ) {
+    updatePurchaseOrderLine(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
 export const AddToPurchaseOrderFromMasterListDocument = gql`
   mutation addToPurchaseOrderFromMasterList(
     $storeId: String!
@@ -721,6 +743,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertPurchaseOrderLine',
+        'mutation',
+        variables
+      );
+    },
+    updatePurchaseOrderLine(
+      variables: UpdatePurchaseOrderLineMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdatePurchaseOrderLineMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePurchaseOrderLineMutation>(
+            UpdatePurchaseOrderLineDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updatePurchaseOrderLine',
         'mutation',
         variables
       );

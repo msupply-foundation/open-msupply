@@ -4,7 +4,7 @@ import {
   createQueryParamsStore,
   createTableStore,
   DetailViewSkeleton,
-  PurchaseOrderNodeStatus,
+
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
@@ -18,6 +18,7 @@ import { PurchaseOrderLineFragment } from '../api';
 import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
+import { canAddNewLines } from '../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
@@ -57,7 +58,7 @@ export const DetailViewInner = () => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
-  const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
+  const isDisabled = !data || !canAddNewLines(data);
 
   return (
     <React.Suspense

@@ -33,6 +33,7 @@ export const PurchaseOrderLineEditModal = ({
 
   const {
     create: { create, isCreating },
+    update: { update, isUpdating },
     draft,
     updatePatch,
   } = usePurchaseOrderLine(currentItem?.id);
@@ -52,7 +53,11 @@ export const PurchaseOrderLineEditModal = ({
 
   const handleSave = async () => {
     try {
-      await create();
+      if (mode === ModalMode.Update) {
+        await update();
+      } else {
+        await create();
+      }
       updatePatch(draft);
       return true;
       // TODO add proper error handling by returning type errors from API
@@ -103,7 +108,7 @@ export const PurchaseOrderLineEditModal = ({
       width={1200}
       enableAutocomplete
     >
-      {isCreating ? (
+      {isCreating || isUpdating ? (
         <Box
           display="flex"
           flex={1}
@@ -118,7 +123,15 @@ export const PurchaseOrderLineEditModal = ({
           currentItem={currentItem}
           isUpdateMode={mode === ModalMode.Update}
           lines={lines}
+          purchaseOrder={purchaseOrder}
           onChangeItem={onChangeItem}
+          onUpdate={(patch) => {
+            if (currentItem) {
+              const updatedItem = { ...currentItem, ...patch };
+              setCurrentItem(updatedItem);
+              updatePatch(patch);
+            }
+          }}
         />
       )}
     </Modal>

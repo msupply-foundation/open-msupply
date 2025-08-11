@@ -2,13 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { SplitButton, SplitButtonOption } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
-import { useNotification, useToggle } from '@common/hooks';
+import { useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
-import { PurchaseOrderFragment } from '../../api';
-import { PurchaseOrderNodeStatus } from '@common/types';
+
 
 interface AddButtonProps {
-  purchaseOrder: PurchaseOrderFragment | undefined;
   onAddItem: (newState: boolean) => void;
   /** Disable the whole control */
   disable: boolean;
@@ -17,13 +15,11 @@ interface AddButtonProps {
 }
 
 export const AddButton = ({
-  purchaseOrder,
   onAddItem,
   disable,
   disableAddFromMasterListButton,
 }: AddButtonProps) => {
   const t = useTranslation();
-  const { info } = useNotification();
   const masterListModalController = useToggle();
 
   const options: [SplitButtonOption<string>, SplitButtonOption<string>] =
@@ -57,10 +53,7 @@ export const AddButton = ({
         onAddItem(true);
         break;
       case 'add-from-master-list':
-        // Mimmicking OG behaviour where purchase orders can be edited when confirmed AND when authorised
-        purchaseOrder?.status !== PurchaseOrderNodeStatus.Finalised
-          ? masterListModalController.toggleOn()
-          : info(t('error.cannot-add-from-masterlist'))();
+        masterListModalController.toggleOn();
         break;
     }
   };

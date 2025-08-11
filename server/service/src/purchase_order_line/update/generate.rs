@@ -10,6 +10,7 @@ pub fn generate(
         requested_pack_size,
         item_id,
         requested_number_of_units,
+        adjusted_number_of_units,
         requested_delivery_date,
         expected_delivery_date,
         id: _,
@@ -22,6 +23,8 @@ pub fn generate(
         requested_pack_size: requested_pack_size.unwrap_or(purchase_order_line.requested_pack_size),
         requested_number_of_units: requested_number_of_units
             .unwrap_or(purchase_order_line.requested_number_of_units),
+        adjusted_number_of_units: adjusted_number_of_units
+            .or(purchase_order_line.adjusted_number_of_units),
         requested_delivery_date: requested_delivery_date
             .or(purchase_order_line.requested_delivery_date),
         expected_delivery_date: expected_delivery_date

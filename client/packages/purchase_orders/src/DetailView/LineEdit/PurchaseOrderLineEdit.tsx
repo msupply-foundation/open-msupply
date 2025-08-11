@@ -1,29 +1,34 @@
 import React from 'react';
-import { BasicTextInput, Grid } from '@openmsupply-client/common';
-import { PurchaseOrderLineFragment } from '../../api';
+import { BasicTextInput, Grid, NumericTextInput, Typography, useTranslation } from '@openmsupply-client/common';
+import { PurchaseOrderLineFragment, PurchaseOrderFragment } from '../../api';
 import {
   ItemWithStatsFragment,
   StockItemSearchInputWithStats,
 } from '@openmsupply-client/system/src';
+import { canEditOriginalQuantity, canEditAdjustedQuantity, isPurchaseOrderConfirmed } from '../../utils';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
   currentItem?: PurchaseOrderLineFragment;
   lines: PurchaseOrderLineFragment[];
+  purchaseOrder: PurchaseOrderFragment;
   onChangeItem: (item: ItemWithStatsFragment) => void;
-  // TODO add line update
-  // onUpdate: (patch: Partial<PurchaseOrderLineFragment>) => void;
+  onUpdate: (patch: Partial<PurchaseOrderLineFragment>) => void;
 }
 
 export const PurchaseOrderLineEdit = ({
   isUpdateMode,
   currentItem,
   lines,
+  purchaseOrder,
   onChangeItem,
-  // TODO add line update
-  // onUpdate,
+  onUpdate,
 }: PurchaseOrderLineEditProps) => {
+  const t = useTranslation();
+  const canEditOriginal = canEditOriginalQuantity(purchaseOrder);
+  const canEditAdjusted = canEditAdjustedQuantity(purchaseOrder);
+  const isConfirmed = isPurchaseOrderConfirmed(purchaseOrder);
   return (
     <Grid
       container
@@ -54,9 +59,110 @@ export const PurchaseOrderLineEdit = ({
         )}
       </Grid>
       <Grid size={12} container spacing={2}>
-        {/* <Grid size={6}>{}</Grid>
-        TODO add update line fields here
-        <Grid size={6}>{}</Grid> */}
+        {isUpdateMode && currentItem && (
+          <>
+            {/* Pack Size */}
+            <Grid size={6}>
+              <NumericTextInput
+                fullWidth
+                label="Pack Size"
+                value={currentItem.requestedPackSize ?? 0}
+                onChange={(value) => onUpdate({ requestedPackSize: value })}
+                disabled={!canEditOriginal}
+              />
+            </Grid>
+
+            {/* Original/Requested Quantity */}
+            <Grid size={6}>
+              <NumericTextInput
+                fullWidth
+                label="Requested Quantity"
+                value={currentItem.requestedNumberOfUnits ?? 0}
+                onChange={(value) => onUpdate({ requestedNumberOfUnits: value })}
+                disabled={!canEditOriginal}
+              />
+            </Grid>
+
+            {/* Adjusted Quantity - only show for confirmed POs */}
+            {isConfirmed && (
+              <Grid size={6}>
+                <NumericTextInput
+                  fullWidth
+                  label="Adjusted Quantity"
+                  value={currentItem.adjustedNumberOfUnits ?? 0}
+                  onChange={(value) => onUpdate({ adjustedNumberOfUnits: value })}
+                  disabled={!canEditAdjusted}
+                />
+              </Grid>
+            )}
+
+            {/* Show pack size and quantity for new items */}
+            {!isUpdateMode && currentItem && (
+              <>
+                <Grid size={6}>
+                  <NumericTextInput
+                    fullWidth
+                    label="Pack Size"
+                    value={currentItem.requestedPackSize ?? 0}
+                    onChange={(value) => onUpdate({ requestedPackSize: value })}
+                    disabled={isConfirmed && !canEditOriginal}
+                  />
+                </Grid>
+                {isConfirmed ? (
+                  <>
+                    <Grid size={12}>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('messages.purchase-order-confirmed-new-lines')}
+                      </Typography>
+                    </Grid>
+                    <Grid size={6}>
+                      <NumericTextInput
+                        fullWidth
+                        label="Adjusted Quantity"
+                        value={currentItem.adjustedNumberOfUnits ?? 0}
+                        onChange={(value) => onUpdate({ adjustedNumberOfUnits: value, requestedNumberOfUnits: 0 })}
+                        disabled={!canEditAdjusted}
+                      />
+                    </Grid>
+                  </>
+                ) : (
+                  <Grid size={6}>
+                    <NumericTextInput
+                      fullWidth
+                      label="Requested Quantity"
+                      value={currentItem.requestedNumberOfUnits ?? 0}
+                      onChange={(value) => onUpdate({ requestedNumberOfUnits: value })}
+                    />
+                  </Grid>
+                )}
+              </>
+            )}
+
+            {/* Requested Delivery Date */}
+            <Grid size={6}>
+              <BasicTextInput
+                fullWidth
+                label="Requested Delivery Date"
+                type="date"
+                value={currentItem.requestedDeliveryDate || ''}
+                onChange={(e) => onUpdate({ requestedDeliveryDate: e.target.value || null })}
+                disabled={isConfirmed && !canEditAdjusted}
+              />
+            </Grid>
+
+            {/* Expected Delivery Date */}
+            <Grid size={6}>
+              <BasicTextInput
+                fullWidth
+                label="Expected Delivery Date"
+                type="date"
+                value={currentItem.expectedDeliveryDate || ''}
+                onChange={(e) => onUpdate({ expectedDeliveryDate: e.target.value || null })}
+                disabled={isConfirmed && !canEditAdjusted}
+              />
+            </Grid>
+          </>
+        )}
       </Grid>
     </Grid>
   );
