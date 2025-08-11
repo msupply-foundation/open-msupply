@@ -1,0 +1,278 @@
+fragment PurchaseOrderRow on PurchaseOrderNode {
+  id
+  number
+  supplier {
+    __typename
+    id
+    name
+    # Add more fields here as required
+  }
+  createdDatetime
+  confirmedDatetime
+  status
+  targetMonths
+  # deliveredDatetime
+  lines {
+    totalCount
+  }
+  comment
+}
+
+fragment PurchaseOrder on PurchaseOrderNode {
+  __typename
+  id
+  number
+  additionalInstructions
+  # advancePaidDatetime
+  agentCommission
+  authorisingOfficer1
+  authorisingOfficer2
+  comment
+  communicationsCharge
+  createdDatetime
+  currencyId
+  documentCharge
+  donor {
+    id
+    name
+  }
+  foreignExchangeRate
+  freightCharge
+  freightConditions
+  headingMessage
+  insuranceCharge
+  reference
+  lines {
+    __typename
+    nodes {
+      ...PurchaseOrderLine
+    }
+    totalCount
+  }
+  sentDatetime
+  shippingMethod
+  status
+  store {
+    id
+    # name
+  }
+  supplier {
+    __typename
+    id
+    name
+    # Add more fields here as required
+  }
+  supplierAgent
+  supplierDiscountAmount
+  supplierDiscountPercentage
+  targetMonths
+  confirmedDatetime
+  contractSignedDate
+  advancePaidDate
+  receivedAtPortDate
+  requestedDeliveryDate
+  authorisedDatetime
+  finalisedDatetime
+}
+
+fragment PurchaseOrderLine on PurchaseOrderLineNode {
+  __typename
+  id
+  expectedDeliveryDate
+  purchaseOrderId
+  item {
+    id
+    code
+    name
+    unitName
+  }
+  requestedPackSize
+  requestedDeliveryDate
+  requestedNumberOfUnits
+  authorisedNumberOfUnits
+}
+
+query purchaseOrders(
+  $first: Int
+  $offset: Int
+  $key: PurchaseOrderSortFieldInput!
+  $desc: Boolean
+  $filter: PurchaseOrderFilterInput
+  $storeId: String!
+) {
+  purchaseOrders(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on PurchaseOrderConnector {
+      __typename
+      nodes {
+        ...PurchaseOrderRow
+      }
+      totalCount
+    }
+  }
+}
+
+query purchaseOrderById($purchaseOrderId: String!, $storeId: String!) {
+  purchaseOrder(id: $purchaseOrderId, storeId: $storeId) {
+    __typename
+    ... on RecordNotFound {
+      __typename
+      description
+    }
+    ... on PurchaseOrderNode {
+      ...PurchaseOrder
+    }
+  }
+}
+
+mutation insertPurchaseOrder(
+  $input: InsertPurchaseOrderInput!
+  $storeId: String!
+) {
+  insertPurchaseOrder(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation updatePurchaseOrder(
+  $input: UpdatePurchaseOrderInput!
+  $storeId: String!
+) {
+  updatePurchaseOrder(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+query purchaseOrderLines(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: PurchaseOrderLineSortFieldInput!
+  $desc: Boolean
+  $filter: PurchaseOrderLineFilterInput
+) {
+  purchaseOrderLines(
+    storeId: $storeId
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on PurchaseOrderLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...PurchaseOrderLine
+      }
+      totalCount
+    }
+  }
+}
+
+query purchaseOrderLine($id: String!, $storeId: String!) {
+  purchaseOrderLines(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on PurchaseOrderLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...PurchaseOrderLine
+      }
+      totalCount
+    }
+  }
+}
+
+query purchaseOrderLinesCount(
+  $filter: PurchaseOrderLineFilterInput
+  $storeId: String!
+) {
+  purchaseOrderLines(storeId: $storeId, filter: $filter) {
+    ... on PurchaseOrderLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}
+
+mutation insertPurchaseOrderLine(
+  $input: InsertPurchaseOrderLineInput!
+  $storeId: String!
+) {
+  insertPurchaseOrderLine(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation addToPurchaseOrderFromMasterList(
+  $storeId: String!
+  $input: AddToPurchaseOrderFromMasterListInput!
+) {
+  addToPurchaseOrderFromMasterList(storeId: $storeId, input: $input) {
+    ... on AddToPurchaseOrderFromMasterListResponse {
+      ... on PurchaseOrderLineConnector {
+        __typename
+        totalCount
+      }
+    }
+    ... on AddToPurchaseOrderFromMasterListError {
+      __typename
+      error {
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
+}
+
+mutation updatePurchaseOrderLine(
+  $input: UpdatePurchaseOrderLineInput!
+  $storeId: String!
+) {
+  updatePurchaseOrderLine(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+    ... on UpdatePurchaseOrderLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on PurchaseOrderDoesNotExist {
+          __typename
+          description
+        }
+        ... on PurchaseOrderLineNotFound {
+          __typename
+          description
+        }
+        ... on UpdatedLineDoesNotExist {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}

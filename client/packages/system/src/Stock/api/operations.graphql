@@ -39,12 +39,16 @@ fragment StockLineRow on StockLineNode {
   vvmStatus {
     __typename
     id
-    level
+    priority
     unusable
     description
   }
   donor(storeId: $storeId) {
     id
+  }
+  program {
+    id
+    name
   }
   campaign {
     id
@@ -124,7 +128,7 @@ fragment VVMStatusLogRow on VvmstatusLogNode {
     id
     description
     code
-    level
+    priority
   }
   createdDatetime
   comment
@@ -314,7 +318,7 @@ fragment VVMStatus on VvmstatusNode {
   __typename
   description
   id
-  level
+  priority
   reasonId
   unusable
 }

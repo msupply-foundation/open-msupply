@@ -107,6 +107,7 @@ impl CustomerReturnLine {
             number_of_packs: line.invoice_line_row.number_of_packs,
             stock_line_id: line.invoice_line_row.stock_line_id.clone(),
             item_variant_id: line.invoice_line_row.item_variant_id.clone(),
+            volume_per_pack: line.invoice_line_row.volume_per_pack,
             // We only include packs_issued on new lines. In order to get it for existing lines, we'd need
             // to store a linked invoice line of the outbound shipment against the customer return line
             packs_issued: None,

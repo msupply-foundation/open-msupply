@@ -20,7 +20,7 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "ID": "12e889c0f0d211eb8dddb54df6d741hx",
         "creation_date": "2021-01-22",
         "target_months": 2.1,
-        "status": "nw",
+        "status": "cn",
         "serial_number": 1,
         "store_ID": "store_b",
         "comment": "some test comment",
@@ -59,7 +59,7 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "include_in_on_order_calcs": "",
         "colour": "",
         "user_field_1": "",
-        "is_authorised": "",
+        "is_authorised": true,
         "auth_checksum": "",
         "donor_id": "donor_a",
         "user_field_2": "",
@@ -74,13 +74,13 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "delivery_method": "sea",
         "curr_rate": 1.6,
         "oms_fields": { 
-            "expected_delivery_date": "2025-01-22",
             "created_datetime": "2021-01-22T00:00:00",
             "confirmed_datetime": "2021-07-11T01:02:03",
             "sent_datetime": "2025-01-15T01:02:03",
             "supplier_discount_percentage": 10.0, 
             "authorised_datetime": "2025-01-22T00:00:00",
-            "finalised_datetime": "2025-01-22T00:00:00"
+            "finalised_datetime": "2025-01-22T00:00:00",
+            "status": "AUTHORISED"
         }
     }"#,
 );
@@ -95,7 +95,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             created_by: Some("some user".to_string()),
             supplier_name_link_id: "name_store_b".to_string(),
             purchase_order_number: 1,
-            status: PurchaseOrderStatus::New,
+            status: PurchaseOrderStatus::Authorised,
             created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -123,7 +123,6 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             contract_signed_date: Some(NaiveDate::from_ymd_opt(2021, 1, 22).unwrap()),
             advance_paid_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
             received_at_port_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
-            expected_delivery_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
             requested_delivery_date: Some(NaiveDate::from_ymd_opt(2021, 8, 15).unwrap()),
             supplier_agent: Some("some agent".to_string()),
             authorising_officer_1: Some("agent".to_string()),
@@ -163,7 +162,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
             id: PURCHASE_ORDER_1.0.to_string(),
             creation_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
             target_months: Some(2.1),
-            status: LegacyPurchaseOrderStatus::Nw,
+            status: LegacyPurchaseOrderStatus::Cn,
             comment: Some("some test comment".to_string()),
             currency_id: Some("currency_a".to_string()),
             reference: Some("test reference".to_string()),
@@ -193,8 +192,8 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
             advance_paid_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
             received_at_port_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
             curr_rate: Some(1.6),
+            is_authorised: true,
             oms_fields: Some(PurchaseOrderOmsFields {
-                expected_delivery_date: Some(NaiveDate::from_ymd_opt(2025, 1, 22).unwrap()),
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
@@ -224,6 +223,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
                 ),
+                status: PurchaseOrderStatus::Authorised,
             }),
         }),
     }
@@ -331,7 +331,6 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: Some(NaiveDate::from_ymd_opt(2021, 3, 15).unwrap()),
             supplier_agent: None,
             authorising_officer_1: None,
@@ -392,6 +391,7 @@ fn purchase_order_2_migration_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 created_datetime: NaiveDate::from_ymd_opt(2021, 3, 15)
                     .unwrap()
@@ -409,6 +409,7 @@ fn purchase_order_2_migration_push_record() -> TestSyncOutgoingRecord {
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
                 ),
+                status: PurchaseOrderStatus::Confirmed,
                 ..Default::default()
             }),
         }),
@@ -426,6 +427,7 @@ const PURCHASE_ORDER_3: (&str, &str) = (
         "serial_number": 1,
         "store_ID": "store_b",
         "confirm_date": "0000-00-00",
+        "curr_rate": 1.0,
         "Date_contract_signed": "0000-00-00",
         "Date_advance_payment": "0000-00-00",
         "po_sent_date": "0000-00-00",
@@ -456,13 +458,12 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: None,
+            foreign_exchange_rate: Some(1.0),
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: None,
             supplier_agent: None,
             authorising_officer_1: None,
@@ -510,7 +511,7 @@ fn purchase_order_3_empty_string_push_record() -> TestSyncOutgoingRecord {
             insurance_charge: None,
             freight_charge: None,
             supplier_discount_amount: 0.0,
-            curr_rate: None,
+            curr_rate: Some(1.0),
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             donor_id: None,
@@ -522,8 +523,8 @@ fn purchase_order_3_empty_string_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
-                expected_delivery_date: None,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
@@ -547,6 +548,7 @@ const PURCHASE_ORDER_4: (&str, &str) = (
         "serial_number": 1,
         "store_ID": "store_b",
         "confirm_date": "0000-00-00",
+        "curr_rate": 1.0,
         "received_at_port_date": "0000-00-00",
         "Date_contract_signed": "0000-00-00",
         "Date_advance_payment": "0000-00-00",
@@ -578,13 +580,12 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: None,
+            foreign_exchange_rate: Some(1.0),
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: None,
             supplier_agent: None,
             authorising_officer_1: None,
@@ -631,7 +632,7 @@ fn purchase_order_4_empty_object_push_record() -> TestSyncOutgoingRecord {
             insurance_charge: None,
             freight_charge: None,
             supplier_discount_amount: 0.0,
-            curr_rate: None,
+            curr_rate: Some(1.0),
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             donor_id: None,
@@ -643,6 +644,7 @@ fn purchase_order_4_empty_object_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                     .unwrap()
@@ -664,6 +666,7 @@ const PURCHASE_ORDER_5: (&str, &str) = (
         "status": "nw",
         "serial_number": 1,
         "store_ID": "store_b",
+        "curr_rate": 1.0,
         "confirm_date": "0000-00-00",
         "received_at_port_date": "0000-00-00",
         "Date_contract_signed": "0000-00-00",
@@ -696,13 +699,12 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: None,
+            foreign_exchange_rate: Some(1.0),
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: None,
             supplier_agent: None,
             authorising_officer_1: None,
@@ -751,7 +753,7 @@ fn purchase_order_5_null_push_record() -> TestSyncOutgoingRecord {
             insurance_charge: None,
             freight_charge: None,
             supplier_discount_amount: 0.0,
-            curr_rate: None,
+            curr_rate: Some(1.0),
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             donor_id: None,
@@ -763,6 +765,7 @@ fn purchase_order_5_null_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                     .unwrap()
@@ -783,6 +786,7 @@ const PURCHASE_ORDER_6: (&str, &str) = (
         "status": "nw",
         "serial_number": 1,
         "store_ID": "store_b",
+        "curr_rate": 1.0,
         "confirm_date": "0000-00-00",
         "received_at_port_date": "0000-00-00",
         "Date_contract_signed": "0000-00-00",
@@ -814,13 +818,12 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: None,
+            foreign_exchange_rate: Some(1.0),
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            expected_delivery_date: None,
             requested_delivery_date: None,
             supplier_agent: None,
             authorising_officer_1: None,
@@ -868,7 +871,7 @@ fn purchase_order_6_no_fields_push_record() -> TestSyncOutgoingRecord {
             insurance_charge: None,
             freight_charge: None,
             supplier_discount_amount: 0.0,
-            curr_rate: None,
+            curr_rate: Some(1.0),
             order_total_before_discount: 0.0,
             order_total_after_discount: 0.0,
             donor_id: None,
@@ -880,6 +883,7 @@ fn purchase_order_6_no_fields_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
+            is_authorised: false,
             oms_fields: Some(PurchaseOrderOmsFields {
                 created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                     .unwrap()

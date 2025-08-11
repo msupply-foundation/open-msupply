@@ -114,7 +114,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
+    
 
     type DeleteLineMethod =
         dyn Fn(ServiceInput) -> Result<Vec<InvoiceLine>, ServiceError> + Sync + Send;
@@ -291,12 +291,13 @@ mod test {
                 }
             );
             Ok(vec![InvoiceLine {
-                invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
-                    r.id = String::from("inbound_shipment_line_a");
-                    r.invoice_id = String::from("inbound_shipment_c");
-                    r.item_link_id = String::from("item_a");
-                    r.r#type = InvoiceLineType::StockIn;
-                }),
+                invoice_line_row: InvoiceLineRow {
+                    id: String::from("inbound_shipment_line_a"),
+                    invoice_id: String::from("inbound_shipment_c"),
+                    item_link_id: String::from("item_a"),
+                    r#type: InvoiceLineType::StockIn,
+                    ..Default::default()
+                },
                 invoice_row: mock_empty_draft_inbound_shipment(),
                 item_row: mock_item_a(),
                 location_row_option: None,

@@ -1,6 +1,5 @@
 use repository::{asset_log_row::AssetLogStatus, db_diesel::assets::asset_log_row::AssetLogRow};
 use serde_json::json;
-use util::Defaults;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
@@ -18,7 +17,6 @@ const ASSET_LOG1: (&str, &str) = (
         "log_datetime": "2020-01-22T15:16:00"   
     }"#,
 );
-
 fn asset_log1() -> AssetLogRow {
     AssetLogRow {
         id: ASSET_LOG1.0.to_string(),
@@ -27,7 +25,10 @@ fn asset_log1() -> AssetLogRow {
         status: Some(AssetLogStatus::Functioning),
         comment: Some("test_comment".to_string()),
         reason_id: None,
-        log_datetime: Defaults::naive_date_time(),
+        log_datetime: chrono::NaiveDate::from_ymd_opt(2020, 01, 22)
+            .unwrap()
+            .and_hms_opt(15, 16, 0)
+            .unwrap(),
         r#type: None,
     }
 }

@@ -16,7 +16,7 @@ table! {
         id -> Text,
         description -> Text,
         code -> Text,
-        level -> Integer,
+        priority -> Integer,
         is_active -> Bool,
         unusable -> Bool,
         reason_id -> Nullable<Text>,
@@ -41,7 +41,7 @@ pub struct VVMStatusRow {
     pub id: String,
     pub description: String,
     pub code: String,
-    pub level: i32,
+    pub priority: i32,
     pub is_active: bool,
     pub unusable: bool,
     pub reason_id: Option<String>,
@@ -76,6 +76,7 @@ impl<'a> VVMStatusRowRepository<'a> {
     pub fn find_all_active(&self) -> Result<Vec<VVMStatusRow>, RepositoryError> {
         let result = vvm_status::table
             .filter(vvm_status::is_active.eq(true))
+            .order(vvm_status::priority.asc())
             .load(self.connection.lock().connection())?;
         Ok(result)
     }

@@ -40,6 +40,7 @@ pub fn generate(
         vvm_status_id,
         donor_id,
         campaign_id,
+        program_id,
         volume_per_pack,
     }: AddNewStockLine,
 ) -> Result<GenerateResult, RepositoryError> {
@@ -114,6 +115,7 @@ pub fn generate(
         donor_id,
         vvm_status_id,
         campaign_id,
+        program_id,
         volume_per_pack,
         total_before_tax: None,
         tax_percentage: None,

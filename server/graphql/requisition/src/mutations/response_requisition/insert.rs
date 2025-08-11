@@ -140,7 +140,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
+    
 
     use crate::RequisitionMutations;
 
@@ -281,20 +281,21 @@ mod test {
         "#;
 
         fn mock_response_draft_requisition() -> RequisitionRow {
-            inline_init(|r: &mut RequisitionRow| {
-                r.id = "mock_response_draft_requisition".to_string();
-                r.requisition_number = 1;
-                r.name_link_id = "name_b".to_string();
-                r.store_id = "store_a".to_string();
-                r.r#type = RequisitionType::Response;
-                r.status = RequisitionStatus::Draft;
-                r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
+            RequisitionRow {
+                id: "mock_response_draft_requisition".to_string(),
+                requisition_number: 1,
+                name_link_id: "name_b".to_string(),
+                store_id: "store_a".to_string(),
+                r#type: RequisitionType::Response,
+                status: RequisitionStatus::Draft,
+                created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
-                    .unwrap();
-                r.max_months_of_stock = 1.0;
-                r.min_months_of_stock = 0.9;
-            })
+                    .unwrap(),
+                max_months_of_stock: 1.0,
+                min_months_of_stock: 0.9,
+                ..Default::default()
+            }
         }
 
         // Success
@@ -308,9 +309,10 @@ mod test {
                     min_months_of_stock: 2.0,
                 }
             );
-            Ok(inline_init(|r: &mut Requisition| {
-                r.requisition_row = mock_response_draft_requisition()
-            }))
+            Ok(Requisition {
+                requisition_row: mock_response_draft_requisition(),
+                ..Default::default()
+            })
         }));
 
         let variables = json!({

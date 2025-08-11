@@ -41,7 +41,7 @@ pub fn generate_create_prescription(
         stock_line_id: stock_line.stock_line_row.id,
         number_of_packs,
         vvm_status_id: stock_line.stock_line_row.vvm_status_id.clone(),
-
+        volume_per_pack: Some(stock_line.stock_line_row.volume_per_pack),
         // default
         prescribed_quantity: None,
         total_before_tax: None,
@@ -54,6 +54,7 @@ pub fn generate_create_prescription(
         cost_price_per_pack: None,
         sell_price_per_pack: None,
         campaign_id: None,
+        program_id: None,
     };
 
     let finalise_prescription = UpdatePrescription {

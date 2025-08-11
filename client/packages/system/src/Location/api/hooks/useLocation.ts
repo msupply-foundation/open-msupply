@@ -48,7 +48,7 @@ const useCreateLocation = () => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
 
   const mutationFn = async (input: LocationRowFragment) => {
-    const { id, code, name, onHold, locationType } = input;
+    const { id, code, name, onHold, locationType, volume } = input;
 
     await locationApi.insertLocation({
       input: {
@@ -57,6 +57,7 @@ const useCreateLocation = () => {
         name,
         onHold,
         locationTypeId: locationType?.id,
+        volume,
       },
       storeId,
     });
@@ -77,7 +78,7 @@ const useUpdateLocation = () => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
 
   const mutationFn = async (input: LocationRowFragment) => {
-    const { id, code, name, onHold, locationType } = input;
+    const { id, code, name, onHold, locationType, volume } = input;
 
     await locationApi.updateLocation({
       input: {
@@ -86,6 +87,7 @@ const useUpdateLocation = () => {
         name,
         onHold,
         locationTypeId: locationType?.id,
+        volume,
       },
       storeId,
     });
