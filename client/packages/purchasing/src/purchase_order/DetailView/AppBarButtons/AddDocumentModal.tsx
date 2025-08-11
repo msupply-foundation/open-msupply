@@ -45,9 +45,6 @@ export const AddDocumentModal = ({
     });
 
     try {
-      // Add fake delay for testing purposes
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
       const response = await fetch(url, {
         method: 'POST',
         headers: {
