@@ -5,7 +5,10 @@ import {
 } from '@common/types';
 import { PurchaseOrderFragment } from './purchase_order/api';
 
-const purchaseOrderStatusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
+const purchaseOrderStatusTranslation: Record<
+  PurchaseOrderNodeStatus,
+  LocaleKey
+> = {
   NEW: 'label.new',
   AUTHORISED: 'label.authorised',
   CONFIRMED: 'label.confirmed',

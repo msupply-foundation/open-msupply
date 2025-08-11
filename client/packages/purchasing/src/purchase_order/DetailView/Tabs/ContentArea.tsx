@@ -6,8 +6,8 @@ import {
   useRowStyle,
   useTranslation,
 } from '@openmsupply-client/common';
-import { PurchaseOrderLineFragment } from '../api';
-import { usePurchaseOrderColumns } from './columns';
+import { PurchaseOrderLineFragment } from '../../api';
+import { usePurchaseOrderColumns } from '../columns';
 
 interface ContentAreaProps {
   lines: PurchaseOrderLineFragment[];
