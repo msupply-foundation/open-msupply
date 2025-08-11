@@ -16,6 +16,32 @@ export type PurchaseOrderRowFragment = {
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
 };
 
+export type SyncFileReferenceFragment = {
+  __typename: 'SyncFileReferenceNode';
+  id: string;
+  fileName: string;
+  recordId: string;
+  createdDatetime: string;
+};
+
+export type PurchaseOrderLineFragment = {
+  __typename: 'PurchaseOrderLineNode';
+  id: string;
+  expectedDeliveryDate?: string | null;
+  purchaseOrderId: string;
+  requestedPackSize: number;
+  requestedDeliveryDate?: string | null;
+  requestedNumberOfUnits: number;
+  authorisedNumberOfUnits?: number | null;
+  item: {
+    __typename: 'ItemNode';
+    id: string;
+    code: string;
+    name: string;
+    unitName?: string | null;
+  };
+};
+
 export type PurchaseOrderFragment = {
   __typename: 'PurchaseOrderNode';
   id: string;
@@ -73,23 +99,15 @@ export type PurchaseOrderFragment = {
   };
   store?: { __typename: 'StoreNode'; id: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
-};
-
-export type PurchaseOrderLineFragment = {
-  __typename: 'PurchaseOrderLineNode';
-  id: string;
-  expectedDeliveryDate?: string | null;
-  purchaseOrderId: string;
-  requestedPackSize: number;
-  requestedDeliveryDate?: string | null;
-  requestedNumberOfUnits: number;
-  authorisedNumberOfUnits?: number | null;
-  item: {
-    __typename: 'ItemNode';
-    id: string;
-    code: string;
-    name: string;
-    unitName?: string | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
   };
 };
 
@@ -187,6 +205,16 @@ export type PurchaseOrderByIdQuery = {
         };
         store?: { __typename: 'StoreNode'; id: string } | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
       }
     | { __typename: 'RecordNotFound'; description: string };
 };
@@ -375,6 +403,15 @@ export const PurchaseOrderLineFragmentDoc = gql`
     authorisedNumberOfUnits
   }
 `;
+export const SyncFileReferenceFragmentDoc = gql`
+  fragment SyncFileReference on SyncFileReferenceNode {
+    __typename
+    id
+    fileName
+    recordId
+    createdDatetime
+  }
+`;
 export const PurchaseOrderFragmentDoc = gql`
   fragment PurchaseOrder on PurchaseOrderNode {
     __typename
@@ -428,11 +465,15 @@ export const PurchaseOrderFragmentDoc = gql`
     requestedDeliveryDate
     authorisedDatetime
     finalisedDatetime
-    donor {
-      id
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
     }
   }
   ${PurchaseOrderLineFragmentDoc}
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const PurchaseOrdersDocument = gql`
   query purchaseOrders(
