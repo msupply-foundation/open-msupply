@@ -6,8 +6,10 @@ use std::collections::HashMap;
 
 use actix_web::web::Data;
 use async_graphql::dataloader::Loader;
-use repository::{EqualFilter, PurchaseOrderLine, PurchaseOrderLineFilter};
+use repository::{EqualFilter, GoodsReceivedLineFilter, PurchaseOrderLine, PurchaseOrderLineFilter};
 use service::service_provider::ServiceProvider;
+
+use crate::standard_graphql_error::StandardGraphqlError;
 // use service::service_provider::ServiceProvider;
 
 // use crate::standard_graphql_error::StandardGraphqlError;
@@ -29,29 +31,29 @@ impl Loader<String> for GoodsReceivedLinesByGoodsReceivedIdLoader {
         let goods_received_lines = self
             .service_provider
             .goods_received_line_service
-            .get_purchase_order_lines(
+            .get_goods_received_lines(
                 &service_context,
                 None,
                 None,
                 Some(
-                    PurchaseOrderLineFilter::new()
-                        .purchase_order_id(EqualFilter::equal_any(purchase_order_ids.to_owned())),
+                    GoodsReceivedLineFilter::new()
+                        .goods_received_id(EqualFilter::equal_any(goods_received_ids.to_owned())),
                 ),
                 None,
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
-        let mut result: HashMap<String, Vec<PurchaseOrderLine>> = HashMap::new();
-        for purchase_order_line in purchase_order_lines.rows {
-            let list = result
+        let mut result: HashMap<String, Vec<GoodsReceivedLine>> = HashMap::new();
+        for goods_received_line in goods_received_lines.rows {
+            let list: &mut Vec<PurchaseOrderLine> = result
                 .entry(
-                    purchase_order_line
-                        .purchase_order_line_row
-                        .purchase_order_id
+                    goods_received_line
+                        .goods_received_line_row
+                        .goods_received_id
                         .clone(),
                 )
                 .or_default();
-            list.push(purchase_order_line)
+            list.push(goods_received_line)
         }
         Ok(result)
     }
