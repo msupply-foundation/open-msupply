@@ -237,7 +237,6 @@ mod test {
     use serde_json::json;
     use util::{
         constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-        inline_init,
     };
 
     use crate::{
@@ -334,9 +333,10 @@ mod test {
                 },
             )
             .unwrap();
-        let program = inline_init(|v: &mut SchemaProgramEnrolment| {
-            v.enrolment_datetime = Utc::now().to_rfc3339();
-        });
+        let program = SchemaProgramEnrolment {
+            enrolment_datetime: Utc::now().to_rfc3339(),
+            ..SchemaProgramEnrolment::default()
+        };
 
         service_provider
             .program_enrolment_service
@@ -452,11 +452,12 @@ mod test {
         matches!(err, InsertEncounterError::InvalidDataSchema(_));
 
         // success insert
-        let encounter = inline_init(|e: &mut SchemaEncounter| {
-            e.created_datetime = Utc::now().to_rfc3339();
-            e.start_datetime = Utc::now().to_rfc3339();
-            e.status = Some(EncounterStatus::Pending);
-        });
+        let encounter = SchemaEncounter {
+            created_datetime: Utc::now().to_rfc3339(),
+            start_datetime: Utc::now().to_rfc3339(),
+            status: Some(EncounterStatus::Pending),
+            ..Default::default()
+        };
         let result = service
             .insert_encounter(
                 &ctx,

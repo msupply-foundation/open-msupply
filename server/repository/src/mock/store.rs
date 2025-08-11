@@ -1,46 +1,49 @@
 use chrono::NaiveDate;
-use util::inline_init;
 
 use crate::StoreRow;
 
 use super::mock_program_master_list_test;
 
 pub fn mock_store_a() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "store_a".to_string();
-        s.name_link_id = "name_store_a".to_string();
-        s.code = "code".to_string();
-        s.site_id = 100;
-        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
-    })
+    StoreRow {
+        id: "store_a".to_string(),
+        name_link_id: "name_store_a".to_string(),
+        code: "code".to_string(),
+        site_id: 100,
+        created_date: NaiveDate::from_ymd_opt(2020, 1, 1),
+        ..Default::default()
+    }
 }
 
 pub fn mock_store_b() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "store_b".to_string();
-        s.name_link_id = "name_store_b".to_string();
-        s.code = "code".to_string();
-        s.site_id = 2;
-        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
-    })
+    StoreRow {
+        id: "store_b".to_string(),
+        name_link_id: "name_store_b".to_string(),
+        code: "code".to_string(),
+        site_id: 2,
+        created_date: NaiveDate::from_ymd_opt(2020, 1, 1),
+        ..Default::default()
+    }
 }
 
 pub fn mock_store_c() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "store_c".to_string();
-        s.name_link_id = "name_store_c".to_string();
-        s.code = "code".to_string();
-        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
-    })
+    StoreRow {
+        id: "store_c".to_string(),
+        name_link_id: "name_store_c".to_string(),
+        code: "code".to_string(),
+        created_date: NaiveDate::from_ymd_opt(2020, 1, 1),
+        ..Default::default()
+    }
 }
 
 pub fn program_master_list_store() -> StoreRow {
-    inline_init(|s: &mut StoreRow| {
-        s.id = "program_master_list_store".to_string();
-        s.name_link_id = mock_program_master_list_test().id;
-        s.code = mock_program_master_list_test().code;
-        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
-    })
+    StoreRow {
+        id: "program_master_list_store".to_string(),
+        name_link_id: mock_program_master_list_test().id,
+        code: mock_program_master_list_test().code,
+        created_date: NaiveDate::from_ymd_opt(2020, 1, 1),
+        ..Default::default()
+    }
 }
 
 pub fn mock_stores() -> Vec<StoreRow> {

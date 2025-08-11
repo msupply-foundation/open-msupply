@@ -6,6 +6,8 @@ import {
   NothingHere,
   AppSxProp,
   useRowStyle,
+  PreferenceKey,
+  usePreference,
 } from '@openmsupply-client/common';
 import { InboundItem } from '../../../types';
 import { useInbound, InboundLineFragment } from '../../api';
@@ -18,12 +20,19 @@ interface ContentAreaProps {
   displayInDoses?: boolean;
 }
 
+interface ExpandoPrefs {
+  allowTrackingOfStockByDonor?: boolean;
+  useCampaigns?: boolean;
+}
+
 const Expando = ({
   rowData,
   displayInDoses,
+  preferences,
 }: {
   rowData: InboundLineFragment | InboundItem;
   displayInDoses?: boolean;
+  preferences?: ExpandoPrefs;
 }) => {
   if ('lines' in rowData && rowData.lines.length > 1) {
     const isVaccineItem = rowData.lines[0]?.item.isVaccine ?? false;
@@ -31,6 +40,7 @@ const Expando = ({
       <ExpandoInner
         rowData={rowData}
         withDoseColumns={displayInDoses && isVaccineItem}
+        preferences={preferences}
       />
     );
   } else {
@@ -41,11 +51,13 @@ const Expando = ({
 const ExpandoInner = ({
   rowData,
   withDoseColumns,
+  preferences,
 }: {
   rowData: InboundLineFragment | InboundItem;
   withDoseColumns?: boolean;
+  preferences?: ExpandoPrefs;
 }) => {
-  const expandoColumns = useExpansionColumns(withDoseColumns);
+  const expandoColumns = useExpansionColumns(withDoseColumns, preferences);
   if ('lines' in rowData && rowData.lines.length > 1) {
     return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
   } else {
@@ -100,12 +112,21 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
     const isDisabled = useInbound.utils.isDisabled();
     const { columns, rows } = useInbound.lines.rows();
     useHighlightPlaceholderRows(rows);
+
+    const { data: preferences } = usePreference(
+      PreferenceKey.AllowTrackingOfStockByDonor,
+      PreferenceKey.UseCampaigns
+    );
     return (
       <DataTable
         id="inbound-detail"
         onRowClick={onRowClick}
         ExpandContent={props => (
-          <Expando {...props} displayInDoses={displayInDoses} />
+          <Expando
+            {...props}
+            displayInDoses={displayInDoses}
+            preferences={preferences}
+          />
         )}
         columns={columns}
         data={rows}

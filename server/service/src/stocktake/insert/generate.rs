@@ -68,6 +68,7 @@ fn generate_stocktake_lines(
         description: _,
         create_blank_stocktake,
         include_all_master_list_items,
+        vvm_status_id,
     }: InsertStocktake,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     if let Some(true) = create_blank_stocktake {
@@ -89,7 +90,7 @@ fn generate_stocktake_lines(
                 });
             }
         };
-        return generate_lines_from_master_list(connection, store_id, &id, &master_list_id);
+        return generate_lines_from_master_list(connection, store_id, id, &master_list_id);
     }
 
     let mut stock_line_filter: StockLineFilter = StockLineFilter::new()
@@ -104,6 +105,10 @@ fn generate_stocktake_lines(
     if let Some(location_id) = location_id {
         stock_line_filter = stock_line_filter
             .location(LocationFilter::new().id(EqualFilter::equal_to(&location_id)))
+    }
+
+    if let Some(vvm_status_id) = vvm_status_id {
+        stock_line_filter = stock_line_filter.vvm_status_id(EqualFilter::equal_to(&vvm_status_id));
     }
 
     if let Some(expires_before_date) = expires_before {
@@ -130,15 +135,18 @@ fn generate_stocktake_lines(
                          expiry_date,
                          note,
                          item_variant_id,
+                         volume_per_pack,
                          donor_link_id,
+                         campaign_id,
+                         program_id,
+                         vvm_status_id,
                          item_link_id: _,
                          supplier_link_id: _,
                          store_id: _,
                          on_hold: _,
                          available_number_of_packs: _,
                          barcode_id: _,
-                         vvm_status_id: _, // Todo?
-                         campaign_id: _,   // Todo?
+                         total_volume: _,
                      },
                  item_row,
                  location_row: _,
@@ -163,6 +171,10 @@ fn generate_stocktake_lines(
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
                     donor_link_id,
+                    vvm_status_id,
+                    volume_per_pack,
+                    campaign_id,
+                    program_id,
                     counted_number_of_packs: None,
                     comment: None,
                     reason_option_id: None,
@@ -212,6 +224,10 @@ fn generate_lines_initial_stocktake(
             item_variant_id: None,
             donor_link_id: None,
             reason_option_id: None,
+            vvm_status_id: None,
+            volume_per_pack: 0.0,
+            campaign_id: None,
+            program_id: None,
         })
         .collect();
 
@@ -272,6 +288,10 @@ pub fn generate_lines_from_master_list(
                 reason_option_id: None,
                 item_variant_id: None,
                 donor_link_id: None,
+                vvm_status_id: None,
+                volume_per_pack: 0.0,
+                campaign_id: None,
+                program_id: None,
             });
         } else {
             stock_lines.into_iter().for_each(|line| {
@@ -286,15 +306,18 @@ pub fn generate_lines_from_master_list(
                     total_number_of_packs,
                     expiry_date,
                     note,
+                    volume_per_pack,
+                    campaign_id,
+                    program_id,
+                    item_variant_id,
+                    donor_link_id,
+                    vvm_status_id,
                     supplier_link_id: _,
                     store_id: _,
                     on_hold: _,
                     available_number_of_packs: _,
                     barcode_id: _,
-                    item_variant_id,
-                    donor_link_id,
-                    vvm_status_id: _, // Not currently included in stocktakes?
-                    campaign_id: _,   // Should this be included?
+                    total_volume: _,
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
@@ -313,7 +336,10 @@ pub fn generate_lines_from_master_list(
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
                     donor_link_id,
-                    // campaign_id,
+                    vvm_status_id,
+                    volume_per_pack,
+                    campaign_id,
+                    program_id,
                     comment: None,
                     reason_option_id: None,
                     counted_number_of_packs: None,

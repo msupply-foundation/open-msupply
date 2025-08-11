@@ -9,7 +9,7 @@ import { ItemVariantSelector } from './ItemVariantSelector';
 
 interface ItemVariantInputProps {
   itemId: string;
-  selectedId: string | null;
+  selectedId?: string | null;
   onChange: (itemVariant: ItemVariantFragment | null) => void;
   width?: number | string;
   disabled?: boolean;

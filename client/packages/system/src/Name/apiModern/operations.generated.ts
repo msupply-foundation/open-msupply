@@ -56,7 +56,6 @@ export type PurchaseOrdersFragment = {
   confirmedDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
-  expectedDeliveryDate?: string | null;
   comment?: string | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
 };
@@ -78,7 +77,6 @@ export type PurchaseOrdersQuery = {
       confirmedDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
-      expectedDeliveryDate?: string | null;
       comment?: string | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
     }>;
@@ -110,7 +108,6 @@ export const PurchaseOrdersFragmentDoc = gql`
     confirmedDatetime
     status
     targetMonths
-    expectedDeliveryDate
     comment
     lines {
       totalCount

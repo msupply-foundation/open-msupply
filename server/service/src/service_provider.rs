@@ -24,6 +24,7 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
     email::{EmailService, EmailServiceTrait},
+    goods_received::{GoodsReceivedService, GoodsReceivedServiceTrait},
     insurance::{InsuranceService, InsuranceServiceTrait},
     insurance_provider::{InsuranceProviderService, InsuranceProviderServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
@@ -31,6 +32,7 @@ use crate::{
     item::ItemServiceTrait,
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
+    ledger_fix::ledger_fix_driver::LedgerFixTrigger,
     localisations::LocalisationsService,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
@@ -145,6 +147,8 @@ pub struct ServiceProvider {
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
     pub site_is_initialised_trigger: SiteIsInitialisedTrigger,
+    pub ledger_fix_trigger: LedgerFixTrigger,
+    // Settings
     pub display_settings_service: Box<dyn DisplaySettingsServiceTrait>,
     // Barcodes
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
@@ -191,7 +195,8 @@ pub struct ServiceProvider {
     // Purchase Orders
     pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
-    // Purchase Orders
+    pub goods_received_service: Box<dyn GoodsReceivedServiceTrait>,
+    // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
 }
 
@@ -214,6 +219,7 @@ impl ServiceProvider {
             connection_manager,
             ProcessorsTrigger::new_void(),
             SyncTrigger::new_void(),
+            LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
         )
@@ -223,6 +229,7 @@ impl ServiceProvider {
         connection_manager: StorageConnectionManager,
         processors_trigger: ProcessorsTrigger,
         sync_trigger: SyncTrigger,
+        ledger_fix_trigger: LedgerFixTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
     ) -> Self {
@@ -299,7 +306,9 @@ impl ServiceProvider {
             campaign_service: Box::new(CampaignService),
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
+            goods_received_service: Box::new(GoodsReceivedService),
             contact_service: Box::new(ContactService {}),
+            ledger_fix_trigger,
         }
     }
 

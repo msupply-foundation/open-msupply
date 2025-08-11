@@ -1,3 +1,5 @@
+use crate::types::program_node::ProgramNode;
+
 use super::{
     CampaignNode, ItemNode, ItemVariantNode, LocationNode, NameNode, VVMStatusLogConnector,
     VVMStatusNode,
@@ -8,7 +10,7 @@ use chrono::NaiveDate;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemLoader, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
-        VVMStatusLogByStockLineIdLoader,
+        ProgramByIdLoader, VVMStatusLogByStockLineIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -52,6 +54,7 @@ impl StockLineNode {
     pub async fn pack_size(&self) -> f64 {
         self.row().pack_size
     }
+    #[graphql(deprecation = "Since 2.10.0. Use item_variant.id instead")]
     pub async fn item_variant_id(&self) -> &Option<String> {
         &self.row().item_variant_id
     }
@@ -169,6 +172,26 @@ impl StockLineNode {
 
         let result = loader.load_one(campaign_id.clone()).await?;
         Ok(result.map(CampaignNode::from_domain))
+    }
+
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let program_id = match &self.row().program_id {
+            Some(program_id) => program_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(program_id.clone()).await?;
+        Ok(result.map(|program_row| ProgramNode { program_row }))
+    }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        self.row().volume_per_pack
+    }
+
+    pub async fn total_volume(&self) -> f64 {
+        self.row().total_volume
     }
 }
 

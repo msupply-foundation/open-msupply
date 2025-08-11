@@ -123,8 +123,10 @@ const inboundParsers = {
       vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
       donorId: line.donor?.id,
       campaignId: line.campaign?.id,
+      programId: line.program?.id,
       note: line.note,
       shippedNumberOfPacks: line.shippedNumberOfPacks,
+      volumePerPack: line.volumePerPack,
       shippedPackSize: line.shippedPackSize,
     };
   },
@@ -157,8 +159,12 @@ const inboundParsers = {
     campaignId: setNullableInput('campaignId', {
       campaignId: line.campaign?.id ?? null,
     }),
+    programId: setNullableInput('programId', {
+      programId: line.program?.id ?? null,
+    }),
     note: setNullableInput('note', { note: line.note ?? null }),
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
+    volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
