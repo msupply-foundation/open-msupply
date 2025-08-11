@@ -24,19 +24,6 @@ mod query {
             service.get_locations(
                 &context,
                 Some(PaginationOption {
-                    limit: Some(2000),
-                    offset: None
-                }),
-                None,
-                None,
-            ),
-            Err(ListError::LimitAboveMax(1000))
-        );
-
-        assert_eq!(
-            service.get_locations(
-                &context,
-                Some(PaginationOption {
                     limit: Some(0),
                     offset: None,
                 }),

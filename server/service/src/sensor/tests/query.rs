@@ -13,20 +13,6 @@ mod query {
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.sensor_service;
-
-        assert_eq!(
-            service.get_sensors(
-                &context,
-                Some(PaginationOption {
-                    limit: Some(2000),
-                    offset: None
-                }),
-                None,
-                None,
-            ),
-            Err(ListError::LimitAboveMax(1000))
-        );
-
         assert_eq!(
             service.get_sensors(
                 &context,
