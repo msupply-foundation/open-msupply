@@ -1,11 +1,21 @@
 import React from 'react';
-import { BasicTextInput, Grid, NumericTextInput, Typography, useTranslation } from '@openmsupply-client/common';
+import {
+  BasicTextInput,
+  Grid,
+  NumericTextInput,
+  Typography,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment, PurchaseOrderFragment } from '../../api';
 import {
   ItemWithStatsFragment,
   StockItemSearchInputWithStats,
 } from '@openmsupply-client/system/src';
-import { canEditOriginalQuantity, canEditAdjustedQuantity, isPurchaseOrderConfirmed } from '../../utils';
+import {
+  canEditOriginalQuantity,
+  canEditAdjustedQuantity,
+  isPurchaseOrderConfirmed,
+} from '../../../utils';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
@@ -67,7 +77,7 @@ export const PurchaseOrderLineEdit = ({
                 fullWidth
                 label="Pack Size"
                 value={currentItem.requestedPackSize ?? 0}
-                onChange={(value) => onUpdate({ requestedPackSize: value })}
+                onChange={value => onUpdate({ requestedPackSize: value })}
                 disabled={!canEditOriginal}
               />
             </Grid>
@@ -78,7 +88,7 @@ export const PurchaseOrderLineEdit = ({
                 fullWidth
                 label="Requested Quantity"
                 value={currentItem.requestedNumberOfUnits ?? 0}
-                onChange={(value) => onUpdate({ requestedNumberOfUnits: value })}
+                onChange={value => onUpdate({ requestedNumberOfUnits: value })}
                 disabled={!canEditOriginal}
               />
             </Grid>
@@ -90,7 +100,7 @@ export const PurchaseOrderLineEdit = ({
                   fullWidth
                   label="Adjusted Quantity"
                   value={currentItem.adjustedNumberOfUnits ?? 0}
-                  onChange={(value) => onUpdate({ adjustedNumberOfUnits: value })}
+                  onChange={value => onUpdate({ adjustedNumberOfUnits: value })}
                   disabled={!canEditAdjusted}
                 />
               </Grid>
@@ -104,7 +114,7 @@ export const PurchaseOrderLineEdit = ({
                     fullWidth
                     label="Pack Size"
                     value={currentItem.requestedPackSize ?? 0}
-                    onChange={(value) => onUpdate({ requestedPackSize: value })}
+                    onChange={value => onUpdate({ requestedPackSize: value })}
                     disabled={isConfirmed && !canEditOriginal}
                   />
                 </Grid>
@@ -120,7 +130,12 @@ export const PurchaseOrderLineEdit = ({
                         fullWidth
                         label="Adjusted Quantity"
                         value={currentItem.adjustedNumberOfUnits ?? 0}
-                        onChange={(value) => onUpdate({ adjustedNumberOfUnits: value, requestedNumberOfUnits: 0 })}
+                        onChange={value =>
+                          onUpdate({
+                            adjustedNumberOfUnits: value,
+                            requestedNumberOfUnits: 0,
+                          })
+                        }
                         disabled={!canEditAdjusted}
                       />
                     </Grid>
@@ -131,7 +146,9 @@ export const PurchaseOrderLineEdit = ({
                       fullWidth
                       label="Requested Quantity"
                       value={currentItem.requestedNumberOfUnits ?? 0}
-                      onChange={(value) => onUpdate({ requestedNumberOfUnits: value })}
+                      onChange={value =>
+                        onUpdate({ requestedNumberOfUnits: value })
+                      }
                     />
                   </Grid>
                 )}
@@ -145,7 +162,9 @@ export const PurchaseOrderLineEdit = ({
                 label="Requested Delivery Date"
                 type="date"
                 value={currentItem.requestedDeliveryDate || ''}
-                onChange={(e) => onUpdate({ requestedDeliveryDate: e.target.value || null })}
+                onChange={e =>
+                  onUpdate({ requestedDeliveryDate: e.target.value || null })
+                }
                 disabled={isConfirmed && !canEditAdjusted}
               />
             </Grid>
@@ -157,7 +176,9 @@ export const PurchaseOrderLineEdit = ({
                 label="Expected Delivery Date"
                 type="date"
                 value={currentItem.expectedDeliveryDate || ''}
-                onChange={(e) => onUpdate({ expectedDeliveryDate: e.target.value || null })}
+                onChange={e =>
+                  onUpdate({ expectedDeliveryDate: e.target.value || null })
+                }
                 disabled={isConfirmed && !canEditAdjusted}
               />
             </Grid>

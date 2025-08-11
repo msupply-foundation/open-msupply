@@ -4,7 +4,6 @@ import {
   createQueryParamsStore,
   createTableStore,
   DetailViewSkeleton,
-
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
@@ -18,7 +17,7 @@ import { PurchaseOrderLineFragment } from '../api';
 import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
-import { canAddNewLines } from '../utils';
+import { canAddNewLines } from '../../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';

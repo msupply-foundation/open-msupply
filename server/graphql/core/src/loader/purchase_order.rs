@@ -38,7 +38,7 @@ impl Loader<String> for PurchaseOrderByIdLoader {
 
         let mut result: HashMap<String, PurchaseOrder> = HashMap::new();
         for purchase_order in purchase_orders.rows {
-            result.insert(purchase_order.id.clone(), purchase_order);
+            result.insert(purchase_order.purchase_order_row.id.clone(), purchase_order);
         }
         Ok(result)
     }
