@@ -151,6 +151,26 @@ mutation updatePurchaseOrder(
   }
 }
 
+mutation deletePurchaseOrder($id: String!, $storeId: String!) {
+  deletePurchaseOrder(id: $id, storeId: $storeId) {
+    ... on DeletePurchaseOrderError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+        }
+        description
+        ... on CannotDeleteNonNewPurchaseOrder {
+          __typename
+        }
+      }
+    }
+    ... on DeleteResponse {
+      id
+    }
+  }
+}
+
 query purchaseOrderLines(
   $storeId: String!
   $first: Int

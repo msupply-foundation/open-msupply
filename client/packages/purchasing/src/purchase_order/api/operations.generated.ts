@@ -211,6 +211,26 @@ export type UpdatePurchaseOrderMutation = {
   updatePurchaseOrder: { __typename: 'IdResponse'; id: string };
 };
 
+export type DeletePurchaseOrderMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeletePurchaseOrderMutation = {
+  __typename: 'Mutations';
+  deletePurchaseOrder:
+    | {
+        __typename: 'DeletePurchaseOrderError';
+        error:
+          | {
+              __typename: 'CannotDeleteNonNewPurchaseOrder';
+              description: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      }
+    | { __typename: 'DeleteResponse'; id: string };
+};
+
 export type PurchaseOrderLinesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -477,6 +497,27 @@ export const UpdatePurchaseOrderDocument = gql`
     }
   }
 `;
+export const DeletePurchaseOrderDocument = gql`
+  mutation deletePurchaseOrder($id: String!, $storeId: String!) {
+    deletePurchaseOrder(id: $id, storeId: $storeId) {
+      ... on DeletePurchaseOrderError {
+        __typename
+        error {
+          ... on RecordNotFound {
+            __typename
+          }
+          description
+          ... on CannotDeleteNonNewPurchaseOrder {
+            __typename
+          }
+        }
+      }
+      ... on DeleteResponse {
+        id
+      }
+    }
+  }
+`;
 export const PurchaseOrderLinesDocument = gql`
   query purchaseOrderLines(
     $storeId: String!
@@ -657,6 +698,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'updatePurchaseOrder',
+        'mutation',
+        variables
+      );
+    },
+    deletePurchaseOrder(
+      variables: DeletePurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeletePurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeletePurchaseOrderMutation>(
+            DeletePurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deletePurchaseOrder',
         'mutation',
         variables
       );

@@ -81,12 +81,17 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
   }));
 
   const deleteMutationFn = async (ids: string[]) => {
-    const response = await (async () => []);
-    // await purchaseOrderApi.deletePurchaseOrders({
-    //   storeId,
-    //   ids,
-    // });
-    // return response?.deletePurchaseOrders;
+    try {
+      for (const id of ids) {
+        await purchaseOrderApi.deletePurchaseOrder({
+          id,
+          storeId,
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting one or more purchase orders:', error);
+      throw error;
+    }
   };
 
   const {
@@ -96,7 +101,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
   } = useMutation({
     mutationFn: deleteMutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LIST_KEY, PURCHASE_ORDER, storeId]);
+      queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY]);
     },
   });
 

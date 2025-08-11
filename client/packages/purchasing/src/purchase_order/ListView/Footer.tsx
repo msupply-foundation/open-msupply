@@ -23,9 +23,8 @@ export const FooterComponent: FC<{ listParams: ListParams }> = ({
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction: async () => {
-      console.log('Deleting...', selectedRows);
       const ids = selectedRows.map(row => row.id);
-      return await deletePurchaseOrders(ids);
+      deletePurchaseOrders(ids);
     },
     canDelete: selectedRows.every(
       row => row.status === PurchaseOrderNodeStatus.New
