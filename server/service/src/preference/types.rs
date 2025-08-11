@@ -20,6 +20,7 @@ pub enum PrefKey {
     CustomTranslations,
     SyncRecordsDisplayThreshold,
     AuthorisePurchaseOrder,
+    AuthoriseGoodsReceived,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,

@@ -23,6 +23,7 @@ pub struct UpsertPreferencesInput {
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub sync_records_display_threshold: Option<i32>,
     pub authorise_purchase_order: Option<bool>,
+    pub authorise_goods_received: Option<bool>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
@@ -64,6 +65,7 @@ impl UpsertPreferencesInput {
             custom_translations,
             sync_records_display_threshold,
             authorise_purchase_order,
+            authorise_goods_received,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -83,7 +85,7 @@ impl UpsertPreferencesInput {
             custom_translations: custom_translations.clone(),
             sync_records_display_threshold: *sync_records_display_threshold,
             authorise_purchase_order: *authorise_purchase_order,
-
+            authorise_goods_received: *authorise_goods_received,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
