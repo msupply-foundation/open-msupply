@@ -40,13 +40,13 @@ export const DetailViewInner = () => {
     onOpen,
     onClose,
     mode,
-    entity: itemId,
+    entity: lineId,
     isOpen,
   } = useEditModal<string | null>();
 
   const onRowClick = useCallback(
     (line: PurchaseOrderLineFragment) => {
-      onOpen(line.item.id);
+      onOpen(line.id);
     },
     [onOpen]
   );
@@ -103,7 +103,7 @@ export const DetailViewInner = () => {
               isOpen={isOpen}
               onClose={onClose}
               mode={mode}
-              itemId={itemId}
+              lineId={lineId}
               purchaseOrder={data}
             />
           )}

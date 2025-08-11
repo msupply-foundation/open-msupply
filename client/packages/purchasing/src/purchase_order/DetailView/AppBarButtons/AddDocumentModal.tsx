@@ -24,8 +24,8 @@ export const AddDocumentModal = ({
   purchaseOrderId,
 }: AddDocumentModalProps) => {
   const t = useTranslation();
-  const { error, success } = useNotification();
   const queryClient = useQueryClient();
+  const { error, success } = useNotification();
   const [isUploading, setIsUploading] = useState(false);
 
   const { Modal } = useDialog({
