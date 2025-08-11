@@ -1,12 +1,9 @@
 #[cfg(test)]
 mod insert {
     use repository::{
-        mock::{
-            mock_item_a, mock_item_b, mock_name_a, mock_store_a, mock_user_account_a,
-            MockDataInserts,
-        },
+        mock::{mock_item_a, mock_name_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
-        PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
+        PurchaseOrderLineRowRepository,
     };
 
     use crate::{
@@ -241,6 +238,10 @@ mod insert {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "non_existent_purchase_order".to_string(),
                     item_id: "item_id".to_string(),
+                    requested_pack_size: None,
+                    requested_number_of_units: None,
+                    requested_delivery_date: None,
+                    expected_delivery_date: None
                 }
             ),
             Err(InsertPurchaseOrderLineError::PurchaseOrderDoesNotExist)

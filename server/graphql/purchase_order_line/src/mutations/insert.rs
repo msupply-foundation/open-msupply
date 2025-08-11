@@ -52,17 +52,6 @@ impl InsertInput {
     }
 }
 
-#[derive(Interface)]
-#[graphql(name = "InsertPurchaseOrderLineErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
-pub enum InsertErrorInterface {
-    PurchaseOrderDoesNotExist(ForeignKeyError),
-    CannotEditPurchaseOrder(CannotEditPurchaseOrder),
-    PurchaseOrderLineWithIdExists(PurchaseOrderLineWithIdExists),
-    PackSizeCodeCombinationExists(PackSizeCodeCombinationExists),
-    CannotFindItemByCode(CannnotFindItemByCode),
-}
-
 #[derive(SimpleObject)]
 #[graphql(name = "InsertPurchaseOrderLineError")]
 pub struct InsertError {
@@ -78,12 +67,6 @@ pub enum InsertErrorInterface {
     PurchaseOrderLineWithIdExists(PurchaseOrderLineWithIdExists),
     PackSizeCodeCombinationExists(PackSizeCodeCombinationExists),
     CannotFindItemByCode(CannnotFindItemByCode),
-}
-
-#[derive(SimpleObject)]
-#[graphql(name = "InsertPurchaseOrderLineError")]
-pub struct InsertError {
-    pub error: InsertErrorInterface,
 }
 
 #[derive(Union)]

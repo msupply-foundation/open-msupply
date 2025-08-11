@@ -2,8 +2,8 @@
 mod delete {
     use repository::{
         mock::{
-            mock_item_c, mock_purchase_order_a, mock_purchase_order_b_line_1, mock_store_a,
-            mock_user_account_a, MockDataInserts,
+            mock_item_a, mock_item_c, mock_purchase_order_a, mock_purchase_order_b_line_1,
+            mock_store_a, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
     };

@@ -23,7 +23,6 @@ impl PurchaseOrderDoesNotExist {
         "Purchase order does not exist"
     }
 }
-use async_graphql::*;
 
 pub struct PurchaseOrderLineWithIdExists;
 #[Object]

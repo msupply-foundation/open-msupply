@@ -2,7 +2,6 @@ import {
   FnUtils,
   InsertPurchaseOrderInput,
   PurchaseOrderLineNode,
-  PurchaseOrderNodeType,
   SortUtils,
   useConfirmationModal,
   useMutation,

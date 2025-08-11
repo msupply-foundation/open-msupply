@@ -11,7 +11,7 @@ import {
   NonEmptyArray,
   useCallbackWithPermission,
 } from '@openmsupply-client/common/src';
-import { isPurchaseOrderEditable } from '../../utils';
+import { isPurchaseOrderEditable } from '@openmsupply-client/purchasing/src/utils';
 
 interface AddButtonProps {
   purchaseOrder: PurchaseOrderFragment | undefined;

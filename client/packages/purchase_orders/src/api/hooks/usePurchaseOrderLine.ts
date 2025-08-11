@@ -4,9 +4,10 @@ import {
   useQuery,
   useTranslation,
 } from '@openmsupply-client/common/src';
-import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
-import { LIST, PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
-import { PurchaseOrderLineFragment } from '../operations.generated';
+import { LIST } from 'packages/purchasing/src/goods_received/api';
+import { PurchaseOrderLineFragment } from 'packages/purchasing/src/purchase_order/api';
+import { PURCHASE_ORDER_LINE, PURCHASE_ORDER } from 'packages/purchasing/src/purchase_order/api/hooks/keys';
+import { usePurchaseOrderGraphQL } from 'packages/purchasing/src/purchase_order/api/usePurchaseOrderGraphQL';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
@@ -125,13 +126,13 @@ export const useLineInsertFromCSV = () => {
 
   const { mutateAsync } = useMutation(
     async (line: Partial<DraftPurchaseOrderLineFromCSV>) => {
-      const result = await purchaseOrderApi.insertPurchaseOrderLineFromCSV({
+      const result = await purchaseOrderApi.insertPurchaseOrderLineFromCsv({
         storeId,
         input: {
           itemCode: line.itemCode ?? '',
-          purchaseOrderId: line.purchaseOrderId ?? '',
-          requestedPackSize: line.requestedPackSize ?? 0.0,
-          requestedNumberOfUnits: line.requestedNumberOfUnits ?? 0,
+          purchaseOrderId: line['purchaseOrderId'] ?? '',
+          requestedPackSize: line['requestedPackSize'] ?? 0.0,
+          requestedNumberOfUnits: line['requestedNumberOfUnits'] ?? 0,
         },
       });
       if (result.insertPurchaseOrderLineFromCsv.__typename === 'IdResponse') {
