@@ -681,7 +681,6 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
-            foreign_exchange_rate: Some(1.0),
             ..Default::default()
         },
     )
@@ -773,7 +772,6 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
-            foreign_exchange_rate: Some(1.0),
             ..Default::default()
         },
     )
