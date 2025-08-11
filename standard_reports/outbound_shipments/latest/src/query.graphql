@@ -17,6 +17,7 @@ query OutboundShipments(
         id
         lines {
           nodes {
+            id
             item {
               id
               code
