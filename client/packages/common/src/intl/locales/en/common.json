@@ -1971,6 +1971,7 @@
   "preference.allowTrackingOfReceivedStockByDonor": "Allow tracking of received stock by donor",
   "preference.allowTrackingOfStockByDonor": "Allow tracking of stock by donor",
   "preference.authorisePurchaseOrder": "Authorise purchase orders",
+  "preference.authoriseGoodsReceived": "Authorise goods received",
   "preference.customTranslations": "Custom translations",
   "preference.genderOptions": "Gender options",
   "preference.manageVaccinesInDoses": "Manage vaccines in doses",
