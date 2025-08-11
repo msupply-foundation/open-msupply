@@ -14,7 +14,8 @@ use service::{
 };
 
 use crate::mutations::errors::{
-    PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound, UpdatedLineDoesNotExist,
+    CannotAdjustRequestedQuantity, PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound,
+    UpdatedLineDoesNotExist,
 };
 
 #[derive(InputObject)]
@@ -36,7 +37,7 @@ impl UpdateInput {
             item_id,
             requested_pack_size,
             requested_number_of_units,
-            adjusted_number_of_units,
+            adjusted_number_of_units, // TODO: Maybe should just have one number in the request and map it to adjusted or requested in backend?
             requested_delivery_date,
             expected_delivery_date,
         } = self;
@@ -46,7 +47,7 @@ impl UpdateInput {
             item_id,
             requested_pack_size,
             requested_number_of_units,
-            adjusted_number_of_units: adjusted_quantity,
+            adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
         }
@@ -60,6 +61,7 @@ pub enum PurchaseOrderLineError {
     UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
     PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
     CannotEditPurchaseOrder(CannotEditPurchaseOrder),
+    CannotAdjustRequestedQuantity(CannotAdjustRequestedQuantity),
 }
 
 #[derive(SimpleObject)]
@@ -121,9 +123,15 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
             }))
         }
         ServiceError::PurchaseOrderDoesNotExist => {
-        | ServiceError::CannotAdjustRequestedQuantity
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
+            }))
+        }
+        ServiceError::CannotAdjustRequestedQuantity => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::CannotAdjustRequestedQuantity(
+                    CannotAdjustRequestedQuantity,
+                ),
             }))
         }
         ServiceError::CannotEditPurchaseOrder => {
