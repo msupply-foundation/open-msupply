@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
-use repository::{EqualFilter, PurchaseOrderFilter, PurchaseOrderRow};
+use repository::{EqualFilter, PurchaseOrder, PurchaseOrderFilter};
 use service::service_provider::ServiceProvider;
 
 use crate::standard_graphql_error::StandardGraphqlError;
@@ -12,7 +12,7 @@ pub struct PurchaseOrderByIdLoader {
 }
 
 impl Loader<String> for PurchaseOrderByIdLoader {
-    type Value = PurchaseOrderRow;
+    type Value = PurchaseOrder;
     type Error = async_graphql::Error;
 
     async fn load(
@@ -36,7 +36,7 @@ impl Loader<String> for PurchaseOrderByIdLoader {
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
-        let mut result: HashMap<String, PurchaseOrderRow> = HashMap::new();
+        let mut result: HashMap<String, PurchaseOrder> = HashMap::new();
         for purchase_order in purchase_orders.rows {
             result.insert(purchase_order.id.clone(), purchase_order);
         }
