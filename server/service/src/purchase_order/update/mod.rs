@@ -54,7 +54,7 @@ pub fn update_purchase_order(
     let purchase_order = ctx
         .connection
         .transaction_sync(|connection: &repository::StorageConnection| {
-            let (purchase_order, old_status) = validate(&input, &store_id, connection)?;
+            let purchase_order = validate(&input, &store_id, connection)?;
             let updated_purchase_order = generate(purchase_order, input)?;
 
             let purchase_order_repository = PurchaseOrderRowRepository::new(connection);
@@ -62,10 +62,7 @@ pub fn update_purchase_order(
 
             activity_log_entry(
                 ctx,
-                log_type_from_purchase_order_status(
-                    &updated_purchase_order.status,
-                    Some(old_status),
-                ),
+                log_type_from_purchase_order_status(&updated_purchase_order.status),
                 Some(updated_purchase_order.id.clone()),
                 None,
                 None,

@@ -178,52 +178,18 @@ mod update {
 
         assert_eq!(log.r#type, ActivityLogType::PurchaseOrderAuthorised);
 
-        // Set purchase order back to new status from authorised
-        service
-            .update_purchase_order(
-                &context,
-                store_id,
-                UpdatePurchaseOrderInput {
-                    id: purchase_order_id.clone(),
-                    status: Some(PurchaseOrderStatus::New),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        let log = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id(&purchase_order_id.clone())
-            .unwrap()
-            .into_iter()
-            .find(|l| l.r#type == ActivityLogType::PurchaseOrderUnauthorised)
-            .unwrap();
-        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderUnauthorised);
-
-        // Authorise purchase order again
-        service
-            .update_purchase_order(
-                &context,
-                store_id,
-                UpdatePurchaseOrderInput {
-                    id: purchase_order_id.clone(),
-                    status: Some(PurchaseOrderStatus::Authorised),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
         let logs = ActivityLogRowRepository::new(&context.connection)
             .find_many_by_record_id(&purchase_order_id.clone())
             .unwrap();
 
-        assert_eq!(logs.len(), 3);
+        assert_eq!(logs.len(), 2);
 
         let authorised_logs: Vec<_> = logs
             .into_iter()
             .filter(|l| l.r#type == ActivityLogType::PurchaseOrderAuthorised)
             .collect();
 
-        assert_eq!(authorised_logs.len(), 2);
+        assert_eq!(authorised_logs.len(), 1);
 
         // set purchase order to confirmed
 

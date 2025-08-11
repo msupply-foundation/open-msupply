@@ -150,14 +150,8 @@ pub fn log_type_from_invoice_status(status: &InvoiceStatus, prescription: bool) 
     }
 }
 
-pub fn log_type_from_purchase_order_status(
-    status: &PurchaseOrderStatus,
-    old_status: Option<PurchaseOrderStatus>,
-) -> ActivityLogType {
+pub fn log_type_from_purchase_order_status(status: &PurchaseOrderStatus) -> ActivityLogType {
     match status {
-        PurchaseOrderStatus::New if old_status == Some(PurchaseOrderStatus::Authorised) => {
-            ActivityLogType::PurchaseOrderUnauthorised
-        }
         PurchaseOrderStatus::New => ActivityLogType::PurchaseOrderCreated,
         PurchaseOrderStatus::Authorised => ActivityLogType::PurchaseOrderAuthorised,
         PurchaseOrderStatus::Confirmed => ActivityLogType::PurchaseOrderConfirmed,

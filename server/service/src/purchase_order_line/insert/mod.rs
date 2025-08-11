@@ -46,6 +46,13 @@ pub fn insert_purchase_order_line(
             )?;
 
             let new_purchase_order_line = generate(connection, store_id, input.clone())?;
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::PurchaseOrderLineCreated,
+                Some(new_purchase_order_line.purchase_order_id.clone()),
+                None,
+                None,
+            )?;
             PurchaseOrderLineRowRepository::new(connection).upsert_one(&new_purchase_order_line)?;
 
             Ok(new_purchase_order_line)

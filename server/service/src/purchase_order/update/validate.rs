@@ -1,6 +1,4 @@
-use repository::{
-    PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus, StorageConnection,
-};
+use repository::{PurchaseOrderRow, PurchaseOrderRowRepository, StorageConnection};
 
 use crate::{
     purchase_order::update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
@@ -12,7 +10,7 @@ pub fn validate(
     input: &UpdatePurchaseOrderInput,
     store_id: &str,
     connection: &StorageConnection,
-) -> Result<(PurchaseOrderRow, PurchaseOrderStatus), UpdatePurchaseOrderError> {
+) -> Result<PurchaseOrderRow, UpdatePurchaseOrderError> {
     let purchase_order = PurchaseOrderRowRepository::new(connection).find_one_by_id(&input.id)?;
     let purchase_order = purchase_order.ok_or(UpdatePurchaseOrderError::UpdatedRecordNotFound)?;
 
@@ -40,6 +38,5 @@ pub fn validate(
             .map_err(|_| UpdatePurchaseOrderError::DonorDoesNotExist)?;
     }
 
-    let status = purchase_order.status.clone();
-    Ok((purchase_order, status))
+    Ok(purchase_order)
 }

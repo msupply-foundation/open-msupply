@@ -61,7 +61,7 @@ pub fn add_from_master_list(
                     activity_log_entry(
                         &ctx,
                         ActivityLogType::PurchaseOrderLineCreated,
-                        Some(purchase_order_line_row.id),
+                        Some(purchase_order_line_row.purchase_order_id),
                         None,
                         None,
                     )?;

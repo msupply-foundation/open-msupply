@@ -21,12 +21,12 @@ pub fn delete_purchase_order_line(
     let purchase_order_line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&id, connection)?;
+            let purchase_order_line = validate(&id, connection)?;
 
             activity_log_entry(
                 &ctx,
                 ActivityLogType::PurchaseOrderLineDeleted,
-                Some(id.clone()),
+                Some(purchase_order_line.purchase_order_id),
                 None,
                 None,
             )?;

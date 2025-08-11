@@ -51,7 +51,7 @@ pub fn update_purchase_order_line(
             activity_log_entry(
                 &ctx,
                 ActivityLogType::PurchaseOrderLineUpdated,
-                Some(updated_purchase_order_line.id.clone()),
+                Some(updated_purchase_order_line.purchase_order_id.clone()),
                 None,
                 None,
             )?;

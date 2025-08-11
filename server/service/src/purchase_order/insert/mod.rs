@@ -40,7 +40,7 @@ pub fn insert_purchase_order(
 
             activity_log_entry(
                 ctx,
-                log_type_from_purchase_order_status(&purchase_order.status, None),
+                log_type_from_purchase_order_status(&purchase_order.status),
                 Some(purchase_order.id.to_owned()),
                 None,
                 None,
