@@ -49,6 +49,10 @@ fragment InboundLine on InvoiceLineNode {
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
     }
+    programs(storeId: $storeId) {
+      id
+      name
+    }
   }
 
   location {
