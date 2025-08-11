@@ -2,6 +2,7 @@ import { ReportRowFragment } from '@openmsupply-client/system';
 
 export enum ReportSubContext {
   StockAndItems = 'StockAndItems',
+  Distribution = 'Distribution',
   HIVCareProgram = 'HIVCareProgram',
   Vaccinations = 'Vaccinations',
   Encounters = 'Encounters',
@@ -18,6 +19,9 @@ export const categoriseReports = (reports: ReportRowFragment[]) => {
   return {
     stockAndItems: reports.filter(
       r => r.subContext === ReportSubContext.StockAndItems
+    ),
+    distribution: reports.filter(
+      r => r.subContext === ReportSubContext.Distribution
     ),
     other: reports.filter(r => r.subContext === ReportSubContext.Other),
 

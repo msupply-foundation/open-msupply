@@ -97,6 +97,13 @@ export const ListView = () => {
           hasReports={!!categorisedReports.stockAndItems.length}
         />
         <ReportWidget
+          title={t('distribution')}
+          Icon={TruckIcon}
+          reports={categorisedReports.distribution}
+          onReportClick={onReportClick}
+          hasReports={!!categorisedReports.distribution.length}
+        />
+        <ReportWidget
           title={t('label.programs')}
           Icon={InvoiceIcon}
           reports={programReports}
