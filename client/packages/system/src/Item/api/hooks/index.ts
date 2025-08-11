@@ -1,5 +1,4 @@
 export * from './useItem';
-export * from './useItemFields';
 export * from './useItems';
 export * from './useHistoricalStockLines';
 export * from './useItemApi';
