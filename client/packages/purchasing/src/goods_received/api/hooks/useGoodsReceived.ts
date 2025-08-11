@@ -3,17 +3,12 @@ import {
   useMutation,
   useNotification,
   useTranslation,
+  InsertGoodsReceivedInput,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedGraphQL } from '../useGoodsReceivedGraphQL';
 import { GOODS_RECEIVED } from './keys';
 
-export interface InsertGoodsReceivedInput {
-  id: string;
-  purchaseOrderId: string;
-}
-
 export const useGoodsReceived = () => {
-  const { goodsReceivedApi: _goodsReceivedApi, storeId: _storeId, queryClient: _queryClient } = useGoodsReceivedGraphQL();
   const { error } = useNotification();
   const t = useTranslation();
 
@@ -27,7 +22,10 @@ export const useGoodsReceived = () => {
   const create = async (purchaseOrderId: string) => {
     const id = FnUtils.generateUUID();
     try {
-      const result = await createMutation({ id, purchaseOrderId });
+      const result = await createMutation({ 
+        id, 
+        purchaseOrderId 
+      });
       return result;
     } catch (e) {
       console.error('Error creating goods received:', e);
@@ -45,24 +43,13 @@ export const useGoodsReceived = () => {
 };
 
 const useCreate = () => {
-  const { goodsReceivedApi: _goodsReceivedApi, storeId: _storeId, queryClient } = useGoodsReceivedGraphQL();
+  const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
 
   const mutationFn = async (input: InsertGoodsReceivedInput) => {
-    // TODO: Replace with actual GraphQL mutation when backend is implemented
-    // For now, simulate a successful response
-    // eslint-disable-next-line no-console
-    console.log('Creating goods received with input:', input);
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Return a mock response that matches the expected GraphQL response structure
-    return {
-      insertGoodsReceived: {
-        __typename: 'IdResponse' as const,
-        id: input.id,
-      },
-    };
+    return await goodsReceivedApi.insertGoodsReceived({
+      input,
+      storeId,
+    });
   };
 
   return useMutation({
