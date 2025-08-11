@@ -1,18 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
-
-import {
-  JsonData,
-  JsonForm,
-  patientProgramSearchTester,
-  PatientProgramSearch,
-  programSearchTester,
-  ProgramSearch,
-  periodSearchTester,
-  PeriodSearch,
-  dateRangeTester,
-  DateRange,
-} from '@openmsupply-client/programs';
+import { JsonData, JsonForm } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
 import { DialogButton, Typography } from '@common/components';
@@ -35,13 +23,6 @@ export type ReportArgumentsModalProps = {
   ) => void;
 };
 
-const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
-  { tester: patientProgramSearchTester, renderer: PatientProgramSearch },
-  { tester: programSearchTester, renderer: ProgramSearch },
-  { tester: periodSearchTester, renderer: PeriodSearch },
-  { tester: dateRangeTester, renderer: DateRange },
-];
-
 export const ReportArgumentsModal = ({
   report,
   printFormat,
@@ -53,6 +34,52 @@ export const ReportArgumentsModal = ({
   const { urlQuery } = useUrlQuery();
   const t = useTranslation();
   const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  /**
+   * Dynamically load renderers to avoid circular dependency
+   *
+   * Note, this is a temporary workaround to avoid the error caused by circular
+   * dependencies when these components were imported directly.
+   *
+   * This should be refactored as part of issue: https://github.com/msupply-foundation/open-msupply/issues/8807
+   */
+
+  const [additionalRenderers, setAdditionalRenderers] = useState<
+    JsonFormsRendererRegistryEntry[]
+  >([]);
+
+  useEffect(() => {
+    // Dynamic import breaks the circular dependency at module load time
+    const loadRenderers = async () => {
+      try {
+        const programsModule = await import('@openmsupply-client/programs');
+        const renderers = [
+          {
+            tester: programsModule.patientProgramSearchTester,
+            renderer: programsModule.PatientProgramSearch,
+          },
+          {
+            tester: programsModule.programSearchTester,
+            renderer: programsModule.ProgramSearch,
+          },
+          {
+            tester: programsModule.periodSearchTester,
+            renderer: programsModule.PeriodSearch,
+          },
+          {
+            tester: programsModule.dateRangeTester,
+            renderer: programsModule.DateRange,
+          },
+        ];
+        setAdditionalRenderers(renderers);
+      } catch (error) {
+        console.warn('Failed to load program renderers:', error);
+        // Continue without the renderers - they're optional
+      }
+    };
+
+    loadRenderers();
+  }, []);
 
   const {
     monthlyConsumptionLookBackPeriod,
