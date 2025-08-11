@@ -169,7 +169,7 @@ impl Upsert for PurchaseOrderLineRow {
 // purchase order line basic upsert and query operation test:
 #[cfg(test)]
 mod tests {
-    use crate::mock::{mock_name_c, mock_store_a, MockDataInserts};
+    use crate::mock::{mock_item_a, mock_name_c, mock_store_a, MockDataInserts};
     use crate::{
         db_diesel::purchase_order_line_row::PurchaseOrderLineRowRepository, test_db::setup_all,
         PurchaseOrderLineRow,
@@ -178,7 +178,11 @@ mod tests {
 
     #[actix_rt::test]
     async fn purchase_order_line_upsert_and_query() {
-        let (_, connection, _, _) = setup_all("purchase order line", MockDataInserts::all()).await;
+        let (_, connection, _, _) = setup_all(
+            "purchase_order_line_upsert_and_query",
+            MockDataInserts::all(),
+        )
+        .await;
         let repo = PurchaseOrderLineRowRepository::new(&connection);
 
         // add purchase order
@@ -191,6 +195,7 @@ mod tests {
             store_id: mock_store_a().id.clone(),
             created_datetime: chrono::Utc::now().naive_utc().into(),
             purchase_order_number: 1,
+
             ..Default::default()
         };
 
@@ -201,7 +206,8 @@ mod tests {
             purchase_order_id: purchase_order_id.to_string(),
             store_id: mock_store_a().id.clone(),
             line_number: 1,
-            item_link_id: "item_a".to_string(),
+            item_link_id: mock_item_a().id,
+            comment: Some("Test comment".to_string()),
             ..Default::default()
         };
 
@@ -209,5 +215,6 @@ mod tests {
 
         let result = repo.find_one_by_id(&line.id).unwrap().unwrap();
         assert_eq!(result.id, "test-line-1".to_string());
+        assert_eq!(result.comment, Some("Test comment".to_string()));
     }
 }

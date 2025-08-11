@@ -9,8 +9,8 @@ use crate::{
 };
 
 use repository::{
-    PaginationOption, PurchaseOrderFilter, PurchaseOrderLine, PurchaseOrderRow, PurchaseOrderSort,
-    RepositoryError,
+    PaginationOption, PurchaseOrder, PurchaseOrderFilter, PurchaseOrderLine, PurchaseOrderRow,
+    PurchaseOrderSort, RepositoryError,
 };
 
 pub mod add_to_purchase_order_from_master_list;
@@ -27,7 +27,7 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: Option<&str>,
         id: &str,
-    ) -> Result<Option<PurchaseOrderRow>, RepositoryError> {
+    ) -> Result<Option<PurchaseOrder>, RepositoryError> {
         get_purchase_order(ctx, store_id, id)
     }
 
@@ -38,7 +38,7 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<PurchaseOrderFilter>,
         sort: Option<PurchaseOrderSort>,
-    ) -> Result<ListResult<PurchaseOrderRow>, ListError> {
+    ) -> Result<ListResult<PurchaseOrder>, ListError> {
         get_purchase_orders(ctx, store_id, pagination, filter, sort)
     }
 

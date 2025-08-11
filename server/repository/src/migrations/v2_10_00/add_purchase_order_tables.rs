@@ -41,7 +41,6 @@ impl MigrationFragment for Migrate {
                     confirmed_datetime {DATETIME},
                     target_months {DOUBLE},
                     comment TEXT,
-                    supplier_discount_amount {DOUBLE} NOT NULL,
                     donor_link_id TEXT REFERENCES name_link(id),
                     reference TEXT,
                     currency_id TEXT REFERENCES currency(id),
@@ -62,10 +61,8 @@ impl MigrationFragment for Migrate {
                     communications_charge {DOUBLE},
                     insurance_charge {DOUBLE},
                     freight_charge {DOUBLE},
-                    freight_conditions TEXT,
-                    order_total_before_discount {DOUBLE} NOT NULL,
-                    order_total_after_discount {DOUBLE} NOT NULL
-                );
+                    freight_conditions TEXT
+                    );
             "#
         )?;
 
