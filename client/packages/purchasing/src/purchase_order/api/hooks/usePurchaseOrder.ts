@@ -11,9 +11,10 @@ import {
   useTranslation,
   useUrlQuery,
   setNullableInput,
+  LIST_KEY,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
-import { LIST, PURCHASE_ORDER } from './keys';
+import { PURCHASE_ORDER } from './keys';
 import { PurchaseOrderFragment } from '../operations.generated';
 import { useMemo } from 'react';
 import { usePurchaseOrderColumns } from '../../DetailView/columns';
@@ -42,7 +43,7 @@ export const usePurchaseOrder = (id?: string) => {
 
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
-  const queryKey = [PURCHASE_ORDER, LIST, storeId];
+  const queryKey = [PURCHASE_ORDER, LIST_KEY, storeId];
 
   // QUERY
   const queryFn = async (): Promise<PurchaseOrderFragment | undefined> => {
@@ -207,7 +208,7 @@ const useAddFromMasterList = () => {
     purchaseOrderApi.addToPurchaseOrderFromMasterList,
     {
       onSuccess: () =>
-        queryClient.invalidateQueries([PURCHASE_ORDER, LIST, storeId]),
+        queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY, storeId]),
     }
   );
 
