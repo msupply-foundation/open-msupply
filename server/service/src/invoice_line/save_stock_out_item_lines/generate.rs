@@ -89,6 +89,7 @@ pub fn generate(
                 vvm_status_id,
                 campaign_id,
                 program_id,
+                campaign_id,
                 // Default (use None so the stock line values are used)
                 batch: None,
                 pack_size: None,
@@ -101,6 +102,8 @@ pub fn generate(
                 cost_price_per_pack: None,
                 sell_price_per_pack: None,
                 volume_per_pack: None,
+                item_variant_id: None,
+                donor_id: None,
             },
         )
         .collect();

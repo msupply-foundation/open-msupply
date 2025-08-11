@@ -3,10 +3,7 @@ use repository::{
     StorageConnectionManager,
 };
 
-use crate::{get_default_pagination, i64_to_u32, ListError, ListResult};
-
-pub const MAX_LIMIT: u32 = 5000;
-pub const MIN_LIMIT: u32 = 1;
+use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
 
 pub fn get_location_types(
     connection_manager: &StorageConnectionManager,

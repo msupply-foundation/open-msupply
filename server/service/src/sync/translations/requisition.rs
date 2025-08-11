@@ -21,7 +21,7 @@ use util::sync_serde::{
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyRequisitionType {
-    /// A response to the request created for the suppling store
+    /// A response to the request created for the supplying store
     #[serde(rename = "response")]
     Response,
     /// A request from a facility where they determine the quantity. If between facilities,
