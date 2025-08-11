@@ -6,7 +6,7 @@ use graphql_core::loader::{
     StoreByIdLoader, UserLoader,
 };
 use graphql_core::ContextExt;
-use repository::{PurchaseOrderRow, PurchaseOrderStatus};
+use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus};
 use service::ListResult;
 
 use crate::types::{NameNode, PurchaseOrderLineConnector, StoreNode, UserNode};
@@ -14,6 +14,7 @@ use crate::types::{NameNode, PurchaseOrderLineConnector, StoreNode, UserNode};
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderNode {
     pub purchase_order: PurchaseOrderRow,
+    pub stats: Option<PurchaseOrderStatsRow>,
 }
 #[derive(SimpleObject)]
 pub struct PurchaseOrderConnector {
@@ -47,7 +48,12 @@ impl PurchaseOrderNode {
     }
 
     pub async fn order_total_after_discount(&self) -> f64 {
-        self.row().order_total_after_discount
+        let order_total_after_discount = match &self.stats {
+            Some(stats) => stats.order_total_after_discount,
+            None => 0.0,
+        };
+
+        order_total_after_discount
     }
 
     pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
@@ -149,7 +155,14 @@ impl PurchaseOrderNode {
     }
 
     pub async fn supplier_discount_amount(&self) -> f64 {
-        self.row().supplier_discount_amount
+        let line_total_after_discount = match &self.stats {
+            Some(stats) => stats.line_total_after_discount,
+            None => 0.0,
+        };
+
+        let discount_percentage = self.row().supplier_discount_percentage.unwrap_or(0.0) / 100.0;
+
+        line_total_after_discount * discount_percentage
     }
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage
@@ -171,8 +184,11 @@ impl PurchaseOrderNode {
 }
 
 impl PurchaseOrderNode {
-    pub fn from_domain(purchase_order: PurchaseOrderRow) -> PurchaseOrderNode {
-        PurchaseOrderNode { purchase_order }
+    pub fn from_domain(purchase_order: PurchaseOrder) -> PurchaseOrderNode {
+        PurchaseOrderNode {
+            purchase_order: purchase_order.purchase_order_row,
+            stats: purchase_order.purchase_order_stats_row,
+        }
     }
 }
 
@@ -213,7 +229,7 @@ impl PurchaseOrderNodeStatus {
 }
 
 impl PurchaseOrderConnector {
-    pub fn from_domain(purchase_orders: ListResult<PurchaseOrderRow>) -> PurchaseOrderConnector {
+    pub fn from_domain(purchase_orders: ListResult<PurchaseOrder>) -> PurchaseOrderConnector {
         PurchaseOrderConnector {
             total_count: purchase_orders.count,
             nodes: purchase_orders
