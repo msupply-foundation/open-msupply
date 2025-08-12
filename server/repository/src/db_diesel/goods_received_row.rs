@@ -117,7 +117,7 @@ impl<'a> GoodsReceivedRowRepository<'a> {
         Ok(())
     }
 
-     pub fn find_max_goods_received_number(
+    pub fn find_max_goods_received_number(
         &self,
         store_id: &str,
     ) -> Result<Option<i64>, RepositoryError> {
