@@ -21,8 +21,7 @@
      "dependencies": {
       "before": ["after"],
       "after": ["before"]
-     },
-     "required": ["otherPartyId"]
+     }
     }
   },
   "type": "object",

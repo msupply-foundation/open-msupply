@@ -3,9 +3,9 @@
 </style>
 
 <div class="container">
-    {% if data and data|length > 0 %}
-  <div class="header">
-    <h2>{{data[0].otherPartyName}}</h2>
+    {% if data and data.otherPartyName %}
+  <div>
+    <h3>{{data.otherPartyName}}</h3>
   </div>
   {% endif %}
   
@@ -24,8 +24,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for line in data %}
-
+      {% for line in data.lines %}
       <tr>
         <td>{{line.itemCode}}</td>
         <td>{{line.itemName}}</td>
