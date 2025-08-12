@@ -12,6 +12,9 @@ export const useGoodsReceived = () => {
   const { error } = useNotification();
   const t = useTranslation();
 
+  // QUERY
+  const { data, isLoading, isError } = useGetById(goodsReceivedId);
+
   // CREATE
   const {
     mutateAsync: createMutation,
@@ -22,9 +25,9 @@ export const useGoodsReceived = () => {
   const create = async (purchaseOrderId: string) => {
     const id = FnUtils.generateUUID();
     try {
-      const result = await createMutation({ 
-        id, 
-        purchaseOrderId 
+      const result = await createMutation({
+        id,
+        purchaseOrderId,
       });
       return result;
     } catch (e) {
@@ -55,5 +58,33 @@ const useCreate = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
+  });
+};
+
+export const useGetById = (id?: string) => {
+  const { goodsReceivedApi, storeId } = useGoodsReceivedGraphQL();
+
+  const queryKey = [GOODS_RECEIVED, LIST, storeId];
+
+  const queryFn = async () => {
+    if (!id) return;
+
+    const result = await goodsReceivedApi.goodsReceivedById({
+      id,
+      storeId,
+    });
+
+    if (result?.goodsReceived.__typename === 'GoodsReceivedNode') {
+      return result.goodsReceived;
+    } else {
+      console.error('No goods received found', id);
+      throw new Error(`Could not find goods received ${id}`);
+    }
+  };
+
+  return useQuery({
+    queryKey,
+    queryFn,
+    enabled: !!id,
   });
 };
