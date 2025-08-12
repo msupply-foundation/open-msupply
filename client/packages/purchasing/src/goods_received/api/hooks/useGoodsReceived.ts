@@ -4,11 +4,15 @@ import {
   useNotification,
   useTranslation,
   InsertGoodsReceivedInput,
+  useParams,
+  LIST_KEY,
+  useQuery,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedGraphQL } from '../useGoodsReceivedGraphQL';
 import { GOODS_RECEIVED } from './keys';
 
 export const useGoodsReceived = () => {
+  const { goodsReceivedId } = useParams();
   const { error } = useNotification();
   const t = useTranslation();
 
@@ -65,11 +69,11 @@ const useCreate = () => {
 export const useGetById = (id?: string) => {
   const { goodsReceivedApi, storeId } = useGoodsReceivedGraphQL();
 
-  const queryKey = [GOODS_RECEIVED, LIST, storeId];
+  const queryKey = [GOODS_RECEIVED, LIST_KEY, storeId];
 
   const queryFn = async () => {
     if (!id) return;
-
+    console.info('Fetching goods received by ID:', id);
     const result = await goodsReceivedApi.goodsReceivedById({
       id,
       storeId,
@@ -78,7 +82,7 @@ export const useGetById = (id?: string) => {
     if (result?.goodsReceived.__typename === 'GoodsReceivedNode') {
       return result.goodsReceived;
     } else {
-      console.error('No goods received found', id);
+      console.error('No goods received found', id, result);
       throw new Error(`Could not find goods received ${id}`);
     }
   };

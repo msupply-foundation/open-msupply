@@ -55,7 +55,6 @@ export const DetailViewInner = (): ReactElement => {
           <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />
-          {/* Add SidePanel if needed */}
           {/* Add Line Edit Modal */}
         </>
       ) : (
@@ -68,8 +67,8 @@ export const DetailViewInner = (): ReactElement => {
                 .build()
             )
           }
-          title={t('error.purchase-order-not-found')}
-          message={t('messages.click-to-return-to-purchase-orders')}
+          title={t('error.goods-received-not-found')}
+          message={t('messages.click-to-return-to-goods-received')}
         />
       )}
     </Suspense>
