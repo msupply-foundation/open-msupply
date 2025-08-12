@@ -2,11 +2,9 @@ use repository::{EqualFilter, PaginationOption};
 use repository::{RepositoryError, Stocktake, StocktakeFilter, StocktakeRepository, StocktakeSort};
 
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
+ 
 
 pub fn get_stocktakes(
     ctx: &ServiceContext,
@@ -15,7 +13,7 @@ pub fn get_stocktakes(
     filter: Option<StocktakeFilter>,
     sort: Option<StocktakeSort>,
 ) -> Result<ListResult<Stocktake>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = StocktakeRepository::new(&ctx.connection);
 
     // ensure filter restrict results to store id

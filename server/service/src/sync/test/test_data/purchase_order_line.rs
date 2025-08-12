@@ -10,16 +10,16 @@ use super::TestSyncOutgoingRecord;
 const TABLE_NAME: &str = "purchase_order_line";
 
 const PURCHASE_ORDER_LINE_1: (&str, &str) = (
-    "test_purchase_order_line_1",
+    "sync_test_purchase_order_1_line_1",
     r#"{
-    "ID": "test_purchase_order_line_1",
-    "purchase_order_ID": "test_purchase_order_a",
+    "ID": "sync_test_purchase_order_1_line_1",
+    "purchase_order_ID": "sync_test_purchase_order_1",
     "item_ID": "item_a",
 	"item_name": "Item A",
     "store_ID": "store_a",
     "batch": "",
-    "comment": "",
-    "cost_from_invoice": 0.012,
+    "comment": "comment a!",
+    "cost_from_invoice": 4,
     "cost_local": 0,
     "delivery_date_expected": "0000-00-00",
     "delivery_date_requested": "2018-03-19",
@@ -35,8 +35,8 @@ const PURCHASE_ORDER_LINE_1: (&str, &str) = (
     "oms_fields": null,
     "pack_units": "",
     "packsize_ordered": 1000,
-    "price_expected_after_discount": 0.0024,
-    "price_extension_expected": 0.012,
+    "price_expected_after_discount": 2.0,
+    "price_extension_expected": 4.0,
     "price_per_pack_before_discount": 0,
     "quan_adjusted_order": 0,
     "quan_original_order": 100,
@@ -56,7 +56,7 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
         PURCHASE_ORDER_LINE_1,
         PurchaseOrderLineRow {
             id: PURCHASE_ORDER_LINE_1.0.to_string(),
-            purchase_order_id: "test_purchase_order_a".to_string(),
+            purchase_order_id: "sync_test_purchase_order_1".to_string(),
             line_number: 1,
             item_link_id: "item_a".to_string(),
             requested_delivery_date: Some(NaiveDate::from_ymd_opt(2018, 3, 19).unwrap()),
@@ -68,9 +68,10 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
             received_number_of_units: 5000.0,
             stock_on_hand_in_units: 0.0,
             supplier_item_code: None,
-            price_per_unit_before_discount: 0.012,
-            price_per_unit_after_discount: 0.0024,
+            price_per_unit_before_discount: 4.0,
+            price_per_unit_after_discount: 2.0,
             store_id: "store_a".to_string(),
+            comment: Some("comment a!".to_string()),
         },
     )
 }
@@ -82,7 +83,7 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
         push_data: json!(LegacyPurchaseOrderLineRow {
             id: PURCHASE_ORDER_LINE_1.0.to_string(),
             store_id: "store_a".to_string(),
-            purchase_order_id: "test_purchase_order_a".to_string(),
+            purchase_order_id: "sync_test_purchase_order_1".to_string(),
             line_number: 1,
             item_link_id: "item_a".to_string(),
             item_name: "Item A".to_string(),
@@ -94,8 +95,9 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             quan_original_order: 100.0,
             quan_adjusted_order: None,
             supplier_item_code: None,
-            price_extension_expected: 0.012,
-            price_expected_after_discount: 0.0024
+            price_extension_expected: 4.0,
+            price_expected_after_discount: 2.0,
+            comment: Some("comment a!".to_string()),
         }),
     }
 }

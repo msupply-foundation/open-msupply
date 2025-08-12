@@ -5,6 +5,7 @@ pub mod mutations;
 pub mod purchase_order_queries;
 
 use mutations::{
+    delete::{delete, DeleteResponse},
     insert::{insert_purchase_order, InsertInput, InsertResponse},
     update::{update_purchase_order, UpdateInput, UpdateResponse},
 };
@@ -72,5 +73,14 @@ impl PurchaseOrderMutations {
         input: UpdateInput,
     ) -> Result<UpdateResponse> {
         update_purchase_order(ctx, &store_id, input)
+    }
+
+    pub async fn delete_purchase_order(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<DeleteResponse> {
+        delete(ctx, &store_id, id)
     }
 }

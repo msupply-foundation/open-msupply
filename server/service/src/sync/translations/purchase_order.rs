@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
+use repository::PurchaseOrderStatsRow;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository,
     PurchaseOrderRow, PurchaseOrderStatus, StorageConnection, SyncBufferRow,
@@ -289,7 +290,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             donor_id,
             curr_rate,
             order_total_before_discount,
-            order_total_after_discount,
+            order_total_after_discount: _, // Not used, we calculate from the sum of the lines instead
             is_authorised,
         } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
 
@@ -344,7 +345,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             target_months,
             comment,
             supplier_discount_percentage,
-            supplier_discount_amount,
             donor_link_id: donor_id,
             reference,
             currency_id,
@@ -366,8 +366,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
-            order_total_before_discount,
-            order_total_after_discount,
             authorised_datetime,
             finalised_datetime,
         };
@@ -381,6 +379,13 @@ impl SyncTranslation for PurchaseOrderTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let purchase_order = PurchaseOrderRepository::new(connection)
+            .query_by_filter(
+                PurchaseOrderFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .pop()
+            .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
+
         let PurchaseOrderRow {
             id,
             store_id,
@@ -393,7 +398,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             target_months,
             comment,
             supplier_discount_percentage,
-            supplier_discount_amount,
             donor_link_id,
             reference,
             currency_id,
@@ -415,16 +419,16 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
-            order_total_before_discount,
-            order_total_after_discount,
             authorised_datetime,
             finalised_datetime,
-        } = PurchaseOrderRepository::new(connection)
-            .query_by_filter(
-                PurchaseOrderFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
-            )?
-            .pop()
-            .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
+        } = purchase_order.purchase_order_row;
+
+        let PurchaseOrderStatsRow {
+            purchase_order_id: _,
+            line_total_before_discount,
+            line_total_after_discount,
+            order_total_after_discount,
+        } = purchase_order.purchase_order_stats_row.unwrap_or_default();
 
         let oms_fields = PurchaseOrderOmsFields {
             created_datetime,
@@ -441,6 +445,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
         let legacy_row = LegacyPurchaseOrderRow {
             id,
+            purchase_order_number,
             target_months,
             status: to_legacy_status(&status),
             comment,
@@ -458,8 +463,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             communications_charge,
             insurance_charge,
             freight_charge,
-            supplier_discount_amount,
-            purchase_order_number,
+            supplier_discount_amount: line_total_after_discount
+                * (supplier_discount_percentage.unwrap_or(0.0) / 100.0),
             heading_message,
             requested_delivery_date,
             delivery_method: shipping_method,
@@ -471,7 +476,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             creation_date: created_datetime.date(),
             confirm_date: confirmed_datetime.map(|d| d.date()),
             curr_rate: foreign_exchange_rate,
-            order_total_before_discount,
+            order_total_before_discount: line_total_before_discount,
             order_total_after_discount,
             donor_id,
             is_authorised: check_is_authorised(&status),
@@ -520,6 +525,7 @@ fn check_is_authorised(status: &PurchaseOrderStatus) -> bool {
     matches!(
         status,
         PurchaseOrderStatus::Authorised | PurchaseOrderStatus::Finalised // Assuming Finalised is always authorised, but the action might be skipped if authorisation is not required due to global preference
+// N.B. if this logic changes, update the Purchase Order form's logic (the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
     )
 }
 

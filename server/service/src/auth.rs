@@ -157,6 +157,10 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
+    // Goods Received
+    MutateGoodsReceived,
+    QueryGoodsReceived,
+    AuthoriseGoodsReceived,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -698,6 +702,19 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::AuthorisePurchaseOrder,
         PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+    );
+
+    map.insert(
+        Resource::QueryGoodsReceived,
+        PermissionDSL::HasPermission(PermissionType::GoodsReceivedQuery),
+    );
+    map.insert(
+        Resource::MutateGoodsReceived,
+        PermissionDSL::HasPermission(PermissionType::GoodsReceivedMutate),
+    );
+    map.insert(
+        Resource::AuthoriseGoodsReceived,
+        PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
     );
 
     map

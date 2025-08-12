@@ -19,12 +19,15 @@ pub enum PrefKey {
     UseCampaigns,
     CustomTranslations,
     SyncRecordsDisplayThreshold,
+    AuthorisePurchaseOrder,
+
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
+    PreventTransfersMonthsBeforeInitialisation,
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -3,7 +3,7 @@ use repository::{
     PaginationOption, StorageConnectionManager,
 };
 
-use crate::{get_default_pagination, i64_to_u32, ListError, ListResult};
+use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
 
 pub fn get_reason_options(
     connection_manager: &StorageConnectionManager,
@@ -11,7 +11,7 @@ pub fn get_reason_options(
     filter: Option<ReasonOptionFilter>,
     sort: Option<ReasonOptionSort>,
 ) -> Result<ListResult<ReasonOption>, ListError> {
-    let pagination = get_default_pagination(pagination, u32::MAX, 1)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let connection = connection_manager.connection()?;
     let repository = ReasonOptionRepository::new(&connection);
 
