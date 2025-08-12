@@ -1,10 +1,9 @@
+use crate::{
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+};
 use repository::{
     EqualFilter, PaginationOption, PurchaseOrderLine, PurchaseOrderLineFilter,
     PurchaseOrderLineRepository, PurchaseOrderLineSort, RepositoryError,
-};
-
-use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 
 pub const MAX_LIMIT: u32 = 1000;
@@ -17,7 +16,7 @@ pub fn get_purchase_order_lines(
     filter: Option<PurchaseOrderLineFilter>,
     sort: Option<PurchaseOrderLineSort>,
 ) -> Result<ListResult<PurchaseOrderLine>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = PurchaseOrderLineRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();

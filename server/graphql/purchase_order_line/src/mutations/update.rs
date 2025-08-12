@@ -1,6 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::CannotEditPurchaseOrder;
+use graphql_core::standard_graphql_error::StandardGraphqlError::BadUserInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError::InternalError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::IdResponse;
@@ -127,6 +128,11 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
                 error: PurchaseOrderLineError::CannotEditPurchaseOrder(CannotEditPurchaseOrder),
             }))
         }
+        // TODO return these as structured errors? Or leave as is
+        ServiceError::PackSizeCodeCombinationExists(_pack_size_code_combination) => {
+            BadUserInput(formatted_error)
+        }
+        ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

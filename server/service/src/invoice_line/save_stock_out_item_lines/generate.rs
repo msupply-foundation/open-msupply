@@ -101,6 +101,8 @@ pub fn generate(
                 cost_price_per_pack: None,
                 sell_price_per_pack: None,
                 volume_per_pack: None,
+                item_variant_id: None,
+                donor_id: None,
             },
         )
         .collect();
