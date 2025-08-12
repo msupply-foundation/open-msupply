@@ -84,7 +84,10 @@ export const canEditOriginalQuantity = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
   // Can only edit original quantity when PO is NEW
-  return purchaseOrder.status === PurchaseOrderNodeStatus.New;
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.New ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Authorised
+  );
 };
 
 export const canEditAdjustedQuantity = (
