@@ -368,7 +368,6 @@ export const StockLineForm = ({
               label={t('label.volume-per-pack')}
               Input={
                 <NumericTextInput
-                  autoFocus
                   width={160}
                   value={draft.volumePerPack ?? 0}
                   decimalLimit={10}
@@ -381,7 +380,6 @@ export const StockLineForm = ({
                 label={t('label.total-volume')}
                 Input={
                   <NumericTextInput
-                    autoFocus
                     disabled
                     width={160}
                     decimalLimit={10}

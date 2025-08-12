@@ -704,20 +704,18 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
     );
 
-    // TODO: Map the Goods Received permissions from Legacy
     map.insert(
         Resource::QueryGoodsReceived,
-        PermissionDSL::HasPermission(PermissionType::PurchaseOrderQuery),
+        PermissionDSL::HasPermission(PermissionType::GoodsReceivedQuery),
     );
     map.insert(
         Resource::MutateGoodsReceived,
-        PermissionDSL::HasPermission(PermissionType::PurchaseOrderMutate),
+        PermissionDSL::HasPermission(PermissionType::GoodsReceivedMutate),
     );
     map.insert(
         Resource::AuthoriseGoodsReceived,
-        PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+        PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
     );
-    // End TODO: Map the Goods Received permissions from Legacy
 
     map
 }

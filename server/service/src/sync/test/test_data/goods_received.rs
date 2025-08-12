@@ -19,7 +19,7 @@ const GOODS_RECEIVED: (&str, &str) = (
         "donor_id": "1FB32324AF8049248D929CFB35F255BA",
         "entry_date": "2025-07-24",
         "linked_transaction_ID": "12e889c0f0d211eb8dddb54df6d741bc",
-        "purchase_order_ID": "12e889c0f0d211eb8dddb54df6d741hx",
+        "purchase_order_ID": "sync_test_purchase_order_1",
         "received_date": "2025-07-24",
         "serial_number": 1,
         "status": "nw",
@@ -37,7 +37,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         GoodsReceivedRow {
             id: "3486239A597646B2B7259D91A24988E8".to_owned(),
             store_id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_owned(),
-            purchase_order_id: Some("12e889c0f0d211eb8dddb54df6d741hx".to_string()),
+            purchase_order_id: Some("sync_test_purchase_order_1".to_string()),
             inbound_shipment_id: Some("12e889c0f0d211eb8dddb54df6d741bc".to_string()),
             goods_received_number: 1,
             status: GoodsReceivedStatus::New.to_owned(),
@@ -62,7 +62,7 @@ fn goods_received_push_record() -> TestSyncOutgoingRecord {
         push_data: json!(LegacyGoodsReceived {
             id: "3486239A597646B2B7259D91A24988E8".to_string(),
             store_id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_string(),
-            purchase_order_id: Some("12e889c0f0d211eb8dddb54df6d741hx".to_string()),
+            purchase_order_id: Some("sync_test_purchase_order_1".to_string()),
             inbound_shipment_id: Some("12e889c0f0d211eb8dddb54df6d741bc".to_string()),
             goods_received_number: 1,
             status: LegacyGoodsReceivedStatus::New,

@@ -21,6 +21,17 @@ pub fn generate(
         requested_delivery_date,
         advance_paid_date,
         received_at_port_date,
+        supplier_agent,
+        authorising_officer_1,
+        authorising_officer_2,
+        additional_instructions,
+        heading_message,
+        agent_commission,
+        document_charge,
+        communications_charge,
+        insurance_charge,
+        freight_charge,
+        freight_conditions,
     }: UpdatePurchaseOrderInput,
 ) -> Result<PurchaseOrderRow, RepositoryError> {
     let mut updated_order = purchase_order.clone();
@@ -55,18 +66,29 @@ pub fn generate(
     updated_order.reference = reference.or(updated_order.reference);
     updated_order.comment = comment.or(updated_order.comment);
 
-    // Updated through Purchase Order Lines
-    let order_total_before_discount = purchase_order.order_total_before_discount;
+    updated_order.authorising_officer_1 =
+        authorising_officer_1.or(updated_order.authorising_officer_1);
+    updated_order.authorising_officer_2 =
+        authorising_officer_2.or(updated_order.authorising_officer_2);
+    updated_order.additional_instructions =
+        additional_instructions.or(updated_order.additional_instructions);
+
+    updated_order.supplier_agent = supplier_agent.or(updated_order.supplier_agent);
+    updated_order.heading_message = heading_message.or(updated_order.heading_message);
+    updated_order.freight_conditions = freight_conditions.or(updated_order.freight_conditions);
+
+    updated_order.agent_commission = agent_commission.or(updated_order.agent_commission);
+    updated_order.document_charge = document_charge.or(updated_order.document_charge);
+    updated_order.communications_charge =
+        communications_charge.or(updated_order.communications_charge);
+    updated_order.insurance_charge = insurance_charge.or(updated_order.insurance_charge);
+    updated_order.freight_charge = freight_charge.or(updated_order.freight_charge);
 
     let supplier_discount_percentage = supplier_discount_percentage
         .or(purchase_order.supplier_discount_percentage)
         .unwrap_or(0.0);
 
     updated_order.supplier_discount_percentage = Some(supplier_discount_percentage);
-    updated_order.supplier_discount_amount =
-        order_total_before_discount * (supplier_discount_percentage / 100.0);
-    updated_order.order_total_after_discount =
-        order_total_before_discount - updated_order.supplier_discount_amount;
 
     Ok(updated_order)
 }

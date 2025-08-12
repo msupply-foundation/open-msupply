@@ -142,7 +142,10 @@ export const LocationSearchInput = ({
     const volumeUsed = getVolumeUsedPercentage(location);
 
     return t('label.percent-used', {
-      value: volumeUsed ? round(volumeUsed, 2) : UNDEFINED_STRING_VALUE,
+      value:
+        volumeUsed === undefined
+          ? UNDEFINED_STRING_VALUE
+          : round(volumeUsed, 2),
     });
   };
 

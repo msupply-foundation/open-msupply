@@ -5,15 +5,21 @@ import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { useNotification, useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
 import { PurchaseOrderFragment } from '../../api';
-import { PurchaseOrderNodeStatus } from '@common/types';
+import { PurchaseOrderNodeStatus, UserPermission } from '@common/types';
+import { AddDocumentModal } from './AddDocumentModal';
+import { PurchaseOrderLineImportModal } from '../ImportLines/PurchaseOrderLineImportModal';
+import {
+  NonEmptyArray,
+  useCallbackWithPermission,
+} from '@openmsupply-client/common/src';
+import { isPurchaseOrderEditable } from '@openmsupply-client/purchasing/src/utils';
 
 interface AddButtonProps {
   purchaseOrder: PurchaseOrderFragment | undefined;
-  onAddItem: (newState: boolean) => void;
+  onAddItem: () => void;
   /** Disable the whole control */
   disable: boolean;
   disableAddFromMasterListButton: boolean;
-  disableAddFromInternalOrderButton: boolean;
 }
 
 export const AddButton = ({
@@ -25,23 +31,39 @@ export const AddButton = ({
   const t = useTranslation();
   const { info } = useNotification();
   const masterListModalController = useToggle();
+  const uploadDocumentController = useToggle();
+  const importModalController = useToggle();
 
-  const options: [SplitButtonOption<string>, SplitButtonOption<string>] =
-    useMemo(
-      () => [
-        {
-          value: 'add-item',
-          label: t('button.add-item'),
-          isDisabled: disable,
-        },
-        {
-          value: 'add-from-master-list',
-          label: t('button.add-from-master-list'),
-          isDisabled: disableAddFromMasterListButton || disable,
-        },
-      ],
-      [disable, disableAddFromMasterListButton]
-    );
+  const handleUploadPurchaseOrderLines = useCallbackWithPermission(
+    UserPermission.PurchaseOrderMutate,
+    importModalController.toggleOn,
+    t('error.no-purchase-order-import-permission')
+  );
+
+  const options: NonEmptyArray<SplitButtonOption<string>> = useMemo(
+    () => [
+      {
+        value: 'add-item',
+        label: t('button.add-item'),
+        isDisabled: disable,
+      },
+      {
+        value: 'add-from-master-list',
+        label: t('button.add-from-master-list'),
+        isDisabled: disable,
+      },
+      {
+        value: 'import-from-csv',
+        label: t('button.upload-purchase-order-lines'),
+        isDisabled: disable,
+      },
+      {
+        value: 'upload-document',
+        label: t('label.upload-document'),
+      },
+    ],
+    [disable, disableAddFromMasterListButton, t]
+  );
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
@@ -54,14 +76,24 @@ export const AddButton = ({
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
       case 'add-item':
-        onAddItem(true);
+        onAddItem();
         break;
       case 'add-from-master-list':
-        // Mimmicking OG behaviour where purchase orders can be edited when confirmed AND when authorised
-        purchaseOrder?.status !== PurchaseOrderNodeStatus.Finalised
+        isPurchaseOrderEditable(
+          purchaseOrder?.status ?? PurchaseOrderNodeStatus.New
+        )
           ? masterListModalController.toggleOn()
           : info(t('error.cannot-add-from-masterlist'))();
         break;
+      case 'upload-document':
+        uploadDocumentController.toggleOn();
+        break;
+      case 'import-from-csv':
+        isPurchaseOrderEditable(
+          purchaseOrder?.status ?? PurchaseOrderNodeStatus.New
+        )
+          ? handleUploadPurchaseOrderLines()
+          : info(t('error.cannot-import'))();
     }
   };
 
@@ -81,12 +113,26 @@ export const AddButton = ({
         isDisabled={disable}
         openFrom="bottom"
         Icon={<PlusCircleIcon />}
+        staticLabel={t('button.add')}
       />
 
       {masterListModalController.isOn && (
         <AddFromMasterListButton
           isOn={masterListModalController.isOn}
           toggleOff={masterListModalController.toggleOff}
+        />
+      )}
+      {uploadDocumentController.isOn && (
+        <AddDocumentModal
+          isOn={uploadDocumentController.isOn}
+          toggleOff={uploadDocumentController.toggleOff}
+          purchaseOrderId={purchaseOrder?.id}
+        />
+      )}
+      {importModalController.isOn && (
+        <PurchaseOrderLineImportModal
+          isOpen={importModalController.isOn}
+          onClose={importModalController.toggleOff}
         />
       )}
     </>
