@@ -1,10 +1,9 @@
+use crate::{
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+};
 use repository::{
     EqualFilter, PaginationOption, PurchaseOrder, PurchaseOrderFilter, PurchaseOrderRepository,
     PurchaseOrderSort, RepositoryError,
-};
-
-use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 
 pub const MAX_LIMIT: u32 = 1000;
@@ -17,7 +16,7 @@ pub fn get_purchase_orders(
     filter: Option<PurchaseOrderFilter>,
     sort: Option<PurchaseOrderSort>,
 ) -> Result<ListResult<PurchaseOrder>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = PurchaseOrderRepository::new(&ctx.connection);
 
     let mut filter: PurchaseOrderFilter = filter.unwrap_or_default();
