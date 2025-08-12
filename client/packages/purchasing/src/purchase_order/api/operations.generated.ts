@@ -427,7 +427,6 @@ export const PurchaseOrderLineFragmentDoc = gql`
       name
       unitName
     }
-    purchaseOrderId
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
@@ -501,6 +500,9 @@ export const PurchaseOrderFragmentDoc = gql`
       nodes {
         ...SyncFileReference
       }
+    }
+    donor {
+      id
     }
   }
   ${PurchaseOrderLineFragmentDoc}
