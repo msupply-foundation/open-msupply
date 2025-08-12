@@ -46,7 +46,7 @@ export const PriceSection = ({ lines }: PriceSectionProps) => {
 
   return (
     <DetailPanelSection title={t('title.pricing')}>
-      <Grid container gap={1} key="other-section">
+      <Grid container gap={1} key="pricing-section">
         <PanelRow>
           <PanelLabel>{t('label.price-total')}</PanelLabel>
           <PanelField>{c(totalPrice)}</PanelField>
