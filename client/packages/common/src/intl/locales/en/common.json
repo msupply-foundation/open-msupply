@@ -1180,6 +1180,8 @@
   "label.prescription-date": "Prescription Date",
   "label.previous-encounters": "Previous Encounters",
   "label.price": "Price",
+  "label.price-total": "Total Price",
+  "label.price-total-after-discount": "Total Price after Discount",
   "label.pricing": "Pricing",
   "label.primary": "Primary",
   "label.primary-1": "Primary (1)",

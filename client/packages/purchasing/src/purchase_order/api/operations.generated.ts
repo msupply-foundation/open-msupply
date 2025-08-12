@@ -33,6 +33,8 @@ export type PurchaseOrderLineFragment = {
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
   authorisedNumberOfUnits?: number | null;
+  pricePerUnitAfterDiscount: number;
+  pricePerUnitBeforeDiscount: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -88,6 +90,8 @@ export type PurchaseOrderFragment = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       authorisedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -194,6 +198,8 @@ export type PurchaseOrderByIdQuery = {
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
             authorisedNumberOfUnits?: number | null;
+            pricePerUnitAfterDiscount: number;
+            pricePerUnitBeforeDiscount: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -262,6 +268,8 @@ export type PurchaseOrderLinesQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       authorisedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -292,6 +300,8 @@ export type PurchaseOrderLineQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       authorisedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -401,6 +411,8 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedDeliveryDate
     requestedNumberOfUnits
     authorisedNumberOfUnits
+    pricePerUnitAfterDiscount
+    pricePerUnitBeforeDiscount
   }
 `;
 export const SyncFileReferenceFragmentDoc = gql`
