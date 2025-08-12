@@ -3,7 +3,10 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use crate::{activity_log::system_activity_log_entry, invoice::common::get_lines_for_invoice};
+use crate::{
+    activity_log::system_activity_log_entry, invoice::common::get_lines_for_invoice,
+    processors::transfer::invoice::InvoiceTransferOutput,
+};
 
 use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation};
 
@@ -35,28 +38,32 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
         &self,
         connection: &StorageConnection,
         record_for_processing: &InvoiceTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
         let linked_invoice = match &record_for_processing.operation {
             // 2.
             Operation::Delete { linked_invoice } => linked_invoice,
-            _ => return Ok(None),
+            operation => return Ok(InvoiceTransferOutput::WrongOperation(operation.to_owned())),
         };
         // 3.
         let inbound_invoice = match &linked_invoice {
             Some(linked_invoice) => linked_invoice,
-            None => return Ok(None),
+            None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
         // 4.
         if !matches!(
             inbound_invoice.invoice_row.r#type,
             InvoiceType::InboundShipment | InvoiceType::CustomerReturn
         ) {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongType(
+                inbound_invoice.invoice_row.r#type.to_owned(),
+            ));
         }
         // 5.
         if inbound_invoice.invoice_row.status != InvoiceStatus::Picked {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongInboundStatus(
+                inbound_invoice.invoice_row.status.to_owned(),
+            ));
         }
 
         // Execute
@@ -86,6 +93,6 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
                 .map(|r| r.invoice_line_row.id),
         );
 
-        Ok(Some(result))
+        Ok(InvoiceTransferOutput::Processed(result))
     }
 }

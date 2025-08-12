@@ -1,11 +1,9 @@
+use crate::{
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+};
+use repository::goods_received::{GoodsReceivedFilter, GoodsReceivedRepository, GoodsReceivedSort};
 use repository::goods_received_row::GoodsReceivedRow;
 use repository::{EqualFilter, PaginationOption, RepositoryError};
-
-use repository::goods_received::{GoodsReceivedFilter, GoodsReceivedRepository, GoodsReceivedSort};
-
-use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
-};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -17,7 +15,7 @@ pub fn get_goods_received_list(
     filter: Option<GoodsReceivedFilter>,
     sort: Option<GoodsReceivedSort>,
 ) -> Result<ListResult<GoodsReceivedRow>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = GoodsReceivedRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();

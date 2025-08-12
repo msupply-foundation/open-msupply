@@ -12,8 +12,8 @@ import {
   InlineProgress,
   Typography,
   useExportCSV,
+  ImportPanel,
 } from '@openmsupply-client/common';
-import { ImportPanel } from './ImportPanel';
 import { ImportRow } from './PropertiesImportModal';
 import { exportFacilitiesPropertiesToCsv } from '../utils';
 import { processProperties } from '../../../utils';

@@ -4,11 +4,9 @@ import {
   useNotification,
   DetailPanelPortal,
 } from '@openmsupply-client/common';
-import {
-  UpdatePurchaseOrderInput,
-  usePurchaseOrder,
-} from '../../api/hooks/usePurchaseOrder';
+import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 import { SupplierDetailSection } from './SupplierDetailSection';
+import { PurchaseOrderFragment } from '../../api';
 import { DateSection } from './DateSection';
 import { OtherSection } from './OtherSection';
 
@@ -16,13 +14,14 @@ export const SidePanel = (): ReactElement => {
   const t = useTranslation();
   const { error } = useNotification();
   const {
-    query: { data },
     update: { update },
+    draft,
+    handleChange,
   } = usePurchaseOrder();
 
-  const handleUpdate = (input: Partial<UpdatePurchaseOrderInput>) => {
+  const handleUpdate = async (input: Partial<PurchaseOrderFragment>) => {
     try {
-      update(input);
+      await update(input);
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();
     }
@@ -30,9 +29,13 @@ export const SidePanel = (): ReactElement => {
 
   return (
     <DetailPanelPortal>
-      <SupplierDetailSection data={data} onUpdate={handleUpdate} />
-      <DateSection data={data} onUpdate={handleUpdate} />
-      <OtherSection data={data} onUpdate={handleUpdate} />
+      <SupplierDetailSection draft={draft} onChange={handleChange} />
+      <DateSection draft={draft} onUpdate={handleUpdate} />
+      <OtherSection
+        draft={draft}
+        onUpdate={handleUpdate}
+        onChange={handleChange}
+      />
     </DetailPanelPortal>
   );
 };
