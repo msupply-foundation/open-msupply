@@ -62,8 +62,7 @@ export const StockLineForm = ({
     PreferenceKey.AllowTrackingOfStockByDonor,
     PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.UseCampaigns
+    PreferenceKey.SortByVvmStatusThenExpiry
   );
 
   const { isConnected, isEnabled, isScanning, startScan } =
@@ -425,21 +424,19 @@ export const StockLineForm = ({
                 }
               />
             )}
-            {preferences?.useCampaigns && (
-              <StyledInputRow
-                label={t('label.campaign')}
-                Input={
-                  <CampaignOrProgramSelector
-                    campaignId={draft.campaign?.id}
-                    programId={draft.program?.id}
-                    programOptionsOrFilter={{ filterByItemId: draft.itemId }}
-                    onChange={({ campaign, program }) =>
-                      onUpdate({ campaign, program })
-                    }
-                  />
-                }
-              />
-            )}
+            <StyledInputRow
+              label={t('label.campaign')}
+              Input={
+                <CampaignOrProgramSelector
+                  campaignId={draft.campaign?.id}
+                  programId={draft.program?.id}
+                  programOptionsOrFilter={{ filterByItemId: draft.itemId }}
+                  onChange={({ campaign, program }) =>
+                    onUpdate({ campaign, program })
+                  }
+                />
+              }
+            />
           </Grid>
         </Grid>
       </Grid>

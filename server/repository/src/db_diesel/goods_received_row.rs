@@ -6,6 +6,7 @@ use crate::{
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use diesel::dsl::max;
 use serde::{Deserialize, Serialize};
 
 table! {
@@ -114,6 +115,17 @@ impl<'a> GoodsReceivedRowRepository<'a> {
             .filter(goods_received::id.eq(id))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn find_max_goods_received_number(
+        &self,
+        store_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = goods_received::table
+            .filter(goods_received::store_id.eq(store_id))
+            .select(max(goods_received::goods_received_number))
+            .first(self.connection.lock().connection())?;
+        Ok(result)
     }
 }
 
