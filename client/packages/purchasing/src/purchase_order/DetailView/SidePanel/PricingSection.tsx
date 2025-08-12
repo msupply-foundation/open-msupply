@@ -11,7 +11,7 @@ import {
 import { PurchaseOrderFragment } from '../../api';
 
 interface PricingSectionProps {
-  draft: PurchaseOrderFragment;
+  draft?: PurchaseOrderFragment;
 }
 
 export const PricingSection = ({ draft }: PricingSectionProps) => {
