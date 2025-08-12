@@ -42,6 +42,7 @@ pub enum NumberRowType {
     Program(String),
     PurchaseOrder,
     PurchaseOrderLine(String),
+    GoodsReceived,
 }
 
 impl fmt::Display for NumberRowType {
@@ -60,6 +61,7 @@ impl fmt::Display for NumberRowType {
             NumberRowType::CustomerReturn => write!(f, "CUSTOMER_RETURN"),
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
             NumberRowType::PurchaseOrder => write!(f, "PURCHASE_ORDER"),
+            NumberRowType::GoodsReceived => write!(f, "GOODS_RECEIVED"),
             NumberRowType::PurchaseOrderLine(custom_string) => {
                 write!(f, "PURCHASEORDERLINE_{}", custom_string) // Since we split this on _ we can't use that in the main part of the name
             }
@@ -82,6 +84,8 @@ impl TryFrom<String> for NumberRowType {
             "REPACK" => Ok(NumberRowType::Repack),
             "SUPPLIER_RETURN" => Ok(NumberRowType::SupplierReturn),
             "CUSTOMER_RETURN" => Ok(NumberRowType::CustomerReturn),
+            "PURCHASE_ORDER" => Ok(NumberRowType::PurchaseOrder),
+            "GOODS_RECEIVED" => Ok(NumberRowType::GoodsReceived),
             _ => match s.split_once('_') {
                 Some((prefix, custom_string)) => match prefix {
                     "PROGRAM" => Ok(NumberRowType::Program(custom_string.to_string())),
