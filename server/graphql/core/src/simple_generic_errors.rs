@@ -259,6 +259,14 @@ impl CannotEditPurchaseOrder {
     }
 }
 
+pub struct CannotDeleteNonNewPurchaseOrder;
+#[Object]
+impl CannotDeleteNonNewPurchaseOrder {
+    pub async fn description(&self) -> &str {
+        "Cannot delete non-new purchase order"
+    }
+}
+
 pub struct CannotHaveFractionalPack;
 #[Object]
 impl CannotHaveFractionalPack {
