@@ -21,7 +21,7 @@
           "expiringInSixMonths": 75,
           "expiringInTwelveMonths": 92,
           "lastMonthConsumption": 300,
-          "stockOnOrder": 0,
+          "stockOnOrder": 4,
           "twoMonthsAgoConsumption": 421
         },
         {
@@ -43,7 +43,7 @@
           "AMC12": 150.8,
           "AMC24": 250.8,
           "AMC": 266.7,
-          "SOH": 300.9,
+          "SOH": 300.902,
           "MOS": 4.5
         }
       ]
