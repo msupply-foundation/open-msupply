@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 import { InlineProgress, Typography } from '@openmsupply-client/common';
-import { ImportPanel } from './ImportPanel';
 import { useTranslation } from '@common/intl';
 import { Grid } from '@openmsupply-client/common';
+import { ImportPanel } from '../../panels/ImportPanel';
 
 interface ImportTabProps {
   importProgress: number;

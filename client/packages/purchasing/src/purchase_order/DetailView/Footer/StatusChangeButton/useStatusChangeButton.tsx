@@ -1,7 +1,11 @@
 import {
+  PreferenceKey,
   PurchaseOrderNodeType,
+  useAuthContext,
   useConfirmationModal,
   useNotification,
+  usePreference,
+  UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../../../api/hooks/usePurchaseOrder';
@@ -16,29 +20,44 @@ import {
 
 export const useStatusChangeButton = () => {
   const t = useTranslation();
-  const { success, error } = useNotification();
+  const { success, error, info } = useNotification();
+  const { userHasPermission } = useAuthContext();
   const {
     query: { data },
     update: { update },
   } = usePurchaseOrder();
-
   const { status, lines } = data ?? {};
 
+  const { data: preferences } = usePreference(
+    PreferenceKey.AuthorisePurchaseOrder
+  );
+  const requiresAuthorisation = preferences?.authorisePurchaseOrder ?? false;
+
   const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
-    [status, t]
+    () => getStatusOptions(status, getButtonLabel(t), requiresAuthorisation),
+    [status, t, requiresAuthorisation]
   );
 
   const [selectedOption, setSelectedOption] =
     useState<PurchaseOrderStatusOption | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(status, options, requiresAuthorisation)
     );
 
   const handleConfirm = async () => {
     if (!selectedOption) return null;
+
+    const status = selectedOption.value as PurchaseOrderNodeType | undefined;
+
+    const isAuthorisationBlocked =
+      requiresAuthorisation &&
+      status === PurchaseOrderNodeType.Authorised &&
+      !userHasPermission(UserPermission.PurchaseOrderAuthorise);
+
+    if (isAuthorisationBlocked)
+      return info(t('error.no-purchase-order-authorisation-permission'))();
+
     try {
-      const status = selectedOption.value as PurchaseOrderNodeType | undefined;
-      await update({ status });
+      await update({ status: selectedOption.value });
       success(t('messages.purchase-order-saved'))();
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();
@@ -56,8 +75,10 @@ export const useStatusChangeButton = () => {
   });
 
   useEffect(() => {
-    setSelectedOption(getNextStatusOption(status, options));
-  }, [status, options]);
+    setSelectedOption(
+      getNextStatusOption(status, options, requiresAuthorisation)
+    );
+  }, [status, options, requiresAuthorisation]);
 
   return {
     lines,

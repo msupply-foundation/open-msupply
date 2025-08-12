@@ -1,10 +1,9 @@
-use repository::{
-    EqualFilter, PaginationOption, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderRow,
-    PurchaseOrderSort, RepositoryError,
-};
-
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+};
+use repository::{
+    EqualFilter, PaginationOption, PurchaseOrder, PurchaseOrderFilter, PurchaseOrderRepository,
+    PurchaseOrderSort, RepositoryError,
 };
 
 pub const MAX_LIMIT: u32 = 1000;
@@ -16,8 +15,8 @@ pub fn get_purchase_orders(
     pagination: Option<PaginationOption>,
     filter: Option<PurchaseOrderFilter>,
     sort: Option<PurchaseOrderSort>,
-) -> Result<ListResult<PurchaseOrderRow>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+) -> Result<ListResult<PurchaseOrder>, ListError> {
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = PurchaseOrderRepository::new(&ctx.connection);
 
     let mut filter: PurchaseOrderFilter = filter.unwrap_or_default();
@@ -33,7 +32,7 @@ pub fn get_purchase_order(
     ctx: &ServiceContext,
     store_id: Option<&str>,
     id: &str,
-) -> Result<Option<PurchaseOrderRow>, RepositoryError> {
+) -> Result<Option<PurchaseOrder>, RepositoryError> {
     let repository = PurchaseOrderRepository::new(&ctx.connection);
     let mut filter = PurchaseOrderFilter::new().id(EqualFilter::equal_to(id));
     filter.store_id = store_id.map(EqualFilter::equal_to);
@@ -49,7 +48,7 @@ mod test {
 
     use repository::PurchaseOrderRowRepository;
     use repository::{db_diesel::PurchaseOrderRow, mock::MockDataInserts, test_db::setup_all};
-    
+
     #[actix_rt::test]
     async fn purchase_order_service_queries() {
         let (_, connection, connection_manager, _) = setup_all(

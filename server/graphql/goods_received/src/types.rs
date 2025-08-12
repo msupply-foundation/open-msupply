@@ -224,6 +224,10 @@ impl GoodsReceivedNode {
         let result = result_option.unwrap_or(vec![]);
         Ok(GoodsReceivedLineConnector::from_vec(result))
     }
+
+    pub async fn created_by(&self) -> &Option<String> {
+        &self.row().created_by
+    }
 }
 
 impl GoodsReceivedNode {

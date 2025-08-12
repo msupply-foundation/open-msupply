@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { ImportPanel } from './ImportPanel';
 import { ImportReviewDataTable } from './ImportReviewDataTable';
 import { NamePropertyNode } from '@common/types';
 import { ImportRow } from './PropertiesImportModal';
+import { ImportPanel } from '@common/components';
 
 interface ReviewTabProps {
   uploadedRows: ImportRow[];

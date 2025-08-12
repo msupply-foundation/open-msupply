@@ -7,10 +7,7 @@ use util::uuid::uuid;
 
 use crate::{item::item::check_item_exists, service_provider::ServiceContext};
 
-use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
-
-pub const MAX_LIMIT: u32 = 5000;
-pub const MIN_LIMIT: u32 = 1;
+use super::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
 
 pub struct InsertResult {
     pub id: String,
@@ -57,7 +54,7 @@ pub trait BarcodeServiceTrait: Sync + Send {
         filter: Option<BarcodeFilter>,
         sort: Option<BarcodeSort>,
     ) -> Result<ListResult<Barcode>, ListError> {
-        let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+        let pagination = get_pagination_or_default(pagination)?;
         let connection = connection_manager.connection()?;
         let repository = BarcodeRepository::new(&connection);
 

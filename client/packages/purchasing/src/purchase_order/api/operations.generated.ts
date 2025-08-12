@@ -11,9 +11,36 @@ export type PurchaseOrderRowFragment = {
   confirmedDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
+  reference?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+};
+
+export type SyncFileReferenceFragment = {
+  __typename: 'SyncFileReferenceNode';
+  id: string;
+  fileName: string;
+  recordId: string;
+  createdDatetime: string;
+};
+
+export type PurchaseOrderLineFragment = {
+  __typename: 'PurchaseOrderLineNode';
+  id: string;
+  expectedDeliveryDate?: string | null;
+  purchaseOrderId: string;
+  requestedPackSize: number;
+  requestedDeliveryDate?: string | null;
+  requestedNumberOfUnits: number;
+  authorisedNumberOfUnits?: number | null;
+  item: {
+    __typename: 'ItemNode';
+    id: string;
+    code: string;
+    name: string;
+    unitName?: string | null;
+  };
 };
 
 export type PurchaseOrderFragment = {
@@ -71,25 +98,16 @@ export type PurchaseOrderFragment = {
       };
     }>;
   };
-  store?: { __typename: 'StoreNode'; id: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
-};
-
-export type PurchaseOrderLineFragment = {
-  __typename: 'PurchaseOrderLineNode';
-  id: string;
-  expectedDeliveryDate?: string | null;
-  purchaseOrderId: string;
-  requestedPackSize: number;
-  requestedDeliveryDate?: string | null;
-  requestedNumberOfUnits: number;
-  authorisedNumberOfUnits?: number | null;
-  item: {
-    __typename: 'ItemNode';
-    id: string;
-    code: string;
-    name: string;
-    unitName?: string | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
   };
 };
 
@@ -115,6 +133,7 @@ export type PurchaseOrdersQuery = {
       confirmedDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
+      reference?: string | null;
       comment?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -185,8 +204,17 @@ export type PurchaseOrderByIdQuery = {
             };
           }>;
         };
-        store?: { __typename: 'StoreNode'; id: string } | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
       }
     | { __typename: 'RecordNotFound'; description: string };
 };
@@ -209,6 +237,26 @@ export type UpdatePurchaseOrderMutationVariables = Types.Exact<{
 export type UpdatePurchaseOrderMutation = {
   __typename: 'Mutations';
   updatePurchaseOrder: { __typename: 'IdResponse'; id: string };
+};
+
+export type DeletePurchaseOrderMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeletePurchaseOrderMutation = {
+  __typename: 'Mutations';
+  deletePurchaseOrder:
+    | {
+        __typename: 'DeletePurchaseOrderError';
+        error:
+          | {
+              __typename: 'CannotDeleteNonNewPurchaseOrder';
+              description: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      }
+    | { __typename: 'DeleteResponse'; id: string };
 };
 
 export type PurchaseOrderLinesQueryVariables = Types.Exact<{
@@ -295,7 +343,9 @@ export type InsertPurchaseOrderLineMutationVariables = Types.Exact<{
 
 export type InsertPurchaseOrderLineMutation = {
   __typename: 'Mutations';
-  insertPurchaseOrderLine: { __typename: 'IdResponse'; id: string };
+  insertPurchaseOrderLine:
+    | { __typename: 'IdResponse'; id: string }
+    | { __typename: 'InsertPurchaseOrderLineError' };
 };
 
 export type AddToPurchaseOrderFromMasterListMutationVariables = Types.Exact<{
@@ -319,6 +369,53 @@ export type AddToPurchaseOrderFromMasterListMutation = {
     | { __typename: 'PurchaseOrderLineConnector' };
 };
 
+export type InsertPurchaseOrderLineFromCsvMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertPurchaseOrderLineFromCsvInput;
+}>;
+
+export type InsertPurchaseOrderLineFromCsvMutation = {
+  __typename: 'Mutations';
+  insertPurchaseOrderLineFromCsv:
+    | { __typename: 'IdResponse'; id: string }
+    | {
+        __typename: 'InsertPurchaseOrderLineError';
+        error:
+          | { __typename: 'CannnotFindItemByCode'; description: string }
+          | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | { __typename: 'ForeignKeyError'; description: string }
+          | {
+              __typename: 'PackSizeCodeCombinationExists';
+              description: string;
+              itemCode: string;
+              requestedPackSize: number;
+            }
+          | {
+              __typename: 'PurchaseOrderLineWithIdExists';
+              description: string;
+            };
+      };
+};
+
+export type UpdatePurchaseOrderLineMutationVariables = Types.Exact<{
+  input: Types.UpdatePurchaseOrderLineInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdatePurchaseOrderLineMutation = {
+  __typename: 'Mutations';
+  updatePurchaseOrderLine:
+    | { __typename: 'IdResponse'; id: string }
+    | {
+        __typename: 'UpdatePurchaseOrderLineError';
+        error:
+          | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | { __typename: 'PurchaseOrderDoesNotExist'; description: string }
+          | { __typename: 'PurchaseOrderLineNotFound'; description: string }
+          | { __typename: 'UpdatedLineDoesNotExist'; description: string };
+      };
+};
+
 export const PurchaseOrderRowFragmentDoc = gql`
   fragment PurchaseOrderRow on PurchaseOrderNode {
     id
@@ -332,6 +429,7 @@ export const PurchaseOrderRowFragmentDoc = gql`
     confirmedDatetime
     status
     targetMonths
+    reference
     lines {
       totalCount
     }
@@ -354,6 +452,15 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedDeliveryDate
     requestedNumberOfUnits
     authorisedNumberOfUnits
+  }
+`;
+export const SyncFileReferenceFragmentDoc = gql`
+  fragment SyncFileReference on SyncFileReferenceNode {
+    __typename
+    id
+    fileName
+    recordId
+    createdDatetime
   }
 `;
 export const PurchaseOrderFragmentDoc = gql`
@@ -390,9 +497,6 @@ export const PurchaseOrderFragmentDoc = gql`
     sentDatetime
     shippingMethod
     status
-    store {
-      id
-    }
     supplier {
       __typename
       id
@@ -409,8 +513,18 @@ export const PurchaseOrderFragmentDoc = gql`
     requestedDeliveryDate
     authorisedDatetime
     finalisedDatetime
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
+    donor {
+      id
+    }
   }
   ${PurchaseOrderLineFragmentDoc}
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const PurchaseOrdersDocument = gql`
   query purchaseOrders(
@@ -472,6 +586,27 @@ export const UpdatePurchaseOrderDocument = gql`
   ) {
     updatePurchaseOrder(input: $input, storeId: $storeId) {
       ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
+export const DeletePurchaseOrderDocument = gql`
+  mutation deletePurchaseOrder($id: String!, $storeId: String!) {
+    deletePurchaseOrder(id: $id, storeId: $storeId) {
+      ... on DeletePurchaseOrderError {
+        __typename
+        error {
+          ... on RecordNotFound {
+            __typename
+          }
+          description
+          ... on CannotDeleteNonNewPurchaseOrder {
+            __typename
+          }
+        }
+      }
+      ... on DeleteResponse {
         id
       }
     }
@@ -577,6 +712,81 @@ export const AddToPurchaseOrderFromMasterListDocument = gql`
     }
   }
 `;
+export const InsertPurchaseOrderLineFromCsvDocument = gql`
+  mutation insertPurchaseOrderLineFromCsv(
+    $storeId: String!
+    $input: InsertPurchaseOrderLineFromCSVInput!
+  ) {
+    insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
+      ... on InsertPurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on CannnotFindItemByCode {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+          }
+          ... on CannotEditPurchaseOrder {
+            __typename
+            description
+          }
+          ... on PackSizeCodeCombinationExists {
+            __typename
+            description
+            itemCode
+            requestedPackSize
+          }
+          ... on PurchaseOrderLineWithIdExists {
+            __typename
+            description
+          }
+        }
+      }
+      ... on IdResponse {
+        __typename
+        id
+      }
+    }
+  }
+`;
+export const UpdatePurchaseOrderLineDocument = gql`
+  mutation updatePurchaseOrderLine(
+    $input: UpdatePurchaseOrderLineInput!
+    $storeId: String!
+  ) {
+    updatePurchaseOrderLine(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+      ... on UpdatePurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on CannotEditPurchaseOrder {
+            __typename
+            description
+          }
+          ... on PurchaseOrderDoesNotExist {
+            __typename
+            description
+          }
+          ... on UpdatedLineDoesNotExist {
+            __typename
+            description
+          }
+          ... on PurchaseOrderLineNotFound {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -661,6 +871,22 @@ export function getSdk(
         variables
       );
     },
+    deletePurchaseOrder(
+      variables: DeletePurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeletePurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeletePurchaseOrderMutation>(
+            DeletePurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deletePurchaseOrder',
+        'mutation',
+        variables
+      );
+    },
     purchaseOrderLines(
       variables: PurchaseOrderLinesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
@@ -737,6 +963,38 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'addToPurchaseOrderFromMasterList',
+        'mutation',
+        variables
+      );
+    },
+    insertPurchaseOrderLineFromCsv(
+      variables: InsertPurchaseOrderLineFromCsvMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertPurchaseOrderLineFromCsvMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertPurchaseOrderLineFromCsvMutation>(
+            InsertPurchaseOrderLineFromCsvDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertPurchaseOrderLineFromCsv',
+        'mutation',
+        variables
+      );
+    },
+    updatePurchaseOrderLine(
+      variables: UpdatePurchaseOrderLineMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdatePurchaseOrderLineMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePurchaseOrderLineMutation>(
+            UpdatePurchaseOrderLineDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updatePurchaseOrderLine',
         'mutation',
         variables
       );
