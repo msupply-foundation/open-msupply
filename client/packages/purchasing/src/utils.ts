@@ -5,7 +5,10 @@ import {
 } from '@common/types';
 import { PurchaseOrderFragment } from './purchase_order/api';
 
-const purchaseOrderStatusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
+const purchaseOrderStatusTranslation: Record<
+  PurchaseOrderNodeStatus,
+  LocaleKey
+> = {
   NEW: 'label.new',
   AUTHORISED: 'label.authorised',
   CONFIRMED: 'label.confirmed',
@@ -66,4 +69,11 @@ export const isPurchaseOrderDisabled = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
   return purchaseOrder.status === PurchaseOrderNodeStatus.Finalised;
+};
+
+export const isPurchaseOrderEditable = (
+  status: PurchaseOrderNodeStatus
+): boolean => {
+  // mimmicking OG behaviour where purchase orders can be edited when confirmed AND when authorised
+  return status !== PurchaseOrderNodeStatus.Finalised;
 };

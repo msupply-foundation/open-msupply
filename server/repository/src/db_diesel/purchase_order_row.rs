@@ -11,6 +11,24 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 table! {
+    purchase_order_stats (purchase_order_id) {
+        purchase_order_id -> Text,
+        line_total_before_discount -> Double,
+        line_total_after_discount -> Double,
+        order_total_after_discount -> Double,
+    }
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
+#[diesel(table_name = purchase_order_stats)]
+pub struct PurchaseOrderStatsRow {
+    pub purchase_order_id: String,
+    pub line_total_before_discount: f64,
+    pub line_total_after_discount: f64,
+    pub order_total_after_discount: f64,
+}
+
+table! {
     purchase_order (id) {
         id ->  Text,
         store_id -> Text,
@@ -43,15 +61,15 @@ table! {
         insurance_charge ->  Nullable<Double>,
         freight_charge ->  Nullable<Double>,
         freight_conditions -> Nullable<Text>,
-        order_total_before_discount -> Double,
-        order_total_after_discount -> Double,
-        supplier_discount_amount -> Double,
         supplier_discount_percentage -> Nullable<Double>,
         authorised_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
     }
 }
 
+joinable!(purchase_order -> purchase_order_stats (id));
+
+allow_tables_to_appear_in_same_query!(purchase_order_stats, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order, item);
 
@@ -92,9 +110,6 @@ pub struct PurchaseOrderRow {
     pub insurance_charge: Option<f64>,
     pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
-    pub order_total_before_discount: f64,
-    pub order_total_after_discount: f64,
-    pub supplier_discount_amount: f64,
     pub supplier_discount_percentage: Option<f64>,
     pub authorised_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
