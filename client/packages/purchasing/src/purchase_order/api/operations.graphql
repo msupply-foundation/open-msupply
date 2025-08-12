@@ -109,24 +109,6 @@ fragment PurchaseOrder on PurchaseOrderNode {
   }
 }
 
-fragment PurchaseOrderLine on PurchaseOrderLineNode {
-  __typename
-  id
-  expectedDeliveryDate
-  purchaseOrderId
-  item {
-    id
-    code
-    name
-    unitName
-  }
-  purchaseOrderId
-  requestedPackSize
-  requestedDeliveryDate
-  requestedNumberOfUnits
-  authorisedNumberOfUnits
-}
-
 query purchaseOrders(
   $first: Int
   $offset: Int
