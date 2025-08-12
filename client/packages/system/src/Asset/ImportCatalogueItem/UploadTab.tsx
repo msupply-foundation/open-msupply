@@ -15,9 +15,9 @@ import {
   useNotification,
   UploadFile,
   useExportCSV,
+  ImportPanel,
 } from '@openmsupply-client/common';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
-import { ImportPanel } from './ImportPanel';
 import { ImportRow } from './CatalogueItemImportModal';
 import { importRowToCsv } from '../utils';
 import { AssetCatalogueItemFragment, useAssetProperties } from '../api';

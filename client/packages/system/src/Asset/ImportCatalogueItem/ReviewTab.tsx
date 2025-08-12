@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
-import { ImportPanel } from './ImportPanel';
 import { ImportRow } from './CatalogueItemImportModal';
 import { ImportReviewDataTable } from './ImportReviewDataTable';
+import { ImportPanel } from '@common/components';
 
 interface AssetItemReviewTabProps {
   uploadedRows: ImportRow[];

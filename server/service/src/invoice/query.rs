@@ -1,13 +1,11 @@
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 use repository::{EqualFilter, PaginationOption};
 use repository::{
     Invoice, InvoiceFilter, InvoiceRepository, InvoiceSort, InvoiceType, RepositoryError,
 };
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
+ 
 
 pub fn get_invoices(
     ctx: &ServiceContext,
@@ -16,7 +14,7 @@ pub fn get_invoices(
     filter: Option<InvoiceFilter>,
     sort: Option<InvoiceSort>,
 ) -> Result<ListResult<Invoice>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = InvoiceRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();

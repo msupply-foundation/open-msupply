@@ -4,7 +4,10 @@ use backend_plugin::plugin_provider::PluginError;
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::location::{LocationFilter, LocationRepository};
 use repository::vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository};
-use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
+use repository::{
+    EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_MAX_LIMIT,
+    DEFAULT_PAGINATION_MIN_LIMIT,
+};
 use repository::{RepositoryError, StorageConnection};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -249,7 +252,7 @@ pub fn get_default_pagination_unlimited(pagination_option: Option<PaginationOpti
     match pagination_option {
         Some(pagination) => Pagination {
             offset: pagination.offset.unwrap_or(0),
-            limit: pagination.limit.unwrap_or(DEFAULT_PAGINATION_LIMIT),
+            limit: pagination.limit.unwrap_or(DEFAULT_PAGINATION_MAX_LIMIT),
         },
         None => Pagination {
             offset: 0,
@@ -258,17 +261,15 @@ pub fn get_default_pagination_unlimited(pagination_option: Option<PaginationOpti
     }
 }
 
-pub fn get_default_pagination(
+pub fn get_pagination_or_default(
     pagination_option: Option<PaginationOption>,
-    max_limit: u32,
-    min_limit: u32,
 ) -> Result<Pagination, ListError> {
     let check_limit = |limit: u32| -> Result<u32, ListError> {
-        if limit < min_limit {
-            return Err(ListError::LimitBelowMin(min_limit));
+        if limit < DEFAULT_PAGINATION_MIN_LIMIT {
+            return Err(ListError::LimitBelowMin(DEFAULT_PAGINATION_MIN_LIMIT));
         }
-        if limit > max_limit {
-            return Err(ListError::LimitAboveMax(max_limit));
+        if limit > DEFAULT_PAGINATION_MAX_LIMIT {
+            return Err(ListError::LimitAboveMax(DEFAULT_PAGINATION_MAX_LIMIT));
         }
 
         Ok(limit)
@@ -279,14 +280,11 @@ pub fn get_default_pagination(
             offset: pagination.offset.unwrap_or(0),
             limit: match pagination.limit {
                 Some(limit) => check_limit(limit)?,
-                None => DEFAULT_PAGINATION_LIMIT,
+                None => DEFAULT_PAGINATION_MAX_LIMIT,
             },
         }
     } else {
-        Pagination {
-            offset: 0,
-            limit: DEFAULT_PAGINATION_LIMIT,
-        }
+        Pagination::all()
     };
 
     Ok(result)

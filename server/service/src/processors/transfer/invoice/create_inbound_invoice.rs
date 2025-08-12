@@ -1,13 +1,17 @@
-use chrono::{Duration, NaiveDateTime, NaiveTime, Utc};
+use chrono::{Duration, Months, NaiveDateTime, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow,
-    InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, Requisition,
-    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
+    ActivityLogType, DatetimeFilter, EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType, Pagination, RepositoryError,
+    Requisition, Sort, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
+    SyncLogFilter, SyncLogRepository, SyncLogSortField,
 };
 use util::uuid::uuid;
 
 use crate::{
-    activity_log::system_activity_log_entry, number::next_number,
+    activity_log::system_activity_log_entry,
+    number::next_number,
+    preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
+    processors::transfer::invoice::InvoiceTransferOutput,
     store_preference::get_store_preferences,
 };
 
@@ -38,6 +42,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
     /// 4. The outbound_invoice.linked_invoice_id is None. This check rather than looking for the Some inbound invoice gives us an escape hatch to prevent transfers being generated.
     /// 5. Source invoice was not created a month before receiving store was created.
+    /// 6. Source invoice was not picked more than 3 months before initialisation of the site that we skip generating the transfer
     ///
     /// Only runs once:
     /// 5. Because created inbound invoice will be linked to source outbound invoice `4.` will never be true again
@@ -45,7 +50,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         &self,
         connection: &StorageConnection,
         record_for_processing: &InvoiceTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
         let (outbound_invoice, linked_invoice, request_requisition, original_shipment) =
             match &record_for_processing.operation {
@@ -60,40 +65,79 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                     request_requisition,
                     original_shipment,
                 ),
-                _ => return Ok(None),
+                operation => {
+                    return Ok(InvoiceTransferOutput::WrongOperation(operation.to_owned()))
+                }
             };
+
         // 2.
         // Also get type for new invoice
-        let new_invoice_type = match outbound_invoice.invoice_row.r#type {
+        let new_invoice_type = match &outbound_invoice.invoice_row.r#type {
             InvoiceType::OutboundShipment => InboundInvoiceType::InboundShipment,
             InvoiceType::SupplierReturn => InboundInvoiceType::CustomerReturn,
-            _ => return Ok(None),
+            other => return Ok(InvoiceTransferOutput::WrongType(other.to_owned())),
         };
 
         // 3.
         if !matches!(
-            outbound_invoice.invoice_row.status,
+            &outbound_invoice.invoice_row.status,
             InvoiceStatus::Shipped | InvoiceStatus::Picked
         ) {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongOutboundStatus(
+                outbound_invoice.invoice_row.status.to_owned(),
+            ));
         }
+
         // 4.
         if linked_invoice.is_some() {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::NoLinkedInvoice);
         }
+
         // 5.
         let store = StoreRowRepository::new(connection)
             .find_one_by_id(&record_for_processing.other_party_store_id)?
             .ok_or(RepositoryError::NotFound)?;
-
         if let Some(created_date) = store.created_date {
-            let store_created_datetime = NaiveDateTime::new(
-                created_date - Duration::days(30),
-                NaiveTime::from_hms_opt(0, 0, 0).unwrap_or_default(),
-            );
+            let store_created_datetime =
+                NaiveDateTime::new(created_date - Duration::days(30), Default::default());
             let invoice_created_datetime = outbound_invoice.invoice_row.created_datetime;
             if invoice_created_datetime < store_created_datetime {
-                return Ok(None);
+                return Ok(InvoiceTransferOutput::InvoiceCreatedBeforeStore);
+            }
+        }
+
+        // 6.
+        if outbound_invoice.invoice_row.status == InvoiceStatus::Picked {
+            if let Some(picked_date) = outbound_invoice.invoice_row.picked_datetime {
+                let pref_months = PreventTransfersMonthsBeforeInitialisation {}
+                    .load(connection, None)
+                    .map_err(|e| RepositoryError::DBError {
+                        msg: e.to_string(),
+                        extra: "".to_string(),
+                    })?;
+                if pref_months > 0 {
+                    let sort = Sort {
+                        key: SyncLogSortField::DoneDatetime,
+                        desc: None,
+                    };
+
+                    let filter = SyncLogFilter::new()
+                        .integration_finished_datetime(DatetimeFilter::is_null(false));
+
+                    let first_initialisation_log = SyncLogRepository::new(connection)
+                        .query(Pagination::one(), Some(filter), Some(sort))?
+                        .pop();
+
+                    if first_initialisation_log
+                        .and_then(|log| log.sync_log_row.integration_finished_datetime)
+                        .and_then(|initialisation_date| {
+                            initialisation_date.checked_sub_months(Months::new(pref_months as u32))
+                        })
+                        .map_or(false, |cutoff_date| picked_date < cutoff_date)
+                    {
+                        return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
+                    }
+                }
             }
         }
 
@@ -144,7 +188,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
             outbound_invoice.invoice_row.id
         );
 
-        Ok(Some(result))
+        Ok(InvoiceTransferOutput::Processed(result))
     }
 }
 
@@ -255,4 +299,129 @@ fn generate_inbound_invoice(
     };
 
     Ok(result)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use chrono::NaiveDate;
+    use repository::{
+        mock::{mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        SyncLogRow,
+    };
+
+    #[actix_rt::test]
+    async fn test_create_inbound_invoice_picked_cutoff() {
+        let log_1 = SyncLogRow {
+            id: "sync_log_1".to_string(),
+            integration_finished_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 01, 01)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            ..Default::default()
+        };
+
+        let log_2 = SyncLogRow {
+            id: "sync_log_2".to_string(),
+            integration_finished_datetime: Some(
+                NaiveDate::from_ymd_opt(2024, 01, 01)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            ..Default::default()
+        };
+
+        let log_3 = SyncLogRow {
+            id: "sync_log_3".to_string(),
+            integration_finished_datetime: None,
+            ..Default::default()
+        };
+
+        let invoice_row_old = InvoiceRow {
+            id: "invoice_row_old".to_string(),
+            status: InvoiceStatus::Picked,
+            created_datetime: NaiveDateTime::new(
+                NaiveDate::from_ymd_opt(2020, 6, 6).unwrap(),
+                Default::default(),
+            ),
+            picked_datetime: Some(NaiveDateTime::new(
+                NaiveDate::from_ymd_opt(2020, 6, 6).unwrap(),
+                Default::default(),
+            )),
+            ..mock_outbound_shipment_a()
+        };
+        let invoice_old = Invoice {
+            invoice_row: invoice_row_old.clone(),
+            name_row: mock_name_b(),
+            store_row: mock_store_b(),
+            clinician_row: None,
+        };
+        let invoice_transfer_old = InvoiceTransferProcessorRecord {
+            operation: Operation::Upsert {
+                invoice: invoice_old.clone(),
+                linked_invoice: None,
+                linked_shipment_requisition: None,
+                linked_original_shipment: None,
+            },
+            other_party_store_id: "store_a".to_string(),
+        };
+
+        let invoice_row_new = InvoiceRow {
+            id: "invoice_row_new".to_string(),
+            picked_datetime: Some(
+                NaiveDate::from_ymd_opt(2025, 8, 7)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+            ),
+            ..invoice_row_old.clone()
+        };
+        let invoice_new = Invoice {
+            invoice_row: invoice_row_new.clone(),
+            ..invoice_old.clone()
+        };
+        let invoice_transfer_new = InvoiceTransferProcessorRecord {
+            operation: Operation::Upsert {
+                invoice: invoice_new.clone(),
+                linked_invoice: None,
+                linked_shipment_requisition: None,
+                linked_original_shipment: None,
+            },
+            other_party_store_id: "store_a".to_string(),
+        };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_create_inbound_invoice_picked_cutoff",
+            MockDataInserts::none().stores(),
+            MockData {
+                invoices: vec![invoice_row_old, invoice_row_new],
+                sync_logs: vec![log_1, log_2, log_3],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let processor = CreateInboundInvoiceProcessor {};
+        let result = processor
+            .try_process_record(&connection, &invoice_transfer_old)
+            .unwrap();
+        assert!(
+            matches!(result, InvoiceTransferOutput::BeforeInitialisationMonths),
+            "The old invoice was skipped for wrong reason: {:?}",
+            result
+        );
+
+        let result = processor
+            .try_process_record(&connection, &invoice_transfer_new)
+            .unwrap();
+        assert!(
+            matches!(result, InvoiceTransferOutput::Processed(_)),
+            "The new invoice should have had a transfer generated, skipped because: {:?}",
+            result
+        );
+    }
 }

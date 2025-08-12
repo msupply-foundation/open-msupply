@@ -6,7 +6,7 @@ use repository::{
 };
 
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 
 use super::extract_fields::extract_fields;
@@ -19,9 +19,6 @@ pub struct EncounterFieldsResult {
     pub row: Encounter,
     pub fields: Vec<serde_json::Value>,
 }
-
-const MAX_LIMIT: u32 = 1000;
-const MIN_LIMIT: u32 = 1;
 
 pub(crate) fn encounter_fields(
     ctx: &ServiceContext,
@@ -40,7 +37,7 @@ pub(crate) fn encounter_fields(
             .restrict_results(&allowed_ctx),
     );
 
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = EncounterRepository::new(&ctx.connection);
     let encounters = repository.query(pagination, Some(filter.clone()), sort)?;
     let doc_names = encounters
