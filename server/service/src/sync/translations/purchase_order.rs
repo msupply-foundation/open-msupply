@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
+use repository::PurchaseOrderDelete;
 use repository::PurchaseOrderStatsRow;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository,
@@ -56,69 +57,6 @@ pub struct PurchaseOrderOmsFields {
     #[serde(default)]
     pub status: PurchaseOrderStatus,
 }
-
-/** Example record
- * {
-    "Date_advance_payment": "0000-00-00",
-    "Date_contract_signed": "0000-00-00",
-    "Date_goods_received_at_port": "0000-00-00",
-    "ID": "74776741F45F47CBB3214143D27308B2",
-    "Order_total_after_discount": 1000,
-    "Order_total_before_discount": 1000,
-    "additional_instructions": "",
-    "agent_commission": 0,
-    "auth_checksum": "be3e0b73e1762782fc8d608ebaf760e1",
-    "authorizing_officer_1": "",
-    "authorizing_officer_2": "",
-    "budget_period_ID": "",
-    "category_ID": "",
-    "colour": 0,
-    "comment": "",
-    "communications_charge": 0,
-    "confirm_date": "2024-11-27",
-    "cost_in_local_currency": 449224.99,
-    "created_by": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "creation_date": "2021-03-11",
-    "curr_rate": 449.224988,
-    "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
-    "custom_data": null,
-    "delivery_method": "",
-    "document_charge": 0,
-    "donor_id": "",
-    "editedRemotely": false,
-    "freight": 0,
-    "freight_charge": 0,
-    "freight_conditions": "",
-    "heading_message": "",
-    "include_in_on_order_calcs": false,
-    "insurance_charge": 0,
-    "inv_discount_amount": 0,
-    "inv_sub_total": 0,
-    "is_authorised": true,
-    "last_edited_by": "0763E2E3053D4C478E1E6B6B03FEC207",
-    "lines": 1,
-    "linked_transaction_ID": "",
-    "locked": false,
-    "lookBackMonths": 0,
-    "minimumExpiryDate": "0000-00-00",
-    "name_ID": "A2815A74F4F24181B637D510A978359E",
-    "oms_fields": null,
-    "po_sent_date": "2024-11-27",
-    "quote_ID": "",
-    "reference": "",
-    "requested_delivery_date": "2021-03-11",
-    "serial_number": 16,
-    "status": "cn",
-    "store_ID": "D77F67339BF8400886D009178F4962E1",
-    "supplier_agent": "",
-    "supplier_discount_amount": 0,
-    "target_months": 0,
-    "total_foreign_currency_expected": 0,
-    "total_local_currency_expected": 0,
-    "user_field_1": "",
-    "user_field_2": ""
-}
- */
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -372,7 +310,15 @@ impl SyncTranslation for PurchaseOrderTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
-    // TODO add try_translate_from_delete_sync_record
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(PurchaseOrderDelete(
+            sync_record.record_id.clone(),
+        )))
+    }
 
     fn try_translate_to_upsert_sync_record(
         &self,
@@ -489,13 +435,21 @@ impl SyncTranslation for PurchaseOrderTranslation {
             serde_json::to_value(legacy_row)?,
         ))
     }
+
+    fn try_translate_to_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
+    }
 }
 
 fn from_legacy_status(
     status: &LegacyPurchaseOrderStatus,
     is_authorised: bool,
 ) -> PurchaseOrderStatus {
-    let oms_status = match status {
+    match status {
         LegacyPurchaseOrderStatus::Nw => PurchaseOrderStatus::New,
         LegacyPurchaseOrderStatus::Sg => PurchaseOrderStatus::New,
         LegacyPurchaseOrderStatus::Cn => {
@@ -507,25 +461,22 @@ fn from_legacy_status(
         }
         LegacyPurchaseOrderStatus::Fn => PurchaseOrderStatus::Finalised, // authorised might or might not be true in this case...
         LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New,   // Default to New for
-    };
-    oms_status
+    }
 }
 
 fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
-    let legacy_status = match status {
+    match status {
         PurchaseOrderStatus::New => LegacyPurchaseOrderStatus::Nw,
         PurchaseOrderStatus::Confirmed => LegacyPurchaseOrderStatus::Cn,
         PurchaseOrderStatus::Authorised => LegacyPurchaseOrderStatus::Cn, // We will also set is_authorised to true (See check_is_authorised)
         PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Fn,
-    };
-    legacy_status
+    }
 }
 
 fn check_is_authorised(status: &PurchaseOrderStatus) -> bool {
     matches!(
         status,
-        PurchaseOrderStatus::Authorised | PurchaseOrderStatus::Finalised // Assuming Finalised is always authorised, but the action might be skipped if authorisation is not required due to global preference
-// N.B. if this logic changes, update the Purchase Order form's logic (the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
+        PurchaseOrderStatus::Authorised | PurchaseOrderStatus::Finalised // Assuming Finalised is always authorised, but the action might be skipped if authorisation is not required due to global preference. N.B. if this logic changes, update the Purchase Order form's logic (the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
     )
 }
 
@@ -552,14 +503,11 @@ mod tests {
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            // println!("Translating record: {:?}", record.sync_buffer_row.data);
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
             assert_eq!(translation_result, record.translated_record);
         }
-
-        // TODO add delete translation test
     }
 
     #[actix_rt::test]
