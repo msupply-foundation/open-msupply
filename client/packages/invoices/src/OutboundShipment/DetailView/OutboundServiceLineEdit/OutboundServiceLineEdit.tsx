@@ -36,6 +36,7 @@ const OutboundServiceLineEditComponent = ({
   const {
     serviceItem: { data: defaultServiceItem },
   } = useItem();
+
   return (
     <Modal
       title={t('heading.service-charges')}
@@ -75,12 +76,7 @@ const OutboundServiceLineEditComponent = ({
               Icon={<PlusCircleIcon />}
             />
           </Box>
-          <TableProvider
-            createStore={createTableStore}
-            queryParamsStore={createQueryParamsStore({
-              initialSortBy: { key: 'serviceItemName' },
-            })}
-          >
+          <TableProvider createStore={createTableStore}>
             <DataTable
               id="outbound-service-line"
               columns={columns}
