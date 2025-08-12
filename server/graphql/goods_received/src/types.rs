@@ -1,6 +1,6 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use graphql_core::loader::{NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader};
 use graphql_core::ContextExt;
 use graphql_types::types::{purchase_order, NameNode};
@@ -94,6 +94,10 @@ impl GoodsReceivedNode {
 
     pub async fn created_by(&self) -> &Option<String> {
         &self.row().created_by
+    }
+
+    pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().finalised_datetime
     }
 }
 

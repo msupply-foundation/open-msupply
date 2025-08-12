@@ -2927,6 +2927,7 @@ export type GoodsReceivedNode = {
   comment?: Maybe<Scalars['String']['output']>;
   createdBy?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   id: Scalars['String']['output'];
   number: Scalars['Int']['output'];
   purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;

@@ -5,6 +5,7 @@ fragment GoodsReceivedRow on GoodsReceivedNode {
   comment
   createdDatetime
   receivedDatetime
+  finalisedDatetime
   purchaseOrderNumber
   supplierReference
   supplier {
@@ -22,6 +23,7 @@ fragment GoodsReceived on GoodsReceivedNode {
   createdBy
   createdDatetime
   receivedDatetime
+  finalisedDatetime
   purchaseOrderNumber
   supplierReference
   supplier {

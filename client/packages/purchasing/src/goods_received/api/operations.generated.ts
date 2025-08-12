@@ -11,6 +11,7 @@ export type GoodsReceivedRowFragment = {
   comment?: string | null;
   createdDatetime: string;
   receivedDatetime?: string | null;
+  finalisedDatetime?: string | null;
   purchaseOrderNumber?: number | null;
   supplierReference?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -25,6 +26,7 @@ export type GoodsReceivedFragment = {
   createdBy?: string | null;
   createdDatetime: string;
   receivedDatetime?: string | null;
+  finalisedDatetime?: string | null;
   purchaseOrderNumber?: number | null;
   supplierReference?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -52,6 +54,7 @@ export type GoodsReceivedListQuery = {
       comment?: string | null;
       createdDatetime: string;
       receivedDatetime?: string | null;
+      finalisedDatetime?: string | null;
       purchaseOrderNumber?: number | null;
       supplierReference?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -76,6 +79,7 @@ export type GoodsReceivedByIdQuery = {
         createdBy?: string | null;
         createdDatetime: string;
         receivedDatetime?: string | null;
+        finalisedDatetime?: string | null;
         purchaseOrderNumber?: number | null;
         supplierReference?: string | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -101,6 +105,7 @@ export const GoodsReceivedRowFragmentDoc = gql`
     comment
     createdDatetime
     receivedDatetime
+    finalisedDatetime
     purchaseOrderNumber
     supplierReference
     supplier {
@@ -119,6 +124,7 @@ export const GoodsReceivedFragmentDoc = gql`
     createdBy
     createdDatetime
     receivedDatetime
+    finalisedDatetime
     purchaseOrderNumber
     supplierReference
     supplier {

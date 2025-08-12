@@ -15,12 +15,13 @@ import { StatusChangeButton } from './StatusChangeButton';
 
 const createStatusLog = (goodsReceived: {
   createdDatetime: string;
-  receivedDatetime?: string | null;
+  finalisedDatetime?: string | null;
 }) => {
   const statusLog: Record<GoodsReceivedNodeStatus, null | undefined | string> =
     {
       [GoodsReceivedNodeStatus.New]: goodsReceived.createdDatetime,
-      [GoodsReceivedNodeStatus.Finalised]: goodsReceived.receivedDatetime, // TODO: change to finalisedDatetime when available
+      [GoodsReceivedNodeStatus.Finalised]:
+        goodsReceived.finalisedDatetime ?? null,
     };
   return statusLog;
 };
@@ -35,7 +36,7 @@ export const Footer = ({ showStatusBar = true }: FooterProps): ReactElement => {
     query: { data },
   } = useGoodsReceived();
 
-  const selectedRows: unknown[] = []; // TODO: Implement proper row selection when lines are implemented
+  const selectedRows = []; // TODO: Implement proper row selection when lines are implemented
   const confirmAndDelete = () => {}; // TODO: Implement delete functionality
 
   const actions: Action[] = [
