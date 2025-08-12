@@ -347,3 +347,24 @@ mutation updatePurchaseOrderLine(
     }
   }
 }
+
+mutation deletePurchaseOrderLines($ids: [String!]!, $storeId: String!) {
+  deletePurchaseOrderLines(ids: $ids, storeId: $storeId) {
+    id
+    response {
+      ... on DeleteResponse {
+        id
+      }
+      ... on DeletePurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
