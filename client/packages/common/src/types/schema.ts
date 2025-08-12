@@ -6469,6 +6469,7 @@ export enum PreferenceKey {
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   OrderInPacks = 'orderInPacks',
+  PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
@@ -6507,6 +6508,7 @@ export type PreferencesNode = {
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   orderInPacks: Scalars['Boolean']['output'];
+  preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
@@ -10601,6 +10603,9 @@ export type UpsertPreferencesInput = {
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
+  preventTransfersMonthsBeforeInitialisation?: InputMaybe<
+    Scalars['Int']['input']
+  >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
