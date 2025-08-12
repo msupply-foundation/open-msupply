@@ -4,7 +4,7 @@
   "code": "outbound-shipments",
   "context": "REPORT",
   "sub_context": "Distribution",
-  "name": "Outbound shipments",
+  "name": "Outbound Shipments",
   "queries": {
     "gql": "query.graphql"
   },

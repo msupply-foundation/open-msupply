@@ -9,12 +9,7 @@ import {
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
-import {
-  BarIcon,
-  InvoiceIcon,
-  TrendingDownIcon,
-  TruckIcon,
-} from '@common/icons';
+import { BarIcon, InvoiceIcon, TruckIcon } from '@common/icons';
 import {
   useReportList,
   ReportRowFragment,
