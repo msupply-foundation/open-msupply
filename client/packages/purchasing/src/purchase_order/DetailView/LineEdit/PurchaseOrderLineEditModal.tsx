@@ -2,7 +2,7 @@ import { ModalMode, useDialog, useNotification } from '@common/hooks';
 import { PurchaseOrderFragment } from '../../api';
 import { DialogButton, InlineSpinner } from '@common/components';
 import { useTranslation, Box } from '@openmsupply-client/common';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { ItemStockOnHandFragment } from '@openmsupply-client/system';
@@ -12,6 +12,7 @@ interface PurchaseOrderLineEditModalProps {
   purchaseOrder: PurchaseOrderFragment;
   mode: ModalMode | null;
   isOpen: boolean;
+  openNext: () => void;
   onClose: () => void;
 }
 
@@ -21,6 +22,7 @@ export const PurchaseOrderLineEditModal = ({
   mode,
   isOpen,
   onClose,
+  openNext,
 }: PurchaseOrderLineEditModalProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -31,12 +33,23 @@ export const PurchaseOrderLineEditModal = ({
     lines.find(line => line.id === lineId) ?? undefined
   );
 
+  console.log('currentLine:', currentLine);
+
   const {
     create: { create, isCreating },
     update: { update, isUpdating },
     draft,
     updatePatch,
   } = usePurchaseOrderLine(currentLine?.id);
+
+  useEffect(() => {
+    if (lineId) {
+      const line = lines.find(line => line.id === lineId);
+      setCurrentLine(line ?? undefined);
+    } else {
+      setCurrentLine(undefined);
+    }
+  }, [lineId]);
 
   const onChangeItem = (item: ItemStockOnHandFragment) => {
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
@@ -70,6 +83,9 @@ export const PurchaseOrderLineEditModal = ({
     }
   };
 
+  const hasNext =
+    lines.findIndex(line => line.id === lineId) < lines.length - 2;
+
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   return (
@@ -87,6 +103,16 @@ export const PurchaseOrderLineEditModal = ({
           onClick={async () => {
             const success = await handleSave();
             if (success) onClose();
+          }}
+        />
+      }
+      nextButton={
+        <DialogButton
+          variant="next-and-ok"
+          disabled={!hasNext}
+          onClick={async () => {
+            await handleSave();
+            openNext();
           }}
         />
       }
