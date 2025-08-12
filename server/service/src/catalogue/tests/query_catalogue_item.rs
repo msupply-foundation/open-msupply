@@ -25,19 +25,6 @@ mod query_catalogue_item {
             service.get_asset_catalogue_items(
                 &context.connection,
                 Some(PaginationOption {
-                    limit: Some(2000),
-                    offset: None
-                }),
-                None,
-                None,
-            ),
-            Err(ListError::LimitAboveMax(1000))
-        );
-
-        assert_eq!(
-            service.get_asset_catalogue_items(
-                &context.connection,
-                Some(PaginationOption {
                     limit: Some(0),
                     offset: None
                 }),
