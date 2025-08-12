@@ -7,7 +7,6 @@ export const useStocktakeOld = {
     get: Document.useStocktake,
     list: Document.useStocktakes,
     listAll: Document.useStocktakesAll,
-    hasStocktake: Document.useHasStocktake,
 
     delete: Document.useStocktakeDelete,
     deleteSelected: Document.useStocktakeDeleteSelected,
