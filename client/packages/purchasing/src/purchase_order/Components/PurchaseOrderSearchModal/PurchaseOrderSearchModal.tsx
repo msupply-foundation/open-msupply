@@ -57,20 +57,22 @@ const PurchaseOrderSearchComponent: FC<PurchaseOrderSearchModalProps> = ({
 
   const getPurchaseOrderOptionRenderer: AutocompleteOptionRenderer<
     PurchaseOrderRowFragment
-  > = (props, item) => (
-    <DefaultAutocompleteItemOption {...props} key={item.id}>
+  > = (props, po) => (
+    <DefaultAutocompleteItemOption {...props} key={po.id}>
       <Box display="flex" flexDirection="column" gap={0.5}>
         <Box display="flex" alignItems="center" gap={1}>
-          <Typography sx={{ fontWeight: 'bold' }}>
-            {item.supplier?.name ?? ''}
+          <Typography>
+            {t('label.purchase-order-shorthand')} #{po.number}
           </Typography>
+          <Typography>{po.supplier?.name ?? ''}</Typography>
+
           <Typography variant="body2" color="textSecondary">
-            {t('label.purchase-order-shorthand')} {item.number}
+            {po.reference || ''}
           </Typography>
         </Box>
-        {item.comment && (
+        {po.comment && (
           <Typography variant="body2" color="textSecondary">
-            {item.comment}
+            {po.comment}
           </Typography>
         )}
       </Box>
