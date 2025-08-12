@@ -1,10 +1,11 @@
-use repository::{PurchaseOrderRowRepository, RepositoryError, TransactionError};
+use repository::{ActivityLogType, PurchaseOrderRowRepository, RepositoryError, TransactionError};
 
 pub mod validate;
 
 use validate::validate;
 
 use crate::{
+    activity_log::activity_log_entry,
     purchase_order::common::get_lines_for_purchase_order,
     purchase_order_line::delete::{delete_purchase_order_line, DeletePurchaseOrderLineError},
     service_provider::ServiceContext,
@@ -31,6 +32,14 @@ pub fn delete_purchase_order(
                             error,
                         })?;
                 }
+
+                activity_log_entry(
+                    ctx,
+                    ActivityLogType::DeletePurchaseOrder,
+                    Some(id.to_owned()),
+                    None,
+                    None,
+                )?;
 
                 match PurchaseOrderRowRepository::new(connection).delete(&id) {
                     Ok(_) => Ok(id.clone()),
