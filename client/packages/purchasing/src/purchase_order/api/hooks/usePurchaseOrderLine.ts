@@ -67,6 +67,7 @@ export function usePurchaseOrderLine(id?: string) {
       requestedPackSize: draft.requestedPackSize,
       requestedDeliveryDate: draft.requestedDeliveryDate,
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
+      adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
     };
     return await updatePurchaseOrderLine(input);
   };
