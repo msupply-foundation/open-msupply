@@ -9,35 +9,7 @@ import { useItemGraphQL } from '../useItemGraphQL';
 import { ITEM } from '../keys';
 import { ItemRowFragment } from '../operations.generated';
 
-interface ItemHookProps {
-  filterBy?: ItemFilterInput;
-  refetchOnMount?: boolean;
-}
-
-export const useItems = ({
-  filterBy = {},
-  refetchOnMount = true,
-}: ItemHookProps = {}) => {
-  const { data, isLoading, isError } = useVisibleOrOnHandItems();
-  const { data: itemsByFilter, isLoading: isLoadingByFilter } = useGetByFilter({
-    filterBy,
-    refetchOnMount,
-  });
-
-  return {
-    items: {
-      data,
-      isLoading,
-      isError,
-    },
-    itemsByFilter: {
-      data: itemsByFilter,
-      isLoading: isLoadingByFilter,
-    },
-  };
-};
-
-const useVisibleOrOnHandItems = () => {
+export const useVisibleOrOnHandItems = () => {
   const { api, storeId } = useItemGraphQL();
   const { queryParams } = useUrlQueryParams({
     filters: [{ key: 'codeOrName' }],
@@ -70,7 +42,12 @@ const useVisibleOrOnHandItems = () => {
   });
 };
 
-const useGetByFilter = ({
+interface ItemHookProps {
+  filterBy?: ItemFilterInput;
+  refetchOnMount?: boolean;
+}
+
+export const useItemsByFilter = ({
   filterBy = {},
   refetchOnMount = false,
 }: ItemHookProps = {}) => {

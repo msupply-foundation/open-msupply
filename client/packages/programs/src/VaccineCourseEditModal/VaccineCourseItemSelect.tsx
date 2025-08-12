@@ -4,7 +4,7 @@ import {
   FnUtils,
   AutocompleteMulti,
 } from '@openmsupply-client/common';
-import { useItems } from '@openmsupply-client/system';
+import { useItemsByFilter } from '@openmsupply-client/system';
 import {
   DraftVaccineCourse,
   DraftVaccineCourseItem,
@@ -40,9 +40,7 @@ export const VaccineItemSelect = ({
   onChange,
   draft,
 }: VaccineItemSelectProps) => {
-  const {
-    itemsByFilter: { data },
-  } = useItems({
+  const { data } = useItemsByFilter({
     filterBy: {
       isVaccine: true,
     },

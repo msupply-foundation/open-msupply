@@ -9,7 +9,7 @@ import {
   createQueryParamsStore,
   ItemNodeType,
 } from '@openmsupply-client/common';
-import { ItemRowFragment, useItems } from '../../api';
+import { ItemRowFragment, useItemsByFilter } from '../../api';
 
 interface ItemSearchInputProps {
   onChange: (item: ItemRowFragment | null) => void;
@@ -48,9 +48,7 @@ const ServiceItemSearchComponent = ({
   autoFocus = false,
   refetchOnMount = true,
 }: ItemSearchInputProps) => {
-  const {
-    itemsByFilter: { data, isLoading },
-  } = useItems({
+  const { data, isLoading } = useItemsByFilter({
     refetchOnMount,
     filterBy: {
       type: { equalTo: ItemNodeType.Service },
