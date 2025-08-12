@@ -8,10 +8,8 @@ use repository::{
     EqualFilter, PaginationOption, StorageConnection,
 };
 
-use crate::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
+use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult, SingleRecordError};
+ 
 
 pub fn get_vaccine_courses(
     connection: &StorageConnection,
@@ -19,7 +17,7 @@ pub fn get_vaccine_courses(
     filter: Option<VaccineCourseFilter>,
     sort: Option<VaccineCourseSort>,
 ) -> Result<ListResult<VaccineCourseRow>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = VaccineCourseRepository::new(connection);
 
     Ok(ListResult {

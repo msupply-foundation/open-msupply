@@ -4,10 +4,8 @@ use repository::{
     EqualFilter, PaginationOption, RepositoryError, StorageConnection,
 };
 
-use crate::{get_default_pagination, i64_to_u32, ListError, ListResult};
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
+use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
+ 
 
 pub fn get_asset_classes(
     connection: &StorageConnection,
@@ -15,7 +13,7 @@ pub fn get_asset_classes(
     filter: Option<AssetClassFilter>,
     sort: Option<AssetClassSort>,
 ) -> Result<ListResult<AssetClassRow>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = AssetClassRepository::new(connection);
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,
