@@ -18,6 +18,31 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   comment
 }
 
+fragment SyncFileReference on SyncFileReferenceNode {
+  __typename
+  id
+  fileName
+  recordId
+  createdDatetime
+}
+
+fragment PurchaseOrderLine on PurchaseOrderLineNode {
+  __typename
+  id
+  expectedDeliveryDate
+  purchaseOrderId
+  item {
+    id
+    code
+    name
+    unitName
+  }
+  requestedPackSize
+  requestedDeliveryDate
+  requestedNumberOfUnits
+  authorisedNumberOfUnits
+}
+
 fragment PurchaseOrder on PurchaseOrderNode {
   __typename
   id
@@ -73,26 +98,12 @@ fragment PurchaseOrder on PurchaseOrderNode {
   requestedDeliveryDate
   authorisedDatetime
   finalisedDatetime
-  donor {
-    id
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
   }
-}
-
-fragment PurchaseOrderLine on PurchaseOrderLineNode {
-  __typename
-  id
-  expectedDeliveryDate
-  purchaseOrderId
-  item {
-    id
-    code
-    name
-    unitName
-  }
-  requestedPackSize
-  requestedDeliveryDate
-  requestedNumberOfUnits
-  authorisedNumberOfUnits
 }
 
 query purchaseOrders(

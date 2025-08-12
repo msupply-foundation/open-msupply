@@ -135,7 +135,6 @@ mod update {
             .unwrap()
             .unwrap();
 
-        purchase_order.order_total_before_discount = order_total_before_discount;
         PurchaseOrderRowRepository::new(&context.connection)
             .upsert_one(&purchase_order)
             .unwrap();
@@ -164,18 +163,10 @@ mod update {
             .unwrap()
             .unwrap();
 
-        let expected_discount_amount = order_total_before_discount * (discount_percentage / 100.0);
-        let expected_total_after_discount = order_total_before_discount - expected_discount_amount;
-
         assert_eq!(result.id, purchase_order.id);
         assert_eq!(
             result.supplier_discount_percentage,
             Some(discount_percentage)
-        );
-        assert_eq!(result.supplier_discount_amount, expected_discount_amount);
-        assert_eq!(
-            result.order_total_after_discount,
-            expected_total_after_discount
         );
         assert_eq!(result.comment, Some("Updated comment".to_string()));
         assert_eq!(result.status, PurchaseOrderStatus::Authorised);

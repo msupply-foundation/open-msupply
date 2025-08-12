@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   AlertModal,
   createQueryParamsStore,
@@ -16,7 +16,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea, Details } from './Tabs';
+import { ContentArea, Details, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -28,6 +28,7 @@ export const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const [showStatusBar, setShowStatusBar] = useState(true);
 
   const {
     query: { data, isLoading },
@@ -76,6 +77,16 @@ export const DetailViewInner = () => {
       value: 'Details',
     },
     {
+      Component: (
+        <Documents
+          purchaseOrderId={data?.id}
+          documents={data?.documents?.nodes}
+          setShowStatusBar={setShowStatusBar}
+        />
+      ),
+      value: 'Documents',
+    },
+    {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
@@ -90,7 +101,7 @@ export const DetailViewInner = () => {
           <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
           <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
-          <Footer />
+          <Footer showStatusBar={showStatusBar} />
           <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal
