@@ -17,11 +17,7 @@
           "format": "date-time",
           "type": "string"
         }
-      },
-     "dependencies": {
-      "before": ["after"],
-      "after": ["before"]
-     }
+      }
     }
   },
   "type": "object",
