@@ -37,6 +37,8 @@ pub struct InsertStockOutLine {
     pub program_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
+    pub item_variant_id: Option<String>,
+    pub donor_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -131,7 +133,6 @@ mod test {
         InvoiceType, StockLineRowRepository,
     };
     use repository::{StockLineRow, Upsert};
-   
 
     use crate::{
         invoice::outbound_shipment::update::{

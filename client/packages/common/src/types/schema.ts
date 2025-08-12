@@ -1064,6 +1064,11 @@ export type CanOnlyChangeToPickedWhenNoUnallocatedLines =
     invoiceLines: InvoiceLineConnector;
   };
 
+export type CannnotFindItemByCode = InsertPurchaseOrderLineErrorInterface & {
+  __typename: 'CannnotFindItemByCode';
+  description: Scalars['String']['output'];
+};
+
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
   UpdateInboundShipmentErrorInterface & {
     __typename: 'CannotChangeStatusOfInvoiceOnHold';
@@ -1083,6 +1088,12 @@ export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
 export type CannotDeleteLineLinkedToShipment =
   DeleteResponseRequisitionLineErrorInterface & {
     __typename: 'CannotDeleteLineLinkedToShipment';
+    description: Scalars['String']['output'];
+  };
+
+export type CannotDeleteNonNewPurchaseOrder =
+  DeletePurchaseOrderErrorInterface & {
+    __typename: 'CannotDeleteNonNewPurchaseOrder';
     description: Scalars['String']['output'];
   };
 
@@ -1122,6 +1133,7 @@ export type CannotEditInvoice =
 
 export type CannotEditPurchaseOrder =
   AddToPurchaseOrderFromMasterListErrorInterface &
+    InsertPurchaseOrderLineErrorInterface &
     PurchaseOrderLineError & {
       __typename: 'CannotEditPurchaseOrder';
       description: Scalars['String']['output'];
@@ -1957,6 +1969,15 @@ export type DeletePrescriptionResponseWithId = {
   response: DeletePrescriptionResponse;
 };
 
+export type DeletePurchaseOrderError = {
+  __typename: 'DeletePurchaseOrderError';
+  error: DeletePurchaseOrderErrorInterface;
+};
+
+export type DeletePurchaseOrderErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type DeletePurchaseOrderLineError = {
   __typename: 'DeletePurchaseOrderLineError';
   error: DeletePurchaseOrderLineInterface;
@@ -1972,6 +1993,10 @@ export type DeletePurchaseOrderLineInterface = {
 
 export type DeletePurchaseOrderLineResponse =
   | DeletePurchaseOrderLineError
+  | DeleteResponse;
+
+export type DeletePurchaseOrderResponse =
+  | DeletePurchaseOrderError
   | DeleteResponse;
 
 export type DeleteRequestRequisitionError = {
@@ -2749,6 +2774,7 @@ export enum ForeignKey {
   ItemId = 'itemId',
   LocationId = 'locationId',
   OtherPartyId = 'otherPartyId',
+  PurchaseOrderId = 'purchaseOrderId',
   RequisitionId = 'requisitionId',
   StockLineId = 'stockLineId',
 }
@@ -2766,6 +2792,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
   InsertOutboundShipmentServiceLineErrorInterface &
   InsertOutboundShipmentUnallocatedLineErrorInterface &
   InsertPrescriptionLineErrorInterface &
+  InsertPurchaseOrderLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
   SetPrescribedQuantityErrorInterface &
@@ -3659,6 +3686,22 @@ export type InsertPurchaseOrderInput = {
   supplierId: Scalars['String']['input'];
 };
 
+export type InsertPurchaseOrderLineError = {
+  __typename: 'InsertPurchaseOrderLineError';
+  error: InsertPurchaseOrderLineErrorInterface;
+};
+
+export type InsertPurchaseOrderLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertPurchaseOrderLineFromCsvInput = {
+  itemCode: Scalars['String']['input'];
+  purchaseOrderId: Scalars['String']['input'];
+  requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
+  requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type InsertPurchaseOrderLineInput = {
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
@@ -3669,7 +3712,9 @@ export type InsertPurchaseOrderLineInput = {
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
-export type InsertPurchaseOrderLineResponse = IdResponse;
+export type InsertPurchaseOrderLineResponse =
+  | IdResponse
+  | InsertPurchaseOrderLineError;
 
 export type InsertPurchaseOrderResponse = IdResponse;
 
@@ -5088,6 +5133,7 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  deletePurchaseOrder: DeletePurchaseOrderResponse;
   deletePurchaseOrderLine: DeletePurchaseOrderLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
@@ -5138,6 +5184,7 @@ export type Mutations = {
   insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
   insertPurchaseOrder: InsertPurchaseOrderResponse;
   insertPurchaseOrderLine: InsertPurchaseOrderLineResponse;
+  insertPurchaseOrderLineFromCsv: InsertPurchaseOrderLineResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -5343,6 +5390,11 @@ export type MutationsDeletePrescriptionLineArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsDeletePurchaseOrderArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsDeletePurchaseOrderLineArgs = {
   input: DeletePurchaseOrderLineInput;
   storeId: Scalars['String']['input'];
@@ -5541,6 +5593,11 @@ export type MutationsInsertPurchaseOrderArgs = {
 
 export type MutationsInsertPurchaseOrderLineArgs = {
   input: InsertPurchaseOrderLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertPurchaseOrderLineFromCsvArgs = {
+  input: InsertPurchaseOrderLineFromCsvInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6160,6 +6217,14 @@ export type OutboundShipmentLineInput = {
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type PackSizeCodeCombinationExists =
+  InsertPurchaseOrderLineErrorInterface & {
+    __typename: 'PackSizeCodeCombinationExists';
+    description: Scalars['String']['output'];
+    itemCode: Scalars['String']['output'];
+    requestedPackSize: Scalars['Float']['output'];
+  };
+
 export type PackagingVariantInput = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -6430,6 +6495,7 @@ export enum PreferenceKey {
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   OrderInPacks = 'orderInPacks',
+  PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
@@ -6468,6 +6534,7 @@ export type PreferencesNode = {
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   orderInPacks: Scalars['Boolean']['output'];
+  preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
@@ -6867,6 +6934,12 @@ export type PurchaseOrderLineSortInput = {
   /** Sort query result by `key` */
   key: PurchaseOrderLineSortFieldInput;
 };
+
+export type PurchaseOrderLineWithIdExists =
+  InsertPurchaseOrderLineErrorInterface & {
+    __typename: 'PurchaseOrderLineWithIdExists';
+    description: Scalars['String']['output'];
+  };
 
 export type PurchaseOrderLinesResponse = PurchaseOrderLineConnector;
 
@@ -7949,6 +8022,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteOutboundShipmentUnallocatedLineErrorInterface &
   DeletePrescriptionErrorInterface &
   DeletePrescriptionLineErrorInterface &
+  DeletePurchaseOrderErrorInterface &
   DeletePurchaseOrderLineInterface &
   DeleteRequestRequisitionErrorInterface &
   DeleteRequestRequisitionLineErrorInterface &
@@ -10556,6 +10630,9 @@ export type UpsertPreferencesInput = {
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
+  preventTransfersMonthsBeforeInitialisation?: InputMaybe<
+    Scalars['Int']['input']
+  >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;

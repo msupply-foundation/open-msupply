@@ -104,6 +104,9 @@ fragment PurchaseOrder on PurchaseOrderNode {
       ...SyncFileReference
     }
   }
+  donor {
+    id
+  }
 }
 
 query purchaseOrders(
@@ -160,6 +163,26 @@ mutation updatePurchaseOrder(
 ) {
   updatePurchaseOrder(input: $input, storeId: $storeId) {
     ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation deletePurchaseOrder($id: String!, $storeId: String!) {
+  deletePurchaseOrder(id: $id, storeId: $storeId) {
+    ... on DeletePurchaseOrderError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+        }
+        description
+        ... on CannotDeleteNonNewPurchaseOrder {
+          __typename
+        }
+      }
+    }
+    ... on DeleteResponse {
       id
     }
   }
@@ -258,6 +281,46 @@ mutation addToPurchaseOrderFromMasterList(
   }
 }
 
+mutation insertPurchaseOrderLineFromCsv(
+  $storeId: String!
+  $input: InsertPurchaseOrderLineFromCSVInput!
+) {
+  insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
+    ... on InsertPurchaseOrderLineError {
+      __typename
+      error {
+        description
+        ... on CannnotFindItemByCode {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+        }
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on PackSizeCodeCombinationExists {
+          __typename
+          description
+          itemCode
+          requestedPackSize
+        }
+        ... on PurchaseOrderLineWithIdExists {
+          __typename
+          description
+        }
+      }
+    }
+    ... on IdResponse {
+      __typename
+      id
+    }
+  }
+}
+
 mutation updatePurchaseOrderLine(
   $input: UpdatePurchaseOrderLineInput!
   $storeId: String!
@@ -278,11 +341,11 @@ mutation updatePurchaseOrderLine(
           __typename
           description
         }
-        ... on PurchaseOrderLineNotFound {
+        ... on UpdatedLineDoesNotExist {
           __typename
           description
         }
-        ... on UpdatedLineDoesNotExist {
+        ... on PurchaseOrderLineNotFound {
           __typename
           description
         }

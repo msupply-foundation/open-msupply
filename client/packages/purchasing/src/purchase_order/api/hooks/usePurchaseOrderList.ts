@@ -3,6 +3,7 @@ import {
   LIST_KEY,
   PurchaseOrderSortFieldInput,
   SortBy,
+  useMutation,
   useQuery,
   useTableStore,
 } from '@openmsupply-client/common';
@@ -21,7 +22,7 @@ export type ListParams = {
 };
 
 export const usePurchaseOrderList = (queryParams: ListParams) => {
-  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
   const {
     sortBy = {
@@ -79,8 +80,38 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
       .filter(Boolean) as PurchaseOrderFragment[],
   }));
 
+  const deleteMutationFn = async (ids: string[]) => {
+    try {
+      for (const id of ids) {
+        await purchaseOrderApi.deletePurchaseOrder({
+          id,
+          storeId,
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting one or more purchase orders:', error);
+      throw error;
+    }
+  };
+
+  const {
+    mutate: deletePurchaseOrders,
+    isLoading: isDeleting,
+    isError: deleteError,
+  } = useMutation({
+    mutationFn: deleteMutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY]);
+    },
+  });
+
   return {
     query: { data, isLoading, isError },
     selectedRows,
+    delete: {
+      deletePurchaseOrders,
+      isDeleting,
+      deleteError,
+    },
   };
 };
