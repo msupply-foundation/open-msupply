@@ -18,9 +18,11 @@ export type StocktakesParams = {
 
 export const useStocktakeList = (queryParams?: StocktakesParams) => {
   const { data, isLoading, isError } = useGet(queryParams ?? {});
+  const { data: hasStocktake } = useHasStocktake();
 
   return {
     query: { data, isLoading, isError },
+    hasStocktake: hasStocktake ?? false,
   };
 };
 
@@ -61,6 +63,22 @@ const useGet = (queryParams: StocktakesParams) => {
     });
     const { nodes, totalCount } = query?.stocktakes;
     return { nodes, totalCount };
+  };
+
+  const query = useQuery({ queryKey, queryFn });
+  return query;
+};
+
+const useHasStocktake = () => {
+  const { stocktakeApi, storeId } = useStocktakeGraphQL();
+  const queryKey = [STOCKTAKE, storeId];
+
+  const queryFn = async () => {
+    const result = await stocktakeApi.stocktakes({
+      storeId,
+      page: { offset: 0, first: 1 },
+    });
+    return result?.stocktakes?.nodes.length > 0;
   };
 
   const query = useQuery({ queryKey, queryFn });
