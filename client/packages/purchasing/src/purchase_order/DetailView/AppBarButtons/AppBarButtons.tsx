@@ -38,6 +38,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           sort={{ key: sortBy.key, desc: sortBy.isDesc }}
         />
         <AddButton
+          purchaseOrder={data ?? undefined}
           onAddItem={onAddItem}
           disable={isDisabled}
           disableAddFromMasterListButton={isLoading}
