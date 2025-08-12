@@ -339,6 +339,12 @@ mod number_row_mapping_test {
                         NumberRowType::try_from(NumberRowType::PurchaseOrder.to_string()).unwrap()
                             == NumberRowType::PurchaseOrder
                     )
+                },
+                NumberRowType::GoodsReceived => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::GoodsReceived.to_string()).unwrap()
+                            == NumberRowType::GoodsReceived
+                    )
                 }
                 NumberRowType::PurchaseOrderLine(s) => {
                     assert!(
