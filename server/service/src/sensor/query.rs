@@ -6,12 +6,10 @@ use repository::{
 };
 
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
     SingleRecordError,
 };
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
+ 
 
 pub fn get_sensors(
     ctx: &ServiceContext,
@@ -19,7 +17,7 @@ pub fn get_sensors(
     filter: Option<SensorFilter>,
     sort: Option<SensorSort>,
 ) -> Result<ListResult<Sensor>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = SensorRepository::new(&ctx.connection);
 
     Ok(ListResult {

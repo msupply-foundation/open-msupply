@@ -1,6 +1,7 @@
 import {
   FnUtils,
   InsertPurchaseOrderInput,
+  PurchaseOrderLineNode,
   SortUtils,
   useConfirmationModal,
   useMutation,
@@ -21,6 +22,10 @@ import { usePurchaseOrderColumns } from '../../DetailView/columns';
 import { parseUpdateInput } from './utils';
 
 const DEBOUNCED_TIME = 1000;
+
+export type PurchaseOrderLineInsertFromCsvInput = Partial<
+  PurchaseOrderLineNode & { purchaseOrderId: string; itemCode: string }
+>;
 
 export const usePurchaseOrder = (id?: string) => {
   const { purchaseOrderId = id } = useParams();
