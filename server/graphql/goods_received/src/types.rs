@@ -91,6 +91,10 @@ impl GoodsReceivedNode {
     pub async fn received_datetime(&self) -> Option<NaiveDate> {
         self.row().received_date
     }
+
+    pub async fn created_by(&self) -> &Option<String> {
+        &self.row().created_by
+    }
 }
 
 impl GoodsReceivedNode {

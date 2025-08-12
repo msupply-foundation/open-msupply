@@ -21,6 +21,7 @@ pub enum PrefKey {
     SyncRecordsDisplayThreshold,
     AuthorisePurchaseOrder,
 
+    AuthoriseGoodsReceived,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
