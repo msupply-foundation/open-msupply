@@ -36,9 +36,7 @@ const UIComponent = (props: ControlProps) => {
     props.uischema.options
   );
   const { handleChange, label, path } = props;
-
   const [otherParty, setOtherParty] = useState<NameRowFragment | null>(null);
-
   const nameType = schemaOptions?.nameType;
 
   const onChange = (newVal: NameRowFragment | null) => {
