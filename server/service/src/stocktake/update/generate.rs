@@ -81,7 +81,6 @@ fn generate_stock_in_out_or_update(
     stocktake_number: &i64,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let stocktake_line_row = stocktake_line.line.to_owned();
-
     let counted_number_of_packs = match stocktake_line_row.counted_number_of_packs {
         Some(counted_number_of_packs) => counted_number_of_packs,
         None => {
@@ -218,7 +217,6 @@ fn generate_stock_in_out_or_update(
             r#type: StockOutType::InventoryReduction,
             id: invoice_line_id,
             invoice_id: inventory_reduction_id.to_string(),
-            stock_line_id: stock_line_row.id,
             number_of_packs: quantity_change,
             note: stock_line_row.note,
             location_id: stocktake_line_row.location_id,
@@ -228,6 +226,9 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack: Some(cost_price_per_pack),
             sell_price_per_pack: Some(sell_price_per_pack),
             volume_per_pack: Some(stocktake_line_row.volume_per_pack),
+            stock_line_id: stock_line_row.id.clone(),
+            item_variant_id,
+            donor_id: donor_link_id,
             campaign_id,
             program_id,
             vvm_status_id,
@@ -338,7 +339,7 @@ fn generate_new_stock_line(
     let item_id = stocktake_line.item.id.to_owned();
     let stock_line_id = uuid();
 
-    let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0.0);
+    let counted_number_of_packs = stocktake_line_row.counted_number_of_packs.unwrap_or(0.0);
 
     // If no counted packs, we shouldn't create a stock line
     if counted_number_of_packs == 0.0 {

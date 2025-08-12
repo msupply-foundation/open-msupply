@@ -2,12 +2,9 @@ use repository::assets::asset::{Asset, AssetFilter, AssetRepository, AssetSort};
 use repository::{EqualFilter, PaginationOption, StorageConnection};
 
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
     SingleRecordError,
 };
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_assets(
     connection: &StorageConnection,
@@ -15,7 +12,7 @@ pub fn get_assets(
     filter: Option<AssetFilter>,
     sort: Option<AssetSort>,
 ) -> Result<ListResult<Asset>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = AssetRepository::new(connection);
 
     Ok(ListResult {

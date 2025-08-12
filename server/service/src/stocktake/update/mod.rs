@@ -185,15 +185,16 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_item_a, mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b,
-            mock_stocktake_a, mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
+            mock_donor_b, mock_item_a, mock_item_a_variant_1, mock_locked_stocktake,
+            mock_stock_line_a, mock_stock_line_b, mock_stocktake_a,
+            mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
             mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
             mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
             mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
             mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a, MockData,
             MockDataInserts,
         },
-        test_db::setup_all_with_data,
+        test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineType,
         StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
         StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
@@ -207,6 +208,8 @@ mod test {
             update::{UpdateStocktake, UpdateStocktakeError},
             UpdateStocktakeStatus,
         },
+        stocktake_line::UpdateStocktakeLine,
+        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -686,5 +689,70 @@ mod test {
 
         // still has initial batch name (was not updated)
         assert_eq!(stock_line.batch, Some("initial batch name".to_string()),);
+    }
+
+    #[actix_rt::test]
+    async fn update_stocktake_stock_lines_update() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stocktake_stock_lines_update",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let stocktake_service = service_provider.stocktake_service;
+        let stocktake_line_service = service_provider.stocktake_line_service;
+
+        // Donor & item variant updates
+        stocktake_line_service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: mock_stocktake_line_stock_surplus().id.clone(),
+                    item_variant_id: Some(NullableUpdate {
+                        value: Some(mock_item_a_variant_1().id.clone()),
+                    }),
+                    donor_id: Some(NullableUpdate {
+                        value: Some(mock_donor_b().id.clone()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let result = stocktake_service
+            .update_stocktake(
+                &context,
+                UpdateStocktake {
+                    id: mock_stocktake_stock_surplus().id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stocktake_line = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new()
+                    .id(EqualFilter::equal_to(
+                        &mock_stocktake_line_stock_surplus().id,
+                    ))
+                    .stocktake_id(EqualFilter::equal_to(&result.id)),
+                None,
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert_eq!(
+            stocktake_line.stock_line.as_ref().unwrap().donor_link_id,
+            Some(mock_donor_b().id.clone())
+        );
+        assert_eq!(
+            stocktake_line.stock_line.as_ref().unwrap().item_variant_id,
+            Some(mock_item_a_variant_1().id.clone())
+        );
     }
 }

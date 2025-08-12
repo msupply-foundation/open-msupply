@@ -41,7 +41,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onAddItem={onAddItem}
           disable={isDisabled}
           disableAddFromMasterListButton={isLoading}
-          disableAddFromInternalOrderButton={isLoading}
         />
         {OpenButton}
       </Grid>
