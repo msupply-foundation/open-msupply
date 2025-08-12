@@ -1,5 +1,6 @@
 use async_graphql::*;
 use chrono::NaiveDate;
+use graphql_core::simple_generic_errors::{CannotEditPurchaseOrder, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
@@ -8,6 +9,11 @@ use repository::PurchaseOrderLineRow;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::purchase_order_line::insert::{
     InsertPurchaseOrderLineError as ServiceError, InsertPurchaseOrderLineInput as ServiceInput,
+    PackSizeCodeCombination,
+};
+
+use crate::mutations::errors::{
+    CannnotFindItemByCode, PackSizeCodeCombinationExists, PurchaseOrderLineWithIdExists,
 };
 
 #[derive(InputObject)]
@@ -46,9 +52,27 @@ impl InsertInput {
     }
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "InsertPurchaseOrderLineError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
+#[derive(Interface)]
+#[graphql(name = "InsertPurchaseOrderLineErrorInterface")]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum InsertErrorInterface {
+    PurchaseOrderDoesNotExist(ForeignKeyError),
+    CannotEditPurchaseOrder(CannotEditPurchaseOrder),
+    PurchaseOrderLineWithIdExists(PurchaseOrderLineWithIdExists),
+    PackSizeCodeCombinationExists(PackSizeCodeCombinationExists),
+    CannotFindItemByCode(CannnotFindItemByCode),
+}
+
 #[derive(Union)]
 #[graphql(name = "InsertPurchaseOrderLineResponse")]
 pub enum InsertResponse {
+    Error(InsertError),
     Response(IdResponse),
 }
 
@@ -71,26 +95,60 @@ pub fn insert_purchase_order_line(
     map_response(
         service_provider
             .purchase_order_line_service
-            .insert_purchase_order_line(&service_context, store_id, input.to_domain()),
+            .insert_purchase_order_line(&service_context, input.to_domain()),
     )
 }
 
-fn map_response(from: Result<PurchaseOrderLineRow, ServiceError>) -> Result<InsertResponse> {
-    match from {
-        Ok(purchase_order) => Ok(InsertResponse::Response(IdResponse(purchase_order.id))),
-        Err(error) => map_error(error),
-    }
+pub fn map_response(from: Result<PurchaseOrderLineRow, ServiceError>) -> Result<InsertResponse> {
+    let result = match from {
+        Ok(purchase_order_line) => {
+            InsertResponse::Response(IdResponse::from_domain(purchase_order_line))
+        }
+        Err(error) => InsertResponse::Error(InsertError {
+            error: map_error(error)?,
+        }),
+    };
+    Ok(result)
 }
 
-fn map_error(error: ServiceError) -> Result<InsertResponse> {
+pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::ItemDoesNotExist
-        | ServiceError::PurchaseOrderDoesNotExist
-        | ServiceError::CannotEditPurchaseOrder
-        | ServiceError::IncorrectStoreId
-        | ServiceError::PurchaseOrderLineAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::PurchaseOrderDoesNotExist => {
+            return Ok(InsertErrorInterface::PurchaseOrderDoesNotExist(
+                ForeignKeyError(ForeignKey::PurchaseOrderId),
+            ));
+        }
+        ServiceError::CannotEditPurchaseOrder => {
+            return Ok(InsertErrorInterface::CannotEditPurchaseOrder(
+                CannotEditPurchaseOrder {},
+            ));
+        }
+        ServiceError::PurchaseOrderLineAlreadyExists => {
+            return Ok(InsertErrorInterface::PurchaseOrderLineWithIdExists(
+                PurchaseOrderLineWithIdExists {},
+            ));
+        }
+        ServiceError::PackSizeCodeCombinationExists(PackSizeCodeCombination {
+            item_code,
+            requested_pack_size,
+        }) => {
+            return Ok(InsertErrorInterface::PackSizeCodeCombinationExists(
+                PackSizeCodeCombinationExists {
+                    item_code,
+                    requested_pack_size,
+                },
+            ));
+        }
+        ServiceError::CannotFindItemByCode(_) => {
+            return Ok(InsertErrorInterface::CannotFindItemByCode(
+                CannnotFindItemByCode {},
+            ));
+        }
+        ServiceError::ItemDoesNotExist | ServiceError::IncorrectStoreId => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

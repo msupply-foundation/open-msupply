@@ -20,6 +20,7 @@ pub enum PrefKey {
     CustomTranslations,
     SyncRecordsDisplayThreshold,
     AuthorisePurchaseOrder,
+
     AuthoriseGoodsReceived,
     // Store preferences
     ManageVaccinesInDoses,
@@ -27,6 +28,7 @@ pub enum PrefKey {
     OrderInPacks,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
+    PreventTransfersMonthsBeforeInitialisation,
 }
 
 #[derive(Clone, Debug, PartialEq)]

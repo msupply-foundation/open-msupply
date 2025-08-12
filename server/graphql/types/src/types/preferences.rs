@@ -47,6 +47,14 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.authorise_purchase_order)
     }
 
+    pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .prevent_transfers_months_before_initialisation,
+        )
+    }
+
     pub async fn authorise_goods_received(&self) -> Result<bool> {
         self.load_preference(&self.preferences.authorise_goods_received)
     }
@@ -125,6 +133,7 @@ pub enum PreferenceKey {
     CustomTranslations,
     SyncRecordsDisplayThreshold,
     AuthorisePurchaseOrder,
+    PreventTransfersMonthsBeforeInitialisation,
     AuthoriseGoodsReceived,
     // Store preferences
     ManageVaccinesInDoses,
@@ -145,6 +154,9 @@ impl PreferenceKey {
             PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
             PrefKey::SyncRecordsDisplayThreshold => PreferenceKey::SyncRecordsDisplayThreshold,
             PrefKey::AuthorisePurchaseOrder => PreferenceKey::AuthorisePurchaseOrder,
+            PrefKey::PreventTransfersMonthsBeforeInitialisation => {
+                PreferenceKey::PreventTransfersMonthsBeforeInitialisation
+            }
             PrefKey::AuthoriseGoodsReceived => PreferenceKey::AuthoriseGoodsReceived,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
