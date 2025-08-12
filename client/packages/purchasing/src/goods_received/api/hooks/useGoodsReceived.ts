@@ -41,6 +41,7 @@ export const useGoodsReceived = () => {
   };
 
   return {
+    query: { data, isLoading, isError },
     create: { create, isCreating, createError },
   };
 };
