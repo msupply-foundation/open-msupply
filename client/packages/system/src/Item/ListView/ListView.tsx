@@ -28,7 +28,6 @@ const ItemListComponent = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
     filters: [{ key: 'codeOrName' }],
   });
   const {

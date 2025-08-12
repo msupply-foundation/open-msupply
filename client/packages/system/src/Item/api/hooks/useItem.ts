@@ -1,4 +1,4 @@
-import { useParams, useQuery } from '@openmsupply-client/common';
+import { ItemNodeType, useParams, useQuery } from '@openmsupply-client/common';
 import { useItemGraphQL } from '../useItemGraphQL';
 import { ITEM } from '../keys';
 import { useItems } from './useItems';
@@ -9,8 +9,12 @@ export function useItem(id?: string) {
     useStockLinesFromItem(id);
 
   const {
-    serviceItems: { data: serviceItems, isLoading: serviceItemsLoading },
-  } = useItems();
+    itemsByFilter: { data: serviceItems, isLoading: serviceItemsLoading },
+  } = useItems({
+    filterBy: {
+      type: { equalTo: ItemNodeType.Service },
+    },
+  });
   const defaultServiceItem =
     serviceItems?.nodes.find(({ code }) => code === 'service') ??
     serviceItems?.nodes?.[0];

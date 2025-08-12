@@ -41,8 +41,12 @@ export const VaccineItemSelect = ({
   draft,
 }: VaccineItemSelectProps) => {
   const {
-    vaccineItems: { data },
-  } = useItems();
+    itemsByFilter: { data },
+  } = useItems({
+    filterBy: {
+      isVaccine: true,
+    },
+  });
 
   const onChangeSelectedItems = (selectedItems: DraftVaccineCourseItem[]) => {
     onChange({ vaccineCourseItems: selectedItems });
