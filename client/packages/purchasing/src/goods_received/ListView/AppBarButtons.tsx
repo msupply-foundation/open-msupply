@@ -21,7 +21,7 @@ export const AppBarButtons: React.FC = () => {
   const t = useTranslation();
   const modalController = useToggle();
   const navigate = useNavigate();
-  
+
   const {
     create: { create, isCreating },
   } = useGoodsReceived();
@@ -36,13 +36,16 @@ export const AppBarButtons: React.FC = () => {
     modalController.toggleOn
   );
 
-  const handlePurchaseOrderSelected = async (selected: PurchaseOrderRowFragment) => {
+  const handlePurchaseOrderSelected = async (
+    selected: PurchaseOrderRowFragment
+  ) => {
     try {
       const result = await create(selected.id);
       const goodsReceivedId = result?.insertGoodsReceived?.id;
-      
+
       if (goodsReceivedId) {
-        const detailRoute = RouteBuilder.create(AppRoute.GoodsReceived)
+        const detailRoute = RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(AppRoute.GoodsReceived)
           .addPart(goodsReceivedId)
           .build();
         navigate(detailRoute);
@@ -50,7 +53,7 @@ export const AppBarButtons: React.FC = () => {
     } catch (error) {
       console.error('Failed to create goods received:', error);
     }
-    
+
     modalController.toggleOff();
   };
 
