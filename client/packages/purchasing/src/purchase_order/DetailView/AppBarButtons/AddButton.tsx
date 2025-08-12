@@ -5,15 +5,20 @@ import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
 import { PurchaseOrderFragment } from '../../api';
-import { PurchaseOrderNodeStatus } from '@common/types';
+import { PurchaseOrderNodeStatus, UserPermission } from '@common/types';
 import { AddDocumentModal } from './AddDocumentModal';
+import { PurchaseOrderLineImportModal } from '../ImportLines/PurchaseOrderLineImportModal';
+import {
+  NonEmptyArray,
+  useCallbackWithPermission,
+} from '@openmsupply-client/common/src';
+import { isPurchaseOrderEditable } from '@openmsupply-client/purchasing/src/utils';
 
 interface AddButtonProps {
   onAddItem: () => void;
   /** Disable the whole control */
   disable: boolean;
   disableAddFromMasterListButton: boolean;
-  disableAddFromInternalOrderButton: boolean;
 }
 
 export const AddButton = ({
@@ -24,12 +29,15 @@ export const AddButton = ({
   const t = useTranslation();
   const masterListModalController = useToggle();
   const uploadDocumentController = useToggle();
+  const importModalController = useToggle();
 
-  const options: [
-    SplitButtonOption<string>,
-    SplitButtonOption<string>,
-    SplitButtonOption<string>,
-  ] = useMemo(
+  const handleUploadPurchaseOrderLines = useCallbackWithPermission(
+    UserPermission.PurchaseOrderMutate,
+    importModalController.toggleOn,
+    t('error.no-purchase-order-import-permission')
+  );
+
+  const options: NonEmptyArray<SplitButtonOption<string>> = useMemo(
     () => [
       {
         value: 'add-item',
@@ -39,7 +47,12 @@ export const AddButton = ({
       {
         value: 'add-from-master-list',
         label: t('button.add-from-master-list'),
-        isDisabled: disableAddFromMasterListButton || disable,
+        isDisabled: disable,
+      },
+      {
+        value: 'import-from-csv',
+        label: t('button.upload-purchase-order-lines'),
+        isDisabled: disable,
       },
       {
         value: 'upload-document',
@@ -71,6 +84,12 @@ export const AddButton = ({
       case 'upload-document':
         uploadDocumentController.toggleOn();
         break;
+      case 'import-from-csv':
+        isPurchaseOrderEditable(
+          purchaseOrder?.status ?? PurchaseOrderNodeStatus.New
+        )
+          ? handleUploadPurchaseOrderLines()
+          : info(t('error.cannot-import'))();
     }
   };
 
@@ -90,6 +109,7 @@ export const AddButton = ({
         isDisabled={disable}
         openFrom="bottom"
         Icon={<PlusCircleIcon />}
+        staticLabel={t('button.add')}
       />
 
       {masterListModalController.isOn && (
@@ -103,6 +123,12 @@ export const AddButton = ({
           isOn={uploadDocumentController.isOn}
           toggleOff={uploadDocumentController.toggleOff}
           purchaseOrderId={purchaseOrder?.id}
+        />
+      )}
+      {importModalController.isOn && (
+        <PurchaseOrderLineImportModal
+          isOpen={importModalController.isOn}
+          onClose={importModalController.toggleOff}
         />
       )}
     </>

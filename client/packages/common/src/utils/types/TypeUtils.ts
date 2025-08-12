@@ -31,3 +31,5 @@ export type JsonValue =
   | Array<JsonValue>
   | { [key in string]?: JsonValue }
   | null;
+
+export type NonEmptyArray<T> = [T, ...T[]];

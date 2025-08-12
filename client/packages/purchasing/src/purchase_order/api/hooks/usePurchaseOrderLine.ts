@@ -26,6 +26,13 @@ export type DraftPurchaseOrderLineFromCSV = Omit<
   itemCode: string;
 };
 
+export type DraftPurchaseOrderLineFromCSV = Omit<
+  DraftPurchaseOrderLine,
+  'id' | 'itemId'
+> & {
+  itemCode: string;
+};
+
 const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   id: '',
   purchaseOrderId: '',

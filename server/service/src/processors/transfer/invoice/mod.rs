@@ -19,8 +19,8 @@ use crate::{
 };
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, Invoice,
-    InvoiceFilter, InvoiceRepository, KeyType, RepositoryError, Requisition, RowActionType,
-    StorageConnection,
+    InvoiceFilter, InvoiceRepository, InvoiceStatus, InvoiceType, KeyType, RepositoryError,
+    Requisition, RowActionType, StorageConnection,
 };
 use thiserror::Error;
 
@@ -271,6 +271,24 @@ fn get_delete_operation(
 
     Ok(Operation::Delete { linked_invoice })
 }
+#[derive(Debug)]
+#[allow(dead_code)] // The "Wrong" variants with fields don't use the fields yet. Be warned allowing dead_code here silences when we never use a particular variant as well.
+enum InvoiceTransferOutput {
+    // Success
+    Processed(String),
+    // Reasons for skipping
+    BeforeInitialisationMonths,
+    WrongOperation(Operation),
+    WrongType(InvoiceType),
+    WrongInboundStatus(InvoiceStatus),
+    WrongOutboundStatus(InvoiceStatus),
+    NoLinkedInvoice,
+    InvoiceCreatedBeforeStore,
+    InvoiceNumberAlreadyAllocated,
+    AlreadyLinked,
+    AlreadyVerified,
+    StatusesAlreadyMatch,
+}
 
 #[derive(Error, Debug)]
 #[error("Database error in processor ({0}) {1:?}")]
@@ -284,13 +302,20 @@ trait InvoiceTransferProcessor {
         connection: &StorageConnection,
         record: &InvoiceTransferProcessorRecord,
     ) -> Result<Option<String>, ProcessorError> {
-        let result = connection
+        let output = connection
             .transaction_sync(|connection| self.try_process_record(connection, record))
             .map_err(|e| ProcessorError(self.get_description(), e.to_inner_error()))?;
 
-        if let Some(result) = &result {
-            log::info!("{} - {}", self.get_description(), result);
-        }
+        let result = match output {
+            InvoiceTransferOutput::Processed(msg) => {
+                log::info!("{} - processed: {}", self.get_description(), msg);
+                Some(msg)
+            }
+            other => {
+                log::debug!("{} - skipped: {:?}", self.get_description(), other);
+                None
+            }
+        };
 
         Ok(result)
     }
@@ -300,5 +325,5 @@ trait InvoiceTransferProcessor {
         &self,
         connection: &StorageConnection,
         record: &InvoiceTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError>;
+    ) -> Result<InvoiceTransferOutput, RepositoryError>;
 }

@@ -2,7 +2,8 @@ use chrono::NaiveDate;
 use repository::{PurchaseOrderLine, PurchaseOrderLineRowRepository, RepositoryError};
 
 use crate::{
-    purchase_order_line::query::get_purchase_order_line, service_provider::ServiceContext,
+    purchase_order_line::{insert::PackSizeCodeCombination, query::get_purchase_order_line},
+    service_provider::ServiceContext,
 };
 
 mod generate;
@@ -19,7 +20,9 @@ pub enum UpdatePurchaseOrderLineInputError {
     CannotEditPurchaseOrder,
     CannotAdjustRequestedQuantity,
     UpdatedLineDoesNotExist,
+    PackSizeCodeCombinationExists(PackSizeCodeCombination),
     DatabaseError(RepositoryError),
+    ItemDoesNotExist,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
