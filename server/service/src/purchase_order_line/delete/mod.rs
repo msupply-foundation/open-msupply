@@ -6,7 +6,7 @@ mod test;
 mod validate;
 use validate::validate;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum DeletePurchaseOrderLineError {
     PurchaseOrderLineDoesNotExist,
     PurchaseOrderDoesNotExist,

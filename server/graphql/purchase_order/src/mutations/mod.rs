@@ -1,4 +1,5 @@
 pub mod add_from_master_list;
+pub mod delete;
 pub mod insert;
 pub mod update;
 

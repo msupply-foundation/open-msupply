@@ -1091,6 +1091,12 @@ export type CannotDeleteLineLinkedToShipment =
     description: Scalars['String']['output'];
   };
 
+export type CannotDeleteNonNewPurchaseOrder =
+  DeletePurchaseOrderErrorInterface & {
+    __typename: 'CannotDeleteNonNewPurchaseOrder';
+    description: Scalars['String']['output'];
+  };
+
 export type CannotDeleteRequisitionWithLines =
   DeleteRequestRequisitionErrorInterface & {
     __typename: 'CannotDeleteRequisitionWithLines';
@@ -1963,6 +1969,15 @@ export type DeletePrescriptionResponseWithId = {
   response: DeletePrescriptionResponse;
 };
 
+export type DeletePurchaseOrderError = {
+  __typename: 'DeletePurchaseOrderError';
+  error: DeletePurchaseOrderErrorInterface;
+};
+
+export type DeletePurchaseOrderErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type DeletePurchaseOrderLineError = {
   __typename: 'DeletePurchaseOrderLineError';
   error: DeletePurchaseOrderLineInterface;
@@ -1978,6 +1993,10 @@ export type DeletePurchaseOrderLineInterface = {
 
 export type DeletePurchaseOrderLineResponse =
   | DeletePurchaseOrderLineError
+  | DeleteResponse;
+
+export type DeletePurchaseOrderResponse =
+  | DeletePurchaseOrderError
   | DeleteResponse;
 
 export type DeleteRequestRequisitionError = {
@@ -5113,6 +5132,7 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  deletePurchaseOrder: DeletePurchaseOrderResponse;
   deletePurchaseOrderLine: DeletePurchaseOrderLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
@@ -5366,6 +5386,11 @@ export type MutationsDeletePrescriptionArgs = {
 
 export type MutationsDeletePrescriptionLineArgs = {
   input: DeletePrescriptionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePurchaseOrderArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -7996,6 +8021,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteOutboundShipmentUnallocatedLineErrorInterface &
   DeletePrescriptionErrorInterface &
   DeletePrescriptionLineErrorInterface &
+  DeletePurchaseOrderErrorInterface &
   DeletePurchaseOrderLineInterface &
   DeleteRequestRequisitionErrorInterface &
   DeleteRequestRequisitionLineErrorInterface &
