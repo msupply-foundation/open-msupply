@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useToggle,
   useTranslation,
@@ -7,6 +7,7 @@ import {
   styled,
   QueryParamsProvider,
   createQueryParamsStore,
+  ItemNodeType,
 } from '@openmsupply-client/common';
 import { ItemRowFragment, useItems } from '../../api';
 
@@ -39,18 +40,22 @@ export const optionRenderer = (
   </ItemOption>
 );
 
-const ServiceItemSearchComponent: FC<ItemSearchInputProps> = ({
+const ServiceItemSearchComponent = ({
   onChange,
   currentItemId,
   disabled = false,
   width = 200,
   autoFocus = false,
   refetchOnMount = true,
-}) => {
-  // const { data, isLoading } = useServiceItems({ refetchOnMount });
+}: ItemSearchInputProps) => {
   const {
-    serviceItems: { data, isLoading },
-  } = useItems(refetchOnMount);
+    itemsByFilter: { data, isLoading },
+  } = useItems({
+    refetchOnMount,
+    filterBy: {
+      type: { equalTo: ItemNodeType.Service },
+    },
+  });
   const t = useTranslation();
   const selectControl = useToggle();
 
