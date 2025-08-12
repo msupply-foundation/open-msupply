@@ -48,7 +48,7 @@ export const AddButton = ({
       {
         value: 'add-from-master-list',
         label: t('button.add-from-master-list'),
-        isDisabled: disable,
+        isDisabled: disableAddFromMasterListButton,
       },
       {
         value: 'import-from-csv',
