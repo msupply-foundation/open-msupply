@@ -11,6 +11,7 @@ export type PurchaseOrderRowFragment = {
   confirmedDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
+  reference?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -97,7 +98,6 @@ export type PurchaseOrderFragment = {
       };
     }>;
   };
-  store?: { __typename: 'StoreNode'; id: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   documents: {
     __typename: 'SyncFileReferenceConnector';
@@ -133,6 +133,7 @@ export type PurchaseOrdersQuery = {
       confirmedDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
+      reference?: string | null;
       comment?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -203,7 +204,6 @@ export type PurchaseOrderByIdQuery = {
             };
           }>;
         };
-        store?: { __typename: 'StoreNode'; id: string } | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
         documents: {
           __typename: 'SyncFileReferenceConnector';
@@ -429,6 +429,7 @@ export const PurchaseOrderRowFragmentDoc = gql`
     confirmedDatetime
     status
     targetMonths
+    reference
     lines {
       totalCount
     }
@@ -496,9 +497,6 @@ export const PurchaseOrderFragmentDoc = gql`
     sentDatetime
     shippingMethod
     status
-    store {
-      id
-    }
     supplier {
       __typename
       id
