@@ -17,8 +17,8 @@ import {
   useNotification,
   UploadFile,
   useExportCSV,
+  ImportPanel,
 } from '@openmsupply-client/common';
-import { ImportPanel } from './ImportPanel';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
 import { importEquipmentToCsv, parseStatusFromString } from '../utils';
@@ -261,8 +261,9 @@ export const EquipmentUploadTab = ({
           onUploadComplete();
         },
       });
+    } else {
+      error(t('messages.error-no-file-selected'))();
     }
-    error(t('messages.error-no-file-selected'));
   };
 
   const processUploadedDataChunk = (data: ParseResult<ParsedAsset>) => {

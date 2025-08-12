@@ -159,6 +159,24 @@ pub(crate) fn process_requisition_transfers(
 #[error("Database error in processor ({0}) {1:?}")]
 pub(crate) struct ProcessorError(String, RepositoryError);
 
+#[derive(Debug)]
+enum RequisitionTransferOutput {
+    // Success!!
+    Processed(String),
+    // Reasons for skipping
+    NotRequest,
+    NotSent,
+    HasResponse,
+    BeforeInitialisationMonths,
+    NotResponse,
+    NoLinkedRequisition,
+    LinkedRequisitionNotLinked,
+    RequestAlreadyApproved,
+    ResponseNotApproved,
+    RequestNotFinalised,
+    ResponseNotFinalised,
+}
+
 trait RequisitionTransferProcessor {
     fn get_description(&self) -> String;
 
@@ -167,13 +185,20 @@ trait RequisitionTransferProcessor {
         connection: &StorageConnection,
         record: &RequisitionTransferProcessorRecord,
     ) -> Result<Option<String>, ProcessorError> {
-        let result = connection
+        let output = connection
             .transaction_sync(|connection| self.try_process_record(connection, record))
             .map_err(|e| ProcessorError(self.get_description(), e.to_inner_error()))?;
 
-        if let Some(result) = &result {
-            log::info!("{} - {}", self.get_description(), result);
-        }
+        let result = match output {
+            RequisitionTransferOutput::Processed(msg) => {
+                log::info!("{} - processed: {}", self.get_description(), msg);
+                Some(msg)
+            }
+            other => {
+                log::debug!("{} - skipped: {:?}", self.get_description(), other);
+                None
+            }
+        };
 
         Ok(result)
     }
@@ -183,5 +208,5 @@ trait RequisitionTransferProcessor {
         &self,
         connection: &StorageConnection,
         record: &RequisitionTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError>;
+    ) -> Result<RequisitionTransferOutput, RepositoryError>;
 }

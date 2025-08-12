@@ -43,6 +43,7 @@ const Options = z
     autoFocus: z.boolean().optional(),
     displayPrevious: z.boolean().optional(),
     defaultToPrevious: z.boolean().optional(),
+    previousPath: z.string().optional(),
   })
   .strict()
   .optional();

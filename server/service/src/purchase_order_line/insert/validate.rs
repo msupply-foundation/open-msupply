@@ -1,16 +1,24 @@
 use repository::{
-    ItemRowRepository, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository,
+    EqualFilter, ItemRowRepository, Pagination, PurchaseOrderLineFilter,
+    PurchaseOrderLineRepository, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository,
     StorageConnection,
 };
 
 use crate::{
     purchase_order::validate::purchase_order_is_editable,
-    purchase_order_line::insert::{InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput},
+    purchase_order_line::insert::{InsertPurchaseOrderLineError, PackSizeCodeCombination},
 };
+
+pub struct ValidateInput {
+    pub id: String,
+    pub purchase_order_id: String,
+    pub item_id: String,
+    pub requested_pack_size: f64,
+}
 
 pub fn validate(
     store_id: &str,
-    input: &InsertPurchaseOrderLineInput,
+    input: &ValidateInput,
     connection: &StorageConnection,
 ) -> Result<(), InsertPurchaseOrderLineError> {
     if PurchaseOrderLineRowRepository::new(connection)
@@ -32,11 +40,32 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::CannotEditPurchaseOrder);
     }
 
-    if ItemRowRepository::new(connection)
-        .find_one_by_id(&input.item_id)?
-        .is_none()
-    {
-        return Err(InsertPurchaseOrderLineError::ItemDoesNotExist);
+    let item = match ItemRowRepository::new(connection).find_one_by_id(&input.item_id)? {
+        Some(item) => item,
+        None => {
+            return Err(InsertPurchaseOrderLineError::ItemDoesNotExist);
+        }
+    };
+
+    // check if pack size and item id combination already exists
+    let existing_pack_item = PurchaseOrderLineRepository::new(connection).query(
+        Pagination::all(),
+        Some(PurchaseOrderLineFilter {
+            id: None,
+            purchase_order_id: Some(EqualFilter::equal_to(&input.purchase_order_id)),
+            store_id: None,
+            requested_pack_size: Some(EqualFilter::equal_to_f64(input.requested_pack_size)),
+            item_id: Some(EqualFilter::equal_to(&input.item_id.clone())),
+        }),
+        None,
+    )?;
+    if !existing_pack_item.is_empty() {
+        return Err(InsertPurchaseOrderLineError::PackSizeCodeCombinationExists(
+            PackSizeCodeCombination {
+                item_code: item.code.clone(),
+                requested_pack_size: input.requested_pack_size,
+            },
+        ));
     }
 
     Ok(())

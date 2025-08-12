@@ -13,9 +13,17 @@ describe('ClickableStepper', () => {
         <ClickableStepper
           activeStep={0}
           steps={[
-            { label: 'admin', description: 'admin step' },
-            { label: 'catalogue', description: 'catalogue step' },
-            { label: 'customers', description: 'customers step' },
+            { label: 'admin', description: 'admin step', tab: 'admin' },
+            {
+              label: 'catalogue',
+              description: 'catalogue step',
+              tab: 'catalogue',
+            },
+            {
+              label: 'customers',
+              description: 'customers step',
+              tab: 'customers',
+            },
           ]}
         />
       </TestingProvider>
@@ -36,9 +44,17 @@ describe('ClickableStepper', () => {
         <ClickableStepper
           activeStep={1}
           steps={[
-            { label: 'admin', description: 'admin step' },
-            { label: 'catalogue', description: 'catalogue step' },
-            { label: 'customers', description: 'customers step' },
+            { label: 'admin', description: 'admin step', tab: 'admin' },
+            {
+              label: 'catalogue',
+              description: 'catalogue step',
+              tab: 'catalogue',
+            },
+            {
+              label: 'customers',
+              description: 'customers step',
+              tab: 'customers',
+            },
           ]}
         />
       </TestingProvider>

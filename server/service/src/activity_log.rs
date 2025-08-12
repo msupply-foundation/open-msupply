@@ -14,10 +14,7 @@ use util::{constants::SYSTEM_USER_ID, format_error};
 
 use crate::service_provider::ServiceContext;
 
-use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
+use super::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
 
 pub fn get_activity_logs(
     connection_manager: &StorageConnectionManager,
@@ -25,7 +22,7 @@ pub fn get_activity_logs(
     filter: Option<ActivityLogFilter>,
     sort: Option<ActivityLogSort>,
 ) -> Result<ListResult<ActivityLog>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let connection = connection_manager.connection()?;
     let repository = ActivityLogRepository::new(&connection);
 

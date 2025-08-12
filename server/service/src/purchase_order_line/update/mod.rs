@@ -4,7 +4,11 @@ use repository::{
 };
 
 use crate::{
+<<<<<<< HEAD
     activity_log::activity_log_entry, purchase_order_line::query::get_purchase_order_line,
+=======
+    purchase_order_line::{insert::PackSizeCodeCombination, query::get_purchase_order_line},
+>>>>>>> develop
     service_provider::ServiceContext,
 };
 
@@ -21,7 +25,9 @@ pub enum UpdatePurchaseOrderLineInputError {
     PurchaseOrderDoesNotExist,
     CannotEditPurchaseOrder,
     UpdatedLineDoesNotExist,
+    PackSizeCodeCombinationExists(PackSizeCodeCombination),
     DatabaseError(RepositoryError),
+    ItemDoesNotExist,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
