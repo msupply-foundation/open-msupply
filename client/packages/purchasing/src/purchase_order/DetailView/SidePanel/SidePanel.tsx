@@ -9,7 +9,7 @@ import { SupplierDetailSection } from './SupplierDetailSection';
 import { PurchaseOrderFragment } from '../../api';
 import { DateSection } from './DateSection';
 import { OtherSection } from './OtherSection';
-import { PriceSection } from './PriceSection';
+import { PricingSection } from './PricingSection';
 
 export const SidePanel = (): ReactElement => {
   const t = useTranslation();
@@ -37,7 +37,7 @@ export const SidePanel = (): ReactElement => {
         onUpdate={handleUpdate}
         onChange={handleChange}
       />
-      <PriceSection lines={draft?.lines?.nodes ?? []} />
+      <PricingSection draft={draft} />
     </DetailPanelPortal>
   );
 };
