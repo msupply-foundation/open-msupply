@@ -40,8 +40,6 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedDeliveryDate
   requestedNumberOfUnits
   authorisedNumberOfUnits
-  pricePerUnitAfterDiscount
-  pricePerUnitBeforeDiscount
 }
 
 fragment PurchaseOrder on PurchaseOrderNode {
