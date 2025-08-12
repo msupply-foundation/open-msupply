@@ -39,6 +39,7 @@ export const AppBarButtons: React.FC = () => {
   const handlePurchaseOrderSelected = async (
     selected: PurchaseOrderRowFragment
   ) => {
+    console.log('Selected Purchase Order:', selected);
     try {
       const result = await create(selected.id);
       const goodsReceivedId = result?.insertGoodsReceived?.id;
