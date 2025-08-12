@@ -27,7 +27,7 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
   Icon,
   reports,
   onReportClick,
-  hasReports = true,
+  hasReports = false,
 }) => {
   const { translateDynamicKey } = useIntlUtils();
   if (!hasReports) return null;
