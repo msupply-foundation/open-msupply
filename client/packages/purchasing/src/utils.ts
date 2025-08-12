@@ -70,3 +70,10 @@ export const isPurchaseOrderDisabled = (
 ): boolean => {
   return purchaseOrder.status === PurchaseOrderNodeStatus.Finalised;
 };
+
+export const isPurchaseOrderEditable = (
+  status: PurchaseOrderNodeStatus
+): boolean => {
+  // mimmicking OG behaviour where purchase orders can be edited when confirmed AND when authorised
+  return status !== PurchaseOrderNodeStatus.Finalised;
+};

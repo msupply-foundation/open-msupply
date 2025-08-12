@@ -1,18 +1,18 @@
-import React, { FC } from 'react';
-import { ImportRow } from './EquipmentImportModal';
+import React from 'react';
+import { ImportRow } from './PurchaseOrderLineImportModal';
 import { ImportReviewDataTable } from './ImportReviewDataTable';
 import { ImportPanel } from '@common/components';
 
-interface EquipmentReviewTabProps {
+interface ReviewTabProps {
   uploadedRows: ImportRow[];
   showWarnings: boolean;
 }
 
-export const EquipmentReviewTab: FC<ImportPanel & EquipmentReviewTabProps> = ({
+export const ReviewTab = ({
   showWarnings,
   tab,
   uploadedRows,
-}) => (
+}: ImportPanel & ReviewTabProps) => (
   <ImportPanel tab={tab}>
     <ImportReviewDataTable
       importRows={uploadedRows}
