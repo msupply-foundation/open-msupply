@@ -8,7 +8,7 @@ use graphql_core::loader::{
 use graphql_core::ContextExt;
 use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus};
 use service::ListResult;
-
+use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
 use crate::types::{
     NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
 };

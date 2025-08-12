@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use actix_web::web::Data;
 use async_graphql::dataloader::Loader;
-use repository::{EqualFilter, GoodsReceivedLineFilter, PurchaseOrderLine, PurchaseOrderLineFilter};
+use repository::{EqualFilter, GoodsReceivedLine, GoodsReceivedLineFilter};
 use service::service_provider::ServiceProvider;
 
 use crate::standard_graphql_error::StandardGraphqlError;
@@ -19,7 +19,7 @@ pub struct GoodsReceivedLinesByGoodsReceivedIdLoader {
 }
 
 impl Loader<String> for GoodsReceivedLinesByGoodsReceivedIdLoader {
-    type Value = Vec<PurchaseOrderLine>;
+    type Value = Vec<GoodsReceivedLine>;
     type Error = async_graphql::Error;
 
     async fn load(
@@ -45,7 +45,7 @@ impl Loader<String> for GoodsReceivedLinesByGoodsReceivedIdLoader {
 
         let mut result: HashMap<String, Vec<GoodsReceivedLine>> = HashMap::new();
         for goods_received_line in goods_received_lines.rows {
-            let list: &mut Vec<PurchaseOrderLine> = result
+            let list: &mut Vec<GoodsReceivedLine> = result
                 .entry(
                     goods_received_line
                         .goods_received_line_row
