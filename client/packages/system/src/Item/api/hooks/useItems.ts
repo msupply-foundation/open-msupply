@@ -1,5 +1,5 @@
 import {
-  ItemNodeType,
+  ItemFilterInput,
   ItemSortFieldInput,
   SortBy,
   useQuery,
@@ -9,16 +9,20 @@ import { useItemGraphQL } from '../useItemGraphQL';
 import { ITEM } from '../keys';
 import { ItemRowFragment } from '../operations.generated';
 
-const baseFilter = {
-  isActive: true,
-  isVisible: true,
-};
+interface ItemHookProps {
+  filterBy?: ItemFilterInput;
+  refetchOnMount?: boolean;
+}
 
-export function useItems(refetchOnMount?: boolean) {
-  const { data, isLoading, isError } = useGet();
-  const { data: vaccine } = useGetVaccineItems();
-  const { data: service, isLoading: serviceLoading } =
-    useServiceItems(refetchOnMount);
+export const useItems = ({
+  filterBy = {},
+  refetchOnMount = true,
+}: ItemHookProps = {}) => {
+  const { data, isLoading, isError } = useVisibleOrOnHandItems();
+  const { data: itemsByFilter, isLoading: isLoadingByFilter } = useGetByFilter({
+    filterBy,
+    refetchOnMount,
+  });
 
   return {
     items: {
@@ -26,17 +30,14 @@ export function useItems(refetchOnMount?: boolean) {
       isLoading,
       isError,
     },
-    vaccineItems: {
-      data: vaccine,
-    },
-    serviceItems: {
-      data: service,
-      isLoading: serviceLoading,
+    itemsByFilter: {
+      data: itemsByFilter,
+      isLoading: isLoadingByFilter,
     },
   };
-}
+};
 
-const useGet = () => {
+const useVisibleOrOnHandItems = () => {
   const { api, storeId } = useItemGraphQL();
   const { queryParams } = useUrlQueryParams({
     filters: [{ key: 'codeOrName' }],
@@ -69,7 +70,10 @@ const useGet = () => {
   });
 };
 
-const useGetVaccineItems = () => {
+const useGetByFilter = ({
+  filterBy = {},
+  refetchOnMount = false,
+}: ItemHookProps = {}) => {
   const { api, storeId } = useItemGraphQL();
 
   const queryFn = async () => {
@@ -80,8 +84,9 @@ const useGetVaccineItems = () => {
       desc: false,
       storeId,
       filter: {
-        ...baseFilter,
-        isVaccine: true,
+        isActive: true,
+        isVisible: true,
+        ...filterBy,
       },
     });
 
@@ -91,34 +96,7 @@ const useGetVaccineItems = () => {
   };
 
   return useQuery({
-    queryKey: [ITEM],
-    queryFn,
-  });
-};
-
-const useServiceItems = (refetchOnMount?: boolean) => {
-  const { api, storeId } = useItemGraphQL();
-
-  const queryFn = async () => {
-    const result = await api.items({
-      first: 1000,
-      offset: 0,
-      key: ItemSortFieldInput.Name,
-      desc: false,
-      storeId,
-      filter: {
-        ...baseFilter,
-        type: { equalTo: ItemNodeType.Service },
-      },
-    });
-
-    if (result.items.__typename === 'ItemConnector') {
-      return result.items;
-    }
-  };
-
-  return useQuery({
-    queryKey: [ITEM],
+    queryKey: [ITEM, filterBy],
     queryFn,
     refetchOnMount,
   });
