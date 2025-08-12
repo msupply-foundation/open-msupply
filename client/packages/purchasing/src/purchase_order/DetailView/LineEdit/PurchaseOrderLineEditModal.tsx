@@ -108,7 +108,6 @@ export const PurchaseOrderLineEditModal = ({
         <PurchaseOrderLineEdit
           currentLine={currentLine}
           isUpdateMode={mode === ModalMode.Update}
-          lines={lines}
           purchaseOrder={purchaseOrder}
           onChangeItem={onChangeItem}
           draft={draft}

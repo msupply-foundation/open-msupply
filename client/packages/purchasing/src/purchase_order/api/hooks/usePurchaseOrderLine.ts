@@ -19,15 +19,22 @@ export type DraftPurchaseOrderLine = Omit<
   itemId: string;
 };
 
+export type DraftPurchaseOrderLineFromCSV = Omit<
+  DraftPurchaseOrderLine,
+  'id' | 'itemId'
+> & {
+  itemCode: string;
+};
+
 const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   id: '',
   purchaseOrderId: '',
   itemId: '',
   requestedPackSize: 0,
   requestedNumberOfUnits: 0,
-  adjustedNumberOfUnits: null,
-  requestedDeliveryDate: null,
   expectedDeliveryDate: null,
+  requestedDeliveryDate: null,
+  adjustedNumberOfUnits: null,
 };
 
 export function usePurchaseOrderLine(id?: string) {
@@ -71,39 +78,21 @@ export function usePurchaseOrderLine(id?: string) {
     error: createError,
   } = useCreate();
 
-  const {
-    mutateAsync: updateMutation,
-    isLoading: isUpdating,
-    error: updateError,
-  } = useUpdate();
-
-  const { patch, updatePatch, resetDraft, isDirty } =
-    usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
-
-  const draft: DraftPurchaseOrderLine = data
-    ? { ...defaultPurchaseOrderLine, ...data?.nodes[0], ...patch }
-    : { ...defaultPurchaseOrderLine, ...patch };
-
   const create = async () => {
     const result = await createMutation(draft);
     resetDraft();
     return result;
   };
 
-  const update = async () => {
-    if (!data?.nodes[0]?.id) return;
-    const result = await updateMutation({
-      id: data.nodes[0].id,
-      ...patch,
-    });
-    resetDraft();
-    return result;
-  };
+  // CREATE FROM CSV
+
+  const { mutateAsync, invalidateQueries } = useLineInsertFromCSV();
 
   return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
+    createFromCSV: { mutateAsync, invalidateQueries },
     draft,
     resetDraft,
     isDirty,
@@ -202,4 +191,51 @@ const useUpdate = () => {
   };
 
   return { ...mutationState, updatePurchaseOrderLine };
+};
+
+export const useLineInsertFromCSV = () => {
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+  const t = useTranslation();
+
+  const { mutateAsync } = useMutation(
+    async (line: Partial<DraftPurchaseOrderLineFromCSV>) => {
+      const result = await purchaseOrderApi.insertPurchaseOrderLineFromCsv({
+        storeId,
+        input: {
+          itemCode: line.itemCode ?? '',
+          purchaseOrderId: line.purchaseOrderId ?? '',
+          requestedPackSize: line.requestedPackSize ?? 0.0,
+          requestedNumberOfUnits: line.requestedNumberOfUnits ?? 0,
+        },
+      });
+      if (result.insertPurchaseOrderLineFromCsv.__typename === 'IdResponse') {
+        return result.insertPurchaseOrderLineFromCsv.id;
+      }
+
+      switch (result.insertPurchaseOrderLineFromCsv.error.__typename) {
+        case 'PackSizeCodeCombinationExists':
+          const itemCode = result.insertPurchaseOrderLineFromCsv.error.itemCode;
+          const requestedPackSize =
+            result.insertPurchaseOrderLineFromCsv.error.requestedPackSize;
+          throw new Error(
+            t('error.line-combination-error', { itemCode, requestedPackSize })
+          );
+        case 'CannnotFindItemByCode':
+          throw new Error(t('error.cannot-find-item-by-code'));
+        case 'CannotEditPurchaseOrder':
+          throw new Error(t('error.cannot-edit-purchase-order'));
+        case 'ForeignKeyError':
+          throw new Error(t('error.foreign-key-error'));
+        case 'PurchaseOrderLineWithIdExists':
+          throw new Error(t('error.purchase-order-line-already-exists'));
+        default:
+          throw new Error(t('error.unknown-insert-error'));
+      }
+    }
+  );
+
+  return {
+    mutateAsync,
+    invalidateQueries: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+  };
 };
