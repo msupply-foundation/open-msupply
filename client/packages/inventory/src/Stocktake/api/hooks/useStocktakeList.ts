@@ -3,7 +3,9 @@ import {
   SortBy,
   StocktakeFilterInput,
   StocktakeSortFieldInput,
+  useMutation,
   useQuery,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { STOCKTAKE } from './keys';
 import { useStocktakeGraphQL } from '../useStocktakeGraphQL';
@@ -18,10 +20,12 @@ export type StocktakesParams = {
 
 export const useStocktakeList = (queryParams?: StocktakesParams) => {
   const { data, isLoading, isError } = useGet(queryParams ?? {});
+  const { deleteStocktakes, selectedRows } = useDelete(data?.nodes);
   const { data: hasStocktake } = useHasStocktake();
 
   return {
     query: { data, isLoading, isError },
+    delete: { deleteStocktakes, selectedRows },
     hasStocktake: hasStocktake ?? false,
   };
 };
@@ -83,6 +87,42 @@ const useHasStocktake = () => {
 
   const query = useQuery({ queryKey, queryFn });
   return query;
+};
+
+const useDelete = (stocktakes?: StocktakeRowFragment[]) => {
+  const { stocktakeApi, storeId, queryClient } = useStocktakeGraphQL();
+
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
+      .map(selectedId => stocktakes?.find(({ id }) => selectedId === id))
+      .filter(Boolean) as StocktakeRowFragment[],
+  }));
+
+  const mutationFn = async (stocktakes: StocktakeRowFragment[]) => {
+    const result = await stocktakeApi.deleteStocktakes({
+      ids: stocktakes.map(stocktake => ({ id: stocktake.id })),
+      storeId,
+    });
+    return result.batchStocktake;
+  };
+
+  const { mutateAsync: deleteMutation } = useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([STOCKTAKE]);
+    },
+  });
+
+  const deleteStocktakes = async () => {
+    if (selectedRows.length === 0) return;
+    await deleteMutation(selectedRows);
+  };
+
+  return {
+    deleteStocktakes,
+    selectedRows,
+  };
 };
 
 const toSortField = (
