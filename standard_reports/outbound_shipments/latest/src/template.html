@@ -3,6 +3,12 @@
 </style>
 
 <div class="container">
+    {% if data and data|length > 0 %}
+  <div class="header">
+    <h2>{{data[0].otherPartyName}}</h2>
+  </div>
+  {% endif %}
+  
   <table>
     <thead>
       <tr class="heading">

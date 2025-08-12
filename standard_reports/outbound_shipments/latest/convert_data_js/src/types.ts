@@ -12,6 +12,7 @@ export type Input = {
 export interface InvoiceConnector {
   nodes: {
     id: string;
+    otherPartyName?: string;
     lines: InvoiceLine;
   }[];
 }
@@ -38,6 +39,7 @@ export interface Item {
 export type Output = {
   data: {
     id: string;
+    otherPartyName?: string;
     itemCode: string;
     itemName: string;
     batch?: string | null;
