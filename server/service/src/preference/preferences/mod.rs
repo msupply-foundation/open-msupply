@@ -20,6 +20,10 @@ pub mod custom_translations;
 pub use custom_translations::*;
 pub mod sync_records_display_threshold;
 pub use sync_records_display_threshold::*;
+pub mod authorise_purchase_order;
+pub use authorise_purchase_order::*;
+pub mod prevent_transfers_months_before_initialisation;
+pub use prevent_transfers_months_before_initialisation::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -29,6 +33,8 @@ pub struct PreferenceProvider {
     pub use_campaigns: UseCampaigns,
     pub custom_translations: CustomTranslations,
     pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
+    pub authorise_purchase_order: AuthorisePurchaseOrder,
+    pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -46,6 +52,8 @@ pub fn get_preference_provider() -> PreferenceProvider {
         use_campaigns: UseCampaigns,
         custom_translations: CustomTranslations,
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
+        authorise_purchase_order: AuthorisePurchaseOrder,
+        prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,

@@ -45,6 +45,13 @@ export const ReplenishmentNav = ({
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.GoodsReceived)
+              .build()}
+            text={t('goods-received')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InboundShipment)
               .build()}
             text={t('inbound-shipment')}

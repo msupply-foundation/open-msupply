@@ -387,7 +387,6 @@ mod tests {
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
         MasterListRowRepository, NameRow, NameRowRepository, Pagination, StockLineRow,
         StockLineRowRepository, StoreRow, StoreRowRepository, StringFilter,
-        DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -428,7 +427,6 @@ mod tests {
                 .unwrap();
         }
 
-        let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
         let item_query_repository = ItemRepository::new(&storage_connection);
 
         // Test
@@ -438,13 +436,13 @@ mod tests {
             rows.len()
         );
 
-        // .query, no pagination (default)
+        // .query, no pagination (default) - gets all items
         assert_eq!(
             item_query_repository
                 .query(Pagination::new(), None, None, None)
                 .unwrap()
                 .len(),
-            default_page_size
+            200
         );
 
         // .query, pagination (offset 10)
@@ -452,19 +450,16 @@ mod tests {
             .query(
                 Pagination {
                     offset: 10,
-                    limit: DEFAULT_PAGINATION_LIMIT,
+                    limit: 100,
                 },
                 None,
                 None,
                 None,
             )
             .unwrap();
-        assert_eq!(result.len(), default_page_size);
+        assert_eq!(result.len(), 100);
         assert_eq!(result[0], rows[10]);
-        assert_eq!(
-            result[default_page_size - 1],
-            rows[10 + default_page_size - 1]
-        );
+        assert_eq!(result[99], rows[109]);
 
         // .query, pagination (first 10)
         let result = item_query_repository

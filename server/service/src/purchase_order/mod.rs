@@ -1,6 +1,7 @@
 use self::query::{get_purchase_order, get_purchase_orders};
 use crate::{
     purchase_order::{
+        delete::{delete_purchase_order, DeletePurchaseOrderError},
         insert::{insert_purchase_order, InsertPurchaseOrderError, InsertPurchaseOrderInput},
         update::{update_purchase_order, UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
     },
@@ -9,12 +10,13 @@ use crate::{
 };
 
 use repository::{
-    PaginationOption, PurchaseOrderFilter, PurchaseOrderLine, PurchaseOrderRow, PurchaseOrderSort,
-    RepositoryError,
+    PaginationOption, PurchaseOrder, PurchaseOrderFilter, PurchaseOrderLine, PurchaseOrderRow,
+    PurchaseOrderSort, RepositoryError,
 };
 
 pub mod add_to_purchase_order_from_master_list;
 pub mod common;
+pub mod delete;
 pub mod generate;
 pub mod insert;
 pub mod query;
@@ -25,20 +27,20 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
     fn get_purchase_order(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
+        store_id: Option<&str>,
         id: &str,
-    ) -> Result<Option<PurchaseOrderRow>, RepositoryError> {
+    ) -> Result<Option<PurchaseOrder>, RepositoryError> {
         get_purchase_order(ctx, store_id, id)
     }
 
     fn get_purchase_orders(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
+        store_id: Option<&str>,
         pagination: Option<PaginationOption>,
         filter: Option<PurchaseOrderFilter>,
         sort: Option<PurchaseOrderSort>,
-    ) -> Result<ListResult<PurchaseOrderRow>, ListError> {
+    ) -> Result<ListResult<PurchaseOrder>, ListError> {
         get_purchase_orders(ctx, store_id, pagination, filter, sort)
     }
 
@@ -58,6 +60,15 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
         input: UpdatePurchaseOrderInput,
     ) -> Result<PurchaseOrderRow, UpdatePurchaseOrderError> {
         update_purchase_order(ctx, store_id, input)
+    }
+
+    fn delete_purchase_order(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        id: String,
+    ) -> Result<String, DeletePurchaseOrderError> {
+        delete_purchase_order(ctx, store_id, id)
     }
 
     fn add_to_purchase_order_from_master_list(

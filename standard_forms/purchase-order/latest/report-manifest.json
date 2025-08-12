@@ -7,5 +7,7 @@
   "queries": {
     "gql": "query.graphql"
   },
-  "header": "header.html"
+  "header": "header.html",
+  "convert_data": "convert_data_js",
+  "convert_data_type": "BoaJs"
 }

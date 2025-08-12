@@ -1,0 +1,68 @@
+fragment GoodsReceivedRow on GoodsReceivedNode {
+  id
+  number
+  status
+  comment
+  createdDatetime
+  receivedDatetime
+  purchaseOrderNumber
+  supplierReference
+  supplier {
+    id
+    name
+  }
+}
+
+fragment GoodsReceived on GoodsReceivedNode {
+  __typename
+  id
+  number
+  status
+  comment
+  createdBy
+  createdDatetime
+  receivedDatetime
+  purchaseOrderNumber
+  supplierReference
+  supplier {
+    id
+    name
+  }
+}
+
+query goodsReceivedList(
+  $first: Int
+  $offset: Int
+  $key: GoodsReceivedSortFieldInput!
+  $desc: Boolean
+  $filter: GoodsReceivedFilterInput
+  $storeId: String!
+) {
+  goodsReceivedList(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on GoodsReceivedConnector {
+      __typename
+      nodes {
+        ...GoodsReceivedRow
+      }
+      totalCount
+    }
+  }
+}
+
+query goodsReceivedById($id: String!, $storeId: String!) {
+  goodsReceived(id: $id, storeId: $storeId) {
+    __typename
+    ... on RecordNotFound {
+      __typename
+      description
+    }
+    ... on GoodsReceivedNode {
+      ...GoodsReceived
+    }
+  }
+}

@@ -43,6 +43,18 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
+    pub async fn authorise_purchase_order(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_purchase_order)
+    }
+
+    pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .prevent_transfers_months_before_initialisation,
+        )
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -116,6 +128,8 @@ pub enum PreferenceKey {
     UseCampaigns,
     CustomTranslations,
     SyncRecordsDisplayThreshold,
+    AuthorisePurchaseOrder,
+    PreventTransfersMonthsBeforeInitialisation,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -134,6 +148,10 @@ impl PreferenceKey {
             PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
             PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
             PrefKey::SyncRecordsDisplayThreshold => PreferenceKey::SyncRecordsDisplayThreshold,
+            PrefKey::AuthorisePurchaseOrder => PreferenceKey::AuthorisePurchaseOrder,
+            PrefKey::PreventTransfersMonthsBeforeInitialisation => {
+                PreferenceKey::PreventTransfersMonthsBeforeInitialisation
+            }
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
