@@ -25,6 +25,7 @@ pub struct UpsertPreferencesInput {
     pub authorise_purchase_order: Option<bool>,
     pub prevent_transfers_months_before_initialisation: Option<i32>,
 
+    pub authorise_goods_received: Option<bool>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
@@ -67,6 +68,7 @@ impl UpsertPreferencesInput {
             sync_records_display_threshold,
             authorise_purchase_order,
             prevent_transfers_months_before_initialisation,
+            authorise_goods_received,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -88,7 +90,7 @@ impl UpsertPreferencesInput {
             authorise_purchase_order: *authorise_purchase_order,
             prevent_transfers_months_before_initialisation:
                 *prevent_transfers_months_before_initialisation,
-
+            authorise_goods_received: *authorise_goods_received,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()

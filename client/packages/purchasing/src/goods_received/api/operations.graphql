@@ -69,6 +69,17 @@ query goodsReceivedById($id: String!, $storeId: String!) {
   }
 }
 
+mutation insertGoodsReceived(
+  $input: InsertGoodsReceivedInput!
+  $storeId: String!
+) {
+  insertGoodsReceived(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
 mutation updateGoodsReceived(
   $input: UpdateGoodsReceivedInput!
   $storeId: String!

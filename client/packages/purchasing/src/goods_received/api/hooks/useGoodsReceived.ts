@@ -1,19 +1,51 @@
 import {
-  RecordPatch,
+  FnUtils,
   useMutation,
+  useNotification,
+  useTranslation,
+  InsertGoodsReceivedInput,
   useParams,
+  LIST_KEY,
   useQuery,
+  RecordPatch,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedGraphQL } from '../useGoodsReceivedGraphQL';
-import { GOODS_RECEIVED, LIST } from './keys';
+import { GOODS_RECEIVED } from './keys';
 import { GoodsReceivedFragment } from '../operations.generated';
 import { parseUpdateInput } from './utils';
 
 export const useGoodsReceived = () => {
   const { goodsReceivedId } = useParams();
+  const { error } = useNotification();
+  const t = useTranslation();
 
   // QUERY
   const { data, isLoading, isError } = useGetById(goodsReceivedId);
+
+  // CREATE
+  const {
+    mutateAsync: createMutation,
+    isLoading: isCreating,
+    error: createError,
+  } = useCreate();
+
+  const create = async (purchaseOrderId: string) => {
+    const id = FnUtils.generateUUID();
+    try {
+      const result = await createMutation({
+        id,
+        purchaseOrderId,
+      });
+      return result;
+    } catch (e) {
+      console.error('Error creating goods received:', e);
+      const errorSnack = error(
+        `${t('error.failed-to-create-goods-received')} ${(e as Error).message}`
+      );
+      errorSnack();
+      throw e;
+    }
+  };
 
   // UPDATE
   const {
@@ -30,6 +62,7 @@ export const useGoodsReceived = () => {
 
   return {
     query: { data, isLoading, isError },
+    create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
   };
 };
@@ -37,11 +70,11 @@ export const useGoodsReceived = () => {
 const useGetById = (id?: string) => {
   const { goodsReceivedApi, storeId } = useGoodsReceivedGraphQL();
 
-  const queryKey = [GOODS_RECEIVED, LIST, storeId];
+  const queryKey = [GOODS_RECEIVED, LIST_KEY, storeId];
 
   const queryFn = async () => {
     if (!id) return;
-
+    console.info('Fetching goods received by ID:', id);
     const result = await goodsReceivedApi.goodsReceivedById({
       id,
       storeId,
@@ -50,7 +83,7 @@ const useGetById = (id?: string) => {
     if (result?.goodsReceived.__typename === 'GoodsReceivedNode') {
       return result.goodsReceived;
     } else {
-      console.error('No goods received found', id);
+      console.error('No goods received found', id, result);
       throw new Error(`Could not find goods received ${id}`);
     }
   };
@@ -59,6 +92,22 @@ const useGetById = (id?: string) => {
     queryKey,
     queryFn,
     enabled: !!id,
+  });
+};
+
+const useCreate = () => {
+  const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
+
+  const mutationFn = async (input: InsertGoodsReceivedInput) => {
+    return await goodsReceivedApi.insertGoodsReceived({
+      input,
+      storeId,
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
   });
 };
 
@@ -75,6 +124,6 @@ const useUpdate = () => {
   return useMutation({
     mutationFn,
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: [GOODS_RECEIVED, LIST] }),
+      queryClient.invalidateQueries({ queryKey: [GOODS_RECEIVED] }),
   });
 };

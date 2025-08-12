@@ -11,5 +11,5 @@ export const useGoodsReceivedGraphQL = () => {
   const { storeId } = useAuthContext();
   const goodsReceivedApi = getSdk(client);
 
-  return { goodsReceivedApi, storeId, queryClient };
+  return { goodsReceivedApi, queryClient, storeId };
 };

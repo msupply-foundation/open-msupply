@@ -33,6 +33,8 @@ pub trait PreferenceServiceTrait: Sync + Send {
             sync_records_display_threshold,
             authorise_purchase_order,
             prevent_transfers_months_before_initialisation,
+            authorise_goods_received,
+
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -62,6 +64,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             &mut prefs,
             &input,
         )?;
+        append_if_type(authorise_goods_received, &mut prefs, &input)?;
         // Store preferences
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
