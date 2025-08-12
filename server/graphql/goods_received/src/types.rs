@@ -1,11 +1,13 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use graphql_core::loader::{NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader};
+use graphql_core::loader::{GoodsReceivedLinesByGoodsReceivedIdLoader, ItemLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader};
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::{purchase_order, NameNode};
 use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
-use service::ListResult;
+use repository::{GoodsReceivedLine, GoodsReceivedLineStatus};
+use service::{usize_to_u32, ListResult};
 
 use repository::{GoodsReceivedLineRow, ItemRow};
 
@@ -97,10 +99,10 @@ impl GoodsReceivedLineNode {
 }
 
 impl GoodsReceivedLineConnector {
-    pub fn from_vec(purchase_order_lines: Vec<GoodsReceivedLine>) -> GoodsReceivedLineConnector {
+    pub fn from_vec(goods_received_lines: Vec<GoodsReceivedLine>) -> GoodsReceivedLineConnector {
         GoodsReceivedLineConnector {
-            total_count: usize_to_u32(purchase_order_lines.len()),
-            nodes: purchase_order_lines
+            total_count: usize_to_u32(goods_received_lines.len()),
+            nodes: goods_received_lines
                 .into_iter()
                 .map(GoodsReceivedLineNode::from_domain)
                 .collect(),
