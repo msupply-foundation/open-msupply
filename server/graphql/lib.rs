@@ -5,7 +5,7 @@ mod tests;
 
 mod logger;
 
-use graphql_goods_received_line::GoodsReceivedLineMutations;
+use graphql_goods_received_line::{GoodsReceivedLineMutations, GoodsReceivedLineQueries};
 use logger::{GraphQLRequestLogger, QueryLogInfo};
 
 use std::sync::Mutex;
@@ -194,6 +194,7 @@ pub struct Queries(
     pub PurchaseOrderQueries,
     pub PurchaseOrderLineQueries,
     pub GoodsReceivedQueries,
+    pub GoodsReceivedLineQueries,
 );
 
 impl Queries {
@@ -231,6 +232,7 @@ impl Queries {
             PurchaseOrderQueries,
             PurchaseOrderLineQueries,
             GoodsReceivedQueries,
+            GoodsReceivedLineQueries,
         )
     }
 }
