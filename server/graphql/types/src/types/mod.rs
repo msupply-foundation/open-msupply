@@ -155,9 +155,6 @@ pub use self::purchase_order::*;
 pub mod purchase_order_line;
 pub use self::purchase_order_line::*;
 
-pub mod goods_received_line;
-pub use self::goods_received_line::*;
-
 pub mod item_store_join;
 pub use self::item_store_join::*;
 
