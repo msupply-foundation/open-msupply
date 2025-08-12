@@ -1,3 +1,4 @@
+import React, { ReactElement } from 'react';
 import {
   Box,
   AppFooterPortal,
@@ -7,18 +8,24 @@ import {
   ActionsFooter,
   PurchaseOrderNodeStatus,
   StatusCrumbs,
+  useTableStore,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
-import React, { FC } from 'react';
-import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
-import { StatusChangeButton } from './StatusChangeButton';
+import { usePurchaseOrder, PurchaseOrderFragment } from '../../api';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
-import { PurchaseOrderFragment } from '../../api';
+import { StatusChangeButton } from './StatusChangeButton';
 
-const createStatusLog = (purchaseOrder: PurchaseOrderFragment) => {
+const createStatusLog = (
+  purchaseOrder: PurchaseOrderFragment,
+  requiresAuthorisation: boolean
+) => {
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
       [PurchaseOrderNodeStatus.New]: purchaseOrder.createdDatetime,
-      [PurchaseOrderNodeStatus.Authorised]: purchaseOrder.authorisedDatetime,
+      [PurchaseOrderNodeStatus.Authorised]: requiresAuthorisation
+        ? purchaseOrder.authorisedDatetime
+        : null,
       [PurchaseOrderNodeStatus.Confirmed]: purchaseOrder.confirmedDatetime,
       [PurchaseOrderNodeStatus.Finalised]: purchaseOrder.finalisedDatetime,
     };
@@ -26,13 +33,26 @@ const createStatusLog = (purchaseOrder: PurchaseOrderFragment) => {
   return statusLog;
 };
 
-export const Footer: FC = () => {
+interface FooterProps {
+  showStatusBar: boolean;
+}
+
+export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
+  const t = useTranslation();
   const {
     query: { data },
   } = usePurchaseOrder();
-  const t = useTranslation();
+  const { data: preferences } = usePreference(
+    PreferenceKey.AuthorisePurchaseOrder
+  );
 
-  const selectedRows = [];
+  const selectedRows = useTableStore(state => {
+    const selectedLines =
+      data?.lines.nodes.filter(line => state.rowState[line.id]?.isSelected) ||
+      [];
+    return selectedLines;
+  });
+
   const confirmAndDelete = () => {};
 
   const actions: Action[] = [
@@ -42,6 +62,13 @@ export const Footer: FC = () => {
       onClick: confirmAndDelete,
     },
   ];
+
+  const requiresAuthorisation = preferences?.authorisePurchaseOrder ?? false;
+  const filteredStatuses = requiresAuthorisation
+    ? purchaseOrderStatuses
+    : purchaseOrderStatuses.filter(
+        status => status !== PurchaseOrderNodeStatus.Authorised
+      );
 
   return (
     <AppFooterPortal
@@ -53,7 +80,7 @@ export const Footer: FC = () => {
               selectedRowCount={selectedRows.length}
             />
           )}
-          {data && selectedRows.length === 0 ? (
+          {data && selectedRows.length === 0 && showStatusBar ? (
             <Box
               gap={2}
               display="flex"
@@ -62,8 +89,11 @@ export const Footer: FC = () => {
               height={64}
             >
               <StatusCrumbs
-                statuses={purchaseOrderStatuses}
-                statusLog={createStatusLog(data)}
+                statuses={filteredStatuses}
+                statusLog={createStatusLog(
+                  data,
+                  preferences?.authorisePurchaseOrder ?? false
+                )}
                 statusFormatter={getStatusTranslator(t)}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>

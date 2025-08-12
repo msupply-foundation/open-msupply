@@ -5,12 +5,10 @@ use repository::{
 };
 
 use crate::{
-    get_default_pagination, get_default_pagination_unlimited, i64_to_u32, ListError, ListResult,
+    get_default_pagination_unlimited, get_pagination_or_default, i64_to_u32, ListError, ListResult,
     SingleRecordError,
 };
-
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
+ 
 
 pub fn get_programs(
     connection: &StorageConnection,
@@ -18,7 +16,7 @@ pub fn get_programs(
     filter: Option<ProgramFilter>,
     sort: Option<ProgramSort>,
 ) -> Result<ListResult<ProgramRow>, ListError> {
-    let pagination: Pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination: Pagination = get_pagination_or_default(pagination)?;
     let repository = ProgramRepository::new(connection);
 
     Ok(ListResult {

@@ -19,6 +19,9 @@ pub struct UpsertPreferences {
     pub use_campaigns: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub sync_records_display_threshold: Option<i32>,
+    pub authorise_purchase_order: Option<bool>,
+    pub prevent_transfers_months_before_initialisation: Option<i32>,
+    pub authorise_goods_received: Option<bool>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
@@ -37,6 +40,10 @@ pub fn upsert_preferences(
         use_campaigns: use_campaigns_input,
         custom_translations: custom_translations_input,
         sync_records_display_threshold: sync_records_display_threshold_input,
+        authorise_purchase_order: authorise_purchase_order_input,
+        prevent_transfers_months_before_initialisation:
+            prevent_transfers_months_before_initialisation_input,
+        authorise_goods_received: authorise_goods_received_input,
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
@@ -53,6 +60,9 @@ pub fn upsert_preferences(
         use_campaigns,
         custom_translations,
         sync_records_display_threshold,
+        authorise_purchase_order,
+        prevent_transfers_months_before_initialisation,
+        authorise_goods_received,
         // Store preferences
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
@@ -86,6 +96,18 @@ pub fn upsert_preferences(
 
             if let Some(input) = sync_records_display_threshold_input {
                 sync_records_display_threshold.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = authorise_purchase_order_input {
+                authorise_purchase_order.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = prevent_transfers_months_before_initialisation_input {
+                prevent_transfers_months_before_initialisation.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = authorise_goods_received_input {
+                authorise_goods_received.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

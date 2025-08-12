@@ -9,7 +9,7 @@ use repository::{
 use util::uuid::uuid;
 
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 
 pub struct EventInput {
@@ -125,7 +125,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         sort: Option<ProgramEventSort>,
         allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<ProgramEvent>, ListError> {
-        let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+        let pagination = get_pagination_or_default(pagination)?;
         let repository = ProgramEventRepository::new(&ctx.connection);
 
         let filter = if let Some(allowed_ctx) = allowed_ctx {

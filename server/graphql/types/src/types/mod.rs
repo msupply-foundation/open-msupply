@@ -178,6 +178,12 @@ impl IdResponse {
     }
 }
 
+impl IdResponse {
+    pub fn from_domain(purchase_order_line: PurchaseOrderLineRow) -> Self {
+        IdResponse(purchase_order_line.id)
+    }
+}
+
 pub struct OkResponse;
 #[Object]
 impl OkResponse {
@@ -187,3 +193,4 @@ impl OkResponse {
 }
 
 pub use campaign::*;
+use repository::PurchaseOrderLineRow;
