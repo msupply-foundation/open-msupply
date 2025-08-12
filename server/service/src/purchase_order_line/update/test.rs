@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod update {
     use repository::{
-        mock::{mock_item_a, mock_item_c, mock_item_d, mock_store_a, MockDataInserts},
+        mock::{mock_item_a, mock_item_d, mock_store_a, MockDataInserts},
         test_db::setup_all,
     };
 
@@ -32,6 +32,7 @@ mod update {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: Some(2.0),
                     ..Default::default()
                 },
             )
@@ -56,30 +57,19 @@ mod update {
 
         // Cannot update to the same item and pack size combination
 
-        assert_eq!(
-            service.update_purchase_order_line(
+        // add another existing line with same pack size and item
+        service
+            .insert_purchase_order_line(
                 &context,
-                &mock_store_a().id.clone(),
-                UpdatePurchaseOrderLineInput {
-                    id: "purchase_order_line_id_1".to_string(),
-                    item_id: Some(mock_item_a().id.to_string()),
-                    requested_pack_size: None,
-                    requested_number_of_units: None,
-                    requested_delivery_date: None,
-                    expected_delivery_date: None,
-                }
-            ),
-            Err(
-                UpdatePurchaseOrderLineInputError::PackSizeCodeCombinationExists(
-                    PackSizeCodeCombination {
-                        item_code: mock_item_a().code.clone(),
-                        requested_pack_size: 0.0,
-                    }
-                )
+                InsertPurchaseOrderLineInput {
+                    id: "purchase_order_line_id_2".to_string(),
+                    purchase_order_id: "test_purchase_order_a".to_string(),
+                    item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: Some(5.0),
+                    ..Default::default()
+                },
             )
-        );
-
-        // Cannot update to the same item and pack size combination
+            .unwrap();
 
         assert_eq!(
             service.update_purchase_order_line(
@@ -88,7 +78,7 @@ mod update {
                 UpdatePurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     item_id: Some(mock_item_a().id.to_string()),
-                    requested_pack_size: None,
+                    requested_pack_size: Some(5.0),
                     requested_number_of_units: None,
                     requested_delivery_date: None,
                     expected_delivery_date: None,
@@ -98,7 +88,7 @@ mod update {
                 UpdatePurchaseOrderLineInputError::PackSizeCodeCombinationExists(
                     PackSizeCodeCombination {
                         item_code: mock_item_a().code.clone(),
-                        requested_pack_size: 0.0,
+                        requested_pack_size: 5.0,
                     }
                 )
             )
@@ -124,6 +114,7 @@ mod update {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: Some(5.0),
                     ..Default::default()
                 },
             )

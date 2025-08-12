@@ -53,7 +53,7 @@ pub fn insert_purchase_order_line(
                 purchase_order_id: input.purchase_order_id.clone(),
                 item_id: input.item_id.clone(),
                 // TODO amend default value if we extend standard insert line input
-                requested_pack_size: 0.0, // Default value
+                requested_pack_size: input.requested_pack_size.unwrap_or_default(), // Default value
             };
             validate(&ctx.store_id.clone(), &validate_input, connection)?;
 

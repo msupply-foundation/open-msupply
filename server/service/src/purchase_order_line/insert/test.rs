@@ -150,6 +150,7 @@ mod insert {
                     id: "purchase_order_line_id_1_2".to_string(),
                     purchase_order_id: "purchase_order_id_1".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: Some(10.0),
                     ..Default::default()
                 },
             )
@@ -175,6 +176,7 @@ mod insert {
                     id: "purchase_order_line_id_2_2".to_string(),
                     purchase_order_id: "purchase_order_id_2".to_string(),
                     item_id: mock_item_a().id.to_string(),
+                    requested_pack_size: Some(10.0),
                     ..Default::default()
                 },
             )
