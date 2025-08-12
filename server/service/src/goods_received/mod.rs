@@ -3,10 +3,12 @@ use repository::goods_received_row::GoodsReceivedRow;
 use repository::{PaginationOption, RepositoryError};
 
 use crate::goods_received::query::{get_goods_received, get_goods_received_list};
+use crate::goods_received::update::{update_goods_received, UpdateGoodsReceivedError, UpdateGoodsReceivedInput};
 use crate::service_provider::ServiceContext;
 use crate::{ListError, ListResult};
 
 pub mod query;
+pub mod update;
 
 pub trait GoodsReceivedServiceTrait: Sync + Send {
     fn get_one_goods_received(
@@ -27,6 +29,15 @@ pub trait GoodsReceivedServiceTrait: Sync + Send {
         sort: Option<GoodsReceivedSort>,
     ) -> Result<ListResult<GoodsReceivedRow>, ListError> {
         get_goods_received_list(ctx, store_id, pagination, filter, sort)
+    }
+
+    fn update_goods_received(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdateGoodsReceivedInput,
+    ) -> Result<GoodsReceivedRow, UpdateGoodsReceivedError> {
+        update_goods_received(ctx, store_id, input)
     }
 }
 

@@ -4,7 +4,6 @@
 mod tests;
 
 mod logger;
-use graphql_goods_received::GoodsReceivedQueries;
 use logger::{GraphQLRequestLogger, QueryLogInfo};
 
 use std::sync::Mutex;
@@ -38,6 +37,7 @@ use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
 use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
+use graphql_goods_received::{GoodsReceivedMutations, GoodsReceivedQueries};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
@@ -259,6 +259,7 @@ pub struct Mutations(
     pub ClinicianMutations,
     pub PurchaseOrderMutations,
     pub PurchaseOrderLineMutations,
+    pub GoodsReceivedMutations,
 );
 
 impl Mutations {
@@ -289,6 +290,7 @@ impl Mutations {
             ClinicianMutations,
             PurchaseOrderMutations,
             PurchaseOrderLineMutations,
+            GoodsReceivedMutations,
         )
     }
 }
