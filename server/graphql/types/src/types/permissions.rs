@@ -46,6 +46,9 @@ pub enum UserPermission {
     PurchaseOrderQuery,
     PurchaseOrderMutate,
     PurchaseOrderAuthorise,
+    GoodsReceivedQuery,
+    GoodsReceivedMutate,
+    GoodsReceivedAuthorise,
     Report,
     LogQuery,
     StockLineMutate,
@@ -162,6 +165,9 @@ impl UserPermission {
             PermissionType::PurchaseOrderAuthorise => UserPermission::PurchaseOrderAuthorise,
             PermissionType::MutateClinician => UserPermission::MutateClinician,
             PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
+            PermissionType::GoodsReceivedQuery => UserPermission::GoodsReceivedQuery,
+            PermissionType::GoodsReceivedMutate => UserPermission::GoodsReceivedMutate,
+            PermissionType::GoodsReceivedAuthorise => UserPermission::GoodsReceivedAuthorise,
         }
     }
 
@@ -221,6 +227,9 @@ impl UserPermission {
             UserPermission::PurchaseOrderAuthorise => PermissionType::PurchaseOrderAuthorise,
             UserPermission::MutateClinician => PermissionType::MutateClinician,
             UserPermission::CancelFinalisedInvoices => PermissionType::CancelFinalisedInvoices,
+            UserPermission::GoodsReceivedQuery => PermissionType::GoodsReceivedQuery,
+            UserPermission::GoodsReceivedMutate => PermissionType::GoodsReceivedMutate,
+            UserPermission::GoodsReceivedAuthorise => PermissionType::GoodsReceivedAuthorise,
         }
     }
 }
