@@ -7,8 +7,8 @@ pub fn generate(
     input: &UpdatePurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     let UpdatePurchaseOrderLineInput {
-        requested_pack_size,
         item_id,
+        requested_pack_size,
         requested_number_of_units,
         requested_delivery_date,
         expected_delivery_date,

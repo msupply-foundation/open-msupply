@@ -1,5 +1,5 @@
 use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
     Pagination, SingleRecordError,
 };
 use repository::{
@@ -31,7 +31,7 @@ pub fn get_stock_lines(
     sort: Option<StockLineSort>,
     store_id: Option<String>,
 ) -> Result<ListResult<StockLine>, ListError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = StockLineRepository::new(&ctx.connection);
 
     Ok(ListResult {
