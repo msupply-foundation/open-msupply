@@ -9,6 +9,7 @@ import {
   AutocompleteOptionRenderer,
   Typography,
   Box,
+  FilterOptionsState,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList, PurchaseOrderRowFragment } from '../../api';
 
@@ -41,26 +42,40 @@ const PurchaseOrderSearchComponent: FC<PurchaseOrderSearchModalProps> = ({
   } = usePurchaseOrderList(listParams);
   const t = useTranslation();
 
-  const getPurchaseOrderOptionRenderer: AutocompleteOptionRenderer<PurchaseOrderRowFragment> = 
-    (props, item) => (
-      <DefaultAutocompleteItemOption {...props} key={item.id}>
-        <Box display="flex" flexDirection="column" gap={0.5}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <Typography sx={{ fontWeight: 'bold' }}>
-              {item.supplier?.name || 'Unknown Supplier'}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              PO #{item.number}
-            </Typography>
-          </Box>
-          {item.comment && (
-            <Typography variant="body2" color="textSecondary">
-              {item.comment}
-            </Typography>
-          )}
-        </Box>
-      </DefaultAutocompleteItemOption>
+  const filterOptions = (
+    options: PurchaseOrderRowFragment[],
+    { inputValue }: FilterOptionsState<PurchaseOrderRowFragment>
+  ) => {
+    const filter = inputValue.toLowerCase();
+    return options.filter(
+      option =>
+        option.supplier?.name?.toLowerCase().includes(filter) ||
+        option.number.toString().includes(filter) ||
+        option.comment?.toLowerCase().includes(filter)
     );
+  };
+
+  const getPurchaseOrderOptionRenderer: AutocompleteOptionRenderer<
+    PurchaseOrderRowFragment
+  > = (props, item) => (
+    <DefaultAutocompleteItemOption {...props} key={item.id}>
+      <Box display="flex" flexDirection="column" gap={0.5}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Typography sx={{ fontWeight: 'bold' }}>
+            {item.supplier?.name ?? ''}
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            {t('label.purchase-order-shorthand')} {item.number}
+          </Typography>
+        </Box>
+        {item.comment && (
+          <Typography variant="body2" color="textSecondary">
+            {item.comment}
+          </Typography>
+        )}
+      </Box>
+    </DefaultAutocompleteItemOption>
+  );
 
   return (
     <ListSearch
@@ -70,18 +85,17 @@ const PurchaseOrderSearchComponent: FC<PurchaseOrderSearchModalProps> = ({
       onClose={onClose}
       title={t('label.purchase-orders')}
       renderOption={getPurchaseOrderOptionRenderer}
-      getOptionLabel={(option: PurchaseOrderRowFragment) => 
-        `${option.supplier?.name || ''} - PO ${option.number}`
+      getOptionLabel={(option: PurchaseOrderRowFragment) =>
+        `${option.supplier?.name || ''} - ${option.number}`
       }
-      filterOptions={(options, { inputValue }) => {
-        const filter = inputValue.toLowerCase();
-        return options.filter(option => 
-          option.supplier?.name?.toLowerCase().includes(filter) ||
-          option.number.toString().includes(filter) ||
-          option.comment?.toLowerCase().includes(filter)
-        );
-      }}
-      onChange={(_, purchaseOrder: PurchaseOrderRowFragment | PurchaseOrderRowFragment[] | null) => {
+      filterOptions={filterOptions}
+      onChange={(
+        _,
+        purchaseOrder:
+          | PurchaseOrderRowFragment
+          | PurchaseOrderRowFragment[]
+          | null
+      ) => {
         if (purchaseOrder && !(purchaseOrder instanceof Array)) {
           onChange(purchaseOrder);
         }
@@ -90,7 +104,9 @@ const PurchaseOrderSearchComponent: FC<PurchaseOrderSearchModalProps> = ({
   );
 };
 
-export const PurchaseOrderSearchModal: FC<PurchaseOrderSearchModalProps> = props => (
+export const PurchaseOrderSearchModal: FC<
+  PurchaseOrderSearchModalProps
+> = props => (
   <QueryParamsProvider
     createStore={createQueryParamsStore<PurchaseOrderRowFragment>({
       initialSortBy: { key: 'number' },
