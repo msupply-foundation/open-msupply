@@ -1,35 +1,42 @@
+import React, { ReactElement } from 'react';
 import {
+  Box,
   AppFooterPortal,
   useTranslation,
   DeleteIcon,
   Action,
   ActionsFooter,
+  GoodsReceivedNodeStatus,
+  StatusCrumbs,
 } from '@openmsupply-client/common';
-import React, { FC } from 'react';
+import { useGoodsReceived } from '../../api/hooks/useGoodsReceived';
+import { getStatusTranslator, goodsReceivedStatuses } from './utils';
+import { StatusChangeButton } from './StatusChangeButton';
 
-// Based off purchase order, but to be updated for Goods Received
-// const createStatusLog = (
-//   GoodsReceived: GoodsReceivedFragment,
-//   requiresAuthorisation: boolean
-// ) => {
-//   const statusLog: Record<GoodsReceivedNodeStatus, null | undefined | string> =
-//     {
-//       [GoodsReceivedNodeStatus.New]: GoodsReceived.createdDatetime,
-//       [GoodsReceivedNodeStatus.Authorised]: requiresAuthorisation
-//         ? GoodsReceived.authorisedDatetime
-//         : null,
-//       [GoodsReceivedNodeStatus.Confirmed]: GoodsReceived.confirmedDatetime,
-//       [GoodsReceivedNodeStatus.Finalised]: GoodsReceived.finalisedDatetime,
-//     };
+const createStatusLog = (goodsReceived: {
+  createdDatetime: string;
+  receivedDatetime?: string | null;
+}) => {
+  const statusLog: Record<GoodsReceivedNodeStatus, null | undefined | string> =
+    {
+      [GoodsReceivedNodeStatus.New]: goodsReceived.createdDatetime,
+      [GoodsReceivedNodeStatus.Finalised]: goodsReceived.receivedDatetime, // TODO: change to finalisedDatetime when available
+    };
+  return statusLog;
+};
 
-//   return statusLog;
-// };
+interface FooterProps {
+  showStatusBar?: boolean;
+}
 
-export const Footer: FC = () => {
+export const Footer = ({ showStatusBar = true }: FooterProps): ReactElement => {
   const t = useTranslation();
+  const {
+    query: { data },
+  } = useGoodsReceived();
 
-  const selectedRows = [];
-  const confirmAndDelete = () => {};
+  const selectedRows: unknown[] = []; // TODO: Implement proper row selection when lines are implemented
+  const confirmAndDelete = () => {}; // TODO: Implement delete functionality
 
   const actions: Action[] = [
     {
@@ -49,7 +56,24 @@ export const Footer: FC = () => {
               selectedRowCount={selectedRows.length}
             />
           )}
-          {/* Add StatusCrumbs and StatusChange Button if neeed */}
+          {data && selectedRows.length === 0 && showStatusBar ? (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <StatusCrumbs
+                statuses={goodsReceivedStatuses}
+                statusLog={createStatusLog(data)}
+                statusFormatter={getStatusTranslator(t)}
+              />
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <StatusChangeButton />
+              </Box>
+            </Box>
+          ) : null}
         </>
       }
     />

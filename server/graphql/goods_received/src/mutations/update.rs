@@ -47,37 +47,25 @@ impl GoodsReceivedNodeType {
 #[graphql(name = "UpdateGoodsReceivedInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub purchase_order_id: Option<String>,
-    pub inbound_shipment_id: Option<NullableUpdateInput<String>>,
     pub status: Option<GoodsReceivedNodeType>,
     pub received_date: Option<NullableUpdateInput<NaiveDate>>,
     pub comment: Option<String>,
-    pub supplier_reference: Option<String>,
-    pub donor_link_id: Option<NullableUpdateInput<String>>,
 }
 
 impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
-            purchase_order_id,
-            inbound_shipment_id,
             status,
             received_date,
             comment,
-            supplier_reference,
-            donor_link_id,
         } = self;
 
         ServiceInput {
             id,
-            purchase_order_id,
-            inbound_shipment_id: inbound_shipment_id.map(|i| NullableUpdate { value: i.value }),
             status: status.map(GoodsReceivedNodeType::to_domain),
             received_date: received_date.map(|r| NullableUpdate { value: r.value }),
             comment,
-            supplier_reference,
-            donor_link_id: donor_link_id.map(|d| NullableUpdate { value: d.value }),
         }
     }
 }
@@ -107,7 +95,7 @@ pub fn update_goods_received(
     map_response(
         service_provider
             .goods_received_service
-            .update_goods_received(&service_context, store_id, input.to_domain()),
+            .update_goods_received(&service_context, input.to_domain()),
     )
 }
 
@@ -122,10 +110,7 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::PurchaseOrderDoesNotExist
-        | ServiceError::InboundShipmentDoesNotExist
-        | ServiceError::GoodsReceivedDoesNotExist
-        | ServiceError::DonorDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::GoodsReceivedDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)
         }

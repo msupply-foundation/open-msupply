@@ -83,6 +83,16 @@ export type GoodsReceivedByIdQuery = {
     | { __typename: 'RecordNotFound'; description: string };
 };
 
+export type UpdateGoodsReceivedMutationVariables = Types.Exact<{
+  input: Types.UpdateGoodsReceivedInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdateGoodsReceivedMutation = {
+  __typename: 'Mutations';
+  updateGoodsReceived: { __typename: 'IdResponse'; id: string };
+};
+
 export const GoodsReceivedRowFragmentDoc = gql`
   fragment GoodsReceivedRow on GoodsReceivedNode {
     id
@@ -158,6 +168,18 @@ export const GoodsReceivedByIdDocument = gql`
   }
   ${GoodsReceivedFragmentDoc}
 `;
+export const UpdateGoodsReceivedDocument = gql`
+  mutation updateGoodsReceived(
+    $input: UpdateGoodsReceivedInput!
+    $storeId: String!
+  ) {
+    updateGoodsReceived(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -207,6 +229,22 @@ export function getSdk(
           ),
         'goodsReceivedById',
         'query',
+        variables
+      );
+    },
+    updateGoodsReceived(
+      variables: UpdateGoodsReceivedMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdateGoodsReceivedMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateGoodsReceivedMutation>(
+            UpdateGoodsReceivedDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updateGoodsReceived',
+        'mutation',
         variables
       );
     },

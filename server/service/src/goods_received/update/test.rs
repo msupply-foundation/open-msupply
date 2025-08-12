@@ -23,79 +23,16 @@ mod update {
             .unwrap();
         let service = service_provider.goods_received_service;
 
-        let store_id = &mock_store_a().id;
-
         // GoodsReceivedDoesNotExist
         assert_eq!(
             service.update_goods_received(
                 &context,
-                store_id,
                 UpdateGoodsReceivedInput {
                     id: "invalid_id".to_string(),
                     ..Default::default()
                 },
             ),
             Err(UpdateGoodsReceivedError::GoodsReceivedDoesNotExist)
-        );
-
-        let goods_received_id = uuid();
-
-        // create a goods received row
-        GoodsReceivedRowRepository::new(&context.connection)
-            .upsert_one(&GoodsReceivedRow {
-                id: goods_received_id.clone(),
-                store_id: store_id.clone(),
-                goods_received_number: 1,
-                status: GoodsReceivedStatus::New,
-                created_datetime: chrono::Utc::now().naive_utc(),
-                ..Default::default()
-            })
-            .unwrap();
-
-        // PurchaseOrderDoesNotExist
-        assert_eq!(
-            service.update_goods_received(
-                &context,
-                store_id,
-                UpdateGoodsReceivedInput {
-                    id: goods_received_id.clone(),
-                    purchase_order_id: Some("invalid_purchase_order_id".to_string()),
-                    ..Default::default()
-                },
-            ),
-            Err(UpdateGoodsReceivedError::PurchaseOrderDoesNotExist)
-        );
-
-        // InboundShipmentDoesNotExist
-        assert_eq!(
-            service.update_goods_received(
-                &context,
-                store_id,
-                UpdateGoodsReceivedInput {
-                    id: goods_received_id.clone(),
-                    inbound_shipment_id: Some(crate::NullableUpdate {
-                        value: Some("invalid_inbound_shipment_id".to_string()),
-                    }),
-                    ..Default::default()
-                },
-            ),
-            Err(UpdateGoodsReceivedError::InboundShipmentDoesNotExist)
-        );
-
-        // DonorDoesNotExist
-        assert_eq!(
-            service.update_goods_received(
-                &context,
-                store_id,
-                UpdateGoodsReceivedInput {
-                    id: goods_received_id.clone(),
-                    donor_link_id: Some(crate::NullableUpdate {
-                        value: Some("invalid_donor_id".to_string()),
-                    }),
-                    ..Default::default()
-                },
-            ),
-            Err(UpdateGoodsReceivedError::DonorDoesNotExist)
         );
     }
 
@@ -130,11 +67,9 @@ mod update {
         let result = service
             .update_goods_received(
                 &context,
-                store_id,
                 UpdateGoodsReceivedInput {
                     id: goods_received_id.clone(),
                     comment: Some("Updated comment".to_string()),
-                    supplier_reference: Some("REF-123".to_string()),
                     status: Some(GoodsReceivedStatus::Finalised),
                     ..Default::default()
                 },

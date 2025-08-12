@@ -112,8 +112,6 @@ impl GoodsReceivedNode {
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum GoodsReceivedNodeStatus {
     New,
-    Confirmed,
-    Authorised,
     Finalised,
 }
 
@@ -126,15 +124,13 @@ impl GoodsReceivedNodeStatus {
         }
     }
 
-    // pub fn to_domain(self) -> GoodsReceivedStatus {
-    //     use GoodsReceivedNodeStatus::*;
-    //     match self {
-    //         New => GoodsReceivedStatus::New,
-    //         Confirmed => GoodsReceivedStatus::Confirmed,
-    //         Authorised => GoodsReceivedStatus::Authorised,
-    //         Finalised => GoodsReceivedStatus::Finalised,
-    //     }
-    // }
+    pub fn to_domain(self) -> GoodsReceivedStatus {
+        use GoodsReceivedNodeStatus::*;
+        match self {
+            New => GoodsReceivedStatus::New,
+            Finalised => GoodsReceivedStatus::Finalised,
+        }
+    }
 }
 
 impl GoodsReceivedConnector {

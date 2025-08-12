@@ -2937,8 +2937,11 @@ export type GoodsReceivedNode = {
 };
 
 export enum GoodsReceivedNodeStatus {
-  Authorised = 'AUTHORISED',
-  Confirmed = 'CONFIRMED',
+  Finalised = 'FINALISED',
+  New = 'NEW',
+}
+
+export enum GoodsReceivedNodeType {
   Finalised = 'FINALISED',
   New = 'NEW',
 }
@@ -3269,6 +3272,13 @@ export type InsertFormSchemaInput = {
 export type InsertFormSchemaResponse = FormSchemaNode;
 
 export type InsertFromInternalOrderResponse = InvoiceLineNode;
+
+export type InsertGoodsReceivedInput = {
+  id: Scalars['String']['input'];
+  purchaseOrderId: Scalars['String']['input'];
+};
+
+export type InsertGoodsReceivedResponse = IdResponse;
 
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
@@ -5155,6 +5165,7 @@ export type Mutations = {
   insertDocumentRegistry: InsertDocumentResponse;
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
+  insertGoodsReceived: InsertGoodsReceivedResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
@@ -5210,6 +5221,7 @@ export type Mutations = {
   updateCustomerReturnLines: UpdateCustomerReturnLinesResponse;
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateEncounter: UpdateEncounterResponse;
+  updateGoodsReceived: UpdateGoodsReceivedResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -5497,6 +5509,11 @@ export type MutationsInsertFormSchemaArgs = {
   input: InsertFormSchemaInput;
 };
 
+export type MutationsInsertGoodsReceivedArgs = {
+  input: InsertGoodsReceivedInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsInsertInboundShipmentArgs = {
   input: InsertInboundShipmentInput;
   storeId: Scalars['String']['input'];
@@ -5711,6 +5728,11 @@ export type MutationsUpdateDisplaySettingsArgs = {
 
 export type MutationsUpdateEncounterArgs = {
   input: UpdateEncounterInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateGoodsReceivedArgs = {
+  input: UpdateGoodsReceivedInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -9628,6 +9650,15 @@ export type UpdateErrorInterface = {
   description: Scalars['String']['output'];
 };
 
+export type UpdateGoodsReceivedInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  receivedDate?: InputMaybe<NullableDateUpdate>;
+  status?: InputMaybe<GoodsReceivedNodeType>;
+};
+
+export type UpdateGoodsReceivedResponse = IdResponse;
+
 export type UpdateInboundShipmentError = {
   __typename: 'UpdateInboundShipmentError';
   error: UpdateInboundShipmentErrorInterface;
@@ -10705,6 +10736,9 @@ export enum UserPermission {
   DocumentMutate = 'DOCUMENT_MUTATE',
   DocumentQuery = 'DOCUMENT_QUERY',
   EditCentralData = 'EDIT_CENTRAL_DATA',
+  GoodsReceivedAuthorise = 'GOODS_RECEIVED_AUTHORISE',
+  GoodsReceivedMutate = 'GOODS_RECEIVED_MUTATE',
+  GoodsReceivedQuery = 'GOODS_RECEIVED_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   InventoryAdjustmentMutate = 'INVENTORY_ADJUSTMENT_MUTATE',
