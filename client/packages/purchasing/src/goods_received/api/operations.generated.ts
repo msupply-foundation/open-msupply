@@ -22,6 +22,7 @@ export type GoodsReceivedFragment = {
   number: number;
   status: Types.GoodsReceivedNodeStatus;
   comment?: string | null;
+  createdBy?: string | null;
   createdDatetime: string;
   receivedDatetime?: string | null;
   purchaseOrderNumber?: number | null;
@@ -59,7 +60,7 @@ export type GoodsReceivedListQuery = {
 };
 
 export type GoodsReceivedByIdQueryVariables = Types.Exact<{
-  GoodsReceivedId: Types.Scalars['String']['input'];
+  id: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -72,6 +73,7 @@ export type GoodsReceivedByIdQuery = {
         number: number;
         status: Types.GoodsReceivedNodeStatus;
         comment?: string | null;
+        createdBy?: string | null;
         createdDatetime: string;
         receivedDatetime?: string | null;
         purchaseOrderNumber?: number | null;
@@ -104,6 +106,7 @@ export const GoodsReceivedFragmentDoc = gql`
     number
     status
     comment
+    createdBy
     createdDatetime
     receivedDatetime
     purchaseOrderNumber
@@ -141,8 +144,8 @@ export const GoodsReceivedListDocument = gql`
   ${GoodsReceivedRowFragmentDoc}
 `;
 export const GoodsReceivedByIdDocument = gql`
-  query goodsReceivedById($GoodsReceivedId: String!, $storeId: String!) {
-    goodsReceived(id: $GoodsReceivedId, storeId: $storeId) {
+  query goodsReceivedById($id: String!, $storeId: String!) {
+    goodsReceived(id: $id, storeId: $storeId) {
       __typename
       ... on RecordNotFound {
         __typename
