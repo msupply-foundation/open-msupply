@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { SplitButton, SplitButtonOption } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
-import { useToggle } from '@common/hooks';
+import { useNotification, useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
 import { PurchaseOrderFragment } from '../../api';
 import { PurchaseOrderNodeStatus, UserPermission } from '@common/types';
@@ -15,6 +15,7 @@ import {
 import { isPurchaseOrderEditable } from '@openmsupply-client/purchasing/src/utils';
 
 interface AddButtonProps {
+  purchaseOrder: PurchaseOrderFragment | undefined;
   onAddItem: () => void;
   /** Disable the whole control */
   disable: boolean;
@@ -22,11 +23,13 @@ interface AddButtonProps {
 }
 
 export const AddButton = ({
+  purchaseOrder,
   onAddItem,
   disable,
   disableAddFromMasterListButton,
 }: AddButtonProps) => {
   const t = useTranslation();
+  const { info } = useNotification();
   const masterListModalController = useToggle();
   const uploadDocumentController = useToggle();
   const importModalController = useToggle();
