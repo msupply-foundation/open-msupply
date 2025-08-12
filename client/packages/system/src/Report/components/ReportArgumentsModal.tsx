@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
-import { JsonData, JsonForm, NameSearch, nameSearchTester } from '@openmsupply-client/programs';
+import {
+  JsonData,
+  JsonForm,
+  NameSearch,
+  nameSearchTester,
+} from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
 import { DialogButton, Typography } from '@common/components';
@@ -102,6 +107,7 @@ export const ReportArgumentsModal = ({
 
   const { Modal } = useDialog({
     isOpen: !!report?.argumentSchema,
+    disableMobileFullScreen: true,
   });
 
   if (!report?.argumentSchema) {
