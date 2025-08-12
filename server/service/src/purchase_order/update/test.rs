@@ -9,6 +9,7 @@ mod update {
         ActivityLogRowRepository, ActivityLogType, PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
 
+    use crate::preference::{upsert_helpers::upsert_global, AuthorisePurchaseOrder, Preference};
     use crate::{
         purchase_order::{
             insert::InsertPurchaseOrderInput,
@@ -129,8 +130,15 @@ mod update {
             )
             .unwrap();
 
-        let order_total_before_discount = 1000.0;
-        let mut purchase_order = PurchaseOrderRowRepository::new(&context.connection)
+        // add preference to allow authorised purchase orders
+        upsert_global(
+            &context.connection,
+            AuthorisePurchaseOrder.key_str(),
+            "true".to_string(),
+        )
+        .unwrap();
+
+        let purchase_order = PurchaseOrderRowRepository::new(&context.connection)
             .find_one_by_id(&purchase_order_id.clone())
             .unwrap()
             .unwrap();
