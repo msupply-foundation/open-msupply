@@ -6524,7 +6524,6 @@ export enum PreferenceKey {
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
-  UseCampaigns = 'useCampaigns',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
 
@@ -6564,7 +6563,6 @@ export type PreferencesNode = {
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
-  useCampaigns: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
 
@@ -10671,7 +10669,6 @@ export type UpsertPreferencesInput = {
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
-  useCampaigns?: InputMaybe<Scalars['Boolean']['input']>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
