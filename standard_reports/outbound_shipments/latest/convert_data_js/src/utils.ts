@@ -1,24 +1,28 @@
-import { InvoiceConnector, Output } from "./types";
+import { InvoiceConnector, Lines, Output } from "./types";
 
 export const processInvoiceLines = (
   invoices: InvoiceConnector | undefined,
+  otherPartyId?: string
 ): Output => {
   if (!invoices) {
-    return { data: [] };
+    return { data: undefined };
   }
 
   const itemTotals = new Map<string, number>();
   const itemCount = new Map<string, number>();
-  
+
   invoices.nodes.forEach((invoice) => {
     invoice.lines.nodes.forEach((line) => {
       const itemCode = line.item.code;
-      itemTotals.set(itemCode, (itemTotals.get(itemCode) || 0) + line.totalBeforeTax);
+      itemTotals.set(
+        itemCode,
+        (itemTotals.get(itemCode) || 0) + line.totalBeforeTax
+      );
       itemCount.set(itemCode, (itemCount.get(itemCode) || 0) + 1);
     });
   });
 
-  const result: Output = { data: [] };
+  const result: Lines = [];
   const itemOccurrences = new Map<string, number>();
 
   invoices.nodes.forEach((invoice) => {
@@ -27,10 +31,9 @@ export const processInvoiceLines = (
       const current = (itemOccurrences.get(itemCode) || 0) + 1;
       itemOccurrences.set(itemCode, current);
       const isLast = current === itemCount.get(itemCode);
-      
-      result.data.push({
+
+      result.push({
         id: line.id,
-        otherPartyName: invoice.otherPartyName,
         itemCode: line.item.code,
         itemName: line.item.name,
         batch: line.batch,
@@ -39,12 +42,21 @@ export const processInvoiceLines = (
         numberOfPacks: line.numberOfPacks,
         numberOfUnits: line.numberOfPacks * line.packSize,
         costPricePerPack: line.costPricePerPack,
-        totalCost: isLast ? itemTotals.get(itemCode)! : '-',
+        totalCost: isLast ? itemTotals.get(itemCode)! : "-",
       });
     });
   });
 
-  const sortedResult = result.data.sort((a, b) => a.itemName.localeCompare(b.itemName));
+  const sortedResult = result.sort((a, b) =>
+    a.itemName.localeCompare(b.itemName)
+  );
 
-  return { data: sortedResult };
+  return {
+    data: {
+      otherPartyName: otherPartyId
+        ? invoices.nodes[0]?.otherPartyName
+        : undefined,
+      lines: sortedResult,
+    },
+  };
 };

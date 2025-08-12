@@ -37,17 +37,21 @@ export interface Item {
 }
 
 export type Output = {
-  data: {
-    id: string;
+  data?: {
     otherPartyName?: string;
-    itemCode: string;
-    itemName: string;
-    batch?: string | null;
-    expiryDate?: string | null;
-    packSize: number;
-    numberOfPacks: number;
-    numberOfUnits: number;
-    costPricePerPack: number;
-    totalCost: number | string;
-  }[];
+    lines: Lines;
+  };
 };
+
+export type Lines = {
+  id: string;
+  itemCode: string;
+  itemName: string;
+  batch?: string | null;
+  expiryDate?: string | null;
+  packSize: number;
+  numberOfPacks: number;
+  numberOfUnits: number;
+  costPricePerPack: number;
+  totalCost: number | string;
+}[];
