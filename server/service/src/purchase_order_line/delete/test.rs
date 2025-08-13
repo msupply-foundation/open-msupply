@@ -6,6 +6,7 @@ mod delete {
             MockDataInserts,
         },
         test_db::setup_all,
+        ActivityLogRowRepository, ActivityLogType,
     };
 
     use crate::{
@@ -73,5 +74,15 @@ mod delete {
             .unwrap();
 
         assert_eq!(id, "purchase_order_line_id_1");
+
+        // test activity log for deleted
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id("test_purchase_order_a")
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderLineDeleted)
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineDeleted);
     }
 }
