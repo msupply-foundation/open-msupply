@@ -504,6 +504,7 @@
   "filename.customer-returns": "customer-returns",
   "filename.facilities-properties": "facilities-properties-import",
   "filename.failed-import-rows": "Errored Import Rows",
+  "filename.goods-received": "goods-received",
   "filename.inbounds": "inbound-shipments",
   "filename.locations": "locations",
   "filename.master-lists": "master-lists",
