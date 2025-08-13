@@ -5,9 +5,9 @@ import {
   Grid,
   useDetailPanel,
 } from '@openmsupply-client/common';
-import { AddButtons } from './AddButtons';
+import { isGoodsReceivedEditable } from '../../../utils';
 import { useGoodsReceived } from '../../api';
-import { isGoodsReceivedEditable } from 'packages/purchasing/src/utils';
+import { AddButtons } from './AddButtons';
 
 export const AppBarButtonsComponent = (): ReactElement => {
   const { OpenButton } = useDetailPanel();

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { SyntheticEvent } from 'react';
 import {
   createQueryParamsStore,
   ListSearch,
@@ -19,16 +19,16 @@ interface PurchaseOrderLineSearchModalProps {
   onChange: (purchaseOrderLine: PurchaseOrderLineFragment) => void;
 }
 
-const PurchaseOrderSearchComponent: FC<PurchaseOrderLineSearchModalProps> = ({
+const PurchaseOrderSearchComponent = ({
   purchaseOrderId,
   open,
   onClose,
   onChange,
-}) => {
+}: PurchaseOrderLineSearchModalProps) => {
+  const t = useTranslation();
   const {
     query: { data, isLoading },
   } = usePurchaseOrder(purchaseOrderId);
-  const t = useTranslation();
 
   const filterOptions = (
     options: PurchaseOrderLineFragment[],
@@ -41,6 +41,17 @@ const PurchaseOrderSearchComponent: FC<PurchaseOrderLineSearchModalProps> = ({
         option.item.name.includes(filter) ||
         option.comment?.toLowerCase().includes(filter)
     );
+  };
+
+  const handleChange = (
+    _event: SyntheticEvent,
+    purchaseOrder:
+      | PurchaseOrderLineFragment
+      | PurchaseOrderLineFragment[]
+      | null
+  ) => {
+    if (purchaseOrder && !(purchaseOrder instanceof Array))
+      onChange(purchaseOrder);
   };
 
   const getPurchaseOrderLineOptionRenderer: AutocompleteOptionRenderer<
@@ -78,24 +89,14 @@ const PurchaseOrderSearchComponent: FC<PurchaseOrderLineSearchModalProps> = ({
         `${option.item.name || ''} - ${option.lineNumber}`
       }
       filterOptions={filterOptions}
-      onChange={(
-        _,
-        purchaseOrder:
-          | PurchaseOrderLineFragment
-          | PurchaseOrderLineFragment[]
-          | null
-      ) => {
-        if (purchaseOrder && !(purchaseOrder instanceof Array)) {
-          onChange(purchaseOrder);
-        }
-      }}
+      onChange={handleChange}
     />
   );
 };
 
-export const PurchaseOrderLineSearchModal: FC<
-  PurchaseOrderLineSearchModalProps
-> = props => (
+export const PurchaseOrderLineSearchModal = (
+  props: PurchaseOrderLineSearchModalProps
+) => (
   <QueryParamsProvider
     createStore={createQueryParamsStore<PurchaseOrderLineFragment>({
       initialSortBy: { key: 'number' },
