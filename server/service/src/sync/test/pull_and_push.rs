@@ -1,3 +1,10 @@
+use super::{
+    insert_all_extra_data,
+    test_data::{
+        get_all_pull_delete_central_test_records, get_all_pull_delete_remote_test_records,
+        get_all_pull_upsert_central_test_records, get_all_pull_upsert_remote_test_records,
+    },
+};
 use crate::sync::{
     api::SyncAction,
     sync_buffer::SyncBufferSource,
@@ -11,18 +18,11 @@ use crate::sync::{
         translate_changelogs_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType,
     },
 };
+use pretty_assertions::assert_eq;
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
     test_db, ChangelogRepository, KeyType, KeyValueStoreRow, SyncBufferRow,
     SyncBufferRowRepository,
-};
-
-use super::{
-    insert_all_extra_data,
-    test_data::{
-        get_all_pull_delete_central_test_records, get_all_pull_delete_remote_test_records,
-        get_all_pull_upsert_central_test_records, get_all_pull_upsert_remote_test_records,
-    },
 };
 
 #[actix_rt::test]
@@ -120,17 +120,18 @@ async fn test_sync_pull_and_push() {
         .map(|r| (r.record_id.clone(), r.table_name.clone()))
         .collect::<Vec<(String, String)>>();
 
-    let mut i = 0;
-    for translated_record in changelog_translated_records_id_and_table_name.clone() {
+    for (i, translated_record) in changelog_translated_records_id_and_table_name
+        .clone()
+        .into_iter()
+        .enumerate()
+    {
         let test_record = &test_outgoing_sync_records_id_and_table_name[i];
         if &translated_record != test_record {
             println!(
-                "First mismatched record changelog: {:?} and test_data: {:?}",
-                translated_record, test_record
+                "First mismatched record changelog: {translated_record:?} and test_data: {test_record:?}"
             );
             break;
         }
-        i += 1;
     }
 
     // Test ids and table names
