@@ -5,13 +5,12 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
     __typename
     id
     name
-    # Add more fields here as required
   }
   createdDatetime
   confirmedDatetime
   status
   targetMonths
-  # deliveredDatetime
+  reference
   lines {
     totalCount
   }
@@ -60,19 +59,16 @@ fragment PurchaseOrder on PurchaseOrderNode {
   sentDatetime
   shippingMethod
   status
-  store {
-    id
-    # name
-  }
   supplier {
     __typename
     id
     name
-    # Add more fields here as required
   }
   supplierAgent
   supplierDiscountAmount
   supplierDiscountPercentage
+  lineTotalAfterDiscount
+  orderTotalAfterDiscount
   targetMonths
   confirmedDatetime
   contractSignedDate
@@ -107,6 +103,8 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedDeliveryDate
   requestedNumberOfUnits
   adjustedNumberOfUnits
+  pricePerUnitAfterDiscount
+  pricePerUnitBeforeDiscount
 }
 
 query purchaseOrders(
@@ -163,6 +161,26 @@ mutation updatePurchaseOrder(
 ) {
   updatePurchaseOrder(input: $input, storeId: $storeId) {
     ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation deletePurchaseOrder($id: String!, $storeId: String!) {
+  deletePurchaseOrder(id: $id, storeId: $storeId) {
+    ... on DeletePurchaseOrderError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+        }
+        description
+        ... on CannotDeleteNonNewPurchaseOrder {
+          __typename
+        }
+      }
+    }
+    ... on DeleteResponse {
       id
     }
   }
@@ -328,6 +346,27 @@ mutation updatePurchaseOrderLine(
         ... on PurchaseOrderLineNotFound {
           __typename
           description
+        }
+      }
+    }
+  }
+}
+
+mutation deletePurchaseOrderLines($ids: [String!]!, $storeId: String!) {
+  deletePurchaseOrderLines(ids: $ids, storeId: $storeId) {
+    id
+    response {
+      ... on DeleteResponse {
+        id
+      }
+      ... on DeletePurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on RecordNotFound {
+            __typename
+            description
+          }
         }
       }
     }

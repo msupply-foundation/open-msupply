@@ -11,6 +11,7 @@ export type GoodsReceivedRowFragment = {
   comment?: string | null;
   createdDatetime: string;
   receivedDatetime?: string | null;
+  finalisedDatetime?: string | null;
   purchaseOrderNumber?: number | null;
   supplierReference?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -22,8 +23,10 @@ export type GoodsReceivedFragment = {
   number: number;
   status: Types.GoodsReceivedNodeStatus;
   comment?: string | null;
+  createdBy?: string | null;
   createdDatetime: string;
   receivedDatetime?: string | null;
+  finalisedDatetime?: string | null;
   purchaseOrderNumber?: number | null;
   supplierReference?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -51,6 +54,7 @@ export type GoodsReceivedListQuery = {
       comment?: string | null;
       createdDatetime: string;
       receivedDatetime?: string | null;
+      finalisedDatetime?: string | null;
       purchaseOrderNumber?: number | null;
       supplierReference?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -59,7 +63,7 @@ export type GoodsReceivedListQuery = {
 };
 
 export type GoodsReceivedByIdQueryVariables = Types.Exact<{
-  GoodsReceivedId: Types.Scalars['String']['input'];
+  id: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -72,13 +76,35 @@ export type GoodsReceivedByIdQuery = {
         number: number;
         status: Types.GoodsReceivedNodeStatus;
         comment?: string | null;
+        createdBy?: string | null;
         createdDatetime: string;
         receivedDatetime?: string | null;
+        finalisedDatetime?: string | null;
         purchaseOrderNumber?: number | null;
         supplierReference?: string | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       }
     | { __typename: 'RecordNotFound'; description: string };
+};
+
+export type InsertGoodsReceivedMutationVariables = Types.Exact<{
+  input: Types.InsertGoodsReceivedInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InsertGoodsReceivedMutation = {
+  __typename: 'Mutations';
+  insertGoodsReceived: { __typename: 'IdResponse'; id: string };
+};
+
+export type UpdateGoodsReceivedMutationVariables = Types.Exact<{
+  input: Types.UpdateGoodsReceivedInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdateGoodsReceivedMutation = {
+  __typename: 'Mutations';
+  updateGoodsReceived: { __typename: 'IdResponse'; id: string };
 };
 
 export const GoodsReceivedRowFragmentDoc = gql`
@@ -89,6 +115,7 @@ export const GoodsReceivedRowFragmentDoc = gql`
     comment
     createdDatetime
     receivedDatetime
+    finalisedDatetime
     purchaseOrderNumber
     supplierReference
     supplier {
@@ -104,8 +131,10 @@ export const GoodsReceivedFragmentDoc = gql`
     number
     status
     comment
+    createdBy
     createdDatetime
     receivedDatetime
+    finalisedDatetime
     purchaseOrderNumber
     supplierReference
     supplier {
@@ -141,8 +170,8 @@ export const GoodsReceivedListDocument = gql`
   ${GoodsReceivedRowFragmentDoc}
 `;
 export const GoodsReceivedByIdDocument = gql`
-  query goodsReceivedById($GoodsReceivedId: String!, $storeId: String!) {
-    goodsReceived(id: $GoodsReceivedId, storeId: $storeId) {
+  query goodsReceivedById($id: String!, $storeId: String!) {
+    goodsReceived(id: $id, storeId: $storeId) {
       __typename
       ... on RecordNotFound {
         __typename
@@ -154,6 +183,30 @@ export const GoodsReceivedByIdDocument = gql`
     }
   }
   ${GoodsReceivedFragmentDoc}
+`;
+export const InsertGoodsReceivedDocument = gql`
+  mutation insertGoodsReceived(
+    $input: InsertGoodsReceivedInput!
+    $storeId: String!
+  ) {
+    insertGoodsReceived(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
+export const UpdateGoodsReceivedDocument = gql`
+  mutation updateGoodsReceived(
+    $input: UpdateGoodsReceivedInput!
+    $storeId: String!
+  ) {
+    updateGoodsReceived(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -204,6 +257,38 @@ export function getSdk(
           ),
         'goodsReceivedById',
         'query',
+        variables
+      );
+    },
+    insertGoodsReceived(
+      variables: InsertGoodsReceivedMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertGoodsReceivedMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertGoodsReceivedMutation>(
+            InsertGoodsReceivedDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertGoodsReceived',
+        'mutation',
+        variables
+      );
+    },
+    updateGoodsReceived(
+      variables: UpdateGoodsReceivedMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdateGoodsReceivedMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateGoodsReceivedMutation>(
+            UpdateGoodsReceivedDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updateGoodsReceived',
+        'mutation',
         variables
       );
     },

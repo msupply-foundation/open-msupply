@@ -11,6 +11,7 @@ export type PurchaseOrderRowFragment = {
   confirmedDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
+  reference?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -49,6 +50,8 @@ export type PurchaseOrderFragment = {
   supplierAgent?: string | null;
   supplierDiscountAmount: number;
   supplierDiscountPercentage?: number | null;
+  lineTotalAfterDiscount: number;
+  orderTotalAfterDiscount: number;
   targetMonths?: number | null;
   confirmedDatetime?: string | null;
   contractSignedDate?: string | null;
@@ -70,6 +73,8 @@ export type PurchaseOrderFragment = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -79,7 +84,6 @@ export type PurchaseOrderFragment = {
       };
     }>;
   };
-  store?: { __typename: 'StoreNode'; id: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   documents: {
     __typename: 'SyncFileReferenceConnector';
@@ -102,6 +106,8 @@ export type PurchaseOrderLineFragment = {
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
+  pricePerUnitAfterDiscount: number;
+  pricePerUnitBeforeDiscount: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -133,6 +139,7 @@ export type PurchaseOrdersQuery = {
       confirmedDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
+      reference?: string | null;
       comment?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -173,6 +180,8 @@ export type PurchaseOrderByIdQuery = {
         supplierAgent?: string | null;
         supplierDiscountAmount: number;
         supplierDiscountPercentage?: number | null;
+        lineTotalAfterDiscount: number;
+        orderTotalAfterDiscount: number;
         targetMonths?: number | null;
         confirmedDatetime?: string | null;
         contractSignedDate?: string | null;
@@ -194,6 +203,8 @@ export type PurchaseOrderByIdQuery = {
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
+            pricePerUnitAfterDiscount: number;
+            pricePerUnitBeforeDiscount: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -203,7 +214,6 @@ export type PurchaseOrderByIdQuery = {
             };
           }>;
         };
-        store?: { __typename: 'StoreNode'; id: string } | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
         documents: {
           __typename: 'SyncFileReferenceConnector';
@@ -239,6 +249,26 @@ export type UpdatePurchaseOrderMutation = {
   updatePurchaseOrder: { __typename: 'IdResponse'; id: string };
 };
 
+export type DeletePurchaseOrderMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeletePurchaseOrderMutation = {
+  __typename: 'Mutations';
+  deletePurchaseOrder:
+    | {
+        __typename: 'DeletePurchaseOrderError';
+        error:
+          | {
+              __typename: 'CannotDeleteNonNewPurchaseOrder';
+              description: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      }
+    | { __typename: 'DeleteResponse'; id: string };
+};
+
 export type PurchaseOrderLinesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -262,6 +292,8 @@ export type PurchaseOrderLinesQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -292,6 +324,8 @@ export type PurchaseOrderLineQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -397,6 +431,27 @@ export type UpdatePurchaseOrderLineMutation = {
       };
 };
 
+export type DeletePurchaseOrderLinesMutationVariables = Types.Exact<{
+  ids:
+    | Array<Types.Scalars['String']['input']>
+    | Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeletePurchaseOrderLinesMutation = {
+  __typename: 'Mutations';
+  deletePurchaseOrderLines: Array<{
+    __typename: 'DeletePurchaseOrderLineResponseWithId';
+    id: string;
+    response:
+      | {
+          __typename: 'DeletePurchaseOrderLineError';
+          error: { __typename: 'RecordNotFound'; description: string };
+        }
+      | { __typename: 'DeleteResponse'; id: string };
+  }>;
+};
+
 export const PurchaseOrderRowFragmentDoc = gql`
   fragment PurchaseOrderRow on PurchaseOrderNode {
     id
@@ -410,6 +465,7 @@ export const PurchaseOrderRowFragmentDoc = gql`
     confirmedDatetime
     status
     targetMonths
+    reference
     lines {
       totalCount
     }
@@ -432,6 +488,8 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedDeliveryDate
     requestedNumberOfUnits
     adjustedNumberOfUnits
+    pricePerUnitAfterDiscount
+    pricePerUnitBeforeDiscount
   }
 `;
 export const SyncFileReferenceFragmentDoc = gql`
@@ -477,9 +535,6 @@ export const PurchaseOrderFragmentDoc = gql`
     sentDatetime
     shippingMethod
     status
-    store {
-      id
-    }
     supplier {
       __typename
       id
@@ -488,6 +543,8 @@ export const PurchaseOrderFragmentDoc = gql`
     supplierAgent
     supplierDiscountAmount
     supplierDiscountPercentage
+    lineTotalAfterDiscount
+    orderTotalAfterDiscount
     targetMonths
     confirmedDatetime
     contractSignedDate
@@ -569,6 +626,27 @@ export const UpdatePurchaseOrderDocument = gql`
   ) {
     updatePurchaseOrder(input: $input, storeId: $storeId) {
       ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
+export const DeletePurchaseOrderDocument = gql`
+  mutation deletePurchaseOrder($id: String!, $storeId: String!) {
+    deletePurchaseOrder(id: $id, storeId: $storeId) {
+      ... on DeletePurchaseOrderError {
+        __typename
+        error {
+          ... on RecordNotFound {
+            __typename
+          }
+          description
+          ... on CannotDeleteNonNewPurchaseOrder {
+            __typename
+          }
+        }
+      }
+      ... on DeleteResponse {
         id
       }
     }
@@ -749,6 +827,28 @@ export const UpdatePurchaseOrderLineDocument = gql`
     }
   }
 `;
+export const DeletePurchaseOrderLinesDocument = gql`
+  mutation deletePurchaseOrderLines($ids: [String!]!, $storeId: String!) {
+    deletePurchaseOrderLines(ids: $ids, storeId: $storeId) {
+      id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeletePurchaseOrderLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -829,6 +929,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'updatePurchaseOrder',
+        'mutation',
+        variables
+      );
+    },
+    deletePurchaseOrder(
+      variables: DeletePurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeletePurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeletePurchaseOrderMutation>(
+            DeletePurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deletePurchaseOrder',
         'mutation',
         variables
       );
@@ -941,6 +1057,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'updatePurchaseOrderLine',
+        'mutation',
+        variables
+      );
+    },
+    deletePurchaseOrderLines(
+      variables: DeletePurchaseOrderLinesMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeletePurchaseOrderLinesMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeletePurchaseOrderLinesMutation>(
+            DeletePurchaseOrderLinesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deletePurchaseOrderLines',
         'mutation',
         variables
       );
