@@ -26,8 +26,6 @@ export const usePurchaseOrderLineEditColumns = ({
     | 'discountPercentage'
     | null
   >(null);
-  // console.log('draft', draft);
-  console.log('mostRecentlyChanged', lastChanged.current);
   const columnDefinitions: ColumnDescription<DraftPurchaseOrderLine>[] =
     useMemo(
       () => [
@@ -64,7 +62,6 @@ export const usePurchaseOrderLineEditColumns = ({
               lastChanged.current,
               patch
             );
-            console.log('adjustedPatch', adjustedPatch);
             updatePatch({ ...patch, ...adjustedPatch });
           },
           cellProps: {

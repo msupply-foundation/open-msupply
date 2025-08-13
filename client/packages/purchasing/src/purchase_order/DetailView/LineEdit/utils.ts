@@ -11,7 +11,14 @@ export const createDraftPurchaseOrderLine = (
     purchaseOrderId,
     itemId: item.id,
     requestedPackSize: 0,
+    requestedDeliveryDate: null,
+    expectedDeliveryDate: null,
     requestedNumberOfUnits: 0,
+    adjustedNumberOfUnits: null,
+    pricePerUnitBeforeDiscount: 0,
+    pricePerUnitAfterDiscount: 0,
+    // This value not actually saved to DB
+    discountPercentage: 0,
   };
 };
 
@@ -28,18 +35,10 @@ export const calculatePricesAndDiscount = (
   data: Partial<DraftPurchaseOrderLine>
 ) => {
   const {
-    pricePerUnitBeforeDiscount,
+    pricePerUnitBeforeDiscount = 0,
     discountPercentage,
-    pricePerUnitAfterDiscount,
+    pricePerUnitAfterDiscount = 0,
   } = data;
-
-  console.log('newField', newField);
-  console.log('previouslyChangedField', previouslyChangedField);
-  console.log('data', {
-    pricePerUnitAfterDiscount,
-    pricePerUnitBeforeDiscount,
-    discountPercentage,
-  });
 
   const updateField = [
     'pricePerUnitAfterDiscount',
@@ -49,15 +48,8 @@ export const calculatePricesAndDiscount = (
     field => field !== newField && field !== previouslyChangedField
   )[0] as PriceField;
 
-  console.log('updateField', updateField);
-
   switch (updateField) {
     case 'discountPercentage': {
-      console.log(
-        'New discountPercentage',
-        (pricePerUnitBeforeDiscount - pricePerUnitAfterDiscount) /
-          (pricePerUnitBeforeDiscount || 1)
-      );
       return {
         pricePerUnitBeforeDiscount,
         pricePerUnitAfterDiscount,
