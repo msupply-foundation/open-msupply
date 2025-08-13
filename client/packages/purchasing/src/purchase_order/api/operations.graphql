@@ -36,6 +36,8 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     name
     unitName
   }
+  lineNumber
+  comment
   requestedPackSize
   requestedDeliveryDate
   requestedNumberOfUnits
