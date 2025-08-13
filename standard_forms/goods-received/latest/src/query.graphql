@@ -1,0 +1,21 @@
+query GoodsReceived($dataId: String!, $storeId: String!) {
+  goodsReceived(id: $dataId, storeId: $storeId) {
+    ... on GoodsReceivedNode {
+      id
+      createdBy
+      purchaseOrderNumber
+      supplierReference
+      createdDatetime
+      receivedDatetime
+      lines {
+        nodes {
+          location {
+            name
+          }
+          itemName
+          receivedPackSize
+        }
+      }
+    }
+  }
+}
