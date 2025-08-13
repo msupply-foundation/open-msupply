@@ -1,9 +1,5 @@
 import { useEffect } from 'react';
-import {
-  PreferenceKey,
-  usePreference,
-  useTableStore,
-} from '@openmsupply-client/common';
+import { usePreferences, useTableStore } from '@openmsupply-client/common';
 import { DraftStockOutLineFragment } from './StockOut';
 
 type RowsType = DraftStockOutLineFragment | DraftStockOutLineFragment;
@@ -18,10 +14,9 @@ export const useDisableVvmRows = ({
   isVaccine,
 }: UseDisableVvmRowsProps): void => {
   const { setDisabledRows } = useTableStore();
-  const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatusForStock);
+  const { manageVvmStatusForStock } = usePreferences();
 
-  const shouldDisableVvmRows =
-    prefs?.manageVvmStatusForStock && isVaccine === true;
+  const shouldDisableVvmRows = manageVvmStatusForStock && isVaccine === true;
 
   useEffect(() => {
     if (shouldDisableVvmRows) {

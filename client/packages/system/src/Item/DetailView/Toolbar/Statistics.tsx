@@ -1,11 +1,6 @@
 import React from 'react';
 import { useTranslation } from '@common/intl';
-import {
-  Grid,
-  PreferenceKey,
-  StatsPanel,
-  usePreference,
-} from '@openmsupply-client/common';
+import { Grid, StatsPanel, usePreferences } from '@openmsupply-client/common';
 import { useFormatNumber } from '@common/intl';
 import { useItemFields } from '../../api';
 
@@ -13,12 +8,12 @@ export const Statistics = () => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
   const { stats, isVaccine, doses } = useItemFields();
-  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
+  const { manageVaccinesInDoses } = usePreferences();
 
   if (!stats) return null;
 
   const getDosesMessage = (quan: number) => {
-    if (!prefs?.manageVaccinesInDoses || !isVaccine || !doses) return '';
+    if (!manageVaccinesInDoses || !isVaccine || !doses) return '';
 
     const doseCount = formatNumber.round(doses * quan);
     return `${doseCount} ${t('label.doses').toLowerCase()}`;

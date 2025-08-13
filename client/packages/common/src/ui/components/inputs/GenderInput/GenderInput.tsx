@@ -2,10 +2,9 @@ import React from 'react';
 import {
   Select,
   GenderType,
-  usePreference,
+  usePreferences,
   useTranslation,
   getGenderTranslationKey,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 
 type GenderInputProps = {
@@ -22,11 +21,7 @@ export const GenderInput = ({
   width = 250,
 }: GenderInputProps) => {
   const t = useTranslation();
-  const {
-    data: { genderOptions } = {
-      genderOptions: [],
-    },
-  } = usePreference(PreferenceKey.GenderOptions);
+  const { genderOptions = [] } = usePreferences();
 
   const mapGenderToOption = (value: GenderType) => ({
     id: value,
