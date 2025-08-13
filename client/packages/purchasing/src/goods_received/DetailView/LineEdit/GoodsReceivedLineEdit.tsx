@@ -6,10 +6,10 @@ import {
   Divider,
   Grid,
 } from '@openmsupply-client/common';
-import { DraftGoodsReceivedLine } from '../../api/hooks/useGoodsReceivedLine';
 import { min } from 'lodash';
-import { useGoodsReceivedLineEditColumns } from './columns';
+import { DraftGoodsReceivedLine } from '../../api/hooks/useGoodsReceivedLine';
 import { GoodsReceivedLineFragment } from '../../api/operations.generated';
+import { useGoodsReceivedLineEditColumns } from './columns';
 
 export type GoodsReceivedLineItem = Partial<GoodsReceivedLineFragment>;
 
@@ -29,9 +29,7 @@ export const GoodsReceivedLineEdit = ({
   const showContent = !!draft && !!currentLine;
 
   const lines: DraftGoodsReceivedLine[] = [];
-  if (draft) {
-    lines.push(draft);
-  }
+  if (draft) lines.push(draft);
 
   const columns = useGoodsReceivedLineEditColumns({
     draft,

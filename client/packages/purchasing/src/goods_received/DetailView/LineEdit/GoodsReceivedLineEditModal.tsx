@@ -1,13 +1,21 @@
-import { useDialog, useNotification } from '@common/hooks';
-import { DialogButton, InlineSpinner } from '@common/components';
-import { useTranslation, Box } from '@openmsupply-client/common';
-import React, { useState } from 'react';
-import { GoodsReceivedLineEdit } from './GoodsReceivedLineEdit';
-import { GoodsReceivedFragment } from '../../api/operations.generated';
+import React from 'react';
+import {
+  useTranslation,
+  Box,
+  useDialog,
+  useNotification,
+  DialogButton,
+  InlineSpinner,
+} from '@openmsupply-client/common';
+import {
+  GoodsReceivedFragment,
+  GoodsReceivedLineFragment,
+} from '../../api/operations.generated';
 import { useGoodsReceivedLine } from '../../api';
+import { GoodsReceivedLineEdit } from './GoodsReceivedLineEdit';
 
 interface GoodsReceivedLineEditModalProps {
-  lineId: string | null;
+  lineId: string;
   goodsReceived: GoodsReceivedFragment;
   isOpen: boolean;
   onClose: () => void;
@@ -23,10 +31,9 @@ export const GoodsReceivedLineEditModal = ({
   const { error } = useNotification();
 
   const lines = goodsReceived.lines.nodes;
-
-  const [currentLine, setCurrentLine] = useState(
-    lines.find(line => line.id === lineId) ?? undefined
-  );
+  const currentLine = lines.find(line => line.id === lineId) as
+    | GoodsReceivedLineFragment
+    | undefined; // Remove once item loader is implemented
 
   const isUpdating = false; // remove me when adding update
   const { draft, updatePatch } = useGoodsReceivedLine(currentLine?.id);
