@@ -21,13 +21,13 @@ export type ListParams = {
 };
 
 export const useGoodsReceivedList = (queryParams?: ListParams) => {
-  const { data, isLoading, isError } = useGet(
+  const { data, isLoading, isError, refetch } = useGet(
     queryParams ?? { filterBy: null }
   );
   const { deleteGoodsReceived, selectedRows } = useDeleteLines(data?.nodes);
 
   return {
-    query: { data, isLoading, isError },
+    query: { data, isLoading, isError, fetchAllGoodsReceived: refetch },
     delete: {
       deleteGoodsReceived,
       selectedRows,
