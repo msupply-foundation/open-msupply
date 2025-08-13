@@ -48,6 +48,10 @@ export function usePurchaseOrderLine(id?: string) {
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
 
+  // The discount percentage is calculated from the price fields, but we want to
+  // insert it into the draft so it can be independently manipulated (with the
+  // other fields updated accordingly -- see the column definitions for how that
+  // works)
   const initialDiscountPercentage =
     data?.nodes[0]?.pricePerUnitBeforeDiscount &&
     data?.nodes[0]?.pricePerUnitAfterDiscount
