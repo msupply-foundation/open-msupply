@@ -2,7 +2,7 @@ use crate::sync::{
     test::TestSyncIncomingRecord, translations::purchase_order_line::LegacyPurchaseOrderLineRow,
 };
 use chrono::NaiveDate;
-use repository::PurchaseOrderLineRow;
+use repository::{PurchaseOrderLineDelete, PurchaseOrderLineRow};
 use serde_json::json;
 
 use super::TestSyncOutgoingRecord;
@@ -114,6 +114,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         PURCHASE_ORDER_LINE_1.0,
-        PurchaseOrderDelete(PURCHASE_ORDER_LINE_1.0.to_string()),
+        PurchaseOrderLineDelete(PURCHASE_ORDER_LINE_1.0.to_string()),
     )]
 }
