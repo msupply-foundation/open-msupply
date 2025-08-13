@@ -151,3 +151,28 @@ macro_rules! map_filter {
         }
     }};
 }
+
+#[macro_export]
+macro_rules! map_graphql_diesel_enum {
+    ($from:ty, $to:ty, { $($variant:ident),* $(,)? }) => {
+        impl From<$from> for $to {
+            fn from(value: $from) -> Self {
+                match value {
+                    $(
+                        <$from>::$variant => <$to>::$variant,
+                    )*
+                }
+            }
+        }
+
+        impl From<$to> for $from {
+            fn from(value: $to) -> Self {
+                match value {
+                    $(
+                        <$to>::$variant => <$from>::$variant,
+                    )*
+                }
+            }
+        }
+    };
+}
