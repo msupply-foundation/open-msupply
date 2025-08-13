@@ -16,6 +16,17 @@ export type GoodsReceivedRowFragment = {
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
 };
 
+export type GoodsReceivedLineFragment = {
+  __typename: 'GoodsReceivedLineNode';
+  id: string;
+  lineNumber: number;
+  batch?: string | null;
+  expiryDate?: string | null;
+  receivedPackSize: number;
+  numberOfPacksReceived: number;
+  item: { __typename: 'ItemNode'; code: string; name: string };
+};
+
 export type GoodsReceivedFragment = {
   __typename: 'GoodsReceivedNode';
   id: string;
@@ -28,6 +39,19 @@ export type GoodsReceivedFragment = {
   purchaseOrderNumber?: number | null;
   supplierReference?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+  lines: {
+    __typename: 'GoodsReceivedLineConnector';
+    nodes: Array<{
+      __typename: 'GoodsReceivedLineNode';
+      id: string;
+      lineNumber: number;
+      batch?: string | null;
+      expiryDate?: string | null;
+      receivedPackSize: number;
+      numberOfPacksReceived: number;
+      item: { __typename: 'ItemNode'; code: string; name: string };
+    }>;
+  };
 };
 
 export type GoodsReceivedListQueryVariables = Types.Exact<{
@@ -79,6 +103,19 @@ export type GoodsReceivedByIdQuery = {
         purchaseOrderNumber?: number | null;
         supplierReference?: string | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+        lines: {
+          __typename: 'GoodsReceivedLineConnector';
+          nodes: Array<{
+            __typename: 'GoodsReceivedLineNode';
+            id: string;
+            lineNumber: number;
+            batch?: string | null;
+            expiryDate?: string | null;
+            receivedPackSize: number;
+            numberOfPacksReceived: number;
+            item: { __typename: 'ItemNode'; code: string; name: string };
+          }>;
+        };
       }
     | { __typename: 'RecordNotFound'; description: string };
 };
@@ -109,6 +146,21 @@ export const GoodsReceivedRowFragmentDoc = gql`
     }
   }
 `;
+export const GoodsReceivedLineFragmentDoc = gql`
+  fragment GoodsReceivedLine on GoodsReceivedLineNode {
+    __typename
+    id
+    lineNumber
+    item {
+      code
+      name
+    }
+    batch
+    expiryDate
+    receivedPackSize
+    numberOfPacksReceived
+  }
+`;
 export const GoodsReceivedFragmentDoc = gql`
   fragment GoodsReceived on GoodsReceivedNode {
     __typename
@@ -125,7 +177,14 @@ export const GoodsReceivedFragmentDoc = gql`
       id
       name
     }
+    lines {
+      __typename
+      nodes {
+        ...GoodsReceivedLine
+      }
+    }
   }
+  ${GoodsReceivedLineFragmentDoc}
 `;
 export const GoodsReceivedListDocument = gql`
   query goodsReceivedList(

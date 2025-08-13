@@ -2920,6 +2920,38 @@ export type GoodsReceivedFilterInput = {
   status?: InputMaybe<EqualFilterGoodsReceivedStatusInput>;
 };
 
+export type GoodsReceivedLineConnector = {
+  __typename: 'GoodsReceivedLineConnector';
+  nodes: Array<GoodsReceivedLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type GoodsReceivedLineNode = {
+  __typename: 'GoodsReceivedLineNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  goodsReceivedId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  item: ItemNode;
+  itemLinkId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  lineNumber: Scalars['Int']['output'];
+  locationId?: Maybe<Scalars['String']['output']>;
+  manufacturerLinkId?: Maybe<Scalars['String']['output']>;
+  numberOfPacksReceived: Scalars['Float']['output'];
+  purchaseOrderLineId: Scalars['String']['output'];
+  receivedPackSize: Scalars['Float']['output'];
+  status: GoodsReceivedLineNodeStatus;
+  volumePerPack?: Maybe<Scalars['Float']['output']>;
+  weightPerPack?: Maybe<Scalars['Float']['output']>;
+};
+
+export enum GoodsReceivedLineNodeStatus {
+  Authorised = 'AUTHORISED',
+  Unauthorised = 'UNAUTHORISED',
+}
+
 export type GoodsReceivedListResponse = GoodsReceivedConnector;
 
 export type GoodsReceivedNode = {
@@ -2928,6 +2960,7 @@ export type GoodsReceivedNode = {
   createdBy?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
+  lines: GoodsReceivedLineConnector;
   number: Scalars['Int']['output'];
   purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;
   receivedDatetime?: Maybe<Scalars['NaiveDate']['output']>;
@@ -8147,6 +8180,7 @@ export type ReportConnector = {
 export enum ReportContext {
   Asset = 'ASSET',
   Dispensary = 'DISPENSARY',
+  GoodsReceived = 'GOODS_RECEIVED',
   InboundReturn = 'INBOUND_RETURN',
   InboundShipment = 'INBOUND_SHIPMENT',
   InternalOrder = 'INTERNAL_ORDER',
