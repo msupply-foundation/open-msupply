@@ -1,17 +1,16 @@
+use crate::sync::translations::{
+    invoice::InvoiceTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
+};
 use chrono::NaiveDate;
 use repository::{
     goods_received_row::{
-        GoodsReceivedRow, GoodsReceivedRowDelete, GoodsReceivedRowRepository, GoodsReceivedStatus,
+        GoodsReceivedDelete, GoodsReceivedRow, GoodsReceivedRowRepository, GoodsReceivedStatus,
     },
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option;
-
-use crate::sync::translations::{
-    invoice::InvoiceTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
-};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub enum LegacyGoodsReceivedStatus {
@@ -147,7 +146,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(GoodsReceivedRowDelete(
+        Ok(PullTranslateResult::delete(GoodsReceivedDelete(
             sync_record.record_id.clone(),
         )))
     }
@@ -155,9 +154,8 @@ impl SyncTranslation for GoodsReceivedTranslation {
 
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all};
-
     use crate::sync::translations::{goods_received::GoodsReceivedTranslation, SyncTranslation};
+    use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn test_goods_received_translation() {

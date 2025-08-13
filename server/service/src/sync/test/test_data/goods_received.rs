@@ -3,9 +3,7 @@ use crate::sync::{
     translations::goods_received::{LegacyGoodsReceived, LegacyGoodsReceivedStatus},
 };
 use chrono::NaiveDate;
-use repository::goods_received_row::{
-    GoodsReceivedRow, GoodsReceivedRowDelete, GoodsReceivedStatus,
-};
+use repository::goods_received_row::{GoodsReceivedDelete, GoodsReceivedRow, GoodsReceivedStatus};
 use serde_json::json;
 
 const TABLE_NAME: &str = "Goods_received";
@@ -45,7 +43,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             comment: None,
             supplier_reference: Some("test po 1".to_string()),
             donor_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
-            created_datetime: NaiveDate::from_ymd_opt(2025, 07, 24)
+            created_datetime: NaiveDate::from_ymd_opt(2025, 7, 24)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
@@ -66,8 +64,8 @@ fn goods_received_push_record() -> TestSyncOutgoingRecord {
             inbound_shipment_id: Some("12e889c0f0d211eb8dddb54df6d741bc".to_string()),
             goods_received_number: 1,
             status: LegacyGoodsReceivedStatus::New,
-            created_datetime: NaiveDate::from_ymd_opt(2025, 07, 24).unwrap(),
-            received_date: Some(NaiveDate::from_ymd_opt(2025, 07, 24).unwrap()),
+            created_datetime: NaiveDate::from_ymd_opt(2025, 7, 24).unwrap(),
+            received_date: Some(NaiveDate::from_ymd_opt(2025, 7, 24).unwrap()),
             comment: None,
             supplier_reference: Some("test po 1".to_string()),
             donor_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
@@ -80,7 +78,7 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         GOODS_RECEIVED.0,
-        GoodsReceivedRowDelete(GOODS_RECEIVED.0.to_string()),
+        GoodsReceivedDelete(GOODS_RECEIVED.0.to_string()),
     )]
 }
 
