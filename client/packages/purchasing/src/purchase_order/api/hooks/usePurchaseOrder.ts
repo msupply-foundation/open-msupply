@@ -1,3 +1,4 @@
+import { useMemo, useState, useEffect } from 'react';
 import {
   FnUtils,
   InsertPurchaseOrderInput,
@@ -14,12 +15,13 @@ import {
   useDebounceCallback,
   LIST_KEY,
 } from '@openmsupply-client/common';
-import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
-import { PURCHASE_ORDER } from './keys';
-import { PurchaseOrderFragment } from '../operations.generated';
-import { useMemo, useState, useEffect } from 'react';
+
+import { isPurchaseOrderDisabled } from '../../../utils';
 import { usePurchaseOrderColumns } from '../../DetailView/columns';
+import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
+import { PurchaseOrderFragment } from '../operations.generated';
 import { parseUpdateInput } from './utils';
+import { PURCHASE_ORDER } from './keys';
 
 const DEBOUNCED_TIME = 1000;
 
@@ -55,6 +57,8 @@ export const usePurchaseOrder = (id?: string) => {
     queryFn,
     enabled: !!purchaseOrderId,
   });
+
+  const isDisabled = data ? isPurchaseOrderDisabled(data) : false;
 
   const { sortedAndFilteredLines, itemFilter, setItemFilter } =
     useFilteredAndSortedLines(data);
@@ -113,6 +117,7 @@ export const usePurchaseOrder = (id?: string) => {
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     masterList: { addFromMasterList, isAdding },
+    isDisabled,
     draft,
     handleChange,
   };
