@@ -67,8 +67,6 @@ fragment PurchaseOrder on PurchaseOrderNode {
   supplierAgent
   supplierDiscountAmount
   supplierDiscountPercentage
-  lineTotalAfterDiscount
-  orderTotalAfterDiscount
   targetMonths
   confirmedDatetime
   contractSignedDate
@@ -103,6 +101,8 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedDeliveryDate
   requestedNumberOfUnits
   adjustedNumberOfUnits
+  pricePerUnitAfterDiscount
+  pricePerUnitBeforeDiscount
 }
 
 query purchaseOrders(
