@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import {
   ColumnDescription,
@@ -9,6 +9,7 @@ import {
   PurchaseOrderNodeStatus,
   useColumns,
 } from '@openmsupply-client/common/src';
+import { calculatePricesAndDiscount } from './utils';
 
 export const usePurchaseOrderLineEditColumns = ({
   draft,
@@ -19,6 +20,14 @@ export const usePurchaseOrderLineEditColumns = ({
   updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
   status: PurchaseOrderNodeStatus;
 }) => {
+  const lastChanged = useRef<
+    | 'pricePerUnitAfterDiscount'
+    | 'pricePerUnitBeforeDiscount'
+    | 'discountPercentage'
+    | null
+  >(null);
+  // console.log('draft', draft);
+  console.log('mostRecentlyChanged', lastChanged.current);
   const columnDefinitions: ColumnDescription<DraftPurchaseOrderLine>[] =
     useMemo(
       () => [
@@ -47,10 +56,59 @@ export const usePurchaseOrderLineEditColumns = ({
         },
         {
           Cell: NumberInputCell,
-          key: 'requestedPackSize',
-          label: 'label.pack-size',
+          key: 'pricePerUnitBeforeDiscount',
+          label: 'label.price-per-unit-before-discount',
           setter: patch => {
-            updatePatch({ ...patch });
+            const adjustedPatch = calculatePricesAndDiscount(
+              'pricePerUnitBeforeDiscount',
+              lastChanged.current,
+              patch
+            );
+            console.log('adjustedPatch', adjustedPatch);
+            updatePatch({ ...patch, ...adjustedPatch });
+          },
+          cellProps: {
+            TextInputProps: {
+              onBlur: () =>
+                (lastChanged.current = 'pricePerUnitBeforeDiscount'),
+            },
+          },
+        },
+        {
+          Cell: NumberInputCell,
+          key: 'discountPercentage',
+          label: 'label.discount-percentage',
+
+          setter: patch => {
+            const adjustedPatch = calculatePricesAndDiscount(
+              'discountPercentage',
+              lastChanged.current,
+              patch
+            );
+            updatePatch({ ...patch, ...adjustedPatch });
+          },
+          cellProps: {
+            TextInputProps: {
+              onBlur: () => (lastChanged.current = 'discountPercentage'),
+            },
+          },
+        },
+        {
+          Cell: NumberInputCell,
+          key: 'pricePerUnitAfterDiscount',
+          label: 'label.price-per-unit-after-discount',
+          setter: patch => {
+            const adjustedPatch = calculatePricesAndDiscount(
+              'pricePerUnitAfterDiscount',
+              lastChanged.current,
+              patch
+            );
+            updatePatch({ ...patch, ...adjustedPatch });
+          },
+          cellProps: {
+            TextInputProps: {
+              onBlur: () => (lastChanged.current = 'pricePerUnitAfterDiscount'),
+            },
           },
         },
         {

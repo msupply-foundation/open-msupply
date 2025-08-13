@@ -50,8 +50,6 @@ export type PurchaseOrderFragment = {
   supplierAgent?: string | null;
   supplierDiscountAmount: number;
   supplierDiscountPercentage?: number | null;
-  lineTotalAfterDiscount: number;
-  orderTotalAfterDiscount: number;
   targetMonths?: number | null;
   confirmedDatetime?: string | null;
   contractSignedDate?: string | null;
@@ -73,6 +71,8 @@ export type PurchaseOrderFragment = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -104,6 +104,8 @@ export type PurchaseOrderLineFragment = {
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
+  pricePerUnitAfterDiscount: number;
+  pricePerUnitBeforeDiscount: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -176,8 +178,6 @@ export type PurchaseOrderByIdQuery = {
         supplierAgent?: string | null;
         supplierDiscountAmount: number;
         supplierDiscountPercentage?: number | null;
-        lineTotalAfterDiscount: number;
-        orderTotalAfterDiscount: number;
         targetMonths?: number | null;
         confirmedDatetime?: string | null;
         contractSignedDate?: string | null;
@@ -199,6 +199,8 @@ export type PurchaseOrderByIdQuery = {
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
+            pricePerUnitAfterDiscount: number;
+            pricePerUnitBeforeDiscount: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -286,6 +288,8 @@ export type PurchaseOrderLinesQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -316,6 +320,8 @@ export type PurchaseOrderLineQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -457,6 +463,8 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedDeliveryDate
     requestedNumberOfUnits
     adjustedNumberOfUnits
+    pricePerUnitAfterDiscount
+    pricePerUnitBeforeDiscount
   }
 `;
 export const SyncFileReferenceFragmentDoc = gql`
@@ -510,8 +518,6 @@ export const PurchaseOrderFragmentDoc = gql`
     supplierAgent
     supplierDiscountAmount
     supplierDiscountPercentage
-    lineTotalAfterDiscount
-    orderTotalAfterDiscount
     targetMonths
     confirmedDatetime
     contractSignedDate

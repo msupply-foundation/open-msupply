@@ -17,6 +17,7 @@ export type DraftPurchaseOrderLine = Omit<
 > & {
   purchaseOrderId: string;
   itemId: string;
+  discountPercentage: number;
 };
 
 export type DraftPurchaseOrderLineFromCSV = Omit<
@@ -35,6 +36,10 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
   adjustedNumberOfUnits: null,
+  pricePerUnitBeforeDiscount: 0,
+  pricePerUnitAfterDiscount: 0,
+  // This value not actually saved to DB
+  discountPercentage: 0,
 };
 
 export function usePurchaseOrderLine(id?: string) {
@@ -43,11 +48,21 @@ export function usePurchaseOrderLine(id?: string) {
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
 
+  const initialDiscountPercentage =
+    data?.nodes[0]?.pricePerUnitBeforeDiscount &&
+    data?.nodes[0]?.pricePerUnitAfterDiscount
+      ? ((data?.nodes[0]?.pricePerUnitBeforeDiscount -
+          data?.nodes[0]?.pricePerUnitAfterDiscount) /
+          (data?.nodes[0]?.pricePerUnitBeforeDiscount || 1)) *
+        100
+      : 0;
+
   const draft: DraftPurchaseOrderLine = data
     ? {
         ...defaultPurchaseOrderLine,
         ...data?.nodes[0],
         itemId: data?.nodes[0]?.item.id ?? '',
+        discountPercentage: initialDiscountPercentage,
         ...patch,
       }
     : { ...defaultPurchaseOrderLine, ...patch, itemId: '' };
@@ -68,6 +83,8 @@ export function usePurchaseOrderLine(id?: string) {
       requestedDeliveryDate: draft.requestedDeliveryDate,
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
       adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
+      pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
+      pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
     };
     return await updatePurchaseOrderLine(input);
   };
