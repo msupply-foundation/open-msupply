@@ -365,7 +365,7 @@ impl From<RepositoryError> for LoginError {
     }
 }
 
-fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionType> {
+pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionType> {
     let mut output = HashSet::new();
     for per in permissions {
         match per {
