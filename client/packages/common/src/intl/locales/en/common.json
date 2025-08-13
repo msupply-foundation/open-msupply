@@ -1221,6 +1221,7 @@
   "label.purchase-order-number": "Purchase Order Number",
   "label.purchase-order-shorthand": "PO",
   "label.purchase-orders": "Purchase Orders",
+  "label.purchase-order-lines": "Purchase Order Lines",
   "label.qty-item-name": "Qty/Item Name",
   "label.quantities": "Quantities",
   "label.quantity": "Quantity",

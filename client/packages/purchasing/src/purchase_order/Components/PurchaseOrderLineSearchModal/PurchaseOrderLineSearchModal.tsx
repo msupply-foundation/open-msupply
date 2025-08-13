@@ -72,7 +72,7 @@ const PurchaseOrderSearchComponent: FC<PurchaseOrderLineSearchModalProps> = ({
       open={open}
       options={data?.lines.nodes ?? []}
       onClose={onClose}
-      title={t('label.purchase-orders')}
+      title={t('label.purchase-order-lines')}
       renderOption={getPurchaseOrderLineOptionRenderer}
       getOptionLabel={(option: PurchaseOrderLineFragment) =>
         `${option.item.name || ''} - ${option.lineNumber}`
