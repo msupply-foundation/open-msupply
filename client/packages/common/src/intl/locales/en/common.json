@@ -1203,6 +1203,7 @@
   "label.prescription-date": "Prescription Date",
   "label.previous-encounters": "Previous Encounters",
   "label.price": "Price",
+  "label.cost-total-after-discount": "Total discounted cost",
   "label.pricing": "Pricing",
   "label.primary": "Primary",
   "label.primary-1": "Primary (1)",
