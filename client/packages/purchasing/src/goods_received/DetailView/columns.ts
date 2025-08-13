@@ -15,7 +15,7 @@ export const useGoodsReceivedColumns = () => {
           [
             'lineNumber',
             {
-              width: 90,
+              width: 160,
               accessor: ({ rowData }) => rowData.lineNumber,
               getSortValue: rowData => rowData.lineNumber ?? 0,
             },
@@ -23,7 +23,7 @@ export const useGoodsReceivedColumns = () => {
           [
             'itemCode',
             {
-              width: 130,
+              width: 90,
               accessor: ({ rowData }) => rowData.item.code,
               getSortValue: rowData => rowData.item.code,
             },
@@ -32,18 +32,35 @@ export const useGoodsReceivedColumns = () => {
             'itemName',
             {
               Cell: TooltipTextCell,
-              width: 350,
+              width: 300,
               accessor: ({ rowData }) => rowData.item.name,
               getSortValue: rowData => rowData.item.name,
             },
           ],
           // batch
+          {
+            key: 'batch',
+            label: 'label.batch',
+            align: ColumnAlign.Left,
+            width: 150,
+            accessor: ({ rowData }) => rowData.batch ?? '',
+            getSortValue: rowData => rowData.batch ?? '',
+          },
           // expiry
+          {
+            key: 'expiryDate',
+            label: 'label.expiry-date',
+            align: ColumnAlign.Left,
+            width: 150,
+            accessor: ({ rowData }) => rowData.expiryDate ?? '',
+            getSortValue: rowData => rowData.expiryDate ?? '',
+          },
           // pack size
           {
             key: 'packSize',
             label: 'label.pack-size',
             align: ColumnAlign.Right,
+            width: 150,
             accessor: ({ rowData }) => rowData.receivedPackSize,
             getSortValue: rowData => rowData.receivedPackSize ?? 1,
             defaultHideOnMobile: true,
