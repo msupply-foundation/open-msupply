@@ -1,24 +1,22 @@
 import { gql } from 'graphql-tag';
 import {
   PreferenceKey,
+  PREFERENCES_QUERY_KEY,
   PreferencesNode,
+  useAuthContext,
+  useGql,
   useQuery,
 } from '@openmsupply-client/common';
-// tODO move
-import { usePreferencesGraphQL } from '@openmsupply-client/system/src/Manage/Preferences/api/usePreferencesGraphQL';
 
 type PreferencesQuery = {
   __typename: 'Queries';
-  // If there is a type error here, PreferenceKey enum and PreferencesNode
-  // keys are not in sync. Regenerate the graphql types.
   preferences: PreferencesNode;
 };
 
-// Mount the hook on app startup somewhere...
-
 /** Fields undefined until query has loaded */
 export const usePreferences = (): Partial<PreferencesNode> => {
-  const { storeId, client, PREFERENCES } = usePreferencesGraphQL();
+  const { client } = useGql();
+  const { storeId } = useAuthContext();
 
   // Custom query, rather than using generated one, so new preferences
   // will be included without needing to update the generated types.
@@ -31,14 +29,15 @@ export const usePreferences = (): Partial<PreferencesNode> => {
 `;
 
   const { data } = useQuery({
-    queryKey: [PREFERENCES, storeId],
+    queryKey: [PREFERENCES_QUERY_KEY, storeId],
     queryFn: async () => {
       const result = await client.request<PreferencesQuery, undefined>(
         PreferencesDocument
       );
       return result.preferences;
     },
-    // should only update when explicitly invalidated
+    // Only refetch when explicitly invalidated (on sync/updating preferences)
+    // Or when switching stores
     cacheTime: Infinity,
     staleTime: Infinity,
   });
