@@ -37,7 +37,6 @@ export const useGoodsReceivedColumns = () => {
               getSortValue: rowData => rowData.item.name,
             },
           ],
-          // batch
           {
             key: 'batch',
             label: 'label.batch',
@@ -46,7 +45,6 @@ export const useGoodsReceivedColumns = () => {
             accessor: ({ rowData }) => rowData.batch ?? '',
             getSortValue: rowData => rowData.batch ?? '',
           },
-          // expiry
           {
             key: 'expiryDate',
             label: 'label.expiry-date',
@@ -55,7 +53,6 @@ export const useGoodsReceivedColumns = () => {
             accessor: ({ rowData }) => rowData.expiryDate ?? '',
             getSortValue: rowData => rowData.expiryDate ?? '',
           },
-          // pack size
           {
             key: 'packSize',
             label: 'label.pack-size',
@@ -65,7 +62,6 @@ export const useGoodsReceivedColumns = () => {
             getSortValue: rowData => rowData.receivedPackSize ?? 1,
             defaultHideOnMobile: true,
           },
-          // number of packs
           {
             key: 'numberOfPacks',
             label: 'label.num-packs',
