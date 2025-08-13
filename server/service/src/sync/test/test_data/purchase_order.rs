@@ -852,7 +852,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
-        PURCHASE_ORDER_1.0,
-        PurchaseOrderDelete(PURCHASE_ORDER_1.0.to_string()),
+        PURCHASE_ORDER_5.0,
+        PurchaseOrderDelete(PURCHASE_ORDER_5.0.to_string()),
     )]
 }
