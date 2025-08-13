@@ -6,20 +6,16 @@ import {
   Divider,
   Grid,
 } from '@openmsupply-client/common';
-import { GoodsReceivedLineFragment } from '../../api';
-import {
-  ItemStockOnHandFragment,
-  StockItemSearchInput,
-} from '@openmsupply-client/system/src';
 import { DraftGoodsReceivedLine } from '../../api/hooks/useGoodsReceivedLine';
 import { min } from 'lodash';
 import { useGoodsReceivedLineEditColumns } from './columns';
+import { GoodsReceivedLineFragment } from '../../api/operations.generated';
 
 export type GoodsReceivedLineItem = Partial<GoodsReceivedLineFragment>;
+
 export interface GoodsReceivedLineEditProps {
   isUpdateMode?: boolean;
   currentLine?: GoodsReceivedLineFragment;
-  onChangeItem: (item: ItemStockOnHandFragment) => void;
   draft?: DraftGoodsReceivedLine | null;
   updatePatch: (patch: Partial<DraftGoodsReceivedLine>) => void;
 }
@@ -27,7 +23,6 @@ export interface GoodsReceivedLineEditProps {
 export const GoodsReceivedLineEdit = ({
   isUpdateMode,
   currentLine,
-  onChangeItem,
   draft,
   updatePatch,
 }: GoodsReceivedLineEditProps) => {
@@ -53,19 +48,11 @@ export const GoodsReceivedLineEdit = ({
       paddingBottom={1}
     >
       <Grid size={12} sx={{ mb: 2 }}>
-        {(isUpdateMode && (
+        {isUpdateMode && (
           <BasicTextInput
-            value={`${currentLine?.item?.code}     ${currentLine?.item?.name}`}
+            value={`${currentLine?.item?.id} ${currentLine?.item?.name}`}
             disabled
             fullWidth
-          />
-        )) || (
-          <StockItemSearchInput
-            autoFocus={!currentLine}
-            openOnFocus={!currentLine}
-            disabled={isUpdateMode}
-            currentItemId={currentLine?.item.id}
-            onChange={newItem => newItem && onChangeItem(newItem)}
           />
         )}
       </Grid>
