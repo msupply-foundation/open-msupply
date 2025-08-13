@@ -28,6 +28,14 @@ pub struct UpdateGoodsReceivedInput {
     pub comment: Option<String>,
 }
 
+// TODO:
+// When status is finalised:
+//   - Create an inbound shipment.
+//   - Retrieve the goods received lines and upsert them using inbound_shipment_line.
+//     - If authorisation is enabled, include only authorised lines.
+//     - If authorisation is not enabled,
+// Goods Received -> Goods Recived Lines -> Purchase Order Id -> Use to create Inbound Shipment Lines
+
 pub fn update_goods_received(
     ctx: &ServiceContext,
     input: UpdateGoodsReceivedInput,
