@@ -18,7 +18,7 @@ import { useGoodsReceivedLine } from '../../api';
 import { createDraftGoodsReceivedLine } from '../LineEdit';
 
 interface AddButtonsProps {
-  goodsReceived: GoodsReceivedFragment | undefined;
+  goodsReceived?: GoodsReceivedFragment;
   disable: boolean;
 }
 
