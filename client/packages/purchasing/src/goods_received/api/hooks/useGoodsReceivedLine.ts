@@ -1,6 +1,5 @@
 import {
   // UpdateGoodsReceivedLineInput,
-  LIST_KEY,
   useMutation,
   // useNotification,
   usePatchState,
@@ -71,10 +70,9 @@ export function useGoodsReceivedLine(id?: string) {
     error: createError,
   } = useCreate();
 
-  const create = async () => {
-    const result = await createMutation(draft);
-    resetDraft();
-    return result;
+  const create = async (input?: DraftGoodsReceivedLine) => {
+    if (input) return await createMutation(input);
+    return await createMutation(draft);
   };
 
   return {
@@ -119,22 +117,15 @@ const useCreate = () => {
       storeId,
       input: {
         id: draft.id,
-
         goodsReceivedId: draft.goodsReceivedId,
-        purchaseOrderLineId: '',
+        purchaseOrderLineId: draft.purchaseOrderLineId,
       },
     });
   };
 
   return useMutation({
     mutationFn,
-    onSuccess: () =>
-      queryClient.invalidateQueries([
-        GOODS_RECEIVED_LINE,
-        LIST_KEY,
-        storeId,
-        'goods_received_id', // TODO: pass this through, and or check other patterns
-      ]),
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED_LINE]),
   });
 };
 

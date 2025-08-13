@@ -1,19 +1,36 @@
 use repository::{
     goods_received_line_row::{GoodsReceivedLineRow, GoodsReceivedLineStatus},
-    RepositoryError,
+    purchase_order_line_row::PurchaseOrderLineRowRepository,
+    RepositoryError, StorageConnection,
 };
 
 use super::InsertGoodsReceivedLineInput;
 
 pub fn generate(
+    connection: &StorageConnection,
     input: InsertGoodsReceivedLineInput,
 ) -> Result<GoodsReceivedLineRow, RepositoryError> {
-    // TODO: Look up details from purchase order line and use them to populate the goods received line
+    let purchase_order_line_repo = PurchaseOrderLineRowRepository::new(connection);
+    let purchase_order_line = purchase_order_line_repo
+        .find_one_by_id(&input.purchase_order_line_id)?
+        .ok_or(RepositoryError::NotFound)?;
+
     Ok(GoodsReceivedLineRow {
         id: input.id,
         goods_received_id: input.goods_received_id,
         purchase_order_line_id: input.purchase_order_line_id,
+        received_pack_size: purchase_order_line.requested_pack_size,
+        number_of_packs_received: 0.0,
+        batch: None,
+        weight_per_pack: None,
+        expiry_date: None,
+        line_number: purchase_order_line.line_number,
+        item_link_id: purchase_order_line.item_link_id,
+        item_name: purchase_order_line.item_name,
+        location_id: None,
+        volume_per_pack: None,
+        manufacturer_link_id: None,
         status: GoodsReceivedLineStatus::Unauthorised,
-        ..Default::default()
+        comment: purchase_order_line.comment,
     })
 }
