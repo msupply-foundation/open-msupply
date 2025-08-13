@@ -5,9 +5,8 @@ use crate::sync::translations::{
 };
 use chrono::NaiveDate;
 use repository::{
-    goods_received_row::GoodsReceivedDelete, ChangelogRow, ChangelogTableName,
-    GoodsReceivedLineDelete, GoodsReceivedLineRow, GoodsReceivedLineRowRepository,
-    GoodsReceivedLineStatus, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, GoodsReceivedLineDelete, GoodsReceivedLineRow,
+    GoodsReceivedLineRowRepository, GoodsReceivedLineStatus, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
