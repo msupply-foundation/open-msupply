@@ -5,6 +5,7 @@ import {
   createTableStore,
   DetailTabs,
   DetailViewSkeleton,
+  GoodsReceivedNodeStatus,
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
@@ -28,6 +29,7 @@ export const DetailViewInner = (): ReactElement => {
 
   const {
     query: { data, isLoading },
+    lines: { sortedAndFilteredLines },
   } = useGoodsReceived();
 
   useEffect(() => {
@@ -36,9 +38,17 @@ export const DetailViewInner = (): ReactElement => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
+  const isDisabled = !data || data?.status !== GoodsReceivedNodeStatus.New;
+
   const tabs = [
     {
-      Component: <ContentArea />,
+      Component: (
+        <ContentArea
+          lines={sortedAndFilteredLines}
+          isDisabled={isDisabled}
+          // TODO add onAddItem and onRowClick
+        />
+      ),
       value: 'General',
     },
     // Add more tabs as needed

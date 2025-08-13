@@ -30,17 +30,17 @@ export type GoodsReceivedLineFragment = {
 export type GoodsReceivedFragment = {
   __typename: 'GoodsReceivedNode';
   id: string;
-  number: number;
-  status: Types.GoodsReceivedNodeStatus;
   comment?: string | null;
   createdBy?: string | null;
   createdDatetime: string;
-  receivedDatetime?: string | null;
+  number: number;
   purchaseOrderNumber?: number | null;
-  supplierReference?: string | null;
+  receivedDatetime?: string | null;
+  status: Types.GoodsReceivedNodeStatus;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'GoodsReceivedLineConnector';
+    totalCount: number;
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
@@ -94,17 +94,17 @@ export type GoodsReceivedByIdQuery = {
     | {
         __typename: 'GoodsReceivedNode';
         id: string;
-        number: number;
-        status: Types.GoodsReceivedNodeStatus;
         comment?: string | null;
         createdBy?: string | null;
         createdDatetime: string;
-        receivedDatetime?: string | null;
+        number: number;
         purchaseOrderNumber?: number | null;
-        supplierReference?: string | null;
+        receivedDatetime?: string | null;
+        status: Types.GoodsReceivedNodeStatus;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'GoodsReceivedLineConnector';
+          totalCount: number;
           nodes: Array<{
             __typename: 'GoodsReceivedLineNode';
             id: string;
@@ -151,34 +151,33 @@ export const GoodsReceivedLineFragmentDoc = gql`
     __typename
     id
     lineNumber
-    item {
-      code
-      name
-    }
     batch
     expiryDate
     receivedPackSize
     numberOfPacksReceived
+    item {
+      code
+      name
+    }
   }
 `;
 export const GoodsReceivedFragmentDoc = gql`
   fragment GoodsReceived on GoodsReceivedNode {
     __typename
     id
-    number
-    status
     comment
     createdBy
     createdDatetime
-    receivedDatetime
+    number
     purchaseOrderNumber
-    supplierReference
+    receivedDatetime
+    status
     supplier {
       id
       name
     }
     lines {
-      __typename
+      totalCount
       nodes {
         ...GoodsReceivedLine
       }
@@ -215,13 +214,12 @@ export const GoodsReceivedListDocument = gql`
 export const GoodsReceivedByIdDocument = gql`
   query goodsReceivedById($id: String!, $storeId: String!) {
     goodsReceived(id: $id, storeId: $storeId) {
-      __typename
+      ... on GoodsReceivedNode {
+        ...GoodsReceived
+      }
       ... on RecordNotFound {
         __typename
         description
-      }
-      ... on GoodsReceivedNode {
-        ...GoodsReceived
       }
     }
   }

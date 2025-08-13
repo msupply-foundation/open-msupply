@@ -17,33 +17,32 @@ fragment GoodsReceivedLine on GoodsReceivedLineNode {
   __typename
   id
   lineNumber
-  item {
-    code
-    name
-  }
   batch
   expiryDate
   receivedPackSize
   numberOfPacksReceived
+  item {
+    code
+    name
+  }
 }
 
 fragment GoodsReceived on GoodsReceivedNode {
   __typename
   id
-  number
-  status
   comment
   createdBy
   createdDatetime
-  receivedDatetime
+  number
   purchaseOrderNumber
-  supplierReference
+  receivedDatetime
+  status
   supplier {
     id
     name
   }
   lines {
-    __typename
+    totalCount
     nodes {
       ...GoodsReceivedLine
     }
@@ -76,13 +75,12 @@ query goodsReceivedList(
 
 query goodsReceivedById($id: String!, $storeId: String!) {
   goodsReceived(id: $id, storeId: $storeId) {
-    __typename
+    ... on GoodsReceivedNode {
+      ...GoodsReceived
+    }
     ... on RecordNotFound {
       __typename
       description
-    }
-    ... on GoodsReceivedNode {
-      ...GoodsReceived
     }
   }
 }
