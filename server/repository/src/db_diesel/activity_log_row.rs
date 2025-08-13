@@ -99,7 +99,10 @@ pub enum ActivityLogType {
     ItemVariantUpdateManufacturer,
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
-    VolumePerPackChanged, 
+    VolumePerPackChanged,
+    GoodsReceivedCreated,
+    GoodsReceivedDeleted,
+    GoodsReceivedStatusFinalised,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
