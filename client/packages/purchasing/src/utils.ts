@@ -77,3 +77,9 @@ export const isPurchaseOrderEditable = (
   // mimmicking OG behaviour where purchase orders can be edited when confirmed AND when authorised
   return status !== PurchaseOrderNodeStatus.Finalised;
 };
+
+export const isGoodsReceivedEditable = (
+  status: GoodsReceivedNodeStatus
+): boolean => {
+  return status !== GoodsReceivedNodeStatus.Finalised;
+};
