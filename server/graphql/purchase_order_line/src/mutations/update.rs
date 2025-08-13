@@ -29,6 +29,8 @@ pub struct UpdateInput {
     pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub price_per_unit_before_discount: Option<f64>,
+    pub price_per_unit_after_discount: Option<f64>,
 }
 
 impl UpdateInput {
@@ -41,6 +43,8 @@ impl UpdateInput {
             adjusted_number_of_units, // TODO: Maybe should just have one number in the request and map it to adjusted or requested in backend?
             requested_delivery_date,
             expected_delivery_date,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
         } = self;
 
         ServiceInput {
@@ -51,6 +55,8 @@ impl UpdateInput {
             adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
         }
     }
 }
