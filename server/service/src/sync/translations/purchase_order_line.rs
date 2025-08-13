@@ -4,8 +4,8 @@ use crate::sync::translations::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow,
+    PurchaseOrderLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -128,6 +128,16 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(PurchaseOrderLineDelete(
+            sync_record.record_id.clone(),
+        )))
+    }
+
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
@@ -180,6 +190,14 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             self.table_name(),
             serde_json::to_value(legacy_row)?,
         ))
+    }
+
+    fn try_translate_to_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -255,6 +273,15 @@ mod tests {
                 translated[0].record.record_data["ID"],
                 json!(changelog.record_id)
             );
+        }
+
+        for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
         }
     }
 }

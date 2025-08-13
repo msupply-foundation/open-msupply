@@ -109,3 +109,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
 pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![purchase_order_line_push_record()]
 }
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        PURCHASE_ORDER_LINE_1.0,
+        PurchaseOrderDelete(PURCHASE_ORDER_LINE_1.0.to_string()),
+    )]
+}
