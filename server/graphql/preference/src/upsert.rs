@@ -19,7 +19,6 @@ pub struct UpsertPreferencesInput {
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
-    pub use_campaigns: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub sync_records_display_threshold: Option<i32>,
     pub authorise_purchase_order: Option<bool>,
@@ -63,7 +62,6 @@ impl UpsertPreferencesInput {
             allow_tracking_of_stock_by_donor,
             gender_options,
             show_contact_tracing,
-            use_campaigns,
             custom_translations,
             sync_records_display_threshold,
             authorise_purchase_order,
@@ -84,7 +82,6 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             show_contact_tracing: *show_contact_tracing,
-            use_campaigns: *use_campaigns,
             custom_translations: custom_translations.clone(),
             sync_records_display_threshold: *sync_records_display_threshold,
             authorise_purchase_order: *authorise_purchase_order,
