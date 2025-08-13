@@ -65,15 +65,6 @@ impl PurchaseOrderNode {
         line_total_after_discount
     }
 
-    pub async fn line_total_after_discount(&self) -> f64 {
-        let line_total_after_discount = match &self.stats {
-            Some(stats) => stats.line_total_after_discount,
-            None => 0.0,
-        };
-
-        line_total_after_discount
-    }
-
     pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
         let name = loader

@@ -81,8 +81,11 @@ mod update {
                     item_id: Some(mock_item_a().id.to_string()),
                     requested_pack_size: Some(5.0),
                     requested_number_of_units: None,
+                    adjusted_number_of_units: None,
                     requested_delivery_date: None,
                     expected_delivery_date: None,
+                    price_per_unit_before_discount: None,
+                    price_per_unit_after_discount: None,
                 }
             ),
             Err(

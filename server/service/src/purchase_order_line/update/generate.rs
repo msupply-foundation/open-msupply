@@ -13,6 +13,8 @@ pub fn generate(
         adjusted_number_of_units,
         requested_delivery_date,
         expected_delivery_date,
+        price_per_unit_before_discount,
+        price_per_unit_after_discount,
         id: _,
     } = input;
 
@@ -29,6 +31,10 @@ pub fn generate(
             .or(purchase_order_line.requested_delivery_date),
         expected_delivery_date: expected_delivery_date
             .or(purchase_order_line.expected_delivery_date),
+        price_per_unit_before_discount: price_per_unit_before_discount
+            .unwrap_or(purchase_order_line.price_per_unit_before_discount),
+        price_per_unit_after_discount: price_per_unit_after_discount
+            .unwrap_or(purchase_order_line.price_per_unit_after_discount),
         ..purchase_order_line
     })
 }
