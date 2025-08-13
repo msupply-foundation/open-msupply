@@ -13,6 +13,20 @@ fragment GoodsReceivedRow on GoodsReceivedNode {
   }
 }
 
+fragment GoodsReceivedLine on GoodsReceivedLineNode {
+  __typename
+  id
+  lineNumber
+  item {
+    code
+    name
+  }
+  batch
+  expiryDate
+  receivedPackSize
+  numberOfPacksReceived
+}
+
 fragment GoodsReceived on GoodsReceivedNode {
   __typename
   id
@@ -27,6 +41,12 @@ fragment GoodsReceived on GoodsReceivedNode {
   supplier {
     id
     name
+  }
+  lines {
+    __typename
+    nodes {
+      ...GoodsReceivedLine
+    }
   }
 }
 
