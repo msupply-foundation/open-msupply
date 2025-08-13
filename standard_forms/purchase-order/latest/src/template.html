@@ -53,8 +53,10 @@
       currency")}}:
     </td>
     <td>
+      {% if data.purchaseOrder.orderTotalAfterDiscount and
+      data.purchaseOrder.store.logo %}
       {{data.purchaseOrder.orderTotalAfterDiscount *
-      data.purchaseOrder.foreignExchangeRate | default(value="")}}
+      data.purchaseOrder.foreignExchangeRate}} {% endif %}
     </td>
   </tr>
 </table>
