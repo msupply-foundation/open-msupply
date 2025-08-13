@@ -74,7 +74,7 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
     deleteAction,
     canDelete: !isDisabled,
     messages: {
-      confirmMessage: t('messages.confirm-delete-lines', {
+      confirmMessage: t('messages.confirm-delete-lines-goods-received', {
         count: selectedRows.length,
       }),
       deleteSuccess: t('messages.deleted-lines', {
