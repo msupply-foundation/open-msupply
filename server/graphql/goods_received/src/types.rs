@@ -1,7 +1,10 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use graphql_core::loader::{GoodsReceivedLinesByGoodsReceivedIdLoader, ItemLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader};
+use graphql_core::loader::{
+    GoodsReceivedLinesByGoodsReceivedIdLoader, ItemLoader, NameByIdLoader, NameByIdLoaderInput,
+    PurchaseOrderByIdLoader,
+};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::{purchase_order, NameNode};
@@ -200,6 +203,10 @@ impl GoodsReceivedNode {
             return Ok(name);
         }
         return Ok(None);
+    }
+
+    pub async fn purchase_order_id(&self) -> &Option<String> {
+        &self.row().purchase_order_id
     }
 
     pub async fn purchase_order_number(&self, ctx: &Context<'_>) -> Result<Option<i64>> {
