@@ -1988,10 +1988,6 @@ export type DeletePurchaseOrderLineError = {
   error: DeletePurchaseOrderLineInterface;
 };
 
-export type DeletePurchaseOrderLineInput = {
-  id: Scalars['String']['input'];
-};
-
 export type DeletePurchaseOrderLineInterface = {
   description: Scalars['String']['output'];
 };
@@ -1999,6 +1995,12 @@ export type DeletePurchaseOrderLineInterface = {
 export type DeletePurchaseOrderLineResponse =
   | DeletePurchaseOrderLineError
   | DeleteResponse;
+
+export type DeletePurchaseOrderLineResponseWithId = {
+  __typename: 'DeletePurchaseOrderLineResponseWithId';
+  id: Scalars['String']['output'];
+  response: DeletePurchaseOrderLineResponse;
+};
 
 export type DeletePurchaseOrderResponse =
   | DeletePurchaseOrderError
@@ -5150,7 +5152,7 @@ export type Mutations = {
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deletePurchaseOrder: DeletePurchaseOrderResponse;
-  deletePurchaseOrderLine: DeletePurchaseOrderLineResponse;
+  deletePurchaseOrderLines: Array<DeletePurchaseOrderLineResponseWithId>;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
@@ -5413,8 +5415,8 @@ export type MutationsDeletePurchaseOrderArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type MutationsDeletePurchaseOrderLineArgs = {
-  input: DeletePurchaseOrderLineInput;
+export type MutationsDeletePurchaseOrderLinesArgs = {
+  ids: Array<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
