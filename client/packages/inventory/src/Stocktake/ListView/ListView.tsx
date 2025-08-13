@@ -19,9 +19,9 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
-import { useStocktakeOld } from '../api';
 import { Footer } from './Footer';
 import { useStocktake } from '../api/hooks/useStocktake';
+import { useStocktakeList } from '../api/hooks/useStocktakeList';
 
 const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -41,11 +41,16 @@ export const StocktakeListView = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({
+    filters: [{ key: 'status', condition: 'equalTo' }],
+  });
   const pagination = { page, first, offset };
-  const { data, isError, isLoading } = useStocktakeOld.document.list();
-  const { data: hasStocktake, isLoading: firstStocktakeLoading } =
-    useStocktakeOld.document.hasStocktake();
+  const queryParams = { ...filter, sortBy, first, offset };
+
+  const {
+    query: { data, isError, isLoading },
+    hasStocktake,
+  } = useStocktakeList(queryParams);
   const {
     create: { create, isCreating },
   } = useStocktake();
@@ -112,7 +117,7 @@ export const StocktakeListView = () => {
         columns={columns}
         data={data?.nodes ?? []}
         isError={isError}
-        isLoading={isLoading || firstStocktakeLoading}
+        isLoading={isLoading}
         onRowClick={row => {
           navigate(String(row.id));
         }}

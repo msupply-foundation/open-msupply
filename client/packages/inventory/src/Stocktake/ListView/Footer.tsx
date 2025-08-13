@@ -1,18 +1,37 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useStocktakeOld } from '../api';
+import { useStocktakeList } from '../api/hooks/useStocktakeList';
+import { canDeleteStocktake } from '../../utils';
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = () => {
   const t = useTranslation();
+  const {
+    delete: { deleteStocktakes, selectedRows },
+  } = useStocktakeList();
 
-  const { selectedRows, confirmAndDelete } =
-    useStocktakeOld.document.deleteSelected();
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: deleteStocktakes,
+    canDelete: selectedRows.every(canDeleteStocktake),
+    messages: {
+      confirmMessage: t('messages.confirm-delete-stocktakes', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-stocktakes', {
+        count: selectedRows.length,
+      }),
+      cantDelete: selectedRows.every(item => item.isLocked)
+        ? t('messages.cannot-delete-stocktake-on-hold')
+        : t('label.cant-delete-disabled'),
+    },
+  });
 
   const actions: Action[] = [
     {
