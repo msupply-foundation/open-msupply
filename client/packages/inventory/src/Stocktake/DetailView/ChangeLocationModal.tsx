@@ -81,12 +81,11 @@ export const ChangeLocationConfirmationModal = ({
           labelWidth="100px"
           Input={
             <LocationSearchInput
-              disabled={false}
+              disabled={hasMultipleLocationTypes}
               selectedLocation={location}
               onChange={setLocation}
               width={210}
               restrictedToLocationTypeId={restrictedToLocationTypeId}
-              enableAPI={!hasMultipleLocationTypes}
             />
           }
         />

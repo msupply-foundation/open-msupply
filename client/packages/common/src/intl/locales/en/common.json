@@ -1562,7 +1562,7 @@
   "messages.cancel-prescription-not-allowed": "You don't have permission to cancel this prescription",
   "messages.cannot-add-directions": "Add a quantity to add directions.",
   "messages.cannot-bundle": "You can't bundle other item variants with this one, as this variant is already bundled with other items",
-  "messages.cannot-change-location-multiple-types": "No locations available because the selected lines have different restriction types.",
+  "messages.cannot-change-location-multiple-types": "No locations available. The selected items have different location type restrictions.",
   "messages.cannot-delete-finalised-requisition": "Cannot delete finalised requisition",
   "messages.cannot-delete-linked-requisition": "Cannot delete linked requisition",
   "messages.cannot-delete-multiple-lines": "One or more lines cannot be deleted",

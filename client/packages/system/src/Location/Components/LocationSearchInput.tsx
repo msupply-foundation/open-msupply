@@ -23,7 +23,6 @@ interface LocationSearchInputProps {
   restrictedToLocationTypeId?: string | null;
   volumeRequired?: number;
   fullWidth?: boolean;
-  enableAPI?: boolean;
 }
 
 interface LocationOption {
@@ -99,7 +98,6 @@ export const LocationSearchInput = ({
   autoFocus = false,
   restrictedToLocationTypeId,
   volumeRequired,
-  enableAPI = true,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -109,17 +107,13 @@ export const LocationSearchInput = ({
 
   const {
     query: { data, isLoading },
-  } = useLocationList(
-    {
-      sortBy: {
-        direction: 'asc',
-        key: 'name',
-      },
-      filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
+  } = useLocationList({
+    sortBy: {
+      direction: 'asc',
+      key: 'name',
     },
-    undefined,
-    enableAPI
-  );
+    filterBy: { locationTypeId: { equalTo: restrictedToLocationTypeId } },
+  });
 
   const locations = data?.nodes || [];
 
