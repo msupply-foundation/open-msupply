@@ -31,10 +31,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.show_contact_tracing)
     }
 
-    pub async fn use_campaigns(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.use_campaigns)
-    }
-
     pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
         self.load_preference(&self.preferences.custom_translations)
     }
@@ -129,7 +125,6 @@ pub enum PreferenceKey {
     AllowTrackingOfStockByDonor,
     GenderOptions,
     ShowContactTracing,
-    UseCampaigns,
     CustomTranslations,
     SyncRecordsDisplayThreshold,
     AuthorisePurchaseOrder,
@@ -150,7 +145,6 @@ impl PreferenceKey {
             PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
             PrefKey::GenderOptions => PreferenceKey::GenderOptions,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
-            PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
             PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
             PrefKey::SyncRecordsDisplayThreshold => PreferenceKey::SyncRecordsDisplayThreshold,
             PrefKey::AuthorisePurchaseOrder => PreferenceKey::AuthorisePurchaseOrder,
