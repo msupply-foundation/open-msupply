@@ -35,6 +35,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
   authorisedNumberOfUnits: null,
+  lineNumber: 0,
 };
 
 export function usePurchaseOrderLine(id?: string) {
@@ -84,8 +85,7 @@ export function usePurchaseOrderLine(id?: string) {
     return result;
   };
 
-    // CREATE FROM CSV
-
+  // CREATE FROM CSV
   const { mutateAsync, invalidateQueries } = useLineInsertFromCSV();
 
   return {
@@ -236,7 +236,6 @@ export const useLineInsertFromCSV = () => {
 
   return {
     mutateAsync,
-    invalidateQueries: () =>
-      queryClient.invalidateQueries([PURCHASE_ORDER]),
+    invalidateQueries: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   };
 };

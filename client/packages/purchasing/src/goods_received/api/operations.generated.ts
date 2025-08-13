@@ -183,7 +183,20 @@ export type InsertGoodsReceivedLineMutation = {
   __typename: 'Mutations';
   insertGoodsReceivedLine:
     | { __typename: 'IdResponse'; id: string }
-    | { __typename: 'InsertGoodsReceivedLineError' };
+    | {
+        __typename: 'InsertGoodsReceivedLineError';
+        error:
+          | { __typename: 'CannotEditGoodsReceived'; description: string }
+          | {
+              __typename: 'ForeignKeyError';
+              description: string;
+              key: Types.ForeignKey;
+            }
+          | {
+              __typename: 'GoodsReceivedLineWithIdExists';
+              description: string;
+            };
+      };
 };
 
 export const GoodsReceivedRowFragmentDoc = gql`
@@ -355,6 +368,25 @@ export const InsertGoodsReceivedLineDocument = gql`
     insertGoodsReceivedLine(input: $input, storeId: $storeId) {
       ... on IdResponse {
         id
+      }
+      ... on InsertGoodsReceivedLineError {
+        __typename
+        error {
+          description
+          ... on CannotEditGoodsReceived {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+            key
+          }
+          ... on GoodsReceivedLineWithIdExists {
+            __typename
+            description
+          }
+        }
       }
     }
   }

@@ -12,5 +12,6 @@ export const createDraftPurchaseOrderLine = (
     itemId: item.id,
     requestedPackSize: 0,
     requestedNumberOfUnits: 0,
+    lineNumber: 0,
   };
 };

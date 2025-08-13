@@ -34,7 +34,7 @@ pub fn insert_goods_received_line(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
 
-            let goods_received_line = generate(input.clone())?;
+            let goods_received_line = generate(connection, input.clone())?;
             GoodsReceivedLineRowRepository::new(connection).upsert_one(&goods_received_line)?;
 
             Ok(goods_received_line)

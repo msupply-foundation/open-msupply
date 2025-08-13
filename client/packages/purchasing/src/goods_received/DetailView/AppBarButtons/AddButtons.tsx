@@ -9,9 +9,11 @@ import {
   useToggle,
 } from '@openmsupply-client/common/src';
 import { GoodsReceivedFragment } from '../../api/operations.generated';
-import { PurchaseOrderLineSearchModal } from 'packages/purchasing/src/purchase_order/Components/PurchaseOrderLineSearchModal';
 import { useGoodsReceivedLine } from '../../api';
+import { createDraftGoodsReceivedLine } from '../LineEdit';
 import { PurchaseOrderLineFragment } from 'packages/purchasing/src/purchase_order/api';
+import { PurchaseOrderLineSearchModal } from 'packages/purchasing/src/purchase_order/Components/PurchaseOrderLineSearchModal';
+import { ItemStockOnHandFragment } from 'packages/system/src';
 
 interface AddButtonsProps {
   goodsReceived: GoodsReceivedFragment | undefined;
@@ -24,9 +26,7 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
   const modalController = useToggle();
 
   const {
-    create: { create, isCreating },
-    draft,
-    updatePatch,
+    create: { create },
   } = useGoodsReceivedLine();
 
   const openModal = useCallbackWithPermission(
@@ -38,29 +38,17 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
     selected: PurchaseOrderLineFragment
   ) => {
     try {
-      alert('Not Implemented Yet');
-      draft.itemId = selected.item.id;
-      draft.purchaseOrderLineId = selected.id;
-      draft.goodsReceivedId = goodsReceived?.id ?? '';
-      updatePatch(draft);
-      const result = await create();
-      console.log('Created goods received line:', result);
-      // need to create the new line(s) based on selection
-
-      // const result = await create(selected.id);
-      // const goodsReceivedId = result?.insertGoodsReceived?.id;
-
-      // if (goodsReceivedId) {
-      //   const detailRoute = RouteBuilder.create(AppRoute.Replenishment)
-      //     .addPart(AppRoute.GoodsReceived)
-      //     .addPart(goodsReceivedId)
-      //     .build();
-      //   navigate(detailRoute);
-      // }
+      if (!goodsReceived) return;
+      const item = selected.item as ItemStockOnHandFragment;
+      const draftLine = createDraftGoodsReceivedLine(
+        item,
+        goodsReceived?.id,
+        selected.id
+      );
+      await create(draftLine);
     } catch (error) {
       console.error('Failed to create goods received:', error);
     }
-
     modalController.toggleOff();
   };
 
@@ -94,7 +82,6 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
         openModal();
         break;
       case 'add-all':
-        console.log('goods received', goodsReceived);
         alert('Not Implemented Yet');
         break;
     }
@@ -118,12 +105,14 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
         Icon={<PlusCircleIcon />}
         staticLabel={t('button.add')}
       />
-      <PurchaseOrderLineSearchModal
-        purchaseOrderId={goodsReceived?.purchaseOrderId ?? ''}
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
-        onChange={handlePurchaseOrderSelected}
-      />
+      {modalController.isOn && (
+        <PurchaseOrderLineSearchModal
+          purchaseOrderId={goodsReceived?.purchaseOrderId ?? ''}
+          open={modalController.isOn}
+          onClose={modalController.toggleOff}
+          onChange={handlePurchaseOrderSelected}
+        />
+      )}
     </>
   );
 };
