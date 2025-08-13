@@ -51,7 +51,6 @@ interface StocktakeLineEditTableProps {
   trackStockDonor?: boolean;
   restrictedToLocationTypeId?: string | null;
   isVaccineItem?: boolean;
-  useCampaigns?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -391,7 +390,6 @@ export const LocationTable = ({
   isDisabled,
   trackStockDonor,
   restrictedToLocationTypeId,
-  useCampaigns,
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -425,24 +423,24 @@ export const LocationTable = ({
       )
     );
   }
-  if (useCampaigns) {
-    columnDefinitions.push(getCampaignOrProgramColumn(patch => update(patch)));
-  }
 
-  columnDefinitions.push([
-    'comment',
-    {
-      label: 'label.stocktake-comment',
-      Cell: TextInputCell,
-      cellProps: {
-        fullWidth: true,
+  columnDefinitions.push(
+    getCampaignOrProgramColumn(patch => update(patch)),
+    [
+      'comment',
+      {
+        label: 'label.stocktake-comment',
+        Cell: TextInputCell,
+        cellProps: {
+          fullWidth: true,
+        },
+        width: 200,
+        setter: patch => update({ ...patch, countThisLine: true }),
+        accessor: ({ rowData }) => rowData.comment || '',
+        defaultHideOnMobile: true,
       },
-      width: 200,
-      setter: patch => update({ ...patch, countThisLine: true }),
-      accessor: ({ rowData }) => rowData.comment || '',
-      defaultHideOnMobile: true,
-    },
-  ]);
+    ]
+  );
 
   const columns = useColumns(columnDefinitions, {}, [columnDefinitions]);
 

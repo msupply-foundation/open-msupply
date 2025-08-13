@@ -57,7 +57,6 @@ interface TableProps {
   restrictedToLocationTypeId?: string | null;
   preferences?: {
     allowTrackingOfStockByDonor?: boolean;
-    useCampaigns?: boolean;
   };
 }
 
@@ -442,11 +441,9 @@ export const LocationTableComponent = ({
     ] as ColumnDescription<DraftInboundLine>);
   }
 
-  if (preferences?.useCampaigns) {
-    columnDescriptions.push(
-      getCampaignOrProgramColumn(patch => updateDraftLine(patch))
-    );
-  }
+  columnDescriptions.push(
+    getCampaignOrProgramColumn(patch => updateDraftLine(patch))
+  );
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 

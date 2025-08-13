@@ -1,4 +1,8 @@
-import { GenderType, PreferenceKey } from '@openmsupply-client/common';
+import {
+  GenderType,
+  PreferenceKey,
+  PreferencesNode,
+} from '@openmsupply-client/common';
 import { getDisplayOptions } from '../Select';
 
 describe('getDisplayOptions', () => {
@@ -37,9 +41,8 @@ describe('getDisplayOptions', () => {
       showContactTracing: true,
       sortByVvmStatusThenExpiry: true,
       useSimplifiedMobileUi: true,
-      useCampaigns: true,
       orderInPacks: true,
-    };
+    } as PreferencesNode;
     const options = {
       preferenceKey: PreferenceKey.GenderOptions,
     };
