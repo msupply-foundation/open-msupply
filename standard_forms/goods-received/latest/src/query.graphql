@@ -14,7 +14,14 @@ query GoodsReceived($dataId: String!, $storeId: String!) {
           }
           itemName
           receivedPackSize
+          item {
+            code
+          }
+          numberOfPacksReceived
         }
+      }
+      supplier {
+        name
       }
     }
   }
