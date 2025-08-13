@@ -65,8 +65,7 @@ export const TabLayout = ({
   );
 
   const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
 
   if (draftLines.length === 0)

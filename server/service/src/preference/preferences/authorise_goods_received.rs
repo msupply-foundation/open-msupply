@@ -1,12 +1,12 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct UseCampaigns;
+pub struct AuthoriseGoodsReceived;
 
-impl Preference for UseCampaigns {
+impl Preference for AuthoriseGoodsReceived {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::UseCampaigns
+        PrefKey::AuthoriseGoodsReceived
     }
 
     fn preference_type(&self) -> PreferenceType {

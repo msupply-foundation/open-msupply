@@ -5,13 +5,12 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
     __typename
     id
     name
-    # Add more fields here as required
   }
   createdDatetime
   confirmedDatetime
   status
   targetMonths
-  # deliveredDatetime
+  reference
   lines {
     totalCount
   }
@@ -60,15 +59,10 @@ fragment PurchaseOrder on PurchaseOrderNode {
   sentDatetime
   shippingMethod
   status
-  store {
-    id
-    # name
-  }
   supplier {
     __typename
     id
     name
-    # Add more fields here as required
   }
   supplierAgent
   supplierDiscountAmount
@@ -163,6 +157,26 @@ mutation updatePurchaseOrder(
 ) {
   updatePurchaseOrder(input: $input, storeId: $storeId) {
     ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation deletePurchaseOrder($id: String!, $storeId: String!) {
+  deletePurchaseOrder(id: $id, storeId: $storeId) {
+    ... on DeletePurchaseOrderError {
+      __typename
+      error {
+        ... on RecordNotFound {
+          __typename
+        }
+        description
+        ... on CannotDeleteNonNewPurchaseOrder {
+          __typename
+        }
+      }
+    }
+    ... on DeleteResponse {
       id
     }
   }

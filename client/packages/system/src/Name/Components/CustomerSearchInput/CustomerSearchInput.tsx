@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Autocomplete,
   useBufferState,
@@ -12,15 +12,15 @@ import {
 } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
-export const CustomerSearchInput: FC<NameSearchInputProps> = ({
+export const CustomerSearchInput = ({
   onChange,
   width = 250,
   value,
   disabled = false,
-}) => {
+}: NameSearchInputProps) => {
+  const t = useTranslation();
   const { data, isLoading } = useName.document.customers();
   const [buffer, setBuffer] = useBufferState(value);
-  const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (

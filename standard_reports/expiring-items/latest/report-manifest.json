@@ -1,9 +1,9 @@
 {
   "is_custom": false,
-  "version": "2.6.3",
+  "version": "2.10.0",
   "code": "expiring-items",
   "context": "REPORT",
-  "sub_context": "Expiring",
+  "sub_context": "StockAndItems",
   "name": "Expiring Items",
   "queries": {
     "gql": "query.graphql"

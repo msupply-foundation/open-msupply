@@ -19,6 +19,7 @@ fragment GoodsReceived on GoodsReceivedNode {
   number
   status
   comment
+  createdBy
   createdDatetime
   receivedDatetime
   purchaseOrderNumber
@@ -53,8 +54,8 @@ query goodsReceivedList(
   }
 }
 
-query goodsReceivedById($GoodsReceivedId: String!, $storeId: String!) {
-  goodsReceived(id: $GoodsReceivedId, storeId: $storeId) {
+query goodsReceivedById($id: String!, $storeId: String!) {
+  goodsReceived(id: $id, storeId: $storeId) {
     __typename
     ... on RecordNotFound {
       __typename
@@ -62,6 +63,17 @@ query goodsReceivedById($GoodsReceivedId: String!, $storeId: String!) {
     }
     ... on GoodsReceivedNode {
       ...GoodsReceived
+    }
+  }
+}
+
+mutation insertGoodsReceived(
+  $input: InsertGoodsReceivedInput!
+  $storeId: String!
+) {
+  insertGoodsReceived(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
     }
   }
 }
