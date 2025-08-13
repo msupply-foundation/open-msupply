@@ -16,7 +16,7 @@ import {
   UnitsAndMaybeDoses,
   NumberCell,
 } from '@openmsupply-client/common';
-import { useItems, ItemsWithStatsFragment } from '../api';
+import { useVisibleOrOnHandItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
 
 const ItemListComponent = () => {
@@ -27,11 +27,8 @@ const ItemListComponent = () => {
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
-    filters: [{ key: 'codeOrName' }],
-  });
-  const { data, isError, isLoading } = useItems();
+  } = useUrlQueryParams();
+  const { data, isError, isLoading } = useVisibleOrOnHandItems();
   const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
   const pagination = { page, first, offset };
 

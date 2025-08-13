@@ -1,2 +1,2 @@
 export * from './useItemApi';
-export * from './useItemGraphQL';
+export * from '../../useItemGraphQL';
