@@ -3,7 +3,7 @@ use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
     RowActionType, StorageConnection, Upsert,
 };
-use chrono::{NaiveDate. NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
