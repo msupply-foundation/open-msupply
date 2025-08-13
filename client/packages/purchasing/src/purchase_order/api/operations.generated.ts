@@ -11,6 +11,7 @@ export type PurchaseOrderRowFragment = {
   confirmedDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
   targetMonths?: number | null;
+  reference?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -79,7 +80,6 @@ export type PurchaseOrderFragment = {
       };
     }>;
   };
-  store?: { __typename: 'StoreNode'; id: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   documents: {
     __typename: 'SyncFileReferenceConnector';
@@ -133,6 +133,7 @@ export type PurchaseOrdersQuery = {
       confirmedDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
+      reference?: string | null;
       comment?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
@@ -203,7 +204,6 @@ export type PurchaseOrderByIdQuery = {
             };
           }>;
         };
-        store?: { __typename: 'StoreNode'; id: string } | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
         documents: {
           __typename: 'SyncFileReferenceConnector';
@@ -237,6 +237,26 @@ export type UpdatePurchaseOrderMutationVariables = Types.Exact<{
 export type UpdatePurchaseOrderMutation = {
   __typename: 'Mutations';
   updatePurchaseOrder: { __typename: 'IdResponse'; id: string };
+};
+
+export type DeletePurchaseOrderMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeletePurchaseOrderMutation = {
+  __typename: 'Mutations';
+  deletePurchaseOrder:
+    | {
+        __typename: 'DeletePurchaseOrderError';
+        error:
+          | {
+              __typename: 'CannotDeleteNonNewPurchaseOrder';
+              description: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      }
+    | { __typename: 'DeleteResponse'; id: string };
 };
 
 export type PurchaseOrderLinesQueryVariables = Types.Exact<{
@@ -410,6 +430,7 @@ export const PurchaseOrderRowFragmentDoc = gql`
     confirmedDatetime
     status
     targetMonths
+    reference
     lines {
       totalCount
     }
@@ -477,9 +498,6 @@ export const PurchaseOrderFragmentDoc = gql`
     sentDatetime
     shippingMethod
     status
-    store {
-      id
-    }
     supplier {
       __typename
       id
@@ -569,6 +587,27 @@ export const UpdatePurchaseOrderDocument = gql`
   ) {
     updatePurchaseOrder(input: $input, storeId: $storeId) {
       ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
+export const DeletePurchaseOrderDocument = gql`
+  mutation deletePurchaseOrder($id: String!, $storeId: String!) {
+    deletePurchaseOrder(id: $id, storeId: $storeId) {
+      ... on DeletePurchaseOrderError {
+        __typename
+        error {
+          ... on RecordNotFound {
+            __typename
+          }
+          description
+          ... on CannotDeleteNonNewPurchaseOrder {
+            __typename
+          }
+        }
+      }
+      ... on DeleteResponse {
         id
       }
     }
@@ -829,6 +868,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'updatePurchaseOrder',
+        'mutation',
+        variables
+      );
+    },
+    deletePurchaseOrder(
+      variables: DeletePurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeletePurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeletePurchaseOrderMutation>(
+            DeletePurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deletePurchaseOrder',
         'mutation',
         variables
       );

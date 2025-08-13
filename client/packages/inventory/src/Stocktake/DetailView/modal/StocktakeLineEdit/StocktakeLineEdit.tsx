@@ -45,7 +45,6 @@ interface StocktakeLineEditProps {
   isOpen: boolean;
   isInitialStocktake: boolean;
   enableDonorTracking: boolean;
-  useCampaigns?: boolean;
 }
 
 export const StocktakeLineEdit = ({
@@ -55,7 +54,6 @@ export const StocktakeLineEdit = ({
   isOpen,
   isInitialStocktake,
   enableDonorTracking,
-  useCampaigns = false,
 }: StocktakeLineEditProps) => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
@@ -202,7 +200,6 @@ export const StocktakeLineEdit = ({
                 restrictedToLocationTypeId={
                   currentItem?.restrictedLocationTypeId
                 }
-                useCampaigns={useCampaigns}
               />
             </QueryParamsProvider>
           </StyledTabContainer>

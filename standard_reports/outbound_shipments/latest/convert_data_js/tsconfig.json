@@ -6,9 +6,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "strict": true,
-    "esModuleInterop": true,
-    "paths": {
-      "@types": ["./types.ts"]
-    }
+    "esModuleInterop": true
   }
 }
