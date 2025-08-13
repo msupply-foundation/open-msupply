@@ -4,7 +4,11 @@ use repository::{
     TransactionError,
 };
 
-use crate::{service_provider::ServiceContext, NullableUpdate};
+use crate::{
+    activity_log::{activity_log_entry, log_type_from_purchase_order_status},
+    service_provider::ServiceContext,
+    NullableUpdate,
+};
 
 mod generate;
 mod test;
@@ -62,12 +66,20 @@ pub fn update_purchase_order(
 ) -> Result<PurchaseOrderRow, UpdatePurchaseOrderError> {
     let purchase_order = ctx
         .connection
-        .transaction_sync(|connection| {
+        .transaction_sync(|connection: &repository::StorageConnection| {
             let purchase_order = validate(&input, &store_id, connection)?;
             let updated_purchase_order = generate(purchase_order, input)?;
 
             let purchase_order_repository = PurchaseOrderRowRepository::new(connection);
             purchase_order_repository.upsert_one(&updated_purchase_order)?;
+
+            activity_log_entry(
+                ctx,
+                log_type_from_purchase_order_status(&updated_purchase_order.status),
+                Some(updated_purchase_order.id.clone()),
+                None,
+                None,
+            )?;
 
             purchase_order_repository
                 .find_one_by_id(&updated_purchase_order.id)?
