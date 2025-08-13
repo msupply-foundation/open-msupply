@@ -1,14 +1,14 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::loader::ItemLoader;
+use graphql_core::loader::{ItemLoader, LocationByIdLoader};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use service::{usize_to_u32, ListResult};
 
 use repository::{GoodsReceivedLine, GoodsReceivedLineRow, GoodsReceivedLineStatus, ItemRow};
 
-use graphql_types::types::ItemNode;
+use graphql_types::types::{ItemNode, LocationNode};
 pub struct GoodsReceivedLineNode {
     pub goods_received_line: GoodsReceivedLineRow,
     pub item: ItemRow,
@@ -58,6 +58,20 @@ impl GoodsReceivedLineNode {
     pub async fn location_id(&self) -> &Option<String> {
         &self.row().location_id
     }
+    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+        let location_id = match &self.row().location_id {
+            Some(location_id) => location_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+
+        Ok(loader
+            .load_one(location_id.clone())
+            .await?
+            .map(LocationNode::from_domain))
+    }
+
     pub async fn volume_per_pack(&self) -> &Option<f64> {
         &self.row().volume_per_pack
     }
