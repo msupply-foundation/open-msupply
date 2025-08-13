@@ -17,8 +17,6 @@ import {
   usePluginProvider,
   useEditModal,
   CellProps,
-  usePreference,
-  PreferenceKey,
   UnitsAndMaybeDoses,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
@@ -62,7 +60,6 @@ const StockListComponent: FC = () => {
   const t = useTranslation();
   const { data, isLoading, isError } = useStockList(queryParams);
   const { plugins } = usePluginProvider();
-  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
 
   const { isOpen, onClose, onOpen } = useEditModal();
 
@@ -144,9 +141,6 @@ const StockListComponent: FC = () => {
         maxWidth: 'unset',
         defaultHideOnMobile: true,
         Cell: UnitsAndMaybeDosesCell,
-        cellProps: {
-          displayDoses: prefs?.manageVaccinesInDoses,
-        },
       },
     ],
     [
@@ -160,7 +154,6 @@ const StockListComponent: FC = () => {
         maxWidth: 'unset',
         defaultHideOnMobile: true,
         Cell: UnitsAndMaybeDosesCell,
-        cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
       },
     ],
     {
@@ -245,9 +238,7 @@ export const StockListView: FC = () => (
   </TableProvider>
 );
 
-const UnitsAndMaybeDosesCell = (
-  props: CellProps<StockLineRowFragment> & { displayDoses?: boolean }
-) => {
+const UnitsAndMaybeDosesCell = (props: CellProps<StockLineRowFragment>) => {
   const { rowData, column } = props;
   const units = Number(column.accessor({ rowData })) ?? 0;
   const { isVaccine, dosesPerUnit } = rowData.item;
@@ -258,7 +249,6 @@ const UnitsAndMaybeDosesCell = (
       units={units}
       isVaccine={isVaccine}
       dosesPerUnit={dosesPerUnit}
-      displayDoses={props.displayDoses}
     />
   );
 };

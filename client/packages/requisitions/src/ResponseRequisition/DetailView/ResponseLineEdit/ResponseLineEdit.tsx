@@ -8,6 +8,7 @@ import {
   RequisitionNodeApprovalStatus,
   Typography,
   UserStoreNodeFragment,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -37,7 +38,6 @@ interface ResponseLineEditProps {
   setRepresentation: (type: RepresentationValue) => void;
   disabled: boolean;
   isUpdateMode?: boolean;
-  manageVaccinesInDoses?: boolean;
   isReasonsError: boolean;
   setIsEditingSupply: (isEditingSupply: boolean) => void;
 }
@@ -55,10 +55,10 @@ export const ResponseLineEdit = ({
   isReasonsError,
   disabled = false,
   isUpdateMode = false,
-  manageVaccinesInDoses = false,
   setIsEditingSupply,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
+  const { manageVaccinesInDoses } = usePreferences();
 
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;

@@ -11,8 +11,7 @@ import {
   NumUtils,
   Typography,
   useTableStore,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -127,11 +126,7 @@ export const OutboundLineEditTable = ({
   const t = useTranslation();
   const { format } = useFormatNumber();
   const tableStore = useTableStore();
-  const { data: prefs } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
+  const prefs = usePreferences();
 
   const {
     draftLines,
@@ -206,11 +201,11 @@ export const OutboundLineEditTable = ({
   let extraColumnOffset = 0;
   if (
     item?.isVaccine &&
-    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry)
+    (prefs.manageVvmStatusForStock || prefs.sortByVvmStatusThenExpiry)
   ) {
     extraColumnOffset += 1;
   }
-  if (prefs?.allowTrackingOfStockByDonor) {
+  if (prefs.allowTrackingOfStockByDonor) {
     extraColumnOffset += 1;
   }
 

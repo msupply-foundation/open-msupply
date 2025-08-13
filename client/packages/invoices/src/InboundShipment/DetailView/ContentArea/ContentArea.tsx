@@ -6,8 +6,6 @@ import {
   NothingHere,
   AppSxProp,
   useRowStyle,
-  PreferenceKey,
-  usePreference,
 } from '@openmsupply-client/common';
 import { InboundItem } from '../../../types';
 import { useInbound, InboundLineFragment } from '../../api';
@@ -17,31 +15,16 @@ import { isInboundPlaceholderRow } from '../../../utils';
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: InboundLineFragment | InboundItem) => void);
-  displayInDoses?: boolean;
-}
-
-interface ExpandoPrefs {
-  allowTrackingOfStockByDonor?: boolean;
 }
 
 const Expando = ({
   rowData,
-  displayInDoses,
-  preferences,
 }: {
   rowData: InboundLineFragment | InboundItem;
-  displayInDoses?: boolean;
-  preferences?: ExpandoPrefs;
 }) => {
   if ('lines' in rowData && rowData.lines.length > 1) {
     const isVaccineItem = rowData.lines[0]?.item.isVaccine ?? false;
-    return (
-      <ExpandoInner
-        rowData={rowData}
-        withDoseColumns={displayInDoses && isVaccineItem}
-        preferences={preferences}
-      />
-    );
+    return <ExpandoInner rowData={rowData} isVaccineItem={isVaccineItem} />;
   } else {
     return null;
   }
@@ -49,14 +32,12 @@ const Expando = ({
 
 const ExpandoInner = ({
   rowData,
-  withDoseColumns,
-  preferences,
+  isVaccineItem,
 }: {
   rowData: InboundLineFragment | InboundItem;
-  withDoseColumns?: boolean;
-  preferences?: ExpandoPrefs;
+  isVaccineItem: boolean;
 }) => {
-  const expandoColumns = useExpansionColumns(withDoseColumns, preferences);
+  const expandoColumns = useExpansionColumns(isVaccineItem);
   if ('lines' in rowData && rowData.lines.length > 1) {
     return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
   } else {
@@ -106,26 +87,17 @@ const useHighlightPlaceholderRows = (
 };
 
 export const ContentArea: FC<ContentAreaProps> = React.memo(
-  ({ onAddItem, onRowClick, displayInDoses }) => {
+  ({ onAddItem, onRowClick }) => {
     const t = useTranslation();
     const isDisabled = useInbound.utils.isDisabled();
     const { columns, rows } = useInbound.lines.rows();
     useHighlightPlaceholderRows(rows);
 
-    const { data: preferences } = usePreference(
-      PreferenceKey.AllowTrackingOfStockByDonor
-    );
     return (
       <DataTable
         id="inbound-detail"
         onRowClick={onRowClick}
-        ExpandContent={props => (
-          <Expando
-            {...props}
-            displayInDoses={displayInDoses}
-            preferences={preferences}
-          />
-        )}
+        ExpandContent={props => <Expando {...props} />}
         columns={columns}
         data={rows}
         enableColumnSelection
