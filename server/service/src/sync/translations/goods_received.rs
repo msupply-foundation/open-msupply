@@ -10,7 +10,9 @@ use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::empty_str_as_option;
+use util::sync_serde::{
+    date_option_to_isostring, date_to_isostring, empty_str_as_option, zero_date_as_option,
+};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub enum LegacyGoodsReceivedStatus {
@@ -39,7 +41,10 @@ pub struct LegacyGoodsReceived {
     pub goods_received_number: i64,
     pub status: LegacyGoodsReceivedStatus,
     #[serde(rename = "entry_date")]
+    #[serde(serialize_with = "date_to_isostring")]
     pub created_datetime: NaiveDate,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "received_date")]
     pub received_date: Option<NaiveDate>,
     #[serde(default)]
