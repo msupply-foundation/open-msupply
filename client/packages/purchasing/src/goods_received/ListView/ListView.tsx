@@ -125,7 +125,7 @@ const ListView = () => {
   );
 };
 
-export const GoodsReceivedListView: FC = () => (
+export const GoodsReceivedListView = () => (
   <TableProvider createStore={createTableStore}>
     <ListView />
   </TableProvider>
