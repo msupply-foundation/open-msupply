@@ -1,28 +1,30 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { SplitButton, SplitButtonOption } from '@common/components';
-import { useTranslation } from '@common/intl';
-import { PlusCircleIcon } from '@common/icons';
 import {
   NonEmptyArray,
   useCallbackWithPermission,
+  useNotification,
   UserPermission,
   useToggle,
+  useTranslation,
+  PlusCircleIcon,
+  SplitButton,
+  SplitButtonOption,
 } from '@openmsupply-client/common/src';
+import { ItemStockOnHandFragment } from '@openmsupply-client/system';
+import { PurchaseOrderLineSearchModal } from '../../../purchase_order/Components';
+import { PurchaseOrderLineFragment } from '../../../purchase_order/api';
 import { GoodsReceivedFragment } from '../../api/operations.generated';
 import { useGoodsReceivedLine } from '../../api';
 import { createDraftGoodsReceivedLine } from '../LineEdit';
-import { PurchaseOrderLineFragment } from 'packages/purchasing/src/purchase_order/api';
-import { PurchaseOrderLineSearchModal } from 'packages/purchasing/src/purchase_order/Components/PurchaseOrderLineSearchModal';
-import { ItemStockOnHandFragment } from 'packages/system/src';
 
 interface AddButtonsProps {
   goodsReceived: GoodsReceivedFragment | undefined;
-  /** Disable the whole control */
   disable: boolean;
 }
 
 export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
   const t = useTranslation();
+  const { error } = useNotification();
   const modalController = useToggle();
 
   const {
@@ -46,8 +48,12 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
         selected.id
       );
       await create(draftLine);
-    } catch (error) {
-      console.error('Failed to create goods received:', error);
+    } catch (e) {
+      error(
+        t('error.failed-to-add-goods-received-line', {
+          message: e instanceof Error ? e.message : 'unknown error',
+        })
+      )();
     }
     modalController.toggleOff();
   };

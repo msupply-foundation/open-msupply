@@ -1,10 +1,7 @@
 import {
-  // UpdateGoodsReceivedLineInput,
   useMutation,
-  // useNotification,
   usePatchState,
   useQuery,
-  // useTranslation,
 } from '@openmsupply-client/common/src';
 import { useGoodsReceivedGraphQL } from '../useGoodsReceivedGraphQL';
 import { GOODS_RECEIVED_LINE } from './keys';
@@ -48,21 +45,6 @@ export function useGoodsReceivedLine(id?: string) {
       }
     : { ...defaultGoodsReceivedLine, ...patch, itemId: '' };
 
-  // UPDATE
-  // const {
-  //   updateGoodsReceivedLine,
-  //   isLoading: isUpdating,
-  //   error: updateError,
-  // } = useUpdate();
-
-  // const update = async () => {
-  //   const input: UpdateGoodsReceivedLineInput = {
-  //     id: draft.id,
-  //     itemId: draft.itemId,
-  //   };
-  //   return await updateGoodsReceivedLine(input);
-  // };
-
   // CREATE
   const {
     mutateAsync: createMutation,
@@ -75,10 +57,12 @@ export function useGoodsReceivedLine(id?: string) {
     return await createMutation(draft);
   };
 
+  // UPDATE
+  // TODO: Implement update functionality
+
   return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
-    // update: { update, isUpdating, updateError },
     draft,
     resetDraft,
     isDirty,
@@ -95,9 +79,8 @@ const useGet = (id: string) => {
       storeId,
     });
 
-    if (result.goodsReceivedLines.__typename === 'GoodsReceivedLineConnector') {
+    if (result.goodsReceivedLines.__typename === 'GoodsReceivedLineConnector')
       return result.goodsReceivedLines;
-    }
   };
 
   const query = useQuery({
@@ -128,48 +111,3 @@ const useCreate = () => {
     onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED_LINE]),
   });
 };
-
-// const useUpdate = () => {
-//   const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
-//   const t = useTranslation();
-//   const { error } = useNotification();
-
-//   const mutationState = useMutation(goodsReceivedApi.updateGoodsReceivedLine);
-
-//   const updateGoodsReceivedLine = async (
-//     input: UpdateGoodsReceivedLineInput
-//   ) => {
-//     try {
-//       const result = await goodsReceivedApi.updateGoodsReceivedLine({
-//         storeId,
-//         input: {
-//           ...input,
-//         },
-//       });
-//       if (
-//         result.updateGoodsReceivedLine.__typename ===
-//         'UpdateGoodsReceivedLineError'
-//       ) {
-//         const errorType = result.updateGoodsReceivedLine.error.__typename;
-//         switch (errorType) {
-//           case 'CannotEditGoodsReceived':
-//             return error(t('label.cannot-edit-purchase-order'))();
-//           case 'GoodsReceivedDoesNotExist':
-//             return error(t('label.purchase-order-does-not-exist'))();
-//           case 'GoodsReceivedLineNotFound':
-//             return error(t('label.purchase-order-line-not-found'))();
-//           case 'UpdatedLineDoesNotExist':
-//             return error(t('label.updated-line-does-not-exist'))();
-//           default:
-//             return error(t('label.cannot-update-purchase-order-line'))();
-//         }
-//       }
-//       queryClient.invalidateQueries([GOODS_RECEIVED]);
-//     } catch (e) {
-//       console.error('Error updating purchase order line:', e);
-//       return error(t('label.cannot-update-purchase-order-line'))();
-//     }
-//   };
-
-//   return { ...mutationState, updateGoodsReceivedLine };
-// };
