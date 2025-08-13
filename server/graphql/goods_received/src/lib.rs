@@ -6,6 +6,7 @@ pub mod query;
 pub mod types;
 
 use mutations::{
+    delete::{delete, DeleteResponse},
     insert::{insert_goods_received, InsertInput, InsertResponse},
     update::{update_goods_received, UpdateInput, UpdateResponse},
 };
@@ -58,5 +59,14 @@ impl GoodsReceivedMutations {
         input: UpdateInput,
     ) -> Result<UpdateResponse> {
         update_goods_received(ctx, &store_id, input)
+    }
+
+    pub async fn delete_goods_received(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<DeleteResponse> {
+        delete(ctx, &store_id, id)
     }
 }
