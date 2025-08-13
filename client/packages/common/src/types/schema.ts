@@ -2932,6 +2932,7 @@ export type GoodsReceivedNode = {
   comment?: Maybe<Scalars['String']['output']>;
   createdBy?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   id: Scalars['String']['output'];
   number: Scalars['Int']['output'];
   purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;
@@ -2942,8 +2943,6 @@ export type GoodsReceivedNode = {
 };
 
 export enum GoodsReceivedNodeStatus {
-  Authorised = 'AUTHORISED',
-  Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
   New = 'NEW',
 }
@@ -9660,6 +9659,7 @@ export type UpdateErrorInterface = {
 export type UpdateGoodsReceivedInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  receivedDate?: InputMaybe<NullableDateUpdate>;
   status?: InputMaybe<GoodsReceivedNodeType>;
 };
 
