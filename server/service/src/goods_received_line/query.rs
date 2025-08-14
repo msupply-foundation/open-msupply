@@ -16,8 +16,7 @@ pub fn get_goods_received_lines(
     let pagination = get_pagination_or_default(pagination)?;
     let repository = GoodsReceivedLineRepository::new(&ctx.connection);
 
-    let mut filter = filter.unwrap_or_default();
-    filter.goods_received_id = goods_received_id_option.map(EqualFilter::equal_to);
+    let filter = filter.unwrap_or_default();
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,

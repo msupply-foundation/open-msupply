@@ -27,7 +27,6 @@ impl Loader<String> for GoodsReceivedLinesByGoodsReceivedIdLoader {
             .get_goods_received_lines(
                 &service_context,
                 None,
-                None,
                 Some(
                     GoodsReceivedLineFilter::new()
                         .goods_received_id(EqualFilter::equal_any(goods_received_ids.to_owned())),

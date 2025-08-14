@@ -1,19 +1,20 @@
+use crate::types::{GoodsReceivedLineConnector, GoodsReceivedLineNode};
 use async_graphql::*;
+use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
+use graphql_core::{
+    generic_filters::EqualFilterStringInput, simple_generic_errors::RecordNotFound,
+};
 use repository::GoodsReceivedLineFilter;
 use repository::GoodsReceivedLineSort;
 use repository::GoodsReceivedLineSortField;
 use repository::PaginationOption;
-use service::auth::ResourceAccessRequest;
-use crate::types::{GoodsReceivedLineConnector, GoodsReceivedLineNode};
-use graphql_core::{generic_filters::EqualFilterStringInput, simple_generic_errors::RecordNotFound};
 use service::auth::Resource;
-use graphql_core::pagination::PaginationInput;
+use service::auth::ResourceAccessRequest;
 
-use repository::{EqualFilter};
-
+use repository::EqualFilter;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -101,7 +102,6 @@ pub fn get_goods_received_lines(
         .goods_received_line_service
         .get_goods_received_lines(
             &service_context,
-            Some(&store_id),
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())
