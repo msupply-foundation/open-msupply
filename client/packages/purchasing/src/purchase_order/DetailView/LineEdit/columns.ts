@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import {
   ColumnDescription,
@@ -20,12 +20,6 @@ export const usePurchaseOrderLineEditColumns = ({
   updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
   status: PurchaseOrderNodeStatus;
 }) => {
-  const lastChanged = useRef<
-    | 'pricePerUnitAfterDiscount'
-    | 'pricePerUnitBeforeDiscount'
-    | 'discountPercentage'
-    | null
-  >(null);
   const columnDefinitions: ColumnDescription<DraftPurchaseOrderLine>[] =
     useMemo(
       () => [
@@ -59,16 +53,12 @@ export const usePurchaseOrderLineEditColumns = ({
           setter: patch => {
             const adjustedPatch = calculatePricesAndDiscount(
               'pricePerUnitBeforeDiscount',
-              lastChanged.current,
               patch
             );
             updatePatch({ ...patch, ...adjustedPatch });
           },
           cellProps: {
-            TextInputProps: {
-              onBlur: () =>
-                (lastChanged.current = 'pricePerUnitBeforeDiscount'),
-            },
+            decimalLimit: 2,
           },
         },
         {
@@ -79,15 +69,12 @@ export const usePurchaseOrderLineEditColumns = ({
           setter: patch => {
             const adjustedPatch = calculatePricesAndDiscount(
               'discountPercentage',
-              lastChanged.current,
               patch
             );
             updatePatch({ ...patch, ...adjustedPatch });
           },
           cellProps: {
-            TextInputProps: {
-              onBlur: () => (lastChanged.current = 'discountPercentage'),
-            },
+            decimalLimit: 2,
           },
         },
         {
@@ -97,15 +84,12 @@ export const usePurchaseOrderLineEditColumns = ({
           setter: patch => {
             const adjustedPatch = calculatePricesAndDiscount(
               'pricePerUnitAfterDiscount',
-              lastChanged.current,
               patch
             );
             updatePatch({ ...patch, ...adjustedPatch });
           },
           cellProps: {
-            TextInputProps: {
-              onBlur: () => (lastChanged.current = 'pricePerUnitAfterDiscount'),
-            },
+            decimalLimit: 2,
           },
         },
         {

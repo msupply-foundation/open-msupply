@@ -27,11 +27,17 @@ type PriceField =
   | 'discountPercentage'
   | 'pricePerUnitAfterDiscount';
 
-// Calculates any of the these values from the other two, based on which have
-// most recently changed
+/**
+ * Calculates any of the these values from the other two, based on which have
+ * most recently changed.
+ *
+ * `newField` is the field that is currently active, and the
+ * `previouslyChangedField` is the previous one changed, as tracked by the
+ * useLastChangedField hook (below).
+ */
 export const calculatePricesAndDiscount = (
-  newField: PriceField,
-  previouslyChangedField: PriceField | null,
+  changingField: PriceField,
+  // previouslyChangedField: PriceField | null,
   data: Partial<DraftPurchaseOrderLine>
 ) => {
   const {
@@ -40,26 +46,17 @@ export const calculatePricesAndDiscount = (
     pricePerUnitAfterDiscount = 0,
   } = data;
 
-  const updateField = [
-    'pricePerUnitAfterDiscount',
-    'pricePerUnitBeforeDiscount',
-    'discountPercentage',
-  ].filter(
-    field => field !== newField && field !== previouslyChangedField
-  )[0] as PriceField;
+  // const updateField = [
+  //   'pricePerUnitAfterDiscount',
+  //   'pricePerUnitBeforeDiscount',
+  //   'discountPercentage',
+  // ].filter(
+  //   field => field !== changingField && field !== previouslyChangedField
+  // )[0];
 
-  switch (updateField) {
-    case 'discountPercentage': {
-      return {
-        pricePerUnitBeforeDiscount,
-        pricePerUnitAfterDiscount,
-        discountPercentage:
-          ((pricePerUnitBeforeDiscount - pricePerUnitAfterDiscount) /
-            (pricePerUnitBeforeDiscount || 1)) *
-          100,
-      };
-    }
-    case 'pricePerUnitAfterDiscount': {
+  switch (changingField) {
+    case 'pricePerUnitBeforeDiscount': {
+      // Update the price after discount based on discount percentage
       return {
         pricePerUnitBeforeDiscount,
         discountPercentage,
@@ -67,12 +64,24 @@ export const calculatePricesAndDiscount = (
           pricePerUnitBeforeDiscount * (1 - (discountPercentage || 0) / 100),
       };
     }
-    case 'pricePerUnitBeforeDiscount': {
+    case 'discountPercentage': {
+      // Update the price after discount based on original price
       return {
-        pricePerUnitAfterDiscount,
+        pricePerUnitBeforeDiscount,
         discountPercentage,
-        pricePerUnitBeforeDiscount:
-          pricePerUnitAfterDiscount / (1 - (discountPercentage || 0) / 100),
+        pricePerUnitAfterDiscount:
+          pricePerUnitBeforeDiscount * (1 - (discountPercentage || 0) / 100),
+      };
+    }
+    case 'pricePerUnitAfterDiscount': {
+      // Update the discount percentage based on original price
+      return {
+        pricePerUnitBeforeDiscount,
+        discountPercentage:
+          ((pricePerUnitBeforeDiscount - pricePerUnitAfterDiscount) /
+            (pricePerUnitBeforeDiscount || 1)) *
+          100,
+        pricePerUnitAfterDiscount,
       };
     }
   }
