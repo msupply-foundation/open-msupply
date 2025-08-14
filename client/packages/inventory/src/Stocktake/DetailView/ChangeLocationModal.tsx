@@ -83,12 +83,13 @@ export const ChangeLocationConfirmationModal = ({
           labelWidth="100px"
           Input={
             <LocationSearchInput
-              disabled={hasConflictingRestrictedTypes}
+              disabled={false}
               selectedLocation={location}
               onChange={setLocation}
               width={210}
               restrictedToLocationTypeId={restrictedLocationTypeIds[0]} // if there is only one type, restrict to that type (more than one type disables the input)
               volumeRequired={volumeRequired}
+              enableAPI={!hasConflictingRestrictedTypes}
             />
           }
         />
