@@ -111,6 +111,7 @@ export interface Column<T extends RecordWithId> {
   // When using browser autocomplete in tables, row data needs to be used to set autocompleteName
   // to a value that's related to row data (like item id)
   autocompleteProvider?: (rowDataValue: T) => string;
+  isSticky?: boolean;
 }
 
 export interface ColumnDefinition<T extends RecordWithId>
