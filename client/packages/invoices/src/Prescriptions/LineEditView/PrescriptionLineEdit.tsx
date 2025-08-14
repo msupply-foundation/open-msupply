@@ -4,6 +4,7 @@ import {
   Grid,
   useBufferState,
   useFormatNumber,
+  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
@@ -21,22 +22,18 @@ interface PrescriptionLineEditProps {
   programId?: string;
   invoiceId: string;
   itemId: string | undefined;
-  prefOptions: {
-    allocateVaccineItemsInDoses?: boolean;
-    sortByVvmStatus: boolean;
-  };
 }
 
 export const PrescriptionLineEdit = ({
   itemId,
   programId,
   invoiceId,
-  prefOptions: { allocateVaccineItemsInDoses, sortByVvmStatus },
 }: PrescriptionLineEditProps) => {
   const isNew = !itemId;
 
   const t = useTranslation();
   const { format } = useFormatNumber();
+  const { manageVaccinesInDoses, sortByVvmStatusThenExpiry } = usePreferences();
 
   // Needs to update when user clicks on different item in the list, or when
   // changing item with the selector
@@ -71,7 +68,7 @@ export const PrescriptionLineEdit = ({
       initialise(
         {
           itemData: data,
-          strategy: sortByVvmStatus
+          strategy: sortByVvmStatusThenExpiry
             ? AllocationStrategy.VVMStatus
             : AllocationStrategy.FEFO,
           allowPlaceholder: false,
@@ -80,7 +77,7 @@ export const PrescriptionLineEdit = ({
           // In prescriptions, default to allocate in doses for vaccines
           // if pref is on
           allocateIn:
-            allocateVaccineItemsInDoses && data.item.isVaccine
+            manageVaccinesInDoses && data.item.isVaccine
               ? { type: AllocateInType.Doses }
               : undefined,
         },

@@ -2,8 +2,7 @@ import React from 'react';
 import {
   useTranslation,
   Select,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   useIntlUtils,
   useFormatNumber,
   Typography,
@@ -20,7 +19,7 @@ export const AllocateInSelector = ({
   const { format } = useFormatNumber();
   const { getPlural } = useIntlUtils();
 
-  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
+  const { manageVaccinesInDoses } = usePreferences();
 
   const { allocateIn, availablePackSizes, setAllocateIn, item } =
     useAllocationContext(({ allocateIn, draftLines, item, setAllocateIn }) => ({
@@ -39,7 +38,7 @@ export const AllocateInSelector = ({
   const unitName = item?.unitName ?? t('label.unit');
   const pluralisedUnitName = getPlural(unitName, 2);
 
-  const includeDosesOption = item?.isVaccine && prefs?.manageVaccinesInDoses;
+  const includeDosesOption = item?.isVaccine && manageVaccinesInDoses;
 
   // EARLY RETURN - if only allocating in units, don't show the selector
   if (

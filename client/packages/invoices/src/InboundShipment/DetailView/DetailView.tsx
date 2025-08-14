@@ -14,8 +14,6 @@ import {
   ModalMode,
   useTableStore,
   useBreadcrumbs,
-  usePreference,
-  PreferenceKey,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -70,9 +68,6 @@ const DetailViewInner = () => {
   } = useEditModal<string[]>();
   const { info } = useNotification();
   const { clearSelected } = useTableStore();
-  const { data: preference } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
-  );
   const { data: vvmStatuses } = useVvmStatusesEnabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
@@ -149,7 +144,6 @@ const DetailViewInner = () => {
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
           onAddItem={() => onOpen()}
-          displayInDoses={preference?.manageVaccinesInDoses}
         />
       ),
       value: 'Details',

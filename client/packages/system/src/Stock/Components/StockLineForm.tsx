@@ -21,8 +21,7 @@ import {
   usePluginProvider,
   UsePluginEvents,
   useRegisterActions,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   ReasonOptionNodeType,
   QuantityUtils,
   Alert,
@@ -58,12 +57,7 @@ export const StockLineForm = ({
   const t = useTranslation();
   const { error } = useNotification();
 
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.SortByVvmStatusThenExpiry
-  );
+  const preferences = usePreferences();
 
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
@@ -72,8 +66,8 @@ export const StockLineForm = ({
 
   const showVVMStatus =
     draft?.item?.isVaccine &&
-    (preferences?.manageVvmStatusForStock ||
-      preferences?.sortByVvmStatusThenExpiry);
+    (preferences.manageVvmStatusForStock ||
+      preferences.sortByVvmStatusThenExpiry);
 
   const supplierName = draft.supplierName
     ? draft.supplierName
@@ -114,7 +108,7 @@ export const StockLineForm = ({
   if (loading) return null;
 
   const getDosesProps = (numPacks: number) => {
-    if (!preferences?.manageVaccinesInDoses || !draft.item.isVaccine) return {};
+    if (!preferences.manageVaccinesInDoses || !draft.item.isVaccine) return {};
 
     const doses = QuantityUtils.packsToDoses(numPacks, draft);
 
@@ -411,7 +405,7 @@ export const StockLineForm = ({
                 }
               />
             )}
-            {preferences?.allowTrackingOfStockByDonor && (
+            {preferences.allowTrackingOfStockByDonor && (
               <StyledInputRow
                 label={t('label.donor')}
                 Input={
