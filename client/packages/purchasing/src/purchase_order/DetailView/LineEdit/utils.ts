@@ -1,7 +1,6 @@
 import { ItemStockOnHandFragment } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { FnUtils } from '@common/utils';
-import { useCallback, useRef } from 'react';
 
 export const createDraftPurchaseOrderLine = (
   item: ItemStockOnHandFragment,
