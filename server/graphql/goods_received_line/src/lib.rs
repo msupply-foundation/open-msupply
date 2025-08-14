@@ -5,6 +5,7 @@ use crate::mutations::{
         insert_goods_received_line, insert_goods_received_lines_from_purchase_order, InsertInput,
         InsertLinesInput, InsertLinesResponse, InsertResponse,
     },
+    update::{update_goods_received_line, UpdateInput, UpdateResponse},
 };
 use async_graphql::{Context, Object, Result};
 use graphql_core::pagination::PaginationInput;
@@ -61,14 +62,14 @@ impl GoodsReceivedLineMutations {
         insert_goods_received_lines_from_purchase_order(ctx, &store_id, input)
     }
 
-    // pub async fn update_goods_received_line(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     store_id: String,
-    //     input: UpdateInput,
-    // ) -> Result<UpdateResponse> {
-    //     update_goods_received_line(ctx, &store_id, input)
-    // }
+    pub async fn update_goods_received_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateInput,
+    ) -> Result<UpdateResponse> {
+        update_goods_received_line(ctx, &store_id, input)
+    }
 
     pub async fn delete_goods_received_line(
         &self,
