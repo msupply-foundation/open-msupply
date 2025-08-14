@@ -9,7 +9,6 @@ use crate::ListError;
 
 pub fn get_goods_received_lines(
     ctx: &ServiceContext,
-    goods_received_id_option: Option<&str>,
     pagination: Option<PaginationOption>,
     filter: Option<GoodsReceivedLineFilter>,
     sort: Option<GoodsReceivedLineSort>,
