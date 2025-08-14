@@ -40,6 +40,11 @@ export const ChangeLocationConfirmationModal = ({
   // E.g. 'freezer', 'room-temp' <- these conflict, we should disable changing location
   const hasConflictingRestrictedTypes = restrictedLocationTypeIds.length > 1;
 
+  const volumeRequired = rows.reduce((totalVolume, row) => {
+    const numPacks = row.countedNumberOfPacks ?? row.snapshotNumberOfPacks;
+    return totalVolume + numPacks * row.volumePerPack;
+  }, 0);
+
   return (
     <ConfirmationModalLayout
       isOpen={isOpen}
@@ -83,6 +88,7 @@ export const ChangeLocationConfirmationModal = ({
               onChange={setLocation}
               width={210}
               restrictedToLocationTypeId={restrictedLocationTypeIds[0]} // if there is only one type, restrict to that type (more than one type disables the input)
+              volumeRequired={volumeRequired}
             />
           }
         />
