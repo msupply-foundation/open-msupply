@@ -72,6 +72,7 @@ impl Migration for V2_10_00 {
             Box::new(rename_authorised_to_adjusted::Migrate),
             Box::new(remove_use_campaigns_pref::Migrate),
             Box::new(add_purchase_order_activity_logs::Migrate),
+            Box::new(add_goods_received_permission_enum_values::Migrate),
         ]
     }
 }
