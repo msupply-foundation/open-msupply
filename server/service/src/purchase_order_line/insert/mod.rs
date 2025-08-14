@@ -39,6 +39,8 @@ pub struct InsertPurchaseOrderLineInput {
     pub requested_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub price_per_unit_before_discount: Option<f64>,
+    pub price_per_unit_after_discount: Option<f64>,
 }
 
 pub fn insert_purchase_order_line(
@@ -88,6 +90,8 @@ pub struct InsertPurchaseOrderLineFromCSVInput {
     pub item_code: String,
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
+    pub price_per_unit_before_discount: Option<f64>,
+    pub price_per_unit_after_discount: Option<f64>,
 }
 
 pub fn insert_purchase_order_line_from_csv(
@@ -116,6 +120,8 @@ pub fn insert_purchase_order_line_from_csv(
                 item_id: item.id,
                 requested_pack_size: input.requested_pack_size,
                 requested_number_of_units: input.requested_number_of_units,
+                price_per_unit_before_discount: input.price_per_unit_before_discount,
+                price_per_unit_after_discount: input.price_per_unit_after_discount,
                 requested_delivery_date: None,
                 expected_delivery_date: None,
             };
