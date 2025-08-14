@@ -1,6 +1,6 @@
 mod purchase_order_line_queries;
 use crate::mutations::{
-    delete::{delete_purchase_order_line, DeleteInput, DeleteResponse},
+    delete::{delete_purchase_order_lines, DeleteResponseWithId},
     insert::{insert_purchase_order_line, InsertInput, InsertResponse},
     insert_from_csv::{insert_purchase_order_line_from_csv, InsertFromCSVInput},
     update::{update_purchase_order_line, UpdateInput, UpdateResponse},
@@ -69,12 +69,12 @@ impl PurchaseOrderLineMutations {
         update_purchase_order_line(ctx, &store_id, input)
     }
 
-    pub async fn delete_purchase_order_line(
+    pub async fn delete_purchase_order_lines(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: DeleteInput,
-    ) -> Result<DeleteResponse> {
-        delete_purchase_order_line(ctx, &store_id, input)
+        ids: Vec<String>,
+    ) -> Result<Vec<DeleteResponseWithId>> {
+        delete_purchase_order_lines(ctx, &store_id, ids)
     }
 }
