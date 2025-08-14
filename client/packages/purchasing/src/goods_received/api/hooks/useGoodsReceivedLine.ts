@@ -1,4 +1,5 @@
 import {
+  InsertGoodsReceivedLinesFromPurchaseOrderInput,
   useMutation,
   usePatchState,
   useQuery,
@@ -57,12 +58,30 @@ export function useGoodsReceivedLine(id?: string) {
     return await createMutation(draft);
   };
 
+  // CREATE LINES FROM PURCHASE ORDER
+  const {
+    mutateAsync: createLinesFromPurchaseOrderMutation,
+    isLoading: isCreatingLinesFromPurchaseOrder,
+    error: createLinesFromPurchaseOrderError,
+  } = useCreateGoodsReceivedLinesFromPurchaseOrder();
+
+  const createLinesFromPurchaseOrder = async (
+    input: InsertGoodsReceivedLinesFromPurchaseOrderInput
+  ) => {
+    return await createLinesFromPurchaseOrderMutation(input);
+  };
+
   // UPDATE
   // TODO: Implement update functionality
 
   return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
+    createLinesFromPurchaseOrder: {
+      createLinesFromPurchaseOrder,
+      isCreatingLinesFromPurchaseOrder,
+      createLinesFromPurchaseOrderError,
+    },
     draft,
     resetDraft,
     isDirty,
@@ -103,6 +122,24 @@ const useCreate = () => {
         goodsReceivedId: draft.goodsReceivedId,
         purchaseOrderLineId: draft.purchaseOrderLineId,
       },
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED_LINE]),
+  });
+};
+
+const useCreateGoodsReceivedLinesFromPurchaseOrder = () => {
+  const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
+
+  const mutationFn = async (
+    input: InsertGoodsReceivedLinesFromPurchaseOrderInput
+  ) => {
+    return await goodsReceivedApi.insertGoodsReceivedLinesFromPurchaseOrder({
+      storeId,
+      input,
     });
   };
 

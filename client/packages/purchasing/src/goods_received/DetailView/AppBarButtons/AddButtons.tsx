@@ -29,6 +29,7 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
 
   const {
     create: { create },
+    createLinesFromPurchaseOrder: { createLinesFromPurchaseOrder },
   } = useGoodsReceivedLine();
 
   const openModal = useCallbackWithPermission(
@@ -56,6 +57,19 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
       )();
     }
     modalController.toggleOff();
+  };
+
+  const handleAllLinesFromPurchaseOrder = async () => {
+    if (!goodsReceived?.purchaseOrderId) return;
+    try {
+      const { purchaseOrderId, id: goodsReceivedId } = goodsReceived;
+      await createLinesFromPurchaseOrder({
+        purchaseOrderId,
+        goodsReceivedId,
+      });
+    } catch (e) {
+      console.error('Failed to create lines from purchase order:', e);
+    }
   };
 
   const options: NonEmptyArray<SplitButtonOption<string>> = useMemo(
@@ -88,14 +102,13 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
         openModal();
         break;
       case 'add-all':
-        alert('Not Implemented Yet');
+        handleAllLinesFromPurchaseOrder();
         break;
     }
   };
 
   const onSelectOption = (option: SplitButtonOption<string>) => {
     setSelectedOption(option);
-    handleOptionSelection(option);
   };
 
   return (

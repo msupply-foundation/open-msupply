@@ -145,7 +145,7 @@ pub enum InsertLinesErrorInterface {
     CannotEditGoodsReceived(CannotEditGoodsReceived),
 }
 #[derive(InputObject)]
-#[graphql(name = "InsertLinesFromPurchaseOrderInput")]
+#[graphql(name = "InsertGoodsReceivedLinesFromPurchaseOrderInput")]
 pub struct InsertLinesInput {
     pub goods_received_id: String,
     pub purchase_order_id: String,
