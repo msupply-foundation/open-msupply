@@ -55,6 +55,18 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_user_and_store(
+        &self,
+        user_id: &str,
+        store_id: &str,
+    ) -> Result<Option<UserStoreJoinRow>, RepositoryError> {
+        Ok(user_store_join::table
+            .filter(user_store_join::user_id.eq(user_id))
+            .filter(user_store_join::store_id.eq(store_id))
+            .first(self.connection.lock().connection())
+            .optional()?)
+    }
+
     pub fn delete_by_user_id(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_store_join::table.filter(user_store_join::user_id.eq(id)))
             .execute(self.connection.lock().connection())?;
