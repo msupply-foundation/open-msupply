@@ -1,14 +1,21 @@
 import React from 'react';
-import { useTranslation } from '@common/intl';
-import { Grid, StatsPanel, usePreferences } from '@openmsupply-client/common';
-import { useFormatNumber } from '@common/intl';
-import { useItemFields } from '../../api';
+import {
+  Grid,
+  StatsPanel,
+  useFormatNumber,
+  useTranslation,
+  usePreferences,
+} from '@openmsupply-client/common';
+import { useItem } from '../../api';
 
 export const Statistics = () => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
-  const { stats, isVaccine, doses } = useItemFields();
+  const {
+    byId: { data },
+  } = useItem();
   const { manageVaccinesInDoses } = usePreferences();
+  const { stats, isVaccine, doses } = data || {};
 
   if (!stats) return null;
 

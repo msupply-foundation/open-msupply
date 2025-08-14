@@ -84,6 +84,8 @@ fragment PurchaseOrder on PurchaseOrderNode {
   supplierAgent
   supplierDiscountAmount
   supplierDiscountPercentage
+  lineTotalAfterDiscount
+  orderTotalAfterDiscount
   targetMonths
   confirmedDatetime
   contractSignedDate
@@ -342,6 +344,27 @@ mutation updatePurchaseOrderLine(
         ... on PurchaseOrderLineNotFound {
           __typename
           description
+        }
+      }
+    }
+  }
+}
+
+mutation deletePurchaseOrderLines($ids: [String!]!, $storeId: String!) {
+  deletePurchaseOrderLines(ids: $ids, storeId: $storeId) {
+    id
+    response {
+      ... on DeleteResponse {
+        id
+      }
+      ... on DeletePurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on RecordNotFound {
+            __typename
+            description
+          }
         }
       }
     }

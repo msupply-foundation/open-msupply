@@ -25,7 +25,9 @@ export const ItemDetailView = () => {
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isCentralServer = useIsCentralServerApi();
-  const { data, isLoading } = useItem();
+  const {
+    byId: { data, isLoading },
+  } = useItem();
 
   React.useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.name ?? '' });

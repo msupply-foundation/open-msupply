@@ -10,8 +10,13 @@ import {
   StatusCrumbs,
   useTableStore,
   usePreferences,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { usePurchaseOrder, PurchaseOrderFragment } from '../../api';
+import {
+  usePurchaseOrder,
+  PurchaseOrderFragment,
+  usePurchaseOrderLine,
+} from '../../api';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 import { StatusChangeButton } from './StatusChangeButton';
 
@@ -40,8 +45,12 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
   const t = useTranslation();
   const {
     query: { data },
+    isDisabled,
   } = usePurchaseOrder();
   const { authorisePurchaseOrder = false } = usePreferences();
+  const {
+    delete: { deleteLines },
+  } = usePurchaseOrderLine();
 
   const selectedRows = useTableStore(state => {
     const selectedLines =
@@ -50,7 +59,25 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
     return selectedLines;
   });
 
-  const confirmAndDelete = () => {};
+  const deleteAction = async () => {
+    const ids = selectedRows.map(row => row.id);
+    if (ids.length === 0) return;
+    return await deleteLines(ids);
+  };
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction,
+    canDelete: !isDisabled,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-lines-goods-received', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-lines', {
+        count: selectedRows.length,
+      }),
+    },
+  });
 
   const actions: Action[] = [
     {

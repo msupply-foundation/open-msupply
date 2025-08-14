@@ -92,6 +92,16 @@ pub enum ActivityLogNodeType {
     ItemVariantUpdateVVMType,
     VVMStatusLogUpdated,
     VolumePerPackChanged,
+    // Purchase Orders
+    PurchaseOrderCreated,
+    PurchaseOrderAuthorised,
+    PurchaseOrderUnauthorised,
+    PurchaseOrderConfirmed,
+    PurchaseOrderFinalised,
+    PurchaseOrderDeleted,
+    PurchaseOrderLineCreated,
+    PurchaseOrderLineUpdated,
+    PurchaseOrderLineDeleted,
 }
 
 #[Object]
@@ -239,6 +249,15 @@ impl ActivityLogNodeType {
             from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
             from::InvoiceStatusReceived => to::InvoiceStatusReceived,
             from::VolumePerPackChanged => to::VolumePerPackChanged,
+            from::PurchaseOrderCreated => to::PurchaseOrderCreated,
+            from::PurchaseOrderAuthorised => to::PurchaseOrderAuthorised,
+            from::PurchaseOrderUnauthorised => to::PurchaseOrderUnauthorised,
+            from::PurchaseOrderConfirmed => to::PurchaseOrderConfirmed,
+            from::PurchaseOrderFinalised => to::PurchaseOrderFinalised,
+            from::PurchaseOrderDeleted => to::PurchaseOrderDeleted,
+            from::PurchaseOrderLineCreated => to::PurchaseOrderLineCreated,
+            from::PurchaseOrderLineUpdated => to::PurchaseOrderLineUpdated,
+            from::PurchaseOrderLineDeleted => to::PurchaseOrderLineDeleted,
         }
     }
 
@@ -316,6 +335,15 @@ impl ActivityLogNodeType {
             from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
             from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
             from::VolumePerPackChanged => to::VolumePerPackChanged,
+            from::PurchaseOrderCreated => to::PurchaseOrderCreated,
+            from::PurchaseOrderAuthorised => to::PurchaseOrderAuthorised,
+            from::PurchaseOrderUnauthorised => to::PurchaseOrderUnauthorised,
+            from::PurchaseOrderConfirmed => to::PurchaseOrderConfirmed,
+            from::PurchaseOrderFinalised => to::PurchaseOrderFinalised,
+            from::PurchaseOrderDeleted => to::PurchaseOrderDeleted,
+            from::PurchaseOrderLineCreated => to::PurchaseOrderLineCreated,
+            from::PurchaseOrderLineUpdated => to::PurchaseOrderLineUpdated,
+            from::PurchaseOrderLineDeleted => to::PurchaseOrderLineDeleted,
         }
     }
 }

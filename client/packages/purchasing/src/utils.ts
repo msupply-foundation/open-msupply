@@ -32,8 +32,6 @@ const goodsReceivedStatusTranslation: Record<
   LocaleKey
 > = {
   NEW: 'label.new',
-  CONFIRMED: 'label.confirmed',
-  AUTHORISED: 'label.authorised',
   FINALISED: 'label.finalised',
 };
 
