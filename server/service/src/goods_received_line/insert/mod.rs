@@ -9,6 +9,7 @@ use crate::service_provider::ServiceContext;
 
 mod generate;
 use generate::generate;
+mod test;
 mod validate;
 use validate::{validate, validate_references};
 
