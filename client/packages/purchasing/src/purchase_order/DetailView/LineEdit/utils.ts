@@ -46,14 +46,6 @@ export const calculatePricesAndDiscount = (
     pricePerUnitAfterDiscount = 0,
   } = data;
 
-  // const updateField = [
-  //   'pricePerUnitAfterDiscount',
-  //   'pricePerUnitBeforeDiscount',
-  //   'discountPercentage',
-  // ].filter(
-  //   field => field !== changingField && field !== previouslyChangedField
-  // )[0];
-
   switch (changingField) {
     case 'pricePerUnitBeforeDiscount': {
       // Update the price after discount based on discount percentage
