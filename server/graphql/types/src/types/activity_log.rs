@@ -1,10 +1,9 @@
 use super::{StoreNode, UserNode};
 use async_graphql::{dataloader::DataLoader, *};
-use chrono::DateTime;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{StoreByIdLoader, UserLoader},
-    map_graphql_diesel_enum, ContextExt,
+    ContextExt,
 };
 use repository::{activity_log::ActivityLog, ActivityLogRow, ActivityLogType};
 use service::ListResult;
@@ -21,6 +20,8 @@ pub struct ActivityLogConnector {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::activity_log_row
+::ActivityLogType")]
 pub enum ActivityLogNodeType {
     UserLoggedIn,
     InvoiceCreated,
@@ -94,6 +95,16 @@ pub enum ActivityLogNodeType {
     GoodsReceivedCreated,
     GoodsReceivedDeleted,
     GoodsReceivedStatusFinalised,
+    // Purchase Orders
+    PurchaseOrderCreated,
+    PurchaseOrderAuthorised,
+    PurchaseOrderUnauthorised,
+    PurchaseOrderConfirmed,
+    PurchaseOrderFinalised,
+    PurchaseOrderDeleted,
+    PurchaseOrderLineCreated,
+    PurchaseOrderLineUpdated,
+    PurchaseOrderLineDeleted,
 }
 
 #[Object]
@@ -165,81 +176,6 @@ impl ActivityLogNode {
         &self.activity_log.activity_log_row
     }
 }
-
-map_graphql_diesel_enum!(ActivityLogNodeType, ActivityLogType, {
-    UserLoggedIn,
-    InvoiceCreated,
-    InvoiceDeleted,
-    InvoiceNumberAllocated,
-    InvoiceStatusAllocated,
-    InvoiceStatusPicked,
-    InvoiceStatusShipped,
-    InvoiceStatusDelivered,
-    InvoiceStatusReceived,
-    InvoiceStatusVerified,
-    InventoryAdjustment,
-    StocktakeCreated,
-    StocktakeDeleted,
-    StocktakeStatusFinalised,
-    RequisitionCreated,
-    RequisitionDeleted,
-    RequisitionNumberAllocated,
-    RequisitionApproved,
-    RequisitionStatusSent,
-    RequisitionStatusFinalised,
-    StockLocationChange,
-    StockCostPriceChange,
-    StockSellPriceChange,
-    StockExpiryDateChange,
-    StockBatchChange,
-    StockOnHold,
-    StockOffHold,
-    Repack,
-    PrescriptionCreated,
-    PrescriptionDeleted,
-    PrescriptionStatusPicked,
-    PrescriptionStatusVerified,
-    PrescriptionStatusCancelled,
-    SensorLocationChanged,
-    AssetCreated,
-    AssetUpdated,
-    AssetDeleted,
-    AssetLogCreated,
-    AssetCatalogueItemCreated,
-    QuantityForLineHasBeenSetToZero,
-    AssetCatalogueItemPropertyCreated,
-    AssetLogReasonCreated,
-    AssetLogReasonDeleted,
-    AssetPropertyCreated,
-    VaccineCourseCreated,
-    ProgramCreated,
-    ProgramUpdated,
-    VaccineCourseUpdated,
-    RnrFormCreated,
-    RnrFormUpdated,
-    RnrFormDeleted,
-    RnrFormFinalised,
-    VaccinationCreated,
-    VaccinationUpdated,
-    VaccinationDeleted,
-    DemographicIndicatorCreated,
-    DemographicIndicatorUpdated,
-    DemographicProjectionCreated,
-    DemographicProjectionUpdated,
-    InvoiceStatusCancelled,
-    ItemVariantCreated,
-    ItemVariantDeleted,
-    ItemVariantUpdatedName,
-    ItemVariantUpdateLocationType,
-    ItemVariantUpdateManufacturer,
-    ItemVariantUpdateDosePerUnit,
-    ItemVariantUpdateVVMType,
-    VVMStatusLogUpdated,
-    VolumePerPackChanged,
-    GoodsReceivedCreated,
-    GoodsReceivedDeleted,
-    GoodsReceivedStatusFinalised,
-});
 
 impl ActivityLogConnector {
     pub fn from_domain(activity_logs: ListResult<ActivityLog>) -> ActivityLogConnector {

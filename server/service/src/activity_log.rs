@@ -5,7 +5,7 @@ use repository::{
     activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
     system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     ActivityLogRow, ActivityLogRowRepository, ActivityLogType, InvoiceStatus, KeyType,
-    KeyValueStoreRepository, StorageConnection, StorageConnectionManager,
+    KeyValueStoreRepository, PurchaseOrderStatus, StorageConnection, StorageConnectionManager,
 };
 
 use repository::{PaginationOption, RepositoryError};
@@ -144,6 +144,15 @@ pub fn log_type_from_invoice_status(status: &InvoiceStatus, prescription: bool) 
         from::Verified => to::InvoiceStatusVerified,
         from::Cancelled if prescription => to::PrescriptionStatusCancelled,
         from::Cancelled => to::InvoiceStatusCancelled,
+    }
+}
+
+pub fn log_type_from_purchase_order_status(status: &PurchaseOrderStatus) -> ActivityLogType {
+    match status {
+        PurchaseOrderStatus::New => ActivityLogType::PurchaseOrderCreated,
+        PurchaseOrderStatus::Authorised => ActivityLogType::PurchaseOrderAuthorised,
+        PurchaseOrderStatus::Confirmed => ActivityLogType::PurchaseOrderConfirmed,
+        PurchaseOrderStatus::Finalised => ActivityLogType::PurchaseOrderFinalised,
     }
 }
 
