@@ -18,6 +18,7 @@ export type DraftPurchaseOrderLine = Omit<
   purchaseOrderId: string;
   itemId: string;
   discountPercentage: number;
+  numberOfPacks: number;
 };
 
 export type DraftPurchaseOrderLineFromCSV = Omit<
@@ -40,6 +41,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   pricePerUnitAfterDiscount: 0,
   // This value not actually saved to DB
   discountPercentage: 0,
+  numberOfPacks: 0,
 };
 
 export function usePurchaseOrderLine(id?: string) {

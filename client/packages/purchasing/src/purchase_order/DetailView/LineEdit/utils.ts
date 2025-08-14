@@ -1,6 +1,7 @@
 import { ItemStockOnHandFragment } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { FnUtils } from '@common/utils';
+import { PurchaseOrderNodeStatus } from '@common/types';
 
 export const createDraftPurchaseOrderLine = (
   item: ItemStockOnHandFragment,
@@ -19,6 +20,7 @@ export const createDraftPurchaseOrderLine = (
     pricePerUnitAfterDiscount: 0,
     // This value not actually saved to DB
     discountPercentage: 0,
+    numberOfPacks: 0,
   };
 };
 
@@ -85,4 +87,40 @@ export const calculatePricesAndDiscount = (
       };
     }
   }
+};
+
+type UnitCalcFields = 'numberOfPacks' | 'packSize';
+
+export const calculateUnitQuantities = (
+  changingField: UnitCalcFields,
+  status: PurchaseOrderNodeStatus,
+  data: Partial<DraftPurchaseOrderLine>,
+  draft: DraftPurchaseOrderLine | null | undefined
+) => {
+  let numberOfPacks = draft?.numberOfPacks ?? 0;
+  let requestedPackSize = draft?.requestedPackSize ?? 0;
+
+  switch (changingField) {
+    case 'numberOfPacks': {
+      numberOfPacks = data.numberOfPacks || 0;
+      break;
+    }
+    case 'packSize': {
+      requestedPackSize = data.requestedPackSize || 0;
+      break;
+    }
+  }
+
+  const totalUnits = numberOfPacks * requestedPackSize;
+
+  // Only adjust the requested number of units if the status is not confirmed yet
+  if (status === PurchaseOrderNodeStatus.Confirmed) {
+    return {
+      adjustedNumberOfUnits: totalUnits,
+    };
+  }
+  return {
+    requestedNumberOfUnits: totalUnits,
+    adjustedNumberOfUnits: totalUnits,
+  };
 };
