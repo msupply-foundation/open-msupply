@@ -11,6 +11,7 @@ export type GoodsReceivedRowFragment = {
   comment?: string | null;
   createdDatetime: string;
   receivedDatetime?: string | null;
+  finalisedDatetime?: string | null;
   purchaseOrderNumber?: number | null;
   supplierReference?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -25,6 +26,7 @@ export type GoodsReceivedFragment = {
   createdBy?: string | null;
   createdDatetime: string;
   receivedDatetime?: string | null;
+  finalisedDatetime?: string | null;
   purchaseOrderNumber?: number | null;
   supplierReference?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -52,6 +54,7 @@ export type GoodsReceivedListQuery = {
       comment?: string | null;
       createdDatetime: string;
       receivedDatetime?: string | null;
+      finalisedDatetime?: string | null;
       purchaseOrderNumber?: number | null;
       supplierReference?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -76,6 +79,7 @@ export type GoodsReceivedByIdQuery = {
         createdBy?: string | null;
         createdDatetime: string;
         receivedDatetime?: string | null;
+        finalisedDatetime?: string | null;
         purchaseOrderNumber?: number | null;
         supplierReference?: string | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -103,6 +107,16 @@ export type DeleteGoodsReceivedMutation = {
   deleteGoodsReceived: { __typename: 'DeleteResponse'; id: string };
 };
 
+export type UpdateGoodsReceivedMutationVariables = Types.Exact<{
+  input: Types.UpdateGoodsReceivedInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdateGoodsReceivedMutation = {
+  __typename: 'Mutations';
+  updateGoodsReceived: { __typename: 'IdResponse'; id: string };
+};
+
 export const GoodsReceivedRowFragmentDoc = gql`
   fragment GoodsReceivedRow on GoodsReceivedNode {
     id
@@ -111,6 +125,7 @@ export const GoodsReceivedRowFragmentDoc = gql`
     comment
     createdDatetime
     receivedDatetime
+    finalisedDatetime
     purchaseOrderNumber
     supplierReference
     supplier {
@@ -129,6 +144,7 @@ export const GoodsReceivedFragmentDoc = gql`
     createdBy
     createdDatetime
     receivedDatetime
+    finalisedDatetime
     purchaseOrderNumber
     supplierReference
     supplier {
@@ -194,6 +210,18 @@ export const DeleteGoodsReceivedDocument = gql`
   mutation deleteGoodsReceived($id: String!, $storeId: String!) {
     deleteGoodsReceived(id: $id, storeId: $storeId) {
       ... on DeleteResponse {
+        id
+      }
+    }
+  }
+`;
+export const UpdateGoodsReceivedDocument = gql`
+  mutation updateGoodsReceived(
+    $input: UpdateGoodsReceivedInput!
+    $storeId: String!
+  ) {
+    updateGoodsReceived(input: $input, storeId: $storeId) {
+      ... on IdResponse {
         id
       }
     }
@@ -279,6 +307,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'deleteGoodsReceived',
+        'mutation',
+        variables
+      );
+    },
+    updateGoodsReceived(
+      variables: UpdateGoodsReceivedMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdateGoodsReceivedMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateGoodsReceivedMutation>(
+            UpdateGoodsReceivedDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updateGoodsReceived',
         'mutation',
         variables
       );

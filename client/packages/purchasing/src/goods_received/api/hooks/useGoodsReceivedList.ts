@@ -122,7 +122,9 @@ const useDeleteLines = (goodsReceived?: GoodsReceivedRowFragment[]) => {
         try {
           await deleteMutation(id);
         } catch (error) {
-          console.error(`Failed to delete Goods Received with id ${id}`, error);
+          throw new Error(
+            `Failed to delete Goods Received with id ${id}: ${error}`
+          );
         }
       })
     );

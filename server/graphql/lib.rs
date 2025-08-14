@@ -4,7 +4,6 @@
 mod tests;
 
 mod logger;
-
 use logger::{GraphQLRequestLogger, QueryLogInfo};
 
 use std::sync::Mutex;
