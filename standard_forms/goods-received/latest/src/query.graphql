@@ -1,8 +1,6 @@
 query GoodsReceived($dataId: String!, $storeId: String!) {
   goodsReceived(id: $dataId, storeId: $storeId) {
     ... on GoodsReceivedNode {
-      id
-      createdBy
       purchaseOrderNumber
       supplierReference
       createdDatetime
@@ -22,6 +20,11 @@ query GoodsReceived($dataId: String!, $storeId: String!) {
       }
       supplier {
         name
+      }
+      store {
+        name(storeId: "") {
+          name
+        }
       }
     }
   }
