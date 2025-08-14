@@ -245,9 +245,9 @@ mod test {
             let row = PurchaseOrderRow {
                 id: id.clone(),
                 supplier_name_link_id: mock_name_c().id,
-                status: status,
+                status,
                 store_id: mock_store_a().id.clone(),
-                created_datetime: chrono::Utc::now().naive_utc().into(),
+                created_datetime: chrono::Utc::now().naive_utc(),
                 purchase_order_number: po_number,
                 ..Default::default()
             };

@@ -171,6 +171,8 @@ const useCreate = () => {
         requestedNumberOfUnits: draft.requestedNumberOfUnits,
         requestedDeliveryDate: draft.requestedDeliveryDate,
         expectedDeliveryDate: draft.expectedDeliveryDate,
+        pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
+        pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
       },
     });
   };
