@@ -9,7 +9,7 @@ import {
   PurchaseOrderNodeStatus,
   useColumns,
 } from '@openmsupply-client/common/src';
-import { calculatePricesAndDiscount } from './utils';
+import { calculatePricesAndDiscount, calculateUnitQuantities } from './utils';
 
 export const usePurchaseOrderLineEditColumns = ({
   draft,
@@ -23,6 +23,36 @@ export const usePurchaseOrderLineEditColumns = ({
   const columnDefinitions: ColumnDescription<DraftPurchaseOrderLine>[] =
     useMemo(
       () => [
+        {
+          Cell: NumberInputCell,
+          key: 'numberOfPacks',
+          label: 'label.requested-packs',
+          setter: patch => {
+            // Adjust the requested and adjusted number of units based on the number of packs
+            const adjustedPatch = calculateUnitQuantities(
+              'numberOfPacks',
+              status,
+              patch,
+              draft
+            );
+            updatePatch({ ...patch, ...adjustedPatch });
+          },
+        },
+        {
+          Cell: NumberInputCell,
+          key: 'requestedPackSize',
+          label: 'label.pack-size',
+          setter: patch => {
+            // Adjust the requested and adjusted number of units based on the new pack size
+            const adjustedPatch = calculateUnitQuantities(
+              'packSize',
+              status,
+              patch,
+              draft
+            );
+            updatePatch({ ...patch, ...adjustedPatch });
+          },
+        },
         ...(status === PurchaseOrderNodeStatus.Confirmed
           ? [
               {
@@ -46,6 +76,7 @@ export const usePurchaseOrderLineEditColumns = ({
             isDisabled: status === PurchaseOrderNodeStatus.Confirmed,
           },
         },
+
         {
           Cell: NumberInputCell,
           key: 'pricePerUnitBeforeDiscount',
