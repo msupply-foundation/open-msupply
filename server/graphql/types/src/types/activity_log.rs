@@ -1,12 +1,11 @@
 use super::{StoreNode, UserNode};
 use async_graphql::{dataloader::DataLoader, *};
-use chrono::DateTime;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{StoreByIdLoader, UserLoader},
     ContextExt,
 };
-use repository::{activity_log::ActivityLog, ActivityLogRow};
+use repository::{activity_log::ActivityLog, ActivityLogRow, ActivityLogType};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
@@ -262,6 +261,9 @@ impl ActivityLogNodeType {
             from::PurchaseOrderLineCreated => to::PurchaseOrderLineCreated,
             from::PurchaseOrderLineUpdated => to::PurchaseOrderLineUpdated,
             from::PurchaseOrderLineDeleted => to::PurchaseOrderLineDeleted,
+            from::GoodsReceivedCreated => to::GoodsReceivedCreated,
+            from::GoodsReceivedDeleted => to::GoodsReceivedDeleted,
+            from::GoodsReceivedStatusFinalised => to::GoodsReceivedStatusFinalised,
         }
     }
 
