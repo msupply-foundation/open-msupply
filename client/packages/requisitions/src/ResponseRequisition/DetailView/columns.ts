@@ -52,7 +52,6 @@ export const useResponseColumns = (manageVaccinesInDoses: boolean = false) => {
         Cell: TooltipTextCell,
         accessor: ({ rowData }) => rowData.item.name,
         getSortValue: rowData => rowData.item.name,
-        isSticky: true,
       },
     ],
     {

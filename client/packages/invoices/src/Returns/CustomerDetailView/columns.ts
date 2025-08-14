@@ -67,7 +67,6 @@ export const useCustomerReturnColumns = ({
             { path: ['lines', 'itemName'] },
             { path: ['itemName'], default: '' },
           ]),
-        isSticky: true,
       },
     ],
     [

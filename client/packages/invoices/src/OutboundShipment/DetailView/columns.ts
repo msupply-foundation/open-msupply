@@ -104,7 +104,6 @@ export const useOutboundColumns = ({
             { path: ['lines', 'itemName'] },
             { path: ['itemName'], default: '' },
           ]),
-        isSticky: true,
       },
     ],
     [
