@@ -2,7 +2,7 @@
   "is_custom": false,
   "version": "2.10.0",
   "code": "goods-received",
-  "context": "PURCHASE_ORDER",
+  "context": "GOODS_RECEIVED",
   "name": "Goods Received",
   "queries": {
     "gql": "query.graphql"
