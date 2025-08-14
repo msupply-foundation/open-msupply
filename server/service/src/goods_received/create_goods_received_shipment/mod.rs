@@ -25,8 +25,12 @@ pub enum CreateGoodsReceivedShipmentError {
     ProblemGettingOtherParty,
     GoodsReceivedDoesNotExist,
     PurchaseOrderDoesNotExist,
+    GoodsReceivedEmpty,
+    PurchaseOrderLinesNotFound(Vec<String>),
     NotThisStoreGoodsReceived,
+    NotThisStorePurchaseOrder,
     GoodsReceivedNotFinalised,
+    PurchaseOrderNotFinalised,
 }
 
 type OutError = CreateGoodsReceivedShipmentError;

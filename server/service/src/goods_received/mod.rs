@@ -1,7 +1,10 @@
 use repository::goods_received::{GoodsReceivedFilter, GoodsReceivedSort};
 use repository::goods_received_row::GoodsReceivedRow;
-use repository::{PaginationOption, RepositoryError};
+use repository::{Invoice, PaginationOption, RepositoryError};
 
+use crate::goods_received::create_goods_received_shipment::{
+    create_goods_received_shipment, CreateGoodsReceivedShipment, CreateGoodsReceivedShipmentError,
+};
 use crate::goods_received::query::{get_goods_received, get_goods_received_list};
 use crate::goods_received::update::{
     update_goods_received, UpdateGoodsReceivedError, UpdateGoodsReceivedInput,
@@ -53,6 +56,14 @@ pub trait GoodsReceivedServiceTrait: Sync + Send {
         input: UpdateGoodsReceivedInput,
     ) -> Result<GoodsReceivedRow, UpdateGoodsReceivedError> {
         update_goods_received(ctx, input)
+    }
+
+    fn create_goods_received_shipment(
+        &self,
+        ctx: &ServiceContext,
+        input: CreateGoodsReceivedShipment,
+    ) -> Result<Invoice, CreateGoodsReceivedShipmentError> {
+        create_goods_received_shipment(ctx, input)
     }
 }
 
