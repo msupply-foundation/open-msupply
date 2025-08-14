@@ -69,6 +69,7 @@ export const usePurchaseOrderLineEditColumns = ({
               onBlur: () =>
                 (lastChanged.current = 'pricePerUnitBeforeDiscount'),
             },
+            decimalLimit: 2,
           },
         },
         {
@@ -88,6 +89,7 @@ export const usePurchaseOrderLineEditColumns = ({
             TextInputProps: {
               onBlur: () => (lastChanged.current = 'discountPercentage'),
             },
+            decimalLimit: 2,
           },
         },
         {
@@ -106,6 +108,7 @@ export const usePurchaseOrderLineEditColumns = ({
             TextInputProps: {
               onBlur: () => (lastChanged.current = 'pricePerUnitAfterDiscount'),
             },
+            decimalLimit: 2,
           },
         },
         {
