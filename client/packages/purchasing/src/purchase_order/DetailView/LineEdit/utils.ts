@@ -1,6 +1,7 @@
 import { ItemStockOnHandFragment } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { FnUtils } from '@common/utils';
+import { useCallback, useRef } from 'react';
 
 export const createDraftPurchaseOrderLine = (
   item: ItemStockOnHandFragment,
@@ -27,8 +28,14 @@ type PriceField =
   | 'discountPercentage'
   | 'pricePerUnitAfterDiscount';
 
-// Calculates any of the these values from the other two, based on which have
-// most recently changed
+/**
+ * Calculates any of the these values from the other two, based on which have
+ * most recently changed.
+ *
+ * `newField` is the field that is currently active, and the
+ * `previouslyChangedField` is the previous one changed, as tracked by the
+ * useLastChangedField hook (below).
+ */
 export const calculatePricesAndDiscount = (
   newField: PriceField,
   previouslyChangedField: PriceField | null,
@@ -76,4 +83,33 @@ export const calculatePricesAndDiscount = (
       };
     }
   }
+};
+
+/**
+ * Hook to track the last changed field in a group of inputs. Updates the value
+ * of `lastChanged` on blur, but only if the value has actually changed (so it
+ * doesn't count if you just tab through)
+ *
+ * Returns the "lastChanged" field, and a function to set event handlers for the
+ * inputs that are to be included
+ */
+export const useLastChangedField = <T>() => {
+  const lastChanged = useRef<T | null>(null);
+  const trackedValue = useRef<string | null>(null);
+
+  const getInputEventHandlers = useCallback((name: T) => {
+    return {
+      onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+        trackedValue.current = e.target.value;
+      },
+      onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+        const originalValue = trackedValue.current;
+        if (originalValue !== e.target.value) {
+          lastChanged.current = name;
+        }
+      },
+    };
+  }, []);
+
+  return { lastChanged: lastChanged.current, getInputEventHandlers };
 };
