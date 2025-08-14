@@ -39,7 +39,7 @@ pub fn create_goods_received_shipment(
         .connection
         .transaction_sync(|connection| {
             // TODO: Replace the following arguments with actual values as needed
-            let (supplier_name_link, goods_received, goods_received_lines) =
+            let (supplier_name_link, goods_received, line_map) =
                 validate(connection, &ctx.store_id, &input)?;
 
             let (invoice_row, invoice_line_rows) = generate(
@@ -48,7 +48,7 @@ pub fn create_goods_received_shipment(
                 &ctx.user_id,
                 supplier_name_link,
                 goods_received,
-                goods_received_lines,
+                line_map,
             )?;
 
             InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;

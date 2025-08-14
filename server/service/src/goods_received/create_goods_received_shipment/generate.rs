@@ -4,7 +4,7 @@ use chrono::Utc;
 use repository::{
     goods_received_line_row::GoodsReceivedLineRow, goods_received_row::GoodsReceivedRow,
     CurrencyFilter, CurrencyRepository, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus,
-    InvoiceType, ItemRowRepository, NumberRowType, StorageConnection,
+    InvoiceType, ItemRowRepository, NumberRowType, PurchaseOrderLineRow, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -14,7 +14,7 @@ pub fn generate(
     user_id: &str,
     supplier_name_link: String,
     goods_received: GoodsReceivedRow,
-    goods_received_lines: Vec<GoodsReceivedLineRow>,
+    line_map: Vec<(GoodsReceivedLineRow, PurchaseOrderLineRow)>,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), CreateGoodsReceivedShipmentError> {
     let currency = CurrencyRepository::new(connection)
         .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
@@ -65,8 +65,7 @@ pub fn generate(
         default_donor_link_id: None,
     };
 
-    let invoice_line_rows =
-        generate_invoice_lines(connection, &new_invoice.id, goods_received_lines)?;
+    let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, line_map)?;
 
     Ok((new_invoice, invoice_line_rows))
 }
@@ -74,19 +73,19 @@ pub fn generate(
 pub fn generate_invoice_lines(
     connection: &StorageConnection,
     invoice_id: &str,
-    goods_received_lines: Vec<GoodsReceivedLineRow>,
+    line_map: Vec<(GoodsReceivedLineRow, PurchaseOrderLineRow)>,
 ) -> Result<Vec<InvoiceLineRow>, CreateGoodsReceivedShipmentError> {
     let item_rows = ItemRowRepository::new(connection).find_many_active_by_id(
-        &goods_received_lines
+        &line_map
             .iter()
             // Could refactor this to go by item_row.id if we join item_row to goods received line
-            .filter_map(|line| Some(line.item_link_id.clone()))
+            .filter_map(|(line, _)| Some(line.item_link_id.clone()))
             .collect(),
     )?;
 
-    let lines: Vec<InvoiceLineRow> = goods_received_lines
+    let lines: Vec<InvoiceLineRow> = line_map
         .iter()
-        .filter_map(|line| {
+        .filter_map(|(line, po_line)| {
             let item_row = item_rows.iter().find(|item| item.id == line.item_link_id)?;
             Some(InvoiceLineRow {
                 id: uuid(),
@@ -100,6 +99,7 @@ pub fn generate_invoice_lines(
                 expiry_date: line.expiry_date,
                 batch: line.batch.clone(),
                 volume_per_pack: line.volume_per_pack.unwrap_or(0.0),
+                cost_price_per_pack: po_line.price_per_unit_after_discount,
 
                 // Default
                 total_before_tax: 0.0,
@@ -109,7 +109,6 @@ pub fn generate_invoice_lines(
                 location_id: None,
                 // TODO should these refer to PO line cost values?
                 sell_price_per_pack: 0.0,
-                cost_price_per_pack: 0.0,
                 stock_line_id: None,
                 foreign_currency_price_before_tax: None,
                 item_variant_id: None,
