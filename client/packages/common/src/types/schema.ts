@@ -150,6 +150,15 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
+  PurchaseOrderAuthorised = 'PURCHASE_ORDER_AUTHORISED',
+  PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
+  PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
+  PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',
+  PurchaseOrderFinalised = 'PURCHASE_ORDER_FINALISED',
+  PurchaseOrderLineCreated = 'PURCHASE_ORDER_LINE_CREATED',
+  PurchaseOrderLineDeleted = 'PURCHASE_ORDER_LINE_DELETED',
+  PurchaseOrderLineUpdated = 'PURCHASE_ORDER_LINE_UPDATED',
+  PurchaseOrderUnauthorised = 'PURCHASE_ORDER_UNAUTHORISED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
   RequisitionApproved = 'REQUISITION_APPROVED',
@@ -3715,6 +3724,8 @@ export type InsertPurchaseOrderLineErrorInterface = {
 
 export type InsertPurchaseOrderLineFromCsvInput = {
   itemCode: Scalars['String']['input'];
+  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -3724,6 +3735,8 @@ export type InsertPurchaseOrderLineInput = {
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
