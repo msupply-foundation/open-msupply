@@ -93,7 +93,8 @@ export const EditPreference = ({
       );
 
     case PreferenceValueNodeType.CustomTranslations:
-      return <EditCustomTranslations value={value} update={debouncedUpdate} />;
+      // Pass update directly - called on modal save than on each key stroke/click
+      return <EditCustomTranslations value={value} update={update} />;
 
     default:
       try {
