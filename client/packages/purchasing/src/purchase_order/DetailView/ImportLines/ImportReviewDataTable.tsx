@@ -49,8 +49,19 @@ export const ImportReviewDataTable = ({
       key: 'requestedNumberOfUnits',
       sortable: false,
       label: 'label.requested',
+    },
+    {
+      width: 90,
+      key: 'pricePerUnitBeforeDiscount',
+      sortable: false,
+      label: 'label.price-per-unit-before-discount',
+    },
+    {
+      width: 90,
+      key: 'pricePerUnitAfterDiscount',
+      sortable: false,
+      label: 'label.price-per-unit-after-discount',
     }
-    // TODO add more input / show fields
   );
 
   if (showWarnings) {

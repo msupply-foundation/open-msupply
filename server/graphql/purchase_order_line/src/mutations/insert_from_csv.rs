@@ -14,6 +14,8 @@ pub struct InsertFromCSVInput {
     pub item_code: String,
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
+    pub price_per_unit_before_discount: Option<f64>,
+    pub price_per_unit_after_discount: Option<f64>,
 }
 
 impl InsertFromCSVInput {
@@ -23,6 +25,8 @@ impl InsertFromCSVInput {
             item_code,
             requested_pack_size,
             requested_number_of_units,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
         } = self;
 
         ServiceInput {
@@ -30,6 +34,8 @@ impl InsertFromCSVInput {
             item_code,
             requested_pack_size,
             requested_number_of_units,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
         }
     }
 }

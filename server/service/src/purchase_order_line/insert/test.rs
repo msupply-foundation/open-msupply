@@ -250,10 +250,7 @@ mod insert {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "non_existent_purchase_order".to_string(),
                     item_id: "item_id".to_string(),
-                    requested_pack_size: None,
-                    requested_number_of_units: None,
-                    requested_delivery_date: None,
-                    expected_delivery_date: None
+                    ..Default::default()
                 }
             ),
             Err(InsertPurchaseOrderLineError::PurchaseOrderDoesNotExist)
@@ -279,8 +276,7 @@ mod insert {
                 InsertPurchaseOrderLineFromCSVInput {
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_code: "some_non_existent_item".to_string(),
-                    requested_pack_size: Some(0.0),
-                    requested_number_of_units: Some(0.0)
+                    ..Default::default()
                 }
             ),
             Err(InsertPurchaseOrderLineError::CannotFindItemByCode(
@@ -295,7 +291,7 @@ mod insert {
                 purchase_order_id: "purchase_order_id".to_string(),
                 item_code: mock_item_a().code.clone(),
                 requested_pack_size: Some(1.1),
-                requested_number_of_units: Some(0.0),
+                ..Default::default()
             },
         );
         assert!(result.is_ok());
@@ -308,7 +304,7 @@ mod insert {
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_code: mock_item_a().code.clone(),
                     requested_pack_size: Some(1.1),
-                    requested_number_of_units: Some(0.0),
+                    ..Default::default()
                 },
             ),
             Err(InsertPurchaseOrderLineError::PackSizeCodeCombinationExists(

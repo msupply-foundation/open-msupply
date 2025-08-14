@@ -41,6 +41,8 @@ export type ImportRow = {
   itemCode: string;
   requestedPackSize?: number;
   requestedNumberOfUnits?: number;
+  pricePerUnitBeforeDiscount?: number;
+  pricePerUnitAfterDiscount?: number;
   errorMessage: string;
   warningMessage: string;
   // TODO add remaining fields as needed
@@ -59,6 +61,8 @@ export const toInsertPurchaseOrderLine = (
     itemCode: row.itemCode,
     requestedPackSize: row.requestedPackSize,
     requestedNumberOfUnits: row.requestedNumberOfUnits,
+    pricePerUnitBeforeDiscount: row.pricePerUnitBeforeDiscount,
+    pricePerUnitAfterDiscount: row.pricePerUnitAfterDiscount,
   };
 };
 
