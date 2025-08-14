@@ -175,3 +175,34 @@ mutation insertGoodsReceivedLine(
     }
   }
 }
+
+mutation insertGoodsReceivedLinesFromPurchaseOrder(
+  $input: InsertGoodsReceivedLinesFromPurchaseOrderInput!
+  $storeId: String!
+) {
+  insertGoodsReceivedLinesFromPurchaseOrder(input: $input, storeId: $storeId) {
+    ... on InsertLinesFromPurchaseOrderResponseNode {
+      __typename
+      ids
+    }
+    ... on InsertGoodsReceivedLinesError {
+      __typename
+      error {
+        description
+        ... on PurchaseOrderNotFound {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on CannotEditGoodsReceived {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}

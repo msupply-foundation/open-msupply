@@ -192,10 +192,37 @@ export type InsertGoodsReceivedLineMutation = {
               description: string;
               key: Types.ForeignKey;
             }
+          | { __typename: 'GoodsReceivedLineWithIdExists'; description: string }
           | {
-              __typename: 'GoodsReceivedLineWithIdExists';
+              __typename: 'PurchaseOrderLineDoesNotExist';
               description: string;
             };
+      };
+};
+
+export type InsertGoodsReceivedLinesFromPurchaseOrderMutationVariables =
+  Types.Exact<{
+    input: Types.InsertGoodsReceivedLinesFromPurchaseOrderInput;
+    storeId: Types.Scalars['String']['input'];
+  }>;
+
+export type InsertGoodsReceivedLinesFromPurchaseOrderMutation = {
+  __typename: 'Mutations';
+  insertGoodsReceivedLinesFromPurchaseOrder:
+    | {
+        __typename: 'InsertGoodsReceivedLinesError';
+        error:
+          | { __typename: 'CannotEditGoodsReceived'; description: string }
+          | {
+              __typename: 'ForeignKeyError';
+              description: string;
+              key: Types.ForeignKey;
+            }
+          | { __typename: 'PurchaseOrderNotFound'; description: string };
+      }
+    | {
+        __typename: 'InsertLinesFromPurchaseOrderResponseNode';
+        ids: Array<string>;
       };
 };
 
@@ -391,6 +418,41 @@ export const InsertGoodsReceivedLineDocument = gql`
     }
   }
 `;
+export const InsertGoodsReceivedLinesFromPurchaseOrderDocument = gql`
+  mutation insertGoodsReceivedLinesFromPurchaseOrder(
+    $input: InsertGoodsReceivedLinesFromPurchaseOrderInput!
+    $storeId: String!
+  ) {
+    insertGoodsReceivedLinesFromPurchaseOrder(
+      input: $input
+      storeId: $storeId
+    ) {
+      ... on InsertLinesFromPurchaseOrderResponseNode {
+        __typename
+        ids
+      }
+      ... on InsertGoodsReceivedLinesError {
+        __typename
+        error {
+          description
+          ... on PurchaseOrderNotFound {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+            key
+          }
+          ... on CannotEditGoodsReceived {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -519,6 +581,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertGoodsReceivedLine',
+        'mutation',
+        variables
+      );
+    },
+    insertGoodsReceivedLinesFromPurchaseOrder(
+      variables: InsertGoodsReceivedLinesFromPurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertGoodsReceivedLinesFromPurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertGoodsReceivedLinesFromPurchaseOrderMutation>(
+            InsertGoodsReceivedLinesFromPurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertGoodsReceivedLinesFromPurchaseOrder',
         'mutation',
         variables
       );

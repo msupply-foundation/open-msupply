@@ -2,9 +2,6 @@ import { useMemo } from 'react';
 import { DraftGoodsReceivedLine } from '../../api/hooks/useGoodsReceivedLine';
 import {
   ColumnDescription,
-  DateInputCell,
-  DateUtils,
-  Formatter,
   NumberInputCell,
   useColumns,
 } from '@openmsupply-client/common/src';
@@ -35,32 +32,33 @@ export const useGoodsReceivedLineEditColumns = ({
             updatePatch({ ...patch });
           },
         },
-        {
-          Cell: DateInputCell,
-          key: 'requestedDeliveryDate',
-          label: 'Requested delivery date',
-          setter: ({ id, requestedDeliveryDate }) => {
-            updatePatch({
-              id,
-              requestedDeliveryDate: Formatter.naiveDate(
-                DateUtils.getNaiveDate(requestedDeliveryDate)
-              ),
-            });
-          },
-        },
-        {
-          Cell: DateInputCell,
-          key: 'expectedDeliveryDate',
-          label: 'Expected Delivery Date',
-          setter: ({ id, expectedDeliveryDate }) => {
-            updatePatch({
-              id,
-              expectedDeliveryDate: Formatter.naiveDate(
-                DateUtils.getNaiveDate(expectedDeliveryDate)
-              ),
-            });
-          },
-        },
+        // TODO: Add respective fields needed when ready
+        // {
+        //   Cell: DateInputCell,
+        //   key: 'requestedDeliveryDate',
+        //   label: 'Requested delivery date',
+        //   setter: ({ id, requestedDeliveryDate }) => {
+        //     updatePatch({
+        //       id,
+        //       requestedDeliveryDate: Formatter.naiveDate(
+        //         DateUtils.getNaiveDate(requestedDeliveryDate)
+        //       ),
+        //     });
+        //   },
+        // },
+        // {
+        //   Cell: DateInputCell,
+        //   key: 'expectedDeliveryDate',
+        //   label: 'Expected Delivery Date',
+        //   setter: ({ id, expectedDeliveryDate }) => {
+        //     updatePatch({
+        //       id,
+        //       expectedDeliveryDate: Formatter.naiveDate(
+        //         DateUtils.getNaiveDate(expectedDeliveryDate)
+        //       ),
+        //     });
+        //   },
+        // },
       ],
       [updatePatch]
     );
