@@ -23,6 +23,8 @@ pub fn generate(
         requested_pack_size: input.requested_pack_size.unwrap_or_default(),
         requested_delivery_date: input.requested_delivery_date,
         expected_delivery_date: input.expected_delivery_date,
+        price_per_unit_after_discount: input.price_per_unit_after_discount.unwrap_or(0.0),
+        price_per_unit_before_discount: input.price_per_unit_before_discount.unwrap_or(0.0),
         ..Default::default()
     })
 }
@@ -46,6 +48,8 @@ pub fn generate_from_csv(
         item_link_id: input.item_id,
         requested_pack_size: input.requested_pack_size.unwrap_or(0.0),
         requested_number_of_units: input.requested_number_of_units.unwrap_or(0.0),
+        price_per_unit_after_discount: input.price_per_unit_after_discount.unwrap_or(0.0),
+        price_per_unit_before_discount: input.price_per_unit_before_discount.unwrap_or(0.0),
         ..Default::default()
     })
 }
