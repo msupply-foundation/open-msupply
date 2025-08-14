@@ -31,13 +31,11 @@ type PriceField =
  * Calculates any of the these values from the other two, based on which have
  * most recently changed.
  *
- * `newField` is the field that is currently active, and the
- * `previouslyChangedField` is the previous one changed, as tracked by the
- * useLastChangedField hook (below).
+ * `changingField` is the fields being updated by the user, and `data` contains
+ * the current state of all 3.
  */
 export const calculatePricesAndDiscount = (
   changingField: PriceField,
-  // previouslyChangedField: PriceField | null,
   data: Partial<DraftPurchaseOrderLine>
 ) => {
   const {
