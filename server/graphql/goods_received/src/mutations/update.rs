@@ -110,7 +110,10 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::GoodsReceivedDoesNotExist => BadUserInput(formatted_error),
+        // TODO destructure these appropriately if need be?
+        ServiceError::GoodsReceivedDoesNotExist | ServiceError::ErrorCreatingShipment(_) => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)
         }

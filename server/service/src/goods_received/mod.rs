@@ -9,6 +9,8 @@ use crate::goods_received::update::{
 use crate::service_provider::ServiceContext;
 use crate::{ListError, ListResult};
 
+pub mod common;
+pub mod create_goods_received_shipment;
 pub mod insert;
 pub mod query;
 pub mod update;
