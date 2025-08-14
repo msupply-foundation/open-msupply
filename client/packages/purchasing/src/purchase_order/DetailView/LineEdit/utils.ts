@@ -87,32 +87,3 @@ export const calculatePricesAndDiscount = (
     }
   }
 };
-
-/**
- * Hook to track the last changed field in a group of inputs. Updates the value
- * of `lastChanged` on blur, but only if the value has actually changed (so it
- * doesn't count if you just tab through)
- *
- * Returns the "lastChanged" field, and a function to set event handlers for the
- * inputs that are to be included
- */
-export const useLastChangedField = <T>() => {
-  const lastChanged = useRef<T | null>(null);
-  const trackedValue = useRef<string | null>(null);
-
-  const getInputEventHandlers = useCallback((name: T) => {
-    return {
-      onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-        trackedValue.current = e.target.value;
-      },
-      onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
-        const originalValue = trackedValue.current;
-        if (originalValue !== e.target.value) {
-          lastChanged.current = name;
-        }
-      },
-    };
-  }, []);
-
-  return { lastChanged: lastChanged.current, getInputEventHandlers };
-};
