@@ -91,7 +91,7 @@ impl GoodsReceivedLineNode {
 
         result.map(ItemNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
-                "Cannot find item ({}) linked to purchase_order_line ({})",
+                "Cannot find item ({}) linked to goods_received_line ({})",
                 &self.item.id,
                 &self.row().id
             ))
