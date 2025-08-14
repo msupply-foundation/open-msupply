@@ -51,9 +51,7 @@ export const calculatePricesAndDiscount = (
     'pricePerUnitAfterDiscount',
     'pricePerUnitBeforeDiscount',
     'discountPercentage',
-  ].filter(
-    field => field !== newField && field !== previouslyChangedField
-  )[0] as PriceField;
+  ].filter(field => field !== newField && field !== previouslyChangedField)[0];
 
   switch (updateField) {
     case 'discountPercentage': {
