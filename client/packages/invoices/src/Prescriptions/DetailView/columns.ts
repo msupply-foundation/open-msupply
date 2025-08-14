@@ -58,6 +58,7 @@ export const usePrescriptionColumn = ({
           ]),
         accessor: ({ rowData }) =>
           getColumnProperty(rowData, [{ path: ['item', 'code'], default: '' }]),
+        isSticky: true,
       },
     ],
     [
@@ -67,6 +68,7 @@ export const usePrescriptionColumn = ({
           getColumnPropertyAsString(row, [{ path: ['itemName'], default: '' }]),
         accessor: ({ rowData }) =>
           getColumnProperty(rowData, [{ path: ['itemName'], default: '' }]),
+        isSticky: true,
       },
     ],
     [

@@ -103,6 +103,7 @@ export const useInboundShipmentColumns = ({
             { path: ['lines', 'item', 'code'] },
             { path: ['item', 'code'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [
@@ -119,6 +120,7 @@ export const useInboundShipmentColumns = ({
             { path: ['lines', 'itemName'] },
             { path: ['itemName'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [

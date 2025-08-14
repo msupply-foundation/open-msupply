@@ -102,6 +102,7 @@ export const useStocktakeColumns = ({
           return row.item?.code ?? '';
         },
         accessor: ({ rowData }) => rowData.item?.code ?? '',
+        isSticky: true,
       },
     ],
     [
@@ -118,6 +119,7 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'itemName'] },
             { path: ['itemName'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [

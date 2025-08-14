@@ -53,6 +53,7 @@ export const useSupplierReturnColumns = ({
             { path: ['lines', 'itemCode'] },
             { path: ['itemCode'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [
@@ -69,6 +70,7 @@ export const useSupplierReturnColumns = ({
             { path: ['lines', 'itemName'] },
             { path: ['itemName'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [
