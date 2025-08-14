@@ -69,6 +69,7 @@ impl Migration for V2_10_00 {
             Box::new(rename_cold_storage_type_fk::Migrate),
             Box::new(add_vvm_status_to_stocktake_line::Migrate),
             Box::new(add_comment_to_purchase_order_line::Migrate),
+            Box::new(add_goods_received_permission_enum_values::Migrate),
             Box::new(rename_authorised_to_adjusted::Migrate),
             Box::new(remove_use_campaigns_pref::Migrate),
             Box::new(add_purchase_order_activity_logs::Migrate),
