@@ -32,6 +32,22 @@ impl GoodsReceivedLineWithIdExists {
     }
 }
 
+pub struct PurchaseOrderNotFound;
+#[Object]
+impl PurchaseOrderNotFound {
+    pub async fn description(&self) -> &str {
+        "Purchase order does not exist"
+    }
+}
+
+pub struct PurchaseOrderLineDoesNotExist;
+#[Object]
+impl PurchaseOrderLineDoesNotExist {
+    pub async fn description(&self) -> &str {
+        "Purchase order line does not exist"
+    }
+}
+
 pub struct CannnotFindItemByCode;
 #[Object]
 impl CannnotFindItemByCode {

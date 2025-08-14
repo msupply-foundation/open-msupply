@@ -7,10 +7,12 @@ use repository::GoodsReceivedLineRow;
 use repository::GoodsReceivedLineSort;
 use repository::{PaginationOption, RepositoryError};
 
-use crate::goods_received_line::insert::insert_goods_received_line;
-use crate::goods_received_line::insert::InsertGoodsReceivedLineError;
-use crate::goods_received_line::insert::InsertGoodsReceivedLineInput;
 use crate::{
+    goods_received_line::insert::{
+        insert_goods_received_line, insert_goods_received_lines_from_purchase_order,
+        InsertGoodsReceivedLineError, InsertGoodsReceivedLineInput, InsertGoodsReceivedLinesError,
+        InsertGoodsReceivedLinesFromPurchaseOrderInput,
+    },
     goods_received_line::query::{get_goods_received_line, get_goods_received_lines},
     service_provider::ServiceContext,
     ListError, ListResult,
@@ -43,6 +45,14 @@ pub trait GoodsReceivedLineServiceTrait: Sync + Send {
         input: InsertGoodsReceivedLineInput,
     ) -> Result<GoodsReceivedLineRow, InsertGoodsReceivedLineError> {
         insert_goods_received_line(ctx, input)
+    }
+
+    fn insert_goods_received_lines_from_purchase_order(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertGoodsReceivedLinesFromPurchaseOrderInput,
+    ) -> Result<Vec<GoodsReceivedLineRow>, InsertGoodsReceivedLinesError> {
+        insert_goods_received_lines_from_purchase_order(ctx, input)
     }
 }
 
