@@ -23,6 +23,7 @@ import { ru } from 'date-fns/locale/ru';
 import { pt } from 'date-fns/locale/pt';
 import pluralize from 'pluralize';
 import { localeKeySet } from '../locales';
+export { splitTranslatedLines } from './ReactUtils';
 
 // Map locale string (from i18n) to locale object (from date-fns)
 const getLocaleObj = { fr, ar, es, ru };
