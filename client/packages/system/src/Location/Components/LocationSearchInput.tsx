@@ -25,6 +25,7 @@ interface LocationSearchInputProps {
   volumeRequired?: number;
   fullWidth?: boolean;
   enableAPI?: boolean;
+  originalSelectedLocation?: LocationRowFragment | null;
 }
 
 interface LocationOption {
@@ -101,14 +102,12 @@ export const LocationSearchInput = ({
   restrictedToLocationTypeId,
   volumeRequired,
   enableAPI = true,
+  originalSelectedLocation = null,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const { round } = useFormatNumber();
 
-  const [originalSelectedLocation] = useState<LocationRowFragment | null>(
-    selectedLocation
-  );
   const [filter, setFilter] = useState<LocationFilter>(LocationFilter.All);
 
   const {
