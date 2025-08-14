@@ -240,6 +240,8 @@ export const useLineInsertFromCSV = () => {
           purchaseOrderId: line.purchaseOrderId ?? '',
           requestedPackSize: line.requestedPackSize ?? 0.0,
           requestedNumberOfUnits: line.requestedNumberOfUnits ?? 0,
+          pricePerUnitAfterDiscount: line.pricePerUnitAfterDiscount ?? 0.0,
+          pricePerUnitBeforeDiscount: line.pricePerUnitBeforeDiscount ?? 0.0,
         },
       });
       if (result.insertPurchaseOrderLineFromCsv.__typename === 'IdResponse') {
