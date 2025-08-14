@@ -155,7 +155,7 @@ impl GoodsReceivedLineFilter {
 }
 
 fn to_domain(
-    (goods_received_line_row, (_, item_row), _): GoodsReceivedLineJoin,
+    (goods_received_line_row, (_item_link_row, item_row), _goods_received_row): GoodsReceivedLineJoin,
 ) -> GoodsReceivedLine {
     GoodsReceivedLine {
         goods_received_line_row,
