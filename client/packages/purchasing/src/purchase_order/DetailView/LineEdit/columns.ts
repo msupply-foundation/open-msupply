@@ -62,6 +62,9 @@ export const usePurchaseOrderLineEditColumns = ({
                 setter: (patch: Partial<DraftPurchaseOrderLine>) => {
                   updatePatch({ ...patch });
                 },
+                cellProps: {
+                  isDisabled: true, // Edited via number of packs for now
+                },
               },
             ]
           : []),
@@ -73,7 +76,7 @@ export const usePurchaseOrderLineEditColumns = ({
             updatePatch({ ...patch });
           },
           cellProps: {
-            isDisabled: status === PurchaseOrderNodeStatus.Confirmed,
+            isDisabled: true, // Edited via number of packs for now
           },
         },
 
