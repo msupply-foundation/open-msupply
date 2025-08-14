@@ -69,6 +69,7 @@ pub fn generate(
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: None,
+        goods_received_id: None,
     };
 
     Ok(result)
