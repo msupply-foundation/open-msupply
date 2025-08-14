@@ -39,29 +39,8 @@ pub fn generate(
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
-        tax_percentage: None,
-        transport_reference: None,
-        allocated_datetime: None,
-        picked_datetime: None,
-        shipped_datetime: None,
-        delivered_datetime: None,
-        received_datetime: None,
-        verified_datetime: None,
-        cancelled_datetime: None,
-        linked_invoice_id: None,
-        requisition_id: None,
-        clinician_link_id: None,
-        original_shipment_id: None,
-        backdated_datetime: None,
-        diagnosis_id: None,
-        program_id: None,
-        name_insurance_join_id: None,
-        insurance_discount_amount: None,
-        insurance_discount_percentage: None,
         is_cancellation: false,
-        expected_delivery_date: None,
-        default_donor_link_id: None,
-        goods_received_id: None,
+        ..Default::default()
     };
 
     Ok(result)
