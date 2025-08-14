@@ -10,7 +10,6 @@ pub fn generate(
         expiry_date,
         number_of_packs_received,
         received_pack_size,
-        location_id,
         manufacturer_link_id,
         comment,
     }: UpdateGoodsReceivedLineInput,
@@ -31,10 +30,6 @@ pub fn generate(
 
     if let Some(new_pack_size) = received_pack_size {
         updated_line.received_pack_size = new_pack_size;
-    }
-
-    if let Some(new_location_id) = location_id {
-        updated_line.location_id = Some(new_location_id);
     }
 
     if let Some(new_manufacturer_id) = manufacturer_link_id {

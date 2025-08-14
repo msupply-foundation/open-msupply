@@ -26,21 +26,8 @@ pub struct UpdateGoodsReceivedLineInput {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs_received: Option<f64>,
     pub received_pack_size: Option<f64>,
-    pub location_id: Option<String>,
     pub manufacturer_link_id: Option<String>,
     pub comment: Option<String>,
-}
-
-impl UpdateGoodsReceivedLineInput {
-    pub fn total_quantity(&self, existing_line: &GoodsReceivedLineRow) -> f64 {
-        let packs = self
-            .number_of_packs_received
-            .unwrap_or(existing_line.number_of_packs_received);
-        let pack_size = self
-            .received_pack_size
-            .unwrap_or(existing_line.received_pack_size);
-        packs * pack_size
-    }
 }
 
 pub fn update_goods_received_line(
