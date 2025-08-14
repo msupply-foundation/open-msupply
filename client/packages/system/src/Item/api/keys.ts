@@ -1,3 +1,4 @@
+export const ITEM = 'ITEM';
 export const ITEM_VARIANTS = 'ITEM_VARIANTS';
 export const HISTORICAL_STOCK_LINES = 'HISTORICAL_STOCK_LINES';
 export const ITEM_LEDGER = 'ITEM_LEDGER';

@@ -58,7 +58,7 @@ const ListView: FC = () => {
 
   useEffect(() => {
     const disabledRows = (data?.nodes ?? [])
-      .filter(row => row.status !== PurchaseOrderNodeStatus.New)
+      .filter(row => row.status === PurchaseOrderNodeStatus.Finalised)
       .map(({ id }) => id);
     setDisabledRows(disabledRows);
   }, [data, setDisabledRows]);

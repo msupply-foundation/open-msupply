@@ -1,8 +1,8 @@
-use crate::service_provider::ServiceContext;
+use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use chrono::NaiveDate;
 use repository::{
-    ItemRowRepository, PurchaseOrderLineRow, PurchaseOrderLineRowRepository, RepositoryError,
-    TransactionError,
+    ActivityLogType, ItemRowRepository, PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
+    RepositoryError, TransactionError,
 };
 
 mod generate;
@@ -57,8 +57,23 @@ pub fn insert_purchase_order_line(
             };
             validate(&ctx.store_id.clone(), &validate_input, connection)?;
 
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::PurchaseOrderLineCreated,
+                Some(input.purchase_order_id.clone()),
+                None,
+                None,
+            )?;
+
             let new_purchase_order_line =
                 generate(connection, &ctx.store_id.clone(), input.clone())?;
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::PurchaseOrderLineCreated,
+                Some(new_purchase_order_line.purchase_order_id.clone()),
+                None,
+                None,
+            )?;
             PurchaseOrderLineRowRepository::new(connection).upsert_one(&new_purchase_order_line)?;
 
             Ok(new_purchase_order_line)

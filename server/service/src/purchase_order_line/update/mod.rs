@@ -1,7 +1,10 @@
 use chrono::NaiveDate;
-use repository::{PurchaseOrderLine, PurchaseOrderLineRowRepository, RepositoryError};
+use repository::{
+    ActivityLogType, PurchaseOrderLine, PurchaseOrderLineRowRepository, RepositoryError,
+};
 
 use crate::{
+    activity_log::activity_log_entry,
     purchase_order_line::{insert::PackSizeCodeCombination, query::get_purchase_order_line},
     service_provider::ServiceContext,
 };
@@ -47,6 +50,14 @@ pub fn update_purchase_order_line(
 
             PurchaseOrderLineRowRepository::new(connection)
                 .upsert_one(&updated_purchase_order_line)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::PurchaseOrderLineUpdated,
+                Some(updated_purchase_order_line.purchase_order_id.clone()),
+                None,
+                None,
+            )?;
 
             get_purchase_order_line(ctx, Some(store_id), &updated_purchase_order_line.id)
                 .map_err(UpdatePurchaseOrderLineInputError::DatabaseError)?

@@ -52,6 +52,19 @@ export function usePurchaseOrderLine(id?: string) {
       }
     : { ...defaultPurchaseOrderLine, ...patch, itemId: '' };
 
+  // CREATE
+  const {
+    mutateAsync: createMutation,
+    isLoading: isCreating,
+    error: createError,
+  } = useCreate();
+
+  const create = async () => {
+    const result = await createMutation(draft);
+    resetDraft();
+    return result;
+  };
+
   // UPDATE
   const {
     updatePurchaseOrderLine,
@@ -71,27 +84,26 @@ export function usePurchaseOrderLine(id?: string) {
     return await updatePurchaseOrderLine(input);
   };
 
-  // CREATE
+  // DELETE
   const {
-    mutateAsync: createMutation,
-    isLoading: isCreating,
-    error: createError,
-  } = useCreate();
+    mutateAsync: deleteMutation,
+    isLoading: isDeletingLines,
+    error: deleteError,
+  } = useDeleteLines();
 
-  const create = async () => {
-    const result = await createMutation(draft);
+  const deleteLines = async (ids: string[]) => {
+    await deleteMutation(ids);
     resetDraft();
-    return result;
   };
 
-    // CREATE FROM CSV
-
+  // CREATE FROM CSV
   const { mutateAsync, invalidateQueries } = useLineInsertFromCSV();
 
   return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
+    delete: { deleteLines, isDeletingLines, deleteError },
     createFromCSV: { mutateAsync, invalidateQueries },
     draft,
     resetDraft,
@@ -236,7 +248,24 @@ export const useLineInsertFromCSV = () => {
 
   return {
     mutateAsync,
-    invalidateQueries: () =>
-      queryClient.invalidateQueries([PURCHASE_ORDER]),
+    invalidateQueries: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   };
+};
+
+const useDeleteLines = () => {
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+
+  const mutationFn = async (ids: string[]) => {
+    return purchaseOrderApi.deletePurchaseOrderLines({
+      storeId,
+      ids,
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([PURCHASE_ORDER]);
+    },
+  });
 };

@@ -1,6 +1,6 @@
-use repository::{PurchaseOrderLineRowRepository, RepositoryError};
+use repository::{ActivityLogType, PurchaseOrderLineRowRepository, RepositoryError};
 
-use crate::service_provider::ServiceContext;
+use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 
 mod test;
 mod validate;
@@ -21,7 +21,16 @@ pub fn delete_purchase_order_line(
     let purchase_order_line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&id, connection)?;
+            let purchase_order_line = validate(&id, connection)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::PurchaseOrderLineDeleted,
+                Some(purchase_order_line.purchase_order_id),
+                None,
+                None,
+            )?;
+
             match PurchaseOrderLineRowRepository::new(connection).delete(&id) {
                 Ok(_) => Ok(id),
                 Err(err) => Err(DeletePurchaseOrderLineError::from(err)),

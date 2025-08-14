@@ -3,7 +3,7 @@ import {
   useGql,
   useQueryClient,
 } from '@openmsupply-client/common';
-import { getSdk } from '../../operations.generated';
+import { getSdk } from './operations.generated';
 
 export const useItemGraphQL = () => {
   const { client } = useGql();

@@ -21,7 +21,8 @@ import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
-import { PurchaseOrderLineEditModal } from './LineEdit';
+import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
+import { ActivityLogList } from 'packages/system/src';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -84,6 +85,10 @@ export const DetailViewInner = () => {
         />
       ),
       value: 'Documents',
+    },
+    {
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
+      value: 'Log',
     },
   ];
 

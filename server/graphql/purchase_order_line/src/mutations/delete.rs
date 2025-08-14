@@ -23,18 +23,6 @@ pub struct DeleteError {
     pub error: DeleteErrorInterface,
 }
 
-#[derive(InputObject)]
-#[graphql(name = "DeletePurchaseOrderLineInput")]
-pub struct DeleteInput {
-    pub id: String,
-}
-
-impl DeleteInput {
-    pub fn to_domain(&self) -> String {
-        self.id.clone()
-    }
-}
-
 #[derive(Union)]
 #[graphql(name = "DeletePurchaseOrderLineResponse")]
 pub enum DeleteResponse {
@@ -42,11 +30,18 @@ pub enum DeleteResponse {
     Response(GenericDeleteResponse),
 }
 
-pub fn delete_purchase_order_line(
+#[derive(SimpleObject)]
+#[graphql(name = "DeletePurchaseOrderLineResponseWithId")]
+pub struct DeleteResponseWithId {
+    pub id: String,
+    pub response: DeleteResponse,
+}
+
+pub fn delete_purchase_order_lines(
     ctx: &Context<'_>,
     store_id: &str,
-    input: DeleteInput,
-) -> Result<DeleteResponse> {
+    ids: Vec<String>,
+) -> Result<Vec<DeleteResponseWithId>> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -58,11 +53,22 @@ pub fn delete_purchase_order_line(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .purchase_order_line_service
-            .delete_purchase_order_line(&service_context, input.to_domain()),
-    )
+    let mut results = Vec::new();
+
+    for id in ids {
+        let result = map_response(
+            service_provider
+                .purchase_order_line_service
+                .delete_purchase_order_line(&service_context, id.clone()),
+        );
+
+        results.push(DeleteResponseWithId {
+            id,
+            response: result?,
+        });
+    }
+
+    Ok(results)
 }
 
 fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
