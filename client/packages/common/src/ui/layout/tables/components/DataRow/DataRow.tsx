@@ -74,8 +74,6 @@ const DataRowComponent = <T extends RecordWithId>({
     if (rowLinkBuilder) rowLinkBuilder(rowData);
     else if (onClick) onClick(rowData);
   };
-  const backgroundColor =
-    rowIndex % 2 === 1 ? 'background.paper' : 'background.toolbar';
 
   useEffect(() => {
     if (isFocused) handleRowClick();
@@ -93,7 +91,10 @@ const DataRowComponent = <T extends RecordWithId>({
                 ? theme => alpha(theme.palette.secondary.main, 0.1)
                 : null,
               '&.MuiTableRow-root': {
-                backgroundColor,
+                backgroundColor:
+                  rowIndex % 2 === 1
+                    ? 'background.paper'
+                    : 'background.toolbar',
                 '&:hover': hasOnClick
                   ? theme => ({
                       backgroundColor: alpha(theme.palette.secondary.main, 0.1),
@@ -147,11 +148,8 @@ const DataRowComponent = <T extends RecordWithId>({
                           position: 'sticky',
                           left: stickyColumnPositions.get(column.key),
                           zIndex: 'stickyColumn',
-                          backgroundColor,
-                          boxShadow: dense
-                            ? 'none'
-                            : theme =>
-                                `inset 0 0.5px 0 0 ${alpha(theme.palette.gray.main, 0.5)}`,
+                          backgroundColor: 'inherit',
+                          boxShadow: 'inherit',
                           'tr:hover &': hasOnClick
                             ? {
                                 backgroundColor: '#edf2fa',
