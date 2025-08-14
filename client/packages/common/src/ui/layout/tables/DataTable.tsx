@@ -172,9 +172,6 @@ const DataTableComponent = <T extends RecordWithId>({
   const stickyColumnPositions = React.useMemo(() => {
     return calculateStickyPositions(columnsToDisplay);
   }, [columnsToDisplay]);
-  const sumStickyColumnWidths = Array.from(
-    stickyColumnPositions.values()
-  ).reduce((acc, width) => acc + width, 0);
 
   useRegisterActions([
     {
@@ -273,7 +270,6 @@ const DataTableComponent = <T extends RecordWithId>({
                 key={String(column.key)}
                 isSticky={column.isSticky}
                 stickyPosition={stickyColumnPositions.get(column.key) ?? 0}
-                stickyZIndex={sumStickyColumnWidths}
               />
             ))}
             {!!enableColumnSelection && (

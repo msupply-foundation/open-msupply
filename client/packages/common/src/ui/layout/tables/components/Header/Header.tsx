@@ -34,7 +34,6 @@ interface HeaderCellProps<T extends RecordWithId> {
   dense?: boolean;
   isSticky?: boolean;
   stickyPosition?: number;
-  stickyZIndex?: number;
 }
 
 export const HeaderCell = <T extends RecordWithId>({
@@ -42,7 +41,6 @@ export const HeaderCell = <T extends RecordWithId>({
   dense = false,
   isSticky = false,
   stickyPosition,
-  stickyZIndex,
 }: HeaderCellProps<T>): JSX.Element => {
   const {
     maxWidth,
@@ -152,8 +150,7 @@ export const HeaderCell = <T extends RecordWithId>({
         position: 'sticky' as const,
         left: stickyPosition,
         backgroundColor: 'white',
-        // When position is at 0, need to add some padding to avoid overlap
-        zIndex: `calc(${stickyZIndex} + 200)`,
+        zIndex: 200,
       }
     : {};
 
