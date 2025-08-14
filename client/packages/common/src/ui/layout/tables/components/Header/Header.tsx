@@ -152,6 +152,7 @@ export const HeaderCell = <T extends RecordWithId>({
         position: 'sticky' as const,
         left: stickyPosition,
         backgroundColor: 'white',
+        // When position is at 0, need to add some padding to avoid overlap
         zIndex: `calc(${stickyZIndex} + 200)`,
       }
     : {};
