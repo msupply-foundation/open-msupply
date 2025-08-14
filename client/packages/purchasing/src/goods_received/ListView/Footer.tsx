@@ -1,27 +1,40 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { ListParams, useGoodsReceivedList } from '../api'; // To be implemented
+import { useGoodsReceivedList } from '../api'; // To be implemented
+import { canDeleteGoodsReceived } from '../utils';
 
-export const FooterComponent: FC<{ listParams: ListParams }> = ({
-  listParams,
-}) => {
+export const FooterComponent = () => {
   const t = useTranslation();
-  const { selectedRows } = useGoodsReceivedList(listParams);
+  const {
+    delete: { deleteGoodsReceived, selectedRows },
+  } = useGoodsReceivedList();
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: deleteGoodsReceived,
+    canDelete: selectedRows.every(canDeleteGoodsReceived),
+    messages: {
+      confirmMessage: t('messages.confirm-delete-goods-received', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-goods-received', {
+        count: selectedRows.length,
+      }),
+    },
+  });
 
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: () => {
-        // eslint-disable-next-line
-        alert('TO-DO: Delete goods received...');
-      },
+      onClick: confirmAndDelete,
     },
   ];
 
