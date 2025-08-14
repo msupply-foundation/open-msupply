@@ -41,6 +41,7 @@ interface DataRowProps<T extends RecordWithId> {
   isAnimated: boolean;
   /** will ignore onClick if defined. Allows opening in new tab */
   rowLinkBuilder?: (rowData: T) => string;
+  stickyColumnPositions?: Map<string | keyof T, number>;
 }
 
 const DataRowComponent = <T extends RecordWithId>({
@@ -57,6 +58,7 @@ const DataRowComponent = <T extends RecordWithId>({
   localisedDate,
   isAnimated,
   rowLinkBuilder,
+  stickyColumnPositions,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick || !!rowLinkBuilder;
   const { isExpanded } = useExpanded(rowData.id);
@@ -72,6 +74,8 @@ const DataRowComponent = <T extends RecordWithId>({
     if (rowLinkBuilder) rowLinkBuilder(rowData);
     else if (onClick) onClick(rowData);
   };
+  const backgroundColor =
+    rowIndex % 2 === 1 ? 'background.paper' : 'background.toolbar';
 
   useEffect(() => {
     if (isFocused) handleRowClick();
@@ -89,9 +93,7 @@ const DataRowComponent = <T extends RecordWithId>({
                 ? theme => alpha(theme.palette.secondary.main, 0.1)
                 : null,
               '&.MuiTableRow-root': {
-                '&:nth-of-type(even)': {
-                  backgroundColor: 'background.toolbar',
-                },
+                backgroundColor,
                 '&:hover': hasOnClick
                   ? theme => ({
                       backgroundColor: alpha(theme.palette.secondary.main, 0.1),
@@ -138,6 +140,23 @@ const DataRowComponent = <T extends RecordWithId>({
                           borderStyle: 'solid',
                           borderColor: 'error.main',
                           borderRadius: '8px',
+                        }
+                      : {}),
+                    ...(column.isSticky && stickyColumnPositions
+                      ? {
+                          position: 'sticky',
+                          left: stickyColumnPositions.get(column.key),
+                          zIndex: 'stickyColumn',
+                          backgroundColor,
+                          boxShadow: dense
+                            ? 'none'
+                            : theme =>
+                                `inset 0 0.5px 0 0 ${alpha(theme.palette.gray.main, 0.5)}`,
+                          'tr:hover &': hasOnClick
+                            ? {
+                                backgroundColor: '#edf2fa',
+                              }
+                            : {},
                         }
                       : {}),
                   }}
