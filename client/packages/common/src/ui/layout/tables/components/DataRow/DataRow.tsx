@@ -41,6 +41,7 @@ interface DataRowProps<T extends RecordWithId> {
   isAnimated: boolean;
   /** will ignore onClick if defined. Allows opening in new tab */
   rowLinkBuilder?: (rowData: T) => string;
+  stickyColumnPositions?: Map<string | keyof T, number>;
 }
 
 const DataRowComponent = <T extends RecordWithId>({
@@ -57,6 +58,7 @@ const DataRowComponent = <T extends RecordWithId>({
   localisedDate,
   isAnimated,
   rowLinkBuilder,
+  stickyColumnPositions,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick || !!rowLinkBuilder;
   const { isExpanded } = useExpanded(rowData.id);
@@ -89,9 +91,10 @@ const DataRowComponent = <T extends RecordWithId>({
                 ? theme => alpha(theme.palette.secondary.main, 0.1)
                 : null,
               '&.MuiTableRow-root': {
-                '&:nth-of-type(even)': {
-                  backgroundColor: 'background.toolbar',
-                },
+                backgroundColor:
+                  rowIndex % 2 === 1
+                    ? 'background.paper'
+                    : 'background.toolbar',
                 '&:hover': hasOnClick
                   ? theme => ({
                       backgroundColor: alpha(theme.palette.secondary.main, 0.1),
@@ -138,6 +141,20 @@ const DataRowComponent = <T extends RecordWithId>({
                           borderStyle: 'solid',
                           borderColor: 'error.main',
                           borderRadius: '8px',
+                        }
+                      : {}),
+                    ...(column.isSticky && stickyColumnPositions
+                      ? {
+                          position: 'sticky',
+                          left: stickyColumnPositions.get(column.key),
+                          zIndex: 'stickyColumn',
+                          backgroundColor: 'inherit',
+                          boxShadow: 'inherit',
+                          'tr:hover &': hasOnClick
+                            ? {
+                                backgroundColor: '#edf2fa',
+                              }
+                            : {},
                         }
                       : {}),
                   }}
