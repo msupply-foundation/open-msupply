@@ -97,6 +97,9 @@ pub fn generate_invoice_lines(
                 item_code: item_row.code.clone(),
                 item_name: item_row.name.clone(),
                 r#type: InvoiceLineType::UnallocatedStock,
+                expiry_date: line.expiry_date,
+                batch: line.batch.clone(),
+                volume_per_pack: line.volume_per_pack.unwrap_or(0.0),
 
                 // Default
                 total_before_tax: 0.0,
@@ -104,8 +107,7 @@ pub fn generate_invoice_lines(
                 tax_percentage: None,
                 note: None,
                 location_id: None,
-                batch: None,
-                expiry_date: None,
+                // TODO should these refer to PO line cost values?
                 sell_price_per_pack: 0.0,
                 cost_price_per_pack: 0.0,
                 stock_line_id: None,
@@ -117,12 +119,10 @@ pub fn generate_invoice_lines(
                 vvm_status_id: None,
                 reason_option_id: None,
                 campaign_id: None,
-                // Generating placeholder outbound lines - program_id will be populated later based on
-                // the program of existing stock lines when this line is allocated, rather than the
-                // program of the requisition here
                 program_id: None,
+                // TODO is this goods received shipped number of packs?
                 shipped_number_of_packs: None,
-                volume_per_pack: 0.0,
+                // TODO is this goods received received pack size?
                 shipped_pack_size: None,
             })
         })
