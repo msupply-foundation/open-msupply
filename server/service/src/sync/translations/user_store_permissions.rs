@@ -1,12 +1,17 @@
+use std::collections::HashMap;
+
 use crate::{
     apis::permissions::map_api_permissions,
     login::permissions_to_domain,
-    sync::translations::{store::StoreTranslation, user::UserTranslation},
+    sync::translations::{store::StoreTranslation, user::UserTranslation, IntegrationOperation},
 };
 use repository::{
     EqualFilter, PermissionType, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowDelete,
+    UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 use serde::{Deserialize, Serialize};
+use util::uuid::uuid;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -19,7 +24,8 @@ pub struct LegacyUserStorePermissionTable {
     #[serde(rename = "store_ID")]
     pub store_id: String,
     pub permissions: Vec<bool>,
-    pub store_default: bool,
+    #[serde(rename = "store_default")]
+    pub is_default: bool,
     pub can_login: bool,
     pub can_action_replenishments: bool,
 }
@@ -49,11 +55,10 @@ impl SyncTranslation for UserStorePermissionTranslation {
             user_id,
             store_id,
             permissions,
-            store_default,
+            is_default,
             can_login,
-            can_action_replenishments,
+            can_action_replenishments: _,
         } = serde_json::from_str::<LegacyUserStorePermissionTable>(&sync_record.data)?;
-
         if StoreRepository::new(connection)
             .query_one(StoreFilter::new().id(EqualFilter::equal_to(&store_id)))?
             .is_none()
@@ -61,13 +66,66 @@ impl SyncTranslation for UserStorePermissionTranslation {
             return Ok(PullTranslateResult::NotMatched);
         }
 
-        let permissions = map_api_permissions(permissions);
-        let mut permission_map = permissions_to_domain(permissions);
+        let mut integration_operations: Vec<IntegrationOperation> = Vec::new();
+
+        // Login code may hit OG API if online. If it does, it drops all permissions and regenerates them with new PKs.
+        // There should only be one join per user and store, so we just match on the user and store ids rather than relying on the PK.
+        // If it doesn't exist just upsert a new one using the PK from OG Central.
+        let user_store_join_row = UserStoreJoinRowRepository::new(connection)
+            .find_one_by_user_and_store(&user_id, &store_id)?
+            .map_or_else(
+                || UserStoreJoinRow {
+                    id: id.clone(),
+                    user_id: user_id.clone(),
+                    store_id: store_id.clone(),
+                    is_default,
+                },
+                |r| UserStoreJoinRow { is_default, ..r },
+            );
+        integration_operations.push(IntegrationOperation::upsert(user_store_join_row));
+
+        // Similar to user_store_join, the login functionality will drop literally all the user's permissions and recreate them with new PKs.
+        // If the sync record turns the permission on and it exists, do nothing, else upsert a new record.
+        // If the sync record turns the permission off, delete the corresponding record.
+        // We cannot drop them all and insert again as login does as sync operations execute all deletes after all inserts, so we'd wipe out our permissions
+        let mut existing_permissions: HashMap<PermissionType, UserPermissionRow> =
+            UserPermissionRepository::new(connection)
+                .query_by_filter(
+                    UserPermissionFilter::new()
+                        .user_id(EqualFilter::equal_to(&user_id))
+                        .has_context(false),
+                )?
+                .into_iter()
+                .map(|p| (p.permission.clone(), p))
+                .collect();
+
+        let new_permissions = map_api_permissions(permissions);
+        let mut new_permission_set = permissions_to_domain(new_permissions);
         if can_login {
-            permission_map.insert(PermissionType::StoreAccess);
+            new_permission_set.insert(PermissionType::StoreAccess);
         }
 
-        Ok(PullTranslateResult::upsert(result))
+        for permission in new_permission_set {
+            if existing_permissions.remove(&permission).is_none() {
+                integration_operations.push(IntegrationOperation::upsert(UserPermissionRow {
+                    id: uuid(),
+                    user_id: user_id.clone(),
+                    store_id: Some(store_id.clone()),
+                    permission: permission.clone(),
+                    context_id: None,
+                }));
+            }
+        }
+
+        for (_, row) in existing_permissions {
+            integration_operations.push(IntegrationOperation::delete(UserPermissionRowDelete(
+                row.id,
+            )))
+        }
+
+        Ok(PullTranslateResult::IntegrationOperations(
+            integration_operations,
+        ))
     }
 }
 
