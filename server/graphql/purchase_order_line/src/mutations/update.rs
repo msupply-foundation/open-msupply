@@ -40,7 +40,7 @@ impl UpdateInput {
             item_id,
             requested_pack_size,
             requested_number_of_units,
-            adjusted_number_of_units, // TODO: Maybe should just have one number in the request and map it to adjusted or requested in backend?
+            adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             price_per_unit_before_discount,
