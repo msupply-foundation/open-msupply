@@ -52,7 +52,6 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
         width: 350,
         accessor: ({ rowData }) => rowData.itemName,
         getSortValue: rowData => rowData.itemName,
-        isSticky: true,
       },
     ],
     {

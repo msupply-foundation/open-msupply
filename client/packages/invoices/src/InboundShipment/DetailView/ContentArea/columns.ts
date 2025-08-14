@@ -120,7 +120,6 @@ export const useInboundShipmentColumns = ({
             { path: ['lines', 'itemName'] },
             { path: ['itemName'], default: '' },
           ]),
-        isSticky: true,
       },
     ],
     [

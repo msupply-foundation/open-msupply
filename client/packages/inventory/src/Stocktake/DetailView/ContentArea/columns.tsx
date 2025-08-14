@@ -119,7 +119,6 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'itemName'] },
             { path: ['itemName'], default: '' },
           ]),
-        isSticky: true,
       },
     ],
     [
