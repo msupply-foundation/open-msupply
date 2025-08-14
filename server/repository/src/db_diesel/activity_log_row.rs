@@ -103,6 +103,17 @@ pub enum ActivityLogType {
     GoodsReceivedCreated,
     GoodsReceivedDeleted,
     GoodsReceivedStatusFinalised,
+    // Purchase Orders
+    PurchaseOrderCreated,
+    PurchaseOrderAuthorised,
+    PurchaseOrderUnauthorised,
+    PurchaseOrderConfirmed,
+    PurchaseOrderFinalised,
+    // TODO add delete purchase order once https://github.com/msupply-foundation/open-msupply/pull/8714 merged
+    PurchaseOrderDeleted,
+    PurchaseOrderLineCreated,
+    PurchaseOrderLineUpdated,
+    PurchaseOrderLineDeleted,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

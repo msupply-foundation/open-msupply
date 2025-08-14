@@ -38,7 +38,7 @@ const GOODS_RECEIVED_2: (&str, &str) = (
         "entry_date": "2025-07-24",
         "linked_transaction_ID": "",
         "purchase_order_ID": "",
-        "received_date": "2025-07-24",
+        "received_date": "",
         "serial_number": 2,
         "status": "nw",
         "store_ID": "4E27CEB263354EB7B1B33CEA8F7884D8",
@@ -73,31 +73,6 @@ pub(crate) fn test_pull_upsert_record_1() -> TestSyncIncomingRecord {
     )
 }
 
-pub(crate) fn test_pull_upsert_record_2() -> TestSyncIncomingRecord {
-    TestSyncIncomingRecord::new_pull_upsert(
-        TABLE_NAME,
-        GOODS_RECEIVED_2,
-        GoodsReceivedRow {
-            id: "3486239A597646B2B7259D91A24988E9".to_owned(),
-            store_id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_owned(),
-            purchase_order_id: None,
-            inbound_shipment_id: None,
-            goods_received_number: 2,
-            status: GoodsReceivedStatus::New,
-            received_date: Some("2025-07-24".parse().unwrap()),
-            comment: None,
-            supplier_reference: Some("test po 2".to_string()),
-            donor_link_id: None,
-            created_datetime: NaiveDate::from_ymd_opt(2025, 7, 24)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap(),
-            finalised_datetime: None,
-            created_by: Some("user1".to_string()),
-        },
-    )
-}
-
 fn goods_received_push_record() -> TestSyncOutgoingRecord {
     TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
@@ -119,6 +94,31 @@ fn goods_received_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
+pub(crate) fn test_pull_upsert_record_2() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        GOODS_RECEIVED_2,
+        GoodsReceivedRow {
+            id: "3486239A597646B2B7259D91A24988E9".to_owned(),
+            store_id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_owned(),
+            purchase_order_id: None,
+            inbound_shipment_id: None,
+            goods_received_number: 2,
+            status: GoodsReceivedStatus::New,
+            received_date: None,
+            comment: None,
+            supplier_reference: Some("test po 2".to_string()),
+            donor_link_id: None,
+            created_datetime: NaiveDate::from_ymd_opt(2025, 7, 24)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            finalised_datetime: None,
+            created_by: Some("user1".to_string()),
+        },
+    )
+}
+
 fn goods_received_2_push_record() -> TestSyncOutgoingRecord {
     TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
@@ -131,7 +131,7 @@ fn goods_received_2_push_record() -> TestSyncOutgoingRecord {
             goods_received_number: 2,
             status: LegacyGoodsReceivedStatus::New,
             created_datetime: NaiveDate::from_ymd_opt(2025, 7, 24).unwrap(),
-            received_date: Some(NaiveDate::from_ymd_opt(2025, 7, 24).unwrap()),
+            received_date: None,
             comment: None,
             supplier_reference: Some("test po 2".to_string()),
             donor_link_id: None,
