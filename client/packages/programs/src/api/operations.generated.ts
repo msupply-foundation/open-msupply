@@ -1067,7 +1067,7 @@ export type ClinicianFragment = {
   firstName?: string | null;
   id: string;
   initials: string;
-  gender?: Types.GenderType | null;
+  gender?: Types.GenderTypeNode | null;
   lastName: string;
   mobile?: string | null;
   phone?: string | null;
@@ -1095,7 +1095,7 @@ export type CliniciansQuery = {
       firstName?: string | null;
       id: string;
       initials: string;
-      gender?: Types.GenderType | null;
+      gender?: Types.GenderTypeNode | null;
       lastName: string;
       mobile?: string | null;
       phone?: string | null;
@@ -1160,7 +1160,7 @@ export type ContactTraceRowFragment = {
   id: string;
   firstName?: string | null;
   lastName?: string | null;
-  gender?: Types.GenderType | null;
+  gender?: Types.GenderTypeNode | null;
   dateOfBirth?: string | null;
   age?: number | null;
   patientId: string;
@@ -1210,7 +1210,7 @@ export type ContactTracesQuery = {
       id: string;
       firstName?: string | null;
       lastName?: string | null;
-      gender?: Types.GenderType | null;
+      gender?: Types.GenderTypeNode | null;
       dateOfBirth?: string | null;
       age?: number | null;
       patientId: string;
