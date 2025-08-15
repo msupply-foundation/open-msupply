@@ -157,7 +157,7 @@ fn purchase_order_line_unlinked_pull_record() -> TestSyncIncomingRecord {
             item_name: "Item A".to_string(),
             requested_pack_size: 0.0,
             requested_number_of_units: 0.0,
-            authorised_number_of_units: None,
+            adjusted_number_of_units: None,
             received_number_of_units: 0.0,
             stock_on_hand_in_units: 0.0,
             supplier_item_code: None,
