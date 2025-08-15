@@ -28,12 +28,12 @@ export const usePurchaseOrderLineEditColumns = ({
           key: 'numberOfPacks',
           label: 'label.requested-packs',
           setter: patch => {
+              console.log('Setting number of packs', patch);
+
             // Adjust the requested and adjusted number of units based on the number of packs
             const adjustedPatch = calculateUnitQuantities(
-              'numberOfPacks',
               status,
               patch,
-              draft
             );
             updatePatch({ ...patch, ...adjustedPatch });
           },
@@ -45,10 +45,8 @@ export const usePurchaseOrderLineEditColumns = ({
           setter: patch => {
             // Adjust the requested and adjusted number of units based on the new pack size
             const adjustedPatch = calculateUnitQuantities(
-              'packSize',
               status,
               patch,
-              draft
             );
             updatePatch({ ...patch, ...adjustedPatch });
           },
