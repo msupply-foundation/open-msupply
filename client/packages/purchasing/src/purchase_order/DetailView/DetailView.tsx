@@ -114,16 +114,16 @@ export const DetailViewInner = () => {
           <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal
+              purchaseOrder={data}
               isOpen={isOpen}
               onClose={onClose}
-              openNext={openNext}
               mode={mode}
               lineId={lineId}
               hasNext={
                 sortedAndFilteredLines.findIndex(line => line.id === lineId) <
                 sortedAndFilteredLines.length - 1
               }
-              purchaseOrder={data}
+              openNext={openNext}
             />
           )}
         </>

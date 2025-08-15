@@ -10,20 +10,20 @@ import { createDraftPurchaseOrderLine } from './utils';
 interface PurchaseOrderLineEditModalProps {
   lineId: string | null;
   purchaseOrder: PurchaseOrderFragment;
-  hasNext: boolean;
   mode: ModalMode | null;
   isOpen: boolean;
-  openNext: () => void;
   onClose: () => void;
+  hasNext: boolean;
+  openNext: () => void;
 }
 
 export const PurchaseOrderLineEditModal = ({
   lineId,
   purchaseOrder,
-  hasNext,
   mode,
   isOpen,
   onClose,
+  hasNext,
   openNext,
 }: PurchaseOrderLineEditModalProps) => {
   const t = useTranslation();
