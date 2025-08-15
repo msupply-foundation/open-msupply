@@ -21,6 +21,7 @@ interface LocationSearchInputProps {
   disabled: boolean;
   autoFocus?: boolean;
   restrictedToLocationTypeId?: string | null;
+  /** Enables the available volume filters */
   volumeRequired?: number;
   fullWidth?: boolean;
   enableAPI?: boolean;

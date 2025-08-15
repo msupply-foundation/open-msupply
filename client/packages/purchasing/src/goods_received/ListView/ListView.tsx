@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useNavigate,
   DataTable,
@@ -18,7 +18,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 import { getGoodsReceivedStatusTranslator } from '../../utils';
 
-const ListView: FC = () => {
+const ListView = () => {
   const t = useTranslation();
   const {
     updateSortQuery,
@@ -120,12 +120,12 @@ const ListView: FC = () => {
           navigate(row.id);
         }}
       />
-      <Footer listParams={listParams} />
+      <Footer />
     </>
   );
 };
 
-export const GoodsReceivedListView: FC = () => (
+export const GoodsReceivedListView = () => (
   <TableProvider createStore={createTableStore}>
     <ListView />
   </TableProvider>
