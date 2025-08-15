@@ -1,4 +1,4 @@
-use crate::types::AssetLogStatusInput;
+use crate::types::AssetLogStatusNodeType;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
@@ -48,7 +48,7 @@ pub fn insert_asset_log(
 pub struct InsertAssetLogInput {
     pub id: String,
     pub asset_id: String,
-    pub status: Option<AssetLogStatusInput>,
+    pub status: Option<AssetLogStatusNodeType>,
     pub reason_id: Option<String>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
@@ -68,7 +68,7 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
         InsertAssetLog {
             id,
             asset_id,
-            status: status.map(|s| s.to_domain()),
+            status: status.map(|s| s.into()),
             reason_id,
             comment,
             r#type,
@@ -117,6 +117,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
 #[cfg(test)]
 
 mod test {
+    use crate::logs::AssetLogMutations;
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
@@ -124,7 +125,6 @@ mod test {
         StorageConnectionManager,
     };
     use serde_json::json;
-
     use service::{
         asset::{
             insert_log::{InsertAssetLog, InsertAssetLogError},
@@ -132,8 +132,6 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-
-    use crate::logs::AssetLogMutations;
 
     type InsertAssetLogMethod =
         dyn Fn(InsertAssetLog) -> Result<AssetLog, InsertAssetLogError> + Sync + Send;
@@ -184,7 +182,7 @@ mod test {
             "input": {
                 "id": "n/a",
                 "assetId": "asset_a",
-                "status": AssetLogStatus::Functioning,
+                "status": "FUNCTIONING",
             }
         }));
 
@@ -202,7 +200,7 @@ mod test {
             "insertAssetLog": {
                 "id": "id",
                 "assetId": "asset_a",
-                "status": AssetLogStatus::Functioning,
+                "status": "FUNCTIONING",
             }
         });
         assert_graphql_query!(
