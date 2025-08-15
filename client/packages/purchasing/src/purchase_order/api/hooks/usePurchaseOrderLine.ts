@@ -64,11 +64,11 @@ export function usePurchaseOrderLine(id?: string) {
       : 0;
 
   // Number of packs is not in the DB, so we derived it from the draft
-  const initialNumberOfPacks = data?.nodes[0]?.requestedNumberOfUnits
-    ? (data?.nodes[0]?.adjustedNumberOfUnits ??
-        data?.nodes[0]?.requestedNumberOfUnits ??
-        0) / (data?.nodes[0]?.requestedPackSize ?? 1)
-    : 0;
+  const adjustedUnits = data?.nodes[0]?.adjustedNumberOfUnits;
+  const requestedUnits = data?.nodes[0]?.requestedNumberOfUnits ?? 0;
+  const requestedPackSize = data?.nodes[0]?.requestedPackSize ?? 1;
+  const initialNumberOfPacks =
+    (adjustedUnits ?? requestedUnits) / requestedPackSize;
 
   const draft: DraftPurchaseOrderLine = data
     ? {
