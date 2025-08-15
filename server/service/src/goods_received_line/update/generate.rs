@@ -10,7 +10,7 @@ pub fn generate(
         expiry_date,
         number_of_packs_received,
         received_pack_size,
-        manufacturer_link_id,
+        manufacturer_id,
         comment,
     }: UpdateGoodsReceivedLineInput,
 ) -> Result<GoodsReceivedLineRow, RepositoryError> {
@@ -32,7 +32,7 @@ pub fn generate(
         updated_line.received_pack_size = new_pack_size;
     }
 
-    if let Some(new_manufacturer_id) = manufacturer_link_id {
+    if let Some(new_manufacturer_id) = manufacturer_id {
         updated_line.manufacturer_link_id = Some(new_manufacturer_id);
     }
 

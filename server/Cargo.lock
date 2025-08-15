@@ -3908,6 +3908,7 @@ dependencies = [
  "graphql_core",
  "graphql_goods_received",
  "graphql_types",
+ "log",
  "repository",
  "serde",
  "serde_json",

@@ -1,12 +1,13 @@
 pub mod delete;
 pub mod insert;
 pub mod query;
+pub mod save_goods_received_lines;
 pub mod update;
 pub mod validate;
 
 use repository::{
-    GoodsReceivedLine, GoodsReceivedLineFilter, GoodsReceivedLineRow, GoodsReceivedLineSort,
-    PaginationOption, RepositoryError,
+    goods_received_row::GoodsReceivedRow, GoodsReceivedLine, GoodsReceivedLineFilter,
+    GoodsReceivedLineRow, GoodsReceivedLineSort, PaginationOption, RepositoryError,
 };
 
 use crate::{
@@ -18,6 +19,9 @@ use crate::{
             InsertGoodsReceivedLinesError, InsertGoodsReceivedLinesFromPurchaseOrderInput,
         },
         query::{get_goods_received_line, get_goods_received_lines},
+        save_goods_received_lines::{
+            save_goods_received_lines, SaveGoodsReceivedLinesError, SaveGoodsReceivedLinesInput,
+        },
         update::{
             update_goods_received_line, UpdateGoodsReceivedLineError, UpdateGoodsReceivedLineInput,
         },
@@ -77,6 +81,14 @@ pub trait GoodsReceivedLineServiceTrait: Sync + Send {
         id: String,
     ) -> Result<String, DeleteGoodsReceivedLineError> {
         delete_goods_received_line(ctx, id)
+    }
+
+    fn save_goods_received_lines(
+        &self,
+        ctx: &ServiceContext,
+        input: SaveGoodsReceivedLinesInput,
+    ) -> Result<GoodsReceivedRow, SaveGoodsReceivedLinesError> {
+        save_goods_received_lines(ctx, input)
     }
 }
 

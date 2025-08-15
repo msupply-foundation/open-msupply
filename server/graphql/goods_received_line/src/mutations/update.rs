@@ -40,7 +40,7 @@ pub struct UpdateInput {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs_received: Option<f64>,
     pub received_pack_size: Option<f64>,
-    pub manufacturer_link_id: Option<String>,
+    pub manufacturer_id: Option<String>,
     pub comment: Option<String>,
 }
 
@@ -52,7 +52,7 @@ impl UpdateInput {
             expiry_date,
             number_of_packs_received,
             received_pack_size,
-            manufacturer_link_id,
+            manufacturer_id,
             comment,
         } = self;
 
@@ -62,7 +62,7 @@ impl UpdateInput {
             expiry_date,
             number_of_packs_received,
             received_pack_size,
-            manufacturer_link_id,
+            manufacturer_id,
             comment,
         }
     }

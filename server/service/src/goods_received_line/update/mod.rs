@@ -26,7 +26,7 @@ pub struct UpdateGoodsReceivedLineInput {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs_received: Option<f64>,
     pub received_pack_size: Option<f64>,
-    pub manufacturer_link_id: Option<String>,
+    pub manufacturer_id: Option<String>,
     pub comment: Option<String>,
 }
 
