@@ -35,6 +35,7 @@ pub fn get_goods_received_line(
 
     Ok(repository.query_by_filter(filter)?.pop())
 }
+
 // goods received line query tests
 #[cfg(test)]
 mod test {
@@ -77,6 +78,7 @@ mod test {
             expiry_date: None,
             ..Default::default()
         };
+        gr_line.upsert(&connection).unwrap();
 
         // Test querying by ID
         let result = service_provider
