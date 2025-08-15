@@ -5,7 +5,7 @@ use graphql_core::{
     loader::{StoreByIdLoader, UserLoader},
     ContextExt,
 };
-use repository::{activity_log::ActivityLog, ActivityLogRow, ActivityLogType};
+use repository::{activity_log::ActivityLog, ActivityLogRow};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
