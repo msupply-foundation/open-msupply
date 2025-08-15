@@ -100,6 +100,9 @@ pub enum ActivityLogType {
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
     VolumePerPackChanged,
+    GoodsReceivedCreated,
+    GoodsReceivedDeleted,
+    GoodsReceivedStatusFinalised,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderAuthorised,

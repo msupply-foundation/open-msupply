@@ -220,6 +220,8 @@ pub(crate) fn get_all_pull_delete_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut name_tag_join::test_pull_delete_records());
     test_records.append(&mut indicator_value::test_pull_delete_records());
     test_records.append(&mut preference::test_pull_delete_records());
+    test_records.append(&mut purchase_order::test_pull_delete_records());
+    test_records.append(&mut purchase_order_line::test_pull_delete_records());
     test_records
 }
 

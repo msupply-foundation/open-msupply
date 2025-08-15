@@ -57,6 +57,7 @@ export const usePrescriptionColumn = ({
           ]),
         accessor: ({ rowData }) =>
           getColumnProperty(rowData, [{ path: ['item', 'code'], default: '' }]),
+        isSticky: true,
       },
     ],
     [

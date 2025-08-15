@@ -1,19 +1,17 @@
-use crate::sync::translations::goods_received::GoodsReceivedTranslation;
-use crate::sync::translations::item::ItemTranslation;
-use crate::sync::translations::purchase_order::PurchaseOrderTranslation;
-use crate::sync::translations::{location::LocationTranslation, name::NameTranslation};
-use crate::sync::translations::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use crate::sync::translations::{
+    goods_received::GoodsReceivedTranslation, item::ItemTranslation, location::LocationTranslation,
+    name::NameTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
+};
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, GoodsReceivedLineRow, GoodsReceivedLineRowDelete, GoodsReceivedLineRowRepository,
-    GoodsReceivedLineStatus,
+    ChangelogRow, ChangelogTableName, GoodsReceivedLineDelete, GoodsReceivedLineRow,
+    GoodsReceivedLineRowRepository, GoodsReceivedLineStatus, StorageConnection, SyncBufferRow,
 };
-use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
-use util::sync_serde::empty_str_as_option_string;
-use util::sync_serde::zero_f64_as_none;
-use util::sync_serde::{date_option_to_isostring, zero_date_as_option};
-
+use util::sync_serde::{
+    date_option_to_isostring, empty_str_as_option_string, zero_date_as_option, zero_f64_as_none,
+};
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct LegacyGoodsReceivedLineRow {
@@ -98,6 +96,16 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(GoodsReceivedLineDelete(
+            sync_record.record_id.clone(),
+        )))
+    }
+
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
@@ -141,14 +149,12 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         ))
     }
 
-    fn try_translate_from_delete_sync_record(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(GoodsReceivedLineRowDelete(
-            sync_record.record_id.clone(),
-        )))
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 

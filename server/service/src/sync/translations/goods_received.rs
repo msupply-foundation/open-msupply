@@ -1,16 +1,17 @@
+use crate::sync::translations::{
+    invoice::InvoiceTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
+};
 use chrono::NaiveDate;
 use repository::{
     goods_received_row::{
-        GoodsReceivedRow, GoodsReceivedRowDelete, GoodsReceivedRowRepository, GoodsReceivedStatus,
+        GoodsReceivedDelete, GoodsReceivedRow, GoodsReceivedRowRepository, GoodsReceivedStatus,
     },
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::empty_str_as_option;
-
-use crate::sync::translations::{
-    invoice::InvoiceTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
+use util::sync_serde::{
+    date_option_to_isostring, date_to_isostring, empty_str_as_option, zero_date_as_option,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
@@ -40,7 +41,10 @@ pub struct LegacyGoodsReceived {
     pub goods_received_number: i64,
     pub status: LegacyGoodsReceivedStatus,
     #[serde(rename = "entry_date")]
+    #[serde(serialize_with = "date_to_isostring")]
     pub created_datetime: NaiveDate,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "received_date")]
     pub received_date: Option<NaiveDate>,
     #[serde(default)]
@@ -147,7 +151,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(GoodsReceivedRowDelete(
+        Ok(PullTranslateResult::delete(GoodsReceivedDelete(
             sync_record.record_id.clone(),
         )))
     }
@@ -155,9 +159,8 @@ impl SyncTranslation for GoodsReceivedTranslation {
 
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all};
-
     use crate::sync::translations::{goods_received::GoodsReceivedTranslation, SyncTranslation};
+    use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn test_goods_received_translation() {

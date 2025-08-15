@@ -1,14 +1,12 @@
+use super::{StoreNode, UserNode};
 use async_graphql::{dataloader::DataLoader, *};
-use chrono::DateTime;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{StoreByIdLoader, UserLoader},
     ContextExt,
 };
 use repository::{activity_log::ActivityLog, ActivityLogRow, ActivityLogType};
 use service::ListResult;
-
-use super::{StoreNode, UserNode};
 
 #[derive(PartialEq, Debug)]
 pub struct ActivityLogNode {
@@ -22,6 +20,8 @@ pub struct ActivityLogConnector {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::activity_log_row
+::ActivityLogType")]
 pub enum ActivityLogNodeType {
     UserLoggedIn,
     InvoiceCreated,
@@ -92,6 +92,9 @@ pub enum ActivityLogNodeType {
     ItemVariantUpdateVVMType,
     VVMStatusLogUpdated,
     VolumePerPackChanged,
+    GoodsReceivedCreated,
+    GoodsReceivedDeleted,
+    GoodsReceivedStatusFinalised,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderAuthorised,
@@ -111,7 +114,7 @@ impl ActivityLogNode {
     }
 
     pub async fn r#type(&self) -> ActivityLogNodeType {
-        ActivityLogNodeType::from_domain(&self.row().r#type)
+        ActivityLogNodeType::from(self.row().r#type.clone())
     }
 
     pub async fn store_id(&self) -> &Option<String> {
@@ -171,180 +174,6 @@ impl ActivityLogNode {
 
     pub fn row(&self) -> &ActivityLogRow {
         &self.activity_log.activity_log_row
-    }
-}
-
-impl ActivityLogNodeType {
-    pub fn from_domain(from: &ActivityLogType) -> ActivityLogNodeType {
-        use ActivityLogNodeType as to;
-        use ActivityLogType as from;
-
-        match from {
-            from::UserLoggedIn => to::UserLoggedIn,
-            from::InvoiceCreated => to::InvoiceCreated,
-            from::InvoiceDeleted => to::InvoiceDeleted,
-            from::InvoiceStatusAllocated => to::InvoiceStatusAllocated,
-            from::InvoiceStatusPicked => to::InvoiceStatusPicked,
-            from::InvoiceStatusShipped => to::InvoiceStatusShipped,
-            from::InvoiceStatusDelivered => to::InvoiceStatusDelivered,
-            from::InvoiceStatusVerified => to::InvoiceStatusVerified,
-            from::InventoryAdjustment => to::InventoryAdjustment,
-            from::StocktakeCreated => to::StocktakeCreated,
-            from::StocktakeDeleted => to::StocktakeDeleted,
-            from::StocktakeStatusFinalised => to::StocktakeStatusFinalised,
-            from::RequisitionCreated => to::RequisitionCreated,
-            from::RequisitionDeleted => to::RequisitionDeleted,
-            from::RequisitionApproved => to::RequisitionApproved,
-            from::RequisitionStatusSent => to::RequisitionStatusSent,
-            from::RequisitionStatusFinalised => to::RequisitionStatusFinalised,
-            from::StockLocationChange => to::StockLocationChange,
-            from::StockCostPriceChange => to::StockCostPriceChange,
-            from::StockSellPriceChange => to::StockSellPriceChange,
-            from::StockExpiryDateChange => to::StockExpiryDateChange,
-            from::StockBatchChange => to::StockBatchChange,
-            from::StockOnHold => to::StockOnHold,
-            from::StockOffHold => to::StockOffHold,
-            from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
-            from::RequisitionNumberAllocated => to::RequisitionNumberAllocated,
-            from::Repack => to::Repack,
-            from::PrescriptionCreated => to::PrescriptionCreated,
-            from::PrescriptionDeleted => to::PrescriptionDeleted,
-            from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
-            from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
-            from::SensorLocationChanged => to::SensorLocationChanged,
-            from::AssetCreated => to::AssetCreated,
-            from::AssetUpdated => to::AssetUpdated,
-            from::AssetDeleted => to::AssetDeleted,
-            from::AssetLogCreated => to::AssetLogCreated,
-            from::AssetCatalogueItemCreated => to::AssetCatalogueItemCreated,
-            from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
-            from::AssetCatalogueItemPropertyCreated => to::AssetCatalogueItemPropertyCreated,
-            from::AssetLogReasonCreated => to::AssetLogReasonCreated,
-            from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
-            from::AssetPropertyCreated => to::AssetPropertyCreated,
-            from::VaccineCourseCreated => to::VaccineCourseCreated,
-            from::VaccineCourseUpdated => to::VaccineCourseUpdated,
-            from::ProgramCreated => to::ProgramCreated,
-            from::ProgramUpdated => to::ProgramUpdated,
-            from::RnrFormCreated => to::RnrFormCreated,
-            from::RnrFormUpdated => to::RnrFormUpdated,
-            from::RnrFormDeleted => to::RnrFormDeleted,
-            from::RnrFormFinalised => to::RnrFormFinalised,
-            from::VaccinationCreated => to::VaccinationCreated,
-            from::VaccinationUpdated => to::VaccinationUpdated,
-            from::VaccinationDeleted => to::VaccinationDeleted,
-            from::DemographicIndicatorCreated => to::DemographicIndicatorCreated,
-            from::DemographicIndicatorUpdated => to::DemographicIndicatorUpdated,
-            from::DemographicProjectionCreated => to::DemographicProjectionCreated,
-            from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
-            from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
-            from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
-            from::ItemVariantCreated => to::ItemVariantCreated,
-            from::ItemVariantDeleted => to::ItemVariantDeleted,
-            from::ItemVariantUpdatedName => to::ItemVariantUpdatedName,
-            from::ItemVariantUpdateLocationType => to::ItemVariantUpdateLocationType,
-            from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
-            from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
-            from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
-            from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
-            from::InvoiceStatusReceived => to::InvoiceStatusReceived,
-            from::VolumePerPackChanged => to::VolumePerPackChanged,
-            from::PurchaseOrderCreated => to::PurchaseOrderCreated,
-            from::PurchaseOrderAuthorised => to::PurchaseOrderAuthorised,
-            from::PurchaseOrderUnauthorised => to::PurchaseOrderUnauthorised,
-            from::PurchaseOrderConfirmed => to::PurchaseOrderConfirmed,
-            from::PurchaseOrderFinalised => to::PurchaseOrderFinalised,
-            from::PurchaseOrderDeleted => to::PurchaseOrderDeleted,
-            from::PurchaseOrderLineCreated => to::PurchaseOrderLineCreated,
-            from::PurchaseOrderLineUpdated => to::PurchaseOrderLineUpdated,
-            from::PurchaseOrderLineDeleted => to::PurchaseOrderLineDeleted,
-        }
-    }
-
-    pub fn to_domain(self) -> ActivityLogType {
-        use ActivityLogNodeType as from;
-        use ActivityLogType as to;
-
-        match self {
-            from::UserLoggedIn => to::UserLoggedIn,
-            from::InvoiceCreated => to::InvoiceCreated,
-            from::InvoiceDeleted => to::InvoiceDeleted,
-            from::InvoiceStatusAllocated => to::InvoiceStatusAllocated,
-            from::InvoiceStatusPicked => to::InvoiceStatusPicked,
-            from::InvoiceStatusShipped => to::InvoiceStatusShipped,
-            from::InvoiceStatusDelivered => to::InvoiceStatusDelivered,
-            from::InvoiceStatusReceived => to::InvoiceStatusReceived,
-            from::InvoiceStatusVerified => to::InvoiceStatusVerified,
-            from::InventoryAdjustment => to::InventoryAdjustment,
-            from::StocktakeCreated => to::StocktakeCreated,
-            from::StocktakeDeleted => to::StocktakeDeleted,
-            from::StocktakeStatusFinalised => to::StocktakeStatusFinalised,
-            from::RequisitionCreated => to::RequisitionCreated,
-            from::RequisitionDeleted => to::RequisitionDeleted,
-            from::RequisitionApproved => to::RequisitionApproved,
-            from::RequisitionStatusSent => to::RequisitionStatusSent,
-            from::RequisitionStatusFinalised => to::RequisitionStatusFinalised,
-            from::StockLocationChange => to::StockLocationChange,
-            from::StockCostPriceChange => to::StockCostPriceChange,
-            from::StockSellPriceChange => to::StockSellPriceChange,
-            from::StockExpiryDateChange => to::StockExpiryDateChange,
-            from::StockBatchChange => to::StockBatchChange,
-            from::StockOnHold => to::StockOnHold,
-            from::StockOffHold => to::StockOffHold,
-            from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
-            from::RequisitionNumberAllocated => to::RequisitionNumberAllocated,
-            from::Repack => to::Repack,
-            from::PrescriptionCreated => to::PrescriptionCreated,
-            from::PrescriptionDeleted => to::PrescriptionDeleted,
-            from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
-            from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
-            from::SensorLocationChanged => to::SensorLocationChanged,
-            from::AssetCreated => to::AssetCreated,
-            from::AssetUpdated => to::AssetUpdated,
-            from::AssetDeleted => to::AssetDeleted,
-            from::AssetLogCreated => to::AssetLogCreated,
-            from::AssetCatalogueItemCreated => to::AssetCatalogueItemCreated,
-            from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
-            from::AssetCatalogueItemPropertyCreated => to::AssetCatalogueItemPropertyCreated,
-            from::AssetLogReasonCreated => to::AssetLogReasonCreated,
-            from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
-            from::AssetPropertyCreated => to::AssetPropertyCreated,
-            from::VaccineCourseCreated => to::VaccineCourseCreated,
-            from::VaccineCourseUpdated => to::VaccineCourseUpdated,
-            from::ProgramCreated => to::ProgramCreated,
-            from::ProgramUpdated => to::ProgramUpdated,
-            from::RnrFormCreated => to::RnrFormCreated,
-            from::RnrFormUpdated => to::RnrFormUpdated,
-            from::RnrFormDeleted => to::RnrFormDeleted,
-            from::RnrFormFinalised => to::RnrFormFinalised,
-            from::VaccinationCreated => to::VaccinationCreated,
-            from::VaccinationUpdated => to::VaccinationUpdated,
-            from::VaccinationDeleted => to::VaccinationDeleted,
-            from::DemographicIndicatorCreated => to::DemographicIndicatorCreated,
-            from::DemographicIndicatorUpdated => to::DemographicIndicatorUpdated,
-            from::DemographicProjectionCreated => to::DemographicProjectionCreated,
-            from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
-            from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
-            from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
-            from::ItemVariantCreated => to::ItemVariantCreated,
-            from::ItemVariantDeleted => to::ItemVariantDeleted,
-            from::ItemVariantUpdatedName => to::ItemVariantUpdatedName,
-            from::ItemVariantUpdateLocationType => to::ItemVariantUpdateLocationType,
-            from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
-            from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
-            from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
-            from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
-            from::VolumePerPackChanged => to::VolumePerPackChanged,
-            from::PurchaseOrderCreated => to::PurchaseOrderCreated,
-            from::PurchaseOrderAuthorised => to::PurchaseOrderAuthorised,
-            from::PurchaseOrderUnauthorised => to::PurchaseOrderUnauthorised,
-            from::PurchaseOrderConfirmed => to::PurchaseOrderConfirmed,
-            from::PurchaseOrderFinalised => to::PurchaseOrderFinalised,
-            from::PurchaseOrderDeleted => to::PurchaseOrderDeleted,
-            from::PurchaseOrderLineCreated => to::PurchaseOrderLineCreated,
-            from::PurchaseOrderLineUpdated => to::PurchaseOrderLineUpdated,
-            from::PurchaseOrderLineDeleted => to::PurchaseOrderLineDeleted,
-        }
     }
 }
 

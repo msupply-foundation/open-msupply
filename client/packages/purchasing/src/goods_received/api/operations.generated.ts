@@ -97,6 +97,16 @@ export type InsertGoodsReceivedMutation = {
   insertGoodsReceived: { __typename: 'IdResponse'; id: string };
 };
 
+export type DeleteGoodsReceivedMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeleteGoodsReceivedMutation = {
+  __typename: 'Mutations';
+  deleteGoodsReceived: { __typename: 'DeleteResponse'; id: string };
+};
+
 export type UpdateGoodsReceivedMutationVariables = Types.Exact<{
   input: Types.UpdateGoodsReceivedInput;
   storeId: Types.Scalars['String']['input'];
@@ -203,6 +213,15 @@ export const InsertGoodsReceivedDocument = gql`
     }
   }
 `;
+export const DeleteGoodsReceivedDocument = gql`
+  mutation deleteGoodsReceived($id: String!, $storeId: String!) {
+    deleteGoodsReceived(id: $id, storeId: $storeId) {
+      ... on DeleteResponse {
+        id
+      }
+    }
+  }
+`;
 export const UpdateGoodsReceivedDocument = gql`
   mutation updateGoodsReceived(
     $input: UpdateGoodsReceivedInput!
@@ -291,6 +310,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertGoodsReceived',
+        'mutation',
+        variables
+      );
+    },
+    deleteGoodsReceived(
+      variables: DeleteGoodsReceivedMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeleteGoodsReceivedMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteGoodsReceivedMutation>(
+            DeleteGoodsReceivedDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deleteGoodsReceived',
         'mutation',
         variables
       );

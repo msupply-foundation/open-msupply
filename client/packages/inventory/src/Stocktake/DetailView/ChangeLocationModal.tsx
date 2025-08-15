@@ -31,19 +31,19 @@ export const ChangeLocationConfirmationModal = ({
   const onChangeLocation = useStocktakeOld.line.changeLocation();
 
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
-  const hasMultipleItemsSelected =
-    new Set(rows.map(row => row.item.id)).size > 1;
 
-  // Get all unique, non-empty restricted location type IDs from the selected rows
-  const uniqueLocationTypeIds = Array.from(
+  // Find all unique location type restrictions for the selected rows
+  const restrictedLocationTypeIds = Array.from(
     new Set(rows.map(row => row.item.restrictedLocationTypeId).filter(Boolean))
   );
 
-  // Only want to display location if all restricted location types match
-  const hasMultipleLocationTypes = uniqueLocationTypeIds.length > 1;
-  const restrictedToLocationTypeId = hasMultipleLocationTypes
-    ? undefined
-    : uniqueLocationTypeIds[0];
+  // E.g. 'freezer', 'room-temp' <- these conflict, we should disable changing location
+  const hasConflictingRestrictedTypes = restrictedLocationTypeIds.length > 1;
+
+  const volumeRequired = rows.reduce((totalVolume, row) => {
+    const numPacks = row.countedNumberOfPacks ?? row.snapshotNumberOfPacks;
+    return totalVolume + numPacks * row.volumePerPack;
+  }, 0);
 
   return (
     <ConfirmationModalLayout
@@ -69,11 +69,13 @@ export const ChangeLocationConfirmationModal = ({
       }
     >
       <Box gap={1} display="flex" flexDirection="column">
-        {hasMultipleItemsSelected && hasMultipleLocationTypes && (
+        {restrictedLocationTypeIds.length > 0 && (
           <Alert severity="warning" sx={{ width: 320 }}>
-            {hasMultipleLocationTypes
-              ? t('messages.cannot-change-location-multiple-types')
-              : t('messages.locations-restricted')}
+            {
+              hasConflictingRestrictedTypes
+                ? t('messages.cannot-change-location-multiple-types')
+                : t('messages.locations-restricted') // some lines `null`, some lines `freezer`, so we only show freezer locations - warn user
+            }
           </Alert>
         )}
         <InputWithLabelRow
@@ -85,8 +87,9 @@ export const ChangeLocationConfirmationModal = ({
               selectedLocation={location}
               onChange={setLocation}
               width={210}
-              restrictedToLocationTypeId={restrictedToLocationTypeId}
-              enableAPI={!hasMultipleLocationTypes}
+              restrictedToLocationTypeId={restrictedLocationTypeIds[0]} // if there is only one type, restrict to that type (more than one type disables the input)
+              volumeRequired={volumeRequired}
+              enableAPI={!hasConflictingRestrictedTypes}
             />
           }
         />

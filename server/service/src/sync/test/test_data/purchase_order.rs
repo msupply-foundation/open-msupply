@@ -5,7 +5,7 @@ use crate::sync::{
     },
 };
 use chrono::NaiveDate;
-use repository::{PurchaseOrderRow, PurchaseOrderStatus};
+use repository::{PurchaseOrderDelete, PurchaseOrderRow, PurchaseOrderStatus};
 use serde_json::json;
 
 use super::TestSyncOutgoingRecord;
@@ -847,4 +847,12 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
         purchase_order_5_null_push_record(),
         purchase_order_6_no_fields_push_record(),
     ]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        PURCHASE_ORDER_5.0,
+        PurchaseOrderDelete(PURCHASE_ORDER_5.0.to_string()),
+    )]
 }

@@ -11,24 +11,41 @@ import {
   RouteBuilder,
   UserPermission,
   useCallbackWithPermission,
+  useExportCSV,
+  useNotification,
+  LoadingButton,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PurchaseOrderSearchModal } from '../../purchase_order/Components';
 import { PurchaseOrderRowFragment } from '../../purchase_order/api';
-import { useGoodsReceived } from '../api';
+import { useGoodsReceived, useGoodsReceivedList } from '../api';
+import { goodsReceivedToCsv } from '../utils';
 
-export const AppBarButtons: React.FC = () => {
+export const AppBarButtons = () => {
   const t = useTranslation();
   const modalController = useToggle();
   const navigate = useNavigate();
+  const { error } = useNotification();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
+  const {
+    query: { fetchAllGoodsReceived, isLoading },
+  } = useGoodsReceivedList();
   const {
     create: { create, isCreating },
   } = useGoodsReceived();
+  const exportCSV = useExportCSV();
 
-  const handleExport = () => {
-    // eslint-disable-next-line
-    console.log('TO-DO: Export goods received...');
+  const csvExport = async () => {
+    const { data } = await fetchAllGoodsReceived();
+    if (!data || !data?.nodes.length) {
+      error(t('error.no-data'))();
+      return;
+    }
+
+    const csv = goodsReceivedToCsv(data.nodes, t);
+    exportCSV(csv, t('filename.goods-received'));
   };
 
   const openModal = useCallbackWithPermission(
@@ -66,11 +83,15 @@ export const AppBarButtons: React.FC = () => {
           onClick={openModal}
           loading={isCreating}
         />
-        <ButtonWithIcon
-          Icon={<DownloadIcon />}
-          label={t('button.export')}
-          onClick={handleExport}
-        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            isLoading={isLoading}
+            variant="outlined"
+            onClick={csvExport}
+            label={t('button.export')}
+          />
+        )}
         <PurchaseOrderSearchModal
           open={modalController.isOn}
           onClose={modalController.toggleOff}

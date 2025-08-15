@@ -36,6 +36,7 @@ export const useRequestLines = () => {
     } else {
       return sorted?.filter(item => matchItem(itemFilter, item.item));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock, itemFilter]);
 
   return {

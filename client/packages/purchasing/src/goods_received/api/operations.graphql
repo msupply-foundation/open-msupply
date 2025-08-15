@@ -80,6 +80,14 @@ mutation insertGoodsReceived(
   }
 }
 
+mutation deleteGoodsReceived($id: String!, $storeId: String!) {
+  deleteGoodsReceived(id: $id, storeId: $storeId) {
+    ... on DeleteResponse {
+      id
+    }
+  }
+}
+
 mutation updateGoodsReceived(
   $input: UpdateGoodsReceivedInput!
   $storeId: String!

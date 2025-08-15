@@ -32,11 +32,15 @@ export const HeaderRow: FC<
 interface HeaderCellProps<T extends RecordWithId> {
   column: Column<T>;
   dense?: boolean;
+  isSticky?: boolean;
+  stickyPosition?: number;
 }
 
 export const HeaderCell = <T extends RecordWithId>({
   column,
   dense = false,
+  isSticky = false,
+  stickyPosition,
 }: HeaderCellProps<T>): JSX.Element => {
   const {
     maxWidth,
@@ -141,6 +145,15 @@ export const HeaderCell = <T extends RecordWithId>({
     child
   );
 
+  const stickyStyles = isSticky
+    ? {
+        position: 'sticky' as const,
+        left: stickyPosition,
+        backgroundColor: 'white',
+        zIndex: 200,
+      }
+    : {};
+
   return (
     <TableCell
       role="columnheader"
@@ -158,6 +171,7 @@ export const HeaderCell = <T extends RecordWithId>({
         fontWeight: 'bold',
         fontSize: dense ? '12px' : '14px',
         verticalAlign: 'bottom',
+        ...stickyStyles,
       }}
       aria-label={String(key)}
       sortDirection={isSorted ? direction : false}

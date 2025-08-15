@@ -1,12 +1,15 @@
 use repository::{
-    goods_received_row::GoodsReceivedRow, EqualFilter, GoodsReceivedFilter,
-    GoodsReceivedRepository, RepositoryError, StorageConnection,
+    goods_received_row::{GoodsReceivedRow, GoodsReceivedRowRepository, GoodsReceivedStatus},
+    RepositoryError, StorageConnection,
 };
+
 pub fn check_goods_received_exists(
-    connection: &StorageConnection,
     id: &str,
+    connection: &StorageConnection,
 ) -> Result<Option<GoodsReceivedRow>, RepositoryError> {
-    Ok(GoodsReceivedRepository::new(connection)
-        .query_by_filter(GoodsReceivedFilter::new().id(EqualFilter::equal_to(id)))?
-        .pop())
+    GoodsReceivedRowRepository::new(connection).find_one_by_id(id)
+}
+
+pub fn check_goods_received_editable(status: &GoodsReceivedStatus) -> bool {
+    matches!(status, GoodsReceivedStatus::New)
 }

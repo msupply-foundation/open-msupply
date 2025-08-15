@@ -53,6 +53,7 @@ export const useSupplierReturnColumns = ({
             { path: ['lines', 'itemCode'] },
             { path: ['itemCode'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [
