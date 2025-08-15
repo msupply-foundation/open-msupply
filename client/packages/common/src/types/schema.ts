@@ -150,6 +150,15 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
+  PurchaseOrderAuthorised = 'PURCHASE_ORDER_AUTHORISED',
+  PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
+  PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
+  PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',
+  PurchaseOrderFinalised = 'PURCHASE_ORDER_FINALISED',
+  PurchaseOrderLineCreated = 'PURCHASE_ORDER_LINE_CREATED',
+  PurchaseOrderLineDeleted = 'PURCHASE_ORDER_LINE_DELETED',
+  PurchaseOrderLineUpdated = 'PURCHASE_ORDER_LINE_UPDATED',
+  PurchaseOrderUnauthorised = 'PURCHASE_ORDER_UNAUTHORISED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
   RequisitionApproved = 'REQUISITION_APPROVED',
@@ -2914,6 +2923,15 @@ export type GoodsReceivedConnector = {
   __typename: 'GoodsReceivedConnector';
   nodes: Array<GoodsReceivedNode>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type GoodsReceivedEmpty = GoodsReceivedError & {
+  __typename: 'GoodsReceivedEmpty';
+  description: Scalars['String']['output'];
+};
+
+export type GoodsReceivedError = {
+  description: Scalars['String']['output'];
 };
 
 export type GoodsReceivedFilterInput = {
@@ -7025,6 +7043,11 @@ export enum PurchaseOrderNodeType {
   New = 'NEW',
 }
 
+export type PurchaseOrderNotFinalised = GoodsReceivedError & {
+  __typename: 'PurchaseOrderNotFinalised';
+  description: Scalars['String']['output'];
+};
+
 export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
 
 export enum PurchaseOrderSortFieldInput {
@@ -9654,6 +9677,11 @@ export type UpdateErrorInterface = {
   description: Scalars['String']['output'];
 };
 
+export type UpdateGoodsReceivedError = {
+  __typename: 'UpdateGoodsReceivedError';
+  error: GoodsReceivedError;
+};
+
 export type UpdateGoodsReceivedInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
@@ -9661,7 +9689,7 @@ export type UpdateGoodsReceivedInput = {
   status?: InputMaybe<GoodsReceivedNodeType>;
 };
 
-export type UpdateGoodsReceivedResponse = IdResponse;
+export type UpdateGoodsReceivedResponse = IdResponse | UpdateGoodsReceivedError;
 
 export type UpdateInboundShipmentError = {
   __typename: 'UpdateInboundShipmentError';

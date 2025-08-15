@@ -18,7 +18,6 @@ mod form_schema;
 mod full_invoice;
 mod full_master_list;
 mod goods_received;
-mod goods_received_line;
 mod indicator_column;
 mod indicator_line;
 mod indicator_value;
@@ -95,7 +94,6 @@ pub use form_schema::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
 pub use goods_received::*;
-pub use goods_received_line::*;
 pub use indicator_column::*;
 pub use indicator_line::*;
 pub use indicator_value::*;
@@ -260,7 +258,6 @@ pub struct MockData {
     pub location_types: Vec<LocationTypeRow>,
     pub preferences: Vec<PreferenceRow>,
     pub goods_received: Vec<GoodsReceivedRow>,
-    pub goods_received_line: Vec<GoodsReceivedLineRow>,
 }
 
 impl MockData {
@@ -355,7 +352,6 @@ pub struct MockDataInserts {
     pub location_types: bool,
     pub preferences: bool,
     pub goods_received: bool,
-    pub goods_received_line: bool,
 }
 
 impl MockDataInserts {
@@ -439,7 +435,6 @@ impl MockDataInserts {
             location_types: true,
             preferences: true,
             goods_received: true,
-            goods_received_line: true,
         }
     }
 
@@ -835,20 +830,6 @@ impl MockDataInserts {
         self
     }
 
-    pub fn goods_received_line(mut self) -> Self {
-        self.location_types = true;
-        self.names = true;
-        self.units = true;
-        self.items = true;
-        self.stores = true;
-        self.currencies = true;
-        self.purchase_order = true;
-        self.purchase_order_line = true;
-        self.goods_received = true;
-        self.goods_received_line = true;
-        self
-    }
-
     pub fn location_types(mut self) -> Self {
         self.location_types = true;
         self
@@ -959,7 +940,6 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             purchase_order_line: mock_purchase_order_lines(),
             location_types: mock_location_types(),
             goods_received: mock_goods_received(),
-            goods_received_line: mock_goods_received_lines(),
             ..Default::default()
         },
     );
@@ -1555,12 +1535,6 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
-        if inserts.goods_received_line {
-            let repo = GoodsReceivedLineRowRepository::new(connection);
-            for row in &mock_data.goods_received_line {
-                repo.upsert_one(row).unwrap();
-            }
-        }
     }
     mock_data
 }
@@ -1647,7 +1621,6 @@ impl MockData {
             mut location_types,
             mut preferences,
             mut goods_received,
-            mut goods_received_line,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1728,7 +1701,6 @@ impl MockData {
         self.location_types.append(&mut location_types);
         self.preferences.append(&mut preferences);
         self.goods_received.append(&mut goods_received);
-        self.goods_received_line.append(&mut goods_received_line);
         self
     }
 }

@@ -59,6 +59,17 @@ pub fn mock_purchase_order_d() -> PurchaseOrderRow {
     }
 }
 
+pub fn mock_purchase_order_e() -> PurchaseOrderRow {
+    PurchaseOrderRow {
+        id: "test_purchase_order_e".to_string(),
+        store_id: mock_store_b().id,
+        status: db_diesel::purchase_order_row::PurchaseOrderStatus::Finalised,
+        supplier_name_link_id: "name_a".to_string(),
+        purchase_order_number: 3,
+        ..Default::default()
+    }
+}
+
 pub fn mock_purchase_orders() -> Vec<PurchaseOrderRow> {
     vec![
         mock_purchase_order_a(),
@@ -66,5 +77,6 @@ pub fn mock_purchase_orders() -> Vec<PurchaseOrderRow> {
         mock_purchase_order_b_finalised(),
         mock_purchase_order_c(),
         mock_purchase_order_d(),
+        mock_purchase_order_e(),
     ]
 }
