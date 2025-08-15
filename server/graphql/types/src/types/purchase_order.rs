@@ -50,12 +50,10 @@ impl PurchaseOrderNode {
     }
 
     pub async fn order_total_after_discount(&self) -> f64 {
-        let order_total_after_discount = match &self.stats {
+        match &self.stats {
             Some(stats) => stats.order_total_after_discount,
             None => 0.0,
-        };
-
-        order_total_after_discount
+        }
     }
 
     pub async fn line_total_after_discount(&self) -> f64 {

@@ -26,6 +26,7 @@ mod add_vvm_status_to_stocktake_line;
 mod delete_unused_number_type;
 mod reintegrate_location_volume;
 mod remove_use_campaigns_pref;
+mod rename_authorised_to_adjusted;
 mod rename_cold_storage_type_fk;
 mod rename_cold_storage_type_to_location_type;
 mod rename_vvm_status_level_to_priority;
@@ -70,6 +71,7 @@ impl Migration for V2_10_00 {
             Box::new(add_vvm_status_to_stocktake_line::Migrate),
             Box::new(add_comment_to_purchase_order_line::Migrate),
             Box::new(add_goods_received_permission_enum_values::Migrate),
+            Box::new(rename_authorised_to_adjusted::Migrate),
             Box::new(remove_use_campaigns_pref::Migrate),
             Box::new(add_activity_log_goods_received::Migrate),
             Box::new(add_purchase_order_activity_logs::Migrate),
