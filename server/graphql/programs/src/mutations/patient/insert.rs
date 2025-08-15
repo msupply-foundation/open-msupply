@@ -4,8 +4,8 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::patient::{GenderType, PatientNode};
-use repository::NameRowType;
+use graphql_types::types::patient::{GenderTypeNode, PatientNode};
+use repository::{GenderType, NameRowType};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::{InsertPatient as ServiceInput, InsertPatientError},
@@ -18,7 +18,7 @@ pub struct InsertPatientInput {
     pub code_2: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub gender: Option<GenderType>,
+    pub gender: Option<GenderTypeNode>,
     pub date_of_birth: Option<NaiveDate>,
     pub address1: Option<String>,
     pub phone: Option<String>,
@@ -106,7 +106,7 @@ impl InsertPatientInput {
             code_2,
             first_name,
             last_name,
-            gender: gender.map(|g| g.to_domain()),
+            gender: gender.map(|g| GenderType::from(g)),
             date_of_birth,
             address1,
             phone,

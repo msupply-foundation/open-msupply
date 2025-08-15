@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Box,
   Checkbox,
-  GenderType,
+  GenderTypeNode,
   getGenderTranslationKey,
   InputWithLabelRow,
   LocaleKey,
@@ -70,7 +70,7 @@ export const getEnumPreferenceOptions = (
 ) => {
   switch (key) {
     case PreferenceKey.GenderOptions:
-      return Object.values(GenderType)
+      return Object.values(GenderTypeNode)
         .filter(
           gender => !gender.includes('HORMONE') && !gender.includes('SURGICAL')
         )

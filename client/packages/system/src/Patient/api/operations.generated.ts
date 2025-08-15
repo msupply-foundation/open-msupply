@@ -14,7 +14,7 @@ export type PatientRowFragment = {
   dateOfBirth?: string | null;
   address1?: string | null;
   phone?: string | null;
-  gender?: Types.GenderType | null;
+  gender?: Types.GenderTypeNode | null;
   email?: string | null;
   nextOfKinName?: string | null;
   createdDatetime?: string | null;
@@ -49,7 +49,7 @@ export type ProgramPatientRowFragment = {
   dateOfBirth?: string | null;
   address1?: string | null;
   phone?: string | null;
-  gender?: Types.GenderType | null;
+  gender?: Types.GenderTypeNode | null;
   email?: string | null;
   createdDatetime?: string | null;
   documentDraft?: any | null;
@@ -105,7 +105,7 @@ export type PatientsQuery = {
       dateOfBirth?: string | null;
       address1?: string | null;
       phone?: string | null;
-      gender?: Types.GenderType | null;
+      gender?: Types.GenderTypeNode | null;
       email?: string | null;
       nextOfKinName?: string | null;
       createdDatetime?: string | null;
@@ -152,7 +152,7 @@ export type PatientByIdQuery = {
       dateOfBirth?: string | null;
       address1?: string | null;
       phone?: string | null;
-      gender?: Types.GenderType | null;
+      gender?: Types.GenderTypeNode | null;
       email?: string | null;
       createdDatetime?: string | null;
       documentDraft?: any | null;
@@ -209,7 +209,7 @@ export type PatientSearchQuery = {
         dateOfBirth?: string | null;
         address1?: string | null;
         phone?: string | null;
-        gender?: Types.GenderType | null;
+        gender?: Types.GenderTypeNode | null;
         email?: string | null;
         createdDatetime?: string | null;
         documentDraft?: any | null;
@@ -307,7 +307,7 @@ export type InsertProgramPatientMutation = {
     dateOfBirth?: string | null;
     address1?: string | null;
     phone?: string | null;
-    gender?: Types.GenderType | null;
+    gender?: Types.GenderTypeNode | null;
     email?: string | null;
     createdDatetime?: string | null;
     documentDraft?: any | null;
@@ -357,7 +357,7 @@ export type UpdateProgramPatientMutation = {
     dateOfBirth?: string | null;
     address1?: string | null;
     phone?: string | null;
-    gender?: Types.GenderType | null;
+    gender?: Types.GenderTypeNode | null;
     email?: string | null;
     createdDatetime?: string | null;
     documentDraft?: any | null;
@@ -407,7 +407,7 @@ export type InsertPatientMutation = {
     dateOfBirth?: string | null;
     address1?: string | null;
     phone?: string | null;
-    gender?: Types.GenderType | null;
+    gender?: Types.GenderTypeNode | null;
     email?: string | null;
     createdDatetime?: string | null;
     documentDraft?: any | null;
@@ -457,7 +457,7 @@ export type UpdatePatientMutation = {
     dateOfBirth?: string | null;
     address1?: string | null;
     phone?: string | null;
-    gender?: Types.GenderType | null;
+    gender?: Types.GenderTypeNode | null;
     email?: string | null;
     createdDatetime?: string | null;
     documentDraft?: any | null;

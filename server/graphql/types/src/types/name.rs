@@ -9,7 +9,7 @@ use serde::Serialize;
 
 use crate::types::CurrencyNode;
 
-use super::{patient::GenderType, StoreNode};
+use super::{patient::GenderTypeNode, StoreNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -90,8 +90,10 @@ impl NameNode {
         &self.row().last_name
     }
 
-    pub async fn gender(&self) -> Option<GenderType> {
-        self.row().gender.as_ref().map(GenderType::from_domain)
+    pub async fn gender(&self) -> Option<GenderTypeNode> {
+        Some(GenderTypeNode::from(
+            self.row().gender.clone().unwrap_or_default(),
+        ))
     }
 
     pub async fn phone(&self) -> &Option<String> {

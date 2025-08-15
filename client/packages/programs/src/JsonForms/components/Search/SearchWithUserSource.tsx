@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {
-  GenderType,
+  GenderTypeNode,
   LocaleKey,
   PatientSearchInput,
   RegexUtils,
@@ -158,7 +158,7 @@ const createSearchFilter = (
       ? data['firstName']
       : undefined,
     gender: searchFields.includes('gender')
-      ? (data['gender'] as GenderType)
+      ? (data['gender'] as GenderTypeNode)
       : undefined,
     lastName: searchFields.includes('lastName') ? data['lastName'] : undefined,
     name: searchFields.includes('name') ? data['name'] : undefined,

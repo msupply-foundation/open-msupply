@@ -141,7 +141,7 @@ export type PrescriptionRowFragment = {
     id: string;
     name: string;
     code: string;
-    gender?: Types.GenderType | null;
+    gender?: Types.GenderTypeNode | null;
     dateOfBirth?: string | null;
     isDeceased: boolean;
   } | null;
@@ -478,7 +478,7 @@ export type PrescriptionsQuery = {
         id: string;
         name: string;
         code: string;
-        gender?: Types.GenderType | null;
+        gender?: Types.GenderTypeNode | null;
         dateOfBirth?: string | null;
         isDeceased: boolean;
       } | null;
@@ -660,7 +660,7 @@ export type PrescriptionByNumberQuery = {
           id: string;
           name: string;
           code: string;
-          gender?: Types.GenderType | null;
+          gender?: Types.GenderTypeNode | null;
           dateOfBirth?: string | null;
           isDeceased: boolean;
         } | null;
@@ -851,7 +851,7 @@ export type PrescriptionByIdQuery = {
           id: string;
           name: string;
           code: string;
-          gender?: Types.GenderType | null;
+          gender?: Types.GenderTypeNode | null;
           dateOfBirth?: string | null;
           isDeceased: boolean;
         } | null;

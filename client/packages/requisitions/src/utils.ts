@@ -148,6 +148,12 @@ export const getApprovalStatusKey = (
       return 'approval-status.none';
     case RequisitionNodeApprovalStatus.Pending:
       return 'approval-status.pending';
+    case RequisitionNodeApprovalStatus.AutoApproved:
+      return 'approval-status.auto-approved';
+    case RequisitionNodeApprovalStatus.ApprovedByAnother:
+      return 'approval-status.approved-by-another';
+    case RequisitionNodeApprovalStatus.DeniedByAnother:
+      return 'approval-status.denied-by-another';
     default:
       return noOtherVariants(approvalStatus);
   }

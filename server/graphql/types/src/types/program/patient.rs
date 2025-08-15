@@ -57,7 +57,7 @@ impl From<PatientFilterInput> for PatientFilter {
             code_2: f.code_2.map(StringFilter::from),
             first_name: f.first_name.map(StringFilter::from),
             last_name: f.last_name.map(StringFilter::from),
-            gender: f.gender.map(|t| map_filter!(t, GenderType::to_domain)),
+            gender: f.gender.map(|t| map_filter!(t, |g| GenderRepo::from(g))),
             date_of_birth: f.date_of_birth.map(DateFilter::from),
             phone: f.phone.map(StringFilter::from),
             address1: f.address1.map(StringFilter::from),
@@ -80,7 +80,8 @@ pub struct PatientNode {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-pub enum GenderType {
+#[graphql(remote = "repository::db_diesel::name_row::GenderType")]
+pub enum GenderTypeNode {
     Female,
     Male,
     Transgender,
@@ -93,45 +94,11 @@ pub enum GenderType {
     Unknown,
     NonBinary,
 }
-impl GenderType {
-    pub fn from_domain(gender: &GenderRepo) -> Self {
-        match gender {
-            GenderRepo::Female => GenderType::Female,
-            GenderRepo::Male => GenderType::Male,
-            GenderRepo::Transgender => GenderType::Transgender,
-            GenderRepo::TransgenderMale => GenderType::TransgenderMale,
-            GenderRepo::TransgenderMaleHormone => GenderType::TransgenderMaleHormone,
-            GenderRepo::TransgenderMaleSurgical => GenderType::TransgenderMaleSurgical,
-            GenderRepo::TransgenderFemale => GenderType::TransgenderFemale,
-            GenderRepo::TransgenderFemaleHormone => GenderType::TransgenderFemaleHormone,
-            GenderRepo::TransgenderFemaleSurgical => GenderType::TransgenderFemaleSurgical,
-            GenderRepo::Unknown => GenderType::Unknown,
-            GenderRepo::NonBinary => GenderType::NonBinary,
-        }
-    }
-
-    pub fn to_domain(self) -> GenderRepo {
-        match self {
-            GenderType::Female => GenderRepo::Female,
-            GenderType::Male => GenderRepo::Male,
-            GenderType::TransgenderMale => GenderRepo::TransgenderMale,
-            GenderType::TransgenderMaleHormone => GenderRepo::TransgenderMaleHormone,
-            GenderType::TransgenderMaleSurgical => GenderRepo::TransgenderMaleSurgical,
-            GenderType::TransgenderFemale => GenderRepo::TransgenderFemale,
-            GenderType::TransgenderFemaleHormone => GenderRepo::TransgenderFemaleHormone,
-            GenderType::TransgenderFemaleSurgical => GenderRepo::TransgenderFemaleSurgical,
-            GenderType::Unknown => GenderRepo::Unknown,
-            GenderType::NonBinary => GenderRepo::NonBinary,
-            GenderType::Transgender => GenderRepo::Transgender,
-        }
-    }
-}
-
 #[derive(InputObject, Clone)]
 pub struct EqualFilterGenderType {
-    pub equal_to: Option<GenderType>,
-    pub equal_any: Option<Vec<GenderType>>,
-    pub not_equal_to: Option<GenderType>,
+    pub equal_to: Option<GenderTypeNode>,
+    pub equal_any: Option<Vec<GenderTypeNode>>,
+    pub not_equal_to: Option<GenderTypeNode>,
 }
 
 #[Object]
@@ -160,8 +127,10 @@ impl PatientNode {
         self.patient.last_name.clone()
     }
 
-    pub async fn gender(&self) -> Option<GenderType> {
-        self.patient.gender.as_ref().map(GenderType::from_domain)
+    pub async fn gender(&self) -> Option<GenderTypeNode> {
+        Some(GenderTypeNode::from(
+            self.patient.gender.clone().unwrap_or_default(),
+        ))
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {

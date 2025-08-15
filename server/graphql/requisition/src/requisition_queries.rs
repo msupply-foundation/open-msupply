@@ -13,7 +13,10 @@ use graphql_core::{
 use graphql_types::types::{
     RequisitionConnector, RequisitionNode, RequisitionNodeStatus, RequisitionNodeType,
 };
-use repository::{DateFilter, DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
+use repository::{
+    DateFilter, DatetimeFilter, EqualFilter, PaginationOption, RequisitionStatus, RequisitionType,
+    StringFilter,
+};
 use repository::{RequisitionFilter, RequisitionSort, RequisitionSortField};
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -181,7 +184,7 @@ pub fn get_requisition_by_number(
             &service_context,
             store_id,
             requisition_number,
-            r#type.to_domain(),
+            r#type.into(),
         )?;
 
     let response = match requisition_option {
@@ -229,10 +232,10 @@ impl RequisitionFilterInput {
             requisition_number: self.requisition_number.map(EqualFilter::from),
             r#type: self
                 .r#type
-                .map(|t| map_filter!(t, RequisitionNodeType::to_domain)),
+                .map(|t| map_filter!(t, |r| RequisitionType::from(r))),
             status: self
                 .status
-                .map(|t| map_filter!(t, RequisitionNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |s| RequisitionStatus::from(s))),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
             finalised_datetime: self.finalised_datetime.map(DatetimeFilter::from),
