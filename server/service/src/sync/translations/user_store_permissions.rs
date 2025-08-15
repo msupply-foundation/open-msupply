@@ -87,7 +87,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
         //TODO possibly need to delete the user_store_join_row if the user loses login rights
         //TODO if the user has no login rights to any store on site, they can't login even if the central is available and has given them login rights?
         //TODO wait does normal old OMS actually remove login rights? If it removes all for a user then they can never login???
-        //TODO OG, when you add a user to a group it needs to requeue the user's own user_store records, not the group's. Just save them. Or save the groups user_store records.
+        //TODO OG, when you add a user to a group it needs to requeue the user's own user_store records, not the group's. Just save them. Or save the groups user_store records, the trigger will do the members'
         //TODO OG, test group sync permissions
 
         // Similar to user_store_join, the login functionality will drop literally all the user's permissions and recreate them with new PKs.
