@@ -87,7 +87,7 @@ mod test {
 
         let result = service_provider
             .goods_received_line_service
-            .get_goods_received_line(&context, Some(mock_store_a().id), &gr_line.id)
+            .get_goods_received_line(&context, Some(&mock_store_a().id), &gr_line.id)
             .unwrap();
         assert!(result.is_some());
 
