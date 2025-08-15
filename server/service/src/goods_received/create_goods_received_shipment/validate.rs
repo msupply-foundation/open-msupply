@@ -22,7 +22,7 @@ pub fn validate(
     ),
     OutError,
 > {
-    let goods_received = check_goods_received_exists(connection, &input.goods_received_id)?
+    let goods_received = check_goods_received_exists(&input.goods_received_id, connection)?
         .ok_or(OutError::GoodsReceivedDoesNotExist)?;
 
     if goods_received.store_id != store_id {
