@@ -40,10 +40,11 @@ pub fn get_goods_received_line(
 #[cfg(test)]
 mod test {
     use crate::service_provider::ServiceProvider;
-    use repository::mock::{mock_item_a, mock_purchase_order_a, mock_store_a};
+    use repository::mock::{
+        mock_item_a, mock_purchase_order_a, mock_purchase_order_a_line_1, mock_store_a,
+    };
     use repository::{GoodsReceivedLineRow, Upsert};
 
-    use repository::goods_received::GoodsReceivedRepository;
     use repository::{
         db_diesel::goods_received_row::GoodsReceivedRow, mock::MockDataInserts, test_db::setup_all,
     };
@@ -57,7 +58,6 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
-        let repo = GoodsReceivedRepository::new(&connection);
 
         let gr = GoodsReceivedRow {
             id: "test_gr_1".to_string(),
@@ -75,7 +75,7 @@ mod test {
             goods_received_id: gr.id.clone(),
             item_link_id: mock_item_a().id,
             line_number: 1,
-            expiry_date: None,
+            purchase_order_line_id: mock_purchase_order_a_line_1().id,
             ..Default::default()
         };
         gr_line.upsert(&connection).unwrap();
