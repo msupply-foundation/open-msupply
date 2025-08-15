@@ -11,7 +11,7 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
 };
 
-use crate::types::{AssetLogReasonNode, AssetLogStatusInput};
+use crate::types::{AssetLogReasonNode, AssetLogStatusNodeType};
 
 pub fn insert_asset_log_reason(
     ctx: &Context<'_>,
@@ -47,7 +47,7 @@ pub fn insert_asset_log_reason(
 
 pub struct InsertAssetLogReasonInput {
     pub id: String,
-    pub asset_log_status: AssetLogStatusInput,
+    pub asset_log_status: AssetLogStatusNodeType,
     pub reason: String,
 }
 impl From<InsertAssetLogReasonInput> for InsertAssetLogReason {
@@ -60,7 +60,7 @@ impl From<InsertAssetLogReasonInput> for InsertAssetLogReason {
     ) -> Self {
         InsertAssetLogReason {
             id,
-            asset_log_status: asset_log_status.to_domain(),
+            asset_log_status: asset_log_status.into(),
             reason,
         }
     }
@@ -104,6 +104,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogReasonErrorInterface> 
 #[cfg(test)]
 
 mod test {
+    use crate::logs::AssetLogReasonMutations;
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
@@ -111,7 +112,6 @@ mod test {
         mock::MockDataInserts, StorageConnectionManager,
     };
     use serde_json::json;
-
     use service::{
         asset::{
             insert_log_reason::{InsertAssetLogReason, InsertAssetLogReasonError},
@@ -119,8 +119,6 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-
-    use crate::logs::AssetLogReasonMutations;
 
     type InsertAssetLogReasonMethod = dyn Fn(InsertAssetLogReason) -> Result<AssetLogReason, InsertAssetLogReasonError>
         + Sync
@@ -171,7 +169,7 @@ mod test {
         let variables = Some(json!({
             "input": {
                 "id": "n/a",
-                "assetLogStatus": AssetLogStatus::Functioning,
+                "assetLogStatus": "FUNCTIONING",
                 "reason": "reason",
             }
         }));
@@ -189,7 +187,7 @@ mod test {
         let expected = json!({
             "insertAssetLogReason": {
                 "id": "id",
-                "assetLogStatus": AssetLogStatus::Functioning,
+                "assetLogStatus": "FUNCTIONING",
                 "reason": "reason",
             }
         });

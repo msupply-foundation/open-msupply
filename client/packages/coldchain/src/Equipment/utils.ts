@@ -5,7 +5,7 @@ import {
   ArrayUtils,
   Formatter,
   ObjUtils,
-  StatusType,
+  AssetLogStatusNodeType,
 } from '@openmsupply-client/common';
 import { ImportRow, LineNumber } from './ImportAsset';
 
@@ -80,35 +80,35 @@ export const assetsToCsv = (
 };
 
 export const parseLogStatus = (
-  status: StatusType
+  status: AssetLogStatusNodeType
 ): { key: LocaleKey; colour: string } | undefined => {
   switch (status) {
-    case StatusType.Decommissioned:
+    case AssetLogStatusNodeType.Decommissioned:
       return {
         key: 'status.decommissioned',
         colour: 'cceStatus.decommissioned',
       };
-    case StatusType.Functioning:
+    case AssetLogStatusNodeType.Functioning:
       return {
         key: 'status.functioning',
         colour: 'cceStatus.functioning',
       };
-    case StatusType.FunctioningButNeedsAttention:
+    case AssetLogStatusNodeType.FunctioningButNeedsAttention:
       return {
         key: 'status.functioning-but-needs-attention',
         colour: 'cceStatus.functioningButNeedsAttention',
       };
-    case StatusType.NotFunctioning:
+    case AssetLogStatusNodeType.NotFunctioning:
       return {
         key: 'status.not-functioning',
         colour: 'cceStatus.notFunctioning',
       };
-    case StatusType.NotInUse:
+    case AssetLogStatusNodeType.NotInUse:
       return {
         key: 'status.not-in-use',
         colour: 'cceStatus.notInUse',
       };
-    case StatusType.Unserviceable:
+    case AssetLogStatusNodeType.Unserviceable:
       return {
         key: 'status.unserviceable',
         colour: 'cceStatus.unserviceable',
@@ -172,7 +172,7 @@ export const importEquipmentToCsv = (
 
   const data = assets.map(node => {
     const statusKey = parseLogStatus(
-      node.status ?? StatusType.Functioning // to avoid status being undefined
+      node.status ?? AssetLogStatusNodeType.Functioning // to avoid status being undefined
     )?.key;
     const row = [
       ...(isCentralServer ? [node.store?.code] : []),
@@ -199,25 +199,25 @@ export const importEquipmentToCsv = (
 export const parseStatusFromString = (
   status: string,
   t: TypedTFunction<LocaleKey>
-): StatusType | undefined => {
+): AssetLogStatusNodeType | undefined => {
   switch (status.toLowerCase()) {
     case t('status.decommissioned').toLowerCase():
-      return StatusType.Decommissioned;
+      return AssetLogStatusNodeType.Decommissioned;
 
     case t('status.functioning').toLowerCase():
-      return StatusType.Functioning;
+      return AssetLogStatusNodeType.Functioning;
 
     case t('status.functioning-but-needs-attention').toLowerCase():
-      return StatusType.FunctioningButNeedsAttention;
+      return AssetLogStatusNodeType.FunctioningButNeedsAttention;
 
     case t('status.not-functioning').toLowerCase():
-      return StatusType.NotFunctioning;
+      return AssetLogStatusNodeType.NotFunctioning;
 
     case t('status.not-in-use').toLowerCase():
-      return StatusType.NotInUse;
+      return AssetLogStatusNodeType.NotInUse;
 
     case t('status.unserviceable').toLowerCase():
-      return StatusType.Unserviceable;
+      return AssetLogStatusNodeType.Unserviceable;
   }
 };
 
