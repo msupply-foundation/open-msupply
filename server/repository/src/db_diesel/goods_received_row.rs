@@ -1,7 +1,9 @@
+use crate::db_diesel::{item_link_row::item_link, item_row::item};
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
     RowActionType, StorageConnection, Upsert,
 };
+
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::dsl::max;
 use diesel::prelude::*;
@@ -25,6 +27,9 @@ table! {
         created_by -> Nullable<Text>,
     }
 }
+
+allow_tables_to_appear_in_same_query!(goods_received, item_link);
+allow_tables_to_appear_in_same_query!(goods_received, item);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
