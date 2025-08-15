@@ -1,6 +1,7 @@
 import { ItemStockOnHandFragment } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { FnUtils } from '@common/utils';
+import { PurchaseOrderNodeStatus } from '@common/types';
 
 export const createDraftPurchaseOrderLine = (
   item: ItemStockOnHandFragment,
@@ -19,6 +20,7 @@ export const createDraftPurchaseOrderLine = (
     pricePerUnitAfterDiscount: 0,
     // This value not actually saved to DB
     discountPercentage: 0,
+    numberOfPacks: 0,
   };
 };
 
@@ -31,11 +33,13 @@ type PriceField =
  * Calculates any of the these values from the other two, based on which have
  * most recently changed.
  *
- * `changingField` is the fields being updated by the user, and `data` contains
- * the current state of all 3.
+ * `newField` is the field that is currently active, and the
+ * `previouslyChangedField` is the previous one changed, as tracked by the
+ * useLastChangedField hook (below).
  */
 export const calculatePricesAndDiscount = (
   changingField: PriceField,
+  // previouslyChangedField: PriceField | null,
   data: Partial<DraftPurchaseOrderLine>
 ) => {
   const {
@@ -43,6 +47,14 @@ export const calculatePricesAndDiscount = (
     discountPercentage,
     pricePerUnitAfterDiscount = 0,
   } = data;
+
+  // const updateField = [
+  //   'pricePerUnitAfterDiscount',
+  //   'pricePerUnitBeforeDiscount',
+  //   'discountPercentage',
+  // ].filter(
+  //   field => field !== changingField && field !== previouslyChangedField
+  // )[0];
 
   switch (changingField) {
     case 'pricePerUnitBeforeDiscount': {
@@ -75,4 +87,25 @@ export const calculatePricesAndDiscount = (
       };
     }
   }
+};
+
+
+export const calculateUnitQuantities = (
+  status: PurchaseOrderNodeStatus,
+  data: Partial<DraftPurchaseOrderLine>,
+) => {
+  let numberOfPacks = data?.numberOfPacks ?? 0;
+  let requestedPackSize = data?.requestedPackSize ?? 0;
+  const totalUnits = numberOfPacks * requestedPackSize;
+
+  // Only adjust the requested number of units if the status is not confirmed yet
+  if (status === PurchaseOrderNodeStatus.Confirmed) {
+    return {
+      adjustedNumberOfUnits: totalUnits,
+    };
+  }
+  return {
+    requestedNumberOfUnits: totalUnits,
+    adjustedNumberOfUnits: totalUnits,
+  };
 };
