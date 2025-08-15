@@ -29,10 +29,19 @@ const defaultGoodsReceivedLine: DraftGoodsReceivedLine = {
   goodsReceivedId: '',
   purchaseOrderLineId: '',
   itemId: '',
+  batch: '',
+  comment: '',
+  lineNumber: 0,
+  expiryDate: null,
+  manufacturerLinkId: '',
+  numberOfPacksReceived: 0,
+  receivedPackSize: 0,
 };
 
 export function useGoodsReceivedLine(id?: string) {
   const { data, isLoading, error } = useGet(id ?? '');
+
+  console.info('Goods Received Line Data:', data);
 
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftGoodsReceivedLine>(data?.nodes[0] ?? {});

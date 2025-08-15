@@ -1103,8 +1103,10 @@ export type CannotDeleteRequisitionWithLines =
     description: Scalars['String']['output'];
   };
 
-export type CannotEditGoodsReceived = InsertGoodsReceivedLineErrorInterface &
-  InsertGoodsReceivedLinesErrorInterface & {
+export type CannotEditGoodsReceived = DeleteGoodsReceivedLineInterface &
+  InsertGoodsReceivedLineErrorInterface &
+  InsertGoodsReceivedLinesErrorInterface &
+  UpdateGoodsReceivedLineErrorInterface & {
     __typename: 'CannotEditGoodsReceived';
     description: Scalars['String']['output'];
   };
@@ -1644,6 +1646,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateAssetErrorInterface &
   UpdateDemographicIndicatorErrorInterface &
   UpdateDemographicProjectionErrorInterface &
+  UpdateGoodsReceivedLineErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
   UpdateVaccineCourseErrorInterface &
@@ -1762,10 +1765,6 @@ export type DeleteErrorInterface = {
 export type DeleteGoodsReceivedLineError = {
   __typename: 'DeleteGoodsReceivedLineError';
   error: DeleteGoodsReceivedLineInterface;
-};
-
-export type DeleteGoodsReceivedLineInput = {
-  id: Scalars['String']['input'];
 };
 
 export type DeleteGoodsReceivedLineInterface = {
@@ -2822,6 +2821,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
   SetPrescribedQuantityErrorInterface &
+  UpdateGoodsReceivedLineErrorInterface &
   UpdateInboundShipmentLineErrorInterface &
   UpdateInboundShipmentServiceLineErrorInterface &
   UpdateOutboundShipmentLineErrorInterface &
@@ -2940,6 +2940,11 @@ export type GoodsReceivedConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type GoodsReceivedDoesNotExist = DeleteGoodsReceivedLineInterface & {
+  __typename: 'GoodsReceivedDoesNotExist';
+  description: Scalars['String']['output'];
+};
+
 export type GoodsReceivedFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -2982,6 +2987,12 @@ export enum GoodsReceivedLineNodeStatus {
   Authorised = 'AUTHORISED',
   Unauthorised = 'UNAUTHORISED',
 }
+
+export type GoodsReceivedLineNotFound = DeleteGoodsReceivedLineInterface &
+  UpdateGoodsReceivedLineErrorInterface & {
+    __typename: 'GoodsReceivedLineNotFound';
+    description: Scalars['String']['output'];
+  };
 
 export type GoodsReceivedLineResponse = GoodsReceivedLineNode | RecordNotFound;
 
@@ -5345,6 +5356,7 @@ export type Mutations = {
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  saveGoodsReceivedLines: SaveGoodsReceivedLineResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
   /** Set supply quantity to requested quantity */
@@ -5356,6 +5368,7 @@ export type Mutations = {
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateEncounter: UpdateEncounterResponse;
   updateGoodsReceived: UpdateGoodsReceivedResponse;
+  updateGoodsReceivedLine: UpdateGoodsReceivedLineResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -5487,7 +5500,7 @@ export type MutationsDeleteCustomerReturnArgs = {
 };
 
 export type MutationsDeleteGoodsReceivedLineArgs = {
-  input: DeleteGoodsReceivedLineInput;
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -5836,6 +5849,11 @@ export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type MutationsSaveGoodsReceivedLinesArgs = {
+  input: SaveGoodsReceivedLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsSaveOutboundShipmentItemLinesArgs = {
   input: SaveOutboundShipmentLinesInput;
   storeId: Scalars['String']['input'];
@@ -5882,6 +5900,11 @@ export type MutationsUpdateEncounterArgs = {
 
 export type MutationsUpdateGoodsReceivedArgs = {
   input: UpdateGoodsReceivedInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateGoodsReceivedLineArgs = {
+  input: UpdateGoodsReceivedLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -8813,6 +8836,24 @@ export type RnRFormSortInput = {
 
 export type RnRFormsResponse = RnRFormConnector;
 
+export type SaveGoodsReceivedLine = {
+  batch?: InputMaybe<Scalars['String']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReceived?: InputMaybe<Scalars['Float']['input']>;
+  receivedPackSize?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type SaveGoodsReceivedLineResponse = IdResponse;
+
+export type SaveGoodsReceivedLinesInput = {
+  goodsReceivedId: Scalars['String']['input'];
+  lines: Array<SaveGoodsReceivedLine>;
+  purchaseOrderLineId: Scalars['String']['input'];
+};
+
 export type SaveOutboundShipmentLinesInput = {
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
@@ -9833,6 +9874,29 @@ export type UpdateGoodsReceivedInput = {
   id: Scalars['String']['input'];
   status?: InputMaybe<GoodsReceivedNodeType>;
 };
+
+export type UpdateGoodsReceivedLineError = {
+  __typename: 'UpdateGoodsReceivedLineError';
+  error: UpdateGoodsReceivedLineErrorInterface;
+};
+
+export type UpdateGoodsReceivedLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateGoodsReceivedLineInput = {
+  batch?: InputMaybe<Scalars['String']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReceived?: InputMaybe<Scalars['Float']['input']>;
+  receivedPackSize?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdateGoodsReceivedLineResponse =
+  | IdResponse
+  | UpdateGoodsReceivedLineError;
 
 export type UpdateGoodsReceivedResponse = IdResponse;
 

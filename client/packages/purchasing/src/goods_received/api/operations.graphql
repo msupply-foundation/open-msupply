@@ -32,9 +32,19 @@ fragment GoodsReceived on GoodsReceivedNode {
   lines {
     nodes {
       id
+      batch
+      comment
       itemName
       lineNumber
-      purchaseOrderLineId
+      goodsReceivedId
+      expiryDate
+      manufacturerLinkId
+      numberOfPacksReceived
+      receivedPackSize
+      item {
+        id
+        name
+      }
     }
   }
 }
@@ -42,6 +52,14 @@ fragment GoodsReceived on GoodsReceivedNode {
 fragment GoodsReceivedLine on GoodsReceivedLineNode {
   __typename
   id
+  batch
+  comment
+  lineNumber
+  goodsReceivedId
+  expiryDate
+  manufacturerLinkId
+  numberOfPacksReceived
+  receivedPackSize
   item {
     id
     name
@@ -203,6 +221,17 @@ mutation insertGoodsReceivedLinesFromPurchaseOrder(
           description
         }
       }
+    }
+  }
+}
+
+mutation saveGoodsReceivedLines(
+  $input: SaveGoodsReceivedLinesInput!
+  $storeId: String!
+) {
+  saveGoodsReceivedLines(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
     }
   }
 }

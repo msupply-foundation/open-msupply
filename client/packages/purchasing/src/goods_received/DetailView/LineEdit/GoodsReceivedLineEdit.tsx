@@ -8,25 +8,23 @@ import {
 } from '@openmsupply-client/common';
 import { min } from 'lodash';
 import { DraftGoodsReceivedLine } from '../../api/hooks/useGoodsReceivedLine';
-import { GoodsReceivedLineFragment } from '../../api/operations.generated';
 import { useGoodsReceivedLineEditColumns } from './columns';
+import { StockItemSearchInput } from 'packages/system/src';
 
-export type GoodsReceivedLineItem = Partial<GoodsReceivedLineFragment>;
+export type GoodsReceivedLineItem = Partial<DraftGoodsReceivedLine>;
 
 export interface GoodsReceivedLineEditProps {
   isUpdateMode?: boolean;
-  currentLine?: GoodsReceivedLineFragment;
   draft?: DraftGoodsReceivedLine | null;
   updatePatch: (patch: Partial<DraftGoodsReceivedLine>) => void;
 }
 
 export const GoodsReceivedLineEdit = ({
   isUpdateMode,
-  currentLine,
   draft,
   updatePatch,
 }: GoodsReceivedLineEditProps) => {
-  const showContent = !!draft && !!currentLine;
+  const showContent = !!draft;
 
   const lines: DraftGoodsReceivedLine[] = [];
   if (draft) lines.push(draft);
@@ -46,15 +44,23 @@ export const GoodsReceivedLineEdit = ({
       paddingBottom={1}
     >
       <Grid size={12} sx={{ mb: 2 }}>
-        {isUpdateMode && (
+        {isUpdateMode ? (
           <BasicTextInput
-            value={`${currentLine?.item?.id} ${currentLine?.item?.name}`}
+            value={`${draft?.itemId} ${draft?.id}`} // TODO: We need item name here
             disabled
             fullWidth
           />
+        ) : (
+          <StockItemSearchInput
+            autoFocus={!draft?.itemId}
+            openOnFocus={!draft?.itemId}
+            disabled={isUpdateMode}
+            currentItemId={draft?.itemId}
+            onChange={() => {}}
+          />
         )}
       </Grid>
-      {showContent && currentLine && (
+      {showContent && (
         <Box style={{ width: '100%' }}>
           <Divider margin={10} />
           <Box

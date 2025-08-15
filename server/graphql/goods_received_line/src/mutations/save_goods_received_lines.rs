@@ -18,6 +18,7 @@ use service::{
 };
 
 #[derive(InputObject)]
+#[graphql(name = "SaveGoodsReceivedLinesInput")]
 pub struct SaveGoodsReceivedLinesInput {
     pub goods_received_id: String,
     pub purchase_order_line_id: String,

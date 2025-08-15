@@ -61,14 +61,11 @@ export const DetailViewInner = (): ReactElement => {
           <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />
-          {isOpen && lineId && (
-            <GoodsReceivedLineEditModal
-              lineId={lineId}
-              goodsReceived={data}
-              onClose={onClose}
-              isOpen={isOpen}
-            />
-          )}
+          <GoodsReceivedLineEditModal
+            lineId={''}
+            onClose={onClose}
+            isOpen={true}
+          />
         </>
       ) : (
         <AlertModal

@@ -34,9 +34,16 @@ export type GoodsReceivedFragment = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
+      batch?: string | null;
+      comment?: string | null;
       itemName: string;
       lineNumber: number;
-      purchaseOrderLineId: string;
+      goodsReceivedId: string;
+      expiryDate?: string | null;
+      manufacturerLinkId?: string | null;
+      numberOfPacksReceived: number;
+      receivedPackSize: number;
+      item: { __typename: 'ItemNode'; id: string; name: string };
     }>;
   };
 };
@@ -44,6 +51,14 @@ export type GoodsReceivedFragment = {
 export type GoodsReceivedLineFragment = {
   __typename: 'GoodsReceivedLineNode';
   id: string;
+  batch?: string | null;
+  comment?: string | null;
+  lineNumber: number;
+  goodsReceivedId: string;
+  expiryDate?: string | null;
+  manufacturerLinkId?: string | null;
+  numberOfPacksReceived: number;
+  receivedPackSize: number;
   item: { __typename: 'ItemNode'; id: string; name: string };
 };
 
@@ -102,9 +117,16 @@ export type GoodsReceivedByIdQuery = {
           nodes: Array<{
             __typename: 'GoodsReceivedLineNode';
             id: string;
+            batch?: string | null;
+            comment?: string | null;
             itemName: string;
             lineNumber: number;
-            purchaseOrderLineId: string;
+            goodsReceivedId: string;
+            expiryDate?: string | null;
+            manufacturerLinkId?: string | null;
+            numberOfPacksReceived: number;
+            receivedPackSize: number;
+            item: { __typename: 'ItemNode'; id: string; name: string };
           }>;
         };
       }
@@ -138,6 +160,14 @@ export type GoodsReceivedLinesQuery = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
+      batch?: string | null;
+      comment?: string | null;
+      lineNumber: number;
+      goodsReceivedId: string;
+      expiryDate?: string | null;
+      manufacturerLinkId?: string | null;
+      numberOfPacksReceived: number;
+      receivedPackSize: number;
       item: { __typename: 'ItemNode'; id: string; name: string };
     }>;
   };
@@ -156,6 +186,14 @@ export type GoodsReceivedLineQuery = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
+      batch?: string | null;
+      comment?: string | null;
+      lineNumber: number;
+      goodsReceivedId: string;
+      expiryDate?: string | null;
+      manufacturerLinkId?: string | null;
+      numberOfPacksReceived: number;
+      receivedPackSize: number;
       item: { __typename: 'ItemNode'; id: string; name: string };
     }>;
   };
@@ -226,6 +264,16 @@ export type InsertGoodsReceivedLinesFromPurchaseOrderMutation = {
       };
 };
 
+export type SaveGoodsReceivedLinesMutationVariables = Types.Exact<{
+  input: Types.SaveGoodsReceivedLinesInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type SaveGoodsReceivedLinesMutation = {
+  __typename: 'Mutations';
+  saveGoodsReceivedLines: { __typename: 'IdResponse'; id: string };
+};
+
 export const GoodsReceivedRowFragmentDoc = gql`
   fragment GoodsReceivedRow on GoodsReceivedNode {
     id
@@ -262,9 +310,19 @@ export const GoodsReceivedFragmentDoc = gql`
     lines {
       nodes {
         id
+        batch
+        comment
         itemName
         lineNumber
-        purchaseOrderLineId
+        goodsReceivedId
+        expiryDate
+        manufacturerLinkId
+        numberOfPacksReceived
+        receivedPackSize
+        item {
+          id
+          name
+        }
       }
     }
   }
@@ -273,6 +331,14 @@ export const GoodsReceivedLineFragmentDoc = gql`
   fragment GoodsReceivedLine on GoodsReceivedLineNode {
     __typename
     id
+    batch
+    comment
+    lineNumber
+    goodsReceivedId
+    expiryDate
+    manufacturerLinkId
+    numberOfPacksReceived
+    receivedPackSize
     item {
       id
       name
@@ -453,6 +519,18 @@ export const InsertGoodsReceivedLinesFromPurchaseOrderDocument = gql`
     }
   }
 `;
+export const SaveGoodsReceivedLinesDocument = gql`
+  mutation saveGoodsReceivedLines(
+    $input: SaveGoodsReceivedLinesInput!
+    $storeId: String!
+  ) {
+    saveGoodsReceivedLines(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -597,6 +675,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertGoodsReceivedLinesFromPurchaseOrder',
+        'mutation',
+        variables
+      );
+    },
+    saveGoodsReceivedLines(
+      variables: SaveGoodsReceivedLinesMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<SaveGoodsReceivedLinesMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SaveGoodsReceivedLinesMutation>(
+            SaveGoodsReceivedLinesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'saveGoodsReceivedLines',
         'mutation',
         variables
       );

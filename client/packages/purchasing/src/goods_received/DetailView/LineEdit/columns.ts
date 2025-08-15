@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { DraftGoodsReceivedLine } from '../../api/hooks/useGoodsReceivedLine';
 import {
   ColumnDescription,
+  DateInputCell,
   NumberInputCell,
   useColumns,
 } from '@openmsupply-client/common/src';
@@ -32,33 +33,33 @@ export const useGoodsReceivedLineEditColumns = ({
             updatePatch({ ...patch });
           },
         },
-        // TODO: Add respective fields needed when ready
-        // {
-        //   Cell: DateInputCell,
-        //   key: 'requestedDeliveryDate',
-        //   label: 'Requested delivery date',
-        //   setter: ({ id, requestedDeliveryDate }) => {
-        //     updatePatch({
-        //       id,
-        //       requestedDeliveryDate: Formatter.naiveDate(
-        //         DateUtils.getNaiveDate(requestedDeliveryDate)
-        //       ),
-        //     });
-        //   },
-        // },
-        // {
-        //   Cell: DateInputCell,
-        //   key: 'expectedDeliveryDate',
-        //   label: 'Expected Delivery Date',
-        //   setter: ({ id, expectedDeliveryDate }) => {
-        //     updatePatch({
-        //       id,
-        //       expectedDeliveryDate: Formatter.naiveDate(
-        //         DateUtils.getNaiveDate(expectedDeliveryDate)
-        //       ),
-        //     });
-        //   },
-        // },
+        {
+          key: 'totalQuantity',
+          label: 'label.total-quantity',
+          accessor: ({ rowData }) =>
+            (rowData.receivedPackSize ?? 0) *
+            (rowData.numberOfPacksReceived ?? 0),
+        },
+        {
+          key: 'batch',
+          label: 'label.batch',
+          accessor: ({ rowData }) => rowData.batch,
+        },
+        {
+          Cell: DateInputCell,
+          key: 'expiryDate',
+          label: 'label.expiry-date',
+        },
+        {
+          key: 'manufacturer',
+          label: 'label.manufacturer',
+          accessor: ({ rowData }) => rowData.manufacturerLinkId,
+        },
+        {
+          key: 'comment',
+          label: 'label.comment',
+          accessor: ({ rowData }) => rowData.comment,
+        },
       ],
       [updatePatch]
     );
