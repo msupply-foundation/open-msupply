@@ -15,7 +15,8 @@ use service::{
 };
 
 use crate::mutations::errors::{
-    PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound, UpdatedLineDoesNotExist,
+    CannotAdjustRequestedQuantity, PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound,
+    UpdatedLineDoesNotExist,
 };
 
 #[derive(InputObject)]
@@ -25,8 +26,11 @@ pub struct UpdateInput {
     pub item_id: Option<String>,
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
+    pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub price_per_unit_before_discount: Option<f64>,
+    pub price_per_unit_after_discount: Option<f64>,
 }
 
 impl UpdateInput {
@@ -36,8 +40,11 @@ impl UpdateInput {
             item_id,
             requested_pack_size,
             requested_number_of_units,
+            adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
         } = self;
 
         ServiceInput {
@@ -45,8 +52,11 @@ impl UpdateInput {
             item_id,
             requested_pack_size,
             requested_number_of_units,
+            adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
         }
     }
 }
@@ -58,6 +68,7 @@ pub enum PurchaseOrderLineError {
     UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
     PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
     CannotEditPurchaseOrder(CannotEditPurchaseOrder),
+    CannotAdjustRequestedQuantity(CannotAdjustRequestedQuantity),
 }
 
 #[derive(SimpleObject)]
@@ -121,6 +132,13 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::PurchaseOrderDoesNotExist => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
+            }))
+        }
+        ServiceError::CannotAdjustRequestedQuantity => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::CannotAdjustRequestedQuantity(
+                    CannotAdjustRequestedQuantity,
+                ),
             }))
         }
         ServiceError::CannotEditPurchaseOrder => {
