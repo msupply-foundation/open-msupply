@@ -26,12 +26,12 @@ pub fn get_goods_received_lines(
 
 pub fn get_goods_received_line(
     ctx: &ServiceContext,
-    goods_received_id_option: Option<&str>,
+    store_id: Option<&str>,
     id: &str,
 ) -> Result<Option<GoodsReceivedLine>, RepositoryError> {
     let repository = GoodsReceivedLineRepository::new(&ctx.connection);
     let mut filter = GoodsReceivedLineFilter::new().id(EqualFilter::equal_to(id));
-    filter.goods_received_id = goods_received_id_option.map(EqualFilter::equal_to);
+    filter.store_id = store_id.map(EqualFilter::equal_to);
 
     Ok(repository.query_by_filter(filter)?.pop())
 }
