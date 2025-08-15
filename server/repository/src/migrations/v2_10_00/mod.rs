@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_activity_log_goods_received;
 mod add_activity_log_volume_per_pack_changed;
 mod add_campaign_and_program_to_stocktake_line;
 mod add_closed_vial_wastage_reason_option_type;
@@ -72,6 +73,7 @@ impl Migration for V2_10_00 {
             Box::new(add_goods_received_permission_enum_values::Migrate),
             Box::new(rename_authorised_to_adjusted::Migrate),
             Box::new(remove_use_campaigns_pref::Migrate),
+            Box::new(add_activity_log_goods_received::Migrate),
             Box::new(add_purchase_order_activity_logs::Migrate),
         ]
     }
