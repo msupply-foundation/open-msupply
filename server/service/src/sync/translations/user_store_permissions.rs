@@ -51,7 +51,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyUserStorePermissionTable {
-            id,
+            id: _,
             user_id,
             store_id,
             permissions,
@@ -75,7 +75,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
             .find_one_by_user_and_store(&user_id, &store_id)?
             .map_or_else(
                 || UserStoreJoinRow {
-                    id: id.clone(),
+                    id: uuid(), // generating a new id. The incoming ID might be a user_group_id, OMS does not support these as such so OG may send it multiple times, for each user in group.
                     user_id: user_id.clone(),
                     store_id: store_id.clone(),
                     is_default,
@@ -83,6 +83,12 @@ impl SyncTranslation for UserStorePermissionTranslation {
                 |r| UserStoreJoinRow { is_default, ..r },
             );
         integration_operations.push(IntegrationOperation::upsert(user_store_join_row));
+
+        //TODO possibly need to delete the user_store_join_row if the user loses login rights
+        //TODO if the user has no login rights to any store on site, they can't login even if the central is available and has given them login rights?
+        //TODO wait does normal old OMS actually remove login rights? If it removes all for a user then they can never login???
+        //TODO OG, when you add a user to a group it needs to requeue the user's own user_store records, not the group's. Just save them. Or save the groups user_store records.
+        //TODO OG, test group sync permissions
 
         // Similar to user_store_join, the login functionality will drop literally all the user's permissions and recreate them with new PKs.
         // If the sync record turns the permission on and it exists, do nothing, else upsert a new record.
@@ -116,6 +122,10 @@ impl SyncTranslation for UserStorePermissionTranslation {
                 }));
             }
         }
+
+        // Some prefs come from om_user_permission! They should be preserved so the `user_permission` translator can handle them
+        existing_permissions.remove(&PermissionType::DocumentQuery);
+        existing_permissions.remove(&PermissionType::DocumentMutate);
 
         for (_, row) in existing_permissions {
             integration_operations.push(IntegrationOperation::delete(UserPermissionRowDelete(
