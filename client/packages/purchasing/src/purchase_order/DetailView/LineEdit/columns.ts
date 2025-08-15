@@ -17,7 +17,7 @@ export const usePurchaseOrderLineEditColumns = ({
   status,
 }: {
   draft?: DraftPurchaseOrderLine | null;
-  updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
+  updatePatch: (row: Partial<DraftPurchaseOrderLine>) => void;
   status: PurchaseOrderNodeStatus;
 }) => {
   const columnDefinitions: ColumnDescription<DraftPurchaseOrderLine>[] =
@@ -27,28 +27,26 @@ export const usePurchaseOrderLineEditColumns = ({
           Cell: NumberInputCell,
           key: 'numberOfPacks',
           label: 'label.requested-packs',
-          setter: patch => {
-              console.log('Setting number of packs', patch);
-
+          setter: row => {
             // Adjust the requested and adjusted number of units based on the number of packs
             const adjustedPatch = calculateUnitQuantities(
               status,
-              patch,
+              row,
             );
-            updatePatch({ ...patch, ...adjustedPatch });
+            updatePatch({ ...row, ...adjustedPatch });
           },
         },
         {
           Cell: NumberInputCell,
           key: 'requestedPackSize',
           label: 'label.pack-size',
-          setter: patch => {
+          setter: row => {
             // Adjust the requested and adjusted number of units based on the new pack size
             const adjustedPatch = calculateUnitQuantities(
               status,
-              patch,
+              row,
             );
-            updatePatch({ ...patch, ...adjustedPatch });
+            updatePatch({ ...row, ...adjustedPatch });
           },
         },
         ...(status === PurchaseOrderNodeStatus.Confirmed
@@ -76,12 +74,12 @@ export const usePurchaseOrderLineEditColumns = ({
           Cell: NumberInputCell,
           key: 'pricePerUnitBeforeDiscount',
           label: 'label.price-per-unit-before-discount',
-          setter: patch => {
+          setter: row => {
             const adjustedPatch = calculatePricesAndDiscount(
               'pricePerUnitBeforeDiscount',
-              patch
+              row
             );
-            updatePatch({ ...patch, ...adjustedPatch });
+            updatePatch({ ...row, ...adjustedPatch });
           },
           cellProps: {
             decimalLimit: 2,
@@ -92,12 +90,12 @@ export const usePurchaseOrderLineEditColumns = ({
           key: 'discountPercentage',
           label: 'label.discount-percentage',
 
-          setter: patch => {
+          setter: row => {
             const adjustedPatch = calculatePricesAndDiscount(
               'discountPercentage',
-              patch
+              row
             );
-            updatePatch({ ...patch, ...adjustedPatch });
+            updatePatch({ ...row, ...adjustedPatch });
           },
           cellProps: {
             decimalLimit: 2,
@@ -107,12 +105,12 @@ export const usePurchaseOrderLineEditColumns = ({
           Cell: NumberInputCell,
           key: 'pricePerUnitAfterDiscount',
           label: 'label.price-per-unit-after-discount',
-          setter: patch => {
+          setter: row => {
             const adjustedPatch = calculatePricesAndDiscount(
               'pricePerUnitAfterDiscount',
-              patch
+              row
             );
-            updatePatch({ ...patch, ...adjustedPatch });
+            updatePatch({ ...row, ...adjustedPatch });
           },
           cellProps: {
             decimalLimit: 2,
