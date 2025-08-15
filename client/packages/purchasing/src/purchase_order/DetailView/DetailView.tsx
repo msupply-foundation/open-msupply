@@ -119,6 +119,10 @@ export const DetailViewInner = () => {
               openNext={openNext}
               mode={mode}
               lineId={lineId}
+              hasNext={
+                sortedAndFilteredLines.findIndex(line => line.id === lineId) <
+                sortedAndFilteredLines.length - 1
+              }
               purchaseOrder={data}
             />
           )}
