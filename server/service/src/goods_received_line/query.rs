@@ -81,7 +81,7 @@ mod test {
         // Test querying by ID
         let result = service_provider
             .goods_received_line_service
-            .get_goods_received_line(&context, Some(mock_store_a().id), "wrong_id")
+            .get_goods_received_line(&context, Some(&mock_store_a().id), "wrong_id")
             .unwrap();
         assert!(result.is_none());
 
@@ -94,7 +94,8 @@ mod test {
         // Check wrong store_id
         let result = service_provider
             .goods_received_line_service
-            .get_goods_received_line(&context, Some("wrong_store_id"), &gr_line.id);
+            .get_goods_received_line(&context, Some("wrong_store_id"), &gr_line.id)
+            .unwrap();
         assert!(result.is_none());
     }
 }
