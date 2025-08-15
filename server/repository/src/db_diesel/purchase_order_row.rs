@@ -1,11 +1,9 @@
 use crate::{
     db_diesel::{item_link_row::item_link, item_row::item},
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
 };
-
-use chrono::NaiveDate;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -189,11 +187,19 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, purchase_order_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, purchase_order_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(purchase_order_id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
         diesel::delete(purchase_order::table)
             .filter(purchase_order::id.eq(purchase_order_id))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
     pub fn find_max_purchase_order_number(
@@ -223,6 +229,22 @@ impl Upsert for PurchaseOrderRow {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct PurchaseOrderDelete(pub String);
+impl Delete for PurchaseOrderDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = PurchaseOrderRowRepository::new(con).delete(&self.0)?;
+        Ok(change_log_id)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PurchaseOrderRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::mock::{mock_name_c, mock_store_a, MockDataInserts};
@@ -245,9 +267,9 @@ mod test {
             let row = PurchaseOrderRow {
                 id: id.clone(),
                 supplier_name_link_id: mock_name_c().id,
-                status: status,
+                status,
                 store_id: mock_store_a().id.clone(),
-                created_datetime: chrono::Utc::now().naive_utc().into(),
+                created_datetime: chrono::Utc::now().naive_utc(),
                 purchase_order_number: po_number,
                 ..Default::default()
             };
