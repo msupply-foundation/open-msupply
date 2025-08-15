@@ -1,6 +1,8 @@
+pub mod delete;
 pub mod insert;
 pub mod query;
 pub mod update;
+pub mod validate;
 
 use repository::{
     GoodsReceivedLine, GoodsReceivedLineFilter, GoodsReceivedLineRow, GoodsReceivedLineSort,
@@ -8,14 +10,17 @@ use repository::{
 };
 
 use crate::{
-    goods_received_line::insert::{
-        insert_goods_received_line, insert_goods_received_lines_from_purchase_order,
-        InsertGoodsReceivedLineError, InsertGoodsReceivedLineInput, InsertGoodsReceivedLinesError,
-        InsertGoodsReceivedLinesFromPurchaseOrderInput,
-    },
-    goods_received_line::query::{get_goods_received_line, get_goods_received_lines},
-    goods_received_line::update::{
-        update_goods_received_line, UpdateGoodsReceivedLineError, UpdateGoodsReceivedLineInput,
+    goods_received_line::{
+        delete::{delete_goods_received_line, DeleteGoodsReceivedLineError},
+        insert::{
+            insert_goods_received_line, insert_goods_received_lines_from_purchase_order,
+            InsertGoodsReceivedLineError, InsertGoodsReceivedLineInput,
+            InsertGoodsReceivedLinesError, InsertGoodsReceivedLinesFromPurchaseOrderInput,
+        },
+        query::{get_goods_received_line, get_goods_received_lines},
+        update::{
+            update_goods_received_line, UpdateGoodsReceivedLineError, UpdateGoodsReceivedLineInput,
+        },
     },
     service_provider::ServiceContext,
     ListError, ListResult,
@@ -64,6 +69,14 @@ pub trait GoodsReceivedLineServiceTrait: Sync + Send {
         input: UpdateGoodsReceivedLineInput,
     ) -> Result<GoodsReceivedLineRow, UpdateGoodsReceivedLineError> {
         update_goods_received_line(ctx, input)
+    }
+
+    fn delete_goods_received_line(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<String, DeleteGoodsReceivedLineError> {
+        delete_goods_received_line(ctx, id)
     }
 }
 

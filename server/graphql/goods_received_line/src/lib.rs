@@ -1,6 +1,6 @@
 mod goods_received_line_queries;
 use crate::mutations::{
-    delete::{delete_goods_received_line, DeleteInput, DeleteResponse},
+    delete::{delete_goods_received_line, DeleteResponse},
     insert::{
         insert_goods_received_line, insert_goods_received_lines_from_purchase_order, InsertInput,
         InsertLinesInput, InsertLinesResponse, InsertResponse,
@@ -75,8 +75,8 @@ impl GoodsReceivedLineMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: DeleteInput,
+        id: String,
     ) -> Result<DeleteResponse> {
-        delete_goods_received_line(ctx, &store_id, input)
+        delete_goods_received_line(ctx, &store_id, id)
     }
 }

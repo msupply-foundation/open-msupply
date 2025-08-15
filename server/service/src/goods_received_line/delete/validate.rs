@@ -1,35 +1,25 @@
+use super::DeleteGoodsReceivedLineError;
+use crate::goods_received_line::validate::goods_received_is_editable;
 use repository::{
-    goods_received_line_row::{GoodsReceivedLineRow, GoodsReceivedLineRowRepository},
-    goods_received_row::{GoodsReceivedRowRepository, GoodsReceivedStatus},
-    StorageConnection,
+    goods_received_line_row::GoodsReceivedLineRowRepository,
+    goods_received_row::GoodsReceivedRowRepository, StorageConnection,
 };
 
-use super::{DeleteGoodsReceivedLineError, DeleteGoodsReceivedLineInput};
-
 pub fn validate(
-    input: &DeleteGoodsReceivedLineInput,
-    store_id: &str,
+    id: &str,
     connection: &StorageConnection,
-) -> Result<GoodsReceivedLineRow, DeleteGoodsReceivedLineError> {
-    // Check that the goods received line exists
-    let existing_line = GoodsReceivedLineRowRepository::new(connection)
-        .find_one_by_id(&input.id)?
+) -> Result<(), DeleteGoodsReceivedLineError> {
+    let goods_received_line = GoodsReceivedLineRowRepository::new(connection)
+        .find_one_by_id(id)?
         .ok_or(DeleteGoodsReceivedLineError::GoodsReceivedLineDoesNotExist)?;
 
-    // Check that the goods received exists and is editable
     let goods_received = GoodsReceivedRowRepository::new(connection)
-        .find_one_by_id(&existing_line.goods_received_id)?
+        .find_one_by_id(&goods_received_line.goods_received_id)?
         .ok_or(DeleteGoodsReceivedLineError::GoodsReceivedDoesNotExist)?;
 
-    // Check that the goods received belongs to the current store
-    if goods_received.store_id != store_id {
+    if !goods_received_is_editable(&goods_received) {
         return Err(DeleteGoodsReceivedLineError::CannotEditGoodsReceived);
     }
 
-    // Check that the goods received is not finalised (cannot delete lines from finalised goods received)
-    if goods_received.status == GoodsReceivedStatus::Finalised {
-        return Err(DeleteGoodsReceivedLineError::CannotEditGoodsReceived);
-    }
-
-    Ok(existing_line)
+    Ok(())
 }
