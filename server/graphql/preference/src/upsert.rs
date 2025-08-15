@@ -2,7 +2,8 @@ use std::collections::BTreeMap;
 
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::patient::GenderType;
+use graphql_types::types::patient::GenderTypeNode;
+use repository::GenderType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{StorePrefUpdate, UpsertPreferences},
@@ -17,7 +18,7 @@ pub struct BoolStorePrefInput {
 pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub gender_options: Option<Vec<GenderType>>,
+    pub gender_options: Option<Vec<GenderTypeNode>>,
     pub show_contact_tracing: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub sync_records_display_threshold: Option<i32>,
@@ -80,7 +81,7 @@ impl UpsertPreferencesInput {
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
             gender_options: gender_options
                 .as_ref()
-                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+                .map(|i| i.iter().map(|i| GenderType::from(i.clone())).collect()),
             show_contact_tracing: *show_contact_tracing,
             custom_translations: custom_translations.clone(),
             sync_records_display_threshold: *sync_records_display_threshold,

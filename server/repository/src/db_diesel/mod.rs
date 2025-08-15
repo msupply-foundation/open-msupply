@@ -90,7 +90,7 @@ pub mod name_insurance_join_row;
 mod name_link_row;
 pub mod name_property;
 pub mod name_property_row;
-mod name_row;
+pub mod name_row;
 pub mod name_store_join;
 pub mod name_tag;
 pub mod name_tag_join;
