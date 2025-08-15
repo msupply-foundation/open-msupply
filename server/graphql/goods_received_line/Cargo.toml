@@ -1,5 +1,5 @@
 [package]
-name = "graphql_goods_received"
+name = "graphql_goods_received_line"
 version = "0.1.0"
 edition = "2018"
 
@@ -14,7 +14,6 @@ service = { path = "../../service" }
 util = { path = "../../util" }
 graphql_core = { path = "../core" }
 graphql_types = { path = "../types" }
-graphql_goods_received_line = { path = "../goods_received_line" }
 
 actix-web = { workspace = true }
 async-graphql = { workspace = true }
