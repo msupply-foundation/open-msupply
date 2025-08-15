@@ -42,7 +42,7 @@ const TRANSACT_1: (&str, &str) = (
       "export_batch": 0,
       "foreign_currency_total": 0,
       "goodsReceivedConfirmation": null,
-      "goods_received_ID": "",
+      "goods_received_ID": "some goods id",
       "hold": false,
       "insuranceDiscountAmount": 10.0,
       "insuranceDiscountRate": 2.5,
@@ -154,6 +154,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: Some("donor_a".to_string()),
+        goods_received_id: Some("some goods id".to_string()),
     }
 }
 
@@ -225,6 +226,7 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_id: Some("donor_a".to_string()),
+        goods_received_ID: Some("some goods id".to_string()),
     }
 }
 
@@ -330,38 +332,18 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             r#type: InvoiceType::OutboundShipment,
             status: InvoiceStatus::Shipped,
             on_hold: false,
-            comment: None,
-            their_reference: None,
             transport_reference: Some("transport reference".to_string()),
             created_datetime: NaiveDate::from_ymd_opt(2021, 8, 3)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap()
                 + Duration::seconds(44806),
-            allocated_datetime: None,
-            picked_datetime: None,
-            shipped_datetime: None,
-            delivered_datetime: None,
-            received_datetime: None,
-            verified_datetime: None,
-            cancelled_datetime: None,
-            colour: None,
-            requisition_id: None,
-            linked_invoice_id: None,
             tax_percentage: Some(0.0),
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
-            clinician_link_id: None,
-            original_shipment_id: None,
-            backdated_datetime: None,
-            diagnosis_id: None,
             program_id: Some("missing_program".to_string()),
-            name_insurance_join_id: None,
-            insurance_discount_amount: None,
-            insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_date: None,
-            default_donor_link_id: None,
+            ..Default::default()
         },
     )
 }
@@ -421,6 +403,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_id: None,
+            goods_received_ID: None,
         }),
     }
 }
@@ -529,8 +512,6 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             r#type: InvoiceType::InventoryAddition,
             status: InvoiceStatus::Shipped,
             on_hold: false,
-            comment: None,
-            their_reference: None,
             transport_reference: Some("transport reference".to_string()),
             created_datetime: NaiveDate::from_ymd_opt(2022, 8, 24)
                 .unwrap()
@@ -572,24 +553,12 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
                     .and_hms_opt(14, 33, 0)
                     .unwrap(),
             ),
-            cancelled_datetime: None,
             colour: Some("SomeColour".to_string()),
-            requisition_id: None,
-            linked_invoice_id: None,
             tax_percentage: Some(0.0),
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
-            clinician_link_id: None,
-            original_shipment_id: None,
-            backdated_datetime: None,
-            diagnosis_id: None,
-            program_id: None,
-            name_insurance_join_id: None,
-            insurance_discount_amount: None,
-            insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_date: None,
-            default_donor_link_id: None,
+            ..Default::default()
         },
     )
 }
@@ -678,6 +647,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_id: None,
+            goods_received_ID: None,
         }),
     }
 }
@@ -796,33 +766,11 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             ),
             comment: Some("Stocktake 1; Added stock".to_string()),
             tax_percentage: Some(0.0),
-
-            name_store_id: None,
-            their_reference: None,
-            transport_reference: None,
             on_hold: false,
-            allocated_datetime: None,
-            picked_datetime: None,
-            shipped_datetime: None,
-            delivered_datetime: None,
-            received_datetime: None,
-            cancelled_datetime: None,
-            requisition_id: None,
-            linked_invoice_id: None,
-            colour: None,
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.0,
-            clinician_link_id: None,
-            original_shipment_id: None,
-            backdated_datetime: None,
-            diagnosis_id: None,
-            program_id: None,
-            name_insurance_join_id: None,
-            insurance_discount_amount: None,
-            insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_date: None,
-            default_donor_link_id: None,
+            ..Default::default()
         },
     )
 }
@@ -888,6 +836,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_id: None,
+            goods_received_ID: None,
         }),
     }
 }
@@ -1006,33 +955,11 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             ),
             comment: Some("Stocktake 2; Reduced stock".to_string()),
             tax_percentage: Some(0.0),
-
-            name_store_id: None,
-            their_reference: None,
-            transport_reference: None,
             on_hold: false,
-            allocated_datetime: None,
-            picked_datetime: None,
-            shipped_datetime: None,
-            delivered_datetime: None,
-            received_datetime: None,
-            requisition_id: None,
-            cancelled_datetime: None,
-            linked_invoice_id: None,
-            colour: None,
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.0,
-            clinician_link_id: None,
-            original_shipment_id: None,
-            backdated_datetime: None,
-            diagnosis_id: None,
-            program_id: None,
-            name_insurance_join_id: None,
-            insurance_discount_amount: None,
-            insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_date: None,
-            default_donor_link_id: None,
+            ..Default::default()
         },
     )
 }
@@ -1097,6 +1024,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_id: None,
+            goods_received_ID: None,
         }),
     }
 }
@@ -1216,28 +1144,13 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
                     .unwrap()
                     + Duration::seconds(47046),
             ),
-            shipped_datetime: None,
-            delivered_datetime: None,
-            received_datetime: None,
-            verified_datetime: None,
-            cancelled_datetime: None,
-            colour: None,
-            requisition_id: None,
-            linked_invoice_id: None,
             tax_percentage: Some(0.0),
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
-            clinician_link_id: None,
-            original_shipment_id: None,
-            backdated_datetime: None,
+
             diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
-            program_id: None,
-            name_insurance_join_id: None,
-            insurance_discount_amount: None,
-            insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_date: None,
-            default_donor_link_id: None,
+            ..Default::default()
         },
     )
 }
@@ -1302,6 +1215,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_id: None,
+            goods_received_ID: None,
         }),
     }
 }
@@ -1422,33 +1336,19 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
                     .unwrap()
                     + Duration::seconds(47046),
             ),
-            shipped_datetime: None,
-            delivered_datetime: None,
-            received_datetime: None,
-            verified_datetime: None,
             cancelled_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 8, 24)
                     .unwrap()
                     .and_hms_opt(9, 33, 0)
                     .unwrap(),
             ),
-            colour: None,
-            requisition_id: None,
-            linked_invoice_id: None,
             tax_percentage: Some(0.0),
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
-            clinician_link_id: None,
-            original_shipment_id: None,
-            backdated_datetime: None,
             diagnosis_id: Some("503E901E00534F1797DF4F29E12F907D".to_string()),
-            program_id: None,
-            name_insurance_join_id: None,
-            insurance_discount_amount: None,
-            insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
-            default_donor_link_id: None,
+            ..Default::default()
         },
     )
 }
@@ -1518,6 +1418,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             is_cancellation: false,
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
             default_donor_id: None,
+            goods_received_ID: None,
         }),
     }
 }

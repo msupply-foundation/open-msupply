@@ -34,7 +34,7 @@ Optional fields in the manifest json are marked as '// optional'
   "context": "REPORT",
   // optional
   // Sub context for reports, applicable to Dispensary and Report context, see client/packages/reports/src/ListView/ListView.tsx",
-  // Currently only reports of subcontext 'Expiring' and ' StockAndItems' are displayed
+  // Currently only reports of subcontext 'Expiring' and 'StockAndItems' are displayed
   "sub_context": "StockAndItems",
   // Display name of report
   "name": "Item Usage",

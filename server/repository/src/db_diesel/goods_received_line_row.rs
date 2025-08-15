@@ -1,3 +1,6 @@
+use super::item_row::item;
+use crate::db_diesel::goods_received_row::goods_received;
+use crate::db_diesel::item_link_row::item_link;
 use crate::{
     goods_received_row::GoodsReceivedRowRepository, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, Delete, RepositoryError, RowActionType, StorageConnection, Upsert,
@@ -27,6 +30,12 @@ table! {
         comment -> Nullable<Text>,
     }
 }
+
+joinable!(goods_received_line -> item_link(item_link_id));
+joinable!(goods_received_line -> goods_received(goods_received_id));
+allow_tables_to_appear_in_same_query!(goods_received_line, item_link);
+allow_tables_to_appear_in_same_query!(goods_received_line, item);
+allow_tables_to_appear_in_same_query!(goods_received_line, goods_received);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,

@@ -1,7 +1,6 @@
 import {
   GoodsReceivedNodeStatus,
   useConfirmationModal,
-  useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useGoodsReceived } from '../../../api/hooks/useGoodsReceived';
@@ -14,7 +13,6 @@ import {
 
 export const useStatusChangeButton = () => {
   const t = useTranslation();
-  const { success, error } = useNotification();
   const {
     query: { data },
     update: { update },
@@ -30,14 +28,8 @@ export const useStatusChangeButton = () => {
 
   const handleConfirm = async () => {
     if (!selectedOption || !data?.id) return null;
-
     // Since we only have New -> Finalised, we know the status is always Finalised
-    try {
-      await update({ status: GoodsReceivedNodeStatus.Finalised });
-      success(t('messages.purchase-order-saved'))();
-    } catch (e) {
-      error(t('messages.error-saving-purchase-order'))();
-    }
+    await update({ status: GoodsReceivedNodeStatus.Finalised });
   };
 
   const getConfirmation = useConfirmationModal({

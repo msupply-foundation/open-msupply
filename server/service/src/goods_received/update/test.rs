@@ -2,7 +2,9 @@
 mod update {
     use repository::{
         goods_received_row::{GoodsReceivedRow, GoodsReceivedRowRepository, GoodsReceivedStatus},
-        mock::{mock_purchase_order_a, mock_store_a, mock_user_account_a, MockDataInserts},
+        mock::{
+            mock_purchase_order_b_finalised, mock_store_a, mock_user_account_a, MockDataInserts,
+        },
         test_db::setup_all,
     };
     use util::uuid::uuid;
@@ -60,7 +62,7 @@ mod update {
                 status: GoodsReceivedStatus::New,
                 comment: Some("Test comment".to_string()),
                 created_datetime: chrono::Utc::now().naive_utc(),
-                purchase_order_id: Some(mock_purchase_order_a().id.clone()),
+                purchase_order_id: Some(mock_purchase_order_b_finalised().id.clone()),
                 ..Default::default()
             })
             .unwrap();

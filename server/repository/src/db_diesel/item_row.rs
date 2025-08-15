@@ -177,6 +177,17 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_active_by_id(
+        &self,
+        ids: &Vec<String>,
+    ) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = item
+            .filter(id.eq_any(ids))
+            .filter(is_active.eq(true))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(item.filter(id.eq(item_id)))
             .set(is_active.eq(false))

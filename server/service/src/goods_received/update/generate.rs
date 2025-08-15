@@ -7,7 +7,7 @@ use repository::{
 };
 
 pub fn generate(
-    goods_received: GoodsReceivedRow,
+    goods_received: &GoodsReceivedRow,
     UpdateGoodsReceivedInput {
         id: _,
         status,
