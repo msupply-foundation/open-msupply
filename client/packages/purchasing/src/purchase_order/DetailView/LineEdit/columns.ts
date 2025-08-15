@@ -59,9 +59,6 @@ export const usePurchaseOrderLineEditColumns = ({
                 Cell: NumberInputCell,
                 key: 'adjustedNumberOfUnits',
                 label: 'label.adjusted-quantity',
-                setter: (patch: Partial<DraftPurchaseOrderLine>) => {
-                  updatePatch({ ...patch });
-                },
                 cellProps: {
                   isDisabled: true, // Edited via number of packs for now
                 },
@@ -72,9 +69,6 @@ export const usePurchaseOrderLineEditColumns = ({
           Cell: NumberInputCell,
           key: 'requestedNumberOfUnits',
           label: 'label.requested-quantity',
-          setter: patch => {
-            updatePatch({ ...patch });
-          },
           cellProps: {
             isDisabled: true, // Edited via number of packs for now
           },
