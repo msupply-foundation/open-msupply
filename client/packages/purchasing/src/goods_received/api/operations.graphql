@@ -96,5 +96,17 @@ mutation updateGoodsReceived(
     ... on IdResponse {
       id
     }
+    ... on UpdateGoodsReceivedError {
+      __typename
+      error {
+        description
+        ... on GoodsReceivedEmpty {
+          __typename
+        }
+        ... on PurchaseOrderNotFinalised {
+          __typename
+        }
+      }
+    }
   }
 }

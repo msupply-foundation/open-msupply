@@ -114,7 +114,14 @@ export type UpdateGoodsReceivedMutationVariables = Types.Exact<{
 
 export type UpdateGoodsReceivedMutation = {
   __typename: 'Mutations';
-  updateGoodsReceived: { __typename: 'IdResponse'; id: string };
+  updateGoodsReceived:
+    | { __typename: 'IdResponse'; id: string }
+    | {
+        __typename: 'UpdateGoodsReceivedError';
+        error:
+          | { __typename: 'GoodsReceivedEmpty'; description: string }
+          | { __typename: 'PurchaseOrderNotFinalised'; description: string };
+      };
 };
 
 export const GoodsReceivedRowFragmentDoc = gql`
@@ -223,6 +230,18 @@ export const UpdateGoodsReceivedDocument = gql`
     updateGoodsReceived(input: $input, storeId: $storeId) {
       ... on IdResponse {
         id
+      }
+      ... on UpdateGoodsReceivedError {
+        __typename
+        error {
+          description
+          ... on GoodsReceivedEmpty {
+            __typename
+          }
+          ... on PurchaseOrderNotFinalised {
+            __typename
+          }
+        }
       }
     }
   }

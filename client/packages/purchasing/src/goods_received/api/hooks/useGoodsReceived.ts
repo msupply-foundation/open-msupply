@@ -98,6 +98,7 @@ const useGetById = (id?: string) => {
 const useCreate = () => {
   const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
 
+
   const mutationFn = async (input: InsertGoodsReceivedInput) => {
     return await goodsReceivedApi.insertGoodsReceived({
       input,
@@ -113,12 +114,33 @@ const useCreate = () => {
 
 const useUpdate = () => {
   const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
-
+  const { error, success } = useNotification();
+  const t = useTranslation();
   const mutationFn = async (input: RecordPatch<GoodsReceivedFragment>) => {
-    return await goodsReceivedApi.updateGoodsReceived({
-      input: parseUpdateInput(input),
-      storeId,
-    });
+    try {
+      const result =  await goodsReceivedApi.updateGoodsReceived({
+        input: parseUpdateInput(input),
+        storeId,
+      });
+      if (result.updateGoodsReceived.__typename === 'UpdateGoodsReceivedError') {
+        const errorType = result.updateGoodsReceived.error.__typename;
+        switch (errorType) {
+          case 'GoodsReceivedEmpty':
+            return error(t('error.goods-received-empty'))();
+          case 'PurchaseOrderNotFinalised':
+            return error(t('error.purchase-order-not-finalised'))();
+          default:
+            return error(t('error.cannot-update-goods-received'))();
+        }
+      } else if (result.updateGoodsReceived.__typename === 'IdResponse') {
+        // handle successful update
+        success(t('messages.goods-received-saved'))();
+      }
+    } catch (e) {
+      console.error('Error updating goods received:', e);
+      error(t('error.cannot-update-goods-received'))();
+      // swallow error here as we don't want to throw
+    }
   };
 
   return useMutation({
