@@ -74,6 +74,7 @@ pub fn check_reason_is_valid(
                     ReasonOptionType::NegativeInventoryAdjustment.equal_any(vec![
                         ReasonOptionType::NegativeInventoryAdjustment,
                         ReasonOptionType::OpenVialWastage,
+                        ReasonOptionType::ClosedVialWastage,
                     ]),
                 )
                 .is_active(true)
@@ -100,4 +101,105 @@ pub fn check_snapshot_matches_current_count(
     snapshot_packs: f64,
 ) -> bool {
     stock_line.total_number_of_packs == snapshot_packs
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        ReasonOptionRow, ReasonOptionType,
+    };
+
+    use crate::stocktake_line::validate::check_reason_is_valid;
+
+    #[actix_rt::test]
+
+    async fn test_check_reason_is_valid() {
+        fn positive_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
+                id: "positive_reason".to_string(),
+                is_active: true,
+                r#type: ReasonOptionType::PositiveInventoryAdjustment,
+                reason: "Found".to_string(),
+            }
+        }
+        fn negative_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
+                id: "negative_reason".to_string(),
+                is_active: true,
+                r#type: ReasonOptionType::NegativeInventoryAdjustment,
+                reason: "Broken".to_string(),
+            }
+        }
+
+        fn open_vial_wastage_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
+                id: "open_vial_wastage_reason".to_string(),
+                is_active: true,
+                r#type: ReasonOptionType::OpenVialWastage,
+                reason: "Open Vial Wastage".to_string(),
+            }
+        }
+
+        fn closed_vial_wastage_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
+                id: "closed_vial_wastage_reason".to_string(),
+                is_active: true,
+                r#type: ReasonOptionType::ClosedVialWastage,
+                reason: "Temperature Excursion".to_string(),
+            }
+        }
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_check_reason_is_valid",
+            MockDataInserts::none(),
+            MockData {
+                reason_options: vec![
+                    positive_reason(),
+                    negative_reason(),
+                    open_vial_wastage_reason(),
+                    closed_vial_wastage_reason(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // POSITIVE REASON TESTS
+
+        // Can't use positive reason for negative stock reduction
+        assert_eq!(
+            check_reason_is_valid(&connection, Some(positive_reason().id), -10.0),
+            Ok(false)
+        );
+        // Succeeds with positive reason for positive stock reduction
+        assert_eq!(
+            check_reason_is_valid(&connection, Some(positive_reason().id), 10.0),
+            Ok(true)
+        );
+
+        // NEGATIVE REASON TESTS
+
+        // Can't use negative reason for positive stock reduction
+        assert_eq!(
+            check_reason_is_valid(&connection, Some(negative_reason().id), 10.0),
+            Ok(false)
+        );
+        // Succeeds with negative reason for negative stock reduction
+        assert_eq!(
+            check_reason_is_valid(&connection, Some(negative_reason().id), -10.0),
+            Ok(true)
+        );
+        // Succeeds with open vial wastage reason for negative stock reduction
+        assert_eq!(
+            check_reason_is_valid(&connection, Some(open_vial_wastage_reason().id), -10.0),
+            Ok(true)
+        );
+        // Succeeds with closed vial wastage reason for negative stock reduction
+        assert_eq!(
+            check_reason_is_valid(&connection, Some(closed_vial_wastage_reason().id), -10.0),
+            Ok(true)
+        );
+    }
 }
