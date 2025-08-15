@@ -89,28 +89,13 @@ export const calculatePricesAndDiscount = (
   }
 };
 
-type UnitCalcFields = 'numberOfPacks' | 'packSize';
 
 export const calculateUnitQuantities = (
-  changingField: UnitCalcFields,
   status: PurchaseOrderNodeStatus,
   data: Partial<DraftPurchaseOrderLine>,
-  draft: DraftPurchaseOrderLine | null | undefined
 ) => {
-  let numberOfPacks = draft?.numberOfPacks ?? 0;
-  let requestedPackSize = draft?.requestedPackSize ?? 0;
-
-  switch (changingField) {
-    case 'numberOfPacks': {
-      numberOfPacks = data.numberOfPacks || 0;
-      break;
-    }
-    case 'packSize': {
-      requestedPackSize = data.requestedPackSize || 0;
-      break;
-    }
-  }
-
+  let numberOfPacks = data?.numberOfPacks ?? 0;
+  let requestedPackSize = data?.requestedPackSize ?? 0;
   const totalUnits = numberOfPacks * requestedPackSize;
 
   // Only adjust the requested number of units if the status is not confirmed yet
