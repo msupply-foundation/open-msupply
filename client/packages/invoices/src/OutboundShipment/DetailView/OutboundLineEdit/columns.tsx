@@ -127,7 +127,7 @@ export const useOutboundLineEditColumns = ({
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      width: 85,
+      width: 150,
       Cell: VVMStatusInputCell,
       accessor: ({ rowData }) => rowData.vvmStatus,
       setter: ({ id, vvmStatus }) => setVvmStatus(id, vvmStatus),
