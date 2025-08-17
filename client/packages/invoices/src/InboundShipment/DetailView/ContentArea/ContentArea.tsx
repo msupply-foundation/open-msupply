@@ -22,7 +22,6 @@ interface ContentAreaProps {
 
 interface ExpandoPrefs {
   allowTrackingOfStockByDonor?: boolean;
-  useCampaigns?: boolean;
 }
 
 const Expando = ({
@@ -114,8 +113,7 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
     useHighlightPlaceholderRows(rows);
 
     const { data: preferences } = usePreference(
-      PreferenceKey.AllowTrackingOfStockByDonor,
-      PreferenceKey.UseCampaigns
+      PreferenceKey.AllowTrackingOfStockByDonor
     );
     return (
       <DataTable

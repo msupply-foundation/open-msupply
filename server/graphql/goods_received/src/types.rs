@@ -1,6 +1,6 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use graphql_core::loader::{
     GoodsReceivedLinesByGoodsReceivedIdLoader, ItemLoader, NameByIdLoader, NameByIdLoaderInput,
     PurchaseOrderByIdLoader,
@@ -250,6 +250,10 @@ impl GoodsReceivedNode {
     pub async fn created_by(&self) -> &Option<String> {
         &self.row().created_by
     }
+
+    pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().finalised_datetime
+    }
 }
 
 impl GoodsReceivedNode {
@@ -267,8 +271,6 @@ impl GoodsReceivedNode {
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum GoodsReceivedNodeStatus {
     New,
-    Confirmed,
-    Authorised,
     Finalised,
 }
 
@@ -281,15 +283,13 @@ impl GoodsReceivedNodeStatus {
         }
     }
 
-    // pub fn to_domain(self) -> GoodsReceivedStatus {
-    //     use GoodsReceivedNodeStatus::*;
-    //     match self {
-    //         New => GoodsReceivedStatus::New,
-    //         Confirmed => GoodsReceivedStatus::Confirmed,
-    //         Authorised => GoodsReceivedStatus::Authorised,
-    //         Finalised => GoodsReceivedStatus::Finalised,
-    //     }
-    // }
+    pub fn to_domain(self) -> GoodsReceivedStatus {
+        use GoodsReceivedNodeStatus::*;
+        match self {
+            New => GoodsReceivedStatus::New,
+            Finalised => GoodsReceivedStatus::Finalised,
+        }
+    }
 }
 
 impl GoodsReceivedConnector {

@@ -215,8 +215,11 @@ export const NumericTextInput = React.forwardRef<
           ? val === undefined
             ? ''
             : String(val)
-          : format(val, { minimumFractionDigits: decimalMin }),
-      [decimalMin, format, noFormatting]
+          : format(val, {
+              minimumFractionDigits: decimalMin,
+              maximumFractionDigits: decimalLimit,
+            }),
+      [decimalMin, decimalLimit, format, noFormatting]
     );
     const [isDirty, setIsDirty] = useState(false);
     const [textValue, setTextValue] = useState(

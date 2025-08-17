@@ -87,6 +87,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'item', 'code'], default: '' },
             { path: ['item', 'code'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [
@@ -118,7 +119,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'batch'] },
             { path: ['batch'] },
           ]),
-          defaultHideOnMobile: true,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -134,7 +135,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'expiryDate'] },
             { path: ['expiryDate'] },
           ]),
-          defaultHideOnMobile: true,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -167,7 +168,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'item', 'unitName'] },
             { path: ['item', 'unitName'], default: '' },
           ]),
-          defaultHideOnMobile: true,
+        defaultHideOnMobile: true,
       },
     ],
     [

@@ -72,7 +72,7 @@ pub fn insert_goods_received_line(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePurchaseOrder,
+            resource: Resource::MutateGoodsReceived,
             store_id: Some(store_id.to_string()),
         },
     )?;

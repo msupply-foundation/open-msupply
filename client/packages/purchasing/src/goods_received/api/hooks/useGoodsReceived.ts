@@ -7,9 +7,12 @@ import {
   useParams,
   LIST_KEY,
   useQuery,
+  RecordPatch,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedGraphQL } from '../useGoodsReceivedGraphQL';
 import { GOODS_RECEIVED } from './keys';
+import { GoodsReceivedFragment } from '../operations.generated';
+import { parseUpdateInput } from './utils';
 
 export const useGoodsReceived = () => {
   const { goodsReceivedId } = useParams();
@@ -44,29 +47,27 @@ export const useGoodsReceived = () => {
     }
   };
 
+  // UPDATE
+  const {
+    mutateAsync: updateMutation,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate();
+
+  const update = async (input: Partial<GoodsReceivedFragment>) => {
+    if (!goodsReceivedId) return;
+    const result = await updateMutation({ id: goodsReceivedId, ...input });
+    return result;
+  };
+
   return {
     query: { data, isLoading, isError },
     create: { create, isCreating, createError },
+    update: { update, isUpdating, updateError },
   };
 };
 
-const useCreate = () => {
-  const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
-
-  const mutationFn = async (input: InsertGoodsReceivedInput) => {
-    return await goodsReceivedApi.insertGoodsReceived({
-      input,
-      storeId,
-    });
-  };
-
-  return useMutation({
-    mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
-  });
-};
-
-export const useGetById = (id?: string) => {
+const useGetById = (id?: string) => {
   const { goodsReceivedApi, storeId } = useGoodsReceivedGraphQL();
 
   const queryKey = [GOODS_RECEIVED, LIST_KEY, storeId];
@@ -91,5 +92,38 @@ export const useGetById = (id?: string) => {
     queryKey,
     queryFn,
     enabled: !!id,
+  });
+};
+
+const useCreate = () => {
+  const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
+
+  const mutationFn = async (input: InsertGoodsReceivedInput) => {
+    return await goodsReceivedApi.insertGoodsReceived({
+      input,
+      storeId,
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
+  });
+};
+
+const useUpdate = () => {
+  const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
+
+  const mutationFn = async (input: RecordPatch<GoodsReceivedFragment>) => {
+    return await goodsReceivedApi.updateGoodsReceived({
+      input: parseUpdateInput(input),
+      storeId,
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [GOODS_RECEIVED] }),
   });
 };

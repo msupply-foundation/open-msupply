@@ -155,8 +155,8 @@ impl Upsert for GoodsReceivedLineRow {
 }
 
 #[derive(Debug)]
-pub struct GoodsReceivedLineRowDelete(pub String);
-impl Delete for GoodsReceivedLineRowDelete {
+pub struct GoodsReceivedLineDelete(pub String);
+impl Delete for GoodsReceivedLineDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         GoodsReceivedLineRowRepository::new(con).delete(&self.0)?;
         Ok(None)
