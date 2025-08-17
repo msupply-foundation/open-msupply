@@ -167,15 +167,17 @@ mod test {
         .await;
 
         // POSITIVE REASON TESTS
+        // BEWARE: Very confusing - we pass in the "reduction amount" - so negative number
+        // means a positive adjustment!
 
         // Can't use positive reason for negative stock reduction
         assert_eq!(
-            check_reason_is_valid(&connection, Some(positive_reason().id), -10.0),
+            check_reason_is_valid(&connection, Some(positive_reason().id), 10.0),
             Ok(false)
         );
         // Succeeds with positive reason for positive stock reduction
         assert_eq!(
-            check_reason_is_valid(&connection, Some(positive_reason().id), 10.0),
+            check_reason_is_valid(&connection, Some(positive_reason().id), -10.0),
             Ok(true)
         );
 
@@ -183,22 +185,22 @@ mod test {
 
         // Can't use negative reason for positive stock reduction
         assert_eq!(
-            check_reason_is_valid(&connection, Some(negative_reason().id), 10.0),
+            check_reason_is_valid(&connection, Some(negative_reason().id), -10.0),
             Ok(false)
         );
         // Succeeds with negative reason for negative stock reduction
         assert_eq!(
-            check_reason_is_valid(&connection, Some(negative_reason().id), -10.0),
+            check_reason_is_valid(&connection, Some(negative_reason().id), 10.0),
             Ok(true)
         );
         // Succeeds with open vial wastage reason for negative stock reduction
         assert_eq!(
-            check_reason_is_valid(&connection, Some(open_vial_wastage_reason().id), -10.0),
+            check_reason_is_valid(&connection, Some(open_vial_wastage_reason().id), 10.0),
             Ok(true)
         );
         // Succeeds with closed vial wastage reason for negative stock reduction
         assert_eq!(
-            check_reason_is_valid(&connection, Some(closed_vial_wastage_reason().id), -10.0),
+            check_reason_is_valid(&connection, Some(closed_vial_wastage_reason().id), 10.0),
             Ok(true)
         );
     }
