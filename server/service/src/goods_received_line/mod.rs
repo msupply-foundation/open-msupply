@@ -31,12 +31,11 @@ pub trait GoodsReceivedLineServiceTrait: Sync + Send {
     fn get_goods_received_lines(
         &self,
         ctx: &ServiceContext,
-        store_id_option: Option<&str>,
         pagination: Option<PaginationOption>,
         filter: Option<GoodsReceivedLineFilter>,
         sort: Option<GoodsReceivedLineSort>,
     ) -> Result<ListResult<GoodsReceivedLine>, ListError> {
-        get_goods_received_lines(ctx, store_id_option, pagination, filter, sort)
+        get_goods_received_lines(ctx, pagination, filter, sort)
     }
 
     fn insert_goods_received_line(

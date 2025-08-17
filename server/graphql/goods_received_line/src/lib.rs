@@ -1,4 +1,3 @@
-mod goods_received_line_queries;
 use crate::mutations::{
     delete::{delete_goods_received_line, DeleteInput, DeleteResponse},
     insert::{
@@ -9,8 +8,13 @@ use crate::mutations::{
 use async_graphql::{Context, Object, Result};
 use graphql_core::pagination::PaginationInput;
 
+use async_graphql::{Context, Object, Result};
+use graphql_core::pagination::PaginationInput;
+
 pub mod mutations;
-use goods_received_line_queries::*;
+mod query;
+pub mod types;
+use query::*;
 
 #[derive(Default, Clone)]
 pub struct GoodsReceivedLineQueries;

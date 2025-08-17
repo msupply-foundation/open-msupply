@@ -3886,6 +3886,27 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "graphql_goods_received_line",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_goods_received_line"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
  "graphql_types",
  "repository",
  "serde",

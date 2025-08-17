@@ -1,7 +1,3 @@
-// use std::collections::HashMap;
-
-// use async_graphql::dataloader::*;
-
 use std::collections::HashMap;
 
 use actix_web::web::Data;
@@ -10,9 +6,6 @@ use repository::{EqualFilter, GoodsReceivedLine, GoodsReceivedLineFilter};
 use service::service_provider::ServiceProvider;
 
 use crate::standard_graphql_error::StandardGraphqlError;
-// use service::service_provider::ServiceProvider;
-
-// use crate::standard_graphql_error::StandardGraphqlError;
 
 pub struct GoodsReceivedLinesByGoodsReceivedIdLoader {
     pub service_provider: Data<ServiceProvider>,
@@ -33,7 +26,6 @@ impl Loader<String> for GoodsReceivedLinesByGoodsReceivedIdLoader {
             .goods_received_line_service
             .get_goods_received_lines(
                 &service_context,
-                None,
                 None,
                 Some(
                     GoodsReceivedLineFilter::new()
