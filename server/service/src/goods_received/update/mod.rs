@@ -46,8 +46,15 @@ pub fn update_goods_received(
             let goods_received = validate(&input, connection)?;
             let updated_goods_received = generate(&goods_received, input)?;
 
+            let goods_received_repository = GoodsReceivedRowRepository::new(connection);
+            goods_received_repository.upsert_one(&updated_goods_received)?;
+
+            let new_goods_received = goods_received_repository
+                .find_one_by_id(&updated_goods_received.id)?
+                .ok_or(UpdateGoodsReceivedError::UpdatedRecordNotFound)?;
+
             if goods_received.status == GoodsReceivedStatus::New
-                && updated_goods_received.status == GoodsReceivedStatus::Finalised
+                && new_goods_received.status == GoodsReceivedStatus::Finalised
             {
                 // create shipment on status change
                 create_goods_received_shipment(
@@ -59,12 +66,7 @@ pub fn update_goods_received(
                 .map_err(UpdateGoodsReceivedError::ErrorCreatingShipment)?;
             }
 
-            let goods_received_repository = GoodsReceivedRowRepository::new(connection);
-            goods_received_repository.upsert_one(&updated_goods_received)?;
-
-            goods_received_repository
-                .find_one_by_id(&updated_goods_received.id)?
-                .ok_or(UpdateGoodsReceivedError::UpdatedRecordNotFound)
+            Ok(new_goods_received)
         })
         .map_err(|error: TransactionError<UpdateGoodsReceivedError>| error.to_inner_error())?;
 
