@@ -3,10 +3,7 @@ use std::collections::BTreeMap;
 use crate::types::patient::GenderType;
 use async_graphql::*;
 use repository::StorageConnection;
-use service::preference::{
-    preferences::PreferenceProvider, PrefKey, Preference, PreferenceDescription, PreferenceType,
-    PreferenceValueType,
-};
+use service::preference::{preferences::PreferenceProvider, Preference, PreferenceDescription};
 
 pub struct PreferencesNode {
     pub connection: StorageConnection,
@@ -107,11 +104,11 @@ pub struct PreferenceDescriptionNode {
 #[Object]
 impl PreferenceDescriptionNode {
     pub async fn key(&self) -> PreferenceKey {
-        PreferenceKey::from_domain(&self.pref.key)
+        PreferenceKey::from(self.pref.key.clone())
     }
 
     pub async fn value_type(&self) -> PreferenceValueNodeType {
-        PreferenceValueNodeType::from_domain(&self.pref.value_type)
+        PreferenceValueNodeType::from(self.pref.value_type.clone())
     }
 
     /// WARNING: Type loss - holds any kind of pref value (for edit UI).
@@ -144,63 +141,18 @@ pub enum PreferenceKey {
     UseSimplifiedMobileUi,
 }
 
-impl PreferenceKey {
-    pub fn from_domain(pref_key: &PrefKey) -> Self {
-        match pref_key {
-            // Global preferences
-            PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
-            PrefKey::GenderOptions => PreferenceKey::GenderOptions,
-            PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
-            PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
-            PrefKey::SyncRecordsDisplayThreshold => PreferenceKey::SyncRecordsDisplayThreshold,
-            PrefKey::AuthorisePurchaseOrder => PreferenceKey::AuthorisePurchaseOrder,
-            PrefKey::PreventTransfersMonthsBeforeInitialisation => {
-                PreferenceKey::PreventTransfersMonthsBeforeInitialisation
-            }
-            PrefKey::AuthoriseGoodsReceived => PreferenceKey::AuthoriseGoodsReceived,
-            // Store preferences
-            PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
-            PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
-            PrefKey::OrderInPacks => PreferenceKey::OrderInPacks,
-            PrefKey::ShowPurchaseOrderAndGoodsReceived => {
-                PreferenceKey::ShowPurchaseOrderAndGoodsReceived
-            }
-            PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
-            PrefKey::UseSimplifiedMobileUi => PreferenceKey::UseSimplifiedMobileUi,
-        }
-    }
-}
-
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+#[graphql(remote = "service::preference::types::PreferenceType")]
 pub enum PreferenceNodeType {
     Global,
     Store,
 }
 
-impl PreferenceNodeType {
-    pub fn to_domain(self) -> PreferenceType {
-        match self {
-            PreferenceNodeType::Global => PreferenceType::Global,
-            PreferenceNodeType::Store => PreferenceType::Store,
-        }
-    }
-}
-
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+#[graphql(remote = "service::preference::types::PreferenceValueType")]
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
-}
-
-impl PreferenceValueNodeType {
-    pub fn from_domain(domain_type: &PreferenceValueType) -> Self {
-        match domain_type {
-            PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
-            PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
-            PreferenceValueType::MultiChoice => PreferenceValueNodeType::MultiChoice,
-            PreferenceValueType::CustomTranslations => PreferenceValueNodeType::CustomTranslations,
-        }
-    }
 }
