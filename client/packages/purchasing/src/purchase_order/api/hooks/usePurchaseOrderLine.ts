@@ -17,6 +17,7 @@ export type DraftPurchaseOrderLine = Omit<
 > & {
   purchaseOrderId: string;
   itemId: string;
+  discountPercentage: number;
 };
 
 export type DraftPurchaseOrderLineFromCSV = Omit<
@@ -34,8 +35,12 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   requestedNumberOfUnits: 0,
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
-  authorisedNumberOfUnits: null,
+  adjustedNumberOfUnits: null,
   lineNumber: 0,
+  pricePerUnitBeforeDiscount: 0,
+  pricePerUnitAfterDiscount: 0,
+  // This value not actually saved to DB
+  discountPercentage: 0,
 };
 
 export function usePurchaseOrderLine(id?: string) {
@@ -44,14 +49,41 @@ export function usePurchaseOrderLine(id?: string) {
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
 
+  // The discount percentage is calculated from the price fields, but we want to
+  // insert it into the draft so it can be independently manipulated (with the
+  // other fields updated accordingly -- see the column definitions for how that
+  // works)
+  const initialDiscountPercentage =
+    data?.nodes[0]?.pricePerUnitBeforeDiscount &&
+    data?.nodes[0]?.pricePerUnitAfterDiscount
+      ? ((data?.nodes[0]?.pricePerUnitBeforeDiscount -
+          data?.nodes[0]?.pricePerUnitAfterDiscount) /
+          (data?.nodes[0]?.pricePerUnitBeforeDiscount || 1)) *
+        100
+      : 0;
+
   const draft: DraftPurchaseOrderLine = data
     ? {
         ...defaultPurchaseOrderLine,
         ...data?.nodes[0],
         itemId: data?.nodes[0]?.item.id ?? '',
+        discountPercentage: initialDiscountPercentage,
         ...patch,
       }
     : { ...defaultPurchaseOrderLine, ...patch, itemId: '' };
+
+  // CREATE
+  const {
+    mutateAsync: createMutation,
+    isLoading: isCreating,
+    error: createError,
+  } = useCreate();
+
+  const create = async () => {
+    const result = await createMutation(draft);
+    resetDraft();
+    return result;
+  };
 
   // UPDATE
   const {
@@ -68,21 +100,23 @@ export function usePurchaseOrderLine(id?: string) {
       requestedPackSize: draft.requestedPackSize,
       requestedDeliveryDate: draft.requestedDeliveryDate,
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
+      adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
+      pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
+      pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
     };
     return await updatePurchaseOrderLine(input);
   };
 
-  // CREATE
+  // DELETE
   const {
-    mutateAsync: createMutation,
-    isLoading: isCreating,
-    error: createError,
-  } = useCreate();
+    mutateAsync: deleteMutation,
+    isLoading: isDeletingLines,
+    error: deleteError,
+  } = useDeleteLines();
 
-  const create = async () => {
-    const result = await createMutation(draft);
+  const deleteLines = async (ids: string[]) => {
+    await deleteMutation(ids);
     resetDraft();
-    return result;
   };
 
   // CREATE FROM CSV
@@ -92,6 +126,7 @@ export function usePurchaseOrderLine(id?: string) {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
+    delete: { deleteLines, isDeletingLines, deleteError },
     createFromCSV: { mutateAsync, invalidateQueries },
     draft,
     resetDraft,
@@ -238,4 +273,22 @@ export const useLineInsertFromCSV = () => {
     mutateAsync,
     invalidateQueries: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   };
+};
+
+const useDeleteLines = () => {
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
+
+  const mutationFn = async (ids: string[]) => {
+    return purchaseOrderApi.deletePurchaseOrderLines({
+      storeId,
+      ids,
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([PURCHASE_ORDER]);
+    },
+  });
 };

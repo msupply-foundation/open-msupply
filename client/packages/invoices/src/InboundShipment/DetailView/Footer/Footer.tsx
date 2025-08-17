@@ -16,8 +16,6 @@ import {
   ArrowRightIcon,
   useEditModal,
   useTableStore,
-  usePreference,
-  PreferenceKey,
   useNotification,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
@@ -82,7 +80,6 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
   const onDelete = useInbound.lines.deleteSelected();
   const onZeroQuantities = useInbound.lines.zeroQuantities();
   const selectedLines = useInbound.utils.selectedLines();
-  const { data: preference } = usePreference(PreferenceKey.UseCampaigns);
   const { mutateAsync } = useInbound.lines.save();
   const isDisabled = useIsInboundDisabled();
   const isManuallyCreated = !data?.linkedShipment?.id;
@@ -103,16 +100,12 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
       icon: <DeleteIcon />,
       onClick: onDelete,
     },
-    ...(preference?.useCampaigns
-      ? [
-          {
-            label: t('button.change-campaign-or-program'),
-            icon: <ArrowRightIcon />,
-            onClick: handleCampaignClick,
-            shouldShrink: false,
-          },
-        ]
-      : []),
+    {
+      label: t('button.change-campaign-or-program'),
+      icon: <ArrowRightIcon />,
+      onClick: handleCampaignClick,
+      shouldShrink: false,
+    },
     {
       label: t('button.zero-line-quantity'),
       icon: <RewindIcon />,

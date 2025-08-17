@@ -5,7 +5,6 @@ mod tests;
 
 mod logger;
 
-use graphql_goods_received_line::{GoodsReceivedLineMutations, GoodsReceivedLineQueries};
 use logger::{GraphQLRequestLogger, QueryLogInfo};
 
 use std::sync::Mutex;
@@ -42,6 +41,7 @@ use graphql_general::{
     InitialisationMutations, InitialisationQueries,
 };
 use graphql_goods_received::{GoodsReceivedMutations, GoodsReceivedQueries};
+use graphql_goods_received_line::{GoodsReceivedLineMutations, GoodsReceivedLineQueries};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};

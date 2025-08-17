@@ -1,16 +1,15 @@
+use crate::sync::translations::{
+    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
+};
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow,
+    PurchaseOrderLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, zero_date_as_option, zero_f64_as_none,
-};
-
-use crate::sync::translations::{
-    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -116,7 +115,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             item_name,
             requested_number_of_units: quan_original_order,
             requested_pack_size: packsize_ordered,
-            authorised_number_of_units: quan_adjusted_order,
+            adjusted_number_of_units: quan_adjusted_order,
             received_number_of_units: quan_rec_to_date,
             requested_delivery_date: delivery_date_requested,
             expected_delivery_date: delivery_date_expected,
@@ -127,6 +126,16 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             comment,
         };
         Ok(PullTranslateResult::upsert(result))
+    }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(PurchaseOrderLineDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 
     fn try_translate_to_upsert_sync_record(
@@ -145,7 +154,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             expected_delivery_date,
             requested_number_of_units,
             requested_pack_size,
-            authorised_number_of_units,
+            adjusted_number_of_units,
             received_number_of_units,
             stock_on_hand_in_units,
             supplier_item_code,
@@ -166,7 +175,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             snapshot_quantity: stock_on_hand_in_units,
             packsize_ordered: requested_pack_size,
             quan_original_order: requested_number_of_units,
-            quan_adjusted_order: authorised_number_of_units,
+            quan_adjusted_order: adjusted_number_of_units,
             quan_rec_to_date: received_number_of_units,
             delivery_date_requested: requested_delivery_date,
             delivery_date_expected: expected_delivery_date,
@@ -181,6 +190,14 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             self.table_name(),
             serde_json::to_value(legacy_row)?,
         ))
+    }
+
+    fn try_translate_to_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -210,6 +227,15 @@ mod tests {
             println!("Translating record: {:?}", record.sync_buffer_row.data);
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+
+        for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

@@ -58,7 +58,7 @@ const useGetList = (enabled?: boolean, queryParams?: ListParams) => {
   };
 
   const query = useQuery({
-    queryKey,
+    queryKey: [queryKey, enabled],
     queryFn,
     enabled,
   });
