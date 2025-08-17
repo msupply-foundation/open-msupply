@@ -3858,6 +3858,8 @@ export type InsertPurchaseOrderLineErrorInterface = {
 
 export type InsertPurchaseOrderLineFromCsvInput = {
   itemCode: Scalars['String']['input'];
+  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -3867,6 +3869,8 @@ export type InsertPurchaseOrderLineInput = {
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
