@@ -77,6 +77,7 @@ impl Migration for V2_10_00 {
             Box::new(remove_use_campaigns_pref::Migrate),
             Box::new(add_activity_log_goods_received::Migrate),
             Box::new(add_purchase_order_activity_logs::Migrate),
+            Box::new(add_goods_received_permission_enum_values::Migrate),
             Box::new(add_goods_received_report_context::Migrate),
             Box::new(add_goods_received_id_to_invoice::Migrate),
         ]
