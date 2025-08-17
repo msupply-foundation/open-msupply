@@ -6548,7 +6548,7 @@ export enum PreferenceKey {
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
   ShowContactTracing = 'showContactTracing',
-  ShowPurchaseOrderAndGoodsReceived = 'showPurchaseOrderAndGoodsReceived',
+  ShowPurchaseOrdersAndGoodsReceived = 'showPurchaseOrdersAndGoodsReceived',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
@@ -6588,7 +6588,7 @@ export type PreferencesNode = {
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
   showContactTracing: Scalars['Boolean']['output'];
-  showPurchaseOrderAndGoodsReceived: Scalars['Boolean']['output'];
+  showPurchaseOrdersAndGoodsReceived: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
@@ -10700,7 +10700,7 @@ export type UpsertPreferencesInput = {
     Scalars['Int']['input']
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  showPurchaseOrderAndGoodsReceived?: InputMaybe<Array<BoolStorePrefInput>>;
+  showPurchaseOrdersAndGoodsReceived?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
