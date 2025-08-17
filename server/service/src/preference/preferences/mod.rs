@@ -24,21 +24,24 @@ pub mod prevent_transfers_months_before_initialisation;
 pub use prevent_transfers_months_before_initialisation::*;
 pub mod authorise_goods_received;
 pub use authorise_goods_received::*;
+pub mod show_purchase_order_and_goods_received;
+pub use show_purchase_order_and_goods_received::*;
 
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
-    pub gender_options: GenderOptions,
-    pub show_contact_tracing: ShowContactTracing,
-    pub custom_translations: CustomTranslations,
-    pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
-    pub authorise_purchase_order: AuthorisePurchaseOrder,
-    pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
     pub authorise_goods_received: AuthoriseGoodsReceived,
+    pub authorise_purchase_order: AuthorisePurchaseOrder,
+    pub custom_translations: CustomTranslations,
+    pub gender_options: GenderOptions,
+    pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
+    pub show_contact_tracing: ShowContactTracing,
+    pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub order_in_packs: OrderInPacks,
+    pub show_purchase_order_and_goods_received: ShowPurchaseOrderAndGoodsReceived,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
 }
@@ -47,17 +50,18 @@ pub fn get_preference_provider() -> PreferenceProvider {
     PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
+        authorise_goods_received: AuthoriseGoodsReceived,
+        authorise_purchase_order: AuthorisePurchaseOrder,
+        custom_translations: CustomTranslations,
         gender_options: GenderOptions,
         show_contact_tracing: ShowContactTracing,
-        custom_translations: CustomTranslations,
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
-        authorise_purchase_order: AuthorisePurchaseOrder,
         prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
-        authorise_goods_received: AuthoriseGoodsReceived,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         order_in_packs: OrderInPacks,
+        show_purchase_order_and_goods_received: ShowPurchaseOrderAndGoodsReceived,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
     }
