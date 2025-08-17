@@ -17,8 +17,6 @@ use service::{
 use crate::mutations::errors::{
     CannotAdjustRequestedQuantity, PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound,
     UpdatedLineDoesNotExist,
-    CannotAdjustRequestedQuantity, PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound,
-    UpdatedLineDoesNotExist,
 };
 
 #[derive(InputObject)]
@@ -29,11 +27,8 @@ pub struct UpdateInput {
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
     pub adjusted_number_of_units: Option<f64>,
-    pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
-    pub price_per_unit_before_discount: Option<f64>,
-    pub price_per_unit_after_discount: Option<f64>,
     pub price_per_unit_before_discount: Option<f64>,
     pub price_per_unit_after_discount: Option<f64>,
 }
@@ -48,8 +43,6 @@ impl UpdateInput {
             adjusted_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
             price_per_unit_before_discount,
             price_per_unit_after_discount,
         } = self;
@@ -75,7 +68,6 @@ pub enum PurchaseOrderLineError {
     UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
     PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
     CannotEditPurchaseOrder(CannotEditPurchaseOrder),
-    CannotAdjustRequestedQuantity(CannotAdjustRequestedQuantity),
     CannotAdjustRequestedQuantity(CannotAdjustRequestedQuantity),
 }
 
