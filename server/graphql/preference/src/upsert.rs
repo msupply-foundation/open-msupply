@@ -17,18 +17,19 @@ pub struct BoolStorePrefInput {
 pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub gender_options: Option<Vec<GenderType>>,
-    pub show_contact_tracing: Option<bool>,
-    pub custom_translations: Option<BTreeMap<String, String>>,
-    pub sync_records_display_threshold: Option<i32>,
-    pub authorise_purchase_order: Option<bool>,
-    pub prevent_transfers_months_before_initialisation: Option<i32>,
-
     pub authorise_goods_received: Option<bool>,
+    pub authorise_purchase_order: Option<bool>,
+    pub custom_translations: Option<BTreeMap<String, String>>,
+    pub gender_options: Option<Vec<GenderType>>,
+    pub prevent_transfers_months_before_initialisation: Option<i32>,
+    pub show_contact_tracing: Option<bool>,
+    pub sync_records_display_threshold: Option<i32>,
+
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
     pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
+    pub show_purchase_order_and_goods_received: Option<Vec<BoolStorePrefInput>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
 }
@@ -60,17 +61,18 @@ impl UpsertPreferencesInput {
         let UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
+            authorise_goods_received,
+            authorise_purchase_order,
+            custom_translations,
+            prevent_transfers_months_before_initialisation,
             gender_options,
             show_contact_tracing,
-            custom_translations,
             sync_records_display_threshold,
-            authorise_purchase_order,
-            prevent_transfers_months_before_initialisation,
-            authorise_goods_received,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
+            show_purchase_order_and_goods_received,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
         } = self;
@@ -78,16 +80,16 @@ impl UpsertPreferencesInput {
         UpsertPreferences {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
+            authorise_goods_received: *authorise_goods_received,
+            authorise_purchase_order: *authorise_purchase_order,
+            custom_translations: custom_translations.clone(),
             gender_options: gender_options
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            show_contact_tracing: *show_contact_tracing,
-            custom_translations: custom_translations.clone(),
-            sync_records_display_threshold: *sync_records_display_threshold,
-            authorise_purchase_order: *authorise_purchase_order,
             prevent_transfers_months_before_initialisation:
                 *prevent_transfers_months_before_initialisation,
-            authorise_goods_received: *authorise_goods_received,
+            show_contact_tracing: *show_contact_tracing,
+            sync_records_display_threshold: *sync_records_display_threshold,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
@@ -96,6 +98,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             order_in_packs: order_in_packs
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            show_purchase_order_and_goods_received: show_purchase_order_and_goods_received
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry

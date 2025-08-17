@@ -21,26 +21,22 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
-    pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
-        let domain_genders = self.load_preference(&self.preferences.gender_options)?;
-        let genders = domain_genders.iter().map(GenderType::from_domain).collect();
-        Ok(genders)
+    pub async fn authorise_goods_received(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_goods_received)
     }
 
-    pub async fn show_contact_tracing(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.show_contact_tracing)
+    pub async fn authorise_purchase_order(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_purchase_order)
     }
 
     pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
         self.load_preference(&self.preferences.custom_translations)
     }
 
-    pub async fn sync_records_display_threshold(&self) -> Result<i32> {
-        self.load_preference(&self.preferences.sync_records_display_threshold)
-    }
-
-    pub async fn authorise_purchase_order(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.authorise_purchase_order)
+    pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
+        let domain_genders = self.load_preference(&self.preferences.gender_options)?;
+        let genders = domain_genders.iter().map(GenderType::from_domain).collect();
+        Ok(genders)
     }
 
     pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
@@ -51,8 +47,12 @@ impl PreferencesNode {
         )
     }
 
-    pub async fn authorise_goods_received(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.authorise_goods_received)
+    pub async fn show_contact_tracing(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_contact_tracing)
+    }
+
+    pub async fn sync_records_display_threshold(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
     // Store preferences
@@ -66,6 +66,10 @@ impl PreferencesNode {
 
     pub async fn order_in_packs(&self) -> Result<bool> {
         self.load_preference(&self.preferences.order_in_packs)
+    }
+
+    pub async fn show_purchase_order_and_goods_received(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_purchase_order_and_goods_received)
     }
 
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
@@ -120,20 +124,22 @@ impl PreferenceDescriptionNode {
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
 #[graphql(rename_items = "camelCase")]
 // These keys (once camelCased) should match fields of PreferencesNode
+#[graphql(remote = "service::preference::types::PrefKey")]
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    GenderOptions,
-    ShowContactTracing,
-    CustomTranslations,
-    SyncRecordsDisplayThreshold,
-    AuthorisePurchaseOrder,
-    PreventTransfersMonthsBeforeInitialisation,
     AuthoriseGoodsReceived,
+    AuthorisePurchaseOrder,
+    CustomTranslations,
+    GenderOptions,
+    PreventTransfersMonthsBeforeInitialisation,
+    ShowContactTracing,
+    SyncRecordsDisplayThreshold,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
+    ShowPurchaseOrderAndGoodsReceived,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
 }
@@ -156,6 +162,9 @@ impl PreferenceKey {
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
             PrefKey::OrderInPacks => PreferenceKey::OrderInPacks,
+            PrefKey::ShowPurchaseOrderAndGoodsReceived => {
+                PreferenceKey::ShowPurchaseOrderAndGoodsReceived
+            }
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
             PrefKey::UseSimplifiedMobileUi => PreferenceKey::UseSimplifiedMobileUi,
         }
