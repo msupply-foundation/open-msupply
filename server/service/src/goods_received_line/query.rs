@@ -35,7 +35,6 @@ pub fn get_goods_received_line(
 
     Ok(repository.query_by_filter(filter)?.pop())
 }
-
 // goods received line query tests
 #[cfg(test)]
 mod test {
@@ -52,7 +51,10 @@ mod test {
     async fn goods_received_line_service_queries() {
         let (_, connection, connection_manager, _) = setup_all(
             "goods_received_line_service_queries",
-            MockDataInserts::none().stores().purchase_order(),
+            MockDataInserts::none()
+                .stores()
+                .purchase_order()
+                .purchase_order_line(),
         )
         .await;
 
