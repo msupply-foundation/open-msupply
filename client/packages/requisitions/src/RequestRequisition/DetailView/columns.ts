@@ -29,6 +29,9 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
   const { store } = useAuthContext();
   const { getError } = useRequestRequisitionLineErrorContext();
   const { plugins } = usePluginProvider();
+  const showExtraColumns =
+    programName &&
+    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders;
 
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
     GenericColumnKey.Selection,
@@ -39,6 +42,7 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
         width: 130,
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,
+        isSticky: true,
       },
     ],
     [
@@ -146,10 +150,7 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
     }
   );
 
-  if (
-    programName &&
-    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders
-  ) {
+  if (showExtraColumns) {
     columnDefinitions.push(
       // TODO: Global pref to show/hide the next columns
       {
