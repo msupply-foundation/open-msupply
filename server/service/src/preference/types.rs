@@ -9,7 +9,7 @@ use super::{
     upsert_helpers::{upsert_global, upsert_store},
 };
 
-#[derive(Display, EnumString)]
+#[derive(Display, EnumString, Clone)]
 #[strum(serialize_all = "snake_case")]
 pub enum PrefKey {
     // Global preferences
@@ -39,6 +39,7 @@ pub enum PreferenceType {
     // Machine,
 }
 
+#[derive(Clone)]
 pub enum PreferenceValueType {
     Boolean,
     Integer,
