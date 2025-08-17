@@ -82,6 +82,11 @@ export const CustomTranslationsModal = ({
       )
       .forEach(key => localStorage.removeItem(key));
 
+    // Clear from i18next cache (specifically for when we delete a translation)
+    for (const lang of i18n.languages) {
+      i18n.removeResourceBundle(lang, CUSTOM_TRANSLATIONS_NAMESPACE);
+    }
+
     // Then reload from backend
     // Note - this is still requires the components in question to
     // re-render to pick up the new translations
