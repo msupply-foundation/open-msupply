@@ -13,8 +13,6 @@ export const createDraftPurchaseOrderLine = (
     requestedPackSize: 0,
     requestedDeliveryDate: null,
     expectedDeliveryDate: null,
-    requestedDeliveryDate: null,
-    expectedDeliveryDate: null,
     requestedNumberOfUnits: 0,
     adjustedNumberOfUnits: null,
     pricePerUnitBeforeDiscount: 0,
