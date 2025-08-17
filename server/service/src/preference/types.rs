@@ -26,7 +26,7 @@ pub enum PrefKey {
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
-    ShowPurchaseOrderAndGoodsReceived,
+    ShowPurchaseOrdersAndGoodsReceived,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
 }

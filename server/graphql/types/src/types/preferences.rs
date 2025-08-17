@@ -65,8 +65,8 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.order_in_packs)
     }
 
-    pub async fn show_purchase_order_and_goods_received(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.show_purchase_order_and_goods_received)
+    pub async fn show_purchase_orders_and_goods_received(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_purchase_orders_and_goods_received)
     }
 
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
@@ -136,7 +136,7 @@ pub enum PreferenceKey {
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
-    ShowPurchaseOrderAndGoodsReceived,
+    ShowPurchaseOrdersAndGoodsReceived,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
 }
