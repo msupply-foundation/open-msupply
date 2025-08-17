@@ -14,20 +14,21 @@ use super::{
 pub enum PrefKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    GenderOptions,
-    ShowContactTracing,
-    CustomTranslations,
-    SyncRecordsDisplayThreshold,
     AuthorisePurchaseOrder,
-
     AuthoriseGoodsReceived,
+    CustomTranslations,
+    GenderOptions,
+    PreventTransfersMonthsBeforeInitialisation,
+    ShowContactTracing,
+    SyncRecordsDisplayThreshold,
+
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
+    ShowPurchaseOrderAndGoodsReceived,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
-    PreventTransfersMonthsBeforeInitialisation,
 }
 
 #[derive(Clone, Debug, PartialEq)]
