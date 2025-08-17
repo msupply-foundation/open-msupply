@@ -9,6 +9,9 @@ import {
   AppNavLink,
   AppNavSection,
   UserStoreNodeFragment,
+  useIsCentralServerApi,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -23,6 +26,13 @@ export const ReplenishmentNav = ({
   );
   const t = useTranslation();
   const rnrVisible = store?.preferences.omProgramModule;
+  const isCentralServer = useIsCentralServerApi();
+  const {
+    data: { showPurchaseOrdersAndGoodsReceived } = {
+      showPurchaseOrdersAndGoodsReceived: false,
+    },
+  } = usePreference(PreferenceKey.ShowPurchaseOrdersAndGoodsReceived);
+  const enablePOAndGR = isCentralServer && showPurchaseOrdersAndGoodsReceived;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Replenishment}>
@@ -36,6 +46,7 @@ export const ReplenishmentNav = ({
       <Collapse in={isActive}>
         <List>
           <AppNavLink
+            visible={enablePOAndGR}
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.PurchaseOrder)
@@ -43,6 +54,7 @@ export const ReplenishmentNav = ({
             text={t('purchase-order')}
           />
           <AppNavLink
+            visible={enablePOAndGR}
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.GoodsReceived)
