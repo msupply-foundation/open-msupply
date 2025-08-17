@@ -1,15 +1,14 @@
-use crate::db_diesel::item_row::item;
-use crate::db_diesel::purchase_order_row::purchase_order;
-use crate::{db_diesel::item_link_row::item_link, Upsert};
-
-use crate::repository_error::RepositoryError;
-use crate::StorageConnection;
+use crate::{
+    db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
+    Delete, Upsert,
+};
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    StorageConnection,
+};
+use chrono::NaiveDate;
 use diesel::{dsl::max, prelude::*};
 use serde::{Deserialize, Serialize};
-
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-
-use chrono::NaiveDate;
 
 table! {
     purchase_order_line (id) {
@@ -175,6 +174,22 @@ impl Upsert for PurchaseOrderLineRow {
         assert_eq!(
             PurchaseOrderLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PurchaseOrderLineDelete(pub String);
+impl Delete for PurchaseOrderLineDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = PurchaseOrderLineRowRepository::new(con).delete(&self.0)?;
+        Ok(change_log_id)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PurchaseOrderLineRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
         )
     }
 }

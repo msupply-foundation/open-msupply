@@ -219,7 +219,7 @@ export const NumericTextInput = React.forwardRef<
               minimumFractionDigits: decimalMin,
               maximumFractionDigits: decimalLimit,
             }),
-      [decimalMin, format, noFormatting]
+      [decimalMin, decimalLimit, format, noFormatting]
     );
     const [isDirty, setIsDirty] = useState(false);
     const [textValue, setTextValue] = useState(

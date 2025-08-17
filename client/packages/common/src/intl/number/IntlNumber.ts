@@ -28,9 +28,23 @@ export const useFormatNumber = () => {
       if (value === undefined || value === null) return '';
       const locale = options?.locale ?? currentLanguage;
 
+      const {
+        maximumFractionDigits = MAX_FRACTION_DIGITS,
+        minimumFractionDigits,
+        ...otherOptions
+      } = options ?? {};
+
       return intlNumberFormat(locale, {
-        maximumFractionDigits: MAX_FRACTION_DIGITS,
-        ...options,
+        ...otherOptions,
+        minimumFractionDigits,
+        maximumFractionDigits:
+          // If the maximumFractionDigits is less than the
+          // minimumFractionDigits, the browser throws an error, so we need
+          // raise the maximum to match.
+          minimumFractionDigits !== undefined &&
+          maximumFractionDigits < minimumFractionDigits
+            ? minimumFractionDigits
+            : (maximumFractionDigits ?? MAX_FRACTION_DIGITS),
       }).format(value);
     },
     round: (value?: number, dp?: number): string => {

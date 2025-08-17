@@ -1,18 +1,13 @@
 use super::{InsertGoodsReceivedError, InsertGoodsReceivedInput};
-use repository::{
-    goods_received_row::GoodsReceivedRowRepository, PurchaseOrderRowRepository, StorageConnection,
-};
+use crate::goods_received::common::check_goods_received_exists;
+use repository::{PurchaseOrderRowRepository, StorageConnection};
 
 pub fn validate(
     input: &InsertGoodsReceivedInput,
     _store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(), InsertGoodsReceivedError> {
-    // Check if goods received with this ID already exists
-    if GoodsReceivedRowRepository::new(connection)
-        .find_one_by_id(&input.id)?
-        .is_some()
-    {
+    if check_goods_received_exists(&input.id, connection)?.is_some() {
         return Err(InsertGoodsReceivedError::GoodsReceivedAlreadyExists);
     }
 
