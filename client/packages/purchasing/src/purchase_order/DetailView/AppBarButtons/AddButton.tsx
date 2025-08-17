@@ -2,17 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { SplitButton, SplitButtonOption } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
-import { useNotification, useToggle } from '@common/hooks';
+import { useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
 import { PurchaseOrderFragment } from '../../api';
-import { PurchaseOrderNodeStatus, UserPermission } from '@common/types';
+import { UserPermission } from '@common/types';
 import { AddDocumentModal } from './AddDocumentModal';
 import { PurchaseOrderLineImportModal } from '../ImportLines/PurchaseOrderLineImportModal';
 import {
   NonEmptyArray,
   useCallbackWithPermission,
 } from '@openmsupply-client/common/src';
-import { isPurchaseOrderEditable } from '@openmsupply-client/purchasing/src/utils';
 
 interface AddButtonProps {
   purchaseOrder: PurchaseOrderFragment | undefined;
@@ -29,7 +28,6 @@ export const AddButton = ({
   disableAddFromMasterListButton,
 }: AddButtonProps) => {
   const t = useTranslation();
-  const { info } = useNotification();
   const masterListModalController = useToggle();
   const uploadDocumentController = useToggle();
   const importModalController = useToggle();
@@ -50,7 +48,7 @@ export const AddButton = ({
       {
         value: 'add-from-master-list',
         label: t('button.add-from-master-list'),
-        isDisabled: disable,
+        isDisabled: disableAddFromMasterListButton,
       },
       {
         value: 'import-from-csv',
@@ -79,21 +77,17 @@ export const AddButton = ({
         onAddItem();
         break;
       case 'add-from-master-list':
-        isPurchaseOrderEditable(
-          purchaseOrder?.status ?? PurchaseOrderNodeStatus.New
-        )
-          ? masterListModalController.toggleOn()
-          : info(t('error.cannot-add-from-masterlist'))();
+        masterListModalController.toggleOn();
+        break;
+      case 'upload-document':
+        uploadDocumentController.toggleOn();
         break;
       case 'upload-document':
         uploadDocumentController.toggleOn();
         break;
       case 'import-from-csv':
-        isPurchaseOrderEditable(
-          purchaseOrder?.status ?? PurchaseOrderNodeStatus.New
-        )
-          ? handleUploadPurchaseOrderLines()
-          : info(t('error.cannot-import'))();
+        handleUploadPurchaseOrderLines();
+        break;
     }
   };
 
