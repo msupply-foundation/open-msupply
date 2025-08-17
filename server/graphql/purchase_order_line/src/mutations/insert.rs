@@ -26,6 +26,8 @@ pub struct InsertInput {
     pub requested_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub price_per_unit_before_discount: Option<f64>,
+    pub price_per_unit_after_discount: Option<f64>,
 }
 
 impl InsertInput {
@@ -38,6 +40,8 @@ impl InsertInput {
             requested_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
+            price_per_unit_after_discount,
+            price_per_unit_before_discount,
         } = self;
 
         ServiceInput {
@@ -48,6 +52,8 @@ impl InsertInput {
             requested_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
+            price_per_unit_after_discount,
+            price_per_unit_before_discount,
         }
     }
 }
