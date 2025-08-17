@@ -7,7 +7,6 @@ import {
   useQuery,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
 import { PurchaseOrderLineFragment } from '../operations.generated';

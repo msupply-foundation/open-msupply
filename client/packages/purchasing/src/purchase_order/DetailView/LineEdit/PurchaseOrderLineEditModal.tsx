@@ -113,10 +113,9 @@ export const PurchaseOrderLineEditModal = ({
         </Box>
       ) : (
         <PurchaseOrderLineEdit
-          currentLine={draft}
+          draft={draft}
           isUpdateMode={isUpdateMode}
           onChangeItem={onChangeItem}
-          draft={draft}
           updatePatch={updatePatch}
           status={purchaseOrder.status}
         />

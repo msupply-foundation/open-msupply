@@ -18,22 +18,20 @@ import { usePurchaseOrderLineEditColumns } from './columns';
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
-  currentLine?: DraftPurchaseOrderLine;
-  onChangeItem: (item: ItemStockOnHandFragment) => void;
   draft?: DraftPurchaseOrderLine | null;
+  onChangeItem: (item: ItemStockOnHandFragment) => void;
   updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
   status: PurchaseOrderNodeStatus;
 }
 
 export const PurchaseOrderLineEdit = ({
   isUpdateMode,
-  currentLine,
   onChangeItem,
   draft,
   updatePatch,
   status,
 }: PurchaseOrderLineEditProps) => {
-  const showContent = !!draft && !!currentLine;
+  const showContent = !!draft;
 
   const lines: DraftPurchaseOrderLine[] = [];
   if (draft) {
@@ -57,14 +55,14 @@ export const PurchaseOrderLineEdit = ({
     >
       <Grid size={12} sx={{ mb: 2 }}>
         <StockItemSearchInput
-          autoFocus={!currentLine}
-          openOnFocus={!currentLine}
+          autoFocus={!draft}
+          openOnFocus={!draft}
           disabled={isUpdateMode}
-          currentItemId={currentLine?.itemId}
+          currentItemId={draft?.itemId}
           onChange={newItem => newItem && onChangeItem(newItem)}
         />
       </Grid>
-      {showContent && currentLine && (
+      {showContent && draft && (
         <Box style={{ width: '100%' }}>
           <Divider margin={10} />
           <Box
