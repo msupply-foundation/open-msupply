@@ -16,21 +16,18 @@
  */
 
 import { useAppTheme, useMediaQuery, Breakpoints } from '@common/styles';
-import { useAuthContext, usePreference } from '../../authentication';
-import { PreferenceKey } from '@common/types';
+import { useAuthContext, usePreferences } from '../../authentication';
 
 export const useSimplifiedTabletUI = () => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
 
-  const { data } = usePreference(PreferenceKey.UseSimplifiedMobileUi);
-
-  const { store } = useAuthContext();
-
   // Defaulting these values to `true` -- if the value hasn't loaded yet, it's
   // better that the UI shows too simplified than too crowded
+  const { useSimplifiedMobileUi = true } = usePreferences();
+
+  const { store } = useAuthContext();
   const packToOne = store?.preferences?.packToOne ?? true;
-  const useSimplifiedMobileUi = data?.useSimplifiedMobileUi ?? true;
 
   // Uncomment to debug individual values
   // console.log('useSimplifiedMobileUi', useSimplifiedMobileUi);

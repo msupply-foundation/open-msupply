@@ -15,8 +15,7 @@ import {
   usePluginEvents,
   useConfirmOnLeaving,
   useSimplifiedTabletUI,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -97,9 +96,7 @@ export const StockLineDetailView: React.FC = () => {
   );
 
   const isVaccine = draft?.item?.isVaccine ?? false;
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVvmStatusForStock
-  );
+  const { manageVvmStatusForStock } = usePreferences();
 
   const tabs = [
     {
@@ -113,7 +110,7 @@ export const StockLineDetailView: React.FC = () => {
       ),
       value: t('label.details'),
     },
-    ...(isVaccine && preferences?.manageVvmStatusForStock
+    ...(isVaccine && manageVvmStatusForStock
       ? [
           {
             Component: <StatusHistory draft={draft} isLoading={isLoading} />,

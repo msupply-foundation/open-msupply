@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_activity_log_goods_received;
 mod add_activity_log_volume_per_pack_changed;
 mod add_campaign_and_program_to_stocktake_line;
 mod add_closed_vial_wastage_reason_option_type;
@@ -12,6 +13,7 @@ mod add_goods_received_table;
 mod add_item_store_join;
 mod add_more_dates_to_purchase_order;
 mod add_program_id_to_stock_and_invoice_lines;
+mod add_purchase_order_activity_logs;
 mod add_purchase_order_permission_enum_values;
 mod add_purchase_order_report_context;
 mod add_purchase_order_tables;
@@ -69,6 +71,8 @@ impl Migration for V2_10_00 {
             Box::new(add_comment_to_purchase_order_line::Migrate),
             Box::new(add_goods_received_permission_enum_values::Migrate),
             Box::new(remove_use_campaigns_pref::Migrate),
+            Box::new(add_activity_log_goods_received::Migrate),
+            Box::new(add_purchase_order_activity_logs::Migrate),
         ]
     }
 }

@@ -44,7 +44,6 @@ interface StocktakeLineEditProps {
   onClose: () => void;
   isOpen: boolean;
   isInitialStocktake: boolean;
-  enableDonorTracking: boolean;
 }
 
 export const StocktakeLineEdit = ({
@@ -53,7 +52,6 @@ export const StocktakeLineEdit = ({
   onClose,
   isOpen,
   isInitialStocktake,
-  enableDonorTracking,
 }: StocktakeLineEditProps) => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
@@ -196,7 +194,6 @@ export const StocktakeLineEdit = ({
                 isDisabled={isDisabled}
                 batches={reversedDraftLines}
                 update={update}
-                trackStockDonor={enableDonorTracking}
                 restrictedToLocationTypeId={
                   currentItem?.restrictedLocationTypeId
                 }

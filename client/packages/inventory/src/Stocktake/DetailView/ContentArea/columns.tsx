@@ -17,10 +17,9 @@ import {
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
   getCommentPopoverColumn,
-  usePreference,
-  PreferenceKey,
   getDosesPerUnitColumn,
   getDifferenceColumn,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { ReasonOptionRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -85,10 +84,7 @@ export const useStocktakeColumns = ({
 >[] => {
   const t = useTranslation();
   const { getError } = useStocktakeLineErrorContext();
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
+  const preferences = usePreferences();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns: ColumnDescription<
@@ -186,7 +182,7 @@ export const useStocktakeColumns = ({
     ],
   ];
 
-  if (preferences?.manageVaccinesInDoses) {
+  if (preferences.manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -245,7 +241,7 @@ export const useStocktakeColumns = ({
         }
       },
     },
-    getDifferenceColumn(t, preferences?.manageVaccinesInDoses ?? false),
+    getDifferenceColumn(t, preferences.manageVaccinesInDoses ?? false),
     {
       key: 'reasonOption',
       label: 'label.reason',
@@ -253,7 +249,7 @@ export const useStocktakeColumns = ({
       sortable: true,
     }
   );
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (preferences.allowTrackingOfStockByDonor) {
     columns.push({
       key: 'donorId',
       label: 'label.donor',
