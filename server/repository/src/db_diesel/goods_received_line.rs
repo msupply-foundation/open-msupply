@@ -28,6 +28,7 @@ pub struct GoodsReceivedLine {
 pub struct GoodsReceivedLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub goods_received_id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 pub enum GoodsReceivedLineSortField {
@@ -130,10 +131,12 @@ fn create_filtered_query(filter: Option<GoodsReceivedLineFilter>) -> BoxedGoodsR
         let GoodsReceivedLineFilter {
             goods_received_id,
             id,
+            store_id,
         } = f;
 
         apply_equal_filter!(query, goods_received_id, goods_received::id);
         apply_equal_filter!(query, id, goods_received_line::id);
+        apply_equal_filter!(query, store_id, goods_received::store_id);
     }
 
     query
@@ -152,10 +155,14 @@ impl GoodsReceivedLineFilter {
         self.goods_received_id = Some(filter);
         self
     }
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
 }
 
 fn to_domain(
-    (goods_received_line_row, (_, item_row), _): GoodsReceivedLineJoin,
+    (goods_received_line_row, (_item_link_row, item_row), _goods_received_row): GoodsReceivedLineJoin,
 ) -> GoodsReceivedLine {
     GoodsReceivedLine {
         goods_received_line_row,
