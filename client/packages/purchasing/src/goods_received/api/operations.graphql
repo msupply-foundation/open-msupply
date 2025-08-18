@@ -5,6 +5,7 @@ fragment GoodsReceivedRow on GoodsReceivedNode {
   comment
   createdDatetime
   receivedDatetime
+  finalisedDatetime
   purchaseOrderNumber
   supplierReference
   supplier {
@@ -34,6 +35,7 @@ fragment GoodsReceived on GoodsReceivedNode {
   createdBy
   createdDatetime
   number
+  finalisedDatetime
   purchaseOrderNumber
   receivedDatetime
   status
@@ -90,6 +92,25 @@ mutation insertGoodsReceived(
   $storeId: String!
 ) {
   insertGoodsReceived(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation deleteGoodsReceived($id: String!, $storeId: String!) {
+  deleteGoodsReceived(id: $id, storeId: $storeId) {
+    ... on DeleteResponse {
+      id
+    }
+  }
+}
+
+mutation updateGoodsReceived(
+  $input: UpdateGoodsReceivedInput!
+  $storeId: String!
+) {
+  updateGoodsReceived(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
     }

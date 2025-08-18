@@ -3,6 +3,7 @@ mod update {
     use repository::{
         mock::{mock_item_a, mock_item_d, mock_store_a, MockDataInserts},
         test_db::setup_all,
+        ActivityLogRowRepository, ActivityLogType,
     };
 
     use crate::{
@@ -80,8 +81,11 @@ mod update {
                     item_id: Some(mock_item_a().id.to_string()),
                     requested_pack_size: Some(5.0),
                     requested_number_of_units: None,
+                    adjusted_number_of_units: None,
                     requested_delivery_date: None,
                     expected_delivery_date: None,
+                    price_per_unit_before_discount: None,
+                    price_per_unit_after_discount: None,
                 }
             ),
             Err(
@@ -139,6 +143,15 @@ mod update {
             result.purchase_order_line_row.id,
             "purchase_order_line_id_1"
         );
-        assert_eq!(result.item_row.id, mock_item_d().id.clone())
+        assert_eq!(result.item_row.id, mock_item_d().id.clone());
+
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&result.purchase_order_line_row.purchase_order_id)
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderLineUpdated)
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineUpdated);
     }
 }

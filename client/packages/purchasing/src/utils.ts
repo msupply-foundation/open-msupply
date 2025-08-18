@@ -32,8 +32,6 @@ const goodsReceivedStatusTranslation: Record<
   LocaleKey
 > = {
   NEW: 'label.new',
-  CONFIRMED: 'label.confirmed',
-  AUTHORISED: 'label.authorised',
   FINALISED: 'label.finalised',
 };
 
@@ -71,9 +69,38 @@ export const isPurchaseOrderDisabled = (
   return purchaseOrder.status === PurchaseOrderNodeStatus.Finalised;
 };
 
-export const isPurchaseOrderEditable = (
-  status: PurchaseOrderNodeStatus
+export const isPurchaseOrderConfirmed = (
+  purchaseOrder: PurchaseOrderFragment
 ): boolean => {
-  // mimmicking OG behaviour where purchase orders can be edited when confirmed AND when authorised
-  return status !== PurchaseOrderNodeStatus.Finalised;
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
+  );
+};
+
+export const canEditOriginalQuantity = (
+  purchaseOrder: PurchaseOrderFragment
+): boolean => {
+  // Can only edit original quantity when PO is NEW
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.New ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Authorised
+  );
+};
+
+export const canEditAdjustedQuantity = (
+  purchaseOrder: PurchaseOrderFragment
+): boolean => {
+  // Can edit adjusted quantity when confirmed but not finalised
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Authorised
+  );
+};
+
+export const canAddNewLines = (
+  purchaseOrder: PurchaseOrderFragment
+): boolean => {
+  // Can add lines when NEW or CONFIRMED/AUTHORISED (but not finalised)
+  return purchaseOrder.status !== PurchaseOrderNodeStatus.Finalised;
 };

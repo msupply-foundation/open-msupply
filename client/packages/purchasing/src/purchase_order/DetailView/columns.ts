@@ -67,10 +67,10 @@ export const usePurchaseOrderColumns = () => {
     },
     {
       key: 'authorisedNumberOfUnits',
-      label: 'label.authorised-quantity',
+      label: 'label.adjusted-quantity',
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.authorisedNumberOfUnits,
-      getSortValue: rowData => rowData.authorisedNumberOfUnits ?? 0,
+      accessor: ({ rowData }) => rowData.adjustedNumberOfUnits,
+      getSortValue: rowData => rowData.adjustedNumberOfUnits ?? 0,
     },
     {
       key: 'totalReceived',

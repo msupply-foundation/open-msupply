@@ -288,6 +288,7 @@ pub async fn get_loaders(
     loaders.insert(purchase_order_line_by_purchase_order_id_loader);
     loaders.insert(goods_received_line_by_goods_received_id_loader);
     loaders.insert(purchase_order_by_id_loader);
+    loaders.insert(goods_received_line_by_goods_received_id_loader);
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
     loaders.insert(requisition_line_supply_status_loader);

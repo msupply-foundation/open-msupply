@@ -10,7 +10,13 @@ import {
 } from './ImportLines/PurchaseOrderLineImportModal';
 
 function basePurchaseOrderLineFields(t: TypedTFunction<LocaleKey>) {
-  return [t('label.code'), t('label.pack-size'), t('label.requested')];
+  return [
+    t('label.code'),
+    t('label.pack-size'),
+    t('label.requested'),
+    t('label.price-per-unit-before-discount'),
+    t('label.price-per-unit-after-discount'),
+  ];
 }
 
 export const purchaseOrderLinesToCsv = (
@@ -45,6 +51,8 @@ export const importPurchaseOrderLinesToCSVWithErrors = (
       node.itemCode,
       node.requestedPackSize,
       node.requestedNumberOfUnits,
+      node.pricePerUnitBeforeDiscount,
+      node.pricePerUnitAfterDiscount,
       node.lineNumber,
       node.errorMessage,
     ];
@@ -61,12 +69,16 @@ export const importPurchaseOrderLinesToCsv = (
     t('label.code'),
     t('label.pack-size'),
     t('label.requested'),
+    t('label.price-per-unit-after-discount'),
+    t('label.price-per-unit-before-discount'),
   ];
   const data = purchaseOrderLines.map(node => {
     const row = [
       node.itemCode,
       node.requestedPackSize,
       node.requestedNumberOfUnits,
+      node.pricePerUnitAfterDiscount,
+      node.pricePerUnitBeforeDiscount,
     ];
     return row;
   });

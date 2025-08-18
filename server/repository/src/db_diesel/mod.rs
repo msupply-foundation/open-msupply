@@ -5,7 +5,7 @@ use crate::repository_error::RepositoryError;
 pub mod abbreviation;
 pub mod abbreviation_row;
 pub mod activity_log;
-mod activity_log_row;
+pub mod activity_log_row;
 pub mod adjustment;
 pub mod assets;
 pub mod backend_plugin_row;

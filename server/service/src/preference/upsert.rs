@@ -16,7 +16,6 @@ pub struct UpsertPreferences {
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
-    pub use_campaigns: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub sync_records_display_threshold: Option<i32>,
     pub authorise_purchase_order: Option<bool>,
@@ -37,7 +36,6 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         gender_options: gender_options_input,
         show_contact_tracing: show_contact_tracing_input,
-        use_campaigns: use_campaigns_input,
         custom_translations: custom_translations_input,
         sync_records_display_threshold: sync_records_display_threshold_input,
         authorise_purchase_order: authorise_purchase_order_input,
@@ -57,7 +55,6 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor,
         gender_options,
         show_contact_tracing,
-        use_campaigns,
         custom_translations,
         sync_records_display_threshold,
         authorise_purchase_order,
@@ -84,10 +81,6 @@ pub fn upsert_preferences(
 
             if let Some(input) = show_contact_tracing_input {
                 show_contact_tracing.upsert(connection, input, None)?;
-            }
-
-            if let Some(input) = use_campaigns_input {
-                use_campaigns.upsert(connection, input, None)?;
             }
 
             if let Some(input) = custom_translations_input {

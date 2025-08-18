@@ -28,7 +28,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
             allow_tracking_of_stock_by_donor,
             gender_options,
             show_contact_tracing,
-            use_campaigns,
             custom_translations,
             sync_records_display_threshold,
             authorise_purchase_order,
@@ -55,7 +54,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
         append_if_type(gender_options, &mut prefs, &input)?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
-        append_if_type(use_campaigns, &mut prefs, &input)?;
         append_if_type(custom_translations, &mut prefs, &input)?;
         append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
         append_if_type(authorise_purchase_order, &mut prefs, &input)?;

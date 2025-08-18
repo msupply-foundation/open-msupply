@@ -1,4 +1,7 @@
-use repository::{PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, StorageConnection};
+use repository::{
+    PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository,
+    StorageConnection,
+};
 
 use crate::{
     purchase_order::validate::purchase_order_is_editable,
@@ -8,7 +11,7 @@ use crate::{
 pub fn validate(
     id: &str,
     connection: &StorageConnection,
-) -> Result<(), DeletePurchaseOrderLineError> {
+) -> Result<PurchaseOrderLineRow, DeletePurchaseOrderLineError> {
     let purchase_order_line = PurchaseOrderLineRowRepository::new(connection).find_one_by_id(id)?;
     let purchase_order_line = match purchase_order_line {
         Some(line) => line,
@@ -26,5 +29,5 @@ pub fn validate(
         return Err(DeletePurchaseOrderLineError::CannotEditPurchaseOrder);
     }
 
-    Ok(())
+    Ok(purchase_order_line)
 }

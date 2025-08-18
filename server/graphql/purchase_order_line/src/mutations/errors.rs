@@ -56,3 +56,11 @@ impl CannnotFindItemByCode {
         "Cannot find item by code"
     }
 }
+
+pub struct CannotAdjustRequestedQuantity;
+#[Object]
+impl CannotAdjustRequestedQuantity {
+    pub async fn description(&self) -> &str {
+        "Cannot adjust requested quantity"
+    }
+}

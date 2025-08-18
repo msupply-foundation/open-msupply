@@ -5,7 +5,6 @@ import {
   createTableStore,
   DetailTabs,
   DetailViewSkeleton,
-  PurchaseOrderNodeStatus,
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
@@ -19,9 +18,11 @@ import { PurchaseOrderLineFragment } from '../api';
 import { ContentArea, Details, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
+import { canAddNewLines } from '../../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
-import { PurchaseOrderLineEditModal } from './LineEdit';
+import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
+import { ActivityLogList } from 'packages/system/src';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -57,7 +58,7 @@ export const DetailViewInner = () => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
-  const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
+  const isDisabled = !data || !canAddNewLines(data);
 
   const tabs = [
     {
@@ -84,6 +85,10 @@ export const DetailViewInner = () => {
         />
       ),
       value: 'Documents',
+    },
+    {
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
+      value: 'Log',
     },
   ];
 

@@ -4,7 +4,6 @@
 mod tests;
 
 mod logger;
-
 use logger::{GraphQLRequestLogger, QueryLogInfo};
 
 use std::sync::Mutex;
@@ -19,26 +18,28 @@ use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 
 use graphql_asset::property::AssetPropertiesQueries;
-use graphql_batch_mutations::BatchMutations;
-use graphql_clinician::{ClinicianMutations, ClinicianQueries};
-use graphql_contact_form::ContactFormMutations;
-use graphql_core::loader::LoaderRegistry;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
-use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
-use graphql_general::campaign::{CampaignMutations, CampaignQueries};
-use graphql_general::{
-    CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
-    InitialisationMutations, InitialisationQueries,
-};
 use graphql_asset::{
     logs::{AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries},
     AssetMutations, AssetQueries,
 };
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
+use graphql_batch_mutations::BatchMutations;
+use graphql_clinician::{ClinicianMutations, ClinicianQueries};
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
+use graphql_contact::ContactQueries;
+use graphql_contact_form::ContactFormMutations;
+use graphql_core::loader::LoaderRegistry;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
+use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
+use graphql_general::campaign::{CampaignMutations, CampaignQueries};
+use graphql_general::{
+    CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
+    InitialisationMutations, InitialisationQueries,
+};
+use graphql_goods_received::{GoodsReceivedMutations, GoodsReceivedQueries};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
@@ -60,9 +61,7 @@ use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
-use graphql_goods_received::{GoodsReceivedQueries,
-    GoodsReceivedMutations};
-use graphql_contact::ContactQueries;
+use graphql_goods_received_line::GoodsReceivedLineQueries;
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 
@@ -74,7 +73,6 @@ use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::sync::CentralServerConfig;
-
 
 pub type OperationalSchema =
     async_graphql::Schema<Queries, Mutations, async_graphql::EmptySubscription>;
@@ -195,6 +193,7 @@ pub struct Queries(
     pub PurchaseOrderQueries,
     pub PurchaseOrderLineQueries,
     pub GoodsReceivedQueries,
+    pub GoodsReceivedLineQueries,
 );
 
 impl Queries {
@@ -232,6 +231,7 @@ impl Queries {
             PurchaseOrderQueries,
             PurchaseOrderLineQueries,
             GoodsReceivedQueries,
+            GoodsReceivedLineQueries,
         )
     }
 }
