@@ -1,8 +1,9 @@
 use crate::StorageConnection;
 use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
 use repository::{
-    GoodsReceivedLineRow, PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
-    PurchaseOrderRowRepository, PurchaseOrderStatus,
+    EqualFilter, GoodsReceivedLine, GoodsReceivedLineFilter, GoodsReceivedLineRepository,
+    GoodsReceivedLineRow, GoodsReceivedLineStatus, PurchaseOrderLineRow,
+    PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, PurchaseOrderStatus,
 };
 
 use crate::goods_received::common::check_goods_received_exists;
@@ -53,14 +54,25 @@ pub fn validate(
 
     let supplier_name_link = purchase_order.supplier_name_link_id.clone();
 
-    // TODO add goods received lines query once we have repository layer from 8183-print-goods-received-form
-    // ALSO todo filter for is_authorised boolean
-    let goods_received_lines: Vec<GoodsReceivedLineRow> = Vec::new();
+    let goods_received_lines = GoodsReceivedLineRepository::new(connection).query_by_filter(
+        GoodsReceivedLineFilter::new().goods_received_id(EqualFilter::equal_to(&goods_received.id)),
+    )?;
 
-    // TODO add this check once we actually have repository layer for goods received line
-    // if goods_received_lines.is_empty() {
-    //     return Err(OutError::GoodsReceivedEmpty);
-    // }
+    if goods_received_lines.is_empty() {
+        return Err(OutError::GoodsReceivedEmpty);
+    }
+
+    let goods_received_lines: Vec<GoodsReceivedLine> = goods_received_lines
+        .into_iter()
+        .filter_map(|line| match line.goods_received_line_row.status {
+            GoodsReceivedLineStatus::Authorised => Some(line),
+            _ => None,
+        })
+        .collect();
+
+    if goods_received_lines.is_empty() {
+        return Err(OutError::NoAuthorisedLines);
+    }
 
     let purchase_order_lines = PurchaseOrderLineRowRepository::new(connection)
         .find_many_by_purchase_order_ids(&[purchase_order.id])?;
@@ -71,13 +83,13 @@ pub fn validate(
     for line in goods_received_lines {
         match purchase_order_lines
             .iter()
-            .find(|po_line| po_line.id == line.purchase_order_line_id)
+            .find(|po_line| po_line.id == line.goods_received_line_row.purchase_order_line_id)
         {
             Some(po_line) => {
-                line_map.push((line.clone(), po_line.clone()));
+                line_map.push((line.goods_received_line_row.clone(), po_line.clone()));
             }
             None => {
-                unfound_lines.push(line.purchase_order_line_id.clone());
+                unfound_lines.push(line.goods_received_line_row.purchase_order_line_id.clone());
             }
         };
     }

@@ -1,9 +1,11 @@
-use repository::{
-    ActivityLogType, EqualFilter, Invoice, InvoiceFilter, InvoiceLineRowRepository,
-    InvoiceRepository, InvoiceRowRepository, RepositoryError,
-};
+use repository::{ActivityLogType, Invoice, RepositoryError, TransactionError};
 
-use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
+use crate::{
+    activity_log::activity_log_entry,
+    invoice::inbound_shipment::{insert_inbound_shipment, InsertInboundShipmentError},
+    invoice_line::stock_in_line::{insert_stock_in_line, InsertStockInLineError},
+    service_provider::ServiceContext,
+};
 
 mod generate;
 mod test;
@@ -21,16 +23,17 @@ pub struct CreateGoodsReceivedShipment {
 
 pub enum CreateGoodsReceivedShipmentError {
     DatabaseError(RepositoryError),
-    CreatedInvoiceDoesNotExist,
-    ProblemGettingOtherParty,
     GoodsReceivedDoesNotExist,
     PurchaseOrderDoesNotExist,
     GoodsReceivedEmpty,
+    NoAuthorisedLines,
     PurchaseOrderLinesNotFound(Vec<String>),
     NotThisStoreGoodsReceived,
     NotThisStorePurchaseOrder,
     GoodsReceivedNotFinalised,
     PurchaseOrderNotFinalised,
+    InboundShipmentError(InsertInboundShipmentError),
+    StockInLineError(InsertStockInLineError),
 }
 
 type OutError = CreateGoodsReceivedShipmentError;
@@ -42,43 +45,33 @@ pub fn create_goods_received_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            // TODO: Replace the following arguments with actual values as needed
             let (supplier_name_link, goods_received, line_map) =
                 validate(connection, &ctx.store_id, &input)?;
 
-            let (invoice_row, invoice_line_rows) = generate(
-                connection,
-                &ctx.store_id,
-                &ctx.user_id,
-                supplier_name_link,
-                goods_received,
-                line_map,
-            )?;
+            let (invoice, invoice_lines) =
+                generate(connection, supplier_name_link, goods_received, line_map)?;
 
+            let result = insert_inbound_shipment(ctx, invoice.clone())
+                .map_err(|error| OutError::InboundShipmentError(error))?;
 
-            insert_inbound_shipment()
+            println!("line length: {}", invoice_lines.len());
 
-            let invoice_line_repository = InvoiceLineRowRepository::new(connection);
-            for row in invoice_line_rows {
-                invoice_line_repository.upsert_one(&row)?;
+            for line in invoice_lines {
+                insert_stock_in_line(ctx, line)
+                    .map_err(|error| OutError::StockInLineError(error))?;
             }
 
             activity_log_entry(
                 ctx,
                 ActivityLogType::InvoiceCreated,
-                Some(invoice_row.id.to_owned()),
+                Some(invoice.id.to_owned()),
                 None,
                 None,
             )?;
 
-            let mut result = InvoiceRepository::new(connection)
-                .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&invoice_row.id)))?;
-
-            result
-                .pop()
-                .ok_or(CreateGoodsReceivedShipmentError::CreatedInvoiceDoesNotExist)
+            Ok(result)
         })
-        .map_err(|error| error.to_inner_error())?;
+        .map_err(|error: TransactionError<OutError>| error.to_inner_error())?;
 
     Ok(invoice)
 }
