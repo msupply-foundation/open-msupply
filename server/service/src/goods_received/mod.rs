@@ -1,9 +1,13 @@
+use crate::goods_received::create_goods_received_shipment::{
+    create_goods_received_shipment, CreateGoodsReceivedShipment, CreateGoodsReceivedShipmentError,
+};
 use crate::goods_received::query::{get_goods_received, get_goods_received_list};
 use crate::goods_received::update::{
     update_goods_received, UpdateGoodsReceivedError, UpdateGoodsReceivedInput,
 };
 use crate::service_provider::ServiceContext;
 use crate::{ListError, ListResult};
+use repository::Invoice;
 use repository::{
     goods_received::{GoodsReceivedFilter, GoodsReceivedSort},
     goods_received_row::GoodsReceivedRow,
@@ -64,6 +68,14 @@ pub trait GoodsReceivedServiceTrait: Sync + Send {
         goods_receiving_id: &str,
     ) -> Result<String, DeleteGoodsReceivedError> {
         delete_goods_received(ctx, goods_receiving_id)
+    }
+
+    fn create_goods_received_shipment(
+        &self,
+        ctx: &ServiceContext,
+        input: CreateGoodsReceivedShipment,
+    ) -> Result<Invoice, CreateGoodsReceivedShipmentError> {
+        create_goods_received_shipment(ctx, input)
     }
 }
 
