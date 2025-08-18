@@ -33,13 +33,11 @@ type PriceField =
  * Calculates any of the these values from the other two, based on which have
  * most recently changed.
  *
- * `newField` is the field that is currently active, and the
- * `previouslyChangedField` is the previous one changed, as tracked by the
- * useLastChangedField hook (below).
+ * `changingField` is the fields being updated by the user, and `data` contains
+ * the current state of all 3.
  */
 export const calculatePricesAndDiscount = (
   changingField: PriceField,
-  // previouslyChangedField: PriceField | null,
   data: Partial<DraftPurchaseOrderLine>
 ) => {
   const {
@@ -47,14 +45,6 @@ export const calculatePricesAndDiscount = (
     discountPercentage,
     pricePerUnitAfterDiscount = 0,
   } = data;
-
-  // const updateField = [
-  //   'pricePerUnitAfterDiscount',
-  //   'pricePerUnitBeforeDiscount',
-  //   'discountPercentage',
-  // ].filter(
-  //   field => field !== changingField && field !== previouslyChangedField
-  // )[0];
 
   switch (changingField) {
     case 'pricePerUnitBeforeDiscount': {
@@ -89,13 +79,12 @@ export const calculatePricesAndDiscount = (
   }
 };
 
-
 export const calculateUnitQuantities = (
   status: PurchaseOrderNodeStatus,
-  data: Partial<DraftPurchaseOrderLine>,
+  data: Partial<DraftPurchaseOrderLine>
 ) => {
-  let numberOfPacks = data?.numberOfPacks ?? 0;
-  let requestedPackSize = data?.requestedPackSize ?? 0;
+  const numberOfPacks = data?.numberOfPacks ?? 0;
+  const requestedPackSize = data?.requestedPackSize ?? 0;
   const totalUnits = numberOfPacks * requestedPackSize;
 
   // Only adjust the requested number of units if the status is not confirmed yet

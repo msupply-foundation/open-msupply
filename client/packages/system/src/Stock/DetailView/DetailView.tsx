@@ -109,6 +109,7 @@ export const StockLineDetailView: React.FC = () => {
           draft={draft}
           onUpdate={updatePatch}
           pluginEvents={pluginEvents}
+          existingStockLine={data}
         />
       ),
       value: t('label.details'),

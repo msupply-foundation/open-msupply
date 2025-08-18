@@ -1,12 +1,12 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
-use graphql_core::loader::{NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader};
+use graphql_core::loader::{GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader};
 use graphql_core::ContextExt;
 use graphql_types::types::{purchase_order, NameNode};
 use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
 use service::ListResult;
-
+use graphql_goods_received_line::types::GoodsReceivedLineConnector;
 #[derive(PartialEq, Debug)]
 pub struct GoodsReceivedNode {
     pub goods_received: GoodsReceivedRow,
@@ -90,6 +90,14 @@ impl GoodsReceivedNode {
 
     pub async fn received_datetime(&self) -> Option<NaiveDate> {
         self.row().received_date
+    }
+
+    pub async fn lines(&self, ctx: &Context<'_>) -> Result<GoodsReceivedLineConnector> {
+        let loader = ctx.get_loader::<DataLoader<GoodsReceivedLinesByGoodsReceivedIdLoader>>();
+        let result_option = loader.load_one(self.row().id.clone()).await?;
+
+        let result = result_option.unwrap_or(vec![]);
+        Ok(GoodsReceivedLineConnector::from_vec(result))
     }
 
     pub async fn created_by(&self) -> &Option<String> {
