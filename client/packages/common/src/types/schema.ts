@@ -2947,6 +2947,11 @@ export type GoodsReceivedLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type GoodsReceivedLineFilterInput = {
+  goodsReceivedId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type GoodsReceivedLineNode = {
   __typename: 'GoodsReceivedLineNode';
   batch?: Maybe<Scalars['String']['output']>;
@@ -2958,6 +2963,7 @@ export type GoodsReceivedLineNode = {
   itemLinkId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   lineNumber: Scalars['Int']['output'];
+  location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   manufacturerLinkId?: Maybe<Scalars['String']['output']>;
   numberOfPacksReceived: Scalars['Float']['output'];
@@ -2972,6 +2978,22 @@ export enum GoodsReceivedLineNodeStatus {
   Authorised = 'AUTHORISED',
   Unauthorised = 'UNAUTHORISED',
 }
+
+export type GoodsReceivedLineResponse = GoodsReceivedLineNode | RecordNotFound;
+
+export enum GoodsReceivedLineSortFieldInput {
+  ExpiryDate = 'expiryDate',
+  ItemName = 'itemName',
+  LineNumber = 'lineNumber',
+}
+
+export type GoodsReceivedLineSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: GoodsReceivedLineSortFieldInput;
+};
+
+export type GoodsReceivedLinesResponse = GoodsReceivedLineConnector;
 
 export type GoodsReceivedListResponse = GoodsReceivedConnector;
 
@@ -7188,6 +7210,8 @@ export type Queries = {
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
   getVvmStatusLogByStockLine: VvmstatusLogResponse;
   goodsReceived: GoodsReceivedResponse;
+  goodsReceivedLine: GoodsReceivedLineResponse;
+  goodsReceivedLines: GoodsReceivedLinesResponse;
   goodsReceivedList: GoodsReceivedListResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
@@ -7561,6 +7585,18 @@ export type QueriesGetVvmStatusLogByStockLineArgs = {
 
 export type QueriesGoodsReceivedArgs = {
   id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesGoodsReceivedLineArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesGoodsReceivedLinesArgs = {
+  filter?: InputMaybe<GoodsReceivedLineFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<GoodsReceivedLineSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -8223,7 +8259,6 @@ export enum ReportContext {
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE',
-  GoodsReceived = 'GOODS_RECEIVED',
 }
 
 export type ReportFilterInput = {
