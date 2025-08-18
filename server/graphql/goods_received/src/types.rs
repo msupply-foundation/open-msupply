@@ -5,7 +5,6 @@ use graphql_core::loader::{
     GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput,
     PurchaseOrderByIdLoader,
 };
-use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_goods_received_line::types::GoodsReceivedLineConnector;
 use graphql_types::types::{purchase_order, NameNode};
