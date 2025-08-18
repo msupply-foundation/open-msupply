@@ -39,6 +39,8 @@ import {
   prescriptionTester,
   patientSearchTester,
   PatientSearch,
+  NameSearch,
+  nameSearchTester,
 } from './components';
 import { EnrolmentId, enrolmentIdTester } from './components/EnrolmentId';
 import {
@@ -83,6 +85,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: prescriptionTester, renderer: Prescription },
   { tester: patientSearchTester, renderer: PatientSearch },
   { tester: dateRangeTester, renderer: DateRange },
+  { tester: nameSearchTester, renderer: NameSearch },
 ];
 
 /**

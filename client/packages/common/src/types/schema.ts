@@ -125,6 +125,9 @@ export enum ActivityLogNodeType {
   DemographicIndicatorUpdated = 'DEMOGRAPHIC_INDICATOR_UPDATED',
   DemographicProjectionCreated = 'DEMOGRAPHIC_PROJECTION_CREATED',
   DemographicProjectionUpdated = 'DEMOGRAPHIC_PROJECTION_UPDATED',
+  GoodsReceivedCreated = 'GOODS_RECEIVED_CREATED',
+  GoodsReceivedDeleted = 'GOODS_RECEIVED_DELETED',
+  GoodsReceivedStatusFinalised = 'GOODS_RECEIVED_STATUS_FINALISED',
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
@@ -150,6 +153,15 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
+  PurchaseOrderAuthorised = 'PURCHASE_ORDER_AUTHORISED',
+  PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
+  PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
+  PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',
+  PurchaseOrderFinalised = 'PURCHASE_ORDER_FINALISED',
+  PurchaseOrderLineCreated = 'PURCHASE_ORDER_LINE_CREATED',
+  PurchaseOrderLineDeleted = 'PURCHASE_ORDER_LINE_DELETED',
+  PurchaseOrderLineUpdated = 'PURCHASE_ORDER_LINE_UPDATED',
+  PurchaseOrderUnauthorised = 'PURCHASE_ORDER_UNAUTHORISED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
   RequisitionApproved = 'REQUISITION_APPROVED',
@@ -1069,6 +1081,11 @@ export type CannnotFindItemByCode = InsertPurchaseOrderLineErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type CannotAdjustRequestedQuantity = PurchaseOrderLineError & {
+  __typename: 'CannotAdjustRequestedQuantity';
+  description: Scalars['String']['output'];
+};
+
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
   UpdateInboundShipmentErrorInterface & {
     __typename: 'CannotChangeStatusOfInvoiceOnHold';
@@ -1775,6 +1792,8 @@ export type DeleteGoodsReceivedLineResponse =
   | DeleteGoodsReceivedLineError
   | DeleteResponse;
 
+export type DeleteGoodsReceivedResponse = DeleteResponse;
+
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
   error: DeleteInboundShipmentErrorInterface;
@@ -2005,10 +2024,6 @@ export type DeletePurchaseOrderLineError = {
   error: DeletePurchaseOrderLineInterface;
 };
 
-export type DeletePurchaseOrderLineInput = {
-  id: Scalars['String']['input'];
-};
-
 export type DeletePurchaseOrderLineInterface = {
   description: Scalars['String']['output'];
 };
@@ -2016,6 +2031,12 @@ export type DeletePurchaseOrderLineInterface = {
 export type DeletePurchaseOrderLineResponse =
   | DeletePurchaseOrderLineError
   | DeleteResponse;
+
+export type DeletePurchaseOrderLineResponseWithId = {
+  __typename: 'DeletePurchaseOrderLineResponseWithId';
+  id: Scalars['String']['output'];
+  response: DeletePurchaseOrderLineResponse;
+};
 
 export type DeletePurchaseOrderResponse =
   | DeletePurchaseOrderError
@@ -2973,6 +2994,7 @@ export type GoodsReceivedLineNode = {
   itemLinkId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   lineNumber: Scalars['Int']['output'];
+  location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   manufacturerLinkId?: Maybe<Scalars['String']['output']>;
   numberOfPacksReceived: Scalars['Float']['output'];
@@ -3023,6 +3045,7 @@ export type GoodsReceivedNode = {
   comment?: Maybe<Scalars['String']['output']>;
   createdBy?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   id: Scalars['String']['output'];
   lines: GoodsReceivedLineConnector;
   number: Scalars['Int']['output'];
@@ -3035,8 +3058,6 @@ export type GoodsReceivedNode = {
 };
 
 export enum GoodsReceivedNodeStatus {
-  Authorised = 'AUTHORISED',
-  Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
   New = 'NEW',
 }
@@ -3849,6 +3870,8 @@ export type InsertPurchaseOrderLineErrorInterface = {
 
 export type InsertPurchaseOrderLineFromCsvInput = {
   itemCode: Scalars['String']['input'];
+  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -3858,6 +3881,8 @@ export type InsertPurchaseOrderLineInput = {
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
@@ -5275,6 +5300,7 @@ export type Mutations = {
   createRequisitionShipment: CreateRequisitionShipmentResponse;
   deleteAsset: DeleteAssetResponse;
   deleteCustomerReturn: DeleteCustomerReturnResponse;
+  deleteGoodsReceived: DeleteGoodsReceivedResponse;
   deleteGoodsReceivedLine: DeleteGoodsReceivedLineResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
@@ -5287,7 +5313,7 @@ export type Mutations = {
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deletePurchaseOrder: DeletePurchaseOrderResponse;
-  deletePurchaseOrderLine: DeletePurchaseOrderLineResponse;
+  deletePurchaseOrderLines: Array<DeletePurchaseOrderLineResponseWithId>;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
@@ -5499,6 +5525,11 @@ export type MutationsDeleteCustomerReturnArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsDeleteGoodsReceivedArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsDeleteGoodsReceivedLineArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -5559,8 +5590,8 @@ export type MutationsDeletePurchaseOrderArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type MutationsDeletePurchaseOrderLineArgs = {
-  input: DeletePurchaseOrderLineInput;
+export type MutationsDeletePurchaseOrderLinesArgs = {
+  ids: Array<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6694,7 +6725,6 @@ export enum PreferenceKey {
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
-  UseCampaigns = 'useCampaigns',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
 
@@ -6734,7 +6764,6 @@ export type PreferencesNode = {
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
-  useCampaigns: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
 
@@ -7100,7 +7129,7 @@ export type PurchaseOrderLineFilterInput = {
 
 export type PurchaseOrderLineNode = {
   __typename: 'PurchaseOrderLineNode';
-  authorisedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
+  adjustedNumberOfUnits?: Maybe<Scalars['Float']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
@@ -7169,6 +7198,7 @@ export type PurchaseOrderNode = {
   headingMessage?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   insuranceCharge?: Maybe<Scalars['Float']['output']>;
+  lineTotalAfterDiscount: Scalars['Float']['output'];
   lines: PurchaseOrderLineConnector;
   number: Scalars['Int']['output'];
   orderTotalAfterDiscount: Scalars['Float']['output'];
@@ -9872,6 +9902,7 @@ export type UpdateErrorInterface = {
 export type UpdateGoodsReceivedInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  receivedDate?: InputMaybe<NullableDateUpdate>;
   status?: InputMaybe<GoodsReceivedNodeType>;
 };
 
@@ -10395,9 +10426,12 @@ export type UpdatePurchaseOrderLineError = {
 };
 
 export type UpdatePurchaseOrderLineInput = {
+  adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
+  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -10909,7 +10943,6 @@ export type UpsertPreferencesInput = {
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
-  useCampaigns?: InputMaybe<Scalars['Boolean']['input']>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 

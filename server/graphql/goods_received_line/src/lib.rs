@@ -1,20 +1,11 @@
-use crate::mutations::{
-    delete::{delete_goods_received_line, DeleteResponse},
-    insert::{
-        insert_goods_received_line, insert_goods_received_lines_from_purchase_order, InsertInput,
-        InsertLinesInput, InsertLinesResponse, InsertResponse,
-    },
-    save_goods_received_lines::{
-        save_goods_received_lines, SaveGoodsReceivedLineResponse, SaveGoodsReceivedLinesInput,
-    },
-    update::{update_goods_received_line, UpdateInput, UpdateResponse},
-};
+mod mutations;
+mod query;
+pub mod types;
 use async_graphql::{Context, Object, Result};
 use graphql_core::pagination::PaginationInput;
 
-mod goods_received_line_queries;
-use goods_received_line_queries::*;
-pub mod mutations;
+use mutations::{delete::*, insert::*, save_goods_received_lines::*, update::*};
+use query::*;
 
 #[derive(Default, Clone)]
 pub struct GoodsReceivedLineQueries;

@@ -9,7 +9,6 @@ use graphql_core::{
 use repository::goods_received::{GoodsReceivedFilter, GoodsReceivedSort, GoodsReceivedSortField};
 use repository::{EqualFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
-
 use crate::types::{GoodsReceivedConnector, GoodsReceivedNode, GoodsReceivedNodeStatus};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

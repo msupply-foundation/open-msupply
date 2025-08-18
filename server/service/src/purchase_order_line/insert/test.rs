@@ -3,7 +3,7 @@ mod insert {
     use repository::{
         mock::{mock_item_a, mock_name_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
-        PurchaseOrderLineRowRepository,
+        ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineRowRepository,
     };
 
     use crate::{
@@ -216,6 +216,16 @@ mod insert {
         assert_eq!(result_1_2.id, purchase_order_lines_1_2.id);
         assert_eq!(result_2_1.id, purchase_order_lines_2_1.id);
         assert_eq!(result_2_2.id, purchase_order_lines_2_2.id);
+
+        // test activity log for created
+        let log = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id("purchase_order_id_1")
+            .unwrap()
+            .into_iter()
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderLineCreated)
+            .unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineCreated);
     }
 
     #[actix_rt::test]
@@ -240,10 +250,7 @@ mod insert {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "non_existent_purchase_order".to_string(),
                     item_id: "item_id".to_string(),
-                    requested_pack_size: None,
-                    requested_number_of_units: None,
-                    requested_delivery_date: None,
-                    expected_delivery_date: None
+                    ..Default::default()
                 }
             ),
             Err(InsertPurchaseOrderLineError::PurchaseOrderDoesNotExist)
@@ -269,8 +276,7 @@ mod insert {
                 InsertPurchaseOrderLineFromCSVInput {
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_code: "some_non_existent_item".to_string(),
-                    requested_pack_size: Some(0.0),
-                    requested_number_of_units: Some(0.0)
+                    ..Default::default()
                 }
             ),
             Err(InsertPurchaseOrderLineError::CannotFindItemByCode(
@@ -285,7 +291,7 @@ mod insert {
                 purchase_order_id: "purchase_order_id".to_string(),
                 item_code: mock_item_a().code.clone(),
                 requested_pack_size: Some(1.1),
-                requested_number_of_units: Some(0.0),
+                ..Default::default()
             },
         );
         assert!(result.is_ok());
@@ -298,7 +304,7 @@ mod insert {
                     purchase_order_id: "purchase_order_id".to_string(),
                     item_code: mock_item_a().code.clone(),
                     requested_pack_size: Some(1.1),
-                    requested_number_of_units: Some(0.0),
+                    ..Default::default()
                 },
             ),
             Err(InsertPurchaseOrderLineError::PackSizeCodeCombinationExists(
