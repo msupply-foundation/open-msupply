@@ -11,7 +11,6 @@ mod add_goods_received_id_to_invoice;
 mod add_goods_received_line_table;
 mod add_goods_received_permission_enum_values;
 mod add_goods_received_report_context;
-mod add_goods_received_report_context;
 mod add_goods_received_table;
 mod add_item_store_join;
 mod add_more_dates_to_purchase_order;
