@@ -70,6 +70,7 @@ export const useGoodsReceivedLineEditColumns = ({
             });
           },
         },
+        // TODO: Convert manufacturerLinkId to use a dropdown of Manufacturer objects
         {
           Cell: TextInputCell,
           key: 'manufacturerLinkId',
