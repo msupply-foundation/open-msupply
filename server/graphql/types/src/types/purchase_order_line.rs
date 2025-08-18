@@ -1,10 +1,13 @@
+use crate::types::{ItemNode, NameNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
-use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{
+    loader::{ItemLoader, NameByIdLoader, NameByIdLoaderInput},
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
+};
 use repository::{PurchaseOrderLine, PurchaseOrderLineRow};
 use service::{usize_to_u32, ListResult};
-
-use crate::types::ItemNode;
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderLineNode {
@@ -77,6 +80,28 @@ impl PurchaseOrderLineNode {
     }
     pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().expected_delivery_date
+    }
+
+    pub async fn manufacturer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let Some(manufacturer_id) = &self.row().manufacturer_link_id else {
+            return Ok(None);
+        };
+
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
+    pub async fn note(&self) -> &Option<String> {
+        &self.row().note
     }
 }
 
