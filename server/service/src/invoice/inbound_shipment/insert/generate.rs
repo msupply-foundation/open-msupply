@@ -46,6 +46,7 @@ pub fn generate(
         on_hold: on_hold.unwrap_or(false),
         colour,
         requisition_id,
+        goods_received_id,
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
@@ -70,7 +71,6 @@ pub fn generate(
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: None,
-        goods_received_id: None,
     };
 
     Ok(result)
