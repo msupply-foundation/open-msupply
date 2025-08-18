@@ -106,6 +106,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   adjustedNumberOfUnits
   pricePerUnitAfterDiscount
   pricePerUnitBeforeDiscount
+  comment
 }
 
 query purchaseOrders(
