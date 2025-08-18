@@ -22,8 +22,10 @@
     <td>{{ line.item.code | default(value="")}}</td>
     <td>{{ line.location.name | default(value="")}}</td>
     <td>{{line.receivedPackSize | default(value="")}}</td>
-    <td>{{line.numberOfPacksReceived| default(value="")}}</td>
-    <td>........</td>
+    <td>{{line.numberOfPacksReceived | default(value="")}}</td>
+    <td class="underline">
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    </td>
   </tr>
   {%- endfor %}
 </table>
