@@ -43,6 +43,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   discountPercentage: 0,
   manufacturer: null,
   note: null,
+  unitOfPacks: null,
 };
 
 export function usePurchaseOrderLine(id?: string) {
@@ -107,6 +108,7 @@ export function usePurchaseOrderLine(id?: string) {
       pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
       manufacturerId: setNullableInput('id', draft.manufacturer),
       note: setNullableInput('note', draft),
+      unitOfPacks: draft.unitOfPacks,
     };
     return await updatePurchaseOrderLine(input);
   };
@@ -180,6 +182,7 @@ const useCreate = () => {
         pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
         manufacturerId: draft.manufacturer?.id,
         note: draft.note,
+        unitOfPacks: draft.unitOfPacks,
       },
     });
   };
