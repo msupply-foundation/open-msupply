@@ -3,8 +3,10 @@ import {
   GoodsReceivedNodeType,
   RecordPatch,
 } from '@common/types';
+import { FnUtils, setNullableInput } from '@common/utils';
+import { ItemStockOnHandFragment } from '@openmsupply-client/system/src';
 import { GoodsReceivedFragment } from '../operations.generated';
-import { setNullableInput } from '@common/utils';
+import { DraftGoodsReceivedLine } from './useGoodsReceivedLine';
 
 export const mapStatus = (
   status?: GoodsReceivedNodeStatus
@@ -25,5 +27,30 @@ export const parseUpdateInput = (input: RecordPatch<GoodsReceivedFragment>) => {
     status: mapStatus(input.status),
     receivedDate: setNullableInput('receivedDatetime', input),
     comment: input.comment,
+  };
+};
+
+export const createDraftGoodsReceivedLine = (
+  item: ItemStockOnHandFragment,
+  goodsReceivedId: string,
+  purchaseOrderLineId: string
+): DraftGoodsReceivedLine => {
+  return {
+    id: FnUtils.generateUUID(),
+    goodsReceivedId,
+    purchaseOrderLineId,
+    item: {
+      __typename: 'ItemNode',
+      id: item.id,
+      name: item.name,
+    },
+    batch: '',
+    comment: '',
+    lineNumber: 0,
+    expiryDate: null,
+    manufacturerLinkId: null,
+    numberOfPacksReceived: 0,
+    receivedPackSize: 0,
+    itemId: item.id,
   };
 };
