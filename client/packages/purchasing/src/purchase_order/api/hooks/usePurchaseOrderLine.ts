@@ -37,6 +37,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
   adjustedNumberOfUnits: null,
+  lineNumber: 0,
   pricePerUnitBeforeDiscount: 0,
   pricePerUnitAfterDiscount: 0,
   // This value not actually saved to DB

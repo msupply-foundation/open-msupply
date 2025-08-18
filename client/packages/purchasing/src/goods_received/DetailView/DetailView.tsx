@@ -1,12 +1,14 @@
 import React, { ReactElement, Suspense, useEffect } from 'react';
 import {
   AlertModal,
+  createQueryParamsStore,
   createTableStore,
   DetailTabs,
   DetailViewSkeleton,
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
+  useEditModal,
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -18,6 +20,8 @@ import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
+import { GoodsReceivedLineEditModal } from './LineEdit';
+import { GoodsReceivedLineFragment } from '../api/operations.generated';
 
 export const DetailViewInner = (): ReactElement => {
   const t = useTranslation();
@@ -27,6 +31,8 @@ export const DetailViewInner = (): ReactElement => {
   const {
     query: { data, isLoading },
   } = useGoodsReceived();
+
+  const { onClose, isOpen, entity: lineId } = useEditModal<string | null>();
 
   console.info('Goods Received Detail View Data:', data);
 
@@ -55,7 +61,14 @@ export const DetailViewInner = (): ReactElement => {
           <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />
-          {/* Add Line Edit Modal */}
+          {isOpen && lineId && (
+            <GoodsReceivedLineEditModal
+              lineId={lineId}
+              goodsReceived={data}
+              onClose={onClose}
+              isOpen={isOpen}
+            />
+          )}
         </>
       ) : (
         <AlertModal
@@ -76,9 +89,15 @@ export const DetailViewInner = (): ReactElement => {
 };
 
 export const GoodsReceivedDetailView = () => {
-  // TODO: Add queryParamsStore
   return (
-    <TableProvider createStore={createTableStore}>
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore<GoodsReceivedLineFragment>({
+        initialSortBy: {
+          key: 'itemName',
+        },
+      })}
+    >
       <DetailViewInner />
     </TableProvider>
   );
