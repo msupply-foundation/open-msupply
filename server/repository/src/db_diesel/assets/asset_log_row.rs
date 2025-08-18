@@ -43,7 +43,6 @@ joinable!(latest_asset_log -> asset (asset_id));
 #[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-
 pub enum AssetLogStatus {
     #[default]
     NotInUse,

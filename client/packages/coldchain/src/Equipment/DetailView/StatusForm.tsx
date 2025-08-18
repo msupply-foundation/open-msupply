@@ -1,10 +1,9 @@
 import React, { ReactNode } from 'react';
 import { Capacitor } from '@capacitor/core';
 import {
-  AssetLogStatusInput,
   Box,
   InsertAssetLogInput,
-  StatusType,
+  AssetLogStatusNodeType,
   useDebounceCallback,
   LocaleKey,
   useTranslation,
@@ -97,7 +96,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
       return parsed == undefined ? undefined : getOption(t(parsed.key), value);
     });
 
-  const statuses = getOptionsFromEnum(StatusType, parseLogStatus);
+  const statuses = getOptionsFromEnum(AssetLogStatusNodeType, parseLogStatus);
   const { data } = useAssetLogReasonList(
     draft.status
       ? {
@@ -139,7 +138,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             isOptionEqualToValue={option => option?.value === draft.status}
             onChange={(_e, selected) =>
               onChange({
-                status: selected?.value as AssetLogStatusInput,
+                status: selected?.value as AssetLogStatusNodeType,
                 reasonId: undefined,
               })
             }

@@ -7,7 +7,7 @@ import {
   FnUtils,
   Formatter,
   useIsCentralServerApi,
-  StatusType,
+  AssetLogStatusNodeType,
   DateUtils,
   LocaleKey,
   TypedTFunction,
@@ -224,7 +224,7 @@ export const EquipmentUploadTab = ({
         replacementDate: t('label.date-format'),
         warrantyStart: t('label.date-format'),
         warrantyEnd: t('label.date-format'),
-        status: StatusType.Functioning,
+        status: AssetLogStatusNodeType.Functioning,
         properties: {},
       },
     ];
@@ -321,7 +321,8 @@ export const EquipmentUploadTab = ({
       addCell(
         'status',
         'label.status',
-        status => parseStatusFromString(status, t) ?? StatusType.Functioning
+        status =>
+          parseStatusFromString(status, t) ?? AssetLogStatusNodeType.Functioning
       );
       addCell('needsReplacement', 'label.needs-replacement', isTruthyString);
       processProperties(properties ?? [], row, importRow, rowErrors, t);

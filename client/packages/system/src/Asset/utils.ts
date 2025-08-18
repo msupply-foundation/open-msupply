@@ -1,8 +1,12 @@
-import { LocaleKey, TypedTFunction } from '@common/intl';
+import {
+  AssetLogStatusNodeType,
+  LocaleKey,
+  TypedTFunction,
+  ArrayUtils,
+  Formatter,
+} from '@openmsupply-client/common';
 import { AssetCatalogueItemFragment } from './api';
-import { ArrayUtils, Formatter } from '@common/utils';
 import { ImportRow, LineNumber } from './ImportCatalogueItem';
-import { AssetLogStatusInput, StatusType } from '@common/types';
 
 function assetCatalogueItemFields(t: TypedTFunction<LocaleKey>) {
   return [
@@ -34,52 +38,26 @@ export const assetCatalogueItemsListToCsv = (
   return Formatter.csv({ fields, data });
 };
 export const parseStatus = (
-  status: StatusType,
+  status: AssetLogStatusNodeType,
   t: TypedTFunction<LocaleKey>
 ) => {
   switch (status) {
-    case StatusType.Decommissioned: {
+    case AssetLogStatusNodeType.Decommissioned: {
       return t('status.decommissioned');
     }
-    case StatusType.Functioning: {
+    case AssetLogStatusNodeType.Functioning: {
       return t('status.functioning');
     }
-    case StatusType.FunctioningButNeedsAttention: {
+    case AssetLogStatusNodeType.FunctioningButNeedsAttention: {
       return t('status.functioning-but-needs-attention');
     }
-    case StatusType.NotFunctioning: {
+    case AssetLogStatusNodeType.NotFunctioning: {
       return t('status.not-functioning');
     }
-    case StatusType.NotInUse: {
+    case AssetLogStatusNodeType.NotInUse: {
       return t('status.not-in-use');
     }
-    case StatusType.Unserviceable: {
-      return t('status.unserviceable');
-    }
-  }
-};
-
-export const parseInputStatus = (
-  status: AssetLogStatusInput,
-  t: TypedTFunction<LocaleKey>
-) => {
-  switch (status) {
-    case AssetLogStatusInput.Decommissioned: {
-      return t('status.decommissioned');
-    }
-    case AssetLogStatusInput.Functioning: {
-      return t('status.functioning');
-    }
-    case AssetLogStatusInput.FunctioningButNeedsAttention: {
-      return t('status.functioning-but-needs-attention');
-    }
-    case AssetLogStatusInput.NotFunctioning: {
-      return t('status.not-functioning');
-    }
-    case AssetLogStatusInput.NotInUse: {
-      return t('status.not-in-use');
-    }
-    case AssetLogStatusInput.Unserviceable: {
+    case AssetLogStatusNodeType.Unserviceable: {
       return t('status.unserviceable');
     }
   }
@@ -120,15 +98,8 @@ export const importRowToCsv = (
   return Formatter.csv({ fields, data });
 };
 
-export const getStatusInputOptions = (t: TypedTFunction<LocaleKey>) => {
-  return Object.values(AssetLogStatusInput).map(status => ({
-    label: parseInputStatus(status, t),
-    value: status,
-  }));
-};
-
 export const getStatusOptions = (t: TypedTFunction<LocaleKey>) => {
-  return Object.values(StatusType).map(status => ({
+  return Object.values(AssetLogStatusNodeType).map(status => ({
     label: parseStatus(status, t),
     value: status,
   }));

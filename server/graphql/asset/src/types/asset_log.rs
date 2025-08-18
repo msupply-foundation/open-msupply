@@ -26,30 +26,15 @@ use repository::asset_log_row::AssetLogStatus;
 use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-
-pub enum AssetLogStatusInput {
+#[graphql(remote = "repository::db_diesel::assets::asset_log_row
+::AssetLogStatus")]
+pub enum AssetLogStatusNodeType {
     NotInUse,
     Functioning,
     FunctioningButNeedsAttention,
     NotFunctioning,
     Decommissioned,
     Unserviceable,
-}
-
-impl AssetLogStatusInput {
-    pub fn to_domain(self) -> AssetLogStatus {
-        match self {
-            AssetLogStatusInput::NotInUse => AssetLogStatus::NotInUse,
-            AssetLogStatusInput::Functioning => AssetLogStatus::Functioning,
-            AssetLogStatusInput::FunctioningButNeedsAttention => {
-                AssetLogStatus::FunctioningButNeedsAttention
-            }
-            AssetLogStatusInput::NotFunctioning => AssetLogStatus::NotFunctioning,
-            AssetLogStatusInput::Decommissioned => AssetLogStatus::Decommissioned,
-            AssetLogStatusInput::Unserviceable => AssetLogStatus::Unserviceable,
-        }
-    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -85,7 +70,7 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
             asset_id: f.asset_id.map(EqualFilter::from),
             status: f
                 .status
-                .map(|s| map_filter!(s, AssetLogStatusInput::to_domain)),
+                .map(|s| map_filter!(s, |t| AssetLogStatus::from(t))),
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
             reason_id: f.reason_id.map(EqualFilter::from),
@@ -95,35 +80,9 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
 
 #[derive(InputObject, Clone)]
 pub struct EqualFilterStatusInput {
-    pub equal_to: Option<AssetLogStatusInput>,
-    pub equal_any: Option<Vec<AssetLogStatusInput>>,
-    pub not_equal_to: Option<AssetLogStatusInput>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-
-pub enum StatusType {
-    NotInUse,
-    Functioning,
-    FunctioningButNeedsAttention,
-    NotFunctioning,
-    Decommissioned,
-    Unserviceable,
-}
-impl StatusType {
-    pub fn from_domain(status: &AssetLogStatus) -> Self {
-        match status {
-            AssetLogStatus::NotInUse => StatusType::NotInUse,
-            AssetLogStatus::Functioning => StatusType::Functioning,
-            AssetLogStatus::FunctioningButNeedsAttention => {
-                StatusType::FunctioningButNeedsAttention
-            }
-            AssetLogStatus::NotFunctioning => StatusType::NotFunctioning,
-            AssetLogStatus::Decommissioned => StatusType::Decommissioned,
-            AssetLogStatus::Unserviceable => StatusType::Unserviceable,
-        }
-    }
+    pub equal_to: Option<AssetLogStatusNodeType>,
+    pub equal_any: Option<Vec<AssetLogStatusNodeType>>,
+    pub not_equal_to: Option<AssetLogStatusNodeType>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -156,8 +115,8 @@ impl AssetLogNode {
             .map(UserNode::from_domain))
     }
 
-    pub async fn status(&self) -> Option<StatusType> {
-        self.row().status.as_ref().map(StatusType::from_domain)
+    pub async fn status(&self) -> Option<AssetLogStatusNodeType> {
+        self.row().status.clone().map(AssetLogStatusNodeType::from)
     }
 
     pub async fn comment(&self) -> &Option<String> {
@@ -280,9 +239,9 @@ impl AssetLogReasonNode {
         &self.row().id
     }
 
-    pub async fn asset_log_status(&self) -> StatusType {
+    pub async fn asset_log_status(&self) -> AssetLogStatusNodeType {
         let asset_log_status = &self.row().asset_log_status;
-        StatusType::from_domain(asset_log_status)
+        AssetLogStatusNodeType::from(asset_log_status.clone())
     }
 
     pub async fn reason(&self) -> &str {
@@ -315,7 +274,7 @@ impl From<AssetLogReasonFilterInput> for AssetLogReasonFilter {
             id: f.id.map(EqualFilter::from),
             asset_log_status: f
                 .asset_log_status
-                .map(|s| map_filter!(s, AssetLogStatusInput::to_domain)),
+                .map(|s| map_filter!(s, |t| AssetLogStatus::from(t))),
             reason: f.reason.map(StringFilter::from),
         }
     }
