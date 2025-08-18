@@ -93,6 +93,7 @@ export const PurchaseOrderLineEditModal = ({
             onClick={async () => {
               await handleSave();
               openNext();
+              return true;
             }}
           />
         ) : undefined
