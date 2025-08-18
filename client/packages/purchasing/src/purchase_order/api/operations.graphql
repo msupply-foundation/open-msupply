@@ -93,6 +93,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   id
   expectedDeliveryDate
   purchaseOrderId
+  lineNumber
   item {
     id
     code
@@ -121,6 +122,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   }
   note
   unitOfPacks
+  comment
 }
 
 query purchaseOrders(

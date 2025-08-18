@@ -69,14 +69,14 @@ export type PurchaseOrderFragment = {
       id: string;
       expectedDeliveryDate?: string | null;
       purchaseOrderId: string;
+      lineNumber: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
-      note?: string | null;
-      unitOfPacks?: string | null;
+      comment?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -84,16 +84,6 @@ export type PurchaseOrderFragment = {
         name: string;
         unitName?: string | null;
       };
-      manufacturer?: {
-        __typename: 'NameNode';
-        id: string;
-        code: string;
-        isCustomer: boolean;
-        isSupplier: boolean;
-        isOnHold: boolean;
-        name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-      } | null;
     }>;
   };
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -114,14 +104,14 @@ export type PurchaseOrderLineFragment = {
   id: string;
   expectedDeliveryDate?: string | null;
   purchaseOrderId: string;
+  lineNumber: number;
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
   pricePerUnitAfterDiscount: number;
   pricePerUnitBeforeDiscount: number;
-  note?: string | null;
-  unitOfPacks?: string | null;
+  comment?: string | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -129,16 +119,6 @@ export type PurchaseOrderLineFragment = {
     name: string;
     unitName?: string | null;
   };
-  manufacturer?: {
-    __typename: 'NameNode';
-    id: string;
-    code: string;
-    isCustomer: boolean;
-    isSupplier: boolean;
-    isOnHold: boolean;
-    name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-  } | null;
 };
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
@@ -223,14 +203,14 @@ export type PurchaseOrderByIdQuery = {
             id: string;
             expectedDeliveryDate?: string | null;
             purchaseOrderId: string;
+            lineNumber: number;
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
             pricePerUnitAfterDiscount: number;
             pricePerUnitBeforeDiscount: number;
-            note?: string | null;
-            unitOfPacks?: string | null;
+            comment?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -238,20 +218,6 @@ export type PurchaseOrderByIdQuery = {
               name: string;
               unitName?: string | null;
             };
-            manufacturer?: {
-              __typename: 'NameNode';
-              id: string;
-              code: string;
-              isCustomer: boolean;
-              isSupplier: boolean;
-              isOnHold: boolean;
-              name: string;
-              store?: {
-                __typename: 'StoreNode';
-                id: string;
-                code: string;
-              } | null;
-            } | null;
           }>;
         };
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -328,14 +294,14 @@ export type PurchaseOrderLinesQuery = {
       id: string;
       expectedDeliveryDate?: string | null;
       purchaseOrderId: string;
+      lineNumber: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
-      note?: string | null;
-      unitOfPacks?: string | null;
+      comment?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -343,16 +309,6 @@ export type PurchaseOrderLinesQuery = {
         name: string;
         unitName?: string | null;
       };
-      manufacturer?: {
-        __typename: 'NameNode';
-        id: string;
-        code: string;
-        isCustomer: boolean;
-        isSupplier: boolean;
-        isOnHold: boolean;
-        name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-      } | null;
     }>;
   };
 };
@@ -372,14 +328,14 @@ export type PurchaseOrderLineQuery = {
       id: string;
       expectedDeliveryDate?: string | null;
       purchaseOrderId: string;
+      lineNumber: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
-      note?: string | null;
-      unitOfPacks?: string | null;
+      comment?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -387,16 +343,6 @@ export type PurchaseOrderLineQuery = {
         name: string;
         unitName?: string | null;
       };
-      manufacturer?: {
-        __typename: 'NameNode';
-        id: string;
-        code: string;
-        isCustomer: boolean;
-        isSupplier: boolean;
-        isOnHold: boolean;
-        name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-      } | null;
     }>;
   };
 };
@@ -542,6 +488,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     id
     expectedDeliveryDate
     purchaseOrderId
+    lineNumber
     item {
       id
       code
@@ -554,22 +501,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     adjustedNumberOfUnits
     pricePerUnitAfterDiscount
     pricePerUnitBeforeDiscount
-    manufacturer(storeId: $storeId) {
-      __typename
-      id
-      code
-      isCustomer
-      isSupplier
-      isOnHold
-      name
-      store {
-        __typename
-        id
-        code
-      }
-    }
-    note
-    unitOfPacks
+    comment
   }
 `;
 export const SyncFileReferenceFragmentDoc = gql`
