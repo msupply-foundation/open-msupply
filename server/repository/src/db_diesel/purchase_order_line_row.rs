@@ -31,6 +31,7 @@ table! {
         comment -> Nullable<Text>,
         manufacturer_link_id -> Nullable<Text>,
         note -> Nullable<Text>,
+        unit_of_packs -> Nullable<Text>,
     }
 }
 
@@ -66,6 +67,7 @@ pub struct PurchaseOrderLineRow {
     pub comment: Option<String>,
     pub manufacturer_link_id: Option<String>,
     pub note: Option<String>,
+    pub unit_of_packs: Option<String>,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {
