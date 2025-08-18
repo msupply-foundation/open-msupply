@@ -17,36 +17,45 @@ export type GoodsReceivedRowFragment = {
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
 };
 
-export type GoodsReceivedFragment = {
-  __typename: 'GoodsReceivedNode';
-  id: string;
-  number: number;
-  status: Types.GoodsReceivedNodeStatus;
-  comment?: string | null;
-  createdBy?: string | null;
-  createdDatetime: string;
-  receivedDatetime?: string | null;
-  finalisedDatetime?: string | null;
-  purchaseOrderNumber?: number | null;
-  purchaseOrderId?: string | null;
-  supplierReference?: string | null;
-  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
-  lines: {
-    __typename: 'GoodsReceivedLineConnector';
-    nodes: Array<{
-      __typename: 'GoodsReceivedLineNode';
-      id: string;
-      itemName: string;
-      lineNumber: number;
-      purchaseOrderLineId: string;
-    }>;
-  };
-};
-
 export type GoodsReceivedLineFragment = {
   __typename: 'GoodsReceivedLineNode';
   id: string;
-  item: { __typename: 'ItemNode'; id: string; name: string };
+  lineNumber: number;
+  batch?: string | null;
+  expiryDate?: string | null;
+  receivedPackSize: number;
+  numberOfPacksReceived: number;
+  item: { __typename: 'ItemNode'; code: string; name: string };
+};
+
+export type GoodsReceivedFragment = {
+  __typename: 'GoodsReceivedNode';
+  id: string;
+  comment?: string | null;
+  createdBy?: string | null;
+  createdDatetime: string;
+  number: number;
+  finalisedDatetime?: string | null;
+  purchaseOrderNumber?: number | null;
+  purchaseOrderId?: string | null;
+  receivedDatetime?: string | null;
+  supplierReference?: string | null;
+  status: Types.GoodsReceivedNodeStatus;
+  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+  lines: {
+    __typename: 'GoodsReceivedLineConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'GoodsReceivedLineNode';
+      id: string;
+      lineNumber: number;
+      batch?: string | null;
+      expiryDate?: string | null;
+      receivedPackSize: number;
+      numberOfPacksReceived: number;
+      item: { __typename: 'ItemNode'; code: string; name: string };
+    }>;
+  };
 };
 
 export type GoodsReceivedListQueryVariables = Types.Exact<{
@@ -90,25 +99,29 @@ export type GoodsReceivedByIdQuery = {
     | {
         __typename: 'GoodsReceivedNode';
         id: string;
-        number: number;
-        status: Types.GoodsReceivedNodeStatus;
         comment?: string | null;
         createdBy?: string | null;
         createdDatetime: string;
-        receivedDatetime?: string | null;
+        number: number;
         finalisedDatetime?: string | null;
         purchaseOrderNumber?: number | null;
         purchaseOrderId?: string | null;
+        receivedDatetime?: string | null;
         supplierReference?: string | null;
+        status: Types.GoodsReceivedNodeStatus;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'GoodsReceivedLineConnector';
+          totalCount: number;
           nodes: Array<{
             __typename: 'GoodsReceivedLineNode';
             id: string;
-            itemName: string;
             lineNumber: number;
-            purchaseOrderLineId: string;
+            batch?: string | null;
+            expiryDate?: string | null;
+            receivedPackSize: number;
+            numberOfPacksReceived: number;
+            item: { __typename: 'ItemNode'; code: string; name: string };
           }>;
         };
       }
@@ -142,7 +155,12 @@ export type GoodsReceivedLinesQuery = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
-      item: { __typename: 'ItemNode'; id: string; name: string };
+      lineNumber: number;
+      batch?: string | null;
+      expiryDate?: string | null;
+      receivedPackSize: number;
+      numberOfPacksReceived: number;
+      item: { __typename: 'ItemNode'; code: string; name: string };
     }>;
   };
 };
@@ -160,7 +178,12 @@ export type GoodsReceivedLineQuery = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
-      item: { __typename: 'ItemNode'; id: string; name: string };
+      lineNumber: number;
+      batch?: string | null;
+      expiryDate?: string | null;
+      receivedPackSize: number;
+      numberOfPacksReceived: number;
+      item: { __typename: 'ItemNode'; code: string; name: string };
     }>;
   };
 };
@@ -267,43 +290,47 @@ export const GoodsReceivedRowFragmentDoc = gql`
     }
   }
 `;
+export const GoodsReceivedLineFragmentDoc = gql`
+  fragment GoodsReceivedLine on GoodsReceivedLineNode {
+    __typename
+    id
+    lineNumber
+    batch
+    expiryDate
+    receivedPackSize
+    numberOfPacksReceived
+    item {
+      code
+      name
+    }
+  }
+`;
 export const GoodsReceivedFragmentDoc = gql`
   fragment GoodsReceived on GoodsReceivedNode {
     __typename
     id
-    number
-    status
     comment
     createdBy
     createdDatetime
-    receivedDatetime
+    number
     finalisedDatetime
     purchaseOrderNumber
     purchaseOrderId
+    receivedDatetime
     supplierReference
+    status
     supplier {
       id
       name
     }
     lines {
+      totalCount
       nodes {
-        id
-        itemName
-        lineNumber
-        purchaseOrderLineId
+        ...GoodsReceivedLine
       }
     }
   }
-`;
-export const GoodsReceivedLineFragmentDoc = gql`
-  fragment GoodsReceivedLine on GoodsReceivedLineNode {
-    __typename
-    id
-    item {
-      id
-      name
-    }
-  }
+  ${GoodsReceivedLineFragmentDoc}
 `;
 export const GoodsReceivedListDocument = gql`
   query goodsReceivedList(
@@ -334,13 +361,12 @@ export const GoodsReceivedListDocument = gql`
 export const GoodsReceivedByIdDocument = gql`
   query goodsReceivedById($id: String!, $storeId: String!) {
     goodsReceived(id: $id, storeId: $storeId) {
-      __typename
+      ... on GoodsReceivedNode {
+        ...GoodsReceived
+      }
       ... on RecordNotFound {
         __typename
         description
-      }
-      ... on GoodsReceivedNode {
-        ...GoodsReceived
       }
     }
   }
