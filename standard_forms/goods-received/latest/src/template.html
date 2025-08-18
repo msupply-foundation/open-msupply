@@ -18,11 +18,11 @@
   </thead>
   {% for line in data.goodsReceived.lines.nodes -%}
   <tr class="body_value">
-    <td>{{ line.itemName }}</td>
-    <td>{{ line.item.code }}</td>
-    <td>{{ line.location.name }}</td>
-    <td>{{line.receivedPackSize}}</td>
-    <td>{{line.numberOfPacksReceived}}</td>
+    <td>{{ line.itemName | default(value="")}}</td>
+    <td>{{ line.item.code | default(value="")}}</td>
+    <td>{{ line.location.name | default(value="")}}</td>
+    <td>{{line.receivedPackSize | default(value="")}}</td>
+    <td>{{line.numberOfPacksReceived| default(value="")}}</td>
     <td>........</td>
   </tr>
   {%- endfor %}
