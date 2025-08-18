@@ -98,6 +98,7 @@ export const useStocktakeColumns = ({
           return row.item?.code ?? '';
         },
         accessor: ({ rowData }) => rowData.item?.code ?? '',
+        isSticky: true,
       },
     ],
     [

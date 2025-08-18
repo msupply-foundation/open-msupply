@@ -11,7 +11,11 @@ import {
   RegexUtils,
   ItemFilterInput,
 } from '@openmsupply-client/common';
-import { ItemStockOnHandFragment, useItemStockOnHandInfinite } from '../../api';
+import {
+  ItemStockOnHandFragment,
+  useGetById,
+  useItemStockOnHandInfinite,
+} from '../../api';
 import { getOptionLabel, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
@@ -59,9 +63,9 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       filter: fullFilter,
     });
 
-  const currentItem = data?.pages
-    .flatMap(page => page.data.nodes)
-    .find(item => item.id === currentItemId);
+  // Note - important that we do a separate query for current item
+  // The infinite query above may not yet include the currently selected item in its results!
+  const { data: currentItem } = useGetById(currentItemId ?? '');
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
 
