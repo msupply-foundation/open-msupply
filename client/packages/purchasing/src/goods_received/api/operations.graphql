@@ -38,6 +38,7 @@ fragment GoodsReceived on GoodsReceivedNode {
   finalisedDatetime
   purchaseOrderNumber
   receivedDatetime
+  supplierReference
   status
   supplier {
     id

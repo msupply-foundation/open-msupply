@@ -38,6 +38,7 @@ export type GoodsReceivedFragment = {
   finalisedDatetime?: string | null;
   purchaseOrderNumber?: number | null;
   receivedDatetime?: string | null;
+  supplierReference?: string | null;
   status: Types.GoodsReceivedNodeStatus;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
@@ -104,6 +105,7 @@ export type GoodsReceivedByIdQuery = {
         finalisedDatetime?: string | null;
         purchaseOrderNumber?: number | null;
         receivedDatetime?: string | null;
+        supplierReference?: string | null;
         status: Types.GoodsReceivedNodeStatus;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
@@ -197,6 +199,7 @@ export const GoodsReceivedFragmentDoc = gql`
     finalisedDatetime
     purchaseOrderNumber
     receivedDatetime
+    supplierReference
     status
     supplier {
       id

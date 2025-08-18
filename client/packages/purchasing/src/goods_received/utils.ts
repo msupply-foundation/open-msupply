@@ -4,13 +4,13 @@ import {
   LocaleKey,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import { GoodsReceivedFragment } from './api/operations.generated';
+import {  GoodsReceivedRowFragment } from './api/operations.generated';
 
-export const canDeleteGoodsReceived = (row: GoodsReceivedFragment): boolean =>
+export const canDeleteGoodsReceived = (row: GoodsReceivedRowFragment): boolean =>
   row.status === GoodsReceivedNodeStatus.New;
 
 export const goodsReceivedToCsv = (
-  goodsReceived: GoodsReceivedFragment[],
+  goodsReceived: GoodsReceivedRowFragment[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
