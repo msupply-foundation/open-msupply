@@ -116,11 +116,7 @@ impl AssetLogNode {
     }
 
     pub async fn status(&self) -> Option<AssetLogStatusNodeType> {
-        if let Some(status) = &self.row().status {
-            Some(AssetLogStatusNodeType::from(status.clone()))
-        } else {
-            None
-        }
+        self.row().status.clone().map(AssetLogStatusNodeType::from)
     }
 
     pub async fn comment(&self) -> &Option<String> {
