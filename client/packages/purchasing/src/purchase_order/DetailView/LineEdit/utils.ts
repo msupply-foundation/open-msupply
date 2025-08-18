@@ -11,6 +11,68 @@ export const createDraftPurchaseOrderLine = (
     purchaseOrderId,
     itemId: item.id,
     requestedPackSize: 0,
+    requestedDeliveryDate: null,
+    expectedDeliveryDate: null,
     requestedNumberOfUnits: 0,
+    adjustedNumberOfUnits: null,
+    pricePerUnitBeforeDiscount: 0,
+    pricePerUnitAfterDiscount: 0,
+    // This value not actually saved to DB
+    discountPercentage: 0,
   };
+};
+
+type PriceField =
+  | 'pricePerUnitBeforeDiscount'
+  | 'discountPercentage'
+  | 'pricePerUnitAfterDiscount';
+
+/**
+ * Calculates any of the these values from the other two, based on which have
+ * most recently changed.
+ *
+ * `changingField` is the fields being updated by the user, and `data` contains
+ * the current state of all 3.
+ */
+export const calculatePricesAndDiscount = (
+  changingField: PriceField,
+  data: Partial<DraftPurchaseOrderLine>
+) => {
+  const {
+    pricePerUnitBeforeDiscount = 0,
+    discountPercentage,
+    pricePerUnitAfterDiscount = 0,
+  } = data;
+
+  switch (changingField) {
+    case 'pricePerUnitBeforeDiscount': {
+      // Update the price after discount based on discount percentage
+      return {
+        pricePerUnitBeforeDiscount,
+        discountPercentage,
+        pricePerUnitAfterDiscount:
+          pricePerUnitBeforeDiscount * (1 - (discountPercentage || 0) / 100),
+      };
+    }
+    case 'discountPercentage': {
+      // Update the price after discount based on original price
+      return {
+        pricePerUnitBeforeDiscount,
+        discountPercentage,
+        pricePerUnitAfterDiscount:
+          pricePerUnitBeforeDiscount * (1 - (discountPercentage || 0) / 100),
+      };
+    }
+    case 'pricePerUnitAfterDiscount': {
+      // Update the discount percentage based on original price
+      return {
+        pricePerUnitBeforeDiscount,
+        discountPercentage:
+          ((pricePerUnitBeforeDiscount - pricePerUnitAfterDiscount) /
+            (pricePerUnitBeforeDiscount || 1)) *
+          100,
+        pricePerUnitAfterDiscount,
+      };
+    }
+  }
 };

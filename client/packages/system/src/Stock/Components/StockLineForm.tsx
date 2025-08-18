@@ -27,7 +27,7 @@ import {
   QuantityUtils,
   Alert,
 } from '@openmsupply-client/common';
-import { DraftStockLine } from '../api';
+import { DraftStockLine, StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import {
   checkInvalidLocationLines,
@@ -46,6 +46,7 @@ interface StockLineFormProps {
   pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
   packEditable?: boolean;
   isNewModal?: boolean;
+  existingStockLine?: StockLineRowFragment | null;
 }
 export const StockLineForm = ({
   draft,
@@ -54,6 +55,7 @@ export const StockLineForm = ({
   pluginEvents,
   packEditable,
   isNewModal = false,
+  existingStockLine = null,
 }: StockLineFormProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -62,8 +64,7 @@ export const StockLineForm = ({
     PreferenceKey.AllowTrackingOfStockByDonor,
     PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.UseCampaigns
+    PreferenceKey.SortByVvmStatusThenExpiry
   );
 
   const { isConnected, isEnabled, isScanning, startScan } =
@@ -328,6 +329,7 @@ export const StockLineForm = ({
                   disabled={false}
                   selectedLocation={location}
                   width={160}
+                  originalSelectedLocation={existingStockLine?.location}
                   onChange={location => {
                     onUpdate({ location, locationId: location?.id });
                   }}
@@ -425,21 +427,19 @@ export const StockLineForm = ({
                 }
               />
             )}
-            {preferences?.useCampaigns && (
-              <StyledInputRow
-                label={t('label.campaign')}
-                Input={
-                  <CampaignOrProgramSelector
-                    campaignId={draft.campaign?.id}
-                    programId={draft.program?.id}
-                    programOptionsOrFilter={{ filterByItemId: draft.itemId }}
-                    onChange={({ campaign, program }) =>
-                      onUpdate({ campaign, program })
-                    }
-                  />
-                }
-              />
-            )}
+            <StyledInputRow
+              label={t('label.campaign')}
+              Input={
+                <CampaignOrProgramSelector
+                  campaignId={draft.campaign?.id}
+                  programId={draft.program?.id}
+                  programOptionsOrFilter={{ filterByItemId: draft.itemId }}
+                  onChange={({ campaign, program }) =>
+                    onUpdate({ campaign, program })
+                  }
+                />
+              }
+            />
           </Grid>
         </Grid>
       </Grid>

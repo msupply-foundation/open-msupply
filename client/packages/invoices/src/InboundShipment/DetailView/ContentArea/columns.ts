@@ -52,8 +52,7 @@ export const useInboundShipmentColumns = ({
   const t = useTranslation();
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { getError } = useInboundShipmentLineErrorContext();
@@ -104,6 +103,7 @@ export const useInboundShipmentColumns = ({
             { path: ['lines', 'item', 'code'] },
             { path: ['item', 'code'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [
@@ -301,8 +301,8 @@ export const useInboundShipmentColumns = ({
     });
   }
 
-  if (preferences?.useCampaigns) {
-    columns.push({
+  columns.push(
+    {
       key: 'campaign',
       label: 'label.campaign',
       accessor: ({ rowData }) => {
@@ -323,10 +323,9 @@ export const useInboundShipmentColumns = ({
         ]);
       },
       defaultHideOnMobile: true,
-    });
-  }
-
-  columns.push(getRowExpandColumn());
+    },
+    getRowExpandColumn()
+  );
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
@@ -338,7 +337,6 @@ export const useExpansionColumns = (
   withDoseColumns?: boolean,
   preferences?: {
     allowTrackingOfStockByDonor?: boolean;
-    useCampaigns?: boolean;
   }
 ): Column<InboundLineFragment>[] => {
   const columns: ColumnDescription<InboundLineFragment>[] = [
@@ -387,16 +385,14 @@ export const useExpansionColumns = (
     });
   }
 
-  if (preferences?.useCampaigns) {
-    columns.push({
-      key: 'campaign',
-      label: 'label.campaign',
-      width: 100,
-      accessor: ({ rowData }) =>
-        rowData.campaign?.name ?? rowData.program?.name ?? '',
-      defaultHideOnMobile: true,
-    });
-  }
+  columns.push({
+    key: 'campaign',
+    label: 'label.campaign',
+    width: 100,
+    accessor: ({ rowData }) =>
+      rowData.campaign?.name ?? rowData.program?.name ?? '',
+    defaultHideOnMobile: true,
+  });
 
   return useColumns(columns, {}, []);
 };
