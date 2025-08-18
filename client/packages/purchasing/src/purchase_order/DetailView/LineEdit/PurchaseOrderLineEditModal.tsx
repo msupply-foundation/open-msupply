@@ -1,18 +1,25 @@
-import { ModalMode, useDialog, useNotification } from '@common/hooks';
+import React, { useState } from 'react';
 import { PurchaseOrderFragment } from '../../api';
 import { DialogButton, InlineSpinner } from '@common/components';
-import { useTranslation, Box } from '@openmsupply-client/common';
-import React, { useState } from 'react';
+import {
+  useTranslation,
+  Box,
+  ModalMode,
+  useDialog,
+  useNotification,
+} from '@openmsupply-client/common';
+import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { createDraftPurchaseOrderLine } from './utils';
+
 interface PurchaseOrderLineEditModalProps {
   lineId: string | null;
   purchaseOrder: PurchaseOrderFragment;
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
+  isDisabled: boolean;
 }
 
 export const PurchaseOrderLineEditModal = ({
@@ -21,6 +28,7 @@ export const PurchaseOrderLineEditModal = ({
   mode,
   isOpen,
   onClose,
+  isDisabled,
 }: PurchaseOrderLineEditModalProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -112,6 +120,8 @@ export const PurchaseOrderLineEditModal = ({
           draft={draft}
           updatePatch={updatePatch}
           status={purchaseOrder.status}
+          isDisabled={isDisabled}
+          lines={lines}
         />
       )}
     </Modal>
