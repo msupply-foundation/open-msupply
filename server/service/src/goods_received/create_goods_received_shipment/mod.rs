@@ -54,8 +54,6 @@ pub fn create_goods_received_shipment(
             let result = insert_inbound_shipment(ctx, invoice.clone())
                 .map_err(|error| OutError::InboundShipmentError(error))?;
 
-            println!("line length: {}", invoice_lines.len());
-
             for line in invoice_lines {
                 insert_stock_in_line(ctx, line)
                     .map_err(|error| OutError::StockInLineError(error))?;
