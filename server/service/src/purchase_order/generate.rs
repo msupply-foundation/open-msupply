@@ -52,6 +52,7 @@ pub fn generate_empty_purchase_order_lines(
                     comment: None,
                     manufacturer_link_id: None,
                     note: None,
+                    unit_of_packs: None,
                 });
             }
             Ok(None) => {}

@@ -46,6 +46,7 @@ pub struct InsertPurchaseOrderLineInput {
     pub price_per_unit_after_discount: Option<f64>,
     pub manufacturer_id: Option<String>,
     pub note: Option<String>,
+    pub unit_of_packs: Option<String>,
 }
 
 pub fn insert_purchase_order_line(
@@ -129,6 +130,7 @@ pub fn insert_purchase_order_line_from_csv(
                 requested_number_of_units: input.requested_number_of_units,
                 price_per_unit_before_discount: input.price_per_unit_before_discount,
                 price_per_unit_after_discount: input.price_per_unit_after_discount,
+                unit_of_packs: None,
                 requested_delivery_date: None,
                 expected_delivery_date: None,
                 manufacturer_id: None,
