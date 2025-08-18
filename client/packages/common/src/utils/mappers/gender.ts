@@ -1,26 +1,25 @@
-import { LocaleKey } from '@common/intl';
-import { GenderType } from '@common/types';
+import { LocaleKey, GenderTypeNode } from '@openmsupply-client/common';
 import { noOtherVariants } from '../types';
 
-export function getGenderTranslationKey(gender: GenderType): LocaleKey {
+export function getGenderTranslationKey(gender: GenderTypeNode): LocaleKey {
   switch (gender) {
-    case GenderType.Female:
+    case GenderTypeNode.Female:
       return 'gender.female';
-    case GenderType.Male:
+    case GenderTypeNode.Male:
       return 'gender.male';
-    case GenderType.NonBinary:
+    case GenderTypeNode.NonBinary:
       return 'gender.non-binary';
-    case GenderType.Transgender:
+    case GenderTypeNode.Transgender:
       return 'gender.transgender';
-    case GenderType.TransgenderFemale:
-    case GenderType.TransgenderFemaleHormone:
-    case GenderType.TransgenderFemaleSurgical:
+    case GenderTypeNode.TransgenderFemale:
+    case GenderTypeNode.TransgenderFemaleHormone:
+    case GenderTypeNode.TransgenderFemaleSurgical:
       return 'gender.transgender-female';
-    case GenderType.TransgenderMale:
-    case GenderType.TransgenderMaleHormone:
-    case GenderType.TransgenderMaleSurgical:
+    case GenderTypeNode.TransgenderMale:
+    case GenderTypeNode.TransgenderMaleHormone:
+    case GenderTypeNode.TransgenderMaleSurgical:
       return 'gender.transgender-male';
-    case GenderType.Unknown:
+    case GenderTypeNode.Unknown:
       return 'gender.unknown';
 
     default:

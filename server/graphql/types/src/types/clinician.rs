@@ -1,4 +1,4 @@
-use crate::types::patient::GenderType;
+use crate::types::patient::GenderTypeNode;
 use async_graphql::*;
 use repository::{Clinician, ClinicianRow};
 
@@ -59,7 +59,9 @@ impl ClinicianNode {
         &self.row().email
     }
 
-    pub async fn gender(&self) -> Option<GenderType> {
-        self.row().gender.as_ref().map(GenderType::from_domain)
+    pub async fn gender(&self) -> Option<GenderTypeNode> {
+        Some(GenderTypeNode::from(
+            self.row().gender.clone().unwrap_or_default(),
+        ))
     }
 }
