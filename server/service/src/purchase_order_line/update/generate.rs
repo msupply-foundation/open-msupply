@@ -16,6 +16,7 @@ pub fn generate(
         price_per_unit_after_discount,
         manufacturer_id,
         note,
+        unit_of_packs,
     }: UpdatePurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     Ok(PurchaseOrderLineRow {
@@ -37,6 +38,7 @@ pub fn generate(
             .map(|v| v.value)
             .unwrap_or(purchase_order_line.manufacturer_link_id),
         note: note.map(|v| v.value).unwrap_or(purchase_order_line.note),
+        unit_of_packs: unit_of_packs.or(purchase_order_line.unit_of_packs),
         ..purchase_order_line
     })
 }

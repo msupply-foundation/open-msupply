@@ -39,6 +39,7 @@ pub struct UpdateInput {
     pub price_per_unit_after_discount: Option<f64>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub note: Option<NullableUpdateInput<String>>,
+    pub unit_of_packs: Option<String>,
 }
 
 impl UpdateInput {
@@ -55,6 +56,7 @@ impl UpdateInput {
             price_per_unit_after_discount,
             manufacturer_id,
             note,
+            unit_of_packs,
         } = self;
 
         ServiceInput {
@@ -69,6 +71,7 @@ impl UpdateInput {
             price_per_unit_after_discount,
             manufacturer_id: manufacturer_id.map(|v| NullableUpdate { value: v.value }),
             note: note.map(|v| NullableUpdate { value: v.value }),
+            unit_of_packs,
         }
     }
 }

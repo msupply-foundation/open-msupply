@@ -42,6 +42,7 @@ pub struct UpdatePurchaseOrderLineInput {
     pub price_per_unit_after_discount: Option<f64>,
     pub manufacturer_id: Option<NullableUpdate<String>>,
     pub note: Option<NullableUpdate<String>>,
+    pub unit_of_packs: Option<String>,
 }
 
 pub fn update_purchase_order_line(
