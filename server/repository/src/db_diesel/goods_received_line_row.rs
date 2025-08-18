@@ -1,6 +1,7 @@
 use super::item_row::item;
 use crate::db_diesel::goods_received_row::goods_received;
 use crate::db_diesel::item_link_row::item_link;
+use crate::EqualFilter;
 use crate::{
     goods_received_row::GoodsReceivedRowRepository, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, Delete, RepositoryError, RowActionType, StorageConnection, Upsert,
@@ -69,6 +70,15 @@ pub enum GoodsReceivedLineStatus {
     #[default]
     Unauthorised,
     Authorised,
+}
+
+impl GoodsReceivedLineStatus {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
 }
 
 pub struct GoodsReceivedLineRowRepository<'a> {
