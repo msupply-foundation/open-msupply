@@ -5,10 +5,9 @@ mod test_update {
         mock::{
             mock_goods_received_a, mock_goods_received_linked_to_not_finalised_purchase_order,
             mock_goods_received_linked_to_other_store_purchase_order, mock_goods_received_new,
-            mock_goods_received_without_linked_purchase_order, mock_item_link_from_item,
-            MockDataInserts,
+            mock_goods_received_without_linked_purchase_order, MockDataInserts,
         },
-        InvoiceFilter,
+        InvoiceFilter, InvoiceLineRowRepository,
     };
 
     use crate::goods_received::update::UpdateGoodsReceivedInput;
@@ -140,5 +139,12 @@ mod test_update {
             .unwrap();
 
         assert!(result.is_some());
+
+        // confirm that stock_in_lines have been added to new invoice
+        let invoice_lines = InvoiceLineRowRepository::new(&context.connection)
+            .find_many_by_invoice_id(&result.unwrap().invoice_row.id)
+            .unwrap();
+
+        assert_eq!(invoice_lines.len(), 1);
     }
 }
