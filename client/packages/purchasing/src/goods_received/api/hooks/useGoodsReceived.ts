@@ -74,7 +74,6 @@ const useGetById = (id?: string) => {
 
   const queryFn = async () => {
     if (!id) return;
-    console.info('Fetching goods received by ID:', id);
     const result = await goodsReceivedApi.goodsReceivedById({
       id,
       storeId,

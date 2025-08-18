@@ -182,7 +182,6 @@ const useSaveGoodsReceivedLines = () => {
   const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
 
   const mutationFn = async (input: SaveGoodsReceivedLinesInput) => {
-    console.info('Saving Goods Received Lines:', input);
     return await goodsReceivedApi.saveGoodsReceivedLines({
       storeId,
       input,

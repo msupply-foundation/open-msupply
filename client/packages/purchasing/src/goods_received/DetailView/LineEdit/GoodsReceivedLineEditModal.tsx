@@ -61,8 +61,6 @@ export const GoodsReceivedLineEditModal = ({
     }
   };
 
-  console.info('draftliens', draftLines);
-
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   return (
