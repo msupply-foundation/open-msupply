@@ -3803,6 +3803,7 @@ export type InsertPurchaseOrderLineInput = {
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  supplierItemCode?: InputMaybe<Scalars['String']['input']>;
   unitOfPacks?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -10278,6 +10279,7 @@ export type UpdatePurchaseOrderLineInput = {
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  supplierItemCode?: InputMaybe<NullableStringUpdate>;
   unitOfPacks?: InputMaybe<Scalars['String']['input']>;
 };
 
