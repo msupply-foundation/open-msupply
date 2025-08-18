@@ -6,6 +6,7 @@ import {
   usePatchState,
   useQuery,
   useTranslation,
+  setNullableInput,
 } from '@openmsupply-client/common/src';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
@@ -40,6 +41,8 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   pricePerUnitAfterDiscount: 0,
   // This value not actually saved to DB
   discountPercentage: 0,
+  manufacturer: null,
+  note: null,
 };
 
 export function usePurchaseOrderLine(id?: string) {
@@ -102,6 +105,8 @@ export function usePurchaseOrderLine(id?: string) {
       adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
       pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
       pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
+      manufacturerId: setNullableInput('id', draft.manufacturer),
+      note: setNullableInput('note', draft),
     };
     return await updatePurchaseOrderLine(input);
   };
@@ -173,6 +178,8 @@ const useCreate = () => {
         expectedDeliveryDate: draft.expectedDeliveryDate,
         pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
         pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
+        manufacturerId: draft.manufacturer?.id,
+        note: draft.note,
       },
     });
   };
