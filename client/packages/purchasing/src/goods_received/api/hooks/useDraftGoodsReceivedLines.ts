@@ -44,7 +44,6 @@ export const useDraftGoodsReceivedLines = (purchaseOrderLineId?: string) => {
     const newLine: DraftGoodsReceivedLine = {
       id: FnUtils.generateUUID(),
       itemId: templateLine?.item.id ?? '',
-      item: templateLine?.item,
       goodsReceivedId: templateLine?.goodsReceivedId ?? '',
       purchaseOrderLineId: templateLine?.purchaseOrderLineId ?? '',
       lineNumber: 0,
@@ -54,6 +53,11 @@ export const useDraftGoodsReceivedLines = (purchaseOrderLineId?: string) => {
       expiryDate: null,
       manufacturerLinkId: null,
       numberOfPacksReceived: 0,
+      item: {
+        __typename: 'ItemNode',
+        id: '',
+        name: '',
+      },
     };
     setDraftLines(prev => [...prev, newLine]);
   }, [goodsReceivedData, purchaseOrderLineId, linesForPurchaseOrderLine]);
