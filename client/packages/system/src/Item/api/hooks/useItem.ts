@@ -4,9 +4,13 @@ import { ITEM } from '../keys';
 import { useItemsByFilter } from './useItems';
 
 export function useItem(id?: string) {
-  const { data, isLoading, error } = useGetById(id);
+  const { id: paramId = '' } = useParams();
+
+  const itemId = id || paramId;
+
+  const { data, isLoading, error } = useGetById(itemId);
   const { data: stockLinesFromItem, isLoading: stockLinesIsLoading } =
-    useStockLinesFromItem(id);
+    useStockLinesFromItem(itemId);
 
   const { data: serviceItems, isLoading: serviceItemsLoading } =
     useItemsByFilter({
@@ -31,14 +35,13 @@ export function useItem(id?: string) {
   };
 }
 
-const useGetById = (itemId?: string) => {
+export const useGetById = (itemId: string) => {
   const { api, storeId } = useItemGraphQL();
-  const { id = '' } = useParams();
 
   const queryFn = async () => {
     const result = await api.itemById({
       storeId,
-      itemId: itemId || id,
+      itemId,
     });
 
     if (result.items.__typename === 'ItemConnector') {
@@ -47,15 +50,15 @@ const useGetById = (itemId?: string) => {
   };
 
   const query = useQuery({
-    queryKey: [ITEM, id],
+    queryKey: [ITEM, itemId],
     queryFn,
-    enabled: !!id,
+    enabled: !!itemId,
   });
 
   return query;
 };
 
-const useStockLinesFromItem = (itemId?: string) => {
+const useStockLinesFromItem = (itemId: string) => {
   const queryState = useGetById(itemId);
   const { data } = queryState;
   const { availableBatches } = data ?? {};
