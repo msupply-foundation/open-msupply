@@ -17,6 +17,7 @@ mod encounter;
 mod form_schema;
 mod full_invoice;
 mod full_master_list;
+mod goods_received;
 mod indicator_column;
 mod indicator_line;
 mod indicator_value;
@@ -92,6 +93,7 @@ pub use encounter::*;
 pub use form_schema::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
+pub use goods_received::*;
 pub use indicator_column::*;
 pub use indicator_line::*;
 pub use indicator_value::*;
@@ -155,6 +157,7 @@ use crate::{
     campaign_row::{CampaignRow, CampaignRowRepository},
     category_row::{CategoryRow, CategoryRowRepository},
     contact_form_row::{ContactFormRow, ContactFormRowRepository},
+    goods_received_row::{GoodsReceivedRow, GoodsReceivedRowRepository},
     item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
     reason_option_row::{ReasonOptionRow, ReasonOptionRowRepository},
     vaccine_course::{
@@ -254,6 +257,7 @@ pub struct MockData {
     pub purchase_order_line: Vec<PurchaseOrderLineRow>,
     pub location_types: Vec<LocationTypeRow>,
     pub preferences: Vec<PreferenceRow>,
+    pub goods_received: Vec<GoodsReceivedRow>,
 }
 
 impl MockData {
@@ -347,6 +351,7 @@ pub struct MockDataInserts {
     pub purchase_order_line: bool,
     pub location_types: bool,
     pub preferences: bool,
+    pub goods_received: bool,
 }
 
 impl MockDataInserts {
@@ -429,6 +434,7 @@ impl MockDataInserts {
             purchase_order_line: true,
             location_types: true,
             preferences: true,
+            goods_received: true,
         }
     }
 
@@ -811,6 +817,19 @@ impl MockDataInserts {
         self
     }
 
+    pub fn goods_received(mut self) -> Self {
+        self.location_types = true;
+        self.names = true;
+        self.units = true;
+        self.items = true;
+        self.stores = true;
+        self.currencies = true;
+        self.purchase_order = true;
+        self.purchase_order_line = true;
+        self.goods_received = true;
+        self
+    }
+
     pub fn location_types(mut self) -> Self {
         self.location_types = true;
         self
@@ -920,6 +939,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             purchase_order: mock_purchase_orders(),
             purchase_order_line: mock_purchase_order_lines(),
             location_types: mock_location_types(),
+            goods_received: mock_goods_received(),
             ..Default::default()
         },
     );
@@ -1509,6 +1529,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.goods_received {
+            let repo = GoodsReceivedRowRepository::new(connection);
+            for row in &mock_data.goods_received {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1594,6 +1621,7 @@ impl MockData {
             mut purchase_order_line,
             mut location_types,
             mut preferences,
+            mut goods_received,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1673,6 +1701,7 @@ impl MockData {
         self.purchase_order_line.append(&mut purchase_order_line);
         self.location_types.append(&mut location_types);
         self.preferences.append(&mut preferences);
+        self.goods_received.append(&mut goods_received);
         self
     }
 }
