@@ -110,6 +110,7 @@ export const DetailViewInner = () => {
               mode={mode}
               lineId={lineId}
               purchaseOrder={data}
+              isDisabled={isDisabled}
             />
           )}
         </>
