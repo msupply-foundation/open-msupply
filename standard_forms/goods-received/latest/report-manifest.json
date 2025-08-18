@@ -1,0 +1,11 @@
+{
+  "is_custom": false,
+  "version": "2.10.0",
+  "code": "goods-received",
+  "context": "PURCHASE_ORDER",
+  "name": "Goods Received",
+  "queries": {
+    "gql": "query.graphql"
+  },
+  "header": "header.html"
+}

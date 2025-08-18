@@ -47,6 +47,8 @@ export const UploadTab = ({
         itemCode: t('label.code'),
         requestedPackSize: 0,
         requestedNumberOfUnits: 0,
+        pricePerUnitBeforeDiscount: 0,
+        pricePerUnitAfterDiscount: 0,
       },
     ];
     const csv = importPurchaseOrderLinesToCsv(exampleRows, t);
@@ -113,6 +115,18 @@ export const UploadTab = ({
 
       addCell('requestedNumberOfUnits', 'label.requested', numString =>
         parseFloat(numString)
+      );
+
+      addCell(
+        'pricePerUnitBeforeDiscount',
+        'label.price-per-unit-before-discount',
+        numString => parseFloat(numString)
+      );
+
+      addCell(
+        'pricePerUnitAfterDiscount',
+        'label.price-per-unit-after-discount',
+        numString => parseFloat(numString)
       );
 
       importRow.errorMessage = rowErrors.join(',');
