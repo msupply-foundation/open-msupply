@@ -19,19 +19,21 @@ pub fn generate(
         id: input.id,
         goods_received_id: input.goods_received_id,
         purchase_order_line_id: input.purchase_order_line_id,
-        received_pack_size: purchase_order_line.requested_pack_size,
+        received_pack_size: input
+            .received_pack_size
+            .unwrap_or(purchase_order_line.requested_pack_size),
         line_number: purchase_order_line.line_number,
         item_link_id: purchase_order_line.item_link_id,
         item_name: purchase_order_line.item_name,
         status: GoodsReceivedLineStatus::Unauthorised,
-        comment: purchase_order_line.comment,
-        // Default values
-        batch: None,
-        number_of_packs_received: 0.0,
+        comment: input.comment.or(purchase_order_line.comment),
+        // Values from input or defaults
+        batch: input.batch,
+        number_of_packs_received: input.number_of_packs_received.unwrap_or(0.0),
         weight_per_pack: None,
-        expiry_date: None,
+        expiry_date: input.expiry_date,
         location_id: None,
         volume_per_pack: None,
-        manufacturer_link_id: None,
+        manufacturer_link_id: input.manufacturer_id,
     })
 }

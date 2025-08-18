@@ -63,7 +63,7 @@ export const DetailViewInner = (): ReactElement => {
             <GoodsReceivedLineEditModal
               lineId={lineId}
               onClose={onClose}
-              isOpen={true}
+              isOpen={isOpen}
             />
           )}
         </>

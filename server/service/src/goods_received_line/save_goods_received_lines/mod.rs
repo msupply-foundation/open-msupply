@@ -13,6 +13,7 @@ use repository::{goods_received_row::GoodsReceivedRow, RepositoryError};
 
 pub mod generate;
 use generate::generate;
+mod test;
 pub mod validate;
 use validate::validate;
 

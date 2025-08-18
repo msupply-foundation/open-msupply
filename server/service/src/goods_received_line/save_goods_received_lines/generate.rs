@@ -43,10 +43,24 @@ pub fn generate(
         .into_iter()
         .filter(|line| !check_already_exists(&line.id))
         .map(
-            |SaveGoodsReceivedLine { id, .. }| InsertGoodsReceivedLineInput {
+            |SaveGoodsReceivedLine { 
+                id,
+                batch,
+                expiry_date,
+                number_of_packs_received,
+                received_pack_size,
+                manufacturer_id,
+                comment,
+            }| InsertGoodsReceivedLineInput {
                 id,
                 goods_received_id: goods_received_id.clone(),
                 purchase_order_line_id: purchase_order_line_id.clone(),
+                batch,
+                expiry_date,
+                number_of_packs_received,
+                received_pack_size,
+                manufacturer_id,
+                comment,
             },
         )
         .collect();

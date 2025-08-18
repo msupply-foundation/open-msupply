@@ -53,6 +53,7 @@ mod delete {
                     id: "goods_received_line_id_1".to_string(),
                     goods_received_id: "goods_received_id_1".to_string(),
                     purchase_order_line_id: mock_purchase_order_a_line_1().id,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -96,6 +97,7 @@ mod delete {
                     id: "goods_received_line_id_1".to_string(),
                     goods_received_id: "goods_received_id_1".to_string(),
                     purchase_order_line_id: mock_purchase_order_a_line_1().id,
+                    ..Default::default()
                 },
             )
             .unwrap();

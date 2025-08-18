@@ -3409,9 +3409,15 @@ export type InsertGoodsReceivedLineErrorInterface = {
 };
 
 export type InsertGoodsReceivedLineInput = {
+  batch?: InputMaybe<Scalars['String']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   goodsReceivedId: Scalars['String']['input'];
   id: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReceived?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderLineId: Scalars['String']['input'];
+  receivedPackSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertGoodsReceivedLineResponse =
