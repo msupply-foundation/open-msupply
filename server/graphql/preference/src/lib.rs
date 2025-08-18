@@ -3,7 +3,10 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::{
     OkResponse, PreferenceDescriptionNode, PreferenceNodeType, PreferencesNode,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    preference::PreferenceType,
+};
 
 mod upsert;
 use upsert::*;
@@ -65,7 +68,7 @@ impl PreferenceQueries {
         let prefs = service.get_preference_descriptions(
             service_context.connection,
             pref_context.store_id,
-            pref_type.to_domain(),
+            PreferenceType::from(pref_type),
         )?;
 
         Ok(prefs
