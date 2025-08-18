@@ -14,10 +14,9 @@ import {
   Grid,
   Alert,
   ClickableStepper,
-  AssetLogStatusInput,
+  AssetLogStatusNodeType,
   FnUtils,
   useIsCentralServerApi,
-  StatusType,
   useExportCSV,
   ImportTab,
 } from '@openmsupply-client/common';
@@ -51,7 +50,7 @@ export type ImportRow = {
   replacementDate: string | null | undefined;
   warrantyStart: string | null | undefined;
   warrantyEnd: string | null | undefined;
-  status: StatusType;
+  status: AssetLogStatusNodeType;
   needsReplacement: boolean;
   id: string;
   notes: string;
@@ -81,23 +80,6 @@ export const toInsertEquipmentInput = (
     store: store ? { ...store, __typename: 'StoreNode', storeName: '' } : null,
     parsedProperties,
   };
-};
-
-export const toStatusTypeInput = (status: StatusType): AssetLogStatusInput => {
-  switch (status) {
-    case StatusType.Functioning:
-      return AssetLogStatusInput.Functioning;
-    case StatusType.Decommissioned:
-      return AssetLogStatusInput.Decommissioned;
-    case StatusType.FunctioningButNeedsAttention:
-      return AssetLogStatusInput.FunctioningButNeedsAttention;
-    case StatusType.NotFunctioning:
-      return AssetLogStatusInput.NotFunctioning;
-    case StatusType.NotInUse:
-      return AssetLogStatusInput.NotInUse;
-    case StatusType.Unserviceable:
-      return AssetLogStatusInput.Unserviceable;
-  }
 };
 
 export const toExportEquipment = (
@@ -172,7 +154,7 @@ export const EquipmentImportModal = ({
         id: FnUtils.generateUUID(),
         assetId: row.id,
         comment: t('message.asset-created'),
-        status: toStatusTypeInput(row.status),
+        status: row.status,
       });
     } catch (e) {
       const errorMessage = (e as Error).message ?? t('messages.unknown-error');

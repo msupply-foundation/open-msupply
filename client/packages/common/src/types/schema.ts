@@ -520,7 +520,7 @@ export type AssetLogNode = {
   id: Scalars['String']['output'];
   logDatetime: Scalars['NaiveDateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
-  status?: Maybe<StatusType>;
+  status?: Maybe<AssetLogStatusNodeType>;
   type?: Maybe<Scalars['String']['output']>;
   user?: Maybe<UserNode>;
 };
@@ -553,7 +553,7 @@ export type AssetLogReasonMutationsInsertAssetLogReasonArgs = {
 
 export type AssetLogReasonNode = {
   __typename: 'AssetLogReasonNode';
-  assetLogStatus: StatusType;
+  assetLogStatus: AssetLogStatusNodeType;
   id: Scalars['String']['output'];
   reason: Scalars['String']['output'];
 };
@@ -589,7 +589,7 @@ export type AssetLogSortInput = {
   key: AssetLogSortFieldInput;
 };
 
-export enum AssetLogStatusInput {
+export enum AssetLogStatusNodeType {
   Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
@@ -2727,9 +2727,9 @@ export type EqualFilterRequisitionTypeInput = {
 };
 
 export type EqualFilterStatusInput = {
-  equalAny?: InputMaybe<Array<AssetLogStatusInput>>;
-  equalTo?: InputMaybe<AssetLogStatusInput>;
-  notEqualTo?: InputMaybe<AssetLogStatusInput>;
+  equalAny?: InputMaybe<Array<AssetLogStatusNodeType>>;
+  equalTo?: InputMaybe<AssetLogStatusNodeType>;
+  notEqualTo?: InputMaybe<AssetLogStatusNodeType>;
 };
 
 export type EqualFilterStocktakeStatusInput = {
@@ -3123,7 +3123,7 @@ export type InsertAssetLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<AssetLogStatusInput>;
+  status?: InputMaybe<AssetLogStatusNodeType>;
   type?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -3137,7 +3137,7 @@ export type InsertAssetLogReasonErrorInterface = {
 };
 
 export type InsertAssetLogReasonInput = {
-  assetLogStatus: AssetLogStatusInput;
+  assetLogStatus: AssetLogStatusNodeType;
   id: Scalars['String']['input'];
   reason: Scalars['String']['input'];
 };
@@ -8780,15 +8780,6 @@ export type SnapshotCountCurrentCountMismatchLine =
     description: Scalars['String']['output'];
     stocktakeLine: StocktakeLineNode;
   };
-
-export enum StatusType {
-  Decommissioned = 'DECOMMISSIONED',
-  Functioning = 'FUNCTIONING',
-  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
-  NotFunctioning = 'NOT_FUNCTIONING',
-  NotInUse = 'NOT_IN_USE',
-  Unserviceable = 'UNSERVICEABLE',
-}
 
 export type StockCounts = {
   __typename: 'StockCounts';

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
-  AssetLogStatusInput,
+  AssetLogStatusNodeType,
   Box,
   FilterDefinition,
   FilterMenu,
@@ -65,27 +65,27 @@ export const useToolbar = () => {
       options: [
         {
           label: t('status.decommissioned'),
-          value: AssetLogStatusInput.Decommissioned,
+          value: AssetLogStatusNodeType.Decommissioned,
         },
         {
           label: t('status.functioning'),
-          value: AssetLogStatusInput.Functioning,
+          value: AssetLogStatusNodeType.Functioning,
         },
         {
           label: t('status.functioning-but-needs-attention'),
-          value: AssetLogStatusInput.FunctioningButNeedsAttention,
+          value: AssetLogStatusNodeType.FunctioningButNeedsAttention,
         },
         {
           label: t('status.not-functioning'),
-          value: AssetLogStatusInput.NotFunctioning,
+          value: AssetLogStatusNodeType.NotFunctioning,
         },
         {
           label: t('status.not-in-use'),
-          value: AssetLogStatusInput.NotInUse,
+          value: AssetLogStatusNodeType.NotInUse,
         },
         {
           label: t('status.unserviceable'),
-          value: AssetLogStatusInput.Unserviceable,
+          value: AssetLogStatusNodeType.Unserviceable,
         },
       ],
       isDefault: true,
