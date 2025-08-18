@@ -40,6 +40,7 @@ pub struct UpdateInput {
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub note: Option<NullableUpdateInput<String>>,
     pub unit_of_packs: Option<String>,
+    pub supplier_item_code: Option<NullableUpdateInput<String>>,
 }
 
 impl UpdateInput {
@@ -57,6 +58,7 @@ impl UpdateInput {
             manufacturer_id,
             note,
             unit_of_packs,
+            supplier_item_code,
         } = self;
 
         ServiceInput {
@@ -72,6 +74,7 @@ impl UpdateInput {
             manufacturer_id: manufacturer_id.map(|v| NullableUpdate { value: v.value }),
             note: note.map(|v| NullableUpdate { value: v.value }),
             unit_of_packs,
+            supplier_item_code: supplier_item_code.map(|v| NullableUpdate { value: v.value }),
         }
     }
 }
