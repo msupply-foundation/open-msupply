@@ -10,13 +10,15 @@ import {
   useAuthContext,
   getLinesFromRow,
   UNDEFINED_STRING_VALUE,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { useResponseRequisitionLineErrorContext } from '../context';
 
-export const useResponseColumns = (manageVaccinesInDoses: boolean = false) => {
+export const useResponseColumns = () => {
   const { getError } = useResponseRequisitionLineErrorContext();
+  const { manageVaccinesInDoses } = usePreferences();
 
   const {
     updateSortQuery,

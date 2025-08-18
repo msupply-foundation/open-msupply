@@ -14,8 +14,6 @@ import {
   useNotification,
   useTableStore,
   useBreadcrumbs,
-  usePreference,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -35,11 +33,6 @@ const DetailViewInner = () => {
   const t = useTranslation();
   const { info } = useNotification();
   const isDisabled = useOutbound.utils.isDisabled();
-
-  const { data: prefs } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVaccinesInDoses
-  );
 
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<OutboundOpenedWith>();
@@ -119,10 +112,6 @@ const DetailViewInner = () => {
               onClose={onClose}
               status={data.status}
               invoiceId={data.id}
-              prefOptions={{
-                sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
-                manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
-              }}
             />
           )}
 

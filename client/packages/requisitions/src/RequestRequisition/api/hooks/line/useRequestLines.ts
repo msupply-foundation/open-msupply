@@ -4,12 +4,10 @@ import { useRequestColumns } from '../../../DetailView/columns';
 import { useHideOverStocked } from '../index';
 import { useRequestFields } from '../document/useRequestFields';
 
-export const useRequestLines = (manageVaccinesInDoses: boolean = false) => {
+export const useRequestLines = () => {
   const { on } = useHideOverStocked();
   const { itemFilter, setItemFilter, matchItem } = useItemUtils();
-  const { columns, onChangeSortBy, sortBy } = useRequestColumns(
-    manageVaccinesInDoses
-  );
+  const { columns, onChangeSortBy, sortBy } = useRequestColumns();
   const { lines, minMonthsOfStock, maxMonthsOfStock } = useRequestFields([
     'lines',
     'minMonthsOfStock',

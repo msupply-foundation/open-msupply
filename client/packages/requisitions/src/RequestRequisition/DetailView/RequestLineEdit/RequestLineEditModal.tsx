@@ -5,6 +5,7 @@ import {
   ModalMode,
   useDialog,
   useNotification,
+  usePreferences,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
@@ -25,8 +26,6 @@ interface RequestLineEditModalProps {
   itemId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  manageVaccinesInDoses: boolean;
-  orderInPacks: boolean;
 }
 
 export const RequestLineEditModal = ({
@@ -36,12 +35,11 @@ export const RequestLineEditModal = ({
   itemId,
   isOpen,
   onClose,
-  manageVaccinesInDoses,
-  orderInPacks,
 }: RequestLineEditModalProps) => {
   const { error } = useNotification();
   const deleteLine = useRequest.line.deleteLine();
   const isDisabled = isRequestDisabled(requisition);
+  const { orderInPacks } = usePreferences();
 
   const lines = useMemo(
     () =>
@@ -169,7 +167,6 @@ export const RequestLineEditModal = ({
           disabled={isDisabled}
           isUpdateMode={mode === ModalMode.Update}
           showExtraFields={useConsumptionData && !!requisition?.program}
-          manageVaccinesInDoses={manageVaccinesInDoses}
           isReasonsError={isReasonsError}
           setIsEditingRequested={setIsEditingRequested}
         />

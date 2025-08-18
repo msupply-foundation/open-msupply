@@ -19,8 +19,7 @@ import {
   ColumnAlign,
   NumberCell,
   getReasonOptionTypes,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   Box,
   useAuthContext,
   StoreModeNodeType,
@@ -48,7 +47,6 @@ interface StocktakeLineEditTableProps {
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
   isInitialStocktake?: boolean;
-  trackStockDonor?: boolean;
   restrictedToLocationTypeId?: string | null;
   isVaccineItem?: boolean;
 }
@@ -181,15 +179,13 @@ export const BatchTable = ({
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVvmStatusForStock
-  );
+  const { manageVvmStatusForStock } = usePreferences();
   useDisableStocktakeRows(batches);
   const { data: reasonOptions, isLoading } = useReasonOptions();
   const errorsContext = useStocktakeLineErrorContext();
 
   const showVVMStatusColumn =
-    (preferences?.manageVvmStatusForStock && isVaccineItem) ?? false;
+    (manageVvmStatusForStock && isVaccineItem) ?? false;
 
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -388,11 +384,12 @@ export const LocationTable = ({
   batches,
   update,
   isDisabled,
-  trackStockDonor,
   restrictedToLocationTypeId,
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
+  const { allowTrackingOfStockByDonor } = usePreferences();
+
   useDisableStocktakeRows(batches);
 
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -411,7 +408,7 @@ export const LocationTable = ({
       },
     ],
   ];
-  if (trackStockDonor) {
+  if (allowTrackingOfStockByDonor) {
     columnDefinitions.push(
       getDonorColumn((id, donor) =>
         update({

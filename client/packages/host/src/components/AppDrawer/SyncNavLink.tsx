@@ -3,10 +3,9 @@ import {
   AlertIcon,
   AppNavLink,
   DateUtils,
-  PreferenceKey,
   RadioIcon,
   SyncErrorVariant,
-  usePreference,
+  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { BadgeProps } from '@mui/material';
@@ -18,11 +17,7 @@ const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000; // 1 minute
 
 export const SyncNavLink = () => {
   const t = useTranslation();
-  const { data: preferences } = usePreference(
-    PreferenceKey.SyncRecordsDisplayThreshold
-  );
-  const syncRecordsDisplayThreshold =
-    preferences?.[PreferenceKey.SyncRecordsDisplayThreshold] ?? 0;
+  const { syncRecordsDisplayThreshold = 0 } = usePreferences();
 
   const showSync = useSyncModal();
 
