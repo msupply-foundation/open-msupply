@@ -13,6 +13,7 @@ import {
   usePluginProvider,
   Typography,
   BufferedTextArea,
+  ModalGridLayout,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -22,7 +23,6 @@ import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import {
   InfoRow,
-  ModalContentLayout,
   ValueInfoRow,
   ValueInfo,
   RepresentationValue,
@@ -213,7 +213,7 @@ export const RequestLineEdit = ({
 
   return (
     <>
-      <ModalContentLayout
+      <ModalGridLayout
         showExtraFields={showExtraFields}
         Top={
           <>
