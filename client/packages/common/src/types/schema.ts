@@ -1776,23 +1776,6 @@ export type DeleteErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type DeleteGoodsReceivedLineError = {
-  __typename: 'DeleteGoodsReceivedLineError';
-  error: DeleteGoodsReceivedLineInterface;
-};
-
-export type DeleteGoodsReceivedLineInput = {
-  id: Scalars['String']['input'];
-};
-
-export type DeleteGoodsReceivedLineInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type DeleteGoodsReceivedLineResponse =
-  | DeleteGoodsReceivedLineError
-  | DeleteResponse;
-
 export type DeleteGoodsReceivedResponse = DeleteResponse;
 
 export type DeleteInboundShipmentError = {
@@ -2989,6 +2972,7 @@ export type GoodsReceivedLineNode = {
   itemLinkId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   lineNumber: Scalars['Int']['output'];
+  location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   manufacturerLinkId?: Maybe<Scalars['String']['output']>;
   numberOfPacksReceived: Scalars['Float']['output'];
@@ -5289,7 +5273,6 @@ export type Mutations = {
   deleteAsset: DeleteAssetResponse;
   deleteCustomerReturn: DeleteCustomerReturnResponse;
   deleteGoodsReceived: DeleteGoodsReceivedResponse;
-  deleteGoodsReceivedLine: DeleteGoodsReceivedLineResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
@@ -5513,11 +5496,6 @@ export type MutationsDeleteCustomerReturnArgs = {
 
 export type MutationsDeleteGoodsReceivedArgs = {
   id: Scalars['String']['input'];
-  storeId: Scalars['String']['input'];
-};
-
-export type MutationsDeleteGoodsReceivedLineArgs = {
-  input: DeleteGoodsReceivedLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -8240,7 +8218,6 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteCampaignErrorInterface &
   DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
-  DeleteGoodsReceivedLineInterface &
   DeleteInboundShipmentErrorInterface &
   DeleteInboundShipmentLineErrorInterface &
   DeleteInboundShipmentServiceLineErrorInterface &
@@ -8363,7 +8340,6 @@ export enum ReportContext {
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE',
-  GoodsReceived = 'GOODS_RECEIVED',
 }
 
 export type ReportFilterInput = {
