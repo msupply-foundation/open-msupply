@@ -63,7 +63,6 @@ use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
-use graphql_goods_received_line::GoodsReceivedLineQueries;
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 
