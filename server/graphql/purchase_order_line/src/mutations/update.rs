@@ -1,9 +1,14 @@
 use async_graphql::*;
 use chrono::NaiveDate;
+use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditPurchaseOrder;
-use graphql_core::standard_graphql_error::StandardGraphqlError::BadUserInput;
-use graphql_core::standard_graphql_error::StandardGraphqlError::InternalError;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{
+        validate_auth,
+        StandardGraphqlError::{BadUserInput, InternalError},
+    },
+    ContextExt,
+};
 use graphql_types::types::IdResponse;
 use repository::PurchaseOrderLine;
 use service::{
@@ -12,6 +17,7 @@ use service::{
         UpdatePurchaseOrderLineInput as ServiceInput,
         UpdatePurchaseOrderLineInputError as ServiceError,
     },
+    NullableUpdate,
 };
 
 use crate::mutations::errors::{
@@ -31,6 +37,8 @@ pub struct UpdateInput {
     pub expected_delivery_date: Option<NaiveDate>,
     pub price_per_unit_before_discount: Option<f64>,
     pub price_per_unit_after_discount: Option<f64>,
+    pub manufacturer_id: Option<NullableUpdateInput<String>>,
+    pub note: Option<NullableUpdateInput<String>>,
 }
 
 impl UpdateInput {
@@ -45,6 +53,8 @@ impl UpdateInput {
             expected_delivery_date,
             price_per_unit_before_discount,
             price_per_unit_after_discount,
+            manufacturer_id,
+            note,
         } = self;
 
         ServiceInput {
@@ -57,6 +67,8 @@ impl UpdateInput {
             expected_delivery_date,
             price_per_unit_before_discount,
             price_per_unit_after_discount,
+            manufacturer_id: manufacturer_id.map(|v| NullableUpdate { value: v.value }),
+            note: note.map(|v| NullableUpdate { value: v.value }),
         }
     }
 }
