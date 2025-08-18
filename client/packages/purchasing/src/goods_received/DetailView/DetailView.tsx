@@ -34,8 +34,6 @@ export const DetailViewInner = (): ReactElement => {
 
   const { onClose, isOpen, entity: lineId } = useEditModal<string | null>();
 
-  console.info('Goods Received Detail View Data:', data);
-
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.number]);
@@ -62,7 +60,7 @@ export const DetailViewInner = (): ReactElement => {
           <Footer />
           <SidePanel />
           <GoodsReceivedLineEditModal
-            lineId={''}
+            lineId={'0198aab1-c406-7dcf-ae5f-35a0fc2c104a'}
             onClose={onClose}
             isOpen={true}
           />

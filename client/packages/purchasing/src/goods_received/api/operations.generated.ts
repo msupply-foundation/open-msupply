@@ -45,6 +45,7 @@ export type GoodsReceivedFragment = {
       manufacturerLinkId?: string | null;
       numberOfPacksReceived: number;
       receivedPackSize: number;
+      purchaseOrderLineId: string;
       item: { __typename: 'ItemNode'; id: string; name: string };
     }>;
   };
@@ -61,6 +62,7 @@ export type GoodsReceivedLineFragment = {
   manufacturerLinkId?: string | null;
   numberOfPacksReceived: number;
   receivedPackSize: number;
+  purchaseOrderLineId: string;
   item: { __typename: 'ItemNode'; id: string; name: string };
 };
 
@@ -130,6 +132,7 @@ export type GoodsReceivedByIdQuery = {
             manufacturerLinkId?: string | null;
             numberOfPacksReceived: number;
             receivedPackSize: number;
+            purchaseOrderLineId: string;
             item: { __typename: 'ItemNode'; id: string; name: string };
           }>;
         };
@@ -192,6 +195,7 @@ export type GoodsReceivedLinesQuery = {
       manufacturerLinkId?: string | null;
       numberOfPacksReceived: number;
       receivedPackSize: number;
+      purchaseOrderLineId: string;
       item: { __typename: 'ItemNode'; id: string; name: string };
     }>;
   };
@@ -218,6 +222,7 @@ export type GoodsReceivedLineQuery = {
       manufacturerLinkId?: string | null;
       numberOfPacksReceived: number;
       receivedPackSize: number;
+      purchaseOrderLineId: string;
       item: { __typename: 'ItemNode'; id: string; name: string };
     }>;
   };
@@ -349,6 +354,7 @@ export const GoodsReceivedFragmentDoc = gql`
           id
           name
         }
+        purchaseOrderLineId
       }
     }
   }
@@ -369,6 +375,8 @@ export const GoodsReceivedLineFragmentDoc = gql`
       id
       name
     }
+    purchaseOrderLineId
+    goodsReceivedId
   }
 `;
 export const GoodsReceivedListDocument = gql`

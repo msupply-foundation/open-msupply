@@ -1,5 +1,6 @@
 import {
   InsertGoodsReceivedLinesFromPurchaseOrderInput,
+  SaveGoodsReceivedLinesInput,
   useMutation,
   usePatchState,
   useQuery,
@@ -10,7 +11,7 @@ import { GoodsReceivedLineFragment } from '../operations.generated';
 
 export type DraftGoodsReceivedLine = Omit<
   GoodsReceivedLineFragment,
-  '__typename' | 'item'
+  '__typename'
 > & {
   goodsReceivedId: string;
   purchaseOrderLineId: string;
@@ -36,12 +37,15 @@ const defaultGoodsReceivedLine: DraftGoodsReceivedLine = {
   manufacturerLinkId: '',
   numberOfPacksReceived: 0,
   receivedPackSize: 0,
+  item: {
+    __typename: 'ItemNode',
+    id: '',
+    name: '',
+  },
 };
 
 export function useGoodsReceivedLine(id?: string) {
   const { data, isLoading, error } = useGet(id ?? '');
-
-  console.info('Goods Received Line Data:', data);
 
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftGoodsReceivedLine>(data?.nodes[0] ?? {});
@@ -83,6 +87,17 @@ export function useGoodsReceivedLine(id?: string) {
   // UPDATE
   // TODO: Implement update functionality
 
+  // Save Goods Received Lines
+  const {
+    mutateAsync: saveGoodsReceivedLinesMutation,
+    isLoading: isSaving,
+    error: saveError,
+  } = useSaveGoodsReceivedLines();
+
+  const saveGoodsReceivedLines = async (input: SaveGoodsReceivedLinesInput) => {
+    return await saveGoodsReceivedLinesMutation(input);
+  };
+
   return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
@@ -90,6 +105,11 @@ export function useGoodsReceivedLine(id?: string) {
       createLinesFromPurchaseOrder,
       isCreatingLinesFromPurchaseOrder,
       createLinesFromPurchaseOrderError,
+    },
+    saveGoodsReceivedLines: {
+      saveGoodsReceivedLines,
+      isSaving,
+      saveError,
     },
     draft,
     resetDraft,
@@ -147,6 +167,23 @@ const useCreateGoodsReceivedLinesFromPurchaseOrder = () => {
     input: InsertGoodsReceivedLinesFromPurchaseOrderInput
   ) => {
     return await goodsReceivedApi.insertGoodsReceivedLinesFromPurchaseOrder({
+      storeId,
+      input,
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED_LINE]),
+  });
+};
+
+const useSaveGoodsReceivedLines = () => {
+  const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
+
+  const mutationFn = async (input: SaveGoodsReceivedLinesInput) => {
+    console.info('Saving Goods Received Lines:', input);
+    return await goodsReceivedApi.saveGoodsReceivedLines({
       storeId,
       input,
     });

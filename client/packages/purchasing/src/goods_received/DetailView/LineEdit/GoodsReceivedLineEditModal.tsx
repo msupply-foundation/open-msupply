@@ -8,6 +8,7 @@ import {
   InlineSpinner,
 } from '@openmsupply-client/common';
 import { useGoodsReceivedLine } from '../../api';
+import { useDraftGoodsReceivedLines } from '../../api/hooks/useDraftGoodsReceivedLines';
 import { GoodsReceivedLineEdit } from './GoodsReceivedLineEdit';
 
 interface GoodsReceivedLineEditModalProps {
@@ -24,20 +25,43 @@ export const GoodsReceivedLineEditModal = ({
   const t = useTranslation();
   const { error } = useNotification();
 
-  const isUpdating = false; // remove me when adding update
-  const { draft, updatePatch } = useGoodsReceivedLine(lineId);
+  const {
+    draft,
+    saveGoodsReceivedLines: { saveGoodsReceivedLines, isSaving },
+  } = useGoodsReceivedLine(lineId);
 
-  const handleSave = async () => {
+  const { draftLines, addDraftLine, updateDraftLine, removeDraftLine } =
+    useDraftGoodsReceivedLines(draft?.purchaseOrderLineId);
+
+  const handleOkClick = async () => {
     try {
-      // await update();
-      alert('Not implemented yet!');
-      return true;
+      if (!draft) return;
+
+      const lines = draftLines.map(line => ({
+        id: line.id,
+        batch: line.batch,
+        comment: line.comment,
+        expiryDate: line.expiryDate,
+        manufacturerId: line.manufacturerLinkId,
+        numberOfPacksReceived: line.numberOfPacksReceived,
+        receivedPackSize: line.receivedPackSize,
+      }));
+
+      const result = await saveGoodsReceivedLines({
+        goodsReceivedId: draft.goodsReceivedId,
+        purchaseOrderLineId: draft.purchaseOrderLineId,
+        lines,
+      });
+
+      if (result.saveGoodsReceivedLines.id !== null) onClose();
     } catch (e: unknown) {
       if (e instanceof Error) error(e.message)();
-      else error('unknown error')();
+      else error(t('error.cant-save'))();
       return false;
     }
   };
+
+  console.info('draftliens', draftLines);
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
@@ -48,18 +72,15 @@ export const GoodsReceivedLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!draft}
-          onClick={async () => {
-            const success = await handleSave();
-            if (success) onClose();
-          }}
+          disabled={!draft || isSaving}
+          onClick={handleOkClick}
         />
       }
       height={700}
       width={1200}
       enableAutocomplete
     >
-      {isUpdating ? (
+      {isSaving ? (
         <Box
           display="flex"
           flex={1}
@@ -71,9 +92,11 @@ export const GoodsReceivedLineEditModal = ({
         </Box>
       ) : (
         <GoodsReceivedLineEdit
-          isUpdateMode
           draft={draft}
-          updatePatch={updatePatch}
+          draftLines={draftLines}
+          addDraftLine={addDraftLine}
+          updateDraftLine={updateDraftLine}
+          removeDraftLine={removeDraftLine}
         />
       )}
     </Modal>

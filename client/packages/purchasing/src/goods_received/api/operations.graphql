@@ -47,6 +47,7 @@ fragment GoodsReceived on GoodsReceivedNode {
         id
         name
       }
+      purchaseOrderLineId
     }
   }
 }
@@ -66,6 +67,8 @@ fragment GoodsReceivedLine on GoodsReceivedLineNode {
     id
     name
   }
+  purchaseOrderLineId
+  goodsReceivedId
 }
 
 query goodsReceivedList(
