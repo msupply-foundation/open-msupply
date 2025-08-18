@@ -28,11 +28,11 @@ export const ReplenishmentNav = ({
   const rnrVisible = store?.preferences.omProgramModule;
   const isCentralServer = useIsCentralServerApi();
   const {
-    data: { showPurchaseOrdersAndGoodsReceived } = {
-      showPurchaseOrdersAndGoodsReceived: false,
+    data: { useProcurementFunctionality } = {
+      useProcurementFunctionality: false,
     },
-  } = usePreference(PreferenceKey.ShowPurchaseOrdersAndGoodsReceived);
-  const enablePOAndGR = isCentralServer && showPurchaseOrdersAndGoodsReceived;
+  } = usePreference(PreferenceKey.UseProcurementFunctionality);
+  const useProcurement = isCentralServer && useProcurementFunctionality;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Replenishment}>
@@ -46,7 +46,7 @@ export const ReplenishmentNav = ({
       <Collapse in={isActive}>
         <List>
           <AppNavLink
-            visible={enablePOAndGR}
+            visible={useProcurement}
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.PurchaseOrder)
@@ -54,7 +54,7 @@ export const ReplenishmentNav = ({
             text={t('purchase-order')}
           />
           <AppNavLink
-            visible={enablePOAndGR}
+            visible={useProcurement}
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.GoodsReceived)

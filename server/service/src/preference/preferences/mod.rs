@@ -24,8 +24,8 @@ pub mod prevent_transfers_months_before_initialisation;
 pub use prevent_transfers_months_before_initialisation::*;
 pub mod authorise_goods_received;
 pub use authorise_goods_received::*;
-pub mod show_purchase_orders_and_goods_received;
-pub use show_purchase_orders_and_goods_received::*;
+pub mod use_procurement_functionality;
+pub use use_procurement_functionality::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -41,7 +41,7 @@ pub struct PreferenceProvider {
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub order_in_packs: OrderInPacks,
-    pub show_purchase_orders_and_goods_received: ShowPurchaseOrdersAndGoodsReceived,
+    pub use_procurement_functionality: UseProcurementFunctionality,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
 }
@@ -61,7 +61,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         order_in_packs: OrderInPacks,
-        show_purchase_orders_and_goods_received: ShowPurchaseOrdersAndGoodsReceived,
+        use_procurement_functionality: UseProcurementFunctionality,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
     }

@@ -38,7 +38,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
-            show_purchase_orders_and_goods_received,
+            use_procurement_functionality,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
         } = self.get_preference_provider();
@@ -69,7 +69,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
         append_if_type(order_in_packs, &mut prefs, &input)?;
-        append_if_type(show_purchase_orders_and_goods_received, &mut prefs, &input)?;
+        append_if_type(use_procurement_functionality, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
 
