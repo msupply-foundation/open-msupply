@@ -11,6 +11,7 @@ use repository::{
 };
 
 mod common;
+pub mod create_goods_received_shipment;
 pub mod delete;
 pub mod insert;
 pub mod query;

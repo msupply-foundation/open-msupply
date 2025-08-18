@@ -21,6 +21,7 @@ pub fn generate(
         their_reference,
         colour,
         requisition_id,
+        goods_received_id,
     }: InsertInboundShipment,
     other_party: Name,
 ) -> Result<InvoiceRow, RepositoryError> {
