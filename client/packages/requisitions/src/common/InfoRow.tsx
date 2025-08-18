@@ -56,7 +56,10 @@ export const InfoRow = ({
         alignItems="flex-end"
       >
         {typeof value === 'number' ? (
-          <NumericTextDisplay value={value} />
+          <NumericTextDisplay
+            value={value}
+            packagingDisplay={packagingDisplay}
+          />
         ) : (
           <Typography variant="body1">
             {value} {packagingDisplay}
