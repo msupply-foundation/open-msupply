@@ -18,6 +18,7 @@ pub fn generate(
         manufacturer_id,
         note,
         unit_of_packs,
+        supplier_item_code,
     }: InsertPurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     let line_number = next_number(
@@ -41,12 +42,12 @@ pub fn generate(
         manufacturer_link_id: manufacturer_id,
         note,
         unit_of_packs,
+        supplier_item_code,
         // Default
         item_name: "".to_string(),
         adjusted_number_of_units: None,
         received_number_of_units: 0.0,
         stock_on_hand_in_units: 0.0,
-        supplier_item_code: None,
         comment: None,
     })
 }
@@ -67,6 +68,7 @@ pub fn generate_from_csv(
         note: _,
         requested_delivery_date: _,
         expected_delivery_date: _,
+        supplier_item_code: _,
     }: InsertPurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     let line_number = next_number(

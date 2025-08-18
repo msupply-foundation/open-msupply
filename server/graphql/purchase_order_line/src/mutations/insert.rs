@@ -31,6 +31,7 @@ pub struct InsertInput {
     pub manufacturer_id: Option<String>,
     pub note: Option<String>,
     pub unit_of_packs: Option<String>,
+    pub supplier_item_code: Option<String>,
 }
 
 impl InsertInput {
@@ -48,6 +49,7 @@ impl InsertInput {
             manufacturer_id,
             note,
             unit_of_packs,
+            supplier_item_code,
         } = self;
 
         ServiceInput {
@@ -63,6 +65,7 @@ impl InsertInput {
             manufacturer_id,
             note,
             unit_of_packs,
+            supplier_item_code,
         }
     }
 }
