@@ -123,6 +123,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   note
   unitOfPacks
   comment
+  supplierItemCode
 }
 
 query purchaseOrders(

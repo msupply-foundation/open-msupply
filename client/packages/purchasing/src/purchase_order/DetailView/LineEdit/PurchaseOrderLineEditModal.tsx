@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { PurchaseOrderFragment } from '../../api';
 import { DialogButton, InlineSpinner } from '@common/components';
 import {
-  useTranslation,
   Box,
   ModalMode,
   useDialog,
@@ -30,11 +29,9 @@ export const PurchaseOrderLineEditModal = ({
   onClose,
   isDisabled,
 }: PurchaseOrderLineEditModalProps) => {
-  const t = useTranslation();
   const { error } = useNotification();
 
   const lines = purchaseOrder.lines.nodes;
-
   const [currentLine, setCurrentLine] = useState(
     lines.find(line => line.id === lineId) ?? undefined
   );
@@ -82,11 +79,8 @@ export const PurchaseOrderLineEditModal = ({
 
   return (
     <Modal
-      title={
-        mode === ModalMode.Create
-          ? t('heading.add-item')
-          : t('heading.edit-item')
-      }
+      title=""
+      contentProps={{ sx: { padding: 0 } }}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
@@ -118,7 +112,7 @@ export const PurchaseOrderLineEditModal = ({
           isUpdateMode={mode === ModalMode.Update}
           onChangeItem={onChangeItem}
           draft={draft}
-          updatePatch={updatePatch}
+          update={updatePatch}
           status={purchaseOrder.status}
           isDisabled={isDisabled}
           lines={lines}
