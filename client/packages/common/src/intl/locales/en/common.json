@@ -2034,7 +2034,7 @@
   "preference.orderInPacks": "Order in packs",
   "preference.preventTransfersMonthsBeforeInitialisation": "Prevent transfers from this many months before initialisation",
   "preference.showContactTracing": "Show contact tracing",
-  "preference.showPurchaseOrdersAndGoodsReceived": "Show purchase orders and goods received",
+  "preference.useProcurementFunctionality": "Use procurement functionality",
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",

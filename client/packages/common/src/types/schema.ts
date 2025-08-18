@@ -6548,9 +6548,9 @@ export enum PreferenceKey {
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
   ShowContactTracing = 'showContactTracing',
-  ShowPurchaseOrdersAndGoodsReceived = 'showPurchaseOrdersAndGoodsReceived',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
+  UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
 
@@ -6588,9 +6588,9 @@ export type PreferencesNode = {
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
   showContactTracing: Scalars['Boolean']['output'];
-  showPurchaseOrdersAndGoodsReceived: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
+  useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
 
@@ -10700,9 +10700,9 @@ export type UpsertPreferencesInput = {
     Scalars['Int']['input']
   >;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  showPurchaseOrdersAndGoodsReceived?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
+  useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
