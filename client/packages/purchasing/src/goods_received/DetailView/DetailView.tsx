@@ -9,6 +9,7 @@ import {
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
+  useEditModal,
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -20,6 +21,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
+import { GoodsReceivedLineEditModal } from './LineEdit';
 import { GoodsReceivedLineFragment } from '../api/operations.generated';
 
 export const DetailViewInner = (): ReactElement => {
@@ -31,6 +33,8 @@ export const DetailViewInner = (): ReactElement => {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
   } = useGoodsReceived();
+
+  const { onClose, isOpen, entity: lineId } = useEditModal<string | null>();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
@@ -65,7 +69,14 @@ export const DetailViewInner = (): ReactElement => {
           <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />
-          {/* Add Line Edit Modal */}
+          {isOpen && lineId && (
+            <GoodsReceivedLineEditModal
+              lineId={lineId}
+              goodsReceived={data}
+              onClose={onClose}
+              isOpen={isOpen}
+            />
+          )}
         </>
       ) : (
         <AlertModal

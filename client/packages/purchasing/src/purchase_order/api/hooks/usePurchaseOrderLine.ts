@@ -18,6 +18,7 @@ export type DraftPurchaseOrderLine = Omit<
   purchaseOrderId: string;
   itemId: string;
   discountPercentage: number;
+  numberOfPacks: number;
 };
 
 export type DraftPurchaseOrderLineFromCSV = Omit<
@@ -36,10 +37,12 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
   adjustedNumberOfUnits: null,
+  lineNumber: 0,
   pricePerUnitBeforeDiscount: 0,
   pricePerUnitAfterDiscount: 0,
   // This value not actually saved to DB
   discountPercentage: 0,
+  numberOfPacks: 0,
 };
 
 export function usePurchaseOrderLine(id?: string) {
@@ -61,12 +64,20 @@ export function usePurchaseOrderLine(id?: string) {
         100
       : 0;
 
+  // Number of packs is not in the DB, so we derived it from the draft
+  const adjustedUnits = data?.nodes[0]?.adjustedNumberOfUnits;
+  const requestedUnits = data?.nodes[0]?.requestedNumberOfUnits ?? 0;
+  const requestedPackSize = data?.nodes[0]?.requestedPackSize ?? 1;
+  const initialNumberOfPacks =
+    (adjustedUnits ?? requestedUnits) / requestedPackSize;
+
   const draft: DraftPurchaseOrderLine = data
     ? {
         ...defaultPurchaseOrderLine,
         ...data?.nodes[0],
         itemId: data?.nodes[0]?.item.id ?? '',
         discountPercentage: initialDiscountPercentage,
+        numberOfPacks: initialNumberOfPacks,
         ...patch,
       }
     : { ...defaultPurchaseOrderLine, ...patch, itemId: '' };

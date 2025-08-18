@@ -37,6 +37,7 @@ fragment GoodsReceived on GoodsReceivedNode {
   number
   finalisedDatetime
   purchaseOrderNumber
+  purchaseOrderId
   receivedDatetime
   supplierReference
   status
@@ -95,6 +96,117 @@ mutation insertGoodsReceived(
   insertGoodsReceived(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
+    }
+  }
+}
+
+query goodsReceivedLines(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: GoodsReceivedLineSortFieldInput!
+  $desc: Boolean
+  $filter: GoodsReceivedLineFilterInput
+) {
+  goodsReceivedLines(
+    storeId: $storeId
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on GoodsReceivedLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...GoodsReceivedLine
+      }
+      totalCount
+    }
+  }
+}
+
+query goodsReceivedLine($id: String!, $storeId: String!) {
+  goodsReceivedLines(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on GoodsReceivedLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...GoodsReceivedLine
+      }
+      totalCount
+    }
+  }
+}
+
+query goodsReceivedLinesCount(
+  $filter: GoodsReceivedLineFilterInput
+  $storeId: String!
+) {
+  goodsReceivedLines(storeId: $storeId, filter: $filter) {
+    ... on GoodsReceivedLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}
+
+mutation insertGoodsReceivedLine(
+  $input: InsertGoodsReceivedLineInput!
+  $storeId: String!
+) {
+  insertGoodsReceivedLine(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+    ... on InsertGoodsReceivedLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditGoodsReceived {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on GoodsReceivedLineWithIdExists {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation insertGoodsReceivedLinesFromPurchaseOrder(
+  $input: InsertGoodsReceivedLinesFromPurchaseOrderInput!
+  $storeId: String!
+) {
+  insertGoodsReceivedLinesFromPurchaseOrder(input: $input, storeId: $storeId) {
+    ... on InsertLinesFromPurchaseOrderResponseNode {
+      __typename
+      ids
+    }
+    ... on InsertGoodsReceivedLinesError {
+      __typename
+      error {
+        description
+        ... on PurchaseOrderNotFound {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on CannotEditGoodsReceived {
+          __typename
+          description
+        }
+      }
     }
   }
 }
