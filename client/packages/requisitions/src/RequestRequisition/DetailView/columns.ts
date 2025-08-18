@@ -11,12 +11,13 @@ import {
   getLinesFromRow,
   usePluginProvider,
   UNDEFINED_STRING_VALUE,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
 
-export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
+export const useRequestColumns = () => {
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
     'maxMonthsOfStock',
     'programName',
@@ -29,6 +30,8 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
   const { store } = useAuthContext();
   const { getError } = useRequestRequisitionLineErrorContext();
   const { plugins } = usePluginProvider();
+  const { manageVaccinesInDoses } = usePreferences();
+
   const showExtraColumns =
     programName &&
     store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders;

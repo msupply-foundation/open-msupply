@@ -10,11 +10,10 @@ import {
   useColumnUtils,
   CurrencyCell,
   getLinesFromRow,
-  usePreference,
+  usePreferences,
   ColumnDescription,
   SortBy,
   useTranslation,
-  PreferenceKey,
   getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { InboundItem } from './../../../types';
@@ -50,10 +49,9 @@ export const useInboundShipmentColumns = ({
   onChangeSortBy,
 }: InboundShipmentColumnsProps) => {
   const t = useTranslation();
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
+  const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
+    usePreferences();
+
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { getError } = useInboundShipmentLineErrorContext();
   const getCostPrice = (row: InboundLineFragment) =>
@@ -204,7 +202,7 @@ export const useInboundShipmentColumns = ({
     ],
   ];
 
-  if (preferences?.manageVaccinesInDoses) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -254,7 +252,7 @@ export const useInboundShipmentColumns = ({
     ]
   );
 
-  if (preferences?.manageVaccinesInDoses) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesQuantityColumn());
   }
 
@@ -288,7 +286,7 @@ export const useInboundShipmentColumns = ({
     }
   );
 
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (allowTrackingOfStockByDonor) {
     columns.push({
       key: 'donorName',
       label: 'label.donor',
@@ -334,11 +332,10 @@ export const useInboundShipmentColumns = ({
 };
 
 export const useExpansionColumns = (
-  withDoseColumns?: boolean,
-  preferences?: {
-    allowTrackingOfStockByDonor?: boolean;
-  }
+  isVaccineItem: boolean
 ): Column<InboundLineFragment>[] => {
+  const { allowTrackingOfStockByDonor, manageVaccinesInDoses } =
+    usePreferences();
   const columns: ColumnDescription<InboundLineFragment>[] = [
     'batch',
     'expiryDate',
@@ -352,7 +349,7 @@ export const useExpansionColumns = (
     'numberOfPacks',
   ];
 
-  if (withDoseColumns) {
+  if (manageVaccinesInDoses && isVaccineItem) {
     columns.push(getDosesQuantityColumn());
   }
 
@@ -375,7 +372,7 @@ export const useExpansionColumns = (
     ]
   );
 
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (allowTrackingOfStockByDonor) {
     columns.push({
       key: 'donorName',
       label: 'label.donor',

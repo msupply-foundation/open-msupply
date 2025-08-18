@@ -11,8 +11,6 @@ import {
   DetailTabs,
   useRowHighlight,
   useBreadcrumbs,
-  PreferenceKey,
-  usePreference,
   useSimplifiedTabletUI,
   Box,
 } from '@openmsupply-client/common';
@@ -117,9 +115,6 @@ const DetailViewComponent = ({
 
 export const DetailView = () => {
   const { data: stocktake, isLoading } = useStocktakeOld.document.get();
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
 
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
   const t = useTranslation();
@@ -166,9 +161,6 @@ export const DetailView = () => {
             mode={mode}
             item={entity}
             isInitialStocktake={stocktake.isInitialStocktake}
-            enableDonorTracking={
-              preferences?.[PreferenceKey.AllowTrackingOfStockByDonor] ?? false
-            }
           />
         )}
       </TableProvider>

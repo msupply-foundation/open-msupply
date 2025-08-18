@@ -7,10 +7,9 @@ import {
   Formatter,
   NumberCell,
   NumberInputCell,
-  PreferenceKey,
   useColumns,
   useIntlUtils,
-  usePreference,
+  usePreferences,
   useTranslation,
   VvmStatusCell,
 } from '@openmsupply-client/common';
@@ -38,10 +37,8 @@ export const usePrescriptionLineEditColumns = ({
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
 
-  const { data: prefs } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock
-  );
+  const { sortByVvmStatusThenExpiry, manageVvmStatusForStock } =
+    usePreferences();
 
   const displayInDoses = allocateIn === AllocateInType.Doses;
 
@@ -67,7 +64,7 @@ export const usePrescriptionLineEditColumns = ({
   // If we have use VVM status, we need to show the VVM status column
   // TODO: But just for vaccines?
   if (
-    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) &&
+    (manageVvmStatusForStock || sortByVvmStatusThenExpiry) &&
     item?.isVaccine
   ) {
     columnDefinitions.push({

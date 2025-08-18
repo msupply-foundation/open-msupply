@@ -9,8 +9,7 @@ import {
   PurchaseOrderNodeStatus,
   StatusCrumbs,
   useTableStore,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import {
@@ -48,13 +47,10 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
     query: { data },
     isDisabled,
   } = usePurchaseOrder();
+  const { authorisePurchaseOrder = false } = usePreferences();
   const {
     delete: { deleteLines },
   } = usePurchaseOrderLine();
-
-  const { data: preferences } = usePreference(
-    PreferenceKey.AuthorisePurchaseOrder
-  );
 
   const selectedRows = useTableStore(state => {
     const selectedLines =
@@ -91,8 +87,7 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
     },
   ];
 
-  const requiresAuthorisation = preferences?.authorisePurchaseOrder ?? false;
-  const filteredStatuses = requiresAuthorisation
+  const filteredStatuses = authorisePurchaseOrder
     ? purchaseOrderStatuses
     : purchaseOrderStatuses.filter(
         status => status !== PurchaseOrderNodeStatus.Authorised
@@ -118,10 +113,7 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
             >
               <StatusCrumbs
                 statuses={filteredStatuses}
-                statusLog={createStatusLog(
-                  data,
-                  preferences?.authorisePurchaseOrder ?? false
-                )}
+                statusLog={createStatusLog(data, authorisePurchaseOrder)}
                 statusFormatter={getStatusTranslator(t)}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
