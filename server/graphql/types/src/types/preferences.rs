@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::types::patient::GenderType;
+use crate::types::patient::GenderTypeNode;
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
@@ -21,9 +21,12 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
-    pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
+    pub async fn gender_options(&self) -> Result<Vec<GenderTypeNode>> {
         let domain_genders = self.load_preference(&self.preferences.gender_options)?;
-        let genders = domain_genders.iter().map(GenderType::from_domain).collect();
+        let genders = domain_genders
+            .iter()
+            .map(|g| GenderTypeNode::from(g.clone()))
+            .collect();
         Ok(genders)
     }
 
