@@ -1394,7 +1394,7 @@
   "label.type": "Type",
   "label.type-end": "Breach end",
   "label.type-start": "Breach start",
-  "report.counted-number-of-units-received": "Counted number of units received",
+  "report.units-received": "Units received",
   "label.unacknowledged": "Unacknowledged",
   "label.unit": "Unit",
   "label.unit-name": "Unit name",

@@ -8,8 +8,6 @@
       <th>{{ t(k="report.item-name", f="Item name") }}</th>
       <th>{{ t(k="report.item-code",f="Item code") }}</th>
       <th>{{ t(k="label.storage-location",f="Storage location") }}</th>
-      <th>{{ t(k="label.received-pack-size",f="Received pack size") }}</th>
-      <th>{{ t(k="label.packs-received", f="Packs received") }}</th>
       <th>
         {{ t(k="report.counted-number-of-units-received", f="Counted number of
         units received") }}
@@ -21,8 +19,6 @@
     <td>{{ line.itemName | default(value="")}}</td>
     <td>{{ line.item.code | default(value="")}}</td>
     <td>{{ line.location.name | default(value="")}}</td>
-    <td>{{line.receivedPackSize | default(value="")}}</td>
-    <td>{{line.numberOfPacksReceived| default(value="")}}</td>
     <td>........</td>
   </tr>
   {%- endfor %}
