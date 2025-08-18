@@ -5,6 +5,7 @@ import {
   DataTable,
   Divider,
   Grid,
+  PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
@@ -22,6 +23,7 @@ export interface PurchaseOrderLineEditProps {
   onChangeItem: (item: ItemStockOnHandFragment) => void;
   draft?: DraftPurchaseOrderLine | null;
   updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
+  status: PurchaseOrderNodeStatus;
 }
 
 export const PurchaseOrderLineEdit = ({
@@ -30,6 +32,7 @@ export const PurchaseOrderLineEdit = ({
   onChangeItem,
   draft,
   updatePatch,
+  status,
 }: PurchaseOrderLineEditProps) => {
   const showContent = !!draft && !!currentLine;
 
@@ -41,6 +44,7 @@ export const PurchaseOrderLineEdit = ({
   const columns = usePurchaseOrderLineEditColumns({
     draft,
     updatePatch,
+    status,
   });
 
   return (
