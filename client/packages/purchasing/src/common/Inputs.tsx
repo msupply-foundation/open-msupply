@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  BasicTextInput,
   Box,
   InputWithLabelRow,
   LocaleKey,
@@ -8,13 +9,6 @@ import {
   TypedTFunction,
   useMediaQuery,
 } from '@openmsupply-client/common';
-
-interface NumInputRowProps {
-  label: string;
-  value: number;
-  onChange?: (value?: number) => void;
-  disabled: boolean;
-}
 
 export const createNumericInput =
   (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
@@ -32,6 +26,13 @@ export const createNumericInput =
       />
     );
   };
+
+interface NumInputRowProps {
+  label: string;
+  value: number;
+  onChange?: (value?: number) => void;
+  disabled: boolean;
+}
 
 export const NumInputRow = ({
   label,
@@ -86,6 +87,95 @@ export const NumInputRow = ({
             onChange={handleChange}
             disabled={disabled}
             decimalLimit={0}
+          />
+        }
+        label={label}
+        labelProps={{
+          sx: {
+            width: {
+              xs: '100%',
+            },
+          },
+        }}
+        sx={{
+          justifyContent: 'space-between',
+          flexDirection: {
+            xs: isVerticalScreen ? 'column' : 'row',
+            md: 'row',
+          },
+          alignItems: { xs: 'flex-start', md: 'center' },
+        }}
+      />
+    </Box>
+  );
+};
+
+export const createTextInput =
+  (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
+  (
+    label: LocaleKey,
+    value: string | null | undefined,
+    onChange?: (value?: string) => void
+  ) => {
+    return (
+      <TextInput
+        disabled={disabled}
+        label={t(label)}
+        value={value ?? ''}
+        onChange={onChange}
+      />
+    );
+  };
+
+interface TextInputProps {
+  label: string;
+  value: string;
+  onChange?: (value?: string) => void;
+  disabled: boolean;
+}
+
+export const TextInput = ({
+  label,
+  value,
+  onChange,
+  disabled,
+}: TextInputProps) => {
+  const isVerticalScreen = useMediaQuery('(max-width:800px)');
+
+  return (
+    <Box
+      sx={{
+        marginBottom: 1,
+        px: 1,
+        flex: 1,
+      }}
+    >
+      <InputWithLabelRow
+        Input={
+          <BasicTextInput
+            fullWidth
+            sx={{
+              '& .MuiInputBase-input': {
+                backgroundColor: theme =>
+                  disabled
+                    ? theme.palette.background.toolbar
+                    : theme.palette.background.white,
+              },
+            }}
+            slotProps={{
+              input: {
+                sx: {
+                  boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
+                  background: theme =>
+                    disabled
+                      ? theme.palette.background.toolbar
+                      : theme.palette.background.white,
+                },
+              },
+            }}
+            value={value}
+            onChange={e => onChange?.(e.target.value)}
+            disabled={disabled}
           />
         }
         label={label}
