@@ -3803,6 +3803,7 @@ export type InsertPurchaseOrderLineInput = {
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  unitOfPacks?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPurchaseOrderLineResponse =
@@ -7026,6 +7027,7 @@ export type PurchaseOrderLineNode = {
   requestedPackSize: Scalars['Float']['output'];
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
+  unitOfPacks?: Maybe<Scalars['String']['output']>;
 };
 
 export type PurchaseOrderLineNodeManufacturerArgs = {
@@ -10276,6 +10278,7 @@ export type UpdatePurchaseOrderLineInput = {
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  unitOfPacks?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePurchaseOrderLineResponse =
