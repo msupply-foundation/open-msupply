@@ -45,6 +45,18 @@ mod delete {
             })
             .unwrap();
 
+        service_provider
+            .goods_received_line_service
+            .insert_goods_received_line(
+                &context,
+                InsertGoodsReceivedLineInput {
+                    id: "goods_received_line_id_1".to_string(),
+                    goods_received_id: "goods_received_id_1".to_string(),
+                    purchase_order_line_id: mock_purchase_order_a_line_1().id,
+                },
+            )
+            .unwrap();
+
         // CannotEditGoodsReceived
         assert_eq!(
             service_provider
