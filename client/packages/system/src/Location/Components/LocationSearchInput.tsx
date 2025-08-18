@@ -21,9 +21,11 @@ interface LocationSearchInputProps {
   disabled: boolean;
   autoFocus?: boolean;
   restrictedToLocationTypeId?: string | null;
+  /** Enables the available volume filters */
   volumeRequired?: number;
   fullWidth?: boolean;
   enableAPI?: boolean;
+  originalSelectedLocation?: LocationRowFragment | null;
 }
 
 interface LocationOption {
@@ -100,6 +102,7 @@ export const LocationSearchInput = ({
   restrictedToLocationTypeId,
   volumeRequired,
   enableAPI = true,
+  originalSelectedLocation = null,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -130,7 +133,11 @@ export const LocationSearchInput = ({
         return location.stock?.totalCount === 0;
 
       case LocationFilter.Available:
-        return location.volume - location.volumeUsed >= (volumeRequired ?? 0);
+        return (
+          // If stock is already in the location, consider that location available
+          location.id === originalSelectedLocation?.id ||
+          location.volume - location.volumeUsed >= (volumeRequired ?? 0)
+        );
 
       case LocationFilter.All:
       default:

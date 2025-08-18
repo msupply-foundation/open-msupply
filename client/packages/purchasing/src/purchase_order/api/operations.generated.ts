@@ -25,24 +25,6 @@ export type SyncFileReferenceFragment = {
   createdDatetime: string;
 };
 
-export type PurchaseOrderLineFragment = {
-  __typename: 'PurchaseOrderLineNode';
-  id: string;
-  expectedDeliveryDate?: string | null;
-  purchaseOrderId: string;
-  requestedPackSize: number;
-  requestedDeliveryDate?: string | null;
-  requestedNumberOfUnits: number;
-  authorisedNumberOfUnits?: number | null;
-  item: {
-    __typename: 'ItemNode';
-    id: string;
-    code: string;
-    name: string;
-    unitName?: string | null;
-  };
-};
-
 export type PurchaseOrderFragment = {
   __typename: 'PurchaseOrderNode';
   id: string;
@@ -90,7 +72,9 @@ export type PurchaseOrderFragment = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      authorisedNumberOfUnits?: number | null;
+      adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -110,6 +94,26 @@ export type PurchaseOrderFragment = {
       recordId: string;
       createdDatetime: string;
     }>;
+  };
+};
+
+export type PurchaseOrderLineFragment = {
+  __typename: 'PurchaseOrderLineNode';
+  id: string;
+  expectedDeliveryDate?: string | null;
+  purchaseOrderId: string;
+  requestedPackSize: number;
+  requestedDeliveryDate?: string | null;
+  requestedNumberOfUnits: number;
+  adjustedNumberOfUnits?: number | null;
+  pricePerUnitAfterDiscount: number;
+  pricePerUnitBeforeDiscount: number;
+  item: {
+    __typename: 'ItemNode';
+    id: string;
+    code: string;
+    name: string;
+    unitName?: string | null;
   };
 };
 
@@ -198,7 +202,9 @@ export type PurchaseOrderByIdQuery = {
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
-            authorisedNumberOfUnits?: number | null;
+            adjustedNumberOfUnits?: number | null;
+            pricePerUnitAfterDiscount: number;
+            pricePerUnitBeforeDiscount: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -285,7 +291,9 @@ export type PurchaseOrderLinesQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      authorisedNumberOfUnits?: number | null;
+      adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -315,7 +323,9 @@ export type PurchaseOrderLineQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      authorisedNumberOfUnits?: number | null;
+      adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -413,6 +423,7 @@ export type UpdatePurchaseOrderLineMutation = {
     | {
         __typename: 'UpdatePurchaseOrderLineError';
         error:
+          | { __typename: 'CannotAdjustRequestedQuantity'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
           | { __typename: 'PurchaseOrderDoesNotExist'; description: string }
           | { __typename: 'PurchaseOrderLineNotFound'; description: string }
@@ -476,7 +487,9 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
-    authorisedNumberOfUnits
+    adjustedNumberOfUnits
+    pricePerUnitAfterDiscount
+    pricePerUnitBeforeDiscount
   }
 `;
 export const SyncFileReferenceFragmentDoc = gql`

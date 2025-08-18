@@ -2,13 +2,13 @@ use self::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{NaiveDate, NaiveDateTime};
 use graphql_core::loader::{
-    NameByIdLoader, NameByIdLoaderInput, PurchaseOrderLinesByPurchaseOrderIdLoader,
+    NameByIdLoader, NameByIdLoaderInput,
     StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::ContextExt;
 use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus};
 use service::ListResult;
-
+use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
 use crate::types::{
     NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
 };
@@ -50,12 +50,10 @@ impl PurchaseOrderNode {
     }
 
     pub async fn order_total_after_discount(&self) -> f64 {
-        let order_total_after_discount = match &self.stats {
+        match &self.stats {
             Some(stats) => stats.order_total_after_discount,
             None => 0.0,
-        };
-
-        order_total_after_discount
+        }
     }
 
     pub async fn line_total_after_discount(&self) -> f64 {
