@@ -1,4 +1,4 @@
 export * from './ListIndicators';
 export * from './PageLayout';
-export * from './ModalContentLayout';
+export * from './InfoRow';
 export * from './utils';
