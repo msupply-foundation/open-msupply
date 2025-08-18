@@ -1141,6 +1141,7 @@
   "label.number-months_other": "{{count}} Months",
   "label.number-of-doses": "Number of doses",
   "label.number-of-units": "Number of units",
+  "label.number-of-packs-received": "Number of packs received",
   "label.observations": "Observations",
   "label.of": "of",
   "label.ok-and-close": "Close log viewer",

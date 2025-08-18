@@ -9,6 +9,8 @@ import {
   useColumns,
   DeleteIcon,
   IconButton,
+  Formatter,
+  DateUtils,
 } from '@openmsupply-client/common';
 
 interface GoodsReceivedLineEditColumnsProps {
@@ -27,15 +29,15 @@ export const useGoodsReceivedLineEditColumns = ({
       () => [
         {
           Cell: NumberInputCell,
-          key: 'requestedPackSize',
+          key: 'receivedPackSize',
           label: 'label.pack-size',
           setter: updateDraftLine,
           accessor: ({ rowData }) => rowData.receivedPackSize,
         },
         {
           Cell: NumberInputCell,
-          key: 'requestedNumberOfUnits',
-          label: 'label.requested-quantity',
+          key: 'numberOfPacksReceived',
+          label: 'label.number-of-packs-received',
           setter: updateDraftLine,
           accessor: ({ rowData }) => rowData.numberOfPacksReceived,
         },
@@ -58,11 +60,19 @@ export const useGoodsReceivedLineEditColumns = ({
           key: 'expiryDate',
           label: 'label.expiry-date',
           accessor: ({ rowData }) => rowData.expiryDate,
-          setter: updateDraftLine,
+          setter: rowData => {
+            const formattedDate = Formatter.naiveDate(
+              DateUtils.getDateOrNull(rowData.expiryDate)
+            );
+            updateDraftLine({
+              id: rowData.id,
+              expiryDate: formattedDate,
+            });
+          },
         },
         {
           Cell: TextInputCell,
-          key: 'manufacturer',
+          key: 'manufacturerLinkId',
           label: 'label.manufacturer',
           accessor: ({ rowData }) => rowData.manufacturerLinkId,
           setter: updateDraftLine,

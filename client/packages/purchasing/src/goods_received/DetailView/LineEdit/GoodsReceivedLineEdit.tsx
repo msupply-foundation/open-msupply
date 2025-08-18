@@ -63,7 +63,7 @@ export const GoodsReceivedLineEdit = ({
       {showContent && (
         <Box
           sx={{
-            pb: 2,
+            py: 2,
             borderWidth: 1,
             borderStyle: 'solid',
             borderColor: 'divider',
