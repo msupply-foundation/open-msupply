@@ -119,9 +119,7 @@ pub fn insert_purchase_order_line(
 
 pub fn map_response(from: Result<PurchaseOrderLineRow, ServiceError>) -> Result<InsertResponse> {
     let result = match from {
-        Ok(purchase_order_line) => {
-            InsertResponse::Response(IdResponse::from_domain(purchase_order_line))
-        }
+        Ok(purchase_order_line) => InsertResponse::Response(IdResponse(purchase_order_line.id)),
         Err(error) => InsertResponse::Error(InsertError {
             error: map_error(error)?,
         }),
