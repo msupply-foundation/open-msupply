@@ -76,7 +76,10 @@ export type PurchaseOrderFragment = {
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
+      note?: string | null;
+      unitOfPacks?: string | null;
       comment?: string | null;
+      supplierItemCode?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -84,6 +87,16 @@ export type PurchaseOrderFragment = {
         name: string;
         unitName?: string | null;
       };
+      manufacturer?: {
+        __typename: 'NameNode';
+        id: string;
+        code: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
     }>;
   };
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -111,7 +124,10 @@ export type PurchaseOrderLineFragment = {
   adjustedNumberOfUnits?: number | null;
   pricePerUnitAfterDiscount: number;
   pricePerUnitBeforeDiscount: number;
+  note?: string | null;
+  unitOfPacks?: string | null;
   comment?: string | null;
+  supplierItemCode?: string | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -119,6 +135,16 @@ export type PurchaseOrderLineFragment = {
     name: string;
     unitName?: string | null;
   };
+  manufacturer?: {
+    __typename: 'NameNode';
+    id: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
 };
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
@@ -210,7 +236,10 @@ export type PurchaseOrderByIdQuery = {
             adjustedNumberOfUnits?: number | null;
             pricePerUnitAfterDiscount: number;
             pricePerUnitBeforeDiscount: number;
+            note?: string | null;
+            unitOfPacks?: string | null;
             comment?: string | null;
+            supplierItemCode?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -218,6 +247,20 @@ export type PurchaseOrderByIdQuery = {
               name: string;
               unitName?: string | null;
             };
+            manufacturer?: {
+              __typename: 'NameNode';
+              id: string;
+              code: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
+            } | null;
           }>;
         };
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -301,7 +344,10 @@ export type PurchaseOrderLinesQuery = {
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
+      note?: string | null;
+      unitOfPacks?: string | null;
       comment?: string | null;
+      supplierItemCode?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -309,6 +355,16 @@ export type PurchaseOrderLinesQuery = {
         name: string;
         unitName?: string | null;
       };
+      manufacturer?: {
+        __typename: 'NameNode';
+        id: string;
+        code: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
     }>;
   };
 };
@@ -335,7 +391,10 @@ export type PurchaseOrderLineQuery = {
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
+      note?: string | null;
+      unitOfPacks?: string | null;
       comment?: string | null;
+      supplierItemCode?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -343,6 +402,16 @@ export type PurchaseOrderLineQuery = {
         name: string;
         unitName?: string | null;
       };
+      manufacturer?: {
+        __typename: 'NameNode';
+        id: string;
+        code: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
     }>;
   };
 };
@@ -501,7 +570,24 @@ export const PurchaseOrderLineFragmentDoc = gql`
     adjustedNumberOfUnits
     pricePerUnitAfterDiscount
     pricePerUnitBeforeDiscount
+    manufacturer(storeId: $storeId) {
+      __typename
+      id
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      name
+      store {
+        __typename
+        id
+        code
+      }
+    }
+    note
+    unitOfPacks
     comment
+    supplierItemCode
   }
 `;
 export const SyncFileReferenceFragmentDoc = gql`
