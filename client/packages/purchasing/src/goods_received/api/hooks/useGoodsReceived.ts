@@ -113,12 +113,35 @@ const useCreate = () => {
 
 const useUpdate = () => {
   const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
-
+  const { error, success } = useNotification();
+  const t = useTranslation();
   const mutationFn = async (input: RecordPatch<GoodsReceivedFragment>) => {
-    return await goodsReceivedApi.updateGoodsReceived({
-      input: parseUpdateInput(input),
-      storeId,
-    });
+    try {
+      const result =  await goodsReceivedApi.updateGoodsReceived({
+        input: parseUpdateInput(input),
+        storeId,
+      });
+      if (result.updateGoodsReceived.__typename === 'UpdateGoodsReceivedError') {
+        const errorType = result.updateGoodsReceived.error.__typename;
+        switch (errorType) {
+          case 'GoodsReceivedEmpty':
+            return error(t('error.goods-received-empty'))();
+          case 'PurchaseOrderNotFinalised':
+            return error(t('error.purchase-order-not-finalised'))();
+          case 'NoAuthorisedLines':
+            return error(t('error.no-authorised-lines'))();
+          default:
+            return error(t('error.cannot-update-goods-received'))();
+        }
+      } else if (result.updateGoodsReceived.__typename === 'IdResponse') {
+        // handle successful update
+        success(t('messages.goods-received-saved'))();
+      }
+    } catch (e) {
+      console.error('Error updating goods received:', e);
+      error(t('error.cannot-update-goods-received'))();
+      // swallow error here as have already handled error ui
+    }
   };
 
   return useMutation({
