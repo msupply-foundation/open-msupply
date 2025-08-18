@@ -55,36 +55,38 @@ export const PurchaseOrderLineEdit = ({
         Left={
           showContent ? (
             <>
-              {numericInput('label.num-packs', draft?.numberOfPacks, value => {
-                const newValue = value || 0;
-                update({
-                  requestedNumberOfPacks: newValue,
-                  requestedNumberOfUnits:
-                    newValue * (draft?.requestedPackSize || 1),
-                });
+              {numericInput('label.num-packs', draft?.numberOfPacks, {
+                onChange: value => {
+                  const newValue = value || 0;
+                  update({
+                    requestedNumberOfPacks: newValue,
+                    requestedNumberOfUnits:
+                      newValue * (draft?.requestedPackSize || 1),
+                  });
+                },
               })}
-              {numericInput(
-                'label.pack-size',
-                draft?.requestedPackSize,
-                value => {
+              {numericInput('label.pack-size', draft?.requestedPackSize, {
+                onChange: value => {
                   const newValue = value || 0;
                   update({
                     requestedPackSize: value,
                     requestedNumberOfUnits:
                       (draft?.requestedNumberOfPacks || 0) * newValue,
                   });
-                }
-              )}
+                },
+              })}
               {numericInput(
                 'label.total-quantity',
                 draft?.requestedNumberOfUnits,
-                value => {
-                  const newValue = value || 0;
-                  update({
-                    requestedNumberOfUnits: newValue,
-                    requestedNumberOfPacks:
-                      newValue / (draft?.requestedPackSize || 1),
-                  });
+                {
+                  onChange: value => {
+                    const newValue = value || 0;
+                    update({
+                      requestedNumberOfUnits: newValue,
+                      requestedNumberOfPacks:
+                        newValue / (draft?.requestedPackSize || 1),
+                    });
+                  },
                 }
               )}
               {textInput(
@@ -100,7 +102,48 @@ export const PurchaseOrderLineEdit = ({
             </>
           ) : null
         }
-        Middle={null}
+        Middle={
+          showContent ? (
+            <>
+              {numericInput(
+                'label.price-per-unit-before-discount',
+                draft?.pricePerUnitBeforeDiscount,
+                {
+                  onChange: value => {
+                    update({
+                      pricePerUnitBeforeDiscount: value,
+                    });
+                  },
+                }
+              )}
+              {numericInput(
+                'label.discount-percentage',
+                draft?.pricePerUnitBeforeDiscount,
+                {
+                  onChange: value => {
+                    update({
+                      pricePerUnitBeforeDiscount: value,
+                    });
+                  },
+                  max: 100,
+                  decimalLimit: 2,
+                  endAdornment: '%',
+                }
+              )}
+              {numericInput(
+                'label.price-per-unit-after-discount',
+                draft?.pricePerUnitAfterDiscount,
+                {
+                  onChange: value => {
+                    update({
+                      pricePerUnitAfterDiscount: value,
+                    });
+                  },
+                }
+              )}
+            </>
+          ) : null
+        }
         Right={null}
       />
     </>

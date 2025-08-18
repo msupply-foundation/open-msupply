@@ -10,19 +10,31 @@ import {
   useMediaQuery,
 } from '@openmsupply-client/common';
 
+interface NumericInputProps {
+  onChange?: (value?: number) => void;
+  max?: number;
+  decimalLimit?: number;
+  endAdornment?: string;
+}
+
 export const createNumericInput =
   (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
   (
     label: LocaleKey,
     value: number | null | undefined,
-    onChange?: (value?: number) => void
+    options: NumericInputProps = {}
   ) => {
+    const { onChange, max, decimalLimit, endAdornment } = options;
+
     return (
       <NumInputRow
         disabled={disabled}
         label={t(label)}
         value={value ?? 0}
         onChange={onChange}
+        max={max}
+        decimalLimit={decimalLimit}
+        endAdornment={endAdornment}
       />
     );
   };
@@ -32,6 +44,9 @@ interface NumInputRowProps {
   value: number;
   onChange?: (value?: number) => void;
   disabled: boolean;
+  max?: number;
+  decimalLimit?: number;
+  endAdornment?: string;
 }
 
 export const NumInputRow = ({
@@ -39,6 +54,9 @@ export const NumInputRow = ({
   value,
   onChange,
   disabled,
+  max,
+  decimalLimit,
+  endAdornment,
 }: NumInputRowProps) => {
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
 
@@ -86,7 +104,9 @@ export const NumInputRow = ({
             value={roundedValue}
             onChange={handleChange}
             disabled={disabled}
-            decimalLimit={0}
+            max={max}
+            decimalLimit={decimalLimit ?? 0}
+            endAdornment={endAdornment}
           />
         }
         label={label}
