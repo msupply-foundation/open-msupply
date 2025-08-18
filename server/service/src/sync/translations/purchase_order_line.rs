@@ -56,6 +56,11 @@ pub struct LegacyPurchaseOrderLineRow {
     pub price_expected_after_discount: f64,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(rename = "manufacturer_ID")]
+    pub manufacturer_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub note: Option<String>,
 }
 
 #[deny(dead_code)]
@@ -104,6 +109,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             price_extension_expected,
             price_expected_after_discount,
             comment,
+            manufacturer_id,
+            note,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
@@ -124,6 +131,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             price_per_unit_before_discount: price_extension_expected,
             price_per_unit_after_discount: price_expected_after_discount,
             comment,
+            manufacturer_link_id: manufacturer_id,
+            note,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -161,6 +170,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             price_per_unit_before_discount,
             price_per_unit_after_discount,
             comment,
+            manufacturer_link_id,
+            note,
         } = PurchaseOrderLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
@@ -183,6 +194,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             price_extension_expected: price_per_unit_before_discount,
             price_expected_after_discount: price_per_unit_after_discount,
             comment,
+            manufacturer_id: manufacturer_link_id,
+            note,
         };
 
         Ok(PushTranslateResult::upsert(

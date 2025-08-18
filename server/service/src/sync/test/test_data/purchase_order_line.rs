@@ -113,6 +113,8 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
             price_per_unit_after_discount: 2.0,
             store_id: "store_a".to_string(),
             comment: Some("comment a!".to_string()),
+            manufacturer_link_id: None,
+            note: None,
         },
     )
 }
@@ -139,6 +141,8 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             price_extension_expected: 4.0,
             price_expected_after_discount: 2.0,
             comment: Some("comment a!".to_string()),
+            manufacturer_id: None,
+            note: None,
         }),
     }
 }
@@ -165,6 +169,8 @@ fn purchase_order_line_unlinked_pull_record() -> TestSyncIncomingRecord {
             price_per_unit_after_discount: 0.0,
             store_id: "store_a".to_string(),
             comment: Some("comment a!".to_string()),
+            manufacturer_link_id: None,
+            note: None,
         },
     )
 }
@@ -191,6 +197,8 @@ fn purchase_order_line_unlinked_push_record() -> TestSyncOutgoingRecord {
             price_extension_expected: 0.0,
             price_expected_after_discount: 0.0,
             comment: Some("comment a!".to_string()),
+            manufacturer_id: None,
+            note: None,
         }),
     }
 }
