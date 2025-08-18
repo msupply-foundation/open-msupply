@@ -25,7 +25,15 @@ pub fn generate(
         expected_delivery_date: input.expected_delivery_date,
         price_per_unit_after_discount: input.price_per_unit_after_discount.unwrap_or(0.0),
         price_per_unit_before_discount: input.price_per_unit_before_discount.unwrap_or(0.0),
-        ..Default::default()
+        manufacturer_link_id: input.manufacturer_id,
+        note: input.note,
+        // Default
+        item_name: "".to_string(),
+        adjusted_number_of_units: None,
+        received_number_of_units: 0.0,
+        stock_on_hand_in_units: 0.0,
+        supplier_item_code: None,
+        comment: None,
     })
 }
 
@@ -50,6 +58,16 @@ pub fn generate_from_csv(
         requested_number_of_units: input.requested_number_of_units.unwrap_or(0.0),
         price_per_unit_after_discount: input.price_per_unit_after_discount.unwrap_or(0.0),
         price_per_unit_before_discount: input.price_per_unit_before_discount.unwrap_or(0.0),
-        ..Default::default()
+        // Default
+        item_name: "".to_string(),
+        adjusted_number_of_units: None,
+        received_number_of_units: 0.0,
+        requested_delivery_date: None,
+        expected_delivery_date: None,
+        stock_on_hand_in_units: 0.0,
+        supplier_item_code: None,
+        comment: None,
+        manufacturer_link_id: None,
+        note: None,
     })
 }
