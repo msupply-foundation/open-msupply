@@ -22,7 +22,9 @@ fragment GoodsReceivedLine on GoodsReceivedLineNode {
   expiryDate
   receivedPackSize
   numberOfPacksReceived
+  purchaseOrderLineId
   item {
+    id
     code
     name
   }
