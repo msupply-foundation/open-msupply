@@ -15,29 +15,10 @@ impl InvoiceLineDomain {
 
     /// Update the number of packs and generate appropriate domain events
     pub fn update_number_of_packs(&mut self, new_packs: f64) -> Vec<DomainEvent> {
-        let old_total_units = self.line.number_of_packs * self.line.pack_size;
+        let old_packs = self.line.number_of_packs;
         self.line.number_of_packs = new_packs;
-        let new_total_units = self.line.number_of_packs * self.line.pack_size;
 
-        self.generate_stock_events(old_total_units, new_total_units)
-    }
-
-    /// Update invoice line fields and generate events
-    /// Returns error if update is not allowed for this invoice type/status
-    pub fn update_packs_and_pack_size(
-        &mut self,
-        new_packs: f64,
-        new_pack_size: f64,
-    ) -> Result<Vec<DomainEvent>, String> {
-        // Check if updates are allowed
-        self.validate_update_allowed()?;
-
-        let old_total_units = self.line.number_of_packs * self.line.pack_size;
-        self.line.number_of_packs = new_packs;
-        self.line.pack_size = new_pack_size;
-        let new_total_units = self.line.number_of_packs * self.line.pack_size;
-
-        Ok(self.generate_stock_events(old_total_units, new_total_units))
+        self.generate_stock_events(old_packs, new_packs)
     }
 
     /// Validate if updates are allowed for this invoice type/status
@@ -73,12 +54,8 @@ impl InvoiceLineDomain {
         }
     }
 
-    /// Generate stock events with clearer logic per invoice type
-    fn generate_stock_events(
-        &self,
-        old_total_units: f64,
-        new_total_units: f64,
-    ) -> Vec<DomainEvent> {
+    /// Generate stock-related events based on invoice type and status
+    fn generate_stock_events(&self, old_packs: f64, new_packs: f64) -> Vec<DomainEvent> {
         let mut events = Vec::new();
 
         if !self.invoice_affects_stock() {
@@ -90,37 +67,37 @@ impl InvoiceLineDomain {
             None => return events,
         };
 
-        let units_change = new_total_units - old_total_units;
-        if units_change == 0.0 {
+        let packs_change = new_packs - old_packs;
+        if packs_change == 0.0 {
             return events; // No change, no events
         }
 
         match &self.invoice.r#type {
             InvoiceType::InboundShipment => {
-                // Inbound: more units = more stock
-                if units_change > 0.0 {
+                // Inbound: more packs_change = more stock
+                if packs_change > 0.0 {
                     events.push(DomainEvent::StockAdded {
                         stock_line_id,
-                        addition: units_change,
+                        addition: packs_change,
                     });
                 } else {
                     events.push(DomainEvent::StockReduced {
                         stock_line_id,
-                        reduction: -units_change,
+                        reduction: -packs_change,
                     });
                 }
             }
             InvoiceType::OutboundShipment | InvoiceType::Prescription => {
-                // Outbound: more units = less available stock
-                if units_change > 0.0 {
+                // Outbound: more packs_change = less available stock
+                if packs_change > 0.0 {
                     events.push(DomainEvent::StockReduced {
                         stock_line_id,
-                        reduction: units_change,
+                        reduction: packs_change,
                     });
                 } else {
                     events.push(DomainEvent::StockAdded {
                         stock_line_id,
-                        addition: -units_change,
+                        addition: -packs_change,
                     });
                 }
 
@@ -132,16 +109,16 @@ impl InvoiceLineDomain {
                 }
             }
             InvoiceType::CustomerReturn => {
-                // Returns: more units = more stock returned
-                if units_change > 0.0 {
+                // Returns: more packs_change = more stock returned
+                if packs_change > 0.0 {
                     events.push(DomainEvent::StockAdded {
                         stock_line_id,
-                        addition: units_change,
+                        addition: packs_change,
                     });
                 } else {
                     events.push(DomainEvent::StockReduced {
                         stock_line_id,
-                        reduction: -units_change,
+                        reduction: -packs_change,
                     });
                 }
             }
