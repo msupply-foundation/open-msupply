@@ -42,7 +42,7 @@ export const createLabelRowSx = (isVerticalScreen: boolean) => ({
   alignItems: { xs: 'flex-start', md: 'center' },
 });
 
-const commonLabelProps = {
+export const commonLabelProps = {
   sx: {
     width: {
       xs: '100%',
