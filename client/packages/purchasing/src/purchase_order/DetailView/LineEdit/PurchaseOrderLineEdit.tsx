@@ -14,6 +14,7 @@ import {
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import {
+  commonLabelProps,
   createDateInput,
   createMultilineTextInput,
   createNumericInput,
@@ -67,7 +68,7 @@ export const PurchaseOrderLineEdit = ({
         Left={
           showContent ? (
             <>
-              {numericInput('label.num-packs', draft?.numberOfPacks, {
+              {numericInput('label.num-packs', draft?.requestedNumberOfPacks, {
                 onChange: value => {
                   const newValue = value || 0;
                   update({
@@ -136,7 +137,7 @@ export const PurchaseOrderLineEdit = ({
                   />
                 }
                 label={t('label.manufacturer')}
-                labelProps={{ sx: { width: '100%', pl: 1 } }}
+                labelProps={commonLabelProps}
               />
             </>
           ) : null
@@ -151,17 +152,23 @@ export const PurchaseOrderLineEdit = ({
                   onChange: value => {
                     update({
                       pricePerUnitBeforeDiscount: value,
+                      pricePerUnitAfterDiscount:
+                        draft?.pricePerUnitBeforeDiscount *
+                        (1 - (draft?.discountPercentage || 0) / 100),
                     });
                   },
                 }
               )}
               {numericInput(
                 'label.discount-percentage',
-                draft?.pricePerUnitBeforeDiscount,
+                draft?.discountPercentage,
                 {
                   onChange: value => {
                     update({
-                      pricePerUnitBeforeDiscount: value,
+                      discountPercentage: value,
+                      pricePerUnitAfterDiscount:
+                        draft?.pricePerUnitBeforeDiscount *
+                        (1 - (draft?.discountPercentage || 0) / 100),
                     });
                   },
                   max: 100,
@@ -193,8 +200,8 @@ export const PurchaseOrderLineEdit = ({
               )}
               {dateInput(
                 'label.expected-delivery-date',
-                draft?.requestedDeliveryDate,
-                value => update({ requestedDeliveryDate: value })
+                draft?.expectedDeliveryDate,
+                value => update({ expectedDeliveryDate: value })
               )}
               {multilineTextInput(
                 'label.comment',
