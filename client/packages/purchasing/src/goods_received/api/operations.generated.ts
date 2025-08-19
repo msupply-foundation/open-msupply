@@ -25,7 +25,8 @@ export type GoodsReceivedLineFragment = {
   expiryDate?: string | null;
   receivedPackSize: number;
   numberOfPacksReceived: number;
-  item: { __typename: 'ItemNode'; code: string; name: string };
+  purchaseOrderLineId: string;
+  item: { __typename: 'ItemNode'; id: string; code: string; name: string };
 };
 
 export type GoodsReceivedFragment = {
@@ -53,7 +54,8 @@ export type GoodsReceivedFragment = {
       expiryDate?: string | null;
       receivedPackSize: number;
       numberOfPacksReceived: number;
-      item: { __typename: 'ItemNode'; code: string; name: string };
+      purchaseOrderLineId: string;
+      item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
   };
 };
@@ -121,7 +123,13 @@ export type GoodsReceivedByIdQuery = {
             expiryDate?: string | null;
             receivedPackSize: number;
             numberOfPacksReceived: number;
-            item: { __typename: 'ItemNode'; code: string; name: string };
+            purchaseOrderLineId: string;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              code: string;
+              name: string;
+            };
           }>;
         };
       }
@@ -160,7 +168,8 @@ export type GoodsReceivedLinesQuery = {
       expiryDate?: string | null;
       receivedPackSize: number;
       numberOfPacksReceived: number;
-      item: { __typename: 'ItemNode'; code: string; name: string };
+      purchaseOrderLineId: string;
+      item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
   };
 };
@@ -183,7 +192,8 @@ export type GoodsReceivedLineQuery = {
       expiryDate?: string | null;
       receivedPackSize: number;
       numberOfPacksReceived: number;
-      item: { __typename: 'ItemNode'; code: string; name: string };
+      purchaseOrderLineId: string;
+      item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
   };
 };
@@ -299,7 +309,9 @@ export const GoodsReceivedLineFragmentDoc = gql`
     expiryDate
     receivedPackSize
     numberOfPacksReceived
+    purchaseOrderLineId
     item {
+      id
       code
       name
     }
