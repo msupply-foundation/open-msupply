@@ -2,7 +2,7 @@ import React from 'react';
 import {
   InputWithLabelRow,
   ModalGridLayout,
-  PurchaseOrderNodeStatus,
+  // PurchaseOrderNodeStatus,
   useMediaQuery,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -27,7 +27,7 @@ export interface PurchaseOrderLineEditProps {
   onChangeItem: (item: ItemStockOnHandFragment) => void;
   draft?: DraftPurchaseOrderLine | null;
   update: (patch: Partial<DraftPurchaseOrderLine>) => void;
-  status: PurchaseOrderNodeStatus;
+  // status: PurchaseOrderNodeStatus;
   isDisabled: boolean;
   lines?: PurchaseOrderLineFragment[];
 }
@@ -38,7 +38,7 @@ export const PurchaseOrderLineEdit = ({
   onChangeItem,
   draft,
   update,
-  status,
+  // status,
   isDisabled = false,
   lines = [],
 }: PurchaseOrderLineEditProps) => {
