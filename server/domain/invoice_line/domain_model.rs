@@ -21,39 +21,6 @@ impl InvoiceLineDomain {
         self.generate_stock_events(old_packs, new_packs)
     }
 
-    /// Validate if updates are allowed for this invoice type/status
-    fn validate_update_allowed(&self) -> Result<(), String> {
-        match &self.invoice.r#type {
-            InvoiceType::Repack
-            | InvoiceType::InventoryAddition
-            | InvoiceType::InventoryReduction => {
-                // These are immediately finalized - no updates allowed
-                Err("Cannot update inventory adjustment invoices after creation".to_string())
-            }
-            InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
-                // Edits allowed during New, Delivered, and Received status
-                match &self.invoice.status {
-                    InvoiceStatus::New | InvoiceStatus::Delivered | InvoiceStatus::Received => {
-                        Ok(())
-                    }
-                    _ => Err("Cannot update inbound shipment invoice in this status".to_string()),
-                }
-            }
-            InvoiceType::SupplierReturn
-            | InvoiceType::OutboundShipment
-            | InvoiceType::Prescription => {
-                // Edits allowed during New, Allocated, and Picked status
-                match &self.invoice.status {
-                    InvoiceStatus::New | InvoiceStatus::Allocated | InvoiceStatus::Picked => Ok(()),
-                    _ => {
-                        Err("Cannot update outbound/prescription invoice in this status"
-                            .to_string())
-                    }
-                }
-            }
-        }
-    }
-
     /// Generate stock-related events based on invoice type and status
     fn generate_stock_events(&self, old_packs: f64, new_packs: f64) -> Vec<DomainEvent> {
         let mut events = Vec::new();
@@ -74,31 +41,58 @@ impl InvoiceLineDomain {
 
         match &self.invoice.r#type {
             InvoiceType::InboundShipment => {
-                // Inbound: more packs_change = more stock
+                // Inbound: more packs = more stock (both available and total)
                 if packs_change > 0.0 {
                     events.push(DomainEvent::StockAdded {
                         stock_line_id,
                         addition: packs_change,
                     });
                 } else {
-                    events.push(DomainEvent::StockReduced {
+                    events.push(DomainEvent::StockReducedAvailableAndTotal {
                         stock_line_id,
                         reduction: -packs_change,
                     });
                 }
             }
             InvoiceType::OutboundShipment | InvoiceType::Prescription => {
-                // Outbound: more packs_change = less available stock
+                // Outbound: more packs = less available stock
                 if packs_change > 0.0 {
-                    events.push(DomainEvent::StockReduced {
-                        stock_line_id,
-                        reduction: packs_change,
-                    });
+                    // Check if we should update total stock as well
+                    if matches!(
+                        self.invoice.status,
+                        InvoiceStatus::Picked | InvoiceStatus::Shipped
+                    ) {
+                        events.push(DomainEvent::StockReducedAvailableAndTotal {
+                            stock_line_id,
+                            reduction: packs_change,
+                        });
+                    } else {
+                        events.push(DomainEvent::StockReducedAvailableOnly {
+                            stock_line_id,
+                            reduction: packs_change,
+                        });
+                    }
                 } else {
-                    events.push(DomainEvent::StockAdded {
-                        stock_line_id,
-                        addition: -packs_change,
-                    });
+                    // Adding back stock (reducing outbound quantity)
+                    // Use the appropriate event based on invoice status
+                    if matches!(
+                        self.invoice.status,
+                        InvoiceStatus::Picked | InvoiceStatus::Shipped
+                    ) {
+                        // If we were in Picked/Shipped, we reduced both available and total,
+                        // so add back to both
+                        events.push(DomainEvent::StockAdded {
+                            stock_line_id,
+                            addition: -packs_change,
+                        });
+                    } else {
+                        // If we were in New/Allocated, we only reduced available,
+                        // so only add back to available
+                        events.push(DomainEvent::StockAddedAvailableOnly {
+                            stock_line_id,
+                            addition: -packs_change,
+                        });
+                    }
                 }
 
                 // Picked date updates for outbound operations
@@ -109,14 +103,14 @@ impl InvoiceLineDomain {
                 }
             }
             InvoiceType::CustomerReturn => {
-                // Returns: more packs_change = more stock returned
+                // Returns: more packs = more stock returned (both available and total)
                 if packs_change > 0.0 {
                     events.push(DomainEvent::StockAdded {
                         stock_line_id,
                         addition: packs_change,
                     });
                 } else {
-                    events.push(DomainEvent::StockReduced {
+                    events.push(DomainEvent::StockReducedAvailableAndTotal {
                         stock_line_id,
                         reduction: -packs_change,
                     });
@@ -125,7 +119,6 @@ impl InvoiceLineDomain {
             InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
                 // These shouldn't be updated after creation, but if somehow they are:
                 // Don't generate events since they're immediately finalized
-                // The initial creation would have already generated the appropriate events
             }
             _ => {
                 // Unknown invoice types don't affect stock

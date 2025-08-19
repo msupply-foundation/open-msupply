@@ -18,7 +18,7 @@ Service Layer -> Domain Layer -> Repository Layer
 
 ## Implementation Phases
 
-### Phase 1: Domain Foundation ✅ (when completed)
+### Phase 1: Domain Foundation ✅ Complete
 
 Create the basic domain layer structure without breaking existing functionality.
 
@@ -32,23 +32,23 @@ Create the basic domain layer structure without breaking existing functionality.
 
 #### 1.2 Define Domain Events
 
-- [ ] Create `DomainEvent` enum in `events.rs`
-- [ ] Define events for:
+- [x] Create `DomainEvent` enum in `events.rs`
+- [x] Define events for:
   - Stock adjustments
   - Picked date updates
   - Other invoice line side effects
 
 #### 1.3 Create Domain Models
 
-- [ ] Create `InvoiceLineDomain` in `server/domain/invoice_line/domain_model.rs`
-- [ ] Implement business logic methods (update_number_of_packs, etc.)
-- [ ] Add event generation logic
+- [x] Create `InvoiceLineDomain` in `server/domain/invoice_line/domain_model.rs`
+- [x] Implement business logic methods (update_number_of_packs, etc.)
+- [x] Add event generation logic
 
 #### 1.4 Create Domain Service
 
-- [ ] Create `InvoiceLineDomainService` in `server/domain/invoice_line/domain_service.rs`
-- [ ] Implement event execution logic
-- [ ] Add transaction coordination
+- [x] Create `InvoiceLineDomainService` in `server/domain/invoice_line/domain_service.rs`
+- [x] Implement event execution logic
+- [x] Add transaction coordination
 
 ### Phase 2: Migrate Update Stock Out Line ✅ (when completed)
 

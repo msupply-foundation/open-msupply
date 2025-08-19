@@ -1,14 +1,25 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum DomainEvent {
-    /// Stock level additions to existing stock lines
+    /// Stock level additions to existing stock lines (for inbound operations)
+    /// Updates both available and total stock
     StockAdded {
+        stock_line_id: String,
+        addition: f64,
+    },
+    /// Stock addition to available stock only (for outbound reversals in New/Allocated status)
+    StockAddedAvailableOnly {
         stock_line_id: String,
         addition: f64,
     },
     /// New stock line creation
     StockCreated { stock_line_id: String, amount: f64 },
-    /// Stock level reduction
-    StockReduced {
+    /// Stock reduction for outbound operations (available only)
+    StockReducedAvailableOnly {
+        stock_line_id: String,
+        reduction: f64,
+    },
+    /// Stock reduction for outbound operations (available and total)
+    StockReducedAvailableAndTotal {
         stock_line_id: String,
         reduction: f64,
     },
@@ -34,8 +45,10 @@ impl DomainEvent {
         matches!(
             self,
             DomainEvent::StockAdded { .. }
+                | DomainEvent::StockAddedAvailableOnly { .. }
                 | DomainEvent::StockCreated { .. }
-                | DomainEvent::StockReduced { .. }
+                | DomainEvent::StockReducedAvailableOnly { .. }
+                | DomainEvent::StockReducedAvailableAndTotal { .. }
         )
     }
 
@@ -43,8 +56,10 @@ impl DomainEvent {
     pub fn stock_line_id(&self) -> Option<&str> {
         match self {
             DomainEvent::StockAdded { stock_line_id, .. }
+            | DomainEvent::StockAddedAvailableOnly { stock_line_id, .. }
             | DomainEvent::StockCreated { stock_line_id, .. }
-            | DomainEvent::StockReduced { stock_line_id, .. }
+            | DomainEvent::StockReducedAvailableOnly { stock_line_id, .. }
+            | DomainEvent::StockReducedAvailableAndTotal { stock_line_id, .. }
             | DomainEvent::VVMStatusLogRequired { stock_line_id, .. } => Some(stock_line_id),
             _ => None,
         }
