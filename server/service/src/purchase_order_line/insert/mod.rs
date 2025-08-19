@@ -48,6 +48,7 @@ pub struct InsertPurchaseOrderLineInput {
     pub note: Option<String>,
     pub unit_of_packs: Option<String>,
     pub supplier_item_code: Option<String>,
+    pub comment: Option<String>,
 }
 
 pub fn insert_purchase_order_line(
@@ -137,6 +138,7 @@ pub fn insert_purchase_order_line_from_csv(
                 manufacturer_id: None,
                 note: None,
                 supplier_item_code: None,
+                comment: None,
             };
 
             let new_purchase_order_line =

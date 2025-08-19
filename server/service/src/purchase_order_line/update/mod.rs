@@ -44,6 +44,7 @@ pub struct UpdatePurchaseOrderLineInput {
     pub note: Option<NullableUpdate<String>>,
     pub unit_of_packs: Option<String>,
     pub supplier_item_code: Option<NullableUpdate<String>>,
+    pub comment: Option<NullableUpdate<String>>,
 }
 
 pub fn update_purchase_order_line(
