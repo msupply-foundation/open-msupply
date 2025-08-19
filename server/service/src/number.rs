@@ -1,6 +1,11 @@
 use repository::{
-    goods_received_row::GoodsReceivedRowRepository, InvoiceRowRepository, InvoiceType, NumberRowRepository, NumberRowType, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, RepositoryError, RequisitionRowRepository, RequisitionType, StocktakeRowRepository, StorageConnection
+    goods_received_row::GoodsReceivedRowRepository, GoodsReceivedLineRepository,
+    GoodsReceivedLineRowRepository, InvoiceRowRepository, InvoiceType, NumberRowRepository,
+    NumberRowType, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, RepositoryError,
+    RequisitionRowRepository, RequisitionType, StocktakeRowRepository, StorageConnection,
 };
+
+use crate::goods_received;
 
 /// Get next number for record type and store
 /// If number for record type and store exists in number table, increment it and return next number
@@ -51,6 +56,10 @@ pub fn next_number(
             NumberRowType::PurchaseOrderLine(purchase_order_id) => {
                 PurchaseOrderLineRowRepository::new(connection_tx)
                     .find_max_purchase_order_line_number(purchase_order_id)?
+            }
+            NumberRowType::GoodsReceivedLine(goods_received_id) => {
+                GoodsReceivedLineRowRepository::new(connection_tx)
+                    .find_max_goods_received_line_number(goods_received_id)?
             }
             NumberRowType::Program(_) => {
                 let next_number =

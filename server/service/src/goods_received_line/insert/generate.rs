@@ -1,8 +1,10 @@
 use repository::{
     goods_received_line_row::{GoodsReceivedLineRow, GoodsReceivedLineStatus},
     purchase_order_line_row::PurchaseOrderLineRowRepository,
-    RepositoryError, StorageConnection,
+    NumberRowType, RepositoryError, StorageConnection,
 };
+
+use crate::number::next_number;
 
 use super::InsertGoodsReceivedLineInput;
 
@@ -15,6 +17,12 @@ pub fn generate(
         .find_one_by_id(&input.purchase_order_line_id)?
         .ok_or(RepositoryError::NotFound)?;
 
+    let goods_received_line_number = next_number(
+        connection,
+        &NumberRowType::GoodsReceivedLine(input.goods_received_id.clone()),
+        &purchase_order_line.store_id,
+    )?;
+
     Ok(GoodsReceivedLineRow {
         id: input.id,
         goods_received_id: input.goods_received_id,
@@ -22,7 +30,7 @@ pub fn generate(
         received_pack_size: input
             .received_pack_size
             .unwrap_or(purchase_order_line.requested_pack_size),
-        line_number: purchase_order_line.line_number,
+        line_number: goods_received_line_number,
         item_link_id: purchase_order_line.item_link_id,
         item_name: purchase_order_line.item_name,
         status: GoodsReceivedLineStatus::Unauthorised,
