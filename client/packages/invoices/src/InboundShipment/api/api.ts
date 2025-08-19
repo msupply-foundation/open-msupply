@@ -378,7 +378,12 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   updateLines: async (draftInboundLine: DraftInboundLine[]) => {
     const input = {
       insertInboundShipmentLines: draftInboundLine
-        .filter(line => line.isCreated && !isInboundPlaceholderRow(line))
+        .filter(
+          line =>
+            line.isCreated &&
+            line.type === InvoiceLineNodeType.StockIn &&
+            !isInboundPlaceholderRow(line)
+        )
         .map(inboundParsers.toInsertLine),
       updateInboundShipmentLines: draftInboundLine
         .filter(
