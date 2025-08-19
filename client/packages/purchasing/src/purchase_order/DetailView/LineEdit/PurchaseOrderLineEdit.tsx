@@ -10,7 +10,11 @@ import {
   StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import { createNumericInput, createTextInput } from '../../../common';
+import {
+  createMultilineTextInput,
+  createNumericInput,
+  createTextInput,
+} from '../../../common';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
@@ -38,10 +42,12 @@ export const PurchaseOrderLineEdit = ({
   const showContent = !!draft && !!currentLine;
   const numericInput = createNumericInput(t, isDisabled);
   const textInput = createTextInput(t, isDisabled);
+  const multilineTextInput = createMultilineTextInput(t, isDisabled);
 
   return (
     <>
       <ModalGridLayout
+        showExtraFields={true}
         Top={
           <StockItemSearchInput
             autoFocus={!currentLine}
@@ -144,7 +150,20 @@ export const PurchaseOrderLineEdit = ({
             </>
           ) : null
         }
-        Right={null}
+        Right={
+          showContent ? (
+            <>
+              {multilineTextInput(
+                'label.comment',
+                draft?.comment || '',
+                value => update({ comment: value })
+              )}
+              {multilineTextInput('label.notes', draft?.note || '', value =>
+                update({ note: value })
+              )}
+            </>
+          ) : null
+        }
       />
     </>
   );
