@@ -71,13 +71,13 @@ export const useGoodsReceivedLineEditColumns = ({
           },
         },
         // TODO: Convert manufacturerLinkId to use a dropdown of Manufacturer objects
-        {
-          Cell: TextInputCell,
-          key: 'manufacturerLinkId',
-          label: 'label.manufacturer',
-          accessor: ({ rowData }) => rowData.manufacturerLinkId,
-          setter: updateDraftLine,
-        },
+        // {
+        //   Cell: TextInputCell,
+        //   key: 'manufacturerLinkId',
+        //   label: 'label.manufacturer',
+        //   accessor: ({ rowData }) => rowData.manufacturerLinkId,
+        //   setter: updateDraftLine,
+        // },
         {
           Cell: TextInputCell,
           key: 'comment',
