@@ -42,8 +42,6 @@ export const GoodsReceivedLineEditModal = ({
     try {
       if (!draft) return;
 
-      console.info('Saving goods received lines:', draftLines);
-
       // Send ALL lines for the entire goods received document to preserve existing lines
       const lines = draftLines.map(line => ({
         id: line.id,

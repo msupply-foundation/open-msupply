@@ -6,7 +6,7 @@ import {
   useQuery,
 } from '@openmsupply-client/common/src';
 import { useGoodsReceivedGraphQL } from '../useGoodsReceivedGraphQL';
-import { GOODS_RECEIVED_LINE } from './keys';
+import { GOODS_RECEIVED, GOODS_RECEIVED_LINE } from './keys';
 import { GoodsReceivedLineFragment } from '../operations.generated';
 
 export type DraftGoodsReceivedLine = Omit<
@@ -157,7 +157,7 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED_LINE]),
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
   });
 };
 
@@ -175,7 +175,7 @@ const useCreateGoodsReceivedLinesFromPurchaseOrder = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED_LINE]),
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
   });
 };
 
@@ -191,6 +191,6 @@ const useSaveGoodsReceivedLines = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED_LINE]),
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
   });
 };

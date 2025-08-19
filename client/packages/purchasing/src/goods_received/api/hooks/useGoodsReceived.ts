@@ -19,9 +19,9 @@ import { useMemo } from 'react';
 import { useGoodsReceivedColumns } from '../../DetailView/columns';
 
 export const useGoodsReceived = () => {
-  const { goodsReceivedId } = useParams();
-  const { error } = useNotification();
   const t = useTranslation();
+  const { error } = useNotification();
+  const { goodsReceivedId } = useParams();
 
   // QUERY
   const { data, isLoading, isError } = useGetById(goodsReceivedId);
@@ -178,4 +178,4 @@ const useFilteredAndSortedLines = (
   }, [data, columns, sortBy, itemFilter]);
 
   return { sortedAndFilteredLines, itemFilter, setItemFilter };
-}
+};
