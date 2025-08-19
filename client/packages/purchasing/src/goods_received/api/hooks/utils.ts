@@ -42,6 +42,7 @@ export const createDraftGoodsReceivedLine = (
     item: {
       __typename: 'ItemNode',
       id: item.id,
+      code: item.code,
       name: item.name,
     },
     batch: '',

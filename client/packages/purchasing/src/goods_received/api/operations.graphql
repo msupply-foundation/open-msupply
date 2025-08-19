@@ -17,18 +17,21 @@ fragment GoodsReceivedRow on GoodsReceivedNode {
 fragment GoodsReceivedLine on GoodsReceivedLineNode {
   __typename
   id
-  lineNumber
   batch
-  expiryDate
-  receivedPackSize
-  numberOfPacksReceived
+  comment
+  lineNumber
   goodsReceivedId
-  purchaseOrderLineId
+  expiryDate
+  manufacturerLinkId
+  numberOfPacksReceived
+  receivedPackSize
   item {
     id
     code
     name
   }
+  purchaseOrderLineId
+  goodsReceivedId
 }
 
 fragment GoodsReceived on GoodsReceivedNode {
@@ -54,7 +57,6 @@ fragment GoodsReceived on GoodsReceivedNode {
       ...GoodsReceivedLine
     }
   }
-  purchaseOrderId
 }
 
 query goodsReceivedList(

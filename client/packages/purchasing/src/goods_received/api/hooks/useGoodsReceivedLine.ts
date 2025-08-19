@@ -11,11 +11,7 @@ import { GoodsReceivedLineFragment } from '../operations.generated';
 
 export type DraftGoodsReceivedLine = Omit<
   GoodsReceivedLineFragment,
-  | '__typename'
-  | 'item'
-  | 'lineNumber'
-  | 'receivedPackSize'
-  | 'numberOfPacksReceived'
+  '__typename'
 > & {
   goodsReceivedId: string;
   purchaseOrderLineId: string;
@@ -44,6 +40,7 @@ const defaultGoodsReceivedLine: DraftGoodsReceivedLine = {
   item: {
     __typename: 'ItemNode',
     id: '',
+    code: '',
     name: '',
   },
 };

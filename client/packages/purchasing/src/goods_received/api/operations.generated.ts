@@ -20,12 +20,14 @@ export type GoodsReceivedRowFragment = {
 export type GoodsReceivedLineFragment = {
   __typename: 'GoodsReceivedLineNode';
   id: string;
-  lineNumber: number;
   batch?: string | null;
-  expiryDate?: string | null;
-  receivedPackSize: number;
-  numberOfPacksReceived: number;
+  comment?: string | null;
+  lineNumber: number;
   goodsReceivedId: string;
+  expiryDate?: string | null;
+  manufacturerLinkId?: string | null;
+  numberOfPacksReceived: number;
+  receivedPackSize: number;
   purchaseOrderLineId: string;
   item: { __typename: 'ItemNode'; id: string; code: string; name: string };
 };
@@ -50,12 +52,14 @@ export type GoodsReceivedFragment = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
-      lineNumber: number;
       batch?: string | null;
-      expiryDate?: string | null;
-      receivedPackSize: number;
-      numberOfPacksReceived: number;
+      comment?: string | null;
+      lineNumber: number;
       goodsReceivedId: string;
+      expiryDate?: string | null;
+      manufacturerLinkId?: string | null;
+      numberOfPacksReceived: number;
+      receivedPackSize: number;
       purchaseOrderLineId: string;
       item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
@@ -120,12 +124,14 @@ export type GoodsReceivedByIdQuery = {
           nodes: Array<{
             __typename: 'GoodsReceivedLineNode';
             id: string;
-            lineNumber: number;
             batch?: string | null;
-            expiryDate?: string | null;
-            receivedPackSize: number;
-            numberOfPacksReceived: number;
+            comment?: string | null;
+            lineNumber: number;
             goodsReceivedId: string;
+            expiryDate?: string | null;
+            manufacturerLinkId?: string | null;
+            numberOfPacksReceived: number;
+            receivedPackSize: number;
             purchaseOrderLineId: string;
             item: {
               __typename: 'ItemNode';
@@ -186,12 +192,14 @@ export type GoodsReceivedLinesQuery = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
-      lineNumber: number;
       batch?: string | null;
-      expiryDate?: string | null;
-      receivedPackSize: number;
-      numberOfPacksReceived: number;
+      comment?: string | null;
+      lineNumber: number;
       goodsReceivedId: string;
+      expiryDate?: string | null;
+      manufacturerLinkId?: string | null;
+      numberOfPacksReceived: number;
+      receivedPackSize: number;
       purchaseOrderLineId: string;
       item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
@@ -211,12 +219,14 @@ export type GoodsReceivedLineQuery = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
-      lineNumber: number;
       batch?: string | null;
-      expiryDate?: string | null;
-      receivedPackSize: number;
-      numberOfPacksReceived: number;
+      comment?: string | null;
+      lineNumber: number;
       goodsReceivedId: string;
+      expiryDate?: string | null;
+      manufacturerLinkId?: string | null;
+      numberOfPacksReceived: number;
+      receivedPackSize: number;
       purchaseOrderLineId: string;
       item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
@@ -319,18 +329,21 @@ export const GoodsReceivedLineFragmentDoc = gql`
   fragment GoodsReceivedLine on GoodsReceivedLineNode {
     __typename
     id
-    lineNumber
     batch
-    expiryDate
-    receivedPackSize
-    numberOfPacksReceived
+    comment
+    lineNumber
     goodsReceivedId
-    purchaseOrderLineId
+    expiryDate
+    manufacturerLinkId
+    numberOfPacksReceived
+    receivedPackSize
     item {
       id
       code
       name
     }
+    purchaseOrderLineId
+    goodsReceivedId
   }
 `;
 export const GoodsReceivedFragmentDoc = gql`
@@ -357,7 +370,6 @@ export const GoodsReceivedFragmentDoc = gql`
         ...GoodsReceivedLine
       }
     }
-    purchaseOrderId
   }
   ${GoodsReceivedLineFragmentDoc}
 `;

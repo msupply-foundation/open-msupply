@@ -30,13 +30,21 @@ export const GoodsReceivedLineEditModal = ({
     saveGoodsReceivedLines: { saveGoodsReceivedLines, isSaving },
   } = useGoodsReceivedLine(lineId);
 
-  const { draftLines, addDraftLine, updateDraftLine, removeDraftLine } =
-    useDraftGoodsReceivedLines(draft?.purchaseOrderLineId);
+  const {
+    draftLines,
+    selectedDraftLines,
+    addDraftLine,
+    updateDraftLine,
+    removeDraftLine,
+  } = useDraftGoodsReceivedLines(draft?.purchaseOrderLineId);
 
   const handleOkClick = async () => {
     try {
       if (!draft) return;
 
+      console.info('Saving goods received lines:', draftLines);
+
+      // Send ALL lines for the entire goods received document to preserve existing lines
       const lines = draftLines.map(line => ({
         id: line.id,
         batch: line.batch,
@@ -91,7 +99,7 @@ export const GoodsReceivedLineEditModal = ({
       ) : (
         <GoodsReceivedLineEdit
           draft={draft}
-          draftLines={draftLines}
+          draftLines={selectedDraftLines}
           addDraftLine={addDraftLine}
           updateDraftLine={updateDraftLine}
           removeDraftLine={removeDraftLine}

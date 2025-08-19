@@ -14,12 +14,8 @@ export const useDraftGoodsReceivedLines = (purchaseOrderLineId?: string) => {
     query: { data: goodsReceivedData },
   } = useGoodsReceived();
 
-  const linesForPurchaseOrderLine = goodsReceivedData?.lines.nodes.filter(
-    line => line.purchaseOrderLineId === purchaseOrderLineId
-  );
-
-  const initialDraftLines: DraftGoodsReceivedLine[] =
-    linesForPurchaseOrderLine?.map(line => ({
+  const allLines: DraftGoodsReceivedLine[] =
+    goodsReceivedData?.lines.nodes.map(line => ({
       ...line,
       itemId: line.item.id,
       goodsReceivedId: goodsReceivedData?.id ?? '',
@@ -28,9 +24,15 @@ export const useDraftGoodsReceivedLines = (purchaseOrderLineId?: string) => {
 
   const { patch, updatePatch, resetDraft, isDirty } = usePatchState<{
     lines: DraftGoodsReceivedLine[];
-  }>({ lines: initialDraftLines });
+  }>({ lines: allLines });
 
-  const draftLines = patch.lines ?? initialDraftLines;
+  const draftLines = patch.lines ?? allLines;
+
+  const selectedDraftLines = draftLines.filter(
+    line => line.purchaseOrderLineId === purchaseOrderLineId
+  );
+
+  const linesForPurchaseOrderLine = selectedDraftLines;
 
   const addDraftLine = useCallback(() => {
     if (!goodsReceivedData || !purchaseOrderLineId) return;
@@ -71,7 +73,8 @@ export const useDraftGoodsReceivedLines = (purchaseOrderLineId?: string) => {
   );
 
   return {
-    draftLines,
+    draftLines, // All lines for saving
+    selectedDraftLines, // Only lines for the selected purchaseOrderLineId
     addDraftLine,
     updateDraftLine,
     removeDraftLine,
