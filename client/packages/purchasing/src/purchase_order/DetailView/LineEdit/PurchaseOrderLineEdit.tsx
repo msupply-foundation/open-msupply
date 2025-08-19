@@ -11,6 +11,7 @@ import {
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import {
+  createDateInput,
   createMultilineTextInput,
   createNumericInput,
   createTextInput,
@@ -43,6 +44,7 @@ export const PurchaseOrderLineEdit = ({
   const numericInput = createNumericInput(t, isDisabled);
   const textInput = createTextInput(t, isDisabled);
   const multilineTextInput = createMultilineTextInput(t, isDisabled);
+  const dateInput = createDateInput(t, isDisabled);
 
   return (
     <>
@@ -153,6 +155,16 @@ export const PurchaseOrderLineEdit = ({
         Right={
           showContent ? (
             <>
+              {dateInput(
+                'label.requested-delivery-date',
+                draft?.requestedDeliveryDate,
+                value => update({ requestedDeliveryDate: value })
+              )}
+              {dateInput(
+                'label.expected-delivery-date',
+                draft?.requestedDeliveryDate,
+                value => update({ requestedDeliveryDate: value })
+              )}
               {multilineTextInput(
                 'label.comment',
                 draft?.comment || '',

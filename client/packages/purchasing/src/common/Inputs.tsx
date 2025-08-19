@@ -3,6 +3,9 @@ import {
   BasicTextInput,
   Box,
   BufferedTextArea,
+  DateTimePickerInput,
+  DateUtils,
+  Formatter,
   InputWithLabelRow,
   LocaleKey,
   NumericTextInput,
@@ -10,6 +13,7 @@ import {
   TypedTFunction,
   Typography,
   useMediaQuery,
+  useTheme,
 } from '@openmsupply-client/common';
 
 interface NumericInputProps {
@@ -51,7 +55,7 @@ interface NumInputRowProps {
   endAdornment?: string;
 }
 
-export const NumInputRow = ({
+const NumInputRow = ({
   label,
   value,
   onChange,
@@ -156,12 +160,7 @@ interface TextInputProps {
   disabled: boolean;
 }
 
-export const TextInput = ({
-  label,
-  value,
-  onChange,
-  disabled,
-}: TextInputProps) => {
+const TextInput = ({ label, value, onChange, disabled }: TextInputProps) => {
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
 
   return (
@@ -221,6 +220,23 @@ export const TextInput = ({
   );
 };
 
+export const createMultilineTextInput =
+  (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
+  (
+    label: LocaleKey,
+    value?: string | null,
+    onChange?: (value?: string) => void
+  ) => {
+    return (
+      <MultilineTextInput
+        disabled={disabled}
+        label={t(label)}
+        value={value ?? ''}
+        onChange={onChange}
+      />
+    );
+  };
+
 interface MultilineTextInputProps {
   label: string;
   value: string;
@@ -228,7 +244,7 @@ interface MultilineTextInputProps {
   disabled: boolean;
 }
 
-export const MultilineTextInput = ({
+const MultilineTextInput = ({
   label,
   value,
   onChange,
@@ -262,19 +278,89 @@ export const MultilineTextInput = ({
   );
 };
 
-export const createMultilineTextInput =
+export const createDateInput =
   (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
   (
     label: LocaleKey,
-    value: string | null | undefined,
-    onChange?: (value?: string) => void
+    value?: string | null,
+    onChange?: (value: string | null) => void
   ) => {
     return (
-      <MultilineTextInput
+      <DateInput
         disabled={disabled}
         label={t(label)}
-        value={value ?? ''}
+        value={value}
         onChange={onChange}
       />
     );
   };
+
+interface DateInputProps {
+  label: string;
+  value?: string | null;
+  onChange?: (value: string | null) => void;
+  disabled: boolean;
+}
+
+const DateInput = ({ label, value, onChange, disabled }: DateInputProps) => {
+  const theme = useTheme();
+  const isVerticalScreen = useMediaQuery('(max-width:800px)');
+  const date = DateUtils.getDateOrNull(value);
+  const handleChange = (newValue: Date | null) => {
+    if (newValue) {
+      onChange?.(Formatter.naiveDate(DateUtils.getNaiveDate(newValue)));
+    } else {
+      onChange?.(null);
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        marginBottom: 1,
+        flex: 1,
+      }}
+    >
+      <InputWithLabelRow
+        Input={
+          <DateTimePickerInput
+            showTime={false}
+            sx={{
+              '& .MuiInputBase-input': {
+                backgroundColor: theme =>
+                  disabled
+                    ? theme.palette.background.toolbar
+                    : theme.palette.background.white,
+              },
+            }}
+            textFieldSx={{
+              boxShadow: !disabled ? theme.shadows[2] : 'none',
+              background: disabled
+                ? theme.palette.background.toolbar
+                : theme.palette.background.white,
+            }}
+            value={date}
+            onChange={handleChange}
+            disabled={disabled}
+          />
+        }
+        label={label}
+        labelProps={{
+          sx: {
+            width: {
+              xs: '100%',
+            },
+          },
+        }}
+        sx={{
+          justifyContent: 'space-between',
+          flexDirection: {
+            xs: isVerticalScreen ? 'column' : 'row',
+            md: 'row',
+          },
+          alignItems: { xs: 'flex-start', md: 'center' },
+        }}
+      />
+    </Box>
+  );
+};
