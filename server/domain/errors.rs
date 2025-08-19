@@ -1,4 +1,4 @@
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType};
+use repository::{InvoiceStatus, InvoiceType};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DomainError {
@@ -20,6 +20,7 @@ pub enum DomainError {
     BusinessRuleViolation { rule: String, details: String },
 }
 
+// todo - display
 impl std::fmt::Display for DomainError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

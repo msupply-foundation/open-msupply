@@ -1,9 +1,10 @@
 use crate::{events::DomainEvent, DomainError, InvoiceLineDomain};
-use chrono::Utc;
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository, StorageConnection,
+    StorageConnection,
 };
+
+use super::handlers::{InvoiceEventHandler, StockEventHandler};
 
 #[derive(Debug)]
 pub enum DomainServiceError {
@@ -85,131 +86,40 @@ impl<'a> InvoiceLineDomainService<'a> {
 
     /// Process a single domain event
     fn process_event(&self, event: DomainEvent) -> Result<(), DomainServiceError> {
+        let stock_handler = StockEventHandler::new(self.connection);
+        let invoice_handler = InvoiceEventHandler::new(self.connection);
+
         match event {
             DomainEvent::StockAdded {
                 stock_line_id,
                 addition,
-            } => {
-                let stock_repo = StockLineRowRepository::new(self.connection);
-                // Load the stock line and update stock
-                let mut stock_line = stock_repo
-                    .find_one_by_id(&stock_line_id)?
-                    .ok_or(RepositoryError::NotFound)?;
+            } => stock_handler.handle_stock_added(&stock_line_id, addition),
 
-                // For inbound operations (inbound shipments, customer returns),
-                // update both available and total stock
-                stock_line.available_number_of_packs += addition;
-                stock_line.total_number_of_packs += addition;
-
-                stock_repo.upsert_one(&stock_line)?;
-                Ok(())
-            }
             DomainEvent::StockAddedAvailableOnly {
                 stock_line_id,
                 addition,
-            } => {
-                let stock_repo = StockLineRowRepository::new(self.connection);
-                // Load the stock line and update available stock only
-                let mut stock_line = stock_repo
-                    .find_one_by_id(&stock_line_id)?
-                    .ok_or(RepositoryError::NotFound)?;
+            } => stock_handler.handle_stock_added_available_only(&stock_line_id, addition),
 
-                // For outbound reversals in New/Allocated status, only update available
-                stock_line.available_number_of_packs += addition;
-
-                stock_repo.upsert_one(&stock_line)?;
-                Ok(())
-            }
             DomainEvent::StockCreated {
                 stock_line_id,
                 amount,
-            } => {
-                let stock_repo = StockLineRowRepository::new(self.connection);
-                // Load the stock line and set stock levels
-                let mut stock_line = stock_repo
-                    .find_one_by_id(&stock_line_id)?
-                    .ok_or(RepositoryError::NotFound)?;
+            } => stock_handler.handle_stock_created(&stock_line_id, amount),
 
-                // For new stock creation, set both available and total
-                stock_line.available_number_of_packs = amount;
-                stock_line.total_number_of_packs = amount;
-
-                stock_repo.upsert_one(&stock_line)?;
-                Ok(())
-            }
             DomainEvent::StockReducedAvailableOnly {
                 stock_line_id,
                 reduction,
-            } => {
-                let stock_repo = StockLineRowRepository::new(self.connection);
-                // Load the stock line and reduce available stock only
-                let mut stock_line = stock_repo
-                    .find_one_by_id(&stock_line_id)?
-                    .ok_or(RepositoryError::NotFound)?;
+            } => stock_handler.handle_stock_reduced_available_only(&stock_line_id, reduction),
 
-                // Check if reduction would cause negative stock
-                if stock_line.available_number_of_packs < reduction {
-                    return Err(DomainError::InsufficientStock {
-                        stock_line_id: stock_line_id.clone(),
-                        requested: reduction,
-                        available: stock_line.available_number_of_packs,
-                    }
-                    .into());
-                }
-
-                // For outbound operations in New/Allocated status, only update available
-                stock_line.available_number_of_packs -= reduction;
-
-                stock_repo.upsert_one(&stock_line)?;
-                Ok(())
-            }
-            DomainEvent::StockReducedAvailableAndTotal {
+            DomainEvent::StockReduced {
                 stock_line_id,
                 reduction,
-            } => {
-                let stock_repo = StockLineRowRepository::new(self.connection);
-                // Load the stock line and reduce both available and total stock
-                let mut stock_line = stock_repo
-                    .find_one_by_id(&stock_line_id)?
-                    .ok_or(RepositoryError::NotFound)?;
+            } => stock_handler.handle_stock_reduced_available_and_total(&stock_line_id, reduction),
 
-                // Check if reduction would cause negative stock
-                if stock_line.available_number_of_packs < reduction {
-                    return Err(DomainError::InsufficientStock {
-                        stock_line_id: stock_line_id.clone(),
-                        requested: reduction,
-                        available: stock_line.available_number_of_packs,
-                    }
-                    .into());
-                }
-                if stock_line.total_number_of_packs < reduction {
-                    return Err(DomainError::InsufficientStock {
-                        stock_line_id: stock_line_id.clone(),
-                        requested: reduction,
-                        available: stock_line.total_number_of_packs,
-                    }
-                    .into());
-                }
-
-                // For outbound operations in Picked/Shipped status, update both
-                stock_line.available_number_of_packs -= reduction;
-                stock_line.total_number_of_packs -= reduction;
-
-                stock_repo.upsert_one(&stock_line)?;
-                Ok(())
-            }
             DomainEvent::PickedDateUpdateRequired { invoice_id } => {
-                let invoice_repo = InvoiceRowRepository::new(self.connection);
-                // Load the invoice and update picked date to now
-                let mut invoice = invoice_repo
-                    .find_one_by_id(&invoice_id)?
-                    .ok_or(RepositoryError::NotFound)?;
-
-                invoice.picked_datetime = Some(chrono::Utc::now().naive_utc());
-                invoice_repo.upsert_one(&invoice)?;
-                Ok(())
+                invoice_handler.handle_picked_date_update(&invoice_id)
             }
-            DomainEvent::VVMStatusLogRequired {
+
+            DomainEvent::VVMStatusChanged {
                 stock_line_id,
                 vvm_status_id,
                 invoice_line_id,
@@ -218,7 +128,8 @@ impl<'a> InvoiceLineDomainService<'a> {
                 // This would create a log entry tracking VVM status changes
                 todo!("Implement VVM status log creation - needs VVMStatusLogRepository")
             }
-            DomainEvent::BarcodeCreationRequired {
+
+            DomainEvent::BarcodeCreated {
                 gtin,
                 item_id,
                 pack_size,

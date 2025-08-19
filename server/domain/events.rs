@@ -1,6 +1,5 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum DomainEvent {
-    /// Stock level additions to existing stock lines (for inbound operations)
     /// Updates both available and total stock
     StockAdded {
         stock_line_id: String,
@@ -18,21 +17,20 @@ pub enum DomainEvent {
         stock_line_id: String,
         reduction: f64,
     },
-    /// Stock reduction for outbound operations (available and total)
-    StockReducedAvailableAndTotal {
+    StockReduced {
         stock_line_id: String,
         reduction: f64,
     },
     /// Picked date update required
     PickedDateUpdateRequired { invoice_id: String },
-    /// VVM status log creation
-    VVMStatusLogRequired {
+    /// VVM status changed
+    VVMStatusChanged {
         stock_line_id: String,
         vvm_status_id: String,
         invoice_line_id: String,
     },
     /// Barcode creation
-    BarcodeCreationRequired {
+    BarcodeCreated {
         gtin: String,
         item_id: String,
         pack_size: f64,
@@ -48,7 +46,7 @@ impl DomainEvent {
                 | DomainEvent::StockAddedAvailableOnly { .. }
                 | DomainEvent::StockCreated { .. }
                 | DomainEvent::StockReducedAvailableOnly { .. }
-                | DomainEvent::StockReducedAvailableAndTotal { .. }
+                | DomainEvent::StockReduced { .. }
         )
     }
 
@@ -59,8 +57,8 @@ impl DomainEvent {
             | DomainEvent::StockAddedAvailableOnly { stock_line_id, .. }
             | DomainEvent::StockCreated { stock_line_id, .. }
             | DomainEvent::StockReducedAvailableOnly { stock_line_id, .. }
-            | DomainEvent::StockReducedAvailableAndTotal { stock_line_id, .. }
-            | DomainEvent::VVMStatusLogRequired { stock_line_id, .. } => Some(stock_line_id),
+            | DomainEvent::StockReduced { stock_line_id, .. }
+            | DomainEvent::VVMStatusChanged { stock_line_id, .. } => Some(stock_line_id),
             _ => None,
         }
     }
