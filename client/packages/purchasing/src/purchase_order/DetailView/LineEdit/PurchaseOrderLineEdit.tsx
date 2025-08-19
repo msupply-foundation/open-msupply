@@ -68,16 +68,20 @@ export const PurchaseOrderLineEdit = ({
         Left={
           showContent ? (
             <>
-              {numericInput('label.num-packs', draft?.requestedNumberOfPacks, {
-                onChange: value => {
-                  const newValue = value || 0;
-                  update({
-                    requestedNumberOfPacks: newValue,
-                    requestedNumberOfUnits:
-                      newValue * (draft?.requestedPackSize || 1),
-                  });
-                },
-              })}
+              {numericInput(
+                'label.requested-packs',
+                draft?.requestedNumberOfPacks,
+                {
+                  onChange: value => {
+                    const newValue = value || 0;
+                    update({
+                      requestedNumberOfPacks: newValue,
+                      requestedNumberOfUnits:
+                        newValue * (draft?.requestedPackSize || 1),
+                    });
+                  },
+                }
+              )}
               {numericInput('label.pack-size', draft?.requestedPackSize, {
                 onChange: value => {
                   const newValue = value || 0;
@@ -89,7 +93,7 @@ export const PurchaseOrderLineEdit = ({
                 },
               })}
               {numericInput(
-                'label.total-quantity',
+                'label.requested-quantity',
                 draft?.requestedNumberOfUnits,
                 {
                   onChange: value => {
