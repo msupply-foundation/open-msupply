@@ -10,7 +10,7 @@ import { GoodsReceivedLineFragment } from '../operations.generated';
 
 export type DraftGoodsReceivedLine = Omit<
   GoodsReceivedLineFragment,
-  '__typename' | 'item'
+  '__typename' | 'item' |  'lineNumber' | 'receivedPackSize' | 'numberOfPacksReceived'
 > & {
   goodsReceivedId: string;
   purchaseOrderLineId: string;
@@ -19,7 +19,7 @@ export type DraftGoodsReceivedLine = Omit<
 
 export type DraftGoodsReceivedLineFromCSV = Omit<
   DraftGoodsReceivedLine,
-  'id' | 'itemId'
+  'id' | 'itemId' 
 > & {
   itemCode: string;
 };
