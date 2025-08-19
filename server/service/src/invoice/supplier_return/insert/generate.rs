@@ -103,6 +103,11 @@ pub fn generate(
             cost_price_per_pack: None,
             sell_price_per_pack: None,
             campaign_id: None,
+            program_id: None,
+            vvm_status_id: None,
+            volume_per_pack: None,
+            item_variant_id: None,
+            donor_id: None,
         })
         .collect();
 

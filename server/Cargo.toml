@@ -4,41 +4,44 @@ strip = true
 [workspace.dependencies]
 # dependencies used in graphql crates:
 # Warning don't add anything above this lines as auto patch is applied during docker build
-async-graphql = { version = "7.0.13", features = ["dataloader", "chrono"] }
-async-graphql-actix-web = "7.0.13"
-actix-web = { version = "4.9.0", default-features = false, features = ["macros", "rustls"] }
+async-graphql = { version = "7.0.17", features = ["dataloader", "chrono"] }
+async-graphql-actix-web = "7.0.17"
+actix-web = { version = "4.11.0", default-features = false, features = [
+  "macros",
+  "rustls",
+] }
 actix-multipart = "0.7.2"
 anymap = "0.12.1"
-async-trait = "0.1.85"
-chrono = { version = "0.4.39", features = ["serde"] }
-clap = { version = "4.5.7", features = ["derive"] }
+async-trait = "0.1.88"
+chrono = { version = "0.4.41", features = ["serde"] }
+clap = { version = "4.5.41", features = ["derive"] }
 futures = "0.3.31"
 futures-util = "0.3.31"
 httpmock = "0.7"
-log = "0.4.22"
+log = "0.4.27"
 pretty_assertions = "1.4.1"
-rcgen = "0.13.2"
+rcgen = "0.14.2"
 regex = "1.11.1"
-reqwest = { version = "0.12.12", features = [
+reqwest = { version = "0.12.22", features = [
   "gzip",
   "json",
   "rustls-tls",
   "multipart",
   "blocking",
 ], default-features = false }
-serde = "^1.0.219"
-serde_json = "1.0"
+serde = { version = "^1.0.219",  features = ["derive"] }
+serde_json = "1.0.140"
 serde_yaml = "0.9.34"
-sha2 = "0.10.8"
-simple-log = { version = "2.0.2" }
-strum = { version = "0.26.3", features = ["derive"] }
-thiserror = "1.0.30"
-tokio = { version = "1.42.0", features = ["macros", "process"] }
+sha2 = "0.10.9"
+simple-log = { version = "2.3.0" }
+strum = { version = "0.27.1", features = ["derive"] }
+thiserror = "2.0.2"
+tokio = { version = "1.46.1", features = ["macros", "process"] }
 # dev dependencies used in graphql crates:
+anyhow = "1.0.98"
 actix-rt = "2.10.0"
 assert-json-diff = "2.0.2"
 rand = "0.8.5"
-anyhow = "1.0.95"
 actix-files = "0.6.6"
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 base64 = "0.22.1"

@@ -31,6 +31,8 @@ pub struct AddNewStockLine {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -121,13 +123,13 @@ mod test {
     use repository::{
         mock::{
             mock_item_a, mock_location_1, mock_stock_line_a, mock_store_a, mock_user_account_a,
-            MockData, MockDataInserts,
+            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
+        vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
         EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
         InvoiceStatus, ReasonOptionRow, ReasonOptionType,
     };
-    use util::inline_edit;
 
     use crate::{
         invoice::inventory_adjustment::add_new_stock_line::AddNewStockLine,
@@ -267,16 +269,10 @@ mod test {
             .unwrap();
 
         let stock_line_row = new_stock_line.stock_line_row;
-        assert_eq!(
-            stock_line_row,
-            inline_edit(&stock_line_row, |mut u| {
-                u.available_number_of_packs = 2.0;
-                u.total_number_of_packs = 2.0;
-                u.location_id = Some(mock_location_1().id);
-                u.on_hold = true;
-                u
-            })
-        );
+        assert_eq!(stock_line_row.available_number_of_packs, 2.0);
+        assert_eq!(stock_line_row.total_number_of_packs, 2.0);
+        assert_eq!(stock_line_row.location_id, Some(mock_location_1().id));
+        assert_eq!(stock_line_row.on_hold, true);
         let mut invoices = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().stock_line_id(stock_line_row.id))
             .unwrap();
@@ -298,22 +294,55 @@ mod test {
         let invoice_line = invoice_lines.pop().unwrap();
         let invoice_line_row = invoice_line.invoice_line_row;
 
+        assert_eq!(invoice_row.status, InvoiceStatus::Verified);
+
+        assert_eq!(invoice_line_row.number_of_packs, 2.0);
         assert_eq!(
-            invoice_row,
-            inline_edit(&invoice_row, |mut u| {
-                u.status = InvoiceStatus::Verified;
-                u
-            })
+            invoice_line_row.reason_option_id,
+            Some(addition_reason().id)
         );
 
-        assert_eq!(
-            invoice_line_row,
-            inline_edit(&invoice_line_row, |mut u| {
-                u.number_of_packs = 2.0;
-                u.reason_option_id = Some(addition_reason().id);
-                u
-            })
-        );
+        let new_stock_line = service
+            .add_new_stock_line(
+                &context,
+                AddNewStockLine {
+                    stock_line_id: "new_vaccine".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 2.0,
+                    item_id: mock_vaccine_item_a().id,
+                    reason_option_id: Some(addition_reason().id),
+                    vvm_status_id: Some(mock_vvm_status_a().id),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stock_line_id = new_stock_line.stock_line_row.id.clone();
+        let invoice = InvoiceRepository::new(&connection)
+            .query_by_filter(InvoiceFilter::new().stock_line_id(stock_line_id.clone()))
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        let invoice_lines = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id)),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        let vvm_status_log = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(
+                VVMStatusLogFilter::new()
+                    .stock_line_id(EqualFilter::equal_to(&stock_line_id))
+                    .invoice_line_id(EqualFilter::equal_to(&invoice_lines.invoice_line_row.id)),
+            )
+            .unwrap()
+            .pop();
+
+        assert!(new_stock_line.vvm_status_row.is_some());
+        assert!(vvm_status_log.is_some());
     }
 
     #[actix_rt::test]

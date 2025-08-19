@@ -13,7 +13,6 @@ use std::convert::TryInto;
 use strum::EnumIter;
 use strum::IntoEnumIterator;
 use ts_rs::TS;
-use util::inline_init;
 
 use diesel_derive_enum::DbEnum;
 
@@ -63,6 +62,7 @@ pub enum RowActionType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter, TS)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
+    GoodsReceivedLine,
     BackendPlugin,
     Number,
     Location,
@@ -79,7 +79,6 @@ pub enum ChangelogTableName {
     Barcode,
     Clinician,
     ClinicianStoreJoin,
-    ColdStorageType,
     Name,
     NameStoreJoin,
     Document,
@@ -131,6 +130,7 @@ pub enum ChangelogTableName {
     SyncMessage,
     PurchaseOrder,
     PurchaseOrderLine,
+    GoodsReceived,
     SupportUpload,
 }
 
@@ -195,7 +195,6 @@ impl ChangelogTableName {
             ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
             ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::ColdStorageType => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::ItemVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
@@ -214,6 +213,8 @@ impl ChangelogTableName {
             ChangelogTableName::SyncMessage => ChangeLogSyncStyle::Remote,
             ChangelogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::GoodsReceived => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::GoodsReceivedLine => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::SupportUpload => ChangeLogSyncStyle::RemoteAndCentral,
         }
     }
@@ -687,7 +688,6 @@ where
     }
 }
 
-// Only used in tests (cfg flag doesn't seem to work for inline_init even in tests)
 impl Default for ChangelogRow {
     fn default() -> Self {
         Self {
@@ -747,20 +747,25 @@ impl ChangelogFilter {
 
 impl ChangelogTableName {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }
 
 impl RowActionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
     use tokio::sync::oneshot;
-    use util::inline_init;
 
     use crate::{
         mock::MockDataInserts, test_db::setup_all, ChangelogRepository, ClinicianRow,
@@ -774,10 +779,11 @@ mod test {
             setup_all("test_late_changelog_rows", MockDataInserts::none()).await;
 
         ClinicianRowRepository::new(&connection)
-            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
-                r.id = String::from("1");
-                r.is_active = true;
-            }))
+            .upsert_one(&ClinicianRow {
+                id: String::from("1"),
+                is_active: true,
+                ..Default::default()
+            })
             .unwrap();
 
         let (sender, receiver) = oneshot::channel::<()>();
@@ -787,10 +793,11 @@ mod test {
             let result: Result<(), TransactionError<RepositoryError>> = connection
                 .transaction_sync(|con| {
                     ClinicianRowRepository::new(con)
-                        .upsert_one(&inline_init(|r: &mut ClinicianRow| {
-                            r.id = String::from("2");
-                            r.is_active = true;
-                        }))
+                        .upsert_one(&ClinicianRow {
+                            id: String::from("2"),
+                            is_active: true,
+                            ..Default::default()
+                        })
                         .unwrap();
                     sender.send(()).unwrap();
                     std::thread::sleep(core::time::Duration::from_millis(100));
@@ -800,10 +807,11 @@ mod test {
         });
         receiver.await.unwrap();
         ClinicianRowRepository::new(&connection)
-            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
-                r.id = String::from("3");
-                r.is_active = true;
-            }))
+            .upsert_one(&ClinicianRow {
+                id: String::from("3"),
+                is_active: true,
+                ..Default::default()
+            })
             .unwrap();
 
         let changelogs = ChangelogRepository::new(&connection)

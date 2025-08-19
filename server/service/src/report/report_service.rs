@@ -13,7 +13,7 @@ use util::{format_error, uuid::uuid};
 
 use crate::{
     boajs::{call_method, BoaJsError},
-    get_default_pagination, i64_to_u32,
+    get_pagination_or_default, i64_to_u32,
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     settings::Settings,
@@ -110,41 +110,34 @@ pub trait ReportServiceTrait: Sync + Send {
     fn get_report(
         &self,
         ctx: &ServiceContext,
-        translation_service: &Box<Localisations>,
+        localisations: &Localisations,
         user_language: String,
         id: &str,
     ) -> Result<Report, GetReportError> {
-        get_report(ctx, translation_service, user_language, id)
+        get_report(ctx, localisations, user_language, id)
     }
 
     fn query_reports(
         &self,
         ctx: &ServiceContext,
-        translation_service: &Box<Localisations>,
+        localisations: &Localisations,
         user_language: String,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
     ) -> Result<Vec<Report>, GetReportsError> {
-        query_reports(ctx, translation_service, user_language, filter, sort)
+        query_reports(ctx, localisations, user_language, filter, sort)
     }
 
     fn query_all_report_versions(
         &self,
         ctx: &ServiceContext,
-        translation_service: &Box<Localisations>,
+        localisations: &Localisations,
         user_language: String,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
         pagination: Option<PaginationOption>,
     ) -> Result<ListResult<Report>, GetReportsError> {
-        query_all_report_versions(
-            ctx,
-            translation_service,
-            user_language,
-            filter,
-            sort,
-            pagination,
-        )
+        query_all_report_versions(ctx, localisations, user_language, filter, sort, pagination)
     }
 
     /// Loads a report definition by id and resolves it
@@ -175,14 +168,14 @@ pub trait ReportServiceTrait: Sync + Send {
         report_data: serde_json::Value,
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
-        translation_service: &Localisations,
+        localisations: &Localisations,
         current_language: Option<String>,
     ) -> Result<String, ReportError> {
         let document = generate_report(
             report,
             report_data,
             arguments,
-            translation_service,
+            localisations,
             current_language,
         )?;
 
@@ -310,9 +303,6 @@ fn format_html_document(document: GeneratedReport) -> String {
 pub struct ReportService;
 impl ReportServiceTrait for ReportService {}
 
-pub const MAX_LIMIT: u32 = 1000;
-pub const MIN_LIMIT: u32 = 1;
-
 #[derive(Debug)]
 pub enum GetReportError {
     TranslationError(TranslationError),
@@ -321,7 +311,7 @@ pub enum GetReportError {
 
 fn get_report(
     ctx: &ServiceContext,
-    translation_service: &Box<Localisations>,
+    localisations: &Localisations,
     user_language: String,
     id: &str,
 ) -> Result<Report, GetReportError> {
@@ -331,7 +321,7 @@ fn get_report(
         .pop()
         .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
 
-    let report = translate_report_arugment_schema(report, translation_service, &user_language)
+    let report = translate_report_arugment_schema(report, localisations, &user_language)
         .map_err(GetReportError::TranslationError)?;
 
     Ok(report)
@@ -345,7 +335,7 @@ pub enum GetReportsError {
 
 fn query_reports(
     ctx: &ServiceContext,
-    translation_service: &Box<Localisations>,
+    localisations: &Localisations,
     user_language: String,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
@@ -368,7 +358,7 @@ fn query_reports(
     let reports = reports
         .into_iter()
         .map(|r| {
-            translate_report_arugment_schema(r, translation_service, &user_language)
+            translate_report_arugment_schema(r, localisations, &user_language)
                 .map_err(GetReportsError::TranslationError)
         })
         .collect::<Result<Vec<Report>, GetReportsError>>();
@@ -378,14 +368,13 @@ fn query_reports(
 
 fn query_all_report_versions(
     ctx: &ServiceContext,
-    translation_service: &Box<Localisations>,
+    localisations: &Localisations,
     user_language: String,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
     pagination: Option<PaginationOption>,
 ) -> Result<ListResult<Report>, GetReportsError> {
-    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
-        .map_err(GetReportsError::ListError)?;
+    let pagination = get_pagination_or_default(pagination).map_err(GetReportsError::ListError)?;
 
     let repo = ReportRepository::new(&ctx.connection);
 
@@ -397,7 +386,7 @@ fn query_all_report_versions(
     let reports = reports
         .into_iter()
         .map(|r| {
-            translate_report_arugment_schema(r, translation_service, &user_language)
+            translate_report_arugment_schema(r, localisations, &user_language)
                 .map_err(GetReportsError::TranslationError)
         })
         .collect::<Result<Vec<Report>, GetReportsError>>()?;
@@ -584,7 +573,7 @@ fn generate_report(
     report: &ResolvedReportDefinition,
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,
-    translation_service: &Localisations,
+    localisations: &Localisations,
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let report_data = ReportData { data, arguments };
@@ -627,7 +616,7 @@ fn generate_report(
 
     tera.register_function(
         "t",
-        translation_service.get_translation_function(current_language),
+        localisations.get_translation_function(current_language),
     );
 
     let mut templates: HashMap<String, String> = report
@@ -942,7 +931,10 @@ mod report_service_test {
             .context("store_id".to_string(), "".to_string())
             .unwrap();
         let service = &service_provider.report_service;
-        let translation_service = &service_provider.translations_service;
+        let localisations = &service_provider
+            .localisations_service
+            .get_localisations(&connection)
+            .unwrap();
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
         let doc = generate_report(
@@ -951,7 +943,7 @@ mod report_service_test {
                 "test": "Hello"
             }),
             None,
-            translation_service,
+            localisations,
             None,
         )
         .unwrap();
@@ -985,10 +977,13 @@ mod report_generation_test {
             output: ReportOutputType::Html,
         };
 
-        let (_, _, connection_manager, _) =
+        let (_, connection, connection_manager, _) =
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
-        let translation_service = ServiceProvider::new(connection_manager).translations_service;
+        let localisations = ServiceProvider::new(connection_manager)
+            .localisations_service
+            .get_localisations(&connection)
+            .unwrap();
 
         let mut templates = HashMap::new();
         templates.insert("test.html".to_string(), tera_template);
@@ -1010,7 +1005,7 @@ mod report_generation_test {
             &report,
             report_data.clone(),
             None,
-            &translation_service,
+            &localisations,
             Some("en".to_string()),
         )
         .unwrap();
@@ -1024,7 +1019,7 @@ mod report_generation_test {
             &report,
             report_data,
             None,
-            &translation_service,
+            &localisations,
             Some("fr".to_string()),
         )
         .unwrap();

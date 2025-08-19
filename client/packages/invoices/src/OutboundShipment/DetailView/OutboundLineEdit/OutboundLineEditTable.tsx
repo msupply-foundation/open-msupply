@@ -11,8 +11,7 @@ import {
   NumUtils,
   Typography,
   useTableStore,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -22,6 +21,7 @@ import {
   getAllocatedQuantity,
 } from '../../../StockOut';
 import { min } from 'lodash';
+import { useDisableVvmRows } from '../../../useDisableVvmRows';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -56,6 +56,7 @@ const PlaceholderRow = ({
   const t = useTranslation();
 
   const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
+  const tooltip = useFormatNumber().round(quantity ?? 0, 10);
 
   // TODO - maybe should be editable? Can't clear when manually allocating..
   return quantity === null ? null : (
@@ -75,7 +76,7 @@ const PlaceholderRow = ({
         </PlaceholderCell>
       )}
       <PlaceholderCell colSpan={dosesPerUnit ? 2 : 3}></PlaceholderCell>
-      <Tooltip title={quantity.toString()}>
+      <Tooltip title={tooltip}>
         <PlaceholderCell style={{ textAlign: 'right' }}>
           {!!NumUtils.hasMoreThanTwoDp(quantity)
             ? `${formattedValue}...`
@@ -95,12 +96,13 @@ const TotalRow = ({
 }) => {
   const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
+  const tooltip = useFormatNumber().round(allocatedQuantity, 10);
 
   return (
     <tr>
       <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
       <TotalCell colSpan={6 + extraColumnOffset}></TotalCell>
-      <Tooltip title={allocatedQuantity.toString()}>
+      <Tooltip title={tooltip}>
         <TotalCell
           style={{
             textAlign: 'right',
@@ -124,11 +126,7 @@ export const OutboundLineEditTable = ({
   const t = useTranslation();
   const { format } = useFormatNumber();
   const tableStore = useTableStore();
-  const { data: prefs } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
+  const prefs = usePreferences();
 
   const {
     draftLines,
@@ -138,6 +136,7 @@ export const OutboundLineEditTable = ({
     allocatedQuantity,
     item,
     manualAllocate,
+    setVvmStatus,
   } = useAllocationContext(state => {
     const { placeholderUnits, item, allocateIn } = state;
 
@@ -175,6 +174,7 @@ export const OutboundLineEditTable = ({
     currency,
     isExternalSupplier,
     allocateIn: allocateIn,
+    setVvmStatus,
   });
 
   // Display all stock lines to user, including non-allocatable ones at the bottom
@@ -188,6 +188,8 @@ export const OutboundLineEditTable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useDisableVvmRows({ rows: lines, isVaccine: item?.isVaccine });
+
   // Null means we aren't using placeholder
   if (!lines.length && placeholderQuantity === null)
     return (
@@ -199,11 +201,11 @@ export const OutboundLineEditTable = ({
   let extraColumnOffset = 0;
   if (
     item?.isVaccine &&
-    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry)
+    (prefs.manageVvmStatusForStock || prefs.sortByVvmStatusThenExpiry)
   ) {
     extraColumnOffset += 1;
   }
-  if (prefs?.allowTrackingOfStockByDonor) {
+  if (prefs.allowTrackingOfStockByDonor) {
     extraColumnOffset += 1;
   }
 

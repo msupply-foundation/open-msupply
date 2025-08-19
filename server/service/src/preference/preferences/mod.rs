@@ -12,17 +12,29 @@ pub mod use_simplified_mobile_ui;
 pub use use_simplified_mobile_ui::*;
 pub mod gender_options;
 pub use gender_options::*;
-pub mod use_campaigns;
-pub use use_campaigns::*;
 pub mod order_in_packs;
 pub use order_in_packs::*;
+pub mod custom_translations;
+pub use custom_translations::*;
+pub mod sync_records_display_threshold;
+pub use sync_records_display_threshold::*;
+pub mod authorise_purchase_order;
+pub use authorise_purchase_order::*;
+pub mod prevent_transfers_months_before_initialisation;
+pub use prevent_transfers_months_before_initialisation::*;
+pub mod authorise_goods_received;
+pub use authorise_goods_received::*;
 
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
     pub gender_options: GenderOptions,
     pub show_contact_tracing: ShowContactTracing,
-    pub use_campaigns: UseCampaigns,
+    pub custom_translations: CustomTranslations,
+    pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
+    pub authorise_purchase_order: AuthorisePurchaseOrder,
+    pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
+    pub authorise_goods_received: AuthoriseGoodsReceived,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
@@ -37,7 +49,11 @@ pub fn get_preference_provider() -> PreferenceProvider {
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
         gender_options: GenderOptions,
         show_contact_tracing: ShowContactTracing,
-        use_campaigns: UseCampaigns,
+        custom_translations: CustomTranslations,
+        sync_records_display_threshold: SyncRecordsDisplayThreshold,
+        authorise_purchase_order: AuthorisePurchaseOrder,
+        prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
+        authorise_goods_received: AuthoriseGoodsReceived,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,

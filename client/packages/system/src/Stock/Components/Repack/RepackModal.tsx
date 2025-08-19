@@ -14,7 +14,6 @@ import {
   noOtherVariants,
   ButtonWithIcon,
   ReportContext,
-  StockLineNode,
   useConfirmationModal,
   useNavigate,
   RouteBuilder,
@@ -25,14 +24,14 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { RepackEditForm } from './RepackEditForm';
 import { ReportSelector, useActivityLog } from '@openmsupply-client/system';
-import { RepackFragment } from '../../api';
+import { RepackFragment, StockLineRowFragment } from '../../api';
 import { useRepackColumns } from './column';
 import { useRepack } from '../../api/hooks';
 
 interface RepackModalControlProps {
   isOpen: boolean;
   onClose: () => void;
-  stockLine: StockLineNode;
+  stockLine: StockLineRowFragment;
 }
 
 export const RepackModal: FC<RepackModalControlProps> = ({
@@ -50,7 +49,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
-  const [reportDisabled, setReportDisabled] = useState<boolean>(false);
   const [isNew, setIsNew] = useState<boolean>(false);
 
   const { data: logData } = useActivityLog(stockLine?.id ?? '');
@@ -71,7 +69,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const onRowClick = (rowData: RepackFragment) => {
     setInvoiceId(rowData.id);
-    setReportDisabled(false);
     setIsNew(false);
   };
 
@@ -106,6 +103,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         ...draft,
         locationName: stockLine.location?.name,
         packSize: stockLine.packSize,
+        restrictedToLocationType:
+          stockLine.item.restrictedLocationTypeId ?? undefined,
       };
     }
 
@@ -181,7 +180,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         <ReportSelector
           context={ReportContext.Repack}
           dataId={invoiceId || ''}
-          disabled={reportDisabled || !invoiceId}
         />
       }
     >

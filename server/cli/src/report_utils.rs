@@ -40,9 +40,9 @@ pub enum ReportError {
     FailedToGenerateArgumentSchema(PathBuf),
     #[error("Failed to write reports json {0}")]
     FailedToWriteReportsFile(PathBuf, #[source] std::io::Error),
-    #[error("Failed to open test-config file {0}")]
+    #[error("Failed to open test-config file in the {0} directory. Does the file exist?")]
     CannotOpenTestConfigFile(PathBuf, #[source] std::io::Error),
-    #[error("Failed to read test-config file {0}")]
+    #[error("Failed to read test-config file in the {0} directory")]
     CannotReadTestConfigFile(PathBuf, #[source] serde_json::Error),
     #[error("Failed to generate report {0} {1}")]
     FailedToGenerateReport(PathBuf, anyhow::Error),

@@ -6,6 +6,7 @@ use repository::{
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     invoice::common::get_lines_for_invoice,
+    processors::transfer::invoice::InvoiceTransferOutput,
     store_preference::get_store_preferences,
 };
 
@@ -38,7 +39,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
         &self,
         connection: &StorageConnection,
         record_for_processing: &InvoiceTransferProcessorRecord,
-    ) -> Result<Option<String>, RepositoryError> {
+    ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
         let (outbound_invoice, linked_invoice) = match &record_for_processing.operation {
             Operation::Upsert {
@@ -46,26 +47,30 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
                 linked_invoice,
                 ..
             } => (invoice, linked_invoice),
-            _ => return Ok(None),
+            operation => return Ok(InvoiceTransferOutput::WrongOperation(operation.to_owned())),
         };
         // 2.
-        let inbound_invoice_type = match outbound_invoice.invoice_row.r#type {
+        let inbound_invoice_type = match &outbound_invoice.invoice_row.r#type {
             InvoiceType::OutboundShipment => InboundInvoiceType::InboundShipment,
             InvoiceType::SupplierReturn => InboundInvoiceType::CustomerReturn,
-            _ => return Ok(None),
+            invoice_type => return Ok(InvoiceTransferOutput::WrongType(invoice_type.to_owned())),
         };
         // 3.
         let inbound_invoice = match &linked_invoice {
             Some(linked_invoice) => linked_invoice,
-            None => return Ok(None),
+            None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
         // 4.
         if inbound_invoice.invoice_row.status != InvoiceStatus::Picked {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongInboundStatus(
+                inbound_invoice.invoice_row.status.to_owned(),
+            ));
         }
         // 5.
         if outbound_invoice.invoice_row.status != InvoiceStatus::Shipped {
-            return Ok(None);
+            return Ok(InvoiceTransferOutput::WrongOutboundStatus(
+                outbound_invoice.invoice_row.status.to_owned(),
+            ));
         }
 
         // Execute
@@ -73,6 +78,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
         let new_inbound_lines = generate_inbound_lines(
             connection,
             &inbound_invoice.invoice_row.id,
+            &inbound_invoice.store_row.id,
             outbound_invoice,
         )?;
 
@@ -108,11 +114,11 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
 
         let formatted_comment = match inbound_invoice_type {
             InboundInvoiceType::InboundShipment => match &outbound_invoice_row.comment {
-                Some(comment) => format!("Stock transfer ({})", comment),
+                Some(comment) => format!("Stock transfer ({comment})"),
                 None => "Stock transfer".to_string(),
             },
             InboundInvoiceType::CustomerReturn => match &outbound_invoice_row.comment {
-                Some(comment) => format!("Stock return ({})", comment),
+                Some(comment) => format!("Stock return ({comment})"),
                 None => "Stock return".to_string(),
             },
         };
@@ -155,6 +161,6 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
                 .collect::<Vec<String>>(),
         );
 
-        Ok(Some(result))
+        Ok(InvoiceTransferOutput::Processed(result))
     }
 }

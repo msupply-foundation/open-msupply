@@ -22,7 +22,7 @@ export type AssetRowFragment = {
   statusLog?: {
     __typename: 'AssetLogNode';
     logDatetime: string;
-    status?: Types.StatusType | null;
+    status?: Types.AssetLogStatusNodeType | null;
     reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
   } | null;
   store?: {
@@ -83,8 +83,8 @@ export type AssetFragment = {
       code: string;
       name: string;
       onHold: boolean;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
@@ -95,7 +95,7 @@ export type AssetFragment = {
   statusLog?: {
     __typename: 'AssetLogNode';
     logDatetime: string;
-    status?: Types.StatusType | null;
+    status?: Types.AssetLogStatusNodeType | null;
     reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
   } | null;
   store?: {
@@ -134,7 +134,7 @@ export type ColdchainAssetLogFragment = {
   comment?: string | null;
   id: string;
   logDatetime: string;
-  status?: Types.StatusType | null;
+  status?: Types.AssetLogStatusNodeType | null;
   type?: string | null;
   reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
   user?: {
@@ -188,7 +188,7 @@ export type AssetsQuery = {
       statusLog?: {
         __typename: 'AssetLogNode';
         logDatetime: string;
-        status?: Types.StatusType | null;
+        status?: Types.AssetLogStatusNodeType | null;
         reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
       } | null;
       store?: {
@@ -261,8 +261,8 @@ export type AssetByIdQuery = {
           code: string;
           name: string;
           onHold: boolean;
-          coldStorageType?: {
-            __typename: 'ColdStorageTypeNode';
+          locationType?: {
+            __typename: 'LocationTypeNode';
             id: string;
             name: string;
             maxTemperature: number;
@@ -273,7 +273,7 @@ export type AssetByIdQuery = {
       statusLog?: {
         __typename: 'AssetLogNode';
         logDatetime: string;
-        status?: Types.StatusType | null;
+        status?: Types.AssetLogStatusNodeType | null;
         reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
       } | null;
       store?: {
@@ -357,8 +357,8 @@ export type AssetFromGs1DataQuery = {
             code: string;
             name: string;
             onHold: boolean;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               maxTemperature: number;
@@ -369,7 +369,7 @@ export type AssetFromGs1DataQuery = {
         statusLog?: {
           __typename: 'AssetLogNode';
           logDatetime: string;
-          status?: Types.StatusType | null;
+          status?: Types.AssetLogStatusNodeType | null;
           reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
         } | null;
         store?: {
@@ -427,7 +427,7 @@ export type AssetLogsQuery = {
       comment?: string | null;
       id: string;
       logDatetime: string;
-      status?: Types.StatusType | null;
+      status?: Types.AssetLogStatusNodeType | null;
       type?: string | null;
       reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
       user?: {
@@ -610,7 +610,7 @@ export const AssetFragmentDoc = gql`
         code
         name
         onHold
-        coldStorageType {
+        locationType {
           id
           name
           maxTemperature

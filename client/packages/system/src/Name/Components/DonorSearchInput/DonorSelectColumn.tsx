@@ -18,7 +18,7 @@ export const getDonorColumn = <T extends RecordWithId>(
       <DonorSearchInput
         donorId={column.accessor({ rowData }) as string | null}
         onChange={donor => update(rowData.id, donor)}
-        width={200}
+        fullWidth
         clearable
         disabled={isDisabled}
       />

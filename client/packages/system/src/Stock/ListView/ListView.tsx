@@ -16,6 +16,8 @@ import {
   ExpiryDateCell,
   usePluginProvider,
   useEditModal,
+  CellProps,
+  UnitsAndMaybeDoses,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -126,7 +128,7 @@ const StockListComponent: FC = () => {
     [
       'numberOfPacks',
       {
-        accessor: ({ rowData }) => rowData.totalNumberOfPacks.toFixed(2),
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
         width: 125,
       },
     ],
@@ -134,10 +136,11 @@ const StockListComponent: FC = () => {
       'stockOnHand',
       {
         accessor: ({ rowData }) =>
-          (rowData.totalNumberOfPacks * rowData.packSize).toFixed(2),
+          rowData.totalNumberOfPacks * rowData.packSize,
         sortable: false,
-        width: 125,
+        maxWidth: 'unset',
         defaultHideOnMobile: true,
+        Cell: UnitsAndMaybeDosesCell,
       },
     ],
     [
@@ -146,10 +149,11 @@ const StockListComponent: FC = () => {
         label: 'label.available-soh',
         description: 'description.available-soh',
         accessor: ({ rowData }) =>
-          (rowData.availableNumberOfPacks * rowData.packSize).toFixed(2),
+          rowData.availableNumberOfPacks * rowData.packSize,
         sortable: false,
-        width: 125,
+        maxWidth: 'unset',
         defaultHideOnMobile: true,
+        Cell: UnitsAndMaybeDosesCell,
       },
     ],
     {
@@ -233,3 +237,18 @@ export const StockListView: FC = () => (
     <StockListComponent />
   </TableProvider>
 );
+
+const UnitsAndMaybeDosesCell = (props: CellProps<StockLineRowFragment>) => {
+  const { rowData, column } = props;
+  const units = Number(column.accessor({ rowData })) ?? 0;
+  const { isVaccine, dosesPerUnit } = rowData.item;
+
+  return (
+    <UnitsAndMaybeDoses
+      numberCellProps={props}
+      units={units}
+      isVaccine={isVaccine}
+      dosesPerUnit={dosesPerUnit}
+    />
+  );
+};

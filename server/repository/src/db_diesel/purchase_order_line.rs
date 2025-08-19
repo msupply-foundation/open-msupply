@@ -32,15 +32,16 @@ pub struct PurchaseOrderLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub purchase_order_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub requested_pack_size: Option<EqualFilter<f64>>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 pub enum PurchaseOrderLineSortField {
     ItemName,
-    NumberOfPacks,
     LineNumber,
-    RequestedQuantity,
-    AuthorisedQuantity,
-    TotalReceived,
+    // RequestedQuantity, // TODO: Bring back sorting as needed by frontend
+    // AuthorisedQuantity,
+    // TotalReceived,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
 }
@@ -57,7 +58,7 @@ impl<'a> PurchaseOrderLineRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<PurchaseOrderLineFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter)?;
+        let query = create_filtered_query(filter);
 
         Ok(query
             .count()
@@ -84,28 +85,17 @@ impl<'a> PurchaseOrderLineRepository<'a> {
         filter: Option<PurchaseOrderLineFilter>,
         sort: Option<PurchaseOrderLineSort>,
     ) -> Result<Vec<PurchaseOrderLine>, RepositoryError> {
-        let mut query = create_filtered_query(filter)?;
+        let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
             match sort.key {
                 PurchaseOrderLineSortField::ItemName => {
                     apply_sort_no_case!(query, sort, item::name);
                 }
-                PurchaseOrderLineSortField::NumberOfPacks => {
-                    apply_sort!(query, sort, purchase_order_line::number_of_packs);
-                }
                 PurchaseOrderLineSortField::LineNumber => {
                     apply_sort!(query, sort, purchase_order_line::line_number);
                 }
-                PurchaseOrderLineSortField::RequestedQuantity => {
-                    apply_sort!(query, sort, purchase_order_line::requested_quantity);
-                }
-                PurchaseOrderLineSortField::AuthorisedQuantity => {
-                    apply_sort!(query, sort, purchase_order_line::authorised_quantity);
-                }
-                PurchaseOrderLineSortField::TotalReceived => {
-                    apply_sort!(query, sort, purchase_order_line::total_received);
-                }
+
                 PurchaseOrderLineSortField::RequestedDeliveryDate => {
                     apply_sort!(query, sort, purchase_order_line::requested_delivery_date);
                 }
@@ -120,6 +110,12 @@ impl<'a> PurchaseOrderLineRepository<'a> {
         let final_query = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
+
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
 
         let result =
             final_query.load::<PurchaseOrderLineJoin>(self.connection.lock().connection())?;
@@ -137,9 +133,7 @@ type BoxedPurchaseOrderLineQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_filtered_query(
-    filter: Option<PurchaseOrderLineFilter>,
-) -> Result<BoxedPurchaseOrderLineQuery, RepositoryError> {
+fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurchaseOrderLineQuery {
     let mut query = purchase_order_line::table
         .inner_join(item_link::table.inner_join(item::table))
         .inner_join(purchase_order::table)
@@ -150,18 +144,22 @@ fn create_filtered_query(
             purchase_order_id,
             id,
             store_id,
+            requested_pack_size,
+            item_id,
         } = f;
 
-        apply_equal_filter!(
-            query,
-            purchase_order_id,
-            purchase_order_line::purchase_order_id
-        );
+        apply_equal_filter!(query, purchase_order_id, purchase_order::id);
         apply_equal_filter!(query, id, purchase_order_line::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
+        apply_equal_filter!(
+            query,
+            requested_pack_size,
+            purchase_order_line::requested_pack_size
+        );
+        apply_equal_filter!(query, item_id, item_link::item_id);
     }
 
-    Ok(query)
+    query
 }
 
 impl PurchaseOrderLineFilter {
@@ -175,6 +173,11 @@ impl PurchaseOrderLineFilter {
     }
     pub fn purchase_order_id(mut self, filter: EqualFilter<String>) -> Self {
         self.purchase_order_id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }

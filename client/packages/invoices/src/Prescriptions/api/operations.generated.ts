@@ -129,7 +129,7 @@ export type PrescriptionRowFragment = {
         vvmStatus?: {
           __typename: 'VvmstatusNode';
           id: string;
-          level: number;
+          priority: number;
           unusable: boolean;
           description: string;
         } | null;
@@ -141,7 +141,7 @@ export type PrescriptionRowFragment = {
     id: string;
     name: string;
     code: string;
-    gender?: Types.GenderType | null;
+    gender?: Types.GenderTypeNode | null;
     dateOfBirth?: string | null;
     isDeceased: boolean;
   } | null;
@@ -172,7 +172,7 @@ export type PrescriptionRowFragment = {
       providerName: string;
     } | null;
   } | null;
-  store?: { __typename: 'StoreNode'; id: string } | null;
+  store: { __typename: 'StoreNode'; id: string };
 };
 
 export type PrescriptionLineFragment = {
@@ -260,7 +260,7 @@ export type PrescriptionLineFragment = {
     vvmStatus?: {
       __typename: 'VvmstatusNode';
       id: string;
-      level: number;
+      priority: number;
       unusable: boolean;
       description: string;
     } | null;
@@ -466,7 +466,7 @@ export type PrescriptionsQuery = {
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
-              level: number;
+              priority: number;
               unusable: boolean;
               description: string;
             } | null;
@@ -478,7 +478,7 @@ export type PrescriptionsQuery = {
         id: string;
         name: string;
         code: string;
-        gender?: Types.GenderType | null;
+        gender?: Types.GenderTypeNode | null;
         dateOfBirth?: string | null;
         isDeceased: boolean;
       } | null;
@@ -509,7 +509,7 @@ export type PrescriptionsQuery = {
           providerName: string;
         } | null;
       } | null;
-      store?: { __typename: 'StoreNode'; id: string } | null;
+      store: { __typename: 'StoreNode'; id: string };
     }>;
   };
 };
@@ -648,7 +648,7 @@ export type PrescriptionByNumberQuery = {
               vvmStatus?: {
                 __typename: 'VvmstatusNode';
                 id: string;
-                level: number;
+                priority: number;
                 unusable: boolean;
                 description: string;
               } | null;
@@ -660,7 +660,7 @@ export type PrescriptionByNumberQuery = {
           id: string;
           name: string;
           code: string;
-          gender?: Types.GenderType | null;
+          gender?: Types.GenderTypeNode | null;
           dateOfBirth?: string | null;
           isDeceased: boolean;
         } | null;
@@ -691,7 +691,7 @@ export type PrescriptionByNumberQuery = {
             providerName: string;
           } | null;
         } | null;
-        store?: { __typename: 'StoreNode'; id: string } | null;
+        store: { __typename: 'StoreNode'; id: string };
       }
     | {
         __typename: 'NodeError';
@@ -839,7 +839,7 @@ export type PrescriptionByIdQuery = {
               vvmStatus?: {
                 __typename: 'VvmstatusNode';
                 id: string;
-                level: number;
+                priority: number;
                 unusable: boolean;
                 description: string;
               } | null;
@@ -851,7 +851,7 @@ export type PrescriptionByIdQuery = {
           id: string;
           name: string;
           code: string;
-          gender?: Types.GenderType | null;
+          gender?: Types.GenderTypeNode | null;
           dateOfBirth?: string | null;
           isDeceased: boolean;
         } | null;
@@ -882,7 +882,7 @@ export type PrescriptionByIdQuery = {
             providerName: string;
           } | null;
         } | null;
-        store?: { __typename: 'StoreNode'; id: string } | null;
+        store: { __typename: 'StoreNode'; id: string };
       }
     | {
         __typename: 'NodeError';
@@ -1304,7 +1304,7 @@ export const PrescriptionLineFragmentDoc = gql`
       vvmStatus {
         __typename
         id
-        level
+        priority
         unusable
         description
       }

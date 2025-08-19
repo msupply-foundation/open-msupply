@@ -11,12 +11,13 @@ import {
   getLinesFromRow,
   usePluginProvider,
   UNDEFINED_STRING_VALUE,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
 
-export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
+export const useRequestColumns = () => {
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
     'maxMonthsOfStock',
     'programName',
@@ -29,6 +30,11 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
   const { store } = useAuthContext();
   const { getError } = useRequestRequisitionLineErrorContext();
   const { plugins } = usePluginProvider();
+  const { manageVaccinesInDoses } = usePreferences();
+
+  const showExtraColumns =
+    programName &&
+    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders;
 
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
     GenericColumnKey.Selection,
@@ -39,6 +45,7 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
         width: 130,
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,
+        isSticky: true,
       },
     ],
     [
@@ -88,6 +95,7 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
       description: 'description.available-soh',
       align: ColumnAlign.Right,
       width: 200,
+      Cell: PackQuantityCell,
       accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
       getSortValue: rowData => rowData.itemStats.availableStockOnHand,
     },
@@ -145,10 +153,7 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
     }
   );
 
-  if (
-    programName &&
-    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders
-  ) {
+  if (showExtraColumns) {
     columnDefinitions.push(
       // TODO: Global pref to show/hide the next columns
       {

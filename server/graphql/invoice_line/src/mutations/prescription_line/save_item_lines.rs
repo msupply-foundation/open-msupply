@@ -81,6 +81,8 @@ impl SavePrescriptionLinesInput {
                     number_of_packs: line.number_of_packs,
                     stock_line_id: line.stock_line_id,
                     campaign_id: None,
+                    program_id: None,
+                    vvm_status_id: None,
                 })
                 .collect(),
         }

@@ -5,7 +5,7 @@ use repository::{
     InvoiceRow, MasterList, MasterListFilter, MasterListRepository, NameLinkRowRepository,
     RepositoryError, StockLineRow, StorageConnection,
 };
-use util::{inline_edit, uuid::uuid};
+use util::uuid::uuid;
 
 use crate::store_preference::get_store_preferences;
 
@@ -15,11 +15,9 @@ pub fn generate_invoice_user_id_update(
 ) -> Option<InvoiceRow> {
     let user_id_option = Some(user_id.to_string());
     let user_id_has_changed = existing_invoice_row.user_id != user_id_option;
-    user_id_has_changed.then(|| {
-        inline_edit(&existing_invoice_row, |mut u| {
-            u.user_id = user_id_option;
-            u
-        })
+    user_id_has_changed.then(|| InvoiceRow {
+        user_id: user_id_option,
+        ..existing_invoice_row
     })
 }
 
@@ -131,6 +129,7 @@ pub fn generate_batches_total_number_of_packs_update(
         )?;
 
         stock_line.total_number_of_packs -= invoice_line_row.number_of_packs;
+        stock_line.total_volume -= stock_line.volume_per_pack * invoice_line_row.number_of_packs;
         result.push(stock_line);
     }
     Ok(result)
@@ -149,6 +148,7 @@ pub struct GenerateVVMStatusLogInput {
     pub vvm_status_id: String,
     pub stock_line_id: String,
     pub invoice_line_id: String,
+    pub comment: Option<String>,
 }
 
 pub fn generate_vvm_status_log(
@@ -159,6 +159,7 @@ pub fn generate_vvm_status_log(
         stock_line_id,
         invoice_line_id,
         created_by,
+        comment,
     }: GenerateVVMStatusLogInput,
 ) -> VVMStatusLogRow {
     VVMStatusLogRow {
@@ -169,6 +170,6 @@ pub fn generate_vvm_status_log(
         status_id: vvm_status_id.to_string(),
         stock_line_id: stock_line_id.to_string(),
         invoice_line_id: Some(invoice_line_id.to_string()),
-        comment: None,
+        comment,
     }
 }

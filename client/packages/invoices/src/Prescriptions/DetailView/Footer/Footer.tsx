@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -56,21 +56,18 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
   return statusLog;
 };
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = () => {
   const t = useTranslation();
   const {
     query: { data: prescription },
     isDisabled,
-    rows: items,
+    rows,
   } = usePrescription();
   const { navigateUpOne } = useBreadcrumbs();
 
   const selectedRows =
     useTableStore(state => {
-      return items
-        ?.filter(({ id }) => state.rowState[id]?.isSelected)
-        .map(({ lines }) => lines.flat())
-        .flat();
+      return rows?.filter(row => state.rowState[row.id]?.isSelected) || [];
     }) || [];
 
   const {
@@ -118,7 +115,6 @@ export const FooterComponent: FC = () => {
       label: t('button.print-prescription-label'),
       icon: <PrinterIcon />,
       onClick: handlePrintLabels,
-      disabled: isDisabled,
       loading: isPrintingLabels,
     },
   ];

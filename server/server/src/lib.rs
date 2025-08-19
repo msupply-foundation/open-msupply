@@ -3,7 +3,8 @@ extern crate machine_uid;
 
 use crate::{
     central::config_central, certs::Certificates, cold_chain::config_cold_chain,
-    configuration::get_or_create_token_secret, cors::cors_policy, middleware::central_server_only,
+    configuration::get_or_create_token_secret, cors::cors_policy,
+    custom_translations::config_custom_translations, middleware::central_server_only,
     print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
     support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
@@ -24,6 +25,7 @@ use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
     auth_data::AuthData,
     boajs::context::BoaJsContext,
+    ledger_fix::ledger_fix_driver::LedgerFixDriver,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
@@ -54,6 +56,7 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+mod custom_translations;
 mod serve_frontend_plugins;
 mod upload;
 
@@ -110,6 +113,7 @@ pub async fn start_server(
     let (processors_trigger, processors) = Processors::init();
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
+    let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();
 
@@ -117,6 +121,7 @@ pub async fn start_server(
         connection_manager.clone(),
         processors_trigger,
         sync_trigger,
+        ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
     ));
@@ -322,6 +327,7 @@ pub async fn start_server(
         service_provider.clone().into_inner(),
         force_trigger_sync_on_startup,
     );
+    let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
     // Scheduled tasks
@@ -351,6 +357,7 @@ pub async fn start_server(
             .configure(config_central)
             .configure(config_support)
             .configure(config_print)
+            .configure(config_custom_translations)
             .configure(config_upload)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
@@ -380,9 +387,9 @@ pub async fn start_server(
         Some(_) = off_switch.recv() => {},
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
+          _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
-
     };
 
     server_handle.stop(true).await;

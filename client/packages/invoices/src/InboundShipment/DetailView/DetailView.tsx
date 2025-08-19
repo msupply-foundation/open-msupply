@@ -14,8 +14,6 @@ import {
   ModalMode,
   useTableStore,
   useBreadcrumbs,
-  usePreference,
-  PreferenceKey,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -31,7 +29,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
-import { InboundItem } from '../../types';
+import { InboundItem, ScannedBarcode } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
 import { canReturnInboundLines } from '../../utils';
@@ -39,27 +37,37 @@ import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLine
 
 type InboundLineItem = InboundLineFragment['item'];
 
+// This is what the Edit Modal receives when a scanned barcode is used (as
+// opposed to the usual full "InboundLineItem" object)
+export type ScannedItem = {
+  id: string;
+  batch?: string;
+  expiryDate?: string;
+};
+
+// This is the data that is passed to the "CreateDraftInboundLine" function when
+// creating the new line
+export type ScannedBatchData = { batch?: string; expiryDate?: string };
+
 const DetailViewInner = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { data, isLoading } = useInbound.document.get();
   const isDisabled = useInbound.utils.isDisabled();
-  const { onOpen, onClose, mode, entity, isOpen } =
-    useEditModal<InboundLineItem>();
+  const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
+    InboundLineItem | ScannedItem
+  >();
   const {
     onOpen: onOpenReturns,
     onClose: onCloseReturns,
     isOpen: returnsIsOpen,
     entity: stockLineIds,
     mode: returnModalMode,
-    setMode: setReturnMode,
+    setMode,
   } = useEditModal<string[]>();
-  const { info, error } = useNotification();
+  const { info } = useNotification();
   const { clearSelected } = useTableStore();
-  const { data: preference } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
-  );
   const { data: vvmStatuses } = useVvmStatusesEnabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
@@ -70,6 +78,30 @@ const DetailViewInner = () => {
     },
     [onOpen]
   );
+
+  const onAddItem: (scannedBarcode?: ScannedBarcode) => void = openWith => {
+    // Unless we're acquiring a scanned barcode, just open the modal as normal,
+    // with no pre-filled line data
+    if (
+      (openWith as ScannedBarcode & { __typename: string })?.__typename !==
+        'BarcodeNode' ||
+      !openWith?.itemId
+    ) {
+      onOpen();
+      setMode(ModalMode.Create);
+      return;
+    }
+
+    const { itemId, expiryDate, batch } = openWith;
+    onOpen({
+      id: itemId ?? '',
+      batch,
+      expiryDate,
+    });
+    // Mode set to "Update" when using scanned item, which prevents the "Item"
+    // selector from being changed
+    setMode(ModalMode.Update);
+  };
 
   const onReturn = async (selectedLines: InboundLineFragment[]) => {
     if (!data || !canReturnInboundLines(data)) {
@@ -85,8 +117,9 @@ const DetailViewInner = () => {
       return;
     }
     if (selectedLines.some(line => !line.stockLine)) {
-      const errMsg = 'No stock line associated with the selected line(s).';
-      const selectLinesSnack = error(`${t('error.something-wrong')} ${errMsg}`);
+      const selectLinesSnack = info(
+        t('messages.cant-return-lines-with-no-received-stock')
+      );
       selectLinesSnack();
       return;
     }
@@ -96,7 +129,7 @@ const DetailViewInner = () => {
     );
 
     onOpenReturns(selectedStockLineIds);
-    setReturnMode(ModalMode.Create);
+    setMode(ModalMode.Create);
   };
 
   useEffect(() => {
@@ -111,7 +144,6 @@ const DetailViewInner = () => {
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
           onAddItem={() => onOpen()}
-          displayInDoses={preference?.manageVaccinesInDoses}
         />
       ),
       value: 'Details',
@@ -130,7 +162,7 @@ const DetailViewInner = () => {
         <>
           <InboundShipmentLineErrorProvider>
             <AppBarButtons
-              onAddItem={() => onOpen()}
+              onAddItem={onAddItem}
               simplifiedTabletView={simplifiedTabletView}
             />
 
@@ -147,11 +179,18 @@ const DetailViewInner = () => {
                 isOpen={isOpen}
                 onClose={onClose}
                 mode={mode}
-                item={entity}
+                // "as" here is okay, as the child components will take care of
+                // populating the item will the full details if they are missing
+                // (which is the case when item info is scanned from barcode)
+                item={entity as InboundLineItem}
                 currency={data.currency}
                 isExternalSupplier={!data.otherParty.store}
                 hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
                 hasItemVariantsEnabled={hasItemVariantsEnabled}
+                scannedBatchData={{
+                  batch: (entity as ScannedBatchData)?.batch,
+                  expiryDate: (entity as ScannedBatchData)?.expiryDate,
+                }}
               />
             )}
             {returnsIsOpen && (

@@ -9,7 +9,6 @@ use diesel::{
     dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
-use util::inline_init;
 
 use crate::{
     category_row::category,
@@ -363,19 +362,23 @@ impl Item {
 
 impl ItemType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 
     pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use std::convert::TryFrom;
-
-    use util::inline_init;
 
     use crate::{
         mock::{mock_item_b, mock_item_link_from_item, MockDataInserts},
@@ -384,7 +387,6 @@ mod tests {
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
         MasterListRowRepository, NameRow, NameRowRepository, Pagination, StockLineRow,
         StockLineRowRepository, StoreRow, StoreRowRepository, StringFilter,
-        DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -401,12 +403,13 @@ mod tests {
     fn data() -> Vec<ItemRow> {
         let mut rows = Vec::new();
         for index in 0..200 {
-            rows.push(inline_init(|r: &mut ItemRow| {
-                r.id = format!("id{:05}", index);
-                r.name = format!("name{}", index);
-                r.code = format!("code{}", index);
-                r.r#type = ItemType::Stock;
-            }));
+            rows.push(ItemRow {
+                id: format!("id{:05}", index),
+                name: format!("name{}", index),
+                code: format!("code{}", index),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            });
         }
         rows
     }
@@ -424,7 +427,6 @@ mod tests {
                 .unwrap();
         }
 
-        let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
         let item_query_repository = ItemRepository::new(&storage_connection);
 
         // Test
@@ -434,13 +436,13 @@ mod tests {
             rows.len()
         );
 
-        // .query, no pagination (default)
+        // .query, no pagination (default) - gets all items
         assert_eq!(
             item_query_repository
                 .query(Pagination::new(), None, None, None)
                 .unwrap()
                 .len(),
-            default_page_size
+            200
         );
 
         // .query, pagination (offset 10)
@@ -448,19 +450,16 @@ mod tests {
             .query(
                 Pagination {
                     offset: 10,
-                    limit: DEFAULT_PAGINATION_LIMIT,
+                    limit: 100,
                 },
                 None,
                 None,
                 None,
             )
             .unwrap();
-        assert_eq!(result.len(), default_page_size);
+        assert_eq!(result.len(), 100);
         assert_eq!(result[0], rows[10]);
-        assert_eq!(
-            result[default_page_size - 1],
-            rows[10 + default_page_size - 1]
-        );
+        assert_eq!(result[99], rows[109]);
 
         // .query, pagination (first 10)
         let result = item_query_repository
@@ -575,36 +574,41 @@ mod tests {
         .await;
 
         let item_rows = vec![
-            inline_init(|r: &mut ItemRow| {
-                r.id = "item1".to_string();
-                r.name = "name1".to_string();
-                r.code = "name1".to_string();
-                r.r#type = ItemType::Stock;
-            }),
-            inline_init(|r: &mut ItemRow| {
-                r.id = "item2".to_string();
-                r.name = "name2".to_string();
-                r.code = "name2".to_string();
-                r.r#type = ItemType::Stock;
-            }),
-            inline_init(|r: &mut ItemRow| {
-                r.id = "item3".to_string();
-                r.name = "name3".to_string();
-                r.code = "name3".to_string();
-                r.r#type = ItemType::Stock;
-            }),
-            inline_init(|r: &mut ItemRow| {
-                r.id = "item4".to_string();
-                r.name = "name4".to_string();
-                r.code = "name4".to_string();
-                r.r#type = ItemType::Stock;
-            }),
-            inline_init(|r: &mut ItemRow| {
-                r.id = "item5".to_string();
-                r.name = "name5".to_string();
-                r.code = "name5".to_string();
-                r.r#type = ItemType::Stock;
-            }),
+            ItemRow {
+                id: "item1".to_string(),
+                name: "name1".to_string(),
+                code: "name1".to_string(),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            },
+            ItemRow {
+                id: "item2".to_string(),
+                name: "name2".to_string(),
+                code: "name2".to_string(),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            },
+            ItemRow {
+                id: "item3".to_string(),
+                name: "name3".to_string(),
+                code: "name3".to_string(),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            },
+            ItemRow {
+                id: "item4".to_string(),
+                name: "name4".to_string(),
+                code: "name4".to_string(),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            },
+            ItemRow {
+                id: "item5".to_string(),
+                name: "name5".to_string(),
+                code: "name5".to_string(),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            },
         ];
 
         let item_link_rows = vec![
@@ -661,18 +665,20 @@ mod tests {
             },
         ];
 
-        let name_row = inline_init(|r: &mut NameRow| {
-            r.id = "name1".to_string();
-            r.name = "".to_string();
-            r.code = "".to_string();
-            r.is_supplier = true;
-            r.is_customer = true;
-        });
+        let name_row = NameRow {
+            id: "name1".to_string(),
+            name: "".to_string(),
+            code: "".to_string(),
+            is_supplier: true,
+            is_customer: true,
+            ..Default::default()
+        };
 
-        let store_row = inline_init(|r: &mut StoreRow| {
-            r.id = "name1_store".to_string();
-            r.name_link_id = "name1".to_string();
-        });
+        let store_row = StoreRow {
+            id: "name1_store".to_string(),
+            name_link_id: "name1".to_string(),
+            ..Default::default()
+        };
 
         let master_list_name_join_1 = MasterListNameJoinRow {
             id: "id1".to_string(),

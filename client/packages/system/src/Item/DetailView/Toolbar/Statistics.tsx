@@ -1,15 +1,30 @@
 import React from 'react';
-import { useTranslation } from '@common/intl';
-import { Grid, StatsPanel } from '@openmsupply-client/common';
-import { useFormatNumber } from '@common/intl';
-import { useItemFields } from '../../api';
+import {
+  Grid,
+  StatsPanel,
+  useFormatNumber,
+  useTranslation,
+  usePreferences,
+} from '@openmsupply-client/common';
+import { useItem } from '../../api';
 
 export const Statistics = () => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
-  const { stats } = useItemFields();
+  const {
+    byId: { data },
+  } = useItem();
+  const { manageVaccinesInDoses } = usePreferences();
+  const { stats, isVaccine, doses } = data || {};
 
   if (!stats) return null;
+
+  const getDosesMessage = (quan: number) => {
+    if (!manageVaccinesInDoses || !isVaccine || !doses) return '';
+
+    const doseCount = formatNumber.round(doses * quan);
+    return `${doseCount} ${t('label.doses').toLowerCase()}`;
+  };
 
   return (
     <Grid
@@ -25,6 +40,7 @@ export const Statistics = () => {
           {
             label: t('label.units'),
             value: formatNumber.round(stats.stockOnHand),
+            extraMessage: getDosesMessage(stats.stockOnHand),
           },
         ]}
         title={t('title.stock-on-hand')}
@@ -36,6 +52,7 @@ export const Statistics = () => {
           {
             label: t('label.units'),
             value: formatNumber.round(stats.averageMonthlyConsumption, 2),
+            extraMessage: getDosesMessage(stats.averageMonthlyConsumption),
           },
         ]}
         title={t('title.average-monthly-consumption')}

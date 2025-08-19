@@ -26,6 +26,7 @@ fragment StocktakeLine on StocktakeLineNode {
   sellPricePerPack
   costPricePerPack
   comment
+  volumePerPack
 
   donorId
   donorName
@@ -36,6 +37,10 @@ fragment StocktakeLine on StocktakeLineNode {
     name
     code
     onHold
+    locationType {
+      id
+      name
+    }
   }
 
   stockLine {
@@ -52,15 +57,44 @@ fragment StocktakeLine on StocktakeLineNode {
     isVaccine
     doses
     defaultPackSize
+    restrictedLocationTypeId
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
 
   itemVariantId
+
+  vvmStatus {
+    ...VVMStatus
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
+  }
 
   reasonOption {
     reason
     type
     isActive
     id
+  }
+
+  campaign {
+    id
+    name
+  }
+
+  program {
+    id
+    name
   }
 }
 

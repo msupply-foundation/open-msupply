@@ -33,8 +33,11 @@ pub struct InsertInput {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
     pub note: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
+    pub volume_per_pack: Option<f64>,
+    pub shipped_pack_size: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -96,8 +99,11 @@ impl InsertInput {
             donor_id,
             vvm_status_id,
             campaign_id,
+            program_id,
             note,
             shipped_number_of_packs,
+            volume_per_pack,
+            shipped_pack_size,
         } = self;
 
         ServiceInput {
@@ -120,12 +126,15 @@ impl InsertInput {
             vvm_status_id,
             donor_id,
             shipped_number_of_packs,
-            // Default
+            campaign_id,
+            program_id,
+            volume_per_pack,
+            shipped_pack_size,
             note,
+            // Default
             stock_line_id: None,
             barcode: None,
             stock_on_hold: false,
-            campaign_id,
         }
     }
 }
@@ -171,10 +180,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::DonorDoesNotExist
         | ServiceError::DonorNotVisible
         | ServiceError::SelectedDonorPartyIsNotADonor
+        | ServiceError::ProgramNotVisible
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)
         }
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -244,6 +255,7 @@ mod test {
             "packSize": 0,
             "sellPricePerPack": 0,
             "totalBeforeTax": 0,
+            "volumePerPack": 0,
           }
         })
     }

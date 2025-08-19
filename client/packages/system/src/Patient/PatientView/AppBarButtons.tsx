@@ -32,11 +32,7 @@ export const AppBarButtons: FC<{
           store={store}
         />
         {store?.preferences.omProgramModule && (
-          <ReportSelector
-            dataId={patientId}
-            context={ReportContext.Patient}
-            disabled={disabled}
-          />
+          <ReportSelector dataId={patientId} context={ReportContext.Patient} />
         )}
       </Grid>
     </AppBarButtonsPortal>

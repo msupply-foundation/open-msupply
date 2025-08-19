@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useToggle,
   useTranslation,
@@ -7,22 +7,22 @@ import {
   styled,
   QueryParamsProvider,
   createQueryParamsStore,
+  ItemNodeType,
 } from '@openmsupply-client/common';
-import { useServiceItems } from '../../api';
-import { ServiceItemRowFragment } from '../../api/operations.generated';
+import { ItemRowFragment, useItemsByFilter } from '../../api';
 
 interface ItemSearchInputProps {
-  onChange: (item: ServiceItemRowFragment | null) => void;
+  onChange: (item: ItemRowFragment | null) => void;
   currentItemId?: string | null;
   disabled?: boolean;
-  extraFilter?: (item: ServiceItemRowFragment) => boolean;
+  extraFilter?: (item: ItemRowFragment) => boolean;
   width?: number;
   autoFocus?: boolean;
   refetchOnMount?: boolean;
 }
 
 const filterOptions = {
-  stringify: (item: ServiceItemRowFragment) => `${item.code} ${item.name}`,
+  stringify: (item: ItemRowFragment) => `${item.code} ${item.name}`,
   limit: 100,
 };
 
@@ -33,22 +33,27 @@ const ItemOption = styled('li')(({ theme }) => ({
 
 export const optionRenderer = (
   props: React.HTMLAttributes<HTMLLIElement>,
-  item: ServiceItemRowFragment
+  item: ItemRowFragment
 ) => (
   <ItemOption {...props} key={item.code}>
     <span style={{ whiteSpace: 'nowrap', width: 500 }}>{item.name}</span>
   </ItemOption>
 );
 
-const ServiceItemSearchComponent: FC<ItemSearchInputProps> = ({
+const ServiceItemSearchComponent = ({
   onChange,
   currentItemId,
   disabled = false,
   width = 200,
   autoFocus = false,
   refetchOnMount = true,
-}) => {
-  const { data, isLoading } = useServiceItems({ refetchOnMount });
+}: ItemSearchInputProps) => {
+  const { data, isLoading } = useItemsByFilter({
+    refetchOnMount,
+    filterBy: {
+      type: { equalTo: ItemNodeType.Service },
+    },
+  });
   const t = useTranslation();
   const selectControl = useToggle();
 
@@ -78,7 +83,7 @@ const ServiceItemSearchComponent: FC<ItemSearchInputProps> = ({
 
 export const ServiceItemSearchInput = (props: ItemSearchInputProps) => (
   <QueryParamsProvider
-    createStore={createQueryParamsStore<ServiceItemRowFragment>({
+    createStore={createQueryParamsStore<ItemRowFragment>({
       initialSortBy: { key: 'name' },
     })}
   >

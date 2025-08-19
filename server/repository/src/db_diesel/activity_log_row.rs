@@ -81,6 +81,7 @@ pub enum ActivityLogType {
     RnrFormCreated,
     RnrFormUpdated,
     RnrFormFinalised,
+    RnrFormDeleted,
     VaccinationCreated,
     VaccinationUpdated,
     VaccinationDeleted,
@@ -92,10 +93,27 @@ pub enum ActivityLogType {
     ItemVariantCreated,
     ItemVariantDeleted,
     ItemVariantUpdatedName,
-    ItemVariantUpdateColdStorageType,
+    // Renamed in 2.10.0 - keeping name in DB/sync for backwards compatibility
+    #[serde(rename = "ITEM_VARIANT_UPDATE_COLD_STORAGE_TYPE")]
+    ItemVariantUpdateLocationType,
     ItemVariantUpdateManufacturer,
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
+    VolumePerPackChanged,
+    GoodsReceivedCreated,
+    GoodsReceivedDeleted,
+    GoodsReceivedStatusFinalised,
+    // Purchase Orders
+    PurchaseOrderCreated,
+    PurchaseOrderAuthorised,
+    PurchaseOrderUnauthorised,
+    PurchaseOrderConfirmed,
+    PurchaseOrderFinalised,
+    // TODO add delete purchase order once https://github.com/msupply-foundation/open-msupply/pull/8714 merged
+    PurchaseOrderDeleted,
+    PurchaseOrderLineCreated,
+    PurchaseOrderLineUpdated,
+    PurchaseOrderLineDeleted,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

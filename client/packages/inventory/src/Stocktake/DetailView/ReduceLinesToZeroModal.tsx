@@ -5,7 +5,9 @@ import {
   ConfirmationModalLayout,
   Grid,
   DialogButton,
-  ReasonOptionNodeType,
+  getReasonOptionTypes,
+  useAuthContext,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import {
   ReasonOptionRowFragment,
@@ -26,12 +28,14 @@ export const ReduceLinesToZeroConfirmationModal = ({
   clearSelected,
 }: ReduceLinesToZeroConfirmationModalProps) => {
   const t = useTranslation();
+  const { store } = useAuthContext();
 
   const [reason, setReason] = useState<ReasonOptionRowFragment | null>(null);
 
-  const onZeroQuantities = useStocktakeOld.line.zeroQuantities();
+  const { onZeroQuantities, allSelectedItemsAreVaccines } =
+    useStocktakeOld.line.zeroQuantities();
 
-  const { data: reasonOptions, isLoading } = useReasonOptions();
+  const { data: reasonOptions } = useReasonOptions();
   const reasonIsRequired = reasonOptions?.totalCount !== 0;
 
   return (
@@ -64,11 +68,14 @@ export const ReduceLinesToZeroConfirmationModal = ({
           labelWidth="100px"
           Input={
             <ReasonOptionsSearchInput
-              type={ReasonOptionNodeType.NegativeInventoryAdjustment}
+              type={getReasonOptionTypes({
+                isInventoryReduction: true,
+                isVaccine: allSelectedItemsAreVaccines,
+                isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
+              })}
               value={reason}
               onChange={reason => setReason(reason)}
-              reasonOptions={reasonOptions?.nodes ?? []}
-              loading={isLoading}
+              width={160}
             />
           }
           sx={{

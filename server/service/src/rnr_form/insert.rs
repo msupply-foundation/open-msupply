@@ -1,14 +1,8 @@
 use crate::{
     activity_log::activity_log_entry,
+    common::check_program_exists,
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
-};
-
-use chrono::Utc;
-use repository::{
-    ActivityLogType, EqualFilter, PeriodRow, RepositoryError, RnRForm, RnRFormFilter,
-    RnRFormLineRow, RnRFormLineRowRepository, RnRFormRepository, RnRFormRow, RnRFormRowRepository,
-    RnRFormStatus,
 };
 
 use super::{
@@ -16,9 +10,15 @@ use super::{
     query::get_rnr_form,
     schedules_with_periods::get_schedules_with_periods_by_program,
     validate::{
-        check_master_list_exists, check_period_exists, check_program_exists,
-        check_rnr_form_already_exists_for_period, check_rnr_form_does_not_exist,
+        check_master_list_exists, check_period_exists, check_rnr_form_already_exists_for_period,
+        check_rnr_form_does_not_exist,
     },
+};
+use chrono::Utc;
+use repository::{
+    ActivityLogType, EqualFilter, PeriodRow, RepositoryError, RnRForm, RnRFormFilter,
+    RnRFormLineRow, RnRFormLineRowRepository, RnRFormRepository, RnRFormRow, RnRFormRowRepository,
+    RnRFormStatus,
 };
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct InsertRnRForm {
@@ -40,7 +40,7 @@ pub enum InsertRnRFormError {
     ProgramHasNoMasterList,
     PeriodDoesNotExist,
     PeriodNotInProgramSchedule,
-    PeriodNotNextInSequence,
+    PeriodMustBeLaterThanLastUsed,
     PeriodNotClosed,
     PreviousRnRFormNotFinalised,
     RnRFormAlreadyExistsForPeriod,
@@ -170,12 +170,18 @@ fn validate(
             // this should never happen, we've already checked it's there
             .ok_or(InsertRnRFormError::PeriodNotInProgramSchedule)?;
 
-        if previous_period != this_period + 1 {
-            return Err(InsertRnRFormError::PeriodNotNextInSequence);
+        // Periods are ordered by end_date desc in get_schedules_with_periods_by_program, so condition operator implies opposite to what error states
+        if this_period > previous_period {
+            return Err(InsertRnRFormError::PeriodMustBeLaterThanLastUsed);
         }
 
         if form.rnr_form_row.status != RnRFormStatus::Finalised {
             return Err(InsertRnRFormError::PreviousRnRFormNotFinalised);
+        }
+
+        // If the the previous form was from many periods ago, don't use it in subsequent calculations
+        if previous_period.saturating_sub(this_period) > 1 {
+            return Ok((None, period, master_list_id));
         }
     }
 

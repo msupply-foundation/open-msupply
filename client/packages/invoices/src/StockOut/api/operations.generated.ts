@@ -22,6 +22,7 @@ export type StockOutLineFragment = {
   taxPercentage?: number | null;
   itemName: string;
   itemVariantId?: string | null;
+  vvmStatusId?: string | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -74,6 +75,7 @@ export type DraftStockOutLineFragment = {
   stockLineOnHold: boolean;
   dosesPerUnit: number;
   itemVariantId?: string | null;
+  vvmStatusId?: string | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -84,11 +86,12 @@ export type DraftStockOutLineFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  program?: { __typename: 'ProgramNode'; name: string; id: string } | null;
   campaign?: { __typename: 'CampaignNode'; name: string; id: string } | null;
 };
 
@@ -137,6 +140,7 @@ export type GetOutboundEditLinesQuery = {
       stockLineOnHold: boolean;
       dosesPerUnit: number;
       itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -147,11 +151,12 @@ export type GetOutboundEditLinesQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      program?: { __typename: 'ProgramNode'; name: string; id: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         name: string;
@@ -181,6 +186,7 @@ export const StockOutLineFragmentDoc = gql`
     note
     itemName
     itemVariantId
+    vvmStatusId
     item {
       __typename
       id
@@ -233,6 +239,7 @@ export const DraftStockOutLineFragmentDoc = gql`
     stockLineOnHold
     dosesPerUnit
     itemVariantId
+    vvmStatusId
     location {
       __typename
       id
@@ -243,13 +250,17 @@ export const DraftStockOutLineFragmentDoc = gql`
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
     }
     donor(storeId: $storeId) {
       id
       name
+    }
+    program {
+      name
+      id
     }
     campaign {
       name

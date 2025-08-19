@@ -1,16 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useInbound } from '.';
-import { useConfirmOnLeaving } from '@common/hooks';
+import { useConfirmOnLeaving, useNotification } from '@common/hooks';
 import { DraftInboundLine } from '../../../types';
 import { InboundLineFragment } from '../operations.generated';
 import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
+import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
+import { useTranslation } from '@common/intl';
+import { ScannedBatchData } from '../../DetailView';
 
 type InboundLineItem = InboundLineFragment['item'];
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
-export const useDraftInboundLines = (item: InboundLineItem | null) => {
+export const useDraftInboundLines = (
+  item: InboundLineItem | null,
+  scannedBatchData?: ScannedBatchData
+) => {
+  const t = useTranslation();
+  const { error } = useNotification();
+
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
   const { id } = useInbound.document.fields('id');
@@ -22,8 +31,6 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
     'inbound-shipment-line-edit'
   );
 
-  const defaultPackSize = item?.defaultPackSize || 1;
-
   useEffect(() => {
     if (lines && item) {
       const drafts = lines.map(line =>
@@ -31,25 +38,32 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
           item: line.item,
           invoiceId: line.invoiceId,
           seed: line,
-          defaultPackSize,
+          // From scanned barcode:
+          batch: scannedBatchData?.batch,
+          expiryDate: scannedBatchData?.expiryDate,
         })
       );
       if (drafts.length === 0)
         drafts.push(
-          CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize })
+          CreateDraft.stockInLine({
+            item,
+            invoiceId: id,
+            // From scanned barcode:
+            batch: scannedBatchData?.batch,
+            expiryDate: scannedBatchData?.expiryDate,
+          })
         );
       setDraftLines(drafts);
     } else {
       setDraftLines([]);
     }
-  }, [lines, item, id, defaultPackSize]);
+  }, [lines, item, id]);
 
   const addDraftLine = () => {
     if (item) {
       const newLine = CreateDraft.stockInLine({
         item,
         invoiceId: id,
-        defaultPackSize,
       });
       setIsDirty(true);
       setDraftLines(draftLines => [...draftLines, newLine]);
@@ -76,8 +90,36 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
   const removeDraftLine = async (id: string) => {
     const batch = draftLines.find(line => line.id === id);
     if (!batch) return;
-    const deletedBatch = { ...batch, isDeleted: true };
-    await deleteMutation([deletedBatch]);
+    if (batch.isCreated) {
+      setDraftLines(draftLines => {
+        const newLines = draftLines.filter(line => line.id !== id);
+        if (newLines.length === 0 && item) {
+          return [CreateDraft.stockInLine({ item, invoiceId: id })];
+        }
+        return newLines;
+      });
+    } else {
+      const deletedBatch = { ...batch, isDeleted: true };
+      try {
+        const response = await deleteMutation([deletedBatch]);
+
+        const responseForLine =
+          response.batchInboundShipment.deleteInboundShipmentLines?.[0];
+
+        if (!responseForLine) {
+          error(t('error.something-wrong'))();
+          return;
+        }
+        const errorMessage = mapErrorToMessageAndSetContext(
+          responseForLine,
+          [deletedBatch],
+          t
+        );
+        if (errorMessage) error(errorMessage)();
+      } catch {
+        error(t('error.something-wrong'))();
+      }
+    }
   };
 
   const saveLines = async () => {

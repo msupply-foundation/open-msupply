@@ -8,11 +8,15 @@ import {
   UpsertPreferencesInput,
   PreferenceDescriptionNode,
   useTranslation,
+  useNotification,
+  NumericTextInput,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import {
   EnumOptions,
   getEnumPreferenceOptions,
 } from '../Components/EnumOptions';
+import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
 
 export const EditPreference = ({
   preference,
@@ -20,14 +24,26 @@ export const EditPreference = ({
   disabled = false,
 }: {
   preference: PreferenceDescriptionNode;
-  update: (input: UpsertPreferencesInput[keyof UpsertPreferencesInput]) => void;
+  update: (
+    input: UpsertPreferencesInput[keyof UpsertPreferencesInput]
+  ) => Promise<void>;
   disabled?: boolean;
 }) => {
   const t = useTranslation();
+  const { error } = useNotification();
 
   // The preference.value only updates after mutation completes and cache
   // is invalidated - use local state for fast UI change
   const [value, setValue] = useState(preference.value);
+
+  const debouncedUpdate = useDebouncedValueCallback(
+    value => {
+      setValue(value);
+      update(value);
+    },
+    [],
+    350
+  );
 
   switch (preference.valueType) {
     case PreferenceValueNodeType.Boolean:
@@ -39,8 +55,7 @@ export const EditPreference = ({
           disabled={disabled}
           checked={value}
           onChange={(_, checked) => {
-            setValue(checked);
-            update(checked);
+            debouncedUpdate(checked);
           }}
         />
       );
@@ -49,9 +64,15 @@ export const EditPreference = ({
       if (!isNumber(preference.value)) {
         return t('error.something-wrong');
       }
-      // Adding NumericTextInput here would currently get a type error,
-      // because there are no editPreference inputs that accept a number
-      return <>To be implemented</>;
+      return (
+        <NumericTextInput
+          value={value}
+          onChange={newValue => {
+            setValue(newValue);
+            debouncedUpdate(newValue);
+          }}
+        />
+      );
 
     case PreferenceValueNodeType.MultiChoice:
       if (!Array.isArray(value)) {
@@ -66,12 +87,22 @@ export const EditPreference = ({
           value={value}
           onChange={newValue => {
             setValue(newValue);
-            update(newValue);
+            debouncedUpdate(newValue);
           }}
         />
       );
 
+    case PreferenceValueNodeType.CustomTranslations:
+      return (
+        // Pass API value/update directly - called on modal save rather than on each key stroke/click
+        <EditCustomTranslations value={preference.value} update={update} />
+      );
+
     default:
-      noOtherVariants(preference.valueType);
+      try {
+        noOtherVariants(preference.valueType);
+      } catch (e) {
+        error((e as Error).message)();
+      }
   }
 };

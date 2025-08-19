@@ -5,7 +5,11 @@ import {
   usePatchState,
   useQuery,
 } from '@openmsupply-client/common';
-import { ReasonOptionRowFragment, StockLineRowFragment } from '../../..';
+import {
+  LOCATION,
+  ReasonOptionRowFragment,
+  StockLineRowFragment,
+} from '../../..';
 import { STOCK_LINE } from './keys';
 import { useStockGraphQL } from '../useStockGraphQL';
 
@@ -29,6 +33,7 @@ const defaultDraftStockLine: DraftStockLine = {
     code: '',
     name: '',
     isVaccine: false,
+    dosesPerUnit: 0,
   },
   reasonOption: null,
   vvmStatusLogs: {
@@ -37,6 +42,10 @@ const defaultDraftStockLine: DraftStockLine = {
   },
   vvmStatus: null,
   campaign: null,
+  program: null,
+  volumePerPack: 0,
+  itemVariant: null,
+  totalVolume: 0,
 };
 
 export function useStockLine(id?: string) {
@@ -118,10 +127,12 @@ const useCreate = () => {
     costPricePerPack,
     location,
     onHold,
-    itemVariantId,
-    vvmStatusId,
+    itemVariant,
     donor,
     campaign,
+    program,
+    vvmStatus,
+    volumePerPack,
   }: DraftStockLine) => {
     return await stockApi.insertStockLine({
       storeId,
@@ -138,10 +149,12 @@ const useCreate = () => {
         numberOfPacks: totalNumberOfPacks,
         location: setNullableInput('id', location),
         reasonOptionId: reasonOption?.id,
-        itemVariantId,
-        vvmStatusId,
+        itemVariantId: itemVariant?.id,
+        vvmStatusId: vvmStatus?.id,
         donorId: donor?.id,
         campaignId: campaign?.id,
+        programId: program?.id,
+        volumePerPack: volumePerPack,
       },
     });
   };
@@ -165,10 +178,12 @@ const useUpdate = (id: string) => {
     costPricePerPack,
     onHold,
     location,
-    itemVariantId,
     vvmStatusId,
+    itemVariant,
     donor,
     campaign,
+    program,
+    volumePerPack,
   }: Partial<DraftStockLine>) => {
     const result = await stockApi.updateStockLine({
       input: {
@@ -180,10 +195,12 @@ const useUpdate = (id: string) => {
         onHold,
         sellPricePerPack,
         location: setNullableInput('id', location),
-        itemVariantId: setNullableInput('itemVariantId', { itemVariantId }),
+        itemVariantId: setNullableInput('id', itemVariant),
         vvmStatusId,
         donorId: setNullableInput('id', donor),
         campaignId: setNullableInput('id', campaign),
+        programId: setNullableInput('id', program),
+        volumePerPack,
       },
       storeId,
     });
@@ -199,6 +216,9 @@ const useUpdate = (id: string) => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([STOCK_LINE, id]),
+    onSuccess: () => {
+      queryClient.invalidateQueries([STOCK_LINE, id]);
+      queryClient.invalidateQueries([LOCATION]); // Invalidate location queries to update available volume
+    },
   });
 };

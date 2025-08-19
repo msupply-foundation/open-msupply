@@ -1,6 +1,5 @@
-use repository::{rnr_form_row::RnRFormRow, RnRFormStatus};
+use repository::{rnr_form_row::RnRFormRow, RnRFormDelete, RnRFormStatus};
 use serde_json::json;
-use util::Defaults;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
@@ -27,7 +26,10 @@ fn rnr_form1() -> RnRFormRow {
         name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
         period_id: "period_1".to_string(),
         program_id: "program_test".to_string(),
-        created_datetime: Defaults::naive_date_time(),
+        created_datetime: chrono::NaiveDate::from_ymd_opt(2020, 01, 22)
+            .unwrap()
+            .and_hms_opt(15, 16, 0)
+            .unwrap(),
         finalised_datetime: None,
         status: RnRFormStatus::Draft,
         linked_requisition_id: None,
@@ -50,4 +52,12 @@ pub(crate) fn test_v6_records() -> Vec<TestSyncOutgoingRecord> {
         record_id: RNR_FORM1.0.to_string(),
         push_data: json!(rnr_form1()),
     }]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        RNR_FORM1.0,
+        RnRFormDelete(RNR_FORM1.0.to_string()),
+    )]
 }

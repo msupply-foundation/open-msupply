@@ -17,9 +17,9 @@ import {
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
   getCommentPopoverColumn,
-  usePreference,
-  PreferenceKey,
   getDosesPerUnitColumn,
+  getDifferenceColumn,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { ReasonOptionRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -84,10 +84,7 @@ export const useStocktakeColumns = ({
 >[] => {
   const t = useTranslation();
   const { getError } = useStocktakeLineErrorContext();
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
+  const preferences = usePreferences();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns: ColumnDescription<
@@ -101,6 +98,7 @@ export const useStocktakeColumns = ({
           return row.item?.code ?? '';
         },
         accessor: ({ rowData }) => rowData.item?.code ?? '',
+        isSticky: true,
       },
     ],
     [
@@ -185,7 +183,7 @@ export const useStocktakeColumns = ({
     ],
   ];
 
-  if (preferences?.manageVaccinesInDoses) {
+  if (preferences.manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -244,75 +242,7 @@ export const useStocktakeColumns = ({
         }
       },
     },
-    {
-      key: 'difference',
-      label: 'label.difference',
-      align: ColumnAlign.Right,
-      sortable: false,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          const { lines } = rowData;
-          const displayDoses =
-            preferences?.manageVaccinesInDoses && lines[0]?.item.isVaccine;
-
-          const total =
-            lines.reduce(
-              (total, line) =>
-                total +
-                (line.snapshotNumberOfPacks -
-                  (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
-              0
-            ) ?? 0;
-          const totalInDoses = displayDoses
-            ? (lines.reduce(
-                (total, line) =>
-                  total +
-                  (line.item?.doses ?? 1) *
-                    (line?.packSize ?? 1) *
-                    (line.snapshotNumberOfPacks -
-                      (line.countedNumberOfPacks ??
-                        line.snapshotNumberOfPacks)),
-                0
-              ) ?? 0)
-            : null;
-
-          const totalRounded = Math.round(total * 100) / 100;
-          const totalInDosesRounded = totalInDoses
-            ? Math.round(totalInDoses * 100) / 100
-            : null;
-
-          return `${totalRounded} ${
-            totalInDosesRounded
-              ? `(${totalInDosesRounded} ${t('label.doses')})`
-              : ''
-          }`;
-        } else if (rowData.countedNumberOfPacks === null) {
-          return UNDEFINED_STRING_VALUE;
-        } else {
-          const displayDoses =
-            preferences?.manageVaccinesInDoses && rowData?.item.isVaccine;
-
-          const total =
-            (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
-            rowData.snapshotNumberOfPacks;
-          const totalRounded = Math.round(total * 100) / 100;
-
-          const totalInDoses =
-            displayDoses && rowData?.item?.doses
-              ? total * (rowData?.packSize ?? 1) * rowData?.item?.doses
-              : null;
-
-          const totalInDosesRounded = totalInDoses
-            ? Math.round(totalInDoses * 100) / 100
-            : null;
-          const displayDosesTotal = totalInDosesRounded
-            ? `(${totalInDosesRounded} ${t('label.doses')})`
-            : '';
-
-          return `${totalRounded} ${displayDosesTotal}`;
-        }
-      },
-    },
+    getDifferenceColumn(t, preferences.manageVaccinesInDoses ?? false),
     {
       key: 'reasonOption',
       label: 'label.reason',
@@ -320,7 +250,7 @@ export const useStocktakeColumns = ({
       sortable: true,
     }
   );
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (preferences.allowTrackingOfStockByDonor) {
     columns.push({
       key: 'donorId',
       label: 'label.donor',

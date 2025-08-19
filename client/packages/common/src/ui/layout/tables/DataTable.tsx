@@ -39,7 +39,26 @@ interface RenderRowsProps<T extends RecordWithId> {
   additionalRows?: JSX.Element[];
   /** will ignore onRowClick if defined. Allows opening in new tab */
   rowLinkBuilder?: (row: T) => string;
+  stickyColumnPositions?: Map<string | keyof T, number>;
 }
+
+const calculateStickyPositions = <T extends RecordWithId>(
+  columns: Column<T>[]
+): Map<string | keyof T, number> => {
+  const positions = new Map<string | keyof T, number>();
+  let currentPosition = 0;
+
+  columns.forEach(column => {
+    if (column.isSticky) {
+      positions.set(column.key, currentPosition);
+      const columnWidth = Number(column.width) || 120;
+      currentPosition += columnWidth;
+    }
+  });
+
+  return positions;
+};
+
 const RenderRows = <T extends RecordWithId>({
   mRef,
   data,
@@ -52,6 +71,7 @@ const RenderRows = <T extends RecordWithId>({
   isRowAnimated,
   additionalRows,
   rowLinkBuilder,
+  stickyColumnPositions,
 }: RenderRowsProps<T>) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
@@ -75,6 +95,7 @@ const RenderRows = <T extends RecordWithId>({
             localisedDate={localisedDate}
             isAnimated={isRowAnimated}
             rowLinkBuilder={rowLinkBuilder}
+            stickyColumnPositions={stickyColumnPositions}
           />
         ))}
         {additionalRows}
@@ -93,7 +114,6 @@ const RenderRows = <T extends RecordWithId>({
         {(row, idx) => (
           <DataRow
             key={row.id}
-            ExpandContent={ExpandContent}
             rowIndex={idx}
             columns={columnsToDisplay}
             onClick={onRowClick ? onRowClick : undefined}
@@ -106,6 +126,7 @@ const RenderRows = <T extends RecordWithId>({
             localisedDate={localisedDate}
             isAnimated={isRowAnimated}
             rowLinkBuilder={rowLinkBuilder}
+            stickyColumnPositions={stickyColumnPositions}
           />
         )}
       </ViewportList>
@@ -120,6 +141,7 @@ const DataTableComponent = <T extends RecordWithId>({
   columns,
   data = [],
   dense = false,
+  headerSx,
   enableColumnSelection,
   generateRowTooltip,
   isDisabled = false,
@@ -144,9 +166,12 @@ const DataTableComponent = <T extends RecordWithId>({
 
   const columnsToDisplay = React.useMemo(() => {
     const cols = columns.filter(c => columnDisplayState[String(c.key)] ?? true);
-
     return cols.every(c => c.key === 'selection') ? [] : cols;
   }, [columns, columnDisplayState]);
+
+  const stickyColumnPositions = React.useMemo(() => {
+    return calculateStickyPositions(columnsToDisplay);
+  }, [columnsToDisplay]);
 
   useRegisterActions([
     {
@@ -237,12 +262,14 @@ const DataTableComponent = <T extends RecordWithId>({
             boxShadow: dense ? null : theme => theme.shadows[2],
           }}
         >
-          <HeaderRow dense={dense}>
+          <HeaderRow dense={dense} sx={headerSx}>
             {columnsToDisplay.map(column => (
               <HeaderCell
                 dense={dense}
                 column={column}
                 key={String(column.key)}
+                isSticky={column.isSticky}
+                stickyPosition={stickyColumnPositions.get(column.key) ?? 0}
               />
             ))}
             {!!enableColumnSelection && (
@@ -278,6 +305,7 @@ const DataTableComponent = <T extends RecordWithId>({
             isRowAnimated={isRowAnimated}
             additionalRows={additionalRows}
             rowLinkBuilder={rowLinkBuilder}
+            stickyColumnPositions={stickyColumnPositions}
           />
         </TableBody>
       </MuiTable>

@@ -4,16 +4,10 @@ import {
   BasicTextInput,
   useTranslation,
   Typography,
-  TypedTFunction,
-  LocaleKey,
-  NumUtils,
   DropdownMenu,
   DropdownMenuItem,
   TextArea,
   InputWithLabelRow,
-  useIntlUtils,
-  usePreference,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 import { AccordionPanelSection } from './PanelSection';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
@@ -21,10 +15,10 @@ import { useAbbreviations } from '../api/hooks/useAbbreviations';
 import { AllocationSection } from './AllocationSection';
 import {
   AutoAllocationAlerts,
-  DraftStockOutLineFragment,
   useAllocationContext,
   getAllocatedQuantity,
 } from '../../StockOut';
+import { useClosedSummary } from './hooks/useClosedSummary';
 
 interface PrescriptionLineEditFormProps {
   disabled: boolean;
@@ -36,28 +30,24 @@ export const PrescriptionLineEditForm = ({
   isNew,
 }: PrescriptionLineEditFormProps) => {
   const t = useTranslation();
-  const { getPlural } = useIntlUtils();
-  const { data: prefs } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.SortByVvmStatusThenExpiry
-  );
 
-  const { draftLines, item, note, allocatedQuantity, setNote } =
+  const { draftLines, item, note, allocatedQuantity, allocateInType, setNote } =
     useAllocationContext(state => ({
       draftLines: state.draftLines,
       item: state.item,
       note: state.note,
       setNote: state.setNote,
       allocatedQuantity: getAllocatedQuantity(state),
+      allocateInType: state.allocateIn.type,
     }));
 
   const [defaultDirection, setDefaultDirection] = useState('');
   const [abbreviation, setAbbreviation] = useState('');
 
   const isDirectionsDisabled = !allocatedQuantity;
-  const displayInDoses = !!prefs?.manageVaccinesInDoses && !!item?.isVaccine;
 
   const { data: options = [] } = useAbbreviations();
+  const summarise = useClosedSummary();
 
   const saveAbbreviation = () => {
     if (!abbreviation) return;
@@ -83,16 +73,12 @@ export const PrescriptionLineEditForm = ({
 
         <AccordionPanelSection
           title={t('label.quantity')}
-          closedSummary={
-            displayInDoses
-              ? dosesSummary(t, draftLines)
-              : summarise(
-                  t,
-                  item.unitName ?? t('label.unit'),
-                  draftLines,
-                  getPlural
-                )
-          }
+          closedSummary={summarise(
+            t,
+            draftLines,
+            allocateInType,
+            item.unitName
+          )}
           defaultExpanded={isNew && !disabled}
         >
           <Grid
@@ -111,7 +97,7 @@ export const PrescriptionLineEditForm = ({
         </AccordionPanelSection>
         <AccordionPanelSection
           title={t('label.directions')}
-          closedSummary={isDirectionsDisabled ? '' : (note ?? '')}
+          closedSummary={[{ text: isDirectionsDisabled ? '' : (note ?? '') }]}
           defaultExpanded={(isNew || !note) && !disabled}
         >
           {isDirectionsDisabled ? (
@@ -194,71 +180,4 @@ export const PrescriptionLineEditForm = ({
       </>
     )
   );
-};
-
-const summarise = (
-  t: TypedTFunction<LocaleKey>,
-  unitName: string,
-  lines: DraftStockOutLineFragment[],
-  getPlural: (word: string, count: number) => string
-) => {
-  // Count how many of each pack size
-  const counts: Record<number, { unitName: string; count: number }> = {};
-  lines.forEach(({ packSize, numberOfPacks }) => {
-    if (numberOfPacks === 0) return;
-    if (counts[packSize]) {
-      counts[packSize].count += packSize * numberOfPacks;
-    } else {
-      counts[packSize] = {
-        unitName,
-        count: NumUtils.round(packSize * numberOfPacks, 2),
-      };
-    }
-  });
-
-  // Summarise counts in words
-  const summary: string[] = [];
-  Object.entries(counts).forEach(([size, { unitName, count: numUnits }]) => {
-    const packSize = Number(size);
-    if (packSize > 1) {
-      const numPacks = NumUtils.round(numUnits / packSize, 3);
-      const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
-      const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
-      const unitType = getPlural(unitName, packSize);
-      summary.push(
-        t('label.packs-of-size', {
-          numPacks,
-          numUnits,
-          packSize,
-          unitType,
-          packWord,
-          unitWord,
-        })
-      );
-    } else {
-      const unitType = getPlural(unitName, numUnits);
-      summary.push(t('label.packs-of-1', { numUnits, unitType }));
-    }
-  });
-
-  return summary.join('\n');
-};
-
-const dosesSummary = (
-  t: TypedTFunction<LocaleKey>,
-  lines: DraftStockOutLineFragment[]
-) => {
-  const totalDoses = lines.reduce(
-    (sum, { packSize, numberOfPacks, dosesPerUnit }) =>
-      sum + packSize * numberOfPacks * dosesPerUnit,
-    0
-  );
-
-  const roundedDoses = NumUtils.round(totalDoses);
-
-  const unitWord = t('label.doses-plural', {
-    count: roundedDoses,
-  });
-
-  return `${roundedDoses} ${unitWord}`;
 };

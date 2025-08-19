@@ -67,6 +67,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   paginationDebounce,
   onPageChange,
   mapOptions,
+  sx,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
   const t = useTranslation();
@@ -206,6 +207,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         paddingTop: 0.5,
         paddingBottom: 0.5,
         width,
+        ...sx,
       }}
       slots={{
         popper: popper,

@@ -7,11 +7,11 @@ import {
   Formatter,
   NumberCell,
   NumberInputCell,
-  PreferenceKey,
   useColumns,
   useIntlUtils,
-  usePreference,
+  usePreferences,
   useTranslation,
+  VvmStatusCell,
 } from '@openmsupply-client/common';
 import { getPrescriptionLineDosesColumns } from './columnsDoses';
 import {
@@ -37,10 +37,8 @@ export const usePrescriptionLineEditColumns = ({
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
 
-  const { data: prefs } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock
-  );
+  const { sortByVvmStatusThenExpiry, manageVvmStatusForStock } =
+    usePreferences();
 
   const displayInDoses = allocateIn === AllocateInType.Doses;
 
@@ -66,17 +64,14 @@ export const usePrescriptionLineEditColumns = ({
   // If we have use VVM status, we need to show the VVM status column
   // TODO: But just for vaccines?
   if (
-    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) &&
+    (manageVvmStatusForStock || sortByVvmStatusThenExpiry) &&
     item?.isVaccine
   ) {
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => {
-        if (!rowData.vvmStatus) return '';
-        // TODO: Show unusable VVM status somehow?
-        return rowData.vvmStatus?.description;
-      },
+      Cell: VvmStatusCell,
+      accessor: ({ rowData }) => rowData?.vvmStatus,
       width: 85,
     });
   }

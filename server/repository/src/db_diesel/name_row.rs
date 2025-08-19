@@ -1,5 +1,5 @@
 use super::{
-    cold_storage_type_row::cold_storage_type, currency_row::currency,
+    currency_row::currency, location_type_row::location_type,
     master_list_name_join::master_list_name_join, master_list_row::master_list,
     name_store_join::name_store_join, program_row::program, store_row::store, NameType,
     StorageConnection,
@@ -74,7 +74,7 @@ joinable!(name -> currency (currency_id));
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
 allow_tables_to_appear_in_same_query!(name, name_oms_fields);
-allow_tables_to_appear_in_same_query!(name, cold_storage_type);
+allow_tables_to_appear_in_same_query!(name, location_type);
 allow_tables_to_appear_in_same_query!(name, currency);
 // for names query
 allow_tables_to_appear_in_same_query!(name_oms_fields, item_link);
@@ -86,7 +86,11 @@ allow_tables_to_appear_in_same_query!(name_oms_fields, master_list_name_join);
 allow_tables_to_appear_in_same_query!(name_oms_fields, master_list);
 allow_tables_to_appear_in_same_query!(name_oms_fields, program);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+// If adding to this enum remember that we need to add migrations.
+// Old versions may integrate through sync the new gender variant as `None`.
+// Your migration should address this by checking all records with `None` values and
+// convert them to the new more concrete variant you have added.
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum GenderType {
@@ -99,6 +103,7 @@ pub enum GenderType {
     TransgenderFemale,
     TransgenderFemaleHormone,
     TransgenderFemaleSurgical,
+    #[default]
     Unknown,
     NonBinary,
 }

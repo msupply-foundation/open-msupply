@@ -39,11 +39,14 @@ pub enum LegacyTransLineType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct TransLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub campaign_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub program_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -113,6 +116,9 @@ pub struct LegacyTransLineRow {
     pub oms_fields: Option<TransLineRowOmsFields>,
     #[serde(rename = "sentQuantity")]
     pub shipped_number_of_packs: Option<f64>,
+    pub volume_per_pack: f64,
+    #[serde(rename = "sent_pack_size")]
+    pub shipped_pack_size: Option<f64>,
 }
 
 // Needs to be added to all_translators()
@@ -176,6 +182,8 @@ impl SyncTranslation for InvoiceLineTranslation {
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,
+            volume_per_pack,
+            shipped_pack_size,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -285,6 +293,11 @@ impl SyncTranslation for InvoiceLineTranslation {
             }
         });
 
+        let TransLineRowOmsFields {
+            campaign_id,
+            program_id,
+        } = oms_fields.unwrap_or_default();
+
         let result = InvoiceLineRow {
             id,
             invoice_id,
@@ -311,8 +324,11 @@ impl SyncTranslation for InvoiceLineTranslation {
             donor_link_id: donor_id,
             reason_option_id,
             vvm_status_id,
-            campaign_id: oms_fields.and_then(|o| o.campaign_id),
+            campaign_id,
+            program_id,
             shipped_number_of_packs,
+            volume_per_pack,
+            shipped_pack_size,
         };
 
         let result = adjust_negative_values(result);
@@ -371,17 +387,19 @@ impl SyncTranslation for InvoiceLineTranslation {
                     vvm_status_id,
                     reason_option_id,
                     campaign_id,
+                    program_id,
                     shipped_number_of_packs,
+                    volume_per_pack,
+                    shipped_pack_size,
                 },
             item_row,
             ..
         } = invoice_line;
 
-        let oms_fields = if campaign_id.is_some() {
-            Some(TransLineRowOmsFields { campaign_id })
-        } else {
-            None
-        };
+        let oms_fields = Some(TransLineRowOmsFields {
+            campaign_id,
+            program_id,
+        });
 
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
@@ -411,6 +429,8 @@ impl SyncTranslation for InvoiceLineTranslation {
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,
+            volume_per_pack,
+            shipped_pack_size,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -480,7 +500,6 @@ mod tests {
         ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
     };
     use serde_json::json;
-    use util::inline_init;
 
     #[actix_rt::test]
     async fn test_invoice_line_translation() {
@@ -497,13 +516,15 @@ mod tests {
                 .locations()
                 .stock_lines()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![mock_outbound_shipment_a()];
-                r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
-                    r.id = KeyType::SettingsSyncSiteId;
-                    r.value_int = Some(mock_store_b().site_id);
-                })]
-            }),
+            MockData {
+                invoices: vec![mock_outbound_shipment_a()],
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_b().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
         )
         .await;
 

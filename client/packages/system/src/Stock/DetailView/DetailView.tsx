@@ -10,14 +10,12 @@ import {
   useNotification,
   useUrlQuery,
   useToggle,
-  StockLineNode,
   useCallbackWithPermission,
   UserPermission,
   usePluginEvents,
   useConfirmOnLeaving,
   useSimplifiedTabletUI,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -98,9 +96,7 @@ export const StockLineDetailView: React.FC = () => {
   );
 
   const isVaccine = draft?.item?.isVaccine ?? false;
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVvmStatusForStock
-  );
+  const { manageVvmStatusForStock } = usePreferences();
 
   const tabs = [
     {
@@ -110,11 +106,12 @@ export const StockLineDetailView: React.FC = () => {
           draft={draft}
           onUpdate={updatePatch}
           pluginEvents={pluginEvents}
+          existingStockLine={data}
         />
       ),
       value: t('label.details'),
     },
-    ...(isVaccine && preferences?.manageVvmStatusForStock
+    ...(isVaccine && manageVvmStatusForStock
       ? [
           {
             Component: <StatusHistory draft={draft} isLoading={isLoading} />,
@@ -142,19 +139,23 @@ export const StockLineDetailView: React.FC = () => {
 
   return (
     <>
-      {repackModalController.isOn && data && (
-        <RepackModal
-          isOpen={repackModalController.isOn}
-          onClose={repackModalController.toggleOff}
-          stockLine={data as StockLineNode}
-        />
-      )}
-      {adjustmentModalController.isOn && (
-        <InventoryAdjustmentModal
-          stockLine={data as StockLineNode}
-          isOpen={adjustmentModalController.isOn}
-          onClose={adjustmentModalController.toggleOff}
-        />
+      {data && (
+        <>
+          {repackModalController.isOn && (
+            <RepackModal
+              isOpen={repackModalController.isOn}
+              onClose={repackModalController.toggleOff}
+              stockLine={data}
+            />
+          )}
+          {adjustmentModalController.isOn && (
+            <InventoryAdjustmentModal
+              stockLine={data}
+              isOpen={adjustmentModalController.isOn}
+              onClose={adjustmentModalController.toggleOff}
+            />
+          )}
+        </>
       )}
       <AppBarButtons
         openRepack={repackModalController.toggleOn}

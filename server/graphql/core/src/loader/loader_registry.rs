@@ -1,4 +1,4 @@
-use crate::loader::*;
+use crate::loader::{location::VolumeUsedByLocationLoader, *};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;
@@ -156,6 +156,20 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
+    let purchase_order_by_id_loader = DataLoader::new(
+        PurchaseOrderByIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    );
+
+    let goods_received_line_by_goods_received_id_loader = DataLoader::new(
+        GoodsReceivedLinesByGoodsReceivedIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    );
+
     let requisition_line_by_linked_requisition_line_id_loader = DataLoader::new(
         LinkedRequisitionLineLoader {
             service_provider: service_provider.clone(),
@@ -272,6 +286,8 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_by_requisition_id_loader);
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
     loaders.insert(purchase_order_line_by_purchase_order_id_loader);
+    loaders.insert(purchase_order_by_id_loader);
+    loaders.insert(goods_received_line_by_goods_received_id_loader);
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
     loaders.insert(requisition_line_supply_status_loader);
@@ -408,7 +424,7 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
-        ColdStorageTypeLoader {
+        LocationTypeLoader {
             connection_manager: connection_manager.clone(),
         },
         tokio::spawn,
@@ -507,6 +523,24 @@ pub async fn get_loaders(
     loaders.insert(DataLoader::new(
         CampaignByIdLoader {
             connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ItemStoreJoinLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        VolumeUsedByLocationLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ProgramsByItemIdLoader {
+            service_provider: service_provider.clone(),
         },
         tokio::spawn,
     ));

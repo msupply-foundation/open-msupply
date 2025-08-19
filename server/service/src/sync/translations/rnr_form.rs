@@ -1,6 +1,6 @@
 use repository::{
     rnr_form_row::{RnRFormRow, RnRFormRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, RnRFormDelete, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -85,11 +85,22 @@ impl SyncTranslation for RnRFormTranslation {
             serde_json::to_value(row)?,
         ))
     }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(RnRFormDelete(
+            sync_record.record_id.clone(),
+        )))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]

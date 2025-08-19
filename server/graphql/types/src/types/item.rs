@@ -2,13 +2,17 @@ use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
     WarningNode,
 };
+use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode};
+
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
-        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemVariantsByItemIdLoader,
-        ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
-        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
+        ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
+        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
+        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, ProgramsByItemIdLoader,
+        ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
@@ -70,6 +74,26 @@ impl ItemNode {
 
     pub async fn doses(&self) -> i32 {
         self.row().vaccine_doses
+    }
+
+    pub async fn restricted_location_type_id(&self) -> &Option<String> {
+        &self.row().restricted_location_type_id
+    }
+
+    pub async fn restricted_location_type(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<LocationTypeNode>> {
+        let restricted_location_type_id = match &self.row().restricted_location_type_id {
+            Some(restricted_location_type_id) => restricted_location_type_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationTypeLoader>>();
+        Ok(loader
+            .load_one(restricted_location_type_id.clone())
+            .await?
+            .map(LocationTypeNode::from_domain))
     }
 
     pub async fn stats(
@@ -223,6 +247,44 @@ impl ItemNode {
                 .collect()
         }))
     }
+
+    pub async fn item_store_properties(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<ItemStorePropertiesNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemStoreJoinLoader>>();
+        let result: Vec<repository::ItemStoreJoinRow> = loader
+            .load_one(ItemStoreJoinLoaderInput::new(&store_id, &self.row().id))
+            .await?
+            .unwrap_or_default();
+
+        if result.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(ItemStorePropertiesNode::from_domain(
+            result.first().cloned().unwrap(),
+        )))
+    }
+
+    pub async fn programs(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<Vec<ProgramNode>>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramsByItemIdLoader>>();
+        let result = loader
+            .load_one(ProgramsByItemIdLoaderInput::new(&store_id, &self.row().id))
+            .await?;
+
+        Ok(result.map(|programs| {
+            programs
+                .into_iter()
+                .map(|program_row| ProgramNode { program_row })
+                .collect()
+        }))
+    }
 }
 
 #[derive(Union)]
@@ -355,7 +417,6 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
     use serde_json::json;
-    use util::inline_init;
 
     use super::*;
 
@@ -376,9 +437,9 @@ mod test {
         impl TestQuery {
             pub async fn test_query(&self) -> ItemNode {
                 ItemNode {
-                    item: inline_init(|r: &mut Item| {
-                        r.item_row = inline_init(|r: &mut ItemRow| {
-                            r.legacy_record = r#"{
+                    item: Item {
+                        item_row: ItemRow {
+                            legacy_record: r#"{
                                 "ID": "AA460A207402434A89B1F6EEAC08DA43",
                                 "item_name": "test_item",
                                 "start_of_year_date": "0000-00-00",
@@ -451,11 +512,13 @@ mod test {
                                 "custom_data": null,
                                 "doses": 11,
                                 "is_vaccine": true,
-                                "restricted_location_type_ID": ""
+                                "restricted_location_type_ID": "84AA2B7A18694A2AB1E84DCABAD19617"
                             }"#
-                            .to_string();
-                        });
-                    }),
+                            .to_string(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
         }

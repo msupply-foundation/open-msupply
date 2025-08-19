@@ -1,13 +1,27 @@
-use super::{DBType, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection};
+use super::{DBType, RepositoryError, StorageConnection};
 use crate::db_diesel::name_row::name;
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
 };
-use crate::purchase_order_row::purchase_order::{self};
+use crate::purchase_order_row::{
+    purchase_order::{self},
+    purchase_order_stats::{self},
+    PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus,
+};
 
 use crate::{name_link, DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 use diesel::query_dsl::QueryDsl;
-use diesel::{prelude::*, RunQueryDsl};
+use diesel::{
+    dsl::{IntoBoxed, LeftJoin},
+    prelude::*,
+    RunQueryDsl,
+};
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct PurchaseOrder {
+    pub purchase_order_row: PurchaseOrderRow,
+    pub purchase_order_stats_row: Option<PurchaseOrderStatsRow>,
+}
 
 #[derive(Clone, Default)]
 pub struct PurchaseOrderFilter {
@@ -20,12 +34,10 @@ pub struct PurchaseOrderFilter {
 
 #[derive(PartialEq, Debug)]
 pub enum PurchaseOrderSortField {
-    Supplier,
     Number,
     CreatedDatetime,
     Status,
     TargetMonths,
-    DeliveryDate,
 }
 
 pub type PurchaseOrderSort = Sort<PurchaseOrderSortField>;
@@ -33,6 +45,8 @@ pub type PurchaseOrderSort = Sort<PurchaseOrderSortField>;
 pub struct PurchaseOrderRepository<'a> {
     connection: &'a StorageConnection,
 }
+
+type PurchaseOrderJoin = (PurchaseOrderRow, Option<PurchaseOrderStatsRow>);
 
 impl<'a> PurchaseOrderRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -49,7 +63,7 @@ impl<'a> PurchaseOrderRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: PurchaseOrderFilter,
-    ) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
+    ) -> Result<Vec<PurchaseOrder>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
@@ -58,13 +72,10 @@ impl<'a> PurchaseOrderRepository<'a> {
         pagination: Pagination,
         filter: Option<PurchaseOrderFilter>,
         sort: Option<PurchaseOrderSort>,
-    ) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
+    ) -> Result<Vec<PurchaseOrder>, RepositoryError> {
         let mut query = create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
-                PurchaseOrderSortField::Supplier => {
-                    apply_sort_no_case!(query, sort, purchase_order::supplier_name_link_id)
-                }
                 PurchaseOrderSortField::Number => {
                     apply_sort!(query, sort, purchase_order::purchase_order_number)
                 }
@@ -77,10 +88,9 @@ impl<'a> PurchaseOrderRepository<'a> {
                 PurchaseOrderSortField::TargetMonths => {
                     apply_sort!(query, sort, purchase_order::target_months)
                 }
-                PurchaseOrderSortField::DeliveryDate => {
-                    apply_sort!(query, sort, purchase_order::delivered_datetime)
-                }
             }
+        } else {
+            query = query.order(purchase_order::created_datetime.desc())
         }
 
         // Debug diesel query
@@ -89,16 +99,26 @@ impl<'a> PurchaseOrderRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<PurchaseOrderRow>(self.connection.lock().connection())?;
+            .load::<PurchaseOrderJoin>(self.connection.lock().connection())?;
 
-        Ok(result)
+        Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedPurchaseOrderQuery = purchase_order::BoxedQuery<'static, DBType>;
+fn to_domain((purchase_order, purchase_order_stats): PurchaseOrderJoin) -> PurchaseOrder {
+    PurchaseOrder {
+        purchase_order_row: purchase_order,
+        purchase_order_stats_row: purchase_order_stats,
+    }
+}
+
+type BoxedPurchaseOrderQuery =
+    IntoBoxed<'static, LeftJoin<purchase_order::table, purchase_order_stats::table>, DBType>;
 
 fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOrderQuery {
-    let mut query = purchase_order::table.into_boxed();
+    let mut query = purchase_order::table
+        .left_join(purchase_order_stats::table)
+        .into_boxed();
 
     if let Some(f) = filter {
         let PurchaseOrderFilter {
@@ -115,7 +135,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
         if let Some(supplier_string) = supplier {
             let mut sub_query = name_link::table
                 .inner_join(name::table)
-                .select(name_link::id.nullable())
+                .select(name_link::id)
                 .into_boxed();
             apply_string_filter!(sub_query, Some(supplier_string), name::name_);
 

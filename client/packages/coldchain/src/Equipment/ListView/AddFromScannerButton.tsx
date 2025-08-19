@@ -14,7 +14,7 @@ import {
   RouteBuilder,
   useConfirmationModal,
   FnUtils,
-  AssetLogStatusInput,
+  AssetLogStatusNodeType,
   UserPermission,
   useAuthContext,
   useIsGapsStoreOnly,
@@ -56,7 +56,7 @@ export const AddFromScannerButtonComponent = () => {
                 id: FnUtils.generateUUID(),
                 assetId: newAssetData.current.id,
                 comment: t('message.asset-created'),
-                status: AssetLogStatusInput.Functioning,
+                status: AssetLogStatusNodeType.Functioning,
               });
               invalidateQueries();
               navigate(equipmentRoute.addPart(newAssetData.current.id).build());

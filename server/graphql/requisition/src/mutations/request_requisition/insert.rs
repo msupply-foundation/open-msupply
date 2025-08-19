@@ -158,7 +158,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::{date_now, inline_init};
+    use util::date_now;
 
     use crate::RequisitionMutations;
 
@@ -325,9 +325,10 @@ mod test {
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap())
                 }
             );
-            Ok(inline_init(|r: &mut Requisition| {
-                r.requisition_row = mock_request_draft_requisition()
-            }))
+            Ok(Requisition {
+                requisition_row: mock_request_draft_requisition(),
+                ..Default::default()
+            })
         }));
 
         let variables = json!({
@@ -365,9 +366,10 @@ mod test {
             let expected = input.expected_delivery_date.unwrap();
             assert_eq!((expected - now), chrono::Duration::weeks(2));
 
-            Ok(inline_init(|r: &mut Requisition| {
-                r.requisition_row = mock_request_draft_requisition()
-            }))
+            Ok(Requisition {
+                requisition_row: mock_request_draft_requisition(),
+                ..Default::default()
+            })
         }));
 
         let expected = json!({

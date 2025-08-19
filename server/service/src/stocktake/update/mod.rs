@@ -6,7 +6,8 @@ use generate::*;
 
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, ActivityLogType,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLine, StockLineRowRepository, Stocktake,
     StocktakeLine, StocktakeLineRowRepository, StocktakeRowRepository,
 };
@@ -84,6 +85,7 @@ pub fn update_stocktake(
             let stocktake_line_repo = StocktakeLineRowRepository::new(connection);
             let invoice_row_repo = InvoiceRowRepository::new(connection);
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
+            let vvm_status_log_repo = VVMStatusLogRowRepository::new(connection);
 
             // write updated stock lines (stock line info has changed, but no inventory adjustment)
             for stock_line in result.stock_lines {
@@ -154,6 +156,10 @@ pub fn update_stocktake(
                 }
             }
 
+            for vvm_status_log in result.vvm_status_logs {
+                vvm_status_log_repo.upsert_one(&vvm_status_log)?;
+            }
+
             if status_changed {
                 activity_log_entry(
                     ctx,
@@ -179,21 +185,22 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_item_a, mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b,
-            mock_stocktake_a, mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
+            mock_donor_b, mock_item_a, mock_item_a_variant_1, mock_locked_stocktake,
+            mock_stock_line_a, mock_stock_line_b, mock_stocktake_a,
+            mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
             mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
             mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
             mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
             mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a, MockData,
             MockDataInserts,
         },
-        test_db::setup_all_with_data,
+        test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineType,
         StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
         StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
         StocktakeRow, StocktakeStatus,
     };
-    use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, inline_init};
+    use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
     use crate::{
         service_provider::ServiceProvider,
@@ -201,102 +208,111 @@ mod test {
             update::{UpdateStocktake, UpdateStocktakeError},
             UpdateStocktakeStatus,
         },
+        stocktake_line::UpdateStocktakeLine,
+        NullableUpdate,
     };
 
     #[actix_rt::test]
     async fn update_stocktake() {
         fn mock_stocktake_existing_line() -> StocktakeRow {
-            inline_init(|r: &mut StocktakeRow| {
-                r.id = "mock_stocktake_existing_line".to_string();
-                r.store_id = "store_a".to_string();
-                r.stocktake_number = 10;
-                r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 14)
+            StocktakeRow {
+                id: "mock_stocktake_existing_line".to_string(),
+                store_id: "store_a".to_string(),
+                stocktake_number: 10,
+                created_datetime: NaiveDate::from_ymd_opt(2021, 12, 14)
                     .unwrap()
                     .and_hms_milli_opt(12, 33, 0, 0)
-                    .unwrap();
-                r.status = StocktakeStatus::New;
-            })
+                    .unwrap(),
+                status: StocktakeStatus::New,
+                ..Default::default()
+            }
         }
 
         fn mock_stocktake_line_existing_line() -> StocktakeLineRow {
-            inline_init(|r: &mut StocktakeLineRow| {
-                r.id = "mock_stocktake_line_existing_line".to_string();
-                r.stocktake_id = mock_stocktake_existing_line().id;
-                r.stock_line_id = Some(mock_existing_stock_line().id);
-                r.counted_number_of_packs = Some(20.0);
-                r.snapshot_number_of_packs = 20.0;
-                r.item_link_id = mock_item_a().id;
-                r.cost_price_per_pack = Some(1.0);
-                r.sell_price_per_pack = Some(2.0);
-            })
+            StocktakeLineRow {
+                id: "mock_stocktake_line_existing_line".to_string(),
+                stocktake_id: mock_stocktake_existing_line().id,
+                stock_line_id: Some(mock_existing_stock_line().id),
+                counted_number_of_packs: Some(20.0),
+                snapshot_number_of_packs: 20.0,
+                item_link_id: mock_item_a().id,
+                cost_price_per_pack: Some(1.0),
+                sell_price_per_pack: Some(2.0),
+                ..Default::default()
+            }
         }
 
         fn mock_existing_stock_line() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "existing_stock_a".to_string();
-                r.item_link_id = "item_a".to_string();
-                r.store_id = "store_a".to_string();
-                r.available_number_of_packs = 20.0;
-                r.pack_size = 1.0;
-                r.cost_price_per_pack = 0.0;
-                r.sell_price_per_pack = 0.0;
-                r.total_number_of_packs = 20.0;
-                r.on_hold = false;
-                r.supplier_link_id = Some("name_store_b".to_string());
-            })
+            StockLineRow {
+                id: "existing_stock_a".to_string(),
+                item_link_id: "item_a".to_string(),
+                store_id: "store_a".to_string(),
+                available_number_of_packs: 20.0,
+                pack_size: 1.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_number_of_packs: 20.0,
+                on_hold: false,
+                supplier_link_id: Some("name_store_b".to_string()),
+                ..Default::default()
+            }
         }
 
         fn mock_stocktake_no_counted_packs() -> StocktakeRow {
-            inline_init(|r: &mut StocktakeRow| {
-                r.id = "mock_stocktake_no_counted_packs".to_string();
-                r.store_id = "store_a".to_string();
-                r.stocktake_number = 20;
-                r.created_datetime = NaiveDate::from_ymd_opt(2024, 12, 14)
+            StocktakeRow {
+                id: "mock_stocktake_no_counted_packs".to_string(),
+                store_id: "store_a".to_string(),
+                stocktake_number: 20,
+                created_datetime: NaiveDate::from_ymd_opt(2024, 12, 14)
                     .unwrap()
                     .and_hms_milli_opt(12, 33, 0, 0)
-                    .unwrap();
-                r.status = StocktakeStatus::New;
-            })
+                    .unwrap(),
+                status: StocktakeStatus::New,
+                ..Default::default()
+            }
         }
 
         fn mock_stocktake_line_no_counted_packs_line() -> StocktakeLineRow {
-            inline_init(|r: &mut StocktakeLineRow| {
-                r.id = "mock_stocktake_line_no_counted_packs_line".to_string();
-                r.stocktake_id = mock_stocktake_no_counted_packs().id;
-                r.stock_line_id = Some(mock_existing_stock_line_b().id);
-                r.snapshot_number_of_packs = 10.0;
-                r.item_link_id = mock_item_a().id;
-                r.batch = Some("updated batch name".to_string());
-                r.counted_number_of_packs = None;
-            })
+            StocktakeLineRow {
+                id: "mock_stocktake_line_no_counted_packs_line".to_string(),
+                stocktake_id: mock_stocktake_no_counted_packs().id,
+                stock_line_id: Some(mock_existing_stock_line_b().id),
+                snapshot_number_of_packs: 10.0,
+                item_link_id: mock_item_a().id,
+                batch: Some("updated batch name".to_string()),
+                counted_number_of_packs: None,
+                ..Default::default()
+            }
         }
 
         fn mock_existing_stock_line_b() -> StockLineRow {
-            inline_init(|r: &mut StockLineRow| {
-                r.id = "existing_stock_b".to_string();
-                r.item_link_id = "item_a".to_string();
-                r.store_id = "store_a".to_string();
-                r.available_number_of_packs = 10.0;
-                r.pack_size = 2.0;
-                r.total_number_of_packs = 10.0;
-                r.batch = Some("initial batch name".to_string());
-            })
+            StockLineRow {
+                id: "existing_stock_b".to_string(),
+                item_link_id: "item_a".to_string(),
+                store_id: "store_a".to_string(),
+                available_number_of_packs: 10.0,
+                pack_size: 2.0,
+                total_number_of_packs: 10.0,
+                batch: Some("initial batch name".to_string()),
+                ..Default::default()
+            }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_stocktake",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.stocktakes = vec![
+            MockData {
+                stocktakes: vec![
                     mock_stocktake_existing_line(),
                     mock_stocktake_no_counted_packs(),
-                ];
-                r.stocktake_lines = vec![
+                ],
+                stocktake_lines: vec![
                     mock_stocktake_line_existing_line(),
                     mock_stocktake_line_no_counted_packs_line(),
-                ];
-                r.stock_lines = vec![mock_existing_stock_line(), mock_existing_stock_line_b()];
-            }),
+                ],
+                stock_lines: vec![mock_existing_stock_line(), mock_existing_stock_line_b()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -311,9 +327,10 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id.clone_from(&existing_stocktake.id);
-                }),
+                UpdateStocktake {
+                    id: existing_stocktake.id.clone(),
+                    ..Default::default()
+                },
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeError::InvalidStore);
@@ -323,9 +340,10 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = "invalid".to_string();
-                }),
+                UpdateStocktake {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                },
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeError::StocktakeDoesNotExist);
@@ -335,10 +353,11 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id;
-                    i.comment = Some("Comment".to_string());
-                }),
+                UpdateStocktake {
+                    id: stocktake.id,
+                    comment: Some("Comment".to_string()),
+                    ..Default::default()
+                },
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeError::CannotEditFinalised);
@@ -348,10 +367,11 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id;
-                    i.comment = Some("Comment".to_string());
-                }),
+                UpdateStocktake {
+                    id: stocktake.id,
+                    comment: Some("Comment".to_string()),
+                    ..Default::default()
+                },
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeError::StocktakeIsLocked);
@@ -366,11 +386,12 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id;
-                    i.comment = Some("Comment".to_string());
-                    i.status = Some(UpdateStocktakeStatus::Finalised);
-                }),
+                UpdateStocktake {
+                    id: stocktake.id,
+                    comment: Some("Comment".to_string()),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
             )
             .unwrap_err();
         assert_eq!(
@@ -390,11 +411,12 @@ mod test {
         let error = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id;
-                    i.comment = Some("Comment".to_string());
-                    i.status = Some(UpdateStocktakeStatus::Finalised);
-                }),
+                UpdateStocktake {
+                    id: stocktake.id,
+                    comment: Some("Comment".to_string()),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeError::NoLines);
@@ -409,10 +431,11 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id;
-                    i.status = Some(UpdateStocktakeStatus::Finalised);
-                }),
+                UpdateStocktake {
+                    id: stocktake.id,
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
             )
             .unwrap();
         let invoice_line = InvoiceLineRowRepository::new(&context.connection)
@@ -434,10 +457,11 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id;
-                    i.status = Some(UpdateStocktakeStatus::Finalised);
-                }),
+                UpdateStocktake {
+                    id: stocktake.id,
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
             )
             .unwrap();
         let invoice_line = InvoiceLineRowRepository::new(&context.connection)
@@ -457,10 +481,11 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id;
-                    i.status = Some(UpdateStocktakeStatus::Finalised);
-                }),
+                UpdateStocktake {
+                    id: stocktake.id,
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
             )
             .unwrap();
         assert_eq!(
@@ -475,9 +500,10 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id;
-                }),
+                UpdateStocktake {
+                    id: stocktake.id,
+                    ..Default::default()
+                },
             )
             .unwrap();
         assert_eq!(result, mock_stocktake_a());
@@ -487,11 +513,12 @@ mod test {
         service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id.clone_from(&stocktake.id);
-                    i.is_locked = Some(true);
-                    i.comment = Some("New comment".to_string());
-                }),
+                UpdateStocktake {
+                    id: stocktake.id.clone(),
+                    is_locked: Some(true),
+                    comment: Some("New comment".to_string()),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -500,11 +527,12 @@ mod test {
                 .find_one_by_id(&stocktake.id)
                 .unwrap()
                 .unwrap(),
-            inline_edit(&stocktake, |mut r: StocktakeRow| {
-                r.is_locked = true;
-                r.comment = Some("New comment".to_string());
-                r
-            })
+            {
+                let mut expected = stocktake.clone();
+                expected.is_locked = true;
+                expected.comment = Some("New comment".to_string());
+                expected
+            }
         );
 
         // success: Edit and un-lock
@@ -512,11 +540,12 @@ mod test {
         service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id.clone_from(&stocktake.id);
-                    i.is_locked = Some(false);
-                    i.comment = Some("Comment".to_string());
-                }),
+                UpdateStocktake {
+                    id: stocktake.id.clone(),
+                    is_locked: Some(false),
+                    comment: Some("Comment".to_string()),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -525,11 +554,12 @@ mod test {
                 .find_one_by_id(&stocktake.id)
                 .unwrap()
                 .unwrap(),
-            inline_edit(&stocktake, |mut r: StocktakeRow| {
-                r.is_locked = false;
-                r.comment = Some("Comment".to_string());
-                r
-            })
+            {
+                let mut expected = stocktake.clone();
+                expected.is_locked = false;
+                expected.comment = Some("Comment".to_string());
+                expected
+            }
         );
         // success: all changes (not finalised)
         let stocktake = mock_stocktake_full_edit();
@@ -549,28 +579,27 @@ mod test {
             )
             .unwrap();
 
-        assert_eq!(
-            result,
-            inline_edit(&stocktake, |mut i: StocktakeRow| {
-                i.comment = Some("comment_1".to_string());
-                i.description = Some("description_1".to_string());
-                i.stocktake_date = Some(NaiveDate::from_ymd_opt(2019, 3, 20).unwrap());
-                i.is_locked = false;
-                i.counted_by = Some("user_a".to_string());
-                i.verified_by = Some("user_b".to_string());
-                i
-            }),
-        );
+        assert_eq!(result, {
+            let mut expected = stocktake.clone();
+            expected.comment = Some("comment_1".to_string());
+            expected.description = Some("description_1".to_string());
+            expected.stocktake_date = Some(NaiveDate::from_ymd_opt(2019, 3, 20).unwrap());
+            expected.is_locked = false;
+            expected.counted_by = Some("user_a".to_string());
+            expected.verified_by = Some("user_b".to_string());
+            expected
+        },);
 
         // success: new stock line
         let stocktake = mock_stocktake_new_stock_line();
         let result = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id.clone_from(&stocktake.id);
-                    i.status = Some(UpdateStocktakeStatus::Finalised);
-                }),
+                UpdateStocktake {
+                    id: stocktake.id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
             )
             .unwrap();
         let shipment_line = InvoiceLineRowRepository::new(&context.connection)
@@ -612,10 +641,11 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id.clone_from(&mock_stocktake_existing_line().id);
-                    i.status = Some(UpdateStocktakeStatus::Finalised);
-                }),
+                UpdateStocktake {
+                    id: mock_stocktake_existing_line().id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
             )
             .unwrap();
         let stocktake_line = StocktakeLineRepository::new(&context.connection)
@@ -634,10 +664,11 @@ mod test {
         let result = service
             .update_stocktake(
                 &context,
-                inline_init(|i: &mut UpdateStocktake| {
-                    i.id.clone_from(&mock_stocktake_no_counted_packs().id);
-                    i.status = Some(UpdateStocktakeStatus::Finalised);
-                }),
+                UpdateStocktake {
+                    id: mock_stocktake_no_counted_packs().id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -658,5 +689,70 @@ mod test {
 
         // still has initial batch name (was not updated)
         assert_eq!(stock_line.batch, Some("initial batch name".to_string()),);
+    }
+
+    #[actix_rt::test]
+    async fn update_stocktake_stock_lines_update() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stocktake_stock_lines_update",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let stocktake_service = service_provider.stocktake_service;
+        let stocktake_line_service = service_provider.stocktake_line_service;
+
+        // Donor & item variant updates
+        stocktake_line_service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: mock_stocktake_line_stock_surplus().id.clone(),
+                    item_variant_id: Some(NullableUpdate {
+                        value: Some(mock_item_a_variant_1().id.clone()),
+                    }),
+                    donor_id: Some(NullableUpdate {
+                        value: Some(mock_donor_b().id.clone()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let result = stocktake_service
+            .update_stocktake(
+                &context,
+                UpdateStocktake {
+                    id: mock_stocktake_stock_surplus().id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stocktake_line = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new()
+                    .id(EqualFilter::equal_to(
+                        &mock_stocktake_line_stock_surplus().id,
+                    ))
+                    .stocktake_id(EqualFilter::equal_to(&result.id)),
+                None,
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert_eq!(
+            stocktake_line.stock_line.as_ref().unwrap().donor_link_id,
+            Some(mock_donor_b().id.clone())
+        );
+        assert_eq!(
+            stocktake_line.stock_line.as_ref().unwrap().item_variant_id,
+            Some(mock_item_a_variant_1().id.clone())
+        );
     }
 }

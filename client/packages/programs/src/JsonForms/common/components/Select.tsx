@@ -8,7 +8,7 @@ import {
   PreferenceKey,
   PreferencesNode,
   TypedTFunction,
-  usePreference,
+  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
@@ -18,6 +18,7 @@ import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
 import { extractProperty, getGenderTranslationKey } from '@common/utils';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
+import { usePrevious } from '../hooks/usePrevious';
 
 export const selectTester = rankWith(4, isEnumControl);
 
@@ -73,6 +74,16 @@ const Options = z
       })
       .optional(),
     preferenceKey: z.nativeEnum(PreferenceKey).optional(),
+    /**
+     * If true, the value will be pre-populated with the previous value (if
+     * available)
+     */
+    defaultToPrevious: z.boolean().optional(),
+    /**
+     * If using "previous" data, you can specify a path to get previous data
+     * from a different field
+     */
+    previousPath: z.string().optional(),
   })
   .strict()
   .optional();
@@ -90,7 +101,7 @@ export const getDisplayOptions = (
   t: TypedTFunction<LocaleKey>,
   schemaEnum: string[],
   options?: Options,
-  prefOptions?: Pick<PreferencesNode, PreferenceKey>
+  prefOptions?: Partial<PreferencesNode>
 ): DisplayOption[] => {
   if (options?.preferenceKey) {
     switch (options?.preferenceKey) {
@@ -273,12 +284,12 @@ const UIComponent = (props: ControlProps) => {
     path,
     'Select'
   );
-  const { data: preference } = usePreference(
-    schemaOptions?.preferenceKey ?? PreferenceKey.GenderOptions
-  );
+  const preferences = usePreferences();
   useEffect(() => {
     setCustomError(validationError);
   }, [validationError]);
+
+  usePrevious(path, data, schemaOptions, value => handleChange(path, value));
 
   if (!props.visible) {
     return null;
@@ -288,7 +299,7 @@ const UIComponent = (props: ControlProps) => {
     value: DisplayOption | null
   ) => handleChange(path, value?.value);
 
-  const options = getDisplayOptions(t, items, schemaOptions, preference);
+  const options = getDisplayOptions(t, items, schemaOptions, preferences);
 
   const value = data ? options.find(o => o.value === data) : null;
 

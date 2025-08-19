@@ -7,19 +7,14 @@ import {
   Box,
   FilterDefinition,
   useAuthContext,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   getGenderTranslationKey,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
   const { store } = useAuthContext();
-  const {
-    data: { genderOptions } = {
-      genderOptions: [],
-    },
-  } = usePreference(PreferenceKey.GenderOptions);
+  const { genderOptions = [] } = usePreferences();
 
   const filters: FilterDefinition[] = [
     {

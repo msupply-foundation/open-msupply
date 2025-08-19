@@ -1,8 +1,10 @@
 use async_graphql::*;
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
 use graphql_types::types::IdResponse;
 use repository::PurchaseOrderRow;
+use service::auth::{Resource, ResourceAccessRequest};
 use service::purchase_order::insert::{
     InsertPurchaseOrderError as ServiceError, InsertPurchaseOrderInput as ServiceInput,
 };
@@ -33,9 +35,15 @@ pub fn insert_purchase_order(
     store_id: &str,
     input: InsertInput,
 ) -> Result<InsertResponse> {
-    // TODO: add auth validation once permissions finalised
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutatePurchaseOrder,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), "".to_string())?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider

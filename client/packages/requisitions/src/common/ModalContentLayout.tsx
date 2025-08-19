@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Grid,
+  NumericTextDisplay,
   SxProps,
   Theme,
   Typography,
@@ -84,10 +85,19 @@ export const InfoRow = ({
           {label}:
         </Typography>
       </Grid>
-      <Grid size={4} textAlign="right">
-        <Typography variant="body1">
-          {value} {packagingDisplay}
-        </Typography>
+      <Grid
+        size={4}
+        display="flex"
+        flexDirection="column"
+        alignItems="flex-end"
+      >
+        {typeof value === 'number' ? (
+          <NumericTextDisplay value={value} />
+        ) : (
+          <Typography variant="body1">
+            {value} {packagingDisplay}
+          </Typography>
+        )}
         {displayVaccinesInDoses && (
           <Typography variant="caption" color="text.secondary">
             {doses ? `(${doses} ${dosesLabel?.toLowerCase()})` : ''}
@@ -133,19 +143,24 @@ export const ValueInfoRow = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { round } = useFormatNumber();
+
   const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     value
   );
-  const valueInDoses = React.useMemo(
+
+  // doses always rounded to display in whole numbers
+  const valueInDoses = useMemo(
     () =>
       displayVaccinesInDoses
-        ? calculateValueInDoses(
-            representation,
-            defaultPackSize,
-            dosesPerUnit,
-            valueInUnitsOrPacks
+        ? round(
+            calculateValueInDoses(
+              representation,
+              defaultPackSize,
+              dosesPerUnit,
+              valueInUnitsOrPacks
+            )
           )
         : undefined,
     [
@@ -168,9 +183,7 @@ export const ValueInfoRow = ({
 
   const treatAsNull = value === null && nullDisplay;
 
-  const displayValue = treatAsNull
-    ? nullDisplay
-    : round(valueInUnitsOrPacks, 2);
+  const displayValue = treatAsNull ? nullDisplay : valueInUnitsOrPacks;
 
   return (
     <InfoRow
@@ -179,7 +192,7 @@ export const ValueInfoRow = ({
       packagingDisplay={treatAsNull ? '' : endAdornment}
       sx={sx}
       displayVaccinesInDoses={displayVaccinesInDoses && !!valueInUnitsOrPacks}
-      doses={round(valueInDoses, 2)}
+      doses={valueInDoses}
       dosesLabel={t('label.doses')}
     />
   );

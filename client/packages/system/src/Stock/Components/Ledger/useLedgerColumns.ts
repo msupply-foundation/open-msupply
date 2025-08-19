@@ -1,9 +1,9 @@
 import {
   ColumnFormat,
+  NumberCell,
   SortBy,
   useColumns,
   useFormatDateTime,
-  useFormatNumber,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LedgerRowFragment } from '../../api';
@@ -29,7 +29,6 @@ export const useLedgerColumns = (
 ) => {
   const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
-  const { format } = useFormatNumber();
 
   const columns = useColumns<LedgerRowFragment>(
     [
@@ -54,15 +53,15 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Quantity,
         label: 'label.unit-quantity',
-        accessor: ({ rowData }) => format(rowData.quantity),
         sortable: false,
         description: 'description.unit-quantity',
+        Cell: NumberCell,
       },
       {
         key: ColumnKey.Balance,
         label: 'label.balance',
-        accessor: ({ rowData }) => format(rowData.runningBalance),
         sortable: false,
+        Cell: NumberCell,
       },
       {
         key: ColumnKey.Type,

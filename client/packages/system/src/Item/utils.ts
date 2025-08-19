@@ -20,6 +20,10 @@ export const toItemRow = (line: ItemLike): ItemRowFragment => ({
     ('lines' in line ? line.lines[0]?.item.isVaccine : line.item.isVaccine) ??
     false,
   doses: ('lines' in line ? line.lines[0]?.item.doses : line.item.doses) ?? 0,
+  restrictedLocationTypeId:
+    ('lines' in line
+      ? line.lines[0]?.item.restrictedLocationTypeId
+      : line.item.restrictedLocationTypeId) ?? null,
 });
 
 export const toItemWithPackSize = (
@@ -35,6 +39,10 @@ interface GenericStockItemSearchInputProps {
   width?: number;
   autoFocus?: boolean;
   openOnFocus?: boolean;
+  // Some components passing currentItemId haven't actually loaded the full item
+  // yet, so if this is true, we call `onChange` when the item is loaded
+  // initially
+  initialUpdate?: boolean;
 }
 
 export interface StockItemSearchInputProps
@@ -61,5 +69,6 @@ export const itemFilterOptions = {
   stringify: (item: ItemWithStatsFragment) => `${item.code} ${item.name}`,
 };
 
-export const getOptionLabel = <T extends { code: string; name: string }>(item: T): string =>
-  `${item.code} ${item.name}`;
+export const getOptionLabel = <T extends { code: string; name: string }>(
+  item: T
+): string => `${item.code} ${item.name}`;

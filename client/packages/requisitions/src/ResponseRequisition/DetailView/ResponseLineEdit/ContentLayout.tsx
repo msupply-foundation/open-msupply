@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   NumUtils,
@@ -83,7 +83,8 @@ export const NumInputRow = ({
     }
   };
 
-  const valueInDoses = React.useMemo(
+  // doses always rounded to display in whole numbers
+  const valueInDoses = useMemo(
     () =>
       displayVaccinesInDoses
         ? round(
@@ -92,8 +93,7 @@ export const NumInputRow = ({
               defaultPackSize,
               dosesPerUnit,
               valueInUnitsOrPacks
-            ),
-            2
+            )
           )
         : undefined,
     [
@@ -182,6 +182,7 @@ interface NumericInputOptions {
   disabledOverride?: boolean;
   endAdornmentOverride?: string;
   sx?: Record<string, unknown>;
+  overrideDoseDisplay?: boolean;
 }
 
 export const createNumericInput =
@@ -206,6 +207,7 @@ export const createNumericInput =
       onChange = () => {},
       disabledOverride,
       endAdornmentOverride,
+      overrideDoseDisplay,
       sx = {},
     } = options;
 
@@ -215,7 +217,9 @@ export const createNumericInput =
         representation={commonProps.representation}
         unitName={commonProps.unitName}
         showExtraFields={commonProps.showExtraFields}
-        displayVaccinesInDoses={commonProps.displayVaccinesInDoses}
+        displayVaccinesInDoses={
+          overrideDoseDisplay ?? commonProps.displayVaccinesInDoses
+        }
         disabled={disabledOverride ?? commonProps.disabled}
         label={t(label)}
         value={value ?? 0}
