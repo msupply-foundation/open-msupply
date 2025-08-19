@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PurchaseOrderRowFragment = {
   __typename: 'PurchaseOrderNode';
@@ -89,8 +90,8 @@ export type PurchaseOrderFragment = {
       };
       manufacturer?: {
         __typename: 'NameNode';
-        id: string;
         code: string;
+        id: string;
         isCustomer: boolean;
         isSupplier: boolean;
         isOnHold: boolean;
@@ -137,8 +138,8 @@ export type PurchaseOrderLineFragment = {
   };
   manufacturer?: {
     __typename: 'NameNode';
-    id: string;
     code: string;
+    id: string;
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
@@ -249,8 +250,8 @@ export type PurchaseOrderByIdQuery = {
             };
             manufacturer?: {
               __typename: 'NameNode';
-              id: string;
               code: string;
+              id: string;
               isCustomer: boolean;
               isSupplier: boolean;
               isOnHold: boolean;
@@ -357,8 +358,8 @@ export type PurchaseOrderLinesQuery = {
       };
       manufacturer?: {
         __typename: 'NameNode';
-        id: string;
         code: string;
+        id: string;
         isCustomer: boolean;
         isSupplier: boolean;
         isOnHold: boolean;
@@ -404,8 +405,8 @@ export type PurchaseOrderLineQuery = {
       };
       manufacturer?: {
         __typename: 'NameNode';
-        id: string;
         code: string;
+        id: string;
         isCustomer: boolean;
         isSupplier: boolean;
         isOnHold: boolean;
@@ -571,24 +572,14 @@ export const PurchaseOrderLineFragmentDoc = gql`
     pricePerUnitAfterDiscount
     pricePerUnitBeforeDiscount
     manufacturer(storeId: $storeId) {
-      __typename
-      id
-      code
-      isCustomer
-      isSupplier
-      isOnHold
-      name
-      store {
-        __typename
-        id
-        code
-      }
+      ...NameRow
     }
     note
     unitOfPacks
     comment
     supplierItemCode
   }
+  ${NameRowFragmentDoc}
 `;
 export const SyncFileReferenceFragmentDoc = gql`
   fragment SyncFileReference on SyncFileReferenceNode {

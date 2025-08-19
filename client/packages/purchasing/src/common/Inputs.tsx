@@ -10,11 +10,46 @@ import {
   LocaleKey,
   NumericTextInput,
   NumUtils,
+  Theme,
   TypedTFunction,
   Typography,
-  useMediaQuery,
   useTheme,
 } from '@openmsupply-client/common';
+
+const commonInputContainerSx = {
+  marginBottom: 1,
+  px: 1,
+  flex: 1,
+};
+
+export const inputSlotProps = (disabled: boolean) => ({
+  input: {
+    sx: {
+      boxShadow: (theme: Theme) => (!disabled ? theme.shadows[2] : 'none'),
+      background: (theme: Theme) =>
+        disabled
+          ? theme.palette.background.toolbar
+          : theme.palette.background.white,
+    },
+  },
+});
+
+export const createLabelRowSx = (isVerticalScreen: boolean) => ({
+  justifyContent: 'space-between',
+  flexDirection: {
+    xs: isVerticalScreen ? 'column' : 'row',
+    md: 'row',
+  },
+  alignItems: { xs: 'flex-start', md: 'center' },
+});
+
+export const commonLabelProps = {
+  sx: {
+    width: {
+      xs: '100%',
+    },
+  },
+};
 
 interface NumericInputProps {
   onChange?: (value?: number) => void;
@@ -24,7 +59,11 @@ interface NumericInputProps {
 }
 
 export const createNumericInput =
-  (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
+  (
+    t: TypedTFunction<LocaleKey>,
+    disabled: boolean,
+    isVerticalScreen: boolean
+  ) =>
   (
     label: LocaleKey,
     value: number | null | undefined,
@@ -41,6 +80,7 @@ export const createNumericInput =
         max={max}
         decimalLimit={decimalLimit}
         endAdornment={endAdornment}
+        isVerticalScreen={isVerticalScreen}
       />
     );
   };
@@ -48,6 +88,7 @@ export const createNumericInput =
 interface NumInputRowProps {
   label: string;
   value: number;
+  isVerticalScreen: boolean;
   onChange?: (value?: number) => void;
   disabled: boolean;
   max?: number;
@@ -58,14 +99,13 @@ interface NumInputRowProps {
 const NumInputRow = ({
   label,
   value,
+  isVerticalScreen,
   onChange,
   disabled,
   max,
   decimalLimit,
   endAdornment,
 }: NumInputRowProps) => {
-  const isVerticalScreen = useMediaQuery('(max-width:800px)');
-
   const roundedValue = NumUtils.round(value, 2);
 
   const handleChange = (newValue?: number) => {
@@ -76,13 +116,7 @@ const NumInputRow = ({
   };
 
   return (
-    <Box
-      sx={{
-        marginBottom: 1,
-        px: 1,
-        flex: 1,
-      }}
-    >
+    <Box sx={commonInputContainerSx}>
       <InputWithLabelRow
         Input={
           <NumericTextInput
@@ -95,17 +129,7 @@ const NumInputRow = ({
                     : theme.palette.background.white,
               },
             }}
-            slotProps={{
-              input: {
-                sx: {
-                  boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-                  background: theme =>
-                    disabled
-                      ? theme.palette.background.toolbar
-                      : theme.palette.background.white,
-                },
-              },
-            }}
+            slotProps={inputSlotProps(disabled)}
             min={0}
             value={roundedValue}
             onChange={handleChange}
@@ -116,28 +140,19 @@ const NumInputRow = ({
           />
         }
         label={label}
-        labelProps={{
-          sx: {
-            width: {
-              xs: '100%',
-            },
-          },
-        }}
-        sx={{
-          justifyContent: 'space-between',
-          flexDirection: {
-            xs: isVerticalScreen ? 'column' : 'row',
-            md: 'row',
-          },
-          alignItems: { xs: 'flex-start', md: 'center' },
-        }}
+        labelProps={commonLabelProps}
+        sx={createLabelRowSx(isVerticalScreen)}
       />
     </Box>
   );
 };
 
 export const createTextInput =
-  (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
+  (
+    t: TypedTFunction<LocaleKey>,
+    disabled: boolean,
+    isVerticalScreen: boolean
+  ) =>
   (
     label: LocaleKey,
     value: string | null | undefined,
@@ -149,6 +164,7 @@ export const createTextInput =
         label={t(label)}
         value={value ?? ''}
         onChange={onChange}
+        isVerticalScreen={isVerticalScreen}
       />
     );
   };
@@ -156,21 +172,20 @@ export const createTextInput =
 interface TextInputProps {
   label: string;
   value: string;
+  isVerticalScreen: boolean;
   onChange?: (value?: string) => void;
   disabled: boolean;
 }
 
-const TextInput = ({ label, value, onChange, disabled }: TextInputProps) => {
-  const isVerticalScreen = useMediaQuery('(max-width:800px)');
-
+const TextInput = ({
+  label,
+  value,
+  isVerticalScreen,
+  onChange,
+  disabled,
+}: TextInputProps) => {
   return (
-    <Box
-      sx={{
-        marginBottom: 1,
-        px: 1,
-        flex: 1,
-      }}
-    >
+    <Box sx={commonInputContainerSx}>
       <InputWithLabelRow
         Input={
           <BasicTextInput
@@ -183,38 +198,15 @@ const TextInput = ({ label, value, onChange, disabled }: TextInputProps) => {
                     : theme.palette.background.white,
               },
             }}
-            slotProps={{
-              input: {
-                sx: {
-                  boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-                  background: theme =>
-                    disabled
-                      ? theme.palette.background.toolbar
-                      : theme.palette.background.white,
-                },
-              },
-            }}
+            slotProps={inputSlotProps(disabled)}
             value={value}
             onChange={e => onChange?.(e.target.value)}
             disabled={disabled}
           />
         }
         label={label}
-        labelProps={{
-          sx: {
-            width: {
-              xs: '100%',
-            },
-          },
-        }}
-        sx={{
-          justifyContent: 'space-between',
-          flexDirection: {
-            xs: isVerticalScreen ? 'column' : 'row',
-            md: 'row',
-          },
-          alignItems: { xs: 'flex-start', md: 'center' },
-        }}
+        labelProps={commonLabelProps}
+        sx={createLabelRowSx(isVerticalScreen)}
       />
     </Box>
   );
@@ -258,18 +250,7 @@ const MultilineTextInput = ({
       <BufferedTextArea
         value={value}
         onChange={e => onChange?.(e.target.value)}
-        slotProps={{
-          input: {
-            sx: {
-              boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-              borderRadius: 2,
-              backgroundColor: theme =>
-                disabled
-                  ? theme.palette.background.toolbar
-                  : theme.palette.background.white,
-            },
-          },
-        }}
+        slotProps={inputSlotProps(disabled)}
         disabled={disabled}
         minRows={3}
         maxRows={3}
@@ -279,7 +260,11 @@ const MultilineTextInput = ({
 };
 
 export const createDateInput =
-  (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
+  (
+    t: TypedTFunction<LocaleKey>,
+    disabled: boolean,
+    isVerticalScreen: boolean
+  ) =>
   (
     label: LocaleKey,
     value?: string | null,
@@ -290,6 +275,7 @@ export const createDateInput =
         disabled={disabled}
         label={t(label)}
         value={value}
+        isVerticalScreen={isVerticalScreen}
         onChange={onChange}
       />
     );
@@ -298,13 +284,19 @@ export const createDateInput =
 interface DateInputProps {
   label: string;
   value?: string | null;
+  isVerticalScreen: boolean;
   onChange?: (value: string | null) => void;
   disabled: boolean;
 }
 
-const DateInput = ({ label, value, onChange, disabled }: DateInputProps) => {
+const DateInput = ({
+  label,
+  value,
+  isVerticalScreen,
+  onChange,
+  disabled,
+}: DateInputProps) => {
   const theme = useTheme();
-  const isVerticalScreen = useMediaQuery('(max-width:800px)');
   const date = DateUtils.getDateOrNull(value);
   const handleChange = (newValue: Date | null) => {
     if (newValue) {
@@ -315,12 +307,7 @@ const DateInput = ({ label, value, onChange, disabled }: DateInputProps) => {
   };
 
   return (
-    <Box
-      sx={{
-        marginBottom: 1,
-        flex: 1,
-      }}
-    >
+    <Box sx={{ ...commonInputContainerSx, px: 0 }}>
       <InputWithLabelRow
         Input={
           <DateTimePickerInput
@@ -345,21 +332,8 @@ const DateInput = ({ label, value, onChange, disabled }: DateInputProps) => {
           />
         }
         label={label}
-        labelProps={{
-          sx: {
-            width: {
-              xs: '100%',
-            },
-          },
-        }}
-        sx={{
-          justifyContent: 'space-between',
-          flexDirection: {
-            xs: isVerticalScreen ? 'column' : 'row',
-            md: 'row',
-          },
-          alignItems: { xs: 'flex-start', md: 'center' },
-        }}
+        labelProps={commonLabelProps}
+        sx={createLabelRowSx(isVerticalScreen)}
       />
     </Box>
   );
