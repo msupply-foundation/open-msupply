@@ -22,7 +22,7 @@ pub enum ManagePlaceholderLine {
 }
 pub struct GenerateResult {
     pub lines_to_add: Vec<InsertStockOutLine>,
-    pub lines_to_update: Vec<UpdateStockOutLine>,
+    pub lines_to_update: Vec<SaveStockOutInvoiceLine>,
     pub lines_to_delete: Vec<DeleteStockOutLine>,
     pub manage_placeholder: ManagePlaceholderLine,
 }
@@ -110,31 +110,31 @@ pub fn generate(
     let lines_to_update = lines
         .clone()
         .into_iter()
-        .filter(|line| line.number_of_packs > 0.0 && check_already_exists(&line.id))
-        .map(
-            |SaveStockOutInvoiceLine {
-                 id,
-                 number_of_packs,
-                 stock_line_id,
-                 campaign_id,
-                 program_id,
-                 vvm_status_id,
-             }| UpdateStockOutLine {
-                id,
-                stock_line_id: Some(stock_line_id),
-                number_of_packs: Some(number_of_packs),
-                r#type: Some(stock_out_type.clone()),
-                campaign_id,
-                program_id,
-                vvm_status_id,
-                // Default
-                prescribed_quantity: None,
-                total_before_tax: None,
-                tax: None,
-                note: None,
-            },
-        )
-        .collect();
+        .filter(|line| line.number_of_packs > 0.0 && check_already_exists(&line.id));
+    // .map(
+    //     |SaveStockOutInvoiceLine {
+    //          id,
+    //          number_of_packs,
+    //          stock_line_id,
+    //          campaign_id,
+    //          program_id,
+    //          vvm_status_id,
+    //      }| UpdateStockOutLine {
+    //         id,
+    //         stock_line_id: Some(stock_line_id),
+    //         number_of_packs: Some(number_of_packs),
+    //         r#type: Some(stock_out_type.clone()),
+    //         campaign_id,
+    //         program_id,
+    //         vvm_status_id,
+    //         // Default
+    //         prescribed_quantity: None,
+    //         total_before_tax: None,
+    //         tax: None,
+    //         note: None,
+    //     },
+    // )
+    // .collect();
 
     let lines_to_delete = lines
         .clone()

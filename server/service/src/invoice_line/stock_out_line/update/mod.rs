@@ -18,8 +18,6 @@ use validate::validate;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateStockOutLine {
     pub id: String,
-    pub r#type: Option<StockOutType>,
-    pub stock_line_id: Option<String>,
     pub number_of_packs: Option<f64>,
     pub prescribed_quantity: Option<f64>,
     pub total_before_tax: Option<f64>,
@@ -157,7 +155,6 @@ mod test {
         InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
         Upsert,
     };
-   
 
     use crate::{
         invoice::outbound_shipment::update::{

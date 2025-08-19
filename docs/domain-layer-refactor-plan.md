@@ -50,9 +50,9 @@ Create the basic domain layer structure without breaking existing functionality.
 - [x] Implement event execution logic
 - [x] Add transaction coordination
 
-### Phase 2: Migrate Update Stock Out Line ✅ (when completed)
+### Phase 2: Service Migration ✅ (in progress)
 
-Replace the existing `update_stock_out_line` service with domain layer implementation.
+Migrate the first service method to use the domain layer.
 
 #### 2.1 Extract Business Logic
 

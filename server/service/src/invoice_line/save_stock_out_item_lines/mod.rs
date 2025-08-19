@@ -1,3 +1,4 @@
+use domain::{DomainServiceError, InvoiceLineDomainService};
 use repository::{Invoice, InvoiceLineRowRepository, RepositoryError};
 
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext};
@@ -57,7 +58,7 @@ pub enum SaveStockOutItemLinesError {
     },
     LineUpdateError {
         line_id: String,
-        error: UpdateStockOutLineError,
+        error: DomainServiceError,
     },
     LineDeleteError {
         line_id: String,
@@ -100,13 +101,22 @@ pub fn save_stock_out_item_lines(
                 })?;
             }
 
+            let domain_service = InvoiceLineDomainService::new(connection);
             for line in lines_to_update {
-                update_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    SaveStockOutItemLinesError::LineUpdateError {
-                        line_id: line.id,
+                let mut model = domain_service
+                    .load_invoice_line(&line.id)
+                    .map_err(|error| SaveStockOutItemLinesError::LineUpdateError {
+                        line_id: line.id.clone(),
                         error,
-                    }
-                })?;
+                    })?;
+
+                let events = model.update_number_of_packs(line.number_of_packs);
+                // update_stock_out_line(ctx, line.clone()).map_err(|error| {
+                //     SaveStockOutItemLinesError::LineUpdateError {
+                //         line_id: line.id,
+                //         error,
+                //     }
+                // })?;
             }
 
             for line in lines_to_delete {

@@ -1,4 +1,5 @@
 use crate::events::DomainEvent;
+use chrono::NaiveDate;
 use repository::{InvoiceLineRow, InvoiceRow};
 
 use super::{business_rules::InvoiceBusinessRules, stock_events::StockEventGenerator};
@@ -10,9 +11,40 @@ pub struct InvoiceLineDomain {
     pub invoice: InvoiceRow,
 }
 
+pub struct InvoiceLineMetadataFields {
+    pub batch: Option<String>,
+    pub expiry_date: Option<NaiveDate>,
+    pub shipped_number_of_packs: Option<f64>,
+    pub shipped_pack_size: Option<f64>,
+    pub volume_per_pack: f64,
+    pub cost_price_per_pack: f64,
+    pub sell_price_per_pack: f64,
+    pub total_before_tax: f64,
+    pub total_after_tax: f64,
+    pub tax_percentage: Option<f64>,
+    pub foreign_currency_price_before_tax: Option<f64>,
+    pub prescribed_quantity: Option<f64>,
+    pub note: Option<String>,
+    pub location_id: Option<String>,
+    pub item_variant_id: Option<String>,
+    pub donor_link_id: Option<String>,
+    pub vvm_status_id: Option<String>,
+    pub reason_option_id: Option<String>,
+    pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
+}
+
 impl InvoiceLineDomain {
     pub fn new(line: InvoiceLineRow, invoice: InvoiceRow) -> Self {
         Self { line, invoice }
+    }
+
+    /// Update the number of packs and generate appropriate domain events
+    pub fn update_meta_data(&mut self, metadata: InvoiceLineMetadataFields) -> Vec<DomainEvent> {
+        let old_packs = self.line.number_of_packs;
+        self.line.number_of_packs = new_packs;
+
+        self.generate_stock_events(old_packs, new_packs)
     }
 
     /// Update the number of packs and generate appropriate domain events
