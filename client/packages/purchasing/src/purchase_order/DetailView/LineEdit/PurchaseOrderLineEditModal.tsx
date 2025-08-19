@@ -113,7 +113,7 @@ export const PurchaseOrderLineEditModal = ({
           onChangeItem={onChangeItem}
           draft={draft}
           update={updatePatch}
-          status={purchaseOrder.status}
+          // status={purchaseOrder.status} // TODO: The things that show on confirmed status
           isDisabled={isDisabled}
           lines={lines}
         />
