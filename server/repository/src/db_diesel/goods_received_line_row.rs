@@ -6,6 +6,7 @@ use crate::{
     ChangelogTableName, Delete, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 use chrono::NaiveDate;
+use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -133,6 +134,17 @@ impl<'a> GoodsReceivedLineRowRepository<'a> {
             .filter(goods_received_line::id.eq(id))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn find_max_goods_received_line_number(
+        &self,
+        goods_received_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = goods_received_line::table
+            .filter(goods_received_line::goods_received_id.eq(goods_received_id))
+            .select(max(goods_received_line::line_number))
+            .first(self.connection.lock().connection())?;
+        Ok(result)
     }
 }
 

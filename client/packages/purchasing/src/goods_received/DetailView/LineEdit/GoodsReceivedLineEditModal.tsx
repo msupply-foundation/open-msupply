@@ -7,45 +7,62 @@ import {
   DialogButton,
   InlineSpinner,
 } from '@openmsupply-client/common';
-import {
-  GoodsReceivedFragment,
-  GoodsReceivedLineFragment,
-} from '../../api/operations.generated';
 import { useGoodsReceivedLine } from '../../api';
+import { useDraftGoodsReceivedLines } from '../../api/hooks/useDraftGoodsReceivedLines';
 import { GoodsReceivedLineEdit } from './GoodsReceivedLineEdit';
 
 interface GoodsReceivedLineEditModalProps {
   lineId: string;
-  goodsReceived: GoodsReceivedFragment;
   isOpen: boolean;
   onClose: () => void;
 }
 
 export const GoodsReceivedLineEditModal = ({
   lineId,
-  goodsReceived,
   isOpen,
   onClose,
 }: GoodsReceivedLineEditModalProps) => {
   const t = useTranslation();
   const { error } = useNotification();
 
-  const lines = goodsReceived.lines.nodes;
-  const currentLine = lines.find(line => line.id === lineId) as
-    | GoodsReceivedLineFragment
-    | undefined; // Remove once item loader is implemented
+  const {
+    draft,
+    saveGoodsReceivedLines: { saveGoodsReceivedLines, isSaving },
+  } = useGoodsReceivedLine(lineId);
 
-  const isUpdating = false; // remove me when adding update
-  const { draft, updatePatch } = useGoodsReceivedLine(currentLine?.id);
+  const {
+    draftLines,
+    selectedDraftLines,
+    addDraftLine,
+    updateDraftLine,
+    removeDraftLine,
+  } = useDraftGoodsReceivedLines(draft?.purchaseOrderLineId);
 
-  const handleSave = async () => {
+  const handleOkClick = async () => {
     try {
-      // await update();
-      alert('Not implemented yet!');
-      return true;
+      if (!draft) return;
+
+      // Send ALL lines for the entire goods received document to preserve existing lines
+      const lines = draftLines.map(line => ({
+        id: line.id,
+        batch: line.batch,
+        comment: line.comment,
+        expiryDate: line.expiryDate,
+        manufacturerId: line.manufacturerLinkId,
+        numberOfPacksReceived: line.numberOfPacksReceived,
+        receivedPackSize: line.receivedPackSize,
+      }));
+
+      const result = await saveGoodsReceivedLines({
+        goodsReceivedId: draft.goodsReceivedId,
+        purchaseOrderLineId: draft.purchaseOrderLineId,
+        lines,
+      });
+
+      if (result.saveGoodsReceivedLines.id !== null) onClose();
     } catch (e: unknown) {
       if (e instanceof Error) error(e.message)();
-      else error('unknown error')();
+      else error(t('error.cant-save'))();
       return false;
     }
   };
@@ -59,18 +76,15 @@ export const GoodsReceivedLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentLine}
-          onClick={async () => {
-            const success = await handleSave();
-            if (success) onClose();
-          }}
+          disabled={!draft || isSaving}
+          onClick={handleOkClick}
         />
       }
       height={700}
       width={1200}
       enableAutocomplete
     >
-      {isUpdating ? (
+      {isSaving ? (
         <Box
           display="flex"
           flex={1}
@@ -82,10 +96,11 @@ export const GoodsReceivedLineEditModal = ({
         </Box>
       ) : (
         <GoodsReceivedLineEdit
-          isUpdateMode
           draft={draft}
-          currentLine={currentLine}
-          updatePatch={updatePatch}
+          draftLines={selectedDraftLines}
+          addDraftLine={addDraftLine}
+          updateDraftLine={updateDraftLine}
+          removeDraftLine={removeDraftLine}
         />
       )}
     </Modal>

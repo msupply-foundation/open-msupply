@@ -9,16 +9,10 @@ import {
 import { GoodsReceivedLineFragment } from '../../api/operations.generated';
 import { useGoodsReceivedColumns } from '../columns';
 
-// TODO:
-// Add columns - create a useGoodsReceivedColumns hook
-// Define the type for GoodsReceivedLineFragment once available
-// Update Props interface accordingly
-
 interface ContentAreaProps {
   lines: GoodsReceivedLineFragment[];
   isDisabled: boolean;
-  // onAddItem: () => void;
-  // onRowClick: null | ((line: PurchaseOrderLineFragment) => void);
+  onRowClick: null | ((line: GoodsReceivedLineFragment) => void);
 }
 
 const useHighlightPlaceholderRows = (
@@ -39,7 +33,11 @@ const useHighlightPlaceholderRows = (
   }, [rows, setRowStyles]);
 };
 
-export const ContentArea = ({ lines, isDisabled }: ContentAreaProps) => {
+export const ContentArea = ({
+  lines,
+  isDisabled,
+  onRowClick,
+}: ContentAreaProps) => {
   const t = useTranslation();
 
   useHighlightPlaceholderRows(lines);
@@ -49,7 +47,7 @@ export const ContentArea = ({ lines, isDisabled }: ContentAreaProps) => {
   return (
     <DataTable
       id="goods-receiving-detail"
-      onRowClick={() => {}}
+      onRowClick={onRowClick}
       columns={columns}
       data={lines}
       enableColumnSelection
