@@ -61,6 +61,7 @@ pub enum VENCategory {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(table_name = item)]
 pub struct ItemRow {
     pub id: String,
