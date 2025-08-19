@@ -292,9 +292,6 @@ mod insert {
             goods_received_line_2.received_pack_size,
             mock_purchase_order_a_line_2().requested_pack_size
         );
-        assert_eq!(
-            goods_received_line_2.line_number,
-            mock_purchase_order_a_line_2().line_number
-        );
+        assert_eq!(goods_received_line_2.line_number, 2);
     }
 }

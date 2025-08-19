@@ -1,11 +1,9 @@
 use repository::{
-    goods_received_row::GoodsReceivedRowRepository, GoodsReceivedLineRepository,
-    GoodsReceivedLineRowRepository, InvoiceRowRepository, InvoiceType, NumberRowRepository,
-    NumberRowType, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, RepositoryError,
+    goods_received_row::GoodsReceivedRowRepository, GoodsReceivedLineRowRepository,
+    InvoiceRowRepository, InvoiceType, NumberRowRepository, NumberRowType,
+    PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, RepositoryError,
     RequisitionRowRepository, RequisitionType, StocktakeRowRepository, StorageConnection,
 };
-
-use crate::goods_received;
 
 /// Get next number for record type and store
 /// If number for record type and store exists in number table, increment it and return next number
