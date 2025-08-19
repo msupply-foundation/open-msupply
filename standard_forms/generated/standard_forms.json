@@ -8,9 +8,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -60,9 +58,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "requisitionQuery.graphql"
-          ],
+          "query": ["requisitionQuery.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -119,9 +115,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "query_default"
-          ],
+          "query": ["query_default"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -175,9 +169,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "query_default"
-          ],
+          "query": ["query_default"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -231,9 +223,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": "dmFyIGU9ezEwNTplPT57Y29uc3QgdD1lPT57bGV0IHI9e307cmV0dXJuIE9iamVjdC5rZXlzKGUpLmZvckVhY2goZnVuY3Rpb24obyl7IiIhPT1lW29dJiZ2b2lkIDAhPT1lW29dJiZudWxsIT09ZVtvXSYmKCJvYmplY3QiPT10eXBlb2YgZVtvXT9yW29dPXQoZVtvXSk6cltvXT1lW29dKX0pLHJ9LHI9KGUsdCk9Pih0Kz0iIikuc3BsaXQoIi4iKS5yZWR1Y2UoKGUsdCk9PmUmJmVbdF0sZSk7ZS5leHBvcnRzPXtjbGVhblVwT2JqZWN0OnQsY2xlYW5VcE5vZGVzOmU9PntsZXQgcj1bXTtyZXR1cm4gZS5mb3JFYWNoKGU9PnswIT1PYmplY3Qua2V5cyhlKS5sZW5ndGgmJnIucHVzaCh0KGUpKX0pLHJ9LGdldE5lc3RlZFZhbHVlOnIsc29ydE5vZGVzOihlLHQsbyk9Pih0JiZlLnNvcnQoKGUsbik9PntsZXQgcz1yKGUsdCk7InN0cmluZyI9PXR5cGVvZiBzJiYocz1zLnRvTG9jYWxlTG93ZXJDYXNlKCkpO2xldCBhPXIobix0KTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIGEmJihhPWEudG9Mb2NhbGVMb3dlckNhc2UoKSksbnVsbD09cyYmbnVsbD09YT8wOm51bGw9PXM/ImFzYyI9PT1vPy0xOjE6bnVsbD09YT8iYXNjIj09PW8/MTotMTpzPT09YT8wOiJhc2MiPT09bz9zPmE/MTotMTpzPGE/MTotMX0pLGUpfX19LHQ9e307ZnVuY3Rpb24gcihvKXt2YXIgbj10W29dO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgcz10W29dPXtleHBvcnRzOnt9fTtyZXR1cm4gZVtvXShzLHMuZXhwb3J0cyxyKSxzLmV4cG9ydHN9ci5uPWU9Pnt2YXIgdD1lJiZlLl9fZXNNb2R1bGU/KCk9PmUuZGVmYXVsdDooKT0+ZTtyZXR1cm4gci5kKHQse2E6dH0pLHR9LHIuZD0oZSx0KT0+e2Zvcih2YXIgbyBpbiB0KXIubyh0LG8pJiYhci5vKGUsbykmJk9iamVjdC5kZWZpbmVQcm9wZXJ0eShlLG8se2VudW1lcmFibGU6ITAsZ2V0OnRbb119KX0sci5vPShlLHQpPT5PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5LmNhbGwoZSx0KTt2YXIgbz17fTtyLmQobyx7SDooKT0+c30pO3ZhciBuPXIoMTA1KTtmdW5jdGlvbiBzKGUpe2xldCB0PWUuZGF0YS5wdXJjaGFzZU9yZGVyLmxpbmVzLm5vZGVzO2ZvcihsZXQgZSBpbiB0KXtsZXQgcj10W2VdLnByaWNlUGVyVW5pdEFmdGVyRGlzY291bnQqdFtlXS5yZXF1ZXN0ZWROdW1iZXJPZlVuaXRzO3RbZV0ubGluZUNvc3Q9ci50b0ZpeGVkKDIpfWxldCByPSgwLG4uY2xlYW5VcE5vZGVzKShlLmRhdGEucHVyY2hhc2VPcmRlci5saW5lcy5ub2Rlcyk7cmV0dXJuIGUuZGF0YS5wdXJjaGFzZU9yZGVyLmxpbmVzLm5vZGVzPSgwLG4uc29ydE5vZGVzKShyLCJsaW5lTnVtYmVyIiwiYXNjIiksZX1jb25zdCBhPW8uSDtleHBvcnR7YSBhcyBjb252ZXJ0X2RhdGF9Ow==",
           "convert_data_type": "BoaJs"
         },
@@ -283,9 +273,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "query_default"
-          ],
+          "query": ["query_default"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -339,9 +327,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "query_default"
-          ],
+          "query": ["query_default"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -395,9 +381,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -440,9 +424,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "repack.graphql"
-          ],
+          "query": ["repack.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -499,9 +481,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "repack.graphql"
-          ],
+          "query": ["repack.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -558,9 +538,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "stocktake.graphql"
-          ],
+          "query": ["stocktake.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -610,9 +588,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "stocktake.graphql"
-          ],
+          "query": ["stocktake.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -662,9 +638,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "StockVarianceQuery.graphql"
-          ],
+          "query": ["StockVarianceQuery.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -714,9 +688,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "picklist.graphql"
-          ],
+          "query": ["picklist.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -773,9 +745,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "picklist.graphql"
-          ],
+          "query": ["picklist.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -832,9 +802,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "inbound.graphql"
-          ],
+          "query": ["inbound.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -891,9 +859,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "inbound.graphql"
-          ],
+          "query": ["inbound.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -950,9 +916,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "outbound.graphql"
-          ],
+          "query": ["outbound.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -1009,9 +973,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "outbound.graphql"
-          ],
+          "query": ["outbound.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -1068,9 +1030,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "StocktakeDetailQuery.graphql"
-          ],
+          "query": ["StocktakeDetailQuery.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -1127,9 +1087,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "StocktakeDetailQuery.graphql"
-          ],
+          "query": ["StocktakeDetailQuery.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -1186,9 +1144,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
