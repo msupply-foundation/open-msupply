@@ -2666,6 +2666,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "domain"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "env_logger",
+ "log",
+ "repository",
+ "serde",
+ "thiserror 2.0.12",
+ "uuid",
+]
+
+[[package]]
 name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7693,6 +7707,7 @@ dependencies = [
  "bcrypt",
  "boa_engine",
  "chrono",
+ "domain",
  "flate2",
  "headless_chrome",
  "hex",

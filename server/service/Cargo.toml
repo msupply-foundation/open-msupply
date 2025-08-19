@@ -9,6 +9,7 @@ doctest = false
 
 [dependencies]
 repository = { path = "../repository" }
+domain = { path = "../domain" }
 util = { path = "../util" }
 
 anyhow.workspace = true
