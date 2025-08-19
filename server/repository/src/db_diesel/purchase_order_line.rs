@@ -4,10 +4,10 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     item_link,
     purchase_order_row::purchase_order::{self},
-    EqualFilter, Pagination, PurchaseOrderLineRow, PurchaseOrderRow, Sort,
+    DateFilter, EqualFilter, Pagination, PurchaseOrderLineRow, PurchaseOrderRow, Sort,
 };
 
 use diesel::{
@@ -34,6 +34,9 @@ pub struct PurchaseOrderLineFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub requested_pack_size: Option<EqualFilter<f64>>,
     pub item_id: Option<EqualFilter<String>>,
+    pub received_number_of_units: Option<EqualFilter<f64>>,
+    pub requested_delivery_date: Option<DateFilter>,
+    pub expected_delivery_date: Option<DateFilter>,
 }
 
 pub enum PurchaseOrderLineSortField {
@@ -146,6 +149,9 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             store_id,
             requested_pack_size,
             item_id,
+            received_number_of_units,
+            requested_delivery_date,
+            expected_delivery_date,
         } = f;
 
         apply_equal_filter!(query, purchase_order_id, purchase_order::id);
@@ -157,6 +163,21 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             purchase_order_line::requested_pack_size
         );
         apply_equal_filter!(query, item_id, item_link::item_id);
+        apply_equal_filter!(
+            query,
+            received_number_of_units,
+            purchase_order_line::received_number_of_units
+        );
+        apply_date_filter!(
+            query,
+            requested_delivery_date,
+            purchase_order_line::requested_delivery_date
+        );
+        apply_date_filter!(
+            query,
+            expected_delivery_date,
+            purchase_order_line::expected_delivery_date
+        );
     }
 
     query
@@ -178,6 +199,21 @@ impl PurchaseOrderLineFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn requested_delivery_date(mut self, filter: DateFilter) -> Self {
+        self.requested_delivery_date = Some(filter);
+        self
+    }
+
+    pub fn expected_delivery_date(mut self, filter: DateFilter) -> Self {
+        self.expected_delivery_date = Some(filter);
+        self
+    }
+
+    pub fn received_number_of_units(mut self, filter: EqualFilter<f64>) -> Self {
+        self.received_number_of_units = Some(filter);
         self
     }
 }

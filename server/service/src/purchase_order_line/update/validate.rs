@@ -55,6 +55,9 @@ pub fn validate(
                     .clone()
                     .unwrap_or(purchase_order_line.item_link_id.clone()),
             )),
+            received_number_of_units: None,
+            requested_delivery_date: None,
+            expected_delivery_date: None,
         }),
         None,
     )?;

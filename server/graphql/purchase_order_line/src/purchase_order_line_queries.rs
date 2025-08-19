@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{DateFilterInput, EqualFilterBigFloatingNumberInput, EqualFilterStringInput},
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -8,7 +8,7 @@ use graphql_core::{
 };
 use graphql_types::types::{PurchaseOrderLineConnector, PurchaseOrderLineNode};
 use repository::{
-    EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
+    DateFilter, EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
     PurchaseOrderLineSortField,
 };
 use service::auth::{Resource, ResourceAccessRequest};
@@ -33,6 +33,9 @@ pub struct PurchaseOrderLineSortInput {
 pub struct PurchaseOrderLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub purchase_order_id: Option<EqualFilterStringInput>,
+    pub received_number_of_units: Option<EqualFilterBigFloatingNumberInput>,
+    pub requested_delivery_date: Option<DateFilterInput>,
+    pub expected_delivery_date: Option<DateFilterInput>,
 }
 
 #[derive(Union)]
@@ -121,6 +124,9 @@ impl PurchaseOrderLineFilterInput {
             store_id: None,
             requested_pack_size: None,
             item_id: None,
+            received_number_of_units: self.received_number_of_units.map(EqualFilter::from),
+            requested_delivery_date: self.requested_delivery_date.map(DateFilter::from),
+            expected_delivery_date: self.expected_delivery_date.map(DateFilter::from),
         }
     }
 }

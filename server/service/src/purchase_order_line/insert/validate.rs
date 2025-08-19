@@ -60,6 +60,9 @@ pub fn validate(
             store_id: None,
             requested_pack_size: Some(EqualFilter::equal_to_f64(input.requested_pack_size)),
             item_id: Some(EqualFilter::equal_to(&item.id)),
+            received_number_of_units: None,
+            requested_delivery_date: None,
+            expected_delivery_date: None,
         }),
         None,
     )?;
