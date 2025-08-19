@@ -2,11 +2,13 @@ import React from 'react';
 import {
   BasicTextInput,
   Box,
+  BufferedTextArea,
   InputWithLabelRow,
   LocaleKey,
   NumericTextInput,
   NumUtils,
   TypedTFunction,
+  Typography,
   useMediaQuery,
 } from '@openmsupply-client/common';
 
@@ -218,3 +220,61 @@ export const TextInput = ({
     </Box>
   );
 };
+
+interface MultilineTextInputProps {
+  label: string;
+  value: string;
+  onChange?: (value?: string) => void;
+  disabled: boolean;
+}
+
+export const MultilineTextInput = ({
+  label,
+  value,
+  onChange,
+  disabled,
+}: MultilineTextInputProps) => {
+  return (
+    <Box flex={1}>
+      <Typography variant="body1" fontWeight="bold" pt={0.5}>
+        {label}:
+      </Typography>
+      <BufferedTextArea
+        value={value}
+        onChange={e => onChange?.(e.target.value)}
+        slotProps={{
+          input: {
+            sx: {
+              boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
+              borderRadius: 2,
+              backgroundColor: theme =>
+                disabled
+                  ? theme.palette.background.toolbar
+                  : theme.palette.background.white,
+            },
+          },
+        }}
+        disabled={disabled}
+        minRows={3}
+        maxRows={3}
+      />
+    </Box>
+  );
+};
+
+export const createMultilineTextInput =
+  (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
+  (
+    label: LocaleKey,
+    value: string | null | undefined,
+    onChange?: (value?: string) => void
+  ) => {
+    return (
+      <MultilineTextInput
+        disabled={disabled}
+        label={t(label)}
+        value={value ?? ''}
+        onChange={onChange}
+      />
+    );
+  };
