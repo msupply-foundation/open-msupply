@@ -4,9 +4,6 @@ use crate::migrations::sql;
 pub(crate) struct ViewMigration;
 
 impl ViewMigrationFragment for ViewMigration {
-    fn identifier(&self) -> &'static str {
-        "stock_line_ledger_discrepancy"
-    }
 
     fn drop_view(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
@@ -20,12 +17,6 @@ impl ViewMigrationFragment for ViewMigration {
     }
 
     fn rebuild_view(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        let absolute = if cfg!(feature = "postgres") {
-            "@"
-        } else {
-            "abs"
-        };
-
         sql!(
             connection,
             r#"

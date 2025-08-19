@@ -1,14 +1,10 @@
 use crate::{migrations::sql, StorageConnection};
 
 mod stock_line_ledger_discrepancy;
+
 pub(crate) trait ViewMigrationFragment {
-    fn identifier(&self) -> &'static str;
-    fn drop_view(&self, _: &StorageConnection) -> anyhow::Result<()> {
-        Ok(())
-    }
-    fn rebuild_view(&self, _: &StorageConnection) -> anyhow::Result<()> {
-        Ok(())
-    }
+    fn drop_view(&self, _connection: &StorageConnection) -> anyhow::Result<()>;
+    fn rebuild_view(&self, _connection: &StorageConnection) -> anyhow::Result<()>;
 }
 
 // List of all view migrations, they need be in the order required for creation.
@@ -16,7 +12,6 @@ pub(crate) trait ViewMigrationFragment {
 fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
     vec![Box::new(stock_line_ledger_discrepancy::ViewMigration)]
 }
-
 
 pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
     log::info!("Dropping database views...");
@@ -767,10 +762,7 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
     for view in all_views().iter().rev() {
         view.drop_view(connection)?;
     }
-    
     legacy_drop_views(connection)?;
-    
-
     Ok(())
 }
 
