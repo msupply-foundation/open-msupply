@@ -1,80 +1,86 @@
 import React from 'react';
 import {
-  BasicTextInput,
   Box,
   DataTable,
   Divider,
-  Grid,
+  ButtonWithIcon,
+  PlusCircleIcon,
+  useTranslation,
+  ModalRow,
 } from '@openmsupply-client/common';
-import { min } from 'lodash';
+import { StockItemSearchInput } from '@openmsupply-client/system/src';
 import { DraftGoodsReceivedLine } from '../../api/hooks/useGoodsReceivedLine';
-import { GoodsReceivedLineFragment } from '../../api/operations.generated';
+import { PatchDraftLineInput } from '../../api/hooks/useDraftGoodsReceivedLines';
 import { useGoodsReceivedLineEditColumns } from './columns';
 
-export type GoodsReceivedLineItem = Partial<GoodsReceivedLineFragment>;
+export type GoodsReceivedLineItem = Partial<DraftGoodsReceivedLine>;
 
 export interface GoodsReceivedLineEditProps {
-  isUpdateMode?: boolean;
-  currentLine?: GoodsReceivedLineFragment;
   draft?: DraftGoodsReceivedLine | null;
-  updatePatch: (patch: Partial<DraftGoodsReceivedLine>) => void;
+  draftLines: DraftGoodsReceivedLine[];
+  addDraftLine: () => void;
+  updateDraftLine: (patch: PatchDraftLineInput) => void;
+  removeDraftLine: (id: string) => void;
 }
 
 export const GoodsReceivedLineEdit = ({
-  isUpdateMode,
-  currentLine,
   draft,
-  updatePatch,
+  draftLines,
+  addDraftLine,
+  updateDraftLine,
+  removeDraftLine,
 }: GoodsReceivedLineEditProps) => {
-  const showContent = !!draft && !!currentLine;
-
-  const lines: DraftGoodsReceivedLine[] = [];
-  if (draft) lines.push(draft);
+  const t = useTranslation();
+  const showContent = !!draft;
 
   const columns = useGoodsReceivedLineEditColumns({
     draft,
-    updatePatch,
+    updateDraftLine,
+    removeDraftLine,
   });
 
   return (
-    <Grid
-      container
-      spacing={1}
-      direction="row"
-      bgcolor="background.toolbar"
-      padding={2}
-      paddingBottom={1}
-    >
-      <Grid size={12} sx={{ mb: 2 }}>
-        {isUpdateMode && (
-          <BasicTextInput
-            value={`${currentLine?.item?.id} ${currentLine?.item?.name}`}
-            disabled
-            fullWidth
+    <>
+      <ModalRow>
+        <StockItemSearchInput
+          autoFocus={!draft}
+          openOnFocus={!draft}
+          disabled={true} // Only used to edit existing lines
+          currentItemId={draft?.itemId}
+          onChange={() => {}}
+        />
+        <Box flex={1} justifyContent="flex-start" display="flex" my={2}>
+          <ButtonWithIcon
+            onClick={addDraftLine}
+            color="primary"
+            variant="outlined"
+            label={`${t('label.add-batch')} (+)`}
+            Icon={<PlusCircleIcon />}
           />
-        )}
-      </Grid>
-      {showContent && currentLine && (
-        <Box style={{ width: '100%' }}>
-          <Divider margin={10} />
-          <Box
-            style={{
-              maxHeight: min([screen.height - 570, 325]),
-              display: 'flex',
-              flexDirection: 'column',
-              overflowX: 'hidden',
-              overflowY: 'auto',
-            }}
-          >
-            <DataTable
-              id="purchase-order-line-edit"
-              columns={columns}
-              data={lines}
-              dense
-            />
-          </Box>
+        </Box>
+        <Divider margin={10} />
+      </ModalRow>
+      {showContent && (
+        <Box
+          sx={{
+            py: 2,
+            borderWidth: 1,
+            borderStyle: 'solid',
+            borderColor: 'divider',
+            borderRadius: 5,
+            width: '100%',
+            maxWidth: '100%',
+            overflowX: 'auto',
+          }}
+        >
+          <DataTable
+            id="goods-received-line-edit"
+            columns={columns}
+            data={draftLines}
+            dense
+          />
         </Box>
       )}
-    </Grid>
+    </>
   );
 };

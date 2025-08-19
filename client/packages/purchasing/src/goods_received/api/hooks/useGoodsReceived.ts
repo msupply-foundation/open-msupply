@@ -19,9 +19,9 @@ import { useMemo } from 'react';
 import { useGoodsReceivedColumns } from '../../DetailView/columns';
 
 export const useGoodsReceived = () => {
-  const { goodsReceivedId } = useParams();
-  const { error } = useNotification();
   const t = useTranslation();
+  const { error } = useNotification();
+  const { goodsReceivedId } = useParams();
 
   // QUERY
   const { data, isLoading, isError } = useGetById(goodsReceivedId);
@@ -82,7 +82,6 @@ const useGetById = (id?: string) => {
 
   const queryFn = async () => {
     if (!id) return;
-    console.info('Fetching goods received by ID:', id);
     const result = await goodsReceivedApi.goodsReceivedById({
       id,
       storeId,
@@ -179,4 +178,4 @@ const useFilteredAndSortedLines = (
   }, [data, columns, sortBy, itemFilter]);
 
   return { sortedAndFilteredLines, itemFilter, setItemFilter };
-}
+};

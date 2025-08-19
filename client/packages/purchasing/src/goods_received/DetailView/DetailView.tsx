@@ -1,4 +1,4 @@
-import React, { ReactElement, Suspense, useEffect } from 'react';
+import React, { ReactElement, Suspense, useCallback, useEffect } from 'react';
 import {
   AlertModal,
   createQueryParamsStore,
@@ -34,7 +34,19 @@ export const DetailViewInner = (): ReactElement => {
     lines: { sortedAndFilteredLines },
   } = useGoodsReceived();
 
-  const { onClose, isOpen, entity: lineId } = useEditModal<string | null>();
+  const {
+    onOpen,
+    onClose,
+    isOpen,
+    entity: lineId,
+  } = useEditModal<string | null>();
+
+  const onRowClick = useCallback(
+    (line: GoodsReceivedLineFragment) => {
+      onOpen(line.id);
+    },
+    [onOpen]
+  );
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
@@ -50,12 +62,11 @@ export const DetailViewInner = (): ReactElement => {
         <ContentArea
           lines={sortedAndFilteredLines}
           isDisabled={isDisabled}
-          // TODO add onAddItem and onRowClick
+          onRowClick={onRowClick}
         />
       ),
       value: 'General',
     },
-    // Add more tabs as needed
   ];
 
   return (
@@ -72,7 +83,6 @@ export const DetailViewInner = (): ReactElement => {
           {isOpen && lineId && (
             <GoodsReceivedLineEditModal
               lineId={lineId}
-              goodsReceived={data}
               onClose={onClose}
               isOpen={isOpen}
             />

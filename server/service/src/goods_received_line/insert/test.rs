@@ -38,6 +38,7 @@ mod insert {
                     id: "test_id".to_string(),
                     goods_received_id: "non_existent_goods_received".to_string(),
                     purchase_order_line_id: "non_existent_purchase_order_line".to_string(),
+                    ..Default::default()
                 }
             ),
             Err(InsertGoodsReceivedLineError::GoodsReceivedDoesNotExist)
@@ -61,6 +62,7 @@ mod insert {
                     id: "test_id".to_string(),
                     goods_received_id: "goods_received_id".to_string(),
                     purchase_order_line_id: "non_existent_purchase_order_line".to_string(),
+                    ..Default::default()
                 }
             ),
             Err(InsertGoodsReceivedLineError::PurchaseOrderLineDoesNotExist)
@@ -73,6 +75,7 @@ mod insert {
                     id: "test_id".to_string(),
                     goods_received_id: "goods_received_id".to_string(),
                     purchase_order_line_id: mock_purchase_order_a_line_1().id.to_string(),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -85,6 +88,7 @@ mod insert {
                     id: "test_id".to_string(),
                     goods_received_id: "goods_received_id".to_string(),
                     purchase_order_line_id: mock_purchase_order_a_line_1().id.to_string(),
+                    ..Default::default()
                 }
             ),
             Err(InsertGoodsReceivedLineError::GoodsReceivedLineAlreadyExists)
@@ -122,6 +126,7 @@ mod insert {
                     id: "test_id".to_string(),
                     goods_received_id: goods_received.id.clone(),
                     purchase_order_line_id: mock_purchase_order_a_line_1().id.to_string(),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -287,9 +292,6 @@ mod insert {
             goods_received_line_2.received_pack_size,
             mock_purchase_order_a_line_2().requested_pack_size
         );
-        assert_eq!(
-            goods_received_line_2.line_number,
-            mock_purchase_order_a_line_2().line_number
-        );
+        assert_eq!(goods_received_line_2.line_number, 2);
     }
 }

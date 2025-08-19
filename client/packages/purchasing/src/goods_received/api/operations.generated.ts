@@ -20,11 +20,14 @@ export type GoodsReceivedRowFragment = {
 export type GoodsReceivedLineFragment = {
   __typename: 'GoodsReceivedLineNode';
   id: string;
-  lineNumber: number;
   batch?: string | null;
+  comment?: string | null;
+  lineNumber: number;
+  goodsReceivedId: string;
   expiryDate?: string | null;
-  receivedPackSize: number;
+  manufacturerLinkId?: string | null;
   numberOfPacksReceived: number;
+  receivedPackSize: number;
   purchaseOrderLineId: string;
   item: { __typename: 'ItemNode'; id: string; code: string; name: string };
 };
@@ -49,11 +52,14 @@ export type GoodsReceivedFragment = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
-      lineNumber: number;
       batch?: string | null;
+      comment?: string | null;
+      lineNumber: number;
+      goodsReceivedId: string;
       expiryDate?: string | null;
-      receivedPackSize: number;
+      manufacturerLinkId?: string | null;
       numberOfPacksReceived: number;
+      receivedPackSize: number;
       purchaseOrderLineId: string;
       item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
@@ -118,11 +124,14 @@ export type GoodsReceivedByIdQuery = {
           nodes: Array<{
             __typename: 'GoodsReceivedLineNode';
             id: string;
-            lineNumber: number;
             batch?: string | null;
+            comment?: string | null;
+            lineNumber: number;
+            goodsReceivedId: string;
             expiryDate?: string | null;
-            receivedPackSize: number;
+            manufacturerLinkId?: string | null;
             numberOfPacksReceived: number;
+            receivedPackSize: number;
             purchaseOrderLineId: string;
             item: {
               __typename: 'ItemNode';
@@ -146,6 +155,26 @@ export type InsertGoodsReceivedMutation = {
   insertGoodsReceived: { __typename: 'IdResponse'; id: string };
 };
 
+export type UpdateGoodsReceivedMutationVariables = Types.Exact<{
+  input: Types.UpdateGoodsReceivedInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdateGoodsReceivedMutation = {
+  __typename: 'Mutations';
+  updateGoodsReceived: { __typename: 'IdResponse'; id: string };
+};
+
+export type DeleteGoodsReceivedMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeleteGoodsReceivedMutation = {
+  __typename: 'Mutations';
+  deleteGoodsReceived: { __typename: 'DeleteResponse'; id: string };
+};
+
 export type GoodsReceivedLinesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -163,11 +192,14 @@ export type GoodsReceivedLinesQuery = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
-      lineNumber: number;
       batch?: string | null;
+      comment?: string | null;
+      lineNumber: number;
+      goodsReceivedId: string;
       expiryDate?: string | null;
-      receivedPackSize: number;
+      manufacturerLinkId?: string | null;
       numberOfPacksReceived: number;
+      receivedPackSize: number;
       purchaseOrderLineId: string;
       item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
@@ -187,11 +219,14 @@ export type GoodsReceivedLineQuery = {
     nodes: Array<{
       __typename: 'GoodsReceivedLineNode';
       id: string;
-      lineNumber: number;
       batch?: string | null;
+      comment?: string | null;
+      lineNumber: number;
+      goodsReceivedId: string;
       expiryDate?: string | null;
-      receivedPackSize: number;
+      manufacturerLinkId?: string | null;
       numberOfPacksReceived: number;
+      receivedPackSize: number;
       purchaseOrderLineId: string;
       item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
@@ -263,24 +298,14 @@ export type InsertGoodsReceivedLinesFromPurchaseOrderMutation = {
       };
 };
 
-export type DeleteGoodsReceivedMutationVariables = Types.Exact<{
-  id: Types.Scalars['String']['input'];
+export type SaveGoodsReceivedLinesMutationVariables = Types.Exact<{
+  input: Types.SaveGoodsReceivedLinesInput;
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type DeleteGoodsReceivedMutation = {
+export type SaveGoodsReceivedLinesMutation = {
   __typename: 'Mutations';
-  deleteGoodsReceived: { __typename: 'DeleteResponse'; id: string };
-};
-
-export type UpdateGoodsReceivedMutationVariables = Types.Exact<{
-  input: Types.UpdateGoodsReceivedInput;
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-export type UpdateGoodsReceivedMutation = {
-  __typename: 'Mutations';
-  updateGoodsReceived: { __typename: 'IdResponse'; id: string };
+  saveGoodsReceivedLines: { __typename: 'IdResponse'; id: string };
 };
 
 export const GoodsReceivedRowFragmentDoc = gql`
@@ -304,17 +329,21 @@ export const GoodsReceivedLineFragmentDoc = gql`
   fragment GoodsReceivedLine on GoodsReceivedLineNode {
     __typename
     id
-    lineNumber
     batch
+    comment
+    lineNumber
+    goodsReceivedId
     expiryDate
-    receivedPackSize
+    manufacturerLinkId
     numberOfPacksReceived
-    purchaseOrderLineId
+    receivedPackSize
     item {
       id
       code
       name
     }
+    purchaseOrderLineId
+    goodsReceivedId
   }
 `;
 export const GoodsReceivedFragmentDoc = gql`
@@ -391,6 +420,27 @@ export const InsertGoodsReceivedDocument = gql`
   ) {
     insertGoodsReceived(input: $input, storeId: $storeId) {
       ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
+export const UpdateGoodsReceivedDocument = gql`
+  mutation updateGoodsReceived(
+    $input: UpdateGoodsReceivedInput!
+    $storeId: String!
+  ) {
+    updateGoodsReceived(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
+export const DeleteGoodsReceivedDocument = gql`
+  mutation deleteGoodsReceived($id: String!, $storeId: String!) {
+    deleteGoodsReceived(id: $id, storeId: $storeId) {
+      ... on DeleteResponse {
         id
       }
     }
@@ -517,21 +567,12 @@ export const InsertGoodsReceivedLinesFromPurchaseOrderDocument = gql`
     }
   }
 `;
-export const DeleteGoodsReceivedDocument = gql`
-  mutation deleteGoodsReceived($id: String!, $storeId: String!) {
-    deleteGoodsReceived(id: $id, storeId: $storeId) {
-      ... on DeleteResponse {
-        id
-      }
-    }
-  }
-`;
-export const UpdateGoodsReceivedDocument = gql`
-  mutation updateGoodsReceived(
-    $input: UpdateGoodsReceivedInput!
+export const SaveGoodsReceivedLinesDocument = gql`
+  mutation saveGoodsReceivedLines(
+    $input: SaveGoodsReceivedLinesInput!
     $storeId: String!
   ) {
-    updateGoodsReceived(input: $input, storeId: $storeId) {
+    saveGoodsReceivedLines(input: $input, storeId: $storeId) {
       ... on IdResponse {
         id
       }
@@ -602,6 +643,38 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertGoodsReceived',
+        'mutation',
+        variables
+      );
+    },
+    updateGoodsReceived(
+      variables: UpdateGoodsReceivedMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdateGoodsReceivedMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateGoodsReceivedMutation>(
+            UpdateGoodsReceivedDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updateGoodsReceived',
+        'mutation',
+        variables
+      );
+    },
+    deleteGoodsReceived(
+      variables: DeleteGoodsReceivedMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeleteGoodsReceivedMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteGoodsReceivedMutation>(
+            DeleteGoodsReceivedDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deleteGoodsReceived',
         'mutation',
         variables
       );
@@ -686,34 +759,18 @@ export function getSdk(
         variables
       );
     },
-    deleteGoodsReceived(
-      variables: DeleteGoodsReceivedMutationVariables,
+    saveGoodsReceivedLines(
+      variables: SaveGoodsReceivedLinesMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<DeleteGoodsReceivedMutation> {
+    ): Promise<SaveGoodsReceivedLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteGoodsReceivedMutation>(
-            DeleteGoodsReceivedDocument,
+          client.request<SaveGoodsReceivedLinesMutation>(
+            SaveGoodsReceivedLinesDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'deleteGoodsReceived',
-        'mutation',
-        variables
-      );
-    },
-    updateGoodsReceived(
-      variables: UpdateGoodsReceivedMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<UpdateGoodsReceivedMutation> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<UpdateGoodsReceivedMutation>(
-            UpdateGoodsReceivedDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'updateGoodsReceived',
+        'saveGoodsReceivedLines',
         'mutation',
         variables
       );
