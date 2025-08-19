@@ -10,8 +10,8 @@ const SUPPORT_UPLOAD1: (&str, &str) = (
     "support-upload-dfw1-1234-faba934ghlad",
     r#"{
         "id": "support-upload-dfw1-1234-faba934ghlad", 
-        "datetime": "2020-01-22T15:16:00",
-        "site_id": "1",
+        "created_datetime": "2020-01-22T15:16:00",
+        "store_id": "store_a",
         "title": "database error",
         "status": "InProgress",
         "upload_start_datetime": "2020-01-22T15:16:00"
@@ -21,8 +21,8 @@ const SUPPORT_UPLOAD1: (&str, &str) = (
 fn support_upload1() -> SupportUploadRow {
     SupportUploadRow {
         id: SUPPORT_UPLOAD1.0.to_string(),
-        datetime: Defaults::naive_date_time(),
-        site_id: "1".to_string(),
+        created_datetime: Defaults::naive_date_time(),
+        store_id: "store_a".to_string(),
         title: "database error".to_string(),
         status: SupportUploadStatus::InProgress,
         upload_start_datetime: Defaults::naive_date_time(),
