@@ -1,12 +1,15 @@
 import React from 'react';
 import {
+  InputWithLabelRow,
   ModalGridLayout,
   PurchaseOrderNodeStatus,
+  useMediaQuery,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
   ItemStockOnHandFragment,
+  ManufacturerSearchInput,
   StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
@@ -41,10 +44,11 @@ export const PurchaseOrderLineEdit = ({
 }: PurchaseOrderLineEditProps) => {
   const t = useTranslation();
   const showContent = !!draft && !!currentLine;
-  const numericInput = createNumericInput(t, isDisabled);
-  const textInput = createTextInput(t, isDisabled);
+  const isVerticalScreen = useMediaQuery('(max-width:800px)');
+  const numericInput = createNumericInput(t, isDisabled, isVerticalScreen);
+  const textInput = createTextInput(t, isDisabled, isVerticalScreen);
   const multilineTextInput = createMultilineTextInput(t, isDisabled);
-  const dateInput = createDateInput(t, isDisabled);
+  const dateInput = createDateInput(t, isDisabled, isVerticalScreen);
 
   return (
     <>
@@ -105,8 +109,35 @@ export const PurchaseOrderLineEdit = ({
               {textInput(
                 'label.supplier-item-code',
                 draft?.supplierItemCode || '',
-                value => update({ unitOfPacks: value })
+                value => update({ supplierItemCode: value })
               )}
+              <InputWithLabelRow
+                Input={
+                  <ManufacturerSearchInput
+                    disabled={isDisabled}
+                    value={draft?.manufacturer ?? null}
+                    onChange={manufacturer =>
+                      update({ manufacturer: manufacturer || null })
+                    }
+                    textSx={
+                      isDisabled
+                        ? {
+                            backgroundColor: theme =>
+                              theme.palette.background.toolbar,
+                            boxShadow: 'none',
+                          }
+                        : {
+                            backgroundColor: theme =>
+                              theme.palette.background.white,
+                            boxShadow: theme => theme.shadows[2],
+                          }
+                    }
+                    width={185}
+                  />
+                }
+                label={t('label.manufacturer')}
+                labelProps={{ sx: { width: '100%', pl: 1 } }}
+              />
             </>
           ) : null
         }
