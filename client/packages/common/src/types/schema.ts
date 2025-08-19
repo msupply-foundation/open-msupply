@@ -3850,6 +3850,7 @@ export type InsertPurchaseOrderLineFromCsvInput = {
 };
 
 export type InsertPurchaseOrderLineInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
@@ -10352,6 +10353,7 @@ export type UpdatePurchaseOrderLineError = {
 
 export type UpdatePurchaseOrderLineInput = {
   adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
+  comment?: InputMaybe<NullableStringUpdate>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;

@@ -45,6 +45,8 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   manufacturer: null,
   note: null,
   unitOfPacks: null,
+  supplierItemCode: null,
+  comment: null,
   // This value not actually saved to DB
   discountPercentage: 0,
   numberOfPacks: 0,
@@ -122,6 +124,8 @@ export function usePurchaseOrderLine(id?: string) {
       manufacturerId: setNullableInput('id', draft.manufacturer),
       note: setNullableInput('note', draft),
       unitOfPacks: draft.unitOfPacks,
+      supplierItemCode: setNullableInput('supplierItemCode', draft),
+      comment: setNullableInput('comment', draft),
     };
     return await updatePurchaseOrderLine(input);
   };
@@ -196,6 +200,8 @@ const useCreate = () => {
         manufacturerId: draft.manufacturer?.id,
         note: draft.note,
         unitOfPacks: draft.unitOfPacks,
+        supplierItemCode: draft.supplierItemCode,
+        comment: draft.comment,
       },
     });
   };

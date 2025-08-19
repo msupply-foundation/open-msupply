@@ -18,11 +18,10 @@ import {
 
 const commonInputContainerSx = {
   marginBottom: 1,
-  px: 1,
   flex: 1,
 };
 
-export const inputSlotProps = (disabled: boolean) => ({
+const inputSlotProps = (disabled: boolean) => ({
   input: {
     sx: {
       boxShadow: (theme: Theme) => (!disabled ? theme.shadows[2] : 'none'),
@@ -43,7 +42,7 @@ export const createLabelRowSx = (isVerticalScreen: boolean) => ({
   alignItems: { xs: 'flex-start', md: 'center' },
 });
 
-export const commonLabelProps = {
+const commonLabelProps = {
   sx: {
     width: {
       xs: '100%',
