@@ -11,7 +11,11 @@ import { GoodsReceivedLineFragment } from '../operations.generated';
 
 export type DraftGoodsReceivedLine = Omit<
   GoodsReceivedLineFragment,
-  '__typename'
+  | '__typename'
+  | 'item'
+  | 'lineNumber'
+  | 'receivedPackSize'
+  | 'numberOfPacksReceived'
 > & {
   goodsReceivedId: string;
   purchaseOrderLineId: string;

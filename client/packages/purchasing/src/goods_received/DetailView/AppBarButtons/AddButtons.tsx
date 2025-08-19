@@ -67,7 +67,11 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
         goodsReceivedId,
       });
     } catch (e) {
-      console.error('Failed to create lines from purchase order:', e);
+      error(
+        t('error.failed-to-add-goods-received-line', {
+          message: e instanceof Error ? e.message : 'unknown error',
+        })
+      )();
     }
   };
 

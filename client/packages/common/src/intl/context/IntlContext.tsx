@@ -18,7 +18,7 @@ export const CUSTOM_TRANSLATIONS_NAMESPACE = 'custom-translations';
 const defaultNS = 'common';
 const minuteInMilliseconds = 60 * 1000;
 const isDevelopment = process.env['NODE_ENV'] === 'development';
-// TODO dont cache pref translation
+
 const expirationTime = isDevelopment ? 0 : 7 * 24 * 60 * minuteInMilliseconds; // Cache for 7 days, on rebuild we should get a new language version so we can use a reasonably long cache
 
 const languageVersion =
