@@ -1,769 +1,788 @@
 use crate::{migrations::sql, StorageConnection};
 
+mod stock_line_ledger_discrepancy;
+pub(crate) trait ViewMigrationFragment {
+    fn identifier(&self) -> &'static str;
+    fn drop_view(&self, _: &StorageConnection) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn rebuild_view(&self, _: &StorageConnection) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
+
+// pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
+//     log::info!("Dropping database views...");
+//     sql!(
+//         connection,
+//         // Drop order is important here, as some views depend on others. Please
+//         // check when adding new views.
+//         r#"
+//       DROP VIEW IF EXISTS stock_line_ledger_discrepancy;
+//       DROP VIEW IF EXISTS purchase_order_stats;
+//       DROP VIEW IF EXISTS invoice_stats;
+//       DROP VIEW IF EXISTS consumption;
+//       DROP VIEW IF EXISTS replenishment;
+//       DROP VIEW IF EXISTS adjustments;
+//       DROP VIEW IF EXISTS item_ledger;
+//       DROP VIEW IF EXISTS stock_line_ledger;
+//       DROP VIEW IF EXISTS stock_movement;
+//       DROP VIEW IF EXISTS outbound_shipment_stock_movement;
+//       DROP VIEW IF EXISTS inbound_shipment_stock_movement;
+//       DROP VIEW IF EXISTS inventory_adjustment_stock_movement;
+//       DROP VIEW IF EXISTS invoice_line_stock_movement;
+//       DROP VIEW IF EXISTS stock_on_hand;
+//       DROP VIEW IF EXISTS changelog_deduped;
+//       DROP VIEW IF EXISTS latest_document;
+//       DROP VIEW IF EXISTS contact_trace_name_link_view;
+//       DROP VIEW IF EXISTS latest_asset_log;
+//       DROP VIEW IF EXISTS report_encounter;
+//       DROP VIEW IF EXISTS report_patient;
+//       DROP VIEW IF EXISTS report_program_enrolment;
+//       DROP VIEW IF EXISTS report_program_event;
+//       DROP VIEW IF EXISTS report_store;
+//       DROP VIEW IF EXISTS report_document;
+//       DROP VIEW IF EXISTS requisitions_in_period;
+//       DROP VIEW IF EXISTS store_items;
+//       DROP VIEW IF EXISTS vaccination_card;
+//       DROP VIEW IF EXISTS vaccination_course;
+//     "#
+//     )?;
+//
+//     Ok(())
+// }
+
+// pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()> {
+//     log::info!("Re-creating database views...");
+//
+//     let absolute = if cfg!(feature = "postgres") {
+//         "@"
+//     } else {
+//         "abs"
+//     };
+//
+//     sql!(
+//         connection,
+//         r#"
+//   CREATE VIEW invoice_line_stock_movement AS
+//     SELECT
+//         invoice_line.id,
+//         invoice_line.invoice_id,
+//         invoice_line.item_name,
+//         invoice_line.item_code,
+//         invoice_line.stock_line_id,
+//         invoice_line.location_id,
+//         invoice_line.batch,
+//         invoice_line.expiry_date,
+//         invoice_line.cost_price_per_pack,
+//         invoice_line.sell_price_per_pack,
+//         invoice_line.total_before_tax,
+//         invoice_line.total_after_tax,
+//         invoice_line.tax_percentage,
+//         invoice_line.number_of_packs,
+//         invoice_line.pack_size,
+//         invoice_line.note,
+//         invoice_line.type,
+//         invoice_line.reason_option_id,
+//         invoice_line.foreign_currency_price_before_tax,
+//         invoice_line.item_link_id,
+//         item_link.item_id AS item_id,
+//         CASE
+//             WHEN "type" = 'STOCK_IN' THEN (number_of_packs * pack_size)
+//             WHEN "type" = 'STOCK_OUT' THEN (number_of_packs * pack_size) * -1
+//         END AS quantity_movement
+//     FROM
+//         invoice_line
+//         JOIN item_link ON item_link.id = invoice_line.item_link_id
+//     WHERE
+//         number_of_packs > 0
+//         AND "type" IN ('STOCK_IN', 'STOCK_OUT');
+//
+//   -- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockMovement.4dm
+//   -- TODO are all of sc, ci, si type transactions synced, and are all of the dates set correctly ?
+//   CREATE VIEW outbound_shipment_stock_movement AS
+//     SELECT
+//         'n/a' as id,
+//         quantity_movement as quantity,
+//         item_id,
+//         store_id,
+//         picked_datetime as datetime
+//     FROM invoice_line_stock_movement
+//     JOIN invoice
+//         ON invoice_line_stock_movement.invoice_id = invoice.id
+//     WHERE invoice.type = 'OUTBOUND_SHIPMENT'
+//         AND picked_datetime IS NOT NULL;
+//
+//   CREATE VIEW inbound_shipment_stock_movement AS
+//     SELECT
+//         'n/a' as id,
+//         quantity_movement as quantity,
+//         item_id,
+//         store_id,
+//         received_datetime as datetime
+//     FROM invoice_line_stock_movement
+//     JOIN invoice
+//         ON invoice_line_stock_movement.invoice_id = invoice.id
+//     WHERE invoice.type = 'INBOUND_SHIPMENT'
+//         AND received_datetime IS NOT NULL;
+//
+//   CREATE VIEW inventory_adjustment_stock_movement AS
+//     SELECT
+//         'n/a' as id,
+//         quantity_movement as quantity,
+//         item_id,
+//         store_id,
+//         verified_datetime as datetime
+//     FROM invoice_line_stock_movement
+//     JOIN invoice
+//         ON invoice_line_stock_movement.invoice_id = invoice.id
+//     WHERE invoice.type IN ('INVENTORY_REDUCTION', 'INVENTORY_ADDITION')
+//         AND verified_datetime IS NOT NULL;
+//
+//   CREATE VIEW stock_movement AS
+//     WITH all_movements AS (
+//       SELECT
+//         invoice_line_stock_movement.id AS id,
+//         quantity_movement AS quantity,
+//         invoice_line_stock_movement.item_link_id AS item_id,
+//         invoice.store_id as store_id,
+//         CASE WHEN invoice.type IN (
+//             'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN',
+//             'PRESCRIPTION'
+//         ) THEN picked_datetime
+//                     WHEN invoice.type IN (
+//             'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
+//         ) THEN received_datetime
+//                     WHEN invoice.type IN (
+//             'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
+//         ) THEN verified_datetime
+//             END AS datetime,
+//         name,
+//         invoice.type AS invoice_type,
+//         invoice.invoice_number AS invoice_number,
+//         invoice.id AS invoice_id,
+//         reason_option.reason AS reason,
+//         stock_line_id,
+//         invoice_line_stock_movement.expiry_date AS expiry_date,
+//         invoice_line_stock_movement.batch AS batch,
+//         invoice_line_stock_movement.cost_price_per_pack AS cost_price_per_pack,
+//         invoice_line_stock_movement.sell_price_per_pack AS sell_price_per_pack,
+//         invoice.status AS invoice_status,
+//         invoice_line_stock_movement.total_before_tax AS total_before_tax,
+//         invoice_line_stock_movement.pack_size as pack_size,
+//         invoice_line_stock_movement.number_of_packs as number_of_packs
+//     FROM
+//         invoice_line_stock_movement
+//         LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
+//         LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
+//         JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
+//         JOIN name_link ON invoice.name_link_id = name_link.id
+//         JOIN name ON name_link.name_id = name.id
+//     )
+//     SELECT * FROM all_movements
+//     WHERE datetime IS NOT NULL;
+//
+//
+//   -- Separate views for stock & item ledger, so the running balance window functions are only executed when required
+//
+//   CREATE VIEW stock_line_ledger AS
+//     WITH movements_with_precedence AS (
+//       SELECT *,
+//         CASE
+//           WHEN invoice_type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
+//           WHEN invoice_type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
+//           ELSE 3
+//         END AS type_precedence
+//       FROM stock_movement
+//       WHERE stock_line_id IS NOT NULL
+//     )
+//     SELECT *,
+//       SUM(quantity) OVER (
+//         PARTITION BY store_id, stock_line_id
+//         ORDER BY datetime, type_precedence
+//         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+//       ) AS running_balance
+//     FROM movements_with_precedence
+//     ORDER BY datetime, type_precedence;
+//
+//   CREATE VIEW stock_line_ledger_discrepancy AS
+//   WITH
+//   allocated_not_picked AS (
+//       SELECT stock_line_id,
+//           SUM(number_of_packs * pack_size) AS q
+//       FROM invoice_line
+//           JOIN invoice on invoice.id = invoice_line.invoice_id
+//       WHERE invoice_line.type = 'STOCK_OUT'
+//           AND invoice.status IN ('NEW', 'ALLOCATED')
+//       GROUP BY 1
+//   ),
+//   max_ledger_datetime AS (
+//       SELECT stock_line_id,
+//           MAX(datetime) AS dt
+//       FROM stock_movement
+//       GROUP BY 1
+//   ),
+//   running_balance AS (
+//       SELECT stock_line_ledger.stock_line_id,
+//           running_balance AS q
+//       FROM stock_line_ledger
+//           JOIN max_ledger_datetime on stock_line_ledger.stock_line_id = max_ledger_datetime.stock_line_id
+//           AND stock_line_ledger.datetime = max_ledger_datetime.dt
+//   ),
+//   current_balance AS (
+//       SELECT stock_line.id AS stock_line_id,
+//           store_id,
+//           available_number_of_packs * pack_size AS a_q,
+//           total_number_of_packs * pack_size AS t_q
+//       from stock_line
+//   )
+//   SELECT DISTINCT stock_line_id
+//   FROM stock_line_ledger
+//   WHERE running_balance < 0
+//   UNION
+//   SELECT running_balance.stock_line_id
+//   FROM running_balance
+//       JOIN current_balance ON running_balance.stock_line_id = current_balance.stock_line_id
+//       LEFT JOIN allocated_not_picked ON running_balance.stock_line_id = allocated_not_picked.stock_line_id
+//   WHERE NOT(
+//           running_balance.q = current_balance.t_q
+//           AND (
+//               (
+//                   allocated_not_picked.q IS NULL
+//                   AND current_balance.t_q = current_balance.a_q
+//               )
+//               OR (
+//                   allocated_not_picked.q IS NOT NULL
+//                   AND current_balance.a_q + allocated_not_picked.q = current_balance.t_q
+//               )
+//           )
+//       );
+//
+//   CREATE VIEW item_ledger AS
+//     WITH all_movements AS (
+//       SELECT
+//         invoice_line_stock_movement.id AS id,
+//         quantity_movement AS movement_in_units,
+//         invoice_line_stock_movement.item_link_id AS item_id,
+//         invoice.store_id as store_id,
+//         CASE WHEN invoice.type IN (
+//           'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION'
+//         ) THEN picked_datetime
+//           WHEN invoice.type IN (
+//             'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
+//         ) THEN received_datetime
+//           WHEN invoice.type IN (
+//             'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
+//         ) THEN verified_datetime
+//         ELSE NULL
+//         END AS datetime,
+//         name,
+//         invoice.type AS invoice_type,
+//         invoice.invoice_number AS invoice_number,
+//         invoice.id AS invoice_id,
+//         reason_option.reason AS reason,
+//         stock_line_id,
+//         invoice_line_stock_movement.expiry_date AS expiry_date,
+//         invoice_line_stock_movement.batch AS batch,
+//         invoice_line_stock_movement.cost_price_per_pack AS cost_price_per_pack,
+//         invoice_line_stock_movement.sell_price_per_pack AS sell_price_per_pack,
+//         invoice.status AS invoice_status,
+//         invoice_line_stock_movement.total_before_tax AS total_before_tax,
+//         invoice_line_stock_movement.pack_size as pack_size,
+//         invoice_line_stock_movement.number_of_packs as number_of_packs,
+//         CASE
+//           WHEN invoice.type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
+//           WHEN invoice.type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
+//           ELSE 3
+//         END AS type_precedence
+//     FROM
+//         invoice_line_stock_movement
+//         LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
+//         LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
+//         JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
+//         JOIN name_link ON invoice.name_link_id = name_link.id
+//         JOIN name ON name_link.name_id = name.id
+//     )
+//     SELECT *,
+//       SUM(movement_in_units) OVER (
+//         PARTITION BY store_id, item_id
+//         ORDER BY datetime, id, type_precedence
+//         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+//       ) AS running_balance
+//     FROM all_movements
+//     WHERE datetime IS NOT NULL
+//     ORDER BY datetime, id, type_precedence;
+//
+//   CREATE VIEW replenishment AS
+//     SELECT
+//         'n/a' as id,
+//         items_and_stores.item_id AS item_id,
+//         items_and_stores.store_id AS store_id,
+//         {absolute}(COALESCE(stock_movement.quantity, 0)) AS quantity,
+//         date(stock_movement.datetime) AS date
+//     FROM
+//         (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
+//     LEFT OUTER JOIN stock_movement
+//         ON stock_movement.item_id = items_and_stores.item_id
+//             AND stock_movement.store_id = items_and_stores.store_id
+//     WHERE invoice_type='INBOUND_SHIPMENT';
+//
+//   CREATE VIEW adjustments AS
+//     SELECT
+//         'n/a' as id,
+//         items_and_stores.item_id AS item_id,
+//         items_and_stores.store_id AS store_id,
+//         stock_movement.quantity AS quantity,
+//         date(stock_movement.datetime) AS date
+//     FROM
+//         (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
+//     LEFT OUTER JOIN stock_movement
+//         ON stock_movement.item_id = items_and_stores.item_id
+//             AND stock_movement.store_id = items_and_stores.store_id
+//     WHERE invoice_type='CUSTOMER_RETURN'
+//       OR invoice_type='SUPPLIER_RETURN'
+//       OR invoice_type='INVENTORY_ADDITION'
+//       OR invoice_type='INVENTORY_REDUCTION';
+//
+//
+//   -- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockConsumption.4dm
+//   -- TODO sc type ?
+//   CREATE VIEW consumption AS
+//     SELECT
+//         'n/a' as id,
+//         items_and_stores.item_id AS item_id,
+//         items_and_stores.store_id AS store_id,
+//         {absolute}(COALESCE(stock_movement.quantity, 0)) AS quantity,
+//         date(stock_movement.datetime) AS date
+//     FROM
+//         (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
+//     LEFT OUTER JOIN stock_movement
+//         ON stock_movement.item_id = items_and_stores.item_id
+//             AND stock_movement.store_id = items_and_stores.store_id
+//     WHERE invoice_type='OUTBOUND_SHIPMENT' OR invoice_type='PRESCRIPTION';
+//
+//   CREATE VIEW store_items AS
+//     SELECT i.id as item_id, sl.store_id, sl.pack_size, sl.available_number_of_packs, sl.total_number_of_packs
+//     FROM
+//       item i
+//       LEFT JOIN item_link il ON il.item_id = i.id
+//       LEFT JOIN stock_line sl ON sl.item_link_id = il.id
+//       LEFT JOIN store s ON s.id = sl.store_id;
+//
+//   CREATE VIEW stock_on_hand AS
+//     SELECT
+//       'n/a' AS id,
+//       items_and_stores.item_id AS item_id,
+//       items_and_stores.item_name AS item_name,
+//       items_and_stores.store_id AS store_id,
+//       COALESCE(stock.available_stock_on_hand, 0) AS available_stock_on_hand,
+//       COALESCE(stock.total_stock_on_hand, 0) AS total_stock_on_hand
+//     FROM
+//       (
+//         SELECT
+//           item.id AS item_id,
+//           item.name AS item_name,
+//           store.id AS store_id
+//         FROM
+//           item,
+//           store
+//       ) AS items_and_stores
+//       LEFT OUTER JOIN (
+//         SELECT
+//           item_id,
+//           store_id,
+//           SUM(pack_size * available_number_of_packs) AS available_stock_on_hand,
+//           SUM(pack_size * total_number_of_packs) AS total_stock_on_hand
+//         FROM
+//           store_items
+//         WHERE
+//           store_items.available_number_of_packs > 0 OR store_items.total_number_of_packs > 0
+//         GROUP BY
+//           item_id,
+//           store_id
+//       ) AS stock ON stock.item_id = items_and_stores.item_id
+//       AND stock.store_id = items_and_stores.store_id;
+//
+//     -- View of the changelog that only contains the most recent changes to a row, i.e. previous row
+//     -- edits are removed.
+//     -- Note, an insert + delete will show up as an orphaned delete.
+//   CREATE VIEW changelog_deduped AS
+//     SELECT c.cursor,
+//         c.table_name,
+//         c.record_id,
+//         c.row_action,
+//         c.name_link_id,
+//         c.store_id,
+//         c.is_sync_update,
+//         c.source_site_id
+//     FROM (
+//         SELECT record_id, MAX(cursor) AS max_cursor
+//         FROM changelog
+//         GROUP BY record_id
+//     ) grouped
+//     INNER JOIN changelog c
+//         ON c.record_id = grouped.record_id AND c.cursor = grouped.max_cursor
+//     ORDER BY c.cursor;
+//
+//   CREATE VIEW latest_document
+//     AS
+//         SELECT d.*
+//         FROM (
+//         SELECT name, MAX(datetime) AS datetime
+//             FROM document
+//             GROUP BY name
+//     ) grouped
+//     INNER JOIN document d
+//     ON d.name = grouped.name AND d.datetime = grouped.datetime;
+//
+//   CREATE VIEW latest_asset_log AS
+//     SELECT al.id,
+//       al.asset_id,
+//       al.user_id,
+//       al.comment,
+//       al.type,
+//       al.log_datetime,
+//       al.status,
+//       al.reason_id
+//     FROM (
+//       SELECT asset_id, MAX(log_datetime) AS latest_log_datetime
+//       FROM asset_log
+//       GROUP BY asset_id
+//     ) grouped
+//     INNER JOIN asset_log al
+//       ON al.asset_id = grouped.asset_id AND al.log_datetime = grouped.latest_log_datetime;
+//
+//   -- This view contains the latest document versions
+//   CREATE VIEW report_document AS
+//     SELECT
+//         d.name,
+//         d.datetime,
+//         d.type,
+//         d.data,
+//         nl.name_id as owner_name_id
+//     FROM (
+//         SELECT name as doc_name, MAX(datetime) AS doc_time
+//         FROM document
+//         GROUP BY name
+//     ) grouped
+//     INNER JOIN document d ON d.name = grouped.doc_name AND d.datetime = grouped.doc_time
+//     LEFT JOIN name_link nl ON nl.id = d.owner_name_link_id
+//     WHERE d.status != 'DELETED';
+//
+//   CREATE VIEW report_encounter AS
+//     SELECT
+//       encounter.id,
+//       encounter.created_datetime,
+//       encounter.start_datetime,
+//       encounter.end_datetime,
+//       encounter.status,
+//       encounter.store_id,
+//       nl.name_id as patient_id,
+//       encounter.document_type,
+//       doc.data as document_data
+//     FROM encounter
+//     LEFT JOIN name_link nl ON nl.id = encounter.patient_link_id
+//     LEFT JOIN report_document doc ON doc.name = encounter.document_name;
+//
+//   CREATE VIEW report_store AS
+//     SELECT
+//         store.id,
+//         store.code,
+//         store.store_mode,
+//         store.logo,
+//         name.name
+//     FROM store
+//     JOIN name_link ON store.name_link_id = name_link.id
+//     JOIN name ON name_link.name_id = name.id;
+//
+//   CREATE VIEW report_patient AS
+//     SELECT
+//         id,
+//         code,
+//         national_health_number AS code_2,
+//         first_name,
+//         last_name,
+//         gender,
+//         date_of_birth,
+//         address1,
+//         phone,
+//         date_of_death,
+//         is_deceased
+//     FROM name;
+//
+//   CREATE VIEW report_program_event AS
+//     SELECT
+//         e.id,
+//         nl.name_id as patient_id,
+//         e.datetime,
+//         e.active_start_datetime,
+//         e.active_end_datetime,
+//         e.document_type,
+//         e.document_name,
+//         e.type,
+//         e.data
+//     FROM program_event e
+//     LEFT JOIN name_link nl ON nl.id = e.patient_link_id;
+//
+//   CREATE VIEW report_program_enrolment AS
+//     SELECT
+//         program_enrolment.id,
+//         program_enrolment.document_type,
+//         program_enrolment.enrolment_datetime,
+//         program_enrolment.program_enrolment_id,
+//         program_enrolment.status,
+//         nl.name_id as patient_id,
+//         doc.data as document_data
+//     FROM program_enrolment
+//     LEFT JOIN name_link nl ON nl.id = program_enrolment.patient_link_id
+//     LEFT JOIN report_document doc ON doc.name = program_enrolment.document_name;
+//
+//   CREATE VIEW requisitions_in_period AS
+//     SELECT
+//       'n/a' as id,
+//       r.program_id,
+//       r.period_id,
+//       r.store_id,
+//       r.order_type,
+//       r.type,
+//       n.id AS other_party_id,
+//       count(*) as count
+//     FROM requisition r
+//     INNER JOIN name_link nl ON r.name_link_id = nl.id
+//     INNER JOIN name n ON nl.name_id = n.id
+//     WHERE r.order_type IS NOT NULL
+//     GROUP BY 1,2,3,4,5,6,7;
+//
+//   CREATE VIEW vaccination_card AS
+//     SELECT
+//       vcd.id || '_' || pe.id AS id,
+//       vcd.id as vaccine_course_dose_id,
+//       vcd.label,
+//       vcd.min_interval_days,
+//       vcd.min_age,
+//       vcd.max_age,
+//       vcd.custom_age_label,
+//       vc.id as vaccine_course_id,
+//       v.id as vaccination_id,
+//       v.vaccination_date,
+//       v.given,
+//       v.stock_line_id,
+//       n.id AS facility_name_id,
+//       v.facility_free_text,
+//       s.batch,
+//       pe.id as program_enrolment_id
+//     FROM vaccine_course_dose vcd
+//     JOIN vaccine_course vc
+//       ON vcd.vaccine_course_id = vc.id
+//     JOIN program_enrolment pe
+//       ON pe.program_id = vc.program_id
+//     LEFT JOIN vaccination v
+//       ON v.vaccine_course_dose_id = vcd.id AND v.program_enrolment_id = pe.id
+//     LEFT JOIN name_link nl
+//       ON v.facility_name_link_id = nl.id
+//     LEFT JOIN name n
+//       ON nl.name_id = n.id
+//     LEFT JOIN stock_line s
+//       ON v.stock_line_id = s.id
+//     -- Only show doses that haven't been deleted, unless they have a vaccination
+//     WHERE vcd.deleted_datetime IS NULL OR v.id IS NOT NULL;
+//
+// CREATE VIEW vaccination_course AS
+//     SELECT
+//       vc.id,
+//       vc.name AS vaccine_course_name,
+//       coverage_rate,
+//       wastage_rate,
+//       vcd.id AS vaccine_course_dose_id,
+//       label AS dose_label,
+//       min_interval_days,
+//       min_age,
+//       max_age,
+//       custom_age_label,
+//       vci.id AS vaccine_course_item_id,
+//       item.id AS item_id,
+//       il.id AS item_link_id,
+//       item.name AS item_name,
+//       item.code AS item_code,
+//       item.type AS item_type,
+//       item.default_pack_size,
+//       item.is_vaccine AS is_vaccine_item,
+//       item.vaccine_doses,
+//       item.unit_id AS unit_id,
+//       unit.name AS unit,
+//       unit."index" AS unit_index,
+//       d.id AS demographic_id,
+//       d.name AS demographic_name,
+//       d.population_percentage AS population_percentage,
+//       p.id AS program_id,
+//       p.name AS program_name
+//     FROM
+//       vaccine_course vc
+//       JOIN vaccine_course_dose vcd ON vc.id = vcd.vaccine_course_id
+//       JOIN vaccine_course_item vci ON vci.vaccine_course_id = vc.id
+//       JOIN item_link il ON vci.item_link_id = il.id
+//       JOIN item ON item.id = il.item_id
+//       LEFT JOIN unit ON item.unit_id = unit.id
+//       LEFT JOIN demographic d ON d.id = vc.demographic_id
+//       JOIN PROGRAM p ON p.id = vc.program_id
+//     WHERE
+//       vc.deleted_datetime IS NULL
+//       AND vcd.deleted_datetime IS NULL
+//       AND vci.deleted_datetime IS NULL;
+//
+//     CREATE VIEW purchase_order_stats AS
+//         SELECT
+//             po.id AS purchase_order_id,
+//             COALESCE(SUM(
+//                 CASE
+//                     WHEN pol.adjusted_number_of_units IS NOT NULL
+//                     THEN pol.adjusted_number_of_units * pol.price_per_unit_before_discount
+//                     ELSE pol.requested_number_of_units * pol.price_per_unit_before_discount
+//                 END
+//             ), 0) AS line_total_before_discount,
+//             COALESCE(SUM(
+//                 CASE
+//                     WHEN pol.adjusted_number_of_units IS NOT NULL
+//                     THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
+//                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
+//                 END
+//
+//             ), 0) AS line_total_after_discount,
+//             COALESCE(SUM(
+//                 CASE
+//                     WHEN pol.adjusted_number_of_units IS NOT NULL
+//                     THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
+//                     ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
+//                 END
+//             ), 0) * (1-(COALESCE(po.supplier_discount_percentage, 0)/100)) AS order_total_after_discount
+//         FROM
+//             purchase_order po JOIN purchase_order_line pol on po.id = pol.purchase_order_id
+//         GROUP BY
+//             po.id;
+//     "#,
+//     )?;
+//
+//     if cfg!(not(feature = "postgres")) {
+//         sql!(
+//             connection,
+//             r#"
+//        CREATE VIEW invoice_stats AS
+//         SELECT
+// 	        invoice_line.invoice_id,
+//             SUM(invoice_line.total_before_tax) AS total_before_tax,
+// 	        SUM(invoice_line.total_after_tax) AS total_after_tax,
+//             (SUM(invoice_line.total_after_tax) / SUM(invoice_line.total_before_tax) - 1) * 100 AS tax_percentage,
+//             SUM(invoice_line.foreign_currency_price_before_tax) + (SUM(invoice_line.foreign_currency_price_before_tax) * COALESCE(invoice_line.tax_percentage, 0) / 100) AS foreign_currency_total_after_tax,
+// 	        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
+// 	        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_after_tax,
+// 	        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_before_tax,
+// 	         COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax
+//         FROM
+// 	        invoice_line
+//         GROUP BY
+// 	        invoice_line.invoice_id;
+//
+//     CREATE VIEW contact_trace_name_link_view AS
+//       SELECT
+//         ct.id AS id,
+//         ct.program_id AS program_id,
+//         ct.document_id AS document_id,
+//         ct.datetime AS datetime,
+//         ct.contact_trace_id AS contact_trace_id,
+//         patient_name_link.name_id AS patient_id,
+//         contact_patient_name_link.name_id AS contact_patient_id,
+//         ct.first_name AS first_name,
+//         ct.last_name AS last_name,
+//         ct.gender AS gender,
+//         ct.date_of_birth AS date_of_birth,
+//         ct.store_id AS store_id,
+//         ct.relationship AS relationship
+//       FROM contact_trace ct
+//       INNER JOIN name_link as patient_name_link
+//         ON ct.patient_link_id = patient_name_link.id
+//       LEFT JOIN name_link as contact_patient_name_link
+//         ON ct.contact_patient_link_id = contact_patient_name_link.id;
+//       "#
+//         )?;
+//     }
+//
+//     if cfg!(feature = "postgres") {
+//         sql!(
+//             connection,
+//             r#"
+//               CREATE VIEW invoice_stats AS
+//         SELECT
+// 	        invoice_line.invoice_id,
+//             SUM(invoice_line.total_before_tax) AS total_before_tax,
+// 	        SUM(invoice_line.total_after_tax) AS total_after_tax,
+//             COALESCE((SUM(invoice_line.total_after_tax) / NULLIF(SUM(invoice_line.total_before_tax), 0) - 1), 0) * 100 AS tax_percentage,
+//             COALESCE(SUM(invoice_line.foreign_currency_price_before_tax), 0) + (COALESCE(SUM(invoice_line.foreign_currency_price_before_tax), 0) * (COALESCE((SUM(invoice_line.total_after_tax) / NULLIF(SUM(invoice_line.total_before_tax), 0) - 1), 0))) AS foreign_currency_total_after_tax,
+//             COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
+// 	        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_after_tax,
+// 	        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_before_tax,
+// 	         COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax
+//         FROM
+// 	        invoice_line
+//         GROUP BY
+// 	        invoice_line.invoice_id;
+//
+//     CREATE VIEW contact_trace_name_link_view AS
+//       SELECT
+//         ct.id AS id,
+//         ct.program_id AS program_id,
+//         ct.document_id AS document_id,
+//         ct.datetime AS datetime,
+//         ct.contact_trace_id AS contact_trace_id,
+//         patient_name_link.name_id AS patient_id,
+//         contact_patient_name_link.name_id AS contact_patient_id,
+//         ct.first_name AS first_name,
+//         ct.last_name AS last_name,
+//         ct.gender AS gender,
+//         CAST(ct.date_of_birth AS DATE) AS date_of_birth,
+//         ct.store_id AS store_id,
+//         ct.relationship AS relationship
+//       FROM contact_trace ct
+//       INNER JOIN name_link as patient_name_link
+//         ON ct.patient_link_id = patient_name_link.id
+//       LEFT JOIN name_link as contact_patient_name_link
+//         ON ct.contact_patient_link_id = contact_patient_name_link.id;
+//         "#
+//         )?;
+//     }
+//
+//     Ok(())
+// }
+
 pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
-    log::info!("Dropping database views...");
-    sql!(
-        connection,
-        // Drop order is important here, as some views depend on others. Please
-        // check when adding new views.
-        r#"
-      DROP VIEW IF EXISTS stock_line_ledger_discrepancy;
-      DROP VIEW IF EXISTS purchase_order_stats;
-      DROP VIEW IF EXISTS invoice_stats;
-      DROP VIEW IF EXISTS consumption;
-      DROP VIEW IF EXISTS replenishment;
-      DROP VIEW IF EXISTS adjustments;
-      DROP VIEW IF EXISTS item_ledger;
-      DROP VIEW IF EXISTS stock_line_ledger;
-      DROP VIEW IF EXISTS stock_movement;
-      DROP VIEW IF EXISTS outbound_shipment_stock_movement;
-      DROP VIEW IF EXISTS inbound_shipment_stock_movement;
-      DROP VIEW IF EXISTS inventory_adjustment_stock_movement;
-      DROP VIEW IF EXISTS invoice_line_stock_movement;
-      DROP VIEW IF EXISTS stock_on_hand;
-      DROP VIEW IF EXISTS changelog_deduped;
-      DROP VIEW IF EXISTS latest_document;
-      DROP VIEW IF EXISTS contact_trace_name_link_view;
-      DROP VIEW IF EXISTS latest_asset_log;
-      DROP VIEW IF EXISTS report_encounter;
-      DROP VIEW IF EXISTS report_patient;
-      DROP VIEW IF EXISTS report_program_enrolment;
-      DROP VIEW IF EXISTS report_program_event;
-      DROP VIEW IF EXISTS report_store;
-      DROP VIEW IF EXISTS report_document;
-      DROP VIEW IF EXISTS requisitions_in_period;
-      DROP VIEW IF EXISTS store_items;
-      DROP VIEW IF EXISTS vaccination_card;
-      DROP VIEW IF EXISTS vaccination_course;
-    "#
-    )?;
-
-    Ok(())
+    vec![Box::new(
+        stock_line_ledger_discrepancy::ViewMigration::drop_view,
+    )]
 }
 
-pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()> {
-    log::info!("Re-creating database views...");
+pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()> {}
 
-    let absolute = if cfg!(feature = "postgres") {
-        "@"
-    } else {
-        "abs"
-    };
+// #[cfg(test)]
+// mod test {
+//     use crate::test_db::{setup_test, SetupOption, SetupResult};
 
-    sql!(
-        connection,
-        r#"
-  CREATE VIEW invoice_line_stock_movement AS 
-    SELECT
-        invoice_line.id,
-        invoice_line.invoice_id,
-        invoice_line.item_name,
-        invoice_line.item_code,
-        invoice_line.stock_line_id,
-        invoice_line.location_id,
-        invoice_line.batch,
-        invoice_line.expiry_date,
-        invoice_line.cost_price_per_pack,
-        invoice_line.sell_price_per_pack,
-        invoice_line.total_before_tax,
-        invoice_line.total_after_tax,
-        invoice_line.tax_percentage,
-        invoice_line.number_of_packs,
-        invoice_line.pack_size,
-        invoice_line.note,
-        invoice_line.type,
-        invoice_line.reason_option_id,
-        invoice_line.foreign_currency_price_before_tax,
-        invoice_line.item_link_id,
-        item_link.item_id AS item_id,
-        CASE
-            WHEN "type" = 'STOCK_IN' THEN (number_of_packs * pack_size)
-            WHEN "type" = 'STOCK_OUT' THEN (number_of_packs * pack_size) * -1
-        END AS quantity_movement
-    FROM
-        invoice_line
-        JOIN item_link ON item_link.id = invoice_line.item_link_id
-    WHERE
-        number_of_packs > 0
-        AND "type" IN ('STOCK_IN', 'STOCK_OUT');
+//     use super::{drop_views, rebuild_views};
 
-  -- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockMovement.4dm
-  -- TODO are all of sc, ci, si type transactions synced, and are all of the dates set correctly ?
-  CREATE VIEW outbound_shipment_stock_movement AS
-    SELECT 
-        'n/a' as id,
-        quantity_movement as quantity,
-        item_id,
-        store_id,
-        picked_datetime as datetime
-    FROM invoice_line_stock_movement 
-    JOIN invoice
-        ON invoice_line_stock_movement.invoice_id = invoice.id
-    WHERE invoice.type = 'OUTBOUND_SHIPMENT' 
-        AND picked_datetime IS NOT NULL;
-                  
-  CREATE VIEW inbound_shipment_stock_movement AS
-    SELECT 
-        'n/a' as id,
-        quantity_movement as quantity,
-        item_id,
-        store_id,
-        received_datetime as datetime
-    FROM invoice_line_stock_movement
-    JOIN invoice
-        ON invoice_line_stock_movement.invoice_id = invoice.id
-    WHERE invoice.type = 'INBOUND_SHIPMENT' 
-        AND received_datetime IS NOT NULL;
-                    
-  CREATE VIEW inventory_adjustment_stock_movement AS
-    SELECT
-        'n/a' as id,
-        quantity_movement as quantity,
-        item_id,
-        store_id,
-        verified_datetime as datetime
-    FROM invoice_line_stock_movement
-    JOIN invoice
-        ON invoice_line_stock_movement.invoice_id = invoice.id
-    WHERE invoice.type IN ('INVENTORY_REDUCTION', 'INVENTORY_ADDITION') 
-        AND verified_datetime IS NOT NULL;
+//     #[actix_rt::test]
+//     async fn drop_and_rebuild_views() {
+//         // Setup will run initial migrations, which will create the views
+//         let SetupResult { connection, .. } = setup_test(SetupOption {
+//             db_name: "drop_and_rebuild_views",
+//             ..Default::default()
+//         })
+//         .await;
 
-  CREATE VIEW stock_movement AS
-    WITH all_movements AS (
-      SELECT
-        invoice_line_stock_movement.id AS id,
-        quantity_movement AS quantity,
-        invoice_line_stock_movement.item_link_id AS item_id,
-        invoice.store_id as store_id,
-        CASE WHEN invoice.type IN (
-            'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN',
-            'PRESCRIPTION'
-        ) THEN picked_datetime
-                    WHEN invoice.type IN (
-            'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
-        ) THEN received_datetime
-                    WHEN invoice.type IN (
-            'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
-        ) THEN verified_datetime
-            END AS datetime,
-        name,
-        invoice.type AS invoice_type,
-        invoice.invoice_number AS invoice_number,
-        invoice.id AS invoice_id,
-        reason_option.reason AS reason,
-        stock_line_id,
-        invoice_line_stock_movement.expiry_date AS expiry_date,
-        invoice_line_stock_movement.batch AS batch,
-        invoice_line_stock_movement.cost_price_per_pack AS cost_price_per_pack,
-        invoice_line_stock_movement.sell_price_per_pack AS sell_price_per_pack,
-        invoice.status AS invoice_status,
-        invoice_line_stock_movement.total_before_tax AS total_before_tax,
-        invoice_line_stock_movement.pack_size as pack_size,
-        invoice_line_stock_movement.number_of_packs as number_of_packs
-    FROM
-        invoice_line_stock_movement
-        LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
-        LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
-        JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
-        JOIN name_link ON invoice.name_link_id = name_link.id
-        JOIN name ON name_link.name_id = name.id
-    )
-    SELECT * FROM all_movements
-    WHERE datetime IS NOT NULL;
+//         // Ensure views can be dropped and recreated without error
+//         drop_views(&connection).unwrap();
+//         // Rebuild should be fine, this already happens in our setup_test, but just to be sure :)
+//         rebuild_views(&connection).unwrap();
 
-
-  -- Separate views for stock & item ledger, so the running balance window functions are only executed when required
-
-  CREATE VIEW stock_line_ledger AS
-    WITH movements_with_precedence AS (
-      SELECT *,
-        CASE
-          WHEN invoice_type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
-          WHEN invoice_type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
-          ELSE 3
-        END AS type_precedence
-      FROM stock_movement
-      WHERE stock_line_id IS NOT NULL
-    )
-    SELECT *,
-      SUM(quantity) OVER (
-        PARTITION BY store_id, stock_line_id
-        ORDER BY datetime, type_precedence
-        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-      ) AS running_balance
-    FROM movements_with_precedence
-    ORDER BY datetime, type_precedence;
-
-  CREATE VIEW stock_line_ledger_discrepancy AS 
-  WITH 
-  allocated_not_picked AS (
-      SELECT stock_line_id,
-          SUM(number_of_packs * pack_size) AS q
-      FROM invoice_line
-          JOIN invoice on invoice.id = invoice_line.invoice_id
-      WHERE invoice_line.type = 'STOCK_OUT'
-          AND invoice.status IN ('NEW', 'ALLOCATED')
-      GROUP BY 1
-  ),
-  max_ledger_datetime AS (
-      SELECT stock_line_id,
-          MAX(datetime) AS dt
-      FROM stock_movement
-      GROUP BY 1
-  ),
-  running_balance AS (
-      SELECT stock_line_ledger.stock_line_id,
-          running_balance AS q
-      FROM stock_line_ledger
-          JOIN max_ledger_datetime on stock_line_ledger.stock_line_id = max_ledger_datetime.stock_line_id
-          AND stock_line_ledger.datetime = max_ledger_datetime.dt
-  ),
-  current_balance AS (
-      SELECT stock_line.id AS stock_line_id,
-          store_id,
-          available_number_of_packs * pack_size AS a_q,
-          total_number_of_packs * pack_size AS t_q
-      from stock_line
-  )
-  SELECT DISTINCT stock_line_id
-  FROM stock_line_ledger
-  WHERE running_balance < 0
-  UNION
-  SELECT running_balance.stock_line_id
-  FROM running_balance
-      JOIN current_balance ON running_balance.stock_line_id = current_balance.stock_line_id
-      LEFT JOIN allocated_not_picked ON running_balance.stock_line_id = allocated_not_picked.stock_line_id
-  WHERE NOT(
-          running_balance.q = current_balance.t_q
-          AND (
-              (
-                  allocated_not_picked.q IS NULL
-                  AND current_balance.t_q = current_balance.a_q
-              )
-              OR (
-                  allocated_not_picked.q IS NOT NULL
-                  AND current_balance.a_q + allocated_not_picked.q = current_balance.t_q
-              )
-          )
-      );
-
-  CREATE VIEW item_ledger AS
-    WITH all_movements AS (
-      SELECT
-        invoice_line_stock_movement.id AS id,
-        quantity_movement AS movement_in_units,
-        invoice_line_stock_movement.item_link_id AS item_id,
-        invoice.store_id as store_id,
-        CASE WHEN invoice.type IN (
-          'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION'
-        ) THEN picked_datetime
-          WHEN invoice.type IN (
-            'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
-        ) THEN received_datetime
-          WHEN invoice.type IN (
-            'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
-        ) THEN verified_datetime
-        ELSE NULL
-        END AS datetime,
-        name,
-        invoice.type AS invoice_type,
-        invoice.invoice_number AS invoice_number,
-        invoice.id AS invoice_id,
-        reason_option.reason AS reason,
-        stock_line_id,
-        invoice_line_stock_movement.expiry_date AS expiry_date,
-        invoice_line_stock_movement.batch AS batch,
-        invoice_line_stock_movement.cost_price_per_pack AS cost_price_per_pack,
-        invoice_line_stock_movement.sell_price_per_pack AS sell_price_per_pack,
-        invoice.status AS invoice_status,
-        invoice_line_stock_movement.total_before_tax AS total_before_tax,
-        invoice_line_stock_movement.pack_size as pack_size,
-        invoice_line_stock_movement.number_of_packs as number_of_packs,
-        CASE
-          WHEN invoice.type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
-          WHEN invoice.type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
-          ELSE 3
-        END AS type_precedence
-    FROM
-        invoice_line_stock_movement
-        LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
-        LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
-        JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
-        JOIN name_link ON invoice.name_link_id = name_link.id
-        JOIN name ON name_link.name_id = name.id
-    )
-    SELECT *,
-      SUM(movement_in_units) OVER (
-        PARTITION BY store_id, item_id
-        ORDER BY datetime, id, type_precedence
-        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-      ) AS running_balance
-    FROM all_movements
-    WHERE datetime IS NOT NULL  
-    ORDER BY datetime, id, type_precedence;
-
-  CREATE VIEW replenishment AS
-    SELECT
-        'n/a' as id,
-        items_and_stores.item_id AS item_id,
-        items_and_stores.store_id AS store_id,
-        {absolute}(COALESCE(stock_movement.quantity, 0)) AS quantity,
-        date(stock_movement.datetime) AS date
-    FROM
-        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
-    LEFT OUTER JOIN stock_movement
-        ON stock_movement.item_id = items_and_stores.item_id
-            AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='INBOUND_SHIPMENT';
-
-  CREATE VIEW adjustments AS
-    SELECT
-        'n/a' as id,
-        items_and_stores.item_id AS item_id,
-        items_and_stores.store_id AS store_id,
-        stock_movement.quantity AS quantity,
-        date(stock_movement.datetime) AS date
-    FROM
-        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
-    LEFT OUTER JOIN stock_movement
-        ON stock_movement.item_id = items_and_stores.item_id
-            AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='CUSTOMER_RETURN'
-      OR invoice_type='SUPPLIER_RETURN'
-      OR invoice_type='INVENTORY_ADDITION'
-      OR invoice_type='INVENTORY_REDUCTION';
-
-          
-  -- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockConsumption.4dm
-  -- TODO sc type ?
-  CREATE VIEW consumption AS
-    SELECT
-        'n/a' as id,
-        items_and_stores.item_id AS item_id,
-        items_and_stores.store_id AS store_id,
-        {absolute}(COALESCE(stock_movement.quantity, 0)) AS quantity,
-        date(stock_movement.datetime) AS date
-    FROM
-        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
-    LEFT OUTER JOIN stock_movement
-        ON stock_movement.item_id = items_and_stores.item_id
-            AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='OUTBOUND_SHIPMENT' OR invoice_type='PRESCRIPTION';
-
-  CREATE VIEW store_items AS
-    SELECT i.id as item_id, sl.store_id, sl.pack_size, sl.available_number_of_packs, sl.total_number_of_packs
-    FROM
-      item i
-      LEFT JOIN item_link il ON il.item_id = i.id
-      LEFT JOIN stock_line sl ON sl.item_link_id = il.id
-      LEFT JOIN store s ON s.id = sl.store_id;
-
-  CREATE VIEW stock_on_hand AS
-    SELECT
-      'n/a' AS id,
-      items_and_stores.item_id AS item_id,
-      items_and_stores.item_name AS item_name,
-      items_and_stores.store_id AS store_id,
-      COALESCE(stock.available_stock_on_hand, 0) AS available_stock_on_hand,
-      COALESCE(stock.total_stock_on_hand, 0) AS total_stock_on_hand
-    FROM
-      (
-        SELECT
-          item.id AS item_id,
-          item.name AS item_name,
-          store.id AS store_id
-        FROM
-          item,
-          store
-      ) AS items_and_stores
-      LEFT OUTER JOIN (
-        SELECT
-          item_id,
-          store_id,
-          SUM(pack_size * available_number_of_packs) AS available_stock_on_hand,
-          SUM(pack_size * total_number_of_packs) AS total_stock_on_hand
-        FROM
-          store_items
-        WHERE
-          store_items.available_number_of_packs > 0 OR store_items.total_number_of_packs > 0
-        GROUP BY
-          item_id,
-          store_id
-      ) AS stock ON stock.item_id = items_and_stores.item_id
-      AND stock.store_id = items_and_stores.store_id;
-
-    -- View of the changelog that only contains the most recent changes to a row, i.e. previous row
-    -- edits are removed.
-    -- Note, an insert + delete will show up as an orphaned delete.
-  CREATE VIEW changelog_deduped AS
-    SELECT c.cursor,
-        c.table_name,
-        c.record_id,
-        c.row_action,
-        c.name_link_id,
-        c.store_id,
-        c.is_sync_update,
-        c.source_site_id
-    FROM (
-        SELECT record_id, MAX(cursor) AS max_cursor
-        FROM changelog
-        GROUP BY record_id
-    ) grouped
-    INNER JOIN changelog c
-        ON c.record_id = grouped.record_id AND c.cursor = grouped.max_cursor
-    ORDER BY c.cursor;
-
-  CREATE VIEW latest_document
-    AS
-        SELECT d.*
-        FROM (
-        SELECT name, MAX(datetime) AS datetime
-            FROM document
-            GROUP BY name
-    ) grouped
-    INNER JOIN document d
-    ON d.name = grouped.name AND d.datetime = grouped.datetime;
-
-  CREATE VIEW latest_asset_log AS
-    SELECT al.id,
-      al.asset_id,
-      al.user_id,
-      al.comment,
-      al.type,
-      al.log_datetime,
-      al.status,            
-      al.reason_id
-    FROM (
-      SELECT asset_id, MAX(log_datetime) AS latest_log_datetime
-      FROM asset_log
-      GROUP BY asset_id
-    ) grouped
-    INNER JOIN asset_log al
-      ON al.asset_id = grouped.asset_id AND al.log_datetime = grouped.latest_log_datetime;
-
-  -- This view contains the latest document versions
-  CREATE VIEW report_document AS
-    SELECT
-        d.name,
-        d.datetime,
-        d.type,
-        d.data,
-        nl.name_id as owner_name_id
-    FROM (
-        SELECT name as doc_name, MAX(datetime) AS doc_time
-        FROM document
-        GROUP BY name
-    ) grouped
-    INNER JOIN document d ON d.name = grouped.doc_name AND d.datetime = grouped.doc_time
-    LEFT JOIN name_link nl ON nl.id = d.owner_name_link_id
-    WHERE d.status != 'DELETED';
-
-  CREATE VIEW report_encounter AS
-    SELECT
-      encounter.id,
-      encounter.created_datetime,
-      encounter.start_datetime,
-      encounter.end_datetime,
-      encounter.status,
-      encounter.store_id,
-      nl.name_id as patient_id,
-      encounter.document_type,
-      doc.data as document_data
-    FROM encounter
-    LEFT JOIN name_link nl ON nl.id = encounter.patient_link_id
-    LEFT JOIN report_document doc ON doc.name = encounter.document_name;
-
-  CREATE VIEW report_store AS
-    SELECT
-        store.id,
-        store.code,
-        store.store_mode,
-        store.logo,
-        name.name
-    FROM store
-    JOIN name_link ON store.name_link_id = name_link.id
-    JOIN name ON name_link.name_id = name.id;
-
-  CREATE VIEW report_patient AS
-    SELECT
-        id,
-        code,
-        national_health_number AS code_2,
-        first_name,
-        last_name,
-        gender,
-        date_of_birth,
-        address1,
-        phone,
-        date_of_death,
-        is_deceased
-    FROM name;
-
-  CREATE VIEW report_program_event AS
-    SELECT
-        e.id,
-        nl.name_id as patient_id,
-        e.datetime,
-        e.active_start_datetime,
-        e.active_end_datetime,
-        e.document_type,
-        e.document_name,
-        e.type,
-        e.data
-    FROM program_event e
-    LEFT JOIN name_link nl ON nl.id = e.patient_link_id;
-
-  CREATE VIEW report_program_enrolment AS
-    SELECT
-        program_enrolment.id,
-        program_enrolment.document_type,
-        program_enrolment.enrolment_datetime,
-        program_enrolment.program_enrolment_id,
-        program_enrolment.status,
-        nl.name_id as patient_id,
-        doc.data as document_data
-    FROM program_enrolment
-    LEFT JOIN name_link nl ON nl.id = program_enrolment.patient_link_id
-    LEFT JOIN report_document doc ON doc.name = program_enrolment.document_name;
-
-  CREATE VIEW requisitions_in_period AS
-    SELECT
-      'n/a' as id,
-      r.program_id,
-      r.period_id,
-      r.store_id,
-      r.order_type,
-      r.type,
-      n.id AS other_party_id,
-      count(*) as count
-    FROM requisition r 
-    INNER JOIN name_link nl ON r.name_link_id = nl.id
-    INNER JOIN name n ON nl.name_id = n.id
-    WHERE r.order_type IS NOT NULL
-    GROUP BY 1,2,3,4,5,6,7;
-
-  CREATE VIEW vaccination_card AS
-    SELECT 
-      vcd.id || '_' || pe.id AS id,
-      vcd.id as vaccine_course_dose_id, 
-      vcd.label, 
-      vcd.min_interval_days, 
-      vcd.min_age,
-      vcd.max_age,
-      vcd.custom_age_label, 
-      vc.id as vaccine_course_id, 
-      v.id as vaccination_id, 
-      v.vaccination_date, 
-      v.given, 
-      v.stock_line_id, 
-      n.id AS facility_name_id,
-      v.facility_free_text,
-      s.batch,
-      pe.id as program_enrolment_id
-    FROM vaccine_course_dose vcd 
-    JOIN vaccine_course vc 
-      ON vcd.vaccine_course_id = vc.id
-    JOIN program_enrolment pe 
-      ON pe.program_id = vc.program_id
-    LEFT JOIN vaccination v 
-      ON v.vaccine_course_dose_id = vcd.id AND v.program_enrolment_id = pe.id
-    LEFT JOIN name_link nl
-      ON v.facility_name_link_id = nl.id
-    LEFT JOIN name n
-      ON nl.name_id = n.id
-    LEFT JOIN stock_line s 
-      ON v.stock_line_id = s.id
-    -- Only show doses that haven't been deleted, unless they have a vaccination
-    WHERE vcd.deleted_datetime IS NULL OR v.id IS NOT NULL;
-
-CREATE VIEW vaccination_course AS
-    SELECT
-      vc.id,
-      vc.name AS vaccine_course_name,
-      coverage_rate,
-      wastage_rate,
-      vcd.id AS vaccine_course_dose_id,
-      label AS dose_label,
-      min_interval_days,
-      min_age,
-      max_age,
-      custom_age_label,
-      vci.id AS vaccine_course_item_id,
-      item.id AS item_id,
-      il.id AS item_link_id,
-      item.name AS item_name,
-      item.code AS item_code,
-      item.type AS item_type,
-      item.default_pack_size,
-      item.is_vaccine AS is_vaccine_item,
-      item.vaccine_doses,
-      item.unit_id AS unit_id,
-      unit.name AS unit,
-      unit."index" AS unit_index,
-      d.id AS demographic_id,
-      d.name AS demographic_name,
-      d.population_percentage AS population_percentage,
-      p.id AS program_id,
-      p.name AS program_name
-    FROM
-      vaccine_course vc
-      JOIN vaccine_course_dose vcd ON vc.id = vcd.vaccine_course_id
-      JOIN vaccine_course_item vci ON vci.vaccine_course_id = vc.id
-      JOIN item_link il ON vci.item_link_id = il.id
-      JOIN item ON item.id = il.item_id
-      LEFT JOIN unit ON item.unit_id = unit.id
-      LEFT JOIN demographic d ON d.id = vc.demographic_id
-      JOIN PROGRAM p ON p.id = vc.program_id
-    WHERE
-      vc.deleted_datetime IS NULL
-      AND vcd.deleted_datetime IS NULL
-      AND vci.deleted_datetime IS NULL;
-    
-    CREATE VIEW purchase_order_stats AS
-        SELECT
-            po.id AS purchase_order_id,
-            COALESCE(SUM(
-                CASE 
-                    WHEN pol.adjusted_number_of_units IS NOT NULL 
-                    THEN pol.adjusted_number_of_units * pol.price_per_unit_before_discount
-                    ELSE pol.requested_number_of_units * pol.price_per_unit_before_discount
-                END
-            ), 0) AS line_total_before_discount,
-            COALESCE(SUM(
-                CASE 
-                    WHEN pol.adjusted_number_of_units IS NOT NULL 
-                    THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
-                    ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
-                END
-
-            ), 0) AS line_total_after_discount,
-            COALESCE(SUM(
-                CASE 
-                    WHEN pol.adjusted_number_of_units IS NOT NULL 
-                    THEN pol.adjusted_number_of_units * pol.price_per_unit_after_discount
-                    ELSE pol.requested_number_of_units * pol.price_per_unit_after_discount
-                END
-            ), 0) * (1-(COALESCE(po.supplier_discount_percentage, 0)/100)) AS order_total_after_discount
-        FROM
-            purchase_order po JOIN purchase_order_line pol on po.id = pol.purchase_order_id
-        GROUP BY
-            po.id;
-    "#,
-    )?;
-
-    if cfg!(not(feature = "postgres")) {
-        sql!(
-            connection,
-            r#"
-       CREATE VIEW invoice_stats AS
-        SELECT
-	        invoice_line.invoice_id,
-            SUM(invoice_line.total_before_tax) AS total_before_tax,
-	        SUM(invoice_line.total_after_tax) AS total_after_tax,
-            (SUM(invoice_line.total_after_tax) / SUM(invoice_line.total_before_tax) - 1) * 100 AS tax_percentage,
-            SUM(invoice_line.foreign_currency_price_before_tax) + (SUM(invoice_line.foreign_currency_price_before_tax) * COALESCE(invoice_line.tax_percentage, 0) / 100) AS foreign_currency_total_after_tax,
-	        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
-	        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_after_tax,
-	        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_before_tax,
-	         COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax
-        FROM
-	        invoice_line
-        GROUP BY
-	        invoice_line.invoice_id;
-
-    CREATE VIEW contact_trace_name_link_view AS
-      SELECT 
-        ct.id AS id,
-        ct.program_id AS program_id,
-        ct.document_id AS document_id,
-        ct.datetime AS datetime,
-        ct.contact_trace_id AS contact_trace_id,
-        patient_name_link.name_id AS patient_id,
-        contact_patient_name_link.name_id AS contact_patient_id,
-        ct.first_name AS first_name,
-        ct.last_name AS last_name,
-        ct.gender AS gender,
-        ct.date_of_birth AS date_of_birth,
-        ct.store_id AS store_id,
-        ct.relationship AS relationship
-      FROM contact_trace ct
-      INNER JOIN name_link as patient_name_link
-        ON ct.patient_link_id = patient_name_link.id
-      LEFT JOIN name_link as contact_patient_name_link
-        ON ct.contact_patient_link_id = contact_patient_name_link.id;
-      "#
-        )?;
-    }
-
-    if cfg!(feature = "postgres") {
-        sql!(
-            connection,
-            r#"
-              CREATE VIEW invoice_stats AS
-        SELECT
-	        invoice_line.invoice_id,
-            SUM(invoice_line.total_before_tax) AS total_before_tax,
-	        SUM(invoice_line.total_after_tax) AS total_after_tax,
-            COALESCE((SUM(invoice_line.total_after_tax) / NULLIF(SUM(invoice_line.total_before_tax), 0) - 1), 0) * 100 AS tax_percentage,
-            COALESCE(SUM(invoice_line.foreign_currency_price_before_tax), 0) + (COALESCE(SUM(invoice_line.foreign_currency_price_before_tax), 0) * (COALESCE((SUM(invoice_line.total_after_tax) / NULLIF(SUM(invoice_line.total_before_tax), 0) - 1), 0))) AS foreign_currency_total_after_tax,
-            COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
-	        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_after_tax,
-	        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_before_tax,
-	         COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax
-        FROM
-	        invoice_line
-        GROUP BY
-	        invoice_line.invoice_id;
-
-    CREATE VIEW contact_trace_name_link_view AS
-      SELECT 
-        ct.id AS id,
-        ct.program_id AS program_id,
-        ct.document_id AS document_id,
-        ct.datetime AS datetime,
-        ct.contact_trace_id AS contact_trace_id,
-        patient_name_link.name_id AS patient_id,
-        contact_patient_name_link.name_id AS contact_patient_id,
-        ct.first_name AS first_name,
-        ct.last_name AS last_name,
-        ct.gender AS gender,
-        CAST(ct.date_of_birth AS DATE) AS date_of_birth,
-        ct.store_id AS store_id,
-        ct.relationship AS relationship
-      FROM contact_trace ct
-      INNER JOIN name_link as patient_name_link
-        ON ct.patient_link_id = patient_name_link.id
-      LEFT JOIN name_link as contact_patient_name_link
-        ON ct.contact_patient_link_id = contact_patient_name_link.id;
-        "#
-        )?;
-    }
-
-    Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use crate::test_db::{setup_test, SetupOption, SetupResult};
-
-    use super::{drop_views, rebuild_views};
-
-    #[actix_rt::test]
-    async fn drop_and_rebuild_views() {
-        // Setup will run initial migrations, which will create the views
-        let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: "drop_and_rebuild_views",
-            ..Default::default()
-        })
-        .await;
-
-        // Ensure views can be dropped and recreated without error
-        drop_views(&connection).unwrap();
-        // Rebuild should be fine, this already happens in our setup_test, but just to be sure :)
-        rebuild_views(&connection).unwrap();
-
-        // Note: what this test does not capture is whether previous views can be dropped
-        // successfully (as we only have current state of the views)
-        // This is handled in CI, the validate-db-migration-with-views workflow
-    }
-}
+//         // Note: what this test does not capture is whether previous views can be dropped
+//         // successfully (as we only have current state of the views)
+//         // This is handled in CI, the validate-db-migration-with-views workflow
+//     }
+// }
