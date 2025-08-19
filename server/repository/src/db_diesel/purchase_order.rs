@@ -25,11 +25,16 @@ pub struct PurchaseOrder {
 
 #[derive(Clone, Default)]
 pub struct PurchaseOrderFilter {
-    pub id: Option<EqualFilter<String>>,
-    pub store_id: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
-    pub status: Option<EqualFilter<PurchaseOrderStatus>>,
+    pub confirmed_datetime: Option<DatetimeFilter>,
+    pub sent_datetime: Option<DatetimeFilter>,
     pub supplier: Option<StringFilter>,
+    pub item_name: Option<StringFilter>,
+    pub item_code: Option<StringFilter>,
+    pub donor: Option<StringFilter>,
+    pub id: Option<EqualFilter<String>>,
+    pub status: Option<EqualFilter<PurchaseOrderStatus>>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -127,6 +132,11 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
             created_datetime,
             status,
             supplier,
+            confirmed_datetime,
+            sent_datetime,
+            item_name,
+            item_code,
+            donor,
         } = f;
         apply_equal_filter!(query, id, purchase_order::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
@@ -138,6 +148,21 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
                 .select(name_link::id)
                 .into_boxed();
             apply_string_filter!(sub_query, Some(supplier_string), name::name_);
+
+            query = query.filter(purchase_order::supplier_name_link_id.eq_any(sub_query));
+        }
+        apply_date_time_filter!(
+            query,
+            confirmed_datetime,
+            purchase_order::confirmed_datetime
+        );
+        apply_date_time_filter!(query, sent_datetime, purchase_order::sent_datetime);
+        if let Some(item_name_string) = item_name {
+            let mut sub_query = name_link::table
+                .inner_join(name::table)
+                .select(name_link::id)
+                .into_boxed();
+            apply_string_filter!(sub_query, Some(item_name_string), name::name_);
 
             query = query.filter(purchase_order::supplier_name_link_id.eq_any(sub_query));
         }

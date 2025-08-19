@@ -37,10 +37,15 @@ pub struct EqualFilterPurchaseOrderStatusInput {
 
 #[derive(InputObject, Clone)]
 pub struct PurchaseOrderFilterInput {
-    pub id: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
-    pub status: Option<EqualFilterPurchaseOrderStatusInput>,
+    pub confirmed_datetime: Option<DatetimeFilterInput>,
+    pub sent_datetime: Option<DatetimeFilterInput>,
     pub supplier: Option<StringFilterInput>,
+    pub item_name: Option<StringFilterInput>,
+    pub item_code: Option<StringFilterInput>,
+    pub donor: Option<StringFilterInput>,
+    pub id: Option<EqualFilterStringInput>,
+    pub status: Option<EqualFilterPurchaseOrderStatusInput>,
     pub store_id: Option<EqualFilterStringInput>,
 }
 
@@ -129,10 +134,15 @@ impl PurchaseOrderFilterInput {
         PurchaseOrderFilter {
             id: self.id.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
+            confirmed_datetime: self.confirmed_datetime.map(DatetimeFilter::from),
+            sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
+            supplier: self.supplier.map(StringFilter::from),
+            item_name: self.item_name.map(StringFilter::from),
+            item_code: self.item_code.map(StringFilter::from),
+            donor: self.donor.map(StringFilter::from),
             status: self
                 .status
                 .map(|t| map_filter!(t, PurchaseOrderNodeStatus::to_domain)),
-            supplier: self.supplier.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
         }
     }
