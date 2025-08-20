@@ -13,13 +13,7 @@ import {
   StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import {
-  commonLabelProps,
-  createDateInput,
-  createMultilineTextInput,
-  createNumericInput,
-  createTextInput,
-} from '../../../common';
+import { commonLabelProps, useInputComponents } from '../../../common';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
@@ -46,10 +40,8 @@ export const PurchaseOrderLineEdit = ({
   const t = useTranslation();
   const showContent = !!draft && !!currentLine;
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
-  const numericInput = createNumericInput(t, isDisabled, isVerticalScreen);
-  const textInput = createTextInput(t, isDisabled, isVerticalScreen);
-  const multilineTextInput = createMultilineTextInput(t, isDisabled);
-  const dateInput = createDateInput(t, isDisabled, isVerticalScreen);
+  const { numericInput, textInput, multilineTextInput, dateInput } =
+    useInputComponents(t, isDisabled, isVerticalScreen);
 
   return (
     <>
