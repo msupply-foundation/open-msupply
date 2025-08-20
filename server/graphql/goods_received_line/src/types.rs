@@ -6,7 +6,7 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use service::{usize_to_u32, ListResult};
 
-use repository::{GoodsReceivedLine, GoodsReceivedLineRow, GoodsReceivedLineStatus, ItemRow};
+use repository::{GoodsReceivedLine, GoodsReceivedLineRow, ItemRow};
 
 use graphql_types::types::{ItemNode, LocationNode};
 pub struct GoodsReceivedLineNode {
