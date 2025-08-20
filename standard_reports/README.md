@@ -659,3 +659,9 @@ Reports will then be synced out from there to remote sites.
 ## Decision tree
 
 ## Troubleshooting
+
+#### Missing value error
+
+Most common error with tera is a missing or undefined value during rendering. This can occur either because [we remove empty strings during data conversion](https://github.com/msupply-foundation/open-msupply/issues/8909#issuecomment-3202798312), or the node indexing in the tera HTML template is wrong. 
+
+[Fallbacks](https://keats.github.io/tera/docs/#default) can be used to swallow errors and templates by ignoring missing values.
