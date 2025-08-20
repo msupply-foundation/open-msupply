@@ -10,13 +10,15 @@ import {
   useAuthContext,
   getLinesFromRow,
   UNDEFINED_STRING_VALUE,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { useResponseRequisitionLineErrorContext } from '../context';
 
-export const useResponseColumns = (manageVaccinesInDoses: boolean = false) => {
+export const useResponseColumns = () => {
   const { getError } = useResponseRequisitionLineErrorContext();
+  const { manageVaccinesInDoses } = usePreferences();
 
   const {
     updateSortQuery,
@@ -43,6 +45,7 @@ export const useResponseColumns = (manageVaccinesInDoses: boolean = false) => {
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,
         width: 125,
+        isSticky: true,
       },
     ],
     [
@@ -242,7 +245,7 @@ export const useResponseColumns = (manageVaccinesInDoses: boolean = false) => {
     columnDefinitions.push({
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
-      sortable: false,
+      sortable: true,
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => rowData.approvedQuantity,
     });

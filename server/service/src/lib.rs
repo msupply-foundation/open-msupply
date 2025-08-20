@@ -4,7 +4,10 @@ use backend_plugin::plugin_provider::PluginError;
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::location::{LocationFilter, LocationRepository};
 use repository::vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository};
-use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
+use repository::{
+    EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_MAX_LIMIT,
+    DEFAULT_PAGINATION_MIN_LIMIT,
+};
 use repository::{RepositoryError, StorageConnection};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -22,6 +25,7 @@ pub mod apis;
 pub mod app_data;
 pub mod boajs;
 pub mod campaign;
+pub mod ledger_fix;
 
 pub mod asset;
 pub mod auth;
@@ -31,8 +35,7 @@ pub mod barcode;
 pub mod catalogue;
 pub mod clinician;
 pub mod cold_chain;
-pub mod cold_storage_type;
-mod common_stock;
+mod common;
 pub mod contact;
 pub mod contact_form;
 pub mod currency;
@@ -43,6 +46,8 @@ pub mod diagnosis;
 pub mod display_settings_service;
 pub mod document;
 pub mod email;
+pub mod goods_received;
+pub mod goods_received_line;
 pub mod insurance;
 pub mod insurance_provider;
 pub mod invoice;
@@ -55,6 +60,7 @@ pub mod label_printer_settings_service;
 pub mod ledger;
 pub mod localisations;
 pub mod location;
+pub mod location_type;
 pub mod log_service;
 pub mod login;
 pub mod master_list;
@@ -247,7 +253,7 @@ pub fn get_default_pagination_unlimited(pagination_option: Option<PaginationOpti
     match pagination_option {
         Some(pagination) => Pagination {
             offset: pagination.offset.unwrap_or(0),
-            limit: pagination.limit.unwrap_or(DEFAULT_PAGINATION_LIMIT),
+            limit: pagination.limit.unwrap_or(DEFAULT_PAGINATION_MAX_LIMIT),
         },
         None => Pagination {
             offset: 0,
@@ -256,17 +262,15 @@ pub fn get_default_pagination_unlimited(pagination_option: Option<PaginationOpti
     }
 }
 
-pub fn get_default_pagination(
+pub fn get_pagination_or_default(
     pagination_option: Option<PaginationOption>,
-    max_limit: u32,
-    min_limit: u32,
 ) -> Result<Pagination, ListError> {
     let check_limit = |limit: u32| -> Result<u32, ListError> {
-        if limit < min_limit {
-            return Err(ListError::LimitBelowMin(min_limit));
+        if limit < DEFAULT_PAGINATION_MIN_LIMIT {
+            return Err(ListError::LimitBelowMin(DEFAULT_PAGINATION_MIN_LIMIT));
         }
-        if limit > max_limit {
-            return Err(ListError::LimitAboveMax(max_limit));
+        if limit > DEFAULT_PAGINATION_MAX_LIMIT {
+            return Err(ListError::LimitAboveMax(DEFAULT_PAGINATION_MAX_LIMIT));
         }
 
         Ok(limit)
@@ -277,14 +281,11 @@ pub fn get_default_pagination(
             offset: pagination.offset.unwrap_or(0),
             limit: match pagination.limit {
                 Some(limit) => check_limit(limit)?,
-                None => DEFAULT_PAGINATION_LIMIT,
+                None => DEFAULT_PAGINATION_MAX_LIMIT,
             },
         }
     } else {
-        Pagination {
-            offset: 0,
-            limit: DEFAULT_PAGINATION_LIMIT,
-        }
+        Pagination::all()
     };
 
     Ok(result)
@@ -338,6 +339,30 @@ fn check_location_exists(
             .store_id(EqualFilter::equal_to(store_id)),
     ))?;
     Ok(count > 0)
+}
+
+// Checks if the input location is of the correct type for the item
+fn check_location_type_is_valid(
+    connection: &StorageConnection,
+    store_id: &str,
+    location_id: &str,
+    restricted_location_type_id: &str,
+) -> Result<bool, RepositoryError> {
+    let location = LocationRepository::new(connection)
+        .query_by_filter(
+            LocationFilter::new()
+                .id(EqualFilter::equal_to(location_id))
+                .store_id(EqualFilter::equal_to(store_id)),
+        )?
+        .pop();
+
+    match location {
+        Some(location) => {
+            Ok(location.location_row.location_type_id
+                == Some(restricted_location_type_id.to_owned()))
+        }
+        None => Ok(false),
+    }
 }
 
 fn check_item_variant_exists(

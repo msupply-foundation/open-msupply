@@ -97,11 +97,13 @@ impl UpdateInput {
             r#type: Some(StockOutType::Prescription),
             stock_line_id,
             number_of_packs,
+            note,
             prescribed_quantity: None,
             total_before_tax: None,
             tax: None,
-            note,
             campaign_id: None,
+            program_id: None,
+            vvm_status_id: None,
         }
     }
 }
@@ -168,6 +170,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ItemNotFound
         | ItemDoesNotMatchStockLine
         | NotThisInvoiceLine(_)
+        | VVMStatusDoesNotExist
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
         AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
@@ -541,11 +544,8 @@ mod test {
                     r#type: Some(StockOutType::Prescription),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
-                    prescribed_quantity: None,
                     note: Some("some note".to_string()),
-                    total_before_tax: None,
-                    tax: None,
-                    campaign_id: None,
+                    ..Default::default()
                 }
             );
             Ok(InvoiceLine {

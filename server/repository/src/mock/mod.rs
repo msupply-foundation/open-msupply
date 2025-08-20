@@ -23,9 +23,11 @@ mod indicator_value;
 mod invoice;
 mod invoice_line;
 mod item;
+mod item_store_join;
 mod item_variant;
 pub mod ledger;
 mod location;
+mod location_type;
 mod name;
 mod name_store_join;
 mod name_tag;
@@ -96,8 +98,10 @@ pub use indicator_value::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use item::*;
+pub use item_store_join::*;
 pub use item_variant::*;
 pub use location::*;
+pub use location_type::*;
 pub use name::*;
 pub use name_store_join::*;
 pub use name_tag::*;
@@ -245,6 +249,11 @@ pub struct MockData {
     pub reason_options: Vec<ReasonOptionRow>,
     pub vvm_statuses: Vec<VVMStatusRow>,
     pub campaigns: Vec<CampaignRow>,
+    pub item_store_joins: Vec<ItemStoreJoinRow>,
+    pub purchase_order: Vec<PurchaseOrderRow>,
+    pub purchase_order_line: Vec<PurchaseOrderLineRow>,
+    pub location_types: Vec<LocationTypeRow>,
+    pub preferences: Vec<PreferenceRow>,
 }
 
 impl MockData {
@@ -333,6 +342,11 @@ pub struct MockDataInserts {
     pub reason_options: bool,
     pub vvm_statuses: bool,
     pub campaigns: bool,
+    pub item_store_joins: bool,
+    pub purchase_order: bool,
+    pub purchase_order_line: bool,
+    pub location_types: bool,
+    pub preferences: bool,
 }
 
 impl MockDataInserts {
@@ -410,6 +424,11 @@ impl MockDataInserts {
             store_preferences: true,
             reason_options: true,
             campaigns: true,
+            item_store_joins: true,
+            purchase_order: true,
+            purchase_order_line: true,
+            location_types: true,
+            preferences: true,
         }
     }
 
@@ -480,12 +499,24 @@ impl MockDataInserts {
     }
 
     pub fn items(mut self) -> Self {
+        self.location_types = true;
         self.units = true;
         self.items = true;
         self
     }
 
+    pub fn item_store_joins(mut self) -> Self {
+        self.location_types = true;
+        self.units = true;
+        self.items = true;
+        self.names = true;
+        self.stores = true;
+        self.item_store_joins = true;
+        self
+    }
+
     pub fn item_variants(mut self) -> Self {
+        self.location_types = true;
         self.units = true;
         self.items = true;
         self.item_variants = true;
@@ -493,6 +524,7 @@ impl MockDataInserts {
     }
 
     pub fn locations(mut self) -> Self {
+        self.location_types = true;
         self.locations = true;
         self
     }
@@ -759,6 +791,35 @@ impl MockDataInserts {
         self.vvm_statuses = true;
         self
     }
+
+    pub fn purchase_order(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.currencies = true;
+        self.purchase_order = true;
+        self
+    }
+    pub fn purchase_order_line(mut self) -> Self {
+        self.location_types = true;
+        self.names = true;
+        self.units = true;
+        self.items = true;
+        self.stores = true;
+        self.currencies = true;
+        self.purchase_order = true;
+        self.purchase_order_line = true;
+        self
+    }
+
+    pub fn location_types(mut self) -> Self {
+        self.location_types = true;
+        self
+    }
+
+    pub fn preferences(mut self) -> Self {
+        self.preferences = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -855,6 +916,10 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             printer: mock_printers(),
             vvm_statuses: mock_vvm_statuses(),
             campaigns: mock_campaigns(),
+            item_store_joins: mock_item_store_joins(),
+            purchase_order: mock_purchase_orders(),
+            purchase_order_line: mock_purchase_order_lines(),
+            location_types: mock_location_types(),
             ..Default::default()
         },
     );
@@ -998,6 +1063,13 @@ pub fn insert_mock_data(
         if inserts.currencies {
             let repo = crate::CurrencyRowRepository::new(connection);
             for row in &mock_data.currencies {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.location_types {
+            let repo = LocationTypeRowRepository::new(connection);
+            for row in &mock_data.location_types {
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1412,6 +1484,31 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.item_store_joins {
+            let repo = ItemStoreJoinRowRepository::new(connection);
+            for row in &mock_data.item_store_joins {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.purchase_order {
+            let repo = PurchaseOrderRowRepository::new(connection);
+            for row in &mock_data.purchase_order {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.purchase_order_line {
+            let repo = PurchaseOrderLineRowRepository::new(connection);
+            for row in &mock_data.purchase_order_line {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.preferences {
+            let repo = PreferenceRowRepository::new(connection);
+            for row in &mock_data.preferences {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1492,6 +1589,11 @@ impl MockData {
             mut reason_options,
             mut vvm_statuses,
             mut campaigns,
+            mut item_store_joins,
+            mut purchase_order,
+            mut purchase_order_line,
+            mut location_types,
+            mut preferences,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1566,6 +1668,11 @@ impl MockData {
         self.store_preferences.append(&mut store_preferences);
         self.vvm_statuses.append(&mut vvm_statuses);
         self.campaigns.append(&mut campaigns);
+        self.item_store_joins.append(&mut item_store_joins);
+        self.purchase_order.append(&mut purchase_order);
+        self.purchase_order_line.append(&mut purchase_order_line);
+        self.location_types.append(&mut location_types);
+        self.preferences.append(&mut preferences);
         self
     }
 }

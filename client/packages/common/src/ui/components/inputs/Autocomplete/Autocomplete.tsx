@@ -66,6 +66,7 @@ export interface AutocompleteProps<T>
   required?: boolean;
   textSx?: SxProps<Theme>;
   clickableOption?: ClickableOptionConfig;
+  placeholder?: string;
 }
 
 export function Autocomplete<T>({
@@ -96,6 +97,7 @@ export function Autocomplete<T>({
   required,
   textSx,
   clickableOption,
+  placeholder,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const t = useTranslation();
@@ -134,6 +136,7 @@ export function Autocomplete<T>({
             ...textSx,
           },
           ...props.InputProps,
+          placeholder,
         },
         inputLabel: { shrink: true },
         htmlInput: {
@@ -243,6 +246,7 @@ export function Autocomplete<T>({
       }}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       slots={{
+        ...restOfAutocompleteProps.slots,
         popper: popper,
       }}
       sx={{

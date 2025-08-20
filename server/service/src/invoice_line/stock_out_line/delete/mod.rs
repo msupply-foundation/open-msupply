@@ -1,14 +1,15 @@
-use crate::service_provider::ServiceContext;
+use super::StockOutType;
+use crate::{
+    invoice_line::stock_in_line::get_existing_vvm_status_log_id, service_provider::ServiceContext,
+};
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
-    StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLineRowRepository,
+    InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
 };
 
 mod validate;
-
 use validate::validate;
 
-use super::StockOutType;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteStockOutLine {
     pub id: String,
@@ -26,6 +27,14 @@ pub fn delete_stock_out_line(
         .transaction_sync(|connection| {
             let line = validate(&input, &ctx.store_id, connection)?;
             let stock_line_id_option = line.stock_line_id.clone();
+
+            if let Some(stock_line_id) = &stock_line_id_option {
+                if let Some(existing_log_id) =
+                    get_existing_vvm_status_log_id(connection, stock_line_id, &line.id)?
+                {
+                    VVMStatusLogRowRepository::new(connection).delete(&existing_log_id)?;
+                }
+            }
 
             InvoiceLineRowRepository::new(connection).delete(&line.id)?;
 
@@ -86,7 +95,7 @@ mod test {
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
         StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
+   
 
     use crate::{
         invoice_line::stock_out_line::{
@@ -173,38 +182,39 @@ mod test {
     #[actix_rt::test]
     async fn delete_outbound_shipment_line_success() {
         fn outbound_shipment_no_lines_allocated() -> InvoiceRow {
-            inline_edit(&mock_outbound_shipment_no_lines(), |mut u| {
-                u.status = InvoiceStatus::Allocated;
-                u
-            })
+            let mut u = mock_outbound_shipment_no_lines().clone();
+            u.status = InvoiceStatus::Allocated;
+            u
         }
 
         fn outbound_shipment_lines() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = String::from("outbound_shipment_no_lines_a");
-                r.invoice_id = mock_outbound_shipment_no_lines().id;
-                r.item_link_id = String::from("item_a");
-                r.item_name = String::from("Item A");
-                r.item_code = String::from("item_a_code");
-                r.stock_line_id = Some(String::from("item_a_line_a"));
-                r.batch = Some(String::from("item_a_line_a"));
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2020, 8, 1).unwrap());
-                r.pack_size = 1.0;
-                r.total_before_tax = 0.87;
-                r.total_after_tax = 1.0;
-                r.tax_percentage = Some(15.0);
-                r.r#type = InvoiceLineType::StockOut;
-                r.number_of_packs = 10.0;
-            })
+            InvoiceLineRow {
+                id: String::from("outbound_shipment_no_lines_a"),
+                invoice_id: mock_outbound_shipment_no_lines().id,
+                item_link_id: String::from("item_a"),
+                item_name: String::from("Item A"),
+                item_code: String::from("item_a_code"),
+                stock_line_id: Some(String::from("item_a_line_a")),
+                batch: Some(String::from("item_a_line_a")),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2020, 8, 1).unwrap()),
+                pack_size: 1.0,
+                total_before_tax: 0.87,
+                total_after_tax: 1.0,
+                tax_percentage: Some(15.0),
+                r#type: InvoiceLineType::StockOut,
+                number_of_packs: 10.0,
+                ..Default::default()
+            }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "delete_outbound_shipment_line_success",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![outbound_shipment_no_lines_allocated()];
-                r.invoice_lines = vec![outbound_shipment_lines()];
-            }),
+            MockData {
+                invoices: vec![outbound_shipment_no_lines_allocated()],
+                invoice_lines: vec![outbound_shipment_lines()],
+                ..Default::default()
+            },
         )
         .await;
 

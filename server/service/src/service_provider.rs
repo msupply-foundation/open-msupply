@@ -24,6 +24,8 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
     email::{EmailService, EmailServiceTrait},
+    goods_received::{GoodsReceivedService, GoodsReceivedServiceTrait},
+    goods_received_line::{GoodsReceivedLineService, GoodsReceivedLineServiceTrait},
     insurance::{InsuranceService, InsuranceServiceTrait},
     insurance_provider::{InsuranceProviderService, InsuranceProviderServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
@@ -31,7 +33,8 @@ use crate::{
     item::ItemServiceTrait,
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
-    localisations::Localisations,
+    ledger_fix::ledger_fix_driver::LedgerFixTrigger,
+    localisations::LocalisationsService,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
@@ -145,6 +148,8 @@ pub struct ServiceProvider {
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
     pub site_is_initialised_trigger: SiteIsInitialisedTrigger,
+    pub ledger_fix_trigger: LedgerFixTrigger,
+    // Settings
     pub display_settings_service: Box<dyn DisplaySettingsServiceTrait>,
     // Barcodes
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
@@ -173,7 +178,7 @@ pub struct ServiceProvider {
     pub program_service: Box<dyn ProgramServiceTrait>,
     pub pricing_service: Box<dyn PricingServiceTrait>,
     // Translations
-    pub translations_service: Box<Localisations>,
+    pub localisations_service: Box<LocalisationsService>,
     // Standard Reports
     pub standard_reports: Box<StandardReports>,
     // Emails
@@ -191,7 +196,9 @@ pub struct ServiceProvider {
     // Purchase Orders
     pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
-    // Purchase Orders
+    pub goods_received_service: Box<dyn GoodsReceivedServiceTrait>,
+    pub goods_received_line_service: Box<dyn GoodsReceivedLineServiceTrait>,
+    // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
 }
 
@@ -214,6 +221,7 @@ impl ServiceProvider {
             connection_manager,
             ProcessorsTrigger::new_void(),
             SyncTrigger::new_void(),
+            LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
         )
@@ -223,6 +231,7 @@ impl ServiceProvider {
         connection_manager: StorageConnectionManager,
         processors_trigger: ProcessorsTrigger,
         sync_trigger: SyncTrigger,
+        ledger_fix_trigger: LedgerFixTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
     ) -> Self {
@@ -285,7 +294,7 @@ impl ServiceProvider {
             pricing_service: Box::new(PricingService {}),
             rnr_form_service: Box::new(RnRFormService {}),
             vaccination_service: Box::new(VaccinationService {}),
-            translations_service: Box::new(Localisations::new()),
+            localisations_service: Box::new(LocalisationsService::new()),
             standard_reports: Box::new(StandardReports {}),
             email_service: Box::new(EmailService::new(mail_settings.clone())),
             contact_form_service: Box::new(ContactFormService {}),
@@ -299,7 +308,10 @@ impl ServiceProvider {
             campaign_service: Box::new(CampaignService),
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
+            goods_received_service: Box::new(GoodsReceivedService),
+            goods_received_line_service: Box::new(GoodsReceivedLineService),
             contact_service: Box::new(ContactService {}),
+            ledger_fix_trigger,
         }
     }
 

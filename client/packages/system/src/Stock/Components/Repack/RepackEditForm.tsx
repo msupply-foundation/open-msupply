@@ -4,10 +4,10 @@ import {
   Box,
   Divider,
   InputWithLabelRow,
+  NumericTextDisplay,
   NumericTextInput,
   TextWithLabelRow,
   UNDEFINED_STRING_VALUE,
-  useFormatNumber,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, RepackDraft } from '@openmsupply-client/system';
@@ -29,7 +29,6 @@ export const RepackEditForm = ({
   availableNumberOfPacks,
 }: RepackEditFormProps) => {
   const t = useTranslation();
-  const { round } = useFormatNumber();
 
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
   const textProps = { textAlign: 'end' as 'end' | 'start' };
@@ -41,11 +40,10 @@ export const RepackEditForm = ({
       <Box display="flex">
         <Box display="flex" flexDirection="column" padding={2} gap={1} flex={1}>
           {isNew && (
-            <TextWithLabelRow
+            <InputWithLabelRow
               label={t('label.packs-available')}
-              text={round(availableNumberOfPacks, 2)}
-              textProps={textProps}
-              labelProps={labelProps}
+              labelWidth="100%"
+              Input={<NumericTextDisplay value={availableNumberOfPacks} />}
             />
           )}
           <InputWithLabelRow
@@ -66,11 +64,10 @@ export const RepackEditForm = ({
               />
             }
           />
-          <TextWithLabelRow
+          <InputWithLabelRow
             label={t('label.pack-size')}
-            text={String(data.packSize ?? '')}
-            textProps={textProps}
-            labelProps={labelProps}
+            labelWidth="100%"
+            Input={<NumericTextDisplay value={data.packSize} />}
           />
           <TextWithLabelRow
             label={t('label.location')}
@@ -95,14 +92,17 @@ export const RepackEditForm = ({
           flex={1}
         >
           {isNew && <Box height={24} />}
-          <TextWithLabelRow
+          <InputWithLabelRow
             label={t('label.new-num-packs')}
-            text={(
-              ((data.numberOfPacks ?? 0) * (data?.packSize ?? 0)) /
-              (data.newPackSize || 1)
-            ).toFixed(2)}
-            textProps={textProps}
-            labelProps={labelProps}
+            labelWidth="100%"
+            Input={
+              <NumericTextDisplay
+                value={
+                  ((data.numberOfPacks ?? 0) * (data?.packSize ?? 0)) /
+                  (data.newPackSize || 1)
+                }
+              />
+            }
           />
           <InputWithLabelRow
             label={t('label.new-pack-size')}
@@ -144,6 +144,7 @@ export const RepackEditForm = ({
                       newLocationId: location?.id,
                     });
                   }}
+                  restrictedToLocationTypeId={data.restrictedToLocationType}
                 />
               }
             />

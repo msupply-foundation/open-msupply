@@ -18,9 +18,10 @@ type ListParams = {
 
 export const useLocationList = (
   queryParams?: ListParams,
-  currentLocation?: LocationRowFragment | null
+  currentLocation?: LocationRowFragment | null,
+  enabled: boolean = true
 ) => {
-  const { data, isLoading, isError } = useGetList(queryParams);
+  const { data, isLoading, isError } = useGetList(enabled, queryParams);
 
   // NEXT LOCATION
   const next = getNextLocation(data?.nodes ?? [], currentLocation);
@@ -31,7 +32,7 @@ export const useLocationList = (
   };
 };
 
-const useGetList = (queryParams?: ListParams) => {
+const useGetList = (enabled?: boolean, queryParams?: ListParams) => {
   const { locationApi, storeId } = useLocationGraphQL();
   const { first, offset, sortBy, filterBy } = queryParams ?? {};
   const queryKey = [
@@ -57,8 +58,9 @@ const useGetList = (queryParams?: ListParams) => {
   };
 
   const query = useQuery({
-    queryKey,
+    queryKey: [...queryKey, enabled],
     queryFn,
+    enabled,
   });
   return query;
 };

@@ -8,7 +8,7 @@ import {
   AutocompleteWithPagination,
   useFormatNumber,
 } from '@openmsupply-client/common';
-import { useItemById, useStockItemsWithStats } from '../../api';
+import { useItem, useStockItemsWithStats } from '../../api';
 import {
   getOptionLabel,
   StockItemSearchInputWithStatsProps,
@@ -46,7 +46,9 @@ export const StockItemSearchInputWithStats = ({
     });
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
-  const { data: currentItem } = useItemById(currentItemId ?? undefined);
+  const {
+    byId: { data: currentItem },
+  } = useItem(currentItemId ?? undefined);
 
   useEffect(() => {
     if (currentItem && search === '') setSearch(getOptionLabel(currentItem));
@@ -104,6 +106,7 @@ export const StockItemSearchInputWithStats = ({
       sx={{
         '.MuiInputBase-root': { paddingLeft: disabled ? 0 : undefined },
         '.MuiBox-root': { justifyContent: 'flex-start' },
+        paddingX: '25px',
       }}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       inputValue={search}

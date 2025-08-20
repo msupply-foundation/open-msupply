@@ -19,7 +19,7 @@ use diesel::{
     prelude::*,
     query_source::Alias,
 };
-use util::{constants::SYSTEM_NAME_CODES, inline_init};
+use util::constants::SYSTEM_NAME_CODES;
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Name {
@@ -427,7 +427,10 @@ impl Name {
 
 impl NameType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }
 
@@ -446,7 +449,7 @@ impl From<NameType> for NameRowType {
 
 #[cfg(test)]
 mod tests {
-    use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
+    use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
     use crate::{
         mock::{
@@ -454,7 +457,7 @@ mod tests {
             MockDataInserts,
         },
         test_db, NameFilter, NameLinkRow, NameRepository, NameRow, NameRowRepository, Pagination,
-        StringFilter, DEFAULT_PAGINATION_LIMIT,
+        StringFilter,
     };
 
     use std::convert::TryFrom;
@@ -465,22 +468,24 @@ mod tests {
         let mut rows = Vec::new();
         let mut queries = Vec::new();
         for index in 0..200 {
-            rows.push(inline_init(|r: &mut NameRow| {
-                r.id = format!("id{:05}", index);
-                r.name = format!("name{}", index);
-                r.code = format!("code{}", index);
-                r.is_customer = true;
-                r.is_supplier = true;
-            }));
+            rows.push(NameRow {
+                id: format!("id{:05}", index),
+                name: format!("name{}", index),
+                code: format!("code{}", index),
+                is_customer: true,
+                is_supplier: true,
+                ..Default::default()
+            });
 
             queries.push(Name {
-                name_row: inline_init(|r: &mut NameRow| {
-                    r.id = format!("id{:05}", index);
-                    r.name = format!("name{}", index);
-                    r.code = format!("code{}", index);
-                    r.is_customer = true;
-                    r.is_supplier = true;
-                }),
+                name_row: NameRow {
+                    id: format!("id{:05}", index),
+                    name: format!("name{}", index),
+                    code: format!("code{}", index),
+                    is_customer: true,
+                    is_supplier: true,
+                    ..Default::default()
+                },
                 name_store_join_row: None,
                 store_row: None,
                 properties: None,
@@ -506,7 +511,6 @@ mod tests {
                 .unwrap();
         }
 
-        let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
         let store_id = "store_a";
 
         // Test
@@ -521,13 +525,13 @@ mod tests {
             queries.len()
         );
 
-        // .query, no pagination (default)
+        // .query, no pagination (default) - gets all names
         assert_eq!(
             NameRepository::new(&storage_connection)
                 .query(store_id, Pagination::new(), None, None)
                 .unwrap()
                 .len(),
-            default_page_size
+            queries.len()
         );
 
         // .query, pagination (offset 10)
@@ -536,18 +540,15 @@ mod tests {
                 store_id,
                 Pagination {
                     offset: 10,
-                    limit: DEFAULT_PAGINATION_LIMIT,
+                    limit: 100,
                 },
                 None,
                 None,
             )
             .unwrap();
-        assert_eq!(result.len(), default_page_size);
+        assert_eq!(result.len(), 100);
         assert_eq!(result[0], queries[10]);
-        assert_eq!(
-            result[default_page_size - 1],
-            queries[10 + default_page_size - 1]
-        );
+        assert_eq!(result[99], queries[109]);
 
         // .query, pagination (first 10)
         let result = NameRepository::new(&storage_connection)

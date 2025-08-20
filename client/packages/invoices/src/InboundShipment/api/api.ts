@@ -23,7 +23,7 @@ import {
   UpdateDonorInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
-import { isA } from '../../utils';
+import { isA, isInboundPlaceholderRow } from '../../utils';
 import {
   Sdk,
   InboundFragment,
@@ -120,11 +120,14 @@ const inboundParsers = {
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
       itemVariantId: line.itemVariantId,
-      vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
+      vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
       donorId: line.donor?.id,
       campaignId: line.campaign?.id,
+      programId: line.program?.id,
       note: line.note,
       shippedNumberOfPacks: line.shippedNumberOfPacks,
+      volumePerPack: line.volumePerPack,
+      shippedPackSize: line.shippedPackSize,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -151,13 +154,18 @@ const inboundParsers = {
     itemVariantId: setNullableInput('itemVariantId', {
       itemVariantId: line.itemVariantId,
     }),
-    vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
+    vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
     donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
     campaignId: setNullableInput('campaignId', {
       campaignId: line.campaign?.id ?? null,
     }),
+    programId: setNullableInput('programId', {
+      programId: line.program?.id ?? null,
+    }),
     note: setNullableInput('note', { note: line.note ?? null }),
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
+    volumePerPack: line.volumePerPack ?? null,
+    shippedPackSize: line.shippedPackSize ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
@@ -370,12 +378,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   updateLines: async (draftInboundLine: DraftInboundLine[]) => {
     const input = {
       insertInboundShipmentLines: draftInboundLine
-        .filter(
-          ({ type, isCreated, numberOfPacks }) =>
-            isCreated &&
-            type === InvoiceLineNodeType.StockIn &&
-            numberOfPacks > 0
-        )
+        .filter(line => line.isCreated && !isInboundPlaceholderRow(line))
         .map(inboundParsers.toInsertLine),
       updateInboundShipmentLines: draftInboundLine
         .filter(

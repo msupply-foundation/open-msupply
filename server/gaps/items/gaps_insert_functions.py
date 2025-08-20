@@ -1,5 +1,5 @@
 
-from helpers import cold_storage_type_id_lookup
+from helpers import location_type_id_lookup
 
 
 def changelog_stmt(record_id, table_name):
@@ -52,12 +52,12 @@ def upsert_diluent_stmt(item_id, row):
 def upsert_item_variant_stmt(item_variant_id, item_id, row):
     item_variant_name = row['CommercialName'] + " (" + row['Manufacturer'] + ")"
     item_link_id = item_id # Assuming nothings been merged here...
-    cold_storage_type_id = cold_storage_type_id_lookup(row['VaccineStorageTemperature'])
+    location_type_id = location_type_id_lookup(row['VaccineStorageTemperature'])
 
     # Insert the item_variant
     insert_statement = (f"INSERT INTO item_variant "
-                        "(id, name, item_link_id, cold_storage_type_id)"
-                        f" VALUES ('{item_variant_id}', '{item_variant_name}', '{item_link_id}', {cold_storage_type_id})"
+                        "(id, name, item_link_id, location_type_id)"
+                        f" VALUES ('{item_variant_id}', '{item_variant_name}', '{item_link_id}', {location_type_id})"
                         f" ON CONFLICT DO NOTHING;\n") # For now we just won't update, so only new items will be inserted
 
 
@@ -68,12 +68,12 @@ def upsert_item_variant_stmt(item_variant_id, item_id, row):
 def upsert_diluent_variant_stmt(diluent_variant_id, diluent_item_id, row):
     item_variant_name = row['CommercialName'] + " (" + row['Manufacturer'] + ")"
     item_link_id = diluent_item_id
-    cold_storage_type_id = cold_storage_type_id_lookup(row['VaccineStorageTemperature'])
+    location_type_id = location_type_id_lookup(row['VaccineStorageTemperature'])
 
     # Insert the item_variant(diluent)
     insert_statement = (f"INSERT INTO item_variant "
-                        "(id, name, item_link_id, cold_storage_type_id)"
-                        f" VALUES ('{diluent_variant_id}', '{item_variant_name}', '{item_link_id}', {cold_storage_type_id})"
+                        "(id, name, item_link_id, location_type_id)"
+                        f" VALUES ('{diluent_variant_id}', '{item_variant_name}', '{item_link_id}', {location_type_id})"
                         f" ON CONFLICT DO NOTHING;\n") # For now we just won't update, so only new items will be inserted
 
     sql_statements = insert_statement + changelog_stmt(diluent_variant_id, 'item_variant')

@@ -8,13 +8,12 @@ import {
   RequisitionNodeApprovalStatus,
   Typography,
   UserStoreNodeFragment,
-  useFormatNumber,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
   StockItemSearchInputWithStats,
-  useReasonOptions,
 } from '@openmsupply-client/system';
 import { ResponseFragment, ResponseLineFragment } from '../../api';
 import {
@@ -39,7 +38,6 @@ interface ResponseLineEditProps {
   setRepresentation: (type: RepresentationValue) => void;
   disabled: boolean;
   isUpdateMode?: boolean;
-  manageVaccinesInDoses?: boolean;
   isReasonsError: boolean;
   setIsEditingSupply: (isEditingSupply: boolean) => void;
 }
@@ -57,12 +55,10 @@ export const ResponseLineEdit = ({
   isReasonsError,
   disabled = false,
   isUpdateMode = false,
-  manageVaccinesInDoses = false,
   setIsEditingSupply,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
-  const { data: reasonOptions, isLoading } = useReasonOptions();
-  const { round } = useFormatNumber();
+  const { manageVaccinesInDoses } = usePreferences();
 
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
@@ -103,13 +99,13 @@ export const ResponseLineEdit = ({
         {isPacksEnabled && (
           <InfoRow
             label={t('label.default-pack-size')}
-            value={round(currentItem?.defaultPackSize)}
+            value={currentItem?.defaultPackSize}
           />
         )}
         {displayVaccinesInDoses && currentItem?.doses ? (
           <InfoRow
             label={t('label.doses-per-unit')}
-            value={round(currentItem?.doses)}
+            value={currentItem?.doses}
           />
         ) : null}
         {showExtraFields && (
@@ -152,13 +148,13 @@ export const ResponseLineEdit = ({
         {isPacksEnabled && !showExtraFields && (
           <InfoRow
             label={t('label.default-pack-size')}
-            value={round(currentItem?.defaultPackSize)}
+            value={currentItem?.defaultPackSize}
           />
         )}
         {displayVaccinesInDoses && currentItem?.doses && !showExtraFields ? (
           <InfoRow
             label={t('label.doses-per-unit')}
-            value={round(currentItem?.doses)}
+            value={currentItem?.doses}
           />
         ) : null}
         <Box
@@ -203,8 +199,6 @@ export const ResponseLineEdit = ({
                 }}
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
-                reasonOptions={reasonOptions?.nodes ?? []}
-                loading={isLoading}
                 inputProps={{
                   error: isReasonsError,
                 }}

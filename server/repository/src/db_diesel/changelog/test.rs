@@ -1,6 +1,5 @@
 use super::changelog::changelog;
 use diesel::prelude::*;
-use util::{inline_edit, inline_init};
 
 use crate::{
     asset_class_row::AssetClassRow,
@@ -35,13 +34,14 @@ async fn test_changelog() {
     let log_entry = result.pop().unwrap();
     assert_eq!(
         log_entry,
-        inline_init(|r: &mut ChangelogRow| {
-            r.cursor = starting_cursor as i64 + 1;
-            r.table_name = ChangelogTableName::Location;
-            r.record_id = mock_location_1().id;
-            r.row_action = RowActionType::Upsert;
-            r.store_id = Some(mock_location_1().store_id.clone());
-        })
+        ChangelogRow {
+            cursor: starting_cursor as i64 + 1,
+            table_name: ChangelogTableName::Location,
+            record_id: mock_location_1().id,
+            row_action: RowActionType::Upsert,
+            store_id: Some(mock_location_1().store_id.clone()),
+            ..Default::default()
+        }
     );
 
     // querying from the first entry should give the same result:
@@ -52,10 +52,11 @@ async fn test_changelog() {
 
     // update the entry
     location_repo
-        .upsert_one(&inline_edit(&mock_location_1(), |mut u| {
+        .upsert_one(&{
+            let mut u = mock_location_1();
             u.code = "new_code".to_string();
             u
-        }))
+        })
         .unwrap();
     let mut result = repo
         .changelogs((log_entry.cursor + 1) as u64, 10, None)
@@ -64,13 +65,14 @@ async fn test_changelog() {
     let log_entry = result.pop().unwrap();
     assert_eq!(
         log_entry,
-        inline_init(|r: &mut ChangelogRow| {
-            r.cursor = starting_cursor as i64 + 2;
-            r.table_name = ChangelogTableName::Location;
-            r.record_id = mock_location_1().id;
-            r.row_action = RowActionType::Upsert;
-            r.store_id = Some(mock_location_1().store_id.clone());
-        })
+        ChangelogRow {
+            cursor: starting_cursor as i64 + 2,
+            table_name: ChangelogTableName::Location,
+            record_id: mock_location_1().id,
+            row_action: RowActionType::Upsert,
+            store_id: Some(mock_location_1().store_id.clone()),
+            ..Default::default()
+        }
     );
 
     // query the full list from cursor=0
@@ -80,13 +82,14 @@ async fn test_changelog() {
     let log_entry = result.pop().unwrap();
     assert_eq!(
         log_entry,
-        inline_init(|r: &mut ChangelogRow| {
-            r.cursor = starting_cursor as i64 + 2;
-            r.table_name = ChangelogTableName::Location;
-            r.record_id = mock_location_1().id;
-            r.row_action = RowActionType::Upsert;
-            r.store_id = Some(mock_location_1().store_id.clone());
-        })
+        ChangelogRow {
+            cursor: starting_cursor as i64 + 2,
+            table_name: ChangelogTableName::Location,
+            record_id: mock_location_1().id,
+            row_action: RowActionType::Upsert,
+            store_id: Some(mock_location_1().store_id.clone()),
+            ..Default::default()
+        }
     );
 
     // add another entry
@@ -96,20 +99,22 @@ async fn test_changelog() {
     assert_eq!(
         result,
         vec![
-            inline_init(|r: &mut ChangelogRow| {
-                r.cursor = starting_cursor as i64 + 2;
-                r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_1().id;
-                r.row_action = RowActionType::Upsert;
-                r.store_id = Some(mock_location_1().store_id.clone());
-            }),
-            inline_init(|r: &mut ChangelogRow| {
-                r.cursor = starting_cursor as i64 + 3;
-                r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_on_hold().id;
-                r.row_action = RowActionType::Upsert;
-                r.store_id = Some(mock_location_on_hold().store_id.clone());
-            })
+            ChangelogRow {
+                cursor: starting_cursor as i64 + 2,
+                table_name: ChangelogTableName::Location,
+                record_id: mock_location_1().id,
+                row_action: RowActionType::Upsert,
+                store_id: Some(mock_location_1().store_id.clone()),
+                ..Default::default()
+            },
+            ChangelogRow {
+                cursor: starting_cursor as i64 + 3,
+                table_name: ChangelogTableName::Location,
+                record_id: mock_location_on_hold().id,
+                row_action: RowActionType::Upsert,
+                store_id: Some(mock_location_on_hold().store_id.clone()),
+                ..Default::default()
+            }
         ]
     );
 
@@ -120,20 +125,22 @@ async fn test_changelog() {
     assert_eq!(
         result,
         vec![
-            inline_init(|r: &mut ChangelogRow| {
-                r.cursor = starting_cursor as i64 + 2;
-                r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_1().id;
-                r.row_action = RowActionType::Upsert;
-                r.store_id = Some(mock_location_1().store_id.clone());
-            }),
-            inline_init(|r: &mut ChangelogRow| {
-                r.cursor = starting_cursor as i64 + 4;
-                r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_on_hold().id;
-                r.row_action = RowActionType::Delete;
-                r.store_id = Some(mock_location_on_hold().store_id.clone());
-            })
+            ChangelogRow {
+                cursor: starting_cursor as i64 + 2,
+                table_name: ChangelogTableName::Location,
+                record_id: mock_location_1().id,
+                row_action: RowActionType::Upsert,
+                store_id: Some(mock_location_1().store_id.clone()),
+                ..Default::default()
+            },
+            ChangelogRow {
+                cursor: starting_cursor as i64 + 4,
+                table_name: ChangelogTableName::Location,
+                record_id: mock_location_on_hold().id,
+                row_action: RowActionType::Delete,
+                store_id: Some(mock_location_on_hold().store_id.clone()),
+                ..Default::default()
+            }
         ]
     );
 }
@@ -335,16 +342,14 @@ fn test_changelog_name_and_store_id<T, F>(
         )
         .unwrap();
 
-    assert_eq!(
-        change_logs[0],
-        inline_edit(&change_logs[0], |mut r| {
-            r.name_id = Some(record.name_id);
-            r.store_id = Some(record.store_id);
-            r.record_id = record.record_id;
-            r.row_action = row_action.clone();
-            r
-        })
-    );
+    assert_eq!(change_logs[0], {
+        let mut r = change_logs[0].clone();
+        r.name_id = Some(record.name_id);
+        r.store_id = Some(record.store_id);
+        r.record_id = record.record_id;
+        r.row_action = row_action.clone();
+        r
+    });
 }
 
 #[actix_rt::test]
@@ -352,72 +357,80 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // This test checks that the database triggers that should create change log records are working correctly
     // For each record type we create an example record, then check that the associated changelog record has automatically been created.
     fn name() -> NameRow {
-        inline_init(|r: &mut NameRow| {
-            r.id = "name_id".to_string();
-            r.name = "name".to_string()
-        })
+        NameRow {
+            id: "name_id".to_string(),
+            name: "name".to_string(),
+            ..Default::default()
+        }
     }
 
     fn store() -> StoreRow {
-        inline_init(|r: &mut StoreRow| {
-            r.id = "store".to_string();
-            r.name_link_id = name().id
-        })
+        StoreRow {
+            id: "store".to_string(),
+            name_link_id: name().id,
+            ..Default::default()
+        }
     }
 
     fn currency() -> CurrencyRow {
-        inline_init(|r: &mut CurrencyRow| {
-            r.id = "currency".to_string();
-            r.is_home_currency = true;
-            r.code = "NZD".to_string();
-        })
+        CurrencyRow {
+            id: "currency".to_string(),
+            is_home_currency: true,
+            code: "NZD".to_string(),
+            ..Default::default()
+        }
     }
 
     fn invoice() -> InvoiceRow {
-        inline_init(|r: &mut InvoiceRow| {
-            r.id = "invoice".to_string();
-            r.name_link_id = name().id;
-            r.store_id = store().id;
-            r.currency_id = Some(currency().id);
-        })
+        InvoiceRow {
+            id: "invoice".to_string(),
+            name_link_id: name().id,
+            store_id: store().id,
+            currency_id: Some(currency().id),
+            ..Default::default()
+        }
     }
 
     fn invoice_line() -> InvoiceLineRow {
-        inline_init(|r: &mut InvoiceLineRow| {
-            r.id = "invoice_line".to_string();
-            r.invoice_id = invoice().id;
-            r.item_link_id = mock_item_a().id;
-        })
+        InvoiceLineRow {
+            id: "invoice_line".to_string(),
+            invoice_id: invoice().id,
+            item_link_id: mock_item_a().id,
+            ..Default::default()
+        }
     }
 
     fn requisition() -> RequisitionRow {
-        inline_init(|r: &mut RequisitionRow| {
-            r.id = "requisition".to_string();
-            r.name_link_id = name().id;
-            r.store_id = store().id;
-        })
+        RequisitionRow {
+            id: "requisition".to_string(),
+            name_link_id: name().id,
+            store_id: store().id,
+            ..Default::default()
+        }
     }
 
     fn requisition_line() -> RequisitionLineRow {
-        inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "requisition_line".to_string();
-            r.requisition_id = requisition().id;
-            r.item_link_id = mock_item_a().id;
-        })
+        RequisitionLineRow {
+            id: "requisition_line".to_string(),
+            requisition_id: requisition().id,
+            item_link_id: mock_item_a().id,
+            ..Default::default()
+        }
     }
 
     let (_, connection, _, _) = setup_all_with_data(
         "test_changelog_name_and_store_id_insert",
         MockDataInserts::none().units().items(),
-        inline_init(|r: &mut MockData| {
-            r.names = vec![name()];
-            r.stores = vec![store()];
-            r.currencies = vec![currency()];
-            r.invoices = vec![invoice()];
-            r.invoice_lines = vec![invoice_line()];
-            r.requisitions = vec![requisition()];
-            r.requisition_lines = vec![requisition_line()];
-        }),
+        MockData {
+            names: vec![name()],
+            stores: vec![store()],
+            currencies: vec![currency()],
+            invoices: vec![invoice()],
+            invoice_lines: vec![invoice_line()],
+            requisitions: vec![requisition()],
+            requisition_lines: vec![requisition_line()],
+            ..Default::default()
+        },
     )
     .await;
 

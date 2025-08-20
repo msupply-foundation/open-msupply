@@ -10,18 +10,17 @@ import {
   useColumnUtils,
   CurrencyCell,
   getLinesFromRow,
-  usePreference,
+  usePreferences,
   ColumnDescription,
   SortBy,
   useTranslation,
-  PreferenceKey,
   getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
 import { useInboundShipmentLineErrorContext } from '../../context/inboundShipmentLineError';
-import { getDosesQuantityColumn } from 'packages/invoices/src/DoseQtyColumn';
+import { getDosesQuantityColumn } from '../../../DoseQtyColumn';
 
 const getUnitQuantity = (row: InboundLineFragment) =>
   row.packSize * row.numberOfPacks;
@@ -50,11 +49,9 @@ export const useInboundShipmentColumns = ({
   onChangeSortBy,
 }: InboundShipmentColumnsProps) => {
   const t = useTranslation();
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
-  );
+  const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
+    usePreferences();
+
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { getError } = useInboundShipmentLineErrorContext();
   const getCostPrice = (row: InboundLineFragment) =>
@@ -104,6 +101,7 @@ export const useInboundShipmentColumns = ({
             { path: ['lines', 'item', 'code'] },
             { path: ['item', 'code'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [
@@ -204,7 +202,7 @@ export const useInboundShipmentColumns = ({
     ],
   ];
 
-  if (preferences?.manageVaccinesInDoses) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -254,7 +252,7 @@ export const useInboundShipmentColumns = ({
     ]
   );
 
-  if (preferences?.manageVaccinesInDoses) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesQuantityColumn());
   }
 
@@ -288,7 +286,7 @@ export const useInboundShipmentColumns = ({
     }
   );
 
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (allowTrackingOfStockByDonor) {
     columns.push({
       key: 'donorName',
       label: 'label.donor',
@@ -301,20 +299,31 @@ export const useInboundShipmentColumns = ({
     });
   }
 
-  if (preferences?.useCampaigns) {
-    columns.push({
+  columns.push(
+    {
       key: 'campaign',
       label: 'label.campaign',
-      accessor: ({ rowData }) =>
-        getColumnProperty(rowData, [
-          { path: ['lines', 'campaign', 'name'] },
-          { path: ['campaign', 'name'], default: '' },
-        ]),
-      defaultHideOnMobile: true,
-    });
-  }
+      accessor: ({ rowData }) => {
+        // Campaign or program could be selected
 
-  columns.push(getRowExpandColumn());
+        // Check for campaign name first
+        const campaignName = getColumnProperty(rowData, [
+          { path: ['lines', 'campaign', 'name'] },
+          { path: ['campaign', 'name'] },
+        ]);
+
+        if (!!campaignName) return campaignName;
+
+        // Otherwise, check for program name
+        return getColumnProperty(rowData, [
+          { path: ['lines', 'program', 'name'] },
+          { path: ['program', 'name'], default: '' },
+        ]);
+      },
+      defaultHideOnMobile: true,
+    },
+    getRowExpandColumn()
+  );
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
@@ -323,13 +332,10 @@ export const useInboundShipmentColumns = ({
 };
 
 export const useExpansionColumns = (
-  withDoseColumns?: boolean
+  isVaccineItem: boolean
 ): Column<InboundLineFragment>[] => {
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns,
-  );
-
+  const { allowTrackingOfStockByDonor, manageVaccinesInDoses } =
+    usePreferences();
   const columns: ColumnDescription<InboundLineFragment>[] = [
     'batch',
     'expiryDate',
@@ -343,7 +349,7 @@ export const useExpansionColumns = (
     'numberOfPacks',
   ];
 
-  if (withDoseColumns) {
+  if (manageVaccinesInDoses && isVaccineItem) {
     columns.push(getDosesQuantityColumn());
   }
 
@@ -366,7 +372,7 @@ export const useExpansionColumns = (
     ]
   );
 
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (allowTrackingOfStockByDonor) {
     columns.push({
       key: 'donorName',
       label: 'label.donor',
@@ -376,15 +382,14 @@ export const useExpansionColumns = (
     });
   }
 
-  if (preferences?.useCampaigns) {
-    columns.push({
-      key: 'campaign',
-      label: 'label.campaign',
-      width: 100,
-      accessor: ({ rowData }) => rowData.campaign?.name,
-      defaultHideOnMobile: true,
-    });
-  }
+  columns.push({
+    key: 'campaign',
+    label: 'label.campaign',
+    width: 100,
+    accessor: ({ rowData }) =>
+      rowData.campaign?.name ?? rowData.program?.name ?? '',
+    defaultHideOnMobile: true,
+  });
 
   return useColumns(columns, {}, []);
 };

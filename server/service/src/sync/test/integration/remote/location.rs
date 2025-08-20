@@ -5,7 +5,7 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use repository::{LocationRow, LocationRowDelete};
-use util::{inline_edit, uuid::uuid};
+use util::uuid::uuid;
 
 pub struct LocationRecordTester;
 impl SyncRecordTester for LocationRecordTester {
@@ -19,7 +19,7 @@ impl SyncRecordTester for LocationRecordTester {
             code: "LocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
-            cold_storage_type_id: None,
+            location_type_id: None,
         };
 
         result.push(TestStepData {
@@ -27,12 +27,10 @@ impl SyncRecordTester for LocationRecordTester {
             ..Default::default()
         });
         // STEP 2 - mutate
-        let row = inline_edit(&row, |mut d| {
-            d.name = "LoationName2".to_string();
-            d.code = "LocationCode2".to_string();
-            d.on_hold = true;
-            d
-        });
+        let mut row = row.clone();
+        row.name = "LocationName2".to_string();
+        row.code = "LocationCode2".to_string();
+        row.on_hold = true;
         result.push(TestStepData {
             integration_records: vec![IntegrationOperation::upsert(row.clone())],
             ..Default::default()

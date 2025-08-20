@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 use crate::service_provider::ServiceContext;
 use repository::{GenderType, TransactionError};
@@ -14,8 +16,11 @@ pub struct UpsertPreferences {
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub gender_options: Option<Vec<GenderType>>,
     pub show_contact_tracing: Option<bool>,
-    pub use_campaigns: Option<bool>,
-    pub custom_translations: Option<serde_json::Value>,
+    pub custom_translations: Option<BTreeMap<String, String>>,
+    pub sync_records_display_threshold: Option<i32>,
+    pub authorise_purchase_order: Option<bool>,
+    pub prevent_transfers_months_before_initialisation: Option<i32>,
+    pub authorise_goods_received: Option<bool>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
@@ -31,8 +36,12 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         gender_options: gender_options_input,
         show_contact_tracing: show_contact_tracing_input,
-        use_campaigns: use_campaigns_input,
         custom_translations: custom_translations_input,
+        sync_records_display_threshold: sync_records_display_threshold_input,
+        authorise_purchase_order: authorise_purchase_order_input,
+        prevent_transfers_months_before_initialisation:
+            prevent_transfers_months_before_initialisation_input,
+        authorise_goods_received: authorise_goods_received_input,
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
@@ -46,8 +55,11 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor,
         gender_options,
         show_contact_tracing,
-        use_campaigns,
         custom_translations,
+        sync_records_display_threshold,
+        authorise_purchase_order,
+        prevent_transfers_months_before_initialisation,
+        authorise_goods_received,
         // Store preferences
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
@@ -71,12 +83,24 @@ pub fn upsert_preferences(
                 show_contact_tracing.upsert(connection, input, None)?;
             }
 
-            if let Some(input) = use_campaigns_input {
-                use_campaigns.upsert(connection, input, None)?;
-            }
-
             if let Some(input) = custom_translations_input {
                 custom_translations.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = sync_records_display_threshold_input {
+                sync_records_display_threshold.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = authorise_purchase_order_input {
+                authorise_purchase_order.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = prevent_transfers_months_before_initialisation_input {
+                prevent_transfers_months_before_initialisation.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = authorise_goods_received_input {
+                authorise_goods_received.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

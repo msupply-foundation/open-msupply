@@ -33,28 +33,24 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE purchase_order (
                     id TEXT NOT NULL PRIMARY KEY,
                     store_id TEXT NOT NULL REFERENCES store(id),
-                    user_id TEXT,
-                    supplier_name_link_id TEXT REFERENCES name_link(id),
-                    -- corresponds to OG "serial_number"
+                    created_by TEXT,
+                    supplier_name_link_id TEXT NOT NULL REFERENCES name_link(id),
                     purchase_order_number BIGINT NOT NULL,
                     status {purchase_order_status} NOT NULL,
                     created_datetime {DATETIME} NOT NULL,
                     confirmed_datetime {DATETIME},
-                    delivered_datetime {DATETIME},
                     target_months {DOUBLE},
                     comment TEXT,
-                    supplier_discount_percentage {DOUBLE},
-                    supplier_discount_amount {DOUBLE},
                     donor_link_id TEXT REFERENCES name_link(id),
                     reference TEXT,
                     currency_id TEXT REFERENCES currency(id),
-                    foreign_exchange_rate {DOUBLE},
+                    foreign_exchange_rate {DOUBLE} NOT NULL DEFAULT 1.0,
                     shipping_method TEXT,
                     sent_datetime {DATETIME},
-                    contract_signed_datetime {DATETIME},
-                    advance_paid_datetime {DATETIME},
-                    received_at_port_datetime {DATE},
-                    expected_delivery_datetime {DATE},
+                    contract_signed_date {DATE},
+                    advance_paid_date {DATE},
+                    received_at_port_date {DATE},
+                    requested_delivery_date {DATE},
                     supplier_agent TEXT,
                     authorising_officer_1 TEXT,
                     authorising_officer_2 TEXT,
@@ -66,7 +62,7 @@ impl MigrationFragment for Migrate {
                     insurance_charge {DOUBLE},
                     freight_charge {DOUBLE},
                     freight_conditions TEXT
-                );
+                    );
             "#
         )?;
 
@@ -76,27 +72,21 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE purchase_order_line (
                     id TEXT NOT NULL PRIMARY KEY,
                     purchase_order_id TEXT REFERENCES purchase_order(id) NOT NULL,
+                    store_id TEXT NOT NULL REFERENCES store(id),
                     line_number BIGINT NOT NULL,
                     item_link_id TEXT REFERENCES item_link(id) NOT NULL,
-                    item_name TEXT,
-                    number_of_packs {DOUBLE},
-                    pack_size {DOUBLE},
-                    -- corresponds to OG "original_quantity"
-                    requested_quantity {DOUBLE},
-                    -- corresponds to OG "adjusted_quantity"
-                    authorised_quantity {DOUBLE},
-                    total_received {DOUBLE},
+                    item_name TEXT NOT NULL,
+                    requested_pack_size {DOUBLE} NOT NULL DEFAULT 1.0,
+                    requested_number_of_units {DOUBLE} NOT NULL DEFAULT 0.0,
+                    authorised_number_of_units {DOUBLE},
+                    received_number_of_units {DOUBLE},
                     requested_delivery_date {DATE},
-                    expected_delivery_date {DATE}
+                    expected_delivery_date {DATE},
+                    stock_on_hand_in_units {DOUBLE} NOT NULL DEFAULT 0.0,
+                    supplier_item_code TEXT,
+                    price_per_unit_before_discount {DOUBLE} NOT NULL DEFAULT 0.0,
+                    price_per_unit_after_discount {DOUBLE} NOT NULL DEFAULT 0.0
                 );
-            "#
-        )?;
-
-        sql!(
-            connection,
-            r#"
-                ALTER TABLE invoice ADD COLUMN purchase_order_id TEXT REFERENCES purchase_order(id);
-                ALTER TABLE invoice_line ADD COLUMN purchase_order_line_id TEXT REFERENCES purchase_order(id);
             "#
         )?;
 

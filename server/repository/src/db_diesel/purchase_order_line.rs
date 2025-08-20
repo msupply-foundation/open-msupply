@@ -32,15 +32,16 @@ pub struct PurchaseOrderLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub purchase_order_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub requested_pack_size: Option<EqualFilter<f64>>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 pub enum PurchaseOrderLineSortField {
     ItemName,
-    NumberOfPacks,
     LineNumber,
-    RequestedQuantity,
-    AuthorisedQuantity,
-    TotalReceived,
+    // RequestedQuantity, // TODO: Bring back sorting as needed by frontend
+    // AuthorisedQuantity,
+    // TotalReceived,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
 }
@@ -91,21 +92,10 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                 PurchaseOrderLineSortField::ItemName => {
                     apply_sort_no_case!(query, sort, item::name);
                 }
-                PurchaseOrderLineSortField::NumberOfPacks => {
-                    apply_sort!(query, sort, purchase_order_line::number_of_packs);
-                }
                 PurchaseOrderLineSortField::LineNumber => {
                     apply_sort!(query, sort, purchase_order_line::line_number);
                 }
-                PurchaseOrderLineSortField::RequestedQuantity => {
-                    apply_sort!(query, sort, purchase_order_line::requested_quantity);
-                }
-                PurchaseOrderLineSortField::AuthorisedQuantity => {
-                    apply_sort!(query, sort, purchase_order_line::authorised_quantity);
-                }
-                PurchaseOrderLineSortField::TotalReceived => {
-                    apply_sort!(query, sort, purchase_order_line::total_received);
-                }
+
                 PurchaseOrderLineSortField::RequestedDeliveryDate => {
                     apply_sort!(query, sort, purchase_order_line::requested_delivery_date);
                 }
@@ -154,11 +144,19 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             purchase_order_id,
             id,
             store_id,
+            requested_pack_size,
+            item_id,
         } = f;
 
         apply_equal_filter!(query, purchase_order_id, purchase_order::id);
         apply_equal_filter!(query, id, purchase_order_line::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
+        apply_equal_filter!(
+            query,
+            requested_pack_size,
+            purchase_order_line::requested_pack_size
+        );
+        apply_equal_filter!(query, item_id, item_link::item_id);
     }
 
     query

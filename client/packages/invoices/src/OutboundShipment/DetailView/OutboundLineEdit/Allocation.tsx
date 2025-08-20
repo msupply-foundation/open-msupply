@@ -13,6 +13,8 @@ import {
   useIntlUtils,
   BasicSpinner,
   Divider,
+  useFormatNumber,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import {
@@ -35,10 +37,6 @@ interface AllocationProps {
   invoiceId: string;
   allowPlaceholder: boolean;
   scannedBatch?: string;
-  prefOptions: {
-    sortByVvmStatus: boolean;
-    manageVaccinesInDoses: boolean;
-  };
 }
 
 export const Allocation = ({
@@ -46,8 +44,11 @@ export const Allocation = ({
   invoiceId,
   allowPlaceholder,
   scannedBatch,
-  prefOptions: { sortByVvmStatus, manageVaccinesInDoses },
 }: AllocationProps) => {
+  const t = useTranslation();
+  const { format } = useFormatNumber();
+  const { manageVaccinesInDoses, sortByVvmStatusThenExpiry } = usePreferences();
+
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
     item,
@@ -76,19 +77,24 @@ export const Allocation = ({
             }
           : undefined;
 
-      initialise({
-        itemData: data,
-        strategy: sortByVvmStatus
-          ? AllocationStrategy.VVMStatus
-          : AllocationStrategy.FEFO,
-        allowPlaceholder,
-        scannedBatch,
-        // Default to allocate in doses for vaccines if pref is on
-        allocateIn:
-          manageVaccinesInDoses && data.item.isVaccine
-            ? { type: AllocateInType.Doses }
-            : allocateInPacksize,
-      });
+      initialise(
+        {
+          itemData: data,
+          strategy: sortByVvmStatusThenExpiry
+            ? AllocationStrategy.VVMStatus
+            : AllocationStrategy.FEFO,
+          allowPlaceholder,
+          scannedBatch,
+          // Default to allocate in doses for vaccines if pref is on
+
+          allocateIn:
+            manageVaccinesInDoses && data.item.isVaccine
+              ? { type: AllocateInType.Doses }
+              : allocateInPacksize,
+        },
+        format,
+        t
+      );
     });
     // Expect dependencies to be stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,7 +157,7 @@ const AllocationInner = () => {
         <Divider margin={10} />
 
         <Box display="flex" alignItems="flex-start" gap={2}>
-          <Grid container alignItems="center" pt={1}>
+          <Grid container alignItems="center" pt={1} gap={1}>
             <AutoAllocateField />
             <AllocateInSelector includePackSizeOptions />
           </Grid>

@@ -121,8 +121,8 @@ pub use self::demographic::*;
 pub mod reason_option;
 pub use self::reason_option::*;
 
-pub mod cold_storage_type;
-pub use self::cold_storage_type::*;
+pub mod location_type;
+pub use self::location_type::*;
 
 pub mod abbreviation;
 pub use self::abbreviation::*;
@@ -155,6 +155,9 @@ pub use self::purchase_order::*;
 pub mod purchase_order_line;
 pub use self::purchase_order_line::*;
 
+pub mod item_store_join;
+pub use self::item_store_join::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
@@ -172,6 +175,12 @@ impl IdResponse {
     }
 }
 
+impl IdResponse {
+    pub fn from_domain(purchase_order_line: PurchaseOrderLineRow) -> Self {
+        IdResponse(purchase_order_line.id)
+    }
+}
+
 pub struct OkResponse;
 #[Object]
 impl OkResponse {
@@ -181,3 +190,4 @@ impl OkResponse {
 }
 
 pub use campaign::*;
+use repository::PurchaseOrderLineRow;

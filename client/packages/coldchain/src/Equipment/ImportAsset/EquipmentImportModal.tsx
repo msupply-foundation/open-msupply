@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { EquipmentReviewTab } from './ReviewTab';
 import { EquipmentUploadTab } from './UploadTab';
-import { EquipmentImportTab } from './ImportTab';
 import {
   QueryParamsProvider,
   createQueryParamsStore,
@@ -15,11 +14,11 @@ import {
   Grid,
   Alert,
   ClickableStepper,
-  AssetLogStatusInput,
+  AssetLogStatusNodeType,
   FnUtils,
   useIsCentralServerApi,
-  StatusType,
   useExportCSV,
+  ImportTab,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useAssets } from '../api';
@@ -51,7 +50,7 @@ export type ImportRow = {
   replacementDate: string | null | undefined;
   warrantyStart: string | null | undefined;
   warrantyEnd: string | null | undefined;
-  status: StatusType;
+  status: AssetLogStatusNodeType;
   needsReplacement: boolean;
   id: string;
   notes: string;
@@ -81,23 +80,6 @@ export const toInsertEquipmentInput = (
     store: store ? { ...store, __typename: 'StoreNode', storeName: '' } : null,
     parsedProperties,
   };
-};
-
-export const toStatusTypeInput = (status: StatusType): AssetLogStatusInput => {
-  switch (status) {
-    case StatusType.Functioning:
-      return AssetLogStatusInput.Functioning;
-    case StatusType.Decommissioned:
-      return AssetLogStatusInput.Decommissioned;
-    case StatusType.FunctioningButNeedsAttention:
-      return AssetLogStatusInput.FunctioningButNeedsAttention;
-    case StatusType.NotFunctioning:
-      return AssetLogStatusInput.NotFunctioning;
-    case StatusType.NotInUse:
-      return AssetLogStatusInput.NotInUse;
-    case StatusType.Unserviceable:
-      return AssetLogStatusInput.Unserviceable;
-  }
 };
 
 export const toExportEquipment = (
@@ -172,7 +154,7 @@ export const EquipmentImportModal = ({
         id: FnUtils.generateUUID(),
         assetId: row.id,
         comment: t('message.asset-created'),
-        status: toStatusTypeInput(row.status),
+        status: row.status,
       });
     } catch (e) {
       const errorMessage = (e as Error).message ?? t('messages.unknown-error');
@@ -262,12 +244,23 @@ export const EquipmentImportModal = ({
   const showWarnings = errorMessage.length == 0 && warningMessage.length > 0;
 
   const importSteps = [
-    { label: t('label.upload'), description: '', clickable: true },
-    { label: t('label.review'), description: '', clickable: true },
+    {
+      label: t('label.upload'),
+      description: '',
+      clickable: true,
+      tab: Tabs.Upload,
+    },
+    {
+      label: t('label.review'),
+      description: '',
+      clickable: true,
+      tab: Tabs.Review,
+    },
     {
       label: t('label.import'),
       description: '',
       clickable: false,
+      tab: Tabs.Import,
     },
   ];
 
@@ -332,7 +325,7 @@ export const EquipmentImportModal = ({
               tab={Tabs.Review}
               uploadedRows={bufferedEquipment}
             />
-            <EquipmentImportTab
+            <ImportTab
               tab={Tabs.Import}
               importProgress={importProgress}
               importErrorCount={importErrorCount}

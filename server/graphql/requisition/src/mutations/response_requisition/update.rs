@@ -182,7 +182,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::inline_init;
+    
 
     type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<Requisition, ServiceError> + Sync + Send;
 
@@ -349,9 +349,10 @@ mod test {
                     status: Some(UpdateResponseRequisitionStatus::Finalised)
                 }
             );
-            Ok(inline_init(|r: &mut Requisition| {
-                r.requisition_row = mock_request_draft_requisition()
-            }))
+            Ok(Requisition {
+                requisition_row: mock_request_draft_requisition(),
+                ..Default::default()
+            })
         }));
 
         let variables = json!({

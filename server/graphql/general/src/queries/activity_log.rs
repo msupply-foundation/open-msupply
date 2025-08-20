@@ -7,7 +7,10 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{ActivityLogConnector, ActivityLogNodeType};
-use repository::activity_log::{ActivityLogFilter, ActivityLogSort, ActivityLogSortField};
+use repository::{
+    activity_log::{ActivityLogFilter, ActivityLogSort, ActivityLogSortField},
+    ActivityLogType,
+};
 use repository::{EqualFilter, PaginationOption};
 use service::{
     activity_log::get_activity_logs,
@@ -96,7 +99,7 @@ impl ActivityLogFilterInput {
 
         ActivityLogFilter {
             id: id.map(EqualFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, ActivityLogNodeType::to_domain)),
+            r#type: r#type.map(|t| map_filter!(t, |r| ActivityLogType::from(r))),
             user_id: user_id.map(EqualFilter::from),
             store_id: store_id.map(EqualFilter::from),
             record_id: record_id.map(EqualFilter::from),

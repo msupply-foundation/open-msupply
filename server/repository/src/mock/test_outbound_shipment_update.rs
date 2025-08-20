@@ -1,5 +1,4 @@
 use chrono::NaiveDate;
-use util::inline_init;
 
 use crate::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow, ItemType,
@@ -31,30 +30,32 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
 }
 
 fn mock_item_with_no_stock_line() -> ItemRow {
-    inline_init(|r: &mut ItemRow| {
-        r.id = String::from("item_with_no_stock_line");
-        r.name = String::from("Item with no stock line");
-        r.code = String::from("code");
-        r.r#type = ItemType::Stock;
-    })
+    ItemRow {
+        id: String::from("item_with_no_stock_line"),
+        name: String::from("Item with no stock line"),
+        code: String::from("code"),
+        r#type: ItemType::Stock,
+        ..Default::default()
+    }
 }
 
 // invoice containing invoice lines without stock line
 fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
-    inline_init(|r: &mut InvoiceRow| {
-        r.id = String::from("outbound_shipment_invalid_stock_line");
-        r.name_link_id = String::from("name_store_a");
-        r.store_id = String::from("store_c");
-        r.invoice_number = 3;
-        r.r#type = InvoiceType::OutboundShipment;
-        r.status = InvoiceStatus::New;
-        r.comment = Some("Sort comment test cA".to_owned());
-        r.their_reference = Some(String::from(""));
-        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 6)
+    InvoiceRow {
+        id: String::from("outbound_shipment_invalid_stock_line"),
+        name_link_id: String::from("name_store_a"),
+        store_id: String::from("store_c"),
+        invoice_number: 3,
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::New,
+        comment: Some("Sort comment test cA".to_owned()),
+        their_reference: Some(String::from("")),
+        created_datetime: NaiveDate::from_ymd_opt(1970, 1, 6)
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
-            .unwrap();
-    })
+            .unwrap(),
+        ..Default::default()
+    }
 }
 
 pub fn test_outbound_shipment_update_data() -> MockData {

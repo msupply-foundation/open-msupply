@@ -62,8 +62,10 @@ const useExportFile = () => {
 export const useDownloadFile = () => {
   const exportFile = useExportFile();
 
-  return async (url: string) => {
-    const res = await fetch(url);
+  return async (url: string, fetchOptions?: RequestInit) => {
+    const res = await fetch(url, {
+      ...fetchOptions,
+    });
     const data = await res.blob();
     const header = res.headers.get('Content-Disposition');
     const filename = header?.match(/filename="(.+)"/)?.[1] ?? getFilename();
@@ -82,6 +84,17 @@ export const useExportCSV = () => {
   };
 
   return exportCsv;
+};
+
+export const useExportLog = () => {
+  const exportFile = useExportFile();
+
+  const exportLog = async (data: string, title: string = 'log') => {
+    const filename = getFilename(undefined, title); // default to .txt
+    exportFile(data, undefined, filename);
+  };
+
+  return exportLog;
 };
 
 // On Android, we first try and open the file from the local file system. If

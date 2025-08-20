@@ -11,6 +11,8 @@ import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { useDebouncedTextInput } from '../hooks/useDebouncedTextInput';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
+import { usePrevious } from '../hooks/usePrevious';
+import { PreviousValueDisplay } from '../utilityComponents';
 
 const Options = z
   .object({
@@ -39,6 +41,9 @@ const Options = z
      */
     useDebounce: z.boolean().optional(),
     autoFocus: z.boolean().optional(),
+    displayPrevious: z.boolean().optional(),
+    defaultToPrevious: z.boolean().optional(),
+    previousPath: z.string().optional(),
   })
   .strict()
   .optional();
@@ -128,8 +133,14 @@ const UIComponent = (props: ControlProps) => {
     data,
     onChange
   );
-
   const t = useTranslation();
+
+  const previousEncounterData = usePrevious(
+    path,
+    data,
+    schemaOptions,
+    onChange
+  );
 
   const examples =
     (props.schema as Record<string, string[]>)['examples'] ??
@@ -154,31 +165,40 @@ const UIComponent = (props: ControlProps) => {
   const autoFocus = schemaOptions?.autoFocus ?? false;
 
   return (
-    <DetailInputWithLabelRow
-      sx={DefaultFormRowSx}
-      label={t(label as LocaleKey)}
-      inputProps={{
-        value: text ?? '',
-        sx: { width },
-        style: { flexBasis },
-        onChange: e =>
-          useDebounce
-            ? onDebounceChange(e.target.value ?? '')
-            : onChange(e.target.value ?? ''),
-        disabled: !props.enabled,
-        error,
-        helperText,
-        FormHelperTextProps: error
-          ? { sx: { color: 'error.main' } }
-          : undefined,
-        required: props.required,
-        multiline,
-        rows,
-        focusOnRender: autoFocus,
-      }}
-      labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment={'start'}
-    />
+    <>
+      <DetailInputWithLabelRow
+        sx={DefaultFormRowSx}
+        label={t(label as LocaleKey)}
+        inputProps={{
+          value: text ?? '',
+          sx: { width },
+          style: { flexBasis },
+          onChange: e =>
+            useDebounce
+              ? onDebounceChange(e.target.value ?? '')
+              : onChange(e.target.value ?? ''),
+          disabled: !props.enabled,
+          error,
+          helperText,
+          FormHelperTextProps: error
+            ? { sx: { color: 'error.main' } }
+            : undefined,
+          required: props.required,
+          multiline,
+          rows,
+          focusOnRender: autoFocus,
+        }}
+        labelWidthPercentage={FORM_LABEL_WIDTH}
+        inputAlignment={'start'}
+      />
+      {previousEncounterData && (
+        <PreviousValueDisplay
+          date={previousEncounterData.startDatetime}
+          value={previousEncounterData.previousValue}
+          label={label}
+        />
+      )}
+    </>
   );
 };
 

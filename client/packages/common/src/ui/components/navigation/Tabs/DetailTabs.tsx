@@ -122,7 +122,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({
                   defaultValue: value,
                 })}
                 tabIndex={index === 0 ? -1 : undefined}
-              ></Tab>
+              />
             ))}
           </ShortTabList>
         </Box>

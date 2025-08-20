@@ -1,3 +1,10 @@
+use super::{
+    insert_all_extra_data,
+    test_data::{
+        get_all_pull_delete_central_test_records, get_all_pull_delete_remote_test_records,
+        get_all_pull_upsert_central_test_records, get_all_pull_upsert_remote_test_records,
+    },
+};
 use crate::sync::{
     api::SyncAction,
     sync_buffer::SyncBufferSource,
@@ -11,19 +18,11 @@ use crate::sync::{
         translate_changelogs_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType,
     },
 };
+use pretty_assertions::assert_eq;
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
     test_db, ChangelogRepository, KeyType, KeyValueStoreRow, SyncBufferRow,
     SyncBufferRowRepository,
-};
-use util::inline_init;
-
-use super::{
-    insert_all_extra_data,
-    test_data::{
-        get_all_pull_delete_central_test_records, get_all_pull_delete_remote_test_records,
-        get_all_pull_upsert_central_test_records, get_all_pull_upsert_remote_test_records,
-    },
 };
 
 #[actix_rt::test]
@@ -34,13 +33,15 @@ async fn test_sync_pull_and_push() {
     let (_, connection, _, _) = test_db::setup_all_with_data(
         "test_sync_pull_and_push",
         MockDataInserts::all(),
-        inline_init(|r: &mut MockData| {
-            r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
-                r.id = KeyType::SettingsSyncSiteId;
+        MockData {
+            key_value_store_rows: vec![KeyValueStoreRow {
+                id: KeyType::SettingsSyncSiteId,
                 // This is needed for invoice line, since we check if it belongs to current site in translator
-                r.value_int = Some(mock_store_b().site_id);
-            })]
-        }),
+                value_int: Some(mock_store_b().site_id),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
     )
     .await;
 
@@ -109,16 +110,34 @@ async fn test_sync_pull_and_push() {
         other => other,
     });
 
+    let changelog_translated_records_id_and_table_name = translated
+        .iter()
+        .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))
+        .collect::<Vec<(String, String)>>();
+
+    let test_outgoing_sync_records_id_and_table_name = test_records
+        .iter()
+        .map(|r| (r.record_id.clone(), r.table_name.clone()))
+        .collect::<Vec<(String, String)>>();
+
+    for (i, translated_record) in changelog_translated_records_id_and_table_name
+        .clone()
+        .into_iter()
+        .enumerate()
+    {
+        let test_record = &test_outgoing_sync_records_id_and_table_name[i];
+        if &translated_record != test_record {
+            println!(
+                "First mismatched record changelog: {translated_record:?} and test_data: {test_record:?}"
+            );
+            break;
+        }
+    }
+
     // Test ids and table names
     assert_eq!(
-        translated
-            .iter()
-            .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))
-            .collect::<Vec<(String, String)>>(),
-        test_records
-            .iter()
-            .map(|r| (r.record_id.clone(), r.table_name.clone()))
-            .collect::<Vec<(String, String)>>()
+        changelog_translated_records_id_and_table_name,
+        test_outgoing_sync_records_id_and_table_name
     );
     // Test data
     for (index, test_record) in test_records.iter().enumerate() {

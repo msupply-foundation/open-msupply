@@ -25,10 +25,6 @@ interface OutboundLineEditProps {
   mode: ModalMode | null;
   status: InvoiceNodeStatus;
   invoiceId: string;
-  prefOptions: {
-    sortByVvmStatus: boolean;
-    manageVaccinesInDoses: boolean;
-  };
 }
 
 export const OutboundLineEdit = ({
@@ -38,7 +34,6 @@ export const OutboundLineEdit = ({
   mode,
   status,
   invoiceId,
-  prefOptions,
 }: OutboundLineEditProps) => {
   const t = useTranslation();
   const { info, warning } = useNotification();
@@ -89,9 +84,24 @@ export const OutboundLineEdit = ({
 
   const handleSave = async (onSaved: () => boolean | void) => {
     const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');
+    const unsavedVvmStatusChange = t('messages.unsaved-outbound-vvm-status');
+    const vvmStatusChanged = draftLines.some(line => {
+      const originalId = line.vvmStatusId ?? null;
+      const currentId = line.vvmStatus?.id ?? null;
+      return line.numberOfPacks === 0 && currentId !== originalId;
+    });
+
+    if (
+      vvmStatusChanged &&
+      !alerts.some(alert => alert.message === unsavedVvmStatusChange)
+    ) {
+      setAlerts([{ message: unsavedVvmStatusChange, severity: 'warning' }]);
+      return;
+    }
     if (
       allocatedQuantity === 0 &&
-      !alerts.some(alert => alert.message === confirmZeroQuantityMessage)
+      !alerts.some(alert => alert.message === confirmZeroQuantityMessage) &&
+      !vvmStatusChanged
     ) {
       setAlerts([{ message: confirmZeroQuantityMessage, severity: 'warning' }]);
       return;
@@ -164,7 +174,6 @@ export const OutboundLineEdit = ({
             invoiceId={invoiceId}
             allowPlaceholder={status === InvoiceNodeStatus.New}
             scannedBatch={asBarcodeOrNull(openedWith)?.batch}
-            prefOptions={prefOptions}
           />
         )}
       </Grid>

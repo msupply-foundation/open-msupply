@@ -153,6 +153,14 @@ pub enum Resource {
     // Campaigns
     QueryCampaigns,
     MutateCampaigns,
+    // Purchase Order
+    QueryPurchaseOrder,
+    MutatePurchaseOrder,
+    AuthorisePurchaseOrder,
+    // Goods Received
+    MutateGoodsReceived,
+    QueryGoodsReceived,
+    AuthoriseGoodsReceived,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -681,6 +689,32 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::QueryCampaigns,
         PermissionDSL::Any(vec![PermissionDSL::HasStoreAccess]),
+    );
+
+    map.insert(
+        Resource::QueryPurchaseOrder,
+        PermissionDSL::HasPermission(PermissionType::PurchaseOrderQuery),
+    );
+    map.insert(
+        Resource::MutatePurchaseOrder,
+        PermissionDSL::HasPermission(PermissionType::PurchaseOrderMutate),
+    );
+    map.insert(
+        Resource::AuthorisePurchaseOrder,
+        PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+    );
+
+    map.insert(
+        Resource::QueryGoodsReceived,
+        PermissionDSL::HasPermission(PermissionType::GoodsReceivedQuery),
+    );
+    map.insert(
+        Resource::MutateGoodsReceived,
+        PermissionDSL::HasPermission(PermissionType::GoodsReceivedMutate),
+    );
+    map.insert(
+        Resource::AuthoriseGoodsReceived,
+        PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
     );
 
     map
@@ -1296,7 +1330,6 @@ mod permission_validation_test {
         test_db::{setup_all, setup_all_with_data},
         NameRow, StoreRow, UserAccountRow, UserPermissionRowRepository,
     };
-    use util::inline_init;
 
     #[actix_rt::test]
     async fn test_basic_permission_validation() {
@@ -1430,31 +1463,35 @@ mod permission_validation_test {
     #[actix_rt::test]
     async fn test_basic_user_store_permissions() {
         fn name() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "name".to_string();
-            })
+            NameRow {
+                id: "name".to_string(),
+                ..Default::default()
+            }
         }
 
         fn store() -> StoreRow {
-            inline_init(|s: &mut StoreRow| {
-                s.id = "store".to_string();
-                s.name_link_id = name().id;
-                s.code = "n/a".to_string();
-            })
+            StoreRow {
+                id: "store".to_string(),
+                name_link_id: name().id,
+                code: "n/a".to_string(),
+                ..Default::default()
+            }
         }
 
         fn user() -> UserAccountRow {
-            inline_init(|r: &mut UserAccountRow| {
-                r.id = "user".to_string();
-                r.username = "user".to_string();
-            })
+            UserAccountRow {
+                id: "user".to_string(),
+                username: "user".to_string(),
+                ..Default::default()
+            }
         }
 
         fn user_without_permission() -> UserAccountRow {
-            inline_init(|r: &mut UserAccountRow| {
-                r.id = "user_without_permission".to_string();
-                r.username = "user".to_string();
-            })
+            UserAccountRow {
+                id: "user_without_permission".to_string(),
+                username: "user".to_string(),
+                ..Default::default()
+            }
         }
 
         fn permissions() -> Vec<UserPermissionRow> {
@@ -1479,12 +1516,13 @@ mod permission_validation_test {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_basic_user_store_permissions",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.stores = vec![store()];
-                r.names = vec![name()];
-                r.user_accounts = vec![user(), user_without_permission()];
-                r.user_permissions = permissions()
-            }),
+            MockData {
+                stores: vec![store()],
+                names: vec![name()],
+                user_accounts: vec![user(), user_without_permission()],
+                user_permissions: permissions(),
+                ..Default::default()
+            },
         )
         .await;
 

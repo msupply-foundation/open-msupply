@@ -5,23 +5,31 @@ import {
   DateUtils,
   RadioIcon,
   SyncErrorVariant,
+  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
+import { BadgeProps } from '@mui/material';
 import { useSync } from '@openmsupply-client/system';
 import { useSyncModal } from '../Sync';
-import { SyncInfoQuery } from 'packages/system/src/Sync/api/operations.generated';
+import { SyncInfoQuery } from '@openmsupply-client/system/src/Sync/api/operations.generated';
 
-const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000;
+const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000; // 1 minute
 
 export const SyncNavLink = () => {
   const t = useTranslation();
+  const { syncRecordsDisplayThreshold = 0 } = usePreferences();
+
   const showSync = useSyncModal();
 
-  const { syncStatus } = useSync.utils.syncInfo(
+  const { syncStatus, numberOfRecordsInPushQueue = 0 } = useSync.utils.syncInfo(
     POLLING_INTERVAL_IN_MILLISECONDS
   );
 
-  const badgeProps = getBadge(syncStatus);
+  const badgeProps = getBadge(
+    syncStatus,
+    numberOfRecordsInPushQueue,
+    syncRecordsDisplayThreshold
+  );
 
   return (
     <AppNavLink
@@ -31,14 +39,23 @@ export const SyncNavLink = () => {
         e.preventDefault();
         showSync();
       }}
-      icon={<RadioIcon fontSize="small" color="primary" />}
+      icon={
+        <RadioIcon
+          fontSize="small"
+          color={syncStatus?.error ? 'disabled' : 'primary'}
+        />
+      }
       text={t('sync')}
       badgeProps={badgeProps}
     />
   );
 };
 
-const getBadge = (syncStatus: SyncInfoQuery['syncStatus']) => {
+const getBadge = (
+  syncStatus: SyncInfoQuery['syncStatus'],
+  syncRecordCount: number,
+  displayThreshold: number
+): BadgeProps | undefined => {
   if (!syncStatus) return;
 
   const { warningThreshold, errorThreshold, lastSuccessfulSync, error } =
@@ -59,15 +76,22 @@ const getBadge = (syncStatus: SyncInfoQuery['syncStatus']) => {
   const beyondWarningThreshold = daysSinceSuccessfulSync >= warningThreshold;
   const beyondErrorThreshold = daysSinceSuccessfulSync >= errorThreshold;
 
-  if (isSyncError || beyondWarningThreshold) {
+  const showCountBadge = syncRecordCount >= displayThreshold;
+
+  if (isSyncError) {
     return {
-      badgeContent: (
-        <AlertIcon
-          color={isSyncError || beyondErrorThreshold ? 'error' : 'warning'}
-          fontSize="small"
-        />
-      ),
-      color: 'default' as 'primary' | 'default',
+      badgeContent: <AlertIcon color="error" />,
+    };
+  }
+
+  if (showCountBadge) {
+    return {
+      badgeContent: syncRecordCount,
+      color: beyondErrorThreshold
+        ? 'error'
+        : beyondWarningThreshold
+          ? 'warning'
+          : 'default',
     };
   }
 };

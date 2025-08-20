@@ -16,6 +16,7 @@ import {
   UNDEFINED_STRING_VALUE,
   useTranslation,
   getDosesPerUnitColumn,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -24,7 +25,6 @@ import { getDosesQuantityColumn } from '../../DoseQtyColumn';
 interface UseOutboundColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
   onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
-  displayDoseColumns: boolean;
 }
 
 const expansionColumn = getRowExpandColumn<
@@ -46,10 +46,10 @@ const getUnitQuantity = (row: StockOutLineFragment) =>
 export const useOutboundColumns = ({
   sortBy,
   onChangeSortBy,
-  displayDoseColumns,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const t = useTranslation();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
+  const { manageVaccinesInDoses } = usePreferences();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     GenericColumnKey.Selection,
@@ -87,6 +87,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'item', 'code'], default: '' },
             { path: ['item', 'code'], default: '' },
           ]),
+        isSticky: true,
       },
     ],
     [
@@ -118,7 +119,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'batch'] },
             { path: ['batch'] },
           ]),
-          defaultHideOnMobile: true,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -134,7 +135,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'expiryDate'] },
             { path: ['expiryDate'] },
           ]),
-          defaultHideOnMobile: true,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -167,7 +168,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'item', 'unitName'] },
             { path: ['item', 'unitName'], default: '' },
           ]),
-          defaultHideOnMobile: true,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -181,7 +182,7 @@ export const useOutboundColumns = ({
     ],
   ];
 
-  if (displayDoseColumns) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -232,7 +233,7 @@ export const useOutboundColumns = ({
     ]
   );
 
-  if (displayDoseColumns) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesQuantityColumn());
   }
 

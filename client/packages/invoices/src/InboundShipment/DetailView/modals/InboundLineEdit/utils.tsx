@@ -85,7 +85,23 @@ export const itemVariantColumn = (
   label: 'label.item-variant',
   width: 150,
   Cell: InboundLineItemVariantInputCell,
-  setter: updateDraftLine,
+  setter: patch => {
+    const { packSize, itemVariant } = patch;
+
+    if (itemVariant) {
+      const packaging = itemVariant.packagingVariants.find(
+        p => p.packSize === packSize
+      );
+      // Item variants save volume in L, but it is saved in m3 everywhere else
+      updateDraftLine({
+        ...patch,
+        volumePerPack:
+          ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
+      });
+    } else {
+      updateDraftLine(patch);
+    }
+  },
 });
 
 export const vvmStatusesColumn = (
@@ -98,7 +114,7 @@ export const vvmStatusesColumn = (
   cellProps: {
     useDefault: true,
   },
-  accessor: ({ rowData }) => rowData.vvmStatusId,
+  accessor: ({ rowData }) => rowData.vvmStatus,
   setter: updateDraftLine,
 });
 

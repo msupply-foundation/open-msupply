@@ -1,11 +1,13 @@
 {
   "is_custom": false,
-  "version": "2.9.0",
+  "version": "2.10.0",
   "code": "purchase-order",
   "context": "PURCHASE_ORDER",
   "name": "Purchase Order",
   "queries": {
     "gql": "query.graphql"
   },
-  "header": "header.html"
+  "header": "header.html",
+  "convert_data": "convert_data_js",
+  "convert_data_type": "BoaJs"
 }

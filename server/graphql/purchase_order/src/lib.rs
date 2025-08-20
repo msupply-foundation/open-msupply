@@ -4,8 +4,17 @@ use graphql_core::pagination::PaginationInput;
 pub mod mutations;
 pub mod purchase_order_queries;
 
-use mutations::insert::{insert_purchase_order, InsertInput, InsertResponse};
+use mutations::{
+    delete::{delete, DeleteResponse},
+    insert::{insert_purchase_order, InsertInput, InsertResponse},
+    update::{update_purchase_order, UpdateInput, UpdateResponse},
+};
 use purchase_order_queries::*;
+
+use crate::mutations::{
+    add_from_master_list::{add_from_master_list, AddFromMasterListResponse},
+    AddToPurchaseOrderFromMasterListInput,
+};
 
 #[derive(Default, Clone)]
 pub struct PurchaseOrderQueries;
@@ -45,5 +54,33 @@ impl PurchaseOrderMutations {
         input: InsertInput,
     ) -> Result<InsertResponse> {
         insert_purchase_order(ctx, &store_id, input)
+    }
+
+    // add to purchase order from master list
+    pub async fn add_to_purchase_order_from_master_list(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: AddToPurchaseOrderFromMasterListInput,
+    ) -> Result<AddFromMasterListResponse> {
+        add_from_master_list(ctx, &store_id, input)
+    }
+
+    pub async fn update_purchase_order(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateInput,
+    ) -> Result<UpdateResponse> {
+        update_purchase_order(ctx, &store_id, input)
+    }
+
+    pub async fn delete_purchase_order(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<DeleteResponse> {
+        delete(ctx, &store_id, id)
     }
 }

@@ -38,6 +38,8 @@ pub struct SaveStockOutInvoiceLine {
     pub number_of_packs: f64,
     pub stock_line_id: String,
     pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -152,7 +154,7 @@ pub fn save_stock_out_item_lines(
                         prescribed_quantity,
                     },
                 )
-                .map_err(|error| SaveStockOutItemLinesError::PrescribedQuantityError(error))?;
+                .map_err(SaveStockOutItemLinesError::PrescribedQuantityError)?;
             }
 
             if let Some(note) = input.note {
@@ -325,7 +327,9 @@ mod test {
                             id: "new_line".to_string(),
                             number_of_packs: 1000.0,
                             stock_line_id: mock_stock_line_vaccine_item_a().id,
-                            campaign_id: None
+                            campaign_id: None,
+                            program_id: None,
+                            vvm_status_id: None,
                         }],
                         ..Default::default()
                     }
@@ -401,13 +405,13 @@ mod test {
                             id: "line1".to_string(), // create
                             number_of_packs: 1.0,
                             stock_line_id: mock_stock_line_b().id,
-                            campaign_id: None,
+                            ..Default::default()
                         },
                         SaveStockOutInvoiceLine {
                             id: line_to_update().id,
                             number_of_packs: 2.0,
                             stock_line_id: mock_stock_line_a().id,
-                            campaign_id: None,
+                            ..Default::default()
                         },
                         SaveStockOutInvoiceLine {
                             id: line_to_delete().id,

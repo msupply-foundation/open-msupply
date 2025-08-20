@@ -6,6 +6,7 @@ import {
   ModalTabs,
   useDialog,
   useNotification,
+  usePreferences,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
@@ -27,8 +28,6 @@ interface ResponseLineEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
-  manageVaccinesInDoses: boolean;
-  orderInPacks: boolean;
 }
 
 export const ResponseLineEditModal = ({
@@ -38,12 +37,11 @@ export const ResponseLineEditModal = ({
   mode,
   isOpen,
   onClose,
-  manageVaccinesInDoses,
-  orderInPacks,
 }: ResponseLineEditModalProps) => {
   const { error } = useNotification();
   const deleteLine = useResponse.line.deleteLine();
   const isDisabled = useResponse.utils.isDisabled();
+  const { orderInPacks } = usePreferences();
 
   const lines = useMemo(
     () =>
@@ -208,7 +206,6 @@ export const ResponseLineEditModal = ({
             setRepresentation={setRepresentation}
             disabled={isDisabled}
             isUpdateMode={mode === ModalMode.Update}
-            manageVaccinesInDoses={manageVaccinesInDoses}
             isReasonsError={isReasonsError}
             setIsEditingSupply={setIsEditingSupply}
           />

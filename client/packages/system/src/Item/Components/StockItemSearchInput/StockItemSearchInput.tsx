@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
-  useItemById,
+  useGetById,
   useItemStockOnHandInfinite,
 } from '../../api';
 import { getOptionLabel, StockItemSearchInputProps } from '../../utils';
@@ -33,6 +33,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   filter: apiFilter = { isVisible: true },
   itemCategoryName,
   programId,
+  initialUpdate = false,
 }) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
@@ -61,11 +62,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       rowsPerPage: ROWS_PER_PAGE,
       filter: fullFilter,
     });
-  // changed from useStockLines even though that is more appropriate
-  // when viewing a stocktake, you may have a stocktake line which has no stock lines.
-  // this call is to fetch the current item; if you have a large number of items
-  // then the current item may not be in the available list of items due to pagination batching
-  const { data: currentItem } = useItemById(currentItemId ?? undefined);
+
+  // Note - important that we do a separate query for current item
+  // The infinite query above may not yet include the currently selected item in its results!
+  const { data: currentItem } = useGetById(currentItemId ?? '');
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
 
@@ -78,6 +78,12 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   );
 
   useEffect(() => {
+    if (initialUpdate && currentItem) {
+      // If initialUpdate is true, we call onChange with the current item
+      // when the component mounts, so that the parent component can update
+      // its state with the current item.
+      onChange(currentItem);
+    }
     if (currentItem && search === '') setSearch(getOptionLabel(currentItem));
   }, [currentItem]);
 
@@ -88,10 +94,21 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     if (openOnFocus) {
       setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
     }
+
+    // Force focus after component mounts (this can conflict with openOnFocus)
+    if (autoFocus) {
+      setTimeout(() => {
+        const input = document.querySelector<HTMLInputElement>(
+          'input[id="stock-item-search-input"]'
+        );
+        input?.focus();
+      }, 50);
+    }
   }, []);
 
   return (
     <Autocomplete
+      id="stock-item-search-input"
       pages={data?.pages ?? []}
       pageNumber={pageNumber}
       rowsPerPage={ROWS_PER_PAGE}

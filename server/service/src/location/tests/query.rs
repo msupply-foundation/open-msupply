@@ -2,13 +2,15 @@
 mod query {
     use repository::{
         location::{LocationFilter, LocationSortField},
-        mock::{mock_asset_b, mock_location_1, MockDataInserts},
+        mock::{mock_asset_b, mock_location_1, stock_line_with_volume, MockDataInserts},
         test_db::setup_all,
+        LocationRow, StockLineRow, Upsert,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
 
     use crate::{
-        asset::update::UpdateAsset, service_provider::ServiceProvider, ListError, SingleRecordError,
+        asset::update::UpdateAsset, location::query::get_volume_used,
+        service_provider::ServiceProvider, ListError, SingleRecordError,
     };
 
     #[actix_rt::test]
@@ -19,19 +21,6 @@ mod query {
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.location_service;
-
-        assert_eq!(
-            service.get_locations(
-                &context,
-                Some(PaginationOption {
-                    limit: Some(2000),
-                    offset: None
-                }),
-                None,
-                None,
-            ),
-            Err(ListError::LimitAboveMax(1000))
-        );
 
         assert_eq!(
             service.get_locations(
@@ -225,5 +214,45 @@ mod query {
             .unwrap();
 
         assert_eq!(result.count, 1);
+    }
+
+    #[actix_rt::test]
+    async fn location_get_volume_used() {
+        let (_mock_data, connection, _, _) =
+            setup_all("test_location_get_volume_used", MockDataInserts::all()).await;
+
+        // Insert a new empty location
+        let location_with_no_stock_lines = LocationRow {
+            id: "location_with_no_stock_lines".to_owned(),
+            store_id: "store_a".to_owned(),
+            ..Default::default()
+        };
+        location_with_no_stock_lines.upsert(&connection).unwrap();
+
+        // Confirm handles location with no stock lines
+        let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();
+        // Should return 0.0 for no stock lines (using bits to ensure 0.0 and not -0.0)
+        assert_eq!(result.to_bits(), 0.0f64.to_bits());
+
+        // Insert some stock lines for the location
+        StockLineRow {
+            id: "line1".to_owned(),
+            location_id: Some(location_with_no_stock_lines.id.clone()),
+            ..stock_line_with_volume() // total volume is 1000.0
+        }
+        .upsert(&connection)
+        .unwrap();
+        StockLineRow {
+            id: "line2".to_owned(),
+            location_id: Some(location_with_no_stock_lines.id.clone()),
+            total_volume: 500.0,
+            ..stock_line_with_volume()
+        }
+        .upsert(&connection)
+        .unwrap();
+
+        // Adds volumes correctly
+        let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();
+        assert_eq!(result, 1500.0);
     }
 }

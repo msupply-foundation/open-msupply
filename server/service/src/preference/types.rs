@@ -16,14 +16,18 @@ pub enum PrefKey {
     AllowTrackingOfStockByDonor,
     GenderOptions,
     ShowContactTracing,
-    UseCampaigns,
     CustomTranslations,
+    SyncRecordsDisplayThreshold,
+    AuthorisePurchaseOrder,
+
+    AuthoriseGoodsReceived,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
+    PreventTransfersMonthsBeforeInitialisation,
 }
 
 #[derive(Clone, Debug, PartialEq)]

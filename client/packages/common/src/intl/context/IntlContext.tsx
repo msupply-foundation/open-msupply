@@ -2,20 +2,23 @@ import React, { PropsWithChildren } from 'react';
 import i18next from 'i18next';
 import Backend from 'i18next-chained-backend';
 import LocalStorageBackend from 'i18next-localstorage-backend';
-import HttpApi from 'i18next-http-backend';
 import { I18nextProviderProps, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { browserLanguageDetector } from './browserLanguageDetector';
 import { createRegisteredContext } from 'react-singleton-context';
+import { Environment } from '@openmsupply-client/config';
+import { GetBackendByNamespace } from './GetBackendByNamespace';
 const appVersion = require('../../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
 // Created by webpack DefinePlugin see webpack.config.js
 // Only for web, otherwise default to app version
 declare const LANG_VERSION: string;
 
+export const CUSTOM_TRANSLATIONS_NAMESPACE = 'custom-translations';
 const defaultNS = 'common';
 const minuteInMilliseconds = 60 * 1000;
 const isDevelopment = process.env['NODE_ENV'] === 'development';
+
 const expirationTime = isDevelopment ? 0 : 7 * 24 * 60 * minuteInMilliseconds; // Cache for 7 days, on rebuild we should get a new language version so we can use a reasonably long cache
 
 const languageVersion =
@@ -30,8 +33,12 @@ export function initialiseI18n({
   const languageDetector = new LanguageDetector();
   languageDetector.addDetector(browserLanguageDetector);
 
+  // Served with frontend bundle
   // Electron `main` window translations should be served with relative path
-  const loadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
+  const defaultTranslationsLoadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
+
+  // Served from backend
+  const customTranslationsLoadPath = `${Environment.API_HOST}/custom-translations`;
 
   i18next
     .use(initReactI18next) // passes i18n down to react-i18next
@@ -41,7 +48,7 @@ export function initialiseI18n({
       backend: {
         backends: [
           LocalStorageBackend, // primary backend
-          HttpApi, // fallback backend
+          GetBackendByNamespace, // when nothing in local storage, or cache invalid, query API for translations
         ],
         backendOptions: [
           {
@@ -50,10 +57,10 @@ export function initialiseI18n({
             defaultVersion: languageVersion,
           },
           {
-            /* options for secondary backend (http api request) */
-            loadPath,
-            queryStringParams: {
-              v: languageVersion,
+            languageVersion,
+            endpointByNamespace: {
+              common: defaultTranslationsLoadPath,
+              [CUSTOM_TRANSLATIONS_NAMESPACE]: customTranslationsLoadPath,
             },
           },
         ],

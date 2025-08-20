@@ -6,12 +6,16 @@ import {
 
 export const INPUT_WIDTH = 160;
 
-export const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
+export const StyledInputRow = ({
+  label,
+  Input,
+  labelWidth,
+}: InputWithLabelRowProps) => (
   <InputWithLabelRow
     label={label}
     Input={Input}
     labelProps={{ sx: { textAlign: 'end' } }}
-    labelWidth="100px"
+    labelWidth={labelWidth ?? '100px'}
     sx={{
       justifyContent: 'space-between',
       '.MuiFormControl-root > .MuiInput-root, > input': {

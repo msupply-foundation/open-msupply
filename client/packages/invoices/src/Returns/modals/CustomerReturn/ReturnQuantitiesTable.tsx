@@ -9,6 +9,7 @@ import {
   getColumnLookupWithOverrides,
   getExpiryDateInputColumn,
   useColumns,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   ItemVariantInputCell,
@@ -29,6 +30,7 @@ export const QuantityReturnedTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
+  const t = useTranslation();
   const showItemVariantsColumn = useIsItemVariantsEnabled();
 
   const columnDefinitions = useMemo(() => {
@@ -53,7 +55,23 @@ export const QuantityReturnedTableComponent = ({
         key: 'itemVariantId',
         label: 'label.item-variant',
         width: 170,
-        setter: updateLine,
+        setter: patch => {
+          const { packSize, itemVariant } = patch;
+
+          if (itemVariant) {
+            const packaging = itemVariant.packagingVariants.find(
+              p => p.packSize === packSize
+            );
+            // Item variants save volume in L, but it is saved in m3 everywhere else
+            updateLine({
+              ...patch,
+              volumePerPack:
+                ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
+            });
+          } else {
+            updateLine(patch);
+          }
+        },
         Cell: props => (
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
@@ -98,16 +116,27 @@ export const QuantityReturnedTableComponent = ({
       ]);
     }
 
-    columnDefinitions.push([
-      'numberOfPacksReturned',
+    columnDefinitions.push(
+      [
+        'numberOfPacksReturned',
+        {
+          description: 'description.pack-quantity',
+          width: 100,
+          setter: updateLine,
+          getIsDisabled: () => isDisabled,
+          Cell: NumberOfPacksReturnedInputCell,
+        },
+      ],
       {
-        description: 'description.pack-quantity',
+        key: 'volumePerPack',
+        label: t('label.volume-per-pack'),
+        Cell: NumberInputCell,
+        cellProps: { decimalLimit: 2 },
         width: 100,
+        accessor: ({ rowData }) => rowData?.volumePerPack,
         setter: updateLine,
-        getIsDisabled: () => isDisabled,
-        Cell: NumberOfPacksReturnedInputCell,
-      },
-    ]);
+      }
+    );
     return columnDefinitions;
   }, [showItemVariantsColumn]);
 

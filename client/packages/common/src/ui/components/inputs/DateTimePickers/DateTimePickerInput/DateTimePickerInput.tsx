@@ -107,7 +107,7 @@ export const DateTimePickerInput = ({
   };
 
   return (
-    <Box display="flex">
+    <Box sx={{ display: 'flex', width: '100%', maxWidth: width }}>
       <DateTimePicker
         format={format}
         onChange={(date, context) => {

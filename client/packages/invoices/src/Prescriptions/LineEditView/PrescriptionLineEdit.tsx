@@ -3,6 +3,8 @@ import {
   BasicSpinner,
   Grid,
   useBufferState,
+  useFormatNumber,
+  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
@@ -20,21 +22,18 @@ interface PrescriptionLineEditProps {
   programId?: string;
   invoiceId: string;
   itemId: string | undefined;
-  prefOptions: {
-    allocateVaccineItemsInDoses?: boolean;
-    sortByVvmStatus: boolean;
-  };
 }
 
 export const PrescriptionLineEdit = ({
   itemId,
   programId,
   invoiceId,
-  prefOptions: { allocateVaccineItemsInDoses, sortByVvmStatus },
 }: PrescriptionLineEditProps) => {
   const isNew = !itemId;
 
   const t = useTranslation();
+  const { format } = useFormatNumber();
+  const { manageVaccinesInDoses, sortByVvmStatusThenExpiry } = usePreferences();
 
   // Needs to update when user clicks on different item in the list, or when
   // changing item with the selector
@@ -66,21 +65,25 @@ export const PrescriptionLineEdit = ({
     queryData().then(({ data }) => {
       if (!data) return;
 
-      initialise({
-        itemData: data,
-        strategy: sortByVvmStatus
-          ? AllocationStrategy.VVMStatus
-          : AllocationStrategy.FEFO,
-        allowPlaceholder: false,
-        allowPrescribedQuantity: true,
-        ignoreNonAllocatableLines: true,
-        // In prescriptions, default to allocate in doses for vaccines
-        // if pref is on
-        allocateIn:
-          allocateVaccineItemsInDoses && data.item.isVaccine
-            ? { type: AllocateInType.Doses }
-            : undefined,
-      });
+      initialise(
+        {
+          itemData: data,
+          strategy: sortByVvmStatusThenExpiry
+            ? AllocationStrategy.VVMStatus
+            : AllocationStrategy.FEFO,
+          allowPlaceholder: false,
+          allowPrescribedQuantity: true,
+          ignoreNonAllocatableLines: true,
+          // In prescriptions, default to allocate in doses for vaccines
+          // if pref is on
+          allocateIn:
+            manageVaccinesInDoses && data.item.isVaccine
+              ? { type: AllocateInType.Doses }
+              : undefined,
+        },
+        format,
+        t
+      );
     });
     // Expect dependencies to be stable
     // eslint-disable-next-line react-hooks/exhaustive-deps

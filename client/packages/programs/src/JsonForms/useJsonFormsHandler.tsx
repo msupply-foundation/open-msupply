@@ -25,8 +25,6 @@ import {
   quantityDispensedTester,
   AdherenceScore,
   adherenceScoreTester,
-  PreviousEncounterField,
-  previousEncounterFieldTester,
   DecisionTreeControl,
   decisionTreeTester,
   Search,
@@ -41,6 +39,8 @@ import {
   prescriptionTester,
   patientSearchTester,
   PatientSearch,
+  NameSearch,
+  nameSearchTester,
 } from './components';
 import { EnrolmentId, enrolmentIdTester } from './components/EnrolmentId';
 import {
@@ -76,10 +76,6 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: quantityDispensedTester, renderer: QuantityPrescribed },
   { tester: bmiTester, renderer: BMI },
   { tester: adherenceScoreTester, renderer: AdherenceScore },
-  {
-    tester: previousEncounterFieldTester,
-    renderer: PreviousEncounterField,
-  },
   { tester: decisionTreeTester, renderer: DecisionTreeControl },
   { tester: searchTester, renderer: Search },
   { tester: programEventTester, renderer: ProgramEvent },
@@ -89,6 +85,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: prescriptionTester, renderer: Prescription },
   { tester: patientSearchTester, renderer: PatientSearch },
   { tester: dateRangeTester, renderer: DateRange },
+  { tester: nameSearchTester, renderer: NameSearch },
 ];
 
 /**

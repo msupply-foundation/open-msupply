@@ -109,6 +109,7 @@ pub(crate) fn generate(
                         vvm_status_id,
                         stock_line_id: batch.stock_line.as_ref().unwrap().id.clone(),
                         invoice_line_id: batch.line.id.clone(),
+                        comment: None,
                     })
                 })
             })
@@ -263,12 +264,19 @@ fn empty_lines_to_trim(
 
     // If new invoice status is not new and previous invoice status is new
     // add all empty lines to be deleted
-    let lines = InvoiceLineRepository::new(connection).query_by_filter(
+
+    let lines_with_no_received_packs = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
             .r#type(InvoiceLineType::StockIn.equal_to())
             .number_of_packs(EqualFilter::equal_to_f64(0.0)),
     )?;
+
+    // Only trim lines that have no shipped packs either (valid to track "supplier said they sent 5 packs but I received 0")
+    let lines = lines_with_no_received_packs
+        .into_iter()
+        .filter(|l| l.invoice_line_row.shipped_number_of_packs.unwrap_or(0.0) == 0.0)
+        .collect::<Vec<_>>();
 
     if lines.is_empty() {
         return Ok(None);
@@ -371,7 +379,9 @@ pub fn generate_lines_and_stock_lines(
             note,
             vvm_status_id,
             campaign_id,
+            program_id,
             reason_option_id: _,
+            volume_per_pack,
             ..
         }: InvoiceLineRow = invoice_line;
 
@@ -388,14 +398,17 @@ pub fn generate_lines_and_stock_lines(
                 available_number_of_packs: number_of_packs,
                 total_number_of_packs: number_of_packs,
                 expiry_date,
-                on_hold: false,
                 note,
                 supplier_link_id: Some(supplier_id.to_string()),
-                barcode_id: None,
                 item_variant_id,
                 donor_link_id,
                 vvm_status_id,
                 campaign_id,
+                program_id,
+                volume_per_pack,
+                total_volume: volume_per_pack * number_of_packs,
+                on_hold: false,
+                barcode_id: None,
             };
             result.push(LineAndStockLine {
                 line,

@@ -5,7 +5,8 @@ mod insert {
             mock_name_a, mock_name_store_b, mock_store_a, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
+        ActivityLogRowRepository, ActivityLogType, PurchaseOrderRow, PurchaseOrderRowRepository,
+        PurchaseOrderStatus,
     };
 
     use crate::{
@@ -44,8 +45,8 @@ mod insert {
             .upsert_one(&PurchaseOrderRow {
                 id: "purchase_order_id".to_string(),
                 store_id: store_id.to_string(),
-                user_id: Some(mock_user_account_a().id.clone()),
-                supplier_name_link_id: Some(mock_name_a().id.to_string()),
+                created_by: Some(mock_user_account_a().id.clone()),
+                supplier_name_link_id: mock_name_a().id,
                 status: PurchaseOrderStatus::New,
                 ..Default::default()
             })
@@ -58,7 +59,7 @@ mod insert {
                 store_id,
                 InsertPurchaseOrderInput {
                     id: "purchase_order_id".to_string(),
-                    supplier_id: mock_name_a().id.to_string(),
+                    supplier_id: mock_name_a().id,
                 }
             ),
             Err(InsertPurchaseOrderError::PurchaseOrderAlreadyExists)
@@ -71,7 +72,7 @@ mod insert {
                 store_id,
                 InsertPurchaseOrderInput {
                     id: "purchase_order_id_a".to_string(),
-                    supplier_id: mock_name_store_b().id.to_string(),
+                    supplier_id: mock_name_store_b().id,
                 }
             ),
             Err(InsertPurchaseOrderError::NotASupplier)
@@ -105,6 +106,14 @@ mod insert {
             .unwrap()
             .unwrap();
 
-        assert_eq!(result.id, purchase_order.id)
+        assert_eq!(result.id, purchase_order.id);
+
+        // Check logging of insertion
+        let logs = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id("purchase_order_id")
+            .unwrap();
+        let log = logs.first().unwrap();
+
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderCreated);
     }
 }

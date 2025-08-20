@@ -12,7 +12,7 @@ import { useItemVariantSelectorColumns } from './columns';
 import { ItemVariantFragment } from '../../api';
 
 interface ItemVariantSelectorProps {
-  selectedId: string | null;
+  selectedId?: string | null;
   variants: ItemVariantFragment[];
   isLoading?: boolean;
   onVariantSelected: (itemVariantId: string | null) => void;

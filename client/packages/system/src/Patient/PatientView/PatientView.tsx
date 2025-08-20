@@ -8,8 +8,7 @@ import {
   ContactTraceSortFieldInput,
   TabDefinition,
   FormErrorProvider,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -49,7 +48,7 @@ export const PatientView = () => {
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
   const { store, storeId } = useAuthContext();
-  const { data: prefs } = usePreference(PreferenceKey.ShowContactTracing);
+  const { showContactTracing } = usePreferences();
 
   const {
     query: { data: insuranceProvidersData },
@@ -106,7 +105,7 @@ export const PatientView = () => {
     tabs.push(...programTabs);
 
     // Only if program module enabled, add contact tracing tab if global pref is enabled
-    if (prefs?.showContactTracing) {
+    if (showContactTracing) {
       tabs.push({
         Component: <ContactTraceListView />,
         value: PatientTabValue.ContactTracing,

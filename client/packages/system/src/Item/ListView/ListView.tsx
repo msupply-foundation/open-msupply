@@ -10,10 +10,12 @@ import {
   useUrlQueryParams,
   ColumnAlign,
   TooltipTextCell,
+  CellProps,
+  UnitsAndMaybeDoses,
+  NumberCell,
 } from '@openmsupply-client/common';
-import { useItems, ItemsWithStatsFragment } from '../api';
+import { useVisibleOrOnHandItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
-import { PackQuantityCell } from '../Components';
 
 const ItemListComponent = () => {
   const t = useTranslation();
@@ -23,11 +25,8 @@ const ItemListComponent = () => {
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
-    filters: [{ key: 'codeOrName' }],
-  });
-  const { data, isError, isLoading } = useItems();
+  } = useUrlQueryParams();
+  const { data, isError, isLoading } = useVisibleOrOnHandItems();
   const pagination = { page, first, offset };
 
   const columns = useColumns<ItemsWithStatsFragment>(
@@ -52,30 +51,31 @@ const ItemListComponent = () => {
         'stockOnHand',
         {
           accessor: ({ rowData }) => rowData.stats.stockOnHand,
-          Cell: PackQuantityCell,
+          Cell: UnitsAndMaybeDosesCell,
+          width: 180,
           sortable: false,
         },
       ],
       [
         'monthlyConsumption',
         {
-          Cell: PackQuantityCell,
+          Cell: UnitsAndMaybeDosesCell,
           accessor: ({ rowData }) => rowData.stats.averageMonthlyConsumption,
 
           align: ColumnAlign.Right,
+          width: 180,
           sortable: false,
-          width: 100,
         },
       ],
       {
-        Cell: PackQuantityCell,
+        Cell: NumberCell,
         accessor: ({ rowData }) => rowData.stats.monthsOfStockOnHand ?? 0,
         align: ColumnAlign.Right,
         description: 'description.months-of-stock',
         key: 'monthsOfStockOnHand',
         label: 'label.months-of-stock',
         sortable: false,
-        width: 100,
+        width: 120,
       },
     ],
     {
@@ -110,3 +110,18 @@ export const ItemListView = () => (
     <ItemListComponent />
   </TableProvider>
 );
+
+const UnitsAndMaybeDosesCell = (props: CellProps<ItemsWithStatsFragment>) => {
+  const { rowData, column } = props;
+  const units = Number(column.accessor({ rowData })) ?? 0;
+  const { isVaccine, doses } = rowData;
+
+  return (
+    <UnitsAndMaybeDoses
+      numberCellProps={props}
+      units={units}
+      isVaccine={isVaccine}
+      dosesPerUnit={doses}
+    />
+  );
+};

@@ -9,10 +9,9 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameByNameLinkIdLoader,
-    NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader,
-    StoreByIdLoader, UserLoader,
+    DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput,
+    NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
+    ProgramByIdLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -21,6 +20,7 @@ use graphql_core::{
 };
 use repository::{
     ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameLinkRow, NameRow, PricingRow,
+    Store, StoreRow,
 };
 
 use repository::Invoice;
@@ -334,21 +334,10 @@ impl InvoiceNode {
         )
     }
 
-    pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let clinician_id = if let Some(clinician) = &self.clinician_row() {
-            &clinician.id
-        } else {
-            return Ok(None);
-        };
-
-        let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
-        Ok(loader
-            .load_one(ClinicianLoaderInput::new(
-                &self.row().store_id,
-                clinician_id,
-            ))
-            .await?
-            .map(ClinicianNode::from_domain))
+    pub async fn clinician(&self) -> Option<ClinicianNode> {
+        self.clinician_row()
+            .as_ref()
+            .map(|row| ClinicianNode::from_domain(row.clone()))
     }
 
     pub async fn clinician_id(&self) -> Option<String> {
@@ -454,12 +443,11 @@ impl InvoiceNode {
         Ok(result)
     }
 
-    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
-        Ok(loader
-            .load_one(self.row().store_id.clone())
-            .await?
-            .map(StoreNode::from_domain))
+    pub async fn store(&self) -> StoreNode {
+        StoreNode::from_domain(Store {
+            store_row: self.store_row().clone(),
+            name_row: self.name_row().clone(),
+        })
     }
 
     pub async fn name_insurance_join_id(&self) -> &Option<String> {
@@ -517,6 +505,9 @@ impl InvoiceNode {
     }
     pub fn name_row(&self) -> &NameRow {
         &self.invoice.name_row
+    }
+    pub fn store_row(&self) -> &StoreRow {
+        &self.invoice.store_row
     }
     pub fn clinician_row(&self) -> &Option<ClinicianRow> {
         &self.invoice.clinician_row
@@ -665,7 +656,7 @@ mod test {
         Invoice, InvoiceLineRow, InvoiceLineType, InvoiceRow,
     };
     use serde_json::json;
-    use util::inline_init;
+    
 
     use crate::types::InvoiceNode;
 
@@ -675,45 +666,49 @@ mod test {
         struct TestQuery;
 
         fn invoice() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "test_invoice_pricing".to_string();
-                r.name_link_id = mock_name_a().id;
-                r.store_id = mock_store_a().id;
-                r.currency_id = Some(currency_a().id);
-            })
+            InvoiceRow {
+                id: "test_invoice_pricing".to_string(),
+                name_link_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                currency_id: Some(currency_a().id),
+                ..Default::default()
+            }
         }
         fn line1() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.invoice_id = invoice().id;
-                r.id = "line1_id".to_string();
-                r.item_link_id = mock_item_a().id;
-                r.total_after_tax = 110.0;
-                r.total_before_tax = 100.0;
-                r.tax_percentage = Some(10.0);
-                r.r#type = InvoiceLineType::Service;
-            })
+            InvoiceLineRow {
+                invoice_id: invoice().id,
+                id: "line1_id".to_string(),
+                item_link_id: mock_item_a().id,
+                total_after_tax: 110.0,
+                total_before_tax: 100.0,
+                tax_percentage: Some(10.0),
+                r#type: InvoiceLineType::Service,
+                ..Default::default()
+            }
         }
         fn line2() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.invoice_id = invoice().id;
-                r.id = "line2_id".to_string();
-                r.item_link_id = mock_item_b().id;
-                r.total_after_tax = 50.0;
-                r.total_before_tax = 50.0;
-                r.tax_percentage = None;
-                r.r#type = InvoiceLineType::StockIn;
-            })
+            InvoiceLineRow {
+                invoice_id: invoice().id,
+                id: "line2_id".to_string(),
+                item_link_id: mock_item_b().id,
+                total_after_tax: 50.0,
+                total_before_tax: 50.0,
+                tax_percentage: None,
+                r#type: InvoiceLineType::StockIn,
+                ..Default::default()
+            }
         }
         fn line3() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.invoice_id = invoice().id;
-                r.id = "line3_id".to_string();
-                r.item_link_id = mock_item_c().id;
-                r.total_after_tax = 105.0;
-                r.total_before_tax = 100.0;
-                r.tax_percentage = Some(5.0);
-                r.r#type = InvoiceLineType::StockOut;
-            })
+            InvoiceLineRow {
+                invoice_id: invoice().id,
+                id: "line3_id".to_string(),
+                item_link_id: mock_item_c().id,
+                total_after_tax: 105.0,
+                total_before_tax: 100.0,
+                tax_percentage: Some(5.0),
+                r#type: InvoiceLineType::StockOut,
+                ..Default::default()
+            }
         }
 
         let (_, _, _, settings) = setup_graphql_test_with_data(
@@ -721,10 +716,11 @@ mod test {
             EmptyMutation,
             "graphq_test_invoice_pricing",
             MockDataInserts::all(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice()];
-                r.invoice_lines = vec![line1(), line2(), line3()];
-            }),
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![line1(), line2(), line3()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -732,7 +728,10 @@ mod test {
         impl TestQuery {
             pub async fn test_query(&self) -> InvoiceNode {
                 InvoiceNode {
-                    invoice: inline_init(|r: &mut Invoice| r.invoice_row = invoice()),
+                    invoice: Invoice {
+                        invoice_row: invoice(),
+                        ..Default::default()
+                    },
                 }
             }
         }

@@ -62,7 +62,7 @@ export const ReportUploadModal = ({
           const id = await fileId.json();
           await install(id['file-id']);
         }
-        success(t('messsages.reports-uploaded-successfully'))();
+        success(t('messages.reports-uploaded-successfully'))();
         onClose();
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);

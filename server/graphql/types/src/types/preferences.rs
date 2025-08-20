@@ -1,4 +1,6 @@
-use crate::types::patient::GenderType;
+use std::collections::BTreeMap;
+
+use crate::types::patient::GenderTypeNode;
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
@@ -19,9 +21,12 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
-    pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
+    pub async fn gender_options(&self) -> Result<Vec<GenderTypeNode>> {
         let domain_genders = self.load_preference(&self.preferences.gender_options)?;
-        let genders = domain_genders.iter().map(GenderType::from_domain).collect();
+        let genders = domain_genders
+            .iter()
+            .map(|g| GenderTypeNode::from(g.clone()))
+            .collect();
         Ok(genders)
     }
 
@@ -29,12 +34,28 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.show_contact_tracing)
     }
 
-    pub async fn use_campaigns(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.use_campaigns)
+    pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
+        self.load_preference(&self.preferences.custom_translations)
     }
 
-    pub async fn custom_translations(&self) -> Result<serde_json::Value> {
-        self.load_preference(&self.preferences.custom_translations)
+    pub async fn sync_records_display_threshold(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.sync_records_display_threshold)
+    }
+
+    pub async fn authorise_purchase_order(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_purchase_order)
+    }
+
+    pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
+        self.load_preference(
+            &self
+                .preferences
+                .prevent_transfers_months_before_initialisation,
+        )
+    }
+
+    pub async fn authorise_goods_received(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_goods_received)
     }
 
     // Store preferences
@@ -107,8 +128,11 @@ pub enum PreferenceKey {
     AllowTrackingOfStockByDonor,
     GenderOptions,
     ShowContactTracing,
-    UseCampaigns,
     CustomTranslations,
+    SyncRecordsDisplayThreshold,
+    AuthorisePurchaseOrder,
+    PreventTransfersMonthsBeforeInitialisation,
+    AuthoriseGoodsReceived,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -124,8 +148,13 @@ impl PreferenceKey {
             PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
             PrefKey::GenderOptions => PreferenceKey::GenderOptions,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
-            PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
             PrefKey::CustomTranslations => PreferenceKey::CustomTranslations,
+            PrefKey::SyncRecordsDisplayThreshold => PreferenceKey::SyncRecordsDisplayThreshold,
+            PrefKey::AuthorisePurchaseOrder => PreferenceKey::AuthorisePurchaseOrder,
+            PrefKey::PreventTransfersMonthsBeforeInitialisation => {
+                PreferenceKey::PreventTransfersMonthsBeforeInitialisation
+            }
+            PrefKey::AuthoriseGoodsReceived => PreferenceKey::AuthoriseGoodsReceived,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,

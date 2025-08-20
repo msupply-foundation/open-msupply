@@ -43,6 +43,12 @@ pub enum UserPermission {
     CustomerReturnMutate,
     PrescriptionQuery,
     PrescriptionMutate,
+    PurchaseOrderQuery,
+    PurchaseOrderMutate,
+    PurchaseOrderAuthorise,
+    GoodsReceivedQuery,
+    GoodsReceivedMutate,
+    GoodsReceivedAuthorise,
     Report,
     LogQuery,
     StockLineMutate,
@@ -154,8 +160,14 @@ impl UserPermission {
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
             PermissionType::EditCentralData => UserPermission::EditCentralData,
             PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
+            PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
+            PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,
+            PermissionType::PurchaseOrderAuthorise => UserPermission::PurchaseOrderAuthorise,
             PermissionType::MutateClinician => UserPermission::MutateClinician,
             PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
+            PermissionType::GoodsReceivedQuery => UserPermission::GoodsReceivedQuery,
+            PermissionType::GoodsReceivedMutate => UserPermission::GoodsReceivedMutate,
+            PermissionType::GoodsReceivedAuthorise => UserPermission::GoodsReceivedAuthorise,
         }
     }
 
@@ -210,8 +222,14 @@ impl UserPermission {
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
             UserPermission::EditCentralData => PermissionType::EditCentralData,
             UserPermission::ViewAndEditVvmStatus => PermissionType::ViewAndEditVvmStatus,
+            UserPermission::PurchaseOrderQuery => PermissionType::PurchaseOrderQuery,
+            UserPermission::PurchaseOrderMutate => PermissionType::PurchaseOrderMutate,
+            UserPermission::PurchaseOrderAuthorise => PermissionType::PurchaseOrderAuthorise,
             UserPermission::MutateClinician => PermissionType::MutateClinician,
             UserPermission::CancelFinalisedInvoices => PermissionType::CancelFinalisedInvoices,
+            UserPermission::GoodsReceivedQuery => PermissionType::GoodsReceivedQuery,
+            UserPermission::GoodsReceivedMutate => PermissionType::GoodsReceivedMutate,
+            UserPermission::GoodsReceivedAuthorise => PermissionType::GoodsReceivedAuthorise,
         }
     }
 }

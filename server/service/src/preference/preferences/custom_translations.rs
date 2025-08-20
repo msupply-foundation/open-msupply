@@ -1,9 +1,11 @@
+use std::collections::BTreeMap;
+
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
 pub struct CustomTranslations;
 
 impl Preference for CustomTranslations {
-    type Value = serde_json::Value;
+    type Value = BTreeMap<String, String>;
 
     fn key(&self) -> PrefKey {
         PrefKey::CustomTranslations
@@ -20,6 +22,6 @@ impl Preference for CustomTranslations {
     }
 
     fn default_value(&self) -> Self::Value {
-        serde_json::json!({})
+        BTreeMap::new()
     }
 }

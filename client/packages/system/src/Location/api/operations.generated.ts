@@ -9,13 +9,16 @@ export type LocationRowFragment = {
   name: string;
   onHold: boolean;
   code: string;
-  coldStorageType?: {
-    __typename: 'ColdStorageTypeNode';
+  volume: number;
+  volumeUsed: number;
+  locationType?: {
+    __typename: 'LocationTypeNode';
     id: string;
     name: string;
     maxTemperature: number;
     minTemperature: number;
   } | null;
+  stock: { __typename: 'StockLineConnector'; totalCount: number };
 };
 
 export type LocationsQueryVariables = Types.Exact<{
@@ -39,13 +42,16 @@ export type LocationsQuery = {
       name: string;
       onHold: boolean;
       code: string;
-      coldStorageType?: {
-        __typename: 'ColdStorageTypeNode';
+      volume: number;
+      volumeUsed: number;
+      locationType?: {
+        __typename: 'LocationTypeNode';
         id: string;
         name: string;
         maxTemperature: number;
         minTemperature: number;
       } | null;
+      stock: { __typename: 'StockLineConnector'; totalCount: number };
     }>;
   };
 };
@@ -84,13 +90,16 @@ export type InsertLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        volume: number;
+        volumeUsed: number;
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       };
 };
 
@@ -108,13 +117,16 @@ export type UpdateLocationMutation = {
         name: string;
         onHold: boolean;
         code: string;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        volume: number;
+        volumeUsed: number;
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           maxTemperature: number;
           minTemperature: number;
         } | null;
+        stock: { __typename: 'StockLineConnector'; totalCount: number };
       }
     | {
         __typename: 'UpdateLocationError';
@@ -186,11 +198,18 @@ export const LocationRowFragmentDoc = gql`
     name
     onHold
     code
-    coldStorageType {
+    volume
+    volumeUsed
+    locationType {
       id
       name
       maxTemperature
       minTemperature
+    }
+    stock {
+      ... on StockLineConnector {
+        totalCount
+      }
     }
   }
 `;

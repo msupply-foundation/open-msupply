@@ -19,6 +19,7 @@ pub struct CustomerReturnLine {
     pub pack_size: f64,
     pub stock_line_id: Option<String>,
     pub expiry_date: Option<NaiveDate>,
+    pub volume_per_pack: f64,
 }
 
 pub struct ExistingLinesInput {
@@ -106,6 +107,7 @@ impl CustomerReturnLine {
             number_of_packs: line.invoice_line_row.number_of_packs,
             stock_line_id: line.invoice_line_row.stock_line_id.clone(),
             item_variant_id: line.invoice_line_row.item_variant_id.clone(),
+            volume_per_pack: line.invoice_line_row.volume_per_pack,
             // We only include packs_issued on new lines. In order to get it for existing lines, we'd need
             // to store a linked invoice line of the outbound shipment against the customer return line
             packs_issued: None,
@@ -130,6 +132,10 @@ fn generate_new_return_lines(
             CustomerReturnLine {
                 id: uuid(),
                 packs_issued: Some(invoice_line.invoice_line_row.number_of_packs),
+                volume_per_pack: invoice_line
+                    .stock_line_option
+                    .as_ref()
+                    .map_or(0.0, |stock_line| stock_line.volume_per_pack),
                 ..Default::default()
             }
             .extend_from_invoice_line(invoice_line)

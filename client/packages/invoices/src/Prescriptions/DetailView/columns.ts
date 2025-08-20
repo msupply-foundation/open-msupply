@@ -11,8 +11,7 @@ import {
   CurrencyCell,
   ColumnDescription,
   useAuthContext,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
@@ -29,7 +28,7 @@ export const usePrescriptionColumn = ({
 }: UsePrescriptionColumnOptions): Column<StockOutLineFragment>[] => {
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
-  const { data: OMSPrefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
+  const { manageVaccinesInDoses } = usePreferences();
   const { store: { preferences } = {} } = useAuthContext();
   const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 
@@ -58,6 +57,7 @@ export const usePrescriptionColumn = ({
           ]),
         accessor: ({ rowData }) =>
           getColumnProperty(rowData, [{ path: ['item', 'code'], default: '' }]),
+        isSticky: true,
       },
     ],
     [
@@ -125,7 +125,7 @@ export const usePrescriptionColumn = ({
     ],
   ];
 
-  if (OMSPrefs?.manageVaccinesInDoses) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -137,7 +137,7 @@ export const usePrescriptionColumn = ({
     },
   ]);
 
-  if (OMSPrefs?.manageVaccinesInDoses) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesQuantityColumn());
   }
 

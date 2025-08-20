@@ -200,7 +200,6 @@ mod test {
     use serde_json::json;
     use util::{
         constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-        inline_init,
     };
 
     use crate::{
@@ -296,9 +295,10 @@ mod test {
                 },
             )
             .unwrap();
-        let program = inline_init(|v: &mut SchemaProgramEnrolment| {
-            v.enrolment_datetime = Utc::now().to_rfc3339();
-        });
+        let program = SchemaProgramEnrolment {
+            enrolment_datetime: Utc::now().to_rfc3339(),
+            ..Default::default()
+        };
 
         service_provider
             .program_enrolment_service
@@ -317,11 +317,12 @@ mod test {
             )
             .unwrap();
         let service = &service_provider.encounter_service;
-        let encounter = inline_init(|e: &mut SchemaEncounter| {
-            e.created_datetime = Utc::now().to_rfc3339();
-            e.start_datetime = Utc::now().to_rfc3339();
-            e.status = Some(EncounterStatus::Pending);
-        });
+        let encounter = SchemaEncounter {
+            created_datetime: Utc::now().to_rfc3339(),
+            start_datetime: Utc::now().to_rfc3339(),
+            status: Some(EncounterStatus::Pending),
+            ..Default::default()
+        };
         let initial_encounter = service
             .insert_encounter(
                 &ctx,
@@ -393,11 +394,12 @@ mod test {
         matches!(err, UpdateEncounterError::InvalidDataSchema(_));
 
         // success update
-        let encounter = inline_init(|e: &mut SchemaEncounter| {
-            e.created_datetime = Utc::now().to_rfc3339();
-            e.start_datetime = Utc::now().to_rfc3339();
-            e.status = Some(EncounterStatus::Visited);
-        });
+        let encounter = SchemaEncounter {
+            created_datetime: Utc::now().to_rfc3339(),
+            start_datetime: Utc::now().to_rfc3339(),
+            status: Some(EncounterStatus::Visited),
+            ..Default::default()
+        };
         let result = service
             .update_encounter(
                 &ctx,

@@ -5,9 +5,8 @@ pub fn mock_location_1() -> LocationRow {
         id: "location_1".to_owned(),
         code: "code_location_1".to_owned(),
         name: "name_location_1".to_owned(),
-        on_hold: false,
         store_id: "store_a".to_string(),
-        cold_storage_type_id: None,
+        ..Default::default()
     }
 }
 
@@ -18,7 +17,7 @@ pub fn mock_location_on_hold() -> LocationRow {
         name: "name_location_on_hold".to_owned(),
         on_hold: true,
         store_id: "store_a".to_string(),
-        cold_storage_type_id: None,
+        ..Default::default()
     }
 }
 
@@ -28,9 +27,8 @@ pub fn mock_location_2() -> LocationRow {
         id: "location_2".to_owned(),
         code: "code_LocAtIOn_2".to_owned(),
         name: "name_LocAtIOn_2".to_owned(),
-        on_hold: false,
         store_id: "store_a".to_string(),
-        cold_storage_type_id: None,
+        ..Default::default()
     }
 }
 
@@ -39,9 +37,8 @@ pub fn mock_location_3() -> LocationRow {
         id: "location_3".to_owned(),
         code: "code_location_3".to_owned(),
         name: "name_location_3".to_owned(),
-        on_hold: false,
         store_id: "store_a".to_string(),
-        cold_storage_type_id: None,
+        ..Default::default()
     }
 }
 
@@ -51,9 +48,19 @@ pub fn mock_location_in_another_store() -> LocationRow {
         id: "location_in_another_store".to_owned(),
         code: "store_b_location".to_owned(),
         name: "store_b_location_name".to_owned(),
-        on_hold: false,
         store_id: "store_b".to_string(),
-        cold_storage_type_id: None,
+        ..Default::default()
+    }
+}
+
+pub fn mock_location_with_restricted_location_type_a() -> LocationRow {
+    LocationRow {
+        id: "location_with_restricted_location_type".to_owned(),
+        code: "code_restricted_location_type_location".to_owned(),
+        name: "name_restricted_location_type_location".to_owned(),
+        store_id: "store_a".to_string(),
+        location_type_id: Some("location_type_a_id".to_owned()),
+        ..Default::default()
     }
 }
 
@@ -64,5 +71,6 @@ pub fn mock_locations() -> Vec<LocationRow> {
         mock_location_2(),
         mock_location_3(),
         mock_location_in_another_store(),
+        mock_location_with_restricted_location_type_a(),
     ]
 }

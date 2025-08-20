@@ -5,7 +5,7 @@ import {
   RecordPatch,
 } from '@openmsupply-client/common';
 import { GenerateCustomerReturnLineFragment, useReturns } from '../../api';
-import { useItemById } from '@openmsupply-client/system';
+import { useItem } from '@openmsupply-client/system';
 
 export const useDraftCustomerReturnLines = ({
   customerId,
@@ -24,7 +24,9 @@ export const useDraftCustomerReturnLines = ({
     GenerateCustomerReturnLineFragment[]
   >([]);
 
-  const { data: item } = useItemById(itemId);
+  const {
+    byId: { data: item },
+  } = useItem(itemId);
 
   const { refetch } = useReturns.lines.generateCustomerReturnLines(
     outboundShipmentLineIds,
@@ -64,6 +66,7 @@ export const useDraftCustomerReturnLines = ({
           itemName: item.name,
           packSize: item.defaultPackSize,
           numberOfPacksReturned: 0,
+          volumePerPack: 0,
           batch: null,
           expiryDate: null,
           note: null,
@@ -97,6 +100,7 @@ export const useDraftCustomerReturnLines = ({
         batch,
         expiryDate,
         itemVariantId,
+        volumePerPack,
       }) => {
         return {
           id,
@@ -108,6 +112,7 @@ export const useDraftCustomerReturnLines = ({
           note,
           numberOfPacksReturned,
           itemVariantId,
+          volumePerPack,
         };
       }
     );

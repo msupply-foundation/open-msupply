@@ -1,17 +1,15 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use dataloader::DataLoader;
-use repository::{Name, NameRow, NameType};
+use repository::{Name, NameRow, NameType, Store, StoreRow};
 
 use graphql_core::{
-    loader::StoreByIdLoader, simple_generic_errors::NodeError,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    simple_generic_errors::NodeError, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use serde::Serialize;
 
 use crate::types::CurrencyNode;
 
-use super::{patient::GenderType, StoreNode};
+use super::{patient::GenderTypeNode, StoreNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -75,17 +73,13 @@ impl NameNode {
         self.name.is_system_name()
     }
 
-    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let store_id = match self.name.store_id() {
-            Some(store_id) => store_id,
-            None => return Ok(None),
-        };
-
-        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
-        Ok(loader
-            .load_one(store_id.to_string())
-            .await?
-            .map(StoreNode::from_domain))
+    pub async fn store(&self) -> Option<StoreNode> {
+        self.store_row().as_ref().map(|store_row| {
+            StoreNode::from_domain(Store {
+                store_row: store_row.clone(),
+                name_row: self.row().clone(),
+            })
+        })
     }
 
     pub async fn first_name(&self) -> &Option<String> {
@@ -96,8 +90,10 @@ impl NameNode {
         &self.row().last_name
     }
 
-    pub async fn gender(&self) -> Option<GenderType> {
-        self.row().gender.as_ref().map(GenderType::from_domain)
+    pub async fn gender(&self) -> Option<GenderTypeNode> {
+        Some(GenderTypeNode::from(
+            self.row().gender.clone().unwrap_or_default(),
+        ))
     }
 
     pub async fn phone(&self) -> &Option<String> {
@@ -224,6 +220,10 @@ impl NameNode {
         NameNode { name }
     }
 
+    pub fn store_row(&self) -> &Option<StoreRow> {
+        &self.name.store_row
+    }
+
     pub fn row(&self) -> &NameRow {
         &self.name.name_row
     }
@@ -236,7 +236,6 @@ mod test {
     use repository::mock::MockDataInserts;
     use repository::{GenderType as GenderRepo, NameLinkRow, NameRowType};
     use serde_json::json;
-    use util::inline_init;
 
     use super::*;
 
@@ -258,32 +257,33 @@ mod test {
             pub async fn test_query(&self) -> NameNode {
                 NameNode {
                     name: Name {
-                        name_row: inline_init(|r: &mut NameRow| {
-                            r.r#type = NameRowType::Store;
-                            r.code = "some code".to_string();
-                            r.first_name = Some("first_name".to_string());
-                            r.last_name = Some("last_name".to_string());
-                            r.gender = Some(GenderRepo::Female);
-                            r.phone = Some("0218738201".to_string());
-                            r.charge_code = Some("test".to_string());
-                            r.comment = Some("name comment".to_string());
-                            r.country = Some("name country".to_string());
-                            r.email = Some("name email".to_string());
-                            r.website = Some("name website".to_string());
-                            r.is_manufacturer = true;
-                            r.is_donor = false;
-                            r.on_hold = true;
-                            r.address1 = Some("address1".to_string());
-                            r.address2 = Some("address2".to_string());
-                            r.created_datetime = Some(
+                        name_row: NameRow {
+                            r#type: NameRowType::Store,
+                            code: "some code".to_string(),
+                            first_name: Some("first_name".to_string()),
+                            last_name: Some("last_name".to_string()),
+                            gender: Some(GenderRepo::Female),
+                            phone: Some("0218738201".to_string()),
+                            charge_code: Some("test".to_string()),
+                            comment: Some("name comment".to_string()),
+                            country: Some("name country".to_string()),
+                            email: Some("name email".to_string()),
+                            website: Some("name website".to_string()),
+                            is_manufacturer: true,
+                            is_donor: false,
+                            on_hold: true,
+                            address1: Some("address1".to_string()),
+                            address2: Some("address2".to_string()),
+                            created_datetime: Some(
                                 NaiveDate::from_ymd_opt(2022, 5, 18)
                                     .unwrap()
                                     .and_hms_opt(12, 7, 12)
                                     .unwrap(),
-                            );
-                            r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 5, 15).unwrap());
-                            r.custom_data_string = Some(r#"{"check": "check"}"#.to_string());
-                        }),
+                            ),
+                            date_of_birth: Some(NaiveDate::from_ymd_opt(1995, 5, 15).unwrap()),
+                            custom_data_string: Some(r#"{"check": "check"}"#.to_string()),
+                            ..Default::default()
+                        },
                         name_link_row: NameLinkRow {
                             id: "test_id".to_string(),
                             name_id: "test_id".to_string(),
