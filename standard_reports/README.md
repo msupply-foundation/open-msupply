@@ -6,13 +6,13 @@ The second part contains more detailed [development information](#report-develop
 
 ## Overview of Reports
 
-Reports are generated HTML tera files used for a variety of reporting applications in OMS.
+Reports are generated [HTML tera](#tera-templating-language) files used for a variety of reporting applications in OMS.
 
 We have two types of reports: 'Reports' and 'Forms'.
 
 Reports only differ from forms in that they have an addition of a JSON form input which can be used to modify queries or how data is converted.
 
-Both reports and forms can use graphql and sql queries, use BoaJS data conversion, and can be used throughout the app.
+Both reports and forms can use graphql and sql queries, use [BoaJS data conversion](#convert-data-functions), and can be used throughout the app.
 
 OMS uses both custom and standard reports. Standard reports are generic reports which come embedded with any OMS build.
 
