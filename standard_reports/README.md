@@ -24,6 +24,13 @@ The toggle report command can be useful to deactivate standard reports when a cl
 
 ## CLI Tools
 
+CLI tools require the OMS cli to be built either by:
+
+- Building the cli with `cargo build` command, and then running commands with the built cli like:
+`./target/debug/remote_server_cli build-reports`
+- Prefacing the commands with `cargo run --bin remote_server_cli`, ie:
+`cargo run --bin remote_server_cli build-reports`
+
 ### Build Reports
 
 `build-reports --path <optional-path>`
