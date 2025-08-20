@@ -69,12 +69,14 @@ export type PurchaseOrderFragment = {
       id: string;
       expectedDeliveryDate?: string | null;
       purchaseOrderId: string;
+      lineNumber: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
+      comment?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -102,12 +104,14 @@ export type PurchaseOrderLineFragment = {
   id: string;
   expectedDeliveryDate?: string | null;
   purchaseOrderId: string;
+  lineNumber: number;
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
   pricePerUnitAfterDiscount: number;
   pricePerUnitBeforeDiscount: number;
+  comment?: string | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -199,12 +203,14 @@ export type PurchaseOrderByIdQuery = {
             id: string;
             expectedDeliveryDate?: string | null;
             purchaseOrderId: string;
+            lineNumber: number;
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
             pricePerUnitAfterDiscount: number;
             pricePerUnitBeforeDiscount: number;
+            comment?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -288,12 +294,14 @@ export type PurchaseOrderLinesQuery = {
       id: string;
       expectedDeliveryDate?: string | null;
       purchaseOrderId: string;
+      lineNumber: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
+      comment?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -320,12 +328,14 @@ export type PurchaseOrderLineQuery = {
       id: string;
       expectedDeliveryDate?: string | null;
       purchaseOrderId: string;
+      lineNumber: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
+      comment?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -478,6 +488,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     id
     expectedDeliveryDate
     purchaseOrderId
+    lineNumber
     item {
       id
       code
@@ -490,6 +501,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     adjustedNumberOfUnits
     pricePerUnitAfterDiscount
     pricePerUnitBeforeDiscount
+    comment
   }
 `;
 export const SyncFileReferenceFragmentDoc = gql`
