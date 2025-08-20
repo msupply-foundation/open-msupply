@@ -96,15 +96,15 @@ If `--is_custom` is include, will filter the selected reports by the `is_custom`
 
 ## Uploading Reports
 
-A generated report json can be added to an OMS site via the central server ui interface, or using the upsert command.
+A generated report json can be added to an OMS site via the central server ui interface, or using the [upsert command](#upsert-reports).
 
-Reports added to OMS central server are synced to all remote sites.
+Reports added to OMS central server (from either cli or ui interface) are synced to remote sites.
 
-Report versioning protects remote sites of earlier versions from rendering a report of an incompatible api.
+Report versioning protects remote sites of earlier versions from rendering a more recent report of an incompatible api.
 
 The report ui interface can be accesed via the manage nav.
 
-Both the upsert and upload ui accept an array of generated reports.
+Both the upsert and upload ui accept an array of generated reports from the [build reports](#build-reports) command.
 
 # Reports Structure
 
