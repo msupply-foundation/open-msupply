@@ -104,3 +104,9 @@ export const canAddNewLines = (
   // Can add lines when NEW or CONFIRMED/AUTHORISED (but not finalised)
   return purchaseOrder.status !== PurchaseOrderNodeStatus.Finalised;
 };
+
+export const isGoodsReceivedEditable = (
+  status: GoodsReceivedNodeStatus
+): boolean => {
+  return status !== GoodsReceivedNodeStatus.Finalised;
+};

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  BasicTextInput,
   Box,
   DataTable,
   Divider,
@@ -19,22 +18,20 @@ import { usePurchaseOrderLineEditColumns } from './columns';
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
-  currentLine?: PurchaseOrderLineFragment;
-  onChangeItem: (item: ItemStockOnHandFragment) => void;
   draft?: DraftPurchaseOrderLine | null;
+  onChangeItem: (item: ItemStockOnHandFragment) => void;
   updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
   status: PurchaseOrderNodeStatus;
 }
 
 export const PurchaseOrderLineEdit = ({
   isUpdateMode,
-  currentLine,
   onChangeItem,
   draft,
   updatePatch,
   status,
 }: PurchaseOrderLineEditProps) => {
-  const showContent = !!draft && !!currentLine;
+  const showContent = !!draft;
 
   const lines: DraftPurchaseOrderLine[] = [];
   if (draft) {
@@ -57,23 +54,15 @@ export const PurchaseOrderLineEdit = ({
       paddingBottom={1}
     >
       <Grid size={12} sx={{ mb: 2 }}>
-        {(isUpdateMode && (
-          <BasicTextInput
-            value={`${currentLine?.item?.code}     ${currentLine?.item?.name}`}
-            disabled
-            fullWidth
-          />
-        )) || (
-          <StockItemSearchInput
-            autoFocus={!currentLine}
-            openOnFocus={!currentLine}
-            disabled={isUpdateMode}
-            currentItemId={currentLine?.item.id}
-            onChange={newItem => newItem && onChangeItem(newItem)}
-          />
-        )}
+        <StockItemSearchInput
+          autoFocus={!draft}
+          openOnFocus={!draft}
+          disabled={isUpdateMode}
+          currentItemId={draft?.itemId}
+          onChange={newItem => newItem && onChangeItem(newItem)}
+        />
       </Grid>
-      {showContent && currentLine && (
+      {showContent && draft && (
         <Box style={{ width: '100%' }}>
           <Divider margin={10} />
           <Box

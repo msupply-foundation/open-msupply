@@ -4,6 +4,7 @@
 mod tests;
 
 mod logger;
+
 use logger::{GraphQLRequestLogger, QueryLogInfo};
 
 use std::sync::Mutex;
@@ -40,6 +41,7 @@ use graphql_general::{
     InitialisationMutations, InitialisationQueries,
 };
 use graphql_goods_received::{GoodsReceivedMutations, GoodsReceivedQueries};
+use graphql_goods_received_line::{GoodsReceivedLineMutations, GoodsReceivedLineQueries};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
@@ -61,7 +63,6 @@ use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
-use graphql_goods_received_line::GoodsReceivedLineQueries;
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 
@@ -264,6 +265,7 @@ pub struct Mutations(
     pub PurchaseOrderMutations,
     pub PurchaseOrderLineMutations,
     pub GoodsReceivedMutations,
+    pub GoodsReceivedLineMutations,
 );
 
 impl Mutations {
@@ -295,6 +297,7 @@ impl Mutations {
             PurchaseOrderMutations,
             PurchaseOrderLineMutations,
             GoodsReceivedMutations,
+            GoodsReceivedLineMutations,
         )
     }
 }
