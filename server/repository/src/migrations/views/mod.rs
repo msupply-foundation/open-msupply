@@ -1,13 +1,19 @@
 use crate::{migrations::sql, StorageConnection};
 
 mod adjustments;
+mod changelog_deduped;
 mod consumption;
 mod inbound_shipment_stock_movement;
 mod inventory_adjustment_stock_movement;
 mod invoice_line_stock_movement;
 mod item_ledger;
+mod latest_asset_log;
+mod latest_document;
 mod outbound_shipment_stock_movement;
 mod replenishment;
+mod report_document;
+mod report_encounter;
+mod report_store;
 mod stock_line_ledger;
 mod stock_line_ledger_discrepancy;
 mod stock_movement;
@@ -37,6 +43,13 @@ fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
         Box::new(consumption::ViewMigration),
         Box::new(store_items::ViewMigration),
         Box::new(stock_on_hand::ViewMigration),
+        // lot 3:
+        Box::new(changelog_deduped::ViewMigration),
+        Box::new(latest_document::ViewMigration),
+        Box::new(latest_asset_log::ViewMigration),
+        Box::new(report_document::ViewMigration),
+        Box::new(report_encounter::ViewMigration),
+        Box::new(report_store::ViewMigration),
     ]
 }
 
@@ -62,16 +75,16 @@ pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Resul
       
       
      
-      DROP VIEW IF EXISTS changelog_deduped;
-      DROP VIEW IF EXISTS latest_document;
+      
+      
       DROP VIEW IF EXISTS contact_trace_name_link_view;
-      DROP VIEW IF EXISTS latest_asset_log;
-      DROP VIEW IF EXISTS report_encounter;
+      
+      
       DROP VIEW IF EXISTS report_patient;
       DROP VIEW IF EXISTS report_program_enrolment;
       DROP VIEW IF EXISTS report_program_event;
-      DROP VIEW IF EXISTS report_store;
-      DROP VIEW IF EXISTS report_document;
+      
+      
       DROP VIEW IF EXISTS requisitions_in_period;
       
       DROP VIEW IF EXISTS vaccination_card;
@@ -89,109 +102,12 @@ pub(crate) fn legacy_rebuild_views(connection: &StorageConnection) -> anyhow::Re
     sql!(
         connection,
         r#"
-  
-  
 
-  
 
-  
 
 
 
   
-
-  
-    -- View of the changelog that only contains the most recent changes to a row, i.e. previous row
-    -- edits are removed.
-    -- Note, an insert + delete will show up as an orphaned delete.
-  CREATE VIEW changelog_deduped AS
-    SELECT c.cursor,
-        c.table_name,
-        c.record_id,
-        c.row_action,
-        c.name_link_id,
-        c.store_id,
-        c.is_sync_update,
-        c.source_site_id
-    FROM (
-        SELECT record_id, MAX(cursor) AS max_cursor
-        FROM changelog
-        GROUP BY record_id
-    ) grouped
-    INNER JOIN changelog c
-        ON c.record_id = grouped.record_id AND c.cursor = grouped.max_cursor
-    ORDER BY c.cursor;
-
-  CREATE VIEW latest_document
-    AS
-        SELECT d.*
-        FROM (
-        SELECT name, MAX(datetime) AS datetime
-            FROM document
-            GROUP BY name
-    ) grouped
-    INNER JOIN document d
-    ON d.name = grouped.name AND d.datetime = grouped.datetime;
-
-  CREATE VIEW latest_asset_log AS
-    SELECT al.id,
-      al.asset_id,
-      al.user_id,
-      al.comment,
-      al.type,
-      al.log_datetime,
-      al.status,
-      al.reason_id
-    FROM (
-      SELECT asset_id, MAX(log_datetime) AS latest_log_datetime
-      FROM asset_log
-      GROUP BY asset_id
-    ) grouped
-    INNER JOIN asset_log al
-      ON al.asset_id = grouped.asset_id AND al.log_datetime = grouped.latest_log_datetime;
-
-  -- This view contains the latest document versions
-  CREATE VIEW report_document AS
-    SELECT
-        d.name,
-        d.datetime,
-        d.type,
-        d.data,
-        nl.name_id as owner_name_id
-    FROM (
-        SELECT name as doc_name, MAX(datetime) AS doc_time
-        FROM document
-        GROUP BY name
-    ) grouped
-    INNER JOIN document d ON d.name = grouped.doc_name AND d.datetime = grouped.doc_time
-    LEFT JOIN name_link nl ON nl.id = d.owner_name_link_id
-    WHERE d.status != 'DELETED';
-
-  CREATE VIEW report_encounter AS
-    SELECT
-      encounter.id,
-      encounter.created_datetime,
-      encounter.start_datetime,
-      encounter.end_datetime,
-      encounter.status,
-      encounter.store_id,
-      nl.name_id as patient_id,
-      encounter.document_type,
-      doc.data as document_data
-    FROM encounter
-    LEFT JOIN name_link nl ON nl.id = encounter.patient_link_id
-    LEFT JOIN report_document doc ON doc.name = encounter.document_name;
-
-  CREATE VIEW report_store AS
-    SELECT
-        store.id,
-        store.code,
-        store.store_mode,
-        store.logo,
-        name.name
-    FROM store
-    JOIN name_link ON store.name_link_id = name_link.id
-    JOIN name ON name_link.name_id = name.id;
 
   CREATE VIEW report_patient AS
     SELECT
