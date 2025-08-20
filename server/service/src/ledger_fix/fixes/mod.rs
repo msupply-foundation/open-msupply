@@ -22,6 +22,7 @@ use util::uuid::uuid;
 pub(crate) mod adjust_historic_incoming_invoices;
 
 pub(crate) mod adjust_all_to_match_available;
+pub(crate) mod adjust_invoice_status;
 pub(crate) mod adjust_total_to_match_ledger;
 pub(crate) mod fix_cancellations;
 pub(crate) mod inventory_adjustment_to_balance;

@@ -1,8 +1,9 @@
 # Ledger Fix
 
 Due to migration from existing mSupply sites and omSupply bug we've had ledger discrepancies, which are:
-* Where total movements of stock (invoice_lines) does not add up to current stock balance (stock_line)
-* Where as any point in history, sum of invoice_lines as negative.
+
+- Where total movements of stock (invoice_lines) does not add up to current stock balance (stock_line)
+- Where as any point in history, sum of invoice_lines as negative.
 
 ### Strategy to deal with ledger discrepancies
 
@@ -10,35 +11,34 @@ Due to migration from existing mSupply sites and omSupply bug we've had ledger d
 
 Make it harder to implement things that will cause ledger discrepancy.
 
-* Emphasise tests
-* Service/repo structure with one point of entry for operations that affect stock
+- Emphasise tests
+- Service/repo structure with one point of entry for operations that affect stock
 
 #### Fix and Notify
 
 We understand that some ledger problems will sneak through (even with our best effort at prevention), to deal with affect of ledger discrepancies on users we will
 
-* Implement a strategy of timely awareness of ledger discrepancies
-* Strategy to fix ledger discrepancies in as much of a safe manner as possible
+- Implement a strategy of timely awareness of ledger discrepancies
+- Strategy to fix ledger discrepancies in as much of a safe manner as possible
 
 Logic in this section of our codebase is related to fix and notify.
-
 
 ### Ledger driver
 
 There is a scheduler that would attempt to run, in the background
 
-* Once a day
-* After initialisation
-* After upgrade to this version
+- Once a day
+- After initialisation
+- After upgrade to this version
 
-This scheduler will try to find ledger discrepancies and then fix them. Scheduler last execution period is stored in key value store. Detailed logging for each stock line ledger fix would be added to normal file/console log and system log (to be synced to omSupply central), notifications can be made to support and dev team via system log (dashboard/notify) 
+This scheduler will try to find ledger discrepancies and then fix them. Scheduler last execution period is stored in key value store. Detailed logging for each stock line ledger fix would be added to normal file/console log and system log (to be synced to omSupply central), notifications can be made to support and dev team via system log (dashboard/notify)
 
 ### Find Ledger Discrepancies
 
 This operations should be quick and efficient, using partition sql introduced in stock_line/item ledger view, for each stock_line:
 
-* Find any negative running balances 
-* Find any cases where final running balances does not add up to total quantity and total quantity is not available quantity + any stock that is reserved but not yet applied to total
+- Find any negative running balances
+- Find any cases where final running balances does not add up to total quantity and total quantity is not available quantity + any stock that is reserved but not yet applied to total
 
 ### Fix Ledger discrepancies
 
@@ -48,9 +48,17 @@ Each stock line will go through a series of fixes based on know invalid 'states'
 
 In the order of execution (this order is important).
 
+#### Adjust invoice status - adjust_invoice_status
+
+Due to a OG v5 sync bug, some invoices will revert from statuses where they affected stock, back to statuses that shouldn't affect stock. For instance, a shipped inbound shipment reverting back to "new". This would cause SOH to be higher than the running balance.
+
+`state` SOH and running balance do not match. Via stock_line -> invoice_lines -> invoices, check invoice activity_logs clearly indicate that the invoice status is at an earlier state than the last log.
+
+`fix` If safe to do so, change the invoice status back to the latest status in the activity_log. It is not safe if users have changed the status again since the initial invalid status change- this will be evident if there are duplicate statuses e.g. 2 activity logs for verifying the invoice. later fixes namely adjust_total_to_match_ledger will address this scenario.
+
 #### Adjust historic incoming invoices - adjust_historic_incoming_invoices
 
-We've found use cases where stock introduction after issue, all of them were with mSupply mobile or mSupply uuids. 
+We've found use cases where stock introduction after issue, all of them were with mSupply mobile or mSupply uuids.
 
 `state` running balance is negative at some point in history, but current total adds up to available + reserved not picked and to final running balance.
 
@@ -60,7 +68,7 @@ We've found use cases where stock introduction after issue, all of them were wit
 
 There are cases where total adds up to reserved not picked, but running balance doesn't not most of them where mSupply mobile or mSupply uuids but some were omSupply uuids (closer investigation of omSupply uuids showed that they were from ledger discrepancy caused by 'cancelled' prescriptions)
 
-`state` final running balance is not total and total is available + reserved not picked, and stock line uuid is not omSupply 
+`state` final running balance is not total and total is available + reserved not picked, and stock line uuid is not omSupply
 
 `fix` create inventory adjustment to balance final running balance with total, positive inventory adjustment is added to the very start of stock line ledger, negative inventory adjustment is added as far back as possible without causing negative historic ledger
 
@@ -84,7 +92,7 @@ We had a bug in omSupply where cancellations were not putting stock back into st
 
 Some unknown use case where final running balance and total and available + reserve not picked are all different from each other, we found only 1 case of this in the data we looked at, which had 6k ledger discrepancies.
 
-`state` available + reserved not picked is not total or running balance, total is not final running balance 
+`state` available + reserved not picked is not total or running balance, total is not final running balance
 
 `fix` adjust total to be available + reserved not picked and final running balance to be the same, use inventory adjustment method for final running balance as per 'inventory_adjustment_to_balance
 
@@ -98,6 +106,6 @@ This is captured in carry over issue, alongside some improvements to existing lo
 
 To re-run ledger fix, you can empty key value store value for 'last ledger fix run' and then restart the app, ledger fix scheduler fix tries to run 5 seconds after startup and then hourly (always checking last ledger fix run, to not run more then once a day)
 
-A good way to investigate ledger fixes is to get a remote database, run a view to find ledger problems, export to excel and start investigating one line at a time with `stock_line_ledger` view. We also found that looking at activity log was helpful (at least in finding the double picked issue). Pay attention to stock_line_id uuids(), all caps = mSupply, lower case = mSupply mobile, the ones with dashes are omSupply. 
+A good way to investigate ledger fixes is to get a remote database, run a view to find ledger problems, export to excel and start investigating one line at a time with `stock_line_ledger` view. We also found that looking at activity log was helpful (at least in finding the double picked issue). Pay attention to stock_line_id uuids(), all caps = mSupply, lower case = mSupply mobile, the ones with dashes are omSupply.
 
 See 'summary' docs in [this google drive folder](https://drive.google.com/drive/u/1/folders/1dh8hWZ0_GgKWnrf7ldRjAtgp5jg9ZyVi) for sql view, alongside excel files with those views and investigation details.

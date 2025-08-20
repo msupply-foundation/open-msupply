@@ -22,6 +22,7 @@ pub enum ActivityLogSortFieldInput {
     ActivityLogType,
     UserId,
     RecordId,
+    Datetime,
 }
 
 #[derive(InputObject)]
@@ -113,6 +114,7 @@ impl ActivityLogSortInput {
             from::ActivityLogType => to::ActivityLogType,
             from::UserId => to::UserId,
             from::RecordId => to::RecordId,
+            from::Datetime => to::Datetime,
         };
 
         ActivityLogSort {

@@ -26,7 +26,7 @@ table! {
 joinable!(activity_log -> user_account (user_id));
 joinable!(activity_log -> store (store_id));
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash, Copy)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ActivityLogType {
     UserLoggedIn,
