@@ -27,7 +27,7 @@ fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
     ]
 }
 
-// Will be removed in the final PR for this issue.
+// Will be removed in the final PR for this issue, when all the drop view statements have been moved to different files.
 pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
     log::info!("Dropping database views...");
     sql!(
@@ -69,7 +69,7 @@ pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Resul
     Ok(())
 }
 
-// Will be removed in the final PR for this issue.
+// Will be removed in the final PR for this issue, when all the create view statements have been moved to different.
 pub(crate) fn legacy_rebuild_views(connection: &StorageConnection) -> anyhow::Result<()> {
     log::info!("Re-creating database views...");
 
@@ -609,7 +609,10 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
 
 #[cfg(test)]
 mod test {
-    use crate::test_db::{setup_test, SetupOption, SetupResult};
+    use crate::{
+        migrations::views::legacy_drop_views,
+        test_db::{setup_test, SetupOption, SetupResult},
+    };
 
     use super::{drop_views, rebuild_views};
 
@@ -624,6 +627,7 @@ mod test {
 
         // Ensure views can be dropped and recreated without error
         drop_views(&connection).unwrap();
+
         // Rebuild should be fine, this already happens in our setup_test, but just to be sure :)
         rebuild_views(&connection).unwrap();
 
