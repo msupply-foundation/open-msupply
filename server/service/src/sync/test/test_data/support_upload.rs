@@ -1,6 +1,6 @@
+use chrono::NaiveDate;
 use repository::{SupportUploadRow, SupportUploadStatus};
 use serde_json::json;
-use util::Defaults;
 
 use crate::sync::test::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
@@ -10,22 +10,28 @@ const SUPPORT_UPLOAD1: (&str, &str) = (
     "support-upload-dfw1-1234-faba934ghlad",
     r#"{
         "id": "support-upload-dfw1-1234-faba934ghlad", 
-        "created_datetime": "2020-01-22T15:16:00",
+        "created_datetime": "2020-01-01T00:00:00",
         "store_id": "store_a",
         "title": "database error",
         "status": "InProgress",
-        "upload_start_datetime": "2020-01-22T15:16:00"
+        "upload_start_datetime": "2020-01-01T00:00:00"
     }"#,
 );
 
 fn support_upload1() -> SupportUploadRow {
     SupportUploadRow {
         id: SUPPORT_UPLOAD1.0.to_string(),
-        created_datetime: Defaults::naive_date_time(),
+        created_datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
         store_id: "store_a".to_string(),
         title: "database error".to_string(),
         status: SupportUploadStatus::InProgress,
-        upload_start_datetime: Defaults::naive_date_time(),
+        upload_start_datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
     }
 }
 
