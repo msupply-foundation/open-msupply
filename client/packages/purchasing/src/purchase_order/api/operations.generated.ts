@@ -78,7 +78,7 @@ export type PurchaseOrderFragment = {
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
       note?: string | null;
-      unitOfPacks?: string | null;
+      unit?: string | null;
       comment?: string | null;
       supplierItemCode?: string | null;
       item: {
@@ -126,7 +126,7 @@ export type PurchaseOrderLineFragment = {
   pricePerUnitAfterDiscount: number;
   pricePerUnitBeforeDiscount: number;
   note?: string | null;
-  unitOfPacks?: string | null;
+  unit?: string | null;
   comment?: string | null;
   supplierItemCode?: string | null;
   item: {
@@ -238,7 +238,7 @@ export type PurchaseOrderByIdQuery = {
             pricePerUnitAfterDiscount: number;
             pricePerUnitBeforeDiscount: number;
             note?: string | null;
-            unitOfPacks?: string | null;
+            unit?: string | null;
             comment?: string | null;
             supplierItemCode?: string | null;
             item: {
@@ -346,7 +346,7 @@ export type PurchaseOrderLinesQuery = {
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
       note?: string | null;
-      unitOfPacks?: string | null;
+      unit?: string | null;
       comment?: string | null;
       supplierItemCode?: string | null;
       item: {
@@ -393,7 +393,7 @@ export type PurchaseOrderLineQuery = {
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
       note?: string | null;
-      unitOfPacks?: string | null;
+      unit?: string | null;
       comment?: string | null;
       supplierItemCode?: string | null;
       item: {
@@ -575,7 +575,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
       ...NameRow
     }
     note
-    unitOfPacks
+    unit
     comment
     supplierItemCode
   }

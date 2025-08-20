@@ -16,7 +16,7 @@ pub fn generate(
         price_per_unit_after_discount,
         manufacturer_id,
         note,
-        unit_of_packs,
+        unit,
         supplier_item_code,
         comment,
     }: UpdatePurchaseOrderLineInput,
@@ -40,7 +40,7 @@ pub fn generate(
             .map(|v| v.value)
             .unwrap_or(purchase_order_line.manufacturer_link_id),
         note: note.map(|v| v.value).unwrap_or(purchase_order_line.note),
-        unit_of_packs: unit_of_packs.or(purchase_order_line.unit_of_packs),
+        unit: unit.or(purchase_order_line.unit),
         supplier_item_code: supplier_item_code
             .map(|v| v.value)
             .unwrap_or(purchase_order_line.supplier_item_code),

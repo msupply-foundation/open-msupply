@@ -104,8 +104,8 @@ impl PurchaseOrderLineNode {
         &self.row().note
     }
 
-    pub async fn unit_of_packs(&self) -> &Option<String> {
-        &self.row().unit_of_packs
+    pub async fn unit(&self) -> &Option<String> {
+        &self.row().unit
     }
 }
 

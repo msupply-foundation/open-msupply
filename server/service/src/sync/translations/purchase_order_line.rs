@@ -70,7 +70,7 @@ pub struct LegacyPurchaseOrderLineRow {
     pub note: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "pack_units")]
-    pub unit_of_packs: Option<String>,
+    pub unit: Option<String>,
 }
 
 #[deny(dead_code)]
@@ -121,7 +121,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             comment,
             manufacturer_id,
             note,
-            unit_of_packs,
+            unit,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
@@ -144,7 +144,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             comment,
             manufacturer_link_id: manufacturer_id,
             note,
-            unit_of_packs,
+            unit,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -184,7 +184,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             comment,
             manufacturer_link_id,
             note,
-            unit_of_packs,
+            unit,
         } = PurchaseOrderLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
@@ -209,7 +209,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             comment,
             manufacturer_id: manufacturer_link_id,
             note,
-            unit_of_packs,
+            unit,
         };
 
         Ok(PushTranslateResult::upsert(

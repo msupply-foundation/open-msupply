@@ -115,7 +115,7 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
             comment: Some("comment a!".to_string()),
             manufacturer_link_id: None,
             note: None,
-            unit_of_packs: None,
+            unit: None,
         },
     )
 }
@@ -144,7 +144,7 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             comment: Some("comment a!".to_string()),
             manufacturer_id: None,
             note: None,
-            unit_of_packs: None,
+            unit: None,
         }),
     }
 }
@@ -173,7 +173,7 @@ fn purchase_order_line_unlinked_pull_record() -> TestSyncIncomingRecord {
             comment: Some("comment a!".to_string()),
             manufacturer_link_id: None,
             note: None,
-            unit_of_packs: None,
+            unit: None,
         },
     )
 }
@@ -202,7 +202,7 @@ fn purchase_order_line_unlinked_push_record() -> TestSyncOutgoingRecord {
             comment: Some("comment a!".to_string()),
             manufacturer_id: None,
             note: None,
-            unit_of_packs: None,
+            unit: None,
         }),
     }
 }

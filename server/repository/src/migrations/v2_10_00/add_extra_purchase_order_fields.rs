@@ -13,7 +13,7 @@ impl MigrationFragment for Migrate {
             r#"
             ALTER TABLE purchase_order_line ADD COLUMN manufacturer_link_id TEXT REFERENCES name_link(id);
             ALTER TABLE purchase_order_line ADD COLUMN note TEXT;
-            ALTER TABLE purchase_order_line ADD COLUMN unit_of_packs TEXT;
+            ALTER TABLE purchase_order_line ADD COLUMN unit TEXT;
             "#
         )?;
 

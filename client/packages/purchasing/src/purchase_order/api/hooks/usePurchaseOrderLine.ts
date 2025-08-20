@@ -44,7 +44,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   pricePerUnitAfterDiscount: 0,
   manufacturer: null,
   note: null,
-  unitOfPacks: null,
+  unit: null,
   supplierItemCode: null,
   comment: null,
   // This value not actually saved to DB
@@ -123,7 +123,7 @@ export function usePurchaseOrderLine(id?: string) {
       pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
       manufacturerId: setNullableInput('id', draft.manufacturer),
       note: setNullableInput('note', draft),
-      unitOfPacks: draft.unitOfPacks,
+      unit: draft.unit,
       supplierItemCode: setNullableInput('supplierItemCode', draft),
       comment: setNullableInput('comment', draft),
     };
@@ -199,7 +199,7 @@ const useCreate = () => {
         pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
         manufacturerId: draft.manufacturer?.id,
         note: draft.note,
-        unitOfPacks: draft.unitOfPacks,
+        unit: draft.unit,
         supplierItemCode: draft.supplierItemCode,
         comment: draft.comment,
       },

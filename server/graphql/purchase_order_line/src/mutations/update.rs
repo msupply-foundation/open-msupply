@@ -39,7 +39,7 @@ pub struct UpdateInput {
     pub price_per_unit_after_discount: Option<f64>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub note: Option<NullableUpdateInput<String>>,
-    pub unit_of_packs: Option<String>,
+    pub unit: Option<String>,
     pub supplier_item_code: Option<NullableUpdateInput<String>>,
     pub comment: Option<NullableUpdateInput<String>>,
 }
@@ -58,7 +58,7 @@ impl UpdateInput {
             price_per_unit_after_discount,
             manufacturer_id,
             note,
-            unit_of_packs,
+            unit,
             supplier_item_code,
             comment,
         } = self;
@@ -75,7 +75,7 @@ impl UpdateInput {
             price_per_unit_after_discount,
             manufacturer_id: manufacturer_id.map(|v| NullableUpdate { value: v.value }),
             note: note.map(|v| NullableUpdate { value: v.value }),
-            unit_of_packs,
+            unit,
             supplier_item_code: supplier_item_code.map(|v| NullableUpdate { value: v.value }),
             comment: comment.map(|v| NullableUpdate { value: v.value }),
         }
