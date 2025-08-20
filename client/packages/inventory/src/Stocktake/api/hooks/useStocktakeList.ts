@@ -15,7 +15,7 @@ export type StocktakesParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<StocktakeSortFieldInput>;
-  filter?: StocktakeFilterInput;
+  filterBy?: StocktakeFilterInput | null;
 };
 
 export const useStocktakeList = (queryParams?: StocktakesParams) => {
@@ -33,7 +33,7 @@ export const useStocktakeList = (queryParams?: StocktakesParams) => {
 const useGet = (queryParams: StocktakesParams) => {
   const { stocktakeApi, storeId } = useStocktakeGraphQL();
 
-  const { sortBy, first, offset, filter } = queryParams;
+  const { sortBy, first, offset, filterBy } = queryParams;
 
   const queryKey = [
     STOCKTAKE,
@@ -42,7 +42,7 @@ const useGet = (queryParams: StocktakesParams) => {
     sortBy,
     first,
     offset,
-    filter,
+    filterBy,
   ];
   const sort = sortBy?.key
     ? sortBy
@@ -63,7 +63,7 @@ const useGet = (queryParams: StocktakesParams) => {
         key: toSortField(sort),
         desc: !!sort.isDesc,
       },
-      filter,
+      filter: filterBy,
     });
     const { nodes, totalCount } = query?.stocktakes;
     return { nodes, totalCount };
