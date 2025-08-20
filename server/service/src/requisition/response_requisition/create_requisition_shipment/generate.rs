@@ -67,6 +67,7 @@ pub fn generate(
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: None,
+        goods_received_id: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;

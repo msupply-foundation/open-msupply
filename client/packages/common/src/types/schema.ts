@@ -2966,6 +2966,15 @@ export type GoodsReceivedDoesNotExist = DeleteGoodsReceivedLineInterface & {
   description: Scalars['String']['output'];
 };
 
+export type GoodsReceivedEmpty = GoodsReceivedError & {
+  __typename: 'GoodsReceivedEmpty';
+  description: Scalars['String']['output'];
+};
+
+export type GoodsReceivedError = {
+  description: Scalars['String']['output'];
+};
+
 export type GoodsReceivedFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -6269,6 +6278,11 @@ export type NameStoreJoinNode = {
 
 export type NamesResponse = NameConnector;
 
+export type NoAuthorisedLines = GoodsReceivedError & {
+  __typename: 'NoAuthorisedLines';
+  description: Scalars['String']['output'];
+};
+
 export type NoPermissionForThisStore = InsertAssetErrorInterface &
   InsertDemographicIndicatorErrorInterface &
   InsertDemographicProjectionErrorInterface &
@@ -7238,6 +7252,11 @@ export enum PurchaseOrderNodeType {
   Finalised = 'FINALISED',
   New = 'NEW',
 }
+
+export type PurchaseOrderNotFinalised = GoodsReceivedError & {
+  __typename: 'PurchaseOrderNotFinalised';
+  description: Scalars['String']['output'];
+};
 
 export type PurchaseOrderNotFound = InsertGoodsReceivedLinesErrorInterface & {
   __typename: 'PurchaseOrderNotFound';
@@ -9907,6 +9926,11 @@ export type UpdateErrorInterface = {
   description: Scalars['String']['output'];
 };
 
+export type UpdateGoodsReceivedError = {
+  __typename: 'UpdateGoodsReceivedError';
+  error: GoodsReceivedError;
+};
+
 export type UpdateGoodsReceivedInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
@@ -9937,7 +9961,7 @@ export type UpdateGoodsReceivedLineResponse =
   | IdResponse
   | UpdateGoodsReceivedLineError;
 
-export type UpdateGoodsReceivedResponse = IdResponse;
+export type UpdateGoodsReceivedResponse = IdResponse | UpdateGoodsReceivedError;
 
 export type UpdateInboundShipmentError = {
   __typename: 'UpdateInboundShipmentError';

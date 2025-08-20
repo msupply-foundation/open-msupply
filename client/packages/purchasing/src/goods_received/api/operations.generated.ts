@@ -162,7 +162,15 @@ export type UpdateGoodsReceivedMutationVariables = Types.Exact<{
 
 export type UpdateGoodsReceivedMutation = {
   __typename: 'Mutations';
-  updateGoodsReceived: { __typename: 'IdResponse'; id: string };
+  updateGoodsReceived:
+    | { __typename: 'IdResponse'; id: string }
+    | {
+        __typename: 'UpdateGoodsReceivedError';
+        error:
+          | { __typename: 'GoodsReceivedEmpty'; description: string }
+          | { __typename: 'NoAuthorisedLines'; description: string }
+          | { __typename: 'PurchaseOrderNotFinalised'; description: string };
+      };
 };
 
 export type DeleteGoodsReceivedMutationVariables = Types.Exact<{
@@ -244,32 +252,6 @@ export type GoodsReceivedLinesCountQuery = {
     __typename: 'GoodsReceivedLineConnector';
     totalCount: number;
   };
-};
-
-export type InsertGoodsReceivedLineMutationVariables = Types.Exact<{
-  input: Types.InsertGoodsReceivedLineInput;
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-export type InsertGoodsReceivedLineMutation = {
-  __typename: 'Mutations';
-  insertGoodsReceivedLine:
-    | { __typename: 'IdResponse'; id: string }
-    | {
-        __typename: 'InsertGoodsReceivedLineError';
-        error:
-          | { __typename: 'CannotEditGoodsReceived'; description: string }
-          | {
-              __typename: 'ForeignKeyError';
-              description: string;
-              key: Types.ForeignKey;
-            }
-          | { __typename: 'GoodsReceivedLineWithIdExists'; description: string }
-          | {
-              __typename: 'PurchaseOrderLineDoesNotExist';
-              description: string;
-            };
-      };
 };
 
 export type InsertGoodsReceivedLinesFromPurchaseOrderMutationVariables =
@@ -434,6 +416,21 @@ export const UpdateGoodsReceivedDocument = gql`
       ... on IdResponse {
         id
       }
+      ... on UpdateGoodsReceivedError {
+        __typename
+        error {
+          description
+          ... on GoodsReceivedEmpty {
+            __typename
+          }
+          ... on PurchaseOrderNotFinalised {
+            __typename
+          }
+          ... on NoAuthorisedLines {
+            __typename
+          }
+        }
+      }
     }
   }
 `;
@@ -497,37 +494,6 @@ export const GoodsReceivedLinesCountDocument = gql`
       ... on GoodsReceivedLineConnector {
         __typename
         totalCount
-      }
-    }
-  }
-`;
-export const InsertGoodsReceivedLineDocument = gql`
-  mutation insertGoodsReceivedLine(
-    $input: InsertGoodsReceivedLineInput!
-    $storeId: String!
-  ) {
-    insertGoodsReceivedLine(input: $input, storeId: $storeId) {
-      ... on IdResponse {
-        id
-      }
-      ... on InsertGoodsReceivedLineError {
-        __typename
-        error {
-          description
-          ... on CannotEditGoodsReceived {
-            __typename
-            description
-          }
-          ... on ForeignKeyError {
-            __typename
-            description
-            key
-          }
-          ... on GoodsReceivedLineWithIdExists {
-            __typename
-            description
-          }
-        }
       }
     }
   }
@@ -724,22 +690,6 @@ export function getSdk(
           ),
         'goodsReceivedLinesCount',
         'query',
-        variables
-      );
-    },
-    insertGoodsReceivedLine(
-      variables: InsertGoodsReceivedLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<InsertGoodsReceivedLineMutation> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<InsertGoodsReceivedLineMutation>(
-            InsertGoodsReceivedLineDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'insertGoodsReceivedLine',
-        'mutation',
         variables
       );
     },
