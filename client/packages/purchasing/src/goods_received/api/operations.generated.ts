@@ -254,6 +254,32 @@ export type GoodsReceivedLinesCountQuery = {
   };
 };
 
+export type InsertGoodsReceivedLineMutationVariables = Types.Exact<{
+  input: Types.InsertGoodsReceivedLineInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InsertGoodsReceivedLineMutation = {
+  __typename: 'Mutations';
+  insertGoodsReceivedLine:
+    | { __typename: 'IdResponse'; id: string }
+    | {
+        __typename: 'InsertGoodsReceivedLineError';
+        error:
+          | { __typename: 'CannotEditGoodsReceived'; description: string }
+          | {
+              __typename: 'ForeignKeyError';
+              description: string;
+              key: Types.ForeignKey;
+            }
+          | { __typename: 'GoodsReceivedLineWithIdExists'; description: string }
+          | {
+              __typename: 'PurchaseOrderLineDoesNotExist';
+              description: string;
+            };
+      };
+};
+
 export type InsertGoodsReceivedLinesFromPurchaseOrderMutationVariables =
   Types.Exact<{
     input: Types.InsertGoodsReceivedLinesFromPurchaseOrderInput;
@@ -498,6 +524,37 @@ export const GoodsReceivedLinesCountDocument = gql`
     }
   }
 `;
+export const InsertGoodsReceivedLineDocument = gql`
+  mutation insertGoodsReceivedLine(
+    $input: InsertGoodsReceivedLineInput!
+    $storeId: String!
+  ) {
+    insertGoodsReceivedLine(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+      ... on InsertGoodsReceivedLineError {
+        __typename
+        error {
+          description
+          ... on CannotEditGoodsReceived {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+            key
+          }
+          ... on GoodsReceivedLineWithIdExists {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 export const InsertGoodsReceivedLinesFromPurchaseOrderDocument = gql`
   mutation insertGoodsReceivedLinesFromPurchaseOrder(
     $input: InsertGoodsReceivedLinesFromPurchaseOrderInput!
@@ -690,6 +747,22 @@ export function getSdk(
           ),
         'goodsReceivedLinesCount',
         'query',
+        variables
+      );
+    },
+    insertGoodsReceivedLine(
+      variables: InsertGoodsReceivedLineMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertGoodsReceivedLineMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertGoodsReceivedLineMutation>(
+            InsertGoodsReceivedLineDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertGoodsReceivedLine',
+        'mutation',
         variables
       );
     },

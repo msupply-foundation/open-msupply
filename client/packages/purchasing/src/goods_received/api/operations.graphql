@@ -190,6 +190,36 @@ query goodsReceivedLinesCount(
   }
 }
 
+mutation insertGoodsReceivedLine(
+  $input: InsertGoodsReceivedLineInput!
+  $storeId: String!
+) {
+  insertGoodsReceivedLine(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+    ... on InsertGoodsReceivedLineError {
+      __typename
+      error {
+        description
+        ... on CannotEditGoodsReceived {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+        ... on GoodsReceivedLineWithIdExists {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
 mutation insertGoodsReceivedLinesFromPurchaseOrder(
   $input: InsertGoodsReceivedLinesFromPurchaseOrderInput!
   $storeId: String!
