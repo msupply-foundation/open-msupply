@@ -89,6 +89,10 @@ Reports need certain parameters and arguments. Copy the `test-config.example.jso
 
 A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json` file.
 
+The test config is used to manually populate the parameters of the graphql query which would typically be inferred by OMS in actual use.
+For example, a standard form of an inbound shipment would use the context of the UI to know the invoice id. 
+Test config can manually configure the id for rapid report editing and generation without the need to manually build and upsert, or contriving the OMS front end to render the report.
+
 ### Toggle Report
 
 `toggle-report --code <report-code> --is_custom [true|false : optional] --enable (optional) --disable (optional)`
