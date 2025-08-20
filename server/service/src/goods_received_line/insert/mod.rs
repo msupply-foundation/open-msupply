@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use repository::{
     goods_received_line_row::{GoodsReceivedLineRow, GoodsReceivedLineRowRepository},
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, RepositoryError,
@@ -27,6 +28,12 @@ pub struct InsertGoodsReceivedLineInput {
     pub id: String,
     pub goods_received_id: String,
     pub purchase_order_line_id: String,
+    pub batch: Option<String>,
+    pub expiry_date: Option<NaiveDate>,
+    pub number_of_packs_received: Option<f64>,
+    pub received_pack_size: Option<f64>,
+    pub manufacturer_id: Option<String>,
+    pub comment: Option<String>,
 }
 
 pub fn insert_goods_received_line(
@@ -91,6 +98,12 @@ pub fn insert_goods_received_lines_from_purchase_order(
                     id: uuid(),
                     goods_received_id: input.goods_received_id.clone(),
                     purchase_order_line_id: purchase_order_line.purchase_order_line_row.id.clone(),
+                    batch: None,
+                    expiry_date: None,
+                    number_of_packs_received: None,
+                    received_pack_size: None,
+                    manufacturer_id: None,
+                    comment: None,
                 };
 
                 let goods_received_line = generate(connection, line_input)?;

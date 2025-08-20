@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { PurchaseOrderFragment } from '../../api';
 import { DialogButton, InlineSpinner } from '@common/components';
 import {
@@ -19,6 +19,8 @@ interface PurchaseOrderLineEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   isDisabled: boolean;
+  hasNext: boolean;
+  openNext: () => void;
 }
 
 export const PurchaseOrderLineEditModal = ({
@@ -28,20 +30,20 @@ export const PurchaseOrderLineEditModal = ({
   isOpen,
   onClose,
   isDisabled,
+  hasNext,
+  openNext,
 }: PurchaseOrderLineEditModalProps) => {
   const { error } = useNotification();
 
   const lines = purchaseOrder.lines.nodes;
-  const [currentLine, setCurrentLine] = useState(
-    lines.find(line => line.id === lineId) ?? undefined
-  );
+  const isUpdateMode = mode === ModalMode.Update;
 
   const {
     create: { create, isCreating },
     update: { update, isUpdating },
     draft,
     updatePatch,
-  } = usePurchaseOrderLine(currentLine?.id);
+  } = usePurchaseOrderLine(lineId);
 
   const onChangeItem = (item: ItemStockOnHandFragment) => {
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
@@ -50,11 +52,6 @@ export const PurchaseOrderLineEditModal = ({
         ...draftLine,
         itemId: item.id,
       });
-    setCurrentLine({
-      ...draftLine,
-      __typename: 'PurchaseOrderLineNode',
-      item: item,
-    });
   };
 
   const handleSave = async () => {
@@ -85,12 +82,25 @@ export const PurchaseOrderLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentLine}
+          disabled={!draft}
           onClick={async () => {
             const success = await handleSave();
             if (success) onClose();
           }}
         />
+      }
+      nextButton={
+        isUpdateMode ? (
+          <DialogButton
+            variant="next-and-ok"
+            disabled={!hasNext}
+            onClick={async () => {
+              await handleSave();
+              openNext();
+              return true;
+            }}
+          />
+        ) : undefined
       }
       height={700}
       width={1200}
@@ -108,14 +118,13 @@ export const PurchaseOrderLineEditModal = ({
         </Box>
       ) : (
         <PurchaseOrderLineEdit
-          currentLine={currentLine}
-          isUpdateMode={mode === ModalMode.Update}
-          onChangeItem={onChangeItem}
           draft={draft}
           update={updatePatch}
           // status={purchaseOrder.status} // TODO: The things that show on confirmed status
           isDisabled={isDisabled}
           lines={lines}
+          isUpdateMode={isUpdateMode}
+          onChangeItem={onChangeItem}
         />
       )}
     </Modal>

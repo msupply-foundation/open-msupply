@@ -14,39 +14,48 @@ fragment GoodsReceivedRow on GoodsReceivedNode {
   }
 }
 
+fragment GoodsReceivedLine on GoodsReceivedLineNode {
+  __typename
+  id
+  batch
+  comment
+  lineNumber
+  goodsReceivedId
+  expiryDate
+  manufacturerLinkId
+  numberOfPacksReceived
+  receivedPackSize
+  item {
+    id
+    code
+    name
+  }
+  purchaseOrderLineId
+  goodsReceivedId
+}
+
 fragment GoodsReceived on GoodsReceivedNode {
   __typename
   id
-  number
-  status
   comment
   createdBy
   createdDatetime
-  receivedDatetime
+  number
   finalisedDatetime
   purchaseOrderNumber
   purchaseOrderId
+  receivedDatetime
   supplierReference
+  status
   supplier {
     id
     name
   }
   lines {
+    totalCount
     nodes {
-      id
-      itemName
-      lineNumber
-      purchaseOrderLineId
+      ...GoodsReceivedLine
     }
-  }
-}
-
-fragment GoodsReceivedLine on GoodsReceivedLineNode {
-  __typename
-  id
-  item {
-    id
-    name
   }
 }
 
@@ -76,13 +85,12 @@ query goodsReceivedList(
 
 query goodsReceivedById($id: String!, $storeId: String!) {
   goodsReceived(id: $id, storeId: $storeId) {
-    __typename
+    ... on GoodsReceivedNode {
+      ...GoodsReceived
+    }
     ... on RecordNotFound {
       __typename
       description
-    }
-    ... on GoodsReceivedNode {
-      ...GoodsReceived
     }
   }
 }
@@ -93,6 +101,40 @@ mutation insertGoodsReceived(
 ) {
   insertGoodsReceived(input: $input, storeId: $storeId) {
     ... on IdResponse {
+      id
+    }
+  }
+}
+
+mutation updateGoodsReceived(
+  $input: UpdateGoodsReceivedInput!
+  $storeId: String!
+) {
+  updateGoodsReceived(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+    ... on UpdateGoodsReceivedError {
+      __typename
+      error {
+        description
+        ... on GoodsReceivedEmpty {
+          __typename
+        }
+        ... on PurchaseOrderNotFinalised {
+          __typename
+        }
+        ... on NoAuthorisedLines {
+          __typename
+        }
+      }
+    }
+  }
+}
+
+mutation deleteGoodsReceived($id: String!, $storeId: String!) {
+  deleteGoodsReceived(id: $id, storeId: $storeId) {
+    ... on DeleteResponse {
       id
     }
   }
@@ -148,36 +190,6 @@ query goodsReceivedLinesCount(
   }
 }
 
-mutation insertGoodsReceivedLine(
-  $input: InsertGoodsReceivedLineInput!
-  $storeId: String!
-) {
-  insertGoodsReceivedLine(input: $input, storeId: $storeId) {
-    ... on IdResponse {
-      id
-    }
-    ... on InsertGoodsReceivedLineError {
-      __typename
-      error {
-        description
-        ... on CannotEditGoodsReceived {
-          __typename
-          description
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-          key
-        }
-        ... on GoodsReceivedLineWithIdExists {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
 mutation insertGoodsReceivedLinesFromPurchaseOrder(
   $input: InsertGoodsReceivedLinesFromPurchaseOrderInput!
   $storeId: String!
@@ -209,19 +221,11 @@ mutation insertGoodsReceivedLinesFromPurchaseOrder(
   }
 }
 
-mutation deleteGoodsReceived($id: String!, $storeId: String!) {
-  deleteGoodsReceived(id: $id, storeId: $storeId) {
-    ... on DeleteResponse {
-      id
-    }
-  }
-}
-
-mutation updateGoodsReceived(
-  $input: UpdateGoodsReceivedInput!
+mutation saveGoodsReceivedLines(
+  $input: SaveGoodsReceivedLinesInput!
   $storeId: String!
 ) {
-  updateGoodsReceived(input: $input, storeId: $storeId) {
+  saveGoodsReceivedLines(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
     }

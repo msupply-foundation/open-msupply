@@ -18,18 +18,16 @@ import { commonLabelProps, useInputComponents } from '../../../common';
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
-  currentLine?: PurchaseOrderLineFragment;
-  onChangeItem: (item: ItemStockOnHandFragment) => void;
   draft?: DraftPurchaseOrderLine | null;
   update: (patch: Partial<DraftPurchaseOrderLine>) => void;
   // status: PurchaseOrderNodeStatus;
   isDisabled: boolean;
   lines?: PurchaseOrderLineFragment[];
+  onChangeItem: (item: ItemStockOnHandFragment) => void;
 }
 
 export const PurchaseOrderLineEdit = ({
   isUpdateMode,
-  currentLine,
   onChangeItem,
   draft,
   update,
@@ -38,7 +36,7 @@ export const PurchaseOrderLineEdit = ({
   lines = [],
 }: PurchaseOrderLineEditProps) => {
   const t = useTranslation();
-  const showContent = !!draft && !!currentLine;
+  const showContent = !!draft;
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
   const { numericInput, textInput, multilineTextInput, dateInput } =
     useInputComponents(t, isDisabled, isVerticalScreen);
@@ -49,10 +47,10 @@ export const PurchaseOrderLineEdit = ({
         showExtraFields={true}
         Top={
           <StockItemSearchInput
-            autoFocus={!currentLine}
-            openOnFocus={!currentLine}
+            autoFocus={!draft}
+            openOnFocus={!draft}
             disabled={isUpdateMode || isDisabled}
-            currentItemId={currentLine?.item.id}
+            currentItemId={draft?.itemId}
             onChange={newItem => newItem && onChangeItem(newItem)}
             extraFilter={item => !lines.some(line => line.item.id === item.id)}
           />

@@ -8,6 +8,7 @@ mod add_closed_vial_wastage_reason_option_type;
 mod add_comment_to_purchase_order_line;
 mod add_contact_table;
 mod add_extra_purchase_order_fields;
+mod add_goods_received_id_to_invoice;
 mod add_goods_received_line_table;
 mod add_goods_received_permission_enum_values;
 mod add_goods_received_report_context;
@@ -80,6 +81,7 @@ impl Migration for V2_10_00 {
             Box::new(add_goods_received_permission_enum_values::Migrate),
             Box::new(add_goods_received_report_context::Migrate),
             Box::new(add_extra_purchase_order_fields::Migrate),
+            Box::new(add_goods_received_id_to_invoice::Migrate),
         ]
     }
 }

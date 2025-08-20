@@ -14,8 +14,7 @@ import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { PurchaseOrderLineSearchModal } from '../../../purchase_order/Components';
 import { PurchaseOrderLineFragment } from '../../../purchase_order/api';
 import { GoodsReceivedFragment } from '../../api/operations.generated';
-import { useGoodsReceivedLine } from '../../api';
-import { createDraftGoodsReceivedLine } from '../LineEdit';
+import { useGoodsReceivedLine, createDraftGoodsReceivedLine } from '../../api';
 
 interface AddButtonsProps {
   goodsReceived?: GoodsReceivedFragment;

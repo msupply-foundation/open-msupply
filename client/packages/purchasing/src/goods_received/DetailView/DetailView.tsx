@@ -1,10 +1,11 @@
-import React, { ReactElement, Suspense, useEffect } from 'react';
+import React, { ReactElement, Suspense, useCallback, useEffect } from 'react';
 import {
   AlertModal,
   createQueryParamsStore,
   createTableStore,
   DetailTabs,
   DetailViewSkeleton,
+  GoodsReceivedNodeStatus,
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
@@ -30,11 +31,22 @@ export const DetailViewInner = (): ReactElement => {
 
   const {
     query: { data, isLoading },
+    lines: { sortedAndFilteredLines },
   } = useGoodsReceived();
 
-  const { onClose, isOpen, entity: lineId } = useEditModal<string | null>();
+  const {
+    onOpen,
+    onClose,
+    isOpen,
+    entity: lineId,
+  } = useEditModal<string | null>();
 
-  console.info('Goods Received Detail View Data:', data);
+  const onRowClick = useCallback(
+    (line: GoodsReceivedLineFragment) => {
+      onOpen(line.id);
+    },
+    [onOpen]
+  );
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
@@ -42,12 +54,19 @@ export const DetailViewInner = (): ReactElement => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
+  const isDisabled = !data || data?.status !== GoodsReceivedNodeStatus.New;
+
   const tabs = [
     {
-      Component: <ContentArea />,
+      Component: (
+        <ContentArea
+          lines={sortedAndFilteredLines}
+          isDisabled={isDisabled}
+          onRowClick={onRowClick}
+        />
+      ),
       value: 'General',
     },
-    // Add more tabs as needed
   ];
 
   return (
@@ -64,7 +83,6 @@ export const DetailViewInner = (): ReactElement => {
           {isOpen && lineId && (
             <GoodsReceivedLineEditModal
               lineId={lineId}
-              goodsReceived={data}
               onClose={onClose}
               isOpen={isOpen}
             />
