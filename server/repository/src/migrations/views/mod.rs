@@ -1,6 +1,12 @@
 use crate::{migrations::sql, StorageConnection};
 
+mod inbound_shipment_stock_movement;
+mod inventory_adjustment_stock_movement;
+mod invoice_line_stock_movement;
+mod outbound_shipment_stock_movement;
+mod stock_line_ledger;
 mod stock_line_ledger_discrepancy;
+mod stock_movement;
 
 pub(crate) trait ViewMigrationFragment {
     fn drop_view(&self, _connection: &StorageConnection) -> anyhow::Result<()>;
@@ -10,9 +16,18 @@ pub(crate) trait ViewMigrationFragment {
 // List of all view migrations, they need be in the order required for creation.
 // Dropped will be in the reverse order.
 fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
-    vec![Box::new(stock_line_ledger_discrepancy::ViewMigration)]
+    vec![
+        Box::new(invoice_line_stock_movement::ViewMigration),
+        Box::new(outbound_shipment_stock_movement::ViewMigration),
+        Box::new(inbound_shipment_stock_movement::ViewMigration),
+        Box::new(inventory_adjustment_stock_movement::ViewMigration),
+        Box::new(stock_movement::ViewMigration),
+        Box::new(stock_line_ledger::ViewMigration),
+        Box::new(stock_line_ledger_discrepancy::ViewMigration),
+    ]
 }
 
+// Will be removed in the final PR for this issue.
 pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
     log::info!("Dropping database views...");
     sql!(
@@ -27,12 +42,12 @@ pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Resul
       DROP VIEW IF EXISTS replenishment;
       DROP VIEW IF EXISTS adjustments;
       DROP VIEW IF EXISTS item_ledger;
-      DROP VIEW IF EXISTS stock_line_ledger;
-      DROP VIEW IF EXISTS stock_movement;
-      DROP VIEW IF EXISTS outbound_shipment_stock_movement;
-      DROP VIEW IF EXISTS inbound_shipment_stock_movement;
-      DROP VIEW IF EXISTS inventory_adjustment_stock_movement;
-      DROP VIEW IF EXISTS invoice_line_stock_movement;
+      
+      
+
+      
+      
+      
       DROP VIEW IF EXISTS stock_on_hand;
       DROP VIEW IF EXISTS changelog_deduped;
       DROP VIEW IF EXISTS latest_document;
@@ -54,6 +69,7 @@ pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Resul
     Ok(())
 }
 
+// Will be removed in the final PR for this issue.
 pub(crate) fn legacy_rebuild_views(connection: &StorageConnection) -> anyhow::Result<()> {
     log::info!("Re-creating database views...");
 
@@ -66,199 +82,16 @@ pub(crate) fn legacy_rebuild_views(connection: &StorageConnection) -> anyhow::Re
     sql!(
         connection,
         r#"
-  CREATE VIEW invoice_line_stock_movement AS
-    SELECT
-        invoice_line.id,
-        invoice_line.invoice_id,
-        invoice_line.item_name,
-        invoice_line.item_code,
-        invoice_line.stock_line_id,
-        invoice_line.location_id,
-        invoice_line.batch,
-        invoice_line.expiry_date,
-        invoice_line.cost_price_per_pack,
-        invoice_line.sell_price_per_pack,
-        invoice_line.total_before_tax,
-        invoice_line.total_after_tax,
-        invoice_line.tax_percentage,
-        invoice_line.number_of_packs,
-        invoice_line.pack_size,
-        invoice_line.note,
-        invoice_line.type,
-        invoice_line.reason_option_id,
-        invoice_line.foreign_currency_price_before_tax,
-        invoice_line.item_link_id,
-        item_link.item_id AS item_id,
-        CASE
-            WHEN "type" = 'STOCK_IN' THEN (number_of_packs * pack_size)
-            WHEN "type" = 'STOCK_OUT' THEN (number_of_packs * pack_size) * -1
-        END AS quantity_movement
-    FROM
-        invoice_line
-        JOIN item_link ON item_link.id = invoice_line.item_link_id
-    WHERE
-        number_of_packs > 0
-        AND "type" IN ('STOCK_IN', 'STOCK_OUT');
+  
+  
 
-  -- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockMovement.4dm
-  -- TODO are all of sc, ci, si type transactions synced, and are all of the dates set correctly ?
-  CREATE VIEW outbound_shipment_stock_movement AS
-    SELECT
-        'n/a' as id,
-        quantity_movement as quantity,
-        item_id,
-        store_id,
-        picked_datetime as datetime
-    FROM invoice_line_stock_movement
-    JOIN invoice
-        ON invoice_line_stock_movement.invoice_id = invoice.id
-    WHERE invoice.type = 'OUTBOUND_SHIPMENT'
-        AND picked_datetime IS NOT NULL;
+  
+  
 
-  CREATE VIEW inbound_shipment_stock_movement AS
-    SELECT
-        'n/a' as id,
-        quantity_movement as quantity,
-        item_id,
-        store_id,
-        received_datetime as datetime
-    FROM invoice_line_stock_movement
-    JOIN invoice
-        ON invoice_line_stock_movement.invoice_id = invoice.id
-    WHERE invoice.type = 'INBOUND_SHIPMENT'
-        AND received_datetime IS NOT NULL;
-
-  CREATE VIEW inventory_adjustment_stock_movement AS
-    SELECT
-        'n/a' as id,
-        quantity_movement as quantity,
-        item_id,
-        store_id,
-        verified_datetime as datetime
-    FROM invoice_line_stock_movement
-    JOIN invoice
-        ON invoice_line_stock_movement.invoice_id = invoice.id
-    WHERE invoice.type IN ('INVENTORY_REDUCTION', 'INVENTORY_ADDITION')
-        AND verified_datetime IS NOT NULL;
-
-  CREATE VIEW stock_movement AS
-    WITH all_movements AS (
-      SELECT
-        invoice_line_stock_movement.id AS id,
-        quantity_movement AS quantity,
-        invoice_line_stock_movement.item_link_id AS item_id,
-        invoice.store_id as store_id,
-        CASE WHEN invoice.type IN (
-            'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN',
-            'PRESCRIPTION'
-        ) THEN picked_datetime
-                    WHEN invoice.type IN (
-            'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
-        ) THEN received_datetime
-                    WHEN invoice.type IN (
-            'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
-        ) THEN verified_datetime
-            END AS datetime,
-        name,
-        invoice.type AS invoice_type,
-        invoice.invoice_number AS invoice_number,
-        invoice.id AS invoice_id,
-        reason_option.reason AS reason,
-        stock_line_id,
-        invoice_line_stock_movement.expiry_date AS expiry_date,
-        invoice_line_stock_movement.batch AS batch,
-        invoice_line_stock_movement.cost_price_per_pack AS cost_price_per_pack,
-        invoice_line_stock_movement.sell_price_per_pack AS sell_price_per_pack,
-        invoice.status AS invoice_status,
-        invoice_line_stock_movement.total_before_tax AS total_before_tax,
-        invoice_line_stock_movement.pack_size as pack_size,
-        invoice_line_stock_movement.number_of_packs as number_of_packs
-    FROM
-        invoice_line_stock_movement
-        LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
-        LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
-        JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
-        JOIN name_link ON invoice.name_link_id = name_link.id
-        JOIN name ON name_link.name_id = name.id
-    )
-    SELECT * FROM all_movements
-    WHERE datetime IS NOT NULL;
+  
 
 
-  -- Separate views for stock & item ledger, so the running balance window functions are only executed when required
-
-  CREATE VIEW stock_line_ledger AS
-    WITH movements_with_precedence AS (
-      SELECT *,
-        CASE
-          WHEN invoice_type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
-          WHEN invoice_type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
-          ELSE 3
-        END AS type_precedence
-      FROM stock_movement
-      WHERE stock_line_id IS NOT NULL
-    )
-    SELECT *,
-      SUM(quantity) OVER (
-        PARTITION BY store_id, stock_line_id
-        ORDER BY datetime, type_precedence
-        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-      ) AS running_balance
-    FROM movements_with_precedence
-    ORDER BY datetime, type_precedence;
-
-  CREATE VIEW stock_line_ledger_discrepancy AS
-  WITH
-  allocated_not_picked AS (
-      SELECT stock_line_id,
-          SUM(number_of_packs * pack_size) AS q
-      FROM invoice_line
-          JOIN invoice on invoice.id = invoice_line.invoice_id
-      WHERE invoice_line.type = 'STOCK_OUT'
-          AND invoice.status IN ('NEW', 'ALLOCATED')
-      GROUP BY 1
-  ),
-  max_ledger_datetime AS (
-      SELECT stock_line_id,
-          MAX(datetime) AS dt
-      FROM stock_movement
-      GROUP BY 1
-  ),
-  running_balance AS (
-      SELECT stock_line_ledger.stock_line_id,
-          running_balance AS q
-      FROM stock_line_ledger
-          JOIN max_ledger_datetime on stock_line_ledger.stock_line_id = max_ledger_datetime.stock_line_id
-          AND stock_line_ledger.datetime = max_ledger_datetime.dt
-  ),
-  current_balance AS (
-      SELECT stock_line.id AS stock_line_id,
-          store_id,
-          available_number_of_packs * pack_size AS a_q,
-          total_number_of_packs * pack_size AS t_q
-      from stock_line
-  )
-  SELECT DISTINCT stock_line_id
-  FROM stock_line_ledger
-  WHERE running_balance < 0
-  UNION
-  SELECT running_balance.stock_line_id
-  FROM running_balance
-      JOIN current_balance ON running_balance.stock_line_id = current_balance.stock_line_id
-      LEFT JOIN allocated_not_picked ON running_balance.stock_line_id = allocated_not_picked.stock_line_id
-  WHERE NOT(
-          running_balance.q = current_balance.t_q
-          AND (
-              (
-                  allocated_not_picked.q IS NULL
-                  AND current_balance.t_q = current_balance.a_q
-              )
-              OR (
-                  allocated_not_picked.q IS NOT NULL
-                  AND current_balance.a_q + allocated_not_picked.q = current_balance.t_q
-              )
-          )
-      );
+  
 
   CREATE VIEW item_ledger AS
     WITH all_movements AS (
@@ -756,7 +589,6 @@ CREATE VIEW vaccination_course AS
 }
 
 pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
-
     // Drop views in reverse order of creation
     log::info!("Dropping database views...");
     for view in all_views().iter().rev() {
