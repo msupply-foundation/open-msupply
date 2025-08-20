@@ -3,11 +3,10 @@ use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use graphql_core::loader::{
     GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput,
-    PurchaseOrderByIdLoader, StoreByIdLoader,
+    PurchaseOrderByIdLoader,
 };
 use graphql_core::ContextExt;
 use graphql_goods_received_line::types::GoodsReceivedLineConnector;
-use graphql_types::types::StoreNode;
 use graphql_types::types::{purchase_order, NameNode};
 use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
 use service::ListResult;
@@ -72,6 +71,10 @@ impl GoodsReceivedNode {
             return Ok(name);
         }
         return Ok(None);
+    }
+
+    pub async fn purchase_order_id(&self) -> &Option<String> {
+        &self.row().purchase_order_id
     }
 
     pub async fn purchase_order_number(&self, ctx: &Context<'_>) -> Result<Option<i64>> {

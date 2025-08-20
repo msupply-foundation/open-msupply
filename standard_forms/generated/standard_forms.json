@@ -8,9 +8,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -60,9 +58,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "requisitionQuery.graphql"
-          ],
+          "query": ["requisitionQuery.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -82,10 +78,10 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: center; width: 100%\"></div>\n"
+              "template": "<style>\n  {% include \"requisition.css\" %}\n</style>\n<div style=\"font-size: 10px; text-align: center; width: 98%\">\n  <table style=\"width: 98%; height: 98%\">\n    <tr>\n      <td style=\"padding-left: 8px\">\n        <img class=\"logo\" src=\"{{data.store.logo}}\"/>\n      </td>\n      <td>\n        <span style=\"text-align: center; font-size: 9pt; font-weight: bold\">{{data.store.storeName}}</span><br />\n        <span style=\"text-align: center; font-size: 7pt\">{{data.store.name.address1}}</span><br />\n        <span style=\"text-align: center; font-size: 6pt\">{{data.store.name.address2}}</span>\n      </td>\n      <td style=\"padding-left: 8px\">\n        <span style=\"text-align: right; font-weight: bold; font-size: 7pt; float: right; margin-left: 20px;\">{{t(k=\"label.requisition\",f=\"Requisition\")}} #: {{ data.requisition.requisitionNumber | default(value='')}}</span>\n      </td>\n    </tr>\n  </table>\n</div>\n"
             }
           },
-          "header.html": {
+          "template.html": {
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
@@ -119,9 +115,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "query_default"
-          ],
+          "query": ["query_default"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -175,9 +169,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "query_default"
-          ],
+          "query": ["query_default"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -231,9 +223,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": "dmFyIGU9ezEwNTplPT57Y29uc3QgdD1lPT57bGV0IHI9e307cmV0dXJuIE9iamVjdC5rZXlzKGUpLmZvckVhY2goZnVuY3Rpb24obyl7IiIhPT1lW29dJiZ2b2lkIDAhPT1lW29dJiZudWxsIT09ZVtvXSYmKCJvYmplY3QiPT10eXBlb2YgZVtvXT9yW29dPXQoZVtvXSk6cltvXT1lW29dKX0pLHJ9LHI9KGUsdCk9Pih0Kz0iIikuc3BsaXQoIi4iKS5yZWR1Y2UoKGUsdCk9PmUmJmVbdF0sZSk7ZS5leHBvcnRzPXtjbGVhblVwT2JqZWN0OnQsY2xlYW5VcE5vZGVzOmU9PntsZXQgcj1bXTtyZXR1cm4gZS5mb3JFYWNoKGU9PnswIT1PYmplY3Qua2V5cyhlKS5sZW5ndGgmJnIucHVzaCh0KGUpKX0pLHJ9LGdldE5lc3RlZFZhbHVlOnIsc29ydE5vZGVzOihlLHQsbyk9Pih0JiZlLnNvcnQoKGUsbik9PntsZXQgcz1yKGUsdCk7InN0cmluZyI9PXR5cGVvZiBzJiYocz1zLnRvTG9jYWxlTG93ZXJDYXNlKCkpO2xldCBhPXIobix0KTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIGEmJihhPWEudG9Mb2NhbGVMb3dlckNhc2UoKSksbnVsbD09cyYmbnVsbD09YT8wOm51bGw9PXM/ImFzYyI9PT1vPy0xOjE6bnVsbD09YT8iYXNjIj09PW8/MTotMTpzPT09YT8wOiJhc2MiPT09bz9zPmE/MTotMTpzPGE/MTotMX0pLGUpfX19LHQ9e307ZnVuY3Rpb24gcihvKXt2YXIgbj10W29dO2lmKHZvaWQgMCE9PW4pcmV0dXJuIG4uZXhwb3J0czt2YXIgcz10W29dPXtleHBvcnRzOnt9fTtyZXR1cm4gZVtvXShzLHMuZXhwb3J0cyxyKSxzLmV4cG9ydHN9ci5uPWU9Pnt2YXIgdD1lJiZlLl9fZXNNb2R1bGU/KCk9PmUuZGVmYXVsdDooKT0+ZTtyZXR1cm4gci5kKHQse2E6dH0pLHR9LHIuZD0oZSx0KT0+e2Zvcih2YXIgbyBpbiB0KXIubyh0LG8pJiYhci5vKGUsbykmJk9iamVjdC5kZWZpbmVQcm9wZXJ0eShlLG8se2VudW1lcmFibGU6ITAsZ2V0OnRbb119KX0sci5vPShlLHQpPT5PYmplY3QucHJvdG90eXBlLmhhc093blByb3BlcnR5LmNhbGwoZSx0KTt2YXIgbz17fTtyLmQobyx7SDooKT0+c30pO3ZhciBuPXIoMTA1KTtmdW5jdGlvbiBzKGUpe2xldCB0PWUuZGF0YS5wdXJjaGFzZU9yZGVyLmxpbmVzLm5vZGVzO2ZvcihsZXQgZSBpbiB0KXtsZXQgcj10W2VdLnByaWNlUGVyVW5pdEFmdGVyRGlzY291bnQqdFtlXS5yZXF1ZXN0ZWROdW1iZXJPZlVuaXRzO3RbZV0ubGluZUNvc3Q9ci50b0ZpeGVkKDIpfWxldCByPSgwLG4uY2xlYW5VcE5vZGVzKShlLmRhdGEucHVyY2hhc2VPcmRlci5saW5lcy5ub2Rlcyk7cmV0dXJuIGUuZGF0YS5wdXJjaGFzZU9yZGVyLmxpbmVzLm5vZGVzPSgwLG4uc29ydE5vZGVzKShyLCJsaW5lTnVtYmVyIiwiYXNjIiksZX1jb25zdCBhPW8uSDtleHBvcnR7YSBhcyBjb252ZXJ0X2RhdGF9Ow==",
           "convert_data_type": "BoaJs"
         },
@@ -283,9 +273,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "query_default"
-          ],
+          "query": ["query_default"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -295,9 +283,10 @@
             "data": {
               "output": "Html",
               "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n    <thead>\n        <tr class=\"body_column_label\">\n            <th>{{t(k=\"label.location\", f=\"Location\")}}</th>\n            <th>{{t(k=\"label.code\", f=\"Code\")}}</th>\n            <th>{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n            <th>{{t(k=\"label.batch\", f=\"batch\")}}</th>\n            <th>{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n            <th>{{t(k=\"report.pack-size\",f=\"Pack size\")}}</th>\n            <th>{{t(k=\"report.quan\",f=\"Quan\")}}</th>\n            <th>{{t(k=\"report.actual-stock\",f=\"Actual Stock\")}}</th>\n        </tr>\n    </thead>\n    {% for line in data.stocktakeLines.nodes -%}\n    <tr class=\"body_value\">\n        <td>{{ line.location.code | default(value='') }}</td>\n        <td>{{ line.item.code }}</td>\n        <td>{{ line.item.name }}</td>\n        <td class=\"batch\">{{ line.batch }}</td>\n        <td>\n            {% if line.expiryDate %}\n            {{ line.expiryDate | date(format=\"%d/%m/%Y\") }}\n            {% endif %}\n        </td>\n        <td>{{ line.packSize }}</td>\n        <td>{{ line.countedNumberOfPacks }}</td>\n        <td>.....................</td>\n    </tr>\n    {%- endfor %}\n</table>\n"
+              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n    <thead>\n        <tr class=\"body_column_label\">\n            <th>{{t(k=\"label.location\", f=\"Location\")}}</th>\n            <th>{{t(k=\"label.code\", f=\"Code\")}}</th>\n            <th>{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n            <th>{{t(k=\"label.batch\", f=\"batch\")}}</th>\n            <th>{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n            <th>{{t(k=\"report.pack-size\",f=\"Pack size\")}}</th>\n            <th>{{t(k=\"report.quan\",f=\"Quan\")}}</th>\n            <th>{{t(k=\"report.actual-stock\",f=\"Actual Stock\")}}</th>\n        </tr>\n    </thead>\n    {% for line in data.stocktakeLines.nodes -%}\n    <tr class=\"body_value\">\n        <td>{{ line.location.code | default(value='') }}</td>\n        <td>{{ line.item.code }}</td>\n        <td>{{ line.item.name }}</td>\n        <td class=\"batch\">{{ line.batch }}</td>\n        <td>\n            {% if line.expiryDate %}\n            {{ line.expiryDate | date(format=\"%d/%m/%Y\") }}\n            {% endif %}\n        </td>\n        <td>{{ line.packSize }}</td>\n        <td>{{ line.countedNumberOfPacks }}</td>\n        <td>.....................</td>\n    </tr>\n    {%- endfor %}\n</table>\n"
             }
           },
-          "header.html": {
+          "footer.html": {
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
@@ -339,9 +328,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "query_default"
-          ],
+          "query": ["query_default"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -395,9 +382,7 @@
           "template": "template.html",
           "header": null,
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -440,9 +425,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "repack.graphql"
-          ],
+          "query": ["repack.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -499,9 +482,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "repack.graphql"
-          ],
+          "query": ["repack.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -510,7 +491,7 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: right; width: 100%;\">\n    <span class=\"pageNumber\"></span>\n</div>"
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: center; width: 98%\">\n  <table class=\"header_image_section\" style=\"width: 98%; height: 98%\">\n    <tr>\n      <td>\n        <img class=\"logo\" src=\"{{data.store.logo}}\" />\n      </td>\n      <td style=\"width: 350px\">\n        <span\n          style=\"\n            text-align: center;\n            font-size: 9pt;\n            font-weight: bold;\n            font-family: Tahoma;\n          \"\n          >{{ data.store.storeName }}</span\n        ><br />\n        <span style=\"text-align: center; font-size: 7pt; font-family: Tahoma\"\n          >{{ data.store.name.address1 }}</span\n        ><br />\n        <span style=\"text-align: center; font-size: 6pt; font-family: Tahoma\"\n          >{{ data.store.name.address2 }}</span\n        >\n      </td>\n      <td style=\"padding-left: 8px\">\n        <span\n          class=\"repack_details\"\n          style=\"\n            text-align: right;\n            font-weight: bold;\n            font-size: 7pt;\n            float: right;\n            margin-left: 20px;\n          \"\n        >\n          <div>{{t(k=\"label.repack\",f=\"Repack\")}} #: {{ data.repack.invoice.invoiceNumber }}</div>\n          <div>{{t(k=\"report.status\", f=\"Status\")}}: {{ data.repack.invoice.status }}</div>\n          <div>\n            {{t(k=\"report.confirmed-date\", f=\"Confirmed date\")}}: {{ data.repack.datetime | date(format=\"%d/%m/%Y\") }}\n          </div>\n        </span>\n      </td>\n    </tr>\n  </table>\n</div>\n"
             }
           },
           "repack.graphql": {
@@ -558,9 +539,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "stocktake.graphql"
-          ],
+          "query": ["stocktake.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -610,9 +589,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "stocktake.graphql"
-          ],
+          "query": ["stocktake.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -662,9 +639,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "StockVarianceQuery.graphql"
-          ],
+          "query": ["StockVarianceQuery.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -714,9 +689,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "picklist.graphql"
-          ],
+          "query": ["picklist.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -773,9 +746,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "picklist.graphql"
-          ],
+          "query": ["picklist.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -832,9 +803,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "inbound.graphql"
-          ],
+          "query": ["inbound.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -891,9 +860,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "inbound.graphql"
-          ],
+          "query": ["inbound.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -929,6 +896,13 @@
               "output": "Html",
               "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: center; width: 98%;\">\n    <table class=\"header_image_section\" style=\"width: 98%;height: 98%;\"> \n        <tr> \n            <td>\n                <img class=\"logo\" src=\"{{data.store.logo}}\"/>\n            </td> \n            <td style=\"width: 350px;\">\n                <span style=\"text-align: center;font-size: 9pt;font-weight: bold;font-family: Tahoma;\">{{ data.store.storeName }}</span><br>\n                <span style=\"text-align: center;font-size: 7pt;font-family: Tahoma;\">{{ data.store.name.address1 }}</span><br>\n                <span style=\"text-align: center;font-size: 6pt;font-family: Tahoma;\">{{ data.store.name.address2 }}</span>\n            </td>\n            <td style=\"padding-left: 8px;\">\n                <span class=\"invoice_number\" \n                    style=\"text-align: right;font-weight: bold;font-size: 7pt;float: right;margin-left: 20px;\">\n                    {{t(k=\"report.invoice\",f=\"Invoice\")}} #: {{ data.invoice.invoiceNumber }}\n                </span>\n            </td>\n        </tr>     \n    </table>\n</div>"
             }
+          },
+          "inbound.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query InvoiceQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  invoice(storeId: $storeId, id: $dataId) {\n    ... on InvoiceNode {\n      id\n      otherPartyId\n      comment\n      status\n      invoiceNumber\n      theirReference\n      createdDatetime\n      pickedDatetime\n      shippedDatetime\n      deliveredDatetime\n      allocatedDatetime\n      otherPartyName\n      type\n      pricing {\n        serviceTotalAfterTax\n        serviceTotalBeforeTax\n        stockTotalAfterTax\n        stockTotalBeforeTax\n        taxPercentage\n        totalAfterTax\n        totalBeforeTax\n      }\n      otherParty(storeId: $storeId) {\n        name\n        id\n        isSupplier\n        isCustomer\n        code\n        address1\n        address2\n      }\n      user {\n        username\n      }\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {\n    ... on InvoiceLineConnector {\n      nodes {\n        id\n        itemId\n        itemCode\n        itemName\n        locationName\n        item {\n          unitName\n        }\n        packSize\n        expiryDate\n        batch\n        numberOfPacks\n        packSize\n        sellPricePerPack\n        costPricePerPack\n        pricing {\n          serviceTotalAfterTax\n          serviceTotalBeforeTax\n          stockTotalAfterTax\n          stockTotalBeforeTax\n          taxPercentage\n          totalAfterTax\n          totalBeforeTax\n        }\n        location {\n          code\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        chargeCode\n        code\n        comment\n        country\n        email\n        name\n        phone\n        website\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
           }
         }
       },
@@ -950,9 +924,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "outbound.graphql"
-          ],
+          "query": ["outbound.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -1009,9 +981,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "outbound.graphql"
-          ],
+          "query": ["outbound.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -1027,7 +997,7 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: right; width: 100%;\">\n<span class=\"pageNumber\"></span>\n</div>"
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: center; width: 98%;\">\n    <table class=\"header_image_section\" style=\"width: 98%;height: 98%;\"> \n        <tr> \n            <td>\n                <img class=\"logo\" src=\"{{data.store.logo}}\"/>\n            </td> \n            <td style=\"width: 350px;\">\n                <span style=\"text-align: center;font-size: 9pt;font-weight: bold;font-family: Tahoma;\">{{ data.store.storeName }}</span><br>\n                <span style=\"text-align: center;font-size: 7pt;font-family: Tahoma;\">{{ data.store.name.address1 }}</span><br>\n                <span style=\"text-align: center;font-size: 6pt;font-family: Tahoma;\">{{ data.store.name.address2 }}</span>\n            </td>\n            <td style=\"padding-left: 8px;\">\n                <span class=\"invoice_number\" \n                    style=\"text-align: right;font-weight: bold;font-size: 7pt;float: right;margin-left: 20px;\">\n                    {{t(k=\"report.invoice\",f=\"Invoice\")}} #: {{ data.invoice.invoiceNumber | default(value='')\n                }}\n                </span>\n            </td>\n        </tr>     \n    </table>\n</div>"
             }
           },
           "header.html": {
@@ -1040,6 +1010,8 @@
           "outbound.graphql": {
             "type": "GraphGLQuery",
             "data": {
+              "query": "query InvoiceQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  invoice(storeId: $storeId, id: $dataId) {\n    ... on InvoiceNode {\n      id\n      otherPartyId\n      comment\n      status\n      invoiceNumber\n      theirReference\n      createdDatetime\n      pickedDatetime\n      shippedDatetime\n      deliveredDatetime\n      allocatedDatetime\n      otherPartyName\n      type\n      pricing {\n        serviceTotalAfterTax\n        serviceTotalBeforeTax\n        stockTotalAfterTax\n        stockTotalBeforeTax\n        taxPercentage\n        totalAfterTax\n        totalBeforeTax\n      }\n      otherParty(storeId: $storeId) {\n        name\n        id\n        isSupplier\n        isCustomer\n        code\n        address1\n        address2\n      }\n      user {\n        username\n      }\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {\n    ... on InvoiceLineConnector {\n      nodes {\n        id\n        itemId\n        itemCode\n        itemName\n        item {\n          unitName\n        }\n        packSize\n        expiryDate\n        batch\n        numberOfPacks\n        packSize\n        sellPricePerPack\n        costPricePerPack\n        pricing {\n          serviceTotalAfterTax\n          serviceTotalBeforeTax\n          stockTotalAfterTax\n          stockTotalBeforeTax\n          taxPercentage\n          totalAfterTax\n          totalBeforeTax\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        chargeCode\n        code\n        comment\n        country\n        email\n        name\n        phone\n        website\n      }\n    }\n  }\n}",
+              "variables": null
               "query": "query InvoiceQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  invoice(storeId: $storeId, id: $dataId) {\n    ... on InvoiceNode {\n      id\n      otherPartyId\n      comment\n      status\n      invoiceNumber\n      theirReference\n      createdDatetime\n      pickedDatetime\n      shippedDatetime\n      deliveredDatetime\n      allocatedDatetime\n      otherPartyName\n      type\n      pricing {\n        serviceTotalAfterTax\n        serviceTotalBeforeTax\n        stockTotalAfterTax\n        stockTotalBeforeTax\n        taxPercentage\n        totalAfterTax\n        totalBeforeTax\n      }\n      otherParty(storeId: $storeId) {\n        name\n        id\n        isSupplier\n        isCustomer\n        code\n        address1\n        address2\n      }\n      user {\n        username\n      }\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {\n    ... on InvoiceLineConnector {\n      nodes {\n        id\n        itemId\n        itemCode\n        itemName\n        item {\n          unitName\n        }\n        packSize\n        expiryDate\n        batch\n        numberOfPacks\n        packSize\n        sellPricePerPack\n        costPricePerPack\n        pricing {\n          serviceTotalAfterTax\n          serviceTotalBeforeTax\n          stockTotalAfterTax\n          stockTotalBeforeTax\n          taxPercentage\n          totalAfterTax\n          totalBeforeTax\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        chargeCode\n        code\n        comment\n        country\n        email\n        name\n        phone\n        website\n      }\n    }\n  }\n}",
               "variables": null
             }
@@ -1068,9 +1040,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "StocktakeDetailQuery.graphql"
-          ],
+          "query": ["StocktakeDetailQuery.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -1127,9 +1097,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": "footer.html",
-          "query": [
-            "StocktakeDetailQuery.graphql"
-          ],
+          "query": ["StocktakeDetailQuery.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
@@ -1225,8 +1193,8 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "2.10.0",
-      "code": "goods-received",
+      "version": "2.6.3",
+      "code": "stock-take-detail-view",
       "form_schema": null,
       "excel_template_buffer": null
     },
@@ -1238,9 +1206,7 @@
           "template": "template.html",
           "header": "header.html",
           "footer": null,
-          "query": [
-            "query.graphql"
-          ],
+          "query": ["query.graphql"],
           "convert_data": null,
           "convert_data_type": "Extism"
         },
