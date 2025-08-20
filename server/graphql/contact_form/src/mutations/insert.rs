@@ -1,8 +1,7 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::contact_form_row::ContactFormRow;
-use repository::contact_form_row::ContactType;
+use repository::contact_form_row::{ContactFormRow, ContactType};
 use serde::Serialize;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -11,25 +10,11 @@ use service::{
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::contact_form_row
+::ContactType")]
 pub enum ContactFormNodeType {
     Feedback,
     Support,
-}
-
-impl ContactFormNodeType {
-    pub fn from_domain(domain_type: &ContactType) -> Self {
-        match domain_type {
-            ContactType::Feedback => ContactFormNodeType::Feedback,
-            ContactType::Support => ContactFormNodeType::Support,
-        }
-    }
-
-    pub fn to_domain(self) -> ContactType {
-        match self {
-            ContactFormNodeType::Feedback => ContactType::Feedback,
-            ContactFormNodeType::Support => ContactType::Support,
-        }
-    }
 }
 
 #[derive(InputObject)]
@@ -102,7 +87,7 @@ impl InsertContactFormInput {
 
         ServiceInput {
             id,
-            contact_type: contact_type.to_domain(),
+            contact_type: ContactType::from(contact_type),
             reply_email,
             body,
         }
