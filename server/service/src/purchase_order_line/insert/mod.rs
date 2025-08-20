@@ -67,9 +67,9 @@ pub fn insert_purchase_order_line(
                 requested_pack_size: input.requested_pack_size.unwrap_or_default(), // Default value
                 manufacturer_id: input.manufacturer_id.clone(),
             };
-            validate(&ctx.store_id.clone(), &validate_input, connection)?;
+            let item = validate(&ctx.store_id.clone(), &validate_input, connection)?;
             let new_purchase_order_line =
-                generate(connection, &ctx.store_id.clone(), input.clone())?;
+                generate(connection, &ctx.store_id.clone(), item, input.clone())?;
 
             activity_log_entry(
                 ctx,

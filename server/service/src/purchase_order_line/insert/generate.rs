@@ -1,10 +1,13 @@
 use super::InsertPurchaseOrderLineInput;
 use crate::number::next_number;
-use repository::{NumberRowType, PurchaseOrderLineRow, RepositoryError, StorageConnection};
+use repository::{
+    ItemRow, NumberRowType, PurchaseOrderLineRow, RepositoryError, StorageConnection,
+};
 
 pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
+    item: ItemRow,
     InsertPurchaseOrderLineInput {
         id,
         purchase_order_id,
@@ -33,6 +36,7 @@ pub fn generate(
         store_id: store_id.to_string(),
         purchase_order_id,
         line_number,
+        item_name: item.name,
         item_link_id: item_id,
         requested_number_of_units: requested_number_of_units.unwrap_or_default(),
         requested_pack_size: requested_pack_size.unwrap_or_default(),
@@ -46,7 +50,6 @@ pub fn generate(
         supplier_item_code,
         comment,
         // Default
-        item_name: "".to_string(),
         adjusted_number_of_units: None,
         received_number_of_units: 0.0,
         stock_on_hand_in_units: 0.0,
