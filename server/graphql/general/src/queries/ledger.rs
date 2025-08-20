@@ -78,7 +78,7 @@ impl LedgerNode {
         &self.ledger.quantity
     }
     pub async fn invoice_type(&self) -> InvoiceNodeType {
-        InvoiceNodeType::from_domain(&self.ledger.invoice_type)
+        InvoiceNodeType::from(self.ledger.invoice_type.clone())
     }
     pub async fn invoice_number(&self) -> &i64 {
         &self.ledger.invoice_number

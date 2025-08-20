@@ -8,7 +8,7 @@ use graphql_core::loader::{
 use graphql_core::ContextExt;
 use graphql_goods_received_line::types::GoodsReceivedLineConnector;
 use graphql_types::types::{purchase_order, NameNode};
-use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
+use repository::goods_received_row::GoodsReceivedRow;
 use service::ListResult;
 #[derive(PartialEq, Debug)]
 pub struct GoodsReceivedNode {
