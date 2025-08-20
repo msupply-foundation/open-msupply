@@ -2,8 +2,8 @@ use crate::StorageConnection;
 use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
 use repository::{
     EqualFilter, GoodsReceivedLine, GoodsReceivedLineFilter, GoodsReceivedLineRepository,
-    GoodsReceivedLineRow, GoodsReceivedLineStatus, PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, PurchaseOrderStatus,
+    GoodsReceivedLineRow, PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
+    PurchaseOrderRowRepository, PurchaseOrderStatus,
 };
 
 use crate::goods_received::common::check_goods_received_exists;
@@ -64,10 +64,10 @@ pub fn validate(
 
     let goods_received_lines: Vec<GoodsReceivedLine> = goods_received_lines
         .into_iter()
-        .filter_map(|line| match line.goods_received_line_row.status {
-            GoodsReceivedLineStatus::Authorised => Some(line),
-            _ => None,
-        })
+        // .filter_map(|line| match line.goods_received_line_row.status {
+        //     GoodsReceivedLineStatus::Authorised => Some(line),
+        //     _ => None,
+        // }) TODO: Handle authorisation status
         .collect();
 
     if goods_received_lines.is_empty() {
