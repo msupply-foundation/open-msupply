@@ -163,6 +163,22 @@ export const InsuranceModal = (): ReactElement => {
                   }
                 />
               )}
+              <InputWithLabelRow
+                label={t('label.policy-number-person')}
+                Input={
+                  <BasicTextInput
+                    disabled={haveInsuranceId}
+                    onChange={event => {
+                      updatePatch({
+                        policyNumberPerson: event.target.value,
+                      });
+                    }}
+                    value={draft.policyNumberPerson ?? undefined}
+                    required={!draft.policyNumberFamily}
+                    // error={error}
+                  />
+                }
+              />
             </FieldErrorWrapper>
             <FieldErrorWrapper
               code="insurancePolicy"
