@@ -78,7 +78,7 @@ pub fn validate(
         .find_many_by_purchase_order_ids(&[purchase_order.id])?;
 
     let mut line_map: Vec<(GoodsReceivedLineRow, PurchaseOrderLineRow)> = Vec::new();
-    let mut unfound_lines: Vec<String> = Vec::new();
+    let mut missing_purchase_order_lines: Vec<String> = Vec::new();
 
     for line in goods_received_lines {
         match purchase_order_lines
@@ -89,13 +89,16 @@ pub fn validate(
                 line_map.push((line.goods_received_line_row.clone(), po_line.clone()));
             }
             None => {
-                unfound_lines.push(line.goods_received_line_row.purchase_order_line_id.clone());
+                missing_purchase_order_lines
+                    .push(line.goods_received_line_row.purchase_order_line_id.clone());
             }
         };
     }
 
-    if !unfound_lines.is_empty() {
-        return Err(OutError::PurchaseOrderLinesNotFound(unfound_lines));
+    if !missing_purchase_order_lines.is_empty() {
+        return Err(OutError::PurchaseOrderLinesNotFound(
+            missing_purchase_order_lines,
+        ));
     }
 
     Ok((supplier_name_link, goods_received, line_map))
