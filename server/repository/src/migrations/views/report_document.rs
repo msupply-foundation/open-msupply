@@ -16,12 +16,6 @@ impl ViewMigrationFragment for ViewMigration {
     }
 
     fn rebuild_view(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        let absolute = if cfg!(feature = "postgres") {
-            "@"
-        } else {
-            "abs"
-        };
-
         sql!(
             connection,
             r#"

@@ -13,12 +13,17 @@ mod outbound_shipment_stock_movement;
 mod replenishment;
 mod report_document;
 mod report_encounter;
+mod report_patient;
+mod report_program_enrolment;
+mod report_program_event;
 mod report_store;
+mod requisitions_in_period;
 mod stock_line_ledger;
 mod stock_line_ledger_discrepancy;
 mod stock_movement;
 mod stock_on_hand;
 mod store_items;
+mod vaccination_card;
 
 pub(crate) trait ViewMigrationFragment {
     fn drop_view(&self, _connection: &StorageConnection) -> anyhow::Result<()>;
@@ -50,6 +55,12 @@ fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
         Box::new(report_document::ViewMigration),
         Box::new(report_encounter::ViewMigration),
         Box::new(report_store::ViewMigration),
+        // lot 4:
+        Box::new(report_patient::ViewMigration),
+        Box::new(report_program_event::ViewMigration),
+        Box::new(report_program_enrolment::ViewMigration),
+        Box::new(requisitions_in_period::ViewMigration),
+        Box::new(vaccination_card::ViewMigration),
     ]
 }
 
@@ -78,16 +89,6 @@ pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Resul
       
       
       DROP VIEW IF EXISTS contact_trace_name_link_view;
-      
-      
-      DROP VIEW IF EXISTS report_patient;
-      DROP VIEW IF EXISTS report_program_enrolment;
-      DROP VIEW IF EXISTS report_program_event;
-      
-      
-      DROP VIEW IF EXISTS requisitions_in_period;
-      
-      DROP VIEW IF EXISTS vaccination_card;
       DROP VIEW IF EXISTS vaccination_course;
     "#
     )?;
@@ -107,99 +108,13 @@ pub(crate) fn legacy_rebuild_views(connection: &StorageConnection) -> anyhow::Re
 
 
 
+
+
+  
+  
   
 
-  CREATE VIEW report_patient AS
-    SELECT
-        id,
-        code,
-        national_health_number AS code_2,
-        first_name,
-        last_name,
-        gender,
-        date_of_birth,
-        address1,
-        phone,
-        date_of_death,
-        is_deceased
-    FROM name;
-
-  CREATE VIEW report_program_event AS
-    SELECT
-        e.id,
-        nl.name_id as patient_id,
-        e.datetime,
-        e.active_start_datetime,
-        e.active_end_datetime,
-        e.document_type,
-        e.document_name,
-        e.type,
-        e.data
-    FROM program_event e
-    LEFT JOIN name_link nl ON nl.id = e.patient_link_id;
-
-  CREATE VIEW report_program_enrolment AS
-    SELECT
-        program_enrolment.id,
-        program_enrolment.document_type,
-        program_enrolment.enrolment_datetime,
-        program_enrolment.program_enrolment_id,
-        program_enrolment.status,
-        nl.name_id as patient_id,
-        doc.data as document_data
-    FROM program_enrolment
-    LEFT JOIN name_link nl ON nl.id = program_enrolment.patient_link_id
-    LEFT JOIN report_document doc ON doc.name = program_enrolment.document_name;
-
-  CREATE VIEW requisitions_in_period AS
-    SELECT
-      'n/a' as id,
-      r.program_id,
-      r.period_id,
-      r.store_id,
-      r.order_type,
-      r.type,
-      n.id AS other_party_id,
-      count(*) as count
-    FROM requisition r
-    INNER JOIN name_link nl ON r.name_link_id = nl.id
-    INNER JOIN name n ON nl.name_id = n.id
-    WHERE r.order_type IS NOT NULL
-    GROUP BY 1,2,3,4,5,6,7;
-
-  CREATE VIEW vaccination_card AS
-    SELECT
-      vcd.id || '_' || pe.id AS id,
-      vcd.id as vaccine_course_dose_id,
-      vcd.label,
-      vcd.min_interval_days,
-      vcd.min_age,
-      vcd.max_age,
-      vcd.custom_age_label,
-      vc.id as vaccine_course_id,
-      v.id as vaccination_id,
-      v.vaccination_date,
-      v.given,
-      v.stock_line_id,
-      n.id AS facility_name_id,
-      v.facility_free_text,
-      s.batch,
-      pe.id as program_enrolment_id
-    FROM vaccine_course_dose vcd
-    JOIN vaccine_course vc
-      ON vcd.vaccine_course_id = vc.id
-    JOIN program_enrolment pe
-      ON pe.program_id = vc.program_id
-    LEFT JOIN vaccination v
-      ON v.vaccine_course_dose_id = vcd.id AND v.program_enrolment_id = pe.id
-    LEFT JOIN name_link nl
-      ON v.facility_name_link_id = nl.id
-    LEFT JOIN name n
-      ON nl.name_id = n.id
-    LEFT JOIN stock_line s
-      ON v.stock_line_id = s.id
-    -- Only show doses that haven't been deleted, unless they have a vaccination
-    WHERE vcd.deleted_datetime IS NULL OR v.id IS NOT NULL;
+  
 
 CREATE VIEW vaccination_course AS
     SELECT
