@@ -75,13 +75,13 @@ export const Toolbar = ({ filter, simplifiedTabletView }: ToolbarProps) => {
                 name: t('label.created-datetime'),
                 elements: [
                   {
-                    type: 'date',
+                    type: 'dateTime',
                     name: t('label.from-created-datetime'),
                     urlParameter: 'createdDatetime',
                     range: 'from',
                   },
                   {
-                    type: 'date',
+                    type: 'dateTime',
                     name: t('label.to-created-datetime'),
                     urlParameter: 'createdDatetime',
                     range: 'to',
@@ -93,13 +93,13 @@ export const Toolbar = ({ filter, simplifiedTabletView }: ToolbarProps) => {
                 name: t('label.shipped-datetime'),
                 elements: [
                   {
-                    type: 'date',
+                    type: 'dateTime',
                     name: t('label.from-shipped-datetime'),
                     urlParameter: 'shippedDatetime',
                     range: 'from',
                   },
                   {
-                    type: 'date',
+                    type: 'dateTime',
                     name: t('label.to-shipped-datetime'),
                     urlParameter: 'shippedDatetime',
                     range: 'to',
