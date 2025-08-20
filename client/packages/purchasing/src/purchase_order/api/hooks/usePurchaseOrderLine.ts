@@ -80,7 +80,7 @@ export function usePurchaseOrderLine(id?: string | null) {
         numberOfPacks: initialNumberOfPacks,
         ...patch,
       }
-    : { ...defaultPurchaseOrderLine, ...patch, itemId: '' };
+    : { ...defaultPurchaseOrderLine, ...patch };
 
   // CREATE
   const {
