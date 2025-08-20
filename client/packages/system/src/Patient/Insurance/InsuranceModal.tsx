@@ -1,5 +1,11 @@
+import {
+  useDialog,
+  useNotification,
+  ErrorDisplay,
+  FieldErrorWrapper,
+  useFormErrorActions,
+} from '@common/hooks';
 import React, { ReactElement } from 'react';
-import { useDialog, useNotification } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   BasicTextInput,
@@ -38,8 +44,16 @@ export const InsuranceModal = (): ReactElement => {
     insuranceId,
     haveInsuranceId,
     draft,
-    updatePatch,
+    updatePatch: updateDraft,
   } = useInsurancePolicies(nameId);
+
+  const { showRequiredErrors, resetRequiredErrors, hasErrors } =
+    useFormErrorActions();
+
+  const updatePatch: (newData: Partial<unknown>) => void = newData => {
+    resetRequiredErrors();
+    updateDraft(newData);
+  };
 
   const handleInsuranceUpdate = async (): Promise<void> => {
     try {
@@ -55,10 +69,6 @@ export const InsuranceModal = (): ReactElement => {
 
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
-      // Temp hotfix for when both policy number fields are empty. Will be
-      // improved with new Error State handler
-      if (draft.policyNumberFamily === '' && draft.policyNumberPerson === '')
-        throw new Error('missing policy numbers');
       const result = await create();
       if (result != null) setModal(undefined);
       success(t('messages.insurance-created'))();
@@ -70,6 +80,11 @@ export const InsuranceModal = (): ReactElement => {
   };
 
   const handleSave = async (): Promise<void> => {
+    showRequiredErrors();
+    if (hasErrors()) {
+      // console.log("Errors, can't submit");
+      return;
+    }
     if (insuranceId !== undefined) await handleInsuranceUpdate();
     else await handleInsuranceInsert();
   };
@@ -90,107 +105,196 @@ export const InsuranceModal = (): ReactElement => {
         '& .MuiDialogContent-root': {
           display: 'flex',
           alignItems: 'center',
-          margin: '0 auto',
+          justifyContent: 'center',
         },
       }}
     >
-      <Stack gap={8} flexDirection="row">
-        <Box display="flex" flexDirection="column" gap={2}>
-          <InputWithLabelRow
-            label={t('label.policy-number-family')}
-            Input={
-              <BasicTextInput
-                required={draft.policyNumberPerson === ''}
-                disabled={haveInsuranceId}
-                value={draft.policyNumberFamily}
-                onChange={event => {
-                  updatePatch({
-                    policyNumberFamily: event.target.value,
-                  });
-                }}
-              />
-            }
-          />
-          <InputWithLabelRow
-            label={t('label.policy-number-person')}
-            Input={
-              <BasicTextInput
-                required={draft.policyNumberFamily === ''}
-                disabled={haveInsuranceId}
-                value={draft.policyNumberPerson}
-                onChange={event => {
-                  updatePatch({
-                    policyNumberPerson: event.target.value,
-                  });
-                }}
-              />
-            }
-          />
-          <InsurancePolicySelect
-            policyType={draft.policyType}
-            onChange={value =>
-              updatePatch({
-                policyType: value,
-              })
-            }
-          />
-          <InputWithLabelRow
-            label={t('label.insurance-active')}
-            Input={
-              <Switch
-                onChange={() => updatePatch({ isActive: !draft.isActive })}
-                checked={draft.isActive}
-                switchSx={{ left: '-13px' }}
-                color="secondary"
-              />
-            }
-          />
-        </Box>
-        <Box display="flex" flexDirection="column" gap={2}>
-          <InputWithLabelRow
-            label={t('label.insurance-expiry-date')}
-            Input={
-              <DateTimePickerInput
-                required
-                value={DateUtils.getNaiveDate(draft.expiryDate)}
-                onChange={date => {
-                  if (date)
-                    updatePatch({
-                      expiryDate: formatDateTime.customDate(date, 'yyyy-MM-dd'),
-                    });
-                }}
-              />
-            }
-          />
-          <InsuranceProvidersSelect
-            insuranceProviderId={draft.insuranceProviderId}
-            onChange={value => {
-              updatePatch({
-                insuranceProviderId: value,
-              });
-            }}
-          />
-          <InputWithLabelRow
-            label={t('label.coverage-rate')}
-            Input={
-              <NumericTextInput
-                required
-                min={0}
-                decimalLimit={2}
-                value={draft.discountPercentage ?? 0}
-                endAdornment="%"
-                onChange={value => {
-                  if (value) {
-                    updatePatch({
-                      discountPercentage: value,
-                    });
+      <>
+        <Stack gap={8} flexDirection="row">
+          <Box display="flex" flexDirection="column" gap={2}>
+            <FieldErrorWrapper
+              code="policyNumberFamily"
+              label={t('label.policy-number-family')}
+              value={draft.policyNumberFamily ?? undefined}
+              required={!draft.policyNumberPerson}
+            >
+              {({ label, value, required, error }) => (
+                <InputWithLabelRow
+                  label={label}
+                  Input={
+                    <BasicTextInput
+                      disabled={haveInsuranceId}
+                      onChange={event => {
+                        updatePatch({
+                          policyNumberFamily: event.target.value,
+                        });
+                      }}
+                      value={value}
+                      required={required}
+                      error={error}
+                    />
                   }
-                }}
+                />
+              )}
+            </FieldErrorWrapper>
+            <FieldErrorWrapper
+              code="policyNumberPerson"
+              label={t('label.policy-number-person')}
+              value={draft.policyNumberPerson ?? undefined}
+              required={!draft.policyNumberFamily}
+              customErrorState={draft.policyNumberPerson === '666'}
+              customErrorMessage="That is the devil's number and is forbidden 😈"
+            >
+              {({ label, value, required, error }) => (
+                <InputWithLabelRow
+                  label={label}
+                  Input={
+                    <BasicTextInput
+                      disabled={haveInsuranceId}
+                      onChange={event => {
+                        updatePatch({
+                          policyNumberPerson: event.target.value,
+                        });
+                      }}
+                      value={value}
+                      required={required}
+                      error={error}
+                    />
+                  }
+                />
+              )}
+              <InputWithLabelRow
+                label={t('label.policy-number-person')}
+                Input={
+                  <BasicTextInput
+                    disabled={haveInsuranceId}
+                    onChange={event => {
+                      updatePatch({
+                        policyNumberPerson: event.target.value,
+                      });
+                    }}
+                    value={draft.policyNumberPerson ?? undefined}
+                    required={!draft.policyNumberFamily}
+                    // error={error}
+                  />
+                }
               />
-            }
-          />
-        </Box>
-      </Stack>
+            </FieldErrorWrapper>
+            <FieldErrorWrapper
+              code="insurancePolicy"
+              label={t('label.insurance-policy')}
+              required
+              value={draft.policyType}
+            >
+              {({ value, required, error, setError }) => (
+                <InsurancePolicySelect
+                  policyType={value}
+                  onChange={value =>
+                    updatePatch({
+                      policyType: value,
+                    })
+                  }
+                  required={required}
+                  error={error}
+                  setError={setError}
+                />
+              )}
+            </FieldErrorWrapper>
+            <InputWithLabelRow
+              label={t('label.insurance-active')}
+              Input={
+                <Switch
+                  onChange={() => updatePatch({ isActive: !draft.isActive })}
+                  checked={draft.isActive}
+                  switchSx={{ left: '-13px' }}
+                  color="secondary"
+                />
+              }
+            />
+          </Box>
+          <Box display="flex" flexDirection="column" gap={2}>
+            <FieldErrorWrapper
+              code="expDate"
+              label={t('label.expiry-date')}
+              required
+              value={DateUtils.getNaiveDate(draft.expiryDate)}
+            >
+              {({ label, value, required, error, setError }) => (
+                <InputWithLabelRow
+                  label={label}
+                  Input={
+                    <DateTimePickerInput
+                      value={value}
+                      required={required}
+                      onChange={date => {
+                        if (date)
+                          updatePatch({
+                            expiryDate: formatDateTime.customDate(
+                              date,
+                              'yyyy-MM-dd'
+                            ),
+                          });
+                      }}
+                      error={error}
+                      setError={setError}
+                    />
+                  }
+                />
+              )}
+            </FieldErrorWrapper>
+            <FieldErrorWrapper
+              code="providerName"
+              label={t('label.provider-name')}
+              value={draft.insuranceProviderId}
+              required
+            >
+              {({ value, required, error, setError }) => (
+                <InsuranceProvidersSelect
+                  insuranceProviderId={value}
+                  onChange={value => {
+                    updatePatch({
+                      insuranceProviderId: value,
+                    });
+                  }}
+                  required={required}
+                  error={error}
+                  setError={setError}
+                />
+              )}
+            </FieldErrorWrapper>
+            <FieldErrorWrapper
+              code="discountPercentage"
+              label={t('label.discount-rate')}
+              value={draft.discountPercentage}
+              required
+              customErrorState={draft.discountPercentage >= 110}
+              customErrorMessage="Waaaay too big!"
+            >
+              {({ label, ...fieldProps }) => (
+                <InputWithLabelRow
+                  label={label}
+                  Input={
+                    <NumericTextInput
+                      {...fieldProps}
+                      min={0}
+                      max={100}
+                      decimalLimit={2}
+                      onChange={value => {
+                        if (value) {
+                          updatePatch({
+                            discountPercentage: value,
+                          });
+                        }
+                      }}
+                    />
+                  }
+                />
+              )}
+            </FieldErrorWrapper>
+          </Box>
+        </Stack>
+        <ErrorDisplay sx={{ marginTop: '1em' }} />
+      </>
     </Modal>
   );
 };

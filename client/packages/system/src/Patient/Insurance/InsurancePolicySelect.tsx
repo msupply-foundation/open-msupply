@@ -6,11 +6,17 @@ import { Autocomplete, InputWithLabelRow } from '@common/components';
 interface InsurancePolicySelectProps {
   policyType: string;
   onChange: (value: string) => void;
+  error?: boolean;
+  setError?: (error: string) => void;
+  required?: boolean;
 }
 
 export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
   policyType,
   onChange,
+  error,
+  setError,
+  required,
 }): ReactElement => {
   const t = useTranslation();
 
@@ -25,6 +31,8 @@ export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
     },
   ];
 
+  const errorProps = { error, setError, required };
+
   const defaultValue = getDefaultValue(policyType, t);
 
   return (
@@ -33,7 +41,6 @@ export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
       Input={
         <Autocomplete
           clearable={false}
-          required
           options={options}
           value={defaultValue}
           onChange={(_, option) => {
@@ -42,6 +49,7 @@ export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
             }
           }}
           getOptionLabel={option => option.label}
+          {...errorProps}
         />
       }
       sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
