@@ -1,6 +1,112 @@
 # Reports
 
-This readme contains information on [source file structuring](#report-source-files), report related [CLI tools](#cli-tools), information on [development](#development) and [maintenance](#maintenance-support-info) of OMS reports.
+The first part of this readme explains [basic tools](#basic-tools-and-uploading) for building and installing including [CLI tools](#cli-tools), and how to add reports to remote sites via the [ui interface](#uploading-reports).
+
+The second part contains more detailed [development information](#report-development) such as information on [source file structuring](#report-source-files), information on [development](#development) processes, and [maintenance](#maintenance-support-info) of OMS reports.
+
+## Overview of Reports
+
+Reports are generated HTML tera files used for a variety of reporting applications in OMS.
+
+We have two types of reports: 'Reports' and 'Forms'.
+
+Reports only differ from forms in that they have an addition of a JSON form input which can be used to modify queries or how data is converted.
+
+Both reports and forms can use graphql and sql queries, use BoaJS data conversion, and can be used throughout the app.
+
+OMS uses both custom and standard reports. Standard reports are generic reports which come embedded with any OMS build.
+
+Custom reports are client specific reports. Custom reports can be added as an override to a standard report (by using the same code), or in addition to standard reports (by using a new code).
+
+The toggle report command can be useful to deactivate standard reports when a client wants them to be hidden.
+
+# Basic tools and uploading
+
+## CLI Tools
+
+### Build Reports
+
+`build-reports --path <optional-path>`
+
+Build reports command generates all reports into a json array.
+
+This command builds these reports from source files within the dir passed as an argument to this command. It will attempt to build a report from any dir containing a `report-manifest.json` file. This command will search through any sub directories recursively; any file structure can be used.
+
+If no path is passed, the build-reports command defaults to the `standard_forms` and `standard_reportd` dirs containing OMS standard forms and reports respectively.
+
+The generated json can be added to sites via the [ui interface](#uploading-reports) or [upsert reports](#upsert-reports) cli command.
+
+The `build-reports` command will generated all reports in all sub dirs - so can be used to generate multiple reports for a specific client, or a single specific report. Regardless if one or many reports are built, the generated json file will be of the same structure (an array of reports), and can be uploaded via cli or central server ui.
+
+### Upsert Reports
+
+`upsert-reports --path <optional-path> --overwrite (optional)`
+
+Upsert reports command inserts or upserts reports from a json array located in the path passed as the `path` argument.
+
+This command will upsert if the `-o` or `--overwrite` flag is passed.
+If no overwrite flag is passed, it will default to insert.
+
+If no path is passed, it will look for in the `reports/generated/standard-reports.json` file for the array of standard reports. 
+
+#### Report IDs
+
+Report IDs are generated in a standardised way in the format of `<report-code>_<report-version>_<is-custom-boolean>`.
+This means an edited report of the same version will not upload without the `-o` flag.
+To ensure edited reports supercede existing reports, they should have their patch version bumped as detailed in the [versioning section](#report-versioning).
+
+
+### Reload Embedded Reports
+
+`reload-embedded-reports`
+
+This command upserts and updates oms standard reports to the current branch.
+
+Open mSupply standard reports are embedded during building from the `reports/generated/standard-reports.json` file. Embedded reports are included in release builds, and are therefore accessible on testing builds where the OMS repo file structure is not available.
+
+This command is used to update standard reports to the current branch in databases on live or test builds.
+
+Building reports will automatically install any node dependencies for a specific report from that reports' package.json.
+
+### Show Report
+
+`show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json> --format <optional[html|excel]>`
+
+Show report replaces previously used print.sh and show.sh bash commands on the OMS reports repo.
+
+By default, running this command will generate and open an html file of the report. A `format` argument can be passed to generate an excel file instead.
+
+#### Test Config
+
+Reports need certain parameters and arguments. Copy the `test-config.example.json` file to `test-config.json` in this directory, and update it with your desired parameters.
+
+A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json` file.
+
+### Toggle Report
+
+`toggle-report --code <report-code> --is_custom [true|false : optional] --enable (optional) --disable (optional)`
+
+Sets the `is_active` flag on a report.
+
+By default will toggle the `is_active` flag, swapping between true/false.
+
+If `--enable` or `--disable` are specified, will directly set the `is_active` flag to `true` or `false` respectively.
+
+If `--is_custom` is include, will filter the selected reports by the `is_custom` flag.
+
+## Uploading Reports
+
+A generated report json can be added to an OMS site via the central server ui interface, or using the upsert command.
+
+Reports added to OMS central server are synced to all remote sites.
+
+Report versioning protects remote sites of earlier versions from rendering a report of an incompatible api.
+
+The report ui interface can be accesed via the manage nav.
+
+Both the upsert and upload ui accept an array of generated reports.
+
+# Reports Structure
 
 ## Report Source Files
 
@@ -122,6 +228,34 @@ These files must be compliant with JSON forms.
    │   ├── dist (generated)
    |   ├── node_modules (generated)
    |   ├── src
+   |   |   ├── convert_data.js (copy)
+   |   |   ├── utils.js
+   |   |   └── utils.test.js (optional)
+   |   ├── webpack.config.js
+   |   ├── input.json (optional)
+   |   ├── output.json (optional)
+   |   └── package.json (copy)
+   ├──  src
+   |   ├── footer.html (optional)
+   |   ├── header.html (optional)
+   |   ├── style.css
+   |   ├── SQL queries (optional, and possibly multiple)
+   |   ├── GraphQL query (optional)
+   |   └── template.html
+   └── report-manifest.json
+```
+
+### source file structure diagram with typescript functionality
+
+```
+├── example-report
+   ├── argument_schemas (optional)
+   │   ├── argument_ui.json
+   |   └── arguments.json
+   ├── convert_data_js (optional)
+   │   ├── dist (generated)
+   |   ├── node_modules (generated)
+   |   ├── src
    |   |   ├── generated-types (generated)
    |   |   ├── test (optional)
    |   |   |   ├── input.json
@@ -150,95 +284,6 @@ These files must be compliant with JSON forms.
    ├── excel_template.xlsx (optional)
    └── report-manifest.json
 ```
-
-### source file structure diagram with typescript functionality
-
-```
-├── example-report
-   ├── argument_schemas (optional)
-   │   ├── argument_ui.json
-   |   └── arguments.json
-   ├── convert_data_js (optional)
-   │   ├── dist (generated)
-   |   ├── node_modules (generated)
-   |   ├── src
-   |   |   ├── convert_data.js (copy)
-   |   |   ├── utils.js
-   |   |   └── utils.test.js (optional)
-   |   ├── webpack.config.js
-   |   ├── input.json (optional)
-   |   ├── output.json (optional)
-   |   └── package.json (copy)
-   ├──  src
-   |   ├── footer.html (optional)
-   |   ├── header.html (optional)
-   |   ├── style.css
-   |   ├── SQL queries (optional, and possibly multiple)
-   |   ├── GraphQL query (optional)
-   |   └── template.html
-   └── report-manifest.json
-```
-
-## CLI Tools
-
-Command line interface tools used in development and maintenance of reports are:
-
-### Build Reports
-
-`build-reports --path <optional-path>`
-
-Build reports command generates all reports into a json array.
-
-It builds these reports from source files within the dir passed as an argument to this command. It will attempt to build a report from any dir containing a `report-manifest.json` file. This command will search through any sub directories recursively; any file structure can be used.
-
-If no path is passed, the build-reports command defaults to the `reports` dir containing OMS standard reports.
-
-### Upsert Reports
-
-`upsert-reports --path <optional-path> --overwrite (optional)`
-
-Upsert reports command inserts or upserts reports from a json array located in the path passed as the `path` argument.
-
-This command will upsert if the `-o` or `--overwrite` flag is passed.
-If no overwrite flag is passed, it will default to insert.
-
-If no path is passed, it will look for in the `reports/generated/standard-reports.json` file for the array of standard reports.
-
-### Reload Embedded Reports
-
-`reload-embedded-reports`
-
-This command upserts and updates oms standard reports to the current branch.
-
-Open mSupply standard reports are embedded during building from the `reports/generated/standard-reports.json` file. Embedded reports are included in release builds, and are therefore accessible on testing builds where the OMS repo file structure is not available.
-
-This command is used to update standard reports to the current branch in databases on live or test builds.
-
-### Show Report
-
-`show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json> --format <optional[html|excel]>`
-
-Show report replaces previously used print.sh and show.sh bash commands on the OMS reports repo.
-
-By default, running this command will generate and open an html file of the report. A `format` argument can be passed to generate an excel file instead.
-
-#### Test Config
-
-Reports need certain parameters and arguments. Copy the `test-config.example.json` file to `test-config.json` in this directory, and update it with your desired parameters.
-
-A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json` file.
-
-### Toggle Report
-
-`toggle-report --code <report-code> --is_custom [true|false : optional] --enable (optional) --disable (optional)`
-
-Sets the `is_active` flag on a report.
-
-By default will toggle the `is_active` flag, swapping between true/false.
-
-If `--enable` or `--disable` are specified, will directly set the `is_active` flag to `true` or `false` respectively.
-
-If `--is_custom` is include, will filter the selected reports by the `is_custom` flag.
 
 ## Development
 
@@ -596,3 +641,10 @@ All sites will have embedded standard reports inserted on startup.
 Additional reports (both custom, and patched standard reports) can be upserted in bulk to open mSupply central servers via the `upsert-reports` command.
 
 Reports will then be synced out from there to remote sites.
+
+
+## Glossary
+
+## Decision tree
+
+## Troubleshooting
