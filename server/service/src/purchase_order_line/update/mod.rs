@@ -42,7 +42,7 @@ pub struct UpdatePurchaseOrderLineInput {
     pub price_per_unit_after_discount: Option<f64>,
     pub manufacturer_id: Option<NullableUpdate<String>>,
     pub note: Option<NullableUpdate<String>>,
-    pub unit_of_packs: Option<String>,
+    pub unit: Option<String>,
     pub supplier_item_code: Option<NullableUpdate<String>>,
     pub comment: Option<NullableUpdate<String>>,
 }

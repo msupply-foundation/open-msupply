@@ -30,7 +30,7 @@ pub struct InsertInput {
     pub price_per_unit_after_discount: Option<f64>,
     pub manufacturer_id: Option<String>,
     pub note: Option<String>,
-    pub unit_of_packs: Option<String>,
+    pub unit: Option<String>,
     pub supplier_item_code: Option<String>,
     pub comment: Option<String>,
 }
@@ -49,7 +49,7 @@ impl InsertInput {
             price_per_unit_before_discount,
             manufacturer_id,
             note,
-            unit_of_packs,
+            unit,
             supplier_item_code,
             comment,
         } = self;
@@ -66,7 +66,7 @@ impl InsertInput {
             price_per_unit_before_discount,
             manufacturer_id,
             note,
-            unit_of_packs,
+            unit,
             supplier_item_code,
             comment,
         }

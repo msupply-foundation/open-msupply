@@ -17,7 +17,7 @@ pub fn generate(
         price_per_unit_after_discount,
         manufacturer_id,
         note,
-        unit_of_packs,
+        unit,
         supplier_item_code,
         comment,
     }: InsertPurchaseOrderLineInput,
@@ -42,7 +42,7 @@ pub fn generate(
         price_per_unit_before_discount: price_per_unit_before_discount.unwrap_or(0.0),
         manufacturer_link_id: manufacturer_id,
         note,
-        unit_of_packs,
+        unit,
         supplier_item_code,
         comment,
         // Default
@@ -64,7 +64,7 @@ pub fn generate_from_csv(
         requested_number_of_units,
         price_per_unit_before_discount,
         price_per_unit_after_discount,
-        unit_of_packs: _,
+        unit: _,
         manufacturer_id: _,
         note: _,
         requested_delivery_date: _,
@@ -100,6 +100,6 @@ pub fn generate_from_csv(
         comment: None,
         manufacturer_link_id: None,
         note: None,
-        unit_of_packs: None,
+        unit: None,
     })
 }

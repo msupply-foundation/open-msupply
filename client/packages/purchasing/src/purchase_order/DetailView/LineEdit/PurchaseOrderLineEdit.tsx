@@ -98,10 +98,8 @@ export const PurchaseOrderLineEdit = ({
                   },
                 }
               )}
-              {textInput(
-                'label.unit-of-packs',
-                draft?.unitOfPacks || '',
-                value => update({ unitOfPacks: value })
+              {textInput('label.unit', draft?.unit || '', value =>
+                update({ unit: value })
               )}
               {textInput(
                 'label.supplier-item-code',

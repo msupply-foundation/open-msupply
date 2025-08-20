@@ -1400,7 +1400,6 @@
   "label.unacknowledged": "Unacknowledged",
   "label.unit": "Unit",
   "label.unit-name": "Unit name",
-  "label.unit-of-packs": "Unit of packs (e.g. kg, L)",
   "label.unit-plural_few": "{{unit}}s",
   "label.unit-plural_many": "{{unit}}s",
   "label.unit-plural_one": "{{unit}}",

@@ -110,7 +110,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     ...NameRow
   }
   note
-  unitOfPacks
+  unit
   comment
   supplierItemCode
 }
