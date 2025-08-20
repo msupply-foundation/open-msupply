@@ -36,7 +36,7 @@ export const PurchaseOrderLineEdit = ({
   lines = [],
 }: PurchaseOrderLineEditProps) => {
   const t = useTranslation();
-  const showContent = !!draft;
+  const showContent = !!draft?.itemId;
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
   const { numericInput, textInput, multilineTextInput, dateInput } =
     useInputComponents(t, isDisabled, isVerticalScreen);
