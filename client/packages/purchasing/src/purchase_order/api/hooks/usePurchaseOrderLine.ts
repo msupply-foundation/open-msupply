@@ -7,7 +7,7 @@ import {
   useQuery,
   useTranslation,
   setNullableInput,
-} from '@openmsupply-client/common/src';
+} from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
 import { PurchaseOrderLineFragment } from '../operations.generated';
@@ -53,7 +53,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   requestedNumberOfPacks: 0,
 };
 
-export function usePurchaseOrderLine(id?: string) {
+export function usePurchaseOrderLine(id?: string | null) {
   const { data, isLoading, error } = useGet(id ?? '');
 
   const { patch, updatePatch, resetDraft, isDirty } =
@@ -88,7 +88,7 @@ export function usePurchaseOrderLine(id?: string) {
         numberOfPacks: initialNumberOfPacks,
         ...patch,
       }
-    : { ...defaultPurchaseOrderLine, ...patch, itemId: '' };
+    : { ...defaultPurchaseOrderLine, ...patch };
 
   // CREATE
   const {

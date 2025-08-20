@@ -1,19 +1,31 @@
+pub mod delete;
 pub mod insert;
 pub mod query;
+pub mod save_goods_received_lines;
+pub mod update;
+pub mod validate;
 
-use repository::GoodsReceivedLine;
-use repository::GoodsReceivedLineFilter;
-use repository::GoodsReceivedLineRow;
-use repository::GoodsReceivedLineSort;
-use repository::{PaginationOption, RepositoryError};
+use repository::{
+    goods_received_row::GoodsReceivedRow, GoodsReceivedLine, GoodsReceivedLineFilter,
+    GoodsReceivedLineRow, GoodsReceivedLineSort, PaginationOption, RepositoryError,
+};
 
 use crate::{
-    goods_received_line::insert::{
-        insert_goods_received_line, insert_goods_received_lines_from_purchase_order,
-        InsertGoodsReceivedLineError, InsertGoodsReceivedLineInput, InsertGoodsReceivedLinesError,
-        InsertGoodsReceivedLinesFromPurchaseOrderInput,
+    goods_received_line::{
+        delete::{delete_goods_received_line, DeleteGoodsReceivedLineError},
+        insert::{
+            insert_goods_received_line, insert_goods_received_lines_from_purchase_order,
+            InsertGoodsReceivedLineError, InsertGoodsReceivedLineInput,
+            InsertGoodsReceivedLinesError, InsertGoodsReceivedLinesFromPurchaseOrderInput,
+        },
+        query::{get_goods_received_line, get_goods_received_lines},
+        save_goods_received_lines::{
+            save_goods_received_lines, SaveGoodsReceivedLinesError, SaveGoodsReceivedLinesInput,
+        },
+        update::{
+            update_goods_received_line, UpdateGoodsReceivedLineError, UpdateGoodsReceivedLineInput,
+        },
     },
-    goods_received_line::query::{get_goods_received_line, get_goods_received_lines},
     service_provider::ServiceContext,
     ListError, ListResult,
 };
@@ -52,6 +64,30 @@ pub trait GoodsReceivedLineServiceTrait: Sync + Send {
         input: InsertGoodsReceivedLinesFromPurchaseOrderInput,
     ) -> Result<Vec<GoodsReceivedLineRow>, InsertGoodsReceivedLinesError> {
         insert_goods_received_lines_from_purchase_order(ctx, input)
+    }
+
+    fn update_goods_received_line(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateGoodsReceivedLineInput,
+    ) -> Result<GoodsReceivedLineRow, UpdateGoodsReceivedLineError> {
+        update_goods_received_line(ctx, input)
+    }
+
+    fn delete_goods_received_line(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<String, DeleteGoodsReceivedLineError> {
+        delete_goods_received_line(ctx, id)
+    }
+
+    fn save_goods_received_lines(
+        &self,
+        ctx: &ServiceContext,
+        input: SaveGoodsReceivedLinesInput,
+    ) -> Result<GoodsReceivedRow, SaveGoodsReceivedLinesError> {
+        save_goods_received_lines(ctx, input)
     }
 }
 

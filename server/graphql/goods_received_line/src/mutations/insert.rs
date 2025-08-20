@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::{CannotEditGoodsReceived, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::InternalError;
@@ -39,6 +40,12 @@ pub struct InsertInput {
     pub id: String,
     pub goods_received_id: String,
     pub purchase_order_line_id: String,
+    pub batch: Option<String>,
+    pub expiry_date: Option<NaiveDate>,
+    pub number_of_packs_received: Option<f64>,
+    pub received_pack_size: Option<f64>,
+    pub manufacturer_id: Option<String>,
+    pub comment: Option<String>,
 }
 
 impl InsertInput {
@@ -47,12 +54,24 @@ impl InsertInput {
             id,
             goods_received_id,
             purchase_order_line_id,
+            batch,
+            expiry_date,
+            number_of_packs_received,
+            received_pack_size,
+            manufacturer_id,
+            comment,
         } = self;
 
         ServiceInput {
             id,
             goods_received_id,
             purchase_order_line_id,
+            batch,
+            expiry_date,
+            number_of_packs_received,
+            received_pack_size,
+            manufacturer_id,
+            comment,
         }
     }
 }

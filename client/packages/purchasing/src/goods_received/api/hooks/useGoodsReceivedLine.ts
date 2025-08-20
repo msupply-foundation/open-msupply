@@ -1,16 +1,17 @@
 import {
   InsertGoodsReceivedLinesFromPurchaseOrderInput,
+  SaveGoodsReceivedLinesInput,
   useMutation,
   usePatchState,
   useQuery,
 } from '@openmsupply-client/common/src';
 import { useGoodsReceivedGraphQL } from '../useGoodsReceivedGraphQL';
-import { GOODS_RECEIVED_LINE } from './keys';
+import { GOODS_RECEIVED, GOODS_RECEIVED_LINE } from './keys';
 import { GoodsReceivedLineFragment } from '../operations.generated';
 
 export type DraftGoodsReceivedLine = Omit<
   GoodsReceivedLineFragment,
-  '__typename' | 'item'
+  '__typename'
 > & {
   goodsReceivedId: string;
   purchaseOrderLineId: string;
@@ -29,6 +30,19 @@ const defaultGoodsReceivedLine: DraftGoodsReceivedLine = {
   goodsReceivedId: '',
   purchaseOrderLineId: '',
   itemId: '',
+  batch: '',
+  comment: '',
+  lineNumber: 0,
+  expiryDate: null,
+  manufacturerLinkId: '',
+  numberOfPacksReceived: 0,
+  receivedPackSize: 0,
+  item: {
+    __typename: 'ItemNode',
+    id: '',
+    code: '',
+    name: '',
+  },
 };
 
 export function useGoodsReceivedLine(id?: string) {
@@ -74,6 +88,17 @@ export function useGoodsReceivedLine(id?: string) {
   // UPDATE
   // TODO: Implement update functionality
 
+  // Save Goods Received Lines
+  const {
+    mutateAsync: saveGoodsReceivedLinesMutation,
+    isLoading: isSaving,
+    error: saveError,
+  } = useSaveGoodsReceivedLines();
+
+  const saveGoodsReceivedLines = async (input: SaveGoodsReceivedLinesInput) => {
+    return await saveGoodsReceivedLinesMutation(input);
+  };
+
   return {
     query: { data: data?.nodes[0], isLoading, error },
     create: { create, isCreating, createError },
@@ -81,6 +106,11 @@ export function useGoodsReceivedLine(id?: string) {
       createLinesFromPurchaseOrder,
       isCreatingLinesFromPurchaseOrder,
       createLinesFromPurchaseOrderError,
+    },
+    saveGoodsReceivedLines: {
+      saveGoodsReceivedLines,
+      isSaving,
+      saveError,
     },
     draft,
     resetDraft,
@@ -127,7 +157,7 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED_LINE]),
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
   });
 };
 
@@ -145,6 +175,22 @@ const useCreateGoodsReceivedLinesFromPurchaseOrder = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED_LINE]),
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
+  });
+};
+
+const useSaveGoodsReceivedLines = () => {
+  const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
+
+  const mutationFn = async (input: SaveGoodsReceivedLinesInput) => {
+    return await goodsReceivedApi.saveGoodsReceivedLines({
+      storeId,
+      input,
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([GOODS_RECEIVED]),
   });
 };
