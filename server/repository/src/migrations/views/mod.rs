@@ -1,12 +1,18 @@
 use crate::{migrations::sql, StorageConnection};
 
+mod adjustments;
+mod consumption;
 mod inbound_shipment_stock_movement;
 mod inventory_adjustment_stock_movement;
 mod invoice_line_stock_movement;
+mod item_ledger;
 mod outbound_shipment_stock_movement;
+mod replenishment;
 mod stock_line_ledger;
 mod stock_line_ledger_discrepancy;
 mod stock_movement;
+mod stock_on_hand;
+mod store_items;
 
 pub(crate) trait ViewMigrationFragment {
     fn drop_view(&self, _connection: &StorageConnection) -> anyhow::Result<()>;
@@ -24,6 +30,13 @@ fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
         Box::new(stock_movement::ViewMigration),
         Box::new(stock_line_ledger::ViewMigration),
         Box::new(stock_line_ledger_discrepancy::ViewMigration),
+        // lot 2:
+        Box::new(item_ledger::ViewMigration),
+        Box::new(replenishment::ViewMigration),
+        Box::new(adjustments::ViewMigration),
+        Box::new(consumption::ViewMigration),
+        Box::new(store_items::ViewMigration),
+        Box::new(stock_on_hand::ViewMigration),
     ]
 }
 
@@ -38,17 +51,17 @@ pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Resul
       DROP VIEW IF EXISTS stock_line_ledger_discrepancy;
       DROP VIEW IF EXISTS purchase_order_stats;
       DROP VIEW IF EXISTS invoice_stats;
-      DROP VIEW IF EXISTS consumption;
-      DROP VIEW IF EXISTS replenishment;
-      DROP VIEW IF EXISTS adjustments;
-      DROP VIEW IF EXISTS item_ledger;
+      
+      
+      
+      
       
       
 
       
       
       
-      DROP VIEW IF EXISTS stock_on_hand;
+     
       DROP VIEW IF EXISTS changelog_deduped;
       DROP VIEW IF EXISTS latest_document;
       DROP VIEW IF EXISTS contact_trace_name_link_view;
@@ -60,7 +73,7 @@ pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Resul
       DROP VIEW IF EXISTS report_store;
       DROP VIEW IF EXISTS report_document;
       DROP VIEW IF EXISTS requisitions_in_period;
-      DROP VIEW IF EXISTS store_items;
+      
       DROP VIEW IF EXISTS vaccination_card;
       DROP VIEW IF EXISTS vaccination_course;
     "#
@@ -73,12 +86,6 @@ pub(crate) fn legacy_drop_views(connection: &StorageConnection) -> anyhow::Resul
 pub(crate) fn legacy_rebuild_views(connection: &StorageConnection) -> anyhow::Result<()> {
     log::info!("Re-creating database views...");
 
-    let absolute = if cfg!(feature = "postgres") {
-        "@"
-    } else {
-        "abs"
-    };
-
     sql!(
         connection,
         r#"
@@ -86,158 +93,14 @@ pub(crate) fn legacy_rebuild_views(connection: &StorageConnection) -> anyhow::Re
   
 
   
-  
 
   
 
 
+
   
 
-  CREATE VIEW item_ledger AS
-    WITH all_movements AS (
-      SELECT
-        invoice_line_stock_movement.id AS id,
-        quantity_movement AS movement_in_units,
-        invoice_line_stock_movement.item_link_id AS item_id,
-        invoice.store_id as store_id,
-        CASE WHEN invoice.type IN (
-          'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION'
-        ) THEN picked_datetime
-          WHEN invoice.type IN (
-            'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
-        ) THEN received_datetime
-          WHEN invoice.type IN (
-            'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
-        ) THEN verified_datetime
-        ELSE NULL
-        END AS datetime,
-        name,
-        invoice.type AS invoice_type,
-        invoice.invoice_number AS invoice_number,
-        invoice.id AS invoice_id,
-        reason_option.reason AS reason,
-        stock_line_id,
-        invoice_line_stock_movement.expiry_date AS expiry_date,
-        invoice_line_stock_movement.batch AS batch,
-        invoice_line_stock_movement.cost_price_per_pack AS cost_price_per_pack,
-        invoice_line_stock_movement.sell_price_per_pack AS sell_price_per_pack,
-        invoice.status AS invoice_status,
-        invoice_line_stock_movement.total_before_tax AS total_before_tax,
-        invoice_line_stock_movement.pack_size as pack_size,
-        invoice_line_stock_movement.number_of_packs as number_of_packs,
-        CASE
-          WHEN invoice.type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
-          WHEN invoice.type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
-          ELSE 3
-        END AS type_precedence
-    FROM
-        invoice_line_stock_movement
-        LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
-        LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
-        JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
-        JOIN name_link ON invoice.name_link_id = name_link.id
-        JOIN name ON name_link.name_id = name.id
-    )
-    SELECT *,
-      SUM(movement_in_units) OVER (
-        PARTITION BY store_id, item_id
-        ORDER BY datetime, id, type_precedence
-        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-      ) AS running_balance
-    FROM all_movements
-    WHERE datetime IS NOT NULL
-    ORDER BY datetime, id, type_precedence;
-
-  CREATE VIEW replenishment AS
-    SELECT
-        'n/a' as id,
-        items_and_stores.item_id AS item_id,
-        items_and_stores.store_id AS store_id,
-        {absolute}(COALESCE(stock_movement.quantity, 0)) AS quantity,
-        date(stock_movement.datetime) AS date
-    FROM
-        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
-    LEFT OUTER JOIN stock_movement
-        ON stock_movement.item_id = items_and_stores.item_id
-            AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='INBOUND_SHIPMENT';
-
-  CREATE VIEW adjustments AS
-    SELECT
-        'n/a' as id,
-        items_and_stores.item_id AS item_id,
-        items_and_stores.store_id AS store_id,
-        stock_movement.quantity AS quantity,
-        date(stock_movement.datetime) AS date
-    FROM
-        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
-    LEFT OUTER JOIN stock_movement
-        ON stock_movement.item_id = items_and_stores.item_id
-            AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='CUSTOMER_RETURN'
-      OR invoice_type='SUPPLIER_RETURN'
-      OR invoice_type='INVENTORY_ADDITION'
-      OR invoice_type='INVENTORY_REDUCTION';
-
-
-  -- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockConsumption.4dm
-  -- TODO sc type ?
-  CREATE VIEW consumption AS
-    SELECT
-        'n/a' as id,
-        items_and_stores.item_id AS item_id,
-        items_and_stores.store_id AS store_id,
-        {absolute}(COALESCE(stock_movement.quantity, 0)) AS quantity,
-        date(stock_movement.datetime) AS date
-    FROM
-        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
-    LEFT OUTER JOIN stock_movement
-        ON stock_movement.item_id = items_and_stores.item_id
-            AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='OUTBOUND_SHIPMENT' OR invoice_type='PRESCRIPTION';
-
-  CREATE VIEW store_items AS
-    SELECT i.id as item_id, sl.store_id, sl.pack_size, sl.available_number_of_packs, sl.total_number_of_packs
-    FROM
-      item i
-      LEFT JOIN item_link il ON il.item_id = i.id
-      LEFT JOIN stock_line sl ON sl.item_link_id = il.id
-      LEFT JOIN store s ON s.id = sl.store_id;
-
-  CREATE VIEW stock_on_hand AS
-    SELECT
-      'n/a' AS id,
-      items_and_stores.item_id AS item_id,
-      items_and_stores.item_name AS item_name,
-      items_and_stores.store_id AS store_id,
-      COALESCE(stock.available_stock_on_hand, 0) AS available_stock_on_hand,
-      COALESCE(stock.total_stock_on_hand, 0) AS total_stock_on_hand
-    FROM
-      (
-        SELECT
-          item.id AS item_id,
-          item.name AS item_name,
-          store.id AS store_id
-        FROM
-          item,
-          store
-      ) AS items_and_stores
-      LEFT OUTER JOIN (
-        SELECT
-          item_id,
-          store_id,
-          SUM(pack_size * available_number_of_packs) AS available_stock_on_hand,
-          SUM(pack_size * total_number_of_packs) AS total_stock_on_hand
-        FROM
-          store_items
-        WHERE
-          store_items.available_number_of_packs > 0 OR store_items.total_number_of_packs > 0
-        GROUP BY
-          item_id,
-          store_id
-      ) AS stock ON stock.item_id = items_and_stores.item_id
-      AND stock.store_id = items_and_stores.store_id;
-
+  
     -- View of the changelog that only contains the most recent changes to a row, i.e. previous row
     -- edits are removed.
     -- Note, an insert + delete will show up as an orphaned delete.
@@ -609,10 +472,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        migrations::views::legacy_drop_views,
-        test_db::{setup_test, SetupOption, SetupResult},
-    };
+    use crate::test_db::{setup_test, SetupOption, SetupResult};
 
     use super::{drop_views, rebuild_views};
 
