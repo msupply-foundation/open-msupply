@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   BasicTextInput,
   Box,
@@ -57,32 +57,82 @@ interface NumericInputProps {
   endAdornment?: string;
 }
 
-export const createNumericInput =
-  (
-    t: TypedTFunction<LocaleKey>,
-    disabled: boolean,
-    isVerticalScreen: boolean
-  ) =>
-  (
-    label: LocaleKey,
-    value: number | null | undefined,
-    options: NumericInputProps = {}
-  ) => {
-    const { onChange, max, decimalLimit, endAdornment } = options;
+export const useInputComponents = (
+  t: TypedTFunction<LocaleKey>,
+  disabled: boolean,
+  isVerticalScreen: boolean
+) => {
+  return useMemo(
+    () => ({
+      numericInput: (
+        label: LocaleKey,
+        value: number | null | undefined,
+        options: NumericInputProps = {}
+      ) => {
+        const { onChange, max, decimalLimit, endAdornment } = options;
+        return (
+          <NumInputRow
+            key={label}
+            disabled={disabled}
+            label={t(label)}
+            value={value ?? 0}
+            onChange={onChange}
+            max={max}
+            decimalLimit={decimalLimit}
+            endAdornment={endAdornment}
+            isVerticalScreen={isVerticalScreen}
+          />
+        );
+      },
 
-    return (
-      <NumInputRow
-        disabled={disabled}
-        label={t(label)}
-        value={value ?? 0}
-        onChange={onChange}
-        max={max}
-        decimalLimit={decimalLimit}
-        endAdornment={endAdornment}
-        isVerticalScreen={isVerticalScreen}
-      />
-    );
-  };
+      textInput: (
+        label: LocaleKey,
+        value: string | null | undefined,
+        onChange?: (value?: string) => void
+      ) => (
+        <TextInput
+          key={label}
+          disabled={disabled}
+          label={t(label)}
+          value={value ?? ''}
+          onChange={onChange}
+          isVerticalScreen={isVerticalScreen}
+        />
+      ),
+
+      multilineTextInput: (
+        label: LocaleKey,
+        value?: string | null,
+        onChange?: (value?: string) => void
+      ) => (
+        <MultilineTextInput
+          key={label}
+          disabled={disabled}
+          label={t(label)}
+          value={value ?? ''}
+          onChange={onChange}
+        />
+      ),
+
+      dateInput: (
+        label: LocaleKey,
+        value?: string | null,
+        onChange?: (value: string | null) => void
+      ) => (
+        <DateInput
+          key={label}
+          disabled={disabled}
+          label={t(label)}
+          value={value}
+          isVerticalScreen={isVerticalScreen}
+          onChange={onChange}
+        />
+      ),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [disabled, isVerticalScreen]
+  );
+};
 
 interface NumInputRowProps {
   label: string;
@@ -146,28 +196,6 @@ const NumInputRow = ({
   );
 };
 
-export const createTextInput =
-  (
-    t: TypedTFunction<LocaleKey>,
-    disabled: boolean,
-    isVerticalScreen: boolean
-  ) =>
-  (
-    label: LocaleKey,
-    value: string | null | undefined,
-    onChange?: (value?: string) => void
-  ) => {
-    return (
-      <TextInput
-        disabled={disabled}
-        label={t(label)}
-        value={value ?? ''}
-        onChange={onChange}
-        isVerticalScreen={isVerticalScreen}
-      />
-    );
-  };
-
 interface TextInputProps {
   label: string;
   value: string;
@@ -211,23 +239,6 @@ const TextInput = ({
   );
 };
 
-export const createMultilineTextInput =
-  (t: TypedTFunction<LocaleKey>, disabled: boolean) =>
-  (
-    label: LocaleKey,
-    value?: string | null,
-    onChange?: (value?: string) => void
-  ) => {
-    return (
-      <MultilineTextInput
-        disabled={disabled}
-        label={t(label)}
-        value={value ?? ''}
-        onChange={onChange}
-      />
-    );
-  };
-
 interface MultilineTextInputProps {
   label: string;
   value: string;
@@ -257,28 +268,6 @@ const MultilineTextInput = ({
     </Box>
   );
 };
-
-export const createDateInput =
-  (
-    t: TypedTFunction<LocaleKey>,
-    disabled: boolean,
-    isVerticalScreen: boolean
-  ) =>
-  (
-    label: LocaleKey,
-    value?: string | null,
-    onChange?: (value: string | null) => void
-  ) => {
-    return (
-      <DateInput
-        disabled={disabled}
-        label={t(label)}
-        value={value}
-        isVerticalScreen={isVerticalScreen}
-        onChange={onChange}
-      />
-    );
-  };
 
 interface DateInputProps {
   label: string;
