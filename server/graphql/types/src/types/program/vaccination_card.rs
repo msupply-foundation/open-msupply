@@ -8,14 +8,13 @@ use graphql_core::{
     ContextExt,
 };
 use serde::Serialize;
-use service::vaccination::get_vaccination_card::{
-    VaccinationCard, VaccinationCardItem, VaccinationCardItemStatus,
-};
+use service::vaccination::get_vaccination_card::{VaccinationCard, VaccinationCardItem};
 
 use crate::types::StockLineNode;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[graphql(remote = "service::vaccination::get_vaccination_card::VaccinationCardItemStatus")]
 pub enum VaccinationCardItemNodeStatus {
     Given,
     NotGiven,
@@ -109,8 +108,8 @@ impl VaccinationCardItemNode {
     pub async fn status(&self) -> Option<VaccinationCardItemNodeStatus> {
         self.item
             .status
-            .as_ref()
-            .map(|status| VaccinationCardItemNodeStatus::from_domain(status))
+            .clone()
+            .map(|status| VaccinationCardItemNodeStatus::from(status))
     }
 
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
@@ -159,28 +158,6 @@ impl VaccinationCardItemNode {
     pub fn from_domain(vaccination_card_item: VaccinationCardItem) -> VaccinationCardItemNode {
         VaccinationCardItemNode {
             item: vaccination_card_item,
-        }
-    }
-}
-
-impl VaccinationCardItemNodeStatus {
-    pub fn to_domain(self) -> VaccinationCardItemStatus {
-        use VaccinationCardItemNodeStatus::*;
-        match self {
-            Given => VaccinationCardItemStatus::Given,
-            NotGiven => VaccinationCardItemStatus::NotGiven,
-            Pending => VaccinationCardItemStatus::Pending,
-            Late => VaccinationCardItemStatus::Late,
-        }
-    }
-
-    pub fn from_domain(status: &VaccinationCardItemStatus) -> VaccinationCardItemNodeStatus {
-        use VaccinationCardItemStatus::*;
-        match status {
-            Given => VaccinationCardItemNodeStatus::Given,
-            NotGiven => VaccinationCardItemNodeStatus::NotGiven,
-            Pending => VaccinationCardItemNodeStatus::Pending,
-            Late => VaccinationCardItemNodeStatus::Late,
         }
     }
 }
