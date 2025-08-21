@@ -2,19 +2,15 @@ import {
   useDialog,
   useNotification,
   ErrorDisplay,
-  FieldErrorWrapper,
   useFormErrorActions,
 } from '@common/hooks';
 import React, { ReactElement } from 'react';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
-  BasicTextInput,
   BasicTextInputWithError,
-  DateTimePickerInput,
   DateTimePickerInputWithError,
   DialogButton,
   InputWithLabelRow,
-  NumericTextInput,
   NumericTextInputWithError,
   Switch,
 } from '@common/components';
@@ -24,14 +20,8 @@ import {
   usePatientModalStore,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
-import {
-  InsurancePolicySelect,
-  InsurancePolicySelectWithError,
-} from './InsurancePolicySelect';
-import {
-  InsuranceProvidersSelect,
-  InsuranceProvidersSelectWithError,
-} from './InsuranceProvidersSelect';
+import { InsurancePolicySelectWithError } from './InsurancePolicySelect';
+import { InsuranceProvidersSelectWithError } from './InsuranceProvidersSelect';
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
 export const InsuranceModal = (): ReactElement => {

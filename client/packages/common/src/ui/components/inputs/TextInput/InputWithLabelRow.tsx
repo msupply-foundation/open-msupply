@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react';
 import { FormLabel, Box, FormLabelProps, SxProps, Theme } from '@mui/material';
 import { BasicTextInput } from './BasicTextInput';
-import { FieldErrorWrapper } from '@common/hooks';
 
 export interface InputWithLabelRowProps {
   Input: ReactNode;
