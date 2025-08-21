@@ -75,7 +75,7 @@ export const Toolbar = ({ simplifiedTabletView }: ToolbarProps) => {
                     disabled={isDisabled || isTransfer}
                     value={otherParty}
                     onChange={name => {
-                      update({ otherParty: name });
+                      update({ otherParty: name ?? undefined });
                     }}
                   />
                 }

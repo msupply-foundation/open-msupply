@@ -53,7 +53,9 @@ export const Toolbar: FC = () => {
                   <CustomerSearchInput
                     disabled={isDisabled || !!requisition}
                     value={otherParty}
-                    onChange={async ({ id: otherPartyId }) => {
+                    onChange={async v => {
+                      if (!v) return;
+                      const otherPartyId = v.id;
                       const newId = await updateName({ id, otherPartyId });
                       // When changing customer name, the whole invoice is
                       // deleted and re-created, so we'll need to re-direct to
