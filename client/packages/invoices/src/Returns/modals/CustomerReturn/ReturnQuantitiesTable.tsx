@@ -12,6 +12,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import {
+  getVolumePerPackFromVariant,
   ItemVariantInputCell,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
@@ -55,23 +56,12 @@ export const QuantityReturnedTableComponent = ({
         key: 'itemVariantId',
         label: 'label.item-variant',
         width: 170,
-        setter: patch => {
-          const { packSize, itemVariant } = patch;
-
-          if (itemVariant) {
-            const packaging = itemVariant.packagingVariants.find(
-              p => p.packSize === packSize
-            );
-            // Item variants save volume in L, but it is saved in m3 everywhere else
-            updateLine({
-              ...patch,
-              volumePerPack:
-                ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
-            });
-          } else {
-            updateLine(patch);
-          }
-        },
+        setter: patch =>
+          updateLine({
+            ...patch,
+            volumePerPack:
+              getVolumePerPackFromVariant(patch) ?? patch.volumePerPack,
+          }),
         Cell: props => (
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
@@ -95,7 +85,12 @@ export const QuantityReturnedTableComponent = ({
       ],
       getColumnLookupWithOverrides('packSize', {
         Cell: PackSizeEntryCell<GenerateCustomerReturnLineFragment>,
-        setter: updateLine,
+        setter: patch =>
+          updateLine({
+            ...patch,
+            volumePerPack:
+              getVolumePerPackFromVariant(patch) ?? patch.volumePerPack,
+          }),
         getIsDisabled: () => isDisabled,
         label: 'label.pack-size',
       })
