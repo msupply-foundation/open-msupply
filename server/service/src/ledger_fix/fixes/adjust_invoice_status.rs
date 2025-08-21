@@ -192,9 +192,9 @@ pub(crate) fn fix(
                                 continue;
                             }
                         };
+                        operation_log.push_str(&format!("Adjusting invoice {invoice_id} status {invoice_status:?} to match latest log status: {log_status:?}.\n", invoice_id = invoice.id));
+                        InvoiceRowRepository::new(connection).upsert_one(invoice)?;
                     }
-                    operation_log.push_str(&format!("Adjusting invoice {invoice_id} status {invoice_status:?} to match latest log status: {log_status:?}.\n", invoice_id = invoice.id));
-                    InvoiceRowRepository::new(connection).upsert_one(invoice)?;
                 }
                 _ => continue,
             }
@@ -219,7 +219,8 @@ mod test {
         InvoiceStatus, KeyValueStoreRepository, StockLineRow,
     };
 
-    fn mock_data() -> MockData {
+    #[actix_rt::test]
+    async fn test_ledger_fix_adjust_invoice_status() {
         // No status change so should not be fixed by this ledger fix
         let total_does_not_match = StockLineRow {
             id: "total_does_not_match".to_string(),
@@ -254,10 +255,15 @@ mod test {
                 .iter()
                 .flat_map(invoice_generate_logs)
                 .collect();
-        an_invoice_where_status_changed_movements.invoices[0].status = InvoiceStatus::Allocated;
-        an_invoice_where_status_changed_movements.invoices[0].delivered_datetime = None;
-        an_invoice_where_status_changed_movements.invoices[0].received_datetime = None;
-        an_invoice_where_status_changed_movements.invoices[0].verified_datetime = None;
+        let invoice = &mut an_invoice_where_status_changed_movements.invoices[0];
+        let invoice_status_changed_id = &invoice.id.clone();
+        let old_delivered_datetime = invoice.delivered_datetime.clone();
+        let old_received_datetime = invoice.received_datetime.clone();
+        let old_verified_datetime = invoice.verified_datetime.clone();
+        invoice.status = InvoiceStatus::Allocated;
+        invoice.delivered_datetime = None;
+        invoice.received_datetime = None;
+        invoice.verified_datetime = None;
 
         // Invoice changed status, but user changed status again creating duplicate in logs. Should not get fixed.
         let an_invoice_where_status_changed_duplicate_status = StockLineRow {
@@ -274,17 +280,19 @@ mod test {
             .iter()
             .flat_map(invoice_generate_logs)
             .collect();
-        duplicate_status_movements.invoices[0].status = InvoiceStatus::Delivered;
-        duplicate_status_movements.invoices[0].received_datetime = None;
-        duplicate_status_movements.invoices[0].verified_datetime = None;
+        let invoice = &mut duplicate_status_movements.invoices[0];
+        let invoice_duplicate_status_id = &invoice.id.clone();
+        invoice.status = InvoiceStatus::Delivered;
+        invoice.received_datetime = None;
+        invoice.verified_datetime = None;
         duplicate_status_movements.activity_logs.push({
             ActivityLogRow {
                 id: "duplicate_delivered_status".to_string(),
-                ..duplicate_status_movements.activity_logs[1].clone() // Should be the delivered log from the first time
+                ..duplicate_status_movements.activity_logs[1].clone() // Should be the delivered log from the first time.
             }
         });
 
-        MockData {
+        let mock_data = MockData {
             stock_lines: vec![
                 total_does_not_match.clone(),
                 an_invoice_where_status_changed.clone(),
@@ -294,15 +302,12 @@ mod test {
         }
         .join(total_does_not_match_movements)
         .join(an_invoice_where_status_changed_movements)
-        .join(duplicate_status_movements)
-    }
+        .join(duplicate_status_movements);
 
-    #[actix_rt::test]
-    async fn adjust_total_to_match_ledger_test() {
         let ServiceTestContext { connection, .. } = setup_all_with_data_and_service_provider(
-            "adjust_total_to_match_ledger",
+            "test_ledger_fix_adjust_invoice_status",
             MockDataInserts::none().names().stores().units().items(),
-            mock_data(),
+            mock_data,
         )
         .await;
 
@@ -313,48 +318,59 @@ mod test {
             )
             .unwrap();
 
-        // assert_eq!(
-        //     is_ledger_fixed(&connection, "total_does_not_match"),
-        //     Ok(false)
-        // );
-        // let mut logs = String::new();
-        // fix(&connection, &mut logs, "total_does_not_match").unwrap();
-        // assert_eq!(
-        //     is_ledger_fixed(&connection, "total_does_not_match"),
-        //     Ok(false)
-        // );
-
-        // assert_eq!(
-        //     is_ledger_fixed(&connection, "an_invoice_where_status_changed"),
-        //     Ok(false)
-        // );
-        // let mut logs = String::new();
-        // fix(&connection, &mut logs, "an_invoice_where_status_changed").unwrap();
-        // assert_eq!(
-        //     is_ledger_fixed(&connection, "an_invoice_where_status_changed"),
-        //     Ok(true)
-        // );
-
-        assert_eq!(
-            is_ledger_fixed(
-                &connection,
-                "an_invoice_where_status_changed_duplicate_status"
-            ),
-            Ok(false)
-        );
         let mut logs = String::new();
-        fix(
-            &connection,
-            &mut logs,
-            "an_invoice_where_status_changed_duplicate_status",
-        )
-        .unwrap();
+        let invoice_id = &total_does_not_match.id;
+        assert_eq!(is_ledger_fixed(&connection, invoice_id), Ok(false));
+        fix(&connection, &mut logs, invoice_id).unwrap();
+        assert_eq!(is_ledger_fixed(&connection, invoice_id), Ok(false));
+
+        let stock_line_id = &an_invoice_where_status_changed.id;
+        let invoice_id = invoice_status_changed_id;
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(invoice_id)
+            .unwrap()
+            .unwrap();
+        assert!(invoice.delivered_datetime.is_none());
+        assert!(invoice.received_datetime.is_none());
+        assert!(invoice.verified_datetime.is_none());
+        assert_eq!(is_ledger_fixed(&connection, stock_line_id), Ok(false));
+        fix(&connection, &mut logs, stock_line_id).unwrap();
+        assert_eq!(is_ledger_fixed(&connection, stock_line_id), Ok(true));
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(invoice_id)
+            .unwrap()
+            .unwrap();
         assert_eq!(
-            is_ledger_fixed(
-                &connection,
-                "an_invoice_where_status_changed_duplicate_status"
-            ),
-            Ok(false)
+            invoice.delivered_datetime, old_delivered_datetime,
+            "delivered_datetime should have been recovered from activity log"
         );
+        assert_eq!(
+            invoice.received_datetime, old_received_datetime,
+            "received_datetime should have been recovered from activity log"
+        );
+        assert_eq!(
+            invoice.verified_datetime, old_verified_datetime,
+            "verified_datetime should have been recovered from activity log"
+        );
+
+        let stock_line_id = &an_invoice_where_status_changed_duplicate_status.id;
+        let invoice_id = invoice_duplicate_status_id;
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(invoice_id)
+            .unwrap()
+            .unwrap();
+        assert!(invoice.delivered_datetime.is_some());
+        assert!(invoice.received_datetime.is_none());
+        assert!(invoice.verified_datetime.is_none());
+        assert_eq!(is_ledger_fixed(&connection, stock_line_id), Ok(false));
+        fix(&connection, &mut logs, stock_line_id).unwrap();
+        assert_eq!(is_ledger_fixed(&connection, stock_line_id), Ok(false));
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(invoice_id)
+            .unwrap()
+            .unwrap();
+        assert!(invoice.delivered_datetime.is_some());
+        assert!(invoice.received_datetime.is_none());
+        assert!(invoice.verified_datetime.is_none());
     }
 }
