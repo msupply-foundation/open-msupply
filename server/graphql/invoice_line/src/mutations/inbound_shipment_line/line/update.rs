@@ -541,7 +541,7 @@ mod test {
             "batch": "batch input",
             "costPricePerPack": 1,
             "sellPricePerPack": 1,
-            "expiryDate": "2022-01-01",
+            "expiryDate": {"value": "2022-01-01"},
             "numberOfPacks": 1.0,
           },
           "storeId": "store_a"
