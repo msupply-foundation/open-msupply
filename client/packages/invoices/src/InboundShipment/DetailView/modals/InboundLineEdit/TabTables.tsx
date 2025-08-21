@@ -31,6 +31,7 @@ import {
   getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
+  getVolumePerPackFromVariant,
   ItemRowFragment,
   LocationRowFragment,
   PackSizeEntryCell,
@@ -146,7 +147,10 @@ export const QuantityTableComponent = ({
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
         setPackRoundingMessage?.('');
-        updateDraftLine(patch);
+        updateDraftLine({
+          ...patch,
+          volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+        });
       },
       label: 'label.received-pack-size',
       width: 100,

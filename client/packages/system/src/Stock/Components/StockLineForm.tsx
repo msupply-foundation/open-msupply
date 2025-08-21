@@ -36,7 +36,11 @@ import {
   VVMStatusSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
-import { ItemVariantInput, useIsItemVariantsEnabled } from '../../Item';
+import {
+  getVolumePerPackFromVariant,
+  ItemVariantInput,
+  useIsItemVariantsEnabled,
+} from '../../Item';
 import { CampaignOrProgramSelector } from './Campaign';
 
 interface StockLineFormProps {
@@ -351,16 +355,14 @@ export const StockLineForm = ({
                     selectedId={draft?.itemVariant?.id}
                     width={160}
                     onChange={variant => {
-                      const packaging = variant?.packagingVariants.find(
-                        p => p.packSize === draft.packSize
-                      );
-                      const volumePerPack =
-                        ((packaging?.volumePerUnit ?? 0) / 1000) *
-                        (draft?.packSize ?? 1);
+                      const newVolume = getVolumePerPackFromVariant({
+                        itemVariant: variant,
+                        packSize: draft.packSize,
+                      });
 
                       onUpdate({
                         itemVariant: variant,
-                        volumePerPack,
+                        volumePerPack: newVolume ?? 0,
                       });
                     }}
                   />
