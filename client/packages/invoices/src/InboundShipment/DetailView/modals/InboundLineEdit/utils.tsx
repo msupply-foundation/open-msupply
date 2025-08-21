@@ -11,10 +11,10 @@ import {
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
+  getVolumePerPackFromVariant,
   ItemVariantInputCell,
   VVMStatusInputCell,
 } from '@openmsupply-client/system';
-import { InboundLineFragment } from '../../../api';
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
 const getBatchColumn = (
@@ -89,7 +89,7 @@ export const itemVariantColumn = (
   setter: patch => {
     updateDraftLine({
       ...patch,
-      volumePerPack: getNewVolumePerPack(patch) ?? patch.volumePerPack,
+      volumePerPack: getVolumePerPackFromVariant(patch) ?? patch.volumePerPack,
     });
   },
 });
@@ -122,22 +122,3 @@ export const getInboundDosesColumns = (
     },
   },
 ];
-
-export const getNewVolumePerPack = ({
-  packSize,
-  itemVariant,
-}: {
-  packSize?: number | null;
-  itemVariant?: InboundLineFragment['itemVariant'];
-}): number | undefined => {
-  if (!itemVariant) return undefined;
-
-  const packaging = itemVariant.packagingVariants.find(
-    p => p.packSize === packSize
-  );
-
-  if (!packaging) return undefined;
-
-  // Item variants save volume in L, but it is saved in m3 everywhere else
-  return ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1);
-};

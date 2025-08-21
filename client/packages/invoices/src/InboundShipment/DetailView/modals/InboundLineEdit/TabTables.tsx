@@ -31,6 +31,7 @@ import {
   getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
+  getVolumePerPackFromVariant,
   ItemRowFragment,
   LocationRowFragment,
   PackSizeEntryCell,
@@ -38,7 +39,6 @@ import {
 import {
   getBatchExpiryColumns,
   getInboundDosesColumns,
-  getNewVolumePerPack,
   itemVariantColumn,
   NumberOfPacksCell,
   vvmStatusesColumn,
@@ -149,7 +149,8 @@ export const QuantityTableComponent = ({
         setPackRoundingMessage?.('');
         updateDraftLine({
           ...patch,
-          volumePerPack: getNewVolumePerPack(patch) ?? patch.volumePerPack,
+          volumePerPack:
+            getVolumePerPackFromVariant(patch) ?? patch.volumePerPack,
         });
       },
       label: 'label.received-pack-size',
