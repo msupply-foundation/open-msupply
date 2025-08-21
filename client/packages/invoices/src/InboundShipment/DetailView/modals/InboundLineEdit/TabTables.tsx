@@ -38,6 +38,7 @@ import {
 import {
   getBatchExpiryColumns,
   getInboundDosesColumns,
+  getNewVolumePerPack,
   itemVariantColumn,
   NumberOfPacksCell,
   vvmStatusesColumn,
@@ -146,7 +147,10 @@ export const QuantityTableComponent = ({
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
         setPackRoundingMessage?.('');
-        updateDraftLine(patch);
+        updateDraftLine({
+          ...patch,
+          volumePerPack: getNewVolumePerPack(patch) ?? patch.volumePerPack,
+        });
       },
       label: 'label.received-pack-size',
       width: 100,
