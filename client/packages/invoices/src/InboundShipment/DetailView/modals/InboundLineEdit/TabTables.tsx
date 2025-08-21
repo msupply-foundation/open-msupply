@@ -149,8 +149,7 @@ export const QuantityTableComponent = ({
         setPackRoundingMessage?.('');
         updateDraftLine({
           ...patch,
-          volumePerPack:
-            getVolumePerPackFromVariant(patch) ?? patch.volumePerPack,
+          volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
         });
       },
       label: 'label.received-pack-size',

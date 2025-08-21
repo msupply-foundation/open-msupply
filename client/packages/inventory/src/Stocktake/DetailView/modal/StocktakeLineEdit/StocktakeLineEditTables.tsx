@@ -215,8 +215,7 @@ export const BatchTable = ({
         setter: patch => {
           update({
             ...patch,
-            volumePerPack:
-              getVolumePerPackFromVariant(patch) ?? patch.volumePerPack,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
           });
         },
       });
@@ -250,11 +249,12 @@ export const BatchTable = ({
             patch.item?.defaultPackSize !== patch.packSize &&
             patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
               patch.sellPricePerPack;
-          if (shouldClearSellPrice) {
-            update({ ...patch, sellPricePerPack: 0 });
-          } else {
-            update(patch);
-          }
+
+          update({
+            ...patch,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+            sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
+          });
         },
       }),
       {

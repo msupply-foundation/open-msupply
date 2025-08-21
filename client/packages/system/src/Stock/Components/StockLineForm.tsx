@@ -362,7 +362,7 @@ export const StockLineForm = ({
 
                       onUpdate({
                         itemVariant: variant,
-                        volumePerPack: newVolume ?? draft.volumePerPack,
+                        volumePerPack: newVolume ?? 0,
                       });
                     }}
                   />
