@@ -9,7 +9,7 @@ use graphql_core::{
 use graphql_types::types::{ReasonOptionConnector, ReasonOptionNodeType};
 use repository::{
     reason_option::{ReasonOptionFilter, ReasonOptionSort, ReasonOptionSortField},
-    EqualFilter, PaginationOption,
+    EqualFilter, PaginationOption, ReasonOptionType,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -92,7 +92,7 @@ impl ReasonOptionFilterInput {
 
         ReasonOptionFilter {
             id: id.map(EqualFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, ReasonOptionNodeType::to_domain)),
+            r#type: r#type.map(|t| map_filter!(t, |r| ReasonOptionType::from(r))),
             is_active,
         }
     }
