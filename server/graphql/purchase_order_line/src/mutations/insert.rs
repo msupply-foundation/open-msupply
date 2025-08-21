@@ -28,6 +28,11 @@ pub struct InsertInput {
     pub expected_delivery_date: Option<NaiveDate>,
     pub price_per_unit_before_discount: Option<f64>,
     pub price_per_unit_after_discount: Option<f64>,
+    pub manufacturer_id: Option<String>,
+    pub note: Option<String>,
+    pub unit: Option<String>,
+    pub supplier_item_code: Option<String>,
+    pub comment: Option<String>,
 }
 
 impl InsertInput {
@@ -42,6 +47,11 @@ impl InsertInput {
             expected_delivery_date,
             price_per_unit_after_discount,
             price_per_unit_before_discount,
+            manufacturer_id,
+            note,
+            unit,
+            supplier_item_code,
+            comment,
         } = self;
 
         ServiceInput {
@@ -54,6 +64,11 @@ impl InsertInput {
             expected_delivery_date,
             price_per_unit_after_discount,
             price_per_unit_before_discount,
+            manufacturer_id,
+            note,
+            unit,
+            supplier_item_code,
+            comment,
         }
     }
 }
@@ -150,9 +165,11 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 CannnotFindItemByCode {},
             ));
         }
-        ServiceError::ItemDoesNotExist | ServiceError::IncorrectStoreId => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::ItemDoesNotExist
+        | ServiceError::IncorrectStoreId
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::OtherPartyNotAManufacturer
+        | ServiceError::OtherPartyNotVisible => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

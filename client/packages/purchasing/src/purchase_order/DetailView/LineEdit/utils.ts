@@ -19,6 +19,7 @@ export const createDraftPurchaseOrderLine = (
     adjustedNumberOfUnits: null,
     pricePerUnitBeforeDiscount: 0,
     pricePerUnitAfterDiscount: 0,
+    unit: item.unitName,
     // This value not actually saved to DB
     discountPercentage: 0,
     numberOfPacks: 0,

@@ -15,12 +15,14 @@ interface NumericTextDisplayProps {
   defaultValue?: string | number;
   children?: React.ReactElement;
   width?: number | string;
+  packagingDisplay?: string;
 }
 
 export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   value,
   defaultValue = '',
   width = 50,
+  packagingDisplay,
 }) => {
   const format = useFormatNumber();
   const tooltip = value ? format.round(value ?? undefined, 10) : null;
@@ -48,6 +50,7 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
           {!!NumUtils.hasMoreThanTwoDp(value ?? 0)
             ? `${displayValue}...`
             : displayValue}
+          {packagingDisplay ? ` ${packagingDisplay}` : ''}
         </Typography>
       </Tooltip>
     </Box>

@@ -119,6 +119,7 @@ export const DetailViewInner = () => {
               onClose={onClose}
               mode={mode}
               lineId={lineId}
+              isDisabled={isDisabled}
               hasNext={
                 sortedAndFilteredLines.findIndex(line => line.id === lineId) <
                 sortedAndFilteredLines.length - 1

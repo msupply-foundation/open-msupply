@@ -6,6 +6,7 @@ import {
   usePatchState,
   useQuery,
   useTranslation,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
@@ -19,6 +20,7 @@ export type DraftPurchaseOrderLine = Omit<
   itemId: string;
   discountPercentage: number;
   numberOfPacks: number;
+  requestedNumberOfPacks?: number;
 };
 
 export type DraftPurchaseOrderLineFromCSV = Omit<
@@ -40,9 +42,15 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   lineNumber: 0,
   pricePerUnitBeforeDiscount: 0,
   pricePerUnitAfterDiscount: 0,
+  manufacturer: null,
+  note: null,
+  unit: null,
+  supplierItemCode: null,
+  comment: null,
   // This value not actually saved to DB
   discountPercentage: 0,
   numberOfPacks: 0,
+  requestedNumberOfPacks: 0,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {
@@ -113,6 +121,11 @@ export function usePurchaseOrderLine(id?: string | null) {
       adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
       pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
       pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
+      manufacturerId: setNullableInput('id', draft.manufacturer),
+      note: setNullableInput('note', draft),
+      unit: draft.unit,
+      supplierItemCode: setNullableInput('supplierItemCode', draft),
+      comment: setNullableInput('comment', draft),
     };
     return await updatePurchaseOrderLine(input);
   };
@@ -184,6 +197,11 @@ const useCreate = () => {
         expectedDeliveryDate: draft.expectedDeliveryDate,
         pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
         pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
+        manufacturerId: draft.manufacturer?.id,
+        note: draft.note,
+        unit: draft.unit,
+        supplierItemCode: draft.supplierItemCode,
+        comment: draft.comment,
       },
     });
   };

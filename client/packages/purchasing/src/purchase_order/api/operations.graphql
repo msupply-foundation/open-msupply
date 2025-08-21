@@ -106,7 +106,13 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   adjustedNumberOfUnits
   pricePerUnitAfterDiscount
   pricePerUnitBeforeDiscount
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+  note
+  unit
   comment
+  supplierItemCode
 }
 
 query purchaseOrders(
