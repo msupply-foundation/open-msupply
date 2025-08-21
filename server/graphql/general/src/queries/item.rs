@@ -7,7 +7,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{ItemConnector, ItemNodeType};
-use repository::{EqualFilter, PaginationOption, StringFilter};
+use repository::{EqualFilter, ItemType, PaginationOption, StringFilter};
 use repository::{ItemFilter, ItemSort, ItemSortField};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -116,7 +116,7 @@ impl ItemFilterInput {
             id: id.map(EqualFilter::from),
             name: name.map(StringFilter::from),
             code: code.map(StringFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, ItemNodeType::to_domain)),
+            r#type: r#type.map(|t| map_filter!(t, |r| ItemType::from(r))),
             category_id,
             category_name,
             is_visible,

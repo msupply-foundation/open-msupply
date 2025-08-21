@@ -68,7 +68,7 @@ pub mod item_direction;
 pub mod item_direction_row;
 pub mod item_ledger;
 mod item_link_row;
-mod item_row;
+pub mod item_row;
 pub mod item_store_join;
 pub mod item_variant;
 pub mod item_warning_join;
