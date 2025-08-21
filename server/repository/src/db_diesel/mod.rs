@@ -123,7 +123,7 @@ pub mod reason_option_row;
 pub mod replenishment;
 pub mod report;
 mod report_query;
-mod report_row;
+pub mod report_row;
 pub mod requisition;
 pub mod requisition_line;
 pub mod rnr_form;
