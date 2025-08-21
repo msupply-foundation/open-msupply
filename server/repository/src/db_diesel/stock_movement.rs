@@ -7,7 +7,6 @@ use crate::{
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-
 /*
 -- Stock movement --
 
@@ -31,7 +30,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default)]
 pub struct StockMovementRow {
     pub id: String,
     pub item_id: String,
@@ -39,20 +38,6 @@ pub struct StockMovementRow {
     pub quantity: f64,
     pub datetime: NaiveDateTime,
     pub stock_line_id: Option<String>,
-}
-
-impl Default for StockMovementRow {
-    fn default() -> Self {
-        Self {
-            datetime: Default::default(),
-            // Default
-            id: Default::default(),
-            item_id: Default::default(),
-            store_id: Default::default(),
-            quantity: Default::default(),
-            stock_line_id: Default::default(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
