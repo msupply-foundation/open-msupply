@@ -25,6 +25,9 @@ pub enum InsertPurchaseOrderLineError {
     PurchaseOrderDoesNotExist,
     IncorrectStoreId,
     CannotEditPurchaseOrder,
+    OtherPartyDoesNotExist,
+    OtherPartyNotAManufacturer,
+    OtherPartyNotVisible,
     PackSizeCodeCombinationExists(PackSizeCodeCombination),
     DatabaseError(RepositoryError),
     CannotFindItemByCode(String),
@@ -41,6 +44,11 @@ pub struct InsertPurchaseOrderLineInput {
     pub expected_delivery_date: Option<NaiveDate>,
     pub price_per_unit_before_discount: Option<f64>,
     pub price_per_unit_after_discount: Option<f64>,
+    pub manufacturer_id: Option<String>,
+    pub note: Option<String>,
+    pub unit: Option<String>,
+    pub supplier_item_code: Option<String>,
+    pub comment: Option<String>,
 }
 
 pub fn insert_purchase_order_line(
@@ -57,10 +65,11 @@ pub fn insert_purchase_order_line(
                 item_code: None,
                 // TODO amend default value if we extend standard insert line input
                 requested_pack_size: input.requested_pack_size.unwrap_or_default(), // Default value
+                manufacturer_id: input.manufacturer_id.clone(),
             };
-            validate(&ctx.store_id.clone(), &validate_input, connection)?;
+            let item = validate(&ctx.store_id.clone(), &validate_input, connection)?;
             let new_purchase_order_line =
-                generate(connection, &ctx.store_id.clone(), input.clone())?;
+                generate(connection, &ctx.store_id.clone(), item, input.clone())?;
 
             activity_log_entry(
                 ctx,
@@ -110,6 +119,7 @@ pub fn insert_purchase_order_line_from_csv(
                 item_id: None,
                 item_code: Some(input.item_code.clone()),
                 requested_pack_size: input.requested_pack_size.unwrap_or(0.0), // Default value which can be edited in UI
+                manufacturer_id: None,
             };
 
             let item = validate(&ctx.store_id.clone(), &validate_input, connection)?;
@@ -122,8 +132,13 @@ pub fn insert_purchase_order_line_from_csv(
                 requested_number_of_units: input.requested_number_of_units,
                 price_per_unit_before_discount: input.price_per_unit_before_discount,
                 price_per_unit_after_discount: input.price_per_unit_after_discount,
+                unit: None,
                 requested_delivery_date: None,
                 expected_delivery_date: None,
+                manufacturer_id: None,
+                note: None,
+                supplier_item_code: None,
+                comment: None,
             };
 
             let new_purchase_order_line =
