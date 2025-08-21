@@ -4847,7 +4847,7 @@ export type LabelPrinterUpdateResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export enum LanguageType {
+export enum LanguageTypeNode {
   English = 'ENGLISH',
   French = 'FRENCH',
   Khmer = 'KHMER',
@@ -9443,6 +9443,7 @@ export type TemperatureBreachNode = {
 export enum TemperatureBreachNodeType {
   ColdConsecutive = 'COLD_CONSECUTIVE',
   ColdCumulative = 'COLD_CUMULATIVE',
+  Excursion = 'EXCURSION',
   HotConsecutive = 'HOT_CONSECUTIVE',
   HotCumulative = 'HOT_CUMULATIVE',
 }
@@ -10809,7 +10810,7 @@ export type UserNode = {
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   jobTitle?: Maybe<Scalars['String']['output']>;
-  language: LanguageType;
+  language: LanguageTypeNode;
   lastName?: Maybe<Scalars['String']['output']>;
   permissions: UserStorePermissionConnector;
   phoneNumber?: Maybe<Scalars['String']['output']>;
@@ -10862,8 +10863,8 @@ export enum UserPermission {
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
   RequisitionSend = 'REQUISITION_SEND',
-  RnRFormMutate = 'RN_R_FORM_MUTATE',
-  RnRFormQuery = 'RN_R_FORM_QUERY',
+  RnrFormMutate = 'RNR_FORM_MUTATE',
+  RnrFormQuery = 'RNR_FORM_QUERY',
   SensorMutate = 'SENSOR_MUTATE',
   SensorQuery = 'SENSOR_QUERY',
   ServerAdmin = 'SERVER_ADMIN',
