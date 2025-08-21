@@ -107,7 +107,6 @@ pub fn get_sync_messages(
         .sync_message_service
         .get_sync_messages(
             &service_context,
-            store_id,
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())

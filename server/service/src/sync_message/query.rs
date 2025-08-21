@@ -20,7 +20,6 @@ pub fn get_sync_message(
 
 pub fn get_sync_messages(
     ctx: &ServiceContext,
-    store_id: &str,
     pagination: Option<PaginationOption>,
     filter: Option<SyncMessageFilter>,
     sort: Option<SyncMessageSort>,
@@ -28,21 +27,10 @@ pub fn get_sync_messages(
     let pagination = get_pagination_or_default(pagination)?;
     let repository = SyncMessageRepository::new(&ctx.connection);
 
-    let results = repository.query(pagination, filter.clone(), sort)?;
-
-    // TODO: have to rethink how we filter from store_id
-    let filtered_rows: Vec<SyncMessageRow> = results
-        .into_iter()
-        .filter(|row| {
-            row.to_store_id.as_ref() == Some(&store_id.to_string())
-                || row.from_store_id.as_ref() == Some(&store_id.to_string())
-        })
-        .collect();
-
-    let count = repository.count(filter)?;
+    let filter = filter.unwrap_or_default();
 
     Ok(ListResult {
-        rows: filtered_rows,
-        count: i64_to_u32(count),
+        rows: repository.query(pagination, Some(filter.clone()), sort)?,
+        count: i64_to_u32(repository.count(Some(filter))?),
     })
 }
