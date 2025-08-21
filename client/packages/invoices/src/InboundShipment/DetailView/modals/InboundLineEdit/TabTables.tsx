@@ -112,7 +112,6 @@ export const QuantityTableComponent = ({
       width: 100,
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
-        setPackRoundingMessage?.('');
         updateDraftLine(patch);
       },
       getIsDisabled: rowData => !!rowData.linkedInvoiceId,
