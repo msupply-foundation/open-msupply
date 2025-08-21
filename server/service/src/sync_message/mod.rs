@@ -21,12 +21,11 @@ pub trait SyncMessageTrait: Sync + Send {
     fn get_sync_messages(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         pagination: Option<PaginationOption>,
         filter: Option<SyncMessageFilter>,
         sort: Option<SyncMessageSort>,
     ) -> Result<ListResult<SyncMessageRow>, ListError> {
-        get_sync_messages(ctx, store_id, pagination, filter, sort)
+        get_sync_messages(ctx, pagination, filter, sort)
     }
 }
 
