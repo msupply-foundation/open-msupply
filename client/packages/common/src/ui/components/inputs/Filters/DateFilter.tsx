@@ -44,6 +44,7 @@ export const DateFilter = ({
 
       let date = selection;
 
+      // when user is only selecting the date, ensure the search filter is inclusive of start and end of day
       if (!showTimepicker && type === 'dateTime') {
         if (range === 'from') {
           date = DateUtils.startOfDay(selection);
