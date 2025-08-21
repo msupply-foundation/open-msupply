@@ -161,6 +161,8 @@ pub enum Resource {
     MutateGoodsReceived,
     QueryGoodsReceived,
     AuthoriseGoodsReceived,
+    // Sync Message
+    QuerySyncMessage,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -715,6 +717,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::AuthoriseGoodsReceived,
         PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
+    );
+
+    map.insert(
+        Resource::QuerySyncMessage,
+        PermissionDSL::HasStoreAccess,
     );
 
     map

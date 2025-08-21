@@ -77,6 +77,7 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
+    sync_message::{SyncMessageService, SyncMessageTrait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
@@ -200,6 +201,8 @@ pub struct ServiceProvider {
     pub goods_received_line_service: Box<dyn GoodsReceivedLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
+    // Sync Message
+    pub sync_message_service: Box<dyn SyncMessageTrait>,
 }
 
 pub struct ServiceContext {
@@ -311,6 +314,7 @@ impl ServiceProvider {
             goods_received_service: Box::new(GoodsReceivedService),
             goods_received_line_service: Box::new(GoodsReceivedLineService),
             contact_service: Box::new(ContactService {}),
+            sync_message_service: Box::new(SyncMessageService),
             ledger_fix_trigger,
         }
     }
