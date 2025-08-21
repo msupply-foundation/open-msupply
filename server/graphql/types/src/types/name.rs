@@ -1,6 +1,6 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use repository::{Name, NameRow, NameType, Store, StoreRow};
+use repository::{Name, NameRow, NameRowType, NameType, Store, StoreRow};
 
 use graphql_core::{
     simple_generic_errors::NodeError, standard_graphql_error::StandardGraphqlError, ContextExt,
@@ -13,30 +13,12 @@ use super::{patient::GenderTypeNode, StoreNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::name::NameType")]
 pub enum NameNodeType {
     Facility,
     Invad,
     Repack,
     Store,
-}
-
-impl NameNodeType {
-    pub fn from_domain(name_type: &NameType) -> Self {
-        match name_type {
-            NameType::Facility => NameNodeType::Facility,
-            NameType::Invad => NameNodeType::Invad,
-            NameType::Repack => NameNodeType::Repack,
-            NameType::Store => NameNodeType::Store,
-        }
-    }
-    pub fn to_domain(self) -> NameType {
-        match self {
-            NameNodeType::Facility => NameType::Facility,
-            NameNodeType::Invad => NameType::Invad,
-            NameNodeType::Repack => NameType::Repack,
-            NameNodeType::Store => NameType::Store,
-        }
-    }
 }
 
 #[Object]
@@ -54,7 +36,9 @@ impl NameNode {
     }
 
     pub async fn r#type(&self) -> NameNodeType {
-        NameNodeType::from_domain(&self.row().r#type.clone().into())
+        NameNodeType::from(<NameRowType as Into<NameType>>::into(
+            self.row().r#type.clone(),
+        ))
     }
 
     pub async fn is_customer(&self) -> bool {
