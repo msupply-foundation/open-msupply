@@ -8,7 +8,9 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderNodeStatus};
-use repository::{DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
+use repository::{
+    DatetimeFilter, EqualFilter, PaginationOption, PurchaseOrderStatus, StringFilter,
+};
 use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField};
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -131,7 +133,7 @@ impl PurchaseOrderFilterInput {
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             status: self
                 .status
-                .map(|t| map_filter!(t, PurchaseOrderNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |s| PurchaseOrderStatus::from(s))),
             supplier: self.supplier.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
         }
