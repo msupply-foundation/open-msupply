@@ -110,6 +110,7 @@ import {
 } from '@common/utils';
 import { useFormatNumber, useCurrency, useTranslation } from '@common/intl';
 import { InputAdornment } from '@common/components';
+import { FieldErrorWrapper, FieldErrorWrapperProps } from '@common/hooks';
 
 export interface NumericInputProps {
   /**
@@ -392,9 +393,25 @@ export const NumericTextInput = React.forwardRef<
   }
 );
 
-export const constrain = (
-  value: number,
-  decimals: number,
-  min: number,
-  max: number
-) => NumUtils.constrain(NumUtils.round(value, decimals), min, max);
+export const NumericTextInputWithError = ({
+  code,
+  label,
+  value,
+  required,
+  customErrorState,
+  customErrorMessage,
+  ...numericInputProps
+}: NumericTextInputProps &
+  Omit<FieldErrorWrapperProps<number | undefined>, 'children'>) => (
+  <FieldErrorWrapper
+    {...{ code, label, value, required, customErrorState, customErrorMessage }}
+  >
+    {errorProps => (
+      <NumericTextInput
+        {...numericInputProps}
+        {...errorProps}
+        label={undefined} // Suppress input's own label
+      />
+    )}
+  </FieldErrorWrapper>
+);
