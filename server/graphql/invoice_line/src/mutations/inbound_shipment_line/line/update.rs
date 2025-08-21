@@ -515,7 +515,9 @@ mod test {
                     batch: Some("batch input".to_string()),
                     cost_price_per_pack: Some(1.0),
                     sell_price_per_pack: Some(1.0),
-                    expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
+                    expiry_date: Some(NullableUpdate {
+                        value: NaiveDate::from_ymd_opt(2022, 1, 1)
+                    }),
                     number_of_packs: Some(1.0),
                     r#type: StockInType::InboundShipment,
                     ..Default::default()
