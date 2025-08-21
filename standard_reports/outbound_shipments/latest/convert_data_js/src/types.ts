@@ -12,7 +12,7 @@ export type Input = {
 export interface InvoiceConnector {
   nodes: {
     id: string;
-    otherPartyName?: string;
+    otherPartyName: string;
     lines: InvoiceLine;
   }[];
 }
@@ -38,7 +38,6 @@ export interface Item {
 
 export type Output = {
   data?: {
-    otherPartyName?: string;
     lines: Lines;
   };
 };
@@ -54,4 +53,5 @@ export type Lines = {
   numberOfUnits: number;
   costPricePerPack: number;
   totalCost: number | string;
+  otherPartyName: string;
 }[];

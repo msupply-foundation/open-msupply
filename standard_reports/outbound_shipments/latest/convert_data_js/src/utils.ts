@@ -2,7 +2,6 @@ import { InvoiceConnector, Lines, Output } from "./types";
 
 export const processInvoiceLines = (
   invoices: InvoiceConnector | undefined,
-  otherPartyId?: string
 ): Output => {
   if (!invoices) {
     return { data: undefined };
@@ -43,19 +42,17 @@ export const processInvoiceLines = (
         numberOfUnits: line.numberOfPacks * line.packSize,
         costPricePerPack: line.costPricePerPack,
         totalCost: isLast ? itemTotals.get(itemCode)! : "-",
+        otherPartyName: invoice.otherPartyName,
       });
     });
   });
 
   const sortedResult = result.sort((a, b) =>
-    a.itemName.localeCompare(b.itemName)
+    a.itemName.localeCompare(b.itemName) || a.otherPartyName.localeCompare(b.otherPartyName)
   );
 
   return {
     data: {
-      otherPartyName: otherPartyId
-        ? invoices.nodes[0]?.otherPartyName
-        : undefined,
       lines: sortedResult,
     },
   };
