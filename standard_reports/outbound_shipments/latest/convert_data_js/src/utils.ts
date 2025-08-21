@@ -1,7 +1,7 @@
 import { InvoiceConnector, Lines, Output } from "./types";
 
 export const processInvoiceLines = (
-  invoices: InvoiceConnector | undefined,
+  invoices: InvoiceConnector | undefined
 ): Output => {
   if (!invoices) {
     return { data: undefined };
@@ -12,12 +12,13 @@ export const processInvoiceLines = (
 
   invoices.nodes.forEach((invoice) => {
     invoice.lines.nodes.forEach((line) => {
-      const itemCode = line.item.code;
+      const groupKey = `${line.item.code}-${invoice.otherPartyName}`;
       itemTotals.set(
-        itemCode,
-        (itemTotals.get(itemCode) || 0) + line.totalBeforeTax
+        groupKey,
+        (itemTotals.get(groupKey) || 0) +
+          line.costPricePerPack * line.numberOfPacks
       );
-      itemCount.set(itemCode, (itemCount.get(itemCode) || 0) + 1);
+      itemCount.set(groupKey, (itemCount.get(groupKey) || 0) + 1);
     });
   });
 
@@ -26,10 +27,10 @@ export const processInvoiceLines = (
 
   invoices.nodes.forEach((invoice) => {
     invoice.lines.nodes.forEach((line) => {
-      const itemCode = line.item.code;
-      const current = (itemOccurrences.get(itemCode) || 0) + 1;
-      itemOccurrences.set(itemCode, current);
-      const isLast = current === itemCount.get(itemCode);
+      const groupKey = `${line.item.code}-${invoice.otherPartyName}`;
+      const current = (itemOccurrences.get(groupKey) || 0) + 1;
+      itemOccurrences.set(groupKey, current);
+      const isLast = current === itemCount.get(groupKey);
 
       result.push({
         id: line.id,
@@ -41,14 +42,16 @@ export const processInvoiceLines = (
         numberOfPacks: line.numberOfPacks,
         numberOfUnits: line.numberOfPacks * line.packSize,
         costPricePerPack: line.costPricePerPack,
-        totalCost: isLast ? itemTotals.get(itemCode)! : "-",
+        totalCost: isLast ? (itemTotals.get(groupKey)!).toFixed(2) : "-",
         otherPartyName: invoice.otherPartyName,
       });
     });
   });
 
-  const sortedResult = result.sort((a, b) =>
-    a.itemName.localeCompare(b.itemName) || a.otherPartyName.localeCompare(b.otherPartyName)
+  const sortedResult = result.sort(
+    (a, b) =>
+      a.itemName.localeCompare(b.itemName) ||
+      a.otherPartyName.localeCompare(b.otherPartyName)
   );
 
   return {
