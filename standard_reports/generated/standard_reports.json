@@ -15,10 +15,6 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}"
-          },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
@@ -32,6 +28,10 @@
               "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n    page: { first: 5000 }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
             }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}"
           }
         }
       },
@@ -227,18 +227,18 @@
             "type": "Resource",
             "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}"
           },
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
-          },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
               "template": "<style>{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.expiring-in-days\", f=\"Expiring in (days)\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"report.expiry-date\", f=\"Expiry date\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.average-monthly-consumption\", f=\"Average monthly consumption\")}}</td>\n        <td>{{t(k=\"report.expected-usage\", f=\"Expected usage\")}}</td>\n        <td>{{t(k=\"report.stock-at-risk\", f=\"Stock at risk\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td class=\"expiry-date\">\n          {% if stockLine.daysUntilExpired %}\n            {% if stockLine.daysUntilExpired <= 0 %}\n              <span class=\"expired\">{{t(k=\"report.expired\", f=\"Expired\")}}</span>\n              {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire *\n                (365.25 / 12.0) %}\n              <span class=\"soon\">{{ stockLine.daysUntilExpired }}</span>\n            {% else %}\n                <span class=\"all-good\">{{ stockLine.daysUntilExpired }}</span>\n            {% endif %}\n          {% else %}\n            <span class=\"na\">N/A</span>\n          {% endif %}\n        </td>\n        <td>{{stockLine.batch | default(value='')}}</td>\n        <td>\n          {% if stockLine.expiryDate %}\n            {{ stockLine.expiryDate | date(format=\"%d/%m/%Y\") }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)\n          }}</td>\n        <td>{{stockLine.averageMonthlyConsumption }}</td>\n        <td>\n          {% if stockLine.expectedUsage %}\n              {{ stockLine.expectedUsage | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>\n          {% if stockLine.stockAtRisk %}\n            {{ stockLine.stockAtRisk | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
+            }
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
             }
           }
         }
@@ -427,26 +427,26 @@
           "query": [
             "query.graphql"
           ],
-          "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goKGU9PntlLmxpbmVzLm5vZGVzLmZvckVhY2goKGU9Pntjb25zdCBvPWUuaXRlbS5jb2RlO3Quc2V0KG8sKHQuZ2V0KG8pfHwwKStlLnRvdGFsQmVmb3JlVGF4KSxhLnNldChvLChhLmdldChvKXx8MCkrMSl9KSl9KSk7Y29uc3Qgbz1bXSxyPW5ldyBNYXA7cmV0dXJuIGUubm9kZXMuZm9yRWFjaCgoZT0+e2UubGluZXMubm9kZXMuZm9yRWFjaCgoYz0+e2NvbnN0IG49Yy5pdGVtLmNvZGUsaT0oci5nZXQobil8fDApKzE7ci5zZXQobixpKTtjb25zdCBzPWk9PT1hLmdldChuKTtvLnB1c2goe2lkOmMuaWQsaXRlbUNvZGU6Yy5pdGVtLmNvZGUsaXRlbU5hbWU6Yy5pdGVtLm5hbWUsYmF0Y2g6Yy5iYXRjaCxleHBpcnlEYXRlOmMuZXhwaXJ5RGF0ZSxwYWNrU2l6ZTpjLnBhY2tTaXplLG51bWJlck9mUGFja3M6Yy5udW1iZXJPZlBhY2tzLG51bWJlck9mVW5pdHM6Yy5udW1iZXJPZlBhY2tzKmMucGFja1NpemUsY29zdFByaWNlUGVyUGFjazpjLmNvc3RQcmljZVBlclBhY2ssdG90YWxDb3N0OnM/dC5nZXQobik6Ii0iLG90aGVyUGFydHlOYW1lOmUub3RoZXJQYXJ0eU5hbWV9KX0pKX0pKSx7ZGF0YTp7bGluZXM6by5zb3J0KCgoZSx0KT0+ZS5pdGVtTmFtZS5sb2NhbGVDb21wYXJlKHQuaXRlbU5hbWUpfHxlLm90aGVyUGFydHlOYW1lLmxvY2FsZUNvbXBhcmUodC5vdGhlclBhcnR5TmFtZSkpKX19fSkoZT8uZGF0YT8uaW52b2ljZXMpfWV4cG9ydHtlIGFzIGNvbnZlcnRfZGF0YX07",
+          "convert_data": "ZnVuY3Rpb24gZShlKXtyZXR1cm4oZT0+e2lmKCFlKXJldHVybntkYXRhOnZvaWQgMH07Y29uc3QgdD1uZXcgTWFwLGE9bmV3IE1hcDtlLm5vZGVzLmZvckVhY2goKGU9PntlLmxpbmVzLm5vZGVzLmZvckVhY2goKHI9Pntjb25zdCBvPWAke3IuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YDt0LnNldChvLCh0LmdldChvKXx8MCkrci5jb3N0UHJpY2VQZXJQYWNrKnIubnVtYmVyT2ZQYWNrcyksYS5zZXQobywoYS5nZXQobyl8fDApKzEpfSkpfSkpO2NvbnN0IHI9W10sbz1uZXcgTWFwO3JldHVybiBlLm5vZGVzLmZvckVhY2goKGU9PntlLmxpbmVzLm5vZGVzLmZvckVhY2goKGM9Pntjb25zdCBpPWAke2MuaXRlbS5jb2RlfS0ke2Uub3RoZXJQYXJ0eU5hbWV9YCxuPShvLmdldChpKXx8MCkrMTtvLnNldChpLG4pO2NvbnN0IHM9bj09PWEuZ2V0KGkpO3IucHVzaCh7aWQ6Yy5pZCxpdGVtQ29kZTpjLml0ZW0uY29kZSxpdGVtTmFtZTpjLml0ZW0ubmFtZSxiYXRjaDpjLmJhdGNoLGV4cGlyeURhdGU6Yy5leHBpcnlEYXRlLHBhY2tTaXplOmMucGFja1NpemUsbnVtYmVyT2ZQYWNrczpjLm51bWJlck9mUGFja3MsbnVtYmVyT2ZVbml0czpjLm51bWJlck9mUGFja3MqYy5wYWNrU2l6ZSxjb3N0UHJpY2VQZXJQYWNrOmMuY29zdFByaWNlUGVyUGFjayx0b3RhbENvc3Q6cz90LmdldChpKS50b0ZpeGVkKDIpOiItIixvdGhlclBhcnR5TmFtZTplLm90aGVyUGFydHlOYW1lfSl9KSl9KSkse2RhdGE6e2xpbmVzOnIuc29ydCgoKGUsdCk9PmUuaXRlbU5hbWUubG9jYWxlQ29tcGFyZSh0Lml0ZW1OYW1lKXx8ZS5vdGhlclBhcnR5TmFtZS5sb2NhbGVDb21wYXJlKHQub3RoZXJQYXJ0eU5hbWUpKSl9fX0pKGU/LmRhdGE/Lmludm9pY2VzKX1leHBvcnR7ZSBhcyBjb252ZXJ0X2RhdGF9Ow==",
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query OutboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: OUTBOUND_SHIPMENT }\n      otherPartyId: { equalTo: $otherPartyId }\n      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n            totalBeforeTax\n          }\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
-          },
           "style.css": {
             "type": "Resource",
             "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query OutboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: OUTBOUND_SHIPMENT }\n      otherPartyId: { equalTo: $otherPartyId }\n      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
           },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.customer\", f=\"Customer\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          \n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.customer\", f=\"Customer\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
             }
           }
         }
@@ -718,51 +718,12 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "expiringInSixMonths": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "expiringInSixMonths",
-              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    six_months AS (\n        SELECT date('now', '+6 months') AS six_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, six_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < six_months AND stock_line.store_id = $storeId\nGROUP BY i.item_id\n",
-              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    six_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '6 months') AS six_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN six_months ON true\nWHERE s.expiry_date < six_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id\n"
-            }
-          },
           "AMCTwelve": {
             "type": "SQLQuery",
             "data": {
               "name": "AMCTwelve",
               "query_sqlite": "WITH\n    twelve_months_ago AS (\n        SELECT date('now', 'start of month', '-12 month') AS twelve_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 12), 1) AS quantity,\n    item_id\nFROM consumption, twelve_months_ago\nWHERE date >= twelve_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n",
               "query_postgres": "WITH\n    twelve_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '12 months') AS twelve_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 12)::numeric, 1) AS quantity,\n    item_id\nFROM consumption, twelve_months_ago\nWHERE date >= twelve_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n"
-            }
-          },
-          "stockOnOrder": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "stockOnOrder",
-              "query_sqlite": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1",
-              "query_postgres": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1"
-            }
-          },
-          "AMCTwentyFour": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "AMCTwentyFour",
-              "query_sqlite": "WITH\n    twenty_four_months_ago AS (\n        SELECT date('now', 'start of month', '-24 month') AS twenty_four_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 24), 1) AS quantity,    \n    item_id\nFROM consumption, twenty_four_months_ago\nWHERE date >= twenty_four_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH\n    twenty_four_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '24 months') AS twenty_four_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 24)::numeric, 1) AS quantity,\n    item_id\nFROM consumption, twenty_four_months_ago\nWHERE date >= twenty_four_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n"
-            }
-          },
-          "expiringInTwelveMonths": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "expiringInTwelveMonths",
-              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    twelve_months AS (\n        SELECT date('now', '+12 months') AS twelve_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, twelve_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < twelve_months AND stock_line.store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    twelve_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '12 months') AS twelve_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN twelve_months ON true\nWHERE s.expiry_date < twelve_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id"
-            }
-          },
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
             }
           },
           "lastMonthConsumption": {
@@ -773,13 +734,40 @@
               "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month, last_month\nWHERE date >= last_month AND date < this_month AND store_id = $storeId\nGROUP BY item_id\n"
             }
           },
-          "thisMonthConsumption": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.stock-on-order\", f=\"Stock on order\")}}</td>\n        <td>{{t(k=\"report.amc-12-months\", f=\"AMC (12 months)\")}}</td>\n        <td>{{t(k=\"report.amc-24-months\", f=\"AMC (24 months)\")}}</td>\n        <td>{{t(k=\"report.amc-for-lookback\", f=\"AMC (lookback period)\")}}</td>\n        <td>{{t(k=\"report.months-cover\", f=\"Months cover\")}}</td>\n        <td>\n          {{t(k=\"report.usage-this-month\", f=\"Monthly usage (this month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-last-month\", f=\"Monthly usage (last month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-2-months-prior\", f=\"Monthly usage (2 months\n          ago)\")}}\n        </td>\n        <td>{{t(k=\"report.expiring-6-months\", f=\"Expiring in 6 months\")}}</td>\n        <td>{{t(k=\"report.expiring-12-months\", f=\"Expiring in 12 months\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td>{{item.SOH | round( precision=1)}}</td>\n        <td>{{item.stockOnOrder}}</td>\n        <td>{{item.AMC12}}</td>\n        <td>{{item.AMC24}}</td>\n        <td>{{item.AMC | round( precision=1)}}</td>\n        <td>{{item.MOS | round( precision=1)}}</td>\n        <td>{{item.monthConsumption}}</td>\n        <td>{{item.lastMonthConsumption}}</td>\n        <td>{{item.twoMonthsAgoConsumption}}</td>\n        <td>{{item.expiringInSixMonths}}</td>\n        <td>{{item.expiringInTwelveMonths}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          },
+          "expiringInTwelveMonths": {
             "type": "SQLQuery",
             "data": {
-              "name": "thisMonthConsumption",
-              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n"
+              "name": "expiringInTwelveMonths",
+              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    twelve_months AS (\n        SELECT date('now', '+12 months') AS twelve_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, twelve_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < twelve_months AND stock_line.store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    twelve_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '12 months') AS twelve_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN twelve_months ON true\nWHERE s.expiry_date < twelve_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id"
             }
+          },
+          "expiringInSixMonths": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "expiringInSixMonths",
+              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    six_months AS (\n        SELECT date('now', '+6 months') AS six_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, six_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < six_months AND stock_line.store_id = $storeId\nGROUP BY i.item_id\n",
+              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    six_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '6 months') AS six_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN six_months ON true\nWHERE s.expiry_date < six_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id\n"
+            }
+          },
+          "AMCTwentyFour": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "AMCTwentyFour",
+              "query_sqlite": "WITH\n    twenty_four_months_ago AS (\n        SELECT date('now', 'start of month', '-24 month') AS twenty_four_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 24), 1) AS quantity,    \n    item_id\nFROM consumption, twenty_four_months_ago\nWHERE date >= twenty_four_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    twenty_four_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '24 months') AS twenty_four_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 24)::numeric, 1) AS quantity,\n    item_id\nFROM consumption, twenty_four_months_ago\nWHERE date >= twenty_four_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container > table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
           },
           "twoMonthsAgoConsumption": {
             "type": "SQLQuery",
@@ -789,16 +777,28 @@
               "query_postgres": "WITH\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n"
             }
           },
-          "template.html": {
-            "type": "TeraTemplate",
+          "query.graphql": {
+            "type": "GraphGLQuery",
             "data": {
-              "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.stock-on-order\", f=\"Stock on order\")}}</td>\n        <td>{{t(k=\"report.amc-12-months\", f=\"AMC (12 months)\")}}</td>\n        <td>{{t(k=\"report.amc-24-months\", f=\"AMC (24 months)\")}}</td>\n        <td>{{t(k=\"report.amc-for-lookback\", f=\"AMC (lookback period)\")}}</td>\n        <td>{{t(k=\"report.months-cover\", f=\"Months cover\")}}</td>\n        <td>\n          {{t(k=\"report.usage-this-month\", f=\"Monthly usage (this month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-last-month\", f=\"Monthly usage (last month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-2-months-prior\", f=\"Monthly usage (2 months\n          ago)\")}}\n        </td>\n        <td>{{t(k=\"report.expiring-6-months\", f=\"Expiring in 6 months\")}}</td>\n        <td>{{t(k=\"report.expiring-12-months\", f=\"Expiring in 12 months\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td>{{item.SOH | round( precision=1)}}</td>\n        <td>{{item.stockOnOrder}}</td>\n        <td>{{item.AMC12}}</td>\n        <td>{{item.AMC24}}</td>\n        <td>{{item.AMC | round( precision=1)}}</td>\n        <td>{{item.MOS | round( precision=1)}}</td>\n        <td>{{item.monthConsumption}}</td>\n        <td>{{item.lastMonthConsumption}}</td>\n        <td>{{item.twoMonthsAgoConsumption}}</td>\n        <td>{{item.expiringInSixMonths}}</td>\n        <td>{{item.expiringInTwelveMonths}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+              "query": "query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
             }
           },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container > table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          "thisMonthConsumption": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "thisMonthConsumption",
+              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
+          "stockOnOrder": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "stockOnOrder",
+              "query_sqlite": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1",
+              "query_postgres": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1"
+            }
           }
         }
       },
@@ -973,6 +973,13 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query StockDetail($storeId: String, $itemCodeOrName: String) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
@@ -983,13 +990,6 @@
           "style.css": {
             "type": "Resource",
             "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
-          },
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query StockDetail($storeId: String, $itemCodeOrName: String) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
           }
         }
       },
