@@ -182,7 +182,7 @@ impl SensorNode {
         .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(breach.rows.into_iter().next().map(|breach| {
-            TemperatureBreachNodeType::from_domain(&breach.temperature_breach_row.r#type)
+            TemperatureBreachNodeType::from(breach.temperature_breach_row.r#type.clone())
         }))
     }
 }
