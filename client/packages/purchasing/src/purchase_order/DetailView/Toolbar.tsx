@@ -52,7 +52,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
         flexDirection: 'column',
       }}
     >
-      <Grid container gap={2} flexWrap="nowrap">
+      <Grid container gap={2}>
         <Grid display="flex" flexDirection="column" gap={1}>
           {data?.supplier && (
             <InputWithLabelRow
