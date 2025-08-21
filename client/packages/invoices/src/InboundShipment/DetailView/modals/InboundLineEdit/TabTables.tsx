@@ -113,19 +113,7 @@ export const QuantityTableComponent = ({
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
         setPackRoundingMessage?.('');
-        const shouldClearSellPrice =
-          patch.item?.defaultPackSize !== patch.packSize &&
-          patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
-            patch.sellPricePerPack;
-
-        if (shouldClearSellPrice) {
-          updateDraftLine({
-            ...patch,
-            sellPricePerPack: 0,
-          });
-        } else {
-          updateDraftLine(patch);
-        }
+        updateDraftLine(patch);
       },
       getIsDisabled: rowData => !!rowData.linkedInvoiceId,
       defaultHideOnMobile: true,
@@ -146,10 +134,15 @@ export const QuantityTableComponent = ({
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
-        setPackRoundingMessage?.('');
+        const shouldClearSellPrice =
+          patch.item?.defaultPackSize !== patch.packSize &&
+          patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
+            patch.sellPricePerPack;
+
         updateDraftLine({
           ...patch,
           volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+          sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
         });
       },
       label: 'label.received-pack-size',
