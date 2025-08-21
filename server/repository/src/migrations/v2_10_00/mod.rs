@@ -30,6 +30,7 @@ mod delete_unused_number_type;
 mod reintegrate_location_volume;
 mod remove_use_campaigns_pref;
 mod rename_authorised_to_adjusted;
+mod rename_cold_storage_type_activity_log_enum;
 mod rename_cold_storage_type_fk;
 mod rename_cold_storage_type_to_location_type;
 mod rename_vvm_status_level_to_priority;
@@ -43,6 +44,7 @@ impl Migration for V2_10_00 {
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
+        rename_cold_storage_type_activity_log_enum::migrate(_connection)?;
         Ok(())
     }
 
