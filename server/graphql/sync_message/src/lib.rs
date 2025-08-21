@@ -20,7 +20,7 @@ impl SyncMessageQueries {
         get_sync_message(ctx, &store_id, &id)
     }
 
-    pub async fn sync_messages_for_store(
+    pub async fn sync_messages(
         &self,
         ctx: &Context<'_>,
         store_id: String,
