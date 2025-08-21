@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use graphql_core::{loader::RnRFormLinesByRnRFormIdLoader, ContextExt};
-use repository::{NameRow, PeriodRow, ProgramRow, RnRForm, RnRFormRow, RnRFormStatus};
+use repository::{NameRow, PeriodRow, ProgramRow, RnRForm, RnRFormRow};
 use serde::Serialize;
 use service::rnr_form::get_period_length;
 
@@ -27,7 +27,7 @@ impl RnRFormNode {
     }
 
     pub async fn status(&self) -> RnRFormNodeStatus {
-        RnRFormNodeStatus::from_domain(&self.rnr_form_row.status)
+        RnRFormNodeStatus::from(self.rnr_form_row.status.clone())
     }
 
     pub async fn program_id(&self) -> &str {
@@ -106,15 +106,8 @@ impl RnRFormNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[graphql(remote = "repository::db_diesel::rnr_form_row::RnRFormStatus")]
 pub enum RnRFormNodeStatus {
     Draft,
     Finalised,
-}
-impl RnRFormNodeStatus {
-    pub fn from_domain(status: &RnRFormStatus) -> Self {
-        match status {
-            RnRFormStatus::Draft => RnRFormNodeStatus::Draft,
-            RnRFormStatus::Finalised => RnRFormNodeStatus::Finalised,
-        }
-    }
 }
