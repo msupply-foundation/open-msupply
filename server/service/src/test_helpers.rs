@@ -1,7 +1,8 @@
+#![cfg(test)]
 use std::sync::Arc;
 
 use actix_rt::task::JoinHandle;
-use chrono::Utc;
+use chrono::{Timelike, Utc};
 use repository::{
     mock::mock_name_a, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
     StockLineRow,
@@ -11,6 +12,7 @@ use repository::{
     test_db::setup_all_with_data,
     StorageConnection, StorageConnectionManager,
 };
+use repository::{ActivityLogRow, ActivityLogType};
 
 use crate::{
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
@@ -98,7 +100,6 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
     }
 }
 
-#[cfg(test)]
 pub(crate) async fn setup_all_and_service_provider(
     db_name: &str,
     inserts: MockDataInserts,
@@ -131,30 +132,43 @@ pub(crate) fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, 
             let invoice_id = format!("invoice_{}_{}_{}", stock_line.id, date, quantity);
             let date = Utc::now().naive_utc() + chrono::Duration::days(date - 30);
 
-            (
+            // Assuming external parties, non-transfers. So some dates are None
+            let invoice = if quantity > 0 {
                 InvoiceRow {
                     id: invoice_id.clone(),
                     store_id: stock_line.store_id.clone(),
                     name_link_id: mock_name_a().id.clone(),
-                    r#type: if quantity > 0 {
-                        InvoiceType::InboundShipment
-                    } else {
-                        InvoiceType::OutboundShipment
-                    },
-                    status: if quantity > 0 {
-                        InvoiceStatus::Verified
-                    } else {
-                        InvoiceStatus::Shipped
-                    },
-                    created_datetime: date,
-                    allocated_datetime: Some(date),
-                    picked_datetime: Some(date),
-                    shipped_datetime: Some(date),
-                    delivered_datetime: Some(date),
-                    received_datetime: Some(date),
-                    verified_datetime: Some(date),
+                    r#type: InvoiceType::InboundShipment,
+                    status: InvoiceStatus::Verified,
+                    created_datetime: date.with_hour(1).unwrap(),
+                    allocated_datetime: None,
+                    picked_datetime: None,
+                    shipped_datetime: None,
+                    delivered_datetime: date.with_hour(2),
+                    received_datetime: date.with_hour(3),
+                    verified_datetime: date.with_hour(4),
                     ..Default::default()
-                },
+                }
+            } else {
+                InvoiceRow {
+                    id: invoice_id.clone(),
+                    store_id: stock_line.store_id.clone(),
+                    name_link_id: mock_name_a().id.clone(),
+                    r#type: InvoiceType::OutboundShipment,
+                    status: InvoiceStatus::Shipped,
+                    created_datetime: date.with_hour(1).unwrap(),
+                    allocated_datetime: date.with_hour(2),
+                    picked_datetime: date.with_hour(3),
+                    shipped_datetime: date.with_hour(4),
+                    delivered_datetime: None,
+                    received_datetime: None,
+                    verified_datetime: None,
+                    ..Default::default()
+                }
+            };
+
+            (
+                invoice,
                 InvoiceLineRow {
                     id: format!("line_{}", invoice_id),
                     invoice_id,
@@ -181,4 +195,112 @@ pub(crate) fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, 
 
         ..Default::default()
     }
+}
+
+pub fn invoice_generate_logs(invoice: &InvoiceRow) -> Vec<ActivityLogRow> {
+    let mut logs = Vec::new();
+
+    logs.push(ActivityLogRow {
+        id: format!("{}_created", invoice.id),
+        r#type: ActivityLogType::InvoiceCreated,
+        user_id: Some("user_account_a".to_string()),
+        store_id: Some(invoice.store_id.clone()),
+        record_id: Some(invoice.id.clone()),
+        datetime: invoice.created_datetime.clone(),
+        changed_to: None,
+        changed_from: None,
+    });
+
+    if let Some(allocated_datetime) = invoice.allocated_datetime {
+        logs.push(ActivityLogRow {
+            id: format!("{}_allocated", invoice.id),
+            r#type: ActivityLogType::InvoiceStatusAllocated,
+            user_id: Some("user_account_a".to_string()),
+            store_id: Some(invoice.store_id.clone()),
+            record_id: Some(invoice.id.clone()),
+            datetime: allocated_datetime.clone(),
+            changed_to: None,
+            changed_from: None,
+        });
+    }
+
+    if let Some(picked_datetime) = invoice.picked_datetime {
+        logs.push(ActivityLogRow {
+            id: format!("{}_picked", invoice.id),
+            r#type: ActivityLogType::InvoiceStatusPicked,
+            user_id: Some("user_account_a".to_string()),
+            store_id: Some(invoice.store_id.clone()),
+            record_id: Some(invoice.id.clone()),
+            datetime: picked_datetime.clone(),
+            changed_to: None,
+            changed_from: None,
+        });
+    }
+
+    if let Some(shipped_datetime) = invoice.shipped_datetime {
+        logs.push(ActivityLogRow {
+            id: format!("{}_shipped", invoice.id),
+            r#type: ActivityLogType::InvoiceStatusShipped,
+            user_id: Some("user_account_a".to_string()),
+            store_id: Some(invoice.store_id.clone()),
+            record_id: Some(invoice.id.clone()),
+            datetime: shipped_datetime.clone(),
+            changed_to: None,
+            changed_from: None,
+        });
+    }
+
+    if let Some(delivered_datetime) = invoice.delivered_datetime {
+        logs.push(ActivityLogRow {
+            id: format!("{}_delivered", invoice.id),
+            r#type: ActivityLogType::InvoiceStatusDelivered,
+            user_id: Some("user_account_a".to_string()),
+            store_id: Some(invoice.store_id.clone()),
+            record_id: Some(invoice.id.clone()),
+            datetime: delivered_datetime.clone(),
+            changed_to: None,
+            changed_from: None,
+        });
+    }
+
+    if let Some(received_datetime) = invoice.received_datetime {
+        logs.push(ActivityLogRow {
+            id: format!("{}_received", invoice.id),
+            r#type: ActivityLogType::InvoiceStatusReceived,
+            user_id: Some("user_account_a".to_string()),
+            store_id: Some(invoice.store_id.clone()),
+            record_id: Some(invoice.id.clone()),
+            datetime: received_datetime.clone(),
+            changed_to: None,
+            changed_from: None,
+        });
+    }
+
+    if let Some(verified_datetime) = invoice.verified_datetime {
+        logs.push(ActivityLogRow {
+            id: format!("{}_verified", invoice.id),
+            r#type: ActivityLogType::InvoiceStatusVerified,
+            user_id: Some("user_account_a".to_string()),
+            store_id: Some(invoice.store_id.clone()),
+            record_id: Some(invoice.id.clone()),
+            datetime: verified_datetime.clone(),
+            changed_to: None,
+            changed_from: None,
+        });
+    }
+
+    if let Some(cancelled_datetime) = invoice.cancelled_datetime {
+        logs.push(ActivityLogRow {
+            id: format!("{}_cancelled", invoice.id),
+            r#type: ActivityLogType::InvoiceStatusCancelled,
+            user_id: Some("user_account_a".to_string()),
+            store_id: Some(invoice.store_id.clone()),
+            record_id: Some(invoice.id.clone()),
+            datetime: cancelled_datetime.clone(),
+            changed_to: None,
+            changed_from: None,
+        });
+    }
+
+    logs
 }
