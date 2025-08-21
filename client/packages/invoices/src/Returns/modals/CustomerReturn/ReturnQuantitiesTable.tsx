@@ -59,8 +59,7 @@ export const QuantityReturnedTableComponent = ({
         setter: patch =>
           updateLine({
             ...patch,
-            volumePerPack:
-              getVolumePerPackFromVariant(patch) ?? patch.volumePerPack,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
           }),
         Cell: props => (
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
@@ -88,8 +87,7 @@ export const QuantityReturnedTableComponent = ({
         setter: patch =>
           updateLine({
             ...patch,
-            volumePerPack:
-              getVolumePerPackFromVariant(patch) ?? patch.volumePerPack,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
           }),
         getIsDisabled: () => isDisabled,
         label: 'label.pack-size',

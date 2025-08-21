@@ -89,7 +89,7 @@ export const itemVariantColumn = (
   setter: patch => {
     updateDraftLine({
       ...patch,
-      volumePerPack: getVolumePerPackFromVariant(patch) ?? patch.volumePerPack,
+      volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
     });
   },
 });
