@@ -2546,7 +2546,6 @@ export type EncounterFilterInput = {
   patient?: InputMaybe<PatientFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programEnrolment?: InputMaybe<ProgramEnrolmentFilterInput>;
-  /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterEncounterStatusInput>;
@@ -2601,13 +2600,13 @@ export enum EncounterNodeStatus {
 export type EncounterResponse = EncounterConnector;
 
 export enum EncounterSortFieldInput {
+  Context = 'context',
   CreatedDatetime = 'createdDatetime',
+  DocumentType = 'documentType',
   EndDatetime = 'endDatetime',
   PatientId = 'patientId',
-  Program = 'program',
   StartDatetime = 'startDatetime',
   Status = 'status',
-  Type = 'type',
 }
 
 export type EncounterSortInput = {
