@@ -44,7 +44,6 @@ impl Migration for V2_10_00 {
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
-        rename_cold_storage_type_activity_log_enum::migrate(_connection)?;
         Ok(())
     }
 
@@ -84,6 +83,7 @@ impl Migration for V2_10_00 {
             Box::new(add_goods_received_report_context::Migrate),
             Box::new(add_extra_purchase_order_fields::Migrate),
             Box::new(add_goods_received_id_to_invoice::Migrate),
+            Box::new(rename_cold_storage_type_activity_log_enum::Migrate),
         ]
     }
 }
