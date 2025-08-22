@@ -34,7 +34,7 @@ export const SupplierSearchInput = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentId]);
+  }, [currentId, data]);
 
   return (
     <Autocomplete

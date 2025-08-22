@@ -34,8 +34,8 @@ export const CustomerSearchInput = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentId]);
-  
+  }, [currentId, data]);
+
   return (
     <Autocomplete
       disabled={disabled}
