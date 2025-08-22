@@ -60,7 +60,9 @@ export const PurchaseOrderLineEdit = ({
           showContent ? (
             <>
               {numericInput(
-                'label.requested-packs',
+                status !== PurchaseOrderNodeStatus.Confirmed
+                  ? 'label.requested-packs'
+                  : 'label.adjusted-packs',
                 draft?.numberOfPacks ?? 0,
                 {
                   onChange: value => {

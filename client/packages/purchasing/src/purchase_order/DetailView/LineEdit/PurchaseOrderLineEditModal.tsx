@@ -50,6 +50,7 @@ export const PurchaseOrderLineEditModal = ({
     item &&
       updatePatch({
         ...draftLine,
+        requestedPackSize: item.defaultPackSize ?? 1,
         itemId: item.id,
       });
   };
