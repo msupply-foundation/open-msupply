@@ -11,6 +11,7 @@
           <th>{{ t(k="label.amc",f="AMC") }}</th>
           <th>{{ t(k="label.months-of-stock", f="MOS") }}</th>
           <th style="width: 10%">{{ t(k="label.requested-quantity", f="Requested quantity") }}</th>
+          <th>{{ t(k="label.unit", f="Unit") }}</th>
       </tr>
   </thead>
   {% for line in data.requisition.lines.nodes -%}
@@ -24,6 +25,7 @@
       <td>{{ line.itemStats.monthsOfStockOnHand | default(value=0.00) |
         round(precision=2) }}</td>
       <td>{{ line.requestedQuantity }}</td>
+      <td>{{ line.item.unitName }}</td>
   </tr>
   {%- endfor %}
 </table>
