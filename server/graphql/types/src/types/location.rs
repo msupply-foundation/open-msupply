@@ -16,6 +16,7 @@ use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::location::LocationSortField")]
 pub enum LocationSortFieldInput {
     Name,
     Code,
@@ -163,15 +164,8 @@ impl LocationConnector {
 
 impl LocationSortInput {
     pub fn to_domain(self) -> LocationSort {
-        use LocationSortField as to;
-        use LocationSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-            from::Code => to::Code,
-        };
-
         LocationSort {
-            key,
+            key: LocationSortField::from(self.key),
             desc: self.desc,
         }
     }
