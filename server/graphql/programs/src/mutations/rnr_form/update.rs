@@ -6,7 +6,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{rnr_form::RnRFormNode, rnr_form_line::LowStockStatus};
-use repository::RnRForm;
+use repository::{RnRForm, RnRFormLowStock};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     rnr_form::update::{UpdateRnRForm, UpdateRnRFormError as ServiceError, UpdateRnRFormLine},
@@ -165,7 +165,7 @@ impl UpdateRnRFormLineInput {
             confirmed,
             expiry_date,
             initial_balance,
-            low_stock: low_stock.to_domain(),
+            low_stock: RnRFormLowStock::from(low_stock),
         }
     }
 }

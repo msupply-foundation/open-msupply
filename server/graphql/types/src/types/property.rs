@@ -1,5 +1,5 @@
 use async_graphql::*;
-use repository::{types::PropertyValueType, PropertyRow};
+use repository::PropertyRow;
 use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
