@@ -15,8 +15,8 @@ use service::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::ItemSortField")]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::ItemSortField")]
 pub enum ItemSortFieldInput {
     Name,
     Code,
@@ -132,16 +132,8 @@ impl ItemFilterInput {
 
 impl ItemSortInput {
     pub fn to_domain(self) -> ItemSort {
-        use ItemSortField as to;
-        use ItemSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-            from::Code => to::Code,
-            from::Type => to::Type,
-        };
-
         ItemSort {
-            key,
+            key: ItemSortField::from(self.key),
             desc: self.desc,
         }
     }

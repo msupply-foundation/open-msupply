@@ -100,15 +100,8 @@ impl ReasonOptionFilterInput {
 
 impl ReasonOptionSortInput {
     pub fn to_domain(self) -> ReasonOptionSort {
-        use ReasonOptionSortField as to;
-        use ReasonOptionSortFieldInput as from;
-        let key = match self.key {
-            from::ReasonOptionType => to::ReasonOptionType,
-            from::Reason => to::Reason,
-        };
-
         ReasonOptionSort {
-            key,
+            key: ReasonOptionSortField::from(self.key),
             desc: self.desc,
         }
     }
