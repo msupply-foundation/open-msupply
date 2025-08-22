@@ -11,11 +11,11 @@ use graphql_core::{
 };
 use graphql_types::types::{
     DraftStockOutItemData, EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput,
-    InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus, InvoiceNodeType,
+    InvoiceLineConnector, InvoiceLineNodeType,
 };
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField,
-    PaginationOption,
+    InvoiceLineType, InvoiceStatus, InvoiceType, PaginationOption,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -59,15 +59,15 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
             item_id: f.item_id.map(EqualFilter::from),
             r#type: f
                 .r#type
-                .map(|t| map_filter!(t, InvoiceLineNodeType::to_domain)),
+                .map(|t| map_filter!(t, |r| InvoiceLineType::from(r))),
             requisition_id: f.requisition_id.map(EqualFilter::from),
             number_of_packs: f.number_of_packs.map(|t| map_filter!(t, f64::from)),
             invoice_type: f
                 .invoice_type
-                .map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
+                .map(|t| map_filter!(t, |i| InvoiceType::from(i))),
             invoice_status: f
                 .invoice_status
-                .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |i| InvoiceStatus::from(i))),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
             verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
             reason_option: f
