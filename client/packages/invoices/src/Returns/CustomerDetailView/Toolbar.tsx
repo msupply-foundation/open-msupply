@@ -55,7 +55,7 @@ export const Toolbar: FC = () => {
                     disabled={isDisabled || !!linkedShipment}
                     value={otherParty}
                     onChange={name => {
-                      update({ otherPartyId: name.id });
+                      update({ otherPartyId: name?.id });
                     }}
                   />
                 }

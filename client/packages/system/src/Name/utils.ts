@@ -21,7 +21,7 @@ interface NameSearchListProps {
 }
 
 export interface NameSearchInputProps {
-  onChange: (name: NameRowFragment) => void;
+  onChange: (name: NameRowFragment | null) => void;
   onInputChange?: (
     event: React.SyntheticEvent,
     value: string,
@@ -31,6 +31,7 @@ export interface NameSearchInputProps {
   value: NameRowFragment | null;
   disabled?: boolean;
   clearable?: boolean;
+  currentId?: string;
 }
 
 export interface NullableNameSearchInputProps
