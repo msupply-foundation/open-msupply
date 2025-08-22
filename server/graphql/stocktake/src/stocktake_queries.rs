@@ -220,7 +220,7 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             description: f.description.map(StringFilter::from),
             status: f
                 .status
-                .map(|t| map_filter!(t, StocktakeNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |s| StocktakeStatus::from(s))),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             stocktake_date: f.stocktake_date.map(DateFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),

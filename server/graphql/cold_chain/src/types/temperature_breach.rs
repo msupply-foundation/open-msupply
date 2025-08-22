@@ -25,11 +25,13 @@ use service::{
 use super::sensor::{SensorFilterInput, SensorNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::temperature_breach_row::TemperatureBreachType")]
 pub enum TemperatureBreachNodeType {
     ColdConsecutive,
     ColdCumulative,
     HotConsecutive,
     HotCumulative,
+    Excursion,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -72,7 +74,7 @@ impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
             unacknowledged: f.unacknowledged,
             r#type: f
                 .r#type
-                .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
+                .map(|t| map_filter!(t, |r| TemperatureBreachType::from(r))),
             id: f.id.map(EqualFilter::from),
             start_datetime: f.start_datetime.map(DatetimeFilter::from),
             end_datetime: f.end_datetime.map(DatetimeFilter::from),
@@ -132,7 +134,7 @@ impl TemperatureBreachNode {
     }
 
     pub async fn r#type(&self) -> TemperatureBreachNodeType {
-        TemperatureBreachNodeType::from_domain(&self.row().r#type)
+        TemperatureBreachNodeType::from(self.row().r#type.clone())
     }
 
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
@@ -158,35 +160,6 @@ impl TemperatureBreachNode {
 
     pub async fn comment(&self) -> Option<String> {
         self.row().comment.clone()
-    }
-}
-
-impl TemperatureBreachNodeType {
-    pub fn from_domain(from: &TemperatureBreachType) -> TemperatureBreachNodeType {
-        use TemperatureBreachNodeType as to;
-        use TemperatureBreachType as from;
-
-        match from {
-            from::ColdConsecutive => to::ColdConsecutive,
-            from::ColdCumulative => to::ColdCumulative,
-            from::HotConsecutive => to::HotConsecutive,
-            from::HotCumulative => to::HotCumulative,
-            from::Excursion => {
-                panic!("Excursion is not a valid type for TemperatureBreachNodeType")
-            }
-        }
-    }
-
-    pub fn to_domain(self) -> TemperatureBreachType {
-        use TemperatureBreachNodeType as from;
-        use TemperatureBreachType as to;
-
-        match self {
-            from::ColdConsecutive => to::ColdConsecutive,
-            from::ColdCumulative => to::ColdCumulative,
-            from::HotConsecutive => to::HotConsecutive,
-            from::HotCumulative => to::HotCumulative,
-        }
     }
 }
 
