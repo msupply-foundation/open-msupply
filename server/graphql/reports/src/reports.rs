@@ -18,6 +18,7 @@ use service::ListResult;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::report::ReportSortField")]
 pub enum ReportSortFieldInput {
     Id,
     Name,
@@ -311,14 +312,8 @@ impl ReportFilterInput {
 
 impl ReportSortInput {
     pub fn to_domain(self) -> ReportSort {
-        let key = match self.key {
-            ReportSortFieldInput::Id => ReportSortField::Id,
-            ReportSortFieldInput::Name => ReportSortField::Name,
-            ReportSortFieldInput::Code => ReportSortField::Code,
-            ReportSortFieldInput::Version => ReportSortField::Version,
-        };
         ReportSort {
-            key,
+            key: ReportSortField::from(self.key),
             desc: self.desc,
         }
     }

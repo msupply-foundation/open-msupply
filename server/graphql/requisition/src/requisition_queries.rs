@@ -22,6 +22,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::requisition::RequisitionSortField")]
 pub enum RequisitionSortFieldInput {
     RequisitionNumber,
     Type,
@@ -199,26 +200,8 @@ pub fn get_requisition_by_number(
 
 impl RequisitionSortInput {
     pub fn to_domain(self) -> RequisitionSort {
-        use RequisitionSortField as to;
-        use RequisitionSortFieldInput as from;
-        let key = match self.key {
-            from::RequisitionNumber => to::RequisitionNumber,
-            from::Type => to::Type,
-            from::Status => to::Status,
-            from::Comment => to::Comment,
-            from::OtherPartyName => to::OtherPartyName,
-            from::SentDatetime => to::SentDatetime,
-            from::CreatedDatetime => to::CreatedDatetime,
-            from::FinalisedDatetime => to::FinalisedDatetime,
-            from::ExpectedDeliveryDate => to::ExpectedDeliveryDate,
-            from::TheirReference => to::TheirReference,
-            from::OrderType => to::OrderType,
-            from::ProgramName => to::ProgramName,
-            from::PeriodStartDate => to::PeriodStartDate,
-        };
-
         RequisitionSort {
-            key,
+            key: RequisitionSortField::from(self.key),
             desc: self.desc,
         }
     }

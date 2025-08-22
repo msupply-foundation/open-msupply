@@ -18,6 +18,7 @@ pub enum PatientResponse {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::patient::PatientSortField")]
 pub enum PatientSortFieldInput {
     Name,
     Code,
@@ -47,22 +48,7 @@ pub struct PatientSortInput {
 impl PatientSortInput {
     fn to_domain(self) -> PatientSort {
         PatientSort {
-            key: match self.key {
-                PatientSortFieldInput::Name => PatientSortField::Name,
-                PatientSortFieldInput::Code => PatientSortField::Code,
-                PatientSortFieldInput::Code2 => PatientSortField::Code2,
-                PatientSortFieldInput::FirstName => PatientSortField::FirstName,
-                PatientSortFieldInput::LastName => PatientSortField::LastName,
-                PatientSortFieldInput::Gender => PatientSortField::Gender,
-                PatientSortFieldInput::DateOfBirth => PatientSortField::DateOfBirth,
-                PatientSortFieldInput::Phone => PatientSortField::Phone,
-                PatientSortFieldInput::Address1 => PatientSortField::Address1,
-                PatientSortFieldInput::Address2 => PatientSortField::Address2,
-                PatientSortFieldInput::Country => PatientSortField::Country,
-                PatientSortFieldInput::Email => PatientSortField::Email,
-                PatientSortFieldInput::DateOfDeath => PatientSortField::DateOfDeath,
-                PatientSortFieldInput::CreatedDatetime => PatientSortField::CreatedDatetime,
-            },
+            key: PatientSortField::from(self.key),
             desc: self.desc,
         }
     }
