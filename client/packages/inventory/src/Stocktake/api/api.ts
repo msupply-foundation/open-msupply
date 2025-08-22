@@ -92,9 +92,11 @@ const stocktakeParser = {
       sellPricePerPack: line.sellPricePerPack,
       stockLineId: line.stockLine?.id,
       stocktakeId: line.stocktakeId,
-      expiryDate: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : undefined,
+      expiryDate: {
+        value: line.expiryDate
+          ? Formatter.naiveDate(new Date(line.expiryDate))
+          : null,
+      },
       comment: line.comment ?? '',
       itemVariantId: line.itemVariantId,
       donorId: line.donorId,
@@ -279,7 +281,7 @@ const getInsertStocktakeLines = (stocktakeId: string, items: Item[]) => {
           stockLineId: stockLine.id,
           batch: stockLine.batch,
           costPricePerPack: stockLine.costPricePerPack,
-          expiryDate: stockLine.expiryDate,
+          expiryDate: { value: stockLine.expiryDate },
           packSize: stockLine.packSize,
           sellPricePerPack: stockLine.sellPricePerPack,
         });

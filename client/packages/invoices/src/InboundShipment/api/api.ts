@@ -112,9 +112,11 @@ const inboundParsers = {
       batch: line.batch,
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
-      expiryDate: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : null,
+      expiryDate: {
+        value: line.expiryDate
+          ? Formatter.naiveDate(new Date(line.expiryDate))
+          : null,
+      },
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,

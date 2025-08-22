@@ -25,7 +25,7 @@ pub struct InsertInput {
     pub on_hold: bool,
     pub batch: Option<String>,
     pub location: Option<NullableUpdateInput<String>>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
     #[graphql(deprecation = "Since 2.8.0. Use reason_option_id")]
     pub inventory_adjustment_reason_id: Option<String>,
     pub reason_option_id: Option<String>,
@@ -119,7 +119,9 @@ impl InsertInput {
             }),
             cost_price_per_pack,
             sell_price_per_pack,
-            expiry_date,
+            expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
+                value: expiry_date.value,
+            }),
             batch,
             on_hold,
             barcode,

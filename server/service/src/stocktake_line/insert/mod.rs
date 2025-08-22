@@ -21,7 +21,7 @@ pub struct InsertStocktakeLine {
     pub counted_number_of_packs: Option<f64>,
     pub item_id: Option<String>,
     pub batch: Option<String>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdate<NaiveDate>>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,

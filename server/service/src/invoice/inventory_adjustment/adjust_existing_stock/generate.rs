@@ -133,7 +133,9 @@ pub fn generate(
             batch,
             cost_price_per_pack,
             sell_price_per_pack,
-            expiry_date,
+            expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
+                value: Some(expiry_date),
+            }),
             stock_on_hold: on_hold,
             note,
             item_variant_id,

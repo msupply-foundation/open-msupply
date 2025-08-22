@@ -63,7 +63,9 @@ pub fn generate(
                 pack_size,
                 batch,
                 item_variant_id,
-                expiry_date,
+                expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
+                    value: Some(expiry_date),
+                }),
                 r#type: StockInType::CustomerReturn,
                 vvm_status_id,
                 volume_per_pack,

@@ -9,6 +9,7 @@ use crate::invoice_line::stock_in_line::insert::InsertStockInLine;
 use crate::invoice_line::stock_in_line::StockInType;
 use crate::invoice_line::update_return_reason_id::UpdateLineReturnReason;
 use crate::number::next_number;
+use crate::NullableUpdate;
 
 use super::{CustomerReturnLineInput, InsertCustomerReturn};
 
@@ -110,7 +111,9 @@ pub fn generate(
                  reason_id: _,
              }| InsertStockInLine {
                 id,
-                expiry_date,
+                expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
+                    value: Some(expiry_date),
+                }),
                 number_of_packs,
                 batch,
                 invoice_id: invoice_id.clone(),

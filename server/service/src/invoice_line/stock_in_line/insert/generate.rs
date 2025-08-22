@@ -157,7 +157,7 @@ fn generate_line(
         location_id: location.map(|l| l.value).unwrap_or_default(),
         pack_size,
         batch,
-        expiry_date,
+        expiry_date: expiry_date.map(|e| e.value).unwrap_or_default(),
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineType::StockIn,

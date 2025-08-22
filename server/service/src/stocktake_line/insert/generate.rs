@@ -56,7 +56,7 @@ pub fn generate(
         item_link_id: item_id.to_string(),
         item_name,
         batch,
-        expiry_date,
+        expiry_date: expiry_date.map(|e| e.value).unwrap_or_default(),
         pack_size,
         cost_price_per_pack,
         sell_price_per_pack,

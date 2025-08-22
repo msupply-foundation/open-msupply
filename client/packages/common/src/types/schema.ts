@@ -3484,7 +3484,7 @@ export type InsertInboundShipmentLineInput = {
   campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
   donorId?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  expiryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
@@ -4044,7 +4044,7 @@ export type InsertStockLineInput = {
   campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
   donorId?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  expiryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
   /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
@@ -4092,7 +4092,7 @@ export type InsertStocktakeLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   donorId?: InputMaybe<Scalars['String']['input']>;
-  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  expiryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
   /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;

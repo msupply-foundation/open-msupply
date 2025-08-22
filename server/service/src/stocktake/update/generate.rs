@@ -101,9 +101,6 @@ fn generate_stock_in_out_or_update(
     let pack_size = stocktake_line_row
         .pack_size
         .unwrap_or(stock_line_row.pack_size);
-    let expiry_date = stocktake_line_row
-        .expiry_date
-        .or(stock_line_row.expiry_date);
     let cost_price_per_pack = stocktake_line_row
         .cost_price_per_pack
         .unwrap_or(stock_line_row.cost_price_per_pack);
@@ -134,7 +131,7 @@ fn generate_stock_in_out_or_update(
             pack_size,
             cost_price_per_pack,
             sell_price_per_pack,
-            expiry_date,
+            expiry_date: stocktake_line_row.expiry_date,
             item_variant_id,
             vvm_status_id: vvm_status_id.clone(),
             volume_per_pack: stocktake_line_row.volume_per_pack,
@@ -193,7 +190,11 @@ fn generate_stock_in_out_or_update(
             batch: stocktake_line_row.batch,
             cost_price_per_pack,
             sell_price_per_pack,
-            expiry_date,
+            expiry_date: stocktake_line_row
+                .expiry_date
+                .map(|expiry_date| NullableUpdate {
+                    value: Some(expiry_date),
+                }),
             volume_per_pack: Some(stocktake_line_row.volume_per_pack),
             campaign_id,
             donor_id: donor_link_id,
@@ -381,7 +382,12 @@ fn generate_new_stock_line(
         batch: stocktake_line_row.batch,
         cost_price_per_pack,
         sell_price_per_pack,
-        expiry_date: stocktake_line_row.expiry_date,
+        expiry_date: stocktake_line_row
+            .expiry_date
+            .clone()
+            .map(|expiry_date| NullableUpdate {
+                value: Some(expiry_date),
+            }),
         stock_line_id: Some(stock_line_id.clone()),
         item_id,
         note: stocktake_line_row.note,

@@ -33,7 +33,7 @@ pub struct InsertStockInLine {
     pub note: Option<String>,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdate<NaiveDate>>,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,

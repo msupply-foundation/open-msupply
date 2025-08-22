@@ -707,6 +707,7 @@ mod test {
         let stocktake_line_service = service_provider.stocktake_line_service;
 
         // Donor & item variant updates
+        // Expiry date updates from some to none
         stocktake_line_service
             .update_stocktake_line(
                 &context,
@@ -718,6 +719,7 @@ mod test {
                     donor_id: Some(NullableUpdate {
                         value: Some(mock_donor_b().id.clone()),
                     }),
+                    expiry_date: Some(NullableUpdate { value: None }),
                     ..Default::default()
                 },
             )
@@ -753,6 +755,10 @@ mod test {
         assert_eq!(
             stocktake_line.stock_line.as_ref().unwrap().item_variant_id,
             Some(mock_item_a_variant_1().id.clone())
+        );
+        assert_eq!(
+            stocktake_line.stock_line.as_ref().unwrap().expiry_date,
+            None
         );
     }
 }

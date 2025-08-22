@@ -142,7 +142,7 @@ const useCreate = () => {
         packSize,
         barcode,
         batch,
-        expiryDate,
+        expiryDate: { value: expiryDate },
         sellPricePerPack,
         costPricePerPack,
         onHold,

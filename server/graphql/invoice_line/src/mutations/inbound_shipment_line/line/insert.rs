@@ -25,7 +25,7 @@ pub struct InsertInput {
     pub location: Option<NullableUpdateInput<String>>,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
@@ -115,7 +115,9 @@ impl InsertInput {
             }),
             pack_size,
             batch,
-            expiry_date,
+            expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
+                value: expiry_date.value,
+            }),
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
@@ -472,7 +474,9 @@ mod test {
                     batch: Some("batch".to_string()),
                     cost_price_per_pack: 1.1,
                     sell_price_per_pack: 2.2,
-                    expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
+                    expiry_date: Some(NullableUpdate {
+                        value: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap())
+                    }),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
                     tax_percentage: Some(5.0),
@@ -499,7 +503,7 @@ mod test {
                 "batch": "batch",
                 "costPricePerPack": 1.1,
                 "sellPricePerPack": 2.2,
-                "expiryDate": "2022-01-01",
+                "expiryDate": {"value": "2022-01-01"},
                 "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
                 "taxPercentage": 5.0

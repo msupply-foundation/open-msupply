@@ -512,7 +512,9 @@ mod test {
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 r#type: StockInType::InboundShipment,
-                expiry_date: NaiveDate::from_ymd_opt(2023, 10, 1),
+                expiry_date: Some(NullableUpdate {
+                    value: NaiveDate::from_ymd_opt(2023, 10, 1),
+                }),
                 ..Default::default()
             },
         )

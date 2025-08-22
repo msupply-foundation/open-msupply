@@ -136,6 +136,7 @@ pub fn mock_stocktake_line_stock_surplus() -> StocktakeLineRow {
         snapshot_number_of_packs: stock_line.total_number_of_packs,
         counted_number_of_packs: Some(stock_line.total_number_of_packs + 10.0),
         item_link_id: stock_line.item_link_id,
+        expiry_date: NaiveDate::from_ymd_opt(2025, 08, 22).clone(),
         ..Default::default()
     }
 }
