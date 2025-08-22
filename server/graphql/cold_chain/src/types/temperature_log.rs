@@ -24,6 +24,7 @@ use super::{
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::temperature_log::TemperatureLogSortField")]
 pub enum TemperatureLogSortFieldInput {
     Datetime,
     Temperature,
@@ -177,15 +178,8 @@ impl TemperatureLogConnector {
 
 impl TemperatureLogSortInput {
     pub fn to_domain(self) -> TemperatureLogSort {
-        use TemperatureLogSortField as to;
-        use TemperatureLogSortFieldInput as from;
-        let key = match self.key {
-            from::Datetime => to::Datetime,
-            from::Temperature => to::Temperature,
-        };
-
         TemperatureLogSort {
-            key,
+            key: TemperatureLogSortField::from(self.key),
             desc: self.desc,
         }
     }

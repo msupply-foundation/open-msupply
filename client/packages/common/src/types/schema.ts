@@ -671,6 +671,7 @@ export enum AssetSortFieldInput {
   AssetNumber = 'assetNumber',
   InstallationDate = 'installationDate',
   ModifiedDatetime = 'modifiedDatetime',
+  Notes = 'notes',
   ReplacementDate = 'replacementDate',
   SerialNumber = 'serialNumber',
   Store = 'store',
@@ -3026,6 +3027,9 @@ export type GoodsReceivedResponse = GoodsReceivedNode | RecordNotFound;
 
 export enum GoodsReceivedSortFieldInput {
   CreatedDatetime = 'createdDatetime',
+  Number = 'number',
+  ReceivedDate = 'receivedDate',
+  Status = 'status',
 }
 
 export type GoodsReceivedSortInput = {
@@ -8989,6 +8993,7 @@ export enum StockLineSortFieldInput {
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
   SupplierName = 'supplierName',
+  VvmStatusThenExpiry = 'vvmStatusThenExpiry',
 }
 
 export type StockLineSortInput = {

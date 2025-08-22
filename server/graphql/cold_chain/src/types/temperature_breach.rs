@@ -36,6 +36,7 @@ pub enum TemperatureBreachNodeType {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::temperature_breach::TemperatureBreachSortField")]
 pub enum TemperatureBreachSortFieldInput {
     StartDatetime,
     EndDatetime,
@@ -211,15 +212,8 @@ impl TemperatureBreachConnector {
 
 impl TemperatureBreachSortInput {
     pub fn to_domain(self) -> TemperatureBreachSort {
-        use TemperatureBreachSortField as to;
-        use TemperatureBreachSortFieldInput as from;
-        let key = match self.key {
-            from::StartDatetime => to::StartDatetime,
-            from::EndDatetime => to::EndDatetime,
-        };
-
         TemperatureBreachSort {
-            key,
+            key: TemperatureBreachSortField::from(self.key),
             desc: self.desc,
         }
     }

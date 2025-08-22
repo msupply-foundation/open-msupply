@@ -19,9 +19,8 @@ use crate::types::asset_class::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::asset_class::AssetClassSortField")]
 #[graphql(rename_items = "camelCase")]
-
+#[graphql(remote = "repository::asset_class::AssetClassSortField")]
 pub enum AssetClassSortFieldInput {
     Name,
 }
@@ -108,14 +107,8 @@ impl AssetClassFilterInput {
 
 impl AssetClassSortInput {
     pub fn to_domain(self) -> AssetClassSort {
-        use AssetClassSortField as to;
-        use AssetClassSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-        };
-
         AssetClassSort {
-            key,
+            key: AssetClassSortField::from(self.key),
             desc: self.desc,
         }
     }
