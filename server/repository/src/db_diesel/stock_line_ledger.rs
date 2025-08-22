@@ -83,7 +83,6 @@ pub struct StockLineLedgerFilter {
 
 #[derive(PartialEq, Debug)]
 pub enum StockLineLedgerSortField {
-    Id,
     Datetime,
     Name,
     InvoiceType,
@@ -153,9 +152,6 @@ impl<'a> StockLineLedgerRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
-                StockLineLedgerSortField::Id => {
-                    apply_sort!(query, sort, stock_line_ledger::id);
-                }
                 StockLineLedgerSortField::Datetime => {
                     apply_sort!(query, sort, stock_line_ledger::datetime);
                 }
