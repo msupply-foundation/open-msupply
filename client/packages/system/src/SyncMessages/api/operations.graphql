@@ -1,0 +1,38 @@
+fragment SyncMessageRow on SyncMessageNode {
+  body
+  createdDatetime
+  errorMessage
+  fromStoreId
+  id
+  status
+  toStoreId
+  type
+}
+
+query syncMessages(
+  $first: Int
+  $offset: Int
+  $key: SyncMessageSortFieldInput!
+  $desc: Boolean
+  $filter: SyncMessageFilterInput
+  $storeId: String!
+) {
+  centralServer {
+    syncMessage {
+      syncMessages(
+        storeId: $storeId
+        page: { first: $first, offset: $offset }
+        sort: { key: $key, desc: $desc }
+        filter: $filter
+      ) {
+        ... on SyncMessageConnector {
+          __typename
+          nodes {
+            ...SyncMessageRow
+          }
+          totalCount
+        }
+      }
+    }
+  }
+}
