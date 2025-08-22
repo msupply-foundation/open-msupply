@@ -86,6 +86,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, serde::Serialize, strum::EnumIter)]
 #[serde(rename_all = "lowercase")]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::invoice_line::InvoiceLineSortField")]
 pub enum InvoiceLineSortFieldInput {
     ItemCode,
     ItemName,
@@ -110,19 +111,8 @@ pub struct InvoiceLineSortInput {
 
 impl InvoiceLineSortInput {
     pub fn to_domain(self) -> InvoiceLineSort {
-        use InvoiceLineSortField as to;
-        use InvoiceLineSortFieldInput as from;
-        let key = match self.key {
-            from::ItemCode => to::ItemCode,
-            from::ItemName => to::ItemName,
-            from::Batch => to::Batch,
-            from::ExpiryDate => to::ExpiryDate,
-            from::PackSize => to::PackSize,
-            from::LocationName => to::LocationName,
-        };
-
         InvoiceLineSort {
-            key,
+            key: InvoiceLineSortField::from(self.key),
             desc: self.desc,
         }
     }

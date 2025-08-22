@@ -18,6 +18,7 @@ use repository::EqualFilter;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::goods_received_line::GoodsReceivedLineSortField")]
 pub enum GoodsReceivedLineSortFieldInput {
     ItemName,
     LineNumber,
@@ -126,16 +127,8 @@ impl GoodsReceivedLineFilterInput {
 
 impl GoodsReceivedLineSortInput {
     pub fn to_domain(self) -> GoodsReceivedLineSort {
-        use GoodsReceivedLineSortField as to;
-        use GoodsReceivedLineSortFieldInput as from;
-        let key = match self.key {
-            from::ItemName => to::ItemName,
-            from::LineNumber => to::LineNumber,
-            from::ExpiryDate => to::ExpiryDate,
-        };
-
         GoodsReceivedLineSort {
-            key,
+            key: GoodsReceivedLineSortField::from(self.key),
             desc: self.desc,
         }
     }
