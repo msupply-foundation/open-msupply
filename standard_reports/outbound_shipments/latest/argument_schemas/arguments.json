@@ -5,7 +5,7 @@
       "properties": {
         "otherPartyId": {
           "description": "Filter by other party",
-          "type": "string"
+          "type": ["string", "null"]
         },
         "after": {
           "description": "From date",
