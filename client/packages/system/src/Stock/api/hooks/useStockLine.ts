@@ -34,6 +34,11 @@ const defaultDraftStockLine: DraftStockLine = {
     name: '',
     isVaccine: false,
     dosesPerUnit: 0,
+    defaultPackSize: 0,
+    itemStoreProperties: {
+      __typename: 'ItemStorePropertiesNode',
+      defaultSellPricePerPack: 0,
+    },
   },
   reasonOption: null,
   vvmStatusLogs: {
