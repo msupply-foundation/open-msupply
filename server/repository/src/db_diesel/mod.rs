@@ -97,7 +97,7 @@ pub mod name_tag;
 pub mod name_tag_join;
 mod name_tag_row;
 mod number_row;
-mod patient;
+pub mod patient;
 pub mod period;
 pub mod plugin_data;
 mod plugin_data_row;
