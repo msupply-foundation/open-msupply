@@ -43,12 +43,12 @@ pub fn schema_from_row(schema_row: FormSchemaRow) -> Result<FormSchemaJson, Repo
     let json_schema: serde_json::Value =
         serde_json::from_str(&schema_row.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't deserialize json schema".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
     let ui_schema: serde_json::Value =
         serde_json::from_str(&schema_row.ui_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't deserialize json schema".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
     Ok(FormSchemaJson {
         id: schema_row.id,
@@ -62,12 +62,12 @@ fn row_from_schema(schema: &FormSchemaJson) -> Result<FormSchemaRow, RepositoryE
     let json_schema =
         serde_json::to_string(&schema.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't serialize json schema".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
     let ui_schema =
         serde_json::to_string(&schema.ui_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't serialize ui schema".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
     Ok(FormSchemaRow {
         id: schema.id.to_owned(),
