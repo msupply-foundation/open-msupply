@@ -62,7 +62,7 @@ pub fn get_sync_message(
     let _user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QuerySyncMessage,
+            resource: Resource::ServerAdmin,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -95,7 +95,7 @@ pub fn get_sync_messages(
     let _user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QuerySyncMessage,
+            resource: Resource::ServerAdmin,
             store_id: Some(store_id.to_string()),
         },
     )?;
