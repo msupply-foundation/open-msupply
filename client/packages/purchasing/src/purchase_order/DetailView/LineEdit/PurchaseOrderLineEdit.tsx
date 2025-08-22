@@ -48,8 +48,8 @@ export const PurchaseOrderLineEdit = ({
         showExtraFields={true}
         Top={
           <StockItemSearchInput
-            autoFocus={!draft}
-            openOnFocus={!draft}
+            autoFocus={!isUpdateMode}
+            openOnFocus={!isUpdateMode}
             disabled={isUpdateMode || isDisabled}
             currentItemId={draft?.itemId}
             onChange={newItem => newItem && onChangeItem(newItem)}
