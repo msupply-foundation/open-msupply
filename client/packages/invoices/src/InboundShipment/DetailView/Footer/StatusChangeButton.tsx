@@ -227,8 +227,13 @@ export const validateEmptyInvoice = (lines: {
   totalCount: number;
   nodes: InboundLineFragment[];
 }): boolean => {
-  // Should only proceed if there is at least one line, with received or shipped packs defined
-  if (lines.totalCount === 0 || lines.nodes.every(isInboundPlaceholderRow))
+  // Should only proceed if there is at least one line
+  // If lines are from transfer, they can be 0
+  // Manually added lines must have either received or shipped packs defined
+  if (
+    lines.totalCount === 0 ||
+    lines.nodes.every(l => !l.linkedInvoiceId && isInboundPlaceholderRow(l))
+  )
     return false;
   return true;
 };
