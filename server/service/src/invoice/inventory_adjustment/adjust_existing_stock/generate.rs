@@ -157,9 +157,9 @@ pub fn generate(
             note,
             number_of_packs: adjustment,
             vvm_status_id,
-            campaign_id,
-            program_id,
             volume_per_pack: Some(volume_per_pack),
+            campaign_id: Some(NullableUpdate { value: campaign_id }),
+            program_id: Some(NullableUpdate { value: program_id }),
             // Default
             prescribed_quantity: None,
             total_before_tax: None,
