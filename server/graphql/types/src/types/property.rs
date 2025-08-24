@@ -1,35 +1,16 @@
 use async_graphql::*;
-use repository::{types::PropertyValueType, PropertyRow};
+use repository::PropertyRow;
 use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::assets::types
+::PropertyValueType")]
 pub enum PropertyNodeValueType {
     String,
     Boolean,
     Integer,
     Float,
-}
-
-impl PropertyNodeValueType {
-    pub fn from_domain(value_type: &PropertyValueType) -> PropertyNodeValueType {
-        use PropertyValueType::*;
-        match value_type {
-            String => PropertyNodeValueType::String,
-            Boolean => PropertyNodeValueType::Boolean,
-            Integer => PropertyNodeValueType::Integer,
-            Float => PropertyNodeValueType::Float,
-        }
-    }
-    pub fn to_domain(value_type: &PropertyNodeValueType) -> PropertyValueType {
-        use PropertyNodeValueType::*;
-        match value_type {
-            String => PropertyValueType::String,
-            Boolean => PropertyValueType::Boolean,
-            Integer => PropertyValueType::Integer,
-            Float => PropertyValueType::Float,
-        }
-    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -49,7 +30,7 @@ impl PropertyNode {
         &self.row().name
     }
     pub async fn value_type(&self) -> PropertyNodeValueType {
-        PropertyNodeValueType::from_domain(&self.row().value_type)
+        PropertyNodeValueType::from(self.row().value_type.clone())
     }
     /// If `valueType` is `String`, this field can contain a comma-separated
     /// list of allowed values, essentially defining an enum.

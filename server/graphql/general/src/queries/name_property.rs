@@ -2,6 +2,7 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::{PropertyNode, PropertyNodeValueType};
+use repository::types::PropertyValueType;
 use repository::{NameProperty, NamePropertyRow};
 
 use service::name_property::{
@@ -139,7 +140,7 @@ impl ConfigureNamePropertyInput {
             key,
             property_id,
             name,
-            value_type: PropertyNodeValueType::to_domain(&value_type),
+            value_type: PropertyValueType::from(value_type),
             allowed_values,
             remote_editable,
         }

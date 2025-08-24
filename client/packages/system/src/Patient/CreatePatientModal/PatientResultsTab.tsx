@@ -6,7 +6,7 @@ import {
   DataTable,
   DotCell,
   DownloadIcon,
-  GenderType,
+  GenderTypeNode,
   HomeIcon,
   InfoTooltipIcon,
   LoadingButton,
@@ -23,20 +23,20 @@ import { usePatient } from '../api';
 import { CentralPatientSearchResponse } from '../api/api';
 import { Gender, usePatientStore } from '@openmsupply-client/programs';
 
-const genderToGenderType = (gender: Gender): GenderType => {
+const genderToGenderType = (gender: Gender): GenderTypeNode => {
   switch (gender) {
     case Gender.MALE:
-      return GenderType.Male;
+      return GenderTypeNode.Male;
     case Gender.FEMALE:
-      return GenderType.Female;
+      return GenderTypeNode.Female;
     case Gender.TRANSGENDER_MALE:
-      return GenderType.TransgenderMale;
+      return GenderTypeNode.TransgenderMale;
     case Gender.TRANSGENDER_FEMALE:
-      return GenderType.TransgenderFemale;
+      return GenderTypeNode.TransgenderFemale;
     case Gender.UNKNOWN:
-      return GenderType.Unknown;
+      return GenderTypeNode.Unknown;
     case Gender.NON_BINARY:
-      return GenderType.NonBinary;
+      return GenderTypeNode.NonBinary;
     default:
       return noOtherVariants(gender);
   }
@@ -49,7 +49,7 @@ export interface PatientColumnData {
   firstName?: string | null;
   lastName?: string | null;
   dateOfBirth?: string | null;
-  gender?: GenderType | null;
+  gender?: GenderTypeNode | null;
   isDeceased?: boolean | null;
   isOnCentral?: boolean;
 }

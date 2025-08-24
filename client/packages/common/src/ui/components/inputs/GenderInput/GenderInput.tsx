@@ -1,16 +1,15 @@
 import React from 'react';
 import {
   Select,
-  GenderType,
-  usePreference,
+  GenderTypeNode,
+  usePreferences,
   useTranslation,
   getGenderTranslationKey,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 
 type GenderInputProps = {
-  value: GenderType | null | undefined;
-  onChange: (value: GenderType) => void;
+  value: GenderTypeNode | null | undefined;
+  onChange: (value: GenderTypeNode) => void;
   disabled?: boolean;
   width?: string | number;
 };
@@ -22,13 +21,9 @@ export const GenderInput = ({
   width = 250,
 }: GenderInputProps) => {
   const t = useTranslation();
-  const {
-    data: { genderOptions } = {
-      genderOptions: [],
-    },
-  } = usePreference(PreferenceKey.GenderOptions);
+  const { genderOptions = [] } = usePreferences();
 
-  const mapGenderToOption = (value: GenderType) => ({
+  const mapGenderToOption = (value: GenderTypeNode) => ({
     id: value,
     label: t(getGenderTranslationKey(value)),
     value,
@@ -37,7 +32,7 @@ export const GenderInput = ({
   return (
     <Select
       value={value ?? ''}
-      onChange={e => onChange(e.target.value as GenderType)}
+      onChange={e => onChange(e.target.value as GenderTypeNode)}
       options={genderOptions.map(mapGenderToOption)}
       disabled={disabled}
       sx={{ width }}

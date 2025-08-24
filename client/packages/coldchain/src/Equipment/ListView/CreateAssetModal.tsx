@@ -16,7 +16,7 @@ import {
   useStringFilter,
   ArrayUtils,
   useDebounceCallback,
-  AssetLogStatusInput,
+  AssetLogStatusNodeType,
   usePathnameIncludes,
 } from '@openmsupply-client/common';
 import {
@@ -177,7 +177,7 @@ export const CreateAssetModal = ({
         id: FnUtils.generateUUID(),
         assetId: draft.id,
         comment: t('message.asset-created'),
-        status: AssetLogStatusInput.Functioning,
+        status: AssetLogStatusNodeType.Functioning,
       });
       invalidateQueries();
       success(t('messages.cce-created'))();

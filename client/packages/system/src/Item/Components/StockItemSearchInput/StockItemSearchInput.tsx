@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
-  useItemById,
+  useGetById,
   useItemStockOnHandInfinite,
 } from '../../api';
 import { getOptionLabel, StockItemSearchInputProps } from '../../utils';
@@ -65,7 +65,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 
   // Note - important that we do a separate query for current item
   // The infinite query above may not yet include the currently selected item in its results!
-  const { data: currentItem } = useItemById(currentItemId ?? undefined);
+  const { data: currentItem } = useGetById(currentItemId ?? '');
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
 

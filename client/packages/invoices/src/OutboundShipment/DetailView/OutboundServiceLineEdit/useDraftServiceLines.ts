@@ -4,10 +4,7 @@ import {
   InvoiceLineNodeType,
   FnUtils,
 } from '@openmsupply-client/common';
-import {
-  useDefaultServiceItem,
-  ItemRowFragment,
-} from '@openmsupply-client/system';
+import { ItemRowFragment, useItem } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';
 import { DraftStockOutLine } from './../../../types';
 import { StockOutLineFragment } from '../../../StockOut';
@@ -44,7 +41,9 @@ const createDraftLine = ({
 export const useDraftServiceLines = () => {
   const { id } = useOutbound.document.fields('id');
   const { data: lines } = useOutbound.line.serviceLines();
-  const { defaultServiceItem, isLoading } = useDefaultServiceItem();
+  const {
+    serviceItem: { data: defaultServiceItem, isLoading },
+  } = useItem();
   const { status } = useOutbound.document.fields('status');
   const { mutateAsync } = useOutbound.line.save(status);
 

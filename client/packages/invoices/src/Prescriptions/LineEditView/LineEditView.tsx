@@ -3,13 +3,11 @@ import {
   BasicSpinner,
   InvoiceNodeStatus,
   NothingHere,
-  PreferenceKey,
   RouteBuilder,
   useBreadcrumbs,
   useConfirmOnLeaving,
   useNavigate,
   useParams,
-  usePreference,
 } from '@openmsupply-client/common';
 
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
@@ -28,11 +26,6 @@ export const PrescriptionLineEditView = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isDirty = useRef(false);
   const navigate = useNavigate();
-
-  const { data: prefs, isLoading: isLoadingPrefs } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.SortByVvmStatusThenExpiry
-  );
 
   const {
     isDirty: allocationIsDirty,
@@ -151,7 +144,7 @@ export const PrescriptionLineEditView = () => {
     }
   };
 
-  if (isLoading || !itemId || isLoadingPrefs) return <BasicSpinner />;
+  if (isLoading || !itemId) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
   const itemIdList = items.map(item => item.id);
@@ -183,11 +176,6 @@ export const PrescriptionLineEditView = () => {
               itemId={itemId === 'new' ? undefined : itemId}
               programId={data?.programId ?? undefined}
               invoiceId={invoiceId}
-              prefOptions={{
-                allocateVaccineItemsInDoses:
-                  prefs?.manageVaccinesInDoses ?? false,
-                sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
-              }}
             />
             <NavBar
               items={itemIdList}

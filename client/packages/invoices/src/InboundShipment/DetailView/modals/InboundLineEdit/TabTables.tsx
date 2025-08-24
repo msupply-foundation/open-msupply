@@ -13,8 +13,7 @@ import {
   useCurrencyCell,
   useAuthContext,
   useTranslation,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   Formatter,
   useIntlUtils,
   NumberInputCell,
@@ -56,9 +55,6 @@ interface TableProps {
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
   restrictedToLocationTypeId?: string | null;
-  preferences?: {
-    allowTrackingOfStockByDonor?: boolean;
-  };
 }
 
 interface QuantityTableProps extends TableProps {
@@ -79,11 +75,8 @@ export const QuantityTableComponent = ({
   const theme = useTheme();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
-  );
-  const displayInDoses =
-    !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
+  const { manageVaccinesInDoses } = usePreferences();
+  const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
@@ -396,8 +389,9 @@ export const LocationTableComponent = ({
   updateDraftLine,
   isDisabled,
   restrictedToLocationTypeId,
-  preferences,
 }: TableProps) => {
+  const { allowTrackingOfStockByDonor } = usePreferences();
+
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -430,7 +424,7 @@ export const LocationTableComponent = ({
     ],
   ];
 
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (allowTrackingOfStockByDonor) {
     columnDescriptions.push([
       getDonorColumn((id, donor) => updateDraftLine({ id, donor })),
       { accessor: ({ rowData }) => rowData.donor?.id },

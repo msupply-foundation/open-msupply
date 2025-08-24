@@ -183,7 +183,7 @@ export const LocationSearchInput = ({
       }
     : null;
 
-  const isInvalidLocation = !!selectedLocation?.locationType?.id
+  const isInvalidLocation = !!selectedLocation
     ? checkInvalidLocationLines(restrictedToLocationTypeId ?? null, [
         { location: selectedLocation },
       ])

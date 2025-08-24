@@ -14,6 +14,7 @@ import {
   BasicSpinner,
   Divider,
   useFormatNumber,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import {
@@ -36,10 +37,6 @@ interface AllocationProps {
   invoiceId: string;
   allowPlaceholder: boolean;
   scannedBatch?: string;
-  prefOptions: {
-    sortByVvmStatus: boolean;
-    manageVaccinesInDoses: boolean;
-  };
 }
 
 export const Allocation = ({
@@ -47,10 +44,11 @@ export const Allocation = ({
   invoiceId,
   allowPlaceholder,
   scannedBatch,
-  prefOptions: { sortByVvmStatus, manageVaccinesInDoses },
 }: AllocationProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
+  const { manageVaccinesInDoses, sortByVvmStatusThenExpiry } = usePreferences();
+
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
     item,
@@ -82,7 +80,7 @@ export const Allocation = ({
       initialise(
         {
           itemData: data,
-          strategy: sortByVvmStatus
+          strategy: sortByVvmStatusThenExpiry
             ? AllocationStrategy.VVMStatus
             : AllocationStrategy.FEFO,
           allowPlaceholder,

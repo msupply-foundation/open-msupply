@@ -144,7 +144,7 @@ mod tests {
     #[actix_rt::test]
     async fn message_type() {
         let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: &format!("message_type"),
+            db_name: "message_type",
             inserts: MockDataInserts::none().names().stores(),
             ..Default::default()
         })

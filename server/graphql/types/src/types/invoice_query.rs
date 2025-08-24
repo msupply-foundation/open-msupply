@@ -19,8 +19,7 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameLinkRow, NameRow, PricingRow,
-    Store, StoreRow,
+    ClinicianRow, InvoiceRow, Name, NameLinkRow, NameRow, PricingRow, Store, StoreRow,
 };
 
 use repository::Invoice;
@@ -29,6 +28,7 @@ use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[graphql(remote = "repository::db_diesel::invoice_row::InvoiceType")]
 pub enum InvoiceNodeType {
     OutboundShipment,
     InboundShipment,
@@ -42,6 +42,7 @@ pub enum InvoiceNodeType {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::invoice_row::InvoiceStatus")]
 pub enum InvoiceNodeStatus {
     /// Outbound Shipment: available_number_of_packs in a stock line gets
     /// updated when items are added to the invoice.
@@ -140,11 +141,11 @@ impl InvoiceNode {
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
-        InvoiceNodeType::from_domain(&self.row().r#type)
+        InvoiceNodeType::from(self.row().r#type.clone())
     }
 
     pub async fn status(&self) -> InvoiceNodeStatus {
-        InvoiceNodeStatus::from_domain(&self.row().status)
+        InvoiceNodeStatus::from(self.row().status.clone())
     }
 
     pub async fn invoice_number(&self) -> i64 {
@@ -582,66 +583,6 @@ impl InvoiceConnector {
     }
 }
 
-impl InvoiceNodeType {
-    pub fn to_domain(self) -> InvoiceType {
-        use InvoiceNodeType::*;
-        match self {
-            OutboundShipment => InvoiceType::OutboundShipment,
-            InboundShipment => InvoiceType::InboundShipment,
-            Prescription => InvoiceType::Prescription,
-            InventoryAddition => InvoiceType::InventoryAddition,
-            InventoryReduction => InvoiceType::InventoryReduction,
-            Repack => InvoiceType::Repack,
-            SupplierReturn => InvoiceType::SupplierReturn,
-            CustomerReturn => InvoiceType::CustomerReturn,
-        }
-    }
-
-    pub fn from_domain(r#type: &InvoiceType) -> InvoiceNodeType {
-        use InvoiceType::*;
-        match r#type {
-            OutboundShipment => InvoiceNodeType::OutboundShipment,
-            InboundShipment => InvoiceNodeType::InboundShipment,
-            Prescription => InvoiceNodeType::Prescription,
-            InventoryAddition => InvoiceNodeType::InventoryAddition,
-            InventoryReduction => InvoiceNodeType::InventoryReduction,
-            Repack => InvoiceNodeType::Repack,
-            CustomerReturn => InvoiceNodeType::CustomerReturn,
-            SupplierReturn => InvoiceNodeType::SupplierReturn,
-        }
-    }
-}
-
-impl InvoiceNodeStatus {
-    pub fn to_domain(self) -> InvoiceStatus {
-        use InvoiceNodeStatus::*;
-        match self {
-            New => InvoiceStatus::New,
-            Allocated => InvoiceStatus::Allocated,
-            Picked => InvoiceStatus::Picked,
-            Shipped => InvoiceStatus::Shipped,
-            Delivered => InvoiceStatus::Delivered,
-            Received => InvoiceStatus::Received,
-            Verified => InvoiceStatus::Verified,
-            Cancelled => InvoiceStatus::Cancelled,
-        }
-    }
-
-    pub fn from_domain(status: &InvoiceStatus) -> InvoiceNodeStatus {
-        use InvoiceStatus::*;
-        match status {
-            New => InvoiceNodeStatus::New,
-            Allocated => InvoiceNodeStatus::Allocated,
-            Picked => InvoiceNodeStatus::Picked,
-            Shipped => InvoiceNodeStatus::Shipped,
-            Delivered => InvoiceNodeStatus::Delivered,
-            Received => InvoiceNodeStatus::Received,
-            Verified => InvoiceNodeStatus::Verified,
-            Cancelled => InvoiceNodeStatus::Cancelled,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
 
@@ -656,7 +597,6 @@ mod test {
         Invoice, InvoiceLineRow, InvoiceLineType, InvoiceRow,
     };
     use serde_json::json;
-    
 
     use crate::types::InvoiceNode;
 

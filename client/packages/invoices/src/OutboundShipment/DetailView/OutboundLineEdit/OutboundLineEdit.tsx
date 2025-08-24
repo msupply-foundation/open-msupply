@@ -25,10 +25,6 @@ interface OutboundLineEditProps {
   mode: ModalMode | null;
   status: InvoiceNodeStatus;
   invoiceId: string;
-  prefOptions: {
-    sortByVvmStatus: boolean;
-    manageVaccinesInDoses: boolean;
-  };
 }
 
 export const OutboundLineEdit = ({
@@ -38,7 +34,6 @@ export const OutboundLineEdit = ({
   mode,
   status,
   invoiceId,
-  prefOptions,
 }: OutboundLineEditProps) => {
   const t = useTranslation();
   const { info, warning } = useNotification();
@@ -179,7 +174,6 @@ export const OutboundLineEdit = ({
             invoiceId={invoiceId}
             allowPlaceholder={status === InvoiceNodeStatus.New}
             scannedBatch={asBarcodeOrNull(openedWith)?.batch}
-            prefOptions={prefOptions}
           />
         )}
       </Grid>

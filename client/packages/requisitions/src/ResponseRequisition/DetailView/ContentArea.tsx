@@ -13,7 +13,6 @@ interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick: null | ((line: ResponseLineFragment) => void);
   disableAddLine: boolean;
-  manageVaccinesInDoses?: boolean;
 }
 
 const useHighlightPlaceholderRows = (
@@ -38,10 +37,9 @@ export const ContentArea = ({
   onRowClick,
   onAddItem,
   disableAddLine,
-  manageVaccinesInDoses = false,
 }: ContentAreaProps) => {
   const t = useTranslation();
-  const { columns, lines } = useResponse.line.list(manageVaccinesInDoses);
+  const { columns, lines } = useResponse.line.list();
   useHighlightPlaceholderRows(lines);
 
   return (

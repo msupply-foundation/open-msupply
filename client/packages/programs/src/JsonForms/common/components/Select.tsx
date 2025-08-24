@@ -8,7 +8,7 @@ import {
   PreferenceKey,
   PreferencesNode,
   TypedTFunction,
-  usePreference,
+  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
@@ -101,7 +101,7 @@ export const getDisplayOptions = (
   t: TypedTFunction<LocaleKey>,
   schemaEnum: string[],
   options?: Options,
-  prefOptions?: Pick<PreferencesNode, PreferenceKey>
+  prefOptions?: Partial<PreferencesNode>
 ): DisplayOption[] => {
   if (options?.preferenceKey) {
     switch (options?.preferenceKey) {
@@ -284,9 +284,7 @@ const UIComponent = (props: ControlProps) => {
     path,
     'Select'
   );
-  const { data: preference } = usePreference(
-    schemaOptions?.preferenceKey ?? PreferenceKey.GenderOptions
-  );
+  const preferences = usePreferences();
   useEffect(() => {
     setCustomError(validationError);
   }, [validationError]);
@@ -301,7 +299,7 @@ const UIComponent = (props: ControlProps) => {
     value: DisplayOption | null
   ) => handleChange(path, value?.value);
 
-  const options = getDisplayOptions(t, items, schemaOptions, preference);
+  const options = getDisplayOptions(t, items, schemaOptions, preferences);
 
   const value = data ? options.find(o => o.value === data) : null;
 

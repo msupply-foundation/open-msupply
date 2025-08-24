@@ -18,26 +18,13 @@ table! {
 
 use chrono::NaiveDate;
 
-#[derive(Clone, Queryable, Debug, PartialEq)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default)]
 pub struct AdjustmentRow {
     pub id: String,
     pub item_id: String,
     pub store_id: String,
     pub quantity: f64,
     pub date: NaiveDate,
-}
-
-impl Default for AdjustmentRow {
-    fn default() -> Self {
-        Self {
-            date: Default::default(),
-            // Default
-            id: Default::default(),
-            item_id: Default::default(),
-            store_id: Default::default(),
-            quantity: Default::default(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]

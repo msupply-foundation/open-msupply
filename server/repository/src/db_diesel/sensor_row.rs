@@ -26,9 +26,10 @@ table! {
 joinable!(sensor -> store (store_id));
 joinable!(sensor -> location (location_id));
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum SensorType {
+    #[default]
     BlueMaestro,
     Laird,
     Berlinger,
@@ -45,7 +46,7 @@ pub fn get_sensor_type(serial: &str) -> SensorType {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Default)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sensor)]
 pub struct SensorRow {
@@ -62,22 +63,6 @@ pub struct SensorRow {
     pub r#type: SensorType,
 }
 
-impl Default for SensorRow {
-    fn default() -> Self {
-        SensorRow {
-            id: Default::default(),
-            name: Default::default(),
-            serial: Default::default(),
-            store_id: Default::default(),
-            location_id: None,
-            battery_level: None,
-            log_interval: None,
-            is_active: false,
-            last_connection_datetime: None,
-            r#type: SensorType::BlueMaestro,
-        }
-    }
-}
 pub struct SensorRowRepository<'a> {
     connection: &'a StorageConnection,
 }

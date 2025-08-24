@@ -12,14 +12,14 @@ import {
   InputLabel,
   AutocompleteOnChange,
   InsertAssetLogReasonInput,
-  AssetLogStatusInput,
+  AssetLogStatusNodeType,
 } from '@openmsupply-client/common';
-import { getStatusInputOptions, parseInputStatus } from '../../utils';
 import { useAssetLogReason } from '../../api/hooks/useAssetLogReason';
+import { getStatusOptions, parseStatus } from '../../utils';
 
 type AssetLogStatus = {
   label: string;
-  value: AssetLogStatusInput;
+  value: AssetLogStatusNodeType;
 };
 
 interface LogReasonCreateModalProps {
@@ -31,7 +31,7 @@ interface LogReasonCreateModalProps {
 const createNewLogReason = (
   seed?: InsertAssetLogReasonInput | null
 ): InsertAssetLogReasonInput => ({
-  assetLogStatus: AssetLogStatusInput.Functioning,
+  assetLogStatus: AssetLogStatusNodeType.Functioning,
   id: FnUtils.generateUUID(),
   reason: '',
   ...seed,
@@ -122,9 +122,9 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
               }
               width="150px"
               popperMinWidth={150}
-              options={getStatusInputOptions(t)}
+              options={getStatusOptions(t)}
               value={{
-                label: parseInputStatus(draft.assetLogStatus, t),
+                label: parseStatus(draft.assetLogStatus, t),
                 value: draft.assetLogStatus,
               }}
               onChange={updateStatus}

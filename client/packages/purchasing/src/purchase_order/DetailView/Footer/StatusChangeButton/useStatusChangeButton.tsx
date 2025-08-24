@@ -1,10 +1,9 @@
 import {
-  PreferenceKey,
   PurchaseOrderNodeType,
   useAuthContext,
   useConfirmationModal,
   useNotification,
-  usePreference,
+  usePreferences,
   UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -28,9 +27,7 @@ export const useStatusChangeButton = () => {
   } = usePurchaseOrder();
   const { status, lines } = data ?? {};
 
-  const { data: preferences } = usePreference(
-    PreferenceKey.AuthorisePurchaseOrder
-  );
+  const preferences = usePreferences();
   const requiresAuthorisation = preferences?.authorisePurchaseOrder ?? false;
 
   const options = useMemo(

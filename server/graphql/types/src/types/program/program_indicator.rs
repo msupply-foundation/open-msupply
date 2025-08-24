@@ -10,8 +10,8 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueRow, IndicatorValueType,
-    ProgramIndicatorFilter, ProgramIndicatorSort, ProgramIndicatorSortField,
+    EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueRow, ProgramIndicatorFilter,
+    ProgramIndicatorSort, ProgramIndicatorSortField,
 };
 use service::requisition::program_indicator::query::{IndicatorLine, ProgramIndicator};
 
@@ -185,7 +185,9 @@ impl IndicatorLineRowNode {
     }
 
     pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {
-        IndicatorValueTypeNode::from_domain(&self.line.value_type)
+        Some(IndicatorValueTypeNode::from(
+            self.line.value_type.clone().unwrap_or_default(),
+        ))
     }
 }
 
@@ -211,7 +213,9 @@ impl IndicatorColumnNode {
     }
 
     pub async fn value_type(&self) -> Option<IndicatorValueTypeNode> {
-        IndicatorValueTypeNode::from_domain(&self.column.value_type)
+        Some(IndicatorValueTypeNode::from(
+            self.column.value_type.clone().unwrap_or_default(),
+        ))
     }
 
     pub async fn column_number(&self) -> i32 {
@@ -249,19 +253,11 @@ impl IndicatorColumnNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[graphql(remote = "repository::db_diesel::indicator_line_row
+::IndicatorValueType")]
 pub enum IndicatorValueTypeNode {
     String,
     Number,
-}
-
-impl IndicatorValueTypeNode {
-    pub fn from_domain(r#type: &Option<IndicatorValueType>) -> Option<Self> {
-        match r#type {
-            Some(IndicatorValueType::Number) => Some(IndicatorValueTypeNode::Number),
-            Some(IndicatorValueType::String) => Some(IndicatorValueTypeNode::String),
-            None => None,
-        }
-    }
 }
 
 pub struct IndicatorValueNode {

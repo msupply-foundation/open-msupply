@@ -1,37 +1,37 @@
 import React from 'react';
-import { Box, StatusType } from '@openmsupply-client/common';
+import { Box, AssetLogStatusNodeType } from '@openmsupply-client/common';
 import { LocaleKey, useTranslation } from '@common/intl';
 
 const parseStatus = (
-  status: StatusType
+  status: AssetLogStatusNodeType
 ): { key: LocaleKey; colour: string } | undefined => {
   switch (status) {
-    case StatusType.Decommissioned:
+    case AssetLogStatusNodeType.Decommissioned:
       return {
         key: 'status.decommissioned',
         colour: 'cceStatus.decommissioned',
       };
-    case StatusType.Functioning:
+    case AssetLogStatusNodeType.Functioning:
       return {
         key: 'status.functioning',
         colour: 'cceStatus.functioning',
       };
-    case StatusType.FunctioningButNeedsAttention:
+    case AssetLogStatusNodeType.FunctioningButNeedsAttention:
       return {
         key: 'status.functioning-but-needs-attention',
         colour: 'cceStatus.functioningButNeedsAttention',
       };
-    case StatusType.NotFunctioning:
+    case AssetLogStatusNodeType.NotFunctioning:
       return {
         key: 'status.not-functioning',
         colour: 'cceStatus.notFunctioning',
       };
-    case StatusType.NotInUse:
+    case AssetLogStatusNodeType.NotInUse:
       return {
         key: 'status.not-in-use',
         colour: 'cceStatus.notInUse',
       };
-    case StatusType.Unserviceable:
+    case AssetLogStatusNodeType.Unserviceable:
       return {
         key: 'status.unserviceable',
         colour: 'cceStatus.unserviceable',
@@ -44,7 +44,7 @@ const parseStatus = (
 export const Status = ({
   status,
 }: {
-  status: StatusType | null | undefined;
+  status: AssetLogStatusNodeType | null | undefined;
 }) => {
   const t = useTranslation();
 

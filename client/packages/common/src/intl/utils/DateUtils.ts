@@ -42,10 +42,14 @@ import {
   FirstWeekContainsDate,
   ParseOptions,
   startOfMonth,
+  isMatch,
 } from 'date-fns';
 import { getTimezoneOffset } from 'date-fns-tz';
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
+
+const URL_QUERY_DATE = 'yyyy-MM-dd';
+const URL_QUERY_DATE_TIME = 'yyyy-MM-dd HH:mm';
 
 const dateInputHandler = (date: Date | string | number): Date => {
   // Assume a string is an ISO date-time string
@@ -203,15 +207,13 @@ export const DateUtils = {
   HOUR,
   /** Number of milliseconds in one day */
   DAY,
+  isUrlQueryDateTime: (date: string) => isMatch(date, URL_QUERY_DATE_TIME),
 };
 
 export const useFormatDateTime = () => {
   const { currentLanguage } = useIntlUtils();
   const locale = getLocale(currentLanguage);
   const t = useTranslation();
-
-  const urlQueryDate = 'yyyy-MM-dd';
-  const urlQueryDateTime = 'yyyy-MM-dd HH:mm';
 
   const localisedDate = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'P', { locale });
@@ -270,14 +272,14 @@ export const useFormatDateTime = () => {
     const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
 
     if (patientAge >= 1) {
-      return `${t('label.age-years', {count: patientAge})}`;
+      return `${t('label.age-years', { count: patientAge })}`;
     } else
       return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
   };
 
   return {
-    urlQueryDate,
-    urlQueryDateTime,
+    urlQueryDate: URL_QUERY_DATE,
+    urlQueryDateTime: URL_QUERY_DATE_TIME,
     customDate,
     dayMonthShort,
     dayMonthTime,
