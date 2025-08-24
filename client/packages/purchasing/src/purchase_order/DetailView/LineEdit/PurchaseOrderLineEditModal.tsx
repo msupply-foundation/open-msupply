@@ -1,18 +1,24 @@
 import React from 'react';
-import { ModalMode, useDialog, useNotification } from '@common/hooks';
 import { PurchaseOrderFragment } from '../../api';
 import { DialogButton, InlineSpinner } from '@common/components';
-import { useTranslation, Box } from '@openmsupply-client/common';
+import {
+  Box,
+  ModalMode,
+  useDialog,
+  useNotification,
+} from '@openmsupply-client/common';
+import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { createDraftPurchaseOrderLine } from './utils';
+
 interface PurchaseOrderLineEditModalProps {
   lineId: string | null;
   purchaseOrder: PurchaseOrderFragment;
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
+  isDisabled: boolean;
   hasNext: boolean;
   openNext: () => void;
 }
@@ -23,12 +29,13 @@ export const PurchaseOrderLineEditModal = ({
   mode,
   isOpen,
   onClose,
+  isDisabled,
   hasNext,
   openNext,
 }: PurchaseOrderLineEditModalProps) => {
-  const t = useTranslation();
   const { error } = useNotification();
 
+  const lines = purchaseOrder.lines.nodes;
   const isUpdateMode = mode === ModalMode.Update;
 
   const {
@@ -69,11 +76,8 @@ export const PurchaseOrderLineEditModal = ({
 
   return (
     <Modal
-      title={
-        mode === ModalMode.Create
-          ? t('heading.add-item')
-          : t('heading.edit-item')
-      }
+      title=""
+      contentProps={{ sx: { padding: 0 } }}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
@@ -115,10 +119,12 @@ export const PurchaseOrderLineEditModal = ({
       ) : (
         <PurchaseOrderLineEdit
           draft={draft}
+          update={updatePatch}
+          // status={purchaseOrder.status} // TODO: The things that show on confirmed status
+          isDisabled={isDisabled}
+          lines={lines}
           isUpdateMode={isUpdateMode}
           onChangeItem={onChangeItem}
-          updatePatch={updatePatch}
-          status={purchaseOrder.status}
         />
       )}
     </Modal>
