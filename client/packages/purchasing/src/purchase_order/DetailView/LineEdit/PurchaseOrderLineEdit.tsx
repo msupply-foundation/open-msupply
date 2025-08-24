@@ -2,7 +2,7 @@ import React from 'react';
 import {
   InputWithLabelRow,
   ModalGridLayout,
-  // PurchaseOrderNodeStatus,
+  PurchaseOrderNodeStatus,
   useMediaQuery,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -14,13 +14,14 @@ import {
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { commonLabelProps, useInputComponents } from '../../../common';
+import { calculatePricesAndDiscount, calculateUnitQuantities } from './utils';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
   draft?: DraftPurchaseOrderLine | null;
   update: (patch: Partial<DraftPurchaseOrderLine>) => void;
-  // status: PurchaseOrderNodeStatus;
+  status: PurchaseOrderNodeStatus;
   isDisabled: boolean;
   lines?: PurchaseOrderLineFragment[];
   onChangeItem: (item: ItemStockOnHandFragment) => void;
@@ -31,7 +32,7 @@ export const PurchaseOrderLineEdit = ({
   onChangeItem,
   draft,
   update,
-  // status,
+  status,
   isDisabled = false,
   lines = [],
 }: PurchaseOrderLineEditProps) => {
@@ -47,8 +48,8 @@ export const PurchaseOrderLineEdit = ({
         showExtraFields={true}
         Top={
           <StockItemSearchInput
-            autoFocus={!draft}
-            openOnFocus={!draft}
+            autoFocus={!isUpdateMode}
+            openOnFocus={!isUpdateMode}
             disabled={isUpdateMode || isDisabled}
             currentItemId={draft?.itemId}
             onChange={newItem => newItem && onChangeItem(newItem)}
@@ -59,43 +60,69 @@ export const PurchaseOrderLineEdit = ({
           showContent ? (
             <>
               {numericInput(
-                'label.requested-packs',
-                draft?.requestedNumberOfPacks,
+                status !== PurchaseOrderNodeStatus.Confirmed
+                  ? 'label.requested-packs'
+                  : 'label.adjusted-packs',
+                draft?.numberOfPacks ?? 0,
                 {
                   onChange: value => {
-                    const newValue = value || 0;
-                    update({
-                      requestedNumberOfPacks: newValue,
-                      requestedNumberOfUnits:
-                        newValue * (draft?.requestedPackSize || 1),
+                    // Adjust the requested and adjusted number of units based
+                    // on the number of packs * pack size
+                    const adjustedPatch = calculateUnitQuantities(status, {
+                      ...draft,
+                      numberOfPacks: value,
                     });
+                    update({ ...adjustedPatch, numberOfPacks: value });
                   },
+                  decimalLimit: 2,
+                  autoFocus: true,
                 }
               )}
               {numericInput('label.pack-size', draft?.requestedPackSize, {
-                onChange: value => {
-                  const newValue = value || 0;
-                  update({
-                    requestedPackSize: value,
-                    requestedNumberOfUnits:
-                      (draft?.requestedNumberOfPacks || 0) * newValue,
+                onChange: requestedPackSize => {
+                  // Adjust the requested and adjusted number of units based
+                  // on the number of packs * pack size
+                  const adjustedPatch = calculateUnitQuantities(status, {
+                    ...draft,
+                    requestedPackSize,
                   });
+                  update({ ...adjustedPatch, requestedPackSize });
                 },
+                decimalLimit: 2,
               })}
               {numericInput(
                 'label.requested-quantity',
                 draft?.requestedNumberOfUnits,
                 {
                   onChange: value => {
-                    const newValue = value || 0;
-                    update({
-                      requestedNumberOfUnits: newValue,
-                      requestedNumberOfPacks:
-                        newValue / (draft?.requestedPackSize || 1),
+                    // Adjust the requested and adjusted number of units based on the number of packs
+                    const adjustedPatch = calculateUnitQuantities(status, {
+                      ...draft,
+                      requestedNumberOfUnits: value,
                     });
+                    update(adjustedPatch);
                   },
+                  disabled: true,
+                  decimalLimit: 2,
                 }
               )}
+              {status === PurchaseOrderNodeStatus.Confirmed &&
+                numericInput(
+                  'label.adjusted-quantity',
+                  draft?.adjustedNumberOfUnits,
+                  {
+                    onChange: value => {
+                      // Adjust the requested and adjusted number of units based on the number of packs
+                      const adjustedPatch = calculateUnitQuantities(status, {
+                        ...draft,
+                        requestedNumberOfUnits: value,
+                      });
+                      update(adjustedPatch);
+                    },
+                    disabled: true,
+                    decimalLimit: 2,
+                  }
+                )}
               {textInput('label.unit', draft?.unit || '', value =>
                 update({ unit: value })
               )}
@@ -142,13 +169,13 @@ export const PurchaseOrderLineEdit = ({
                 draft?.pricePerUnitBeforeDiscount,
                 {
                   onChange: value => {
-                    update({
-                      pricePerUnitBeforeDiscount: value,
-                      pricePerUnitAfterDiscount:
-                        draft?.pricePerUnitBeforeDiscount *
-                        (1 - (draft?.discountPercentage || 0) / 100),
-                    });
+                    const adjustedPatch = calculatePricesAndDiscount(
+                      'pricePerUnitBeforeDiscount',
+                      { ...draft, pricePerUnitBeforeDiscount: value }
+                    );
+                    update(adjustedPatch);
                   },
+                  decimalLimit: 2,
                 }
               )}
               {numericInput(
@@ -156,12 +183,11 @@ export const PurchaseOrderLineEdit = ({
                 draft?.discountPercentage,
                 {
                   onChange: value => {
-                    update({
-                      discountPercentage: value,
-                      pricePerUnitAfterDiscount:
-                        draft?.pricePerUnitBeforeDiscount *
-                        (1 - (draft?.discountPercentage || 0) / 100),
-                    });
+                    const adjustedPatch = calculatePricesAndDiscount(
+                      'discountPercentage',
+                      { ...draft, discountPercentage: value }
+                    );
+                    update(adjustedPatch);
                   },
                   max: 100,
                   decimalLimit: 2,
@@ -173,10 +199,13 @@ export const PurchaseOrderLineEdit = ({
                 draft?.pricePerUnitAfterDiscount,
                 {
                   onChange: value => {
-                    update({
-                      pricePerUnitAfterDiscount: value,
-                    });
+                    const adjustedPatch = calculatePricesAndDiscount(
+                      'pricePerUnitAfterDiscount',
+                      { ...draft, pricePerUnitAfterDiscount: value }
+                    );
+                    update(adjustedPatch);
                   },
+                  decimalLimit: 2,
                 }
               )}
             </>
