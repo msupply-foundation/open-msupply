@@ -23,7 +23,7 @@ export const EditCustomTranslations = ({
   update,
 }: {
   value: Record<string, string>;
-  update: (value: Record<string, string>) => Promise<void>;
+  update: (value: Record<string, string>) => Promise<boolean>;
 }) => {
   const t = useTranslation();
   const isOpen = useToggle();
@@ -56,7 +56,7 @@ export const CustomTranslationsModal = ({
   onClose,
 }: {
   value: Record<string, string>;
-  update: (value: Record<string, string>) => Promise<void>;
+  update: (value: Record<string, string>) => Promise<boolean>;
   onClose: () => void;
 }) => {
   const t = useTranslation();
@@ -104,13 +104,15 @@ export const CustomTranslationsModal = ({
 
     setLoading(true);
     const asObject = mapTranslationsToObject(translations);
-    await update(asObject);
 
-    invalidateCustomTranslations();
-
+    const successfulSave = await update(asObject);
     setLoading(false);
-    success(t('messages.saved'))();
-    onClose();
+
+    if (successfulSave) {
+      invalidateCustomTranslations();
+      success(t('messages.saved'))();
+      onClose();
+    }
   };
 
   return (
