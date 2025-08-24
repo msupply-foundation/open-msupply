@@ -275,7 +275,7 @@ mod test {
                 "countedNumberOfPacks": 20,
                 "comment": "comment",
                 "batch": "batch",
-                "expiryDate": "2023-01-22",
+                "expiryDate": {"value": "2023-01-22"},
                 "packSize": 10,
                 "costPricePerPack": 10.0,
                 "sellPricePerPack": 12.0,
