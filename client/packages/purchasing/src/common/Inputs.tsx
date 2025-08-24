@@ -9,6 +9,7 @@ import {
   InputWithLabelRow,
   LocaleKey,
   NumericTextInput,
+  NumericTextInputProps,
   NumUtils,
   Theme,
   TypedTFunction,
@@ -50,13 +51,6 @@ export const commonLabelProps = {
   },
 };
 
-interface NumericInputProps {
-  onChange?: (value?: number) => void;
-  max?: number;
-  decimalLimit?: number;
-  endAdornment?: string;
-}
-
 export const useInputComponents = (
   t: TypedTFunction<LocaleKey>,
   disabled: boolean,
@@ -67,20 +61,21 @@ export const useInputComponents = (
       numericInput: (
         label: LocaleKey,
         value: number | null | undefined,
-        options: NumericInputProps = {}
+        options: NumericTextInputProps = {}
       ) => {
         const { onChange, max, decimalLimit, endAdornment } = options;
         return (
           <NumInputRow
             key={label}
             disabled={disabled}
-            label={t(label)}
             value={value ?? 0}
             onChange={onChange}
             max={max}
             decimalLimit={decimalLimit}
             endAdornment={endAdornment}
             isVerticalScreen={isVerticalScreen}
+            {...options}
+            label={t(label)}
           />
         );
       },
@@ -134,28 +129,21 @@ export const useInputComponents = (
   );
 };
 
-interface NumInputRowProps {
-  label: string;
-  value: number;
-  isVerticalScreen: boolean;
-  onChange?: (value?: number) => void;
-  disabled: boolean;
-  max?: number;
-  decimalLimit?: number;
-  endAdornment?: string;
-}
-
 const NumInputRow = ({
   label,
   value,
   isVerticalScreen,
   onChange,
-  disabled,
+  disabled = false,
   max,
   decimalLimit,
   endAdornment,
-}: NumInputRowProps) => {
-  const roundedValue = NumUtils.round(value, 2);
+  ...rest
+}: NumericTextInputProps & {
+  isVerticalScreen: boolean;
+  label: string;
+}) => {
+  const roundedValue = NumUtils.round(value ?? 0, 2);
 
   const handleChange = (newValue?: number) => {
     if (!onChange || newValue === roundedValue) return;
@@ -186,6 +174,7 @@ const NumInputRow = ({
             max={max}
             decimalLimit={decimalLimit ?? 0}
             endAdornment={endAdornment}
+            {...rest}
           />
         }
         label={label}

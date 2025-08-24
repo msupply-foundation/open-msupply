@@ -50,6 +50,7 @@ export const PurchaseOrderLineEditModal = ({
     item &&
       updatePatch({
         ...draftLine,
+        requestedPackSize: item.defaultPackSize ?? 1,
         itemId: item.id,
       });
   };
@@ -120,7 +121,7 @@ export const PurchaseOrderLineEditModal = ({
         <PurchaseOrderLineEdit
           draft={draft}
           update={updatePatch}
-          // status={purchaseOrder.status} // TODO: The things that show on confirmed status
+          status={purchaseOrder.status}
           isDisabled={isDisabled}
           lines={lines}
           isUpdateMode={isUpdateMode}

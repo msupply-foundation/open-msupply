@@ -34,7 +34,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   id: '',
   purchaseOrderId: '',
   itemId: '',
-  requestedPackSize: 0,
+  requestedPackSize: 1,
   requestedNumberOfUnits: 0,
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
@@ -47,7 +47,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   unit: null,
   supplierItemCode: null,
   comment: null,
-  // This value not actually saved to DB
+  // These values not actually saved to DB
   discountPercentage: 0,
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
@@ -57,7 +57,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   const { data, isLoading, error } = useGet(id ?? '');
 
   const { patch, updatePatch, resetDraft, isDirty } =
-    usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
+    usePatchState<DraftPurchaseOrderLine>({});
 
   // The discount percentage is calculated from the price fields, but we want to
   // insert it into the draft so it can be independently manipulated (with the
@@ -127,6 +127,7 @@ export function usePurchaseOrderLine(id?: string | null) {
       supplierItemCode: setNullableInput('supplierItemCode', draft),
       comment: setNullableInput('comment', draft),
     };
+    resetDraft();
     return await updatePurchaseOrderLine(input);
   };
 
