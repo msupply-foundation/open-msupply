@@ -16,6 +16,7 @@ import {
   UNDEFINED_STRING_VALUE,
   useTranslation,
   getDosesPerUnitColumn,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -24,7 +25,6 @@ import { getDosesQuantityColumn } from '../../DoseQtyColumn';
 interface UseOutboundColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
   onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
-  displayDoseColumns: boolean;
 }
 
 const expansionColumn = getRowExpandColumn<
@@ -46,10 +46,10 @@ const getUnitQuantity = (row: StockOutLineFragment) =>
 export const useOutboundColumns = ({
   sortBy,
   onChangeSortBy,
-  displayDoseColumns,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const t = useTranslation();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
+  const { manageVaccinesInDoses } = usePreferences();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     GenericColumnKey.Selection,
@@ -182,7 +182,7 @@ export const useOutboundColumns = ({
     ],
   ];
 
-  if (displayDoseColumns) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -233,7 +233,7 @@ export const useOutboundColumns = ({
     ]
   );
 
-  if (displayDoseColumns) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesQuantityColumn());
   }
 

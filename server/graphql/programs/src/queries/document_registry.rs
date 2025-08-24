@@ -9,7 +9,8 @@ use graphql_types::types::document_registry::{
     DocumentRegistryCategoryNode, DocumentRegistryConnector, DocumentRegistryNode,
 };
 use repository::{
-    DocumentRegistryFilter, DocumentRegistrySort, DocumentRegistrySortField, EqualFilter,
+    DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistrySort,
+    DocumentRegistrySortField, EqualFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::usize_to_u32;
@@ -109,7 +110,7 @@ impl DocumentRegistryFilterInput {
             id: id.map(EqualFilter::from),
             document_type: document_type.map(EqualFilter::from),
             context_id: context_id.map(EqualFilter::from),
-            category: r#type.map(|t| map_filter!(t, DocumentRegistryCategoryNode::to_domain)),
+            category: r#type.map(|t| map_filter!(t, |c| DocumentRegistryCategory::from(c))),
         }
     }
 }

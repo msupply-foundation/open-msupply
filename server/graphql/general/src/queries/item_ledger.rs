@@ -11,7 +11,10 @@ use graphql_core::{
 use graphql_types::types::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceNodeStatus, InvoiceNodeType,
 };
-use repository::{DatetimeFilter, EqualFilter, ItemLedgerFilter, ItemLedgerRow, PaginationOption};
+use repository::{
+    DatetimeFilter, EqualFilter, InvoiceStatus, InvoiceType, ItemLedgerFilter, ItemLedgerRow,
+    PaginationOption,
+};
 
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -53,7 +56,7 @@ impl ItemLedgerNode {
         &self.item_ledger.movement_in_units
     }
     pub async fn invoice_type(&self) -> InvoiceNodeType {
-        InvoiceNodeType::from_domain(&self.item_ledger.invoice_type)
+        InvoiceNodeType::from(self.item_ledger.invoice_type.clone())
     }
     pub async fn invoice_number(&self) -> &i64 {
         &self.item_ledger.invoice_number
@@ -66,7 +69,7 @@ impl ItemLedgerNode {
     }
 
     pub async fn invoice_status(&self) -> InvoiceNodeStatus {
-        InvoiceNodeStatus::from_domain(&self.item_ledger.invoice_status)
+        InvoiceNodeStatus::from(self.item_ledger.invoice_status.clone())
     }
 
     pub async fn pack_size(&self) -> &f64 {
@@ -165,8 +168,8 @@ impl ItemLedgerFilterInput {
         ItemLedgerFilter {
             item_id: item_id.map(EqualFilter::from),
             datetime: datetime.map(DatetimeFilter::from),
-            invoice_type: invoice_type.map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
-            invoice_status: invoice_status.map(|s| map_filter!(s, InvoiceNodeStatus::to_domain)),
+            invoice_type: invoice_type.map(|t| map_filter!(t, |i| InvoiceType::from(i))),
+            invoice_status: invoice_status.map(|s| map_filter!(s, |i| InvoiceStatus::from(i))),
             store_id: None,
         }
     }

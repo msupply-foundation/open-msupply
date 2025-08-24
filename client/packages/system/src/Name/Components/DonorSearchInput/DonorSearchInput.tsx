@@ -7,6 +7,7 @@ import { getNameOptionRenderer } from '../NameOptionRenderer';
 export interface DonorSearchInputProps {
   onChange: (donor: NameRowFragment | null) => void;
   width?: number;
+  fullWidth?: boolean;
   donorId: string | null;
   disabled?: boolean;
   clearable?: boolean;
@@ -15,6 +16,7 @@ export interface DonorSearchInputProps {
 export const DonorSearchInput = ({
   onChange,
   width = 250,
+  fullWidth = false,
   donorId,
   disabled = false,
   clearable = false,
@@ -43,10 +45,11 @@ export const DonorSearchInput = ({
       renderOption={NameOptionRenderer}
       getOptionLabel={option => option.name}
       filterOptions={filterByNameAndCode}
-      width={`${width}px`}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       getOptionDisabled={option => option.isOnHold}
+      width={fullWidth ? undefined : `${width}px`}
+      fullWidth={fullWidth}
     />
   );
 };

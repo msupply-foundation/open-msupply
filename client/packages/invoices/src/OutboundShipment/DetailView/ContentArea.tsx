@@ -8,8 +8,6 @@ import {
   AppSxProp,
   NothingHere,
   useUrlQueryParams,
-  usePreference,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
@@ -73,8 +71,6 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onRowClick,
 }) => {
   const t = useTranslation();
-  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
-  const displayDoseColumns = prefs?.manageVaccinesInDoses ?? false;
 
   const {
     updateSortQuery,
@@ -85,7 +81,6 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   const columns = useOutboundColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
-    displayDoseColumns,
   });
   const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
@@ -96,9 +91,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     <DataTable
       id="outbound-detail"
       onRowClick={onRowClick}
-      ExpandContent={props => (
-        <Expand {...props} displayDoseColumns={displayDoseColumns} />
-      )}
+      ExpandContent={props => <Expand {...props} />}
       columns={columns}
       data={rows}
       enableColumnSelection

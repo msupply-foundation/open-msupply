@@ -3,7 +3,6 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use std::sync::RwLock;
 
-
 use crate::RepositoryError;
 
 use super::StorageConnection;
@@ -62,7 +61,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sync_log)]
 pub struct SyncLogRow {
@@ -98,45 +97,6 @@ pub struct SyncLogRow {
     pub error_message: Option<String>,
     pub error_code: Option<SyncApiErrorCode>,
     pub duration_in_seconds: i32,
-}
-
-impl Default for SyncLogRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            started_datetime: Default::default(),
-            finished_datetime: Default::default(),
-            prepare_initial_started_datetime: Default::default(),
-            prepare_initial_finished_datetime: Default::default(),
-            push_started_datetime: Default::default(),
-            push_finished_datetime: Default::default(),
-            push_progress_total: Default::default(),
-            push_progress_done: Default::default(),
-            pull_central_started_datetime: Default::default(),
-            pull_central_finished_datetime: Default::default(),
-            pull_central_progress_total: Default::default(),
-            pull_central_progress_done: Default::default(),
-            pull_remote_started_datetime: Default::default(),
-            pull_remote_finished_datetime: Default::default(),
-            pull_remote_progress_total: Default::default(),
-            pull_remote_progress_done: Default::default(),
-            integration_started_datetime: Default::default(),
-            integration_finished_datetime: Default::default(),
-            integration_progress_done: Default::default(),
-            integration_progress_total: Default::default(),
-            error_message: Default::default(),
-            error_code: Default::default(),
-            pull_v6_started_datetime: Default::default(),
-            pull_v6_finished_datetime: Default::default(),
-            pull_v6_progress_total: Default::default(),
-            pull_v6_progress_done: Default::default(),
-            push_v6_started_datetime: Default::default(),
-            push_v6_finished_datetime: Default::default(),
-            push_v6_progress_total: Default::default(),
-            push_v6_progress_done: Default::default(),
-            duration_in_seconds: Default::default(),
-        }
-    }
 }
 
 pub struct SyncLogRowRepository<'a> {

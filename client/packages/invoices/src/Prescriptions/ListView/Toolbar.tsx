@@ -64,14 +64,14 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.date'),
               elements: [
                 {
-                  type: 'date',
+                  type: 'dateTime',
                   name: t('label.from-date'),
                   urlParameter: 'createdOrBackdatedDatetime',
                   range: 'from',
                   isDefault: true,
                 },
                 {
-                  type: 'date',
+                  type: 'dateTime',
                   name: t('label.to-date'),
                   urlParameter: 'createdOrBackdatedDatetime',
                   range: 'to',

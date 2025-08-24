@@ -14,6 +14,7 @@ import {
   Typography,
   BufferedTextArea,
   ModalGridLayout,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -46,7 +47,6 @@ interface RequestLineEditProps {
   disabled?: boolean;
   isUpdateMode?: boolean;
   showExtraFields?: boolean;
-  manageVaccinesInDoses?: boolean;
   isReasonsError: boolean;
   setIsEditingRequested: (isEditingRequested: boolean) => void;
 }
@@ -64,12 +64,13 @@ export const RequestLineEdit = ({
   disabled,
   isUpdateMode,
   showExtraFields,
-  manageVaccinesInDoses = false,
   isReasonsError,
   setIsEditingRequested,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
+  const { manageVaccinesInDoses } = usePreferences();
+
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 

@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::types::patient::GenderType;
+use crate::types::patient::GenderTypeNode;
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{preferences::PreferenceProvider, Preference, PreferenceDescription};
@@ -18,22 +18,25 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
-    pub async fn authorise_goods_received(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.authorise_goods_received)
+    pub async fn gender_options(&self) -> Result<Vec<GenderTypeNode>> {
+        let domain_genders = self.load_preference(&self.preferences.gender_options)?;
+        let genders = domain_genders
+            .iter()
+            .map(|g| GenderTypeNode::from(g.clone()))
+            .collect();
+        Ok(genders)
     }
 
     pub async fn authorise_purchase_order(&self) -> Result<bool> {
         self.load_preference(&self.preferences.authorise_purchase_order)
     }
 
-    pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
-        self.load_preference(&self.preferences.custom_translations)
+    pub async fn authorise_goods_received(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_goods_received)
     }
 
-    pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
-        let domain_genders = self.load_preference(&self.preferences.gender_options)?;
-        let genders = domain_genders.iter().map(GenderType::from_domain).collect();
-        Ok(genders)
+    pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
+        self.load_preference(&self.preferences.custom_translations)
     }
 
     pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {

@@ -6,8 +6,13 @@ import { DateUtils, useFormatDateTime } from '@common/intl';
 import { PickersActionBarAction } from '@mui/x-date-pickers';
 
 export interface DateFilterDefinition extends FilterDefinitionCommon {
+  /**
+   * Use date where the stored date has no time (NaiveDate)
+   * Use dateTime where the stored date has a time. (NaiveDateTime)
+   * DateTime type will handle timezones
+   */
   type: 'date' | 'dateTime';
-  displayAs?: 'date' | 'dateTime';
+  showTimepicker?: boolean;
   range?: RangeOption;
   maxDate?: Date | string;
   minDate?: Date | string;
@@ -20,15 +25,8 @@ export const DateFilter = ({
 }: {
   filterDefinition: DateFilterDefinition;
 }) => {
-  const {
-    type,
-    urlParameter,
-    name,
-    range,
-    displayAs = type,
-    maxDate,
-    minDate,
-  } = filterDefinition;
+  const { type, urlParameter, name, range, maxDate, minDate, showTimepicker } =
+    filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDate, urlQueryDateTime } = useFormatDateTime();
 
@@ -44,10 +42,16 @@ export const DateFilter = ({
         return;
       }
 
-      const date =
-        range === 'to' && displayAs === 'date' // if no time picker, set "TO" field to end of day
-          ? DateUtils.endOfDay(selection)
-          : selection;
+      let date = selection;
+
+      // when user is only selecting the date, ensure the search filter is inclusive of start and end of day
+      if (!showTimepicker && type === 'dateTime') {
+        if (range === 'from') {
+          date = DateUtils.startOfDay(selection);
+        } else if (range === 'to') {
+          date = DateUtils.endOfDay(selection);
+        }
+      }
 
       updateQuery({
         [urlParameter]: { [range]: customDate(date, dateTimeFormat) },
@@ -67,16 +71,11 @@ export const DateFilter = ({
     width: FILTER_WIDTH,
     onChange: handleChange,
     actions: ['clear', 'accept'] as PickersActionBarAction[],
-    displayAs,
+    type,
     ...getMinMaxDates(urlValue, range, minDate, maxDate),
   };
 
-  return (
-    <DateTimePickerInput
-      showTime={displayAs === 'dateTime'}
-      {...componentProps}
-    />
-  );
+  return <DateTimePickerInput showTime={showTimepicker} {...componentProps} />;
 };
 
 const getDateFromUrl = (

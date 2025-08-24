@@ -11,11 +11,11 @@ use graphql_core::{
 };
 use graphql_types::types::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceConnector, InvoiceNode,
-    InvoiceNodeStatus, InvoiceNodeType,
+    InvoiceNodeType,
 };
 use repository::{
-    DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, PaginationOption,
-    StringFilter,
+    DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, InvoiceStatus,
+    InvoiceType, PaginationOption, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -175,7 +175,7 @@ pub fn get_invoice_by_number(
         &service_context,
         &store_id,
         invoice_number,
-        r#type.to_domain(),
+        InvoiceType::from(r#type),
     )?;
 
     let response = match invoice_option {
@@ -199,10 +199,10 @@ impl InvoiceFilterInput {
             user_id: self.user_id.map(EqualFilter::from),
             r#type: self
                 .r#type
-                .map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
+                .map(|t| map_filter!(t, |r| InvoiceType::from(r))),
             status: self
                 .status
-                .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |s| InvoiceStatus::from(s))),
             on_hold: self.on_hold,
             comment: self.comment.map(StringFilter::from),
             their_reference: self.their_reference.map(StringFilter::from),

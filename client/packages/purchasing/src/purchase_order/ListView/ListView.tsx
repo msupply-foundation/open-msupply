@@ -36,7 +36,7 @@ const ListView: FC = () => {
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
       { key: 'supplier' },
-      { key: 'createdDatetime' },
+      { key: 'createdDatetime', condition: 'between' },
       {
         key: 'status',
         condition: 'equalTo',

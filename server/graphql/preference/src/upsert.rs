@@ -2,7 +2,8 @@ use std::collections::BTreeMap;
 
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::patient::GenderType;
+use graphql_types::types::patient::GenderTypeNode;
+use repository::GenderType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{StorePrefUpdate, UpsertPreferences},
@@ -17,10 +18,10 @@ pub struct BoolStorePrefInput {
 pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub authorise_goods_received: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
+    pub authorise_goods_received: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
-    pub gender_options: Option<Vec<GenderType>>,
+    pub gender_options: Option<Vec<GenderTypeNode>>,
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
     pub sync_records_display_threshold: Option<i32>,
@@ -85,7 +86,7 @@ impl UpsertPreferencesInput {
             custom_translations: custom_translations.clone(),
             gender_options: gender_options
                 .as_ref()
-                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+                .map(|i| i.iter().map(|i| GenderType::from(i.clone())).collect()),
             prevent_transfers_months_before_initialisation:
                 *prevent_transfers_months_before_initialisation,
             show_contact_tracing: *show_contact_tracing,
