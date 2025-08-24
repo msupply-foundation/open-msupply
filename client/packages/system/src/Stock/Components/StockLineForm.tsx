@@ -219,7 +219,7 @@ export const StockLineForm = ({
               label={t('label.sell-price')}
               Input={
                 <CurrencyInput
-                  defaultValue={draft.sellPricePerPack}
+                  value={draft.sellPricePerPack}
                   onChangeNumber={sellPricePerPack =>
                     onUpdate({ sellPricePerPack })
                   }
@@ -312,7 +312,19 @@ export const StockLineForm = ({
                   disabled={!packEditable}
                   width={160}
                   value={draft.packSize ?? 1}
-                  onChange={packSize => onUpdate({ packSize })}
+                  onChange={packSize => {
+                    const shouldClearPrice =
+                      draft.item?.defaultPackSize !== packSize &&
+                      draft.item?.itemStoreProperties
+                        ?.defaultSellPricePerPack === draft.sellPricePerPack;
+
+                    onUpdate({
+                      packSize,
+                      sellPricePerPack: shouldClearPrice
+                        ? 0
+                        : draft.sellPricePerPack,
+                    });
+                  }}
                 />
               }
             />
