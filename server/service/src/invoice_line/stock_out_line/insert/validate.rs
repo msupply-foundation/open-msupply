@@ -11,7 +11,9 @@ use crate::{
     },
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
 };
-use repository::{InvoiceRow, InvoiceStatus, ItemRow, StockLine, StorageConnection};
+use repository::{
+    InvoiceRow, InvoiceStatus, ItemRow, LocationRowRepository, StockLine, StorageConnection,
+};
 
 pub fn validate(
     connection: &StorageConnection,
@@ -60,9 +62,22 @@ pub fn validate(
     if !check_batch_on_hold(&batch) {
         return Err(BatchIsOnHold);
     }
-    check_location_on_hold(&batch).map_err(|e| match e {
-        LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
-    })?;
+
+    let location_id = input
+        .location_id
+        .clone()
+        .map(|l| l.value)
+        .unwrap_or(batch.location_row.clone().map(|l| l.id));
+
+    if let Some(location_id) = location_id {
+        let location = LocationRowRepository::new(connection)
+            .find_one_by_id(&location_id)?
+            .ok_or(LocationNotFound)?;
+
+        check_location_on_hold(&Some(location)).map_err(|e| match e {
+            LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
+        })?;
+    }
 
     let mut available_packs = batch.stock_line_row.available_number_of_packs;
     if let Some(backdated_date) = invoice_backdated_date(&invoice) {
