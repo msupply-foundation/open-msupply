@@ -24,14 +24,22 @@ pub(super) fn stock_line_ledger_fix(
     stock_line_id: &str,
 ) -> Result</* fixed fully */ bool, StockLineLedgerFixError> {
     // Ledger fix that adjusts status on an invoice may fix several lines, so need to recheck needing the fix at the start
+    if is_ledger_fixed(connection, stock_line_id)? {
+        return Ok(true);
+    }
 
     adjust_invoice_status::fix(connection, operation_log, stock_line_id)?;
+
+    // TODO only check this if some action was done in ledger fix
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
     }
 
     adjust_historic_incoming_invoices::fix(connection, operation_log, stock_line_id)?;
-    // TODO only check this if some action was done in ledger fix
+
+    if is_ledger_fixed(connection, stock_line_id)? {
+        return Ok(true);
+    }
 
     inventory_adjustment_to_balance::fix(connection, operation_log, stock_line_id)?;
 
