@@ -89,7 +89,7 @@ pub enum MigrationError {
     DatabaseVersionIsPreRelease(Version),
     #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
     MigrationAboveAppVersion(Version, Version),
-    #[error("Problem dropping or re-creating views")]
+    #[error("Problem dropping or re-creating views {0}")]
     DatabaseViewsError(anyhow::Error),
     #[error("Error during one time migration ({version})")]
     MigrationError {
