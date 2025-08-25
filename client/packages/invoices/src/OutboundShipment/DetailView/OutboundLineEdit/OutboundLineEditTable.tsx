@@ -219,11 +219,6 @@ export const OutboundLineEditTable = ({
       dosesPerUnit={item?.doses}
       key="placeholder-row"
     />,
-    <TotalRow
-      key="total-row"
-      allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
-      extraColumnOffset={extraColumnOffset}
-    />,
   ];
 
   return (
@@ -245,6 +240,11 @@ export const OutboundLineEditTable = ({
           dense
           additionalRows={additionalRows}
           enableColumnSelection={true}
+        />
+        <TotalRow
+          key="total-row"
+          allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
+          extraColumnOffset={extraColumnOffset}
         />
       </Box>
     </Box>
