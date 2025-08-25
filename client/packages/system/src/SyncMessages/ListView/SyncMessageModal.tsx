@@ -15,7 +15,6 @@ import { useSyncMessageLine } from '../api/hooks';
 import { statusMapping, typeMapping } from './utils';
 
 // TODO:
-// BE: Add loaders for store IDs
 // BE: Add Upload Type to Sync message - needs writing a migration
 // FE: And Add File Handling - still brainstorming implementation
 
@@ -56,7 +55,9 @@ export const SyncMessageModal = ({
           : t('title.message')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      okButton={<DialogButton variant="save" onClick={onOpen} />}
+      okButton={
+        <DialogButton variant="save" onClick={onOpen} disabled={true} /> // Remove disable once update mutation is implemented
+      }
     >
       <Stack
         sx={{
@@ -68,11 +69,11 @@ export const SyncMessageModal = ({
           <Stack gap={2}>
             <InputWithLabelRow
               label={t('label.from')}
-              Input={<ReadOnlyInput value={data?.fromStoreId ?? ''} />}
+              Input={<ReadOnlyInput value={data?.fromStore?.storeName ?? ''} />}
             />
             <InputWithLabelRow
               label={t('label.to')}
-              Input={<ReadOnlyInput value={data?.toStoreId ?? ''} />}
+              Input={<ReadOnlyInput value={data?.toStore?.storeName ?? ''} />}
             />
           </Stack>
           <Stack gap={2}>

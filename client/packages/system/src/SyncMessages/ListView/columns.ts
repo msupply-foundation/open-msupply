@@ -1,4 +1,5 @@
 import {
+  ColumnAlign,
   ColumnDescription,
   ColumnFormat,
   useColumns,
@@ -20,19 +21,20 @@ export const useSyncMessageColumns = () => {
 
   const columns: ColumnDescription<SyncMessageRowFragment>[] = [
     {
-      key: 'toStoreId',
+      key: 'toStore',
       label: 'label.to-store',
-      accessor: ({ rowData }) => rowData?.toStoreId,
+      accessor: ({ rowData }) => rowData?.toStore?.storeName,
     },
     {
-      key: 'fromStoreId',
+      key: 'fromStore',
       label: 'label.from-store',
-      accessor: ({ rowData }) => rowData?.fromStoreId,
+      accessor: ({ rowData }) => rowData?.fromStore?.storeName,
     },
     {
       key: 'createdDatetime',
       label: 'label.created-datetime',
       format: ColumnFormat.Date,
+      align: ColumnAlign.Left,
       accessor: ({ rowData }) => rowData?.createdDatetime,
     },
     {

@@ -1,11 +1,19 @@
 fragment SyncMessageRow on SyncMessageNode {
-  body
-  createdDatetime
-  fromStoreId
   id
-  status
-  toStoreId
+  body
   type
+  status
+  toStore {
+    id
+    siteId
+    storeName
+  }
+  fromStore {
+    id
+    siteId
+    storeName
+  }
+  createdDatetime
 }
 
 query syncMessages(

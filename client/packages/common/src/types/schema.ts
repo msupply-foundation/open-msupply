@@ -9398,10 +9398,10 @@ export type SyncMessageNode = {
   body: Scalars['String']['output'];
   createdDatetime: Scalars['DateTime']['output'];
   errorMessage?: Maybe<Scalars['String']['output']>;
-  fromStoreId?: Maybe<Scalars['String']['output']>;
+  fromStore?: Maybe<StoreNode>;
   id: Scalars['String']['output'];
   status: SyncMessageNodeStatus;
-  toStoreId?: Maybe<Scalars['String']['output']>;
+  toStore?: Maybe<StoreNode>;
   type: SyncMessageNodeType;
 };
 
