@@ -26,6 +26,7 @@ query requisitionQuery($storeId: String!, $dataId: String!) {
           item {
             code
             name
+            unitName
           }
           itemStats {
             stockOnHand

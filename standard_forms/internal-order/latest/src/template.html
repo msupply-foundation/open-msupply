@@ -7,6 +7,7 @@
       <tr class="body_column_label">
           <th>{{ t(k="label.code", f="Code") }}</th>
           <th>{{ t(k="report.item-name", f="Item name") }}</th>
+          <th>{{ t(k="label.unit", f="Unit") }}</th>
           <th>{{ t(k="report.stock-on-hand",f="Stock on hand") }}</th>
           <th>{{ t(k="label.amc",f="AMC") }}</th>
           <th>{{ t(k="label.months-of-stock", f="MOS") }}</th>
@@ -17,6 +18,7 @@
   <tr class="body_value">
       <td>{{ line.item.code }}</td>
       <td>{{ line.item.name }}</td>
+      <td>{{ line.item.unitName }}</td>
       <td>{{ line.itemStats.stockOnHand | default(value=0.00) |
         round(precision=2) }}</td>
       <td>{{ line.itemStats.averageMonthlyConsumption | default(value=0.00) |
