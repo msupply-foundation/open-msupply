@@ -32,6 +32,7 @@ pub enum InvoicesResponse {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::invoice::InvoiceSortField")]
 pub enum InvoiceSortFieldInput {
     Type,
     OtherPartyName,
@@ -230,27 +231,8 @@ impl InvoiceFilterInput {
 
 impl InvoiceSortInput {
     pub fn to_domain(self) -> InvoiceSort {
-        use InvoiceSortField as to;
-        use InvoiceSortFieldInput as from;
-        let key = match self.key {
-            from::Type => to::Type,
-            from::OtherPartyName => to::OtherPartyName,
-            from::InvoiceNumber => to::InvoiceNumber,
-            from::Comment => to::Comment,
-            from::Status => to::Status,
-            from::CreatedDatetime => to::CreatedDatetime,
-            from::InvoiceDatetime => to::InvoiceDatetime,
-            from::AllocatedDatetime => to::AllocatedDatetime,
-            from::PickedDatetime => to::PickedDatetime,
-            from::ShippedDatetime => to::ShippedDatetime,
-            from::DeliveredDatetime => to::DeliveredDatetime,
-            from::VerifiedDatetime => to::VerifiedDatetime,
-            from::TheirReference => to::TheirReference,
-            from::TransportReference => to::TransportReference,
-        };
-
         InvoiceSort {
-            key,
+            key: InvoiceSortField::from(self.key),
             desc: self.desc,
         }
     }

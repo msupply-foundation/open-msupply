@@ -23,6 +23,7 @@ use service::{
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::stock_line_ledger::StockLineLedgerSortField")]
 pub enum LedgerSortFieldInput {
     Datetime,
     Name,
@@ -180,19 +181,8 @@ impl LedgerFilterInput {
 
 impl LedgerSortInput {
     pub fn to_domain(self) -> StockLineLedgerSort {
-        use LedgerSortFieldInput as from;
-        use StockLineLedgerSortField as to;
-        let key = match self.key {
-            from::Datetime => to::Datetime,
-            from::Name => to::Name,
-            from::InvoiceType => to::InvoiceType,
-            from::Quantity => to::Quantity,
-            from::StockLineId => to::StockLineId,
-            from::ItemId => to::ItemId,
-        };
-
         StockLineLedgerSort {
-            key,
+            key: StockLineLedgerSortField::from(self.key),
             desc: self.desc,
         }
     }

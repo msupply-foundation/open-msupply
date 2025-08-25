@@ -16,6 +16,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::purchase_order::PurchaseOrderSortField")]
 pub enum PurchaseOrderSortFieldInput {
     Number,
     CreatedDatetime,
@@ -142,17 +143,8 @@ impl PurchaseOrderFilterInput {
 
 impl PurchaseOrderSortInput {
     pub fn to_domain(self) -> PurchaseOrderSort {
-        use PurchaseOrderSortField as to;
-        use PurchaseOrderSortFieldInput as from;
-        let key = match self.key {
-            from::Number => to::Number,
-            from::TargetMonths => to::TargetMonths,
-            from::Status => to::Status,
-            from::CreatedDatetime => to::CreatedDatetime,
-        };
-
         PurchaseOrderSort {
-            key,
+            key: PurchaseOrderSortField::from(self.key),
             desc: self.desc,
         }
     }

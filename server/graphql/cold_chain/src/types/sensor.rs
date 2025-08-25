@@ -22,6 +22,7 @@ use super::temperature_log::TemperatureLogConnector;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::sensor::SensorSortField")]
 pub enum SensorSortFieldInput {
     Serial,
     Name,
@@ -230,15 +231,8 @@ impl SensorConnector {
 
 impl SensorSortInput {
     pub fn to_domain(self) -> SensorSort {
-        use SensorSortField as to;
-        use SensorSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-            from::Serial => to::Serial,
-        };
-
         SensorSort {
-            key,
+            key: SensorSortField::from(self.key),
             desc: self.desc,
         }
     }

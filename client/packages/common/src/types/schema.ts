@@ -671,6 +671,7 @@ export enum AssetSortFieldInput {
   AssetNumber = 'assetNumber',
   InstallationDate = 'installationDate',
   ModifiedDatetime = 'modifiedDatetime',
+  Notes = 'notes',
   ReplacementDate = 'replacementDate',
   SerialNumber = 'serialNumber',
   Store = 'store',
@@ -2568,7 +2569,6 @@ export type EncounterFilterInput = {
   patient?: InputMaybe<PatientFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programEnrolment?: InputMaybe<ProgramEnrolmentFilterInput>;
-  /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterEncounterStatusInput>;
@@ -2623,13 +2623,13 @@ export enum EncounterNodeStatus {
 export type EncounterResponse = EncounterConnector;
 
 export enum EncounterSortFieldInput {
+  Program = 'Program',
+  Type = 'Type',
   CreatedDatetime = 'createdDatetime',
   EndDatetime = 'endDatetime',
   PatientId = 'patientId',
-  Program = 'program',
   StartDatetime = 'startDatetime',
   Status = 'status',
-  Type = 'type',
 }
 
 export type EncounterSortInput = {
@@ -3080,6 +3080,9 @@ export type GoodsReceivedResponse = GoodsReceivedNode | RecordNotFound;
 
 export enum GoodsReceivedSortFieldInput {
   CreatedDatetime = 'createdDatetime',
+  Number = 'number',
+  ReceivedDate = 'receivedDate',
+  Status = 'status',
 }
 
 export type GoodsReceivedSortInput = {
@@ -9175,6 +9178,7 @@ export enum StockLineSortFieldInput {
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
   SupplierName = 'supplierName',
+  VvmStatusThenExpiry = 'vvmStatusThenExpiry',
 }
 
 export type StockLineSortInput = {

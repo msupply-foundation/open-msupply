@@ -62,10 +62,13 @@ pub struct EqualFilterEncounterStatusInput {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::encounter::EncounterSortField")]
 pub enum EncounterSortFieldInput {
-    Type,
+    #[graphql(name = "Type")]
+    DocumentType,
     PatientId,
-    Program,
+    #[graphql(name = "Program")]
+    Context, // Program
     CreatedDatetime,
     StartDatetime,
     EndDatetime,
@@ -83,18 +86,8 @@ pub struct EncounterSortInput {
 
 impl EncounterSortInput {
     pub fn to_domain(self) -> EncounterSort {
-        let key = match self.key {
-            EncounterSortFieldInput::Type => EncounterSortField::DocumentType,
-            EncounterSortFieldInput::PatientId => EncounterSortField::PatientId,
-            EncounterSortFieldInput::Program => EncounterSortField::Context,
-            EncounterSortFieldInput::CreatedDatetime => EncounterSortField::CreatedDatetime,
-            EncounterSortFieldInput::StartDatetime => EncounterSortField::StartDatetime,
-            EncounterSortFieldInput::EndDatetime => EncounterSortField::EndDatetime,
-            EncounterSortFieldInput::Status => EncounterSortField::Status,
-        };
-
         EncounterSort {
-            key,
+            key: EncounterSortField::from(self.key),
             desc: self.desc,
         }
     }
@@ -105,7 +98,6 @@ pub struct EncounterFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
-    /// The program id
     pub program_id: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub start_datetime: Option<DatetimeFilterInput>,
