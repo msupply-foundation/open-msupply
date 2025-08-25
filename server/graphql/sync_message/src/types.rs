@@ -1,5 +1,7 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
+use graphql_core::{loader::StoreByIdLoader, ContextExt};
+use graphql_types::types::StoreNode;
 use repository::{SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType};
 use service::ListResult;
 
@@ -34,12 +36,30 @@ impl SyncMessageNode {
         &self.row().id
     }
 
-    pub async fn to_store_id(&self) -> &Option<String> {
-        &self.row().to_store_id
+    pub async fn to_store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+
+        if let Some(to_store_id) = self.row().to_store_id.clone() {
+            return Ok(loader
+                .load_one(to_store_id)
+                .await?
+                .map(StoreNode::from_domain));
+        }
+
+        return Ok(None);
     }
 
-    pub async fn from_store_id(&self) -> &Option<String> {
-        &self.row().from_store_id
+    pub async fn from_store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+
+        if let Some(from_store_id) = self.row().from_store_id.clone() {
+            return Ok(loader
+                .load_one(from_store_id)
+                .await?
+                .map(StoreNode::from_domain));
+        }
+
+        return Ok(None);
     }
 
     pub async fn body(&self) -> &str {

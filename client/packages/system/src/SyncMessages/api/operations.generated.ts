@@ -5,13 +5,23 @@ import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type SyncMessageRowFragment = {
   __typename: 'SyncMessageNode';
-  body: string;
-  createdDatetime: string;
-  fromStoreId?: string | null;
   id: string;
-  status: Types.SyncMessageNodeStatus;
-  toStoreId?: string | null;
+  body: string;
   type: Types.SyncMessageNodeType;
+  status: Types.SyncMessageNodeStatus;
+  createdDatetime: string;
+  toStore?: {
+    __typename: 'StoreNode';
+    id: string;
+    siteId: number;
+    storeName: string;
+  } | null;
+  fromStore?: {
+    __typename: 'StoreNode';
+    id: string;
+    siteId: number;
+    storeName: string;
+  } | null;
 };
 
 export type SyncMessagesQueryVariables = Types.Exact<{
@@ -34,13 +44,23 @@ export type SyncMessagesQuery = {
         totalCount: number;
         nodes: Array<{
           __typename: 'SyncMessageNode';
-          body: string;
-          createdDatetime: string;
-          fromStoreId?: string | null;
           id: string;
-          status: Types.SyncMessageNodeStatus;
-          toStoreId?: string | null;
+          body: string;
           type: Types.SyncMessageNodeType;
+          status: Types.SyncMessageNodeStatus;
+          createdDatetime: string;
+          toStore?: {
+            __typename: 'StoreNode';
+            id: string;
+            siteId: number;
+            storeName: string;
+          } | null;
+          fromStore?: {
+            __typename: 'StoreNode';
+            id: string;
+            siteId: number;
+            storeName: string;
+          } | null;
         }>;
       };
     };
@@ -62,13 +82,23 @@ export type SyncMessageByIdQuery = {
         | { __typename: 'RecordNotFound' }
         | {
             __typename: 'SyncMessageNode';
-            body: string;
-            createdDatetime: string;
-            fromStoreId?: string | null;
             id: string;
-            status: Types.SyncMessageNodeStatus;
-            toStoreId?: string | null;
+            body: string;
             type: Types.SyncMessageNodeType;
+            status: Types.SyncMessageNodeStatus;
+            createdDatetime: string;
+            toStore?: {
+              __typename: 'StoreNode';
+              id: string;
+              siteId: number;
+              storeName: string;
+            } | null;
+            fromStore?: {
+              __typename: 'StoreNode';
+              id: string;
+              siteId: number;
+              storeName: string;
+            } | null;
           };
     };
   };
@@ -76,13 +106,21 @@ export type SyncMessageByIdQuery = {
 
 export const SyncMessageRowFragmentDoc = gql`
   fragment SyncMessageRow on SyncMessageNode {
-    body
-    createdDatetime
-    fromStoreId
     id
-    status
-    toStoreId
+    body
     type
+    status
+    toStore {
+      id
+      siteId
+      storeName
+    }
+    fromStore {
+      id
+      siteId
+      storeName
+    }
+    createdDatetime
   }
 `;
 export const SyncMessagesDocument = gql`
