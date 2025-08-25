@@ -3,19 +3,22 @@ import {
   Box,
   DialogButton,
   InputWithLabelRow,
+  ModalMode,
   ReadOnlyInput,
   Stack,
   TextArea,
   Typography,
   useDialog,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useSyncMessageLine } from '../api/hooks';
 
 interface SyncMessageModalProps {
-  lineId?: string;
   onClose: () => void;
   onOpen: () => void;
   isOpen: boolean;
+  mode: ModalMode | null;
+  lineId?: string;
 }
 
 export const SyncMessageModal = ({
@@ -23,7 +26,9 @@ export const SyncMessageModal = ({
   onClose,
   onOpen,
   isOpen,
+  mode,
 }: SyncMessageModalProps): ReactElement => {
+  const t = useTranslation();
   const { Modal } = useDialog({
     onClose,
     isOpen,
@@ -33,12 +38,14 @@ export const SyncMessageModal = ({
     query: { data },
   } = useSyncMessageLine(lineId);
 
-  console.info('SyncMessageModal lineId:', lineId);
-
   return (
     <Modal
       width={600}
-      title={'Sync Message Details'}
+      title={
+        mode === ModalMode.Create
+          ? t('title.create-message')
+          : t('title.message')
+      }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={<DialogButton variant="save" onClick={onOpen} />}
     >
@@ -49,29 +56,29 @@ export const SyncMessageModal = ({
         }}
       >
         <Stack flexDirection="row">
-          <Box>
+          <Stack gap={2}>
             <InputWithLabelRow
-              label="To Store"
-              Input={<ReadOnlyInput value={data?.toStoreId ?? ''} />}
-            />
-            <InputWithLabelRow
-              label="To Store"
+              label={t('label.from')}
               Input={<ReadOnlyInput value={data?.fromStoreId ?? ''} />}
             />
-          </Box>
-          <Box>
             <InputWithLabelRow
-              label="To Store"
+              label={t('label.to')}
+              Input={<ReadOnlyInput value={data?.toStoreId ?? ''} />}
+            />
+          </Stack>
+          <Stack gap={2}>
+            <InputWithLabelRow
+              label={t('label.status')}
               Input={<ReadOnlyInput value={data?.status} />}
             />
             <InputWithLabelRow
-              label="To Store"
+              label={t('label.type')}
               Input={<ReadOnlyInput value={data?.type} />}
             />
-          </Box>
+          </Stack>
         </Stack>
         <Box>
-          <Typography fontWeight="bold">Body</Typography>
+          <Typography fontWeight="bold">{t('label.body')}:</Typography>
           <TextArea
             fullWidth
             value={data?.body ?? ''}

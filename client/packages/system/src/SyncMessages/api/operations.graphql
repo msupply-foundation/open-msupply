@@ -8,7 +8,7 @@ fragment SyncMessageRow on SyncMessageNode {
   type
 }
 
-query SyncMessages(
+query syncMessages(
   $first: Int
   $offset: Int
   $key: SyncMessageSortFieldInput!
@@ -36,11 +36,12 @@ query SyncMessages(
   }
 }
 
-query SyncMessageById($id: String!, $storeId: String!) {
+query syncMessageById($id: String!, $storeId: String!) {
   centralServer {
     syncMessage {
       syncMessage(id: $id, storeId: $storeId) {
         ... on SyncMessageNode {
+          __typename
           ...SyncMessageRow
         }
       }

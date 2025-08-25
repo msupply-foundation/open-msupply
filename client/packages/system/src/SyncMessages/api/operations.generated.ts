@@ -86,7 +86,7 @@ export const SyncMessageRowFragmentDoc = gql`
   }
 `;
 export const SyncMessagesDocument = gql`
-  query SyncMessages(
+  query syncMessages(
     $first: Int
     $offset: Int
     $key: SyncMessageSortFieldInput!
@@ -116,11 +116,12 @@ export const SyncMessagesDocument = gql`
   ${SyncMessageRowFragmentDoc}
 `;
 export const SyncMessageByIdDocument = gql`
-  query SyncMessageById($id: String!, $storeId: String!) {
+  query syncMessageById($id: String!, $storeId: String!) {
     centralServer {
       syncMessage {
         syncMessage(id: $id, storeId: $storeId) {
           ... on SyncMessageNode {
+            __typename
             ...SyncMessageRow
           }
         }
@@ -149,7 +150,7 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    SyncMessages(
+    syncMessages(
       variables: SyncMessagesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<SyncMessagesQuery> {
@@ -159,12 +160,12 @@ export function getSdk(
             ...requestHeaders,
             ...wrappedRequestHeaders,
           }),
-        'SyncMessages',
+        'syncMessages',
         'query',
         variables
       );
     },
-    SyncMessageById(
+    syncMessageById(
       variables: SyncMessageByIdQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<SyncMessageByIdQuery> {
@@ -175,7 +176,7 @@ export function getSdk(
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'SyncMessageById',
+        'syncMessageById',
         'query',
         variables
       );

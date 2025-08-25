@@ -6,8 +6,6 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { useSyncMessageGraphQL } from '../useSyncMessageGraphQL';
-('./keys');
-
 import { SyncMessageRowFragment } from '../operations.generated';
 import { SYNC_MESSAGE } from './keys';
 
@@ -54,7 +52,7 @@ export const useSyncMessageList = (queryParams: ListParams) => {
       ...filterBy,
     };
 
-    const query = await syncMessageApi.SyncMessages({
+    const query = await syncMessageApi.syncMessages({
       storeId,
       first: first,
       offset: offset,

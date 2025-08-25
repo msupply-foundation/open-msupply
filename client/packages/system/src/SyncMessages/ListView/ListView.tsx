@@ -16,7 +16,7 @@ export const ListView = () => {
   const t = useTranslation();
   const columns = useSyncMessageColumns();
 
-  const { isOpen, entity, onClose, onOpen } =
+  const { isOpen, entity, onClose, onOpen, mode } =
     useEditModal<SyncMessageRowFragment>();
 
   const {
@@ -57,12 +57,15 @@ export const ListView = () => {
         noDataElement={<NothingHere body={t('error.no-purchase-orders')} />}
         onRowClick={onOpen}
       />
-      <SyncMessageModal
-        lineId={entity?.id}
-        isOpen={isOpen}
-        onClose={onClose}
-        onOpen={onOpen}
-      />
+      {isOpen && (
+        <SyncMessageModal
+          lineId={entity?.id}
+          isOpen={isOpen}
+          onClose={onClose}
+          onOpen={onOpen}
+          mode={mode}
+        />
+      )}
     </>
   );
 };
