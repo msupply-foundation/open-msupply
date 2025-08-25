@@ -4,12 +4,17 @@ use repository::{
 };
 use util::uuid;
 
-use crate::invoice_line::{
-    outbound_shipment_unallocated_line::{
-        DeleteOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLine,
-        UpdateOutboundShipmentUnallocatedLine,
+use crate::{
+    invoice_line::{
+        outbound_shipment_unallocated_line::{
+            DeleteOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLine,
+            UpdateOutboundShipmentUnallocatedLine,
+        },
+        stock_out_line::{
+            DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine,
+        },
     },
-    stock_out_line::{DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine},
+    NullableUpdate,
 };
 
 use super::{SaveStockOutInvoiceLine, SaveStockOutItemLines, SaveStockOutItemLinesError};
@@ -87,8 +92,8 @@ pub fn generate(
                 stock_line_id,
                 number_of_packs,
                 vvm_status_id,
-                campaign_id,
-                program_id,
+                campaign_id: Some(NullableUpdate { value: campaign_id }),
+                program_id: Some(NullableUpdate { value: program_id }),
                 // Default (use None so the stock line values are used)
                 batch: None,
                 pack_size: None,
