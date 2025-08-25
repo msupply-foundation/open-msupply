@@ -10,8 +10,7 @@ import {
   AppNavSection,
   UserStoreNodeFragment,
   useIsCentralServerApi,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -27,11 +26,7 @@ export const ReplenishmentNav = ({
   const t = useTranslation();
   const rnrVisible = store?.preferences.omProgramModule;
   const isCentralServer = useIsCentralServerApi();
-  const {
-    data: { useProcurementFunctionality } = {
-      useProcurementFunctionality: false,
-    },
-  } = usePreference(PreferenceKey.UseProcurementFunctionality);
+  const { useProcurementFunctionality } = usePreferences();
   const useProcurement = isCentralServer && useProcurementFunctionality;
 
   return (
