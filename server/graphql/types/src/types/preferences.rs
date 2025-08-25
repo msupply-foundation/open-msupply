@@ -27,20 +27,16 @@ impl PreferencesNode {
         Ok(genders)
     }
 
-    pub async fn show_contact_tracing(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.show_contact_tracing)
+    pub async fn authorise_purchase_order(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_purchase_order)
+    }
+
+    pub async fn authorise_goods_received(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_goods_received)
     }
 
     pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
         self.load_preference(&self.preferences.custom_translations)
-    }
-
-    pub async fn sync_records_display_threshold(&self) -> Result<i32> {
-        self.load_preference(&self.preferences.sync_records_display_threshold)
-    }
-
-    pub async fn authorise_purchase_order(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.authorise_purchase_order)
     }
 
     pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
@@ -51,8 +47,12 @@ impl PreferencesNode {
         )
     }
 
-    pub async fn authorise_goods_received(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.authorise_goods_received)
+    pub async fn show_contact_tracing(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_contact_tracing)
+    }
+
+    pub async fn sync_records_display_threshold(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
     // Store preferences
@@ -66,6 +66,10 @@ impl PreferencesNode {
 
     pub async fn order_in_packs(&self) -> Result<bool> {
         self.load_preference(&self.preferences.order_in_packs)
+    }
+
+    pub async fn use_procurement_functionality(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.use_procurement_functionality)
     }
 
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
@@ -124,17 +128,18 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    GenderOptions,
-    ShowContactTracing,
-    CustomTranslations,
-    SyncRecordsDisplayThreshold,
-    AuthorisePurchaseOrder,
-    PreventTransfersMonthsBeforeInitialisation,
     AuthoriseGoodsReceived,
+    AuthorisePurchaseOrder,
+    CustomTranslations,
+    GenderOptions,
+    PreventTransfersMonthsBeforeInitialisation,
+    ShowContactTracing,
+    SyncRecordsDisplayThreshold,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
+    UseProcurementFunctionality,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
 }
