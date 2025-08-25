@@ -1,6 +1,7 @@
 use crate::{
     purchase_order::validate::purchase_order_is_editable,
     purchase_order_line::insert::{InsertPurchaseOrderLineError, PackSizeCodeCombination},
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 use repository::{
     EqualFilter, ItemRow, ItemRowRepository, Pagination, PurchaseOrderLineFilter,
@@ -14,6 +15,7 @@ pub struct ValidateInput {
     pub item_id: Option<String>,
     pub item_code: Option<String>,
     pub requested_pack_size: f64,
+    pub manufacturer_id: Option<String>,
 }
 
 pub fn validate(
@@ -71,6 +73,29 @@ pub fn validate(
             },
         ));
     }
+
+    if let Some(manufacturer_id) = &input.manufacturer_id {
+        check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        )
+        .map_err(|e| match e {
+            OtherPartyErrors::OtherPartyDoesNotExist => {
+                InsertPurchaseOrderLineError::OtherPartyDoesNotExist {}
+            }
+            OtherPartyErrors::OtherPartyNotVisible => {
+                InsertPurchaseOrderLineError::OtherPartyNotVisible
+            }
+            OtherPartyErrors::TypeMismatched => {
+                InsertPurchaseOrderLineError::OtherPartyNotAManufacturer
+            }
+            OtherPartyErrors::DatabaseError(repository_error) => {
+                InsertPurchaseOrderLineError::DatabaseError(repository_error)
+            }
+        })?;
+    };
 
     Ok(item)
 }

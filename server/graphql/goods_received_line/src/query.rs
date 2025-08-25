@@ -119,7 +119,8 @@ impl GoodsReceivedLineFilterInput {
         GoodsReceivedLineFilter {
             id: self.id.map(EqualFilter::from),
             goods_received_id: self.goods_received_id.map(EqualFilter::from),
-            store_id: None, // Store ID is handled in the service layer
+            store_id: None,
+            status: None,
         }
     }
 }

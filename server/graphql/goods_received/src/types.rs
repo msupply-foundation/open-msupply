@@ -65,6 +65,10 @@ impl GoodsReceivedNode {
         return Ok(None);
     }
 
+    pub async fn purchase_order_id(&self) -> &Option<String> {
+        &self.row().purchase_order_id
+    }
+
     pub async fn purchase_order_number(&self, ctx: &Context<'_>) -> Result<Option<i64>> {
         let po_id = match self.row().purchase_order_id {
             Some(ref id) => id,

@@ -51,7 +51,7 @@ export const Toolbar: FC = () => {
                       disabled
                       value={otherParty}
                       onChange={newOtherParty => {
-                        update({ otherParty: newOtherParty });
+                        update({ otherParty: newOtherParty ?? undefined });
                       }}
                     />
                   }

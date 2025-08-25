@@ -1120,6 +1120,14 @@ export type CannotDeleteRequisitionWithLines =
     description: Scalars['String']['output'];
   };
 
+export type CannotEditGoodsReceived = DeleteGoodsReceivedLineInterface &
+  InsertGoodsReceivedLineErrorInterface &
+  InsertGoodsReceivedLinesErrorInterface &
+  UpdateGoodsReceivedLineErrorInterface & {
+    __typename: 'CannotEditGoodsReceived';
+    description: Scalars['String']['output'];
+  };
+
 export type CannotEditInvoice =
   AddToInboundShipmentFromMasterListErrorInterface &
     AddToOutboundShipmentFromMasterListErrorInterface &
@@ -1655,6 +1663,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateAssetErrorInterface &
   UpdateDemographicIndicatorErrorInterface &
   UpdateDemographicProjectionErrorInterface &
+  UpdateGoodsReceivedLineErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
   UpdateVaccineCourseErrorInterface &
@@ -1769,6 +1778,19 @@ export type DeleteCustomerReturnResponse =
 export type DeleteErrorInterface = {
   description: Scalars['String']['output'];
 };
+
+export type DeleteGoodsReceivedLineError = {
+  __typename: 'DeleteGoodsReceivedLineError';
+  error: DeleteGoodsReceivedLineInterface;
+};
+
+export type DeleteGoodsReceivedLineInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteGoodsReceivedLineResponse =
+  | DeleteGoodsReceivedLineError
+  | DeleteResponse;
 
 export type DeleteGoodsReceivedResponse = DeleteResponse;
 
@@ -2791,6 +2813,7 @@ export type FinalisedRequisition = DeleteResponseRequisitionErrorInterface & {
 };
 
 export enum ForeignKey {
+  GoodsReceivedId = 'goodsReceivedId',
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
   LocationId = 'locationId',
@@ -2807,6 +2830,8 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
   DeleteOutboundShipmentUnallocatedLineErrorInterface &
   DeletePrescriptionLineErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
+  InsertGoodsReceivedLineErrorInterface &
+  InsertGoodsReceivedLinesErrorInterface &
   InsertInboundShipmentLineErrorInterface &
   InsertInboundShipmentServiceLineErrorInterface &
   InsertOutboundShipmentLineErrorInterface &
@@ -2817,6 +2842,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
   SetPrescribedQuantityErrorInterface &
+  UpdateGoodsReceivedLineErrorInterface &
   UpdateInboundShipmentLineErrorInterface &
   UpdateInboundShipmentServiceLineErrorInterface &
   UpdateOutboundShipmentLineErrorInterface &
@@ -2935,6 +2961,20 @@ export type GoodsReceivedConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type GoodsReceivedDoesNotExist = DeleteGoodsReceivedLineInterface & {
+  __typename: 'GoodsReceivedDoesNotExist';
+  description: Scalars['String']['output'];
+};
+
+export type GoodsReceivedEmpty = GoodsReceivedError & {
+  __typename: 'GoodsReceivedEmpty';
+  description: Scalars['String']['output'];
+};
+
+export type GoodsReceivedError = {
+  description: Scalars['String']['output'];
+};
+
 export type GoodsReceivedFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -2979,6 +3019,12 @@ export enum GoodsReceivedLineNodeStatus {
   Unauthorised = 'UNAUTHORISED',
 }
 
+export type GoodsReceivedLineNotFound = DeleteGoodsReceivedLineInterface &
+  UpdateGoodsReceivedLineErrorInterface & {
+    __typename: 'GoodsReceivedLineNotFound';
+    description: Scalars['String']['output'];
+  };
+
 export type GoodsReceivedLineResponse = GoodsReceivedLineNode | RecordNotFound;
 
 export enum GoodsReceivedLineSortFieldInput {
@@ -2993,6 +3039,12 @@ export type GoodsReceivedLineSortInput = {
   key: GoodsReceivedLineSortFieldInput;
 };
 
+export type GoodsReceivedLineWithIdExists =
+  InsertGoodsReceivedLineErrorInterface & {
+    __typename: 'GoodsReceivedLineWithIdExists';
+    description: Scalars['String']['output'];
+  };
+
 export type GoodsReceivedLinesResponse = GoodsReceivedLineConnector;
 
 export type GoodsReceivedListResponse = GoodsReceivedConnector;
@@ -3006,6 +3058,7 @@ export type GoodsReceivedNode = {
   id: Scalars['String']['output'];
   lines: GoodsReceivedLineConnector;
   number: Scalars['Int']['output'];
+  purchaseOrderId?: Maybe<Scalars['String']['output']>;
   purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;
   receivedDatetime?: Maybe<Scalars['NaiveDate']['output']>;
   status: GoodsReceivedNodeStatus;
@@ -3355,6 +3408,45 @@ export type InsertGoodsReceivedInput = {
   purchaseOrderId: Scalars['String']['input'];
 };
 
+export type InsertGoodsReceivedLineError = {
+  __typename: 'InsertGoodsReceivedLineError';
+  error: InsertGoodsReceivedLineErrorInterface;
+};
+
+export type InsertGoodsReceivedLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertGoodsReceivedLineInput = {
+  batch?: InputMaybe<Scalars['String']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  goodsReceivedId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReceived?: InputMaybe<Scalars['Float']['input']>;
+  purchaseOrderLineId: Scalars['String']['input'];
+  receivedPackSize?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type InsertGoodsReceivedLineResponse =
+  | IdResponse
+  | InsertGoodsReceivedLineError;
+
+export type InsertGoodsReceivedLinesError = {
+  __typename: 'InsertGoodsReceivedLinesError';
+  error: InsertGoodsReceivedLinesErrorInterface;
+};
+
+export type InsertGoodsReceivedLinesErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertGoodsReceivedLinesFromPurchaseOrderInput = {
+  goodsReceivedId: Scalars['String']['input'];
+  purchaseOrderId: Scalars['String']['input'];
+};
+
 export type InsertGoodsReceivedResponse = IdResponse;
 
 export type InsertInboundShipmentError = {
@@ -3485,6 +3577,15 @@ export type InsertInsuranceResponse = IdResponse;
 
 export type InsertInventoryAdjustmentErrorInterface = {
   description: Scalars['String']['output'];
+};
+
+export type InsertLinesFromPurchaseOrderResponse =
+  | InsertGoodsReceivedLinesError
+  | InsertLinesFromPurchaseOrderResponseNode;
+
+export type InsertLinesFromPurchaseOrderResponseNode = {
+  __typename: 'InsertLinesFromPurchaseOrderResponseNode';
+  ids: Array<Scalars['String']['output']>;
 };
 
 export type InsertLocationError = {
@@ -3792,15 +3893,20 @@ export type InsertPurchaseOrderLineFromCsvInput = {
 };
 
 export type InsertPurchaseOrderLineInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  note?: InputMaybe<Scalars['String']['input']>;
   pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
   pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  supplierItemCode?: InputMaybe<Scalars['String']['input']>;
+  unit?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPurchaseOrderLineResponse =
@@ -5215,6 +5321,7 @@ export type Mutations = {
   deleteAsset: DeleteAssetResponse;
   deleteCustomerReturn: DeleteCustomerReturnResponse;
   deleteGoodsReceived: DeleteGoodsReceivedResponse;
+  deleteGoodsReceivedLine: DeleteGoodsReceivedLineResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
@@ -5248,6 +5355,8 @@ export type Mutations = {
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
   insertGoodsReceived: InsertGoodsReceivedResponse;
+  insertGoodsReceivedLine: InsertGoodsReceivedLineResponse;
+  insertGoodsReceivedLinesFromPurchaseOrder: InsertLinesFromPurchaseOrderResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
@@ -5293,6 +5402,7 @@ export type Mutations = {
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  saveGoodsReceivedLines: SaveGoodsReceivedLineResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
   /** Set supply quantity to requested quantity */
@@ -5304,6 +5414,7 @@ export type Mutations = {
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateEncounter: UpdateEncounterResponse;
   updateGoodsReceived: UpdateGoodsReceivedResponse;
+  updateGoodsReceivedLine: UpdateGoodsReceivedLineResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -5435,6 +5546,11 @@ export type MutationsDeleteCustomerReturnArgs = {
 };
 
 export type MutationsDeleteGoodsReceivedArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteGoodsReceivedLineArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
@@ -5598,6 +5714,16 @@ export type MutationsInsertFormSchemaArgs = {
 
 export type MutationsInsertGoodsReceivedArgs = {
   input: InsertGoodsReceivedInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertGoodsReceivedLineArgs = {
+  input: InsertGoodsReceivedLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertGoodsReceivedLinesFromPurchaseOrderArgs = {
+  input: InsertGoodsReceivedLinesFromPurchaseOrderInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5774,6 +5900,11 @@ export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type MutationsSaveGoodsReceivedLinesArgs = {
+  input: SaveGoodsReceivedLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsSaveOutboundShipmentItemLinesArgs = {
   input: SaveOutboundShipmentLinesInput;
   storeId: Scalars['String']['input'];
@@ -5820,6 +5951,11 @@ export type MutationsUpdateEncounterArgs = {
 
 export type MutationsUpdateGoodsReceivedArgs = {
   input: UpdateGoodsReceivedInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateGoodsReceivedLineArgs = {
+  input: UpdateGoodsReceivedLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6146,6 +6282,11 @@ export type NameStoreJoinNode = {
 };
 
 export type NamesResponse = NameConnector;
+
+export type NoAuthorisedLines = GoodsReceivedError & {
+  __typename: 'NoAuthorisedLines';
+  description: Scalars['String']['output'];
+};
 
 export type NoPermissionForThisStore = InsertAssetErrorInterface &
   InsertDemographicIndicatorErrorInterface &
@@ -6609,6 +6750,7 @@ export enum PreferenceKey {
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
+  UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
 
@@ -6648,6 +6790,7 @@ export type PreferencesNode = {
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
+  useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
 
@@ -6996,6 +7139,12 @@ export type PurchaseOrderLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type PurchaseOrderLineDoesNotExist =
+  InsertGoodsReceivedLineErrorInterface & {
+    __typename: 'PurchaseOrderLineDoesNotExist';
+    description: Scalars['String']['output'];
+  };
+
 export type PurchaseOrderLineError = {
   description: Scalars['String']['output'];
 };
@@ -7013,6 +7162,8 @@ export type PurchaseOrderLineNode = {
   id: Scalars['String']['output'];
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
+  manufacturer?: Maybe<NameNode>;
+  note?: Maybe<Scalars['String']['output']>;
   pricePerUnitAfterDiscount: Scalars['Float']['output'];
   pricePerUnitBeforeDiscount: Scalars['Float']['output'];
   purchaseOrderId: Scalars['String']['output'];
@@ -7022,6 +7173,11 @@ export type PurchaseOrderLineNode = {
   requestedPackSize: Scalars['Float']['output'];
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
+  unit?: Maybe<Scalars['String']['output']>;
+};
+
+export type PurchaseOrderLineNodeManufacturerArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
@@ -7108,6 +7264,16 @@ export enum PurchaseOrderNodeType {
   Finalised = 'FINALISED',
   New = 'NEW',
 }
+
+export type PurchaseOrderNotFinalised = GoodsReceivedError & {
+  __typename: 'PurchaseOrderNotFinalised';
+  description: Scalars['String']['output'];
+};
+
+export type PurchaseOrderNotFound = InsertGoodsReceivedLinesErrorInterface & {
+  __typename: 'PurchaseOrderNotFound';
+  description: Scalars['String']['output'];
+};
 
 export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
 
@@ -8137,6 +8303,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteCampaignErrorInterface &
   DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
+  DeleteGoodsReceivedLineInterface &
   DeleteInboundShipmentErrorInterface &
   DeleteInboundShipmentLineErrorInterface &
   DeleteInboundShipmentServiceLineErrorInterface &
@@ -8740,6 +8907,24 @@ export type RnRFormSortInput = {
 };
 
 export type RnRFormsResponse = RnRFormConnector;
+
+export type SaveGoodsReceivedLine = {
+  batch?: InputMaybe<Scalars['String']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReceived?: InputMaybe<Scalars['Float']['input']>;
+  receivedPackSize?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type SaveGoodsReceivedLineResponse = IdResponse;
+
+export type SaveGoodsReceivedLinesInput = {
+  goodsReceivedId: Scalars['String']['input'];
+  lines: Array<SaveGoodsReceivedLine>;
+  purchaseOrderLineId: Scalars['String']['input'];
+};
 
 export type SaveOutboundShipmentLinesInput = {
   invoiceId: Scalars['String']['input'];
@@ -9748,6 +9933,11 @@ export type UpdateErrorInterface = {
   description: Scalars['String']['output'];
 };
 
+export type UpdateGoodsReceivedError = {
+  __typename: 'UpdateGoodsReceivedError';
+  error: GoodsReceivedError;
+};
+
 export type UpdateGoodsReceivedInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
@@ -9755,7 +9945,30 @@ export type UpdateGoodsReceivedInput = {
   status?: InputMaybe<GoodsReceivedNodeType>;
 };
 
-export type UpdateGoodsReceivedResponse = IdResponse;
+export type UpdateGoodsReceivedLineError = {
+  __typename: 'UpdateGoodsReceivedLineError';
+  error: UpdateGoodsReceivedLineErrorInterface;
+};
+
+export type UpdateGoodsReceivedLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateGoodsReceivedLineInput = {
+  batch?: InputMaybe<Scalars['String']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReceived?: InputMaybe<Scalars['Float']['input']>;
+  receivedPackSize?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdateGoodsReceivedLineResponse =
+  | IdResponse
+  | UpdateGoodsReceivedLineError;
+
+export type UpdateGoodsReceivedResponse = IdResponse | UpdateGoodsReceivedError;
 
 export type UpdateInboundShipmentError = {
   __typename: 'UpdateInboundShipmentError';
@@ -10253,14 +10466,19 @@ export type UpdatePurchaseOrderLineError = {
 
 export type UpdatePurchaseOrderLineInput = {
   adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
+  comment?: InputMaybe<NullableStringUpdate>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
+  manufacturerId?: InputMaybe<NullableStringUpdate>;
+  note?: InputMaybe<NullableStringUpdate>;
   pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
   pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  supplierItemCode?: InputMaybe<NullableStringUpdate>;
+  unit?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePurchaseOrderLineResponse =
@@ -10769,6 +10987,7 @@ export type UpsertPreferencesInput = {
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
+  useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
