@@ -1,7 +1,6 @@
 fragment SyncMessageRow on SyncMessageNode {
   body
   createdDatetime
-  errorMessage
   fromStoreId
   id
   status
@@ -9,7 +8,7 @@ fragment SyncMessageRow on SyncMessageNode {
   type
 }
 
-query syncMessages(
+query SyncMessages(
   $first: Int
   $offset: Int
   $key: SyncMessageSortFieldInput!
@@ -31,6 +30,18 @@ query syncMessages(
             ...SyncMessageRow
           }
           totalCount
+        }
+      }
+    }
+  }
+}
+
+query SyncMessageById($id: String!, $storeId: String!) {
+  centralServer {
+    syncMessage {
+      syncMessage(id: $id, storeId: $storeId) {
+        ... on SyncMessageNode {
+          ...SyncMessageRow
         }
       }
     }

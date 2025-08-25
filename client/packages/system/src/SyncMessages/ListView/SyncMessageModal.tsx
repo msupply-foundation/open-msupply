@@ -9,15 +9,13 @@ import {
   Typography,
   useDialog,
 } from '@openmsupply-client/common';
-import { SyncMessageRowFragment } from '../api';
+import { useSyncMessageLine } from '../api/hooks';
 
 interface SyncMessageModalProps {
   lineId?: string;
   onClose: () => void;
   onOpen: () => void;
   isOpen: boolean;
-  // temporary props - replace with actual api single sync message call
-  selectedSyncMessage?: SyncMessageRowFragment;
 }
 
 export const SyncMessageModal = ({
@@ -25,12 +23,15 @@ export const SyncMessageModal = ({
   onClose,
   onOpen,
   isOpen,
-  selectedSyncMessage,
 }: SyncMessageModalProps): ReactElement => {
   const { Modal } = useDialog({
     onClose,
     isOpen,
   });
+
+  const {
+    query: { data },
+  } = useSyncMessageLine(lineId);
 
   console.info('SyncMessageModal lineId:', lineId);
 
@@ -51,25 +52,21 @@ export const SyncMessageModal = ({
           <Box>
             <InputWithLabelRow
               label="To Store"
-              Input={
-                <ReadOnlyInput value={selectedSyncMessage?.toStoreId ?? ''} />
-              }
+              Input={<ReadOnlyInput value={data?.toStoreId ?? ''} />}
             />
             <InputWithLabelRow
               label="To Store"
-              Input={
-                <ReadOnlyInput value={selectedSyncMessage?.fromStoreId ?? ''} />
-              }
+              Input={<ReadOnlyInput value={data?.fromStoreId ?? ''} />}
             />
           </Box>
           <Box>
             <InputWithLabelRow
               label="To Store"
-              Input={<ReadOnlyInput value={selectedSyncMessage?.status} />}
+              Input={<ReadOnlyInput value={data?.status} />}
             />
             <InputWithLabelRow
               label="To Store"
-              Input={<ReadOnlyInput value={selectedSyncMessage?.type} />}
+              Input={<ReadOnlyInput value={data?.type} />}
             />
           </Box>
         </Stack>
@@ -77,7 +74,7 @@ export const SyncMessageModal = ({
           <Typography fontWeight="bold">Body</Typography>
           <TextArea
             fullWidth
-            value={selectedSyncMessage?.body ?? ''}
+            value={data?.body ?? ''}
             slotProps={{
               input: { sx: { backgroundColor: 'background.drawer' } },
             }}

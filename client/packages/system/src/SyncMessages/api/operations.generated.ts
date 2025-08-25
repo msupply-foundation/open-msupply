@@ -7,7 +7,6 @@ export type SyncMessageRowFragment = {
   __typename: 'SyncMessageNode';
   body: string;
   createdDatetime: string;
-  errorMessage?: string | null;
   fromStoreId?: string | null;
   id: string;
   status: Types.SyncMessageNodeStatus;
@@ -37,7 +36,6 @@ export type SyncMessagesQuery = {
           __typename: 'SyncMessageNode';
           body: string;
           createdDatetime: string;
-          errorMessage?: string | null;
           fromStoreId?: string | null;
           id: string;
           status: Types.SyncMessageNodeStatus;
@@ -49,11 +47,37 @@ export type SyncMessagesQuery = {
   };
 };
 
+export type SyncMessageByIdQueryVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type SyncMessageByIdQuery = {
+  __typename: 'Queries';
+  centralServer: {
+    __typename: 'CentralServerQueryNode';
+    syncMessage: {
+      __typename: 'SyncMessageQueries';
+      syncMessage:
+        | { __typename: 'RecordNotFound' }
+        | {
+            __typename: 'SyncMessageNode';
+            body: string;
+            createdDatetime: string;
+            fromStoreId?: string | null;
+            id: string;
+            status: Types.SyncMessageNodeStatus;
+            toStoreId?: string | null;
+            type: Types.SyncMessageNodeType;
+          };
+    };
+  };
+};
+
 export const SyncMessageRowFragmentDoc = gql`
   fragment SyncMessageRow on SyncMessageNode {
     body
     createdDatetime
-    errorMessage
     fromStoreId
     id
     status
@@ -62,7 +86,7 @@ export const SyncMessageRowFragmentDoc = gql`
   }
 `;
 export const SyncMessagesDocument = gql`
-  query syncMessages(
+  query SyncMessages(
     $first: Int
     $offset: Int
     $key: SyncMessageSortFieldInput!
@@ -91,6 +115,20 @@ export const SyncMessagesDocument = gql`
   }
   ${SyncMessageRowFragmentDoc}
 `;
+export const SyncMessageByIdDocument = gql`
+  query SyncMessageById($id: String!, $storeId: String!) {
+    centralServer {
+      syncMessage {
+        syncMessage(id: $id, storeId: $storeId) {
+          ... on SyncMessageNode {
+            ...SyncMessageRow
+          }
+        }
+      }
+    }
+  }
+  ${SyncMessageRowFragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -111,7 +149,7 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    syncMessages(
+    SyncMessages(
       variables: SyncMessagesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<SyncMessagesQuery> {
@@ -121,7 +159,23 @@ export function getSdk(
             ...requestHeaders,
             ...wrappedRequestHeaders,
           }),
-        'syncMessages',
+        'SyncMessages',
+        'query',
+        variables
+      );
+    },
+    SyncMessageById(
+      variables: SyncMessageByIdQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<SyncMessageByIdQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SyncMessageByIdQuery>(
+            SyncMessageByIdDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'SyncMessageById',
         'query',
         variables
       );
