@@ -2,11 +2,15 @@ import {
   ColumnDescription,
   ColumnFormat,
   useColumns,
+  useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { SyncMessageRowFragment } from '../api';
+import { statusMapping } from './utils';
 
 export const useSyncMessageColumns = () => {
+  const t = useTranslation();
+
   const {
     updateSortQuery,
     queryParams: { sortBy },
@@ -34,7 +38,10 @@ export const useSyncMessageColumns = () => {
     {
       key: 'status',
       label: 'label.status',
-      accessor: ({ rowData }) => rowData?.status,
+      accessor: ({ rowData }) => {
+        const status = statusMapping(rowData?.status);
+        return t(status);
+      },
     },
     {
       key: 'type',
