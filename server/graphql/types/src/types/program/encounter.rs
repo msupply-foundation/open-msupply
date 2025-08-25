@@ -64,8 +64,10 @@ pub struct EqualFilterEncounterStatusInput {
 #[graphql(rename_items = "camelCase")]
 #[graphql(remote = "repository::db_diesel::encounter::EncounterSortField")]
 pub enum EncounterSortFieldInput {
+    #[graphql(name = "Type")]
     DocumentType,
     PatientId,
+    #[graphql(name = "Program")]
     Context, // Program
     CreatedDatetime,
     StartDatetime,
