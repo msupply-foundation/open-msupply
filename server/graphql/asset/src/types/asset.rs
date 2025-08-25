@@ -33,6 +33,7 @@ use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::assets::asset::AssetSortField")]
 pub enum AssetSortFieldInput {
     SerialNumber,
     InstallationDate,
@@ -40,6 +41,7 @@ pub enum AssetSortFieldInput {
     ModifiedDatetime,
     AssetNumber,
     Store,
+    Notes,
 }
 
 #[derive(InputObject)]
@@ -374,19 +376,8 @@ impl AssetConnector {
 
 impl AssetSortInput {
     pub fn to_domain(&self) -> AssetSort {
-        use AssetSortField as to;
-        use AssetSortFieldInput as from;
-        let key = match self.key {
-            from::SerialNumber => to::SerialNumber,
-            from::InstallationDate => to::InstallationDate,
-            from::ReplacementDate => to::ReplacementDate,
-            from::ModifiedDatetime => to::ModifiedDatetime,
-            from::AssetNumber => to::AssetNumber,
-            from::Store => to::Store,
-        };
-
         AssetSort {
-            key,
+            key: AssetSortField::from(self.key),
             desc: self.desc,
         }
     }

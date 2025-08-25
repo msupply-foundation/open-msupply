@@ -19,7 +19,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{Item, ItemRow, ItemType, VENCategory};
+use repository::{Item, ItemRow};
 use serde_json::json;
 use service::ListResult;
 
@@ -53,7 +53,7 @@ impl ItemNode {
     }
 
     pub async fn r#type(&self) -> ItemNodeType {
-        ItemNodeType::from_domain(&self.row().r#type)
+        ItemNodeType::from(self.row().r#type.clone())
     }
 
     pub async fn strength(&self) -> &Option<String> {
@@ -61,7 +61,7 @@ impl ItemNode {
     }
 
     pub async fn ven_category(&self) -> VenCategoryType {
-        VenCategoryType::from_domain(&self.row().ven_category)
+        VenCategoryType::from(self.row().ven_category.clone())
     }
 
     pub async fn is_vaccine(&self) -> &bool {
@@ -298,47 +298,20 @@ pub struct ItemError {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::item_row::ItemType")]
 pub enum ItemNodeType {
     Service,
     Stock,
     NonStock,
 }
 
-impl ItemNodeType {
-    pub fn from_domain(from: &ItemType) -> ItemNodeType {
-        match from {
-            ItemType::Stock => ItemNodeType::Stock,
-            ItemType::Service => ItemNodeType::Service,
-            ItemType::NonStock => ItemNodeType::NonStock,
-        }
-    }
-
-    pub fn to_domain(self) -> ItemType {
-        match self {
-            ItemNodeType::Stock => ItemType::Stock,
-            ItemNodeType::Service => ItemType::Service,
-            ItemNodeType::NonStock => ItemType::NonStock,
-        }
-    }
-}
-
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::item_row::VENCategory")]
 pub enum VenCategoryType {
     V,
     E,
     N,
     NotAssigned,
-}
-
-impl VenCategoryType {
-    pub fn from_domain(from: &VENCategory) -> VenCategoryType {
-        match from {
-            VENCategory::V => VenCategoryType::V,
-            VENCategory::E => VenCategoryType::E,
-            VENCategory::N => VenCategoryType::N,
-            VENCategory::NotAssigned => VenCategoryType::NotAssigned,
-        }
-    }
 }
 
 #[derive(Union)]

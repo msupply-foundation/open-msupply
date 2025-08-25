@@ -1,5 +1,5 @@
 use async_graphql::*;
-use repository::{DocumentRegistry, DocumentRegistryCategory};
+use repository::DocumentRegistry;
 use serde::Serialize;
 
 #[derive(SimpleObject)]
@@ -15,6 +15,8 @@ pub struct DocumentRegistryNode {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[graphql(remote = "repository::db_diesel::document_registry_row
+::DocumentRegistryCategory")]
 pub enum DocumentRegistryCategoryNode {
     Patient,
     ProgramEnrolment,
@@ -38,15 +40,7 @@ impl DocumentRegistryNode {
     }
 
     pub async fn category(&self) -> DocumentRegistryCategoryNode {
-        match self.document_registry.category {
-            DocumentRegistryCategory::Patient => DocumentRegistryCategoryNode::Patient,
-            DocumentRegistryCategory::ProgramEnrolment => {
-                DocumentRegistryCategoryNode::ProgramEnrolment
-            }
-            DocumentRegistryCategory::Encounter => DocumentRegistryCategoryNode::Encounter,
-            DocumentRegistryCategory::ContactTrace => DocumentRegistryCategoryNode::ContactTrace,
-            DocumentRegistryCategory::Custom => DocumentRegistryCategoryNode::Custom,
-        }
+        DocumentRegistryCategoryNode::from(self.document_registry.category.clone())
     }
 
     pub async fn name(&self) -> &Option<String> {
@@ -67,19 +61,5 @@ impl DocumentRegistryNode {
 
     pub async fn ui_schema(&self) -> &serde_json::Value {
         &self.document_registry.ui_schema
-    }
-}
-
-impl DocumentRegistryCategoryNode {
-    pub fn to_domain(self) -> DocumentRegistryCategory {
-        match self {
-            DocumentRegistryCategoryNode::Patient => DocumentRegistryCategory::Patient,
-            DocumentRegistryCategoryNode::ProgramEnrolment => {
-                DocumentRegistryCategory::ProgramEnrolment
-            }
-            DocumentRegistryCategoryNode::Encounter => DocumentRegistryCategory::Encounter,
-            DocumentRegistryCategoryNode::ContactTrace => DocumentRegistryCategory::ContactTrace,
-            DocumentRegistryCategoryNode::Custom => DocumentRegistryCategory::Custom,
-        }
     }
 }

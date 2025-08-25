@@ -216,14 +216,14 @@ export const ItemLedgerTab = ({
       name: t('label.datetime'),
       elements: [
         {
-          type: 'date',
+          type: 'dateTime',
           name: t('label.from-datetime'),
           urlParameter: 'datetime',
           range: 'from',
           isDefault: true,
         },
         {
-          type: 'date',
+          type: 'dateTime',
           name: t('label.to-datetime'),
           urlParameter: 'datetime',
           range: 'to',

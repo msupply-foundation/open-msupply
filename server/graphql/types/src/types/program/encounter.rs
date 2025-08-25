@@ -62,10 +62,13 @@ pub struct EqualFilterEncounterStatusInput {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::encounter::EncounterSortField")]
 pub enum EncounterSortFieldInput {
-    Type,
+    #[graphql(name = "Type")]
+    DocumentType,
     PatientId,
-    Program,
+    #[graphql(name = "Program")]
+    Context, // Program
     CreatedDatetime,
     StartDatetime,
     EndDatetime,
@@ -83,18 +86,8 @@ pub struct EncounterSortInput {
 
 impl EncounterSortInput {
     pub fn to_domain(self) -> EncounterSort {
-        let key = match self.key {
-            EncounterSortFieldInput::Type => EncounterSortField::DocumentType,
-            EncounterSortFieldInput::PatientId => EncounterSortField::PatientId,
-            EncounterSortFieldInput::Program => EncounterSortField::Context,
-            EncounterSortFieldInput::CreatedDatetime => EncounterSortField::CreatedDatetime,
-            EncounterSortFieldInput::StartDatetime => EncounterSortField::StartDatetime,
-            EncounterSortFieldInput::EndDatetime => EncounterSortField::EndDatetime,
-            EncounterSortFieldInput::Status => EncounterSortField::Status,
-        };
-
         EncounterSort {
-            key,
+            key: EncounterSortField::from(self.key),
             desc: self.desc,
         }
     }
@@ -105,7 +98,6 @@ pub struct EncounterFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
-    /// The program id
     pub program_id: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub start_datetime: Option<DatetimeFilterInput>,
@@ -130,7 +122,7 @@ impl From<EncounterFilterInput> for EncounterFilter {
             start_datetime: f.start_datetime.map(DatetimeFilter::from),
             status: f
                 .status
-                .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
+                .map(|s| map_filter!(s, |status| EncounterStatus::from(status))),
             end_datetime: f.end_datetime.map(DatetimeFilter::from),
             clinician_id: f.clinician_id.map(EqualFilter::from),
             document_type: f.r#type.map(EqualFilter::from),
@@ -145,31 +137,12 @@ impl From<EncounterFilterInput> for EncounterFilter {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+#[graphql(remote = "repository::db_diesel::encounter_row::EncounterStatus")]
 pub enum EncounterNodeStatus {
     Pending,
     Visited,
     Cancelled,
     Deleted,
-}
-
-impl EncounterNodeStatus {
-    pub fn to_domain(self) -> EncounterStatus {
-        match self {
-            EncounterNodeStatus::Pending => EncounterStatus::Pending,
-            EncounterNodeStatus::Visited => EncounterStatus::Visited,
-            EncounterNodeStatus::Cancelled => EncounterStatus::Cancelled,
-            EncounterNodeStatus::Deleted => EncounterStatus::Deleted,
-        }
-    }
-
-    pub fn from_domain(status: &EncounterStatus) -> EncounterNodeStatus {
-        match status {
-            EncounterStatus::Pending => EncounterNodeStatus::Pending,
-            EncounterStatus::Visited => EncounterNodeStatus::Visited,
-            EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
-            EncounterStatus::Deleted => EncounterNodeStatus::Deleted,
-        }
-    }
 }
 
 #[derive(InputObject, Clone)]
@@ -302,7 +275,10 @@ impl EncounterNode {
             .map(ClinicianNode::from_domain)
             .or_else(|| {
                 // Likely this encounter synced from another store, and we don't have visibility of that clinician here
-                println!("Clinician {} not found for store {}", clinician_id, self.store_id);
+                println!(
+                    "Clinician {} not found for store {}",
+                    clinician_id, self.store_id
+                );
                 None
             });
 
@@ -345,10 +321,9 @@ impl EncounterNode {
     }
 
     pub async fn status(&self) -> Option<EncounterNodeStatus> {
-        self.encounter_row()
-            .status
-            .as_ref()
-            .map(EncounterNodeStatus::from_domain)
+        Some(EncounterNodeStatus::from(
+            self.encounter_row().status.clone().unwrap_or_default(),
+        ))
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {

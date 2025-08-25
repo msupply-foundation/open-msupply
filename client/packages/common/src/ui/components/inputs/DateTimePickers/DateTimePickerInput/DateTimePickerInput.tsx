@@ -72,13 +72,27 @@ export const DateTimePickerInput = ({
   actions,
   dateAsEndOfDay,
   disableFuture,
-  displayAs,
   error,
   required,
   textFieldSx: inputSx,
   slotProps,
   ...props
-}: DateTimePickerInputProps) => {
+}: Omit<DateTimePickerProps<true>, 'onChange'> & {
+  error?: string | undefined;
+  width?: number | string;
+  label?: string;
+  onChange: (value: Date | null) => void;
+  onError?: (validationError: string, date?: Date | null) => void;
+  // This allows a calling component to know whether the date was changed via
+  // keyboard input or the picker UI
+  setIsOpen?: (open: boolean) => void;
+  showTime?: boolean;
+  actions?: PickersActionBarAction[];
+  dateAsEndOfDay?: boolean;
+  disableFuture?: boolean;
+  required?: boolean;
+  textFieldSx?: SxProps;
+}) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
@@ -86,7 +100,6 @@ export const DateTimePickerInput = ({
   const t = useTranslation();
   const format =
     props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
-  const displayDt = displayAs === 'date';
 
   const isDesktop = useMediaQuery('(pointer: fine)');
 
@@ -156,14 +169,14 @@ export const DateTimePickerInput = ({
             error: !!error || (!isInitialEntry && !!internalError),
             helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
-              ...getTextFieldSx(theme, !!label, !displayDt, inputSx, width),
+              ...getTextFieldSx(theme, !!label, !showTime, inputSx, width),
               width,
-              minWidth: displayDt ? 200 : undefined,
+              minWidth: showTime ? 200 : undefined,
             },
           },
 
           tabs: {
-            hidden: displayDt && !isDesktop ? false : true,
+            hidden: showTime && !isDesktop ? false : true,
           },
           ...slotProps,
         }}

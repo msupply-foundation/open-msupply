@@ -9,6 +9,7 @@ import {
   InputLabel,
   Box,
   useSimplifiedTabletUI,
+  FilterRule,
 } from '@openmsupply-client/common';
 
 type StatusOption = {
@@ -30,6 +31,19 @@ export const Toolbar: FC<{
     filter.onChangeStringFilterRule('status', 'equalTo', option.value);
   };
 
+  const options = [
+    { label: t('status.new'), value: StocktakeNodeStatus.New },
+    {
+      label: t('status.finalised'),
+      value: StocktakeNodeStatus.Finalised,
+    },
+  ];
+
+  const selectedFilter = (filter.filterBy?.['status'] as FilterRule)?.equalTo;
+  const selectedOption = options.find(
+    option => option.value === selectedFilter
+  );
+
   return simplifiedTabletView ? null : (
     <AppBarContentPortal
       sx={{
@@ -44,14 +58,9 @@ export const Toolbar: FC<{
         <Autocomplete
           isOptionEqualToValue={(option, value) => option.value === value.value}
           width="150px"
-          options={[
-            { label: t('status.new'), value: StocktakeNodeStatus.New },
-            {
-              label: t('status.finalised'),
-              value: StocktakeNodeStatus.Finalised,
-            },
-          ]}
+          options={options}
           onChange={onFilterChange}
+          value={selectedOption ?? null}
         />
       </Box>
     </AppBarContentPortal>

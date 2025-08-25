@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_types::types::document_registry::{DocumentRegistryCategoryNode, DocumentRegistryNode};
+use repository::DocumentRegistryCategory;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::document_registry::{InsertDocRegistryError, InsertDocumentRegistry},
@@ -89,7 +90,7 @@ fn to_domain(
         id,
         document_type,
         context_id,
-        category: category.to_domain(),
+        category: DocumentRegistryCategory::from(category),
         name,
         form_schema_id,
     }

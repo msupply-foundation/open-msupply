@@ -36,6 +36,7 @@ pub struct ContactTraceConnector {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::contact_trace::ContactTraceSortField")]
 pub enum ContactTraceSortFieldInput {
     Datetime,
     PatientId,
@@ -58,19 +59,8 @@ pub struct ContactTraceSortInput {
 
 impl ContactTraceSortInput {
     pub fn to_domain(self) -> ContactTraceSort {
-        let key = match self.key {
-            ContactTraceSortFieldInput::Datetime => ContactTraceSortField::Datetime,
-            ContactTraceSortFieldInput::PatientId => ContactTraceSortField::PatientId,
-            ContactTraceSortFieldInput::ProgramId => ContactTraceSortField::ProgramId,
-            ContactTraceSortFieldInput::ContactTraceId => ContactTraceSortField::ContactTraceId,
-            ContactTraceSortFieldInput::FirstName => ContactTraceSortField::FirstName,
-            ContactTraceSortFieldInput::LastName => ContactTraceSortField::LastName,
-            ContactTraceSortFieldInput::DateOfBirth => ContactTraceSortField::DateOfBirth,
-            ContactTraceSortFieldInput::Gender => ContactTraceSortField::Gender,
-        };
-
         ContactTraceSort {
-            key,
+            key: ContactTraceSortField::from(self.key),
             desc: self.desc,
         }
     }

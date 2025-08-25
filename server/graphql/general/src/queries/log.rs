@@ -1,9 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use service::{
-    auth::{Resource, ResourceAccessRequest},
-    settings::Level,
-};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
 pub struct LogNode {
@@ -21,6 +18,7 @@ impl LogNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[graphql(remote = "service::settings::Level")]
 pub enum LogLevelEnum {
     Error,
     Warn,
@@ -83,15 +81,8 @@ pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
     let level = log_service.get_log_level(&service_context)?;
 
     Ok(LogLevelNode {
-        level: match level {
-            Some(level) => match level {
-                Level::Error => LogLevelEnum::Error,
-                Level::Warn => LogLevelEnum::Warn,
-                Level::Info => LogLevelEnum::Info,
-                Level::Debug => LogLevelEnum::Debug,
-                Level::Trace => LogLevelEnum::Trace,
-            },
-            None => LogLevelEnum::Info,
-        },
+        level: level
+            .map(|l| LogLevelEnum::from(l))
+            .unwrap_or(LogLevelEnum::Info),
     })
 }
