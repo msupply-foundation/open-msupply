@@ -2332,5 +2332,18 @@
   "warning.field-not-parsed": "{{field}} non analysé",
   "warning.foreign-exchange-rate-different": "Ce taux ne correspond pas à la devise.",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
+  "error.failed-to-add-goods-received-line": "Échec de l'ajout de la ligne de réception de marchandises ! {{message}}",
+  "button.add-all-from-purchase-order": "Ajouter tous les articles au bon de commande",
+  "error.cannot-update-goods-received": "Impossible de mettre à jour la réception de marchandise",
+  "error.goods-received-empty": "La réception de marchandises ne contient aucune ligne autorisée",
+  "error.no-authorised-lines": "Aucune ligne autorisée n'a été trouvée dans la réception de marchandises",
+  "error.purchase-order-not-finalised": "Le bon de commande n'est pas finalisé",
+  "label.adjusted-packs": "Conditionnement ajusté",
+  "label.number-of-packs-received": "Nombre de conditionnement reçus",
+  "label.purchase-order-lines": "Lignes du bon de commande",
+  "label.supplier-item-code": "Code article du fournisseur",
+  "messages.goods-received-saved": "Réception de marchandises sauvegardée 🥳",
+  "messages.how-to-read-outbound-shipments": "Ce rapport affiche toutes les lignes d'expédition sortante, qui peuvent être filtrées par client ou plage de dates. Le coût total est regroupé par client et article et n'est affiché que sur la ligne finale de chaque groupe.",
+  "preference.useProcurementFunctionality": "Utiliser la fonctionnalité d'achat"
 }
