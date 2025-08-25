@@ -43,6 +43,7 @@ pub enum NumberRowType {
     PurchaseOrder,
     PurchaseOrderLine(String),
     GoodsReceived,
+    GoodsReceivedLine(String),
 }
 
 impl fmt::Display for NumberRowType {
@@ -64,6 +65,9 @@ impl fmt::Display for NumberRowType {
             NumberRowType::GoodsReceived => write!(f, "GOODS_RECEIVED"),
             NumberRowType::PurchaseOrderLine(custom_string) => {
                 write!(f, "PURCHASEORDERLINE_{}", custom_string) // Since we split this on _ we can't use that in the main part of the name
+            }
+            NumberRowType::GoodsReceivedLine(custom_string) => {
+                write!(f, "GOODSRECEIVEDLINE_{}", custom_string) // Since we split this on _ we can't use that in the main part of the name
             }
         }
     }
@@ -91,6 +95,9 @@ impl TryFrom<String> for NumberRowType {
                     "PROGRAM" => Ok(NumberRowType::Program(custom_string.to_string())),
                     "PURCHASEORDERLINE" => {
                         Ok(NumberRowType::PurchaseOrderLine(custom_string.to_string()))
+                    }
+                    "GOODSRECEIVEDLINE" => {
+                        Ok(NumberRowType::GoodsReceivedLine(custom_string.to_string()))
                     }
                     _ => Err(NumberRowTypeError::UnknownTypePrefix(prefix.to_string())),
                 },
@@ -339,7 +346,7 @@ mod number_row_mapping_test {
                         NumberRowType::try_from(NumberRowType::PurchaseOrder.to_string()).unwrap()
                             == NumberRowType::PurchaseOrder
                     )
-                },
+                }
                 NumberRowType::GoodsReceived => {
                     assert!(
                         NumberRowType::try_from(NumberRowType::GoodsReceived.to_string()).unwrap()
@@ -353,6 +360,15 @@ mod number_row_mapping_test {
                         )
                         .unwrap()
                             == NumberRowType::PurchaseOrderLine(s)
+                    )
+                }
+                NumberRowType::GoodsReceivedLine(s) => {
+                    assert!(
+                        NumberRowType::try_from(
+                            NumberRowType::GoodsReceivedLine(s.to_string()).to_string()
+                        )
+                        .unwrap()
+                            == NumberRowType::GoodsReceivedLine(s)
                     )
                 }
             }

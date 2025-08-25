@@ -5,7 +5,11 @@ import {
   UrlQueryValue,
   useUrlQuery,
 } from './useUrlQuery';
-import { Formatter, useLocalStorage } from '@openmsupply-client/common';
+import {
+  DateUtils,
+  Formatter,
+  useLocalStorage,
+} from '@openmsupply-client/common';
 import {
   FilterBy,
   FilterByWithBoolean,
@@ -164,6 +168,7 @@ const getFilterValue = (
   key: string,
   isNumber?: boolean
 ) => {
+  if (urlQuery[key] === undefined) return undefined;
   if (isNumber === true) {
     return Number(urlQuery[key]);
   } else {
@@ -185,20 +190,27 @@ const getFilterEntry = (
 ) => {
   if (filter.condition === 'between' && filter.key) {
     const filterItems = String(filterValue).split(RANGE_SPLIT_CHAR);
-    const dateAfter = filterItems[0] ? new Date(filterItems[0]) : null;
-    const dateBefore = filterItems[1] ? new Date(filterItems[1]) : null;
 
-    if (filter.key.toLowerCase().includes('datetime')) {
+    const isDateTime = DateUtils.isUrlQueryDateTime(filterItems[0] ?? '');
+
+    // If just "date", we are time zone agnostic, pass the filter straight through
+    if (!isDateTime) {
       return {
-        afterOrEqualTo: Formatter.toIsoString(dateAfter),
-        beforeOrEqualTo: Formatter.toIsoString(dateBefore),
+        // Using `||` to convert "" value to null
+        afterOrEqualTo: filterItems[0] || null,
+        beforeOrEqualTo: filterItems[1] || null,
       };
     }
+
+    // If using date time, map current time zone to ISO/UTC to send to API
+    const dateAfter = filterItems[0] ? new Date(filterItems[0]) : null;
+    const dateBefore = filterItems[1] ? new Date(filterItems[1]) : null;
     return {
-      afterOrEqualTo: Formatter.naiveDate(dateAfter),
-      beforeOrEqualTo: Formatter.naiveDate(dateBefore),
+      afterOrEqualTo: Formatter.toIsoString(dateAfter),
+      beforeOrEqualTo: Formatter.toIsoString(dateBefore),
     };
   }
+
   const condition = filter.condition ? filter.condition : 'like';
   if (condition === '=') {
     return Boolean(filterValue);

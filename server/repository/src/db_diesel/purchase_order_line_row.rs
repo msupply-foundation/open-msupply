@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
-    Delete, Upsert,
+    name_link, Delete, Upsert,
 };
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
@@ -29,11 +29,15 @@ table! {
         price_per_unit_before_discount -> Double,
         price_per_unit_after_discount -> Double,
         comment -> Nullable<Text>,
+        manufacturer_link_id -> Nullable<Text>,
+        note -> Nullable<Text>,
+        unit -> Nullable<Text>,
     }
 }
 
 joinable!(purchase_order_line -> item_link (item_link_id));
 joinable!(purchase_order_line -> purchase_order (purchase_order_id));
+joinable!(purchase_order_line -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
@@ -61,6 +65,9 @@ pub struct PurchaseOrderLineRow {
     pub price_per_unit_before_discount: f64,
     pub price_per_unit_after_discount: f64,
     pub comment: Option<String>,
+    pub manufacturer_link_id: Option<String>,
+    pub note: Option<String>,
+    pub unit: Option<String>,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {

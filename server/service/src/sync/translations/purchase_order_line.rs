@@ -27,35 +27,50 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(default)]
     pub item_name: String,
     #[serde(default)]
-    pub snapshot_quantity: f64,
+    #[serde(rename = "snapshot_quantity")]
+    pub stock_on_hand_in_units: f64,
     #[serde(default)]
-    pub packsize_ordered: f64,
+    #[serde(rename = "packsize_ordered")]
+    pub requested_pack_size: f64,
     #[serde(default)]
-    pub quan_original_order: f64,
+    #[serde(rename = "quan_original_order")]
+    pub requested_number_of_units: f64,
     #[serde(default)]
     #[serde(deserialize_with = "zero_f64_as_none")]
-    pub quan_adjusted_order: Option<f64>,
+    #[serde(rename = "quan_adjusted_order")]
+    pub adjusted_number_of_units: Option<f64>,
     #[serde(default)]
-    pub quan_rec_to_date: f64,
+    #[serde(rename = "quan_rec_to_date")]
+    pub received_number_of_units: f64,
     #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "delivery_date_requested")]
-    pub delivery_date_requested: Option<NaiveDate>,
+    pub requested_delivery_date: Option<NaiveDate>,
     #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "delivery_date_expected")]
-    pub delivery_date_expected: Option<NaiveDate>,
+    pub expected_delivery_date: Option<NaiveDate>,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_item_code: Option<String>,
     #[serde(default)]
-    pub price_extension_expected: f64,
+    #[serde(rename = "price_extension_expected")]
+    pub price_per_unit_before_discount: f64,
     #[serde(default)]
-    pub price_expected_after_discount: f64,
+    #[serde(rename = "price_expected_after_discount")]
+    pub price_per_unit_after_discount: f64,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(rename = "manufacturer_ID")]
+    pub manufacturer_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub note: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(rename = "pack_units")]
+    pub unit: Option<String>,
 }
 
 #[deny(dead_code)]
@@ -93,17 +108,20 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             line_number,
             item_link_id,
             item_name,
-            snapshot_quantity,
-            packsize_ordered,
-            quan_original_order,
-            quan_adjusted_order,
-            quan_rec_to_date,
-            delivery_date_requested,
-            delivery_date_expected,
+            stock_on_hand_in_units,
+            requested_pack_size,
+            requested_number_of_units,
+            adjusted_number_of_units,
+            received_number_of_units,
+            requested_delivery_date,
+            expected_delivery_date,
             supplier_item_code,
-            price_extension_expected,
-            price_expected_after_discount,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
             comment,
+            manufacturer_id,
+            note,
+            unit,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
@@ -113,17 +131,20 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             line_number,
             item_link_id,
             item_name,
-            requested_number_of_units: quan_original_order,
-            requested_pack_size: packsize_ordered,
-            adjusted_number_of_units: quan_adjusted_order,
-            received_number_of_units: quan_rec_to_date,
-            requested_delivery_date: delivery_date_requested,
-            expected_delivery_date: delivery_date_expected,
-            stock_on_hand_in_units: snapshot_quantity,
+            requested_number_of_units,
+            requested_pack_size,
+            adjusted_number_of_units,
+            received_number_of_units,
+            requested_delivery_date,
+            expected_delivery_date,
+            stock_on_hand_in_units,
             supplier_item_code,
-            price_per_unit_before_discount: price_extension_expected,
-            price_per_unit_after_discount: price_expected_after_discount,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
             comment,
+            manufacturer_link_id: manufacturer_id,
+            note,
+            unit,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -161,6 +182,9 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             price_per_unit_before_discount,
             price_per_unit_after_discount,
             comment,
+            manufacturer_link_id,
+            note,
+            unit,
         } = PurchaseOrderLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
@@ -172,17 +196,20 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             line_number,
             item_link_id,
             item_name,
-            snapshot_quantity: stock_on_hand_in_units,
-            packsize_ordered: requested_pack_size,
-            quan_original_order: requested_number_of_units,
-            quan_adjusted_order: adjusted_number_of_units,
-            quan_rec_to_date: received_number_of_units,
-            delivery_date_requested: requested_delivery_date,
-            delivery_date_expected: expected_delivery_date,
+            stock_on_hand_in_units,
+            requested_pack_size,
+            requested_number_of_units,
+            adjusted_number_of_units,
+            received_number_of_units,
+            requested_delivery_date,
+            expected_delivery_date,
             supplier_item_code,
-            price_extension_expected: price_per_unit_before_discount,
-            price_expected_after_discount: price_per_unit_after_discount,
+            price_per_unit_before_discount,
+            price_per_unit_after_discount,
             comment,
+            manufacturer_id: manufacturer_link_id,
+            note,
+            unit,
         };
 
         Ok(PushTranslateResult::upsert(

@@ -29,6 +29,7 @@ import {
   getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
+  getVolumePerPackFromVariant,
   ItemVariantInputCell,
   PackSizeEntryCell,
   ReasonOptionRowFragment,
@@ -208,21 +209,10 @@ export const BatchTable = ({
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
         setter: patch => {
-          const { packSize, itemVariant } = patch;
-
-          if (itemVariant) {
-            const packaging = itemVariant.packagingVariants.find(
-              p => p.packSize === packSize
-            );
-            // Item variants save volume in L, but it is saved in m3 everywhere else
-            update({
-              ...patch,
-              volumePerPack:
-                ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
-            });
-          } else {
-            update(patch);
-          }
+          update({
+            ...patch,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+          });
         },
       });
     }
@@ -255,11 +245,12 @@ export const BatchTable = ({
             patch.item?.defaultPackSize !== patch.packSize &&
             patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
               patch.sellPricePerPack;
-          if (shouldClearSellPrice) {
-            update({ ...patch, sellPricePerPack: 0 });
-          } else {
-            update(patch);
-          }
+
+          update({
+            ...patch,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+            sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
+          });
         },
       }),
       {

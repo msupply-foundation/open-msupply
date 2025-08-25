@@ -41,6 +41,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               elements: [
                 {
                   type: 'dateTime',
+                  showTimepicker: true,
                   name: t('label.from-datetime'),
                   urlParameter: 'datetime',
                   range: 'from',
@@ -49,6 +50,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                 },
                 {
                   type: 'dateTime',
+                  showTimepicker: true,
                   name: t('label.to-datetime'),
                   urlParameter: 'datetime',
                   range: 'to',

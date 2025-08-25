@@ -4,9 +4,8 @@ use crate::purchase_order_line::update::UpdatePurchaseOrderLineInput;
 
 pub fn generate(
     purchase_order_line: PurchaseOrderLineRow,
-    input: &UpdatePurchaseOrderLineInput,
-) -> Result<PurchaseOrderLineRow, RepositoryError> {
-    let UpdatePurchaseOrderLineInput {
+    UpdatePurchaseOrderLineInput {
+        id: _,
         item_id,
         requested_pack_size,
         requested_number_of_units,
@@ -15,13 +14,15 @@ pub fn generate(
         expected_delivery_date,
         price_per_unit_before_discount,
         price_per_unit_after_discount,
-        id: _,
-    } = input;
-
-    let item_link_id = item_id.clone().unwrap_or(purchase_order_line.item_link_id);
-
+        manufacturer_id,
+        note,
+        unit,
+        supplier_item_code,
+        comment,
+    }: UpdatePurchaseOrderLineInput,
+) -> Result<PurchaseOrderLineRow, RepositoryError> {
     Ok(PurchaseOrderLineRow {
-        item_link_id,
+        item_link_id: item_id.clone().unwrap_or(purchase_order_line.item_link_id),
         requested_pack_size: requested_pack_size.unwrap_or(purchase_order_line.requested_pack_size),
         requested_number_of_units: requested_number_of_units
             .unwrap_or(purchase_order_line.requested_number_of_units),
@@ -35,6 +36,17 @@ pub fn generate(
             .unwrap_or(purchase_order_line.price_per_unit_before_discount),
         price_per_unit_after_discount: price_per_unit_after_discount
             .unwrap_or(purchase_order_line.price_per_unit_after_discount),
+        manufacturer_link_id: manufacturer_id
+            .map(|v| v.value)
+            .unwrap_or(purchase_order_line.manufacturer_link_id),
+        note: note.map(|v| v.value).unwrap_or(purchase_order_line.note),
+        unit: unit.or(purchase_order_line.unit),
+        supplier_item_code: supplier_item_code
+            .map(|v| v.value)
+            .unwrap_or(purchase_order_line.supplier_item_code),
+        comment: comment
+            .map(|v| v.value)
+            .unwrap_or(purchase_order_line.comment),
         ..purchase_order_line
     })
 }

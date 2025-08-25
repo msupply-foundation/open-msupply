@@ -52,7 +52,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
         flexDirection: 'column',
       }}
     >
-      <Grid container gap={2} flexWrap="nowrap">
+      <Grid container gap={2}>
         <Grid display="flex" flexDirection="column" gap={1}>
           {data?.supplier && (
             <InputWithLabelRow
@@ -102,13 +102,15 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
               />
             }
           />
+          <Grid sx={{ justifyContent: 'flex-end', display: 'flex' }}>
+            <SearchBar
+              placeholder={t('placeholder.filter-items')}
+              value={itemFilter ?? ''}
+              onChange={newValue => setItemFilter(newValue)}
+              debounceTime={0}
+            />
+          </Grid>
         </Grid>
-        <SearchBar
-          placeholder={t('placeholder.filter-items')}
-          value={itemFilter ?? ''}
-          onChange={newValue => setItemFilter(newValue)}
-          debounceTime={0}
-        />
       </Grid>
     </AppBarContentPortal>
   );
