@@ -12,12 +12,11 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useSyncMessageLine } from '../api/hooks';
-import { statusMapping } from './utils';
+import { statusMapping, typeMapping } from './utils';
 
 // TODO:
-// FE: Add Status and Type mapping
 // BE: Add loaders for store IDs
-// BE: Add Upload Status to Sync message - needs writing a migration
+// BE: Add Upload Type to Sync message - needs writing a migration
 // FE: And Add File Handling - still brainstorming implementation
 
 interface SyncMessageModalProps {
@@ -46,6 +45,7 @@ export const SyncMessageModal = ({
   } = useSyncMessageLine(lineId);
 
   const status = statusMapping(data?.status);
+  const type = typeMapping(data?.type);
 
   return (
     <Modal
@@ -82,7 +82,7 @@ export const SyncMessageModal = ({
             />
             <InputWithLabelRow
               label={t('label.type')}
-              Input={<ReadOnlyInput value={data?.type} />}
+              Input={<ReadOnlyInput value={t(type)} />}
             />
           </Stack>
         </Stack>
