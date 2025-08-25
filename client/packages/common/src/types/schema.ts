@@ -2601,9 +2601,9 @@ export enum EncounterNodeStatus {
 export type EncounterResponse = EncounterConnector;
 
 export enum EncounterSortFieldInput {
-  Context = 'context',
+  Program = 'Program',
+  Type = 'Type',
   CreatedDatetime = 'createdDatetime',
-  DocumentType = 'documentType',
   EndDatetime = 'endDatetime',
   PatientId = 'patientId',
   StartDatetime = 'startDatetime',
