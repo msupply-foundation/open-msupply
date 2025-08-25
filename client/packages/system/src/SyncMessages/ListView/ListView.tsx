@@ -43,8 +43,6 @@ export const ListView = () => {
 
   const { data, isError, isLoading } = useSyncMessageList(listParams);
 
-  const selectedRow = data?.nodes.find(row => row.id === entity?.id);
-
   return (
     <>
       <DataTable
@@ -64,7 +62,6 @@ export const ListView = () => {
         isOpen={isOpen}
         onClose={onClose}
         onOpen={onOpen}
-        selectedSyncMessage={selectedRow}
       />
     </>
   );
