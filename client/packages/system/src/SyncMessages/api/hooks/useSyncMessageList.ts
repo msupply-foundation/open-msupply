@@ -54,7 +54,7 @@ export const useSyncMessageList = (queryParams: ListParams) => {
       ...filterBy,
     };
 
-    const query = await syncMessageApi.syncMessages({
+    const query = await syncMessageApi.SyncMessages({
       storeId,
       first: first,
       offset: offset,
