@@ -2,7 +2,12 @@ import { useCallback, useContext, useState } from 'react';
 import { EnvUtils, Formatter, noOtherVariants } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
-import { LocaleKey, useTranslation, IntlContext } from '@common/intl';
+import {
+  LocaleKey,
+  useTranslation,
+  IntlContext,
+  CUSTOM_TRANSLATIONS_NAMESPACE,
+} from '@common/intl';
 import {
   frFR,
   ptPT,
@@ -107,6 +112,7 @@ export const useIntlUtils = () => {
   const { i18n } = useIntl();
   const { language: i18nLanguage } = i18n;
   const t = useTranslation();
+
   const [language, setLanguage] = useState<string>(i18nLanguage);
 
   const changeLanguage = useCallback(
@@ -172,6 +178,27 @@ export const useIntlUtils = () => {
     return localeKeySet.has(key);
   };
 
+  const invalidateCustomTranslations = () => {
+    // Clear from local storage cache
+    Object.keys(localStorage)
+      .filter(
+        key =>
+          key.startsWith('i18next_res_') &&
+          key.endsWith(CUSTOM_TRANSLATIONS_NAMESPACE)
+      )
+      .forEach(key => localStorage.removeItem(key));
+
+    // Clear from i18next cache (specifically for when we delete a translation)
+    for (const lang of i18n.languages) {
+      i18n.removeResourceBundle(lang, CUSTOM_TRANSLATIONS_NAMESPACE);
+    }
+
+    // Then reload from backend
+    // Note - this is still requires the components in question to
+    // re-render to pick up the new translations
+    i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
+  };
+
   return {
     currentLanguage,
     currentLanguageName,
@@ -188,6 +215,7 @@ export const useIntlUtils = () => {
     translateServerError,
     isLocaleKey,
     translateDynamicKey,
+    invalidateCustomTranslations,
   };
 };
 
