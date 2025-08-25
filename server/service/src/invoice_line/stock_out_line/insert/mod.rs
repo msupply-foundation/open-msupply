@@ -123,7 +123,7 @@ pub fn insert_stock_out_line(
 mod test {
     use repository::{
         mock::{
-            mock_item_a, mock_item_b_lines, mock_name_store_a,
+            mock_item_a, mock_item_b_lines, mock_location_on_hold, mock_name_store_a,
             mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_c,
             mock_outbound_shipment_c_invoice_lines, mock_patient, mock_prescription_a,
             mock_stock_line_a, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
@@ -140,11 +140,11 @@ mod test {
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
-        invoice_line::{
-            stock_out_line::InsertStockOutLine,
-            stock_out_line::{InsertStockOutLineError as ServiceError, StockOutType},
+        invoice_line::stock_out_line::{
+            InsertStockOutLine, InsertStockOutLineError as ServiceError, StockOutType,
         },
         service_provider::ServiceProvider,
+        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -236,6 +236,26 @@ mod test {
                         .clone(),
                     number_of_packs: 1.0,
                     stock_line_id: mock_stock_line_location_is_on_hold()[0].id.clone(),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::LocationIsOnHold)
+        );
+        // Existing stock line is not in on hold location, but invoice moves it to on hold location
+        assert_eq!(
+            service.insert_stock_out_line(
+                &context,
+                InsertStockOutLine {
+                    id: "new outbound line id".to_string(),
+                    r#type: StockOutType::OutboundShipment,
+                    invoice_id: mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone(),
+                    number_of_packs: 1.0,
+                    stock_line_id: mock_stock_line_si_d()[0].id.clone(),
+                    location_id: Some(NullableUpdate {
+                        value: Some(mock_location_on_hold().id)
+                    }),
                     ..Default::default()
                 },
             ),
