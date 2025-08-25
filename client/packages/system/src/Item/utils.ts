@@ -3,6 +3,7 @@ import {
   ItemRowFragment,
   ItemStockOnHandFragment,
   ItemWithPackSizeFragment,
+  PackagingVariantFragment,
 } from './api';
 import { styled } from '@common/styles';
 import { ItemFilterInput } from '@common/types';
@@ -72,3 +73,27 @@ export const itemFilterOptions = {
 export const getOptionLabel = <T extends { code: string; name: string }>(
   item: T
 ): string => `${item.code} ${item.name}`;
+
+export const getVolumePerPackFromVariant = ({
+  itemVariant,
+  packSize,
+}: {
+  packSize?: number | null;
+  itemVariant?: {
+    packagingVariants: Pick<
+      PackagingVariantFragment,
+      'packSize' | 'volumePerUnit'
+    >[];
+  } | null;
+}): number | undefined => {
+  if (!itemVariant) return undefined;
+
+  const packaging = itemVariant.packagingVariants.find(
+    p => p.packSize === packSize
+  );
+
+  if (!packaging) return undefined;
+
+  // Item variants save volume in L, but it is saved in m3 everywhere else
+  return ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1);
+};

@@ -8,7 +8,7 @@ use graphql_core::loader::{
 use graphql_core::ContextExt;
 use graphql_goods_received_line::types::GoodsReceivedLineConnector;
 use graphql_types::types::{purchase_order, NameNode};
-use repository::goods_received_row::GoodsReceivedRow;
+use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
 use service::ListResult;
 #[derive(PartialEq, Debug)]
 pub struct GoodsReceivedNode {
@@ -63,6 +63,10 @@ impl GoodsReceivedNode {
             return Ok(name);
         }
         return Ok(None);
+    }
+
+    pub async fn purchase_order_id(&self) -> &Option<String> {
+        &self.row().purchase_order_id
     }
 
     pub async fn purchase_order_number(&self, ctx: &Context<'_>) -> Result<Option<i64>> {

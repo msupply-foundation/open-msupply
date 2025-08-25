@@ -11,6 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
+  getVolumePerPackFromVariant,
   ItemVariantInputCell,
   VVMStatusInputCell,
 } from '@openmsupply-client/system';
@@ -86,21 +87,10 @@ export const itemVariantColumn = (
   width: 150,
   Cell: InboundLineItemVariantInputCell,
   setter: patch => {
-    const { packSize, itemVariant } = patch;
-
-    if (itemVariant) {
-      const packaging = itemVariant.packagingVariants.find(
-        p => p.packSize === packSize
-      );
-      // Item variants save volume in L, but it is saved in m3 everywhere else
-      updateDraftLine({
-        ...patch,
-        volumePerPack:
-          ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
-      });
-    } else {
-      updateDraftLine(patch);
-    }
+    updateDraftLine({
+      ...patch,
+      volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+    });
   },
 });
 

@@ -1,99 +1,241 @@
 import React from 'react';
 import {
-  BasicTextInput,
-  Box,
-  DataTable,
-  Divider,
-  Grid,
+  InputWithLabelRow,
+  ModalGridLayout,
   PurchaseOrderNodeStatus,
+  useMediaQuery,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
   ItemStockOnHandFragment,
+  ManufacturerSearchInput,
   StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import { min } from 'lodash';
-import { usePurchaseOrderLineEditColumns } from './columns';
+import { commonLabelProps, useInputComponents } from '../../../common';
+import { calculatePricesAndDiscount, calculateUnitQuantities } from './utils';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
-  currentLine?: PurchaseOrderLineFragment;
-  onChangeItem: (item: ItemStockOnHandFragment) => void;
   draft?: DraftPurchaseOrderLine | null;
-  updatePatch: (patch: Partial<DraftPurchaseOrderLine>) => void;
+  update: (patch: Partial<DraftPurchaseOrderLine>) => void;
   status: PurchaseOrderNodeStatus;
+  isDisabled: boolean;
+  lines?: PurchaseOrderLineFragment[];
+  onChangeItem: (item: ItemStockOnHandFragment) => void;
 }
 
 export const PurchaseOrderLineEdit = ({
   isUpdateMode,
-  currentLine,
   onChangeItem,
   draft,
-  updatePatch,
+  update,
   status,
+  isDisabled = false,
+  lines = [],
 }: PurchaseOrderLineEditProps) => {
-  const showContent = !!draft && !!currentLine;
-
-  const lines: DraftPurchaseOrderLine[] = [];
-  if (draft) {
-    lines.push(draft);
-  }
-
-  const columns = usePurchaseOrderLineEditColumns({
-    draft,
-    updatePatch,
-    status,
-  });
+  const t = useTranslation();
+  const showContent = !!draft?.itemId;
+  const isVerticalScreen = useMediaQuery('(max-width:800px)');
+  const { numericInput, textInput, multilineTextInput, dateInput } =
+    useInputComponents(t, isDisabled, isVerticalScreen);
 
   return (
-    <Grid
-      container
-      spacing={1}
-      direction="row"
-      bgcolor="background.toolbar"
-      padding={2}
-      paddingBottom={1}
-    >
-      <Grid size={12} sx={{ mb: 2 }}>
-        {(isUpdateMode && (
-          <BasicTextInput
-            value={`${currentLine?.item?.code}     ${currentLine?.item?.name}`}
-            disabled
-            fullWidth
-          />
-        )) || (
+    <>
+      <ModalGridLayout
+        showExtraFields={true}
+        Top={
           <StockItemSearchInput
-            autoFocus={!currentLine}
-            openOnFocus={!currentLine}
-            disabled={isUpdateMode}
-            currentItemId={currentLine?.item.id}
+            autoFocus={!isUpdateMode}
+            openOnFocus={!isUpdateMode}
+            disabled={isUpdateMode || isDisabled}
+            currentItemId={draft?.itemId}
             onChange={newItem => newItem && onChangeItem(newItem)}
+            extraFilter={item => !lines.some(line => line.item.id === item.id)}
           />
-        )}
-      </Grid>
-      {showContent && currentLine && (
-        <Box style={{ width: '100%' }}>
-          <Divider margin={10} />
-          <Box
-            style={{
-              maxHeight: min([screen.height - 570, 325]),
-              display: 'flex',
-              flexDirection: 'column',
-              overflowX: 'hidden',
-              overflowY: 'auto',
-            }}
-          >
-            <DataTable
-              id="purchase-order-line-edit"
-              columns={columns}
-              data={lines}
-              dense
-            />
-          </Box>
-        </Box>
-      )}
-    </Grid>
+        }
+        Left={
+          showContent ? (
+            <>
+              {numericInput(
+                status !== PurchaseOrderNodeStatus.Confirmed
+                  ? 'label.requested-packs'
+                  : 'label.adjusted-packs',
+                draft?.numberOfPacks ?? 0,
+                {
+                  onChange: value => {
+                    // Adjust the requested and adjusted number of units based
+                    // on the number of packs * pack size
+                    const adjustedPatch = calculateUnitQuantities(status, {
+                      ...draft,
+                      numberOfPacks: value,
+                    });
+                    update({ ...adjustedPatch, numberOfPacks: value });
+                  },
+                  decimalLimit: 2,
+                  autoFocus: true,
+                }
+              )}
+              {numericInput('label.pack-size', draft?.requestedPackSize, {
+                onChange: requestedPackSize => {
+                  // Adjust the requested and adjusted number of units based
+                  // on the number of packs * pack size
+                  const adjustedPatch = calculateUnitQuantities(status, {
+                    ...draft,
+                    requestedPackSize,
+                  });
+                  update({ ...adjustedPatch, requestedPackSize });
+                },
+                decimalLimit: 2,
+              })}
+              {numericInput(
+                'label.requested-quantity',
+                draft?.requestedNumberOfUnits,
+                {
+                  onChange: value => {
+                    // Adjust the requested and adjusted number of units based on the number of packs
+                    const adjustedPatch = calculateUnitQuantities(status, {
+                      ...draft,
+                      requestedNumberOfUnits: value,
+                    });
+                    update(adjustedPatch);
+                  },
+                  disabled: true,
+                  decimalLimit: 2,
+                }
+              )}
+              {status === PurchaseOrderNodeStatus.Confirmed &&
+                numericInput(
+                  'label.adjusted-quantity',
+                  draft?.adjustedNumberOfUnits,
+                  {
+                    onChange: value => {
+                      // Adjust the requested and adjusted number of units based on the number of packs
+                      const adjustedPatch = calculateUnitQuantities(status, {
+                        ...draft,
+                        requestedNumberOfUnits: value,
+                      });
+                      update(adjustedPatch);
+                    },
+                    disabled: true,
+                    decimalLimit: 2,
+                  }
+                )}
+              {textInput('label.unit', draft?.unit || '', value =>
+                update({ unit: value })
+              )}
+              {textInput(
+                'label.supplier-item-code',
+                draft?.supplierItemCode || '',
+                value => update({ supplierItemCode: value })
+              )}
+              <InputWithLabelRow
+                Input={
+                  <ManufacturerSearchInput
+                    disabled={isDisabled}
+                    value={draft?.manufacturer ?? null}
+                    onChange={manufacturer =>
+                      update({ manufacturer: manufacturer || null })
+                    }
+                    textSx={
+                      isDisabled
+                        ? {
+                            backgroundColor: theme =>
+                              theme.palette.background.toolbar,
+                            boxShadow: 'none',
+                          }
+                        : {
+                            backgroundColor: theme =>
+                              theme.palette.background.white,
+                            boxShadow: theme => theme.shadows[2],
+                          }
+                    }
+                    width={185}
+                  />
+                }
+                label={t('label.manufacturer')}
+                labelProps={commonLabelProps}
+              />
+            </>
+          ) : null
+        }
+        Middle={
+          showContent ? (
+            <>
+              {numericInput(
+                'label.price-per-unit-before-discount',
+                draft?.pricePerUnitBeforeDiscount,
+                {
+                  onChange: value => {
+                    const adjustedPatch = calculatePricesAndDiscount(
+                      'pricePerUnitBeforeDiscount',
+                      { ...draft, pricePerUnitBeforeDiscount: value }
+                    );
+                    update(adjustedPatch);
+                  },
+                  decimalLimit: 2,
+                }
+              )}
+              {numericInput(
+                'label.discount-percentage',
+                draft?.discountPercentage,
+                {
+                  onChange: value => {
+                    const adjustedPatch = calculatePricesAndDiscount(
+                      'discountPercentage',
+                      { ...draft, discountPercentage: value }
+                    );
+                    update(adjustedPatch);
+                  },
+                  max: 100,
+                  decimalLimit: 2,
+                  endAdornment: '%',
+                }
+              )}
+              {numericInput(
+                'label.price-per-unit-after-discount',
+                draft?.pricePerUnitAfterDiscount,
+                {
+                  onChange: value => {
+                    const adjustedPatch = calculatePricesAndDiscount(
+                      'pricePerUnitAfterDiscount',
+                      { ...draft, pricePerUnitAfterDiscount: value }
+                    );
+                    update(adjustedPatch);
+                  },
+                  decimalLimit: 2,
+                }
+              )}
+            </>
+          ) : null
+        }
+        Right={
+          showContent ? (
+            <>
+              {dateInput(
+                'label.requested-delivery-date',
+                draft?.requestedDeliveryDate,
+                value => update({ requestedDeliveryDate: value })
+              )}
+              {dateInput(
+                'label.expected-delivery-date',
+                draft?.expectedDeliveryDate,
+                value => update({ expectedDeliveryDate: value })
+              )}
+              {multilineTextInput(
+                'label.comment',
+                draft?.comment || '',
+                value => update({ comment: value })
+              )}
+              {multilineTextInput('label.notes', draft?.note || '', value =>
+                update({ note: value })
+              )}
+            </>
+          ) : null
+        }
+      />
+    </>
   );
 };

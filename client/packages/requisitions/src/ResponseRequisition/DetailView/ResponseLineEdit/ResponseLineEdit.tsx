@@ -9,6 +9,7 @@ import {
   Typography,
   UserStoreNodeFragment,
   usePreferences,
+  ModalGridLayout,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -16,11 +17,7 @@ import {
   StockItemSearchInputWithStats,
 } from '@openmsupply-client/system';
 import { ResponseFragment, ResponseLineFragment } from '../../api';
-import {
-  InfoRow,
-  ModalContentLayout,
-  RepresentationValue,
-} from '../../../common';
+import { InfoRow, RepresentationValue } from '../../../common';
 import { DraftResponseLine } from './hooks';
 import { SupplySelection } from './SuppliedSelection';
 import { useStockCalculations } from './utils';
@@ -329,7 +326,7 @@ export const ResponseLineEdit = ({
   };
 
   return (
-    <ModalContentLayout
+    <ModalGridLayout
       showExtraFields={showExtraFields}
       Top={
         <>
