@@ -196,7 +196,7 @@ const useUpdate = (id: string) => {
         barcode,
         batch,
         costPricePerPack,
-        expiryDate,
+        expiryDate: setNullableInput('expiryDate', { expiryDate }),
         onHold,
         sellPricePerPack,
         location: setNullableInput('id', location),
