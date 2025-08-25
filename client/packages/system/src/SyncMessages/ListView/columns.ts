@@ -6,7 +6,7 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { SyncMessageRowFragment } from '../api';
-import { statusMapping } from './utils';
+import { statusMapping, typeMapping } from './utils';
 
 export const useSyncMessageColumns = () => {
   const t = useTranslation();
@@ -46,7 +46,10 @@ export const useSyncMessageColumns = () => {
     {
       key: 'type',
       label: 'label.type',
-      accessor: ({ rowData }) => rowData?.type,
+      accessor: ({ rowData }) => {
+        const type = typeMapping(rowData?.type);
+        return t(type);
+      },
     },
   ];
 
