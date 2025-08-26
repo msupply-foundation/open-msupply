@@ -30,6 +30,10 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Use Node.js (.nvmrc)
+        uses: actions/setup-node@v1
+        with:
+          node-version: "${{ steps.nvm.outputs.NVMRC }}"
       - name: Build
         run: ./build/mac/build.sh ${{ inputs.architecture }} ${{ inputs.includeDemoData }}
       # Upload artifact would remove +x (execute) permission and attributes from files when zipping
