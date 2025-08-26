@@ -124,9 +124,7 @@ impl SyncMessageFilterInput {
         SyncMessageFilter {
             id: self.id.map(EqualFilter::from),
             to_store_id: self.to_store_id.map(EqualFilter::from),
-            // to_store_name: self.to_store_name.map(StringFilter::from),
             from_store_id: self.from_store_id.map(EqualFilter::from),
-            // from_store_name: self.from_store_name.map(StringFilter::from),
             status: self.status.map(|status_filter| {
                 let equal_to = status_filter.equal_to.map(|s| s.to_domain());
                 let equal_any = status_filter
