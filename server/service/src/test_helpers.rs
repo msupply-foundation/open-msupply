@@ -200,7 +200,7 @@ pub(crate) fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, 
 pub fn invoice_generate_logs(invoice: &InvoiceRow) -> Vec<ActivityLogRow> {
     let mut logs = Vec::new();
 
-    logs.push(ActivityLogRow {
+    let created_log = ActivityLogRow {
         id: format!("{}_created", invoice.id),
         r#type: ActivityLogType::InvoiceCreated,
         user_id: Some("user_account_a".to_string()),
@@ -209,18 +209,16 @@ pub fn invoice_generate_logs(invoice: &InvoiceRow) -> Vec<ActivityLogRow> {
         datetime: invoice.created_datetime.clone(),
         changed_to: None,
         changed_from: None,
-    });
+    };
+
+    logs.push(created_log.clone());
 
     if let Some(allocated_datetime) = invoice.allocated_datetime {
         logs.push(ActivityLogRow {
             id: format!("{}_allocated", invoice.id),
             r#type: ActivityLogType::InvoiceStatusAllocated,
-            user_id: Some("user_account_a".to_string()),
-            store_id: Some(invoice.store_id.clone()),
-            record_id: Some(invoice.id.clone()),
             datetime: allocated_datetime.clone(),
-            changed_to: None,
-            changed_from: None,
+            ..created_log.clone()
         });
     }
 
@@ -228,12 +226,8 @@ pub fn invoice_generate_logs(invoice: &InvoiceRow) -> Vec<ActivityLogRow> {
         logs.push(ActivityLogRow {
             id: format!("{}_picked", invoice.id),
             r#type: ActivityLogType::InvoiceStatusPicked,
-            user_id: Some("user_account_a".to_string()),
-            store_id: Some(invoice.store_id.clone()),
-            record_id: Some(invoice.id.clone()),
             datetime: picked_datetime.clone(),
-            changed_to: None,
-            changed_from: None,
+            ..created_log.clone()
         });
     }
 
@@ -241,12 +235,8 @@ pub fn invoice_generate_logs(invoice: &InvoiceRow) -> Vec<ActivityLogRow> {
         logs.push(ActivityLogRow {
             id: format!("{}_shipped", invoice.id),
             r#type: ActivityLogType::InvoiceStatusShipped,
-            user_id: Some("user_account_a".to_string()),
-            store_id: Some(invoice.store_id.clone()),
-            record_id: Some(invoice.id.clone()),
             datetime: shipped_datetime.clone(),
-            changed_to: None,
-            changed_from: None,
+            ..created_log.clone()
         });
     }
 
@@ -254,12 +244,8 @@ pub fn invoice_generate_logs(invoice: &InvoiceRow) -> Vec<ActivityLogRow> {
         logs.push(ActivityLogRow {
             id: format!("{}_delivered", invoice.id),
             r#type: ActivityLogType::InvoiceStatusDelivered,
-            user_id: Some("user_account_a".to_string()),
-            store_id: Some(invoice.store_id.clone()),
-            record_id: Some(invoice.id.clone()),
             datetime: delivered_datetime.clone(),
-            changed_to: None,
-            changed_from: None,
+            ..created_log.clone()
         });
     }
 
@@ -267,12 +253,8 @@ pub fn invoice_generate_logs(invoice: &InvoiceRow) -> Vec<ActivityLogRow> {
         logs.push(ActivityLogRow {
             id: format!("{}_received", invoice.id),
             r#type: ActivityLogType::InvoiceStatusReceived,
-            user_id: Some("user_account_a".to_string()),
-            store_id: Some(invoice.store_id.clone()),
-            record_id: Some(invoice.id.clone()),
             datetime: received_datetime.clone(),
-            changed_to: None,
-            changed_from: None,
+            ..created_log.clone()
         });
     }
 
@@ -280,12 +262,8 @@ pub fn invoice_generate_logs(invoice: &InvoiceRow) -> Vec<ActivityLogRow> {
         logs.push(ActivityLogRow {
             id: format!("{}_verified", invoice.id),
             r#type: ActivityLogType::InvoiceStatusVerified,
-            user_id: Some("user_account_a".to_string()),
-            store_id: Some(invoice.store_id.clone()),
-            record_id: Some(invoice.id.clone()),
             datetime: verified_datetime.clone(),
-            changed_to: None,
-            changed_from: None,
+            ..created_log.clone()
         });
     }
 
@@ -293,12 +271,8 @@ pub fn invoice_generate_logs(invoice: &InvoiceRow) -> Vec<ActivityLogRow> {
         logs.push(ActivityLogRow {
             id: format!("{}_cancelled", invoice.id),
             r#type: ActivityLogType::InvoiceStatusCancelled,
-            user_id: Some("user_account_a".to_string()),
-            store_id: Some(invoice.store_id.clone()),
-            record_id: Some(invoice.id.clone()),
             datetime: cancelled_datetime.clone(),
-            changed_to: None,
-            changed_from: None,
+            ..created_log.clone()
         });
     }
 
