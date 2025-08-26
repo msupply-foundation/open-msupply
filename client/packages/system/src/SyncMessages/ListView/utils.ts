@@ -22,6 +22,8 @@ export const typeMapping = (type?: SyncMessageNodeType): LocaleKey => {
       return 'label.request-field-change';
     case SyncMessageNodeType.Other:
       return 'label.other';
+    case SyncMessageNodeType.Upload:
+      return 'label.upload';
     default:
       console.warn(`Unknown sync message type: ${type}`);
       return 'messages.not-applicable';

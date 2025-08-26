@@ -23,6 +23,7 @@ pub enum SyncMessageRowStatus {
 pub enum SyncMessageRowType {
     #[default]
     RequestFieldChange,
+    Upload,
     #[serde(untagged)]
     Other(String),
 }
@@ -75,6 +76,11 @@ pub struct SyncMessageRow {
     pub error_message: Option<String>,
 }
 
+// TODO:
+// Add a sync_message processer
+// - updates status to uploading
+// - creates a new sync_reference_row record(s) check either if its logs or database or both
+
 pub struct SyncMessageRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -116,7 +122,9 @@ impl<'a> SyncMessageRowRepository<'a> {
         Ok(results)
     }
 
+    // change prop to row
     fn insert_changelog(&self, id: &str) -> Result<i64, RepositoryError> {
+        // potentially have to update store_id with to_store_id
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncMessage,
             record_id: id.to_string(),
