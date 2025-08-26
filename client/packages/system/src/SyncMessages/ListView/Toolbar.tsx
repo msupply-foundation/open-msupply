@@ -23,18 +23,18 @@ export const Toolbar = () => {
       <Box display="flex" gap={1}>
         <FilterMenu
           filters={[
-            {
-              type: 'text',
-              name: t('label.to-store'),
-              urlParameter: 'to-store',
-              isDefault: true,
-            },
-            {
-              type: 'text',
-              name: t('label.from-store'),
-              urlParameter: 'from-store',
-              isDefault: true,
-            },
+            // {
+            //   type: 'text',
+            //   name: t('label.to-store'),
+            //   urlParameter: 'to-store',
+            //   isDefault: true,
+            // },
+            // {
+            //   type: 'text',
+            //   name: t('label.from-store'),
+            //   urlParameter: 'from-store',
+            //   isDefault: true,
+            // },
             {
               type: 'enum',
               name: t('label.type'),

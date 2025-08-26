@@ -21,9 +21,7 @@ export const ListView = () => {
     useEditModal<SyncMessageRowFragment>();
 
   const {
-    updateSortQuery,
     updatePaginationQuery,
-    filter,
     queryParams: { page, first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
@@ -33,12 +31,12 @@ export const ListView = () => {
         key: 'status',
         condition: 'equalTo',
       },
-      {
-        key: 'to-store',
-      },
-      {
-        key: 'from-store',
-      },
+      // {
+      //   key: 'to-store',
+      // },
+      // {
+      //   key: 'from-store',
+      // },
       {
         key: 'type',
         condition: 'equalTo',
