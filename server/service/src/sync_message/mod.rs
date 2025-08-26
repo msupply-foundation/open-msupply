@@ -1,12 +1,16 @@
 use crate::{
     service_provider::ServiceContext,
-    sync_message::query::{get_sync_message, get_sync_messages},
+    sync_message::{
+        insert::{insert_sync_message, InsertSyncMessageError, InsertSyncMessageInput},
+        query::{get_sync_message, get_sync_messages},
+    },
     ListError, ListResult,
 };
 use repository::{
     PaginationOption, RepositoryError, SyncMessageFilter, SyncMessageRow, SyncMessageSort,
 };
 
+pub mod insert;
 pub mod query;
 
 pub trait SyncMessageTrait: Sync + Send {
@@ -26,6 +30,14 @@ pub trait SyncMessageTrait: Sync + Send {
         sort: Option<SyncMessageSort>,
     ) -> Result<ListResult<SyncMessageRow>, ListError> {
         get_sync_messages(ctx, pagination, filter, sort)
+    }
+
+    fn insert_sync_message(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertSyncMessageInput,
+    ) -> Result<SyncMessageRow, InsertSyncMessageError> {
+        insert_sync_message(ctx, input)
     }
 }
 
