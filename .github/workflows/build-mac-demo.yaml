@@ -30,6 +30,9 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Read .nvmrc
+        run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+        id: nvm
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v1
         with:
