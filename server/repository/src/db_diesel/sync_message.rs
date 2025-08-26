@@ -1,12 +1,5 @@
-use super::{
-    name_row::name, store_row::store, sync_message_row::sync_message, DBType, StorageConnection,
-    SyncMessageRow,
-};
-use crate::diesel_macros::apply_string_filter;
-use diesel::{
-    dsl::{sql, InnerJoin, IntoBoxed},
-    prelude::*,
-};
+use super::{sync_message_row::sync_message, DBType, StorageConnection, SyncMessageRow};
+use diesel::prelude::*;
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort},
@@ -25,9 +18,7 @@ pub struct SyncMessage {
 pub struct SyncMessageFilter {
     pub id: Option<EqualFilter<String>>,
     pub to_store_id: Option<EqualFilter<String>>,
-    // pub to_store_name: Option<EqualFilter<String>>,
     pub from_store_id: Option<EqualFilter<String>>,
-    // pub from_store_name: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<SyncMessageRowStatus>>,
 }
 
@@ -97,50 +88,13 @@ impl<'a> SyncMessageRepository<'a> {
 
 type BoxedSyncMessageQuery = sync_message::BoxedQuery<'static, DBType>;
 
-type BoxedInvoiceQuery = IntoBoxed<
-    'static,
-    InnerJoin<InnerJoin<sync_message::table, store::table>, name::table>,
-    DBType,
->;
-
 fn create_filtered_query(filter: Option<SyncMessageFilter>) -> BoxedSyncMessageQuery {
     let mut query = sync_message::table.into_boxed();
-
-    // Attempt using raw SQL;
-    // let mut query = r#"
-    //     SELECT *
-    //     FROM sync_message
-    //     INNER JOIN store AS to_store ON sync_message.to_store_id = to_store.id
-    //     INNER JOIN name AS to_name ON to_store.name_link_id = to_name.name_id
-    //     INNER JOIN store AS from_store ON sync_message.from_store_id = from_store.id
-    //     INNER JOIN name AS from_name ON from_store.name_link_id = from_name.name_id
-    // "#;
-
-    // Attempt using (possibly hallucinated) .alias() function
-    // let mut query = sync_message::table
-    //     .inner_join(
-    //         store::table
-    //             .on(sync_message::to_store_id.eq(store::id.nullable()))
-    //             .inner_join(name::table.on(store::name_link_id.eq(name::id))),
-    //     )
-    //     .inner_join(
-    //         store::table
-    //             .alias("from_store")
-    //             .on(sql("sync_message.from_store_id = from_store.id"))
-    //             .inner_join(
-    //                 name::table
-    //                     .alias("from_name")
-    //                     .on(sql("from_store.name_id = from_name.id")),
-    //             ),
-    //     )
-    //     .into_boxed();
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, sync_message::id);
         apply_equal_filter!(query, filter.to_store_id, sync_message::to_store_id);
-        // apply_string_filter!(query, filter.to_store_name, name::name_);
         apply_equal_filter!(query, filter.from_store_id, sync_message::from_store_id);
-        // apply_string_filter!(query, filter.from_store_name, name::name_);
         apply_equal_filter!(query, filter.status, sync_message::status);
     }
 

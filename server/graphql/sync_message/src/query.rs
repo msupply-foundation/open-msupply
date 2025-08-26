@@ -38,9 +38,7 @@ pub struct EqualFilterSyncMessageStatusInput {
 pub struct SyncMessageFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub to_store_id: Option<EqualFilterStringInput>,
-    // pub to_store_name: Option<StringFilterInput>,
     pub from_store_id: Option<EqualFilterStringInput>,
-    // pub from_store_name: Option<StringFilterInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterSyncMessageStatusInput>,
 }

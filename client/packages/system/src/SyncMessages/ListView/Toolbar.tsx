@@ -4,7 +4,6 @@ import {
   useTranslation,
   AppBarContentPortal,
   FilterMenu,
-  FilterController,
   Box,
 } from '@openmsupply-client/common';
 import React from 'react';
@@ -23,18 +22,7 @@ export const Toolbar = () => {
       <Box display="flex" gap={1}>
         <FilterMenu
           filters={[
-            // {
-            //   type: 'text',
-            //   name: t('label.to-store'),
-            //   urlParameter: 'to-store',
-            //   isDefault: true,
-            // },
-            // {
-            //   type: 'text',
-            //   name: t('label.from-store'),
-            //   urlParameter: 'from-store',
-            //   isDefault: true,
-            // },
+            // TODO: Add proper filtering for fromStore and toStore
             {
               type: 'enum',
               name: t('label.type'),
