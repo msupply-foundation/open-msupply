@@ -1,6 +1,6 @@
 use super::{
-    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
-    StorageConnection,
+    name_row::name, store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    RowActionType, StorageConnection,
 };
 use crate::{RepositoryError, Upsert};
 use ts_rs::TS;
@@ -56,6 +56,7 @@ table! {
 
 joinable!(sync_message -> store (to_store_id));
 allow_tables_to_appear_in_same_query!(sync_message, store);
+allow_tables_to_appear_in_same_query!(sync_message, name);
 
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, TS,
