@@ -2,10 +2,10 @@
 # common location for local config file containing connection credentials
 server/report_builder/config.yaml
 .vscode/*
+node_modules
 
 # Temp export files
 server/data
 .gitmodules
-
 
 standard_reports/test-config.json
