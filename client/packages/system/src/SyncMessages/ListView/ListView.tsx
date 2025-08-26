@@ -11,6 +11,7 @@ import {
 import { SyncMessageRowFragment, useSyncMessageList } from '../api';
 import { useSyncMessageColumns } from './columns';
 import { SyncMessageModal } from './SyncMessageModal';
+import { Toolbar } from './Toolbar';
 
 export const ListView = () => {
   const t = useTranslation();
@@ -20,7 +21,9 @@ export const ListView = () => {
     useEditModal<SyncMessageRowFragment>();
 
   const {
+    updateSortQuery,
     updatePaginationQuery,
+    filter,
     queryParams: { page, first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
@@ -28,6 +31,16 @@ export const ListView = () => {
       { key: 'createdDatetime' },
       {
         key: 'status',
+        condition: 'equalTo',
+      },
+      {
+        key: 'to-store',
+      },
+      {
+        key: 'from-store',
+      },
+      {
+        key: 'type',
         condition: 'equalTo',
       },
     ],
@@ -42,9 +55,9 @@ export const ListView = () => {
   };
 
   const { data, isError, isLoading } = useSyncMessageList(listParams);
-
   return (
     <>
+      <Toolbar />
       <DataTable
         id="sync-message-list"
         enableColumnSelection
