@@ -39,6 +39,7 @@ const useHostSync = (enabled: boolean) => {
     STATUS_POLLING_INTERVAL,
     enabled
   );
+  const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
 
@@ -56,13 +57,21 @@ const useHostSync = (enabled: boolean) => {
   }, [syncStatus]);
 
   useEffect(() => {
+    if (!syncStatus) {
+      return;
+    }
+
+    isInitialMount && setIsInitialMount(false);
+
     if (syncStatus?.isSyncing) {
       keepAwake();
     } else {
       allowSleep();
       queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
+
       // Reload custom translations, in case we received new ones via sync
-      invalidateCustomTranslations();
+      // Shouldn't run on first mount, when translations might still be loading - see issue #9042
+      !isInitialMount && invalidateCustomTranslations();
     }
   }, [syncStatus?.isSyncing]);
 
