@@ -23,7 +23,7 @@ pub enum SyncMessageRowStatus {
 pub enum SyncMessageRowType {
     #[default]
     RequestFieldChange,
-    Upload,
+    SupportUpload,
     #[serde(untagged)]
     Other(String),
 }
@@ -97,7 +97,7 @@ impl<'a> SyncMessageRowRepository<'a> {
             .do_update()
             .set(row.clone())
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id)
+        self.insert_changelog(&row)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncMessageRow>, RepositoryError> {
@@ -122,15 +122,13 @@ impl<'a> SyncMessageRowRepository<'a> {
         Ok(results)
     }
 
-    // change prop to row
-    fn insert_changelog(&self, id: &str) -> Result<i64, RepositoryError> {
-        // potentially have to update store_id with to_store_id
+    fn insert_changelog(&self, row: &SyncMessageRow) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncMessage,
-            record_id: id.to_string(),
+            record_id: row.id.to_string(),
             row_action: RowActionType::Upsert,
             name_link_id: None,
-            store_id: None,
+            store_id: row.to_store_id.clone(),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

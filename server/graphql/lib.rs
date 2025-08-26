@@ -62,7 +62,7 @@ use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
-use graphql_sync_message::SyncMessageQueries;
+use graphql_sync_message::{SyncMessageMutations, SyncMessageQueries};
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 
@@ -269,6 +269,7 @@ pub struct Mutations(
     pub PurchaseOrderMutations,
     pub PurchaseOrderLineMutations,
     pub GoodsReceivedMutations,
+    pub SyncMessageMutations,
 );
 
 impl Mutations {
@@ -300,6 +301,7 @@ impl Mutations {
             PurchaseOrderMutations,
             PurchaseOrderLineMutations,
             GoodsReceivedMutations,
+            SyncMessageMutations,
         )
     }
 }
