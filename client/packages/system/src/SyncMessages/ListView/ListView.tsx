@@ -31,12 +31,6 @@ export const ListView = () => {
         key: 'status',
         condition: 'equalTo',
       },
-      // {
-      //   key: 'to-store',
-      // },
-      // {
-      //   key: 'from-store',
-      // },
       {
         key: 'type',
         condition: 'equalTo',
