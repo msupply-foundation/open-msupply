@@ -27,6 +27,7 @@ pub enum SyncMessageNodeStatus {
 #[graphql(rename_items = "camelCase")]
 pub enum SyncMessageNodeType {
     RequestFieldChange,
+    Upload,
     Other,
 }
 
@@ -128,6 +129,7 @@ impl SyncMessageNodeType {
     pub fn from_domain(msg_type: &SyncMessageRowType) -> SyncMessageNodeType {
         match msg_type {
             SyncMessageRowType::RequestFieldChange => SyncMessageNodeType::RequestFieldChange,
+            SyncMessageRowType::Upload => SyncMessageNodeType::Upload,
             SyncMessageRowType::Other(_) => SyncMessageNodeType::Other,
         }
     }
@@ -135,6 +137,7 @@ impl SyncMessageNodeType {
     pub fn to_domain(self) -> SyncMessageRowType {
         match self {
             SyncMessageNodeType::RequestFieldChange => SyncMessageRowType::RequestFieldChange,
+            SyncMessageNodeType::Upload => SyncMessageRowType::Upload,
             SyncMessageNodeType::Other => SyncMessageRowType::Other("".to_string()),
         }
     }

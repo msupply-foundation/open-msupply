@@ -9413,6 +9413,7 @@ export enum SyncMessageNodeStatus {
 export enum SyncMessageNodeType {
   Other = 'other',
   RequestFieldChange = 'requestFieldChange',
+  Upload = 'upload',
 }
 
 export type SyncMessageQueries = {
