@@ -1,40 +1,47 @@
-{% macro dateOrNA(datetime) %}
-{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %}
-{% endmacro input %}
+{% macro dateOrNA(datetime) %} {% if datetime %}{{ datetime |
+date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
+%}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} {% endmacro input %}
 
-<table class="header_image_section" style="width: 100%;height: 98%;">
+<table class="header_image_section" style="width: 100%; height: 98%">
   <tr>
-    <th style="text-align:left;width:10%;height:70%;">
+    {% if data.store.logo %}
+    <th style="text-align: left; width: 10%; height: 70%">
       <img class="logo" src="{{ data.store.logo }}" />
     </th>
-    <th style="text-align:left;width:20%;">
-      <span style="font-weight:bold;">{{ data.store.storeName }}</span><br>
-      <span style="font-size:6pt;">{{ data.store.name.address1 }}</span><br>
-      <span style="font-size:6pt;">{{ data.store.name.address2 }}</span><br>
-      <span style="font-size:6pt;">
-        {{t(k="label.phone",f="Telephone")}}: {{ data.store.name.phone }}
-      </span><br>
-      <span style="font-size:6pt;">
+    {% endif %}
+    <th style="text-align: left; width: 20%">
+      <span style="font-weight: bold">{{ data.store.storeName }}</span><br />
+      <span style="font-size: 6pt">{{ data.store.name.address1 }}</span><br />
+      <span style="font-size: 6pt">{{ data.store.name.address2 }}</span><br />
+      <span style="font-size: 6pt">
+        {{t(k="label.phone",f="Telephone")}}: {{ data.store.name.phone }} </span
+      ><br />
+      <span style="font-size: 6pt">
         {{t(k="label.email",f="Email")}}: {{ data.store.name.email }}
       </span>
+      <br />
+      <br />
     </th>
-    <th style="text-align:right;width:70%;font-size:28pt;">
-      {{ t(k="label.repack", f="Repack") }}<br>
+    <th style="text-align: right; width: 70%; font-size: 28pt">
+      {{ t(k="label.repack", f="Repack") }}<br />
     </th>
   </tr>
 </table>
 
-<div class="header_image_section" style="display: flex; flex-direction: column;">
-  <div style="display: flex; justify-content: flex-end;">
-    {{ t(k="label.number", f="Number") }}: {{ data.repack.invoice.invoiceNumber }}
+<div class="header_image_section" style="display: flex; flex-direction: column">
+  <div style="display: flex; justify-content: flex-end">
+    {{ t(k="label.number", f="Number") }}: {{ data.repack.invoice.invoiceNumber
+    }}
   </div>
-  <div style="display: flex; justify-content: flex-end;">
-    {{t(k="report.confirmed-date", f="Confirmed date")}}: {{data.repack.datetime | date(format="%d/%m/%Y")}}
+  <div style="display: flex; justify-content: flex-end">
+    {{t(k="report.confirmed-date", f="Confirmed date")}}: {{data.repack.datetime
+    | date(format="%d/%m/%Y")}}
   </div>
-  <div style="display: flex; justify-content: flex-end;">
-    {{t(k="report.item-code", f="Item code")}}: {{ data.repack.from.stockLine.item.code }}
+  <div style="display: flex; justify-content: flex-end">
+    {{t(k="report.item-code", f="Item code")}}: {{
+    data.repack.from.stockLine.item.code }}
   </div>
-  <div style="display: flex; justify-content: flex-end; padding-bottom: 10px;">
+  <div style="display: flex; justify-content: flex-end; padding-bottom: 10px">
     {{t(k="report.item-name", f="Item name")}}: {{
     data.repack.from.stockLine.item.name }}
   </div>
