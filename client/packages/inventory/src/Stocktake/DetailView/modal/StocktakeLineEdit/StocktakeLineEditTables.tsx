@@ -24,6 +24,7 @@ import {
   Box,
   useAuthContext,
   StoreModeNodeType,
+  TableContainer,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -322,14 +323,38 @@ export const BatchTable = ({
     columnDefinitions,
   ]);
   return (
-    <DataTable
-      id="stocktake-batch"
-      isDisabled={isDisabled}
-      columns={columns}
-      data={batches}
-      noDataMessage={t('label.add-new-line')}
-      dense
-    />
+    <TableContainer
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflowX: 'unset',
+        overflowY: 'auto',
+        width: '100%',
+        position: 'relative', // Ensure the Box can be positioned relative to the container
+      }}
+    >
+      <DataTable
+        id="stocktake-batch"
+        isDisabled={isDisabled}
+        columns={columns}
+        data={batches}
+        noDataMessage={t('label.add-new-line')}
+        dense
+      />
+      {/* Gradient Bottom (Overlapping the final row) */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 0, // Align to the top of the container
+          left: 0,
+          width: '100%',
+          height: '75px',
+          background:
+            'linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.9))',
+          pointerEvents: 'none', // Ensure it doesn't block any interactions
+        }}
+      />
+    </TableContainer>
   );
 };
 
