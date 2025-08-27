@@ -67,6 +67,12 @@ impl<'a> UserStoreJoinRowRepository<'a> {
             .optional()?)
     }
 
+    pub fn delete_by_id(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(user_store_join::table.filter(user_store_join::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn delete_by_user_id(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_store_join::table.filter(user_store_join::user_id.eq(id)))
             .execute(self.connection.lock().connection())?;
@@ -74,12 +80,11 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     }
 }
 
-pub type UserId = String;
 #[derive(Debug, Clone)]
-pub struct UserStoreJoinRowDelete(pub UserId);
+pub struct UserStoreJoinRowDelete(pub String);
 impl Delete for UserStoreJoinRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        UserStoreJoinRowRepository::new(con).delete_by_user_id(&self.0)?;
+        UserStoreJoinRowRepository::new(con).delete_by_id(&self.0)?;
         Ok(None) // Table not in Changelog
     }
     // Test only
