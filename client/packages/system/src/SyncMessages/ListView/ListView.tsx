@@ -12,6 +12,7 @@ import { SyncMessageRowFragment, useSyncMessageList } from '../api';
 import { useSyncMessageColumns } from './columns';
 import { SyncMessageModal } from './SyncMessageModal';
 import { Toolbar } from './Toolbar';
+import { AppBarButtons } from './AppBarButtons';
 
 export const ListView = () => {
   const t = useTranslation();
@@ -47,9 +48,11 @@ export const ListView = () => {
   };
 
   const { data, isError, isLoading } = useSyncMessageList(listParams);
+
   return (
     <>
       <Toolbar />
+      <AppBarButtons onOpen={onOpen} />
       <DataTable
         id="sync-message-list"
         enableColumnSelection
@@ -67,7 +70,6 @@ export const ListView = () => {
           lineId={entity?.id}
           isOpen={isOpen}
           onClose={onClose}
-          onOpen={onOpen}
           mode={mode}
         />
       )}

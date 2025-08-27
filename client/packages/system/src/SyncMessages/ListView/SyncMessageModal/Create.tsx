@@ -1,0 +1,142 @@
+import React, { useEffect, useState } from 'react';
+import {
+  Box,
+  Checkbox,
+  DropdownMenu,
+  DropdownMenuItem,
+  LocaleKey,
+  Stack,
+  SyncMessageNodeType,
+  TextArea,
+  TypedTFunction,
+  Typography,
+} from '@openmsupply-client/common';
+import { StoreSearchInput } from '@openmsupply-client/system/src/Store';
+import { SyncMessageRowFragment } from '../../api';
+import { typeMapping } from '../utils';
+
+interface CreateProps {
+  t: TypedTFunction<LocaleKey>;
+  draft: SyncMessageRowFragment;
+  setDraft: (input: SyncMessageRowFragment) => void;
+}
+
+export const Create = ({ t, draft, setDraft }: CreateProps) => {
+  const syncMessageTypes = Object.values(SyncMessageNodeType);
+
+  const [selectedFiles, setSelectedFiles] = useState({
+    logs: false,
+    database: false,
+  });
+
+  useEffect(() => {
+    if (draft?.type === SyncMessageNodeType.SupportUpload) {
+      setDraft({
+        ...draft,
+        body: JSON.stringify({
+          logs: selectedFiles.logs,
+          database: selectedFiles.database,
+        }),
+      });
+    } else {
+      setDraft({
+        ...draft,
+        body: '',
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFiles, draft?.type]);
+
+  return (
+    <Stack
+      sx={{
+        padding: 2,
+        gap: 2,
+      }}
+    >
+      <Box>
+        <Typography fontWeight="bold">{t('label.to-store')}:</Typography>
+        <StoreSearchInput
+          value={draft?.toStore}
+          onChange={store =>
+            setDraft({
+              ...draft,
+              toStore: store,
+            })
+          }
+          onInputChange={() => {}}
+        />
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        <Typography fontWeight="bold">{t('label.type')}:</Typography>
+        <DropdownMenu
+          selectSx={{ width: 250 }}
+          label={t(typeMapping(draft?.type))}
+        >
+          {syncMessageTypes.map(
+            (type, index) =>
+              type && (
+                <DropdownMenuItem
+                  key={index}
+                  value={type}
+                  sx={{ fontSize: 14 }}
+                  onClick={() =>
+                    setDraft({
+                      ...draft,
+                      type,
+                    })
+                  }
+                >
+                  {t(typeMapping(type))}
+                </DropdownMenuItem>
+              )
+          )}
+        </DropdownMenu>
+      </Box>
+      <Stack flexDirection="column">
+        <Typography fontWeight="bold">{t('label.include')}:</Typography>
+        <Stack flexDirection="row" alignItems="center">
+          <Checkbox
+            disabled={draft?.type !== SyncMessageNodeType.SupportUpload}
+            onChange={() =>
+              setSelectedFiles({
+                ...selectedFiles,
+                logs: !selectedFiles.logs,
+              })
+            }
+          />
+          <Typography>{t('label.logs')}</Typography>
+        </Stack>
+        <Stack flexDirection="row" alignItems="center">
+          <Checkbox
+            disabled={draft?.type !== SyncMessageNodeType.SupportUpload}
+            onChange={() =>
+              setSelectedFiles({
+                ...selectedFiles,
+                database: !selectedFiles.database,
+              })
+            }
+          />
+          <Typography>{t('label.database')}</Typography>
+        </Stack>
+      </Stack>
+      <Box>
+        <Typography fontWeight="bold">{t('label.body')}:</Typography>
+        <TextArea
+          fullWidth
+          value={draft?.body}
+          disabled={draft?.type === SyncMessageNodeType.SupportUpload}
+          onChange={event => {
+            setDraft({
+              ...draft,
+              body: event.target.value,
+            });
+          }}
+          slotProps={{
+            input: { sx: { backgroundColor: 'background.drawer' } },
+          }}
+        />
+      </Box>
+    </Stack>
+  );
+};

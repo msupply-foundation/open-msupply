@@ -259,7 +259,7 @@ impl ServiceProvider {
             clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
-            settings: Box::new(SettingsService),
+            settings: Box::new(SettingsService), // extend to pass in settings and use to get database path
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),
@@ -281,7 +281,7 @@ impl ServiceProvider {
             item_count_service: Box::new(ItemServiceCount {}),
             barcode_service: Box::new(BarcodeService {}),
             repack_service: Box::new(RepackService {}),
-            log_service: Box::new(LogService {}),
+            log_service: Box::new(LogService {}), // use log_service to get logs path
             plugin_data_service: Box::new(PluginDataService {}),
             temperature_excursion_service: Box::new(TemperatureExcursionService {}),
             currency_service: Box::new(CurrencyService {}),
