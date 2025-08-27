@@ -205,6 +205,7 @@ export const BatchTable = ({
         },
       ],
     ];
+
     if (itemVariantsEnabled) {
       columnDefinitions.push({
         key: 'itemVariantId',
@@ -234,6 +235,7 @@ export const BatchTable = ({
         setter: patch => update({ ...patch }),
       });
     }
+
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {
         Cell: PackSizeEntryCell<DraftStocktakeLine>,
@@ -322,6 +324,7 @@ export const BatchTable = ({
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
     columnDefinitions,
   ]);
+
   return (
     <TableContainer
       sx={{
@@ -340,19 +343,7 @@ export const BatchTable = ({
         data={batches}
         noDataMessage={t('label.add-new-line')}
         dense
-      />
-      {/* Gradient Bottom (Overlapping the final row) */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 0, // Align to the top of the container
-          left: 0,
-          width: '100%',
-          height: '75px',
-          background:
-            'linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.9))',
-          pointerEvents: 'none', // Ensure it doesn't block any interactions
-        }}
+        gradientBottom={true}
       />
     </TableContainer>
   );

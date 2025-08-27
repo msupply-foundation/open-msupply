@@ -157,6 +157,7 @@ const DataTableComponent = <T extends RecordWithId>({
   additionalRows,
   width = '100%',
   rowLinkBuilder,
+  gradientBottom,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
   const { setRows, setDisabledRows, setFocus } = useTableStore();
@@ -217,6 +218,24 @@ const DataTableComponent = <T extends RecordWithId>({
 
   const ref = useRef<HTMLDivElement>(null);
 
+  const [isBottom, setIsBottom] = useState(false);
+
+  const handleBottom = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
+    console.log('height:', e.target.scrollHeight);
+    console.log('top', e.target.scrollTop);
+    console.log('clientheight', e.target.clientHeight);
+
+    const testIsBottom =
+      e.target.scrollHeight -
+        Math.ceil(e.target.scrollTop) -
+        e.target.clientHeight <
+      50;
+
+    console.log('testIsBottom', testIsBottom);
+    setIsBottom(testIsBottom);
+    console.log('isBottom', isBottom);
+  };
+
   if (isLoading) return <BasicSpinner />;
 
   if (isError) {
@@ -251,6 +270,7 @@ const DataTableComponent = <T extends RecordWithId>({
         overflowY: 'auto',
         width,
       }}
+      onScroll={event => handleBottom(event)}
     >
       <MuiTable style={{ borderCollapse: 'separate' }}>
         <TableHead
@@ -309,6 +329,22 @@ const DataTableComponent = <T extends RecordWithId>({
           />
         </TableBody>
       </MuiTable>
+
+      {gradientBottom && !isBottom && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '100%',
+            height: '75px',
+            background:
+              'linear-gradient(to bottom, transparent, rgba(13, 255, 0, 0.9))',
+            pointerEvents: 'none', // Ensure it doesn't block any interactions
+          }}
+        />
+      )}
+
       <Box
         sx={{
           flex: 0,
