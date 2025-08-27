@@ -9,9 +9,6 @@ import { useSyncMessageLine } from '../../api/hooks';
 import { View } from './View';
 import { Create } from './Create';
 
-// TODO:
-// BE: Add Upload Type to Sync message - needs writing a migration
-
 interface SyncMessageModalProps {
   onClose: () => void;
   isOpen: boolean;

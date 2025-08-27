@@ -57,7 +57,7 @@ export const Create = ({ t, draft, setDraft }: CreateProps) => {
       <Box>
         <Typography fontWeight="bold">{t('label.to-store')}:</Typography>
         <StoreSearchInput
-          value={draft?.toStore}
+          value={draft?.toStore ?? undefined}
           onChange={store =>
             setDraft({
               ...draft,
@@ -67,10 +67,19 @@ export const Create = ({ t, draft, setDraft }: CreateProps) => {
           onInputChange={() => {}}
         />
       </Box>
-      <Box sx={{ flex: 1 }}>
+      <Box>
         <Typography fontWeight="bold">{t('label.type')}:</Typography>
         <DropdownMenu
-          selectSx={{ width: 250 }}
+          sx={{
+            width: '100%',
+            '& .MuiInputBase-root': {
+              backgroundColor: 'background.drawer',
+            },
+            '& .MuiFormLabel-root': {
+              color: 'gray.dark',
+            },
+          }}
+          selectSx={{ width: '100%' }}
           label={t(typeMapping(draft?.type))}
         >
           {syncMessageTypes.map(
@@ -105,7 +114,15 @@ export const Create = ({ t, draft, setDraft }: CreateProps) => {
               })
             }
           />
-          <Typography>{t('label.logs')}</Typography>
+          <Typography
+            color={
+              draft?.type !== SyncMessageNodeType.SupportUpload
+                ? 'textDisabled'
+                : 'textPrimary'
+            }
+          >
+            {t('label.logs')}
+          </Typography>
         </Stack>
         <Stack flexDirection="row" alignItems="center">
           <Checkbox
@@ -117,7 +134,15 @@ export const Create = ({ t, draft, setDraft }: CreateProps) => {
               })
             }
           />
-          <Typography>{t('label.database')}</Typography>
+          <Typography
+            color={
+              draft?.type !== SyncMessageNodeType.SupportUpload
+                ? 'textDisabled'
+                : 'textPrimary'
+            }
+          >
+            {t('label.database')}
+          </Typography>
         </Stack>
       </Stack>
       <Box>
