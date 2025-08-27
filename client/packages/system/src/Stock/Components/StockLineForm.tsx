@@ -122,7 +122,10 @@ export const StockLineForm = ({
   const getDosesProps = (numPacks: number) => {
     if (!preferences?.manageVaccinesInDoses || !draft.item.isVaccine) return {};
 
-    const doses = QuantityUtils.packsToDoses(numPacks, draft);
+    const doses = QuantityUtils.packsToDoses(numPacks, {
+      packSize: draft.packSize,
+      dosesPerUnit: draft.item.dosesPerUnit,
+    });
 
     return {
       helperText: `${doses} ${t('label.doses').toLowerCase()}`,
