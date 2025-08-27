@@ -110,7 +110,10 @@ fn handle_log_files(
         let stored_file = static_file_service
             .store_file(
                 &file_name,
-                StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
+                StaticFileCategory::SyncFile(
+                    "sync_message_logs".to_string(),
+                    sync_message.id.clone(),
+                ),
                 log_bytes,
             )
             .map_err(|e| ProcessorError::OtherError(e.to_string()))?;
@@ -148,7 +151,10 @@ fn handle_database_file(
     let stored_file = static_file_service
         .store_file(
             &database_settings.database_name,
-            StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
+            StaticFileCategory::SyncFile(
+                "sync_message_database".to_string(),
+                sync_message.id.clone(),
+            ),
             &database_bytes,
         )
         .map_err(|e| ProcessorError::OtherError(e.to_string()))?;
