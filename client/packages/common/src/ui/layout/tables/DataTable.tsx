@@ -228,9 +228,7 @@ const DataTableComponent = <T extends RecordWithId>({
     const testIsBottom =
       scrollHeight - Math.ceil(scrollTop) - clientHeight < 50;
 
-    console.log('testIsBottom', testIsBottom);
     setIsBottom(testIsBottom);
-    console.log('isBottom', isBottom);
   };
 
   if (isLoading) return <BasicSpinner />;
