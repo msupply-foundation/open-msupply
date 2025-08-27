@@ -1,8 +1,10 @@
 <table class="header_image_section" style="width: 100%; height: 98%">
   <tr>
+    {% if data.store.logo %}
     <th style="text-align: left; width: 10%; height: 70%">
       <img class="logo" src="{{ data.store.logo }}" />
     </th>
+    {% endif %}
     <th style="text-align: left; width: 20%">
       <span style="font-weight: bold">{{ data.store.storeName }}</span><br />
       <span style="font-size: 6pt">{{ data.store.name.address1 }}</span><br />
@@ -13,6 +15,8 @@
       <span style="font-size: 6pt">
         {{t(k="label.email",f="Email")}}: {{ data.store.name.email }}
       </span>
+      <br />
+      <br />
     </th>
     <th style="text-align: right; width: 70%; font-size: 28pt">
       {{t(k="report.stock-take-variance-report", f="Stocktake Variance")}}
@@ -22,10 +26,14 @@
 
 <div class="header_supplied_section" style="display: flex; padding: 4px 0">
   <div style="display: flex; flex: 1">
-    {{ data.stocktake.description }}{% if data.stocktake.comment and data.stocktake.description %} -
-    {% else %}{% endif %}{{ data.stocktake.comment }}
+    {{ data.stocktake.description }}{% if data.stocktake.comment and
+    data.stocktake.description %} - {% else %}{% endif %}{{
+    data.stocktake.comment }}
   </div>
   <div style="display: flex">
-    <span>{{ t(k="label.number", f="Number") }}: {{ data.stocktake.stocktakeNumber }}</span>
+    <span
+      >{{ t(k="label.number", f="Number") }}: {{ data.stocktake.stocktakeNumber
+      }}</span
+    >
   </div>
 </div>
