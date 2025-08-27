@@ -29,8 +29,7 @@ pub struct LegacyUserStorePermissionTable {
     pub can_login: bool,
     pub can_action_replenishments: bool,
 }
-// Needs to be added to all_translators()
-#[deny(dead_code)]
+
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(UserStorePermissionTranslation)
 }
@@ -109,9 +108,6 @@ impl SyncTranslation for UserStorePermissionTranslation {
         let new_permissions = map_api_permissions(permissions);
         let mut new_permission_set = permissions_to_domain(new_permissions);
         new_permission_set.insert(PermissionType::StoreAccess);
-
-        //TODO OG, when you add a user to a group it needs to requeue the user's own user_store records, not the group's. Just save them. Or save the groups user_store records, the trigger will do the members'
-        //TODO OG, test group sync permissions
 
         // Similar to user_store_join, the login functionality will drop literally all the user's permissions and recreate them with new PKs.
         // If the sync record turns the permission on and it exists, do nothing, else upsert a new record.
