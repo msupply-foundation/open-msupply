@@ -4,7 +4,6 @@ use repository::{
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 
-
 use crate::{
     cursor_controller::CursorController,
     i32_to_u32,
@@ -230,7 +229,10 @@ fn get_initialisation_status(
 
     // Get sync site name
     // Safe to unwrap since sync settings will be available after initialisation
-    let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
+    let site_name = SettingsService::new(None)
+        .sync_settings(ctx)?
+        .unwrap()
+        .username;
 
     Ok(InitialisationStatus::Initialised(site_name))
 }

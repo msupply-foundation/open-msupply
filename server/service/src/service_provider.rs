@@ -65,7 +65,7 @@ use crate::{
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
-    settings::MailSettings,
+    settings::{MailSettings, Settings},
     settings_service::{SettingsService, SettingsServiceTrait},
     standard_reports::StandardReports,
     stock_line::{StockLineService, StockLineServiceTrait},
@@ -227,6 +227,7 @@ impl ServiceProvider {
             LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
+            None,
         )
     }
 
@@ -237,6 +238,7 @@ impl ServiceProvider {
         ledger_fix_trigger: LedgerFixTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
+        settings: Option<Settings>,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -259,7 +261,7 @@ impl ServiceProvider {
             clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
-            settings: Box::new(SettingsService), // extend to pass in settings and use to get database path
+            settings: Box::new(SettingsService::new(settings.clone())),
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),
@@ -281,7 +283,7 @@ impl ServiceProvider {
             item_count_service: Box::new(ItemServiceCount {}),
             barcode_service: Box::new(BarcodeService {}),
             repack_service: Box::new(RepackService {}),
-            log_service: Box::new(LogService {}), // use log_service to get logs path
+            log_service: Box::new(LogService {}),
             plugin_data_service: Box::new(PluginDataService {}),
             temperature_excursion_service: Box::new(TemperatureExcursionService {}),
             currency_service: Box::new(CurrencyService {}),
