@@ -221,15 +221,12 @@ const DataTableComponent = <T extends RecordWithId>({
   const [isBottom, setIsBottom] = useState(false);
 
   const handleBottom = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
-    console.log('height:', e.target.scrollHeight);
-    console.log('top', e.target.scrollTop);
-    console.log('clientheight', e.target.clientHeight);
+    const scrollHeight = (e.target as HTMLElement).scrollHeight;
+    const scrollTop = (e.target as HTMLElement).scrollTop;
+    const clientHeight = (e.target as HTMLElement).clientHeight;
 
     const testIsBottom =
-      e.target.scrollHeight -
-        Math.ceil(e.target.scrollTop) -
-        e.target.clientHeight <
-      50;
+      scrollHeight - Math.ceil(scrollTop) - clientHeight < 50;
 
     console.log('testIsBottom', testIsBottom);
     setIsBottom(testIsBottom);
@@ -339,7 +336,7 @@ const DataTableComponent = <T extends RecordWithId>({
             width: '100%',
             height: '75px',
             background:
-              'linear-gradient(to bottom, transparent, rgba(13, 255, 0, 0.9))',
+              'linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.9))',
             pointerEvents: 'none', // Ensure it doesn't block any interactions
           }}
         />
