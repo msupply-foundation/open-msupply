@@ -105,6 +105,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
                 .query_by_filter(
                     UserPermissionFilter::new()
                         .user_id(EqualFilter::equal_to(&user_id))
+                        .store_id(EqualFilter::equal_to(&store_id))
                         .has_context(false),
                 )?
                 .into_iter()
