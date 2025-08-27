@@ -1,28 +1,80 @@
-import { useQuery } from '@openmsupply-client/common';
+import {
+  FnUtils,
+  InsertSyncMessageInput,
+  SyncMessageNodeStatus,
+  SyncMessageNodeType,
+  SyncMessageRowTypeInput,
+  useMutation,
+  useNotification,
+  useQuery,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { useSyncMessageGraphQL } from '../useSyncMessageGraphQL';
 
 import { SyncMessageRowFragment } from '../operations.generated';
-import { SYNC_MESSAGE_LINE } from './keys';
+import { SYNC_MESSAGE, SYNC_MESSAGE_LINE } from './keys';
+import { useState } from 'react';
+
+const draftSyncMessageLine: SyncMessageRowFragment = {
+  __typename: 'SyncMessageNode',
+  id: '',
+  body: '',
+  type: SyncMessageNodeType.RequestFieldChange,
+  status: SyncMessageNodeStatus.New,
+  createdDatetime: '',
+  toStore: {
+    __typename: 'StoreNode',
+    id: '',
+    code: '',
+    storeName: '',
+  },
+  fromStore: {
+    __typename: 'StoreNode',
+    id: '',
+    code: '',
+    storeName: '',
+  },
+};
 
 export const useSyncMessageLine = (id?: string) => {
+  const t = useTranslation();
+  const { error } = useNotification();
+
   // QUERY
-  const { data, isLoading: loading, error } = useGetById(id ?? '');
+  const { data, isLoading, isError } = useGetById(id);
+
+  // DRAFT
+  const [draft, setDraft] = useState(draftSyncMessageLine);
 
   // CREATE
-  // TODO: Add create mutation
+  const {
+    mutateAsync: createMutation,
+    isLoading: isCreating,
+    error: createError,
+  } = useCreate();
 
-  // UPDATE
-  // TODO: Add update mutation
+  const create = async () => {
+    try {
+      return await createMutation(draft);
+    } catch (e) {
+      const errorSnack = error(`${t('error.failed-to-create-sync-message')}`);
+      return errorSnack();
+    }
+  };
 
   return {
-    query: { data, loading, error },
+    query: { data, isLoading, isError },
+    create: { create, isCreating, createError },
+    draft,
+    setDraft,
   };
 };
 
-const useGetById = (id: string) => {
+const useGetById = (id?: string) => {
   const { syncMessageApi, storeId } = useSyncMessageGraphQL();
 
   const queryFn = async (): Promise<SyncMessageRowFragment | undefined> => {
+    if (!id) return;
     const result = await syncMessageApi.syncMessageById({
       id,
       storeId,
@@ -36,5 +88,42 @@ const useGetById = (id: string) => {
   return useQuery({
     queryKey: [SYNC_MESSAGE_LINE, id],
     queryFn,
+  });
+};
+
+const useCreate = () => {
+  const { syncMessageApi, storeId, queryClient } = useSyncMessageGraphQL();
+
+  const typeConversion = (type: SyncMessageNodeType) => {
+    switch (type) {
+      case SyncMessageNodeType.SupportUpload:
+        return SyncMessageRowTypeInput.SupportUpload;
+      case SyncMessageNodeType.RequestFieldChange:
+      default:
+        return SyncMessageRowTypeInput.RequestFieldChange;
+    }
+  };
+
+  const parseInput = (
+    draft: SyncMessageRowFragment
+  ): InsertSyncMessageInput => {
+    return {
+      id: FnUtils.generateUUID(),
+      body: draft?.body,
+      type: typeConversion(draft?.type),
+      toStoreId: draft?.toStore?.id,
+    };
+  };
+
+  const mutationFn = async (draft: SyncMessageRowFragment) => {
+    return await syncMessageApi.insertSyncMessage({
+      input: parseInput(draft),
+      storeId,
+    });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([SYNC_MESSAGE]),
   });
 };

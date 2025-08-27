@@ -13,13 +13,13 @@ export type SyncMessageRowFragment = {
   toStore?: {
     __typename: 'StoreNode';
     id: string;
-    siteId: number;
+    code: string;
     storeName: string;
   } | null;
   fromStore?: {
     __typename: 'StoreNode';
     id: string;
-    siteId: number;
+    code: string;
     storeName: string;
   } | null;
 };
@@ -52,13 +52,13 @@ export type SyncMessagesQuery = {
           toStore?: {
             __typename: 'StoreNode';
             id: string;
-            siteId: number;
+            code: string;
             storeName: string;
           } | null;
           fromStore?: {
             __typename: 'StoreNode';
             id: string;
-            siteId: number;
+            code: string;
             storeName: string;
           } | null;
         }>;
@@ -90,18 +90,28 @@ export type SyncMessageByIdQuery = {
             toStore?: {
               __typename: 'StoreNode';
               id: string;
-              siteId: number;
+              code: string;
               storeName: string;
             } | null;
             fromStore?: {
               __typename: 'StoreNode';
               id: string;
-              siteId: number;
+              code: string;
               storeName: string;
             } | null;
           };
     };
   };
+};
+
+export type InsertSyncMessageMutationVariables = Types.Exact<{
+  input: Types.InsertSyncMessageInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InsertSyncMessageMutation = {
+  __typename: 'Mutations';
+  insertSyncMessage: { __typename: 'IdResponse'; id: string };
 };
 
 export const SyncMessageRowFragmentDoc = gql`
@@ -112,12 +122,12 @@ export const SyncMessageRowFragmentDoc = gql`
     status
     toStore {
       id
-      siteId
+      code
       storeName
     }
     fromStore {
       id
-      siteId
+      code
       storeName
     }
     createdDatetime
@@ -168,6 +178,18 @@ export const SyncMessageByIdDocument = gql`
   }
   ${SyncMessageRowFragmentDoc}
 `;
+export const InsertSyncMessageDocument = gql`
+  mutation insertSyncMessage(
+    $input: InsertSyncMessageInput!
+    $storeId: String!
+  ) {
+    insertSyncMessage(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -216,6 +238,22 @@ export function getSdk(
           ),
         'syncMessageById',
         'query',
+        variables
+      );
+    },
+    insertSyncMessage(
+      variables: InsertSyncMessageMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertSyncMessageMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertSyncMessageMutation>(
+            InsertSyncMessageDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertSyncMessage',
+        'mutation',
         variables
       );
     },

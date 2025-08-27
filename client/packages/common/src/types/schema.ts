@@ -4056,6 +4056,15 @@ export type InsertSupplierReturnResponse =
   | InsertSupplierReturnError
   | InvoiceNode;
 
+export type InsertSyncMessageInput = {
+  body?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  toStoreId?: InputMaybe<Scalars['String']['input']>;
+  type: SyncMessageRowTypeInput;
+};
+
+export type InsertSyncMessageResponse = IdResponse;
+
 export type InsertVvmStatusLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
@@ -5295,6 +5304,7 @@ export type Mutations = {
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
   insertSupplierReturn: InsertSupplierReturnResponse;
+  insertSyncMessage: InsertSyncMessageResponse;
   insertVaccination: InsertVaccinationResponse;
   insertVvmStatusLog: InsertVvmStatusLogResponse;
   /** Links a patient to a store and thus effectively to a site */
@@ -5759,6 +5769,11 @@ export type MutationsInsertStocktakeLineArgs = {
 
 export type MutationsInsertSupplierReturnArgs = {
   input: SupplierReturnInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertSyncMessageArgs = {
+  input: InsertSyncMessageInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -9413,7 +9428,7 @@ export enum SyncMessageNodeStatus {
 export enum SyncMessageNodeType {
   Other = 'other',
   RequestFieldChange = 'requestFieldChange',
-  Upload = 'upload',
+  SupportUpload = 'supportUpload',
 }
 
 export type SyncMessageQueries = {
@@ -9435,6 +9450,11 @@ export type SyncMessageQueriesSyncMessagesArgs = {
 };
 
 export type SyncMessageResponse = RecordNotFound | SyncMessageNode;
+
+export enum SyncMessageRowTypeInput {
+  RequestFieldChange = 'REQUEST_FIELD_CHANGE',
+  SupportUpload = 'SUPPORT_UPLOAD',
+}
 
 export enum SyncMessageSortFieldInput {
   CreatedDatetime = 'createdDatetime',

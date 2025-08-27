@@ -11,7 +11,6 @@ export const statusMapping = (status?: SyncMessageNodeStatus): LocaleKey => {
     case SyncMessageNodeStatus.Processed:
       return 'label.processed';
     default:
-      console.warn(`Unknown sync message status: ${status}`);
       return 'messages.not-applicable';
   }
 };
@@ -22,10 +21,9 @@ export const typeMapping = (type?: SyncMessageNodeType): LocaleKey => {
       return 'label.request-field-change';
     case SyncMessageNodeType.Other:
       return 'label.other';
-    case SyncMessageNodeType.Upload:
-      return 'label.upload';
+    case SyncMessageNodeType.SupportUpload:
+      return 'label.support-upload';
     default:
-      console.warn(`Unknown sync message type: ${type}`);
       return 'messages.not-applicable';
   }
 };

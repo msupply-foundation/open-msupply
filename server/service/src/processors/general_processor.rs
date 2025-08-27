@@ -65,10 +65,10 @@ impl ProcessorType {
             ProcessorType::AddPatientVisibilityForCentral => {
                 vec![Box::new(AddPatientVisibilityForCentral)]
             }
+            ProcessorType::Plugins => get_plugin_processors(),
             ProcessorType::SupportUploadFiles => {
                 vec![Box::new(SupportUploadFilesProcessor)]
             }
-            ProcessorType::Plugins => get_plugin_processors(),
         }
     }
 

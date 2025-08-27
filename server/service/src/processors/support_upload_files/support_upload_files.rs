@@ -13,6 +13,11 @@ use crate::{
 
 pub struct SupportUploadFilesProcessor;
 
+// TODO: Look at log_service.rs, service_provider.rs, statis_file.rs and settings_service.rs
+// Update settingservice to take in settings struct, extend setting_service to get databast path
+// Use log_service to get logs path
+// Use one of the methods from status_service -> to store or download the file in the database
+
 #[async_trait]
 impl Processor for SupportUploadFilesProcessor {
     fn get_description(&self) -> String {
