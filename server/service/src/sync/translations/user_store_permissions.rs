@@ -66,8 +66,6 @@ impl SyncTranslation for UserStorePermissionTranslation {
             return Ok(PullTranslateResult::NotMatched);
         }
         let mut integration_operations: Vec<IntegrationOperation> = Vec::new();
-        let new_permissions = map_api_permissions(permissions);
-        let mut new_permission_set = permissions_to_domain(new_permissions);
 
         // Login code may hit OG API if online. If it does, it drops all permissions and regenerates them with new PKs.
         // There should only be one join per user and store, so we just match on the user and store ids rather than relying on the PK.
@@ -84,14 +82,33 @@ impl SyncTranslation for UserStorePermissionTranslation {
                 |r| UserStoreJoinRow { is_default, ..r },
             );
 
-        if can_login {
-            new_permission_set.insert(PermissionType::StoreAccess);
-            integration_operations.push(IntegrationOperation::upsert(user_store_join_row));
-        } else {
+        let existing_permissions = UserPermissionRepository::new(connection).query_by_filter(
+            UserPermissionFilter::new()
+                .user_id(EqualFilter::equal_to(&user_id))
+                .store_id(EqualFilter::equal_to(&store_id))
+                .has_context(false),
+        )?;
+
+        if !can_login {
+            // delete it all!!
             integration_operations.push(IntegrationOperation::delete(UserStoreJoinRowDelete(
                 user_store_join_row.id,
             )));
+            for permission in existing_permissions {
+                integration_operations.push(IntegrationOperation::delete(UserPermissionRowDelete(
+                    permission.id,
+                )))
+            }
+            return Ok(PullTranslateResult::IntegrationOperations(
+                integration_operations,
+            ));
         }
+
+        integration_operations.push(IntegrationOperation::upsert(user_store_join_row));
+
+        let new_permissions = map_api_permissions(permissions);
+        let mut new_permission_set = permissions_to_domain(new_permissions);
+        new_permission_set.insert(PermissionType::StoreAccess);
 
         //TODO OG, when you add a user to a group it needs to requeue the user's own user_store records, not the group's. Just save them. Or save the groups user_store records, the trigger will do the members'
         //TODO OG, test group sync permissions
@@ -101,13 +118,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
         // If the sync record turns the permission off, delete the corresponding record.
         // We cannot drop them all and insert again as login does as sync operations execute all deletes after all inserts, so we'd wipe out our permissions
         let mut existing_permissions: HashMap<PermissionType, UserPermissionRow> =
-            UserPermissionRepository::new(connection)
-                .query_by_filter(
-                    UserPermissionFilter::new()
-                        .user_id(EqualFilter::equal_to(&user_id))
-                        .store_id(EqualFilter::equal_to(&store_id))
-                        .has_context(false),
-                )?
+            existing_permissions
                 .into_iter()
                 .map(|p| (p.permission.clone(), p))
                 .collect();
