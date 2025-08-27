@@ -60,6 +60,7 @@ export const View = ({ data, t }: ViewProps): ReactElement => {
           }}
         />
       </Box>
+      {/* TODO: Show files */}
     </Stack>
   );
 };
