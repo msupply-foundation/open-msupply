@@ -1,0 +1,9 @@
+{
+  "//": "Copy this file to capacitor.config.local.json",
+  "plugins": {
+    "NativeApi": {
+      "//": "Replace with your IP. Points the debug app to local webpack frontend for hot reloading",
+      "debugUrl": "http://192.168.1.61:3003"
+    }
+  }
+}
