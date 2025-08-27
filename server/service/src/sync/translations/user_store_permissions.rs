@@ -8,7 +8,7 @@ use crate::{
 use repository::{
     EqualFilter, PermissionType, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
     UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowDelete,
-    UserStoreJoinRow, UserStoreJoinRowRepository,
+    UserStoreJoinRow, UserStoreJoinRowDelete, UserStoreJoinRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
@@ -65,8 +65,9 @@ impl SyncTranslation for UserStorePermissionTranslation {
         {
             return Ok(PullTranslateResult::NotMatched);
         }
-
         let mut integration_operations: Vec<IntegrationOperation> = Vec::new();
+        let new_permissions = map_api_permissions(permissions);
+        let mut new_permission_set = permissions_to_domain(new_permissions);
 
         // Login code may hit OG API if online. If it does, it drops all permissions and regenerates them with new PKs.
         // There should only be one join per user and store, so we just match on the user and store ids rather than relying on the PK.
@@ -82,11 +83,16 @@ impl SyncTranslation for UserStorePermissionTranslation {
                 },
                 |r| UserStoreJoinRow { is_default, ..r },
             );
-        integration_operations.push(IntegrationOperation::upsert(user_store_join_row));
 
-        //TODO possibly need to delete the user_store_join_row if the user loses login rights
-        //TODO if the user has no login rights to any store on site, they can't login even if the central is available and has given them login rights?
-        //TODO wait does normal old OMS actually remove login rights? If it removes all for a user then they can never login???
+        if can_login {
+            new_permission_set.insert(PermissionType::StoreAccess);
+            integration_operations.push(IntegrationOperation::upsert(user_store_join_row));
+        } else {
+            integration_operations.push(IntegrationOperation::delete(UserStoreJoinRowDelete(
+                user_store_join_row.id,
+            )));
+        }
+
         //TODO OG, when you add a user to a group it needs to requeue the user's own user_store records, not the group's. Just save them. Or save the groups user_store records, the trigger will do the members'
         //TODO OG, test group sync permissions
 
@@ -104,12 +110,6 @@ impl SyncTranslation for UserStorePermissionTranslation {
                 .into_iter()
                 .map(|p| (p.permission.clone(), p))
                 .collect();
-
-        let new_permissions = map_api_permissions(permissions);
-        let mut new_permission_set = permissions_to_domain(new_permissions);
-        if can_login {
-            new_permission_set.insert(PermissionType::StoreAccess);
-        }
 
         for permission in new_permission_set {
             if existing_permissions.remove(&permission).is_none() {
