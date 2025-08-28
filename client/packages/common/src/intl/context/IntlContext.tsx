@@ -8,7 +8,6 @@ import { browserLanguageDetector } from './browserLanguageDetector';
 import { createRegisteredContext } from 'react-singleton-context';
 import { Environment } from '@openmsupply-client/config';
 import { GetBackendByNamespace } from './GetBackendByNamespace';
-import { de } from 'date-fns/locale';
 const appVersion = require('../../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
 // Created by webpack DefinePlugin see webpack.config.js
