@@ -8,6 +8,7 @@ import { browserLanguageDetector } from './browserLanguageDetector';
 import { createRegisteredContext } from 'react-singleton-context';
 import { Environment } from '@openmsupply-client/config';
 import { GetBackendByNamespace } from './GetBackendByNamespace';
+import { de } from 'date-fns/locale';
 const appVersion = require('../../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
 // Created by webpack DefinePlugin see webpack.config.js
@@ -38,7 +39,10 @@ export function initialiseI18n({
   const defaultTranslationsLoadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
 
   // Served from backend
-  const customTranslationsLoadPath = `${Environment.API_HOST}/custom-translations`;
+
+  const customTranslationsLoadPath = Environment.API_HOST
+    ? `${Environment.API_HOST}/custom-translations`
+    : defaultTranslationsLoadPath; // Don't load custom translations from API if no API host specified
 
   i18next
     .use(initReactI18next) // passes i18n down to react-i18next
