@@ -326,26 +326,15 @@ export const BatchTable = ({
   ]);
 
   return (
-    <TableContainer
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX: 'unset',
-        overflowY: 'auto',
-        width: '100%',
-        position: 'relative', // Ensure the Box can be positioned relative to the container
-      }}
-    >
-      <DataTable
-        id="stocktake-batch"
-        isDisabled={isDisabled}
-        columns={columns}
-        data={batches}
-        noDataMessage={t('label.add-new-line')}
-        dense
-        gradientBottom={true}
-      />
-    </TableContainer>
+    <DataTable
+      id="stocktake-batch"
+      isDisabled={isDisabled}
+      columns={columns}
+      data={batches}
+      noDataMessage={t('label.add-new-line')}
+      dense
+      gradientBottom={true}
+    />
   );
 };
 
