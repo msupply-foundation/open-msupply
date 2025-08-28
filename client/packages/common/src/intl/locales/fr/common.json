@@ -1890,6 +1890,7 @@
   "messages.locations-restricted": "Certains articles sélectionnés ne peuvent être stockés que dans des emplacements spécifiques. Les options disponibles peuvent être limitées ci-dessous.",
   "messages.log-saved-successfully": "Journal sauvegardé avec succès",
   "messages.logout-confirm": "Cela vous déconnectera.",
+  "messages.manual-returns-preferences-disabled": "Les retours manuels sont désactivés pour votre dépôt. Veuillez contacter votre administrateur système si vous devez modifier ce paramètre.",
   "messages.mark-as-visited": "Cette rencontre est encore marquée comme étant en attente. Si vous avez terminé, marquez-la comme visitée.",
   "messages.max-or-min-temperature": "Température Max/Min",
   "messages.message-not-sent": "Erreur ! Message non envoyé",
@@ -2069,6 +2070,7 @@
   "preference.authoriseGoodsReceived": "Autoriser les marchandises reçues",
   "preference.authorisePurchaseOrder": "Authoriser les bons de commandes",
   "preference.customTranslations": "Traductions personnalisées",
+  "preference.disableManualReturns": "Désactiver les retours manuels",
   "preference.genderOptions": "Options de genre",
   "preference.manageVaccinesInDoses": "Gérer les vaccins en terme de doses",
   "preference.manageVvmStatusForStock": "Gérer les statuts PCV du stock",
@@ -2345,7 +2347,5 @@
   "warning.field-not-parsed": "{{field}} non analysé",
   "warning.foreign-exchange-rate-different": "Ce taux ne correspond pas à la devise.",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "messages.manual-returns-preferences-disabled": "Les retours manuels sont désactivés pour votre dépôt. Veuillez contacter votre administrateur système si vous devez modifier ce paramètre.",
-  "preference.disableManualReturns": "Désactiver les retours manuels"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
