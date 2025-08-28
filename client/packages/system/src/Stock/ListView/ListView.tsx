@@ -29,13 +29,13 @@ import { NewStockLineModal } from '../Components/NewStockLineModal';
 
 const StockListComponent: FC = () => {
   const {
-    filter,
     updatePaginationQuery,
     updateSortQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'expiryDate', dir: 'asc' },
     filters: [
+      { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'itemCodeOrName' },
       {
         key: 'location.code',
@@ -213,7 +213,7 @@ const StockListComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar />
       <AppBarButtons />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
