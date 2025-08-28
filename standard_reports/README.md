@@ -10,6 +10,8 @@ Reports are generated [HTML tera](#tera-templating-language) files used for a va
 
 We have two types of reports: 'Reports' and 'Forms'. When we say 'reports' in the rest of this readme, we mean both types, reports _and_ forms.
 
+Reports relate to groups of items, e.g. how much stock do we have overall, forms relate to individual items in OMS e.g. the stock in a single inbound shipment.
+
 Reports only differ from forms in that they have an addition of a JSON form input which can be used to modify queries or how data is converted.
 
 Both reports and forms can use graphql and sql queries, use [BoaJS data conversion](#convert-data-functions), and can be used throughout the app.
@@ -703,8 +705,8 @@ Reports will then be synced out from there to remote sites.
 
 ## Glossary
 
-- Form: a type of a report that doesn't have the ability to modify its query.
-- Report: a type of report that does have the ability to modify its query (through the use of a json form).
+- Form: a type of a report that doesn't have the ability to modify its query. They relate to individual items in OMS e.g. the stock in a single inbound shipment.
+- Report: a type of report that does have the ability to modify its query (through the use of a json form). They relate to groups of items, e.g. how much stock do we have overall.
 
 ## Troubleshooting
 
