@@ -21,7 +21,6 @@ import {
   getReasonOptionTypes,
   usePreference,
   PreferenceKey,
-  Box,
   useAuthContext,
   StoreModeNodeType,
 } from '@openmsupply-client/common';
@@ -204,6 +203,7 @@ export const BatchTable = ({
         },
       ],
     ];
+
     if (itemVariantsEnabled) {
       columnDefinitions.push({
         key: 'itemVariantId',
@@ -233,6 +233,7 @@ export const BatchTable = ({
         setter: patch => update({ ...patch }),
       });
     }
+
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {
         Cell: PackSizeEntryCell<DraftStocktakeLine>,
@@ -321,6 +322,7 @@ export const BatchTable = ({
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
     columnDefinitions,
   ]);
+
   return (
     <DataTable
       id="stocktake-batch"
@@ -329,6 +331,7 @@ export const BatchTable = ({
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
+      gradientBottom={true}
     />
   );
 };
@@ -371,6 +374,7 @@ export const PricingTable = ({
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
+      gradientBottom={true}
     />
   );
 };
@@ -436,15 +440,14 @@ export const LocationTable = ({
   const columns = useColumns(columnDefinitions, {}, [columnDefinitions]);
 
   return (
-    <Box display="flex" flexDirection="column" width="100%">
-      <DataTable
-        id="stocktake-location"
-        isDisabled={isDisabled}
-        columns={columns}
-        data={batches}
-        noDataMessage={t('label.add-new-line')}
-        dense
-      />
-    </Box>
+    <DataTable
+      id="stocktake-location"
+      isDisabled={isDisabled}
+      columns={columns}
+      data={batches}
+      noDataMessage={t('label.add-new-line')}
+      dense
+      gradientBottom={true}
+    />
   );
 };
