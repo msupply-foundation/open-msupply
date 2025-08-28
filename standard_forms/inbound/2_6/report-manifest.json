@@ -1,0 +1,13 @@
+{
+  "is_custom": false,
+  "version": "2.6.4",
+  "code": "inbound",
+  "context": "INBOUND_SHIPMENT",
+  "name": "Inbound Shipment",
+  "queries": {
+    "gql": "inbound.graphql"
+  },
+  "arguments": {},
+  "header": "header.html",
+  "footer": "footer.html"
+}
