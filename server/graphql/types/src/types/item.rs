@@ -285,6 +285,10 @@ impl ItemNode {
                 .collect()
         }))
     }
+
+    pub async fn user_field_4(&self) -> bool {
+        self.legacy_bool("user_field_4")
+    }
 }
 
 #[derive(Union)]
