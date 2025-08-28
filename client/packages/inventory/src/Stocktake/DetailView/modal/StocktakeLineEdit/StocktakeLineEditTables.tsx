@@ -380,14 +380,26 @@ export const PricingTable = ({
   ]);
 
   return (
-    <DataTable
-      id="stocktake-pricing"
-      isDisabled={isDisabled}
-      columns={columns}
-      data={batches}
-      noDataMessage={t('label.add-new-line')}
-      dense
-    />
+    <TableContainer
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflowX: 'unset',
+        overflowY: 'auto',
+        width: '100%',
+        position: 'relative', // Ensure the Box can be positioned relative to the container
+      }}
+    >
+      <DataTable
+        id="stocktake-pricing"
+        isDisabled={isDisabled}
+        columns={columns}
+        data={batches}
+        noDataMessage={t('label.add-new-line')}
+        dense
+        gradientBottom={true}
+      />
+    </TableContainer>
   );
 };
 
@@ -452,7 +464,16 @@ export const LocationTable = ({
   const columns = useColumns(columnDefinitions, {}, [columnDefinitions]);
 
   return (
-    <Box display="flex" flexDirection="column" width="100%">
+    <TableContainer
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflowX: 'unset',
+        overflowY: 'auto',
+        width: '100%',
+        position: 'relative', // Ensure the Box can be positioned relative to the container
+      }}
+    >
       <DataTable
         id="stocktake-location"
         isDisabled={isDisabled}
@@ -460,7 +481,8 @@ export const LocationTable = ({
         data={batches}
         noDataMessage={t('label.add-new-line')}
         dense
+        gradientBottom={true}
       />
-    </Box>
+    </TableContainer>
   );
 };
