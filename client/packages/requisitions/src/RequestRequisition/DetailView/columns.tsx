@@ -149,6 +149,7 @@ export const useRequestColumns = () => {
     {
       key: 'requestedQuantity',
       label: 'label.requested',
+      description: 'description.doses-quantity',
       align: ColumnAlign.Right,
       width: 150,
       Cell: UnitsAndMaybeDosesCell,
