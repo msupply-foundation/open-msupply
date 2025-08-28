@@ -520,7 +520,7 @@ export type AssetLogNode = {
   id: Scalars['String']['output'];
   logDatetime: Scalars['NaiveDateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
-  status?: Maybe<StatusType>;
+  status?: Maybe<AssetLogStatusNodeType>;
   type?: Maybe<Scalars['String']['output']>;
   user?: Maybe<UserNode>;
 };
@@ -553,7 +553,7 @@ export type AssetLogReasonMutationsInsertAssetLogReasonArgs = {
 
 export type AssetLogReasonNode = {
   __typename: 'AssetLogReasonNode';
-  assetLogStatus: StatusType;
+  assetLogStatus: AssetLogStatusNodeType;
   id: Scalars['String']['output'];
   reason: Scalars['String']['output'];
 };
@@ -589,7 +589,7 @@ export type AssetLogSortInput = {
   key: AssetLogSortFieldInput;
 };
 
-export enum AssetLogStatusInput {
+export enum AssetLogStatusNodeType {
   Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
@@ -671,6 +671,7 @@ export enum AssetSortFieldInput {
   AssetNumber = 'assetNumber',
   InstallationDate = 'installationDate',
   ModifiedDatetime = 'modifiedDatetime',
+  Notes = 'notes',
   ReplacementDate = 'replacementDate',
   SerialNumber = 'serialNumber',
   Store = 'store',
@@ -1338,7 +1339,7 @@ export type ClinicianNode = {
   code: Scalars['String']['output'];
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
-  gender?: Maybe<GenderType>;
+  gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
   initials: Scalars['String']['output'];
   lastName: Scalars['String']['output'];
@@ -1471,7 +1472,7 @@ export type ContactTraceNode = {
   document: DocumentNode;
   documentId: Scalars['String']['output'];
   firstName?: Maybe<Scalars['String']['output']>;
-  gender?: Maybe<GenderType>;
+  gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
   patient: PatientNode;
@@ -2568,7 +2569,6 @@ export type EncounterFilterInput = {
   patient?: InputMaybe<PatientFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programEnrolment?: InputMaybe<ProgramEnrolmentFilterInput>;
-  /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterEncounterStatusInput>;
@@ -2623,13 +2623,13 @@ export enum EncounterNodeStatus {
 export type EncounterResponse = EncounterConnector;
 
 export enum EncounterSortFieldInput {
+  Program = 'Program',
+  Type = 'Type',
   CreatedDatetime = 'createdDatetime',
   EndDatetime = 'endDatetime',
   PatientId = 'patientId',
-  Program = 'program',
   StartDatetime = 'startDatetime',
   Status = 'status',
-  Type = 'type',
 }
 
 export type EncounterSortInput = {
@@ -2675,9 +2675,9 @@ export type EqualFilterEncounterStatusInput = {
 };
 
 export type EqualFilterGenderType = {
-  equalAny?: InputMaybe<Array<GenderType>>;
-  equalTo?: InputMaybe<GenderType>;
-  notEqualTo?: InputMaybe<GenderType>;
+  equalAny?: InputMaybe<Array<GenderTypeNode>>;
+  equalTo?: InputMaybe<GenderTypeNode>;
+  notEqualTo?: InputMaybe<GenderTypeNode>;
 };
 
 export type EqualFilterGoodsReceivedStatusInput = {
@@ -2754,9 +2754,9 @@ export type EqualFilterRequisitionTypeInput = {
 };
 
 export type EqualFilterStatusInput = {
-  equalAny?: InputMaybe<Array<AssetLogStatusInput>>;
-  equalTo?: InputMaybe<AssetLogStatusInput>;
-  notEqualTo?: InputMaybe<AssetLogStatusInput>;
+  equalAny?: InputMaybe<Array<AssetLogStatusNodeType>>;
+  equalTo?: InputMaybe<AssetLogStatusNodeType>;
+  notEqualTo?: InputMaybe<AssetLogStatusNodeType>;
 };
 
 export type EqualFilterStocktakeStatusInput = {
@@ -2914,7 +2914,7 @@ export type FullSyncStatusNode = {
   warningThreshold: Scalars['Int']['output'];
 };
 
-export enum GenderType {
+export enum GenderTypeNode {
   Female = 'FEMALE',
   Male = 'MALE',
   NonBinary = 'NON_BINARY',
@@ -3080,6 +3080,9 @@ export type GoodsReceivedResponse = GoodsReceivedNode | RecordNotFound;
 
 export enum GoodsReceivedSortFieldInput {
   CreatedDatetime = 'createdDatetime',
+  Number = 'number',
+  ReceivedDate = 'receivedDate',
+  Status = 'status',
 }
 
 export type GoodsReceivedSortInput = {
@@ -3236,7 +3239,7 @@ export type InsertAssetLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<AssetLogStatusInput>;
+  status?: InputMaybe<AssetLogStatusNodeType>;
   type?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -3250,7 +3253,7 @@ export type InsertAssetLogReasonErrorInterface = {
 };
 
 export type InsertAssetLogReasonInput = {
-  assetLogStatus: AssetLogStatusInput;
+  assetLogStatus: AssetLogStatusNodeType;
   id: Scalars['String']['input'];
   reason: Scalars['String']['input'];
 };
@@ -3274,7 +3277,7 @@ export type InsertBarcodeResponse = BarcodeNode;
 export type InsertClinicianInput = {
   code: Scalars['String']['input'];
   firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderType>;
+  gender?: InputMaybe<GenderTypeNode>;
   id: Scalars['String']['input'];
   initials: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
@@ -3568,7 +3571,6 @@ export type InsertInsuranceInput = {
   insuranceProviderId: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
   nameId: Scalars['String']['input'];
-  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
   policyNumberFamily: Scalars['String']['input'];
   policyNumberPerson: Scalars['String']['input'];
   policyType: InsurancePolicyNodeType;
@@ -3726,7 +3728,7 @@ export type InsertPatientInput = {
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
   dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderType>;
+  gender?: InputMaybe<GenderTypeNode>;
   id: Scalars['String']['input'];
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
@@ -4220,7 +4222,6 @@ export type InsurancePolicyNode = {
   insuranceProviderId: Scalars['String']['output'];
   insuranceProviders?: Maybe<InsuranceProviderNode>;
   isActive: Scalars['Boolean']['output'];
-  nameOfInsured?: Maybe<Scalars['String']['output']>;
   policyNumber: Scalars['String']['output'];
   policyNumberFamily?: Maybe<Scalars['String']['output']>;
   policyNumberPerson?: Maybe<Scalars['String']['output']>;
@@ -4955,7 +4956,7 @@ export type LabelPrinterUpdateResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export enum LanguageType {
+export enum LanguageTypeNode {
   English = 'ENGLISH',
   French = 'FRENCH',
   Khmer = 'KHMER',
@@ -6217,7 +6218,7 @@ export type NameNode = {
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   freightFactor?: Maybe<Scalars['Float']['output']>;
-  gender?: Maybe<GenderType>;
+  gender?: Maybe<GenderTypeNode>;
   hshCode?: Maybe<Scalars['String']['output']>;
   hshName?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
@@ -6559,7 +6560,7 @@ export type PatientNode = {
   documentDraft?: Maybe<Scalars['JSON']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
-  gender?: Maybe<GenderType>;
+  gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
   isDeceased: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
@@ -6602,7 +6603,7 @@ export type PatientSearchInput = {
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderType>;
+  gender?: InputMaybe<GenderTypeNode>;
   identifier?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -6744,6 +6745,7 @@ export enum PreferenceKey {
   AuthoriseGoodsReceived = 'authoriseGoodsReceived',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   CustomTranslations = 'customTranslations',
+  DisableManualReturns = 'disableManualReturns',
   GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
@@ -6784,7 +6786,8 @@ export type PreferencesNode = {
   authoriseGoodsReceived: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
-  genderOptions: Array<GenderType>;
+  disableManualReturns: Scalars['Boolean']['output'];
+  genderOptions: Array<GenderTypeNode>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   orderInPacks: Scalars['Boolean']['output'];
@@ -8684,8 +8687,11 @@ export type RequisitionNodeOtherPartyArgs = {
 export enum RequisitionNodeApprovalStatus {
   /** Approved */
   Approved = 'APPROVED',
+  ApprovedByAnother = 'APPROVED_BY_ANOTHER',
+  AutoApproved = 'AUTO_APPROVED',
   /** Approval was denied, requisition is not editable */
   Denied = 'DENIED',
+  DeniedByAnother = 'DENIED_BY_ANOTHER',
   None = 'NONE',
   /** Pending authorisation, requisition should not be editable */
   Pending = 'PENDING',
@@ -9047,15 +9053,6 @@ export type SnapshotCountCurrentCountMismatchLine =
     stocktakeLine: StocktakeLineNode;
   };
 
-export enum StatusType {
-  Decommissioned = 'DECOMMISSIONED',
-  Functioning = 'FUNCTIONING',
-  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
-  NotFunctioning = 'NOT_FUNCTIONING',
-  NotInUse = 'NOT_IN_USE',
-  Unserviceable = 'UNSERVICEABLE',
-}
-
 export type StockCounts = {
   __typename: 'StockCounts';
   expired: Scalars['Int']['output'];
@@ -9183,6 +9180,7 @@ export enum StockLineSortFieldInput {
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
   SupplierName = 'supplierName',
+  VvmStatusThenExpiry = 'vvmStatusThenExpiry',
 }
 
 export type StockLineSortInput = {
@@ -9636,6 +9634,7 @@ export type TemperatureBreachNode = {
 export enum TemperatureBreachNodeType {
   ColdConsecutive = 'COLD_CONSECUTIVE',
   ColdCumulative = 'COLD_CUMULATIVE',
+  Excursion = 'EXCURSION',
   HotConsecutive = 'HOT_CONSECUTIVE',
   HotCumulative = 'HOT_CUMULATIVE',
 }
@@ -10014,7 +10013,7 @@ export type UpdateInboundShipmentLineInput = {
   campaignId?: InputMaybe<NullableStringUpdate>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   donorId?: InputMaybe<NullableStringUpdate>;
-  expiryDate?: InputMaybe<NullableDateUpdate>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
@@ -10110,7 +10109,6 @@ export type UpdateInsuranceInput = {
   id: Scalars['String']['input'];
   insuranceProviderId?: InputMaybe<Scalars['String']['input']>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
   policyType?: InputMaybe<InsurancePolicyNodeType>;
 };
 
@@ -10313,7 +10311,7 @@ export type UpdatePatientInput = {
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
   dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderType>;
+  gender?: InputMaybe<GenderTypeNode>;
   id: Scalars['String']['input'];
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
@@ -10685,7 +10683,7 @@ export type UpdateStockLineInput = {
   campaignId?: InputMaybe<NullableStringUpdate>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   donorId?: InputMaybe<NullableStringUpdate>;
-  expiryDate?: InputMaybe<NullableDateUpdate>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
@@ -10734,7 +10732,7 @@ export type UpdateStocktakeLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   donorId?: InputMaybe<NullableStringUpdate>;
-  expiryDate?: InputMaybe<NullableDateUpdate>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
@@ -10985,7 +10983,8 @@ export type UpsertPreferencesInput = {
   authoriseGoodsReceived?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
-  genderOptions?: InputMaybe<Array<GenderType>>;
+  disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
+  genderOptions?: InputMaybe<Array<GenderTypeNode>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
@@ -11037,7 +11036,7 @@ export type UserNode = {
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   jobTitle?: Maybe<Scalars['String']['output']>;
-  language: LanguageType;
+  language: LanguageTypeNode;
   lastName?: Maybe<Scalars['String']['output']>;
   permissions: UserStorePermissionConnector;
   phoneNumber?: Maybe<Scalars['String']['output']>;
@@ -11090,8 +11089,8 @@ export enum UserPermission {
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
   RequisitionSend = 'REQUISITION_SEND',
-  RnRFormMutate = 'RN_R_FORM_MUTATE',
-  RnRFormQuery = 'RN_R_FORM_QUERY',
+  RnrFormMutate = 'RNR_FORM_MUTATE',
+  RnrFormQuery = 'RNR_FORM_QUERY',
   SensorMutate = 'SENSOR_MUTATE',
   SensorQuery = 'SENSOR_QUERY',
   ServerAdmin = 'SERVER_ADMIN',
