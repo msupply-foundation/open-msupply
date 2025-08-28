@@ -4,16 +4,10 @@ import { DocumentRegistryFragment } from '../api/operations.generated';
 import { useDocumentRegistry } from '../api';
 
 type PatientProgramSearchInputProps = {
-  value: DocumentRegistryFragment | null | AllOptionsType;
-  onChange: (newProgram: DocumentRegistryFragment | null) => void;
+  value: DocumentRegistryFragment | null;
+  onChange: (newProgram: DocumentRegistryFragment) => void;
   setProgram: (newProgram: DocumentRegistryFragment) => void;
   programId: string | null;
-  allProgramsOption?: boolean;
-};
-
-export type AllOptionsType = {
-  name: string;
-  id: string;
 };
 
 export const PatientProgramSearchInput = ({
@@ -21,20 +15,8 @@ export const PatientProgramSearchInput = ({
   onChange,
   setProgram,
   programId,
-  allProgramsOption,
 }: PatientProgramSearchInputProps) => {
   const { data, isLoading } = useDocumentRegistry.get.programRegistries();
-
-  const allProgramsOptionRenderer: AllOptionsType = {
-    id: 'AllProgramsSelector',
-    name: 'All programs',
-  };
-
-  const patientPrograms = data?.nodes ?? [];
-  const options =
-    patientPrograms.length > 1 && allProgramsOption
-      ? [...patientPrograms, allProgramsOptionRenderer]
-      : patientPrograms;
 
   // If there is only one value, set it automatically
   useEffect(() => {
@@ -50,24 +32,15 @@ export const PatientProgramSearchInput = ({
     }
   }
 
-  const handleChange = (
-    newVal: DocumentRegistryFragment | null | AllOptionsType
-  ) => {
-    if (newVal?.id === 'AllOptionsId') {
-      onChange(null);
-    }
-    newVal &&
-      newVal.id !== value?.id &&
-      onChange(newVal as DocumentRegistryFragment);
-  };
-
   return (
     <Autocomplete
       fullWidth
       loading={isLoading}
-      options={options}
+      options={data?.nodes ?? []}
       optionKey="name"
-      onChange={(_, newVal) => handleChange(newVal)}
+      onChange={(_, newVal) =>
+        newVal && newVal.id !== value?.id && onChange(newVal)
+      }
       value={value ? { label: value.name ?? '', ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       clearable={false}
