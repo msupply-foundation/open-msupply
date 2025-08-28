@@ -26,6 +26,8 @@ pub mod authorise_goods_received;
 pub use authorise_goods_received::*;
 pub mod use_procurement_functionality;
 pub use use_procurement_functionality::*;
+pub mod disable_manual_returns;
+pub use disable_manual_returns::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -44,6 +46,7 @@ pub struct PreferenceProvider {
     pub use_procurement_functionality: UseProcurementFunctionality,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
+    pub disable_manual_returns: DisableManualReturns,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -64,5 +67,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         use_procurement_functionality: UseProcurementFunctionality,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
+        disable_manual_returns: DisableManualReturns,
     }
 }

@@ -6746,6 +6746,7 @@ export enum PreferenceKey {
   AuthoriseGoodsReceived = 'authoriseGoodsReceived',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   CustomTranslations = 'customTranslations',
+  DisableManualReturns = 'disableManualReturns',
   GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
@@ -6786,6 +6787,7 @@ export type PreferencesNode = {
   authoriseGoodsReceived: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
+  disableManualReturns: Scalars['Boolean']['output'];
   genderOptions: Array<GenderTypeNode>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
@@ -10982,6 +10984,7 @@ export type UpsertPreferencesInput = {
   authoriseGoodsReceived?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
+  disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
