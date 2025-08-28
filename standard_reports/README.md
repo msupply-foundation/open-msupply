@@ -8,7 +8,9 @@ The second part contains more detailed [development information](#report-develop
 
 Reports are generated [HTML tera](#tera-templating-language) files used for a variety of reporting applications in OMS.
 
-We have two types of reports: 'Reports' and 'Forms'.
+We have two types of reports: 'Reports' and 'Forms'. When we say 'reports' in the rest of this readme, we mean both types, reports _and_ forms.
+
+Reports relate to groups of items, e.g. how much stock do we have overall, forms relate to individual items in OMS e.g. the stock in a single inbound shipment.
 
 Reports only differ from forms in that they have an addition of a JSON form input which can be used to modify queries or how data is converted.
 
@@ -22,14 +24,35 @@ The toggle report command can be useful to deactivate standard reports when a cl
 
 # Basic tools and uploading
 
+## Workflows
+
+- Always re-generate the relevant files after you update a report, or after you merge in a branch when you're working on reports - otherwise the server will not run. To build the reports: `cd open-msupply/server` then `cargo run --bin remote_server_cli build-reports`.
+
+#### To Make a New Report
+
+1. Duplicate the directory of an entire report (e.g. `standard-forms/purchase-order`).
+2. Rename it and change the `report-manifest.json` to what it should be (N.B. each key in `report-manifest.json` is explained in this readme, but note that the `context` has to be one of the possible values of the context enum in the database, so if you're making a report for a new context, you may need to add that value to the context enum. This will require a migration in the repo layer, e.g. `ALTER TYPE context_type ADD VALUE 'GOODS_RECEIVED';`.)
+3. Change the GraphQL query to query the fields you want, using the GraphiQL editor.
+4. Change the `template.html` (and the header or footer html files if present) to just print hello world or something simple to start with.
+5. Render the report: `cd open-msupply/server` then `cargo run --bin remote_server_cli show-report --path /Users/yourUsername/code/open-msupply/standard_forms/[your-report-name]/latest --config /Users/yourUsername/code/open-msupply/standard_reports`
+6. Tweak the html files, and iterate until it is ready.
+
+#### To Make a new or Modified Report Available in the Client
+
+1. Build the reports: `cd open-msupply/server` then `cargo run --bin remote_server_cli build-reports`.
+2. Upsert the reports to the database's report table. You can either use the UI (central server > manage > reports > the big upload button > drag and drop `standard-reports.json` and `standard-forms.json`) or the CLI (`cd open-msupply/server` then `cargo run --bin remote_server_cli upsert-reports --overwrite`).
+
 ## CLI Tools
+
+Some of the CLI's commands require yarn's dependencies to be installed by running `yarn install` in open-msupply's main directory.
 
 CLI tools require the OMS cli to be built either by:
 
-- Building the cli with `cargo build` command, and then running commands with the built cli like:
-`./target/debug/remote_server_cli build-reports`
+- Building the cli with `cargo build` command, and then running commands with the built cli like (in the open-msupply/server directory):
+  `./target/debug/remote_server_cli build-reports`
+
 - Prefacing the commands with `cargo run --bin remote_server_cli`, ie:
-`cargo run --bin remote_server_cli build-reports`
+  `cargo run --bin remote_server_cli build-reports`
 
 ### Build Reports
 
@@ -54,14 +77,13 @@ Upsert reports command inserts or upserts reports from a json array located in t
 This command will upsert if the `-o` or `--overwrite` flag is passed.
 If no overwrite flag is passed, it will default to insert.
 
-If no path is passed, it will look for in the `reports/generated/standard-reports.json` file for the array of standard reports. 
+If no path is passed, it will look for in the `reports/generated/standard-reports.json` file for the array of standard reports.
 
 #### Report IDs
 
 Report IDs are generated in a standardised way in the format of `<report-code>_<report-version>_<is-custom-boolean>`.
 This means an edited report of the same version will not upload without the `-o` flag.
 To ensure edited reports supercede existing reports, they should have their patch version bumped as detailed in the [versioning section](#report-versioning).
-
 
 ### Reload Embedded Reports
 
@@ -90,7 +112,7 @@ Reports need certain parameters and arguments. Copy the `test-config.example.jso
 A custom test-config.json file can be used to render with specific arguments by passing a path to a dir containing a report specific `test-config.json` file.
 
 The test config is used to manually populate the parameters of the graphql query which would typically be inferred by OMS in actual use.
-For example, a standard form of an inbound shipment would use the context of the UI to know the invoice id. 
+For example, a standard form of an inbound shipment would use the context of the UI to know the invoice id.
 Test config can manually configure the id for rapid report editing and generation without the need to manually build and upsert, or contriving the OMS front end to render the report.
 
 ### Toggle Report
@@ -229,6 +251,34 @@ This dir contains
 These files must be compliant with JSON forms.
 
 ### source file structure diagram
+
+```
+├── example-report
+   ├── argument_schemas (optional)
+   │   ├── argument_ui.json
+   |   └── arguments.json
+   ├── convert_data_js (optional)
+   │   ├── dist (generated)
+   |   ├── node_modules (generated)
+   |   ├── src
+   |   |   ├── convert_data.js (copy)
+   |   |   ├── utils.js
+   |   |   └── utils.test.js (optional)
+   |   ├── webpack.config.js
+   |   ├── input.json (optional)
+   |   ├── output.json (optional)
+   |   └── package.json (copy)
+   ├──  src
+   |   ├── footer.html (optional)
+   |   ├── header.html (optional)
+   |   ├── style.css
+   |   ├── SQL queries (optional, and possibly multiple)
+   |   ├── GraphQL query (optional)
+   |   └── template.html
+   └── report-manifest.json
+```
+
+### source file structure diagram with typescript functionality
 
 ```
 ├── example-report
@@ -653,15 +703,15 @@ Additional reports (both custom, and patched standard reports) can be upserted i
 
 Reports will then be synced out from there to remote sites.
 
-
 ## Glossary
 
-## Decision tree
+- Form: a type of a report that doesn't have the ability to modify its query. They relate to individual items in OMS e.g. the stock in a single inbound shipment.
+- Report: a type of report that does have the ability to modify its query (through the use of a json form). They relate to groups of items, e.g. how much stock do we have overall.
 
 ## Troubleshooting
 
 #### Missing value error
 
-Most common error with tera is a missing or undefined value during rendering. This can occur either because [we remove empty strings during data conversion](https://github.com/msupply-foundation/open-msupply/issues/8909#issuecomment-3202798312), or the node indexing in the tera HTML template is wrong. 
+Most common error with tera is a missing or undefined value during rendering. This can occur either because [we remove empty strings during data conversion](https://github.com/msupply-foundation/open-msupply/issues/8909#issuecomment-3202798312), or the node indexing in the tera HTML template is wrong.
 
 [Fallbacks](https://keats.github.io/tera/docs/#default) can be used to swallow errors and templates by ignoring missing values.
