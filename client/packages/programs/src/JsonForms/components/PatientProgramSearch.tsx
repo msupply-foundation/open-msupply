@@ -6,9 +6,25 @@ import {
   DetailInputWithLabelRow,
   extractProperty,
 } from '@openmsupply-client/common';
-import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
+import {
+  DefaultFormRowSx,
+  FORM_GAP,
+  FORM_LABEL_WIDTH,
+  useZodOptionsValidation,
+} from '../common';
 import { PatientProgramSearchInput } from '../../Components';
 import { DocumentRegistryFragment } from '../../api';
+import { z } from 'zod';
+
+const Options = z
+  .object({
+    // to allow an 'All programs' selection in the options
+    allProgramsOption: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
+type Options = z.infer<typeof Options>;
 
 export const patientProgramSearchTester = rankWith(
   10,
@@ -16,17 +32,24 @@ export const patientProgramSearchTester = rankWith(
 );
 
 const UIComponent = (props: ControlProps) => {
-  const { handleChange, label, path } = props;
+  const { handleChange, label, path, uischema } = props;
   const { core } = useJsonForms();
+  const { options } = useZodOptionsValidation(Options, uischema.options);
 
   const [program, setProgram] = React.useState<DocumentRegistryFragment | null>(
     null
   );
   const programId = extractProperty(core?.data, 'programId');
 
-  const onChangeProgram = async (program: DocumentRegistryFragment) => {
-    setProgram(program);
-    handleChange(path, program.contextId);
+  const onChangeProgram = async (program: DocumentRegistryFragment | null) => {
+    if (options?.allProgramsOption && !program) {
+      setProgram(null);
+      handleChange(path, null);
+    }
+    if (program) {
+      setProgram(program);
+      handleChange(path, program.contextId);
+    }
   };
 
   return (
@@ -42,6 +65,7 @@ const UIComponent = (props: ControlProps) => {
             value={program}
             programId={programId}
             setProgram={setProgram}
+            allProgramsOption={options?.allProgramsOption}
           />
         </Box>
       }
