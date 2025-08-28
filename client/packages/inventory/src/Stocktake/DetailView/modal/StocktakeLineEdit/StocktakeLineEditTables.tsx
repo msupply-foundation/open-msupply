@@ -21,7 +21,6 @@ import {
   getReasonOptionTypes,
   usePreference,
   PreferenceKey,
-  Box,
   useAuthContext,
   StoreModeNodeType,
   TableContainer,
