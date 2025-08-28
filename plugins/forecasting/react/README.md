@@ -48,7 +48,7 @@ From this data, we calculate (or retrieve) the following intermediate values for
 
 From these values we can calculate:
 
-**Annual target stock** `= Target Population X Number of Doses X Coverage Rage X Loss Factor` 
+**Annual target stock** `= Target Population X Number of Doses X Coverage Rate X Loss Factor` 
 
 This value is in individual vaccine **doses**.
 
