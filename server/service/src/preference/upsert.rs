@@ -29,6 +29,7 @@ pub struct UpsertPreferences {
     pub use_procurement_functionality: Option<Vec<StorePrefUpdate<bool>>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
+    pub disable_manual_returns: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -52,6 +53,7 @@ pub fn upsert_preferences(
         use_procurement_functionality: show_purchase_orders_and_goods_received_input,
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
+        disable_manual_returns: disable_manual_returns_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -72,6 +74,7 @@ pub fn upsert_preferences(
         use_procurement_functionality,
         sort_by_vvm_status_then_expiry,
         use_simplified_mobile_ui,
+        disable_manual_returns,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -159,6 +162,16 @@ pub fn upsert_preferences(
             if let Some(input) = use_simplified_mobile_ui_input {
                 for update in input.into_iter() {
                     use_simplified_mobile_ui.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
+            if let Some(input) = disable_manual_returns_input {
+                for update in input.into_iter() {
+                    disable_manual_returns.upsert(
                         connection,
                         update.value,
                         Some(update.store_id),
