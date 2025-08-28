@@ -63,6 +63,32 @@ pub trait Upsert: DebugTrait {
     }
 }
 
+pub trait UpsertAndClone: Upsert {
+    fn clone_box(&self) -> Box<dyn UpsertAndClone>;
+}
+
+impl<T> UpsertAndClone for T
+where
+    T: Upsert + Clone + 'static,
+{
+    fn clone_box(&self) -> Box<dyn UpsertAndClone> {
+        Box::new(self.clone())
+    }
+}
+
+pub trait DeleteAndClone: Delete {
+    fn clone_box(&self) -> Box<dyn DeleteAndClone>;
+}
+
+impl<T> DeleteAndClone for T
+where
+    T: Delete + Clone + 'static,
+{
+    fn clone_box(&self) -> Box<dyn DeleteAndClone> {
+        Box::new(self.clone())
+    }
+}
+
 #[test]
 fn downcast_example() {
     let mut boxed: Vec<Box<dyn Upsert>> = vec![
