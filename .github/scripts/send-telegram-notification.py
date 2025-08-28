@@ -89,51 +89,6 @@ def handle_android_build_notification(filenames):
     if send_telegram_notification(chat_id, message, bot_key):
         print(f"✅ Android build notification sent to {channel_type} chat {chat_id}")
 
-# -- Handles Jenkins build notifications -- #
-def handle_jenkins_build_notification(build_args):
-    bot_key = os.getenv("TELEGRAM_RELEASE_BOT_KEY")
-    tag = os.getenv("TAG_NAME")
-    
-    if not bot_key:
-        print("❌ TELEGRAM_RELEASE_BOT_KEY not found.")
-        sys.exit(1)
-
-    if not tag:
-        print("❌ No tag found for Jenkins build notification.")
-        sys.exit(1)
-
-    # Get appropriate channel based on tag
-    chat_id, channel_type = get_channel_for_tag(tag)
-
-    if not chat_id:
-        print(f"❌ No chat ID configured for {channel_type} channel.")
-        sys.exit(1)
-
-    build_status = build_args[0] if build_args else "unknown"
-    
-    # Create message based on build status
-    status_mapping = {
-        "success": ("✅", "Completed Successfully"),
-        "failure": ("❌", "Failed"),
-        "cancelled": ("⏹️", "Cancelled"),
-        "skipped": ("⏭️", "Skipped")
-    }
-
-    emoji, status_text = status_mapping.get(build_status.lower(), ("❓", "Unknown Status"))
-
-    message = f"{emoji} *Jenkins Build {status_text}*\n\n"
-    message += f"Tag: `{tag}`\n"
-    message += f"Status: {status_text}"
-
-    # Add additional build info if provided
-    if len(build_args) > 1:
-        build_type = build_args[1]
-        message += f"\nBuild Type: {escape_markdown_v2(build_type)}"
-
-    print(f"Sending Message:\n {message}")
-    if send_telegram_notification(chat_id, message, bot_key):
-        print(f"✅ Jenkins build notification sent to {channel_type} chat {chat_id}")
-
 # -- Handles tag creation notifications -- #
 def handle_tag_notification():
     bot_key = os.getenv("TELEGRAM_RELEASE_BOT_KEY")
@@ -182,8 +137,6 @@ def main():
 
     if notification_type == "android_build":
         handle_android_build_notification(sys.argv[1:])
-    elif notification_type == "jenkins_build":
-        handle_jenkins_build_notification(sys.argv[1:])
     else:
         handle_tag_notification()
 
