@@ -287,6 +287,34 @@ These files must be compliant with JSON forms.
    │   ├── dist (generated)
    |   ├── node_modules (generated)
    |   ├── src
+   |   |   ├── convert_data.js (copy)
+   |   |   ├── utils.js
+   |   |   └── utils.test.js (optional)
+   |   ├── webpack.config.js
+   |   ├── input.json (optional)
+   |   ├── output.json (optional)
+   |   └── package.json (copy)
+   ├──  src
+   |   ├── footer.html (optional)
+   |   ├── header.html (optional)
+   |   ├── style.css
+   |   ├── SQL queries (optional, and possibly multiple)
+   |   ├── GraphQL query (optional)
+   |   └── template.html
+   └── report-manifest.json
+```
+
+### source file structure diagram with typescript functionality
+
+```
+├── example-report
+   ├── argument_schemas (optional)
+   │   ├── argument_ui.json
+   |   └── arguments.json
+   ├── convert_data_js (optional)
+   │   ├── dist (generated)
+   |   ├── node_modules (generated)
+   |   ├── src
    |   |   ├── generated-types (generated)
    |   |   ├── test (optional)
    |   |   |   ├── input.json

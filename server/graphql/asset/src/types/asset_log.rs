@@ -39,6 +39,8 @@ pub enum AssetLogStatusNodeType {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::assets::asset_log
+::AssetLogSortField")]
 pub enum AssetLogSortFieldInput {
     Status,
     LogDatetime,
@@ -191,15 +193,8 @@ impl AssetLogConnector {
 
 impl AssetLogSortInput {
     pub fn to_domain(&self) -> AssetLogSort {
-        use AssetLogSortField as to;
-        use AssetLogSortFieldInput as from;
-        let key = match self.key {
-            from::Status => to::Status,
-            from::LogDatetime => to::LogDatetime,
-        };
-
         AssetLogSort {
-            key,
+            key: AssetLogSortField::from(self.key),
             desc: self.desc,
         }
     }

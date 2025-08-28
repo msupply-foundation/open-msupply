@@ -20,9 +20,8 @@ use crate::types::vaccine_course::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::vaccine_course::vaccine_course::VaccineCourseSortField")]
 #[graphql(rename_items = "camelCase")]
-
+#[graphql(remote = "repository::vaccine_course::vaccine_course::VaccineCourseSortField")]
 pub enum VaccineCourseSortFieldInput {
     Name,
 }
@@ -111,14 +110,8 @@ impl VaccineCourseFilterInput {
 
 impl VaccineCourseSortInput {
     pub fn to_domain(self) -> VaccineCourseSort {
-        use VaccineCourseSortField as to;
-        use VaccineCourseSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-        };
-
         VaccineCourseSort {
-            key,
+            key: VaccineCourseSortField::from(self.key),
             desc: self.desc,
         }
     }

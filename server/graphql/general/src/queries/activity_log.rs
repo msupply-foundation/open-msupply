@@ -18,8 +18,8 @@ use service::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::activity_log::ActivityLogSortField")]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::activity_log::ActivityLogSortField")]
 pub enum ActivityLogSortFieldInput {
     Id,
     ActivityLogType,
@@ -109,17 +109,8 @@ impl ActivityLogFilterInput {
 
 impl ActivityLogSortInput {
     pub fn to_domain(&self) -> ActivityLogSort {
-        use ActivityLogSortField as to;
-        use ActivityLogSortFieldInput as from;
-        let key = match self.key {
-            from::Id => to::Id,
-            from::ActivityLogType => to::ActivityLogType,
-            from::UserId => to::UserId,
-            from::RecordId => to::RecordId,
-        };
-
         ActivityLogSort {
-            key,
+            key: ActivityLogSortField::from(self.key),
             desc: self.desc,
         }
     }

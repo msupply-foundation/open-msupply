@@ -24,13 +24,20 @@ describe('checkInvalidLocationLines', () => {
     expect(checkInvalidLocationLines('Fridge', lines)).toBe(false);
   });
 
-  it('returns false if restrictedLocationTypeId exists but locationTypeId is missing', () => {
+  it('returns true if restrictedLocationTypeId exists but location has no locationType', () => {
     const lines: TestLine[] = [
       { location: { locationType: { id: null, name: undefined } } },
-      { location: { locationType: undefined } },
-      { location: null },
-      {},
     ];
+    expect(checkInvalidLocationLines('Fridge', lines)).toBe(true);
+  });
+
+  it('returns true if restrictedLocationTypeId exists but locationType is undefined', () => {
+    const lines: TestLine[] = [{ location: { locationType: undefined } }];
+    expect(checkInvalidLocationLines('Fridge', lines)).toBe(true);
+  });
+
+  it('returns false if restrictedLocationTypeId exists but there is no location', () => {
+    const lines: TestLine[] = [{ location: null }, {}];
     expect(checkInvalidLocationLines('Fridge', lines)).toBe(false);
   });
 

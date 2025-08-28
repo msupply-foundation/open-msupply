@@ -17,6 +17,7 @@ use service::auth::ResourceAccessRequest;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::stocktake::StocktakeSortField")]
 pub enum StocktakeSortFieldInput {
     Status,
     CreatedDatetime,
@@ -190,20 +191,8 @@ pub fn stocktake_by_number(
 
 impl StocktakeSortInput {
     pub fn to_domain(self) -> StocktakeSort {
-        use StocktakeSortField as to;
-        use StocktakeSortFieldInput as from;
-        let key = match self.key {
-            from::Status => to::Status,
-            from::CreatedDatetime => to::CreatedDatetime,
-            from::FinalisedDatetime => to::FinalisedDatetime,
-            from::StocktakeNumber => to::StocktakeNumber,
-            from::StocktakeDate => to::StocktakeDate,
-            from::Comment => to::Comment,
-            from::Description => to::Description,
-        };
-
         StocktakeSort {
-            key,
+            key: StocktakeSortField::from(self.key),
             desc: self.desc,
         }
     }
@@ -220,7 +209,7 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             description: f.description.map(StringFilter::from),
             status: f
                 .status
-                .map(|t| map_filter!(t, StocktakeNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |s| StocktakeStatus::from(s))),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             stocktake_date: f.stocktake_date.map(DateFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),

@@ -82,6 +82,7 @@ impl InsertInput {
             their_reference,
             colour,
             requisition_id,
+            goods_received_id: None,
         }
     }
 }
@@ -329,7 +330,8 @@ mod test {
                     comment: Some("comment input".to_string()),
                     their_reference: Some("reference input".to_string()),
                     colour: Some("colour input".to_string()),
-                    requisition_id: None
+                    requisition_id: None,
+                    goods_received_id: None,
                 }
             );
             Ok(Invoice {

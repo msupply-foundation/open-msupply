@@ -1,3 +1,4 @@
+use crate::types::{GoodsReceivedConnector, GoodsReceivedNode, GoodsReceivedNodeStatus};
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
@@ -9,12 +10,15 @@ use graphql_core::{
 use repository::goods_received::{GoodsReceivedFilter, GoodsReceivedSort, GoodsReceivedSortField};
 use repository::{EqualFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
-use crate::types::{GoodsReceivedConnector, GoodsReceivedNode, GoodsReceivedNodeStatus};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::goods_received::GoodsReceivedSortField")]
 pub enum GoodsReceivedSortFieldInput {
     CreatedDatetime,
+    Number,
+    Status,
+    ReceivedDate,
 }
 
 #[derive(InputObject)]
@@ -129,14 +133,8 @@ impl GoodsReceivedFilterInput {
 
 impl GoodsReceivedSortInput {
     pub fn to_domain(self) -> GoodsReceivedSort {
-        use GoodsReceivedSortField as to;
-        use GoodsReceivedSortFieldInput as from;
-        let key = match self.key {
-            from::CreatedDatetime => to::CreatedDatetime,
-        };
-
         GoodsReceivedSort {
-            key,
+            key: GoodsReceivedSortField::from(self.key),
             desc: self.desc,
         }
     }

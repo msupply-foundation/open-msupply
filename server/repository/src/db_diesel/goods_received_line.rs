@@ -6,7 +6,7 @@ use diesel::{
 use crate::{
     db_diesel::item_row::item,
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
-    goods_received_line_row::goods_received_line,
+    goods_received_line_row::{goods_received_line, GoodsReceivedLineStatus},
     goods_received_row::{goods_received, GoodsReceivedRow},
     item_link, DBType, EqualFilter, GoodsReceivedLineRow, ItemLinkRow, ItemRow, Pagination,
     RepositoryError, Sort, StorageConnection,
@@ -29,6 +29,7 @@ pub struct GoodsReceivedLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub goods_received_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub status: Option<EqualFilter<GoodsReceivedLineStatus>>,
 }
 
 pub enum GoodsReceivedLineSortField {
@@ -132,11 +133,13 @@ fn create_filtered_query(filter: Option<GoodsReceivedLineFilter>) -> BoxedGoodsR
             goods_received_id,
             id,
             store_id,
+            status,
         } = f;
 
         apply_equal_filter!(query, goods_received_id, goods_received::id);
         apply_equal_filter!(query, id, goods_received_line::id);
         apply_equal_filter!(query, store_id, goods_received::store_id);
+        apply_equal_filter!(query, status, goods_received_line::status);
     }
 
     query
@@ -157,6 +160,11 @@ impl GoodsReceivedLineFilter {
     }
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn status(mut self, filter: EqualFilter<GoodsReceivedLineStatus>) -> Self {
+        self.status = Some(filter);
         self
     }
 }
