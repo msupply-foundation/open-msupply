@@ -5,6 +5,7 @@ import {
   DetailInputWithLabelRow,
   extractProperty,
   Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   DefaultFormRowSx,
@@ -17,6 +18,11 @@ import { z } from 'zod';
 
 export const programSearchTester = rankWith(10, uiTypeIs('ProgramSearch'));
 
+export type AllOptionsType = {
+  name: string;
+  id: string;
+};
+
 const PatientProgramSearchOptions = z
   .object({
     programType: z.enum(['immunisation']).optional(),
@@ -24,6 +30,8 @@ const PatientProgramSearchOptions = z
   .optional();
 
 const UIComponent = (props: ControlProps) => {
+  const t = useTranslation();
+
   const { errors: zErrors } = useZodOptionsValidation(
     PatientProgramSearchOptions,
     props.uischema.options
@@ -44,7 +52,7 @@ const UIComponent = (props: ControlProps) => {
 
   const onChange = async (program: ProgramFragment | null) => {
     setProgram(program);
-    if (program === null) {
+    if (program === null || program.id === 'AllProgramsSelector') {
       handleChange(path, undefined);
       handleChange('elmisCode', undefined);
     } else {
@@ -62,6 +70,15 @@ const UIComponent = (props: ControlProps) => {
 
   if (zErrors) return <Typography color="error">{zErrors}</Typography>;
 
+  const allProgramsOptionRenderer: AllOptionsType = {
+    id: 'AllProgramsSelector',
+    name: t('label.all-programs'),
+  };
+
+  const programs = data?.nodes ?? [];
+  const programOptions =
+    programs.length > 1 ? [...programs, allProgramsOptionRenderer] : programs;
+
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
@@ -72,11 +89,16 @@ const UIComponent = (props: ControlProps) => {
         <Autocomplete
           fullWidth
           loading={isLoading}
-          options={data?.nodes ?? []}
+          options={programOptions}
           optionKey="name"
-          onChange={(_, newVal) =>
-            newVal && newVal.id !== program?.id && onChange(newVal)
-          }
+          onChange={(_, newVal) => {
+            if (newVal?.id === 'AllOptionsId') {
+              onChange(null);
+            }
+            newVal &&
+              newVal.id !== program?.id &&
+              onChange(newVal as ProgramFragment);
+          }}
           onInputChange={(
             _event: React.SyntheticEvent<Element, Event>,
             _value: string,
