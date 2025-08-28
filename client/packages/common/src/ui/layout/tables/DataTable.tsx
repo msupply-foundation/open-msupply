@@ -256,75 +256,101 @@ const DataTableComponent = <T extends RecordWithId>({
   }
 
   return (
-    <TableContainer
-      ref={ref}
+    <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
         overflowX,
         overflowY: 'auto',
+        position: 'relative', // Ensure the MoreContent gradient overlay can be positioned relative to the container
         width,
       }}
-      onScroll={event => handleBottom(event)}
     >
-      <MuiTable style={{ borderCollapse: 'separate' }}>
-        <TableHead
+      <TableContainer ref={ref} onScroll={event => handleBottom(event)}>
+        <MuiTable style={{ borderCollapse: 'separate' }}>
+          <TableHead
+            sx={{
+              backgroundColor: 'background.white',
+              position: 'sticky',
+              top: 0,
+              zIndex: 'tableHeader',
+              boxShadow: dense ? null : theme => theme.shadows[2],
+            }}
+          >
+            <HeaderRow dense={dense} sx={headerSx}>
+              {columnsToDisplay.map(column => (
+                <HeaderCell
+                  dense={dense}
+                  column={column}
+                  key={String(column.key)}
+                  isSticky={column.isSticky}
+                  stickyPosition={stickyColumnPositions.get(column.key) ?? 0}
+                />
+              ))}
+              {!!enableColumnSelection && (
+                <TableCell
+                  role="columnheader"
+                  padding={'none'}
+                  sx={{
+                    backgroundColor: 'transparent',
+                    borderBottom: '0px',
+                    width: 30,
+                  }}
+                >
+                  <ColumnPicker
+                    columns={columns}
+                    columnDisplayState={columnDisplayState}
+                    toggleColumn={toggleColumn}
+                    showAllColumns={showAllColumns}
+                  />
+                </TableCell>
+              )}
+            </HeaderRow>
+          </TableHead>
+          <TableBody>
+            <RenderRows
+              mRef={ref}
+              data={data}
+              ExpandContent={ExpandContent}
+              columnsToDisplay={columnsToDisplay}
+              onRowClick={onRowClick}
+              dense={dense}
+              clickFocusedRow={clickFocusedRow}
+              generateRowTooltip={generateRowTooltip}
+              isRowAnimated={isRowAnimated}
+              additionalRows={additionalRows}
+              rowLinkBuilder={rowLinkBuilder}
+              stickyColumnPositions={stickyColumnPositions}
+            />
+          </TableBody>
+        </MuiTable>
+
+        <Box
           sx={{
-            backgroundColor: 'background.white',
+            flex: 0,
+            display: 'flex',
+            flexDirection: 'column',
             position: 'sticky',
-            top: 0,
-            zIndex: 'tableHeader',
-            boxShadow: dense ? null : theme => theme.shadows[2],
+            left: 0,
+            insetBlockEnd: 0,
+            backgroundColor: 'white',
+            justifyContent: 'flex-end',
+            zIndex: 100,
           }}
         >
-          <HeaderRow dense={dense} sx={headerSx}>
-            {columnsToDisplay.map(column => (
-              <HeaderCell
-                dense={dense}
-                column={column}
-                key={String(column.key)}
-                isSticky={column.isSticky}
-                stickyPosition={stickyColumnPositions.get(column.key) ?? 0}
-              />
-            ))}
-            {!!enableColumnSelection && (
-              <TableCell
-                role="columnheader"
-                padding={'none'}
-                sx={{
-                  backgroundColor: 'transparent',
-                  borderBottom: '0px',
-                  width: 30,
-                }}
-              >
-                <ColumnPicker
-                  columns={columns}
-                  columnDisplayState={columnDisplayState}
-                  toggleColumn={toggleColumn}
-                  showAllColumns={showAllColumns}
-                />
-              </TableCell>
-            )}
-          </HeaderRow>
-        </TableHead>
-        <TableBody>
-          <RenderRows
-            mRef={ref}
-            data={data}
-            ExpandContent={ExpandContent}
-            columnsToDisplay={columnsToDisplay}
-            onRowClick={onRowClick}
-            dense={dense}
-            clickFocusedRow={clickFocusedRow}
-            generateRowTooltip={generateRowTooltip}
-            isRowAnimated={isRowAnimated}
-            additionalRows={additionalRows}
-            rowLinkBuilder={rowLinkBuilder}
-            stickyColumnPositions={stickyColumnPositions}
-          />
-        </TableBody>
-      </MuiTable>
+          {pagination && onChangePage && (
+            <PaginationRow
+              page={pagination.page}
+              offset={pagination.offset}
+              first={pagination.first}
+              total={pagination.total ?? 0}
+              onChange={onChangePage}
+            />
+          )}
+        </Box>
+      </TableContainer>
 
+      {/* Show a gradient at the bottom of the table if there is more content to scroll to */}
       {gradientBottom && !isBottom && (
         <Box
           sx={{
@@ -339,31 +365,7 @@ const DataTableComponent = <T extends RecordWithId>({
           }}
         />
       )}
-
-      <Box
-        sx={{
-          flex: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'sticky',
-          left: 0,
-          insetBlockEnd: 0,
-          backgroundColor: 'white',
-          justifyContent: 'flex-end',
-          zIndex: 100,
-        }}
-      >
-        {pagination && onChangePage && (
-          <PaginationRow
-            page={pagination.page}
-            offset={pagination.offset}
-            first={pagination.first}
-            total={pagination.total ?? 0}
-            onChange={onChangePage}
-          />
-        )}
-      </Box>
-    </TableContainer>
+    </Box>
   );
 };
 

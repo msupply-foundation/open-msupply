@@ -23,7 +23,6 @@ import {
   PreferenceKey,
   useAuthContext,
   StoreModeNodeType,
-  TableContainer,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -325,26 +324,15 @@ export const BatchTable = ({
   ]);
 
   return (
-    <TableContainer
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX: 'unset',
-        overflowY: 'auto',
-        width: '100%',
-        position: 'relative', // Ensure the Box can be positioned relative to the container
-      }}
-    >
-      <DataTable
-        id="stocktake-batch"
-        isDisabled={isDisabled}
-        columns={columns}
-        data={batches}
-        noDataMessage={t('label.add-new-line')}
-        dense
-        gradientBottom={true}
-      />
-    </TableContainer>
+    <DataTable
+      id="stocktake-batch"
+      isDisabled={isDisabled}
+      columns={columns}
+      data={batches}
+      noDataMessage={t('label.add-new-line')}
+      dense
+      gradientBottom={true}
+    />
   );
 };
 
@@ -379,26 +367,15 @@ export const PricingTable = ({
   ]);
 
   return (
-    <TableContainer
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX: 'unset',
-        overflowY: 'auto',
-        width: '100%',
-        position: 'relative', // Ensure the Box can be positioned relative to the container
-      }}
-    >
-      <DataTable
-        id="stocktake-pricing"
-        isDisabled={isDisabled}
-        columns={columns}
-        data={batches}
-        noDataMessage={t('label.add-new-line')}
-        dense
-        gradientBottom={true}
-      />
-    </TableContainer>
+    <DataTable
+      id="stocktake-pricing"
+      isDisabled={isDisabled}
+      columns={columns}
+      data={batches}
+      noDataMessage={t('label.add-new-line')}
+      dense
+      gradientBottom={true}
+    />
   );
 };
 
@@ -463,25 +440,14 @@ export const LocationTable = ({
   const columns = useColumns(columnDefinitions, {}, [columnDefinitions]);
 
   return (
-    <TableContainer
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX: 'unset',
-        overflowY: 'auto',
-        width: '100%',
-        position: 'relative', // Ensure the Box can be positioned relative to the container
-      }}
-    >
-      <DataTable
-        id="stocktake-location"
-        isDisabled={isDisabled}
-        columns={columns}
-        data={batches}
-        noDataMessage={t('label.add-new-line')}
-        dense
-        gradientBottom={true}
-      />
-    </TableContainer>
+    <DataTable
+      id="stocktake-location"
+      isDisabled={isDisabled}
+      columns={columns}
+      data={batches}
+      noDataMessage={t('label.add-new-line')}
+      dense
+      gradientBottom={true}
+    />
   );
 };
