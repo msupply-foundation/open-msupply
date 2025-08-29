@@ -1,9 +1,4 @@
 declare const API_HOST: string;
-declare const FEATURE_EXAMPLE: boolean;
-// Used to load plugins via server during dev rather then from local dir, to test remote loading
-// `yarn start -- -- -env LOAD_REMOTE_PLUGINS=true`
-declare const LOAD_REMOTE_PLUGINS: boolean;
-declare const FEATURE_PRINTER_SETTINGS: boolean;
 
 // For production, API is on the same domain/ip and port as web app, available through sub-route
 // i.e. web app is on https://my.openmsupply.com/, then graphql will be available https://my.openmsupply.com/graphql
@@ -39,22 +34,7 @@ export const Environment = {
   PRINT_LABEL_TEST: `${apiHost}/print/label-test`,
   PRINT_LABEL_PRESCRIPTION: `${apiHost}/print/label-prescription`,
   ANDROID_DATA_FILES_PATH: `static_files/sync_files`,
-  REPORT_UPLOAD_URL: `${apiHost}/upload`, 
-
-  // -- Feature Flags --
-  // To add a new feature flag:
-  // - Add a new env var via webpack plugin in webpack.config.js
-  // - Declare a const for it above
-  // - Follow the pattern below to add to `Environment` (otherwise you'll get compilation errors with tests/storybook)
-
-  FEATURE_EXAMPLE:
-    typeof FEATURE_EXAMPLE === 'undefined' ? false : FEATURE_EXAMPLE,
-  LOAD_REMOTE_PLUGINS:
-    typeof LOAD_REMOTE_PLUGINS === 'undefined' ? false : LOAD_REMOTE_PLUGINS,
-  FEATURE_PRINTER_SETTINGS:
-    typeof FEATURE_PRINTER_SETTINGS === 'undefined'
-      ? false
-      : FEATURE_PRINTER_SETTINGS,
+  REPORT_UPLOAD_URL: `${apiHost}/upload`,
 };
 
 export default Environment;

@@ -7353,6 +7353,7 @@ export type Queries = {
   draftStockOutLines: DraftStockOutItemData;
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
+  featureFlags: Scalars['JSONObject']['output'];
   formSchemas: FormSchemaResponse;
   frontendPluginMetadata: Array<FrontendPluginMetadataNode>;
   /**

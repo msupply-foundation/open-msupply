@@ -1,9 +1,9 @@
 import {
   loadRemotePlugin,
+  useFeatureFlags,
   usePluginProvider,
   usePlugins,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config/src';
 import { useEffect } from 'react';
 
 // Used for local plugins in dev mode
@@ -11,6 +11,7 @@ declare const LOCAL_PLUGINS: { pluginPath: string; pluginCode: string }[];
 
 export const useInitPlugins = () => {
   const { addPluginBundle } = usePluginProvider();
+  const featureFlags = useFeatureFlags();
   const { query } = usePlugins();
 
   const initRemotePlugins = async () => {
@@ -40,7 +41,7 @@ export const useInitPlugins = () => {
   useEffect(() => {
     if (
       process.env['NODE_ENV'] === 'production' ||
-      Environment.LOAD_REMOTE_PLUGINS
+      featureFlags.loadRemotePluginsInDev
     )
       initRemotePlugins();
     else initLocalPlugins();

@@ -4,12 +4,14 @@ mod queries;
 mod sync_api_error;
 pub mod types;
 
+use std::collections::HashMap;
+
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
 use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
-use graphql_core::pagination::PaginationInput;
+use graphql_core::{pagination::PaginationInput, ContextExt};
 use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
@@ -98,6 +100,10 @@ impl GeneralQueries {
 
     pub async fn is_central_server(&self) -> bool {
         CentralServerConfig::is_central_server()
+    }
+
+    pub async fn feature_flags(&self, ctx: &Context<'_>) -> HashMap<String, bool> {
+        ctx.get_settings().features.clone().unwrap_or_default()
     }
 
     /// Query omSupply "name" entries
