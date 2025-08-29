@@ -8,6 +8,8 @@ import {
   SplitButtonOption,
   useConfirmationModal,
   useDisabledNotificationToast,
+  UserPermission,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import {
   getStatusTranslation,
@@ -245,6 +247,14 @@ export const StatusChangeButton = () => {
   const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
   const t = useTranslation();
 
+  const { userHasPermission } = useAuthContext();
+
+  const onVerify = () => {
+    if (!userHasPermission(UserPermission.InboundShipmentVerify)) {
+      permissionDeniedNotification();
+    }
+  };
+
   const noLinesNotification = useDisabledNotificationToast(
     t('messages.no-lines')
   );
@@ -253,12 +263,17 @@ export const StatusChangeButton = () => {
     t('messages.on-hold')
   );
 
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+
   if (!selectedOption) return null;
   if (isStatusChangeDisabled) return null;
 
   const onStatusClick = () => {
     if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
+    if (selectedOption?.value === InvoiceNodeStatus.Verified) return onVerify();
     return getConfirmation();
   };
 

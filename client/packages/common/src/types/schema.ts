@@ -11069,6 +11069,7 @@ export enum UserPermission {
   GoodsReceivedQuery = 'GOODS_RECEIVED_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  InboundShipmentVerify = 'INBOUND_SHIPMENT_VERIFY',
   InventoryAdjustmentMutate = 'INVENTORY_ADJUSTMENT_MUTATE',
   ItemMutate = 'ITEM_MUTATE',
   ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
