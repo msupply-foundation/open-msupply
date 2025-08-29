@@ -61,6 +61,11 @@ export type OutboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        description: string;
+      } | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -290,6 +295,11 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              description: string;
+            } | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -434,6 +444,11 @@ export type OutboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              description: string;
+            } | null;
             item: {
               __typename: 'ItemNode';
               id: string;
