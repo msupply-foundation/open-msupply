@@ -1361,7 +1361,7 @@
   "label.units-plural_many": "unités",
   "label.units-plural_one": "unité",
   "label.units-plural_other": "unités",
-  "label.units-received": "({{unit}} ) unités reçues",
+  "label.units-received": "{{unit}} reçu(e)s",
   "label.universal-code": "Code universel",
   "label.universal-name": "Nom universel",
   "label.update-live-location": "Actualiser localisation actuelle",
