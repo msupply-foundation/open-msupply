@@ -2,7 +2,7 @@ use super::{activity_log_row::activity_log, ActivityLogRow, DBType, StorageConne
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
     repository_error::RepositoryError,
     ActivityLogType,
 };
@@ -29,6 +29,7 @@ pub enum ActivityLogSortField {
     ActivityLogType,
     UserId,
     RecordId,
+    Datetime,
 }
 
 pub type ActivityLogSort = Sort<ActivityLogSortField>;
@@ -76,6 +77,9 @@ impl<'a> ActivityLogRepository<'a> {
                 }
                 ActivityLogSortField::RecordId => {
                     apply_sort_no_case!(query, sort, activity_log::record_id)
+                }
+                ActivityLogSortField::Datetime => {
+                    apply_sort!(query, sort, activity_log::datetime)
                 }
             }
         } else {

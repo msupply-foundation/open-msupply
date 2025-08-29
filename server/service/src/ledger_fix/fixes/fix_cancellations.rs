@@ -119,6 +119,12 @@ pub(crate) mod test {
         with_cancellation.invoices[3] = inline_edit(&with_cancellation.invoices[3], |mut u| {
             u.status = InvoiceStatus::Cancelled;
             u.r#type = InvoiceType::Prescription;
+            u.cancelled_datetime = Some(u.created_datetime.clone());
+            u.allocated_datetime = u.cancelled_datetime;
+            u.picked_datetime = u.cancelled_datetime;
+            u.received_datetime = u.cancelled_datetime;
+            u.delivered_datetime = u.cancelled_datetime;
+            u.verified_datetime = u.cancelled_datetime;
             u
         });
 
@@ -132,6 +138,12 @@ pub(crate) mod test {
             inline_edit(&with_multiple_cancellations.invoices[2], |mut u| {
                 u.status = InvoiceStatus::Cancelled;
                 u.r#type = InvoiceType::Prescription;
+                u.cancelled_datetime = Some(u.created_datetime);
+                u.allocated_datetime = u.cancelled_datetime;
+                u.picked_datetime = u.cancelled_datetime;
+                u.received_datetime = u.cancelled_datetime;
+                u.delivered_datetime = u.cancelled_datetime;
+                u.verified_datetime = u.cancelled_datetime;
                 u
             });
 
@@ -139,6 +151,12 @@ pub(crate) mod test {
             inline_edit(&with_multiple_cancellations.invoices[5], |mut u| {
                 u.status = InvoiceStatus::Cancelled;
                 u.r#type = InvoiceType::Prescription;
+                u.cancelled_datetime = Some(u.created_datetime);
+                u.allocated_datetime = u.cancelled_datetime;
+                u.picked_datetime = u.cancelled_datetime;
+                u.received_datetime = u.cancelled_datetime;
+                u.delivered_datetime = u.cancelled_datetime;
+                u.verified_datetime = u.cancelled_datetime;
                 u
             });
 

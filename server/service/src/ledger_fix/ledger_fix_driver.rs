@@ -82,7 +82,8 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
 
     for (index, stock_line_id) in stock_line_ids.iter().enumerate() {
         let mut operation_log = format!(
-            "{index}/{} Fixing stock line {stock_line_id} {}\n",
+            "{}/{} Fixing stock line {stock_line_id} {}\n",
+            index + 1,
             stock_line_ids.len(),
             Utc::now().naive_utc()
         );
