@@ -49,7 +49,7 @@ export const useOutboundColumns = ({
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const t = useTranslation();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
-  const { manageVaccinesInDoses } = usePreferences();
+  const { manageVaccinesInDoses, manageVvmStatusForStock } = usePreferences();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     GenericColumnKey.Selection,
@@ -138,6 +138,22 @@ export const useOutboundColumns = ({
         defaultHideOnMobile: true,
       },
     ],
+  ];
+
+  if (manageVvmStatusForStock) {
+    columns.push({
+      key: 'vvmStatus',
+      label: 'label.vvm-status',
+      width: 150,
+      accessor: ({ rowData }) =>
+        getColumnPropertyAsString(rowData, [
+          { path: ['lines', 'vvmStatus', 'description' as any] }, // doesn't like nested description, I think because vvmStatus is optional?
+          { path: ['vvmStatus', 'description'] },
+        ]),
+      defaultHideOnMobile: true,
+    });
+  }
+  columns.push(
     [
       'location',
       {
@@ -179,8 +195,8 @@ export const useOutboundColumns = ({
         accessor: ({ rowData }) => getPackSizeValue(rowData, getColumnProperty),
         defaultHideOnMobile: true,
       },
-    ],
-  ];
+    ]
+  );
 
   if (manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));

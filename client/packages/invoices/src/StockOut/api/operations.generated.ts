@@ -23,6 +23,11 @@ export type StockOutLineFragment = {
   itemName: string;
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    description: string;
+  } | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -187,6 +192,10 @@ export const StockOutLineFragmentDoc = gql`
     itemName
     itemVariantId
     vvmStatusId
+    vvmStatus {
+      id
+      description
+    }
     item {
       __typename
       id
