@@ -12,10 +12,13 @@ import {
   usePluginProvider,
   UNDEFINED_STRING_VALUE,
   usePreferences,
+  UnitsAndMaybeDoses,
+  CellProps,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
+import React from 'react';
 
 export const useRequestColumns = () => {
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
@@ -95,7 +98,7 @@ export const useRequestColumns = () => {
       description: 'description.available-soh',
       align: ColumnAlign.Right,
       width: 200,
-      Cell: PackQuantityCell,
+      Cell: UnitsAndMaybeDosesCell,
       accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
       getSortValue: rowData => rowData.itemStats.availableStockOnHand,
     },
@@ -104,7 +107,7 @@ export const useRequestColumns = () => {
       {
         width: 150,
         align: ColumnAlign.Right,
-        Cell: PackQuantityCell,
+        Cell: UnitsAndMaybeDosesCell,
         accessor: ({ rowData }) => rowData.itemStats.averageMonthlyConsumption,
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
       },
@@ -127,7 +130,7 @@ export const useRequestColumns = () => {
       description: 'description.target-stock',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: PackQuantityCell,
+      Cell: UnitsAndMaybeDosesCell,
       accessor: ({ rowData }) =>
         rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
       getSortValue: rowData =>
@@ -140,15 +143,16 @@ export const useRequestColumns = () => {
       description: 'description.forecast-quantity',
       align: ColumnAlign.Right,
       width: 200,
-      Cell: PackQuantityCell,
+      Cell: UnitsAndMaybeDosesCell,
       getSortValue: rowData => rowData.suggestedQuantity,
     },
     {
       key: 'requestedQuantity',
       label: 'label.requested',
+      description: 'description.doses-quantity',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: PackQuantityCell,
+      Cell: UnitsAndMaybeDosesCell,
       getSortValue: rowData => rowData.requestedQuantity,
     }
   );
@@ -163,7 +167,7 @@ export const useRequestColumns = () => {
         align: ColumnAlign.Right,
         sortable: false,
         description: 'description.initial-stock-on-hand',
-        Cell: PackQuantityCell,
+        Cell: UnitsAndMaybeDosesCell,
         accessor: ({ rowData }) => rowData.initialStockOnHandUnits,
       },
       {
@@ -172,7 +176,7 @@ export const useRequestColumns = () => {
         width: 100,
         align: ColumnAlign.Right,
         sortable: false,
-        Cell: PackQuantityCell,
+        Cell: UnitsAndMaybeDosesCell,
         accessor: ({ rowData }) => rowData.incomingUnits,
       },
       {
@@ -181,7 +185,7 @@ export const useRequestColumns = () => {
         width: 100,
         align: ColumnAlign.Right,
         sortable: false,
-        Cell: PackQuantityCell,
+        Cell: UnitsAndMaybeDosesCell,
         accessor: ({ rowData }) => rowData.outgoingUnits,
       },
       {
@@ -190,7 +194,7 @@ export const useRequestColumns = () => {
         width: 100,
         align: ColumnAlign.Right,
         sortable: false,
-        Cell: PackQuantityCell,
+        Cell: UnitsAndMaybeDosesCell,
         accessor: ({ rowData }) => rowData.lossInUnits,
       },
       {
@@ -199,7 +203,7 @@ export const useRequestColumns = () => {
         width: 100,
         align: ColumnAlign.Right,
         sortable: false,
-        Cell: PackQuantityCell,
+        Cell: UnitsAndMaybeDosesCell,
         accessor: ({ rowData }) => rowData.additionInUnits,
       },
       {
@@ -208,7 +212,7 @@ export const useRequestColumns = () => {
         width: 100,
         align: ColumnAlign.Right,
         sortable: false,
-        Cell: PackQuantityCell,
+        Cell: UnitsAndMaybeDosesCell,
         accessor: ({ rowData }) => rowData.expiringUnits,
       },
       {
@@ -264,4 +268,19 @@ export const useRequestColumns = () => {
   );
 
   return { columns, sortBy, onChangeSortBy: updateSortQuery };
+};
+
+const UnitsAndMaybeDosesCell = (props: CellProps<RequestLineFragment>) => {
+  const { rowData, column } = props;
+  const units = Number(column.accessor({ rowData })) ?? 0;
+  const { isVaccine, doses } = rowData.item;
+
+  return (
+    <UnitsAndMaybeDoses
+      numberCellProps={props}
+      units={units}
+      isVaccine={isVaccine}
+      dosesPerUnit={doses}
+    />
+  );
 };
