@@ -179,7 +179,7 @@ pub(super) async fn test_vaccine_card() {
     let context = site2.context.service_provider.basic_context().unwrap();
     link_patient_to_store(
         &site2.context.service_provider,
-        context,
+        &context,
         &site2.config.new_site_properties.store_id.clone(),
         &patient_one.id,
     )

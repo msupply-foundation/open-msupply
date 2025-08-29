@@ -479,6 +479,7 @@ impl LoadTest {
                 ],
                 base_dir: Some("app_data".to_string()),
                 machine_uid: None,
+                override_is_central_server: false,
             },
             database: DatabaseSettings {
                 username: "postgres".to_owned(),
@@ -563,6 +564,7 @@ impl LoadTest {
                     cors_origins: vec![],
                     base_dir: Some(database_path.to_string()),
                     machine_uid: Some("1337_test".to_owned()),
+                    override_is_central_server: false,
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_owned(),

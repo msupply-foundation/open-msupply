@@ -16,7 +16,7 @@ use crate::{
         program_enrolment::program_schema::SchemaProgramEnrolment,
     },
 };
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct DocumentUpsert(pub(crate) Document);
 
 impl Upsert for DocumentUpsert {
