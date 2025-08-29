@@ -7,13 +7,17 @@ export const useFeatureFlags = () => {
 
   const { data } = useQuery({
     queryFn: async () => {
-      const result = await api.featureFlags();
-      return result.featureFlags;
+      const { featureFlags } = await api.featureFlags();
+
+      return {
+        tableUsabilityImprovements:
+          !!featureFlags['table_usability_improvements'],
+      };
     },
-    // Would only invalidate app restart
+    // Only invalidates on app restart
     cacheTime: Infinity,
     staleTime: Infinity,
   });
 
-  return data ?? {};
+  return data;
 };
