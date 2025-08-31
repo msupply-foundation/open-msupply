@@ -36,7 +36,7 @@ export const InsuranceModal = (): ReactElement => {
     create: { create },
     update: { update },
     insuranceId,
-    haveInsuranceId,
+    hasInsuranceId,
     draft,
     updatePatch,
   } = useInsurancePolicies(nameId);
@@ -97,11 +97,24 @@ export const InsuranceModal = (): ReactElement => {
       <Stack gap={8} flexDirection="row">
         <Box display="flex" flexDirection="column" gap={2}>
           <InputWithLabelRow
+            label={t('label.name-of-the-insured')}
+            Input={
+              <BasicTextInput
+                value={draft.nameOfInsured}
+                onChange={event => {
+                  updatePatch({
+                    nameOfInsured: event.target.value,
+                  });
+                }}
+              />
+            }
+          />
+          <InputWithLabelRow
             label={t('label.policy-number-family')}
             Input={
               <BasicTextInput
                 required={draft.policyNumberPerson === ''}
-                disabled={haveInsuranceId}
+                disabled={hasInsuranceId}
                 value={draft.policyNumberFamily}
                 onChange={event => {
                   updatePatch({
@@ -116,7 +129,7 @@ export const InsuranceModal = (): ReactElement => {
             Input={
               <BasicTextInput
                 required={draft.policyNumberFamily === ''}
-                disabled={haveInsuranceId}
+                disabled={hasInsuranceId}
                 value={draft.policyNumberPerson}
                 onChange={event => {
                   updatePatch({
