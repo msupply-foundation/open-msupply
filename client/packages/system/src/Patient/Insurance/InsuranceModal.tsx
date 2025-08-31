@@ -178,6 +178,7 @@ export const InsuranceModal = ({
                 }}
               />
             }
+            sx={{ justifyContent: 'flex-end' }}
           />
           <InsuranceProvidersSelect
             insuranceProviderId={draft.insuranceProviderId}
