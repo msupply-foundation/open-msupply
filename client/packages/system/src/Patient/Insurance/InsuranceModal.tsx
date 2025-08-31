@@ -19,7 +19,11 @@ import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
-export const InsuranceModal = (): ReactElement => {
+export const InsuranceModal = ({
+  patientName,
+}: {
+  patientName?: string;
+}): ReactElement => {
   const t = useTranslation();
   const formatDateTime = useFormatDateTime();
   const { success, error } = useNotification();
@@ -39,7 +43,7 @@ export const InsuranceModal = (): ReactElement => {
     hasInsuranceId,
     draft,
     updatePatch,
-  } = useInsurancePolicies(nameId);
+  } = useInsurancePolicies(nameId, patientName);
 
   const handleInsuranceUpdate = async (): Promise<void> => {
     try {

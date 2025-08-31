@@ -29,7 +29,7 @@ const defaultDraftInsurance: DraftInsurance = {
   nameOfInsured: '',
 };
 
-export const useInsurancePolicies = (nameId: string) => {
+export const useInsurancePolicies = (nameId: string, patientName?: string) => {
   const { data, isLoading, error } = useGet(nameId);
 
   const {
@@ -52,7 +52,13 @@ export const useInsurancePolicies = (nameId: string) => {
   const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
 
   const draft = data
-    ? { ...defaultDraftInsurance, ...selectedInsurance, ...patch, nameId }
+    ? {
+        ...defaultDraftInsurance,
+        nameOfInsured: patientName,
+        ...selectedInsurance,
+        ...patch,
+        nameId,
+      }
     : { ...defaultDraftInsurance, ...patch, nameId };
 
   const create = async () => {
