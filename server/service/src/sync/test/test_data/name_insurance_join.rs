@@ -2,7 +2,9 @@ use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoin
 
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
-    translations::name_insurance_join::{LegacyInsurancePolicyType, LegacyNameInsuranceJoinRow},
+    translations::name_insurance_join::{
+        LegacyInsurancePolicyType, LegacyNameInsuranceJoinRow, LegacyNameInsuranceJoinRowOmsFields,
+    },
 };
 use serde_json::json;
 
@@ -21,7 +23,8 @@ const NAME_INSURANCE_JOIN_1: (&str, &str) = (
         "policyNumberFamily": "888",
         "policyNumberFull": "888",
         "policyNumberPerson": "",
-        "type": "personal"
+        "type": "personal",
+        "oms_fields": { "name_of_insured": "D" }
     }"#,
 );
 
@@ -41,6 +44,7 @@ fn name_insurance_join_1() -> TestSyncIncomingRecord {
             expiry_date: "2026-01-23".parse().unwrap(),
             is_active: true,
             entered_by_id: None,
+            name_of_insured: Some("D".to_string()),
         },
     )
 }
@@ -58,7 +62,8 @@ const NAME_INSURANCE_JOIN_2: (&str, &str) = (
         "policyNumberFamily": "",
         "policyNumberFull": "777",
         "policyNumberPerson": "777",
-        "type": "business"
+        "type": "business",
+        "oms_fields": {}
     }"#,
 );
 
@@ -78,6 +83,7 @@ fn name_insurance_join_2() -> TestSyncIncomingRecord {
             expiry_date: "2027-01-01".parse().unwrap(),
             is_active: true,
             entered_by_id: None,
+            name_of_insured: None,
         },
     )
 }
@@ -103,6 +109,9 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
                 policyNumberFull: "888".to_string(),
                 policyNumberPerson: None,
                 policyType: LegacyInsurancePolicyType::Personal,
+                oms_fields: Some(LegacyNameInsuranceJoinRowOmsFields {
+                    name_of_insured: Some("D".to_string()),
+                })
             }),
         },
         TestSyncOutgoingRecord {
@@ -120,6 +129,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
                 policyNumberFull: "777".to_string(),
                 policyNumberPerson: Some("777".to_string()),
                 policyType: LegacyInsurancePolicyType::Business,
+                oms_fields: None,
             }),
         },
     ]
