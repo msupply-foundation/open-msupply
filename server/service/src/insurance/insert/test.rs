@@ -48,6 +48,7 @@ mod insert {
             discount_percentage: 10.0,
             expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
             is_active: true,
+            name_of_insured: Some("D".to_string()),
         };
 
         let result = service.insert_insurance(&context, input.clone()).unwrap();
@@ -92,6 +93,7 @@ mod insert {
             discount_percentage: 10.0,
             expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
             is_active: true,
+            name_of_insured: Some("D".to_string()),
         };
 
         let result = service.insert_insurance(&context, input.clone()).unwrap();
