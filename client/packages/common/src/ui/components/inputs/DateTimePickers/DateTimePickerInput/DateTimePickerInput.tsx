@@ -90,6 +90,7 @@ export const DateTimePickerInput = ({
   actions?: PickersActionBarAction[];
   dateAsEndOfDay?: boolean;
   disableFuture?: boolean;
+  displayAs?: 'date' | 'dateTime';
   required?: boolean;
   textFieldSx?: SxProps;
 }) => {
