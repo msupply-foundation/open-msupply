@@ -42,7 +42,7 @@ export const getFormattedDateError = (
 };
 
 type DateTimePickerInputProps = Omit<DateTimePickerProps<true>, 'onChange'> & {
-  error?: boolean | string;
+  error?: boolean;
   required?: boolean;
   setError?: (error: string) => void;
   width?: number | string;
@@ -73,12 +73,14 @@ export const DateTimePickerInput = ({
   dateAsEndOfDay,
   disableFuture,
   error,
+  errorText,
   required,
   textFieldSx: inputSx,
   slotProps,
   ...props
 }: Omit<DateTimePickerProps<true>, 'onChange'> & {
-  error?: string | undefined;
+  error?: boolean;
+  errorText?: string;
   width?: number | string;
   label?: string;
   onChange: (value: Date | null) => void;
@@ -168,7 +170,8 @@ export const DateTimePickerInput = ({
               }
             },
             error: !!error || (!isInitialEntry && !!internalError),
-            helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
+            helperText:
+              errorText || (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
               ...getTextFieldSx(theme, !!label, !showTime, inputSx, width),
               width,

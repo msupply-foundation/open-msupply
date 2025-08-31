@@ -141,7 +141,8 @@ const UIComponent = (props: ControlProps) => {
             onError={validationError =>
               setCustomError(validationError ?? undefined)
             }
-            error={customError || errors}
+            error={!!customError || !!errors}
+            errorText={customError || errors}
             actions={actions}
           />
 

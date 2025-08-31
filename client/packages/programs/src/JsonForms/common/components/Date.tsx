@@ -63,7 +63,8 @@ const UIComponent = (props: ControlProps) => {
           }}
           format="P"
           disabled={!props.enabled}
-          error={customError ?? props.errors ?? zErrors ?? ''}
+          error={!!customError || !!props.errors || !!zErrors}
+          errorText={customError || props.errors || zErrors}
           disableFuture={disableFuture}
           onError={validationError =>
             setCustomError(validationError ?? undefined)
