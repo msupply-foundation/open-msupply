@@ -52,6 +52,7 @@ mod update {
                     discount_percentage: 10.0,
                     expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
                     is_active: true,
+                    name_of_insured: Some("A".to_string()),
                 },
             )
             .unwrap();
@@ -64,6 +65,7 @@ mod update {
             discount_percentage: Some(10.0),
             expiry_date: Some(NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date")),
             is_active: Some(true),
+            name_of_insured: None,
         };
 
         let result = service.update_insurance(&context, input.clone()).unwrap();
@@ -119,6 +121,7 @@ mod update {
                     discount_percentage: 10.0,
                     expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
                     is_active: true,
+                    name_of_insured: Some("A".to_string()),
                 },
             )
             .unwrap();
@@ -131,6 +134,7 @@ mod update {
             discount_percentage: Some(15.0),
             expiry_date: Some(NaiveDate::from_ymd_opt(2026, 12, 31).expect("Invalid date")),
             is_active: Some(false),
+            name_of_insured: Some("B".to_string()),
         };
 
         // Check that the insurance record was updated
@@ -145,5 +149,6 @@ mod update {
         );
         assert_eq!(new_insurance.expiry_date, input.expiry_date.unwrap());
         assert_eq!(new_insurance.is_active, input.is_active.unwrap());
+        assert_eq!(new_insurance.name_of_insured, input.name_of_insured);
     }
 }
