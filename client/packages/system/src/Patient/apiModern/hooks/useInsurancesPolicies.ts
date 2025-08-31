@@ -48,7 +48,7 @@ export const useInsurancePolicies = (nameId: string) => {
 
   const { urlQuery } = useUrlQuery();
   const insuranceId = urlQuery['insuranceId'];
-  const haveInsuranceId = insuranceId !== undefined;
+  const hasInsuranceId = insuranceId !== undefined;
   const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
 
   const draft = data
@@ -72,7 +72,7 @@ export const useInsurancePolicies = (nameId: string) => {
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     insuranceId,
-    haveInsuranceId,
+    hasInsuranceId,
     draft,
     resetDraft,
     isDirty,
