@@ -6,7 +6,7 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use service::{usize_to_u32, ListResult};
 
-use repository::{GoodsReceivedLine, GoodsReceivedLineRow, GoodsReceivedLineStatus, ItemRow};
+use repository::{GoodsReceivedLine, GoodsReceivedLineRow, ItemRow};
 
 use graphql_types::types::{ItemNode, LocationNode};
 pub struct GoodsReceivedLineNode {
@@ -79,7 +79,7 @@ impl GoodsReceivedLineNode {
         &self.row().manufacturer_link_id
     }
     pub async fn status(&self) -> GoodsReceivedLineNodeStatus {
-        GoodsReceivedLineNodeStatus::from_domain(self.row().status.clone())
+        GoodsReceivedLineNodeStatus::from(self.row().status.clone())
     }
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
@@ -143,17 +143,9 @@ impl GoodsReceivedLineConnector {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::goods_received_line_row
+::GoodsReceivedLineStatus")]
 pub enum GoodsReceivedLineNodeStatus {
     Authorised,
     Unauthorised,
-}
-
-impl GoodsReceivedLineNodeStatus {
-    pub fn from_domain(status: GoodsReceivedLineStatus) -> GoodsReceivedLineNodeStatus {
-        use GoodsReceivedLineStatus::*;
-        match status {
-            Authorised => GoodsReceivedLineNodeStatus::Authorised,
-            Unauthorised => GoodsReceivedLineNodeStatus::Unauthorised,
-        }
-    }
 }

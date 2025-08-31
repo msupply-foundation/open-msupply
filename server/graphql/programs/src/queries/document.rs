@@ -31,6 +31,7 @@ pub struct DocumentFilterInput {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::document::DocumentSortField")]
 pub enum DocumentSortFieldInput {
     Name,
     Type,
@@ -64,16 +65,8 @@ impl DocumentFilterInput {
 
 impl DocumentSortInput {
     pub fn to_domain(self) -> DocumentSort {
-        let key = match self.key {
-            DocumentSortFieldInput::Name => DocumentSortField::Name,
-            DocumentSortFieldInput::Type => DocumentSortField::Type,
-            DocumentSortFieldInput::Owner => DocumentSortField::Owner,
-            DocumentSortFieldInput::Context => DocumentSortField::Context,
-            DocumentSortFieldInput::Datetime => DocumentSortField::Datetime,
-        };
-
         DocumentSort {
-            key,
+            key: DocumentSortField::from(self.key),
             desc: self.desc,
         }
     }

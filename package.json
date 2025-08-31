@@ -1,11 +1,14 @@
 {
   "name": "open-msupply",
   "//": "Main version for the app, should be in semantic version format (any release candidate or test build should be separated by '-' i.e. 1.1.1-rc1 or 1.1.1-test",
-  "version": "2.10.00-rc",
+  "version": "2.11.00-develop",
   "private": true,
   "scripts": {
     "start": "cd ./server && cargo run & cd ./client && yarn start-local",
     "build": "cd ./client && yarn build && cd ../server && cargo build --release",
     "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test"
+  },
+  "dependencies": {
+    "typescript": "^5.9.2"
   }
 }

@@ -63,14 +63,12 @@ export const Toolbar = ({ filter, simplifiedTabletView }: ToolbarProps) => {
                 elements: [
                   {
                     type: 'dateTime',
-                    displayAs: 'date',
                     name: t('label.from-created-datetime'),
                     urlParameter: 'createdDatetime',
                     range: 'from',
                   },
                   {
                     type: 'dateTime',
-                    displayAs: 'date',
                     name: t('label.to-created-datetime'),
                     urlParameter: 'createdDatetime',
                     range: 'to',

@@ -49,7 +49,6 @@ export const DateTimePickerInput = ({
   actions,
   dateAsEndOfDay,
   disableFuture,
-  displayAs,
   error,
   required,
   textFieldSx: inputSx,
@@ -71,6 +70,7 @@ export const DateTimePickerInput = ({
   dateAsEndOfDay?: boolean;
   disableFuture?: boolean;
   displayAs?: 'date' | 'dateTime';
+  required?: boolean;
   textFieldSx?: SxProps;
 }) => {
   const theme = useAppTheme();
@@ -80,7 +80,6 @@ export const DateTimePickerInput = ({
   const t = useTranslation();
   const format =
     props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
-  const displayDt = displayAs === 'date';
 
   const isDesktop = useMediaQuery('(pointer: fine)');
 
@@ -150,14 +149,14 @@ export const DateTimePickerInput = ({
             error: !!error || (!isInitialEntry && !!internalError),
             helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
-              ...getTextFieldSx(theme, !!label, !displayDt, inputSx, width),
+              ...getTextFieldSx(theme, !!label, !showTime, inputSx, width),
               width,
-              minWidth: displayDt ? 200 : undefined,
+              minWidth: showTime ? 200 : undefined,
             },
           },
 
           tabs: {
-            hidden: displayDt && !isDesktop ? false : true,
+            hidden: showTime && !isDesktop ? false : true,
           },
           ...slotProps,
         }}

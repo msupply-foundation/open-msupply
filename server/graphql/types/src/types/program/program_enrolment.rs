@@ -24,6 +24,7 @@ use super::{
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::program_enrolment::ProgramEnrolmentSortField")]
 pub enum ProgramEnrolmentSortFieldInput {
     Type,
     PatientId,
@@ -43,20 +44,8 @@ pub struct ProgramEnrolmentSortInput {
 
 impl ProgramEnrolmentSortInput {
     pub fn to_domain(self) -> ProgramEnrolmentSort {
-        let key = match self.key {
-            ProgramEnrolmentSortFieldInput::Type => ProgramEnrolmentSortField::Type,
-            ProgramEnrolmentSortFieldInput::PatientId => ProgramEnrolmentSortField::PatientId,
-            ProgramEnrolmentSortFieldInput::EnrolmentDatetime => {
-                ProgramEnrolmentSortField::EnrolmentDatetime
-            }
-            ProgramEnrolmentSortFieldInput::ProgramEnrolmentId => {
-                ProgramEnrolmentSortField::ProgramEnrolmentId
-            }
-            ProgramEnrolmentSortFieldInput::Status => ProgramEnrolmentSortField::Status,
-        };
-
         ProgramEnrolmentSort {
-            key,
+            key: ProgramEnrolmentSortField::from(self.key),
             desc: self.desc,
         }
     }
