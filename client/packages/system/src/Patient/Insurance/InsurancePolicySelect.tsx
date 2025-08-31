@@ -2,6 +2,7 @@ import React, { FC, ReactElement } from 'react';
 import { InsurancePolicyNodeType } from '@common/types';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import { Autocomplete, InputWithLabelRow } from '@common/components';
+import { FieldErrorWrapper, FieldErrorWrapperProps } from '@common/hooks';
 
 interface InsurancePolicySelectProps {
   policyType: string;
@@ -76,3 +77,26 @@ const getDefaultValue = (policyType: string, t: TypedTFunction<LocaleKey>) => {
       };
   }
 };
+
+export const InsurancePolicySelectWithError = ({
+  code,
+  label,
+  value,
+  required,
+  customErrorState,
+  customErrorMessage,
+  ...insuranceSelectProps
+}: Omit<InsurancePolicySelectProps, 'policyType'> &
+  Omit<FieldErrorWrapperProps<InsurancePolicyNodeType>, 'children'>) => (
+  <FieldErrorWrapper
+    {...{ code, label, value, required, customErrorState, customErrorMessage }}
+  >
+    {errorProps => (
+      <InsurancePolicySelect
+        policyType={value}
+        {...insuranceSelectProps}
+        {...errorProps}
+      />
+    )}
+  </FieldErrorWrapper>
+);

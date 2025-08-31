@@ -5,6 +5,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { FieldErrorWrapper, FieldErrorWrapperProps } from '@common/hooks';
 
 export type BasicTextInputProps = StandardTextFieldProps & {
   textAlign?: 'left' | 'center' | 'right';
@@ -125,4 +126,21 @@ export const BasicTextInput = React.forwardRef<
       </Box>
     );
   }
+);
+
+export const BasicTextInputWithError = ({
+  code,
+  label,
+  value,
+  required,
+  customErrorState,
+  customErrorMessage,
+  ...textInputProps
+}: BasicTextInputProps &
+  Omit<FieldErrorWrapperProps<string | undefined>, 'children'>) => (
+  <FieldErrorWrapper
+    {...{ code, label, value, required, customErrorState, customErrorMessage }}
+  >
+    {errorProps => <BasicTextInput {...textInputProps} {...errorProps} />}
+  </FieldErrorWrapper>
 );

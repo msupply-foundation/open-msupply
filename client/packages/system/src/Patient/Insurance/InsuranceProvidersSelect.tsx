@@ -4,6 +4,7 @@ import { useTranslation } from '@common/intl';
 import { Autocomplete, InputWithLabelRow } from '@common/components';
 
 import { useInsuranceProviders } from '../apiModern/hooks';
+import { FieldErrorWrapper, FieldErrorWrapperProps } from '@common/hooks';
 
 interface InsuranceProvidersSelectProps {
   insuranceProviderId: string;
@@ -60,3 +61,26 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
     />
   );
 };
+
+export const InsuranceProvidersSelectWithError = ({
+  code,
+  label,
+  value,
+  required,
+  customErrorState,
+  customErrorMessage,
+  ...insuranceProviderSelectProps
+}: Omit<InsuranceProvidersSelectProps, 'insuranceProviderId'> &
+  Omit<FieldErrorWrapperProps<string>, 'children'>) => (
+  <FieldErrorWrapper
+    {...{ code, label, value, required, customErrorState, customErrorMessage }}
+  >
+    {errorProps => (
+      <InsuranceProvidersSelect
+        insuranceProviderId={value}
+        {...insuranceProviderSelectProps}
+        {...errorProps}
+      />
+    )}
+  </FieldErrorWrapper>
+);
