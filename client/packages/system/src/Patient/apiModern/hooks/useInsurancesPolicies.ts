@@ -26,6 +26,7 @@ const defaultDraftInsurance: DraftInsurance = {
   discountPercentage: 0,
   expiryDate: '',
   nameId: '',
+  nameOfInsured: '',
 };
 
 export const useInsurancePolicies = (nameId: string) => {
@@ -110,6 +111,7 @@ const useCreate = () => {
     isActive,
     discountPercentage,
     expiryDate,
+    nameOfInsured,
   }: DraftInsurance) => {
     return await patientApi.insertInsurance({
       storeId,
@@ -123,6 +125,7 @@ const useCreate = () => {
         isActive,
         discountPercentage,
         expiryDate,
+        nameOfInsured,
       },
     });
   };
@@ -143,6 +146,7 @@ const useUpdate = () => {
     discountPercentage,
     expiryDate,
     isActive,
+    nameOfInsured,
   }: DraftInsurance) => {
     const result = await patientApi.updateInsurance({
       storeId,
@@ -153,6 +157,7 @@ const useUpdate = () => {
         discountPercentage,
         expiryDate,
         isActive,
+        nameOfInsured,
       },
     });
 
