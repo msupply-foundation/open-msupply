@@ -17,10 +17,7 @@ import {
 import { useInbound } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';
-import {
-  ItemRowFragment,
-  useDefaultServiceItem,
-} from '@openmsupply-client/system';
+import { ItemRowFragment, useItem } from '@openmsupply-client/system';
 
 interface InboundServiceLineEditProps {
   isOpen: boolean;
@@ -31,13 +28,15 @@ const InboundServiceLineEditComponent = ({
   isOpen,
   onClose,
 }: InboundServiceLineEditProps) => {
+  const t = useTranslation();
   const { error } = useNotification();
-  const isDisabled = useInbound.utils.isDisabled();
   const { Modal } = useDialog({ isOpen, onClose });
+  const isDisabled = useInbound.utils.isDisabled();
   const { lines, update, add, save, isLoading } = useDraftServiceLines();
   const columns = useServiceLineColumns(update);
-  const t = useTranslation();
-  const hasDefaultServiceItem = useDefaultServiceItem();
+  const {
+    serviceItem: { data: serviceItem },
+  } = useItem();
 
   return (
     <Modal
@@ -70,7 +69,7 @@ const InboundServiceLineEditComponent = ({
             display="flex"
           >
             <ButtonWithIcon
-              disabled={isDisabled || !hasDefaultServiceItem.defaultServiceItem}
+              disabled={isDisabled || !serviceItem}
               color="primary"
               variant="outlined"
               onClick={add}
@@ -90,7 +89,7 @@ const InboundServiceLineEditComponent = ({
               data={lines.filter(({ isDeleted }) => !isDeleted)}
               dense
               noDataMessage={
-                !hasDefaultServiceItem.defaultServiceItem
+                !serviceItem
                   ? t('error.no-service-charges')
                   : t('error.no-results')
               }

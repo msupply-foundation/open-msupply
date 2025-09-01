@@ -12,12 +12,12 @@ use graphql_core::{
 use repository::{
     contact_trace::{ContactTrace, ContactTraceFilter, ContactTraceSort, ContactTraceSortField},
     contact_trace_row::ContactTraceRow,
-    DateFilter, DatetimeFilter, EqualFilter, ProgramRow, StringFilter,
+    DateFilter, DatetimeFilter, EqualFilter, GenderType, ProgramRow, StringFilter,
 };
 
 use super::{
     document::DocumentNode,
-    patient::{EqualFilterGenderType, GenderType, PatientNode},
+    patient::{EqualFilterGenderType, GenderTypeNode, PatientNode},
     program_enrolment::ProgramEnrolmentNode,
     program_node::ProgramNode,
 };
@@ -36,6 +36,7 @@ pub struct ContactTraceConnector {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::contact_trace::ContactTraceSortField")]
 pub enum ContactTraceSortFieldInput {
     Datetime,
     PatientId,
@@ -58,19 +59,8 @@ pub struct ContactTraceSortInput {
 
 impl ContactTraceSortInput {
     pub fn to_domain(self) -> ContactTraceSort {
-        let key = match self.key {
-            ContactTraceSortFieldInput::Datetime => ContactTraceSortField::Datetime,
-            ContactTraceSortFieldInput::PatientId => ContactTraceSortField::PatientId,
-            ContactTraceSortFieldInput::ProgramId => ContactTraceSortField::ProgramId,
-            ContactTraceSortFieldInput::ContactTraceId => ContactTraceSortField::ContactTraceId,
-            ContactTraceSortFieldInput::FirstName => ContactTraceSortField::FirstName,
-            ContactTraceSortFieldInput::LastName => ContactTraceSortField::LastName,
-            ContactTraceSortFieldInput::DateOfBirth => ContactTraceSortField::DateOfBirth,
-            ContactTraceSortFieldInput::Gender => ContactTraceSortField::Gender,
-        };
-
         ContactTraceSort {
-            key,
+            key: ContactTraceSortField::from(self.key),
             desc: self.desc,
         }
     }
@@ -120,7 +110,7 @@ impl ContactTraceFilterInput {
             last_name: last_name.map(StringFilter::from),
             patient_id: patient_id.map(EqualFilter::from),
             program_context_id: None,
-            gender: gender.map(|t| map_filter!(t, GenderType::to_domain)),
+            gender: gender.map(|t| map_filter!(t, |g| GenderType::from(g))),
             date_of_birth: date_of_birth.map(DateFilter::from),
         }
     }
@@ -262,11 +252,10 @@ impl ContactTraceNode {
         self.trace_row().last_name.clone()
     }
 
-    pub async fn gender(&self) -> Option<GenderType> {
-        self.trace_row()
-            .gender
-            .as_ref()
-            .map(GenderType::from_domain)
+    pub async fn gender(&self) -> Option<GenderTypeNode> {
+        Some(GenderTypeNode::from(
+            self.trace_row().gender.clone().unwrap_or_default(),
+        ))
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {

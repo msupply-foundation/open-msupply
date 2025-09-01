@@ -26,9 +26,11 @@ table! {
 joinable!(activity_log -> user_account (user_id));
 joinable!(activity_log -> store (store_id));
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ActivityLogType {
+    #[default]
     UserLoggedIn,
     InvoiceCreated,
     InvoiceDeleted,
@@ -100,6 +102,9 @@ pub enum ActivityLogType {
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
     VolumePerPackChanged,
+    GoodsReceivedCreated,
+    GoodsReceivedDeleted,
+    GoodsReceivedStatusFinalised,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderAuthorised,
@@ -113,7 +118,7 @@ pub enum ActivityLogType {
     PurchaseOrderLineDeleted,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = activity_log)]
 pub struct ActivityLogRow {
@@ -205,5 +210,37 @@ impl Delete for ActivityLogRowDelete {
             ActivityLogRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
+    }
+}
+#[cfg(test)]
+mod test {
+    use super::*;
+    use strum::IntoEnumIterator;
+    use util::assert_matches;
+
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn activity_log_type_enum() {
+        let (_, connection, _, _) =
+            setup_all("activity_log_type_enum", MockDataInserts::none()).await;
+
+        let repo = ActivityLogRowRepository::new(&connection);
+        // Try upsert all variants, confirm that diesel enums match postgres
+        for option_type in ActivityLogType::iter() {
+            let id = format!("{:?}", option_type);
+            let result = repo.insert_one(&ActivityLogRow {
+                id: id.clone(),
+                r#type: option_type,
+                ..Default::default()
+            });
+            assert!(
+                result.is_ok(),
+                "failed to insert activity log for type {:?}",
+                id
+            );
+
+            assert_matches!(repo.find_one_by_id(&id), Ok(Some(_)));
+        }
     }
 }

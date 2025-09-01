@@ -81,11 +81,9 @@ pub enum ProgramEventSortField {
     Datetime,
     ActiveStartDatetime,
     ActiveEndDatetime,
-    Patient,
     DocumentType,
     DocumentName,
     Type,
-    Name,
 }
 
 macro_rules! apply_program_event_filters {
@@ -187,9 +185,6 @@ impl<'a> ProgramEventRepository<'a> {
                 ProgramEventSortField::ActiveEndDatetime => {
                     apply_sort!(query, sort, program_event::active_end_datetime)
                 }
-                ProgramEventSortField::Patient => {
-                    apply_sort!(query, sort, name_link::name_id)
-                }
                 ProgramEventSortField::DocumentType => {
                     apply_sort!(query, sort, program_event::document_type)
                 }
@@ -197,9 +192,6 @@ impl<'a> ProgramEventRepository<'a> {
                     apply_sort!(query, sort, program_event::document_name)
                 }
                 ProgramEventSortField::Type => apply_sort!(query, sort, program_event::type_),
-                ProgramEventSortField::Name => {
-                    apply_sort!(query, sort, program_event::data)
-                }
             }
         } else {
             query = query.order(program_event::datetime.desc())

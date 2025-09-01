@@ -1,14 +1,15 @@
 import {
   isEmpty,
   PreferenceNodeType,
+  PREFERENCES_QUERY_KEY,
   UpsertPreferencesInput,
   useMutation,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
-import { PREFERENCES } from './keys';
 import { useAdminPrefsList } from './useAdminPrefsList';
+import { PREFERENCE_DESCRIPTION_QUERY_KEY } from './keys';
 
 export const useEditPreferences = (
   prefType: PreferenceNodeType,
@@ -20,13 +21,16 @@ export const useEditPreferences = (
   const { data } = useAdminPrefsList(prefType, storeId);
   const { mutateAsync } = useUpsertPref();
 
-  // Please add debouncing when string prefs are implemented
-  const update = async (input: Partial<UpsertPreferencesInput>) => {
+  const update = async (
+    input: Partial<UpsertPreferencesInput>
+  ): Promise<boolean /* wasSuccessful */> => {
     try {
       await mutateAsync(input);
+      return true;
     } catch (err) {
       console.error('Error updating preferences:', err);
       error(t('error.something-wrong'))();
+      return false;
     }
   };
 
@@ -52,7 +56,8 @@ const useUpsertPref = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(PREFERENCES);
+        queryClient.invalidateQueries(PREFERENCES_QUERY_KEY);
+        queryClient.invalidateQueries(PREFERENCE_DESCRIPTION_QUERY_KEY);
       },
     }
   );

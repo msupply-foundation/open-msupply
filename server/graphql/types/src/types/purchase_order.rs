@@ -1,17 +1,16 @@
 use self::dataloader::DataLoader;
-use async_graphql::*;
-use chrono::{NaiveDate, NaiveDateTime};
-use graphql_core::loader::{
-    NameByIdLoader, NameByIdLoaderInput, PurchaseOrderLinesByPurchaseOrderIdLoader,
-    StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
-};
-use graphql_core::ContextExt;
-use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus};
-use service::ListResult;
-
 use crate::types::{
     NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
 };
+use async_graphql::*;
+use chrono::{NaiveDate, NaiveDateTime};
+use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
+use graphql_core::loader::{
+    NameByIdLoader, NameByIdLoaderInput, StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
+};
+use graphql_core::ContextExt;
+use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow};
+use service::ListResult;
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderNode {
@@ -50,12 +49,10 @@ impl PurchaseOrderNode {
     }
 
     pub async fn order_total_after_discount(&self) -> f64 {
-        let order_total_after_discount = match &self.stats {
+        match &self.stats {
             Some(stats) => stats.order_total_after_discount,
             None => 0.0,
-        };
-
-        order_total_after_discount
+        }
     }
 
     pub async fn line_total_after_discount(&self) -> f64 {
@@ -85,7 +82,7 @@ impl PurchaseOrderNode {
         &self.row().confirmed_datetime
     }
     pub async fn status(&self) -> PurchaseOrderNodeStatus {
-        PurchaseOrderNodeStatus::from_domain(self.row().status.clone())
+        PurchaseOrderNodeStatus::from(self.row().status.clone())
     }
     pub async fn target_months(&self) -> &Option<f64> {
         &self.row().target_months
@@ -220,33 +217,13 @@ impl PurchaseOrderNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::purchase_order_row
+::PurchaseOrderStatus")]
 pub enum PurchaseOrderNodeStatus {
     New,
     Confirmed,
     Authorised,
     Finalised,
-}
-
-impl PurchaseOrderNodeStatus {
-    pub fn from_domain(status: PurchaseOrderStatus) -> PurchaseOrderNodeStatus {
-        use PurchaseOrderStatus::*;
-        match status {
-            New => PurchaseOrderNodeStatus::New,
-            Confirmed => PurchaseOrderNodeStatus::Confirmed,
-            Authorised => PurchaseOrderNodeStatus::Authorised,
-            Finalised => PurchaseOrderNodeStatus::Finalised,
-        }
-    }
-
-    pub fn to_domain(self) -> PurchaseOrderStatus {
-        use PurchaseOrderNodeStatus::*;
-        match self {
-            New => PurchaseOrderStatus::New,
-            Confirmed => PurchaseOrderStatus::Confirmed,
-            Authorised => PurchaseOrderStatus::Authorised,
-            Finalised => PurchaseOrderStatus::Finalised,
-        }
-    }
 }
 
 impl PurchaseOrderConnector {

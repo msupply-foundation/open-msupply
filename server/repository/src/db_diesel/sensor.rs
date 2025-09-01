@@ -25,7 +25,6 @@ pub struct SensorFilter {
 
 #[derive(PartialEq, Debug)]
 pub enum SensorSortField {
-    Id,
     Serial,
     Name,
 }
@@ -61,9 +60,6 @@ impl<'a> SensorRepository<'a> {
         let mut query = Self::create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
-                SensorSortField::Id => {
-                    apply_sort_no_case!(query, sort, sensor::id)
-                }
                 SensorSortField::Serial => {
                     apply_sort_no_case!(query, sort, sensor::serial)
                 }

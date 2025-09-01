@@ -194,7 +194,6 @@ impl AssetLogStatus {
 }
 
 #[cfg(test)]
-
 mod tests {
     use crate::{
         assets::asset_log::{AssetLogFilter, AssetLogRepository},

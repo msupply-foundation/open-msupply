@@ -3,8 +3,10 @@ use std::vec;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
+use repository::asset_log_row::AssetLogStatus;
 use serde_json;
 
+use super::{AssetLogNode, EqualFilterStatusInput};
 use graphql_asset_catalogue::types::asset_catalogue_item::AssetCatalogueItemNode;
 use graphql_asset_catalogue::types::asset_category::AssetCategoryNode;
 use graphql_asset_catalogue::types::asset_class::AssetClassNode;
@@ -22,21 +24,16 @@ use graphql_core::simple_generic_errors::{
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, NameNode, StoreNode, SyncFileReferenceConnector};
-
-use repository::assets::asset::AssetSortField;
-
 use repository::{
-    assets::asset::{Asset, AssetFilter, AssetSort},
-    EqualFilter,
+    assets::asset::{Asset, AssetFilter, AssetSort, AssetSortField},
+    DateFilter, EqualFilter, StringFilter,
 };
-use repository::{DateFilter, StringFilter};
 use service::asset::parse::{AssetFromGs1Error as ServiceScannedDataParseError, LockedAssetFields};
 use service::{usize_to_u32, ListResult};
 
-use super::{AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput};
-
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::assets::asset::AssetSortField")]
 pub enum AssetSortFieldInput {
     SerialNumber,
     InstallationDate,
@@ -44,6 +41,7 @@ pub enum AssetSortFieldInput {
     ModifiedDatetime,
     AssetNumber,
     Store,
+    Notes,
 }
 
 #[derive(InputObject)]
@@ -91,7 +89,7 @@ impl From<AssetFilterInput> for AssetFilter {
             store_id: f.store_id.map(StringFilter::from),
             functional_status: f
                 .functional_status
-                .map(|t| map_filter!(t, AssetLogStatusInput::to_domain)),
+                .map(|t| map_filter!(t, |s| AssetLogStatus::from(s))),
         }
     }
 }
@@ -378,19 +376,8 @@ impl AssetConnector {
 
 impl AssetSortInput {
     pub fn to_domain(&self) -> AssetSort {
-        use AssetSortField as to;
-        use AssetSortFieldInput as from;
-        let key = match self.key {
-            from::SerialNumber => to::SerialNumber,
-            from::InstallationDate => to::InstallationDate,
-            from::ReplacementDate => to::ReplacementDate,
-            from::ModifiedDatetime => to::ModifiedDatetime,
-            from::AssetNumber => to::AssetNumber,
-            from::Store => to::Store,
-        };
-
         AssetSort {
-            key,
+            key: AssetSortField::from(self.key),
             desc: self.desc,
         }
     }

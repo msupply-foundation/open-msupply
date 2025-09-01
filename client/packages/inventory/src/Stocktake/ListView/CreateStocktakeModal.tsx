@@ -20,10 +20,9 @@ import {
 import {
   Box,
   Formatter,
-  PreferenceKey,
   StockLineFilterInput,
   useNavigate,
-  usePreference,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 import { VvmStatusFragment } from 'packages/system/src/Stock/api';
@@ -56,9 +55,7 @@ export const CreateStocktakeModal = ({
   const navigate = useNavigate();
   const t = useTranslation();
 
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVvmStatusForStock
-  );
+  const { manageVvmStatusForStock } = usePreferences();
 
   const { Modal } = useDialog({
     isOpen: open,
@@ -298,7 +295,7 @@ export const CreateStocktakeModal = ({
                 label={t('label.items-expiring-before')}
               />
 
-              {preferences?.manageVvmStatusForStock && (
+              {manageVvmStatusForStock && (
                 <InputWithLabelRow
                   label={t('label.vvm-status')}
                   labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}

@@ -90,7 +90,7 @@ allow_tables_to_appear_in_same_query!(name_oms_fields, program);
 // Old versions may integrate through sync the new gender variant as `None`.
 // Your migration should address this by checking all records with `None` values and
 // convert them to the new more concrete variant you have added.
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum GenderType {
@@ -103,6 +103,7 @@ pub enum GenderType {
     TransgenderFemale,
     TransgenderFemaleHormone,
     TransgenderFemaleSurgical,
+    #[default]
     Unknown,
     NonBinary,
 }

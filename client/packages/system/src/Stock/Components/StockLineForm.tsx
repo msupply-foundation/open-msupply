@@ -21,13 +21,12 @@ import {
   usePluginProvider,
   UsePluginEvents,
   useRegisterActions,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   ReasonOptionNodeType,
   QuantityUtils,
   Alert,
 } from '@openmsupply-client/common';
-import { DraftStockLine } from '../api';
+import { DraftStockLine, StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import {
   checkInvalidLocationLines,
@@ -36,7 +35,11 @@ import {
   VVMStatusSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
-import { ItemVariantInput, useIsItemVariantsEnabled } from '../../Item';
+import {
+  getVolumePerPackFromVariant,
+  ItemVariantInput,
+  useIsItemVariantsEnabled,
+} from '../../Item';
 import { CampaignOrProgramSelector } from './Campaign';
 
 interface StockLineFormProps {
@@ -46,6 +49,7 @@ interface StockLineFormProps {
   pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
   packEditable?: boolean;
   isNewModal?: boolean;
+  existingStockLine?: StockLineRowFragment | null;
 }
 export const StockLineForm = ({
   draft,
@@ -54,16 +58,12 @@ export const StockLineForm = ({
   pluginEvents,
   packEditable,
   isNewModal = false,
+  existingStockLine = null,
 }: StockLineFormProps) => {
   const t = useTranslation();
   const { error } = useNotification();
 
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.SortByVvmStatusThenExpiry
-  );
+  const preferences = usePreferences();
 
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
@@ -72,8 +72,8 @@ export const StockLineForm = ({
 
   const showVVMStatus =
     draft?.item?.isVaccine &&
-    (preferences?.manageVvmStatusForStock ||
-      preferences?.sortByVvmStatusThenExpiry);
+    (preferences.manageVvmStatusForStock ||
+      preferences.sortByVvmStatusThenExpiry);
 
   const supplierName = draft.supplierName
     ? draft.supplierName
@@ -114,7 +114,7 @@ export const StockLineForm = ({
   if (loading) return null;
 
   const getDosesProps = (numPacks: number) => {
-    if (!preferences?.manageVaccinesInDoses || !draft.item.isVaccine) return {};
+    if (!preferences.manageVaccinesInDoses || !draft.item.isVaccine) return {};
 
     const doses = QuantityUtils.packsToDoses(numPacks, draft);
 
@@ -327,6 +327,7 @@ export const StockLineForm = ({
                   disabled={false}
                   selectedLocation={location}
                   width={160}
+                  originalSelectedLocation={existingStockLine?.location}
                   onChange={location => {
                     onUpdate({ location, locationId: location?.id });
                   }}
@@ -348,16 +349,14 @@ export const StockLineForm = ({
                     selectedId={draft?.itemVariant?.id}
                     width={160}
                     onChange={variant => {
-                      const packaging = variant?.packagingVariants.find(
-                        p => p.packSize === draft.packSize
-                      );
-                      const volumePerPack =
-                        ((packaging?.volumePerUnit ?? 0) / 1000) *
-                        (draft?.packSize ?? 1);
+                      const newVolume = getVolumePerPackFromVariant({
+                        itemVariant: variant,
+                        packSize: draft.packSize,
+                      });
 
                       onUpdate({
                         itemVariant: variant,
-                        volumePerPack,
+                        volumePerPack: newVolume ?? 0,
                       });
                     }}
                   />
@@ -411,7 +410,7 @@ export const StockLineForm = ({
                 }
               />
             )}
-            {preferences?.allowTrackingOfStockByDonor && (
+            {preferences.allowTrackingOfStockByDonor && (
               <StyledInputRow
                 label={t('label.donor')}
                 Input={

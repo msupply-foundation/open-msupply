@@ -10,6 +10,7 @@ use graphql_core::{
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::form_schema::FormSchemaSortField")]
 pub enum FormSchemaSortFieldInput {
     Id,
 }
@@ -26,9 +27,7 @@ pub struct FormSchemaSortInput {
 impl FormSchemaSortInput {
     fn to_domain(&self) -> FormSchemaSort {
         FormSchemaSort {
-            key: match self.key {
-                FormSchemaSortFieldInput::Id => FormSchemaSortField::Id,
-            },
+            key: FormSchemaSortField::from(self.key),
             desc: self.desc,
         }
     }

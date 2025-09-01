@@ -1,11 +1,10 @@
-use chrono::NaiveDate;
-use repository::{GoodsReceivedLineRow, GoodsReceivedLineRowDelete};
-use serde_json::json;
-
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
     translations::goods_received_line::LegacyGoodsReceivedLineRow,
 };
+use chrono::NaiveDate;
+use repository::{GoodsReceivedLineDelete, GoodsReceivedLineRow};
+use serde_json::json;
 
 const TABLE_NAME: &str = "Goods_received_line";
 
@@ -104,6 +103,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         GOODS_RECEIVED_LINE.0,
-        GoodsReceivedLineRowDelete(GOODS_RECEIVED_LINE.0.to_string()),
+        GoodsReceivedLineDelete(GOODS_RECEIVED_LINE.0.to_string()),
     )]
 }

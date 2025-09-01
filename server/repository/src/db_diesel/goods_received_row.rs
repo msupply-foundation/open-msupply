@@ -1,12 +1,13 @@
-use crate::Delete;
+use crate::db_diesel::{item_link_row::item_link, item_row::item};
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
 };
+
 use chrono::{NaiveDate, NaiveDateTime};
+use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
-use diesel::dsl::max;
 use serde::{Deserialize, Serialize};
 
 table! {
@@ -26,6 +27,9 @@ table! {
         created_by -> Nullable<Text>,
     }
 }
+
+allow_tables_to_appear_in_same_query!(goods_received, item_link);
+allow_tables_to_appear_in_same_query!(goods_received, item);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
@@ -109,12 +113,19 @@ impl<'a> GoodsReceivedRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+    pub fn delete(&self, goods_receiving_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(goods_receiving_id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(goods_received::table)
-            .filter(goods_received::id.eq(id))
+            .filter(goods_received::id.eq(goods_receiving_id))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
     pub fn find_max_goods_received_number(
@@ -144,14 +155,13 @@ impl Upsert for GoodsReceivedRow {
     }
 }
 
-#[derive(Debug)]
-pub struct GoodsReceivedRowDelete(pub String);
-impl Delete for GoodsReceivedRowDelete {
+#[derive(Debug, Clone)]
+pub struct GoodsReceivedDelete(pub String);
+impl Delete for GoodsReceivedDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        GoodsReceivedRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
+        let change_log_id = GoodsReceivedRowRepository::new(con).delete(&self.0)?;
+        Ok(change_log_id)
     }
-
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(

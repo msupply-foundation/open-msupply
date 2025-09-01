@@ -8,12 +8,15 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderNodeStatus};
-use repository::{DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
+use repository::{
+    DatetimeFilter, EqualFilter, PaginationOption, PurchaseOrderStatus, StringFilter,
+};
 use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::purchase_order::PurchaseOrderSortField")]
 pub enum PurchaseOrderSortFieldInput {
     Number,
     CreatedDatetime,
@@ -131,7 +134,7 @@ impl PurchaseOrderFilterInput {
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             status: self
                 .status
-                .map(|t| map_filter!(t, PurchaseOrderNodeStatus::to_domain)),
+                .map(|t| map_filter!(t, |s| PurchaseOrderStatus::from(s))),
             supplier: self.supplier.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
         }
@@ -140,17 +143,8 @@ impl PurchaseOrderFilterInput {
 
 impl PurchaseOrderSortInput {
     pub fn to_domain(self) -> PurchaseOrderSort {
-        use PurchaseOrderSortField as to;
-        use PurchaseOrderSortFieldInput as from;
-        let key = match self.key {
-            from::Number => to::Number,
-            from::TargetMonths => to::TargetMonths,
-            from::Status => to::Status,
-            from::CreatedDatetime => to::CreatedDatetime,
-        };
-
         PurchaseOrderSort {
-            key,
+            key: PurchaseOrderSortField::from(self.key),
             desc: self.desc,
         }
     }

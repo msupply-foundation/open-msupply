@@ -39,6 +39,7 @@ export const EnumFilter: FC<{
       label={name}
       value={value ?? ''}
       onChange={e => handleChange(e.target.value)}
+      clearable
     />
   );
 };

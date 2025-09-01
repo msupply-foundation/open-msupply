@@ -80,9 +80,7 @@ mod update {
                     id: "purchase_order_line_id_1".to_string(),
                     item_id: Some(mock_item_a().id.to_string()),
                     requested_pack_size: Some(5.0),
-                    requested_number_of_units: None,
-                    requested_delivery_date: None,
-                    expected_delivery_date: None,
+                    ..Default::default()
                 }
             ),
             Err(

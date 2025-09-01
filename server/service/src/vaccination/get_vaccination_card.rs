@@ -39,7 +39,7 @@ pub fn get_vaccination_card(
             ProgramEnrolmentFilter::new().id(EqualFilter::equal_to(&program_enrolment_id)),
         )?
         .pop()
-        .ok_or_else(|| RepositoryError::NotFound)?;
+        .ok_or(RepositoryError::NotFound)?;
 
     let patient_dob = enrolment.patient_row.date_of_birth;
 
@@ -83,13 +83,11 @@ pub fn get_suggested_date(
     patient_dob: Option<NaiveDate>,
     course_rows: Vec<VaccinationCardRow>,
 ) -> Option<NaiveDate> {
-    let suggested_date_by_age = patient_dob
-        .map(|dob| {
-            dob.checked_add_signed(Duration::days(
-                (row.min_age * AVG_NUMBER_OF_DAYS_IN_A_MONTH) as i64,
-            ))
-        })
-        .flatten();
+    let suggested_date_by_age = patient_dob.and_then(|dob| {
+        dob.checked_add_signed(Duration::days(
+            (row.min_age * AVG_NUMBER_OF_DAYS_IN_A_MONTH) as i64,
+        ))
+    });
 
     // If the dose was already given, no need to suggest date
     if row.given == Some(true) {
@@ -271,33 +269,25 @@ mod tests {
         assert_eq!(date, None);
 
         // If DOB, suggested date is DOB + min_age
-        let date = get_suggested_date(&pending, dob.clone(), vec![pending.clone()]);
+        let date = get_suggested_date(&pending, dob, vec![pending.clone()]);
         assert_eq!(date, NaiveDate::from_ymd_opt(2020, 4, 1)); // 3 months old
 
         // Still suggest a date if the dose was not given
-        let date = get_suggested_date(&not_given, dob.clone(), vec![not_given.clone()]);
+        let date = get_suggested_date(&not_given, dob, vec![not_given.clone()]);
         assert_eq!(date, NaiveDate::from_ymd_opt(2020, 3, 1)); // 2 months old
 
         // -- SUBSEQUENT DOSES --
 
         // If no vaccination event for previous dose, no suggested date
-        let date = get_suggested_date(
-            &pending_2,
-            dob.clone(),
-            vec![pending.clone(), pending_2.clone()],
-        );
+        let date = get_suggested_date(&pending_2, dob, vec![pending.clone(), pending_2.clone()]);
         assert_eq!(date, None);
 
         // If previous dose was not given, no suggested date
-        let date = get_suggested_date(
-            &pending,
-            dob.clone(),
-            vec![not_given.clone(), pending.clone()],
-        );
+        let date = get_suggested_date(&pending, dob, vec![not_given.clone(), pending.clone()]);
         assert_eq!(date, None);
 
         // If previous dose was given, add min interval for suggested date (if later than min age)
-        let date = get_suggested_date(&pending, dob.clone(), vec![given.clone(), pending.clone()]);
+        let date = get_suggested_date(&pending, dob, vec![given.clone(), pending.clone()]);
         assert_eq!(date, NaiveDate::from_ymd_opt(2020, 4, 3)); // 60 days after 3/2/2020 (based on interval from the first dose)
 
         // If previous dose was given, add min age for suggested date (if later than min interval)

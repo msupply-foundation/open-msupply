@@ -23,7 +23,7 @@ export const EditCustomTranslations = ({
   update,
 }: {
   value: Record<string, string>;
-  update: (value: Record<string, string>) => Promise<void>;
+  update: (value: Record<string, string>) => Promise<boolean>;
 }) => {
   const t = useTranslation();
   const isOpen = useToggle();
@@ -56,7 +56,7 @@ export const CustomTranslationsModal = ({
   onClose,
 }: {
   value: Record<string, string>;
-  update: (value: Record<string, string>) => Promise<void>;
+  update: (value: Record<string, string>) => Promise<boolean>;
   onClose: () => void;
 }) => {
   const t = useTranslation();
@@ -72,6 +72,27 @@ export const CustomTranslationsModal = ({
     mapTranslationsToArray(value, defaultTranslation)
   );
 
+  const invalidateCustomTranslations = () => {
+    // Clear from local storage cache
+    Object.keys(localStorage)
+      .filter(
+        key =>
+          key.startsWith('i18next_res_') &&
+          key.endsWith(CUSTOM_TRANSLATIONS_NAMESPACE)
+      )
+      .forEach(key => localStorage.removeItem(key));
+
+    // Clear from i18next cache (specifically for when we delete a translation)
+    for (const lang of i18n.languages) {
+      i18n.removeResourceBundle(lang, CUSTOM_TRANSLATIONS_NAMESPACE);
+    }
+
+    // Then reload from backend
+    // Note - this is still requires the components in question to
+    // re-render to pick up the new translations
+    i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
+  };
+
   const saveAndClose = async () => {
     const hasInvalidTranslations = translations.some(tr => tr.isInvalid);
     if (hasInvalidTranslations) {
@@ -83,13 +104,15 @@ export const CustomTranslationsModal = ({
 
     setLoading(true);
     const asObject = mapTranslationsToObject(translations);
-    await update(asObject);
-    // Note - this is still requires the component in question to
-    // re-render to pick up the new translations (i.e. navigate away)
-    i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
+
+    const successfulSave = await update(asObject);
     setLoading(false);
-    success(t('messages.saved'))();
-    onClose();
+
+    if (successfulSave) {
+      invalidateCustomTranslations();
+      success(t('messages.saved'))();
+      onClose();
+    }
   };
 
   return (

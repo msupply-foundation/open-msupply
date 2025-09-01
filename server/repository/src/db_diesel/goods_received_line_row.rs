@@ -1,8 +1,13 @@
+use super::item_row::item;
+use crate::db_diesel::goods_received_row::goods_received;
+use crate::db_diesel::item_link_row::item_link;
+use crate::EqualFilter;
 use crate::{
     goods_received_row::GoodsReceivedRowRepository, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, Delete, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 use chrono::NaiveDate;
+use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -27,6 +32,12 @@ table! {
         comment -> Nullable<Text>,
     }
 }
+
+joinable!(goods_received_line -> item_link(item_link_id));
+joinable!(goods_received_line -> goods_received(goods_received_id));
+allow_tables_to_appear_in_same_query!(goods_received_line, item_link);
+allow_tables_to_appear_in_same_query!(goods_received_line, item);
+allow_tables_to_appear_in_same_query!(goods_received_line, goods_received);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
@@ -60,6 +71,15 @@ pub enum GoodsReceivedLineStatus {
     #[default]
     Unauthorised,
     Authorised,
+}
+
+impl GoodsReceivedLineStatus {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
 }
 
 pub struct GoodsReceivedLineRowRepository<'a> {
@@ -125,6 +145,17 @@ impl<'a> GoodsReceivedLineRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_max_goods_received_line_number(
+        &self,
+        goods_received_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = goods_received_line::table
+            .filter(goods_received_line::goods_received_id.eq(goods_received_id))
+            .select(max(goods_received_line::line_number))
+            .first(self.connection.lock().connection())?;
+        Ok(result)
+    }
 }
 
 impl Upsert for GoodsReceivedLineRow {
@@ -143,8 +174,8 @@ impl Upsert for GoodsReceivedLineRow {
 }
 
 #[derive(Debug)]
-pub struct GoodsReceivedLineRowDelete(pub String);
-impl Delete for GoodsReceivedLineRowDelete {
+pub struct GoodsReceivedLineDelete(pub String);
+impl Delete for GoodsReceivedLineDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         GoodsReceivedLineRowRepository::new(con).delete(&self.0)?;
         Ok(None)

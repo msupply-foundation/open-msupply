@@ -1,4 +1,3 @@
-import { useIntlUtils } from '@common/intl';
 import { AuthCookie, AuthError, setAuthCookie } from '../../AuthContext';
 import { useGetAuthToken } from './useGetAuthToken';
 import {
@@ -10,9 +9,11 @@ import {
   useGql,
   useLocalStorage,
   useQueryClient,
+  LanguageTypeNode,
+  UserNode,
+  UserStoreNodeFragment,
+  useIntlUtils,
 } from '@openmsupply-client/common';
-import { LanguageType, UserNode, UserStoreNodeFragment } from '@common/types';
-
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 
 const authNameQueries = ['authToken', 'me'];
@@ -156,7 +157,7 @@ export const useLogin = (
 
     const userLocale = getUserLocale(username);
     if (userLocale === undefined) {
-      changeLanguage(getLocaleCode(userDetails?.language as LanguageType));
+      changeLanguage(getLocaleCode(userDetails?.language as LanguageTypeNode));
     }
     upsertMostRecentCredential(username, store);
     setAuthCookie(authCookie);

@@ -2,6 +2,7 @@ import {
   FilterByWithBoolean,
   GoodsReceivedSortFieldInput,
   SortBy,
+  useMutation,
   useQuery,
   useTableStore,
 } from '@openmsupply-client/common';
@@ -19,7 +20,22 @@ export type ListParams = {
   filterBy: FilterByWithBoolean | null;
 };
 
-export const useGoodsReceivedList = (queryParams: ListParams) => {
+export const useGoodsReceivedList = (queryParams?: ListParams) => {
+  const { data, isLoading, isError, refetch } = useGet(
+    queryParams ?? { filterBy: null }
+  );
+  const { deleteGoodsReceived, selectedRows } = useDeleteLines(data?.nodes);
+
+  return {
+    query: { data, isLoading, isError, fetchAllGoodsReceived: refetch },
+    delete: {
+      deleteGoodsReceived,
+      selectedRows,
+    },
+  };
+};
+
+const useGet = (queryParams: ListParams) => {
   const { goodsReceivedApi, storeId } = useGoodsReceivedGraphQL();
 
   const {
@@ -68,17 +84,54 @@ export const useGoodsReceivedList = (queryParams: ListParams) => {
     return { nodes, totalCount };
   };
 
-  const { data, isLoading, isError } = useQuery({ queryKey, queryFn });
+  const query = useQuery({
+    queryKey,
+    queryFn,
+  });
+  return query;
+};
+
+const useDeleteLines = (goodsReceived?: GoodsReceivedRowFragment[]) => {
+  const { goodsReceivedApi, storeId, queryClient } = useGoodsReceivedGraphQL();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
+      .map(selectedId => goodsReceived?.find(({ id }) => selectedId === id))
       .filter(Boolean) as GoodsReceivedFragment[],
   }));
 
+  const mutationFn = async (id: string) => {
+    const result = await goodsReceivedApi.deleteGoodsReceived({
+      id,
+      storeId,
+    });
+    return result.deleteGoodsReceived;
+  };
+
+  const { mutateAsync: deleteMutation } = useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([GOODS_RECEIVED, LIST, storeId]);
+    },
+  });
+
+  const deleteGoodsReceived = async () => {
+    await Promise.all(
+      selectedRows.map(async ({ id }) => {
+        try {
+          await deleteMutation(id);
+        } catch (error) {
+          throw new Error(
+            `Failed to delete Goods Received with id ${id}: ${error}`
+          );
+        }
+      })
+    );
+  };
+
   return {
-    query: { data, isLoading, isError },
+    deleteGoodsReceived,
     selectedRows,
   };
 };

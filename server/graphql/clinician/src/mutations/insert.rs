@@ -1,8 +1,9 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::patient::GenderType;
+use graphql_types::types::patient::GenderTypeNode;
 use graphql_types::types::IdResponse;
+use repository::GenderType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     clinician::{InsertClinician, InsertClinicianError},
@@ -15,7 +16,7 @@ pub struct InsertClinicianInput {
     pub initials: String,
     pub last_name: String,
     pub first_name: Option<String>,
-    pub gender: Option<GenderType>,
+    pub gender: Option<GenderTypeNode>,
     pub mobile: Option<String>,
 }
 
@@ -63,7 +64,7 @@ impl InsertClinicianInput {
             initials,
             last_name,
             first_name,
-            gender: gender.map(|g| g.to_domain()),
+            gender: gender.map(|g| GenderType::from(g)),
             mobile,
         }
     }

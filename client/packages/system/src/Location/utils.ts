@@ -11,9 +11,9 @@ export const checkInvalidLocationLines = <
   currentLocationLines: T[]
 ): boolean => {
   return currentLocationLines.some(l => {
-    if (!restrictedLocationTypeId) return false;
+    if (!restrictedLocationTypeId || !l.location) return false;
     const lineLocationTypeId = l.location?.locationType?.id;
-    if (!lineLocationTypeId) return false;
+    if (!lineLocationTypeId) return true;
     return restrictedLocationTypeId !== lineLocationTypeId;
   });
 };

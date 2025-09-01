@@ -10,10 +10,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ApprovalStatusType, NameRow, Requisition,
-};
+use repository::{requisition_row::RequisitionRow, ApprovalStatusType, NameRow, Requisition};
 use service::ListResult;
 
 use super::{
@@ -22,6 +19,7 @@ use super::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::requisition::requisition_row::RequisitionType")]
 pub enum RequisitionNodeType {
     /// Requisition created by store that is ordering stock
     Request,
@@ -29,8 +27,9 @@ pub enum RequisitionNodeType {
     Response,
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
 /// Approval status is applicable to response requisition only
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::requisition::requisition_row::ApprovalStatusType")]
 pub enum RequisitionNodeApprovalStatus {
     // Requisition is editable, no approval required
     None,
@@ -40,9 +39,13 @@ pub enum RequisitionNodeApprovalStatus {
     Approved,
     /// Approval was denied, requisition is not editable
     Denied,
+    AutoApproved,
+    ApprovedByAnother,
+    DeniedByAnother,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::requisition::requisition_row::RequisitionStatus")]
 pub enum RequisitionNodeStatus {
     /// New requisition when manually created
     Draft,
@@ -73,11 +76,11 @@ impl RequisitionNode {
     }
 
     pub async fn r#type(&self) -> RequisitionNodeType {
-        RequisitionNodeType::from_domain(&self.row().r#type)
+        RequisitionNodeType::from(self.row().r#type.clone())
     }
 
     pub async fn status(&self) -> RequisitionNodeStatus {
-        RequisitionNodeStatus::from_domain(&self.row().status)
+        RequisitionNodeStatus::from(self.row().status.clone())
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
@@ -89,11 +92,12 @@ impl RequisitionNode {
     }
 
     pub async fn approval_status(&self) -> RequisitionNodeApprovalStatus {
-        self.row()
-            .approval_status
-            .as_ref()
-            .map(RequisitionNodeApprovalStatus::from_domain)
-            .unwrap_or(RequisitionNodeApprovalStatus::None)
+        RequisitionNodeApprovalStatus::from(
+            self.row()
+                .approval_status
+                .clone()
+                .unwrap_or(ApprovalStatusType::None),
+        )
     }
 
     /// User that last edited requisition, if user is not found in system default unknown user is returned
@@ -288,61 +292,6 @@ impl RequisitionConnector {
                 .into_iter()
                 .map(RequisitionNode::from_domain)
                 .collect(),
-        }
-    }
-}
-
-impl RequisitionNodeType {
-    pub fn to_domain(self) -> RequisitionType {
-        use RequisitionNodeType::*;
-        match self {
-            Request => RequisitionType::Request,
-            Response => RequisitionType::Response,
-        }
-    }
-
-    pub fn from_domain(r#type: &RequisitionType) -> RequisitionNodeType {
-        use RequisitionType::*;
-        match r#type {
-            Request => RequisitionNodeType::Request,
-            Response => RequisitionNodeType::Response,
-        }
-    }
-}
-
-impl RequisitionNodeApprovalStatus {
-    fn from_domain(status: &ApprovalStatusType) -> Self {
-        use ApprovalStatusType::*;
-        match status {
-            None => Self::None,
-            Approved => Self::Approved,
-            Pending => Self::Pending,
-            Denied => Self::Denied,
-            AutoApproved => Self::Approved,
-            ApprovedByAnother => Self::Approved,
-            DeniedByAnother => Self::Denied,
-        }
-    }
-}
-
-impl RequisitionNodeStatus {
-    pub fn to_domain(self) -> RequisitionStatus {
-        use RequisitionNodeStatus::*;
-        match self {
-            Draft => RequisitionStatus::Draft,
-            New => RequisitionStatus::New,
-            Sent => RequisitionStatus::Sent,
-            Finalised => RequisitionStatus::Finalised,
-        }
-    }
-
-    pub fn from_domain(status: &RequisitionStatus) -> RequisitionNodeStatus {
-        use RequisitionStatus::*;
-        match status {
-            Draft => RequisitionNodeStatus::Draft,
-            New => RequisitionNodeStatus::New,
-            Sent => RequisitionNodeStatus::Sent,
-            Finalised => RequisitionNodeStatus::Finalised,
         }
     }
 }
