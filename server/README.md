@@ -134,6 +134,19 @@ cargo make watch
 >
 > It's great for cases such as doing frontend work, where you want the backend to refresh as you switch/pull branches, or when making minor backend changes. Or you can play around with debounced re-compile times, with the `cargo-watch` `--delay` flag.
 
+### Start with feature flags
+
+Feature flags can be used to enable/disable certain features. Mostly we use them to hide features in the that are not ready for production. See [Feature Flags hook](/client/packages/common/src/hooks/useFeatureFlags/useFeatureFlags.ts) for currently available flags.
+
+To enable a feature, easiest way is to set the variable in your configuration yaml file, e.g.
+
+```
+features:
+  example_feature: true
+```
+
+See [Config section](#configs) for more info on yaml configurations.
+
 # Run with postgres
 
 ## Dependencies
