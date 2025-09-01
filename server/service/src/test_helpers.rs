@@ -69,6 +69,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             from: "no-reply@msupply.foundation".to_string(),
             interval: 1,
         }),
+        features: None,
     };
     let (file_sync_trigger, _) = FileSyncDriver::init(&settings);
     let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);
