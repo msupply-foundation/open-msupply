@@ -413,12 +413,8 @@ export const NumericTextInputWithError = ({
   <FieldErrorWrapper
     {...{ code, label, value, required, customErrorState, customErrorMessage }}
   >
-    {errorProps => (
-      <NumericTextInput
-        {...numericInputProps}
-        {...errorProps}
-        label={undefined} // Suppress input's own label
-      />
+    {({ label: _, ...errorProps }) => (
+      <NumericTextInput {...numericInputProps} {...errorProps} />
     )}
   </FieldErrorWrapper>
 );
