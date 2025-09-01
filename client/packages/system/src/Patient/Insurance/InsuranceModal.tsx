@@ -139,8 +139,6 @@ export const InsuranceModal = (): ReactElement => {
                   label={t('label.policy-number-person')}
                   value={draft.policyNumberPerson ?? undefined}
                   required={!draft.policyNumberFamily}
-                  customErrorState={draft.policyNumberPerson === '666'}
-                  customErrorMessage="That is the devil's number and is forbidden 😈"
                   disabled={haveInsuranceId}
                   onChange={event => {
                     updatePatch({
@@ -223,8 +221,6 @@ export const InsuranceModal = (): ReactElement => {
                   }}
                   code="discountPercentage"
                   label={t('label.discount-rate')}
-                  customErrorState={draft.discountPercentage >= 110}
-                  customErrorMessage="Waaaay too big!"
                 />
               }
             />
