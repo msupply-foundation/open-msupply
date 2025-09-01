@@ -52,6 +52,7 @@ pub struct StockLineFilterInput {
     pub location: Option<LocationFilterInput>,
     pub master_list: Option<MasterListFilterInput>,
     pub is_active: Option<bool>,
+    pub is_program_stock_line: Option<bool>,
 }
 
 impl From<StockLineFilterInput> for StockLineFilter {
@@ -69,6 +70,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             location: f.location.map(LocationFilter::from),
             master_list: f.master_list.map(|f| f.to_domain()),
             is_active: f.is_active,
+            is_program_stock_line: f.is_program_stock_line,
         }
     }
 }
