@@ -32,11 +32,14 @@ const UIComponent = (props: ControlProps) => {
     ? extractProperty(core?.data, 'programId')
     : null;
 
+  const shouldFindByProgram =
+    options?.findByProgram && programId && programId !== 'AllProgramsSelector';
+
   const today = new Date();
   const { data, isFetching, fetchNextPage, isRefetching } = usePeriodList(
     RECORDS_PER_PAGE,
-    programId,
-    options?.findByProgram ? !!programId : true,
+    shouldFindByProgram ? programId : null,
+    shouldFindByProgram ? !!programId : true,
     {
       startDate: {
         beforeOrEqualTo: Formatter.naiveDate(today),
@@ -116,7 +119,7 @@ const UIComponent = (props: ControlProps) => {
           value={period ? { label: period.name ?? '', ...period } : null}
           isOptionEqualToValue={(option, value) => option.id === value.id}
           clearable={props.uischema.options?.['clearable'] ?? false}
-          disabled={options?.findByProgram ? !programId : false}
+          disabled={shouldFindByProgram ? !programId : false}
           onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
           paginationDebounce={300}
         />

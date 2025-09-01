@@ -26,6 +26,7 @@ export type AllOptionsType = {
 const PatientProgramSearchOptions = z
   .object({
     programType: z.enum(['immunisation']).optional(),
+    allProgramsOption: z.boolean().optional(),
   })
   .optional();
 
@@ -52,12 +53,18 @@ const UIComponent = (props: ControlProps) => {
 
   const onChange = async (program: ProgramFragment | null) => {
     setProgram(program);
-    if (program === null || program.id === 'AllProgramsSelector') {
+    if (program === null) {
       handleChange(path, undefined);
       handleChange('elmisCode', undefined);
+      handleChange('fetchAllPrograms', false);
+    } else if (program.id === 'AllProgramsSelector') {
+      handleChange(path, undefined);
+      handleChange('fetchAllPrograms', true);
+      handleChange('elmisCode', 'AllProgramsElmis');
     } else {
       handleChange(path, program?.id);
       handleChange('elmisCode', program.elmisCode ?? undefined);
+      handleChange('fetchAllPrograms', true);
     }
   };
 
@@ -76,8 +83,11 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const programs = data?.nodes ?? [];
+
   const programOptions =
-    programs.length > 1 ? [...programs, allProgramsOptionRenderer] : programs;
+    programs.length > 1 && props.uischema.options?.['allProgramsOption']
+      ? [...programs, allProgramsOptionRenderer]
+      : programs;
 
   return (
     <DetailInputWithLabelRow
