@@ -11,12 +11,10 @@ import {
   ColumnAlign,
   TooltipTextCell,
   CellProps,
-  usePreference,
-  PreferenceKey,
   UnitsAndMaybeDoses,
   NumberCell,
 } from '@openmsupply-client/common';
-import { useItems, ItemsWithStatsFragment } from '../api';
+import { useVisibleOrOnHandItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
 
 const ItemListComponent = () => {
@@ -27,12 +25,8 @@ const ItemListComponent = () => {
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
-    filters: [{ key: 'codeOrName' }],
-  });
-  const { data, isError, isLoading } = useItems();
-  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
+  } = useUrlQueryParams();
+  const { data, isError, isLoading } = useVisibleOrOnHandItems();
   const pagination = { page, first, offset };
 
   const columns = useColumns<ItemsWithStatsFragment>(
@@ -60,7 +54,6 @@ const ItemListComponent = () => {
           Cell: UnitsAndMaybeDosesCell,
           width: 180,
           sortable: false,
-          cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
         },
       ],
       [
@@ -72,7 +65,6 @@ const ItemListComponent = () => {
           align: ColumnAlign.Right,
           width: 180,
           sortable: false,
-          cellProps: { displayDoses: prefs?.manageVaccinesInDoses },
         },
       ],
       {
@@ -119,9 +111,7 @@ export const ItemListView = () => (
   </TableProvider>
 );
 
-const UnitsAndMaybeDosesCell = (
-  props: CellProps<ItemsWithStatsFragment> & { displayDoses?: boolean }
-) => {
+const UnitsAndMaybeDosesCell = (props: CellProps<ItemsWithStatsFragment>) => {
   const { rowData, column } = props;
   const units = Number(column.accessor({ rowData })) ?? 0;
   const { isVaccine, doses } = rowData;
@@ -132,7 +122,6 @@ const UnitsAndMaybeDosesCell = (
       units={units}
       isVaccine={isVaccine}
       dosesPerUnit={doses}
-      displayDoses={props.displayDoses}
     />
   );
 };

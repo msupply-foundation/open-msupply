@@ -1,5 +1,5 @@
 import {
-  GenderType,
+  GenderTypeNode,
   PreferenceKey,
   PreferencesNode,
 } from '@openmsupply-client/common';
@@ -34,7 +34,11 @@ describe('getDisplayOptions', () => {
   it('returns preference options when preferenceKey is genderOptions', () => {
     const prefOptions = {
       __typename: 'PreferencesNode',
-      genderOptions: [GenderType.Female, GenderType.Male, GenderType.Unknown],
+      genderOptions: [
+        GenderTypeNode.Female,
+        GenderTypeNode.Male,
+        GenderTypeNode.Unknown,
+      ],
       allowTrackingOfStockByDonor: true,
       manageVaccinesInDoses: true,
       manageVvmStatusForStock: true,

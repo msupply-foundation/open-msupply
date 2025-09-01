@@ -37,13 +37,13 @@ export const Toolbar = () => {
               name: t('label.start-date'),
               elements: [
                 {
-                  type: 'date',
+                  type: 'dateTime',
                   name: t('label.from-date'),
                   urlParameter: 'startDatetime',
                   range: 'from',
                 },
                 {
-                  type: 'date',
+                  type: 'dateTime',
                   name: t('label.to-date'),
                   urlParameter: 'startDatetime',
                   range: 'to',

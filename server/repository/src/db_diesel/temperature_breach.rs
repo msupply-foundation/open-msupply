@@ -5,7 +5,7 @@ use super::{
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
     SensorFilter, SensorRepository,
@@ -32,7 +32,6 @@ pub struct TemperatureBreachFilter {
 
 #[derive(PartialEq, Debug)]
 pub enum TemperatureBreachSortField {
-    Id,
     StartDatetime,
     EndDatetime,
 }
@@ -71,9 +70,6 @@ impl<'a> TemperatureBreachRepository<'a> {
         let mut query = Self::create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
-                TemperatureBreachSortField::Id => {
-                    apply_sort_no_case!(query, sort, temperature_breach::id)
-                }
                 TemperatureBreachSortField::StartDatetime => {
                     apply_sort!(query, sort, temperature_breach::start_datetime)
                 }

@@ -51,7 +51,9 @@ export const Toolbar: FC = () => {
                   <SupplierSearchInput
                     disabled={isDisabled || !!originalShipment}
                     value={otherParty}
-                    onChange={async ({ id: otherPartyId }) => {
+                    onChange={async v => {
+                      const otherPartyId = v?.id;
+                      if (!otherPartyId) return;
                       await updateOtherParty({ id, otherPartyId });
                     }}
                   />

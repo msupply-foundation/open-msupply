@@ -1,15 +1,14 @@
-use crate::db_diesel::item_row::item;
-use crate::db_diesel::purchase_order_row::purchase_order;
-use crate::{db_diesel::item_link_row::item_link, Upsert};
-
-use crate::repository_error::RepositoryError;
-use crate::StorageConnection;
+use crate::{
+    db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
+    name_link, Delete, Upsert,
+};
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    StorageConnection,
+};
+use chrono::NaiveDate;
 use diesel::{dsl::max, prelude::*};
 use serde::{Deserialize, Serialize};
-
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-
-use chrono::NaiveDate;
 
 table! {
     purchase_order_line (id) {
@@ -21,7 +20,7 @@ table! {
         item_name -> Text,
         requested_pack_size -> Double,
         requested_number_of_units -> Double,
-        authorised_number_of_units -> Nullable<Double>,
+        adjusted_number_of_units -> Nullable<Double>,
         received_number_of_units -> Double,
         requested_delivery_date -> Nullable<Date>,
         expected_delivery_date -> Nullable<Date>,
@@ -30,11 +29,15 @@ table! {
         price_per_unit_before_discount -> Double,
         price_per_unit_after_discount -> Double,
         comment -> Nullable<Text>,
+        manufacturer_link_id -> Nullable<Text>,
+        note -> Nullable<Text>,
+        unit -> Nullable<Text>,
     }
 }
 
 joinable!(purchase_order_line -> item_link (item_link_id));
 joinable!(purchase_order_line -> purchase_order (purchase_order_id));
+joinable!(purchase_order_line -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
@@ -53,7 +56,7 @@ pub struct PurchaseOrderLineRow {
     pub item_name: String,
     pub requested_pack_size: f64,
     pub requested_number_of_units: f64,
-    pub authorised_number_of_units: Option<f64>,
+    pub adjusted_number_of_units: Option<f64>,
     pub received_number_of_units: f64,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
@@ -62,6 +65,9 @@ pub struct PurchaseOrderLineRow {
     pub price_per_unit_before_discount: f64,
     pub price_per_unit_after_discount: f64,
     pub comment: Option<String>,
+    pub manufacturer_link_id: Option<String>,
+    pub note: Option<String>,
+    pub unit: Option<String>,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {
@@ -179,6 +185,22 @@ impl Upsert for PurchaseOrderLineRow {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct PurchaseOrderLineDelete(pub String);
+impl Delete for PurchaseOrderLineDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = PurchaseOrderLineRowRepository::new(con).delete(&self.0)?;
+        Ok(change_log_id)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PurchaseOrderLineRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
 // purchase order line basic upsert and query operation test:
 #[cfg(test)]
 mod tests {
@@ -206,7 +228,7 @@ mod tests {
             supplier_name_link_id: mock_name_c().id,
             status: PurchaseOrderStatus::New,
             store_id: mock_store_a().id.clone(),
-            created_datetime: chrono::Utc::now().naive_utc().into(),
+            created_datetime: chrono::Utc::now().naive_utc(),
             purchase_order_number: 1,
 
             ..Default::default()

@@ -9,7 +9,8 @@ use graphql_types::types::document_registry::{
     DocumentRegistryCategoryNode, DocumentRegistryConnector, DocumentRegistryNode,
 };
 use repository::{
-    DocumentRegistryFilter, DocumentRegistrySort, DocumentRegistrySortField, EqualFilter,
+    DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistrySort,
+    DocumentRegistrySortField, EqualFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::usize_to_u32;
@@ -36,6 +37,7 @@ pub struct DocumentRegistryFilterInput {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::document_registry::DocumentRegistrySortField")]
 pub enum DocumentRegistrySortFieldInput {
     Type,
     DocumentType,
@@ -109,20 +111,15 @@ impl DocumentRegistryFilterInput {
             id: id.map(EqualFilter::from),
             document_type: document_type.map(EqualFilter::from),
             context_id: context_id.map(EqualFilter::from),
-            category: r#type.map(|t| map_filter!(t, DocumentRegistryCategoryNode::to_domain)),
+            category: r#type.map(|t| map_filter!(t, |c| DocumentRegistryCategory::from(c))),
         }
     }
 }
 
 impl DocumentRegistrySortInput {
     pub fn to_domain(self) -> DocumentRegistrySort {
-        let key = match self.key {
-            DocumentRegistrySortFieldInput::Type => DocumentRegistrySortField::Type,
-            DocumentRegistrySortFieldInput::DocumentType => DocumentRegistrySortField::DocumentType,
-        };
-
         DocumentRegistrySort {
-            key,
+            key: DocumentRegistrySortField::from(self.key),
             desc: self.desc,
         }
     }

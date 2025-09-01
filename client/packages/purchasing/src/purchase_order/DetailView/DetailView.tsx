@@ -5,7 +5,6 @@ import {
   createTableStore,
   DetailTabs,
   DetailViewSkeleton,
-  PurchaseOrderNodeStatus,
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
@@ -19,6 +18,7 @@ import { PurchaseOrderLineFragment } from '../api';
 import { ContentArea, Details, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
+import { canAddNewLines } from '../../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
@@ -52,13 +52,22 @@ export const DetailViewInner = () => {
     [onOpen]
   );
 
+  const openNext = useCallback(() => {
+    const currentIndex = sortedAndFilteredLines.findIndex(
+      line => line.id === lineId
+    );
+    const nextLine = sortedAndFilteredLines[currentIndex + 1];
+    if (!nextLine) return;
+    onOpen(nextLine.id);
+  }, [onOpen, lineId, sortedAndFilteredLines]);
+
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.number]);
 
   if (isLoading) return <DetailViewSkeleton />;
 
-  const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
+  const isDisabled = !data || !canAddNewLines(data);
 
   const tabs = [
     {
@@ -105,11 +114,17 @@ export const DetailViewInner = () => {
           <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal
+              purchaseOrder={data}
               isOpen={isOpen}
               onClose={onClose}
               mode={mode}
               lineId={lineId}
-              purchaseOrder={data}
+              isDisabled={isDisabled}
+              hasNext={
+                sortedAndFilteredLines.findIndex(line => line.id === lineId) <
+                sortedAndFilteredLines.length - 1
+              }
+              openNext={openNext}
             />
           )}
         </>

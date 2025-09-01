@@ -13,8 +13,7 @@ import {
   CurrencyCell,
   CellProps,
   NumberInputCell,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   useTranslation,
   TypedTFunction,
   LocaleKey,
@@ -74,11 +73,7 @@ export const useOutboundLineEditColumns = ({
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
 
-  const { data: prefs } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
+  const prefs = usePreferences();
 
   const packSize =
     allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
@@ -121,13 +116,13 @@ export const useOutboundLineEditColumns = ({
   ];
 
   if (
-    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) &&
+    (prefs.manageVvmStatusForStock || prefs.sortByVvmStatusThenExpiry) &&
     item?.isVaccine
   ) {
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      width: 85,
+      width: 150,
       Cell: VVMStatusInputCell,
       accessor: ({ rowData }) => rowData.vvmStatus,
       setter: ({ id, vvmStatus }) => setVvmStatus(id, vvmStatus),
@@ -153,7 +148,7 @@ export const useOutboundLineEditColumns = ({
     ]
   );
 
-  if (prefs?.allowTrackingOfStockByDonor) {
+  if (prefs.allowTrackingOfStockByDonor) {
     columnDefinitions.push({
       key: 'donor',
       label: 'label.donor',

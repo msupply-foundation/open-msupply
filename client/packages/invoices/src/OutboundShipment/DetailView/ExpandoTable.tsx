@@ -9,6 +9,7 @@ import {
   TypedTFunction,
   LocaleKey,
   useTranslation,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -16,15 +17,14 @@ import { getDosesQuantityColumn } from '../../DoseQtyColumn';
 
 export const Expand = ({
   rowData,
-  displayDoseColumns,
 }: {
   rowData: StockOutLineFragment | StockOutItem;
-  displayDoseColumns?: boolean;
 }) => {
+  const { manageVaccinesInDoses } = usePreferences();
   if ('lines' in rowData && rowData.lines.length > 1) {
     // Display in doses pref on, but only show dose columns if we've expanded a vaccine item
     const withDoseColumns =
-      (displayDoseColumns && rowData.lines[0]?.item.isVaccine) ?? false;
+      (manageVaccinesInDoses && rowData.lines[0]?.item.isVaccine) ?? false;
 
     return (
       <ExpandInner rows={rowData.lines} withDoseColumns={withDoseColumns} />

@@ -1,3 +1,4 @@
+use super::NameNode;
 use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
 use chrono::NaiveDate;
 use graphql_core::{
@@ -6,8 +7,6 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{NameRow, Store, StoreRow};
-
-use super::NameNode;
 
 #[derive(PartialEq, Debug)]
 pub struct StoreNode {

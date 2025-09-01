@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PurchaseOrderRowFragment = {
   __typename: 'PurchaseOrderNode';
@@ -23,24 +24,6 @@ export type SyncFileReferenceFragment = {
   fileName: string;
   recordId: string;
   createdDatetime: string;
-};
-
-export type PurchaseOrderLineFragment = {
-  __typename: 'PurchaseOrderLineNode';
-  id: string;
-  expectedDeliveryDate?: string | null;
-  purchaseOrderId: string;
-  requestedPackSize: number;
-  requestedDeliveryDate?: string | null;
-  requestedNumberOfUnits: number;
-  authorisedNumberOfUnits?: number | null;
-  item: {
-    __typename: 'ItemNode';
-    id: string;
-    code: string;
-    name: string;
-    unitName?: string | null;
-  };
 };
 
 export type PurchaseOrderFragment = {
@@ -87,10 +70,17 @@ export type PurchaseOrderFragment = {
       id: string;
       expectedDeliveryDate?: string | null;
       purchaseOrderId: string;
+      lineNumber: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      authorisedNumberOfUnits?: number | null;
+      adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
+      note?: string | null;
+      unit?: string | null;
+      comment?: string | null;
+      supplierItemCode?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -98,6 +88,16 @@ export type PurchaseOrderFragment = {
         name: string;
         unitName?: string | null;
       };
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
     }>;
   };
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -111,6 +111,41 @@ export type PurchaseOrderFragment = {
       createdDatetime: string;
     }>;
   };
+};
+
+export type PurchaseOrderLineFragment = {
+  __typename: 'PurchaseOrderLineNode';
+  id: string;
+  expectedDeliveryDate?: string | null;
+  purchaseOrderId: string;
+  lineNumber: number;
+  requestedPackSize: number;
+  requestedDeliveryDate?: string | null;
+  requestedNumberOfUnits: number;
+  adjustedNumberOfUnits?: number | null;
+  pricePerUnitAfterDiscount: number;
+  pricePerUnitBeforeDiscount: number;
+  note?: string | null;
+  unit?: string | null;
+  comment?: string | null;
+  supplierItemCode?: string | null;
+  item: {
+    __typename: 'ItemNode';
+    id: string;
+    code: string;
+    name: string;
+    unitName?: string | null;
+  };
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
 };
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
@@ -195,10 +230,17 @@ export type PurchaseOrderByIdQuery = {
             id: string;
             expectedDeliveryDate?: string | null;
             purchaseOrderId: string;
+            lineNumber: number;
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
-            authorisedNumberOfUnits?: number | null;
+            adjustedNumberOfUnits?: number | null;
+            pricePerUnitAfterDiscount: number;
+            pricePerUnitBeforeDiscount: number;
+            note?: string | null;
+            unit?: string | null;
+            comment?: string | null;
+            supplierItemCode?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -206,6 +248,20 @@ export type PurchaseOrderByIdQuery = {
               name: string;
               unitName?: string | null;
             };
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
+            } | null;
           }>;
         };
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -282,10 +338,17 @@ export type PurchaseOrderLinesQuery = {
       id: string;
       expectedDeliveryDate?: string | null;
       purchaseOrderId: string;
+      lineNumber: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      authorisedNumberOfUnits?: number | null;
+      adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
+      note?: string | null;
+      unit?: string | null;
+      comment?: string | null;
+      supplierItemCode?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -293,6 +356,16 @@ export type PurchaseOrderLinesQuery = {
         name: string;
         unitName?: string | null;
       };
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
     }>;
   };
 };
@@ -312,10 +385,17 @@ export type PurchaseOrderLineQuery = {
       id: string;
       expectedDeliveryDate?: string | null;
       purchaseOrderId: string;
+      lineNumber: number;
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      authorisedNumberOfUnits?: number | null;
+      adjustedNumberOfUnits?: number | null;
+      pricePerUnitAfterDiscount: number;
+      pricePerUnitBeforeDiscount: number;
+      note?: string | null;
+      unit?: string | null;
+      comment?: string | null;
+      supplierItemCode?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -323,6 +403,16 @@ export type PurchaseOrderLineQuery = {
         name: string;
         unitName?: string | null;
       };
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
     }>;
   };
 };
@@ -413,6 +503,7 @@ export type UpdatePurchaseOrderLineMutation = {
     | {
         __typename: 'UpdatePurchaseOrderLineError';
         error:
+          | { __typename: 'CannotAdjustRequestedQuantity'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
           | { __typename: 'PurchaseOrderDoesNotExist'; description: string }
           | { __typename: 'PurchaseOrderLineNotFound'; description: string }
@@ -467,6 +558,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     id
     expectedDeliveryDate
     purchaseOrderId
+    lineNumber
     item {
       id
       code
@@ -476,8 +568,18 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
-    authorisedNumberOfUnits
+    adjustedNumberOfUnits
+    pricePerUnitAfterDiscount
+    pricePerUnitBeforeDiscount
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
+    note
+    unit
+    comment
+    supplierItemCode
   }
+  ${NameRowFragmentDoc}
 `;
 export const SyncFileReferenceFragmentDoc = gql`
   fragment SyncFileReference on SyncFileReferenceNode {

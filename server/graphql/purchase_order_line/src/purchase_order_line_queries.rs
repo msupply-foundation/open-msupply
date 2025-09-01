@@ -15,6 +15,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::purchase_order_line::PurchaseOrderLineSortField")]
 pub enum PurchaseOrderLineSortFieldInput {
     ItemName,
     LineNumber,
@@ -127,17 +128,8 @@ impl PurchaseOrderLineFilterInput {
 
 impl PurchaseOrderLineSortInput {
     pub fn to_domain(self) -> PurchaseOrderLineSort {
-        use PurchaseOrderLineSortField as to;
-        use PurchaseOrderLineSortFieldInput as from;
-        let key = match self.key {
-            from::ItemName => to::ItemName,
-            from::LineNumber => to::LineNumber,
-            from::RequestedDeliveryDate => to::RequestedDeliveryDate,
-            from::ExpectedDeliveryDate => to::ExpectedDeliveryDate,
-        };
-
         PurchaseOrderLineSort {
-            key,
+            key: PurchaseOrderLineSortField::from(self.key),
             desc: self.desc,
         }
     }

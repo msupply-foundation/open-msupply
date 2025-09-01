@@ -13,6 +13,8 @@ import {
   usePluginProvider,
   Typography,
   BufferedTextArea,
+  ModalGridLayout,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -22,7 +24,6 @@ import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import {
   InfoRow,
-  ModalContentLayout,
   ValueInfoRow,
   ValueInfo,
   RepresentationValue,
@@ -46,7 +47,6 @@ interface RequestLineEditProps {
   disabled?: boolean;
   isUpdateMode?: boolean;
   showExtraFields?: boolean;
-  manageVaccinesInDoses?: boolean;
   isReasonsError: boolean;
   setIsEditingRequested: (isEditingRequested: boolean) => void;
 }
@@ -64,12 +64,13 @@ export const RequestLineEdit = ({
   disabled,
   isUpdateMode,
   showExtraFields,
-  manageVaccinesInDoses = false,
   isReasonsError,
   setIsEditingRequested,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
+  const { manageVaccinesInDoses } = usePreferences();
+
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 
@@ -213,7 +214,7 @@ export const RequestLineEdit = ({
 
   return (
     <>
-      <ModalContentLayout
+      <ModalGridLayout
         showExtraFields={showExtraFields}
         Top={
           <>

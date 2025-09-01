@@ -6,13 +6,13 @@ import {
   AppBarContentPortal,
   Box,
   FilterController,
-  StatusType,
+  AssetLogStatusNodeType,
 } from '@openmsupply-client/common';
 import { getStatusOptions } from '../utils';
 
 export type AssetLogStatus = {
   label: string;
-  value: StatusType;
+  value: AssetLogStatusNodeType;
 };
 
 export const Toolbar: FC<{

@@ -18,13 +18,9 @@ interface UseResponseLinesController
   onChangeSortBy: any;
 }
 
-export const useResponseLines = (
-  manageVaccinesInDoses: boolean = false
-): UseResponseLinesController => {
+export const useResponseLines = (): UseResponseLinesController => {
   const { lines } = useResponseFields('lines');
-  const { columns, onChangeSortBy, sortBy } = useResponseColumns(
-    manageVaccinesInDoses
-  );
+  const { columns, onChangeSortBy, sortBy } = useResponseColumns();
   const { itemFilter, setItemFilter, matchItem } = useItemUtils();
 
   const sorted = useMemo(() => {

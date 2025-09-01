@@ -38,17 +38,21 @@ pub fn generate_empty_purchase_order_lines(
                     item_link_id: item.id,
                     item_name: item.name,
                     store_id: purchase_order_row.store_id.clone(),
+                    // Default
                     requested_delivery_date: None,
                     expected_delivery_date: None,
                     requested_pack_size: item.default_pack_size,
                     requested_number_of_units: 0.0,
-                    authorised_number_of_units: None,
+                    adjusted_number_of_units: None,
                     received_number_of_units: 0.0,
                     stock_on_hand_in_units: stock_on_hand,
                     supplier_item_code: None,
                     price_per_unit_before_discount: 0.0,
                     price_per_unit_after_discount: 0.0,
                     comment: None,
+                    manufacturer_link_id: None,
+                    note: None,
+                    unit: None,
                 });
             }
             Ok(None) => {}

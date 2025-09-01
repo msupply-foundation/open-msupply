@@ -19,6 +19,7 @@ pub struct StockLineQueries;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::stock_line::StockLineSortField")]
 pub enum StockLineSortFieldInput {
     ExpiryDate,
     NumberOfPacks,
@@ -28,6 +29,7 @@ pub enum StockLineSortFieldInput {
     PackSize,
     SupplierName,
     LocationCode,
+    VvmStatusThenExpiry,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {
@@ -75,21 +77,8 @@ impl From<StockLineFilterInput> for StockLineFilter {
 
 impl StockLineSortInput {
     pub fn to_domain(self) -> StockLineSort {
-        use StockLineSortField as to;
-        use StockLineSortFieldInput as from;
-        let key = match self.key {
-            from::NumberOfPacks => to::NumberOfPacks,
-            from::ExpiryDate => to::ExpiryDate,
-            from::ItemCode => to::ItemCode,
-            from::ItemName => to::ItemName,
-            from::Batch => to::Batch,
-            from::PackSize => to::PackSize,
-            from::SupplierName => to::SupplierName,
-            from::LocationCode => to::LocationCode,
-        };
-
         StockLineSort {
-            key,
+            key: StockLineSortField::from(self.key),
             desc: self.desc,
         }
     }

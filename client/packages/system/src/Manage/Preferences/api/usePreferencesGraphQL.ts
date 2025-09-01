@@ -4,7 +4,6 @@ import {
   useQueryClient,
 } from '@openmsupply-client/common';
 import { getSdk } from './operations.generated';
-import { PREFERENCES } from './keys';
 
 export const usePreferencesGraphQL = () => {
   const { client } = useGql();
@@ -12,5 +11,11 @@ export const usePreferencesGraphQL = () => {
   const { storeId, store } = useAuthContext();
   const api = getSdk(client);
 
-  return { api, queryClient, storeId, store, client, PREFERENCES };
+  return {
+    api,
+    queryClient,
+    storeId,
+    store,
+    client,
+  };
 };

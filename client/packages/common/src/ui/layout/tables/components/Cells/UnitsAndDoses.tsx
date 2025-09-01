@@ -7,6 +7,7 @@ import {
   Typography,
   RecordWithId,
   useFormatNumber,
+  usePreferences,
 } from '@openmsupply-client/common';
 
 export const UnitsAndMaybeDoses = <T extends RecordWithId>({
@@ -14,16 +15,15 @@ export const UnitsAndMaybeDoses = <T extends RecordWithId>({
   units,
   isVaccine,
   dosesPerUnit,
-  displayDoses,
 }: {
   numberCellProps: CellProps<T>;
   units: number;
   isVaccine: boolean;
   dosesPerUnit: number;
-  displayDoses?: boolean;
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
+  const preferences = usePreferences();
 
   // Doses should always be a whole number, round if fractional packs are giving us funky decimals
   const doseCount = format(dosesPerUnit * units, { maximumFractionDigits: 0 });
@@ -38,7 +38,7 @@ export const UnitsAndMaybeDoses = <T extends RecordWithId>({
       }}
     >
       <NumberCell {...numberCellProps} />
-      {displayDoses && isVaccine && (
+      {preferences?.manageVaccinesInDoses && isVaccine && (
         <Typography
           sx={{
             fontSize: 'small',

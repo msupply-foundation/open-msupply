@@ -33,7 +33,7 @@ export type AssetLogFragment = {
   comment?: string | null;
   id: string;
   logDatetime: string;
-  status?: Types.StatusType | null;
+  status?: Types.AssetLogStatusNodeType | null;
   type?: string | null;
   reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
   user?: {
@@ -48,7 +48,7 @@ export type AssetLogFragment = {
 export type AssetLogReasonFragment = {
   __typename: 'AssetLogReasonNode';
   id: string;
-  assetLogStatus: Types.StatusType;
+  assetLogStatus: Types.AssetLogStatusNodeType;
   reason: string;
 };
 
@@ -202,7 +202,7 @@ export type AssetLogReasonsQuery = {
     nodes: Array<{
       __typename: 'AssetLogReasonNode';
       id: string;
-      assetLogStatus: Types.StatusType;
+      assetLogStatus: Types.AssetLogStatusNodeType;
       reason: string;
     }>;
   };

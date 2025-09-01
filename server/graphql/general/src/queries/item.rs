@@ -7,7 +7,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{ItemConnector, ItemNodeType};
-use repository::{EqualFilter, PaginationOption, StringFilter};
+use repository::{EqualFilter, ItemType, PaginationOption, StringFilter};
 use repository::{ItemFilter, ItemSort, ItemSortField};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -15,8 +15,8 @@ use service::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::ItemSortField")]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::ItemSortField")]
 pub enum ItemSortFieldInput {
     Name,
     Code,
@@ -116,7 +116,7 @@ impl ItemFilterInput {
             id: id.map(EqualFilter::from),
             name: name.map(StringFilter::from),
             code: code.map(StringFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, ItemNodeType::to_domain)),
+            r#type: r#type.map(|t| map_filter!(t, |r| ItemType::from(r))),
             category_id,
             category_name,
             is_visible,
@@ -132,16 +132,8 @@ impl ItemFilterInput {
 
 impl ItemSortInput {
     pub fn to_domain(self) -> ItemSort {
-        use ItemSortField as to;
-        use ItemSortFieldInput as from;
-        let key = match self.key {
-            from::Name => to::Name,
-            from::Code => to::Code,
-            from::Type => to::Type,
-        };
-
         ItemSort {
-            key,
+            key: ItemSortField::from(self.key),
             desc: self.desc,
         }
     }

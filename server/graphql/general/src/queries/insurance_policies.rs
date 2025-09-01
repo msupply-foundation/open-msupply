@@ -12,6 +12,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::name_insurance_join_row::NameInsuranceJoinSortField")]
 pub enum InsuranceSortFieldInput {
     ExpiryDate,
     IsActive,
@@ -112,15 +113,8 @@ impl InsuranceConnector {
 
 impl InsuranceSortInput {
     pub fn to_domain(self) -> NameInsuranceJoinSort {
-        use InsuranceSortFieldInput as from;
-        use NameInsuranceJoinSortField as to;
-        let key = match self.key {
-            from::ExpiryDate => to::ExpiryDate,
-            from::IsActive => to::IsActive,
-        };
-
         NameInsuranceJoinSort {
-            key,
+            key: NameInsuranceJoinSortField::from(self.key),
             desc: self.desc,
         }
     }

@@ -19,8 +19,7 @@ import {
   ColumnAlign,
   NumberCell,
   getReasonOptionTypes,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   Box,
   useAuthContext,
   StoreModeNodeType,
@@ -30,6 +29,7 @@ import {
   getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
+  getVolumePerPackFromVariant,
   ItemVariantInputCell,
   PackSizeEntryCell,
   ReasonOptionRowFragment,
@@ -48,7 +48,6 @@ interface StocktakeLineEditTableProps {
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
   isInitialStocktake?: boolean;
-  trackStockDonor?: boolean;
   restrictedToLocationTypeId?: string | null;
   isVaccineItem?: boolean;
 }
@@ -181,15 +180,13 @@ export const BatchTable = ({
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVvmStatusForStock
-  );
+  const { manageVvmStatusForStock } = usePreferences();
   useDisableStocktakeRows(batches);
   const { data: reasonOptions, isLoading } = useReasonOptions();
   const errorsContext = useStocktakeLineErrorContext();
 
   const showVVMStatusColumn =
-    (preferences?.manageVvmStatusForStock && isVaccineItem) ?? false;
+    (manageVvmStatusForStock && isVaccineItem) ?? false;
 
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -212,21 +209,10 @@ export const BatchTable = ({
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
         setter: patch => {
-          const { packSize, itemVariant } = patch;
-
-          if (itemVariant) {
-            const packaging = itemVariant.packagingVariants.find(
-              p => p.packSize === packSize
-            );
-            // Item variants save volume in L, but it is saved in m3 everywhere else
-            update({
-              ...patch,
-              volumePerPack:
-                ((packaging?.volumePerUnit ?? 0) / 1000) * (packSize ?? 1),
-            });
-          } else {
-            update(patch);
-          }
+          update({
+            ...patch,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+          });
         },
       });
     }
@@ -259,11 +245,12 @@ export const BatchTable = ({
             patch.item?.defaultPackSize !== patch.packSize &&
             patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
               patch.sellPricePerPack;
-          if (shouldClearSellPrice) {
-            update({ ...patch, sellPricePerPack: 0 });
-          } else {
-            update(patch);
-          }
+
+          update({
+            ...patch,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+            sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
+          });
         },
       }),
       {
@@ -388,11 +375,12 @@ export const LocationTable = ({
   batches,
   update,
   isDisabled,
-  trackStockDonor,
   restrictedToLocationTypeId,
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
+  const { allowTrackingOfStockByDonor } = usePreferences();
+
   useDisableStocktakeRows(batches);
 
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -411,7 +399,7 @@ export const LocationTable = ({
       },
     ],
   ];
-  if (trackStockDonor) {
+  if (allowTrackingOfStockByDonor) {
     columnDefinitions.push(
       getDonorColumn((id, donor) =>
         update({

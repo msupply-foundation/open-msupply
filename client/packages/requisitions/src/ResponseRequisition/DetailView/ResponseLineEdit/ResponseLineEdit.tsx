@@ -8,6 +8,8 @@ import {
   RequisitionNodeApprovalStatus,
   Typography,
   UserStoreNodeFragment,
+  ModalGridLayout,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
@@ -15,11 +17,7 @@ import {
   StockItemSearchInputWithStats,
 } from '@openmsupply-client/system';
 import { ResponseFragment, ResponseLineFragment } from '../../api';
-import {
-  InfoRow,
-  ModalContentLayout,
-  RepresentationValue,
-} from '../../../common';
+import { InfoRow, RepresentationValue } from '../../../common';
 import { DraftResponseLine } from './hooks';
 import { SupplySelection } from './SuppliedSelection';
 import { useStockCalculations } from './utils';
@@ -37,7 +35,6 @@ interface ResponseLineEditProps {
   setRepresentation: (type: RepresentationValue) => void;
   disabled: boolean;
   isUpdateMode?: boolean;
-  manageVaccinesInDoses?: boolean;
   isReasonsError: boolean;
   setIsEditingSupply: (isEditingSupply: boolean) => void;
 }
@@ -55,10 +52,10 @@ export const ResponseLineEdit = ({
   isReasonsError,
   disabled = false,
   isUpdateMode = false,
-  manageVaccinesInDoses = false,
   setIsEditingSupply,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
+  const { manageVaccinesInDoses } = usePreferences();
 
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
@@ -329,7 +326,7 @@ export const ResponseLineEdit = ({
   };
 
   return (
-    <ModalContentLayout
+    <ModalGridLayout
       showExtraFields={showExtraFields}
       Top={
         <>

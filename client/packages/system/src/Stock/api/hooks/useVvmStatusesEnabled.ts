@@ -1,12 +1,12 @@
 import { useQuery } from 'react-query';
 import { useStockGraphQL } from '../useStockGraphQL';
-import { PreferenceKey, usePreference } from '@openmsupply-client/common';
+import { usePreferences } from '@openmsupply-client/common';
 import { VVM_STATUSES_CONFIGURED } from './keys';
 
 export function useVvmStatusesEnabled() {
   const { stockApi, storeId } = useStockGraphQL();
 
-  const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatusForStock);
+  const { manageVvmStatusForStock } = usePreferences();
 
   const queryFn = async () => {
     const query = await stockApi.activeVvmStatuses({
@@ -21,7 +21,7 @@ export function useVvmStatusesEnabled() {
     refetchOnMount: true,
   });
 
-  const result = !!prefs?.manageVvmStatusForStock ? data : undefined;
+  const result = manageVvmStatusForStock ? data : undefined;
 
   return { data: result, isLoading };
 }

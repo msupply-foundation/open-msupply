@@ -1,6 +1,6 @@
 import { useCallback, useContext, useState } from 'react';
 import { EnvUtils, Formatter, noOtherVariants } from '@common/utils';
-import { LanguageType } from '../../types/schema';
+import { LanguageTypeNode } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
 import { LocaleKey, useTranslation, IntlContext } from '@common/intl';
 import {
@@ -23,6 +23,7 @@ import { ru } from 'date-fns/locale/ru';
 import { pt } from 'date-fns/locale/pt';
 import pluralize from 'pluralize';
 import { localeKeySet } from '../locales';
+export { splitTranslatedLines } from './ReactUtils';
 
 // Map locale string (from i18n) to locale object (from date-fns)
 const getLocaleObj = { fr, ar, es, ru };
@@ -190,7 +191,7 @@ export const useIntlUtils = () => {
   };
 };
 
-const getLocaleCode = (language: LanguageType) => parseLanguage(language);
+const getLocaleCode = (language: LanguageTypeNode) => parseLanguage(language);
 
 const getUserLocale = (username: string) => {
   const locales = LocalStorage.getItem('/localisation/locale');
@@ -205,21 +206,21 @@ const setUserLocale = (username: string, locale: SupportedLocales) => {
 
 const parseLanguage = (language?: string) => {
   switch (language) {
-    case LanguageType.English:
+    case LanguageTypeNode.English:
       return 'en';
-    case LanguageType.French:
+    case LanguageTypeNode.French:
       return 'fr';
-    case LanguageType.Khmer:
+    case LanguageTypeNode.Khmer:
       return 'kh';
-    case LanguageType.Laos:
+    case LanguageTypeNode.Laos:
       return 'la';
-    case LanguageType.Portuguese:
+    case LanguageTypeNode.Portuguese:
       return 'pt';
-    case LanguageType.Russian:
+    case LanguageTypeNode.Russian:
       return 'ru';
-    case LanguageType.Spanish:
+    case LanguageTypeNode.Spanish:
       return 'es';
-    case LanguageType.Tetum:
+    case LanguageTypeNode.Tetum:
       return 'tet';
     default:
       return undefined;

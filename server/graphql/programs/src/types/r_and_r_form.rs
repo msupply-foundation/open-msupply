@@ -29,6 +29,7 @@ pub enum RnRFormResponse {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::rnr_form::RnRFormSortField")]
 pub enum RnRFormSortFieldInput {
     Period,
     Program,
@@ -48,16 +49,8 @@ pub struct RnRFormSortInput {
 
 impl RnRFormSortInput {
     pub fn to_domain(self) -> RnRFormSort {
-        let key = match self.key {
-            RnRFormSortFieldInput::Period => RnRFormSortField::Period,
-            RnRFormSortFieldInput::Program => RnRFormSortField::Program,
-            RnRFormSortFieldInput::CreatedDatetime => RnRFormSortField::CreatedDatetime,
-            RnRFormSortFieldInput::Status => RnRFormSortField::Status,
-            RnRFormSortFieldInput::SupplierName => RnRFormSortField::SupplierName,
-        };
-
         RnRFormSort {
-            key,
+            key: RnRFormSortField::from(self.key),
             desc: self.desc,
         }
     }

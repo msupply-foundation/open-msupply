@@ -9,8 +9,8 @@ use graphql_core::{
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::FormSchemaNode;
 use repository::{
-    ContextType as ReportContextDomain, EqualFilter, PaginationOption, Report, ReportFilter,
-    ReportSort, ReportSortField, StringFilter,
+    ContextType, EqualFilter, PaginationOption, Report, ReportFilter, ReportSort, ReportSortField,
+    StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::report_service::{GetReportError, GetReportsError};
@@ -18,6 +18,7 @@ use service::ListResult;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::report::ReportSortField")]
 pub enum ReportSortFieldInput {
     Id,
     Name,
@@ -36,6 +37,8 @@ pub struct ReportSortInput {
 
 #[derive(Debug, Enum, Copy, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[graphql(remote = "repository::db_diesel::report_row
+::ContextType")]
 pub enum ReportContext {
     Asset,
     InboundShipment,
@@ -52,6 +55,7 @@ pub enum ReportContext {
     Prescription,
     InternalOrder,
     PurchaseOrder,
+    GoodsReceived,
 }
 
 #[derive(InputObject, Clone)]
@@ -131,7 +135,7 @@ impl ReportNode {
     }
 
     pub async fn context(&self) -> ReportContext {
-        ReportContext::from_domain(&self.row.report_row.context)
+        ReportContext::from(self.row.report_row.context.clone())
     }
 
     pub async fn sub_context(&self) -> &Option<String> {
@@ -297,7 +301,7 @@ impl ReportFilterInput {
             name: self.name.map(StringFilter::from),
             context: self
                 .context
-                .map(|t| map_filter!(t, ReportContext::to_domain)),
+                .map(|t| map_filter!(t, |c| ContextType::from(c))),
             sub_context: self.sub_context.map(EqualFilter::from),
             code: None,
             is_custom: None,
@@ -308,57 +312,9 @@ impl ReportFilterInput {
 
 impl ReportSortInput {
     pub fn to_domain(self) -> ReportSort {
-        let key = match self.key {
-            ReportSortFieldInput::Id => ReportSortField::Id,
-            ReportSortFieldInput::Name => ReportSortField::Name,
-            ReportSortFieldInput::Code => ReportSortField::Code,
-            ReportSortFieldInput::Version => ReportSortField::Version,
-        };
         ReportSort {
-            key,
+            key: ReportSortField::from(self.key),
             desc: self.desc,
-        }
-    }
-}
-
-impl ReportContext {
-    pub fn to_domain(self) -> ReportContextDomain {
-        match self {
-            ReportContext::Asset => ReportContextDomain::Asset,
-            ReportContext::InboundShipment => ReportContextDomain::InboundShipment,
-            ReportContext::OutboundShipment => ReportContextDomain::OutboundShipment,
-            ReportContext::Requisition => ReportContextDomain::Requisition,
-            ReportContext::Stocktake => ReportContextDomain::Stocktake,
-            ReportContext::Resource => ReportContextDomain::Resource,
-            ReportContext::Patient => ReportContextDomain::Patient,
-            ReportContext::Dispensary => ReportContextDomain::Dispensary,
-            ReportContext::Repack => ReportContextDomain::Repack,
-            ReportContext::OutboundReturn => ReportContextDomain::OutboundReturn,
-            ReportContext::InboundReturn => ReportContextDomain::InboundReturn,
-            ReportContext::Report => ReportContextDomain::Report,
-            ReportContext::Prescription => ReportContextDomain::Prescription,
-            ReportContext::InternalOrder => ReportContextDomain::InternalOrder,
-            ReportContext::PurchaseOrder => ReportContextDomain::PurchaseOrder,
-        }
-    }
-
-    pub fn from_domain(context: &ReportContextDomain) -> ReportContext {
-        match context {
-            ReportContextDomain::Asset => ReportContext::Asset,
-            ReportContextDomain::InboundShipment => ReportContext::InboundShipment,
-            ReportContextDomain::OutboundShipment => ReportContext::OutboundShipment,
-            ReportContextDomain::Requisition => ReportContext::Requisition,
-            ReportContextDomain::Stocktake => ReportContext::Stocktake,
-            ReportContextDomain::Resource => ReportContext::Resource,
-            ReportContextDomain::Patient => ReportContext::Patient,
-            ReportContextDomain::Dispensary => ReportContext::Dispensary,
-            ReportContextDomain::Repack => ReportContext::Repack,
-            ReportContextDomain::OutboundReturn => ReportContext::OutboundReturn,
-            ReportContextDomain::InboundReturn => ReportContext::InboundReturn,
-            ReportContextDomain::Report => ReportContext::Report,
-            ReportContextDomain::Prescription => ReportContext::Prescription,
-            ReportContextDomain::InternalOrder => ReportContext::InternalOrder,
-            ReportContextDomain::PurchaseOrder => ReportContext::PurchaseOrder,
         }
     }
 }

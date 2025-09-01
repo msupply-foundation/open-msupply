@@ -13,8 +13,7 @@ import {
   useCurrencyCell,
   useAuthContext,
   useTranslation,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   Formatter,
   useIntlUtils,
   NumberInputCell,
@@ -31,6 +30,7 @@ import {
   getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
+  getVolumePerPackFromVariant,
   ItemRowFragment,
   LocationRowFragment,
   PackSizeEntryCell,
@@ -55,9 +55,6 @@ interface TableProps {
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
   restrictedToLocationTypeId?: string | null;
-  preferences?: {
-    allowTrackingOfStockByDonor?: boolean;
-  };
 }
 
 interface QuantityTableProps extends TableProps {
@@ -78,11 +75,8 @@ export const QuantityTableComponent = ({
   const theme = useTheme();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
-  const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
-  );
-  const displayInDoses =
-    !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
+  const { manageVaccinesInDoses } = usePreferences();
+  const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
@@ -111,20 +105,7 @@ export const QuantityTableComponent = ({
       width: 100,
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
-        setPackRoundingMessage?.('');
-        const shouldClearSellPrice =
-          patch.item?.defaultPackSize !== patch.packSize &&
-          patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
-            patch.sellPricePerPack;
-
-        if (shouldClearSellPrice) {
-          updateDraftLine({
-            ...patch,
-            sellPricePerPack: 0,
-          });
-        } else {
-          updateDraftLine(patch);
-        }
+        updateDraftLine(patch);
       },
       getIsDisabled: rowData => !!rowData.linkedInvoiceId,
       defaultHideOnMobile: true,
@@ -145,8 +126,16 @@ export const QuantityTableComponent = ({
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
-        setPackRoundingMessage?.('');
-        updateDraftLine(patch);
+        const shouldClearSellPrice =
+          patch.item?.defaultPackSize !== patch.packSize &&
+          patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
+            patch.sellPricePerPack;
+
+        updateDraftLine({
+          ...patch,
+          volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+          sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
+        });
       },
       label: 'label.received-pack-size',
       width: 100,
@@ -400,8 +389,9 @@ export const LocationTableComponent = ({
   updateDraftLine,
   isDisabled,
   restrictedToLocationTypeId,
-  preferences,
 }: TableProps) => {
+  const { allowTrackingOfStockByDonor } = usePreferences();
+
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -434,7 +424,7 @@ export const LocationTableComponent = ({
     ],
   ];
 
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (allowTrackingOfStockByDonor) {
     columnDescriptions.push([
       getDonorColumn((id, donor) => updateDraftLine({ id, donor })),
       { accessor: ({ rowData }) => rowData.donor?.id },

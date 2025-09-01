@@ -22,6 +22,7 @@ pub struct StoreFilterInput {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::store::StoreSortField")]
 pub enum StoreSortFieldInput {
     Code,
     Name,
@@ -147,14 +148,8 @@ impl StoreFilterInput {
 
 impl StoreSortInput {
     pub fn to_domain(self) -> StoreSort {
-        let key = match self.key {
-            StoreSortFieldInput::Code => StoreSortField::Code,
-            StoreSortFieldInput::Name => StoreSortField::Name,
-            StoreSortFieldInput::NameCode => StoreSortField::NameCode,
-        };
-
         StoreSort {
-            key,
+            key: StoreSortField::from(self.key),
             desc: self.desc,
         }
     }

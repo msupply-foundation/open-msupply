@@ -1,6 +1,8 @@
 import React from 'react';
 import {
   Autocomplete,
+  SxProps,
+  Theme,
   useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -17,10 +19,13 @@ export const ManufacturerSearchInput = ({
   width = 250,
   value,
   disabled = false,
-}: NullableNameSearchInputProps) => {
+  textSx = {},
+}: NullableNameSearchInputProps & {
+  textSx?: SxProps<Theme>;
+}) => {
+  const t = useTranslation();
   const { data, isLoading } = useName.document.manufacturers();
   const [buffer, setBuffer] = useBufferState(value);
-  const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (
@@ -40,6 +45,7 @@ export const ManufacturerSearchInput = ({
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       getOptionDisabled={option => option.isOnHold}
+      textSx={textSx}
     />
   );
 };

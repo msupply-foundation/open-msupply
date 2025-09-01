@@ -7,6 +7,7 @@ use crate::{
     activity_log::activity_log_entry,
     purchase_order_line::{insert::PackSizeCodeCombination, query::get_purchase_order_line},
     service_provider::ServiceContext,
+    NullableUpdate,
 };
 
 mod generate;
@@ -21,6 +22,7 @@ pub enum UpdatePurchaseOrderLineInputError {
     PurchaseOrderLineNotFound,
     PurchaseOrderDoesNotExist,
     CannotEditPurchaseOrder,
+    CannotAdjustRequestedQuantity,
     UpdatedLineDoesNotExist,
     PackSizeCodeCombinationExists(PackSizeCodeCombination),
     DatabaseError(RepositoryError),
@@ -33,8 +35,16 @@ pub struct UpdatePurchaseOrderLineInput {
     pub item_id: Option<String>,
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
+    pub adjusted_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub price_per_unit_before_discount: Option<f64>,
+    pub price_per_unit_after_discount: Option<f64>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
+    pub note: Option<NullableUpdate<String>>,
+    pub unit: Option<String>,
+    pub supplier_item_code: Option<NullableUpdate<String>>,
+    pub comment: Option<NullableUpdate<String>>,
 }
 
 pub fn update_purchase_order_line(
@@ -46,13 +56,13 @@ pub fn update_purchase_order_line(
         .connection
         .transaction_sync(|connection| {
             let purchase_order_line = validate(&input, connection)?;
-            let updated_purchase_order_line = generate(purchase_order_line, &input)?;
+            let updated_purchase_order_line = generate(purchase_order_line, input)?;
 
             PurchaseOrderLineRowRepository::new(connection)
                 .upsert_one(&updated_purchase_order_line)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::PurchaseOrderLineUpdated,
                 Some(updated_purchase_order_line.purchase_order_id.clone()),
                 None,

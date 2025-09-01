@@ -6,7 +6,8 @@ import {
   usePatchState,
   useQuery,
   useTranslation,
-} from '@openmsupply-client/common/src';
+  setNullableInput,
+} from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
 import { PurchaseOrderLineFragment } from '../operations.generated';
@@ -17,6 +18,9 @@ export type DraftPurchaseOrderLine = Omit<
 > & {
   purchaseOrderId: string;
   itemId: string;
+  discountPercentage: number;
+  numberOfPacks: number;
+  requestedNumberOfPacks?: number;
 };
 
 export type DraftPurchaseOrderLineFromCSV = Omit<
@@ -30,27 +34,61 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   id: '',
   purchaseOrderId: '',
   itemId: '',
-  requestedPackSize: 0,
+  requestedPackSize: 1,
   requestedNumberOfUnits: 0,
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
-  authorisedNumberOfUnits: null,
+  adjustedNumberOfUnits: null,
+  lineNumber: 0,
+  pricePerUnitBeforeDiscount: 0,
+  pricePerUnitAfterDiscount: 0,
+  manufacturer: null,
+  note: null,
+  unit: null,
+  supplierItemCode: null,
+  comment: null,
+  // These values not actually saved to DB
+  discountPercentage: 0,
+  numberOfPacks: 0,
+  requestedNumberOfPacks: 0,
 };
 
-export function usePurchaseOrderLine(id?: string) {
+export function usePurchaseOrderLine(id?: string | null) {
   const { data, isLoading, error } = useGet(id ?? '');
 
   const { patch, updatePatch, resetDraft, isDirty } =
-    usePatchState<DraftPurchaseOrderLine>(data?.nodes[0] ?? {});
+    usePatchState<DraftPurchaseOrderLine>({});
+
+  // The discount percentage is calculated from the price fields, but we want to
+  // insert it into the draft so it can be independently manipulated (with the
+  // other fields updated accordingly -- see the column definitions for how that
+  // works)
+  const initialDiscountPercentage =
+    data?.nodes[0]?.pricePerUnitBeforeDiscount &&
+    data?.nodes[0]?.pricePerUnitAfterDiscount
+      ? ((data?.nodes[0]?.pricePerUnitBeforeDiscount -
+          data?.nodes[0]?.pricePerUnitAfterDiscount) /
+          (data?.nodes[0]?.pricePerUnitBeforeDiscount || 1)) *
+        100
+      : 0;
+
+  // Number of packs is not in the DB, so we derived it from the draft
+  const adjustedUnits = data?.nodes[0]?.adjustedNumberOfUnits;
+  const requestedUnits = data?.nodes[0]?.requestedNumberOfUnits ?? 0;
+  const requestedPackSize = data?.nodes[0]?.requestedPackSize ?? 1;
+  const initialNumberOfPacks =
+    (adjustedUnits ?? requestedUnits) / requestedPackSize;
 
   const draft: DraftPurchaseOrderLine = data
     ? {
         ...defaultPurchaseOrderLine,
         ...data?.nodes[0],
         itemId: data?.nodes[0]?.item.id ?? '',
+        discountPercentage: initialDiscountPercentage,
+        numberOfPacks: initialNumberOfPacks,
         ...patch,
       }
-    : { ...defaultPurchaseOrderLine, ...patch, itemId: '' };
+    : { ...defaultPurchaseOrderLine, ...patch };
 
   // CREATE
   const {
@@ -80,7 +118,16 @@ export function usePurchaseOrderLine(id?: string) {
       requestedPackSize: draft.requestedPackSize,
       requestedDeliveryDate: draft.requestedDeliveryDate,
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
+      adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
+      pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
+      pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
+      manufacturerId: setNullableInput('id', draft.manufacturer),
+      note: setNullableInput('note', draft),
+      unit: draft.unit,
+      supplierItemCode: setNullableInput('supplierItemCode', draft),
+      comment: setNullableInput('comment', draft),
     };
+    resetDraft();
     return await updatePurchaseOrderLine(input);
   };
 
@@ -149,6 +196,13 @@ const useCreate = () => {
         requestedNumberOfUnits: draft.requestedNumberOfUnits,
         requestedDeliveryDate: draft.requestedDeliveryDate,
         expectedDeliveryDate: draft.expectedDeliveryDate,
+        pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
+        pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
+        manufacturerId: draft.manufacturer?.id,
+        note: draft.note,
+        unit: draft.unit,
+        supplierItemCode: draft.supplierItemCode,
+        comment: draft.comment,
       },
     });
   };
@@ -218,6 +272,8 @@ export const useLineInsertFromCSV = () => {
           purchaseOrderId: line.purchaseOrderId ?? '',
           requestedPackSize: line.requestedPackSize ?? 0.0,
           requestedNumberOfUnits: line.requestedNumberOfUnits ?? 0,
+          pricePerUnitAfterDiscount: line.pricePerUnitAfterDiscount ?? 0.0,
+          pricePerUnitBeforeDiscount: line.pricePerUnitBeforeDiscount ?? 0.0,
         },
       });
       if (result.insertPurchaseOrderLineFromCsv.__typename === 'IdResponse') {

@@ -36,6 +36,8 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, serde::Serialize, strum::EnumIter)]
 #[serde(rename_all = "lowercase")]
 #[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::stocktake_line
+::StocktakeLineSortField")]
 pub enum StocktakeLineSortFieldInput {
     ItemCode,
     ItemName,
@@ -59,22 +61,8 @@ pub struct StocktakeLineSortInput {
 
 impl StocktakeLineSortInput {
     pub fn to_domain(self) -> StocktakeLineSort {
-        use StocktakeLineSortField as to;
-        use StocktakeLineSortFieldInput as from;
-        let key = match self.key {
-            from::ItemCode => to::ItemCode,
-            from::ItemName => to::ItemName,
-            from::Batch => to::Batch,
-            from::ExpiryDate => to::ExpiryDate,
-            from::PackSize => to::PackSize,
-            from::LocationCode => to::LocationCode,
-            from::SnapshotNumberOfPacks => to::SnapshotNumberOfPacks,
-            from::CountedNumberOfPacks => to::CountedNumberOfPacks,
-            from::ReasonOption => to::ReasonOption,
-        };
-
         StocktakeLineSort {
-            key,
+            key: StocktakeLineSortField::from(self.key),
             desc: self.desc,
         }
     }
@@ -163,7 +151,6 @@ mod test {
         stocktake_line::{query::GetStocktakeLinesError, StocktakeLineServiceTrait},
         ListResult,
     };
-    
 
     use crate::StocktakeLineQueries;
 

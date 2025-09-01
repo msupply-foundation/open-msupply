@@ -65,7 +65,7 @@ export type MeQuery = {
   me: {
     __typename: 'UserNode';
     email?: string | null;
-    language: Types.LanguageType;
+    language: Types.LanguageTypeNode;
     username: string;
     userId: string;
     firstName?: string | null;

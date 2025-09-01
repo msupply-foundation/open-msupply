@@ -15,8 +15,7 @@ import {
   useToggle,
   IconButton,
   EditIcon,
-  PreferenceKey,
-  usePreference,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 import { DonorEditModal } from '../modals';
@@ -28,9 +27,7 @@ export const AdditionalInfoSectionComponent = () => {
 
   const isDisabled = useInbound.utils.isDisabled();
 
-  const { data: prefs } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
+  const { allowTrackingOfStockByDonor } = usePreferences();
 
   const { id, user, comment, colour, createdDatetime, defaultDonor, update } =
     useInbound.document.fields([
@@ -46,7 +43,7 @@ export const AdditionalInfoSectionComponent = () => {
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
-        {prefs?.allowTrackingOfStockByDonor && (
+        {allowTrackingOfStockByDonor && (
           <>
             {donorModalOn && (
               <DonorEditModal

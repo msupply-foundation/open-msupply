@@ -1,12 +1,15 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
-use graphql_core::loader::{NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader};
+use graphql_core::loader::{
+    GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput,
+    PurchaseOrderByIdLoader,
+};
 use graphql_core::ContextExt;
+use graphql_goods_received_line::types::GoodsReceivedLineConnector;
 use graphql_types::types::{purchase_order, NameNode};
-use repository::goods_received_row::{GoodsReceivedRow, GoodsReceivedStatus};
+use repository::goods_received_row::GoodsReceivedRow;
 use service::ListResult;
-
 #[derive(PartialEq, Debug)]
 pub struct GoodsReceivedNode {
     pub goods_received: GoodsReceivedRow,
@@ -29,7 +32,7 @@ impl GoodsReceivedNode {
     }
 
     pub async fn status(&self) -> GoodsReceivedNodeStatus {
-        GoodsReceivedNodeStatus::from_domain(self.row().status.clone())
+        GoodsReceivedNodeStatus::from(self.row().status.clone())
     }
 
     pub async fn comment(&self) -> &Option<String> {
@@ -62,6 +65,10 @@ impl GoodsReceivedNode {
         return Ok(None);
     }
 
+    pub async fn purchase_order_id(&self) -> &Option<String> {
+        &self.row().purchase_order_id
+    }
+
     pub async fn purchase_order_number(&self, ctx: &Context<'_>) -> Result<Option<i64>> {
         let po_id = match self.row().purchase_order_id {
             Some(ref id) => id,
@@ -92,6 +99,14 @@ impl GoodsReceivedNode {
         self.row().received_date
     }
 
+    pub async fn lines(&self, ctx: &Context<'_>) -> Result<GoodsReceivedLineConnector> {
+        let loader = ctx.get_loader::<DataLoader<GoodsReceivedLinesByGoodsReceivedIdLoader>>();
+        let result_option = loader.load_one(self.row().id.clone()).await?;
+
+        let result = result_option.unwrap_or(vec![]);
+        Ok(GoodsReceivedLineConnector::from_vec(result))
+    }
+
     pub async fn created_by(&self) -> &Option<String> {
         &self.row().created_by
     }
@@ -114,27 +129,11 @@ impl GoodsReceivedNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::goods_received_row
+::GoodsReceivedStatus")]
 pub enum GoodsReceivedNodeStatus {
     New,
     Finalised,
-}
-
-impl GoodsReceivedNodeStatus {
-    pub fn from_domain(status: GoodsReceivedStatus) -> GoodsReceivedNodeStatus {
-        use GoodsReceivedStatus::*;
-        match status {
-            New => GoodsReceivedNodeStatus::New,
-            Finalised => GoodsReceivedNodeStatus::Finalised,
-        }
-    }
-
-    pub fn to_domain(self) -> GoodsReceivedStatus {
-        use GoodsReceivedNodeStatus::*;
-        match self {
-            New => GoodsReceivedStatus::New,
-            Finalised => GoodsReceivedStatus::Finalised,
-        }
-    }
 }
 
 impl GoodsReceivedConnector {

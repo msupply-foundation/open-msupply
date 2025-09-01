@@ -5,7 +5,11 @@ import {
   usePatchState,
   useQuery,
 } from '@openmsupply-client/common';
-import { ReasonOptionRowFragment, StockLineRowFragment } from '../../..';
+import {
+  LOCATION,
+  ReasonOptionRowFragment,
+  StockLineRowFragment,
+} from '../../..';
 import { STOCK_LINE } from './keys';
 import { useStockGraphQL } from '../useStockGraphQL';
 
@@ -212,6 +216,9 @@ const useUpdate = (id: string) => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([STOCK_LINE, id]),
+    onSuccess: () => {
+      queryClient.invalidateQueries([STOCK_LINE, id]);
+      queryClient.invalidateQueries([LOCATION]); // Invalidate location queries to update available volume
+    },
   });
 };
