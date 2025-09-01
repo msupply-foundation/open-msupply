@@ -277,14 +277,18 @@ impl IntegrationOperation {
         Self::Delete(Box::new(delete))
     }
 }
-// impl Clone for IntegrationOperation {
-//     fn clone(&self) -> Self {
-//         match self {
-//             IntegrationOperation::Upsert(upsert) => IntegrationOperation::Upsert(upsert),
-//             IntegrationOperation::Delete(delete) => IntegrationOperation::Delete(delete),
-//         }
-//     }
-// }
+impl Clone for IntegrationOperation {
+    fn clone(&self) -> Self {
+        match self {
+            IntegrationOperation::Upsert(upsert) => {
+                IntegrationOperation::Upsert(dyn_clone::clone_box(&**upsert))
+            }
+            IntegrationOperation::Delete(delete) => {
+                IntegrationOperation::Delete(dyn_clone::clone_box(&**delete))
+            }
+        }
+    }
+}
 
 #[derive(Debug)]
 pub(crate) enum PullTranslateResult {

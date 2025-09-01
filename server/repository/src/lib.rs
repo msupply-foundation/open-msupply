@@ -42,14 +42,16 @@ pub fn run_db_migrations(connection: &StorageConnection) -> Result<(), String> {
     Ok(())
 }
 
+use dyn_clone::DynClone;
 use std::fmt::Debug as DebugTrait;
-pub trait Delete: DebugTrait {
+
+pub trait Delete: DebugTrait + DynClone {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
     // Test only
     fn assert_deleted(&self, con: &StorageConnection);
 }
 
-pub trait Upsert: DebugTrait {
+pub trait Upsert: DebugTrait + DynClone {
     // Upsert returns a changelog id if the table is tracked in changelog
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
 
