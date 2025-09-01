@@ -11,6 +11,7 @@ import {
   useEditModal,
   useSimplifiedTabletUI,
   useExportCSV,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { stockLinesToCsv } from '../../utils';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
@@ -22,6 +23,7 @@ export const AppBarButtonsComponent = () => {
   const { fetchAllStock, isLoading } = useExportStockList();
   const simplifiedTabletView = useSimplifiedTabletUI();
   const exportCSV = useExportCSV();
+  const { manageVvmStatusForStock } = usePreferences();
 
   const { isOpen, onClose, onOpen } = useEditModal();
 
@@ -32,7 +34,7 @@ export const AppBarButtonsComponent = () => {
       return;
     }
 
-    const csv = stockLinesToCsv(data.nodes, t);
+    const csv = stockLinesToCsv(data.nodes, t, !!manageVvmStatusForStock);
     exportCSV(csv, t('filename.stock'));
   };
 
