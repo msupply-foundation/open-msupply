@@ -44,12 +44,14 @@ export const getFormattedDateError = (
 type DateTimePickerInputProps = Omit<DateTimePickerProps<true>, 'onChange'> & {
   error?: boolean;
   errorText?: string;
+  // `setError` used by FormErrorState handler, `onError` used by JSONForms --
+  // should be integrated into single FormErrorState at some point
+  setError?: (error: string | null) => void;
+  onError?: (validationError: string, date?: Date | null) => void;
   required?: boolean;
-  setError?: (error: string) => void;
   width?: number | string;
   label?: string;
   onChange: (value: Date | null) => void;
-  onError?: (validationError: string, date?: Date | null) => void;
   // This allows a calling component to know whether the date was changed via
   // keyboard input or the picker UI
   setIsOpen?: (open: boolean) => void;
@@ -73,6 +75,7 @@ export const DateTimePickerInput = ({
   dateAsEndOfDay,
   disableFuture,
   error,
+  setError,
   errorText,
   required,
   textFieldSx: inputSx,
@@ -121,6 +124,7 @@ export const DateTimePickerInput = ({
           if (validationError) {
             const translatedError = getFormattedDateError(t, validationError);
             if (onError) onError(translatedError, date);
+            if (setError) setError(translatedError);
             else setInternalError(validationError ? translatedError : null);
 
             // If there is a validation error, set internal value (so user can
@@ -149,6 +153,7 @@ export const DateTimePickerInput = ({
               // Apply max/mins on blur if present
               if (minDate || maxDate) {
                 setInternalError(null);
+                if (setError) setError(null);
                 handleDateInput(value);
               }
             },
