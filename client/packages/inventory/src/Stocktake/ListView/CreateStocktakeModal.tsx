@@ -5,8 +5,10 @@ import {
   DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
+  RadioGroup,
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
+import { FormControlLabel, Radio, Stack, Typography } from '@mui/material';
 import { useDialog } from '@common/hooks';
 import {
   useStockListCount,
@@ -26,6 +28,7 @@ import {
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 import { VvmStatusFragment } from 'packages/system/src/Stock/api';
+import { NONAME } from 'dns';
 
 const LABEL_FLEX = '0 0 150px';
 interface NewStocktakeModalProps {
@@ -183,6 +186,21 @@ export const CreateStocktakeModal = ({
         : stockCount;
   }
 
+  const handleRadioButton: React.ChangeEventHandler<HTMLInputElement> = (
+    event
+  ): void => {
+    if (event.target.value === 'none') {
+      setState(() => ({
+        createBlankStocktake: e.target.checked,
+        masterList: null,
+        includeAllMasterListItems: false,
+        location: null,
+        expiryDate: null,
+        vvmStatus: null,
+      }));
+    }
+  };
+
   return (
     <>
       <Modal
@@ -204,26 +222,8 @@ export const CreateStocktakeModal = ({
         <Box flex={1} display="flex" justifyContent="center">
           {!isCreating ? (
             <Box paddingLeft={2} display="flex" flexDirection="column" gap={2}>
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
-                  <Checkbox
-                    style={{ paddingLeft: 0 }}
-                    checked={!!createBlankStocktake}
-                    onChange={e =>
-                      setState(() => ({
-                        createBlankStocktake: e.target.checked,
-                        masterList: null,
-                        includeAllMasterListItems: false,
-                        location: null,
-                        expiryDate: null,
-                        vvmStatus: null,
-                      }))
-                    }
-                  />
-                }
-                label={t('stocktake.create-blank')}
-              />
+              {/* Input boxes */}
+
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
@@ -238,30 +238,7 @@ export const CreateStocktakeModal = ({
                 }
                 label={t('label.master-list')}
               />
-              {masterList ? (
-                <InputWithLabelRow
-                  labelProps={{ sx: { flex: `0 0 250px` } }}
-                  sx={{ paddingLeft: '160px' }}
-                  Input={
-                    <Checkbox
-                      style={{ paddingLeft: 0 }}
-                      disabled={!masterList || createBlankStocktake}
-                      checked={!!includeAllMasterListItems}
-                      onChange={e =>
-                        setState(prev => ({
-                          ...prev,
-                          includeAllMasterListItems: e.target.checked,
-                          vvmStatus: null,
-                          location: null,
-                          expiryDate: null,
-                        }))
-                      }
-                    />
-                  }
-                  label={t('stocktake.all-master-list-items')}
-                  labelRight={true}
-                />
-              ) : null}
+
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
@@ -294,7 +271,6 @@ export const CreateStocktakeModal = ({
                 }
                 label={t('label.items-expiring-before')}
               />
-
               {manageVvmStatusForStock && (
                 <InputWithLabelRow
                   label={t('label.vvm-status')}
@@ -317,6 +293,55 @@ export const CreateStocktakeModal = ({
                 />
               )}
 
+              {/* item status radio buttons, default all (number of lines) */}
+              <Stack
+                flexDirection="row"
+                alignItems="center"
+                sx={{
+                  padding: 2,
+                  gap: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    paddingRight: '87px',
+                  }}
+                >
+                  <Typography alignSelf="center" fontWeight="bold">
+                    {t('label.store')}:
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <RadioGroup
+                    sx={{ margin: '0 auto' }}
+                    defaultValue="All"
+                    // value={draft.given ?? null}
+                    onChange={event => console.log(event.target.value)}
+                  >
+                    <FormControlLabel
+                      // disabled={givenAtOtherStore}
+                      value="All"
+                      control={<Radio />}
+                      label={t('label.all')}
+                    />
+                    <FormControlLabel
+                      // disabled={givenAtOtherStore}
+                      value="In stock"
+                      control={<Radio />}
+                      label={t('report.in-stock')}
+                    />
+                    <FormControlLabel
+                      // disabled={givenAtOtherStore}
+                      value="None"
+                      control={<Radio />}
+                      label={t('label.none')}
+                    />
+                  </RadioGroup>
+                </Box>
+              </Stack>
+
+              {/* Estimated number of rows information pill / if None selected will create a blank stocktake info pill*/}
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={estimatedLineCount}
