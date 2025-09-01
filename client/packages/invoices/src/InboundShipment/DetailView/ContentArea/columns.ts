@@ -49,8 +49,11 @@ export const useInboundShipmentColumns = ({
   onChangeSortBy,
 }: InboundShipmentColumnsProps) => {
   const t = useTranslation();
-  const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
-    usePreferences();
+  const {
+    manageVaccinesInDoses,
+    allowTrackingOfStockByDonor,
+    manageVvmStatusForStock,
+  } = usePreferences();
 
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { getError } = useInboundShipmentLineErrorContext();
@@ -150,6 +153,23 @@ export const useInboundShipmentColumns = ({
           ]),
       },
     ],
+  ];
+
+  if (manageVvmStatusForStock) {
+    columns.push({
+      key: 'vvmStatus',
+      label: 'label.vvm-status',
+      width: 150,
+      accessor: ({ rowData }) =>
+        getColumnPropertyAsString(rowData, [
+          { path: ['lines', 'vvmStatus', 'description' as any] }, // doesn't like nested description, I think because vvmStatus is optional?
+          { path: ['vvmStatus', 'description'] },
+        ]),
+      defaultHideOnMobile: true,
+    });
+  }
+
+  columns.push(
     [
       'location',
       {
@@ -199,8 +219,8 @@ export const useInboundShipmentColumns = ({
           ]),
         defaultHideOnMobile: true,
       },
-    ],
-  ];
+    ]
+  );
 
   if (manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));

@@ -18,6 +18,7 @@ import {
   useEditModal,
   CellProps,
   UnitsAndMaybeDoses,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -28,13 +29,13 @@ import { NewStockLineModal } from '../Components/NewStockLineModal';
 
 const StockListComponent: FC = () => {
   const {
-    filter,
     updatePaginationQuery,
     updateSortQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'expiryDate', dir: 'asc' },
     filters: [
+      { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'itemCodeOrName' },
       {
         key: 'location.code',
@@ -57,9 +58,11 @@ const StockListComponent: FC = () => {
   };
 
   const pagination = { page, first, offset };
+
   const t = useTranslation();
   const { data, isLoading, isError } = useStockList(queryParams);
   const { plugins } = usePluginProvider();
+  const { manageVvmStatusForStock } = usePreferences();
 
   const { isOpen, onClose, onOpen } = useEditModal();
 
@@ -101,6 +104,19 @@ const StockListComponent: FC = () => {
       width: 120,
       defaultHideOnMobile: true,
     },
+  ];
+
+  if (manageVvmStatusForStock) {
+    columnDefinitions.push({
+      key: 'vvmStatus',
+      label: 'label.vvm-status',
+      width: 150,
+      accessor: ({ rowData }) => rowData.vvmStatus?.description,
+      defaultHideOnMobile: true,
+    });
+  }
+
+  columnDefinitions.push(
     {
       key: 'location',
       label: 'label.location',
@@ -183,8 +199,8 @@ const StockListComponent: FC = () => {
       width: 190,
       defaultHideOnMobile: true,
     },
-    ...(plugins.stockLine?.tableColumn || []),
-  ];
+    ...(plugins.stockLine?.tableColumn || [])
+  );
 
   const columns = useColumns<StockLineRowFragment>(
     columnDefinitions,
@@ -197,7 +213,7 @@ const StockListComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar />
       <AppBarButtons />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
