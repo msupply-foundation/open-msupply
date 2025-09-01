@@ -12,6 +12,7 @@ import {
   GenericColumnKey,
   PurchaseOrderNodeStatus,
   useTableStore,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
@@ -93,6 +94,21 @@ const ListView: FC = () => {
         format: ColumnFormat.Date,
         accessor: ({ rowData }) => rowData.confirmedDatetime,
         sortable: true,
+        align: ColumnAlign.Left,
+      },
+      {
+        key: 'sentDatetime',
+        label: 'label.sent',
+        format: ColumnFormat.Date,
+        accessor: ({ rowData }) => rowData.sentDatetime,
+        align: ColumnAlign.Left,
+      },
+      {
+        key: 'requestedDeliveryDate',
+        label: 'label.requested-delivery-date',
+        format: ColumnFormat.Date,
+        accessor: ({ rowData }) => rowData.confirmedDatetime,
+        align: ColumnAlign.Left,
       },
       [
         'status',
@@ -109,6 +125,11 @@ const ListView: FC = () => {
         accessor: ({}) => DeliveryStatus.NotDelivered, // Todo: Replace with actual delivery status calculation once we have goods received data (add rowData back)
         formatter: status =>
           getDeliveryStatusTranslator(t)(status as DeliveryStatus),
+      },
+      {
+        key: 'targetMonths',
+        label: 'label.target-months',
+        accessor: ({ rowData }) => rowData.targetMonths,
       },
       {
         key: 'deliveryDatetime',

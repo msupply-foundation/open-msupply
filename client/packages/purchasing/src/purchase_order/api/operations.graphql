@@ -8,7 +8,9 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   }
   createdDatetime
   confirmedDatetime
+  sentDatetime
   status
+  requestedDeliveryDate
   targetMonths
   reference
   lines {
