@@ -250,7 +250,9 @@ export const StatusChangeButton = () => {
   const { userHasPermission } = useAuthContext();
 
   const onVerify = () => {
-    if (!userHasPermission(UserPermission.InboundShipmentVerify)) {
+    if (userHasPermission(UserPermission.InboundShipmentVerify)) {
+      getConfirmation();
+    } else {
       permissionDeniedNotification();
     }
   };
