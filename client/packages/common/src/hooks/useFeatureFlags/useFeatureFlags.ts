@@ -34,8 +34,5 @@ export const useFeatureFlags = () => {
   return {
     // Enable the new demo table, with better usability
     tableUsabilityImprovements: !!featureFlags['table_usability_improvements'],
-
-    // Used to load plugins via server during dev rather then from local dir, to test remote loading
-    loadRemotePluginsInDev: !!featureFlags['load_remote_plugins_in_dev'],
   };
 };

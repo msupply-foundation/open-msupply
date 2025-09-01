@@ -1,6 +1,5 @@
 import {
   loadRemotePlugin,
-  useFeatureFlags,
   usePluginProvider,
   usePlugins,
 } from '@openmsupply-client/common';
@@ -11,7 +10,6 @@ declare const LOCAL_PLUGINS: { pluginPath: string; pluginCode: string }[];
 
 export const useInitPlugins = () => {
   const { addPluginBundle } = usePluginProvider();
-  const featureFlags = useFeatureFlags();
   const { query } = usePlugins();
 
   const initRemotePlugins = async () => {
@@ -39,11 +37,7 @@ export const useInitPlugins = () => {
     }
   };
   useEffect(() => {
-    if (
-      process.env['NODE_ENV'] === 'production' ||
-      featureFlags.loadRemotePluginsInDev
-    )
-      initRemotePlugins();
+    if (process.env['NODE_ENV'] === 'production') initRemotePlugins();
     else initLocalPlugins();
   }, []);
 };
