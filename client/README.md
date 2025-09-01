@@ -34,6 +34,8 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 `yarn test`
 
+Note that feature flags are set in the server configuration - see the [server README](/server/README.md#start-with-feature-flags) for more detail.
+
 ## Development
 
 - `main` branch - is the stable release branch
