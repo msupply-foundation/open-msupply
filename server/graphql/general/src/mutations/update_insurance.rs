@@ -20,6 +20,7 @@ pub struct UpdateInsuranceInput {
     pub discount_percentage: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub is_active: Option<bool>,
+    pub name_of_insured: Option<String>,
 }
 
 impl UpdateInsuranceInput {
@@ -31,6 +32,7 @@ impl UpdateInsuranceInput {
             discount_percentage,
             expiry_date,
             is_active,
+            name_of_insured,
         } = self;
 
         ServiceInput {
@@ -40,6 +42,7 @@ impl UpdateInsuranceInput {
             discount_percentage,
             expiry_date,
             is_active,
+            name_of_insured,
         }
     }
 }

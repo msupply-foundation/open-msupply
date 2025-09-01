@@ -46,6 +46,7 @@ pub struct InsertInsurance {
     pub discount_percentage: f64,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
+    pub name_of_insured: Option<String>,
 }
 
 pub fn insert_insurance(
