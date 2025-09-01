@@ -3571,6 +3571,7 @@ export type InsertInsuranceInput = {
   insuranceProviderId: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
   nameId: Scalars['String']['input'];
+  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
   policyNumberFamily: Scalars['String']['input'];
   policyNumberPerson: Scalars['String']['input'];
   policyType: InsurancePolicyNodeType;
@@ -4222,6 +4223,7 @@ export type InsurancePolicyNode = {
   insuranceProviderId: Scalars['String']['output'];
   insuranceProviders?: Maybe<InsuranceProviderNode>;
   isActive: Scalars['Boolean']['output'];
+  nameOfInsured?: Maybe<Scalars['String']['output']>;
   policyNumber: Scalars['String']['output'];
   policyNumberFamily?: Maybe<Scalars['String']['output']>;
   policyNumberPerson?: Maybe<Scalars['String']['output']>;
@@ -10111,6 +10113,7 @@ export type UpdateInsuranceInput = {
   id: Scalars['String']['input'];
   insuranceProviderId?: InputMaybe<Scalars['String']['input']>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
   policyType?: InputMaybe<InsurancePolicyNodeType>;
 };
 

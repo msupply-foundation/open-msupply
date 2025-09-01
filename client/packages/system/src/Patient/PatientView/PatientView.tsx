@@ -163,7 +163,9 @@ export const PatientView = () => {
       {current === PatientModal.ContactTraceSearch ? (
         <CreateContactTraceModal />
       ) : null}
-      {current === PatientModal.Insurance ? <InsuranceModal /> : null}
+      {current === PatientModal.Insurance ? (
+        <InsuranceModal patientName={currentPatient?.name} />
+      ) : null}
     </React.Suspense>
   );
 };
