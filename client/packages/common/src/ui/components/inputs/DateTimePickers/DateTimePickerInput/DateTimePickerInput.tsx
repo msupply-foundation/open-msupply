@@ -57,7 +57,6 @@ type DateTimePickerInputProps = Omit<DateTimePickerProps<true>, 'onChange'> & {
   actions?: PickersActionBarAction[];
   dateAsEndOfDay?: boolean;
   disableFuture?: boolean;
-  displayAs?: 'date' | 'dateTime';
   textFieldSx?: SxProps;
 };
 
