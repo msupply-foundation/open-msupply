@@ -3,6 +3,7 @@ import {
   useNotification,
   ErrorDisplay,
   useFormErrorActions,
+  FormErrorProvider,
 } from '@common/hooks';
 import React, { ReactElement } from 'react';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
@@ -24,7 +25,7 @@ import { InsurancePolicySelectWithError } from './InsurancePolicySelect';
 import { InsuranceProvidersSelectWithError } from './InsuranceProvidersSelect';
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
-export const InsuranceModal = (): ReactElement => {
+export const InsuranceModalComponent = (): ReactElement => {
   const t = useTranslation();
   const formatDateTime = useFormatDateTime();
   const { success, error } = useNotification();
@@ -231,3 +232,9 @@ export const InsuranceModal = (): ReactElement => {
     </Modal>
   );
 };
+
+export const InsuranceModal = () => (
+  <FormErrorProvider>
+    <InsuranceModalComponent />
+  </FormErrorProvider>
+);
