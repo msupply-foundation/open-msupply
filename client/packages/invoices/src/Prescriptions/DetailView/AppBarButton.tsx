@@ -11,6 +11,8 @@ import {
   SplitButton,
   PrinterIcon,
   SplitButtonOption,
+  useRegisterActions,
+  EnvUtils,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../../StockOut';
@@ -58,6 +60,21 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const [selected, setSelected] = useState<SplitButtonOption<string>>(
     options[1]!
   );
+
+  const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
+
+  useRegisterActions([
+    {
+      id: 'add',
+      name: `${t('button.print')} (${altOrOptionString}+L)`,
+      shortcut: ['Alt+KeyL'],
+      perform: () => {
+        if (prescription) {
+          printPrescriptionLabels(prescription, prescription.lines.nodes);
+        }
+      },
+    },
+  ]);
 
   return (
     <AppBarButtonsPortal>
