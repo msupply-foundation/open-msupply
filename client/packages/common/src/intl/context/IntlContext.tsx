@@ -39,8 +39,7 @@ export function initialiseI18n({
   const defaultTranslationsLoadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
 
   // Served from backend, on electron we use a dummy but valid url https://localhost:8000 which shouldn't actually be used.
-  const customTranslationsLoadPath = `${!!isElectron ? 'https://localhost:8000' : Environment.API_HOST}/custom-translations`;
-  console.log('customTranslationsLoadPath', customTranslationsLoadPath);
+  const customTranslationsLoadPath = `${Environment.API_HOST.startsWith('file://') ? 'http://localhost:8000' : Environment.API_HOST}/custom-translations`;
 
   i18next
     .use(initReactI18next) // passes i18n down to react-i18next
