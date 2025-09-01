@@ -43,6 +43,7 @@ export const getFormattedDateError = (
 
 type DateTimePickerInputProps = Omit<DateTimePickerProps<true>, 'onChange'> & {
   error?: boolean;
+  errorText?: string;
   required?: boolean;
   setError?: (error: string) => void;
   width?: number | string;
@@ -78,24 +79,7 @@ export const DateTimePickerInput = ({
   textFieldSx: inputSx,
   slotProps,
   ...props
-}: Omit<DateTimePickerProps<true>, 'onChange'> & {
-  error?: boolean;
-  errorText?: string;
-  width?: number | string;
-  label?: string;
-  onChange: (value: Date | null) => void;
-  onError?: (validationError: string, date?: Date | null) => void;
-  // This allows a calling component to know whether the date was changed via
-  // keyboard input or the picker UI
-  setIsOpen?: (open: boolean) => void;
-  showTime?: boolean;
-  actions?: PickersActionBarAction[];
-  dateAsEndOfDay?: boolean;
-  disableFuture?: boolean;
-  displayAs?: 'date' | 'dateTime';
-  required?: boolean;
-  textFieldSx?: SxProps;
-}) => {
+}: DateTimePickerInputProps) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
