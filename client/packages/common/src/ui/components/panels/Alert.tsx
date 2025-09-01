@@ -16,13 +16,12 @@ const getIcon = (severity: AlertColor | undefined) => {
   }
 };
 
-export const Alert = (props: AlertProps) => {
-  const { sx, ...rest } = props;
-  const Icon = getIcon(props.severity);
+export const Alert = (props: AlertProps & { Icon?: React.JSX.Element }) => {
+  const { sx, Icon, ...rest } = props;
   return (
     <MuiAlert
       {...rest}
-      icon={Icon}
+      icon={Icon ?? getIcon(props.severity)}
       sx={{ borderRadius: '10px', marginRight: '8px', ...sx }}
     />
   );

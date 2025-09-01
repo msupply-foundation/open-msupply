@@ -14,7 +14,11 @@ import {
   TypedTFunction,
   useTranslation,
 } from '@common/intl';
-import { useBufferState } from '@common/hooks';
+import {
+  FieldErrorWrapper,
+  FieldErrorWrapperProps,
+  useBufferState,
+} from '@common/hooks';
 import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
 
 export const getFormattedDateError = (
@@ -37,6 +41,26 @@ export const getFormattedDateError = (
   }
 };
 
+type DateTimePickerInputProps = Omit<DateTimePickerProps<true>, 'onChange'> & {
+  error?: boolean;
+  errorText?: string;
+  required?: boolean;
+  setError?: (error: string) => void;
+  width?: number | string;
+  label?: string;
+  onChange: (value: Date | null) => void;
+  onError?: (validationError: string, date?: Date | null) => void;
+  // This allows a calling component to know whether the date was changed via
+  // keyboard input or the picker UI
+  setIsOpen?: (open: boolean) => void;
+  showTime?: boolean;
+  actions?: PickersActionBarAction[];
+  dateAsEndOfDay?: boolean;
+  disableFuture?: boolean;
+  displayAs?: 'date' | 'dateTime';
+  textFieldSx?: SxProps;
+};
+
 export const DateTimePickerInput = ({
   onChange,
   onError,
@@ -50,26 +74,12 @@ export const DateTimePickerInput = ({
   dateAsEndOfDay,
   disableFuture,
   error,
+  errorText,
   required,
   textFieldSx: inputSx,
   slotProps,
   ...props
-}: Omit<DateTimePickerProps<true>, 'onChange'> & {
-  error?: string | undefined;
-  width?: number | string;
-  label?: string;
-  onChange: (value: Date | null) => void;
-  onError?: (validationError: string, date?: Date | null) => void;
-  // This allows a calling component to know whether the date was changed via
-  // keyboard input or the picker UI
-  setIsOpen?: (open: boolean) => void;
-  showTime?: boolean;
-  actions?: PickersActionBarAction[];
-  dateAsEndOfDay?: boolean;
-  disableFuture?: boolean;
-  required?: boolean;
-  textFieldSx?: SxProps;
-}) => {
+}: DateTimePickerInputProps) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
@@ -144,7 +154,8 @@ export const DateTimePickerInput = ({
               }
             },
             error: !!error || (!isInitialEntry && !!internalError),
-            helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
+            helperText:
+              errorText || (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
               ...getTextFieldSx(theme, !!label, !showTime, inputSx, width),
               width,
@@ -186,3 +197,26 @@ export const DateTimePickerInput = ({
     </Box>
   );
 };
+
+export const DateTimePickerInputWithError = ({
+  code,
+  label,
+  value,
+  required,
+  customErrorState,
+  customErrorMessage,
+  ...dateTimeInputProps
+}: DateTimePickerInputProps &
+  Omit<FieldErrorWrapperProps<Date | null>, 'children'>) => (
+  <FieldErrorWrapper
+    {...{ code, label, value, required, customErrorState, customErrorMessage }}
+  >
+    {errorProps => (
+      <DateTimePickerInput
+        {...dateTimeInputProps}
+        {...errorProps}
+        label={undefined} // Suppress input's own label
+      />
+    )}
+  </FieldErrorWrapper>
+);

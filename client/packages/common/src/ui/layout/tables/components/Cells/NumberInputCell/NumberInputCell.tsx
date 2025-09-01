@@ -29,6 +29,7 @@ export const NumberInputCell = <T extends RecordWithId>({
   width,
   endAdornment,
   error,
+  setError,
   slotProps,
   debounce = 250,
 }: CellProps<T> &
@@ -96,6 +97,7 @@ export const NumberInputCell = <T extends RecordWithId>({
       width={width}
       endAdornment={endAdornment}
       error={error}
+      setError={setError}
     />
   );
 };

@@ -4,15 +4,22 @@ import { useTranslation } from '@common/intl';
 import { Autocomplete, InputWithLabelRow } from '@common/components';
 
 import { useInsuranceProviders } from '../apiModern/hooks';
+import { FieldErrorWrapper, FieldErrorWrapperProps } from '@common/hooks';
 
 interface InsuranceProvidersSelectProps {
   insuranceProviderId: string;
   onChange: (value: string) => void;
+  error?: boolean;
+  setError?: (error: string) => void;
+  required?: boolean;
 }
 
 export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
   insuranceProviderId,
   onChange,
+  error,
+  setError,
+  required,
 }): ReactElement => {
   const t = useTranslation();
   const {
@@ -28,13 +35,14 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
 
   const selectedInsurance = data.find(({ id }) => id === insuranceProviderId);
 
+  const errorProps = { error, setError, required };
+
   return (
     <InputWithLabelRow
       label={t('label.provider-name')}
       Input={
         <Autocomplete
           clearable={false}
-          required
           options={options}
           getOptionLabel={option => option.label}
           value={{
@@ -46,9 +54,33 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
               onChange(option.value);
             }
           }}
+          {...errorProps}
         />
       }
       sx={{ '& .MuiAutocomplete-root': { flexGrow: 1, borderRadius: 1 } }}
     />
   );
 };
+
+export const InsuranceProvidersSelectWithError = ({
+  code,
+  label,
+  value,
+  required,
+  customErrorState,
+  customErrorMessage,
+  ...insuranceProviderSelectProps
+}: Omit<InsuranceProvidersSelectProps, 'insuranceProviderId'> &
+  Omit<FieldErrorWrapperProps<string>, 'children'>) => (
+  <FieldErrorWrapper
+    {...{ code, label, value, required, customErrorState, customErrorMessage }}
+  >
+    {errorProps => (
+      <InsuranceProvidersSelect
+        insuranceProviderId={value}
+        {...insuranceProviderSelectProps}
+        {...errorProps}
+      />
+    )}
+  </FieldErrorWrapper>
+);
