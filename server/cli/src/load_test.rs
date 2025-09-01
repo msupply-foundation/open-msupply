@@ -50,7 +50,7 @@ pub struct LoadTest {
     #[clap(short, long)]
     pub sites: usize,
 
-    /// The number of lines to include in each invoice
+    /// The number of lines to include in each requisition
     #[clap(short, long, default_value = "25")]
     pub lines: usize,
 
@@ -196,7 +196,7 @@ impl LoadTest {
         println!("Base Port: {}", self.base_port);
         println!("Output Directory: {}", self.output_dir.display());
         println!("Number of Sites: {}", self.sites);
-        println!("Invoice Lines: {}", self.lines);
+        println!("Requisition Lines: {}", self.lines);
         println!("Duration: {} seconds", self.duration);
 
         let _ = std::fs::remove_dir_all(&self.output_dir);
