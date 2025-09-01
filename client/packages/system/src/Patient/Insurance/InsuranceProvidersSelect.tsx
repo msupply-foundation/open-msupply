@@ -14,7 +14,7 @@ interface InsuranceProvidersSelectProps {
   required?: boolean;
 }
 
-export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
+const InsuranceProvidersSelectInner: FC<InsuranceProvidersSelectProps> = ({
   insuranceProviderId,
   onChange,
   error,
@@ -62,7 +62,8 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
   );
 };
 
-export const InsuranceProvidersSelectWithError = ({
+// Error-wrapped container for the above
+export const InsuranceProvidersSelect = ({
   code,
   label,
   value,
@@ -76,7 +77,7 @@ export const InsuranceProvidersSelectWithError = ({
     {...{ code, label, value, required, customErrorState, customErrorMessage }}
   >
     {errorProps => (
-      <InsuranceProvidersSelect
+      <InsuranceProvidersSelectInner
         insuranceProviderId={value}
         {...insuranceProviderSelectProps}
         {...errorProps}

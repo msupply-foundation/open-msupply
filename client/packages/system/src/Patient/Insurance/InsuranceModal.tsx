@@ -22,7 +22,7 @@ import {
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { InsurancePolicySelectWithError } from './InsurancePolicySelect';
-import { InsuranceProvidersSelectWithError } from './InsuranceProvidersSelect';
+import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
 export const InsuranceModalComponent = (): ReactElement => {
@@ -193,7 +193,7 @@ export const InsuranceModalComponent = (): ReactElement => {
                 />
               }
             />
-            <InsuranceProvidersSelectWithError
+            <InsuranceProvidersSelect
               value={draft.insuranceProviderId}
               onChange={value => {
                 updatePatch({
