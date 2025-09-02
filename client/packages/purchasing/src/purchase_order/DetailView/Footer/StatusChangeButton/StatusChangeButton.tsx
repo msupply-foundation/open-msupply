@@ -6,7 +6,7 @@ import {
   useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { useStatusChangeButton } from './useStatusChangeButton';
-import { validateEmptyPurchaseOrder } from '../utils';
+import { hasValidPurchaseOrderLines } from '../utils';
 
 export const StatusChangeButton = (): ReactElement | null => {
   const t = useTranslation();
@@ -14,13 +14,13 @@ export const StatusChangeButton = (): ReactElement | null => {
     useStatusChangeButton();
 
   const noLinesNotification = useDisabledNotificationToast(
-    t('messages.no-lines')
+    t('messages.cannot-change-status-purchase-order-placeholder-lines')
   );
 
   if (!selectedOption) return null;
 
   const handleClick = () => {
-    if (!validateEmptyPurchaseOrder(lines)) return noLinesNotification();
+    if (!hasValidPurchaseOrderLines(lines)) return noLinesNotification();
     return getConfirmation();
   };
 
