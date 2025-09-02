@@ -64,9 +64,12 @@ const OutboundShipmentListViewComponent: FC = () => {
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
   const simplifiedTabletView = useSimplifiedTabletUI();
+  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
 
   const { data, isError, isLoading } = useOutbound.document.list(queryParams);
   useDisableOutboundRows(data?.nodes);
+
+  // const [sorting, setSorting] = useState<MRT_SortingState>([]);
 
   const columns = useColumns<OutboundRowFragment>(
     [
