@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import {
   DataTable,
   useTranslation,
@@ -9,6 +9,11 @@ import {
   NothingHere,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
+import {
+  MaterialReactTable,
+  MRT_ColumnDef,
+  useMaterialReactTable,
+} from 'material-react-table';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
@@ -87,23 +92,112 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
 
   if (!rows) return null;
 
+  console.log('rows', rows);
+
+  const mrtColumns = useMemo<
+    MRT_ColumnDef<StockOutLineFragment | StockOutItem>[]
+  >(
+    () => [
+      {
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        // size: 140,
+        enableColumnOrdering: false,
+        enableEditing: false,
+        enableSorting: true,
+        enableResizing: true,
+        // muiTableHeadCellProps: { align: 'left' },
+        // muiTableBodyCellProps: { align: 'left' },
+        // isSticky: true,
+      },
+      {
+        accessorKey: 'item.name',
+        header: 'Item name',
+        // size: 140,
+        enableColumnOrdering: false,
+        enableEditing: false,
+        enableSorting: true,
+        enableResizing: true,
+        // muiTableHeadCellProps: { align: 'left' },
+        // muiTableBodyCellProps: { align: 'left' },
+        // isSticky: true,
+      },
+      {
+        accessorKey: 'batch',
+        header: 'Batch',
+        // size: 140,
+        enableColumnOrdering: false,
+        enableEditing: false,
+        enableSorting: true,
+        enableResizing: true,
+        // muiTableHeadCellProps: { align: 'left' },
+        // muiTableBodyCellProps: { align: 'left' },
+        // isSticky: true,
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: 'Expiry Date',
+        // size: 140,
+        enableColumnOrdering: false,
+        enableEditing: false,
+        enableSorting: true,
+        enableResizing: true,
+        // muiTableHeadCellProps: { align: 'left' },
+        // muiTableBodyCellProps: { align: 'left' },
+        // isSticky: true,
+      },
+    ],
+    []
+  );
+
+  const table = useMaterialReactTable({
+    columns: mrtColumns,
+    data: rows,
+    enablePagination: false,
+    enableRowVirtualization: true,
+    muiTableContainerProps: {
+      sx: { maxHeight: '600px', width: '100%' },
+    },
+    // muiTableBodyProps: {
+    //   sx: { border: '1px solid blue', width: '100%' },
+    // },
+    enableColumnResizing: true,
+    // muiTableBodyRowProps: {
+    //   sx: {
+    //     borderBottom: '1px solid rgba(224, 224, 224, 1)',
+    //   },
+    // },
+    // muiTableProps: {
+    //   sx: {
+    //     width: '100%',
+    //     border: '1px solid green',
+    //     // tableLayout: 'fixed', // ensures columns share extra space
+    //   },
+    // },
+  });
+
   return (
-    <DataTable
-      id="outbound-detail"
-      onRowClick={onRowClick}
-      ExpandContent={props => <Expand {...props} />}
-      columns={columns}
-      data={rows}
-      enableColumnSelection
-      noDataElement={
-        <NothingHere
-          body={t('error.no-outbound-items')}
-          onCreate={isDisabled ? undefined : () => onAddItem()}
-          buttonText={t('button.add-item')}
-        />
-      }
-      isRowAnimated={true}
-    />
+    <>
+      <div style={{ width: '100%', overflow: 'hidden' }}>
+        <MaterialReactTable table={table} />
+        {/* <DataTable
+        id="outbound-detail"
+        onRowClick={onRowClick}
+        ExpandContent={props => <Expand {...props} />}
+        columns={columns}
+        data={rows}
+        enableColumnSelection
+        noDataElement={
+          <NothingHere
+            body={t('error.no-outbound-items')}
+            onCreate={isDisabled ? undefined : () => onAddItem()}
+            buttonText={t('button.add-item')}
+          />
+        }
+        isRowAnimated={true}
+      /> */}
+      </div>
+    </>
   );
 };
 

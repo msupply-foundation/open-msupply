@@ -38,6 +38,7 @@
     "js-cookie": "^3.0.5",
     "kbar": "^0.1.0-beta.45",
     "lodash": "^4.17.21",
+    "material-react-table": "^3.2.1",
     "notistack": "^3.0.2",
     "react": "^18.0.0",
     "react-currency-input-field": "^3.10.0",
