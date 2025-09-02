@@ -1,3 +1,5 @@
+## load_test
+
 Load testing was developed to benchmark our OG and OMS sync systems capabilities on a fairly standardised setup. This should inform us:
 
 * What performance we should expect
