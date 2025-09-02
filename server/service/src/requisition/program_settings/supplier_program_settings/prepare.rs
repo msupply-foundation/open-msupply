@@ -2,7 +2,7 @@ use repository::{
     EqualFilter, MasterListFilter, NameTagFilter, PeriodRow, PeriodRowRepository,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
-    ProgramRequisitionSettingsRepository, ProgramSupplier, ProgramSupplierFilter,
+    ProgramRequisitionSettingsRepository, ProgramRow, ProgramSupplier, ProgramSupplierFilter,
     ProgramSupplierRepository, RepositoryError, RequisitionType, RequisitionsInPeriod,
     RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
 };
@@ -107,4 +107,10 @@ pub fn get_program_settings_and_order_types_for_store(
         settings,
         order_types,
     }))
+}
+
+#[derive(Clone, Debug)]
+pub struct ProgramAndOrderType {
+    pub program: ProgramRow,
+    pub order_type: ProgramRequisitionOrderTypeRow,
 }
