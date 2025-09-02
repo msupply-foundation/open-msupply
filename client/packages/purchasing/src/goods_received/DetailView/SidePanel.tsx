@@ -40,7 +40,7 @@ export const SidePanel = (): ReactElement => {
 
           <PanelRow>
             <PanelLabel>{t('label.status')}</PanelLabel>
-            <PanelField>{data?.number ?? ''}</PanelField>
+            <PanelField>{data?.status ?? ''}</PanelField>
           </PanelRow>
         </Grid>
       </DetailPanelSection>
@@ -49,7 +49,7 @@ export const SidePanel = (): ReactElement => {
         <Grid container gap={1} key="additional-info">
           <PanelRow>
             <PanelLabel>{t('label.created-by')}</PanelLabel>
-            <PanelField>{data?.number ?? ''}</PanelField>
+            <PanelField>{data?.createdBy ?? ''}</PanelField>
           </PanelRow>
           <PanelRow>
             <PanelLabel>{t('label.created-datetime')}</PanelLabel>
