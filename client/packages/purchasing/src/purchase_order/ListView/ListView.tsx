@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -25,9 +25,11 @@ import {
   getPurchaseOrderStatusTranslator,
 } from '../../utils';
 
-const ListView: FC = () => {
+const ListView = () => {
   const t = useTranslation();
+  const navigate = useNavigate();
   const { setDisabledRows } = useTableStore();
+
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -45,14 +47,13 @@ const ListView: FC = () => {
       { key: 'sentDatetime', condition: 'equalTo' },
     ],
   });
+
   const listParams = {
     sortBy,
     first,
     offset,
     filterBy,
   };
-
-  const navigate = useNavigate();
   const {
     query: { data, isError, isLoading },
   } = usePurchaseOrderList(listParams);
@@ -155,32 +156,25 @@ const ListView: FC = () => {
   return (
     <>
       <Toolbar />
-      <AppBarButtons />
+      <AppBarButtons data={data?.nodes} isLoading={isLoading} />
       <DataTable
         id="purchase-order-list"
         enableColumnSelection
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes ?? []}
         isError={isError}
         isLoading={isLoading}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-purchase-orders')}
-            // onCreate={modalController.toggleOn}
-          />
-        }
-        onRowClick={row => {
-          navigate(row.id);
-        }}
+        onRowClick={row => navigate(row.id)}
+        onChangePage={updatePaginationQuery}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+        noDataElement={<NothingHere body={t('error.no-purchase-orders')} />}
       />
       <Footer listParams={listParams} />
     </>
   );
 };
 
-export const PurchaseOrderListView: FC = () => (
+export const PurchaseOrderListView = () => (
   <TableProvider createStore={createTableStore}>
     <ListView />
   </TableProvider>

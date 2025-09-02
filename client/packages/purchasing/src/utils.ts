@@ -1,9 +1,15 @@
-import { LocaleKey, useTranslation } from '@common/intl';
 import {
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
   PurchaseOrderNodeStatus,
   GoodsReceivedNodeStatus,
-} from '@common/types';
-import { PurchaseOrderFragment } from './purchase_order/api';
+  Formatter,
+} from '@openmsupply-client/common';
+import {
+  PurchaseOrderFragment,
+  PurchaseOrderRowFragment,
+} from './purchase_order/api';
 
 const purchaseOrderStatusTranslation: Record<
   PurchaseOrderNodeStatus,
@@ -109,4 +115,39 @@ export const isGoodsReceivedEditable = (
   status: GoodsReceivedNodeStatus
 ): boolean => {
   return status !== GoodsReceivedNodeStatus.Finalised;
+};
+
+export const purchaseOrderToCsv = (
+  t: TypedTFunction<LocaleKey>,
+  purchaseOrder: PurchaseOrderRowFragment[]
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.supplier'),
+    t('label.number'),
+    t('label.created'),
+    t('label.confirmed'),
+    t('label.sent'),
+    t('label.requested-delivery-date'),
+    t('label.status'),
+    // t('label.delivery-status'), TODO: add back once we have data?
+    // t('label.delivered'),
+    t('label.target-months'),
+    t('label.lines'),
+  ];
+
+  const data = purchaseOrder.map(node => [
+    node.id,
+    node.supplier?.name,
+    node.number,
+    node.createdDatetime,
+    node.confirmedDatetime,
+    node.sentDatetime,
+    node.requestedDeliveryDate,
+    node.status,
+    node.targetMonths,
+    node.lines.totalCount,
+  ]);
+
+  return Formatter.csv({ fields, data });
 };
