@@ -4,13 +4,11 @@
  */
 
 import {
-  ALT_KEY,
   ArrowLeftIcon,
   ArrowRightIcon,
   Box,
   ButtonWithIcon,
   Typography,
-  useRegisterActions,
   useTranslation,
 } from '@openmsupply-client/common';
 import React from 'react';
@@ -43,15 +41,6 @@ export const NavBar = ({
   };
 
   const currentCount = currentIndex + 1;
-
-  useRegisterActions([
-    {
-      id: 'next',
-      name: `${t('label.new-item')} (${ALT_KEY}+N)`,
-      shortcut: ['Alt+KeyN'],
-      perform: onClick,
-    },
-  ]);
 
   return (
     <Box
