@@ -47,7 +47,7 @@ export const NavBar = ({
   useRegisterActions([
     {
       id: 'next',
-      name: `${t('button.next')} (${ALT_KEY}+N)`,
+      name: `${t('label.new-item')} (${ALT_KEY}+N)`,
       shortcut: ['Alt+KeyN'],
       perform: onClick,
     },
