@@ -28,6 +28,7 @@ export const ToggleButtonGroup = <T extends string>({
         key={option.id}
         value={option.value}
         aria-label={option.label}
+        sx={{ padding: '0 5px' }}
       >
         {option.icon}
       </MuiToggleButton>
