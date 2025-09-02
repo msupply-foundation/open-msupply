@@ -84,6 +84,7 @@ pub enum Resource {
     MutateOutboundShipment,
     // inbound shipment
     MutateInboundShipment,
+    VerifyInboundShipment,
     // supplier return
     MutateSupplierReturn,
     // customer return
@@ -425,6 +426,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::InboundShipmentMutate),
+        ]),
+    );
+    map.insert(
+        Resource::VerifyInboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentVerify),
         ]),
     );
     // Supplier return

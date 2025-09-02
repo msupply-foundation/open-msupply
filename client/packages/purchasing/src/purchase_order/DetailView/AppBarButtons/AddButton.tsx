@@ -107,7 +107,6 @@ export const AddButton = ({
         isDisabled={disable}
         openFrom="bottom"
         Icon={<PlusCircleIcon />}
-        staticLabel={t('button.add')}
       />
 
       {masterListModalController.isOn && (
