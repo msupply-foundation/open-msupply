@@ -8,16 +8,30 @@ import {
   useNotification,
   useToggle,
   useNavigate,
+  LoadingButton,
+  DownloadIcon,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import {
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
+import { PurchaseOrderRowFragment } from '../api';
+import { purchaseOrderToCsv } from '../../utils';
 
-export const AppBarButtonsComponent = () => {
+interface AppBarButtonProps {
+  data?: PurchaseOrderRowFragment[];
+  isLoading: boolean;
+}
+
+export const AppBarButtonsComponent = ({
+  data,
+  isLoading,
+}: AppBarButtonProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const exportCsv = useExportCSV();
   const { error } = useNotification();
   const modalController = useToggle();
 
@@ -39,6 +53,12 @@ export const AppBarButtonsComponent = () => {
     modalController.toggleOff();
   };
 
+  const handleCsvExportClick = async () => {
+    if (!data || !data.length) return error(t('error.no-data'))();
+    const csv = purchaseOrderToCsv(t, data);
+    await exportCsv(csv, t('filename.purchase-order'));
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -46,6 +66,13 @@ export const AppBarButtonsComponent = () => {
           Icon={<PlusCircleIcon />}
           label={t('button.new-purchase-order')}
           onClick={modalController.toggleOn}
+        />
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          variant="outlined"
+          isLoading={isLoading}
+          label={t('button.export')}
+          onClick={handleCsvExportClick}
         />
         {modalController.isOn && (
           <SupplierSearchModal

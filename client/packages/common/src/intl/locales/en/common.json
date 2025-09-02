@@ -521,6 +521,7 @@
   "filename.patients": "patients",
   "filename.pol": "Purchase order lines upload template",
   "filename.prescriptions": "Prescriptions",
+  "filename.purchase-order": "purchase-order",
   "filename.purchase-order-line-failed-uploads": "Purchase Order Line Failed Uploads",
   "filename.requests": "internal-orders",
   "filename.responses": "requisitions",
