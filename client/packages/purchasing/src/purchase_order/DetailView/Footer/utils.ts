@@ -19,7 +19,7 @@ export const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
   FINALISED: 'label.finalised',
 };
 
-export const validateEmptyPurchaseOrder = (
+export const hasValidPurchaseOrderLines = (
   lines:
     | {
         totalCount: number;
@@ -29,10 +29,11 @@ export const validateEmptyPurchaseOrder = (
 ): boolean => {
   if (!lines) return false;
 
-  const noRequestedPackSize = lines.nodes.every(
-    line => line.requestedPackSize === 0
+  const includesEmptyLines = lines.nodes.some(
+    line => line.requestedNumberOfUnits === 0
   );
-  if (lines.totalCount === 0 || noRequestedPackSize) return false;
+
+  if (lines.totalCount === 0 || includesEmptyLines) return false;
   return true;
 };
 

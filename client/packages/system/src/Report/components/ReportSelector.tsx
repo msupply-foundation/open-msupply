@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   PrintFormat,
   PrintReportSortInput,
@@ -28,7 +28,7 @@ interface ReportSelectorProps {
   }) => JSX.Element;
 }
 
-export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
+export const ReportSelector = ({
   context,
   subContext,
   queryParams,
@@ -36,7 +36,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   dataId,
   sort,
   CustomButton,
-}) => {
+}: ReportSelectorProps) => {
   const t = useTranslation();
   const { translateDynamicKey } = useIntlUtils();
   const modalOpen = useToggle();

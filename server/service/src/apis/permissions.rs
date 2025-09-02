@@ -200,7 +200,6 @@ pub enum Permissions {
     ConfirmInternalOrderSent,
     ColdChainApi,
     EditCentralData,
-    VerifyInboundShipment,
 }
 
 pub fn permission_mapping() -> HashMap<i16, Permissions> {
@@ -391,7 +390,6 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (201, Permissions::ColdChainApi),
         (202, Permissions::EditCentralData),
         (203, Permissions::AddAssetsViaDataMatrix),
-        (204, Permissions::VerifyInboundShipment),
         (501, Permissions::HISAddPatients),
         (502, Permissions::HISEditPatientsInfo),
         (503, Permissions::HISCreateEncounters),
