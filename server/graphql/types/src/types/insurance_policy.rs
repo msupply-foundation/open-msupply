@@ -68,6 +68,10 @@ impl InsurancePolicyNode {
         let result = loader.load_one(insurance_provider_id.clone()).await?;
         Ok(result.map(InsuranceProviderNode::from_domain))
     }
+
+    pub async fn name_of_insured(&self) -> &Option<String> {
+        &self.row().name_of_insured
+    }
 }
 
 impl InsurancePolicyNode {

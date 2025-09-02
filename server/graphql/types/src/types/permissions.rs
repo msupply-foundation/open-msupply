@@ -37,6 +37,7 @@ pub enum UserPermission {
     OutboundShipmentMutate,
     InboundShipmentQuery,
     InboundShipmentMutate,
+    InboundShipmentVerify,
     SupplierReturnQuery,
     SupplierReturnMutate,
     CustomerReturnQuery,

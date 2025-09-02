@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { isGoodsReceivedEditable } from '../../../utils';
 import { useGoodsReceived } from '../../api';
-import { AddButtons } from './AddButtons';
+import { AddButton } from './AddButton';
 
 export const AppBarButtonsComponent = (): ReactElement => {
   const { OpenButton } = useDetailPanel();
@@ -20,7 +20,7 @@ export const AppBarButtonsComponent = (): ReactElement => {
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         {/* Add Buttons as needed */}
-        <AddButtons
+        <AddButton
           goodsReceived={data}
           disable={
             isLoading ||
