@@ -1,14 +1,12 @@
 use super::{InsertGoodsReceivedError, InsertGoodsReceivedInput};
 use crate::goods_received::common::check_goods_received_exists;
-use repository::{
-    PurchaseOrderRowRepository, StorageConnection, UserAccountRow, UserAccountRowRepository,
-};
+use repository::{PurchaseOrderRowRepository, StorageConnection};
 
 pub fn validate(
     input: &InsertGoodsReceivedInput,
-    user_id: &str,
+    _store_id: &str,
     connection: &StorageConnection,
-) -> Result<UserAccountRow, InsertGoodsReceivedError> {
+) -> Result<(), InsertGoodsReceivedError> {
     if check_goods_received_exists(&input.id, connection)?.is_some() {
         return Err(InsertGoodsReceivedError::GoodsReceivedAlreadyExists);
     }
@@ -21,11 +19,5 @@ pub fn validate(
         return Err(InsertGoodsReceivedError::PurchaseOrderDoesNotExist);
     }
 
-    let user = UserAccountRowRepository::new(connection)
-        .find_one_by_id(user_id)?
-        .ok_or(InsertGoodsReceivedError::InternalError(
-            "User account not found".to_string(),
-        ))?;
-
-    Ok(user)
+    Ok(())
 }
