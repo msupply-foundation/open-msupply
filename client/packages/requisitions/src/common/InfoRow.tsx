@@ -24,6 +24,7 @@ interface InfoRowProps {
   displayVaccinesInDoses?: boolean;
   doses?: number | string;
   dosesLabel?: string;
+  decimalLimit?: number;
 }
 
 export const InfoRow = ({
@@ -34,6 +35,7 @@ export const InfoRow = ({
   displayVaccinesInDoses = false,
   doses,
   dosesLabel,
+  decimalLimit,
 }: InfoRowProps) => {
   return (
     <Grid
@@ -59,6 +61,7 @@ export const InfoRow = ({
           <NumericTextDisplay
             value={value}
             packagingDisplay={packagingDisplay}
+            decimalLimit={decimalLimit}
           />
         ) : (
           <Typography variant="body1">
@@ -106,6 +109,7 @@ export const ValueInfoRow = ({
   displayVaccinesInDoses = false,
   dosesPerUnit = 1,
   nullDisplay,
+  decimalLimit,
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -161,6 +165,7 @@ export const ValueInfoRow = ({
       displayVaccinesInDoses={displayVaccinesInDoses && !!valueInUnitsOrPacks}
       doses={valueInDoses}
       dosesLabel={t('label.doses')}
+      decimalLimit={decimalLimit}
     />
   );
 };
