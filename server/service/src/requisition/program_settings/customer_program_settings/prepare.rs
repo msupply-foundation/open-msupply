@@ -162,7 +162,7 @@ fn map_period_rows_and_requisitions_to_order_type(
             let available_periods = periods
                 .iter()
                 .filter(|period| {
-                    period_is_available(period, &settings, &order_type, &requisitions_in_periods)
+                    period_is_available(period, settings, &order_type, &requisitions_in_periods)
                 })
                 .cloned()
                 .collect();
@@ -205,7 +205,6 @@ mod test {
         let name_tag1 = NameTagRow {
             id: "name_tag1".to_string(),
             name: "tag1".to_string(),
-            ..Default::default()
         };
         let name_tag_join1 = NameTagJoinRow {
             id: "name_tag_join1".to_string(),
@@ -215,7 +214,6 @@ mod test {
         let name_tag2 = NameTagRow {
             id: "name_tag2".to_string(),
             name: "tag2".to_string(),
-            ..Default::default()
         };
         let name_tag_join2 = NameTagJoinRow {
             id: "name_tag_join2".to_string(),

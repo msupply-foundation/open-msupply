@@ -3,6 +3,7 @@ mod prepare;
 
 use map::map_supplier_program_settings;
 use prepare::prepare_supplier_program_settings;
+pub use prepare::{get_program_settings_and_order_types_for_store, ProgramSettingsAndOrderTypes};
 
 use repository::{
     PeriodRow, ProgramRequisitionOrderTypeRow, ProgramRequisitionSettings, ProgramSupplier,
