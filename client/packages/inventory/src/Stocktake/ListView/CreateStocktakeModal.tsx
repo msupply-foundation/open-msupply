@@ -21,7 +21,9 @@ import {
 import {
   AlertIcon,
   Box,
+  CheckIcon,
   Formatter,
+  InfoIcon,
   StockLineFilterInput,
   useNavigate,
   usePreferences,
@@ -40,12 +42,17 @@ interface NewStocktakeModalProps {
 }
 
 interface ModalState {
-  createBlankStocktake: boolean;
   masterList: MasterListRowFragment | null;
-  includeAllMasterListItems: boolean;
   vvmStatus: VvmStatusFragment | null;
   location: LocationRowFragment | null;
   expiryDate: Date | null;
+  itemStatus: ItemStatus;
+}
+
+enum ItemStatus {
+  All = 'all',
+  InStock = 'in stock',
+  None = 'none',
 }
 
 export const CreateStocktakeModal = ({
@@ -67,22 +74,14 @@ export const CreateStocktakeModal = ({
   });
 
   const [
-    {
-      location,
-      masterList,
-      vvmStatus,
-      expiryDate,
-      createBlankStocktake,
-      includeAllMasterListItems,
-    },
+    { location, masterList, vvmStatus, expiryDate, itemStatus },
     setState,
   ] = useState<ModalState>({
     location: null,
     vvmStatus: null,
     masterList: null,
     expiryDate: null,
-    createBlankStocktake: false,
-    includeAllMasterListItems: false,
+    itemStatus: ItemStatus.All,
   });
 
   const stockFilter: StockLineFilterInput = {
@@ -107,7 +106,7 @@ export const CreateStocktakeModal = ({
   const { localisedDate } = useFormatDateTime();
 
   const generateComment = () => {
-    if (createBlankStocktake) return '';
+    if (itemStatus === ItemStatus.None) return '';
 
     const filterComments: string[] = [];
 
@@ -162,10 +161,8 @@ export const CreateStocktakeModal = ({
       masterListId: masterList?.id,
       locationId: location?.id,
       vvmStatusId: vvmStatus?.id,
-      createBlankStocktake,
       expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
       isInitialStocktake: false,
-      includeAllMasterListItems,
       description,
       comment: generateComment(),
     };
@@ -176,58 +173,18 @@ export const CreateStocktakeModal = ({
     });
   };
 
-  const getEstimatedLineCount = (itemStatus?: string): number => {
+  const estimateLineCount = (suggestedStatus?: ItemStatus): number => {
     const stockCount = data?.totalCount ?? 0;
-    if (itemStatus === 'all') {
+    if (suggestedStatus === ItemStatus.All) {
       return masterListLineCount
         ? Math.max(masterListLineCount, stockCount)
         : stockCount;
-    } else if (itemStatus === 'in stock') {
+    } else if (suggestedStatus === ItemStatus.InStock) {
       return stockCount;
     } else {
-      return includeAllMasterListItems && masterListLineCount
+      return itemStatus === ItemStatus.All && masterListLineCount
         ? Math.max(masterListLineCount, stockCount)
         : stockCount;
-    }
-  };
-
-  let estimatedLineCount = 0;
-  if (createBlankStocktake) {
-    estimatedLineCount = 0;
-  } else {
-    estimatedLineCount = getEstimatedLineCount();
-  }
-
-  const handleRadioButton: React.ChangeEventHandler<HTMLInputElement> = (
-    event
-  ): void => {
-    switch (event.target.value) {
-      case 'none':
-        setState(() => ({
-          createBlankStocktake: true,
-          masterList: null,
-          includeAllMasterListItems: false,
-          location: null,
-          expiryDate: null,
-          vvmStatus: null,
-        }));
-        break;
-      case 'all':
-        setState(prev => ({
-          ...prev,
-          createBlankStocktake: false,
-          masterList: prev.masterList,
-          includeAllMasterListItems: true,
-        }));
-        break;
-      case 'in stock':
-        setState(prev => ({
-          ...prev,
-          createBlankStocktake: false,
-          masterList,
-          includeAllMasterListItems: false,
-        }));
-        break;
     }
   };
 
@@ -258,9 +215,13 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <MasterListSearchInput
-                    disabled={!!createBlankStocktake}
+                    disabled={itemStatus == ItemStatus.None}
                     onChange={masterList =>
-                      setState(prev => ({ ...prev, masterList }))
+                      setState(prev => ({
+                        ...prev,
+                        masterList,
+                        itemStatus: ItemStatus.InStock,
+                      }))
                     }
                     selectedMasterList={masterList}
                     width={380}
@@ -270,12 +231,12 @@ export const CreateStocktakeModal = ({
               />
 
               <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                labelProps={{
+                  sx: { flex: `${LABEL_FLEX}` },
+                }}
                 Input={
                   <LocationSearchInput
-                    disabled={
-                      !!createBlankStocktake || includeAllMasterListItems
-                    }
+                    disabled={itemStatus != ItemStatus.InStock}
                     onChange={location =>
                       setState(prev => ({ ...prev, location }))
                     }
@@ -289,10 +250,8 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <DateTimePickerInput
-                    width="100%"
-                    disabled={
-                      !!createBlankStocktake || includeAllMasterListItems
-                    }
+                    width={380}
+                    disabled={itemStatus != ItemStatus.InStock}
                     value={expiryDate}
                     onChange={expiryDate =>
                       setState(prev => ({ ...prev, expiryDate }))
@@ -307,9 +266,7 @@ export const CreateStocktakeModal = ({
                   labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                   Input={
                     <VVMStatusSearchInput
-                      disabled={
-                        !!createBlankStocktake || includeAllMasterListItems
-                      }
+                      disabled={itemStatus != ItemStatus.InStock}
                       onChange={vvmStatus =>
                         setState(prev => ({
                           ...prev,
@@ -324,57 +281,40 @@ export const CreateStocktakeModal = ({
               )}
 
               {/* item status radio buttons, default all (number of lines) */}
-              <Stack
-                flexDirection="row"
-                alignItems="center"
-                sx={{
-                  padding: 2,
-                  gap: 2,
-                }}
-              >
-                <Box>
-                  <Typography alignSelf="center" fontWeight="bold">
-                    {t('label.item-status')}:
-                  </Typography>
-                </Box>
 
-                <Box
-                  sx={{
-                    paddingLeft: '50px',
-                  }}
-                >
+              <InputWithLabelRow
+                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                Input={
                   <RadioGroup
+                    value={itemStatus}
                     sx={{ margin: '0 auto' }}
-                    defaultValue={
-                      expiryDate || location || vvmStatus || masterList
-                        ? 'in stock'
-                        : 'all'
-                    }
                     onChange={event => {
-                      handleRadioButton(event);
-                      console.log(event.target.value);
+                      setState(prev => ({
+                        ...prev,
+                        itemStatus: event.target.value as ItemStatus,
+                      }));
                     }}
                   >
                     <FormControlLabel
                       disabled={
                         expiryDate || location || vvmStatus ? true : false
                       }
-                      value="all"
+                      value={ItemStatus.All}
                       control={<Radio />}
                       label={concat(
                         t('label.all'),
                         ' (',
-                        getEstimatedLineCount('all').toString(),
+                        estimateLineCount(ItemStatus.All).toString(),
                         ')'
                       )}
                     />
                     <FormControlLabel
-                      value="in stock"
+                      value={ItemStatus.InStock}
                       control={<Radio />}
                       label={concat(
                         t('report.in-stock'),
                         ' (',
-                        getEstimatedLineCount('in stock').toString(),
+                        estimateLineCount(ItemStatus.InStock).toString(),
                         ')'
                       )}
                     />
@@ -384,27 +324,33 @@ export const CreateStocktakeModal = ({
                           ? true
                           : false
                       }
-                      value="none"
+                      value={ItemStatus.None}
                       control={<Radio />}
                       label={concat(t('label.none'), ' (blank)')}
                     />
                   </RadioGroup>
-                </Box>
-              </Stack>
+                }
+                label={t('label.items-expiring-before')}
+              />
 
               {/* Estimated number of rows information pill / if None selected will create a blank stocktake info pill*/}
 
-              {createBlankStocktake ? (
+              {itemStatus == ItemStatus.None ? (
                 <Box
                   display="flex"
-                  sx={{ backgroundColor: 'error.background', borderRadius: 2 }}
-                  gap={1}
+                  sx={{
+                    backgroundColor: 'background.success',
+                    borderRadius: 2,
+                  }}
                   padding={1}
                 >
                   <Box display="flex" flexDirection="column">
                     <Box display="flex" flexDirection="row">
-                      <Box color="error.main">
-                        <AlertIcon />
+                      <Box
+                        color="cceStatus.functioning"
+                        sx={{ paddingLeft: 1.2, paddingRight: 1.2 }}
+                      >
+                        <CheckIcon />
                       </Box>
                       <Box
                         sx={{
@@ -417,20 +363,59 @@ export const CreateStocktakeModal = ({
                           sx={{ color: 'inherit' }}
                           variant="body2"
                           component="span"
+                          fontSize="1em"
                         >
-                          "Unable to connect to server"
+                          {t('message.create-blank-stocktake')}
                         </Typography>
                       </Box>
                     </Box>
                   </Box>
                 </Box>
               ) : (
-                <p>Hi</p>
+                <Box
+                  display="flex"
+                  sx={{
+                    backgroundColor: 'gray.pale',
+                    borderRadius: 2,
+                  }}
+                  padding={1}
+                >
+                  <Box display="flex" flexDirection="column">
+                    <Box display="flex" flexDirection="row">
+                      <Box
+                        color="info.main"
+                        sx={{ paddingLeft: 1.2, paddingRight: 1.2 }}
+                      >
+                        <InfoIcon />
+                      </Box>
+                      <Box
+                        sx={{
+                          '& > div': { display: 'inline-block' },
+                          alignContent: 'center',
+                          paddingLeft: 1,
+                        }}
+                      >
+                        <Typography
+                          sx={{ color: 'inherit' }}
+                          variant="body2"
+                          component="span"
+                          fontSize="1em"
+                        >
+                          {concat(
+                            estimateLineCount().toString(),
+                            ' ',
+                            t('message.lines-estimated')
+                          )}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
               )}
 
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={estimatedLineCount}
+                Input={estimateLineCount()}
                 label={t('label.stocktake-estimated-lines')}
               />
             </Box>
