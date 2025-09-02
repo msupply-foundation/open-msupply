@@ -47,17 +47,23 @@ impl Loader<OrderTypesByProgramIdInput> for OrderTypesByProgramIdLoader {
 
         let store_ids = store_item_map.keys().cloned().collect::<Vec<String>>();
 
-        let ProgramSettingsAndOrderTypes {
-            settings,
-            order_types,
-        } = match get_program_settings_and_order_types_for_store(&service_context, &store_ids[0])? {
-            None => return Ok(HashMap::new()),
-            Some(data) => data,
-        };
-
-        let program_ids = settings
+        let settings_to_store: HashMap<String, ProgramSettingsAndOrderTypes> = store_ids
             .iter()
-            .map(|s| s.program_settings_row.program_id.clone())
+            .filter_map(|store_id| {
+                get_program_settings_and_order_types_for_store(&service_context, store_id)
+                    .ok()
+                    .flatten()
+                    .map(|data| (store_id.clone(), data))
+            })
+            .collect();
+
+        let program_ids = settings_to_store
+            .values()
+            .flat_map(|data| {
+                data.settings
+                    .iter()
+                    .map(|s| s.program_settings_row.program_id.clone())
+            })
             .collect::<Vec<String>>();
 
         let master_list_lines = MasterListLineRepository::new(&connection)
@@ -67,22 +73,7 @@ impl Loader<OrderTypesByProgramIdInput> for OrderTypesByProgramIdLoader {
             )
             .map_err(StandardGraphqlError::from_repository_error)?;
 
-        let mut program_ids_order_types: HashMap<String, Vec<ProgramAndOrderType>> = HashMap::new();
         let mut result = HashMap::<OrderTypesByProgramIdInput, Vec<ProgramAndOrderType>>::new();
-        for order_type in order_types {
-            if let Some(setting) = settings
-                .iter()
-                .find(|s| s.program_settings_row.id == order_type.program_requisition_settings_id)
-            {
-                program_ids_order_types
-                    .entry(setting.program_settings_row.program_id.clone())
-                    .or_default()
-                    .push(ProgramAndOrderType {
-                        program: setting.program_row.clone(),
-                        order_type: order_type.clone(),
-                    });
-            }
-        }
 
         for (store_id, item_ids) in store_item_map {
             for item_id in item_ids {
@@ -93,15 +84,38 @@ impl Loader<OrderTypesByProgramIdInput> for OrderTypesByProgramIdLoader {
                     .collect::<Vec<String>>();
                 let mut order_types_for_item = vec![];
                 for program_id in &program_ids_for_item {
-                    if let Some(mut p) = program_ids_order_types.get(program_id).cloned() {
-                        order_types_for_item.append(&mut p);
+                    if let Some(data) = settings_to_store.get(&store_id) {
+                        let program_ids_order_types: HashMap<String, Vec<ProgramAndOrderType>> =
+                            data.settings
+                                .iter()
+                                .filter(|s| s.program_settings_row.program_id == *program_id)
+                                .map(|s| {
+                                    let order_types = data
+                                        .order_types
+                                        .iter()
+                                        .filter(|o| {
+                                            o.program_requisition_settings_id
+                                                == s.program_settings_row.id
+                                        })
+                                        .map(|o| ProgramAndOrderType {
+                                            program: s.program_row.clone(),
+                                            order_type: o.clone(),
+                                        })
+                                        .collect::<Vec<ProgramAndOrderType>>();
+                                    (s.program_settings_row.program_id.clone(), order_types)
+                                })
+                                .collect();
+                        if let Some(mut p) = program_ids_order_types.get(program_id).cloned() {
+                            order_types_for_item.append(&mut p);
+                        }
                     }
                 }
-                let key = OrderTypesByProgramIdInput::new(&store_id, &item_id);
-                result.insert(key, order_types_for_item);
+                result.insert(
+                    OrderTypesByProgramIdInput::new(&store_id, &item_id),
+                    order_types_for_item,
+                );
             }
         }
-
         Ok(result)
     }
 }
