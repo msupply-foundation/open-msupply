@@ -112,9 +112,6 @@ module.exports = env => {
     plugins: [
       new ReactRefreshWebpackPlugin(),
       new webpack.DefinePlugin({
-        FEATURE_EXAMPLE: env.FEATURE_EXAMPLE,
-        FEATURE_PRINTER_SETTINGS: env.FEATURE_PRINTER_SETTINGS,
-        LOAD_REMOTE_PLUGINS: env.LOAD_REMOTE_PLUGINS,
         API_HOST: JSON.stringify(env.API_HOST),
         LOCAL_PLUGINS: JSON.stringify(require('./getLocalPlugins.js')),
         LANG_VERSION: Date.now(),

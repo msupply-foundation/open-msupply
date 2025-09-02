@@ -3571,6 +3571,7 @@ export type InsertInsuranceInput = {
   insuranceProviderId: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
   nameId: Scalars['String']['input'];
+  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
   policyNumberFamily: Scalars['String']['input'];
   policyNumberPerson: Scalars['String']['input'];
   policyType: InsurancePolicyNodeType;
@@ -4222,6 +4223,7 @@ export type InsurancePolicyNode = {
   insuranceProviderId: Scalars['String']['output'];
   insuranceProviders?: Maybe<InsuranceProviderNode>;
   isActive: Scalars['Boolean']['output'];
+  nameOfInsured?: Maybe<Scalars['String']['output']>;
   policyNumber: Scalars['String']['output'];
   policyNumberFamily?: Maybe<Scalars['String']['output']>;
   policyNumberPerson?: Maybe<Scalars['String']['output']>;
@@ -4392,6 +4394,7 @@ export type InvoiceFilterInput = {
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -7353,6 +7356,7 @@ export type Queries = {
   draftStockOutLines: DraftStockOutItemData;
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
+  featureFlags: Scalars['JSONObject']['output'];
   formSchemas: FormSchemaResponse;
   frontendPluginMetadata: Array<FrontendPluginMetadataNode>;
   /**
@@ -10110,6 +10114,7 @@ export type UpdateInsuranceInput = {
   id: Scalars['String']['input'];
   insuranceProviderId?: InputMaybe<Scalars['String']['input']>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
   policyType?: InputMaybe<InsurancePolicyNodeType>;
 };
 
@@ -11069,6 +11074,7 @@ export enum UserPermission {
   GoodsReceivedQuery = 'GOODS_RECEIVED_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  InboundShipmentVerify = 'INBOUND_SHIPMENT_VERIFY',
   InventoryAdjustmentMutate = 'INVENTORY_ADJUSTMENT_MUTATE',
   ItemMutate = 'ITEM_MUTATE',
   ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',

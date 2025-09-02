@@ -40,6 +40,7 @@ mod v2_09_00;
 mod v2_09_01;
 mod v2_09_02;
 mod v2_10_00;
+mod v2_11_00;
 mod version;
 mod views;
 
@@ -151,6 +152,7 @@ pub fn migrate(
         Box::new(v2_09_01::V2_09_01),
         Box::new(v2_09_02::V2_09_02),
         Box::new(v2_10_00::V2_10_00),
+        Box::new(v2_11_00::V2_11_00),
     ];
 
     // Historic diesel migrations

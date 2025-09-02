@@ -26,10 +26,6 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 `yarn start API_HOST='http://localhost:8001'` (using custom API url, see [config.ts for more info](./packages/config/src/config.ts))
 
-- If there are feature flags in use, they are set as environment variables. For example:
-
-`yarn start FEATURE_INVENTORY_ADJUSTMENTS=true`
-
 - Bundle for production:
 
 `yarn build`
@@ -37,6 +33,8 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 - Test:
 
 `yarn test`
+
+Note that feature flags are set in the server configuration - see the [server README](/server/README.md#start-with-feature-flags) for more detail.
 
 ## Development
 

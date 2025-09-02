@@ -16,12 +16,12 @@ import { PurchaseOrderLineFragment } from '../../../purchase_order/api';
 import { GoodsReceivedFragment } from '../../api/operations.generated';
 import { useGoodsReceivedLine, createDraftGoodsReceivedLine } from '../../api';
 
-interface AddButtonsProps {
+interface AddButtonProps {
   goodsReceived?: GoodsReceivedFragment;
   disable: boolean;
 }
 
-export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
+export const AddButton = ({ goodsReceived, disable }: AddButtonProps) => {
   const t = useTranslation();
   const { error } = useNotification();
   const modalController = useToggle();
@@ -125,7 +125,6 @@ export const AddButtons = ({ goodsReceived, disable }: AddButtonsProps) => {
         isDisabled={disable}
         openFrom="bottom"
         Icon={<PlusCircleIcon />}
-        staticLabel={t('button.add')}
       />
       {modalController.isOn && (
         <PurchaseOrderLineSearchModal
