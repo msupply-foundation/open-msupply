@@ -12,7 +12,7 @@ import {
   GenericColumnKey,
   PurchaseOrderNodeStatus,
   useTableStore,
-  ColumnAlign,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
@@ -94,21 +94,18 @@ const ListView: FC = () => {
         format: ColumnFormat.Date,
         accessor: ({ rowData }) => rowData.confirmedDatetime,
         sortable: true,
-        align: ColumnAlign.Left,
       },
       {
         key: 'sentDatetime',
         label: 'label.sent',
         format: ColumnFormat.Date,
         accessor: ({ rowData }) => rowData.sentDatetime,
-        align: ColumnAlign.Left,
       },
       {
         key: 'requestedDeliveryDate',
         label: 'label.requested-delivery-date',
         format: ColumnFormat.Date,
-        accessor: ({ rowData }) => rowData.confirmedDatetime,
-        align: ColumnAlign.Left,
+        accessor: ({ rowData }) => rowData.requestedDeliveryDate,
       },
       [
         'status',
@@ -130,6 +127,7 @@ const ListView: FC = () => {
         key: 'targetMonths',
         label: 'label.target-months',
         accessor: ({ rowData }) => rowData.targetMonths,
+        Cell: NumberCell,
       },
       {
         key: 'deliveryDatetime',
