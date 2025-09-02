@@ -258,35 +258,23 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str>
 
 #[derive(Debug)]
 pub(crate) enum IntegrationOperation {
-    Upsert(Box<dyn UpsertAndClone>), // Upsert record
-    Delete(Box<dyn DeleteAndClone>), // Delete record
+    Upsert(Box<dyn Upsert>), // Upsert record
+    Delete(Box<dyn Delete>), // Delete record
 }
 
 impl IntegrationOperation {
     pub(crate) fn upsert<U>(upsert: U) -> Self
     where
-        U: Upsert + Clone + 'static,
+        U: Upsert + 'static,
     {
         Self::Upsert(Box::new(upsert))
     }
 
     pub(crate) fn delete<U>(delete: U) -> Self
     where
-        U: Delete + Clone + 'static,
+        U: Delete + 'static,
     {
         Self::Delete(Box::new(delete))
-    }
-}
-impl Clone for IntegrationOperation {
-    fn clone(&self) -> Self {
-        match self {
-            IntegrationOperation::Upsert(upsert) => {
-                IntegrationOperation::Upsert(upsert.clone_box())
-            }
-            IntegrationOperation::Delete(delete) => {
-                IntegrationOperation::Delete(delete.clone_box())
-            }
-        }
     }
 }
 
@@ -309,38 +297,38 @@ impl PartialEq for PullTranslateResult {
 impl PullTranslateResult {
     pub(crate) fn upsert<U>(upsert: U) -> Self
     where
-        U: UpsertAndClone,
+        U: Upsert + 'static,
     {
         Self::upserts(vec![upsert])
     }
 
-    pub(crate) fn upserts<U>(upsert: Vec<U>) -> Self
+    pub(crate) fn upserts<U>(upserts: Vec<U>) -> Self
     where
-        U: UpsertAndClone,
+        U: Upsert + 'static,
     {
         Self::IntegrationOperations(
-            upsert
+            upserts
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Upsert(upsert.clone_box())) // Source site is added later using add_source_site_id
+                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert))) // Source site is added later using add_source_site_id
                 .collect(),
         )
     }
 
     pub(crate) fn delete<U>(upsert: U) -> Self
     where
-        U: DeleteAndClone,
+        U: Delete + 'static,
     {
         Self::deletes(vec![upsert])
     }
 
-    pub(crate) fn deletes<U>(upsert: Vec<U>) -> Self
+    pub(crate) fn deletes<U>(deletes: Vec<U>) -> Self
     where
-        U: DeleteAndClone,
+        U: Delete + 'static,
     {
         Self::IntegrationOperations(
-            upsert
+            deletes
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Delete(upsert.clone_box())) // Source site is added later using add_source_site_id
+                .map(|delete| IntegrationOperation::Delete(Box::new(delete))) // Source site is added later using add_source_site_id
                 .collect(),
         )
     }
