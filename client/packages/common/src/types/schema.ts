@@ -3062,6 +3062,7 @@ export type GoodsReceivedNode = {
   purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;
   receivedDatetime?: Maybe<Scalars['NaiveDate']['output']>;
   status: GoodsReceivedNodeStatus;
+  store?: Maybe<StoreNode>;
   supplier?: Maybe<NameNode>;
   supplierReference?: Maybe<Scalars['String']['output']>;
 };
