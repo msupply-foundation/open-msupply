@@ -11,7 +11,7 @@ import {
   useDisabledNotificationToast,
   useEditModal,
   useRegisterActions,
-  EnvUtils,
+  ALT_KEY,
 } from '@openmsupply-client/common';
 import {
   getNextPrescriptionStatus,
@@ -189,12 +189,10 @@ export const StatusChangeButton = () => {
     return getConfirmation();
   };
 
-  const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
-
   useRegisterActions([
     {
-      id: 'add',
-      name: `${t('button.update-status')} (${altOrOptionString}+V)`,
+      id: 'updateStatus',
+      name: `${t('button.update-status')} (${ALT_KEY}+V)`,
       shortcut: ['Alt+KeyV'],
       perform: onStatusClick,
     },

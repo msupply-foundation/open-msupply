@@ -12,7 +12,7 @@ import {
   PrinterIcon,
   SplitButtonOption,
   useRegisterActions,
-  EnvUtils,
+  ALT_KEY,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../../StockOut';
@@ -61,12 +61,10 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     options[1]!
   );
 
-  const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
-
   useRegisterActions([
     {
-      id: 'add',
-      name: `${t('button.print')} (${altOrOptionString}+L)`,
+      id: 'print',
+      name: `${t('button.print')} (${ALT_KEY}+L)`,
       shortcut: ['Alt+KeyL'],
       perform: () => {
         if (prescription) {
