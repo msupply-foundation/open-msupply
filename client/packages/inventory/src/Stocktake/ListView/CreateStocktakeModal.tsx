@@ -7,7 +7,7 @@ import {
   RadioGroup,
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
-import { FormControlLabel, Radio, Stack, Typography } from '@mui/material';
+import { FormControlLabel, Radio, Typography } from '@mui/material';
 import { useDialog } from '@common/hooks';
 import {
   useStockListCount,
@@ -19,7 +19,6 @@ import {
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import {
-  AlertIcon,
   Box,
   CheckIcon,
   Formatter,
@@ -209,8 +208,6 @@ export const CreateStocktakeModal = ({
         <Box flex={1} display="flex" justifyContent="center">
           {!isCreating ? (
             <Box paddingLeft={2} display="flex" flexDirection="column" gap={2}>
-              {/* Input boxes */}
-
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
@@ -280,8 +277,6 @@ export const CreateStocktakeModal = ({
                 />
               )}
 
-              {/* item status radio buttons, default all (number of lines) */}
-
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
@@ -333,8 +328,6 @@ export const CreateStocktakeModal = ({
                 label={t('label.items-expiring-before')}
               />
 
-              {/* Estimated number of rows information pill / if None selected will create a blank stocktake info pill*/}
-
               {itemStatus == ItemStatus.None ? (
                 <Box
                   display="flex"
@@ -342,14 +335,10 @@ export const CreateStocktakeModal = ({
                     backgroundColor: 'background.success',
                     borderRadius: 2,
                   }}
-                  padding={1}
                 >
                   <Box display="flex" flexDirection="column">
                     <Box display="flex" flexDirection="row">
-                      <Box
-                        color="cceStatus.functioning"
-                        sx={{ paddingLeft: 1.2, paddingRight: 1.2 }}
-                      >
+                      <Box color="cceStatus.functioning">
                         <CheckIcon />
                       </Box>
                       <Box
@@ -382,10 +371,7 @@ export const CreateStocktakeModal = ({
                 >
                   <Box display="flex" flexDirection="column">
                     <Box display="flex" flexDirection="row">
-                      <Box
-                        color="info.main"
-                        sx={{ paddingLeft: 1.2, paddingRight: 1.2 }}
-                      >
+                      <Box color="info.main">
                         <InfoIcon />
                       </Box>
                       <Box
@@ -412,12 +398,6 @@ export const CreateStocktakeModal = ({
                   </Box>
                 </Box>
               )}
-
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={estimateLineCount()}
-                label={t('label.stocktake-estimated-lines')}
-              />
             </Box>
           ) : (
             <Box sx={{ height: '100%' }}>
