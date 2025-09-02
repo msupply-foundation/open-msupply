@@ -9,10 +9,16 @@ import {
   ButtonWithIcon,
 } from './standard';
 import { IconButton } from './IconButton';
-import { ToggleButton } from './ToggleButton';
+import { ToggleButton, ToggleButtonGroup } from './ToggleButton';
 import { ColorSelectButton } from './ColorSelectButton';
 import { FlatButton } from './FlatButton/FlatButton';
-import { BookIcon, TruckIcon } from '@common/icons';
+import {
+  BookIcon,
+  HelpIcon,
+  MinusIcon,
+  PlusIcon,
+  TruckIcon,
+} from '@common/icons';
 import { Color } from '../menus';
 import { useTranslation } from '@common/intl';
 import { SplitButtonOption } from '@common/components';
@@ -67,6 +73,14 @@ const Template: StoryFn<{ color: 'primary' | 'secondary' }> = ({ color }) => {
   const [selectedOption, setSelectedOption] = React.useState<
     SplitButtonOption<string>
   >(ops[0]);
+
+  const [toggleValue, setToggleValue] = React.useState('?');
+
+  const toggleOptions = [
+    { id: 'minus', label: 'minus', value: '-', icon: <MinusIcon /> },
+    { id: 'increase', label: 'increase', value: '+', icon: <PlusIcon /> },
+    { id: 'other', label: 'other', value: '?', icon: <HelpIcon /> },
+  ];
 
   return (
     <>
@@ -149,6 +163,15 @@ const Template: StoryFn<{ color: 'primary' | 'secondary' }> = ({ color }) => {
             selected={selected}
             onClick={() => setSelected(state => !state)}
             label="Admin"
+          />
+        </Wrapper>
+
+        <Wrapper text="Toggle button group">
+          <ToggleButtonGroup
+            color={color}
+            value={toggleValue}
+            onChange={opt => setToggleValue(opt)}
+            options={toggleOptions}
           />
         </Wrapper>
 
