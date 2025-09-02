@@ -1672,7 +1672,6 @@
   "table.show-columns": "إظهار/إخفاء الأعمدة",
   "template.requisition-sent": "تمت الموافقة من قبل{{name}} {{job}}. البريد الإلكتروني: {{email}} ورقم الهاتف: {{phone}}.",
   "text.months": "أشهر",
-  "title.adjustment-details": "تفاصيل التعديل",
   "title.amc": "متوسط الاستهلاك الشهري",
   "title.average-monthly-consumption": "متوسط الاستهلاك الشهري",
   "title.bundle-with": "تجميع مع",
