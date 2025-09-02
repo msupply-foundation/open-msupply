@@ -382,7 +382,7 @@ mod test {
         assert_approx_eq!(
             line.requisition_line_row.suggested_quantity,
             // 10 = requisition max_mos
-            test_item_stats::item1_amc_3_months() * 10.0 - test_item_stats::item_1_soh()
+            (test_item_stats::item1_amc_3_months() * 10.0 - test_item_stats::item_1_soh()).ceil() // 3164
         );
 
         let line = lines
