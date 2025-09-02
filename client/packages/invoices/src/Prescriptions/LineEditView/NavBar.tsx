@@ -4,11 +4,11 @@
  */
 
 import {
+  ALT_KEY,
   ArrowLeftIcon,
   ArrowRightIcon,
   Box,
   ButtonWithIcon,
-  EnvUtils,
   Typography,
   useRegisterActions,
   useTranslation,
@@ -44,12 +44,10 @@ export const NavBar = ({
 
   const currentCount = currentIndex + 1;
 
-  const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
-
   useRegisterActions([
     {
       id: 'next',
-      name: `${t('button.next')} (${altOrOptionString}+N)`,
+      name: `${t('button.next')} (${ALT_KEY}+N)`,
       shortcut: ['Alt+KeyN'],
       perform: onClick,
     },
