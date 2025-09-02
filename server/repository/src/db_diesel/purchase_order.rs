@@ -1,7 +1,7 @@
 use super::{DBType, RepositoryError, StorageConnection};
 use crate::db_diesel::name_row::name;
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
+    apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
 };
 use crate::purchase_order_row::{
     purchase_order::{self},
@@ -9,7 +9,7 @@ use crate::purchase_order_row::{
     PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus,
 };
 
-use crate::{name_link, DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
+use crate::{name_link, DateFilter, DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 use diesel::query_dsl::QueryDsl;
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},
@@ -30,6 +30,9 @@ pub struct PurchaseOrderFilter {
     pub created_datetime: Option<DatetimeFilter>,
     pub status: Option<EqualFilter<PurchaseOrderStatus>>,
     pub supplier: Option<StringFilter>,
+    pub confirmed_datetime: Option<DatetimeFilter>,
+    pub requested_delivery_date: Option<DateFilter>,
+    pub sent_datetime: Option<DatetimeFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -127,6 +130,9 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
             created_datetime,
             status,
             supplier,
+            confirmed_datetime,
+            requested_delivery_date,
+            sent_datetime,
         } = f;
         apply_equal_filter!(query, id, purchase_order::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
@@ -141,6 +147,17 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
 
             query = query.filter(purchase_order::supplier_name_link_id.eq_any(sub_query));
         }
+        apply_date_time_filter!(
+            query,
+            confirmed_datetime,
+            purchase_order::confirmed_datetime
+        );
+        apply_date_filter!(
+            query,
+            requested_delivery_date,
+            purchase_order::requested_delivery_date
+        );
+        apply_date_time_filter!(query, sent_datetime, purchase_order::sent_datetime);
     }
 
     query
