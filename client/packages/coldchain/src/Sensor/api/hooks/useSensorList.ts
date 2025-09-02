@@ -31,7 +31,7 @@ export const useSensorList = (queryParams?: ListParams) => {
     });
 
     if (!result?.sensors) return { nodes: [], totalCount: 0 };
-    const { nodes, totalCount } = result?.sensors;
+    const { nodes, totalCount } = result.sensors;
     return { nodes, totalCount };
   };
 
