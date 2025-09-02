@@ -17,6 +17,7 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
         discount_percentage,
         expiry_date,
         is_active,
+        name_of_insured,
     } = insert_input;
 
     let policy_number = compose_policy_number(
@@ -36,6 +37,7 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
         expiry_date,
         is_active,
         entered_by_id: None,
+        name_of_insured,
     }
 }
 

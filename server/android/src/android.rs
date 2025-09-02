@@ -68,6 +68,8 @@ pub mod android {
             backup: None,
             // Not supporting mail sending on Android - so cannot be Central Server (does it need to be?)
             mail: None,
+            // Feature flags won't work using tablet as a server. Run in client mode and connect to a desktop server instead
+            features: None,
         };
 
         logging_init(settings.logging.clone(), None);
