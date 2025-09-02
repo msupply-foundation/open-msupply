@@ -17,14 +17,13 @@ import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 
 export const AppBarButtonsComponent = () => {
   const t = useTranslation();
-  const modalController = useToggle();
   const navigate = useNavigate();
+  const { error } = useNotification();
+  const modalController = useToggle();
 
   const {
     create: { create },
   } = usePurchaseOrder();
-
-  const { error } = useNotification();
 
   const handleSupplierSelected = async (selected: NameRowFragment) => {
     try {
@@ -37,7 +36,6 @@ export const AppBarButtonsComponent = () => {
       );
       errorSnack();
     }
-
     modalController.toggleOff();
   };
 
@@ -49,11 +47,14 @@ export const AppBarButtonsComponent = () => {
           label={t('button.new-purchase-order')}
           onClick={modalController.toggleOn}
         />
-        <SupplierSearchModal
-          open={modalController.isOn}
-          onClose={modalController.toggleOff}
-          onChange={handleSupplierSelected}
-        />
+        {modalController.isOn && (
+          <SupplierSearchModal
+            external
+            open={modalController.isOn}
+            onClose={modalController.toggleOff}
+            onChange={handleSupplierSelected}
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );
