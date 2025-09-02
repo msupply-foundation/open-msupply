@@ -32,16 +32,6 @@ export const SidePanel = (): ReactElement => {
             <PanelLabel>{t('label.purchase-order-number')}</PanelLabel>
             <PanelField>{data?.purchaseOrderNumber ?? ''}</PanelField>
           </PanelRow>
-
-          <PanelRow>
-            <PanelLabel>{t('label.inbound-shipment')}</PanelLabel>
-            <PanelField>Inbound Shipment</PanelField>
-          </PanelRow>
-
-          <PanelRow>
-            <PanelLabel>{t('label.status')}</PanelLabel>
-            <PanelField>{data?.status ?? ''}</PanelField>
-          </PanelRow>
         </Grid>
       </DetailPanelSection>
 
@@ -49,7 +39,7 @@ export const SidePanel = (): ReactElement => {
         <Grid container gap={1} key="additional-info">
           <PanelRow>
             <PanelLabel>{t('label.created-by')}</PanelLabel>
-            <PanelField>{data?.createdBy ?? ''}</PanelField>
+            <PanelField>{data?.user?.username ?? ''}</PanelField>
           </PanelRow>
           <PanelRow>
             <PanelLabel>{t('label.created-datetime')}</PanelLabel>

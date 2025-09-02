@@ -3,11 +3,11 @@ use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use graphql_core::loader::{
     GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput,
-    PurchaseOrderByIdLoader,
+    PurchaseOrderByIdLoader, UserLoader,
 };
 use graphql_core::ContextExt;
 use graphql_goods_received_line::types::GoodsReceivedLineConnector;
-use graphql_types::types::{purchase_order, NameNode};
+use graphql_types::types::{purchase_order, user, NameNode, UserNode};
 use repository::goods_received_row::GoodsReceivedRow;
 use service::ListResult;
 #[derive(PartialEq, Debug)]
@@ -107,8 +107,18 @@ impl GoodsReceivedNode {
         Ok(GoodsReceivedLineConnector::from_vec(result))
     }
 
-    pub async fn created_by(&self) -> &Option<String> {
-        &self.row().created_by
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+        let user_id = match self.row().created_by.clone() {
+            Some(user_id) => user_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(user_id)
+            .await?
+            .map(user::UserNode::from_domain);
+        Ok(result)
     }
 
     pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
