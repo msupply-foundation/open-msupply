@@ -1816,7 +1816,6 @@
   "table.show-columns": "Показать / скрыть колонки",
   "template.requisition-sent": "Одобрено {{name}}{{job}}. Почта: {{email}} и номер телефона: {{phone}}.",
   "text.months": "Месяцы",
-  "title.adjustment-details": "Детали Корректировки",
   "title.amc": "Среднее Месячное Потребление",
   "title.average-monthly-consumption": "Среднемесячное Потребление",
   "title.bundle-with": "Связать с",

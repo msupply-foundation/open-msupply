@@ -64,7 +64,7 @@ export const InventoryAdjustmentModal = ({
       sx={{ maxWidth: 'unset', minWidth: 700 }}
       height={575}
       slideAnimation={false}
-      title={t('title.adjustment-details')}
+      title={t('title.stock-adjustment')}
       okButton={
         <DialogButton variant="ok" disabled={saveDisabled} onClick={save} />
       }
