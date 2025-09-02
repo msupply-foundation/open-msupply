@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   BasicSpinner,
-  Checkbox,
   DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
@@ -20,6 +19,7 @@ import {
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import {
+  AlertIcon,
   Box,
   Formatter,
   StockLineFilterInput,
@@ -28,7 +28,7 @@ import {
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 import { VvmStatusFragment } from 'packages/system/src/Stock/api';
-import { NONAME } from 'dns';
+import { concat } from 'lodash';
 
 const LABEL_FLEX = '0 0 150px';
 interface NewStocktakeModalProps {
@@ -40,12 +40,12 @@ interface NewStocktakeModalProps {
 }
 
 interface ModalState {
-  location: LocationRowFragment | null;
-  masterList: MasterListRowFragment | null;
-  expiryDate: Date | null;
   createBlankStocktake: boolean;
+  masterList: MasterListRowFragment | null;
   includeAllMasterListItems: boolean;
   vvmStatus: VvmStatusFragment | null;
+  location: LocationRowFragment | null;
+  expiryDate: Date | null;
 }
 
 export const CreateStocktakeModal = ({
@@ -98,6 +98,7 @@ export const CreateStocktakeModal = ({
     vvmStatusId: vvmStatus && {
       equalTo: vvmStatus.id,
     },
+    hasPacksInStore: true,
   };
 
   const { data } = useStockListCount(stockFilter);
@@ -175,29 +176,58 @@ export const CreateStocktakeModal = ({
     });
   };
 
+  const getEstimatedLineCount = (itemStatus?: string): number => {
+    const stockCount = data?.totalCount ?? 0;
+    if (itemStatus === 'all') {
+      return masterListLineCount
+        ? Math.max(masterListLineCount, stockCount)
+        : stockCount;
+    } else if (itemStatus === 'in stock') {
+      return stockCount;
+    } else {
+      return includeAllMasterListItems && masterListLineCount
+        ? Math.max(masterListLineCount, stockCount)
+        : stockCount;
+    }
+  };
+
   let estimatedLineCount = 0;
   if (createBlankStocktake) {
     estimatedLineCount = 0;
   } else {
-    const stockCount = data?.totalCount ?? 0;
-    estimatedLineCount =
-      includeAllMasterListItems && masterListLineCount
-        ? Math.max(masterListLineCount, stockCount)
-        : stockCount;
+    estimatedLineCount = getEstimatedLineCount();
   }
 
   const handleRadioButton: React.ChangeEventHandler<HTMLInputElement> = (
     event
   ): void => {
-    if (event.target.value === 'none') {
-      setState(() => ({
-        createBlankStocktake: e.target.checked,
-        masterList: null,
-        includeAllMasterListItems: false,
-        location: null,
-        expiryDate: null,
-        vvmStatus: null,
-      }));
+    switch (event.target.value) {
+      case 'none':
+        setState(() => ({
+          createBlankStocktake: true,
+          masterList: null,
+          includeAllMasterListItems: false,
+          location: null,
+          expiryDate: null,
+          vvmStatus: null,
+        }));
+        break;
+      case 'all':
+        setState(prev => ({
+          ...prev,
+          createBlankStocktake: false,
+          masterList: prev.masterList,
+          includeAllMasterListItems: true,
+        }));
+        break;
+      case 'in stock':
+        setState(prev => ({
+          ...prev,
+          createBlankStocktake: false,
+          masterList,
+          includeAllMasterListItems: false,
+        }));
+        break;
     }
   };
 
@@ -302,46 +332,102 @@ export const CreateStocktakeModal = ({
                   gap: 2,
                 }}
               >
-                <Box
-                  sx={{
-                    paddingRight: '87px',
-                  }}
-                >
+                <Box>
                   <Typography alignSelf="center" fontWeight="bold">
-                    {t('label.store')}:
+                    {t('label.item-status')}:
                   </Typography>
                 </Box>
 
-                <Box>
+                <Box
+                  sx={{
+                    paddingLeft: '50px',
+                  }}
+                >
                   <RadioGroup
                     sx={{ margin: '0 auto' }}
-                    defaultValue="All"
-                    // value={draft.given ?? null}
-                    onChange={event => console.log(event.target.value)}
+                    defaultValue={
+                      expiryDate || location || vvmStatus || masterList
+                        ? 'in stock'
+                        : 'all'
+                    }
+                    onChange={event => {
+                      handleRadioButton(event);
+                      console.log(event.target.value);
+                    }}
                   >
                     <FormControlLabel
-                      // disabled={givenAtOtherStore}
-                      value="All"
+                      disabled={
+                        expiryDate || location || vvmStatus ? true : false
+                      }
+                      value="all"
                       control={<Radio />}
-                      label={t('label.all')}
+                      label={concat(
+                        t('label.all'),
+                        ' (',
+                        getEstimatedLineCount('all').toString(),
+                        ')'
+                      )}
                     />
                     <FormControlLabel
-                      // disabled={givenAtOtherStore}
-                      value="In stock"
+                      value="in stock"
                       control={<Radio />}
-                      label={t('report.in-stock')}
+                      label={concat(
+                        t('report.in-stock'),
+                        ' (',
+                        getEstimatedLineCount('in stock').toString(),
+                        ')'
+                      )}
                     />
                     <FormControlLabel
-                      // disabled={givenAtOtherStore}
-                      value="None"
+                      disabled={
+                        masterList || expiryDate || location || vvmStatus
+                          ? true
+                          : false
+                      }
+                      value="none"
                       control={<Radio />}
-                      label={t('label.none')}
+                      label={concat(t('label.none'), ' (blank)')}
                     />
                   </RadioGroup>
                 </Box>
               </Stack>
 
               {/* Estimated number of rows information pill / if None selected will create a blank stocktake info pill*/}
+
+              {createBlankStocktake ? (
+                <Box
+                  display="flex"
+                  sx={{ backgroundColor: 'error.background', borderRadius: 2 }}
+                  gap={1}
+                  padding={1}
+                >
+                  <Box display="flex" flexDirection="column">
+                    <Box display="flex" flexDirection="row">
+                      <Box color="error.main">
+                        <AlertIcon />
+                      </Box>
+                      <Box
+                        sx={{
+                          '& > div': { display: 'inline-block' },
+                          alignContent: 'center',
+                          paddingLeft: 1,
+                        }}
+                      >
+                        <Typography
+                          sx={{ color: 'inherit' }}
+                          variant="body2"
+                          component="span"
+                        >
+                          "Unable to connect to server"
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              ) : (
+                <p>Hi</p>
+              )}
+
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={estimatedLineCount}
