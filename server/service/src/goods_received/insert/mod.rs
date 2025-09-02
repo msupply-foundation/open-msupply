@@ -14,6 +14,7 @@ use validate::validate;
 pub enum InsertGoodsReceivedError {
     PurchaseOrderDoesNotExist,
     GoodsReceivedAlreadyExists,
+    InternalError(String),
     DatabaseError(RepositoryError),
 }
 
@@ -31,9 +32,9 @@ pub fn insert_goods_received(
     let goods_received = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, store_id, connection)?;
+            let user = validate(&input, &ctx.user_id, connection)?;
 
-            let goods_received = generate(connection, store_id, &ctx.user_id, input.clone())?;
+            let goods_received = generate(connection, store_id, &user.username, input.clone())?;
             GoodsReceivedRowRepository::new(connection).upsert_one(&goods_received)?;
 
             Ok(goods_received)
