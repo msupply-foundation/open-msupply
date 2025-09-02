@@ -1,38 +1,43 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AdjustmentTypeInput,
-  Autocomplete,
+  MinusIcon,
+  PlusIcon,
+  ToggleButtonGroup,
   useTranslation,
 } from '@openmsupply-client/common';
 
 interface InventoryAdjustmentDirectionInputProps {
   value: AdjustmentTypeInput;
-  onChange: (type?: AdjustmentTypeInput) => void;
+  onChange: (type: AdjustmentTypeInput) => void;
 }
 
-export const InventoryAdjustmentDirectionInput: FC<
-  InventoryAdjustmentDirectionInputProps
-> = ({ value, onChange }) => {
+export const InventoryAdjustmentDirectionInput = ({
+  value,
+  onChange,
+}: InventoryAdjustmentDirectionInputProps) => {
   const t = useTranslation();
 
   const options = [
-    { label: t('label.increase-qty'), value: AdjustmentTypeInput.Addition },
-    { label: t('label.decrease-qty'), value: AdjustmentTypeInput.Reduction },
+    {
+      id: 'decrease',
+      label: t('label.decrease-qty'),
+      value: AdjustmentTypeInput.Reduction,
+      icon: <MinusIcon />,
+    },
+    {
+      id: 'increase',
+      label: t('label.increase-qty'),
+      value: AdjustmentTypeInput.Addition,
+      icon: <PlusIcon />,
+    },
   ];
 
   return (
-    <Autocomplete
+    <ToggleButtonGroup
+      value={value}
+      onChange={direction => onChange(direction)}
       options={options}
-      clearable={false}
-      value={options.find(option => option.value === value) ?? null}
-      onChange={(_, direction) => {
-        onChange(direction?.value);
-      }}
-      sx={{
-        '.MuiFormControl-root > .MuiInput-root, > input': {
-          width: '160px',
-        },
-      }}
     />
   );
 };
