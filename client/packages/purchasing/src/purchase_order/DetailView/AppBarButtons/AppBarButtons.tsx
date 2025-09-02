@@ -32,16 +32,16 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ReportSelector
-          context={ReportContext.PurchaseOrder}
-          dataId={data?.id ?? ''}
-          sort={{ key: sortBy.key, desc: sortBy.isDesc }}
-        />
         <AddButton
           purchaseOrder={data ?? undefined}
           onAddItem={onAddItem}
           disable={isDisabled}
           disableAddFromMasterListButton={isLoading}
+        />
+        <ReportSelector
+          context={ReportContext.PurchaseOrder}
+          dataId={data?.id ?? ''}
+          sort={{ key: sortBy.key, desc: sortBy.isDesc }}
         />
         {OpenButton}
       </Grid>
