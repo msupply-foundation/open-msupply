@@ -4394,6 +4394,7 @@ export type InvoiceFilterInput = {
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -7134,8 +7135,11 @@ export type PurchaseOrderDoesNotExist = PurchaseOrderLineError & {
 };
 
 export type PurchaseOrderFilterInput = {
+  confirmedDatetime?: InputMaybe<DatetimeFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  requestedDeliveryDate?: InputMaybe<DateFilterInput>;
+  sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   supplier?: InputMaybe<StringFilterInput>;

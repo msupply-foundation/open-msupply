@@ -1,14 +1,13 @@
-import React, { FC } from 'react';
+import React, { ReactElement } from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
   FilterMenu,
-  FilterController,
   Box,
   PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{ filter: FilterController }> = () => {
+export const Toolbar = (): ReactElement => {
   const t = useTranslation();
 
   return (
@@ -51,24 +50,19 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               isDefault: false,
             },
             {
-              type: 'group',
-              name: t('label.date'),
-              elements: [
-                {
-                  type: 'dateTime',
-                  name: t('label.from-date'),
-                  urlParameter: 'createdDatetime',
-                  range: 'from',
-                  isDefault: false,
-                },
-                {
-                  type: 'dateTime',
-                  name: t('label.to-date'),
-                  urlParameter: 'createdDatetime',
-                  range: 'to',
-                  isDefault: false,
-                },
-              ],
+              type: 'dateTime',
+              name: t('label.confirmed-datetime'),
+              urlParameter: 'confirmedDatetime',
+            },
+            {
+              type: 'date',
+              name: t('label.requested-delivery-date'),
+              urlParameter: 'requestedDeliveryDate',
+            },
+            {
+              type: 'dateTime',
+              name: t('label.sent-datetime'),
+              urlParameter: 'sentDatetime',
             },
           ]}
         />

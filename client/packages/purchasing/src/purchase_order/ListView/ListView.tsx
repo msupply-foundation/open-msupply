@@ -30,17 +30,18 @@ const ListView: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
-    filter,
     queryParams: { page, first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
       { key: 'supplier' },
-      { key: 'createdDatetime', condition: 'between' },
       {
         key: 'status',
         condition: 'equalTo',
       },
+      { key: 'confirmedDatetime', condition: 'equalTo' },
+      { key: 'requestedDeliveryDate', condition: 'equalTo' },
+      { key: 'sentDatetime', condition: 'equalTo' },
     ],
   });
   const listParams = {
@@ -134,7 +135,7 @@ const ListView: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar />
       <AppBarButtons />
       <DataTable
         id="purchase-order-list"
