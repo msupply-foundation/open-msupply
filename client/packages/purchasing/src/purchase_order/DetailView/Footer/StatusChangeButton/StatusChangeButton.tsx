@@ -14,7 +14,7 @@ export const StatusChangeButton = (): ReactElement | null => {
     useStatusChangeButton();
 
   const noLinesNotification = useDisabledNotificationToast(
-    t('messages.no-lines')
+    t('messages.cannot-change-status-purchase-order-placeholder-lines')
   );
 
   if (!selectedOption) return null;
