@@ -131,7 +131,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use chrono::{NaiveDate, NaiveDateTime};
+    use chrono::NaiveDate;
     use repository::{
         mock::{
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
