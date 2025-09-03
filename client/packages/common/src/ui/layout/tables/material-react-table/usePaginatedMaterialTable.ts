@@ -4,8 +4,11 @@ import {
   MRT_TableOptions,
   useMaterialReactTable,
   MRT_RowSelectionState,
+  MRT_SortingState,
+  MRT_Updater,
+  MRT_PaginationState,
 } from 'material-react-table';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -47,27 +50,55 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     value,
   }));
 
+  const handleSortingChange = useCallback(
+    (sortUpdate: MRT_Updater<MRT_SortingState>) => {
+      if (typeof sortUpdate === 'function') {
+        // MRT can handle multiple sort fields, but for now we're only
+        // supporting one, so we take the first item of the array
+        const newSortValue = sortUpdate([
+          { id: sortBy.key, desc: !!sortBy.isDesc },
+        ])[0];
+        if (newSortValue)
+          updateSortQuery(newSortValue.id, newSortValue.desc ? 'desc' : 'asc');
+        else {
+          // For some reason, when just changing the sort direction on a field,
+          // the sortUpdate method doesn't return anything -- is this a bug in
+          // MRT?
+          updateSortQuery(sortBy.key, !sortBy.isDesc ? 'desc' : 'asc');
+        }
+      }
+    },
+    [sortBy, updateSortQuery]
+  );
+
+  const handlePaginationChange = useCallback(
+    (paginationUpdate: MRT_Updater<MRT_PaginationState>) => {
+      if (typeof paginationUpdate === 'function') {
+        const current = { pageIndex: page, pageSize: first };
+        console.log('current', current);
+        const newPaginationValue = paginationUpdate(current);
+        console.log('New', newPaginationValue);
+        updatePaginationQuery(newPaginationValue.pageIndex);
+      }
+    },
+    [updatePaginationQuery]
+  );
+
+  console.log('pagination', pagination);
+
   const table = useMaterialReactTable<T>({
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
-    // TO-DO: Utility functions for these, and keep elsewhere
-    onSortingChange: sortUpdate => {
-      if (typeof sortUpdate === 'function') {
-        const newSortValue = sortUpdate([
-          { id: sortBy.key, desc: !!sortBy.isDesc },
-        ])[0];
-        // console.log('Sorting changed:', newSortValue);
-        if (newSortValue)
-          updateSortQuery(newSortValue.id, newSortValue.desc ? 'desc' : 'asc');
-      }
-    },
-    onPaginationChange: pagination => {
-      const current = { pageIndex: page, pageSize: first };
-      if (typeof pagination === 'function') {
-        // console.log('current', current);
-        const newPaginationValue = pagination(current);
-        // console.log('Pagination changed:', newPaginationValue);
+    onSortingChange: handleSortingChange,
+    onPaginationChange: (
+      paginationUpdate: MRT_Updater<MRT_PaginationState>
+    ) => {
+      if (typeof paginationUpdate === 'function') {
+        const current = { pageIndex: page, pageSize: first };
+        console.log('current', current);
+        const newPaginationValue = paginationUpdate(current);
+        console.log('New', newPaginationValue);
         updatePaginationQuery(newPaginationValue.pageIndex);
       }
     },
