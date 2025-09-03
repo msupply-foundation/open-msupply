@@ -127,19 +127,19 @@ export const ResponseStoreStats = ({
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!formattedSoh &&
+                {formattedSoh !== null &&
                   statsDisplay(
                     'label.stock-on-hand',
                     formattedSoh,
                     'gray.dark'
                   )}
-                {!!formattedIncoming &&
+                {formattedIncoming !== null &&
                   statsDisplay(
                     'label.incoming-stock',
                     formattedIncoming,
                     'gray.main'
                   )}
-                {!!formattedSoo &&
+                {formattedSoo !== null &&
                   statsDisplay(
                     'label.stock-on-order',
                     formattedSoo,
@@ -155,7 +155,7 @@ export const ResponseStoreStats = ({
           p: '4px 8px',
         }}
       >
-        {(!!formattedRequested || !!formattedOtherRequested) && (
+        {(formattedRequested !== null || formattedOtherRequested !== null) && (
           <>
             <Typography style={{ textAlign: 'start' }} variant="h6">
               {t('label.requested')}
@@ -179,13 +179,13 @@ export const ResponseStoreStats = ({
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!formattedRequested &&
+                {formattedRequested !== null &&
                   statsDisplay(
                     'label.requested-quantity',
                     formattedRequested,
                     'primary.main'
                   )}
-                {!!formattedOtherRequested &&
+                {formattedOtherRequested !== null &&
                   statsDisplay(
                     'label.other-requested-quantity',
                     formattedOtherRequested,

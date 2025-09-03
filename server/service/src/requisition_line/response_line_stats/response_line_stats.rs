@@ -133,7 +133,8 @@ pub fn response_store_stats(
     };
 
     let current_line_quantity = calculate_line_quantity(requisition_line);
-    let other_requested_quantity = calculate_other_requested_quantity(current_line_quantity);
+    let other_requested_quantity =
+        calculate_other_requested_quantity(current_line_quantity).max(0.0);
 
     Ok(ResponseStoreStats {
         stock_on_hand,
