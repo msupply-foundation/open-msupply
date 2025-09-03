@@ -19,13 +19,18 @@ fragment InboundLine on InvoiceLineNode {
   foreignCurrencyPriceBeforeTax
   itemName
   itemVariantId
-  vvmStatusId
   linkedInvoiceId
+  volumePerPack
+
   donor(storeId: $storeId) {
     id
     name
   }
 
+  program {
+    id
+    name
+  }
   campaign {
     id
     name
@@ -40,6 +45,14 @@ fragment InboundLine on InvoiceLineNode {
     defaultPackSize
     isVaccine
     doses
+    restrictedLocationTypeId
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
+    programs(storeId: $storeId) {
+      id
+      name
+    }
   }
 
   location {
@@ -65,6 +78,25 @@ fragment InboundLine on InvoiceLineNode {
     onHold
     note
     vvmStatusId
+  }
+
+  vvmStatus {
+    __typename
+    id
+    priority
+    unusable
+    description
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
   }
 }
 

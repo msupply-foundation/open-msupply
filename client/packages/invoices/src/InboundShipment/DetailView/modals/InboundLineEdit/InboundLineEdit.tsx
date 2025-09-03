@@ -26,6 +26,7 @@ import { TabLayout } from './TabLayout';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
+import { ScannedBatchData } from '../../DetailView';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -38,6 +39,7 @@ interface InboundLineEditProps {
   isExternalSupplier?: boolean;
   hasVvmStatusesEnabled?: boolean;
   hasItemVariantsEnabled?: boolean;
+  scannedBatchData?: ScannedBatchData;
 }
 
 export const InboundLineEdit = ({
@@ -50,6 +52,7 @@ export const InboundLineEdit = ({
   isExternalSupplier,
   hasVvmStatusesEnabled = false,
   hasItemVariantsEnabled = false,
+  scannedBatchData,
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -66,10 +69,13 @@ export const InboundLineEdit = ({
     removeDraftLine,
     isLoading,
     saveLines,
-  } = useDraftInboundLines(currentItem);
+  } = useDraftInboundLines(currentItem, scannedBatchData);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
-  const zeroNumberOfPacks = draftLines.some(isInboundPlaceholderRow);
+  const manualLinesWithZeroNumberOfPacks = draftLines.some(
+    // should be able to save with `0` lines if they're from a transfer
+    l => !l.linkedInvoiceId && isInboundPlaceholderRow(l)
+  );
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   useEffect(() => {
@@ -130,7 +136,7 @@ export const InboundLineEdit = ({
         nextButton={
           <DialogButton
             variant="next-and-ok"
-            disabled={okNextDisabled || zeroNumberOfPacks}
+            disabled={okNextDisabled || manualLinesWithZeroNumberOfPacks}
             onClick={async () => {
               await saveLines();
               if (mode === ModalMode.Update && nextItem) {
@@ -145,7 +151,7 @@ export const InboundLineEdit = ({
         okButton={
           <DialogButton
             variant="ok"
-            disabled={!currentItem || zeroNumberOfPacks}
+            disabled={!currentItem || manualLinesWithZeroNumberOfPacks}
             onClick={async () => {
               try {
                 await saveLines();

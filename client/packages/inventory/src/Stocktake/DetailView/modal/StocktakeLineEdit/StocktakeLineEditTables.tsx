@@ -18,21 +18,25 @@ import {
   NumberInputCell,
   ColumnAlign,
   NumberCell,
-  getReasonOptionType,
-  ReasonOptionNode,
+  getReasonOptionTypes,
   usePreference,
   PreferenceKey,
+  useAuthContext,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
+  getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
+  getVolumePerPackFromVariant,
   ItemVariantInputCell,
   PackSizeEntryCell,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
   useReasonOptions,
+  VVMStatusInputCell,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
@@ -45,6 +49,8 @@ interface StocktakeLineEditTableProps {
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
   isInitialStocktake?: boolean;
   trackStockDonor?: boolean;
+  restrictedToLocationTypeId?: string | null;
+  isVaccineItem?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -60,6 +66,7 @@ const useDisableStocktakeRows = (rows?: DraftStocktakeLine[]) => {
       ?.filter(row => !row.countThisLine)
       .map(({ id }) => id);
     if (disabledRows) setDisabledRows(disabledRows);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 };
 
@@ -105,8 +112,6 @@ const getCountThisLineColumn = (
 const getInventoryAdjustmentReasonInputColumn = (
   setter: DraftLineSetter,
   { getError }: UseStocktakeLineErrors,
-  reasonOptions: ReasonOptionNode[],
-  isLoading: boolean,
   initialStocktake?: boolean
 ): ColumnDescription<DraftStocktakeLine> => {
   return {
@@ -116,6 +121,8 @@ const getInventoryAdjustmentReasonInputColumn = (
     width: 120,
     accessor: ({ rowData }) => rowData.reasonOption || '',
     Cell: ({ rowData, column, columnIndex, rowIndex }) => {
+      const { store } = useAuthContext();
+
       const value = column.accessor({
         rowData,
       }) as ReasonOptionRowFragment | null;
@@ -134,6 +141,12 @@ const getInventoryAdjustmentReasonInputColumn = (
       const isInventoryReduction =
         rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
 
+      const disabled =
+        // Haven't entered a count for this line yet
+        typeof rowData.countedNumberOfPacks !== 'number' ||
+        !rowData.countThisLine ||
+        rowData.snapshotNumberOfPacks === rowData.countedNumberOfPacks;
+
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
       // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
       return (
@@ -142,21 +155,16 @@ const getInventoryAdjustmentReasonInputColumn = (
           value={value}
           width={Number(column.width)}
           onChange={onChange}
-          type={getReasonOptionType(
+          type={getReasonOptionTypes({
             isInventoryReduction,
-            rowData.item.isVaccine
-          )}
+            isVaccine: rowData.item.isVaccine,
+            isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
+          })}
           inputProps={{
             error: isAdjustmentReasonError,
           }}
-          disabled={
-            typeof rowData.countedNumberOfPacks !== 'number' ||
-            !rowData.countThisLine ||
-            rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks
-          }
+          disabled={disabled}
           initialStocktake={initialStocktake}
-          reasonOptions={reasonOptions}
-          loading={isLoading}
         />
       );
     },
@@ -168,18 +176,20 @@ export const BatchTable = ({
   update,
   isDisabled = false,
   isInitialStocktake,
+  isVaccineItem = false,
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
+    PreferenceKey.ManageVvmStatusForStock
   );
   useDisableStocktakeRows(batches);
   const { data: reasonOptions, isLoading } = useReasonOptions();
   const errorsContext = useStocktakeLineErrorContext();
 
-  const displayInDoses = !!preferences?.manageVaccinesInDoses;
+  const showVVMStatusColumn =
+    (preferences?.manageVvmStatusForStock && isVaccineItem) ?? false;
 
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -193,6 +203,7 @@ export const BatchTable = ({
         },
       ],
     ];
+
     if (itemVariantsEnabled) {
       columnDefinitions.push({
         key: 'itemVariantId',
@@ -201,13 +212,31 @@ export const BatchTable = ({
         Cell: props => (
           <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
+        setter: patch => {
+          update({
+            ...patch,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+          });
+        },
+      });
+    }
+
+    if (showVVMStatusColumn) {
+      columnDefinitions.push({
+        key: 'vvmStatus',
+        label: 'label.vvm-status',
+        width: 170,
+        cellProps: {
+          useDefault: true,
+        },
+        Cell: props => <VVMStatusInputCell {...props} />,
         setter: patch => update({ ...patch }),
       });
     }
+
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {
         Cell: PackSizeEntryCell<DraftStocktakeLine>,
-        setter: update,
         label: 'label.pack-size',
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
@@ -216,6 +245,18 @@ export const BatchTable = ({
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
         defaultHideOnMobile: true,
+        setter: patch => {
+          const shouldClearSellPrice =
+            patch.item?.defaultPackSize !== patch.packSize &&
+            patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
+              patch.sellPricePerPack;
+
+          update({
+            ...patch,
+            volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+            sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
+          });
+        },
       }),
       {
         key: 'snapshotNumberOfPacks',
@@ -251,28 +292,37 @@ export const BatchTable = ({
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
       },
+      {
+        key: 'volumePerPack',
+        label: t('label.volume-per-pack'),
+        Cell: NumberInputCell,
+        cellProps: { decimalLimit: 10 },
+        width: 100,
+        accessor: ({ rowData }) => rowData?.volumePerPack,
+        setter: patch => update({ ...patch, countThisLine: true }),
+      },
       getInventoryAdjustmentReasonInputColumn(
         update,
         errorsContext,
-        reasonOptions?.nodes ?? [],
-        isLoading,
         isInitialStocktake
       )
     );
 
     return columnDefinitions;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     itemVariantsEnabled,
     errorsContext,
     reasonOptions,
     isLoading,
     isInitialStocktake,
-    displayInDoses,
+    showVVMStatusColumn,
   ]);
 
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
     columnDefinitions,
   ]);
+
   return (
     <DataTable
       id="stocktake-batch"
@@ -281,6 +331,7 @@ export const BatchTable = ({
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
+      gradientBottom={true}
     />
   );
 };
@@ -292,6 +343,8 @@ export const PricingTable = ({
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
+  useDisableStocktakeRows(batches);
+
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
@@ -321,6 +374,7 @@ export const PricingTable = ({
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
+      gradientBottom={true}
     />
   );
 };
@@ -330,18 +384,25 @@ export const LocationTable = ({
   update,
   isDisabled,
   trackStockDonor,
+  restrictedToLocationTypeId,
 }: StocktakeLineEditTableProps) => {
-  const theme = useTheme();
   const t = useTranslation();
+  const theme = useTheme();
+  useDisableStocktakeRows(batches);
 
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
-      getLocationInputColumn(),
+      getLocationInputColumn(restrictedToLocationTypeId),
       {
         width: 300,
         setter: patch => update({ ...patch, countThisLine: true }),
+        cellProps: {
+          getVolumeRequired: (rowData: DraftStocktakeLine) =>
+            rowData.volumePerPack *
+            (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks),
+        },
       },
     ],
   ];
@@ -357,22 +418,26 @@ export const LocationTable = ({
       )
     );
   }
-  columnDefinitions.push([
-    'comment',
-    {
-      label: 'label.stocktake-comment',
-      Cell: TextInputCell,
-      cellProps: {
-        fullWidth: true,
-      },
-      width: 200,
-      setter: patch => update({ ...patch, countThisLine: true }),
-      accessor: ({ rowData }) => rowData.comment || '',
-      defaultHideOnMobile: true,
-    },
-  ]);
 
-  const columns = useColumns(columnDefinitions);
+  columnDefinitions.push(
+    getCampaignOrProgramColumn(patch => update(patch)),
+    [
+      'comment',
+      {
+        label: 'label.stocktake-comment',
+        Cell: TextInputCell,
+        cellProps: {
+          fullWidth: true,
+        },
+        width: 200,
+        setter: patch => update({ ...patch, countThisLine: true }),
+        accessor: ({ rowData }) => rowData.comment || '',
+        defaultHideOnMobile: true,
+      },
+    ]
+  );
+
+  const columns = useColumns(columnDefinitions, {}, [columnDefinitions]);
 
   return (
     <DataTable
@@ -382,6 +447,7 @@ export const LocationTable = ({
       data={batches}
       noDataMessage={t('label.add-new-line')}
       dense
+      gradientBottom={true}
     />
   );
 };

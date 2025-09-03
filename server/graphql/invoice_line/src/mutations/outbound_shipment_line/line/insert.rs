@@ -24,6 +24,7 @@ pub struct InsertInput {
     pub stock_line_id: String,
     pub number_of_packs: f64,
     pub tax_percentage: Option<f64>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -90,6 +91,7 @@ impl InsertInput {
             stock_line_id,
             number_of_packs,
             tax_percentage,
+            vvm_status_id,
         } = self;
 
         ServiceInput {
@@ -98,9 +100,10 @@ impl InsertInput {
             invoice_id,
             stock_line_id,
             number_of_packs,
-            total_before_tax: None,
             tax_percentage,
+            vvm_status_id,
             // Default
+            total_before_tax: None,
             prescribed_quantity: None,
             note: None,
             location_id: None,
@@ -110,6 +113,8 @@ impl InsertInput {
             cost_price_per_pack: None,
             sell_price_per_pack: None,
             campaign_id: None,
+            program_id: None,
+            volume_per_pack: None,
             item_variant_id: None,
             donor_id: None,
         }
@@ -173,6 +178,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
+        | VVMStatusDoesNotExist
         | NumberOfPacksBelowZero => StandardGraphqlError::BadUserInput(formatted_error),
         AutoPickFailed(_) | DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
@@ -546,16 +552,7 @@ mod test {
                     total_before_tax: None,
                     r#type: StockOutType::OutboundShipment,
                     tax_percentage: Some(5.0),
-                    note: None,
-                    location_id: None,
-                    batch: None,
-                    pack_size: None,
-                    expiry_date: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    campaign_id: None,
-                    item_variant_id: None,
-                    donor_id: None,
+                    ..Default::default()
                 }
             );
             Ok(InvoiceLine {

@@ -9,23 +9,26 @@ use super::{
     upsert_helpers::{upsert_global, upsert_store},
 };
 
-#[derive(Display, EnumString)]
+#[derive(Display, EnumString, Clone)]
 #[strum(serialize_all = "snake_case")]
 pub enum PrefKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
+    AuthorisePurchaseOrder,
+    AuthoriseGoodsReceived,
+    CustomTranslations,
     GenderOptions,
+    PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
-    UseCampaigns,
     SyncRecordsDisplayThreshold,
 
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
+    UseProcurementFunctionality,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
-    PreventTransfersMonthsBeforeInitialisation,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -36,10 +39,13 @@ pub enum PreferenceType {
     // Machine,
 }
 
+#[derive(Clone)]
 pub enum PreferenceValueType {
     Boolean,
     Integer,
     MultiChoice,
+    // specific type to CustomTranslations preference
+    CustomTranslations,
     // String,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers

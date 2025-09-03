@@ -1,5 +1,7 @@
 use repository::{
-    InvoiceRowRepository, InvoiceType, NumberRowRepository, NumberRowType, RepositoryError,
+    goods_received_row::GoodsReceivedRowRepository, GoodsReceivedLineRowRepository,
+    InvoiceRowRepository, InvoiceType, NumberRowRepository, NumberRowType,
+    PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, RepositoryError,
     RequisitionRowRepository, RequisitionType, StocktakeRowRepository, StorageConnection,
 };
 
@@ -45,6 +47,18 @@ pub fn next_number(
                 .find_max_invoice_number(InvoiceType::CustomerReturn, store_id)?,
             NumberRowType::SupplierReturn => InvoiceRowRepository::new(connection_tx)
                 .find_max_invoice_number(InvoiceType::SupplierReturn, store_id)?,
+            NumberRowType::PurchaseOrder => PurchaseOrderRowRepository::new(connection_tx)
+                .find_max_purchase_order_number(store_id)?,
+            NumberRowType::GoodsReceived => GoodsReceivedRowRepository::new(connection_tx)
+                .find_max_goods_received_number(store_id)?,
+            NumberRowType::PurchaseOrderLine(purchase_order_id) => {
+                PurchaseOrderLineRowRepository::new(connection_tx)
+                    .find_max_purchase_order_line_number(purchase_order_id)?
+            }
+            NumberRowType::GoodsReceivedLine(goods_received_id) => {
+                GoodsReceivedLineRowRepository::new(connection_tx)
+                    .find_max_goods_received_line_number(goods_received_id)?
+            }
             NumberRowType::Program(_) => {
                 let next_number =
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
@@ -77,7 +91,6 @@ mod test {
         InvoiceRow, InvoiceType, NumberRowType, RepositoryError, RequisitionRow, RequisitionType,
         TransactionError,
     };
-    use util::inline_init;
 
     #[cfg(not(feature = "memory"))]
     const TEST_SLEEP_TIME: u64 = 100;
@@ -88,22 +101,24 @@ mod test {
     #[actix_rt::test]
     async fn test_number_service() {
         fn invoice1() -> InvoiceRow {
-            inline_init(|r: &mut InvoiceRow| {
-                r.id = "invoice1".to_string();
-                r.name_link_id = mock_name_c().id;
-                r.store_id = mock_store_c().id;
-                r.r#type = InvoiceType::OutboundShipment;
-                r.invoice_number = 100;
-            })
+            InvoiceRow {
+                id: "invoice1".to_string(),
+                name_link_id: mock_name_c().id,
+                store_id: mock_store_c().id,
+                r#type: InvoiceType::OutboundShipment,
+                invoice_number: 100,
+                ..Default::default()
+            }
         }
         fn unassigned_requisition() -> RequisitionRow {
-            inline_init(|r: &mut RequisitionRow| {
-                r.id = "unassigned_requisition".to_string();
-                r.name_link_id = mock_name_a().id;
-                r.store_id = mock_store_c().id;
-                r.r#type = RequisitionType::Response;
-                r.requisition_number = -1;
-            })
+            RequisitionRow {
+                id: "unassigned_requisition".to_string(),
+                name_link_id: mock_name_a().id,
+                store_id: mock_store_c().id,
+                r#type: RequisitionType::Response,
+                requisition_number: -1,
+                ..Default::default()
+            }
         }
 
         let (_, connection, _, _) = setup_all_with_data(
@@ -113,10 +128,11 @@ mod test {
                 .names()
                 .numbers()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice1()];
-                r.requisitions = vec![unassigned_requisition()];
-            }),
+            MockData {
+                invoices: vec![invoice1()],
+                requisitions: vec![unassigned_requisition()],
+                ..Default::default()
+            },
         )
         .await;
 

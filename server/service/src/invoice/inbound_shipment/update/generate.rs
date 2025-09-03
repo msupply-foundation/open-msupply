@@ -109,6 +109,7 @@ pub(crate) fn generate(
                         vvm_status_id,
                         stock_line_id: batch.stock_line.as_ref().unwrap().id.clone(),
                         invoice_line_id: batch.line.id.clone(),
+                        comment: None,
                     })
                 })
             })
@@ -378,7 +379,9 @@ pub fn generate_lines_and_stock_lines(
             note,
             vvm_status_id,
             campaign_id,
+            program_id,
             reason_option_id: _,
+            volume_per_pack,
             ..
         }: InvoiceLineRow = invoice_line;
 
@@ -395,14 +398,17 @@ pub fn generate_lines_and_stock_lines(
                 available_number_of_packs: number_of_packs,
                 total_number_of_packs: number_of_packs,
                 expiry_date,
-                on_hold: false,
                 note,
                 supplier_link_id: Some(supplier_id.to_string()),
-                barcode_id: None,
                 item_variant_id,
                 donor_link_id,
                 vvm_status_id,
                 campaign_id,
+                program_id,
+                volume_per_pack,
+                total_volume: volume_per_pack * number_of_packs,
+                on_hold: false,
+                barcode_id: None,
             };
             result.push(LineAndStockLine {
                 line,

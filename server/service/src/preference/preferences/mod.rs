@@ -12,27 +12,36 @@ pub mod use_simplified_mobile_ui;
 pub use use_simplified_mobile_ui::*;
 pub mod gender_options;
 pub use gender_options::*;
-pub mod use_campaigns;
-pub use use_campaigns::*;
 pub mod order_in_packs;
 pub use order_in_packs::*;
+pub mod custom_translations;
+pub use custom_translations::*;
 pub mod sync_records_display_threshold;
 pub use sync_records_display_threshold::*;
+pub mod authorise_purchase_order;
+pub use authorise_purchase_order::*;
 pub mod prevent_transfers_months_before_initialisation;
 pub use prevent_transfers_months_before_initialisation::*;
+pub mod authorise_goods_received;
+pub use authorise_goods_received::*;
+pub mod use_procurement_functionality;
+pub use use_procurement_functionality::*;
 
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
+    pub authorise_goods_received: AuthoriseGoodsReceived,
+    pub authorise_purchase_order: AuthorisePurchaseOrder,
+    pub custom_translations: CustomTranslations,
     pub gender_options: GenderOptions,
-    pub show_contact_tracing: ShowContactTracing,
-    pub use_campaigns: UseCampaigns,
-    pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
     pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
+    pub show_contact_tracing: ShowContactTracing,
+    pub sync_records_display_threshold: SyncRecordsDisplayThreshold,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub order_in_packs: OrderInPacks,
+    pub use_procurement_functionality: UseProcurementFunctionality,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
     pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
 }
@@ -41,15 +50,18 @@ pub fn get_preference_provider() -> PreferenceProvider {
     PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
+        authorise_goods_received: AuthoriseGoodsReceived,
+        authorise_purchase_order: AuthorisePurchaseOrder,
+        custom_translations: CustomTranslations,
         gender_options: GenderOptions,
         show_contact_tracing: ShowContactTracing,
-        use_campaigns: UseCampaigns,
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
         prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         order_in_packs: OrderInPacks,
+        use_procurement_functionality: UseProcurementFunctionality,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
         use_simplified_mobile_ui: UseSimplifiedMobileUi,
     }

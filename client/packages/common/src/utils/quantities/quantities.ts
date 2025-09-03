@@ -15,4 +15,20 @@ export const QuantityUtils = {
 
     return Math.max(suggested, 0);
   },
+
+  /** Converts a number of packs to dose quantity */
+  packsToDoses: (
+    numPacks: number,
+    line: { packSize: number; dosesPerUnit: number | undefined }
+  ) => {
+    return NumUtils.round(numPacks * line.packSize * (line.dosesPerUnit || 1));
+  },
+
+  /** Converts a dose quantity to number of packs */
+  dosesToPacks: (
+    doses: number,
+    line: { packSize: number; dosesPerUnit?: number }
+  ) => {
+    return doses / line.packSize / (line.dosesPerUnit || 1);
+  },
 };

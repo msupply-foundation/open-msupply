@@ -14,7 +14,6 @@ import {
   noOtherVariants,
   ButtonWithIcon,
   ReportContext,
-  StockLineNode,
   useConfirmationModal,
   useNavigate,
   RouteBuilder,
@@ -25,14 +24,14 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { RepackEditForm } from './RepackEditForm';
 import { ReportSelector, useActivityLog } from '@openmsupply-client/system';
-import { RepackFragment } from '../../api';
+import { RepackFragment, StockLineRowFragment } from '../../api';
 import { useRepackColumns } from './column';
 import { useRepack } from '../../api/hooks';
 
 interface RepackModalControlProps {
   isOpen: boolean;
   onClose: () => void;
-  stockLine: StockLineNode;
+  stockLine: StockLineRowFragment;
 }
 
 export const RepackModal: FC<RepackModalControlProps> = ({
@@ -104,6 +103,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         ...draft,
         locationName: stockLine.location?.name,
         packSize: stockLine.packSize,
+        restrictedToLocationType:
+          stockLine.item.restrictedLocationTypeId ?? undefined,
       };
     }
 

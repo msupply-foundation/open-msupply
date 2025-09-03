@@ -28,9 +28,10 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
-  getCampaignColumn,
+  getCampaignOrProgramColumn,
   getDonorColumn,
   getLocationInputColumn,
+  getVolumePerPackFromVariant,
   ItemRowFragment,
   LocationRowFragment,
   PackSizeEntryCell,
@@ -54,6 +55,10 @@ interface TableProps {
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
+  restrictedToLocationTypeId?: string | null;
+  preferences?: {
+    allowTrackingOfStockByDonor?: boolean;
+  };
 }
 
 interface QuantityTableProps extends TableProps {
@@ -77,7 +82,6 @@ export const QuantityTableComponent = ({
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
-
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -108,7 +112,6 @@ export const QuantityTableComponent = ({
       width: 100,
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
-        setPackRoundingMessage?.('');
         updateDraftLine(patch);
       },
       getIsDisabled: rowData => !!rowData.linkedInvoiceId,
@@ -130,8 +133,16 @@ export const QuantityTableComponent = ({
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
-        setPackRoundingMessage?.('');
-        updateDraftLine(patch);
+        const shouldClearSellPrice =
+          patch.item?.defaultPackSize !== patch.packSize &&
+          patch.item?.itemStoreProperties?.defaultSellPricePerPack ===
+            patch.sellPricePerPack;
+
+        updateDraftLine({
+          ...patch,
+          volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+          sellPricePerPack: shouldClearSellPrice ? 0 : patch.sellPricePerPack,
+        });
       },
       label: 'label.received-pack-size',
       width: 100,
@@ -211,17 +222,28 @@ export const QuantityTableComponent = ({
     columnDefinitions.push(...getInboundDosesColumns(format));
   }
 
-  columnDefinitions.push({
-    key: 'delete',
-    width: 50,
-    Cell: ({ rowData }) => (
-      <IconButton
-        label="Delete"
-        onClick={() => removeDraftLine(rowData.id)}
-        icon={<DeleteIcon fontSize="small" />}
-      />
-    ),
-  });
+  columnDefinitions.push(
+    {
+      key: 'volumePerPack',
+      label: t('label.volume-per-pack'),
+      Cell: NumberInputCell,
+      cellProps: { decimalLimit: 10 },
+      width: 100,
+      accessor: ({ rowData }) => rowData?.volumePerPack,
+      setter: updateDraftLine,
+    },
+    {
+      key: 'delete',
+      width: 50,
+      Cell: ({ rowData }) => (
+        <IconButton
+          label="Delete"
+          onClick={() => removeDraftLine(rowData.id)}
+          icon={<DeleteIcon fontSize="small" />}
+        />
+      ),
+    }
+  );
 
   const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
     updateDraftLine,
@@ -373,12 +395,9 @@ export const LocationTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled,
+  restrictedToLocationTypeId,
+  preferences,
 }: TableProps) => {
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.UseCampaigns
-  );
-
   const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -386,7 +405,18 @@ export const LocationTableComponent = ({
         accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
-    [getLocationInputColumn(), { setter: updateDraftLine, width: 530 }],
+    [
+      'location',
+      {
+        ...getLocationInputColumn(restrictedToLocationTypeId),
+        setter: updateDraftLine,
+        width: 530,
+        cellProps: {
+          getVolumeRequired: (rowData: DraftInboundLine) =>
+            rowData.volumePerPack * rowData.numberOfPacks,
+        },
+      },
+    ],
     [
       'note',
       {
@@ -395,7 +425,7 @@ export const LocationTableComponent = ({
           const note = patch.note === '' ? null : patch.note;
           updateDraftLine({ ...patch, note });
         },
-        accessor: ({ rowData }) => rowData.note,
+        accessor: ({ rowData }) => rowData.note ?? '',
       },
     ],
   ];
@@ -407,9 +437,9 @@ export const LocationTableComponent = ({
     ] as ColumnDescription<DraftInboundLine>);
   }
 
-  if (preferences?.useCampaigns) {
-    columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
-  }
+  columnDescriptions.push(
+    getCampaignOrProgramColumn(patch => updateDraftLine(patch))
+  );
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 

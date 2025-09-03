@@ -67,6 +67,7 @@ pub fn generate(
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: None,
+        goods_received_id: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
@@ -114,7 +115,12 @@ pub fn generate_invoice_lines(
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            // Generating placeholder outbound lines - program_id will be populated later based on
+            // the program of existing stock lines when this line is allocated, rather than the
+            // program of the requisition here
+            program_id: None,
             shipped_number_of_packs: None,
+            volume_per_pack: 0.0,
             shipped_pack_size: None,
         });
     }

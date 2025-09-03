@@ -62,8 +62,10 @@ const useExportFile = () => {
 export const useDownloadFile = () => {
   const exportFile = useExportFile();
 
-  return async (url: string) => {
-    const res = await fetch(url);
+  return async (url: string, fetchOptions?: RequestInit) => {
+    const res = await fetch(url, {
+      ...fetchOptions,
+    });
     const data = await res.blob();
     const header = res.headers.get('Content-Disposition');
     const filename = header?.match(/filename="(.+)"/)?.[1] ?? getFilename();

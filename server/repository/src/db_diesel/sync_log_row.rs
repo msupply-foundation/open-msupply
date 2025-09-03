@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use std::sync::RwLock;
-use util::Defaults;
+
 
 use crate::RepositoryError;
 
@@ -104,7 +104,7 @@ impl Default for SyncLogRow {
     fn default() -> Self {
         Self {
             id: Default::default(),
-            started_datetime: Defaults::naive_date_time(),
+            started_datetime: Default::default(),
             finished_datetime: Default::default(),
             prepare_initial_started_datetime: Default::default(),
             prepare_initial_finished_datetime: Default::default(),
@@ -202,7 +202,6 @@ impl SyncLogRow {
 #[cfg(test)]
 mod test {
     use strum::IntoEnumIterator;
-    use util::inline_init;
 
     use crate::{
         mock::MockDataInserts, test_db::setup_all, SyncApiErrorCode, SyncLogRow,
@@ -216,10 +215,11 @@ mod test {
         let repo = SyncLogRowRepository::new(&connection);
         // Try upsert all variants of SyncApiErrorCode, confirm that diesel enums match postgres
         for variant in SyncApiErrorCode::iter() {
-            let result = repo.upsert_one(&inline_init(|r: &mut SyncLogRow| {
-                r.id = "test".to_string();
-                r.error_code = Some(variant.clone());
-            }));
+            let result = repo.upsert_one(&SyncLogRow {
+                id: "test".to_string(),
+                error_code: Some(variant.clone()),
+                ..Default::default()
+            });
             assert_eq!(result, Ok(()));
 
             let result = repo.find_one_by_id("test").unwrap().unwrap();

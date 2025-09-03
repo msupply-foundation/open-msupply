@@ -1,3 +1,5 @@
+use crate::types::{program_node::ProgramNode, VVMStatusNode};
+
 use super::{
     CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
     PricingNode, ReasonOptionNode, ReturnReasonNode, StockLineNode,
@@ -7,15 +9,15 @@ use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader,
-        NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, ReasonOptionLoader,
-        StockLineByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByNameLinkIdLoader,
+        NameByNameLinkIdLoaderInput, ProgramByIdLoader, ReasonOptionLoader, StockLineByIdLoader,
+        VVMStatusByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineType, ItemRow};
+use repository::{location::Location, InvoiceLine, InvoiceLineRow, InvoiceLineType, ItemRow};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -99,6 +101,22 @@ impl InvoiceLineNode {
     pub async fn vvm_status_id(&self) -> &Option<String> {
         &self.row().vvm_status_id
     }
+    pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
+        if self.row().vvm_status_id.is_none() {
+            return Ok(None);
+        }
+
+        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
+        let status_id = match self.row().vvm_status_id.clone() {
+            Some(status_id) => status_id,
+            None => return Ok(None),
+        };
+
+        Ok(loader
+            .load_one(status_id)
+            .await?
+            .map(VVMStatusNode::from_domain))
+    }
     // Quantity
     pub async fn pack_size(&self) -> f64 {
         self.row().pack_size
@@ -166,17 +184,13 @@ impl InvoiceLineNode {
     pub async fn location_id(&self) -> &Option<String> {
         &self.row().location_id
     }
-    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
-        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
-        let location_id = match &self.row().location_id {
-            None => return Ok(None),
-            Some(location_id) => location_id,
-        };
-
-        let result = loader.load_one(location_id.clone()).await?;
-
-        Ok(result.map(LocationNode::from_domain))
+    pub async fn location(&self) -> Option<LocationNode> {
+        self.invoice_line.location_row_option.as_ref().map(|row| {
+            LocationNode::from_domain(Location {
+                location_row: row.clone(),
+            })
+        })
     }
 
     // Other
@@ -270,8 +284,28 @@ impl InvoiceLineNode {
         Ok(result.map(CampaignNode::from_domain))
     }
 
+    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
+
+        let program_id = match &self.row().program_id {
+            Some(program_id) => program_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(program_id.clone())
+            .await?
+            .map(|program_row| ProgramNode { program_row });
+
+        Ok(result)
+    }
+
     pub async fn linked_invoice_id(&self) -> &Option<String> {
         &self.row().linked_invoice_id
+    }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        self.row().volume_per_pack
     }
 }
 
@@ -341,7 +375,7 @@ mod test {
         LocationRow,
     };
     use serde_json::json;
-    use util::inline_init;
+    
 
     use crate::types::InvoiceLineNode;
 
@@ -363,25 +397,30 @@ mod test {
             pub async fn test_query(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
                     invoice_line: repository::InvoiceLine {
-                        invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
-                            r.id = "line_id".to_string();
-                            r.invoice_id = "line_invoice_id".to_string();
-                            r.r#type = InvoiceLineType::Service;
-                            r.item_link_id = "line_item_id".to_string();
-                            r.item_name = "line_item_name".to_string();
-                            r.item_code = "line_item_code".to_string();
-                            r.pack_size = 1.0;
-                            r.number_of_packs = 2.0;
-                            r.batch = Some("line_batch".to_string());
-                            r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
-                            r.location_id = Some("line_location_id".to_string());
-                            r.note = None;
-                        }),
+                        invoice_line_row: InvoiceLineRow {
+                            id: "line_id".to_string(),
+                            invoice_id: "line_invoice_id".to_string(),
+                            r#type: InvoiceLineType::Service,
+                            item_link_id: "line_item_id".to_string(),
+                            item_name: "line_item_name".to_string(),
+                            item_code: "line_item_code".to_string(),
+                            pack_size: 1.0,
+                            number_of_packs: 2.0,
+                            batch: Some("line_batch".to_string()),
+                            expiry_date: Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap()),
+                            location_id: Some("line_location_id".to_string()),
+                            note: None,
+                            ..Default::default()
+                        },
                         invoice_row: InvoiceRow::default(),
-                        item_row: inline_init(|r: &mut ItemRow| r.id = "line_item_id".to_string()),
-                        location_row_option: Some(inline_init(|r: &mut LocationRow| {
-                            r.name = "line_location_name".to_string();
-                        })),
+                        item_row: ItemRow {
+                            id: "line_item_id".to_string(),
+                            ..Default::default()
+                        },
+                        location_row_option: Some(LocationRow {
+                            name: "line_location_name".to_string(),
+                            ..Default::default()
+                        }),
                         stock_line_option: None,
                     },
                 }
@@ -449,38 +488,44 @@ mod test {
         impl TestQuery {
             pub async fn test_query_stock_in(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
-                    invoice_line: inline_init(|record: &mut InvoiceLine| {
-                        record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
-                            r.total_before_tax = 1.0;
-                            r.total_after_tax = 2.0;
-                            r.tax_percentage = Some(10.0);
-                            r.r#type = InvoiceLineType::StockIn
-                        })
-                    }),
+                    invoice_line: InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            total_before_tax: 1.0,
+                            total_after_tax: 2.0,
+                            tax_percentage: Some(10.0),
+                            r#type: InvoiceLineType::StockIn,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
             pub async fn test_query_stock_out(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
-                    invoice_line: inline_init(|record: &mut InvoiceLine| {
-                        record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
-                            r.total_before_tax = 1.0;
-                            r.total_after_tax = 2.0;
-                            r.tax_percentage = Some(5.0);
-                            r.r#type = InvoiceLineType::StockOut
-                        })
-                    }),
+                    invoice_line: InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            total_before_tax: 1.0,
+                            total_after_tax: 2.0,
+                            tax_percentage: Some(5.0),
+                            r#type: InvoiceLineType::StockOut,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
             pub async fn test_query_service(&self) -> InvoiceLineNode {
                 InvoiceLineNode {
-                    invoice_line: inline_init(|record: &mut InvoiceLine| {
-                        record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
-                            r.total_before_tax = 1.0;
-                            r.total_after_tax = 2.0;
-                            r.tax_percentage = None;
-                            r.r#type = InvoiceLineType::Service
-                        })
-                    }),
+                    invoice_line: InvoiceLine {
+                        invoice_line_row: InvoiceLineRow {
+                            total_before_tax: 1.0,
+                            total_after_tax: 2.0,
+                            tax_percentage: None,
+                            r#type: InvoiceLineType::Service,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
                 }
             }
         }

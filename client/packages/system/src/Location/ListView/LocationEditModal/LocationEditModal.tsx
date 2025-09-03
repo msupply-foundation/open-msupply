@@ -9,9 +9,11 @@ import {
   FnUtils,
   ToggleButton,
   InlineSpinner,
+  NumericTextInput,
+  Box,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList, useLocation } from '../../api';
-import { ColdStorageTypeInput } from '@openmsupply-client/system';
+import { LocationTypeInput } from '@openmsupply-client/system';
 interface LocationEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
@@ -28,6 +30,9 @@ const createNewLocation = (
   name: '',
   code: '',
   onHold: false,
+  volume: 0,
+  volumeUsed: 0,
+  stock: { __typename: 'StockLineConnector', totalCount: 0 },
   ...seed,
 });
 
@@ -145,11 +150,29 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             label={t('label.code')}
             slotProps={{ inputLabel: { shrink: true } }}
           />
-          <ColdStorageTypeInput
-            value={draft.coldStorageType ?? null}
-            label={t('label.cold-storage-type')}
-            onChange={coldStorageType => onUpdate({ coldStorageType })}
+          <LocationTypeInput
+            value={draft.locationType ?? null}
+            label={t('label.location-type')}
+            onChange={locationType => onUpdate({ locationType })}
           />
+          <Box
+            sx={{ display: 'flex', gap: 2, justifyContent: 'space-between' }}
+          >
+            <NumericTextInput
+              value={draft.volume ?? 0}
+              onChange={volume => onUpdate({ volume })}
+              label={t('label.volume')}
+              fullWidth
+              decimalLimit={10}
+            />
+            <NumericTextInput
+              value={draft.volumeUsed}
+              label={t('label.volume-used')}
+              disabled
+              fullWidth
+              decimalLimit={10}
+            />
+          </Box>
           <Grid alignSelf="center">
             <ToggleButton
               label="On hold"

@@ -23,9 +23,10 @@ export type InboundLineFragment = {
   foreignCurrencyPriceBeforeTax?: number | null;
   itemName: string;
   itemVariantId?: string | null;
-  vvmStatusId?: string | null;
   linkedInvoiceId?: string | null;
+  volumePerPack: number;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   item: {
     __typename: 'ItemNode';
@@ -36,6 +37,16 @@ export type InboundLineFragment = {
     defaultPackSize: number;
     isVaccine: boolean;
     doses: number;
+    restrictedLocationTypeId?: string | null;
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      defaultSellPricePerPack: number;
+    } | null;
+    programs?: Array<{
+      __typename: 'ProgramNode';
+      id: string;
+      name: string;
+    }> | null;
   };
   location?: {
     __typename: 'LocationNode';
@@ -59,6 +70,23 @@ export type InboundLineFragment = {
     onHold: boolean;
     note?: string | null;
     vvmStatusId?: string | null;
+  } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    priority: number;
+    unusable: boolean;
+    description: string;
+  } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
   } | null;
 };
 
@@ -122,9 +150,10 @@ export type InboundFragment = {
       foreignCurrencyPriceBeforeTax?: number | null;
       itemName: string;
       itemVariantId?: string | null;
-      vvmStatusId?: string | null;
       linkedInvoiceId?: string | null;
+      volumePerPack: number;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -139,6 +168,16 @@ export type InboundFragment = {
         defaultPackSize: number;
         isVaccine: boolean;
         doses: number;
+        restrictedLocationTypeId?: string | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
+        programs?: Array<{
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        }> | null;
       };
       location?: {
         __typename: 'LocationNode';
@@ -162,6 +201,23 @@ export type InboundFragment = {
         onHold: boolean;
         note?: string | null;
         vvmStatusId?: string | null;
+      } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        priority: number;
+        unusable: boolean;
+        description: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
       } | null;
     }>;
   };
@@ -345,9 +401,14 @@ export type InvoiceQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
-            vvmStatusId?: string | null;
             linkedInvoiceId?: string | null;
+            volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
@@ -362,6 +423,16 @@ export type InvoiceQuery = {
               defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
+              restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
+              programs?: Array<{
+                __typename: 'ProgramNode';
+                id: string;
+                name: string;
+              }> | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -385,6 +456,23 @@ export type InvoiceQuery = {
               onHold: boolean;
               note?: string | null;
               vvmStatusId?: string | null;
+            } | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              priority: number;
+              unusable: boolean;
+              description: string;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
             } | null;
           }>;
         };
@@ -501,9 +589,14 @@ export type InboundByNumberQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
-            vvmStatusId?: string | null;
             linkedInvoiceId?: string | null;
+            volumePerPack: number;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
             campaign?: {
               __typename: 'CampaignNode';
               id: string;
@@ -518,6 +611,16 @@ export type InboundByNumberQuery = {
               defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
+              restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
+              programs?: Array<{
+                __typename: 'ProgramNode';
+                id: string;
+                name: string;
+              }> | null;
             };
             location?: {
               __typename: 'LocationNode';
@@ -541,6 +644,23 @@ export type InboundByNumberQuery = {
               onHold: boolean;
               note?: string | null;
               vvmStatusId?: string | null;
+            } | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              priority: number;
+              unusable: boolean;
+              description: string;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
             } | null;
           }>;
         };
@@ -1031,9 +1151,13 @@ export const InboundLineFragmentDoc = gql`
     foreignCurrencyPriceBeforeTax
     itemName
     itemVariantId
-    vvmStatusId
     linkedInvoiceId
+    volumePerPack
     donor(storeId: $storeId) {
+      id
+      name
+    }
+    program {
       id
       name
     }
@@ -1050,6 +1174,14 @@ export const InboundLineFragmentDoc = gql`
       defaultPackSize
       isVaccine
       doses
+      restrictedLocationTypeId
+      itemStoreProperties(storeId: $storeId) {
+        defaultSellPricePerPack
+      }
+      programs(storeId: $storeId) {
+        id
+        name
+      }
     }
     location {
       __typename
@@ -1073,6 +1205,23 @@ export const InboundLineFragmentDoc = gql`
       onHold
       note
       vvmStatusId
+    }
+    vvmStatus {
+      __typename
+      id
+      priority
+      unusable
+      description
+    }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
     }
   }
 `;

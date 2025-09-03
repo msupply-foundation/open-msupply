@@ -12,14 +12,16 @@ import {
   issue,
   packsToQuantity,
   scannedBatchFilter,
-  getAllocationAlerts,
+  getAutoAllocationAlerts,
   OutboundLineEditData,
   DraftItem,
   DraftStockOutLineFragment,
   normaliseToUnits,
+  getManualAllocationAlerts,
   unitsToQuantity,
 } from '.';
 import { allocateQuantities } from './allocateQuantities';
+import { VvmStatusFragment } from 'packages/system/src/Stock/api';
 
 /**
  * Allocation can be in units, doses, or packs of a specific size.
@@ -79,6 +81,7 @@ interface AllocationContext {
   setAlerts: (alerts: StockOutAlert[]) => void;
   setPrescribedQuantity: (quantity: number) => void;
   setNote: (note: string | null) => void;
+  setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
   setAllocateIn: (
     allocateIn: AllocateInOption,
     // TODO: these are passed into a few functions, can we intialise with them instead?
@@ -266,6 +269,25 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     }));
   },
 
+  setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => {
+    const { draftLines } = get();
+
+    const updatedLines = draftLines.map(line =>
+      line.id === id
+        ? {
+            ...line,
+            numberOfPacks: vvmStatus?.unusable ? 0 : line.numberOfPacks,
+            vvmStatus,
+          }
+        : line
+    );
+    set(state => ({
+      ...state,
+      draftLines: updatedLines,
+      isDirty: true,
+    }));
+  },
+
   autoAllocate: (quantity, format, t, allowPartialPacks = false) => {
     const {
       draftLines,
@@ -307,7 +329,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       ? remainingAsUnits
       : Math.ceil(remainingAsUnits);
 
-    const alerts = getAllocationAlerts(
+    const alerts = getAutoAllocationAlerts(
       quantity,
       allocatedQuantity,
       placeholderInUnits,
@@ -344,24 +366,20 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     // Now check if we need to show any alerts
     const updatedLine = updatedLines.find(line => line.id === lineId);
-
     const allocatedQuantity = updatedLine
       ? packsToQuantity(allocateInType, updatedLine.numberOfPacks, updatedLine)
       : 0;
 
-    // Todo: once prescriptions refactored, see if we can streamline alerts?
-    const alerts: StockOutAlert[] =
-      allocatedQuantity > quantity
-        ? [
-            {
-              message: t('messages.over-allocated-line', {
-                quantity: format(allocatedQuantity),
-                issueQuantity: format(quantity),
-              }),
-              severity: 'warning',
-            },
-          ]
-        : [];
+    const alerts = updatedLine
+      ? getManualAllocationAlerts(
+          quantity,
+          allocatedQuantity,
+          updatedLine,
+          allocateInType,
+          format,
+          t
+        )
+      : [];
 
     set(state => ({
       ...state,

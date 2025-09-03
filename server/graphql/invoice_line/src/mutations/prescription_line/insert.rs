@@ -136,6 +136,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
+        | VVMStatusDoesNotExist
         | NumberOfPacksBelowZero => StandardGraphqlError::BadUserInput(formatted_error),
         AutoPickFailed(_) | DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
@@ -163,6 +164,7 @@ impl InsertInput {
             number_of_packs,
             note,
             // Default
+            vvm_status_id: None,
             prescribed_quantity: None,
             total_before_tax: None,
             tax_percentage: None,
@@ -173,6 +175,8 @@ impl InsertInput {
             cost_price_per_pack: None,
             sell_price_per_pack: None,
             campaign_id: None,
+            program_id: None,
+            volume_per_pack: None,
             item_variant_id: None,
             donor_id: None,
         }
@@ -539,19 +543,7 @@ mod test {
                     invoice_id: "invoice input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
-                    prescribed_quantity: None,
-                    total_before_tax: None,
-                    note: None,
-                    tax_percentage: None,
-                    location_id: None,
-                    batch: None,
-                    pack_size: None,
-                    expiry_date: None,
-                    cost_price_per_pack: None,
-                    sell_price_per_pack: None,
-                    campaign_id: None,
-                    donor_id: None,
-                    item_variant_id: None,
+                    ..Default::default()
                 }
             );
             Ok(InvoiceLine {

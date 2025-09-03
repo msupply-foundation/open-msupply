@@ -8,19 +8,15 @@ import {
   RequisitionNodeApprovalStatus,
   Typography,
   UserStoreNodeFragment,
+  ModalGridLayout,
 } from '@openmsupply-client/common';
 import {
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
   StockItemSearchInputWithStats,
-  useReasonOptions,
 } from '@openmsupply-client/system';
 import { ResponseFragment, ResponseLineFragment } from '../../api';
-import {
-  InfoRow,
-  ModalContentLayout,
-  RepresentationValue,
-} from '../../../common';
+import { InfoRow, RepresentationValue } from '../../../common';
 import { DraftResponseLine } from './hooks';
 import { SupplySelection } from './SuppliedSelection';
 import { useStockCalculations } from './utils';
@@ -60,7 +56,6 @@ export const ResponseLineEdit = ({
   setIsEditingSupply,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
-  const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
@@ -134,6 +129,7 @@ export const ResponseLineEdit = ({
             {numericInput('label.days-out-of-stock', draft?.daysOutOfStock, {
               onChange: value => update({ daysOutOfStock: value }),
               endAdornmentOverride: t('label.days'),
+              overrideDoseDisplay: false,
             })}
           </>
         )}
@@ -200,8 +196,6 @@ export const ResponseLineEdit = ({
                 }}
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
-                reasonOptions={reasonOptions?.nodes ?? []}
-                loading={isLoading}
                 inputProps={{
                   error: isReasonsError,
                 }}
@@ -301,6 +295,7 @@ export const ResponseLineEdit = ({
               sx: {
                 mb: 0,
               },
+              overrideDoseDisplay: false,
             })}
           </>
         ) : null}
@@ -331,7 +326,7 @@ export const ResponseLineEdit = ({
   };
 
   return (
-    <ModalContentLayout
+    <ModalGridLayout
       showExtraFields={showExtraFields}
       Top={
         <>

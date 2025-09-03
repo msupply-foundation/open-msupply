@@ -6,7 +6,6 @@ fragment StockLineRow on StockLineNode {
   id
   itemId
   locationId
-  itemVariantId
   vvmStatusId
   locationName
   onHold
@@ -15,6 +14,8 @@ fragment StockLineRow on StockLineNode {
   storeId
   totalNumberOfPacks
   supplierName
+  volumePerPack
+  totalVolume
   location {
     ...LocationRow
   }
@@ -26,6 +27,12 @@ fragment StockLineRow on StockLineNode {
       name
     }
     isVaccine
+    dosesPerUnit: doses
+    restrictedLocationTypeId
+    defaultPackSize
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
   barcode
   vvmStatusLogs {
@@ -34,15 +41,33 @@ fragment StockLineRow on StockLineNode {
     }
   }
   vvmStatus {
+    __typename
     id
+    priority
+    unusable
     description
   }
   donor(storeId: $storeId) {
     id
   }
+  program {
+    id
+    name
+  }
   campaign {
     id
     name
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
   }
 }
 
@@ -107,7 +132,7 @@ fragment VVMStatusLogRow on VvmstatusLogNode {
     id
     description
     code
-    level
+    priority
   }
   createdDatetime
   comment
@@ -295,11 +320,9 @@ mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
 
 fragment VVMStatus on VvmstatusNode {
   __typename
-  code
   description
   id
-  isActive
-  level
+  priority
   reasonId
   unusable
 }

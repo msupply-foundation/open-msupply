@@ -1,5 +1,11 @@
 import React, { FC, PropsWithChildren } from 'react';
-import { TableCell, TableRow, TableSortLabel, Tooltip } from '@mui/material';
+import {
+  SxProps,
+  TableCell,
+  TableRow,
+  TableSortLabel,
+  Tooltip,
+} from '@mui/material';
 import { Column } from '../../columns/types';
 import { InfoOutlineIcon, SortDescIcon } from '@common/icons';
 import { RecordWithId } from '@common/types';
@@ -11,14 +17,14 @@ import {
 } from '@common/intl';
 import { tooltipPlacement } from '../tooltipPlacement';
 
-export const HeaderRow: FC<PropsWithChildren<{ dense?: boolean }>> = ({
-  dense,
-  ...props
-}) => (
+export const HeaderRow: FC<
+  PropsWithChildren<{ dense?: boolean; sx?: SxProps }>
+> = ({ dense, sx, ...props }) => (
   <TableRow
     {...props}
     sx={{
       height: !!dense ? '40px' : '60px',
+      ...sx,
     }}
   />
 );
@@ -26,11 +32,15 @@ export const HeaderRow: FC<PropsWithChildren<{ dense?: boolean }>> = ({
 interface HeaderCellProps<T extends RecordWithId> {
   column: Column<T>;
   dense?: boolean;
+  isSticky?: boolean;
+  stickyPosition?: number;
 }
 
 export const HeaderCell = <T extends RecordWithId>({
   column,
   dense = false,
+  isSticky = false,
+  stickyPosition,
 }: HeaderCellProps<T>): JSX.Element => {
   const {
     maxWidth,
@@ -135,6 +145,15 @@ export const HeaderCell = <T extends RecordWithId>({
     child
   );
 
+  const stickyStyles = isSticky
+    ? {
+        position: 'sticky' as const,
+        left: stickyPosition,
+        backgroundColor: 'white',
+        zIndex: 200,
+      }
+    : {};
+
   return (
     <TableCell
       role="columnheader"
@@ -152,6 +171,7 @@ export const HeaderCell = <T extends RecordWithId>({
         fontWeight: 'bold',
         fontSize: dense ? '12px' : '14px',
         verticalAlign: 'bottom',
+        ...stickyStyles,
       }}
       aria-label={String(key)}
       sortDirection={isSorted ? direction : false}

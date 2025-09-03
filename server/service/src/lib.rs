@@ -35,8 +35,8 @@ pub mod barcode;
 pub mod catalogue;
 pub mod clinician;
 pub mod cold_chain;
-pub mod cold_storage_type;
-mod common_stock;
+mod common;
+pub mod contact;
 pub mod contact_form;
 pub mod currency;
 pub mod cursor_controller;
@@ -46,6 +46,8 @@ pub mod diagnosis;
 pub mod display_settings_service;
 pub mod document;
 pub mod email;
+pub mod goods_received;
+pub mod goods_received_line;
 pub mod insurance;
 pub mod insurance_provider;
 pub mod invoice;
@@ -58,6 +60,7 @@ pub mod label_printer_settings_service;
 pub mod ledger;
 pub mod localisations;
 pub mod location;
+pub mod location_type;
 pub mod log_service;
 pub mod login;
 pub mod master_list;
@@ -74,6 +77,8 @@ pub mod printer;
 pub mod processors;
 pub mod program;
 pub mod programs;
+pub mod purchase_order;
+pub mod purchase_order_line;
 pub mod reason_option;
 pub mod repack;
 pub mod report;
@@ -334,6 +339,30 @@ fn check_location_exists(
             .store_id(EqualFilter::equal_to(store_id)),
     ))?;
     Ok(count > 0)
+}
+
+// Checks if the input location is of the correct type for the item
+fn check_location_type_is_valid(
+    connection: &StorageConnection,
+    store_id: &str,
+    location_id: &str,
+    restricted_location_type_id: &str,
+) -> Result<bool, RepositoryError> {
+    let location = LocationRepository::new(connection)
+        .query_by_filter(
+            LocationFilter::new()
+                .id(EqualFilter::equal_to(location_id))
+                .store_id(EqualFilter::equal_to(store_id)),
+        )?
+        .pop();
+
+    match location {
+        Some(location) => {
+            Ok(location.location_row.location_type_id
+                == Some(restricted_location_type_id.to_owned()))
+        }
+        None => Ok(false),
+    }
 }
 
 fn check_item_variant_exists(

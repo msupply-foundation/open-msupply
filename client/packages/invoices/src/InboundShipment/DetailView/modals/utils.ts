@@ -9,32 +9,39 @@ export interface CreateDraftInboundLineParams {
   invoiceId: string;
   seed?: InboundLineFragment;
   type?: InvoiceLineNodeType;
-  defaultPackSize: number;
+  batch?: string;
+  expiryDate?: string;
 }
 
 const createDraftInboundLine = ({
   item,
   invoiceId,
   seed,
-  defaultPackSize,
   type = InvoiceLineNodeType.StockIn,
+  batch,
+  expiryDate,
 }: CreateDraftInboundLineParams): DraftInboundLine => {
+  const { defaultPackSize = 1, itemStoreProperties } = item || {};
   const draftLine: DraftInboundLine = {
     __typename: 'InvoiceLineNode',
     totalAfterTax: 0,
     totalBeforeTax: 0,
     id: FnUtils.generateUUID(),
     invoiceId,
-    sellPricePerPack: 0,
+    packSize: defaultPackSize,
+    sellPricePerPack: seed
+      ? seed.sellPricePerPack
+      : (itemStoreProperties?.defaultSellPricePerPack ?? 0),
     costPricePerPack: 0,
     numberOfPacks: 0,
-    packSize: defaultPackSize,
-    isCreated: seed ? false : true,
-    expiryDate: undefined,
+    isCreated: !seed,
+    expiryDate,
+    batch,
     location: undefined,
     type,
     item,
     itemName: item.name,
+    volumePerPack: 0.0,
     shippedPackSize: defaultPackSize,
     ...seed,
   };
@@ -44,12 +51,9 @@ const createDraftInboundLine = ({
 
 export const CreateDraft = {
   stockInLine: createDraftInboundLine,
-  serviceLine: (
-    params: Omit<CreateDraftInboundLineParams, 'type' | 'defaultPackSize'>
-  ) =>
+  serviceLine: (params: Omit<CreateDraftInboundLineParams, 'type'>) =>
     createDraftInboundLine({
       ...params,
       type: InvoiceLineNodeType.Service,
-      defaultPackSize: 1,
     }),
 };

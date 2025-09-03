@@ -105,7 +105,8 @@ pub fn insert_asset(
                                 .unwrap_or_else(|| "Asset".to_string()),
                             on_hold: false,
                             store_id,
-                            cold_storage_type_id: None, // TODO(future): Based on asset type try to determine cold storage type
+                            location_type_id: None, // TODO(future): Based on asset type try to determine location type
+                            volume: 0.0, // TODO(future): Map asset volume to location volume if applicable
                         };
                         new_location.upsert(connection)?;
                         set_asset_location(connection, &new_asset.id, vec![new_location.id])?;

@@ -7,6 +7,7 @@ use crate::{
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
+    contact::{ContactService, ContactServiceTrait},
     contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
@@ -23,6 +24,8 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
     email::{EmailService, EmailServiceTrait},
+    goods_received::{GoodsReceivedService, GoodsReceivedServiceTrait},
+    goods_received_line::{GoodsReceivedLineService, GoodsReceivedLineServiceTrait},
     insurance::{InsuranceService, InsuranceServiceTrait},
     insurance_provider::{InsuranceProviderService, InsuranceProviderServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
@@ -31,7 +34,7 @@ use crate::{
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
     ledger_fix::ledger_fix_driver::LedgerFixTrigger,
-    localisations::Localisations,
+    localisations::LocalisationsService,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
@@ -50,6 +53,8 @@ use crate::{
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
     },
+    purchase_order::{PurchaseOrderService, PurchaseOrderServiceTrait},
+    purchase_order_line::{PurchaseOrderLineService, PurchaseOrderLineServiceTrait},
     repack::{RepackService, RepackServiceTrait},
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{
@@ -173,7 +178,7 @@ pub struct ServiceProvider {
     pub program_service: Box<dyn ProgramServiceTrait>,
     pub pricing_service: Box<dyn PricingServiceTrait>,
     // Translations
-    pub translations_service: Box<Localisations>,
+    pub localisations_service: Box<LocalisationsService>,
     // Standard Reports
     pub standard_reports: Box<StandardReports>,
     // Emails
@@ -188,6 +193,13 @@ pub struct ServiceProvider {
     pub vvm_service: Box<dyn VVMServiceTrait>,
     // Campaign
     pub campaign_service: Box<dyn CampaignServiceTrait>,
+    // Purchase Orders
+    pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
+    pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
+    pub goods_received_service: Box<dyn GoodsReceivedServiceTrait>,
+    pub goods_received_line_service: Box<dyn GoodsReceivedLineServiceTrait>,
+    // Contacts
+    pub contact_service: Box<dyn ContactServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -282,7 +294,7 @@ impl ServiceProvider {
             pricing_service: Box::new(PricingService {}),
             rnr_form_service: Box::new(RnRFormService {}),
             vaccination_service: Box::new(VaccinationService {}),
-            translations_service: Box::new(Localisations::new()),
+            localisations_service: Box::new(LocalisationsService::new()),
             standard_reports: Box::new(StandardReports {}),
             email_service: Box::new(EmailService::new(mail_settings.clone())),
             contact_form_service: Box::new(ContactFormService {}),
@@ -294,6 +306,11 @@ impl ServiceProvider {
             preference_service: Box::new(PreferenceService {}),
             vvm_service: Box::new(VVMService {}),
             campaign_service: Box::new(CampaignService),
+            purchase_order_service: Box::new(PurchaseOrderService),
+            purchase_order_line_service: Box::new(PurchaseOrderLineService),
+            goods_received_service: Box::new(GoodsReceivedService),
+            goods_received_line_service: Box::new(GoodsReceivedLineService),
+            contact_service: Box::new(ContactService {}),
             ledger_fix_trigger,
         }
     }

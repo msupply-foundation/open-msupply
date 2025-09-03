@@ -24,17 +24,24 @@ import {
   usePreference,
   PreferenceKey,
   ReasonOptionNodeType,
+  QuantityUtils,
+  Alert,
 } from '@openmsupply-client/common';
-import { DraftStockLine } from '../api';
+import { DraftStockLine, StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import {
+  checkInvalidLocationLines,
   DonorSearchInput,
-  ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
+  VVMStatusSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
-import { ItemVariantInput, useIsItemVariantsEnabled } from '../../Item';
-import { CampaignSelector } from './Campaign';
+import {
+  getVolumePerPackFromVariant,
+  ItemVariantInput,
+  useIsItemVariantsEnabled,
+} from '../../Item';
+import { CampaignOrProgramSelector } from './Campaign';
 
 interface StockLineFormProps {
   draft: DraftStockLine;
@@ -43,7 +50,7 @@ interface StockLineFormProps {
   pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
   packEditable?: boolean;
   isNewModal?: boolean;
-  reasonOptions?: ReasonOptionRowFragment[];
+  existingStockLine?: StockLineRowFragment | null;
 }
 export const StockLineForm = ({
   draft,
@@ -52,7 +59,7 @@ export const StockLineForm = ({
   pluginEvents,
   packEditable,
   isNewModal = false,
-  reasonOptions,
+  existingStockLine = null,
 }: StockLineFormProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -61,13 +68,18 @@ export const StockLineForm = ({
     PreferenceKey.AllowTrackingOfStockByDonor,
     PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.UseCampaigns
+    PreferenceKey.SortByVvmStatusThenExpiry
   );
 
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
+
+  const showVVMStatus =
+    draft?.item?.isVaccine &&
+    (preferences?.manageVvmStatusForStock ||
+      preferences?.sortByVvmStatusThenExpiry);
 
   const supplierName = draft.supplierName
     ? draft.supplierName
@@ -107,127 +119,195 @@ export const StockLineForm = ({
 
   if (loading) return null;
 
+  const getDosesProps = (numPacks: number) => {
+    if (!preferences?.manageVaccinesInDoses || !draft.item.isVaccine) return {};
+
+    const doses = QuantityUtils.packsToDoses(numPacks, {
+      packSize: draft.packSize,
+      dosesPerUnit: draft.item.dosesPerUnit,
+    });
+
+    return {
+      helperText: `${doses} ${t('label.doses').toLowerCase()}`,
+      sx: {
+        '& .MuiFormHelperText-root': {
+          textAlign: 'right',
+        },
+      },
+    };
+  };
+  const restrictedLocationTypeId = draft.item.restrictedLocationTypeId ?? null;
+  const isInvalidLocation = checkInvalidLocationLines(
+    restrictedLocationTypeId,
+    [draft]
+  );
+
   return (
     <DetailContainer>
-      <Grid
-        flex={1}
-        container
-        paddingTop={2}
-        width="100%"
-        flexWrap="nowrap"
-        maxWidth={900}
-        gap={isNewModal ? undefined : 10}
-      >
-        <Grid container flex={1} flexBasis="50%" flexDirection="column" gap={1}>
-          <StyledInputRow
-            label={t('label.pack-quantity')}
-            Input={
-              <NumericTextInput
-                autoFocus
-                disabled={!packEditable}
-                width={160}
-                value={draft.totalNumberOfPacks ? draft.totalNumberOfPacks : 0}
-                onChange={totalNumberOfPacks =>
-                  onUpdate({ totalNumberOfPacks })
-                }
-              />
-            }
-          />
-          {!packEditable && (
+      <Grid container direction="column" spacing={2}>
+        {isInvalidLocation && (
+          <Grid container justifyContent="center">
+            <Alert severity="warning" sx={{ maxWidth: 800 }}>
+              {t('messages.stock-location-invalid')}
+            </Alert>
+          </Grid>
+        )}
+        <Grid
+          flex={1}
+          container
+          paddingTop={2}
+          width="100%"
+          flexWrap="nowrap"
+          maxWidth={900}
+          gap={isNewModal ? undefined : 10}
+        >
+          <Grid
+            container
+            flex={1}
+            flexBasis="50%"
+            flexDirection="column"
+            gap={1}
+          >
             <StyledInputRow
-              label={t('label.available-packs')}
+              label={t('label.pack-quantity')}
               Input={
                 <NumericTextInput
                   autoFocus
                   disabled={!packEditable}
                   width={160}
-                  value={draft.availableNumberOfPacks}
-                  onChange={availableNumberOfPacks =>
-                    onUpdate({ availableNumberOfPacks })
+                  value={
+                    draft.totalNumberOfPacks ? draft.totalNumberOfPacks : 0
+                  }
+                  onChange={totalNumberOfPacks =>
+                    onUpdate({ totalNumberOfPacks })
+                  }
+                  {...getDosesProps(draft.totalNumberOfPacks)}
+                />
+              }
+            />
+            {!packEditable && (
+              <>
+                <StyledInputRow
+                  label={t('label.available-packs')}
+                  Input={
+                    <NumericTextInput
+                      autoFocus
+                      disabled={!packEditable}
+                      width={160}
+                      value={parseFloat(
+                        draft.availableNumberOfPacks.toFixed(2)
+                      )}
+                      onChange={availableNumberOfPacks =>
+                        onUpdate({ availableNumberOfPacks })
+                      }
+                      {...getDosesProps(draft.availableNumberOfPacks)}
+                    />
+                  }
+                />
+              </>
+            )}
+            <StyledInputRow
+              label={t('label.cost-price')}
+              Input={
+                <CurrencyInput
+                  autoFocus={!packEditable}
+                  defaultValue={draft.costPricePerPack}
+                  onChangeNumber={costPricePerPack =>
+                    onUpdate({ costPricePerPack })
                   }
                 />
               }
             />
-          )}
-          <StyledInputRow
-            label={t('label.cost-price')}
-            Input={
-              <CurrencyInput
-                autoFocus={!packEditable}
-                defaultValue={draft.costPricePerPack}
-                onChangeNumber={costPricePerPack =>
-                  onUpdate({ costPricePerPack })
-                }
-              />
-            }
-          />
-          <StyledInputRow
-            label={t('label.sell-price')}
-            Input={
-              <CurrencyInput
-                defaultValue={draft.sellPricePerPack}
-                onChangeNumber={sellPricePerPack =>
-                  onUpdate({ sellPricePerPack })
-                }
-              />
-            }
-          />
-          <StyledInputRow
-            label={t('label.expiry')}
-            Input={
-              <ExpiryDateInput
-                value={DateUtils.getNaiveDate(draft.expiryDate)}
-                onChange={date =>
-                  onUpdate({ expiryDate: Formatter.naiveDate(date) })
-                }
-                width={160}
-              />
-            }
-          />
-          <StyledInputRow
-            label={t('label.batch')}
-            Input={
-              <BufferedTextInput
-                value={draft.batch ?? ''}
-                onChange={e => onUpdate({ batch: e.target.value })}
-              />
-            }
-          />
-          {isNewModal && (
             <StyledInputRow
-              label={t('label.reason')}
+              label={t('label.sell-price')}
               Input={
-                <ReasonOptionsSearchInput
-                  width={INPUT_WIDTH}
-                  type={ReasonOptionNodeType.PositiveInventoryAdjustment}
-                  value={draft.reasonOption}
-                  onChange={reason => onUpdate({ reasonOption: reason })}
-                  reasonOptions={reasonOptions ?? []}
-                  loading={loading}
-                  disabled={draft?.totalNumberOfPacks === 0}
+                <CurrencyInput
+                  value={draft.sellPricePerPack}
+                  onChangeNumber={sellPricePerPack =>
+                    onUpdate({ sellPricePerPack })
+                  }
                 />
               }
             />
-          )}
-          {showItemVariantsInput && (
             <StyledInputRow
-              label={t('label.item-variant')}
+              label={t('label.expiry')}
               Input={
-                <ItemVariantInput
-                  itemId={draft.itemId}
-                  selectedId={draft.itemVariantId ?? null}
+                <ExpiryDateInput
+                  value={DateUtils.getNaiveDate(draft.expiryDate)}
+                  onChange={date =>
+                    onUpdate({ expiryDate: Formatter.naiveDate(date) })
+                  }
                   width={160}
-                  onChange={variant => onUpdate({ itemVariantId: variant?.id })}
                 />
               }
             />
-          )}
-          {plugins.stockLine?.editViewField.map((Plugin, index) => (
-            <Plugin key={index} stockLine={draft} events={pluginEvents} />
-          ))}
-        </Grid>
-        <Grid container flex={1} flexBasis="50%" flexDirection="column" gap={1}>
-          {packEditable ? (
+            <StyledInputRow
+              label={t('label.batch')}
+              Input={
+                <BufferedTextInput
+                  value={draft.batch ?? ''}
+                  onChange={e => onUpdate({ batch: e.target.value })}
+                />
+              }
+            />
+            <StyledInputRow
+              label={t('label.barcode')}
+              Input={
+                <Box style={{ width: 162 }}>
+                  <BufferedTextInput
+                    value={draft.barcode ?? ''}
+                    onChange={e => onUpdate({ barcode: e.target.value })}
+                  />
+                  {isEnabled && (
+                    <Tooltip
+                      title={
+                        isConnected ? '' : t('error.scanner-not-connected')
+                      }
+                    >
+                      <Box>
+                        <IconButton
+                          disabled={isScanning || !isConnected}
+                          onClick={scanBarcode}
+                          icon={
+                            isScanning ? (
+                              <CircularProgress size={20} color="secondary" />
+                            ) : (
+                              <ScanIcon />
+                            )
+                          }
+                          label={t('button.scan')}
+                        />
+                      </Box>
+                    </Tooltip>
+                  )}
+                </Box>
+              }
+            />
+            {isNewModal && (
+              <StyledInputRow
+                label={t('label.reason')}
+                Input={
+                  <ReasonOptionsSearchInput
+                    width={INPUT_WIDTH}
+                    type={ReasonOptionNodeType.PositiveInventoryAdjustment}
+                    value={draft.reasonOption}
+                    onChange={reason => onUpdate({ reasonOption: reason })}
+                    disabled={draft?.totalNumberOfPacks === 0}
+                  />
+                }
+              />
+            )}
+            {plugins.stockLine?.editViewField.map((Plugin, index) => (
+              <Plugin key={index} stockLine={draft} events={pluginEvents} />
+            ))}
+          </Grid>
+          <Grid
+            container
+            flex={1}
+            flexBasis="50%"
+            flexDirection="column"
+            gap={1}
+          >
             <StyledInputRow
               label={t('label.pack-size')}
               Input={
@@ -235,111 +315,149 @@ export const StockLineForm = ({
                   disabled={!packEditable}
                   width={160}
                   value={draft.packSize ?? 1}
-                  onChange={packSize => onUpdate({ packSize })}
+                  onChange={packSize => {
+                    const shouldClearPrice =
+                      draft.item?.defaultPackSize !== packSize &&
+                      draft.item?.itemStoreProperties
+                        ?.defaultSellPricePerPack === draft.sellPricePerPack;
+
+                    onUpdate({
+                      packSize,
+                      sellPricePerPack: shouldClearPrice
+                        ? 0
+                        : draft.sellPricePerPack,
+                    });
+                  }}
                 />
               }
             />
-          ) : (
+            <StyledInputRow
+              label={t('label.on-hold')}
+              Input={
+                <Checkbox
+                  checked={draft.onHold}
+                  onChange={(_, onHold) => onUpdate({ onHold })}
+                />
+              }
+            />
+            <StyledInputRow
+              label={t('label.location')}
+              Input={
+                <LocationSearchInput
+                  autoFocus={false}
+                  disabled={false}
+                  selectedLocation={location}
+                  width={160}
+                  originalSelectedLocation={existingStockLine?.location}
+                  onChange={location => {
+                    onUpdate({ location, locationId: location?.id });
+                  }}
+                  restrictedToLocationTypeId={
+                    draft.item.restrictedLocationTypeId
+                  }
+                  volumeRequired={
+                    draft.volumePerPack * draft.totalNumberOfPacks
+                  }
+                />
+              }
+            />
+            {showItemVariantsInput && (
+              <StyledInputRow
+                label={t('label.item-variant')}
+                Input={
+                  <ItemVariantInput
+                    itemId={draft.itemId}
+                    selectedId={draft?.itemVariant?.id}
+                    width={160}
+                    onChange={variant => {
+                      const newVolume = getVolumePerPackFromVariant({
+                        itemVariant: variant,
+                        packSize: draft.packSize,
+                      });
+
+                      onUpdate({
+                        itemVariant: variant,
+                        volumePerPack: newVolume ?? 0,
+                      });
+                    }}
+                  />
+                }
+              />
+            )}
+            <StyledInputRow
+              label={t('label.volume-per-pack')}
+              Input={
+                <NumericTextInput
+                  width={160}
+                  value={draft.volumePerPack ?? 0}
+                  decimalLimit={10}
+                  onChange={volumePerPack => onUpdate({ volumePerPack })}
+                />
+              }
+            />
+            {!packEditable && (
+              <StyledInputRow
+                label={t('label.total-volume')}
+                Input={
+                  <NumericTextInput
+                    disabled
+                    width={160}
+                    decimalLimit={10}
+                    // Need to coalesce to 0 to avoid NaN while user is editing volumePerPack!
+                    value={
+                      (draft.volumePerPack ?? 0) * draft.totalNumberOfPacks
+                    }
+                  />
+                }
+              />
+            )}
             <TextWithLabelRow
-              label={t('label.pack-size')}
-              text={String(draft.packSize)}
+              label={t('label.supplier')}
+              text={String(supplierName)}
               textProps={{ textAlign: 'end' }}
             />
-          )}
-          <StyledInputRow
-            label={t('label.on-hold')}
-            Input={
-              <Checkbox
-                checked={draft.onHold}
-                onChange={(_, onHold) => onUpdate({ onHold })}
+            {showVVMStatus && (
+              <StyledInputRow
+                label={t('label.vvm-status')}
+                labelWidth={isNewModal ? '212px' : null}
+                Input={
+                  <VVMStatusSearchInput
+                    selected={draft?.vvmStatus ?? null}
+                    onChange={vvmStatus => onUpdate({ vvmStatus })}
+                    disabled={!isNewModal}
+                    width={!isNewModal ? 160 : undefined}
+                    useDefault
+                  />
+                }
               />
-            }
-          />
-          <StyledInputRow
-            label={t('label.location')}
-            Input={
-              <LocationSearchInput
-                autoFocus={false}
-                disabled={false}
-                selectedLocation={location}
-                width={160}
-                onChange={location => {
-                  onUpdate({ location, locationId: location?.id });
-                }}
+            )}
+            {preferences?.allowTrackingOfStockByDonor && (
+              <StyledInputRow
+                label={t('label.donor')}
+                Input={
+                  <DonorSearchInput
+                    donorId={draft.donor?.id ?? null}
+                    width={160}
+                    onChange={donor => onUpdate({ donor })}
+                    clearable
+                  />
+                }
               />
-            }
-          />
-          <StyledInputRow
-            label={t('label.barcode')}
-            Input={
-              <Box style={{ width: 162 }}>
-                <BufferedTextInput
-                  value={draft.barcode ?? ''}
-                  onChange={e => onUpdate({ barcode: e.target.value })}
-                />
-                {isEnabled && (
-                  <Tooltip
-                    title={isConnected ? '' : t('error.scanner-not-connected')}
-                  >
-                    <Box>
-                      <IconButton
-                        disabled={isScanning || !isConnected}
-                        onClick={scanBarcode}
-                        icon={
-                          isScanning ? (
-                            <CircularProgress size={20} color="secondary" />
-                          ) : (
-                            <ScanIcon />
-                          )
-                        }
-                        label={t('button.scan')}
-                      />
-                    </Box>
-                  </Tooltip>
-                )}
-              </Box>
-            }
-          />
-          <TextWithLabelRow
-            label={t('label.supplier')}
-            text={String(supplierName)}
-            textProps={{ textAlign: 'end' }}
-          />
-          {draft?.item?.isVaccine && preferences?.manageVvmStatusForStock && (
-            <StyledInputRow
-              label={t('label.vvm-status')}
-              Input={
-                <BufferedTextInput
-                  disabled
-                  value={draft.vvmStatus?.description ?? ''}
-                />
-              }
-            />
-          )}
-          {preferences?.allowTrackingOfStockByDonor && (
-            <StyledInputRow
-              label={t('label.donor')}
-              Input={
-                <DonorSearchInput
-                  donorId={draft.donor?.id ?? null}
-                  width={160}
-                  onChange={donor => onUpdate({ donor })}
-                  clearable
-                />
-              }
-            />
-          )}
-          {preferences?.useCampaigns && (
+            )}
             <StyledInputRow
               label={t('label.campaign')}
               Input={
-                <CampaignSelector
+                <CampaignOrProgramSelector
                   campaignId={draft.campaign?.id}
-                  onChange={campaign => onUpdate({ campaign })}
+                  programId={draft.program?.id}
+                  programOptionsOrFilter={{ filterByItemId: draft.itemId }}
+                  onChange={({ campaign, program }) =>
+                    onUpdate({ campaign, program })
+                  }
                 />
               }
             />
-          )}
+          </Grid>
         </Grid>
       </Grid>
     </DetailContainer>

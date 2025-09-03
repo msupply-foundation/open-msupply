@@ -86,6 +86,7 @@ pub fn generate(
                 vvm_status_id,
                 stock_line_id: new_batch.id.clone(),
                 invoice_line_id: update_line.id.clone(),
+                comment: None,
             }))
         } else {
             None
@@ -137,7 +138,9 @@ fn generate_line(
         vvm_status_id,
         donor_id,
         campaign_id,
+        program_id,
         shipped_number_of_packs,
+        volume_per_pack,
         shipped_pack_size,
         id: _,
         item_id: _,
@@ -154,7 +157,9 @@ fn generate_line(
     update_line.batch = batch.or(update_line.batch);
     update_line.note = note.map(|n| n.value).unwrap_or(update_line.note);
     update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);
-    update_line.expiry_date = expiry_date.or(update_line.expiry_date);
+    update_line.expiry_date = expiry_date
+        .map(|expiry_date| expiry_date.value)
+        .unwrap_or(update_line.expiry_date);
     update_line.sell_price_per_pack =
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);
     update_line.cost_price_per_pack =
@@ -200,9 +205,15 @@ fn generate_line(
         .map(|c| c.value)
         .unwrap_or(update_line.campaign_id);
 
+    update_line.program_id = program_id
+        .map(|c| c.value)
+        .unwrap_or(update_line.program_id);
+
     update_line.shipped_number_of_packs =
         shipped_number_of_packs.or(update_line.shipped_number_of_packs);
     update_line.shipped_pack_size = shipped_pack_size.or(update_line.shipped_pack_size);
+
+    update_line.volume_per_pack = volume_per_pack.unwrap_or(update_line.volume_per_pack);
 
     Ok(update_line)
 }

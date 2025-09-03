@@ -39,32 +39,32 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   onChangeNumber,
   maxWidth,
   value,
+  disabled,
+  width,
   ...restOfProps
 }) => {
   const { c, options } = useCurrency();
   const isSymbolLast = options.pattern.endsWith('!');
   const prefix = !isSymbolLast ? options.symbol : '';
   const suffix = isSymbolLast ? options.symbol : '';
-  const defaultValueAsNumber = Number.isNaN(Number(defaultValue))
-    ? undefined
-    : Number(defaultValue);
-  const valueAsNumber = Number.isNaN(value) ? 0 : Number(value);
+  const val = value !== undefined ? value : defaultValue;
+  const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
 
   return (
     <StyledCurrencyInput
       sx={{
         maxWidth,
         backgroundColor: theme =>
-          restOfProps.disabled
+          disabled
             ? theme.palette.background.toolbar
             : theme.palette.background.menu,
+        '&:hover': {
+          borderBottom: disabled ? 'none' : undefined,
+        },
+        color: disabled ? theme => theme.palette.text.disabled : undefined,
+        width,
       }}
-      // We implement our own rounding here, as the react-currency-input-field
-      // component only truncates internally
-      defaultValue={NumUtils.round(
-        defaultValueAsNumber ?? valueAsNumber,
-        options.precision
-      )}
+      value={NumUtils.round(valueAsNumber, options.precision)}
       onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
       onFocus={e => e.target.select()}
       allowNegativeValue={allowNegativeValue}
@@ -75,6 +75,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       decimalsLimit={options.precision}
       allowDecimals={allowDecimals}
       decimalScale={allowDecimals ? options.precision : undefined}
+      disabled={disabled}
       {...restOfProps}
     />
   );

@@ -12,7 +12,6 @@ use repository::{
     ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
     RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
-use util::inline_edit;
 
 #[derive(Debug, PartialEq, Default)]
 pub struct UpdateResponseRequisitionLine {
@@ -148,28 +147,31 @@ fn generate(
         option_id: updated_option_id,
     }: UpdateResponseRequisitionLine,
 ) -> (Option<RequisitionRow>, RequisitionLineRow) {
-    let requisition_line_row = inline_edit(&existing, |mut u| {
-        u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity);
-        u.comment = updated_comment.or(u.comment);
-        if existing_requisition_row.linked_requisition_id.is_none() {
-            u.available_stock_on_hand = updated_stock_on_hand.unwrap_or(u.available_stock_on_hand);
-            u.average_monthly_consumption =
-                updated_average_monthly_consumption.unwrap_or(u.average_monthly_consumption);
-        }
-        // Manual Requisition fields
-        u.requested_quantity = updated_requested_quantity.unwrap_or(u.requested_quantity);
-        u.initial_stock_on_hand_units =
-            updated_initial_stock_on_hand.unwrap_or(u.initial_stock_on_hand_units);
-        u.incoming_units = updated_incoming_units.unwrap_or(u.incoming_units);
-        u.outgoing_units = updated_outgoing_units.unwrap_or(u.outgoing_units);
-        u.loss_in_units = updated_loss_in_units.unwrap_or(u.loss_in_units);
-        u.addition_in_units = updated_addition_in_units.unwrap_or(u.addition_in_units);
-        u.expiring_units = updated_expiring_units.unwrap_or(u.expiring_units);
-        u.days_out_of_stock = updated_days_out_of_stock.unwrap_or(u.days_out_of_stock);
-        u.option_id = updated_option_id;
-
-        u
-    });
+    let requisition_line_row = RequisitionLineRow {
+        supply_quantity: updated_supply_quantity.unwrap_or(existing.supply_quantity),
+        comment: updated_comment.or(existing.comment),
+        available_stock_on_hand: if existing_requisition_row.linked_requisition_id.is_none() {
+            updated_stock_on_hand.unwrap_or(existing.available_stock_on_hand)
+        } else {
+            existing.available_stock_on_hand
+        },
+        average_monthly_consumption: if existing_requisition_row.linked_requisition_id.is_none() {
+            updated_average_monthly_consumption.unwrap_or(existing.average_monthly_consumption)
+        } else {
+            existing.average_monthly_consumption
+        },
+        requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
+        initial_stock_on_hand_units: updated_initial_stock_on_hand
+            .unwrap_or(existing.initial_stock_on_hand_units),
+        incoming_units: updated_incoming_units.unwrap_or(existing.incoming_units),
+        outgoing_units: updated_outgoing_units.unwrap_or(existing.outgoing_units),
+        loss_in_units: updated_loss_in_units.unwrap_or(existing.loss_in_units),
+        addition_in_units: updated_addition_in_units.unwrap_or(existing.addition_in_units),
+        expiring_units: updated_expiring_units.unwrap_or(existing.expiring_units),
+        days_out_of_stock: updated_days_out_of_stock.unwrap_or(existing.days_out_of_stock),
+        option_id: updated_option_id,
+        ..existing
+    };
 
     (
         generate_requisition_user_id_update(user_id, existing_requisition_row),

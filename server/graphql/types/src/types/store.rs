@@ -82,7 +82,6 @@ mod test {
         NameRow, Store, StoreRow,
     };
     use serde_json::json;
-    use util::inline_init;
 
     use crate::types::StoreNode;
 
@@ -92,17 +91,19 @@ mod test {
         struct TestQuery;
 
         fn name() -> NameRow {
-            inline_init(|r: &mut NameRow| {
-                r.id = "name_id".to_string();
-                r.name = "name".to_string()
-            })
+            NameRow {
+                id: "name_id".to_string(),
+                name: "name".to_string(),
+                ..Default::default()
+            }
         }
 
         fn store() -> StoreRow {
-            inline_init(|r: &mut StoreRow| {
-                r.id = "store".to_string();
-                r.name_link_id = name().id
-            })
+            StoreRow {
+                id: "store".to_string(),
+                name_link_id: name().id,
+                ..Default::default()
+            }
         }
 
         let (_, _, _, settings) = setup_graphql_test_with_data(
@@ -110,10 +111,11 @@ mod test {
             EmptyMutation,
             "graphql_test_store_loader",
             MockDataInserts::none(),
-            inline_init(|r: &mut MockData| {
-                r.stores = vec![store()];
-                r.names = vec![name()];
-            }),
+            MockData {
+                stores: vec![store()],
+                names: vec![name()],
+                ..Default::default()
+            },
         )
         .await;
 

@@ -1,10 +1,10 @@
-use crate::types::ColdStorageTypeNode;
+use crate::types::LocationTypeNode;
 
 use super::StockLineConnector;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::ColdStorageTypeLoader;
+use graphql_core::loader::{LocationTypeLoader, VolumeUsedByLocationLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
 use repository::StringFilter;
@@ -37,6 +37,7 @@ pub struct LocationFilterInput {
     pub assigned_to_asset: Option<bool>,
     pub store_id: Option<EqualFilterStringInput>,
     pub id: Option<EqualFilterStringInput>,
+    pub location_type_id: Option<EqualFilterStringInput>,
 }
 
 impl From<LocationFilterInput> for LocationFilter {
@@ -48,6 +49,7 @@ impl From<LocationFilterInput> for LocationFilter {
             store_id: f.store_id.map(EqualFilter::from),
             on_hold: f.on_hold,
             assigned_to_asset: f.assigned_to_asset,
+            location_type_id: f.location_type_id.map(EqualFilter::from),
         }
     }
 }
@@ -81,6 +83,17 @@ impl LocationNode {
         self.row().on_hold
     }
 
+    pub async fn volume(&self) -> f64 {
+        self.row().volume
+    }
+
+    pub async fn volume_used(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<VolumeUsedByLocationLoader>>();
+
+        let result = loader.load_one(self.row().id.clone()).await?.unwrap_or(0.0);
+        Ok(result)
+    }
+
     pub async fn stock(&self, ctx: &Context<'_>) -> Result<StockLineConnector> {
         let loader = ctx.get_loader::<DataLoader<StockLineByLocationIdLoader>>();
         let result_option = loader.load_one(self.row().id.clone()).await?;
@@ -90,20 +103,17 @@ impl LocationNode {
         ))
     }
 
-    pub async fn cold_storage_type(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<ColdStorageTypeNode>> {
-        let cold_storage_type_id = match &self.row().cold_storage_type_id {
-            Some(cold_storage_type_id) => cold_storage_type_id,
+    pub async fn location_type(&self, ctx: &Context<'_>) -> Result<Option<LocationTypeNode>> {
+        let location_type_id = match &self.row().location_type_id {
+            Some(location_type_id) => location_type_id,
             None => return Ok(None),
         };
 
-        let loader = ctx.get_loader::<DataLoader<ColdStorageTypeLoader>>();
+        let loader = ctx.get_loader::<DataLoader<LocationTypeLoader>>();
         Ok(loader
-            .load_one(cold_storage_type_id.clone())
+            .load_one(location_type_id.clone())
             .await?
-            .map(ColdStorageTypeNode::from_domain))
+            .map(LocationTypeNode::from_domain))
     }
 }
 

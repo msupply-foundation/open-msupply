@@ -4,11 +4,18 @@ fragment LocationRow on LocationNode {
   name
   onHold
   code
-  coldStorageType {
+  volume
+  volumeUsed
+  locationType {
     id
     name
     maxTemperature
     minTemperature
+  }
+  stock {
+    ... on StockLineConnector {
+      totalCount
+    }
   }
 }
 

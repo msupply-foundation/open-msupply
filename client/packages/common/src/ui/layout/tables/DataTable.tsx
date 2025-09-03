@@ -39,7 +39,26 @@ interface RenderRowsProps<T extends RecordWithId> {
   additionalRows?: JSX.Element[];
   /** will ignore onRowClick if defined. Allows opening in new tab */
   rowLinkBuilder?: (row: T) => string;
+  stickyColumnPositions?: Map<string | keyof T, number>;
 }
+
+const calculateStickyPositions = <T extends RecordWithId>(
+  columns: Column<T>[]
+): Map<string | keyof T, number> => {
+  const positions = new Map<string | keyof T, number>();
+  let currentPosition = 0;
+
+  columns.forEach(column => {
+    if (column.isSticky) {
+      positions.set(column.key, currentPosition);
+      const columnWidth = Number(column.width) || 120;
+      currentPosition += columnWidth;
+    }
+  });
+
+  return positions;
+};
+
 const RenderRows = <T extends RecordWithId>({
   mRef,
   data,
@@ -52,6 +71,7 @@ const RenderRows = <T extends RecordWithId>({
   isRowAnimated,
   additionalRows,
   rowLinkBuilder,
+  stickyColumnPositions,
 }: RenderRowsProps<T>) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
@@ -75,6 +95,7 @@ const RenderRows = <T extends RecordWithId>({
             localisedDate={localisedDate}
             isAnimated={isRowAnimated}
             rowLinkBuilder={rowLinkBuilder}
+            stickyColumnPositions={stickyColumnPositions}
           />
         ))}
         {additionalRows}
@@ -93,7 +114,6 @@ const RenderRows = <T extends RecordWithId>({
         {(row, idx) => (
           <DataRow
             key={row.id}
-            ExpandContent={ExpandContent}
             rowIndex={idx}
             columns={columnsToDisplay}
             onClick={onRowClick ? onRowClick : undefined}
@@ -106,6 +126,7 @@ const RenderRows = <T extends RecordWithId>({
             localisedDate={localisedDate}
             isAnimated={isRowAnimated}
             rowLinkBuilder={rowLinkBuilder}
+            stickyColumnPositions={stickyColumnPositions}
           />
         )}
       </ViewportList>
@@ -120,6 +141,7 @@ const DataTableComponent = <T extends RecordWithId>({
   columns,
   data = [],
   dense = false,
+  headerSx,
   enableColumnSelection,
   generateRowTooltip,
   isDisabled = false,
@@ -135,6 +157,7 @@ const DataTableComponent = <T extends RecordWithId>({
   additionalRows,
   width = '100%',
   rowLinkBuilder,
+  gradientBottom,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
   const { setRows, setDisabledRows, setFocus } = useTableStore();
@@ -144,9 +167,12 @@ const DataTableComponent = <T extends RecordWithId>({
 
   const columnsToDisplay = React.useMemo(() => {
     const cols = columns.filter(c => columnDisplayState[String(c.key)] ?? true);
-
     return cols.every(c => c.key === 'selection') ? [] : cols;
   }, [columns, columnDisplayState]);
+
+  const stickyColumnPositions = React.useMemo(() => {
+    return calculateStickyPositions(columnsToDisplay);
+  }, [columnsToDisplay]);
 
   useRegisterActions([
     {
@@ -192,6 +218,19 @@ const DataTableComponent = <T extends RecordWithId>({
 
   const ref = useRef<HTMLDivElement>(null);
 
+  const [isBottom, setIsBottom] = useState(false);
+
+  const handleBottom = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
+    const scrollHeight = (e.target as HTMLElement).scrollHeight;
+    const scrollTop = (e.target as HTMLElement).scrollTop;
+    const clientHeight = (e.target as HTMLElement).clientHeight;
+
+    const testIsBottom =
+      scrollHeight - Math.ceil(scrollTop) - clientHeight < 50;
+
+    setIsBottom(testIsBottom);
+  };
+
   if (isLoading) return <BasicSpinner />;
 
   if (isError) {
@@ -217,94 +256,116 @@ const DataTableComponent = <T extends RecordWithId>({
   }
 
   return (
-    <TableContainer
-      ref={ref}
+    <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
         overflowX,
         overflowY: 'auto',
+        position: 'relative', // Ensure the MoreContent gradient overlay can be positioned relative to the container
         width,
       }}
     >
-      <MuiTable style={{ borderCollapse: 'separate' }}>
-        <TableHead
+      <TableContainer ref={ref} onScroll={event => handleBottom(event)}>
+        <MuiTable style={{ borderCollapse: 'separate' }}>
+          <TableHead
+            sx={{
+              backgroundColor: 'background.white',
+              position: 'sticky',
+              top: 0,
+              zIndex: 'tableHeader',
+              boxShadow: dense ? null : theme => theme.shadows[2],
+            }}
+          >
+            <HeaderRow dense={dense} sx={headerSx}>
+              {columnsToDisplay.map(column => (
+                <HeaderCell
+                  dense={dense}
+                  column={column}
+                  key={String(column.key)}
+                  isSticky={column.isSticky}
+                  stickyPosition={stickyColumnPositions.get(column.key) ?? 0}
+                />
+              ))}
+              {!!enableColumnSelection && (
+                <TableCell
+                  role="columnheader"
+                  padding={'none'}
+                  sx={{
+                    backgroundColor: 'transparent',
+                    borderBottom: '0px',
+                    width: 30,
+                  }}
+                >
+                  <ColumnPicker
+                    columns={columns}
+                    columnDisplayState={columnDisplayState}
+                    toggleColumn={toggleColumn}
+                    showAllColumns={showAllColumns}
+                  />
+                </TableCell>
+              )}
+            </HeaderRow>
+          </TableHead>
+          <TableBody>
+            <RenderRows
+              mRef={ref}
+              data={data}
+              ExpandContent={ExpandContent}
+              columnsToDisplay={columnsToDisplay}
+              onRowClick={onRowClick}
+              dense={dense}
+              clickFocusedRow={clickFocusedRow}
+              generateRowTooltip={generateRowTooltip}
+              isRowAnimated={isRowAnimated}
+              additionalRows={additionalRows}
+              rowLinkBuilder={rowLinkBuilder}
+              stickyColumnPositions={stickyColumnPositions}
+            />
+          </TableBody>
+        </MuiTable>
+
+        <Box
           sx={{
-            backgroundColor: 'background.white',
+            flex: 0,
+            display: 'flex',
+            flexDirection: 'column',
             position: 'sticky',
-            top: 0,
-            zIndex: 'tableHeader',
-            boxShadow: dense ? null : theme => theme.shadows[2],
+            left: 0,
+            insetBlockEnd: 0,
+            backgroundColor: 'white',
+            justifyContent: 'flex-end',
+            zIndex: 100,
           }}
         >
-          <HeaderRow dense={dense}>
-            {columnsToDisplay.map(column => (
-              <HeaderCell
-                dense={dense}
-                column={column}
-                key={String(column.key)}
-              />
-            ))}
-            {!!enableColumnSelection && (
-              <TableCell
-                role="columnheader"
-                padding={'none'}
-                sx={{
-                  backgroundColor: 'transparent',
-                  borderBottom: '0px',
-                  width: 30,
-                }}
-              >
-                <ColumnPicker
-                  columns={columns}
-                  columnDisplayState={columnDisplayState}
-                  toggleColumn={toggleColumn}
-                  showAllColumns={showAllColumns}
-                />
-              </TableCell>
-            )}
-          </HeaderRow>
-        </TableHead>
-        <TableBody>
-          <RenderRows
-            mRef={ref}
-            data={data}
-            ExpandContent={ExpandContent}
-            columnsToDisplay={columnsToDisplay}
-            onRowClick={onRowClick}
-            dense={dense}
-            clickFocusedRow={clickFocusedRow}
-            generateRowTooltip={generateRowTooltip}
-            isRowAnimated={isRowAnimated}
-            additionalRows={additionalRows}
-            rowLinkBuilder={rowLinkBuilder}
-          />
-        </TableBody>
-      </MuiTable>
-      <Box
-        sx={{
-          flex: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'sticky',
-          left: 0,
-          insetBlockEnd: 0,
-          backgroundColor: 'white',
-          justifyContent: 'flex-end',
-          zIndex: 100,
-        }}
-      >
-        {pagination && onChangePage && (
-          <PaginationRow
-            page={pagination.page}
-            offset={pagination.offset}
-            first={pagination.first}
-            total={pagination.total ?? 0}
-            onChange={onChangePage}
-          />
-        )}
-      </Box>
-    </TableContainer>
+          {pagination && onChangePage && (
+            <PaginationRow
+              page={pagination.page}
+              offset={pagination.offset}
+              first={pagination.first}
+              total={pagination.total ?? 0}
+              onChange={onChangePage}
+            />
+          )}
+        </Box>
+      </TableContainer>
+
+      {/* Show a gradient at the bottom of the table if there is more content to scroll to */}
+      {gradientBottom && !isBottom && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '100%',
+            height: '75px',
+            background:
+              'linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.9))',
+            pointerEvents: 'none', // Ensure it doesn't block any interactions
+          }}
+        />
+      )}
+    </Box>
   );
 };
 

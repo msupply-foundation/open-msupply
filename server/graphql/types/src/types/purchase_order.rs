@@ -1,0 +1,261 @@
+use self::dataloader::DataLoader;
+use async_graphql::*;
+use chrono::{NaiveDate, NaiveDateTime};
+use graphql_core::loader::{
+    NameByIdLoader, NameByIdLoaderInput,
+    StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
+};
+use graphql_core::ContextExt;
+use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus};
+use service::ListResult;
+use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
+use crate::types::{
+    NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
+};
+
+#[derive(PartialEq, Debug)]
+pub struct PurchaseOrderNode {
+    pub purchase_order: PurchaseOrderRow,
+    pub stats: Option<PurchaseOrderStatsRow>,
+}
+#[derive(SimpleObject)]
+pub struct PurchaseOrderConnector {
+    pub total_count: u32,
+    pub nodes: Vec<PurchaseOrderNode>,
+}
+
+#[Object]
+impl PurchaseOrderNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+    pub async fn number(&self) -> &i64 {
+        &self.row().purchase_order_number
+    }
+    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+        Ok(loader
+            .load_one(self.row().store_id.clone())
+            .await?
+            .map(StoreNode::from_domain))
+    }
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+
+        if let Some(user_id) = self.row().created_by.clone() {
+            return Ok(loader.load_one(user_id).await?.map(UserNode::from_domain));
+        }
+
+        return Ok(None);
+    }
+
+    pub async fn order_total_after_discount(&self) -> f64 {
+        match &self.stats {
+            Some(stats) => stats.order_total_after_discount,
+            None => 0.0,
+        }
+    }
+
+    pub async fn line_total_after_discount(&self) -> f64 {
+        let line_total_after_discount = match &self.stats {
+            Some(stats) => stats.line_total_after_discount,
+            None => 0.0,
+        };
+
+        line_total_after_discount
+    }
+
+    pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let name = loader
+            .load_one(NameByIdLoaderInput::new(
+                &self.row().store_id,
+                &self.row().supplier_name_link_id,
+            ))
+            .await?
+            .map(NameNode::from_domain);
+        return Ok(name);
+    }
+    pub async fn created_datetime(&self) -> NaiveDateTime {
+        self.row().created_datetime
+    }
+    pub async fn confirmed_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().confirmed_datetime
+    }
+    pub async fn status(&self) -> PurchaseOrderNodeStatus {
+        PurchaseOrderNodeStatus::from_domain(self.row().status.clone())
+    }
+    pub async fn target_months(&self) -> &Option<f64> {
+        &self.row().target_months
+    }
+    pub async fn comment(&self) -> &Option<String> {
+        &self.row().comment
+    }
+
+    pub async fn donor(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        if let Some(donor_id) = self.row().donor_link_id.clone() {
+            return Ok(loader
+                .load_one(NameByIdLoaderInput::new(&self.row().store_id, &donor_id))
+                .await?
+                .map(NameNode::from_domain));
+        }
+        return Ok(None);
+    }
+    pub async fn reference(&self) -> &Option<String> {
+        &self.row().reference
+    }
+    pub async fn currency_id(&self) -> &Option<String> {
+        &self.row().currency_id
+    }
+    pub async fn foreign_exchange_rate(&self) -> &Option<f64> {
+        &self.row().foreign_exchange_rate
+    }
+    pub async fn shipping_method(&self) -> &Option<String> {
+        &self.row().shipping_method
+    }
+    pub async fn sent_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().sent_datetime
+    }
+    pub async fn contract_signed_date(&self) -> &Option<NaiveDate> {
+        &self.row().contract_signed_date
+    }
+    pub async fn advance_paid_date(&self) -> &Option<NaiveDate> {
+        &self.row().advance_paid_date
+    }
+    pub async fn received_at_port_date(&self) -> &Option<NaiveDate> {
+        &self.row().received_at_port_date
+    }
+    pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
+        &self.row().requested_delivery_date
+    }
+    pub async fn supplier_agent(&self) -> &Option<String> {
+        &self.row().supplier_agent
+    }
+    pub async fn authorising_officer_1(&self) -> &Option<String> {
+        &self.row().authorising_officer_1
+    }
+    pub async fn authorising_officer_2(&self) -> &Option<String> {
+        &self.row().authorising_officer_2
+    }
+    pub async fn additional_instructions(&self) -> &Option<String> {
+        &self.row().additional_instructions
+    }
+    pub async fn heading_message(&self) -> &Option<String> {
+        &self.row().heading_message
+    }
+    pub async fn agent_commission(&self) -> &Option<f64> {
+        &self.row().agent_commission
+    }
+    pub async fn document_charge(&self) -> &Option<f64> {
+        &self.row().document_charge
+    }
+    pub async fn communications_charge(&self) -> &Option<f64> {
+        &self.row().communications_charge
+    }
+    pub async fn insurance_charge(&self) -> &Option<f64> {
+        &self.row().insurance_charge
+    }
+    pub async fn freight_charge(&self) -> &Option<f64> {
+        &self.row().freight_charge
+    }
+    pub async fn freight_conditions(&self) -> &Option<String> {
+        &self.row().freight_conditions
+    }
+
+    pub async fn supplier_discount_amount(&self) -> f64 {
+        let line_total_after_discount = match &self.stats {
+            Some(stats) => stats.line_total_after_discount,
+            None => 0.0,
+        };
+
+        let discount_percentage = self.row().supplier_discount_percentage.unwrap_or(0.0) / 100.0;
+
+        line_total_after_discount * discount_percentage
+    }
+    pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
+        &self.row().supplier_discount_percentage
+    }
+    pub async fn authorised_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().authorised_datetime
+    }
+    pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().finalised_datetime
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let purchase_order_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(purchase_order_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
+    }
+
+    pub async fn lines(&self, ctx: &Context<'_>) -> Result<PurchaseOrderLineConnector> {
+        let loader = ctx.get_loader::<DataLoader<PurchaseOrderLinesByPurchaseOrderIdLoader>>();
+        let result_option = loader.load_one(self.row().id.clone()).await?;
+
+        let result = result_option.unwrap_or(vec![]);
+        Ok(PurchaseOrderLineConnector::from_vec(result))
+    }
+}
+
+impl PurchaseOrderNode {
+    pub fn from_domain(purchase_order: PurchaseOrder) -> PurchaseOrderNode {
+        PurchaseOrderNode {
+            purchase_order: purchase_order.purchase_order_row,
+            stats: purchase_order.purchase_order_stats_row,
+        }
+    }
+}
+
+impl PurchaseOrderNode {
+    pub fn row(&self) -> &PurchaseOrderRow {
+        &self.purchase_order
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum PurchaseOrderNodeStatus {
+    New,
+    Confirmed,
+    Authorised,
+    Finalised,
+}
+
+impl PurchaseOrderNodeStatus {
+    pub fn from_domain(status: PurchaseOrderStatus) -> PurchaseOrderNodeStatus {
+        use PurchaseOrderStatus::*;
+        match status {
+            New => PurchaseOrderNodeStatus::New,
+            Confirmed => PurchaseOrderNodeStatus::Confirmed,
+            Authorised => PurchaseOrderNodeStatus::Authorised,
+            Finalised => PurchaseOrderNodeStatus::Finalised,
+        }
+    }
+
+    pub fn to_domain(self) -> PurchaseOrderStatus {
+        use PurchaseOrderNodeStatus::*;
+        match self {
+            New => PurchaseOrderStatus::New,
+            Confirmed => PurchaseOrderStatus::Confirmed,
+            Authorised => PurchaseOrderStatus::Authorised,
+            Finalised => PurchaseOrderStatus::Finalised,
+        }
+    }
+}
+
+impl PurchaseOrderConnector {
+    pub fn from_domain(purchase_orders: ListResult<PurchaseOrder>) -> PurchaseOrderConnector {
+        PurchaseOrderConnector {
+            total_count: purchase_orders.count,
+            nodes: purchase_orders
+                .rows
+                .into_iter()
+                .map(PurchaseOrderNode::from_domain)
+                .collect(),
+        }
+    }
+}

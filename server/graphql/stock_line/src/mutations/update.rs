@@ -21,15 +21,17 @@ pub struct UpdateInput {
     pub location: Option<NullableUpdateInput<String>>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
     pub batch: Option<String>,
     pub on_hold: Option<bool>,
     /// Empty barcode will unlink barcode from StockLine
     pub barcode: Option<String>,
-    pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub vvm_status_id: Option<String>,
+    pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
+    pub volume_per_pack: Option<f64>,
 }
 
 #[derive(Interface)]
@@ -95,10 +97,12 @@ impl UpdateInput {
             batch,
             on_hold,
             barcode,
-            item_variant_id,
             vvm_status_id,
+            item_variant_id,
             donor_id,
             campaign_id,
+            program_id,
+            volume_per_pack,
         } = self;
 
         ServiceInput {
@@ -108,7 +112,9 @@ impl UpdateInput {
             }),
             cost_price_per_pack,
             sell_price_per_pack,
-            expiry_date,
+            expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
+                value: expiry_date.value,
+            }),
             batch,
             on_hold,
             barcode,
@@ -122,6 +128,10 @@ impl UpdateInput {
             campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
                 value: campaign_id.value,
             }),
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
+            }),
+            volume_per_pack,
         }
     }
 }
@@ -148,6 +158,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ItemVariantDoesNotExist => BadUserInput(formatted_error),
         ServiceError::UpdatedStockNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

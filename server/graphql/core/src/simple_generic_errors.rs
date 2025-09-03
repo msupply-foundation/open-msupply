@@ -251,6 +251,30 @@ impl CannotEditStocktake {
     }
 }
 
+pub struct CannotEditPurchaseOrder;
+#[Object]
+impl CannotEditPurchaseOrder {
+    pub async fn description(&self) -> &str {
+        "Cannot edit purchase order"
+    }
+}
+
+pub struct CannotEditGoodsReceived;
+#[Object]
+impl CannotEditGoodsReceived {
+    pub async fn description(&self) -> &str {
+        "Cannot edit goods received"
+    }
+}
+
+pub struct CannotDeleteNonNewPurchaseOrder;
+#[Object]
+impl CannotDeleteNonNewPurchaseOrder {
+    pub async fn description(&self) -> &str {
+        "Cannot delete non-new purchase order"
+    }
+}
+
 pub struct CannotHaveFractionalPack;
 #[Object]
 impl CannotHaveFractionalPack {
@@ -269,6 +293,8 @@ pub enum ForeignKey {
     StockLineId,
     LocationId,
     RequisitionId,
+    PurchaseOrderId,
+    GoodsReceivedId,
 }
 
 pub struct ForeignKeyError(pub ForeignKey);

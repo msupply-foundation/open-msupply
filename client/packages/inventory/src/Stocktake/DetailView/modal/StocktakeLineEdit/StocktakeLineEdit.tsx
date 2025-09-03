@@ -1,5 +1,8 @@
-import React, { FC, useEffect, useState } from 'react';
-import { LocationRowFragment } from '@openmsupply-client/system';
+import React, { useEffect, useState } from 'react';
+import {
+  checkInvalidLocationLines,
+  LocationRowFragment,
+} from '@openmsupply-client/system';
 import {
   BasicSpinner,
   Breakpoints,
@@ -14,7 +17,6 @@ import {
   useRowHighlight,
   useMediaQuery,
   useNotification,
-  useIsGrouped,
   useUrlQueryParams,
   useSimplifiedTabletUI,
   ButtonWithIcon,
@@ -45,14 +47,14 @@ interface StocktakeLineEditProps {
   enableDonorTracking: boolean;
 }
 
-export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
+export const StocktakeLineEdit = ({
   item,
   mode,
   onClose,
   isOpen,
   isInitialStocktake,
   enableDonorTracking,
-}) => {
+}: StocktakeLineEditProps) => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentItem, setCurrentItem] = useState(item);
@@ -63,7 +65,6 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const t = useTranslation();
   const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
-  const { isGrouped } = useIsGrouped('stocktake');
   const {
     updatePaginationQuery,
     queryParams: { first, offset, page },
@@ -73,6 +74,13 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   // added to the top of the stocktake list instead of the bottom
   const reversedDraftLines = [...draftLines].reverse();
   const simplifiedTabletView = useSimplifiedTabletUI();
+
+  const restrictedLocationTypeId =
+    currentItem?.restrictedLocationTypeId ?? null;
+
+  const hasInvalidLocationLines = !!currentItem
+    ? checkInvalidLocationLines(restrictedLocationTypeId, draftLines)
+    : null;
 
   const onNext = async () => {
     if (isSaving) return;
@@ -116,13 +124,8 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
       return;
     }
 
-    if (item) {
-      const rowIds = draftLines.map(line =>
-        isGrouped ? line.itemId : line.id
-      );
-
-      highlightRows({ rowIds });
-    }
+    const rowIds = draftLines.map(line => line.id);
+    highlightRows({ rowIds });
     onClose();
   };
 
@@ -144,6 +147,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         batches={reversedDraftLines}
         update={update}
         isInitialStocktake={isInitialStocktake}
+        isVaccineItem={currentItem?.isVaccine ?? false}
       />
       <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
         <ButtonWithIcon
@@ -166,6 +170,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
               batches={reversedDraftLines}
               update={update}
               isInitialStocktake={isInitialStocktake}
+              isVaccineItem={currentItem?.isVaccine ?? false}
             />
           </StyledTabContainer>
         </StyledTabPanel>
@@ -192,6 +197,9 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                 batches={reversedDraftLines}
                 update={update}
                 trackStockDonor={enableDonorTracking}
+                restrictedToLocationTypeId={
+                  currentItem?.restrictedLocationTypeId
+                }
               />
             </QueryParamsProvider>
           </StyledTabContainer>
@@ -232,6 +240,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                 items={items}
                 onChangeItem={setCurrentItem}
                 mode={mode}
+                hasInvalidLocationLines={hasInvalidLocationLines ?? false}
               />
               {!currentItem ? (
                 <Box sx={{ height: isMediumScreen ? 400 : 500 }} />

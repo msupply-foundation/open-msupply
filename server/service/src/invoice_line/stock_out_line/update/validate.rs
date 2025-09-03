@@ -1,6 +1,6 @@
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection};
-
+use super::{UpdateStockOutLine, UpdateStockOutLineError};
 use crate::{
+    check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
@@ -12,8 +12,7 @@ use crate::{
     service_provider::ServiceContext,
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
 };
-
-use super::{UpdateStockOutLine, UpdateStockOutLineError};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection};
 
 pub fn validate(
     ctx: &ServiceContext,
@@ -73,9 +72,15 @@ pub fn validate(
     if !check_batch_on_hold(&batch_pair.main_batch) {
         return Err(BatchIsOnHold);
     }
-    check_location_on_hold(&batch_pair.main_batch).map_err(|e| match e {
+    check_location_on_hold(&batch_pair.main_batch.location_row).map_err(|e| match e {
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
+
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VVMStatusDoesNotExist);
+        }
+    }
 
     let mut adjusted_input = UpdateStockOutLine { ..input };
 

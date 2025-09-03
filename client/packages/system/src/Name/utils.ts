@@ -1,4 +1,10 @@
-import { FilterOptionsState, RegexUtils } from '@openmsupply-client/common';
+import {
+  FilterOptionsState,
+  LocaleKey,
+  PurchaseOrderNodeStatus,
+  RegexUtils,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { NameRowFragment } from './api';
 
 export type NameSearchProps = NameSearchModalProps | NameSearchListProps;
@@ -15,7 +21,7 @@ interface NameSearchListProps {
 }
 
 export interface NameSearchInputProps {
-  onChange: (name: NameRowFragment) => void;
+  onChange: (name: NameRowFragment | null) => void;
   onInputChange?: (
     event: React.SyntheticEvent,
     value: string,
@@ -25,6 +31,7 @@ export interface NameSearchInputProps {
   value: NameRowFragment | null;
   disabled?: boolean;
   clearable?: boolean;
+  currentId?: string;
 }
 
 export interface NullableNameSearchInputProps
@@ -44,3 +51,19 @@ export const filterByNameAndCode = (
   options.filter(option =>
     RegexUtils.matchObjectProperties(state.inputValue, option, ['name', 'code'])
   );
+
+const statusTranslation: Record<PurchaseOrderNodeStatus, LocaleKey> = {
+  AUTHORISED: 'label.authorised',
+  CONFIRMED: 'label.confirmed',
+  FINALISED: 'label.finalised',
+  NEW: 'label.new',
+};
+
+export const getStatusTranslator =
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: PurchaseOrderNodeStatus): string => {
+    return t(
+      statusTranslation[currentStatus] ??
+        statusTranslation[PurchaseOrderNodeStatus.New]
+    );
+  };

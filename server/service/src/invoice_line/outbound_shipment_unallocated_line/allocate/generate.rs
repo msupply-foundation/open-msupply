@@ -181,6 +181,8 @@ fn generate_new_line(
         invoice_id: invoice_id.to_string(),
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
+        vvm_status_id: stock_line_row.vvm_status_id.clone(),
+        volume_per_pack: Some(stock_line_row.volume_per_pack),
         // Default
         prescribed_quantity: None,
         total_before_tax: None,
@@ -193,6 +195,7 @@ fn generate_new_line(
         cost_price_per_pack: None,
         sell_price_per_pack: None,
         campaign_id: None,
+        program_id: None,
         item_variant_id: None,
         donor_id: None,
     }
@@ -212,12 +215,14 @@ fn try_allocate_existing_line(
                 id: line_row.id,
                 r#type: Some(StockOutType::OutboundShipment),
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
+                campaign_id: line_row.campaign_id,
+                program_id: line_row.program_id,
+                vvm_status_id: line_row.vvm_status_id,
                 prescribed_quantity: None,
                 stock_line_id: None,
                 total_before_tax: None,
                 tax: None,
                 note: None,
-                campaign_id: line_row.campaign_id,
             }
         })
 }

@@ -13,7 +13,12 @@ import {
   RewindIcon,
   Action,
   ActionsFooter,
+  ArrowRightIcon,
+  useEditModal,
+  useTableStore,
+  useNotification,
 } from '@openmsupply-client/common';
+import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
   getStatusTranslator,
   inboundStatuses,
@@ -22,6 +27,7 @@ import {
 import { InboundFragment, InboundLineFragment, useInbound } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
+import { useIsInboundDisabled } from '../../api/hooks/utils/useIsInboundDisabled';
 
 const createStatusLog = (invoice: InboundFragment) => {
   const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
@@ -66,12 +72,27 @@ interface FooterComponentProps {
 export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
+  const { clearSelected } = useTableStore();
+  const { info } = useNotification();
+  const changeCampaignOrProgramModal = useEditModal();
 
   const { data } = useInbound.document.get();
-  const isManuallyCreated = !data?.linkedShipment?.id;
   const onDelete = useInbound.lines.deleteSelected();
   const onZeroQuantities = useInbound.lines.zeroQuantities();
   const selectedLines = useInbound.utils.selectedLines();
+  const { mutateAsync } = useInbound.lines.save();
+  const isDisabled = useIsInboundDisabled();
+  const isManuallyCreated = !data?.linkedShipment?.id;
+
+  const handleCampaignClick = () => {
+    if (isDisabled) {
+      info(
+        t('messages.cant-change-campaign-or-program-on-finalised-invoice')
+      )();
+    } else {
+      changeCampaignOrProgramModal.onOpen();
+    }
+  };
 
   const actions: Action[] = [
     {
@@ -80,15 +101,21 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
       onClick: onDelete,
     },
     {
-      label: t('button.return-lines'),
-      icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedLines),
+      label: t('button.change-campaign-or-program'),
+      icon: <ArrowRightIcon />,
+      onClick: handleCampaignClick,
       shouldShrink: false,
     },
     {
       label: t('button.zero-line-quantity'),
       icon: <RewindIcon />,
       onClick: onZeroQuantities,
+      shouldShrink: false,
+    },
+    {
+      label: t('button.return-lines'),
+      icon: <ArrowLeftIcon />,
+      onClick: () => onReturnLines(selectedLines),
       shouldShrink: false,
     },
   ];
@@ -135,6 +162,15 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
               </Box>
             </Box>
           ) : null}
+          {
+            <ChangeCampaignOrProgramConfirmationModal
+              isOpen={changeCampaignOrProgramModal.isOpen}
+              onCancel={changeCampaignOrProgramModal.onClose}
+              clearSelected={clearSelected}
+              rows={selectedLines}
+              onChange={mutateAsync}
+            />
+          }
         </>
       }
     />

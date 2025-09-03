@@ -86,6 +86,7 @@ pub fn generate(
                     vvm_status_id,
                     stock_line_id: batch.id.clone(),
                     invoice_line_id: new_line.id.clone(),
+                    comment: None,
                 }))
             } else {
                 None
@@ -123,8 +124,10 @@ fn generate_line(
         item_variant_id,
         vvm_status_id,
         donor_id,
+        program_id,
         campaign_id,
         shipped_number_of_packs,
+        volume_per_pack,
         shipped_pack_size,
         barcode: _,
         stock_on_hold: _,
@@ -170,7 +173,9 @@ fn generate_line(
         vvm_status_id,
         donor_link_id: donor_id,
         campaign_id,
+        program_id,
         shipped_number_of_packs,
+        volume_per_pack: volume_per_pack.unwrap_or(0.0),
         shipped_pack_size,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,

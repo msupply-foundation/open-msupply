@@ -1,14 +1,15 @@
 #[cfg(test)]
 mod test {
+    use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_name_b, mock_name_customer_a, mock_stock_line_a, mock_store_a,
+            mock_location_with_restricted_location_type_a, mock_name_b, mock_name_customer_a,
+            mock_stock_line_a, mock_stock_line_restricted_location_type_b, mock_store_a,
             mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        StockLineRowRepository,
+        StockLineRow, StockLineRowRepository,
     };
-    use util::{inline_edit, inline_init};
 
     use crate::{service_provider::ServiceProvider, stock_line::UpdateStockLine, NullableUpdate};
 
@@ -29,37 +30,55 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = "invalid".to_string();
-                })
+                UpdateStockLine {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::StockDoesNotExist)
         );
 
-        // LocationDoesNotExist
+        // LocationDoesNotExist: location id does not exist in DB
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::LocationDoesNotExist)
+        );
+
+        // IncorrectLocationType
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_restricted_location_type_b().id.clone(),
+                    location: Some(NullableUpdate {
+                        value: Some(mock_location_with_restricted_location_type_a().id),
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::IncorrectLocationType)
         );
 
         // ItemVariantDoesNotExist
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.item_variant_id = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id.clone(),
+                    item_variant_id: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::ItemVariantDoesNotExist)
         );
@@ -77,6 +96,21 @@ mod test {
                 }
             ),
             Err(ServiceError::DonorDoesNotExist)
+        );
+
+        // ItemVariantDoesNotExist
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    item_variant_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::ItemVariantDoesNotExist)
         );
 
         // DonorNotVisible
@@ -114,12 +148,13 @@ mod test {
         assert_eq!(
             service.update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("invalid".to_string()),
-                    });
-                })
+                    }),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::StockDoesNotBelongToStore)
         );
@@ -140,12 +175,19 @@ mod test {
         service
             .update_stock_line(
                 &context,
-                inline_init(|r: &mut UpdateStockLine| {
-                    r.id = mock_stock_line_a().id;
-                    r.location = Some(NullableUpdate {
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    location: Some(NullableUpdate {
                         value: Some("location_1".to_string()),
-                    });
-                }),
+                    }),
+                    program_id: Some(NullableUpdate {
+                        value: Some("program_a".to_string()),
+                    }),
+                    expiry_date: Some(NullableUpdate {
+                        value: NaiveDate::from_ymd_opt(2025, 12, 31),
+                    }),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -156,10 +198,53 @@ mod test {
 
         assert_eq!(
             stock_line,
-            inline_edit(&stock_line, |mut l| {
-                l.location_id = Some("location_1".to_string());
-                l
-            })
+            StockLineRow {
+                location_id: Some("location_1".to_string()),
+                program_id: Some("program_a".to_string()),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
+                ..stock_line.clone()
+            }
         );
+
+        // None values respect existing values
+        service
+            .update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    expiry_date: None,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&mock_stock_line_a().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            stock_line.expiry_date,
+            Some(NaiveDate::from_ymd_opt(2025, 12, 31).unwrap())
+        );
+
+        // NullableUpdate with None clears the value
+        service
+            .update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    expiry_date: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&mock_stock_line_a().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(stock_line.expiry_date, None);
     }
 }

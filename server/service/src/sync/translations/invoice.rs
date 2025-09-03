@@ -152,6 +152,8 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub transport_reference: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub goods_received_ID: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requisition_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub linked_transaction_id: Option<String>,
@@ -444,6 +446,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
             expected_delivery_date: data.expected_delivery_date,
+            goods_received_id: data.goods_received_ID,
         };
 
         // HACK...
@@ -530,6 +533,7 @@ impl SyncTranslation for InvoiceTranslation {
                     is_cancellation,
                     expected_delivery_date,
                     default_donor_link_id: default_donor_id,
+                    goods_received_id,
                 },
             name_row,
             clinician_row,
@@ -607,6 +611,7 @@ impl SyncTranslation for InvoiceTranslation {
             is_cancellation,
             expected_delivery_date,
             default_donor_id,
+            goods_received_ID: goods_received_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -747,25 +752,21 @@ fn map_legacy(
             }
             _ => {}
         },
-        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
-            mapping.received_datetime = confirm_datetime;
-            mapping.delivered_datetime = confirm_datetime;
-            match data.status {
-                LegacyTransactStatus::Nw if is_transfer => {
-                    mapping.shipped_datetime = Some(mapping.created_datetime);
-                }
-                LegacyTransactStatus::Cn => {
-                    mapping.received_datetime = confirm_datetime;
-                    mapping.delivered_datetime = confirm_datetime;
-                }
-                LegacyTransactStatus::Fn => {
-                    mapping.received_datetime = confirm_datetime;
-                    mapping.delivered_datetime = confirm_datetime;
-                    mapping.verified_datetime = confirm_datetime;
-                }
-                _ => {}
+        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match data.status {
+            LegacyTransactStatus::Nw if is_transfer => {
+                mapping.shipped_datetime = Some(mapping.created_datetime);
             }
-        }
+            LegacyTransactStatus::Cn => {
+                mapping.received_datetime = confirm_datetime;
+                mapping.delivered_datetime = confirm_datetime;
+            }
+            LegacyTransactStatus::Fn => {
+                mapping.received_datetime = confirm_datetime;
+                mapping.delivered_datetime = confirm_datetime;
+                mapping.verified_datetime = confirm_datetime;
+            }
+            _ => {}
+        },
         InvoiceType::Prescription => match data.status {
             LegacyTransactStatus::Cn => {
                 mapping.picked_datetime = confirm_datetime;

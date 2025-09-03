@@ -29,7 +29,7 @@ pub struct UpdateInput {
     pub snapshot_number_of_packs: Option<f64>,
     pub counted_number_of_packs: Option<f64>,
     pub batch: Option<String>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
@@ -39,6 +39,10 @@ pub struct UpdateInput {
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub reason_option_id: Option<String>,
+    pub vvm_status_id: Option<String>,
+    pub volume_per_pack: Option<f64>,
+    pub campaign_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Union)]
@@ -112,6 +116,10 @@ impl UpdateInput {
             item_variant_id,
             donor_id,
             reason_option_id,
+            vvm_status_id,
+            volume_per_pack,
+            campaign_id,
+            program_id,
         } = self;
 
         ServiceInput {
@@ -123,11 +131,14 @@ impl UpdateInput {
             snapshot_number_of_packs,
             counted_number_of_packs,
             batch,
-            expiry_date,
             pack_size,
             cost_price_per_pack,
             sell_price_per_pack,
             note,
+            vvm_status_id,
+            expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
+                value: expiry_date.value,
+            }),
             item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
                 value: item_variant_id.value,
             }),
@@ -135,13 +146,20 @@ impl UpdateInput {
                 value: donor_id.value,
             }),
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
+            volume_per_pack,
+            campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
+                value: campaign_id.value,
+            }),
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
+            }),
         }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -170,13 +188,16 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 SnapshotCountCurrentCountMismatchLine::from_domain(line),
             ))
         }
-        // Standard Graphql Errors
-        // TODO some are structured errors (where can be changed concurrently)
-        ServiceError::InvalidStore => BadUserInput(formatted_error),
-        ServiceError::StocktakeLineDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
+        // Standard GraphQL Errors
+        ServiceError::InvalidStore
+        | ServiceError::StocktakeLineDoesNotExist
+        | ServiceError::StockLineDoesNotExist
+        | ServiceError::LocationDoesNotExist
+        | ServiceError::StocktakeIsLocked
+        | ServiceError::CampaignDoesNotExist
+        | ServiceError::VvmStatusDoesNotExist
+        | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };
@@ -254,7 +275,7 @@ mod test {
                 "countedNumberOfPacks": 20,
                 "comment": "comment",
                 "batch": "batch",
-                "expiryDate": "2023-01-22",
+                "expiryDate": {"value": "2023-01-22"},
                 "packSize": 10,
                 "costPricePerPack": 10.0,
                 "sellPricePerPack": 12.0,
@@ -296,9 +317,7 @@ mod test {
                     cost_price_per_pack: Some(10.0),
                     sell_price_per_pack: Some(12.0),
                     note: Some("note".to_string()),
-                    item_variant_id: None,
-                    donor_link_id: None,
-                    reason_option_id: None,
+                    ..Default::default()
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),

@@ -1,6 +1,6 @@
-use repository::{InvoiceRow, InvoiceStatus, ItemRow, StockLine, StorageConnection};
-
+use super::{InsertStockOutLine, InsertStockOutLineError};
 use crate::{
+    check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
@@ -11,8 +11,9 @@ use crate::{
     },
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
 };
-
-use super::{InsertStockOutLine, InsertStockOutLineError};
+use repository::{
+    InvoiceRow, InvoiceStatus, ItemRow, LocationRowRepository, StockLine, StorageConnection,
+};
 
 pub fn validate(
     connection: &StorageConnection,
@@ -61,9 +62,22 @@ pub fn validate(
     if !check_batch_on_hold(&batch) {
         return Err(BatchIsOnHold);
     }
-    check_location_on_hold(&batch).map_err(|e| match e {
-        LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
-    })?;
+
+    let location_id = input
+        .location_id
+        .clone()
+        .map(|l| l.value)
+        .unwrap_or(batch.location_row.clone().map(|l| l.id));
+
+    if let Some(location_id) = location_id {
+        let location = LocationRowRepository::new(connection)
+            .find_one_by_id(&location_id)?
+            .ok_or(LocationNotFound)?;
+
+        check_location_on_hold(&Some(location)).map_err(|e| match e {
+            LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
+        })?;
+    }
 
     let mut available_packs = batch.stock_line_row.available_number_of_packs;
     if let Some(backdated_date) = invoice_backdated_date(&invoice) {
@@ -73,6 +87,12 @@ pub fn validate(
             None,
             &backdated_date,
         )?
+    }
+
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VVMStatusDoesNotExist);
+        }
     }
 
     // If there's only a tiny bit left in stock after this, we'll adjust the invoice to take the last of the stock

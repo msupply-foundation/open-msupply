@@ -76,6 +76,7 @@ pub fn generate(
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: None,
+        goods_received_id: None,
     };
 
     let lines_with_packs: Vec<&SupplierReturnLineInput> = supplier_return_lines
@@ -103,6 +104,9 @@ pub fn generate(
             cost_price_per_pack: None,
             sell_price_per_pack: None,
             campaign_id: None,
+            program_id: None,
+            vvm_status_id: None,
+            volume_per_pack: None,
             item_variant_id: None,
             donor_id: None,
         })

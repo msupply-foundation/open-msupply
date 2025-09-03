@@ -4,12 +4,17 @@ use repository::{
 };
 use util::uuid;
 
-use crate::invoice_line::{
-    outbound_shipment_unallocated_line::{
-        DeleteOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLine,
-        UpdateOutboundShipmentUnallocatedLine,
+use crate::{
+    invoice_line::{
+        outbound_shipment_unallocated_line::{
+            DeleteOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLine,
+            UpdateOutboundShipmentUnallocatedLine,
+        },
+        stock_out_line::{
+            DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine,
+        },
     },
-    stock_out_line::{DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine},
+    NullableUpdate,
 };
 
 use super::{SaveStockOutInvoiceLine, SaveStockOutItemLines, SaveStockOutItemLinesError};
@@ -78,13 +83,17 @@ pub fn generate(
                  number_of_packs,
                  stock_line_id,
                  campaign_id,
+                 program_id,
+                 vvm_status_id,
              }| InsertStockOutLine {
                 id,
                 invoice_id: invoice_id.clone(),
                 r#type: stock_out_type.clone(),
                 stock_line_id,
                 number_of_packs,
-                campaign_id,
+                vvm_status_id,
+                campaign_id: Some(NullableUpdate { value: campaign_id }),
+                program_id: Some(NullableUpdate { value: program_id }),
                 // Default (use None so the stock line values are used)
                 batch: None,
                 pack_size: None,
@@ -96,6 +105,7 @@ pub fn generate(
                 location_id: None,
                 cost_price_per_pack: None,
                 sell_price_per_pack: None,
+                volume_per_pack: None,
                 item_variant_id: None,
                 donor_id: None,
             },
@@ -112,12 +122,16 @@ pub fn generate(
                  number_of_packs,
                  stock_line_id,
                  campaign_id,
+                 program_id,
+                 vvm_status_id,
              }| UpdateStockOutLine {
                 id,
                 stock_line_id: Some(stock_line_id),
                 number_of_packs: Some(number_of_packs),
                 r#type: Some(stock_out_type.clone()),
                 campaign_id,
+                program_id,
+                vvm_status_id,
                 // Default
                 prescribed_quantity: None,
                 total_before_tax: None,
@@ -214,13 +228,13 @@ mod tests {
                 id: "newA".to_string(),
                 number_of_packs: 1.0,
                 stock_line_id: "A".to_string(),
-                campaign_id: None,
+                ..Default::default()
             },
             SaveStockOutInvoiceLine {
                 id: "newB".to_string(),
                 number_of_packs: 2.0,
                 stock_line_id: "B".to_string(),
-                campaign_id: None,
+                ..Default::default()
             },
         ];
 

@@ -1,3 +1,13 @@
+use super::query::get_stock_line;
+use crate::{
+    activity_log::activity_log_entry,
+    barcode::{self, BarcodeInput},
+    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
+    common::{check_stock_line_exists, CommonStockLineError},
+    service_provider::ServiceContext,
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    NullableUpdate, SingleRecordError,
+};
 use chrono::{NaiveDate, Utc};
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
@@ -7,32 +17,22 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::{
-    activity_log::activity_log_entry,
-    barcode::{self, BarcodeInput},
-    check_item_variant_exists, check_location_exists,
-    common_stock::{check_stock_line_exists, CommonStockLineError},
-    service_provider::ServiceContext,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
-    NullableUpdate, SingleRecordError,
-};
-
-use super::query::get_stock_line;
-
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct UpdateStockLine {
     pub id: String,
     pub location: Option<NullableUpdate<String>>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdate<NaiveDate>>,
     pub on_hold: Option<bool>,
     pub batch: Option<String>,
     pub barcode: Option<String>,
-    pub item_variant_id: Option<NullableUpdate<String>>,
     pub vvm_status_id: Option<String>,
+    pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub campaign_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
+    pub volume_per_pack: Option<f64>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -48,6 +48,7 @@ pub enum UpdateStockLineError {
     UpdatedStockNotFound,
     StockMovementNotFound,
     VVMStatusDoesNotExist,
+    IncorrectLocationType,
 }
 
 pub fn update_stock_line(
@@ -107,8 +108,15 @@ fn validate(
         value: Some(ref location),
     }) = &input.location
     {
-        if !check_location_exists(connection, store_id, location)? {
+        if !check_location_exists(connection, store_id, &location.clone())? {
             return Err(LocationDoesNotExist);
+        }
+
+        if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id {
+            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+            {
+                return Err(IncorrectLocationType);
+            }
         }
     }
 
@@ -159,10 +167,12 @@ fn generate(
         batch,
         on_hold,
         barcode,
-        item_variant_id,
         vvm_status_id,
+        item_variant_id,
         donor_id,
         campaign_id,
+        program_id,
+        volume_per_pack,
     }: UpdateStockLine,
 ) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
@@ -207,15 +217,24 @@ fn generate(
     existing.batch = batch.or(existing.batch);
     existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
-    existing.expiry_date = expiry_date.or(existing.expiry_date);
+
+    existing.expiry_date = expiry_date.map(|v| v.value).unwrap_or(existing.expiry_date);
+
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing.barcode_id = barcode_id;
+    existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
+
     existing.item_variant_id = item_variant_id
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
-    existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
     existing.donor_link_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_link_id);
     existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
+    existing.program_id = program_id.map(|v| v.value).unwrap_or(existing.program_id);
+
+    existing.volume_per_pack = volume_per_pack.unwrap_or(existing.volume_per_pack);
+    if let Some(volume_per_pack) = volume_per_pack {
+        existing.total_volume = volume_per_pack * existing.total_number_of_packs;
+    }
 
     Ok(GenerateResult {
         new_stock_line: existing,
@@ -344,7 +363,23 @@ fn log_stock_changes(
         )?;
     }
     if existing.on_hold != new.on_hold && !new.on_hold {
-        activity_log_entry(ctx, ActivityLogType::StockOffHold, Some(new.id), None, None)?;
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockOffHold,
+            Some(new.id.to_owned()),
+            None,
+            None,
+        )?;
+    }
+
+    if existing.volume_per_pack != new.volume_per_pack {
+        activity_log_entry(
+            ctx,
+            ActivityLogType::VolumePerPackChanged,
+            Some(new.id),
+            Some(existing.volume_per_pack.to_string()),
+            Some(new.volume_per_pack.to_string()),
+        )?;
     }
 
     Ok(())

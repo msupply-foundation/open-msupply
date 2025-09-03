@@ -11,6 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
+  getVolumePerPackFromVariant,
   ItemVariantInputCell,
   VVMStatusInputCell,
 } from '@openmsupply-client/system';
@@ -85,7 +86,12 @@ export const itemVariantColumn = (
   label: 'label.item-variant',
   width: 150,
   Cell: InboundLineItemVariantInputCell,
-  setter: updateDraftLine,
+  setter: patch => {
+    updateDraftLine({
+      ...patch,
+      volumePerPack: getVolumePerPackFromVariant(patch) ?? 0,
+    });
+  },
 });
 
 export const vvmStatusesColumn = (
@@ -95,7 +101,10 @@ export const vvmStatusesColumn = (
   label: 'label.vvm-status',
   width: 170,
   Cell: VVMStatusInputCell,
-  accessor: ({ rowData }) => rowData.vvmStatusId,
+  cellProps: {
+    useDefault: true,
+  },
+  accessor: ({ rowData }) => rowData.vvmStatus,
   setter: updateDraftLine,
 });
 

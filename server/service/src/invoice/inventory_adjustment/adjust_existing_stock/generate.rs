@@ -95,6 +95,7 @@ pub fn generate(
         is_cancellation: false,
         expected_delivery_date: None,
         default_donor_link_id: None,
+        goods_received_id: None,
     };
 
     let StockLineRow {
@@ -110,6 +111,8 @@ pub fn generate(
         donor_link_id,
         vvm_status_id,
         campaign_id,
+        program_id,
+        volume_per_pack,
         ..
     } = stock_line.stock_line_row.clone();
 
@@ -138,6 +141,8 @@ pub fn generate(
             donor_id: donor_link_id,
             vvm_status_id,
             campaign_id,
+            program_id,
+            volume_per_pack: Some(volume_per_pack),
             // Default
             barcode: None,
             total_before_tax: None,
@@ -152,7 +157,10 @@ pub fn generate(
             stock_line_id,
             note,
             number_of_packs: adjustment,
-            campaign_id,
+            vvm_status_id,
+            volume_per_pack: Some(volume_per_pack),
+            campaign_id: Some(NullableUpdate { value: campaign_id }),
+            program_id: Some(NullableUpdate { value: program_id }),
             // Default
             prescribed_quantity: None,
             total_before_tax: None,

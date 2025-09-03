@@ -4,16 +4,6 @@ import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { NameRowFragmentDoc } from '../../Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type ServiceItemRowFragment = {
-  __typename: 'ItemNode';
-  id: string;
-  code: string;
-  name: string;
-  unitName?: string | null;
-  isVaccine: boolean;
-  doses: number;
-};
-
 export type StockLineFragment = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: number;
@@ -29,12 +19,18 @@ export type StockLineFragment = {
   storeId: string;
   totalNumberOfPacks: number;
   itemVariantId?: string | null;
+  volumePerPack: number;
   location?: {
     __typename: 'LocationNode';
     code: string;
     id: string;
     name: string;
     onHold: boolean;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+    } | null;
   } | null;
   item: {
     __typename: 'ItemNode';
@@ -44,6 +40,7 @@ export type StockLineFragment = {
     defaultPackSize: number;
     doses: number;
     isVaccine: boolean;
+    restrictedLocationTypeId?: string | null;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -64,10 +61,12 @@ export type StockLineFragment = {
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
-    level: number;
+    priority: number;
     unusable: boolean;
     description: string;
   } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
 export type ItemRowFragment = {
@@ -78,6 +77,7 @@ export type ItemRowFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
 };
 
 export type ItemDirectionFragment = {
@@ -96,6 +96,7 @@ export type ItemRowWithWarningsFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
   warnings: Array<{
     __typename: 'WarningNode';
     warningText: string;
@@ -124,6 +125,7 @@ export type ItemWithPackSizeFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
 };
 
 export type ItemStockOnHandFragment = {
@@ -136,6 +138,11 @@ export type ItemStockOnHandFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
+  itemStoreProperties?: {
+    __typename: 'ItemStorePropertiesNode';
+    defaultSellPricePerPack: number;
+  } | null;
 };
 
 export type ItemRowWithStatsFragment = {
@@ -148,6 +155,7 @@ export type ItemRowWithStatsFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  restrictedLocationTypeId?: string | null;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -157,10 +165,14 @@ export type ItemRowWithStatsFragment = {
     totalConsumption: number;
     stockOnHand: number;
   };
+  itemStoreProperties?: {
+    __typename: 'ItemStorePropertiesNode';
+    defaultSellPricePerPack: number;
+  } | null;
 };
 
-export type ColdStorageTypeFragment = {
-  __typename: 'ColdStorageTypeNode';
+export type LocationTypeFragment = {
+  __typename: 'LocationTypeNode';
   id: string;
   name: string;
   minTemperature: number;
@@ -210,13 +222,14 @@ export type ItemVariantFragment = {
   name: string;
   itemId: string;
   manufacturerId?: string | null;
-  coldStorageTypeId?: string | null;
+  locationTypeId?: string | null;
   vvmType?: string | null;
   item?: {
     __typename: 'ItemNode';
     id: string;
     name: string;
     isVaccine: boolean;
+    restrictedLocationTypeId?: string | null;
   } | null;
   manufacturer?: {
     __typename: 'NameNode';
@@ -228,8 +241,8 @@ export type ItemVariantFragment = {
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
-  coldStorageType?: {
-    __typename: 'ColdStorageTypeNode';
+  locationType?: {
+    __typename: 'LocationTypeNode';
     id: string;
     name: string;
     minTemperature: number;
@@ -303,7 +316,15 @@ export type ItemFragment = {
   volumePerOuterPack: number;
   volumePerPack: number;
   weight: number;
+  restrictedLocationTypeId?: string | null;
   availableStockOnHand: number;
+  restrictedLocationType?: {
+    __typename: 'LocationTypeNode';
+    id: string;
+    name: string;
+    minTemperature: number;
+    maxTemperature: number;
+  } | null;
   availableBatches: {
     __typename: 'StockLineConnector';
     totalCount: number;
@@ -322,12 +343,18 @@ export type ItemFragment = {
       storeId: string;
       totalNumberOfPacks: number;
       itemVariantId?: string | null;
+      volumePerPack: number;
       location?: {
         __typename: 'LocationNode';
         code: string;
         id: string;
         name: string;
         onHold: boolean;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -337,6 +364,7 @@ export type ItemFragment = {
         defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -357,9 +385,15 @@ export type ItemFragment = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
+      } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
       } | null;
     }>;
   };
@@ -378,13 +412,14 @@ export type ItemFragment = {
     name: string;
     itemId: string;
     manufacturerId?: string | null;
-    coldStorageTypeId?: string | null;
+    locationTypeId?: string | null;
     vvmType?: string | null;
     item?: {
       __typename: 'ItemNode';
       id: string;
       name: string;
       isVaccine: boolean;
+      restrictedLocationTypeId?: string | null;
     } | null;
     manufacturer?: {
       __typename: 'NameNode';
@@ -396,8 +431,8 @@ export type ItemFragment = {
       name: string;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     } | null;
-    coldStorageType?: {
-      __typename: 'ColdStorageTypeNode';
+    locationType?: {
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       minTemperature: number;
@@ -457,6 +492,10 @@ export type ItemFragment = {
     itemId: string;
     priority: number;
   }>;
+  itemStoreProperties?: {
+    __typename: 'ItemStorePropertiesNode';
+    defaultSellPricePerPack: number;
+  } | null;
 };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
@@ -493,7 +532,15 @@ export type ItemsWithStockLinesQuery = {
       volumePerOuterPack: number;
       volumePerPack: number;
       weight: number;
+      restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
+      restrictedLocationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        minTemperature: number;
+        maxTemperature: number;
+      } | null;
       availableBatches: {
         __typename: 'StockLineConnector';
         totalCount: number;
@@ -512,12 +559,18 @@ export type ItemsWithStockLinesQuery = {
           storeId: string;
           totalNumberOfPacks: number;
           itemVariantId?: string | null;
+          volumePerPack: number;
           location?: {
             __typename: 'LocationNode';
             code: string;
             id: string;
             name: string;
             onHold: boolean;
+            locationType?: {
+              __typename: 'LocationTypeNode';
+              id: string;
+              name: string;
+            } | null;
           } | null;
           item: {
             __typename: 'ItemNode';
@@ -527,6 +580,7 @@ export type ItemsWithStockLinesQuery = {
             defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
+            restrictedLocationTypeId?: string | null;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -547,9 +601,19 @@ export type ItemsWithStockLinesQuery = {
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
-            level: number;
+            priority: number;
             unusable: boolean;
             description: string;
+          } | null;
+          program?: {
+            __typename: 'ProgramNode';
+            id: string;
+            name: string;
+          } | null;
+          campaign?: {
+            __typename: 'CampaignNode';
+            id: string;
+            name: string;
           } | null;
         }>;
       };
@@ -568,13 +632,14 @@ export type ItemsWithStockLinesQuery = {
         name: string;
         itemId: string;
         manufacturerId?: string | null;
-        coldStorageTypeId?: string | null;
+        locationTypeId?: string | null;
         vvmType?: string | null;
         item?: {
           __typename: 'ItemNode';
           id: string;
           name: string;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
@@ -586,8 +651,8 @@ export type ItemsWithStockLinesQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           minTemperature: number;
@@ -647,6 +712,10 @@ export type ItemsWithStockLinesQuery = {
         itemId: string;
         priority: number;
       }>;
+      itemStoreProperties?: {
+        __typename: 'ItemStorePropertiesNode';
+        defaultSellPricePerPack: number;
+      } | null;
     }>;
   };
 };
@@ -673,6 +742,7 @@ export type ItemsQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
+      restrictedLocationTypeId?: string | null;
     }>;
   };
 };
@@ -701,6 +771,11 @@ export type ItemStockOnHandQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
+      restrictedLocationTypeId?: string | null;
+      itemStoreProperties?: {
+        __typename: 'ItemStorePropertiesNode';
+        defaultSellPricePerPack: number;
+      } | null;
     }>;
   };
 };
@@ -793,6 +868,7 @@ export type ItemByIdQuery = {
       volumePerOuterPack: number;
       volumePerPack: number;
       weight: number;
+      restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
       stats: {
         __typename: 'ItemStatsNode';
@@ -821,12 +897,18 @@ export type ItemByIdQuery = {
           storeId: string;
           totalNumberOfPacks: number;
           itemVariantId?: string | null;
+          volumePerPack: number;
           location?: {
             __typename: 'LocationNode';
             code: string;
             id: string;
             name: string;
             onHold: boolean;
+            locationType?: {
+              __typename: 'LocationTypeNode';
+              id: string;
+              name: string;
+            } | null;
           } | null;
           item: {
             __typename: 'ItemNode';
@@ -836,6 +918,7 @@ export type ItemByIdQuery = {
             defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
+            restrictedLocationTypeId?: string | null;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -856,25 +939,43 @@ export type ItemByIdQuery = {
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
-            level: number;
+            priority: number;
             unusable: boolean;
             description: string;
           } | null;
+          program?: {
+            __typename: 'ProgramNode';
+            id: string;
+            name: string;
+          } | null;
+          campaign?: {
+            __typename: 'CampaignNode';
+            id: string;
+            name: string;
+          } | null;
         }>;
       };
+      restrictedLocationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        minTemperature: number;
+        maxTemperature: number;
+      } | null;
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
         name: string;
         itemId: string;
         manufacturerId?: string | null;
-        coldStorageTypeId?: string | null;
+        locationTypeId?: string | null;
         vvmType?: string | null;
         item?: {
           __typename: 'ItemNode';
           id: string;
           name: string;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
@@ -886,8 +987,8 @@ export type ItemByIdQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           minTemperature: number;
@@ -947,6 +1048,10 @@ export type ItemByIdQuery = {
         itemId: string;
         priority: number;
       }>;
+      itemStoreProperties?: {
+        __typename: 'ItemStorePropertiesNode';
+        defaultSellPricePerPack: number;
+      } | null;
     }>;
   };
 };
@@ -972,19 +1077,21 @@ export type ItemVariantsQuery = {
     nodes: Array<{
       __typename: 'ItemNode';
       isVaccine: boolean;
+      restrictedLocationTypeId?: string | null;
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
         name: string;
         itemId: string;
         manufacturerId?: string | null;
-        coldStorageTypeId?: string | null;
+        locationTypeId?: string | null;
         vvmType?: string | null;
         item?: {
           __typename: 'ItemNode';
           id: string;
           name: string;
           isVaccine: boolean;
+          restrictedLocationTypeId?: string | null;
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
@@ -996,8 +1103,8 @@ export type ItemVariantsQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
+        locationType?: {
+          __typename: 'LocationTypeNode';
           id: string;
           name: string;
           minTemperature: number;
@@ -1079,12 +1186,18 @@ export type GetHistoricalStockLinesQuery = {
       storeId: string;
       totalNumberOfPacks: number;
       itemVariantId?: string | null;
+      volumePerPack: number;
       location?: {
         __typename: 'LocationNode';
         code: string;
         id: string;
         name: string;
         onHold: boolean;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -1094,6 +1207,7 @@ export type GetHistoricalStockLinesQuery = {
         defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
+        restrictedLocationTypeId?: string | null;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -1114,9 +1228,15 @@ export type GetHistoricalStockLinesQuery = {
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
-        level: number;
+        priority: number;
         unusable: boolean;
         description: string;
+      } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
       } | null;
     }>;
   };
@@ -1140,13 +1260,14 @@ export type UpsertItemVariantMutation = {
             name: string;
             itemId: string;
             manufacturerId?: string | null;
-            coldStorageTypeId?: string | null;
+            locationTypeId?: string | null;
             vvmType?: string | null;
             item?: {
               __typename: 'ItemNode';
               id: string;
               name: string;
               isVaccine: boolean;
+              restrictedLocationTypeId?: string | null;
             } | null;
             manufacturer?: {
               __typename: 'NameNode';
@@ -1162,8 +1283,8 @@ export type UpsertItemVariantMutation = {
                 code: string;
               } | null;
             } | null;
-            coldStorageType?: {
-              __typename: 'ColdStorageTypeNode';
+            locationType?: {
+              __typename: 'LocationTypeNode';
               id: string;
               name: string;
               minTemperature: number;
@@ -1247,16 +1368,16 @@ export type DeleteItemVariantMutation = {
   };
 };
 
-export type ColdStorageTypesQueryVariables = Types.Exact<{
+export type LocationTypesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type ColdStorageTypesQuery = {
+export type LocationTypesQuery = {
   __typename: 'Queries';
-  coldStorageTypes: {
-    __typename: 'ColdStorageTypeConnector';
+  locationTypes: {
+    __typename: 'LocationTypeConnector';
     nodes: Array<{
-      __typename: 'ColdStorageTypeNode';
+      __typename: 'LocationTypeNode';
       id: string;
       name: string;
       minTemperature: number;
@@ -1373,17 +1494,6 @@ export type ItemLedgerQuery = {
   };
 };
 
-export const ServiceItemRowFragmentDoc = gql`
-  fragment ServiceItemRow on ItemNode {
-    __typename
-    id
-    code
-    name
-    unitName
-    isVaccine
-    doses
-  }
-`;
 export const ItemRowFragmentDoc = gql`
   fragment ItemRow on ItemNode {
     __typename
@@ -1393,6 +1503,7 @@ export const ItemRowFragmentDoc = gql`
     unitName
     isVaccine
     doses
+    restrictedLocationTypeId
   }
 `;
 export const WarningFragmentDoc = gql`
@@ -1426,10 +1537,11 @@ export const ItemStockOnHandFragmentDoc = gql`
   fragment ItemStockOnHand on ItemNode {
     ...ItemWithPackSize
     availableStockOnHand(storeId: $storeId)
-    ...ItemRow
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
   ${ItemWithPackSizeFragmentDoc}
-  ${ItemRowFragmentDoc}
 `;
 export const ItemRowWithStatsFragmentDoc = gql`
   fragment ItemRowWithStats on ItemNode {
@@ -1445,6 +1557,15 @@ export const ItemRowWithStatsFragmentDoc = gql`
     }
   }
   ${ItemStockOnHandFragmentDoc}
+`;
+export const LocationTypeFragmentDoc = gql`
+  fragment LocationType on LocationTypeNode {
+    __typename
+    id
+    name
+    minTemperature
+    maxTemperature
+  }
 `;
 export const ItemDirectionFragmentDoc = gql`
   fragment ItemDirection on ItemDirectionNode {
@@ -1467,6 +1588,10 @@ export const StockLineFragmentDoc = gql`
       id
       name
       onHold
+      locationType {
+        id
+        name
+      }
     }
     item {
       name
@@ -1475,6 +1600,7 @@ export const StockLineFragmentDoc = gql`
       defaultPackSize
       doses
       isVaccine
+      restrictedLocationTypeId
       itemDirections {
         ...ItemDirection
       }
@@ -1490,28 +1616,28 @@ export const StockLineFragmentDoc = gql`
     storeId
     totalNumberOfPacks
     itemVariantId
+    volumePerPack
     donor(storeId: $storeId) {
       id
     }
     vvmStatus {
       __typename
       id
-      level
+      priority
       unusable
       description
+    }
+    program {
+      id
+      name
+    }
+    campaign {
+      id
+      name
     }
   }
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
-`;
-export const ColdStorageTypeFragmentDoc = gql`
-  fragment ColdStorageType on ColdStorageTypeNode {
-    __typename
-    id
-    name
-    minTemperature
-    maxTemperature
-  }
 `;
 export const PackagingVariantFragmentDoc = gql`
   fragment PackagingVariant on PackagingVariantNode {
@@ -1555,14 +1681,15 @@ export const ItemVariantFragmentDoc = gql`
       id
       name
       isVaccine
+      restrictedLocationTypeId
     }
     manufacturerId
     manufacturer(storeId: $storeId) {
       ...NameRow
     }
-    coldStorageTypeId
-    coldStorageType {
-      ...ColdStorageType
+    locationTypeId
+    locationType {
+      ...LocationType
     }
     packagingVariants {
       ...PackagingVariant
@@ -1576,7 +1703,7 @@ export const ItemVariantFragmentDoc = gql`
     vvmType
   }
   ${NameRowFragmentDoc}
-  ${ColdStorageTypeFragmentDoc}
+  ${LocationTypeFragmentDoc}
   ${PackagingVariantFragmentDoc}
   ${BundledItemFragmentDoc}
 `;
@@ -1601,6 +1728,10 @@ export const ItemFragmentDoc = gql`
     volumePerOuterPack
     volumePerPack
     weight
+    restrictedLocationTypeId
+    restrictedLocationType {
+      ...LocationType
+    }
     availableStockOnHand(storeId: $storeId)
     availableBatches(storeId: $storeId) {
       __typename
@@ -1625,7 +1756,11 @@ export const ItemFragmentDoc = gql`
     itemDirections {
       ...ItemDirection
     }
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
+  ${LocationTypeFragmentDoc}
   ${StockLineFragmentDoc}
   ${ItemVariantFragmentDoc}
   ${ItemDirectionFragmentDoc}
@@ -1824,6 +1959,7 @@ export const ItemVariantsDocument = gql`
         nodes {
           __typename
           isVaccine
+          restrictedLocationTypeId
           variants {
             ...ItemVariant
           }
@@ -1900,20 +2036,20 @@ export const DeleteItemVariantDocument = gql`
     }
   }
 `;
-export const ColdStorageTypesDocument = gql`
-  query coldStorageTypes($storeId: String!) {
-    coldStorageTypes(
+export const LocationTypesDocument = gql`
+  query locationTypes($storeId: String!) {
+    locationTypes(
       storeId: $storeId
       sort: { key: minTemperature, desc: true }
     ) {
-      ... on ColdStorageTypeConnector {
+      ... on LocationTypeConnector {
         nodes {
-          ...ColdStorageType
+          ...LocationType
         }
       }
     }
   }
-  ${ColdStorageTypeFragmentDoc}
+  ${LocationTypeFragmentDoc}
 `;
 export const UpsertBundledItemDocument = gql`
   mutation upsertBundledItem(
@@ -2152,18 +2288,17 @@ export function getSdk(
         variables
       );
     },
-    coldStorageTypes(
-      variables: ColdStorageTypesQueryVariables,
+    locationTypes(
+      variables: LocationTypesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<ColdStorageTypesQuery> {
+    ): Promise<LocationTypesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ColdStorageTypesQuery>(
-            ColdStorageTypesDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'coldStorageTypes',
+          client.request<LocationTypesQuery>(LocationTypesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'locationTypes',
         'query',
         variables
       );

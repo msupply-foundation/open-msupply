@@ -4,7 +4,6 @@ import {
   ReasonOptionsSearchInput,
   RequestFragment,
   StockItemSearchInputWithStats,
-  useReasonOptions,
 } from '@openmsupply-client/system';
 import {
   useTranslation,
@@ -14,6 +13,7 @@ import {
   usePluginProvider,
   Typography,
   BufferedTextArea,
+  ModalGridLayout,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -23,7 +23,6 @@ import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import {
   InfoRow,
-  ModalContentLayout,
   ValueInfoRow,
   ValueInfo,
   RepresentationValue,
@@ -71,7 +70,6 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { data: reasonOptions, isLoading } = useReasonOptions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 
@@ -94,20 +92,28 @@ export const RequestLineEdit = ({
   const renderValueInfoRows = useCallback(
     (info: ValueInfo[]) => (
       <>
-        {info.map(({ label, value, sx, endAdornmentOverride }) => (
-          <ValueInfoRow
-            key={label}
-            label={label}
-            value={value}
-            endAdornmentOverride={endAdornmentOverride}
-            defaultPackSize={defaultPackSize}
-            representation={representation}
-            unitName={unitName}
-            sx={sx}
-            displayVaccinesInDoses={displayVaccinesInDoses}
-            dosesPerUnit={currentItem?.doses}
-          />
-        ))}
+        {info.map(
+          ({
+            label,
+            value,
+            sx,
+            endAdornmentOverride,
+            displayVaccinesInDoses: showDoses,
+          }) => (
+            <ValueInfoRow
+              key={label}
+              label={label}
+              value={value}
+              endAdornmentOverride={endAdornmentOverride}
+              defaultPackSize={defaultPackSize}
+              representation={representation}
+              unitName={unitName}
+              sx={sx}
+              displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
+              dosesPerUnit={currentItem?.doses}
+            />
+          )
+        )}
       </>
     ),
     [
@@ -163,8 +169,6 @@ export const RequestLineEdit = ({
                 fullWidth
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
-                reasonOptions={reasonOptions?.nodes ?? []}
-                loading={isLoading}
                 textSx={
                   disableReasons
                     ? {
@@ -209,7 +213,7 @@ export const RequestLineEdit = ({
 
   return (
     <>
-      <ModalContentLayout
+      <ModalGridLayout
         showExtraFields={showExtraFields}
         Top={
           <>

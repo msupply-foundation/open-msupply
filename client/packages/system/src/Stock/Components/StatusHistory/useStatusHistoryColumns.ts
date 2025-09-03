@@ -30,8 +30,8 @@ export const useStatusHistoryColumns = () => {
     },
     {
       key: 'level',
-      label: 'label.level',
-      accessor: ({ rowData }) => rowData?.status?.level,
+      label: 'label.distribution-priority',
+      accessor: ({ rowData }) => rowData?.status?.priority,
     },
     {
       key: 'entered-by',

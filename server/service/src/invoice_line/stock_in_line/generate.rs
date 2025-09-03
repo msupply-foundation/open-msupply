@@ -8,6 +8,7 @@ pub fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> Invo
         number_of_packs: invoice_line.number_of_packs * invoice_line.pack_size,
         sell_price_per_pack: invoice_line.sell_price_per_pack / invoice_line.pack_size,
         cost_price_per_pack: invoice_line.cost_price_per_pack / invoice_line.pack_size,
+        volume_per_pack: invoice_line.volume_per_pack / invoice_line.pack_size,
         shipped_number_of_packs: invoice_line
             .shipped_number_of_packs
             .map(|shipped| shipped * invoice_line.pack_size),
@@ -47,6 +48,8 @@ pub fn generate_batch(
         donor_link_id,
         vvm_status_id,
         campaign_id,
+        program_id,
+        volume_per_pack,
         // Ignore other fields, this might be a problem when new fields are added
         ..
     }: InvoiceLineRow,
@@ -108,6 +111,9 @@ pub fn generate_batch(
         donor_link_id,
         vvm_status_id,
         campaign_id,
+        program_id,
+        volume_per_pack,
+        total_volume: total_number_of_packs * volume_per_pack,
     };
 
     Ok(stock_line_row)

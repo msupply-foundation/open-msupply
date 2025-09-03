@@ -28,7 +28,7 @@ pub struct UpdateInput {
     pub batch: Option<String>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
@@ -36,8 +36,10 @@ pub struct UpdateInput {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
+    pub program_id: Option<NullableUpdateInput<String>>,
     pub note: Option<NullableUpdateInput<String>>,
     pub shipped_number_of_packs: Option<f64>,
+    pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
 }
 
@@ -108,8 +110,10 @@ impl UpdateInput {
             vvm_status_id,
             donor_id,
             campaign_id,
+            program_id,
             note,
             shipped_number_of_packs,
+            volume_per_pack,
             shipped_pack_size,
         } = self;
 
@@ -121,7 +125,9 @@ impl UpdateInput {
             }),
             pack_size,
             batch,
-            expiry_date,
+            expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
+                value: expiry_date.value,
+            }),
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
@@ -141,7 +147,11 @@ impl UpdateInput {
             campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
                 value: campaign_id.value,
             }),
+            program_id: program_id.map(|program_id| NullableUpdate {
+                value: program_id.value,
+            }),
             shipped_number_of_packs,
+            volume_per_pack,
             shipped_pack_size,
         }
     }
@@ -160,7 +170,7 @@ pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<UpdateRes
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -189,9 +199,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
         | ServiceError::VVMStatusDoesNotExist
+        | ServiceError::ProgramNotVisible
+        | ServiceError::CampaignDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
+        ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -502,7 +515,9 @@ mod test {
                     batch: Some("batch input".to_string()),
                     cost_price_per_pack: Some(1.0),
                     sell_price_per_pack: Some(1.0),
-                    expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
+                    expiry_date: Some(NullableUpdate {
+                        value: NaiveDate::from_ymd_opt(2022, 1, 1)
+                    }),
                     number_of_packs: Some(1.0),
                     r#type: StockInType::InboundShipment,
                     ..Default::default()
@@ -526,7 +541,7 @@ mod test {
             "batch": "batch input",
             "costPricePerPack": 1,
             "sellPricePerPack": 1,
-            "expiryDate": "2022-01-01",
+            "expiryDate": {"value": "2022-01-01"},
             "numberOfPacks": 1.0,
           },
           "storeId": "store_a"

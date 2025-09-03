@@ -1,10 +1,9 @@
+use std::collections::BTreeMap;
+
 use crate::types::patient::GenderType;
 use async_graphql::*;
 use repository::StorageConnection;
-use service::preference::{
-    preferences::PreferenceProvider, PrefKey, Preference, PreferenceDescription, PreferenceType,
-    PreferenceValueType,
-};
+use service::preference::{preferences::PreferenceProvider, Preference, PreferenceDescription};
 
 pub struct PreferencesNode {
     pub connection: StorageConnection,
@@ -19,22 +18,22 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
+    pub async fn authorise_goods_received(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_goods_received)
+    }
+
+    pub async fn authorise_purchase_order(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.authorise_purchase_order)
+    }
+
+    pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
+        self.load_preference(&self.preferences.custom_translations)
+    }
+
     pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
         let domain_genders = self.load_preference(&self.preferences.gender_options)?;
         let genders = domain_genders.iter().map(GenderType::from_domain).collect();
         Ok(genders)
-    }
-
-    pub async fn show_contact_tracing(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.show_contact_tracing)
-    }
-
-    pub async fn use_campaigns(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.use_campaigns)
-    }
-
-    pub async fn sync_records_display_threshold(&self) -> Result<i32> {
-        self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
     pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
@@ -43,6 +42,14 @@ impl PreferencesNode {
                 .preferences
                 .prevent_transfers_months_before_initialisation,
         )
+    }
+
+    pub async fn show_contact_tracing(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_contact_tracing)
+    }
+
+    pub async fn sync_records_display_threshold(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.sync_records_display_threshold)
     }
 
     // Store preferences
@@ -56,6 +63,10 @@ impl PreferencesNode {
 
     pub async fn order_in_packs(&self) -> Result<bool> {
         self.load_preference(&self.preferences.order_in_packs)
+    }
+
+    pub async fn use_procurement_functionality(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.use_procurement_functionality)
     }
 
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
@@ -93,11 +104,11 @@ pub struct PreferenceDescriptionNode {
 #[Object]
 impl PreferenceDescriptionNode {
     pub async fn key(&self) -> PreferenceKey {
-        PreferenceKey::from_domain(&self.pref.key)
+        PreferenceKey::from(self.pref.key.clone())
     }
 
     pub async fn value_type(&self) -> PreferenceValueNodeType {
-        PreferenceValueNodeType::from_domain(&self.pref.value_type)
+        PreferenceValueNodeType::from(self.pref.value_type.clone())
     }
 
     /// WARNING: Type loss - holds any kind of pref value (for edit UI).
@@ -110,72 +121,38 @@ impl PreferenceDescriptionNode {
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
 #[graphql(rename_items = "camelCase")]
 // These keys (once camelCased) should match fields of PreferencesNode
+#[graphql(remote = "service::preference::types::PrefKey")]
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
+    AuthoriseGoodsReceived,
+    AuthorisePurchaseOrder,
+    CustomTranslations,
     GenderOptions,
-    ShowContactTracing,
-    UseCampaigns,
-    SyncRecordsDisplayThreshold,
     PreventTransfersMonthsBeforeInitialisation,
+    ShowContactTracing,
+    SyncRecordsDisplayThreshold,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
+    UseProcurementFunctionality,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
 }
 
-impl PreferenceKey {
-    pub fn from_domain(pref_key: &PrefKey) -> Self {
-        match pref_key {
-            // Global preferences
-            PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
-            PrefKey::GenderOptions => PreferenceKey::GenderOptions,
-            PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
-            PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
-            PrefKey::SyncRecordsDisplayThreshold => PreferenceKey::SyncRecordsDisplayThreshold,
-            PrefKey::PreventTransfersMonthsBeforeInitialisation => {
-                PreferenceKey::PreventTransfersMonthsBeforeInitialisation
-            }
-            // Store preferences
-            PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
-            PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
-            PrefKey::OrderInPacks => PreferenceKey::OrderInPacks,
-            PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
-            PrefKey::UseSimplifiedMobileUi => PreferenceKey::UseSimplifiedMobileUi,
-        }
-    }
-}
-
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+#[graphql(remote = "service::preference::types::PreferenceType")]
 pub enum PreferenceNodeType {
     Global,
     Store,
 }
 
-impl PreferenceNodeType {
-    pub fn to_domain(self) -> PreferenceType {
-        match self {
-            PreferenceNodeType::Global => PreferenceType::Global,
-            PreferenceNodeType::Store => PreferenceType::Store,
-        }
-    }
-}
-
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+#[graphql(remote = "service::preference::types::PreferenceValueType")]
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
     MultiChoice,
-}
-
-impl PreferenceValueNodeType {
-    pub fn from_domain(domain_type: &PreferenceValueType) -> Self {
-        match domain_type {
-            PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
-            PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
-            PreferenceValueType::MultiChoice => PreferenceValueNodeType::MultiChoice,
-        }
-    }
+    CustomTranslations, // Specific type for CustomTranslations preference
 }

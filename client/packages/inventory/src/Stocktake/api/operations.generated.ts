@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { VvmStatusFragmentDoc } from '../../../../system/src/Stock/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StocktakeRowFragment = {
   __typename: 'StocktakeNode';
@@ -31,6 +32,7 @@ export type StocktakeLineFragment = {
   sellPricePerPack?: number | null;
   costPricePerPack?: number | null;
   comment?: string | null;
+  volumePerPack: number;
   donorId?: string | null;
   donorName?: string | null;
   itemVariantId?: string | null;
@@ -40,6 +42,11 @@ export type StocktakeLineFragment = {
     name: string;
     code: string;
     onHold: boolean;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+    } | null;
   } | null;
   stockLine?: { __typename: 'StockLineNode'; id: string } | null;
   item: {
@@ -51,7 +58,30 @@ export type StocktakeLineFragment = {
     isVaccine: boolean;
     doses: number;
     defaultPackSize: number;
+    restrictedLocationTypeId?: string | null;
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      defaultSellPricePerPack: number;
+    } | null;
   };
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    description: string;
+    id: string;
+    priority: number;
+    reasonId?: string | null;
+    unusable: boolean;
+  } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
+  } | null;
   reasonOption?: {
     __typename: 'ReasonOptionNode';
     reason: string;
@@ -59,6 +89,8 @@ export type StocktakeLineFragment = {
     isActive: boolean;
     id: string;
   } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
 };
 
 export type StocktakeFragment = {
@@ -97,6 +129,7 @@ export type StocktakeFragment = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      volumePerPack: number;
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
@@ -106,6 +139,11 @@ export type StocktakeFragment = {
         name: string;
         code: string;
         onHold: boolean;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       stockLine?: { __typename: 'StockLineNode'; id: string } | null;
       item: {
@@ -117,7 +155,30 @@ export type StocktakeFragment = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
+        restrictedLocationTypeId?: string | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
       };
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        description: string;
+        id: string;
+        priority: number;
+        reasonId?: string | null;
+        unusable: boolean;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
+      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -125,6 +186,12 @@ export type StocktakeFragment = {
         isActive: boolean;
         id: string;
       } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -204,6 +271,7 @@ export type StocktakeQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            volumePerPack: number;
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
@@ -213,6 +281,11 @@ export type StocktakeQuery = {
               name: string;
               code: string;
               onHold: boolean;
+              locationType?: {
+                __typename: 'LocationTypeNode';
+                id: string;
+                name: string;
+              } | null;
             } | null;
             stockLine?: { __typename: 'StockLineNode'; id: string } | null;
             item: {
@@ -224,13 +297,46 @@ export type StocktakeQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
+              restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
             };
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              description: string;
+              id: string;
+              priority: number;
+              reasonId?: string | null;
+              unusable: boolean;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
+            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
               type: Types.ReasonOptionNodeType;
               isActive: boolean;
               id: string;
+            } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
             } | null;
           }>;
         };
@@ -282,6 +388,7 @@ export type StocktakeByNumberQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            volumePerPack: number;
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
@@ -291,6 +398,11 @@ export type StocktakeByNumberQuery = {
               name: string;
               code: string;
               onHold: boolean;
+              locationType?: {
+                __typename: 'LocationTypeNode';
+                id: string;
+                name: string;
+              } | null;
             } | null;
             stockLine?: { __typename: 'StockLineNode'; id: string } | null;
             item: {
@@ -302,13 +414,46 @@ export type StocktakeByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               defaultPackSize: number;
+              restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+              } | null;
             };
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              description: string;
+              id: string;
+              priority: number;
+              reasonId?: string | null;
+              unusable: boolean;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
+            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
               type: Types.ReasonOptionNodeType;
               isActive: boolean;
               id: string;
+            } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
             } | null;
           }>;
         };
@@ -344,6 +489,7 @@ export type StocktakeLinesQuery = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      volumePerPack: number;
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
@@ -353,6 +499,11 @@ export type StocktakeLinesQuery = {
         name: string;
         code: string;
         onHold: boolean;
+        locationType?: {
+          __typename: 'LocationTypeNode';
+          id: string;
+          name: string;
+        } | null;
       } | null;
       stockLine?: { __typename: 'StockLineNode'; id: string } | null;
       item: {
@@ -364,7 +515,30 @@ export type StocktakeLinesQuery = {
         isVaccine: boolean;
         doses: number;
         defaultPackSize: number;
+        restrictedLocationTypeId?: string | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
       };
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        description: string;
+        id: string;
+        priority: number;
+        reasonId?: string | null;
+        unusable: boolean;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
+      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -372,6 +546,12 @@ export type StocktakeLinesQuery = {
         isActive: boolean;
         id: string;
       } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -619,6 +799,7 @@ export const StocktakeLineFragmentDoc = gql`
     sellPricePerPack
     costPricePerPack
     comment
+    volumePerPack
     donorId
     donorName
     location {
@@ -627,6 +808,10 @@ export const StocktakeLineFragmentDoc = gql`
       name
       code
       onHold
+      locationType {
+        id
+        name
+      }
     }
     stockLine {
       __typename
@@ -641,15 +826,41 @@ export const StocktakeLineFragmentDoc = gql`
       isVaccine
       doses
       defaultPackSize
+      restrictedLocationTypeId
+      itemStoreProperties(storeId: $storeId) {
+        defaultSellPricePerPack
+      }
     }
     itemVariantId
+    vvmStatus {
+      ...VVMStatus
+    }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
+    }
     reasonOption {
       reason
       type
       isActive
       id
     }
+    campaign {
+      id
+      name
+    }
+    program {
+      id
+      name
+    }
   }
+  ${VvmStatusFragmentDoc}
 `;
 export const StocktakeFragmentDoc = gql`
   fragment Stocktake on StocktakeNode {
