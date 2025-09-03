@@ -59,12 +59,13 @@ const OutboundShipmentListViewComponent: FC = () => {
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
     ],
   });
+  const { urlQuery, updateQuery } = useUrlQuery();
   const navigate = useNavigate();
   const modalController = useToggle();
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
   const simplifiedTabletView = useSimplifiedTabletUI();
-  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+  const [rowSelection, setRowSelection] = useState<MRTRowSelectionState>({});
 
   const { data, isError, isLoading } = useOutbound.document.list(queryParams);
   useDisableOutboundRows(data?.nodes);
