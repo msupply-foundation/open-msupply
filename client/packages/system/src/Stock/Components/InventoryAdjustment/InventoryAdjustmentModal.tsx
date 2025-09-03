@@ -12,7 +12,7 @@ import {
   StoreModeNodeType,
   FormLabel,
   Typography,
-  useTheme,
+  Alert,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput } from '../../..';
@@ -35,11 +35,6 @@ export const InventoryAdjustmentModal = ({
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
 
-  const packUnit = String(stockLine.packSize);
-  const saveDisabled = draft.adjustment === 0 || stockLine.onHold;
-  const isInventoryReduction =
-    draft.adjustmentType === AdjustmentTypeInput.Reduction;
-
   const save = async () => {
     try {
       const result = await create();
@@ -58,10 +53,19 @@ export const InventoryAdjustmentModal = ({
     }
   };
 
+  const isInventoryReduction =
+    draft.adjustmentType === AdjustmentTypeInput.Reduction;
+
+  const variation = isInventoryReduction ? -draft.adjustment : draft.adjustment;
+  const belowZero = stockLine.availableNumberOfPacks + variation < 0;
+
+  const saveDisabled = draft.adjustment === 0 || belowZero;
+
   return (
     <Modal
-      sx={{ maxWidth: 'unset', minWidth: 700 }}
       height={575}
+      width={700}
+      contentProps={{ sx: { padding: 0, width: 650, margin: '0 auto' } }}
       slideAnimation={false}
       title={t('title.stock-adjustment')}
       okButton={
@@ -70,13 +74,45 @@ export const InventoryAdjustmentModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <>
-        <ItemDetailHeader item={stockLine.item} />
+        <ItemDetailAndStats stockLine={stockLine} />
+
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'end',
+            backgroundColor: 'background.secondary',
+            padding: '1em',
+            borderRadius: '16px',
+            gap: '1em',
+          }}
+        >
+          <Stat
+            label={t('label.new-available-packs')}
+            value={stockLine.availableNumberOfPacks + variation}
+            color={'secondary.main'}
+          />
+          <Box
+            sx={{
+              width: '1px',
+              backgroundColor: 'secondary.main',
+              height: '-webkit-fill-available',
+            }}
+          ></Box>
+          <Stat
+            label={t('label.new-total-packs')}
+            value={stockLine.totalNumberOfPacks + variation}
+            color={'secondary.main'}
+          />
+        </Box>
+
         <Box
           sx={{
             display: 'flex',
             flexDirection: 'column',
             gap: '1em',
             width: '30em',
+            margin: '1.5em auto',
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -105,11 +141,6 @@ export const InventoryAdjustmentModal = ({
                 id="by"
                 width="unset"
                 decimalLimit={2}
-                max={
-                  draft.adjustmentType === AdjustmentTypeInput.Reduction
-                    ? stockLine.totalNumberOfPacks
-                    : undefined
-                }
                 value={draft.adjustment}
                 onChange={value =>
                   setDraft(state => ({
@@ -139,42 +170,104 @@ export const InventoryAdjustmentModal = ({
             />
           </Box>
         </Box>
+        {stockLine.availableNumberOfPacks + variation < 0 && (
+          <Alert severity="error">{t('error.reduced-below-zero')}</Alert>
+        )}
       </>
     </Modal>
   );
 };
 
-const ItemDetailHeader = ({
-  item: { name, code, unitName },
+const ItemDetailAndStats = ({
+  stockLine,
 }: {
-  item: Pick<StockLineRowFragment['item'], 'name' | 'unitName' | 'code'>;
+  stockLine: StockLineRowFragment;
 }) => {
   const t = useTranslation();
-  const theme = useTheme();
+
+  const {
+    item: { code, name, unitName },
+    packSize,
+    totalNumberOfPacks,
+    availableNumberOfPacks,
+  } = stockLine;
   return (
     <Box
       sx={{
         borderWidth: 4,
         borderRadius: '16px',
         borderStyle: 'solid',
-        borderColor: theme.palette.border,
-        padding: 2,
+        borderColor: 'border',
+        paddingX: 2,
+        paddingY: 1,
         marginBottom: 2,
       }}
     >
       {/* Or maybe simpler: */}
       {/* <Typography>{code}</Typography> */}
 
-      <Typography color={theme.typography.body2.color}>
+      <Typography color="gray.dark">
         {t('label.code')}: {code}
         {unitName && (
-          <Typography component="span" color={theme.typography.body2.color}>
+          <Typography component="span" color="gray.dark">
             {' '}
             | {t('label.unit')}: {unitName}
           </Typography>
         )}
       </Typography>
       <Typography sx={{ fontWeight: 500, fontSize: '22px' }}>{name}</Typography>
+
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-evenly',
+          gap: 4,
+          marginTop: 2,
+          alignItems: 'end', // ensure numbers align even if 1 label wraps
+        }}
+      >
+        <Stat label={t('label.pack-size')} value={packSize} />
+        <Stat
+          label={t('label.available-packs')}
+          value={availableNumberOfPacks}
+        />
+        <Stat
+          label={t('label.total-packs-on-hand')}
+          value={totalNumberOfPacks}
+        />
+      </Box>
+    </Box>
+  );
+};
+
+const Stat = ({
+  label,
+  value,
+  color = 'text.primary',
+}: {
+  label: string;
+  value: number;
+  color?: string;
+}) => {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: '10rem',
+      }}
+    >
+      <Typography color="gray.dark">{label}</Typography>
+      <Typography
+        sx={{
+          fontWeight: 600,
+          fontSize: '1.5rem',
+          color: value < 0 ? 'error.main' : color,
+        }}
+      >
+        {value}
+      </Typography>
     </Box>
   );
 };
