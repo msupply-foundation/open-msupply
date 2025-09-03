@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Current directory
 DIR="$(cd "$(dirname "$0")" && pwd)"

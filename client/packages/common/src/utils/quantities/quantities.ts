@@ -19,7 +19,7 @@ export const QuantityUtils = {
   /** Converts a number of packs to dose quantity */
   packsToDoses: (
     numPacks: number,
-    line: { packSize: number; dosesPerUnit?: number }
+    line: { packSize: number; dosesPerUnit: number | undefined }
   ) => {
     return NumUtils.round(numPacks * line.packSize * (line.dosesPerUnit || 1));
   },

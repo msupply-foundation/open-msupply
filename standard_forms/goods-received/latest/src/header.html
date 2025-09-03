@@ -4,34 +4,13 @@ date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
 
 <table class="header_image_section" style="width: 100%; height: 98%">
   <tr>
-    <th style="text-align: left; width: 10%; height: 70%">
-      <img class="logo" src="{{ data.purchaseOrder.store.logo }}" />
-    </th>
     <th style="text-align: left; width: 20%">
       <span style="font-weight: bold">
-        {{ data.purchaseOrder.store.name.name }}
-      </span>
-      <br />
-      <span style="font-size: 6pt">
-        {{ data.purchaseOrder.store.name.address1 }}
-      </span>
-      <br />
-      <span style="font-size: 6pt">
-        {{ data.purchaseOrder.store.name.address2 }}
-      </span>
-      <br />
-      <span style="font-size: 6pt">
-        {{t(k="label.phone",f="Telephone")}}: {{
-        data.purchaseOrder.store.name.phone }}
-      </span>
-      <br />
-      <span style="font-size: 6pt">
-        {{t(k="label.email",f="Email")}}: {{ data.purchaseOrder.store.name.email
-        }}
+        {{ data.goodsReceived.store.name.name }}
       </span>
     </th>
     <th style="text-align: right; width: 70%; font-size: 28pt">
-      {{t(k="label.purchase-order", f="Purchase Order") }}<br />
+      {{t(k="goods-received", f="Goods Received") }}<br />
     </th>
   </tr>
 </table>
@@ -41,18 +20,18 @@ date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
 >
   <div class="header-space-between">
     <span>
-      {% if data.purchaseOrder.supplier %} {{ t(k="label.supplier",
+      {% if data.goodsReceived.supplier %} {{ t(k="label.supplier",
       f="Supplier") }}: {% endif %}
     </span>
 
     <span> 
         {{t(k="label.purchase-order-number", f="Purchase Order Number") }}: {{
-        data.purchaseOrder.number }}
+        data.goodsReceived.purchaseOrderNumber }}
     </span>
   </div>
   <div class="header-space-between">
     <span>
-      {% if data.purchaseOrder.supplier %} {{ data.purchaseOrder.supplier.name
+      {% if data.goodsReceived.supplier %} {{ data.goodsReceived.supplier.name
       }} {% endif %}
     </span>
 
@@ -63,23 +42,19 @@ date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
   </div>
   <div class="header-space-between">
     <span>
-      {% if data.purchaseOrder.supplier %} {{ data.purchaseOrder.supplier.code }}
-      {% endif %}
     </span>
     <span id="date"></span>
-      {{ t(k="report.confirmed-date", f="Confirmed date") }}: 
-      {{self::dateOrNA(datetime=data.purchaseOrder.confirmedDatetime)}}
+      {{ t(k="report.confirmed-date", f="Created date") }}: 
+      {{self::dateOrNA(datetime=data.goodsReceived.createdDatetime)}}
     </span>
   </div>
   <div class="header-space-between">
     <span>
-      {% if data.purchaseOrder.supplier %} {{ data.purchaseOrder.supplier.address1 }} {%
-      if data.purchaseOrder.supplier.address2 %},
-      {{ data.purchaseOrder.supplier.address2 }} {% endif %} {% endif %}
+
     </span>
     <span id="date">
-        {{ t(k="label.expected-delivery-date", f="Expected delivery date") }}: 
-        {{self::dateOrNA(datetime=data.purchaseOrder.expectedDeliveryDatetime)}}
+        {{ t(k="label.received-date", f="Received date") }}: 
+        {{self::dateOrNA(datetime=data.goodsReceived.receivedDatetime)}}
     </span>
   </div>
 </div>

@@ -10,7 +10,9 @@ export type PurchaseOrderRowFragment = {
   number: number;
   createdDatetime: string;
   confirmedDatetime?: string | null;
+  sentDatetime?: string | null;
   status: Types.PurchaseOrderNodeStatus;
+  requestedDeliveryDate?: string | null;
   targetMonths?: number | null;
   reference?: string | null;
   comment?: string | null;
@@ -168,7 +170,9 @@ export type PurchaseOrdersQuery = {
       number: number;
       createdDatetime: string;
       confirmedDatetime?: string | null;
+      sentDatetime?: string | null;
       status: Types.PurchaseOrderNodeStatus;
+      requestedDeliveryDate?: string | null;
       targetMonths?: number | null;
       reference?: string | null;
       comment?: string | null;
@@ -543,7 +547,9 @@ export const PurchaseOrderRowFragmentDoc = gql`
     }
     createdDatetime
     confirmedDatetime
+    sentDatetime
     status
+    requestedDeliveryDate
     targetMonths
     reference
     lines {
