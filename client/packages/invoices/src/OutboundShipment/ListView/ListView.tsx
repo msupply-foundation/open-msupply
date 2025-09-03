@@ -70,8 +70,6 @@ const OutboundShipmentListViewComponent: FC = () => {
   const { data, isError, isLoading } = useOutbound.document.list(queryParams);
   useDisableOutboundRows(data?.nodes);
 
-  // const [sorting, setSorting] = useState<MRT_SortingState>([]);
-
   const columns = useColumns<OutboundRowFragment>(
     [
       GenericColumnKey.Selection,
