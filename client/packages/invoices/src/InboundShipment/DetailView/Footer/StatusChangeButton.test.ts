@@ -15,6 +15,13 @@ describe('validateEmptyInvoice', () => {
     };
     expect(validateEmptyInvoice(lines)).toBe(false);
   });
+  it('should allow status change when lines are from a transfer', () => {
+    const lines = {
+      totalCount: 1,
+      nodes: [makeLine({ numberOfPacks: 0, linkedInvoiceId: '123' })],
+    };
+    expect(validateEmptyInvoice(lines)).toBe(true);
+  });
   it('should allow status change when has lines with received packs', () => {
     const lines = {
       totalCount: 1,
@@ -34,12 +41,15 @@ describe('validateEmptyInvoice', () => {
 const makeLine = ({
   numberOfPacks,
   shippedNumberOfPacks,
+  linkedInvoiceId,
 }: {
   numberOfPacks: number;
   shippedNumberOfPacks?: number;
+  linkedInvoiceId?: string;
 }) =>
   ({
     type: InvoiceLineNodeType.StockIn,
     numberOfPacks,
     shippedNumberOfPacks,
+    linkedInvoiceId,
   }) as InboundLineFragment;

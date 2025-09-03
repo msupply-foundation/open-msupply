@@ -116,7 +116,10 @@ export const StockLineForm = ({
   const getDosesProps = (numPacks: number) => {
     if (!preferences.manageVaccinesInDoses || !draft.item.isVaccine) return {};
 
-    const doses = QuantityUtils.packsToDoses(numPacks, draft);
+    const doses = QuantityUtils.packsToDoses(numPacks, {
+      packSize: draft.packSize,
+      dosesPerUnit: draft.item.dosesPerUnit,
+    });
 
     return {
       helperText: `${doses} ${t('label.doses').toLowerCase()}`,
@@ -213,7 +216,7 @@ export const StockLineForm = ({
               label={t('label.sell-price')}
               Input={
                 <CurrencyInput
-                  defaultValue={draft.sellPricePerPack}
+                  value={draft.sellPricePerPack}
                   onChangeNumber={sellPricePerPack =>
                     onUpdate({ sellPricePerPack })
                   }
@@ -306,7 +309,19 @@ export const StockLineForm = ({
                   disabled={!packEditable}
                   width={160}
                   value={draft.packSize ?? 1}
-                  onChange={packSize => onUpdate({ packSize })}
+                  onChange={packSize => {
+                    const shouldClearPrice =
+                      draft.item?.defaultPackSize !== packSize &&
+                      draft.item?.itemStoreProperties
+                        ?.defaultSellPricePerPack === draft.sellPricePerPack;
+
+                    onUpdate({
+                      packSize,
+                      sellPricePerPack: shouldClearPrice
+                        ? 0
+                        : draft.sellPricePerPack,
+                    });
+                  }}
                 />
               }
             />

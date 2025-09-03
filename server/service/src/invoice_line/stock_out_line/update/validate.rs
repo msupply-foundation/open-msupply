@@ -72,7 +72,7 @@ pub fn validate(
     if !check_batch_on_hold(&batch_pair.main_batch) {
         return Err(BatchIsOnHold);
     }
-    check_location_on_hold(&batch_pair.main_batch).map_err(|e| match e {
+    check_location_on_hold(&batch_pair.main_batch.location_row).map_err(|e| match e {
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
 
