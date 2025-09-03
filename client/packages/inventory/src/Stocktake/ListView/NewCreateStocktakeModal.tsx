@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import {
   BasicSpinner,
-  Checkbox,
   DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
+  RadioGroup,
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
+import { FormControlLabel, Radio, Typography } from '@mui/material';
 import { useDialog } from '@common/hooks';
 import {
   useStockListCount,
@@ -19,13 +20,16 @@ import {
 } from '@openmsupply-client/system';
 import {
   Box,
+  CheckIcon,
   Formatter,
+  InfoIcon,
   StockLineFilterInput,
   useNavigate,
   usePreferences,
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 import { VvmStatusFragment } from 'packages/system/src/Stock/api';
+import { concat } from 'lodash';
 
 const LABEL_FLEX = '0 0 150px';
 interface NewStocktakeModalProps {
@@ -37,15 +41,20 @@ interface NewStocktakeModalProps {
 }
 
 interface ModalState {
-  location: LocationRowFragment | null;
   masterList: MasterListRowFragment | null;
-  expiryDate: Date | null;
-  createBlankStocktake: boolean;
-  includeAllMasterListItems: boolean;
   vvmStatus: VvmStatusFragment | null;
+  location: LocationRowFragment | null;
+  expiryDate: Date | null;
+  itemStatus: ItemStatus;
 }
 
-export const CreateStocktakeModal = ({
+enum ItemStatus {
+  All = 'all',
+  InStock = 'in stock',
+  None = 'none',
+}
+
+export const NewCreateStocktakeModal = ({
   open,
   onClose,
   onCreate,
@@ -64,22 +73,14 @@ export const CreateStocktakeModal = ({
   });
 
   const [
-    {
-      location,
-      masterList,
-      vvmStatus,
-      expiryDate,
-      createBlankStocktake,
-      includeAllMasterListItems,
-    },
+    { location, masterList, vvmStatus, expiryDate, itemStatus },
     setState,
   ] = useState<ModalState>({
     location: null,
     vvmStatus: null,
     masterList: null,
     expiryDate: null,
-    createBlankStocktake: false,
-    includeAllMasterListItems: false,
+    itemStatus: ItemStatus.All,
   });
 
   const stockFilter: StockLineFilterInput = {
@@ -95,6 +96,7 @@ export const CreateStocktakeModal = ({
     vvmStatusId: vvmStatus && {
       equalTo: vvmStatus.id,
     },
+    hasPacksInStore: true,
   };
 
   const { data } = useStockListCount(stockFilter);
@@ -103,7 +105,7 @@ export const CreateStocktakeModal = ({
   const { localisedDate } = useFormatDateTime();
 
   const generateComment = () => {
-    if (createBlankStocktake) return '';
+    if (itemStatus === ItemStatus.None) return '';
 
     const filterComments: string[] = [];
 
@@ -158,10 +160,8 @@ export const CreateStocktakeModal = ({
       masterListId: masterList?.id,
       locationId: location?.id,
       vvmStatusId: vvmStatus?.id,
-      createBlankStocktake,
       expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
       isInitialStocktake: false,
-      includeAllMasterListItems,
       description,
       comment: generateComment(),
     };
@@ -172,16 +172,20 @@ export const CreateStocktakeModal = ({
     });
   };
 
-  let estimatedLineCount = 0;
-  if (createBlankStocktake) {
-    estimatedLineCount = 0;
-  } else {
+  const estimateLineCount = (suggestedStatus?: ItemStatus): number => {
     const stockCount = data?.totalCount ?? 0;
-    estimatedLineCount =
-      includeAllMasterListItems && masterListLineCount
+    if (suggestedStatus === ItemStatus.All) {
+      return masterListLineCount
         ? Math.max(masterListLineCount, stockCount)
         : stockCount;
-  }
+    } else if (suggestedStatus === ItemStatus.InStock) {
+      return stockCount;
+    } else {
+      return itemStatus === ItemStatus.All && masterListLineCount
+        ? Math.max(masterListLineCount, stockCount)
+        : stockCount;
+    }
+  };
 
   return (
     <>
@@ -207,30 +211,14 @@ export const CreateStocktakeModal = ({
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
-                  <Checkbox
-                    style={{ paddingLeft: 0 }}
-                    checked={!!createBlankStocktake}
-                    onChange={e =>
-                      setState(() => ({
-                        createBlankStocktake: e.target.checked,
-                        masterList: null,
-                        includeAllMasterListItems: false,
-                        location: null,
-                        expiryDate: null,
-                        vvmStatus: null,
-                      }))
-                    }
-                  />
-                }
-                label={t('stocktake.create-blank')}
-              />
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
                   <MasterListSearchInput
-                    disabled={!!createBlankStocktake}
+                    disabled={itemStatus == ItemStatus.None}
                     onChange={masterList =>
-                      setState(prev => ({ ...prev, masterList }))
+                      setState(prev => ({
+                        ...prev,
+                        masterList,
+                        itemStatus: ItemStatus.InStock,
+                      }))
                     }
                     selectedMasterList={masterList}
                     width={380}
@@ -238,37 +226,14 @@ export const CreateStocktakeModal = ({
                 }
                 label={t('label.master-list')}
               />
-              {masterList ? (
-                <InputWithLabelRow
-                  labelProps={{ sx: { flex: `0 0 250px` } }}
-                  sx={{ paddingLeft: '160px' }}
-                  Input={
-                    <Checkbox
-                      style={{ paddingLeft: 0 }}
-                      disabled={!masterList || createBlankStocktake}
-                      checked={!!includeAllMasterListItems}
-                      onChange={e =>
-                        setState(prev => ({
-                          ...prev,
-                          includeAllMasterListItems: e.target.checked,
-                          vvmStatus: null,
-                          location: null,
-                          expiryDate: null,
-                        }))
-                      }
-                    />
-                  }
-                  label={t('stocktake.all-master-list-items')}
-                  labelRight={true}
-                />
-              ) : null}
+
               <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                labelProps={{
+                  sx: { flex: `${LABEL_FLEX}` },
+                }}
                 Input={
                   <LocationSearchInput
-                    disabled={
-                      !!createBlankStocktake || includeAllMasterListItems
-                    }
+                    disabled={itemStatus != ItemStatus.InStock}
                     onChange={location =>
                       setState(prev => ({ ...prev, location }))
                     }
@@ -282,10 +247,8 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <DateTimePickerInput
-                    width="100%"
-                    disabled={
-                      !!createBlankStocktake || includeAllMasterListItems
-                    }
+                    width={380}
+                    disabled={itemStatus != ItemStatus.InStock}
                     value={expiryDate}
                     onChange={expiryDate =>
                       setState(prev => ({ ...prev, expiryDate }))
@@ -294,16 +257,13 @@ export const CreateStocktakeModal = ({
                 }
                 label={t('label.items-expiring-before')}
               />
-
               {manageVvmStatusForStock && (
                 <InputWithLabelRow
                   label={t('label.vvm-status')}
                   labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                   Input={
                     <VVMStatusSearchInput
-                      disabled={
-                        !!createBlankStocktake || includeAllMasterListItems
-                      }
+                      disabled={itemStatus != ItemStatus.InStock}
                       onChange={vvmStatus =>
                         setState(prev => ({
                           ...prev,
@@ -319,9 +279,125 @@ export const CreateStocktakeModal = ({
 
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={estimatedLineCount}
-                label={t('label.stocktake-estimated-lines')}
+                Input={
+                  <RadioGroup
+                    value={itemStatus}
+                    sx={{ margin: '0 auto' }}
+                    onChange={event => {
+                      setState(prev => ({
+                        ...prev,
+                        itemStatus: event.target.value as ItemStatus,
+                      }));
+                    }}
+                  >
+                    <FormControlLabel
+                      disabled={
+                        expiryDate || location || vvmStatus ? true : false
+                      }
+                      value={ItemStatus.All}
+                      control={<Radio />}
+                      label={concat(
+                        t('label.all'),
+                        ' (',
+                        estimateLineCount(ItemStatus.All).toString(),
+                        ')'
+                      )}
+                    />
+                    <FormControlLabel
+                      value={ItemStatus.InStock}
+                      control={<Radio />}
+                      label={concat(
+                        t('report.in-stock'),
+                        ' (',
+                        estimateLineCount(ItemStatus.InStock).toString(),
+                        ')'
+                      )}
+                    />
+                    <FormControlLabel
+                      disabled={
+                        masterList || expiryDate || location || vvmStatus
+                          ? true
+                          : false
+                      }
+                      value={ItemStatus.None}
+                      control={<Radio />}
+                      label={concat(t('label.none'), ' (blank)')}
+                    />
+                  </RadioGroup>
+                }
+                label={t('label.items-expiring-before')}
               />
+
+              {itemStatus == ItemStatus.None ? (
+                <Box
+                  display="flex"
+                  sx={{
+                    backgroundColor: 'background.success',
+                    borderRadius: 2,
+                  }}
+                >
+                  <Box display="flex" flexDirection="column">
+                    <Box display="flex" flexDirection="row">
+                      <Box color="cceStatus.functioning">
+                        <CheckIcon />
+                      </Box>
+                      <Box
+                        sx={{
+                          '& > div': { display: 'inline-block' },
+                          alignContent: 'center',
+                          paddingLeft: 1,
+                        }}
+                      >
+                        <Typography
+                          sx={{ color: 'inherit' }}
+                          variant="body2"
+                          component="span"
+                          fontSize="1em"
+                        >
+                          {t('message.create-blank-stocktake')}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              ) : (
+                <Box
+                  display="flex"
+                  sx={{
+                    backgroundColor: 'gray.pale',
+                    borderRadius: 2,
+                  }}
+                  padding={1}
+                >
+                  <Box display="flex" flexDirection="column">
+                    <Box display="flex" flexDirection="row">
+                      <Box color="info.main">
+                        <InfoIcon />
+                      </Box>
+                      <Box
+                        sx={{
+                          '& > div': { display: 'inline-block' },
+                          alignContent: 'center',
+                          paddingLeft: 1,
+                        }}
+                      >
+                        <Typography
+                          sx={{ color: 'inherit' }}
+                          variant="body2"
+                          component="span"
+                          fontSize="1em"
+                        >
+                          {concat(
+                            estimateLineCount().toString(),
+                            ' ',
+                            t('message.lines-estimated')
+                          )}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
             </Box>
           ) : (
             <Box sx={{ height: '100%' }}>
