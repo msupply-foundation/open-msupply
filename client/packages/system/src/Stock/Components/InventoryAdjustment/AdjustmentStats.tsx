@@ -4,18 +4,21 @@ import {
   Box,
   Typography,
   SimpleStatistic,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../../api';
 
 export const ItemDetailAndStats = ({
   stockLine,
+  variation,
 }: {
   stockLine: StockLineRowFragment;
+  variation: number;
 }) => {
   const t = useTranslation();
 
   const {
-    item: { code, name, unitName },
+    item: { code, name },
     packSize,
     totalNumberOfPacks,
     availableNumberOfPacks,
@@ -27,42 +30,38 @@ export const ItemDetailAndStats = ({
         borderRadius: '16px',
         borderStyle: 'solid',
         borderColor: 'border',
-        paddingX: 2,
-        paddingY: 1,
-        marginBottom: 2,
+        padding: 1,
+        margin: '0 auto',
+        width: '520px',
       }}
     >
-      {/* Or maybe simpler, just: */}
-      {/* <Typography>{code}</Typography> */}
-
-      <Typography color="gray.dark">
-        {t('label.code')}: {code}
-        {unitName && (
+      <Box sx={{ paddingX: 1, marginBottom: 1 }}>
+        <Typography>
+          {t('label.code')}:
           <Typography component="span" color="gray.dark">
-            {' '}
-            | {t('label.unit')}: {unitName}
+            {` ${code} | `}
           </Typography>
-        )}
-      </Typography>
-      <Typography sx={{ fontWeight: 500, fontSize: '22px' }}>{name}</Typography>
+          {t('label.pack-size')}:
+          <Typography component="span" color="gray.dark">
+            {` ${packSize}`}
+          </Typography>
+        </Typography>
 
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-evenly',
-          gap: 4,
-          marginTop: 2,
-          alignItems: 'end', // ensure numbers align even if 1 label wraps
-        }}
-      >
-        <SimpleStatistic label={t('label.pack-size')} value={packSize} />
-        <SimpleStatistic
+        <Typography sx={{ fontWeight: 500, fontSize: '22px' }}>
+          {name}
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <AdjustmentStats
+          originalValue={availableNumberOfPacks}
+          variation={variation}
           label={t('label.available-packs')}
-          value={availableNumberOfPacks}
         />
-        <SimpleStatistic
-          label={t('label.total-packs-on-hand')}
-          value={totalNumberOfPacks}
+        <AdjustmentStats
+          originalValue={totalNumberOfPacks}
+          variation={variation}
+          label={t('label.packs-on-hand')}
         />
       </Box>
     </Box>
@@ -70,42 +69,58 @@ export const ItemDetailAndStats = ({
 };
 
 export const AdjustmentStats = ({
-  stockLine,
+  originalValue,
   variation,
+  label,
 }: {
-  stockLine: StockLineRowFragment;
+  originalValue: number;
   variation: number;
+  label: string;
 }) => {
   const t = useTranslation();
+
   return (
     <Box
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'end',
         backgroundColor: 'background.secondary',
         padding: '1em',
         borderRadius: '16px',
-        gap: '1em',
       }}
     >
-      <SimpleStatistic
-        label={t('label.new-available-packs')}
-        value={stockLine.availableNumberOfPacks + variation}
-        color={'secondary.main'}
-      />
+      <Typography
+        sx={{ fontWeight: '600', fontSize: '0.875em', textAlign: 'center' }}
+      >
+        {label}
+      </Typography>
       <Box
         sx={{
-          width: '1px',
-          backgroundColor: 'secondary.main',
-          height: '-webkit-fill-available',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'end',
+          gap: '1em',
+          marginY: '0.25em',
         }}
-      ></Box>
-      <SimpleStatistic
-        label={t('label.new-total-packs')}
-        value={stockLine.totalNumberOfPacks + variation}
-        color={'secondary.main'}
-      />
+      >
+        <SimpleStatistic
+          label={t('label.current')}
+          value={originalValue}
+          color={'secondary.main'}
+        />
+        <Box
+          sx={{
+            width: '1px',
+            backgroundColor: 'secondary.main',
+            height: '-webkit-fill-available',
+          }}
+        ></Box>
+        <SimpleStatistic
+          label={t('label.adjusted')}
+          value={
+            variation === 0 ? UNDEFINED_STRING_VALUE : originalValue + variation
+          }
+          color={'secondary.main'}
+        />
+      </Box>
     </Box>
   );
 };

@@ -7,27 +7,32 @@ export const SimpleStatistic = ({
   color = 'text.primary',
 }: {
   label: string;
-  value: number;
+  value: number | string;
   color?: string;
 }) => {
+  const displayColor =
+    typeof value === 'number' && value < 0 ? 'error.main' : color;
+
   return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        width: '10rem',
+        width: '-webkit-fill-available',
       }}
     >
-      <Typography color="gray.dark">{label}</Typography>
       <Typography
         sx={{
           fontWeight: 600,
           fontSize: '1.5rem',
-          color: value < 0 ? 'error.main' : color,
+          color: displayColor,
         }}
       >
         {value}
+      </Typography>
+      <Typography color="secondary" fontSize="0.875em">
+        {label}
       </Typography>
     </Box>
   );

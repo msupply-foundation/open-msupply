@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { AdjustmentForm } from './AdjustmentForm';
-import { AdjustmentStats, ItemDetailAndStats } from './AdjustmentStats';
+import { ItemDetailAndStats } from './AdjustmentStats';
 
 interface InventoryAdjustmentModalProps {
   stockLine: StockLineRowFragment;
@@ -56,9 +56,9 @@ export const InventoryAdjustmentModal = ({
 
   return (
     <Modal
-      height={575}
-      width={700}
-      contentProps={{ sx: { padding: 0, width: 650, margin: '0 auto' } }}
+      height={600}
+      width={660}
+      contentProps={{ sx: { paddingTop: 0 } }}
       slideAnimation={false}
       title={t('title.stock-adjustment')}
       okButton={
@@ -67,9 +67,7 @@ export const InventoryAdjustmentModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <>
-        <ItemDetailAndStats stockLine={stockLine} />
-
-        <AdjustmentStats stockLine={stockLine} variation={variation} />
+        <ItemDetailAndStats stockLine={stockLine} variation={variation} />
 
         <AdjustmentForm
           isVaccine={stockLine.item.isVaccine}
@@ -78,7 +76,9 @@ export const InventoryAdjustmentModal = ({
         />
 
         {stockLine.availableNumberOfPacks + variation < 0 && (
-          <Alert severity="error">{t('error.reduced-below-zero')}</Alert>
+          <Alert severity="error" sx={{ marginRight: 0 }}>
+            {t('error.reduced-below-zero')}
+          </Alert>
         )}
       </>
     </Modal>
