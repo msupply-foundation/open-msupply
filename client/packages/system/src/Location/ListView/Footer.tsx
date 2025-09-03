@@ -27,7 +27,7 @@ export const FooterComponent = ({ data }: { data: LocationRowFragment[] }) => {
         if (result) {
           setDeleteErrors(result);
         }
-        if (deleteErrors.length === 0) {
+        if (result.length === 0) {
           success(
             t('messages.deleted-locations', {
               count: selectedRows.length,

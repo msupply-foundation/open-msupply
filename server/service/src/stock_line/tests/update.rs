@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test {
+    use chrono::NaiveDate;
     use repository::{
         mock::{
             mock_location_with_restricted_location_type_a, mock_name_b, mock_name_customer_a,
@@ -182,6 +183,9 @@ mod test {
                     program_id: Some(NullableUpdate {
                         value: Some("program_a".to_string()),
                     }),
+                    expiry_date: Some(NullableUpdate {
+                        value: NaiveDate::from_ymd_opt(2025, 12, 31),
+                    }),
                     ..Default::default()
                 },
             )
@@ -197,8 +201,50 @@ mod test {
             StockLineRow {
                 location_id: Some("location_1".to_string()),
                 program_id: Some("program_a".to_string()),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2025, 12, 31).unwrap()),
                 ..stock_line.clone()
             }
         );
+
+        // None values respect existing values
+        service
+            .update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    expiry_date: None,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&mock_stock_line_a().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            stock_line.expiry_date,
+            Some(NaiveDate::from_ymd_opt(2025, 12, 31).unwrap())
+        );
+
+        // NullableUpdate with None clears the value
+        service
+            .update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    expiry_date: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&mock_stock_line_a().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(stock_line.expiry_date, None);
     }
 }

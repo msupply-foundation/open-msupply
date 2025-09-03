@@ -4,9 +4,7 @@ mod validate;
 use validate::validate;
 
 use chrono::NaiveDate;
-use repository::{
-    RepositoryError, StockLine, StockLineRowRepository, StocktakeLine, StocktakeLineRowRepository,
-};
+use repository::{RepositoryError, StockLine, StocktakeLine, StocktakeLineRowRepository};
 
 use crate::{
     service_provider::ServiceContext, stocktake_line::query::get_stocktake_line, NullableUpdate,
@@ -20,7 +18,7 @@ pub struct UpdateStocktakeLine {
     pub snapshot_number_of_packs: Option<f64>,
     pub counted_number_of_packs: Option<f64>,
     pub batch: Option<String>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdate<NaiveDate>>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
@@ -65,17 +63,6 @@ pub fn update_stocktake_line(
             let new_stocktake_line = generate(existing.clone(), input.clone())?;
             StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
-            // Update stock line donor and item variant if changed and stock line exists
-            if let Some(mut stock_line) = existing.stock_line.clone() {
-                if let Some(donor_id) = &input.donor_id {
-                    stock_line.donor_link_id = donor_id.value.clone();
-                }
-                if let Some(item_variant_id) = &input.item_variant_id {
-                    stock_line.item_variant_id = item_variant_id.value.clone();
-                }
-                StockLineRowRepository::new(connection).upsert_one(&stock_line)?;
-            }
-
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(UpdateStocktakeLineError::InternalError(
                 "Failed to read the just inserted stocktake line!".to_string(),
@@ -90,7 +77,7 @@ mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_donor_a, mock_item_a, mock_item_a_variant_1, mock_item_restricted_location_type_b,
+            mock_donor_a, mock_item_a, mock_item_restricted_location_type_b,
             mock_location_with_restricted_location_type_a, mock_locations,
             mock_locked_stocktake_line, mock_stock_line_b, mock_stocktake_a, mock_stocktake_line_a,
             mock_stocktake_line_finalised, mock_store_a, MockData, MockDataInserts,
@@ -98,7 +85,7 @@ mod stocktake_line_test {
         test_db::setup_all_with_data,
         EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ReasonOptionRow,
         ReasonOptionRowRepository, ReasonOptionType, StockLineFilter, StockLineRepository,
-        StockLineRowRepository, StocktakeLineRow, Upsert,
+        StocktakeLineRow, Upsert,
     };
 
     use crate::{
@@ -494,11 +481,11 @@ mod stocktake_line_test {
             }
         );
 
-        // success with donor_id update
+        // success with clearable fields
         let stocktake_line_a = mock_stocktake_line_a();
         let donor_id = mock_donor_a().id;
 
-        service
+        let line = service
             .update_stocktake_line(
                 &context,
                 UpdateStocktakeLine {
@@ -506,85 +493,56 @@ mod stocktake_line_test {
                     donor_id: Some(NullableUpdate {
                         value: Some(donor_id.clone()),
                     }),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        // check that the donor_id was set correctly on the stock line
-        if let Some(stock_line_id) = &stocktake_line_a.stock_line_id {
-            let stock_line_row = StockLineRowRepository::new(&context.connection)
-                .find_one_by_id(stock_line_id)
-                .unwrap()
-                .unwrap();
-            assert_eq!(stock_line_row.donor_link_id, Some(donor_id));
-        }
-
-        // success with donor_id removal (set to None)
-        service
-            .update_stocktake_line(
-                &context,
-                UpdateStocktakeLine {
-                    id: stocktake_line_a.id.clone(),
-                    donor_id: Some(NullableUpdate { value: None }),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        // check that the donor_id was cleared
-        if let Some(stock_line_id) = &stocktake_line_a.stock_line_id {
-            let stock_line_row = StockLineRowRepository::new(&context.connection)
-                .find_one_by_id(stock_line_id)
-                .unwrap()
-                .unwrap();
-            assert_eq!(stock_line_row.donor_link_id, None);
-        }
-
-        // success with item_variant_id update
-        let stocktake_line_a = mock_stocktake_line_a();
-        let item_variant_id = mock_item_a_variant_1().id;
-        service
-            .update_stocktake_line(
-                &context,
-                UpdateStocktakeLine {
-                    id: stocktake_line_a.id.clone(),
-                    item_variant_id: Some(NullableUpdate {
-                        value: Some(item_variant_id.clone()),
+                    expiry_date: Some(NullableUpdate {
+                        value: NaiveDate::from_ymd_opt(2025, 10, 1),
                     }),
                     ..Default::default()
                 },
             )
             .unwrap();
 
-        // check that the item_variant_id was set correctly on the stock line
-        if let Some(stock_line_id) = &stocktake_line_a.stock_line_id {
-            let stock_line_row = StockLineRowRepository::new(&context.connection)
-                .find_one_by_id(stock_line_id)
-                .unwrap()
-                .unwrap();
-            assert_eq!(stock_line_row.item_variant_id, Some(item_variant_id));
-        }
+        // check that the fields were set correctly
+        assert_eq!(line.line.donor_link_id, Some(donor_id.clone()));
+        assert_eq!(
+            line.line.expiry_date,
+            Some(NaiveDate::from_ymd_opt(2025, 10, 1).unwrap())
+        );
 
-        // success with item_variant_id removal (set to None)
-        service
+        // `None` inputs maintain existing values
+        let line = service
             .update_stocktake_line(
                 &context,
                 UpdateStocktakeLine {
                     id: stocktake_line_a.id.clone(),
-                    item_variant_id: Some(NullableUpdate { value: None }),
+                    donor_id: None,
+                    expiry_date: None,
                     ..Default::default()
                 },
             )
             .unwrap();
 
-        // check that the item_variant_id was cleared
-        if let Some(stock_line_id) = &stocktake_line_a.stock_line_id {
-            let stock_line_row = StockLineRowRepository::new(&context.connection)
-                .find_one_by_id(stock_line_id)
-                .unwrap()
-                .unwrap();
-            assert_eq!(stock_line_row.item_variant_id, None);
-        }
+        // Fields stayed the same
+        assert_eq!(line.line.donor_link_id, Some(donor_id));
+        assert_eq!(
+            line.line.expiry_date,
+            Some(NaiveDate::from_ymd_opt(2025, 10, 1).unwrap())
+        );
+
+        // now clear those fields
+        let line = service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: stocktake_line_a.id.clone(),
+                    donor_id: Some(NullableUpdate { value: None }),
+                    expiry_date: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Fields stayed the same
+        assert_eq!(line.line.donor_link_id, None);
+        assert_eq!(line.line.expiry_date, None);
     }
 }

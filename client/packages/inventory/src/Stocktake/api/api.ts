@@ -65,9 +65,11 @@ const stocktakeParser = {
       countedNumberOfPacks: line.countedNumberOfPacks,
       sellPricePerPack: line.sellPricePerPack,
       id: line.id,
-      expiryDate: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : undefined,
+      expiryDate: {
+        value: line.expiryDate
+          ? Formatter.naiveDate(new Date(line.expiryDate))
+          : null,
+      },
       comment: line.comment ?? '',
       itemVariantId: setNullableInput('itemVariantId', {
         itemVariantId: line.itemVariantId,

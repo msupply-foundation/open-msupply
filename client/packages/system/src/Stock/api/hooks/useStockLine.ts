@@ -34,6 +34,11 @@ const defaultDraftStockLine: DraftStockLine = {
     name: '',
     isVaccine: false,
     dosesPerUnit: 0,
+    defaultPackSize: 0,
+    itemStoreProperties: {
+      __typename: 'ItemStorePropertiesNode',
+      defaultSellPricePerPack: 0,
+    },
   },
   reasonOption: null,
   vvmStatusLogs: {
@@ -191,7 +196,7 @@ const useUpdate = (id: string) => {
         barcode,
         batch,
         costPricePerPack,
-        expiryDate,
+        expiryDate: setNullableInput('expiryDate', { expiryDate }),
         onHold,
         sellPricePerPack,
         location: setNullableInput('id', location),

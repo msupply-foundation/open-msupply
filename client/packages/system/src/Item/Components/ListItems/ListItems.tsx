@@ -6,6 +6,8 @@ import {
   useTranslation,
   useConfirmationModal,
   Box,
+  ALT_KEY,
+  useRegisterActions,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '../../api';
 
@@ -48,6 +50,24 @@ export const ListItems = ({
   if (showNew) {
     options.push({ id: 'new', value: t('label.new-item') });
   }
+
+  useRegisterActions(
+    [
+      {
+        id: 'next',
+        name: `${t('button.next')} (${ALT_KEY}+N)`,
+        shortcut: ['Alt+KeyN'],
+        perform: () => {
+          if (showNew) {
+            isDirty
+              ? showSaveConfirmation()
+              : navigate(route.addPart('new').build());
+          }
+        },
+      },
+    ],
+    [route, showNew, currentItemId, isDirty]
+  );
 
   return (
     <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
