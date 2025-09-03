@@ -10,12 +10,10 @@ import {
   useUrlQueryParams,
   useFeatureFlags,
   usePreferences,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
-import {
-  MaterialReactTable,
-  MRT_ColumnDef as MRTColumnDef,
-  useMaterialReactTable,
-} from 'material-react-table';
+import { MRT_ColumnDef as MRTColumnDef } from 'material-react-table';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
@@ -149,51 +147,19 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     return cols;
   }, [manageVvmStatusForStock]);
 
-  const table = useMaterialReactTable({
+  const table = useNonPaginatedMaterialTable<
+    StockOutLineFragment | StockOutItem
+  >({
     columns: mrtColumns,
     data: rows ?? [],
-    enablePagination: false,
-    enableRowVirtualization: true,
-    // muiTableBodyProps: {
-    //   sx: { border: '1px solid blue', width: '100%' },
-    // },
-    enableColumnResizing: true,
-    enableRowSelection: true,
-    initialState: {
-      density: 'compact',
-    },
-    muiTableHeadCellProps: {
-      sx: {
-        fontSize: '14px',
-        lineHeight: 1.2,
-        verticalAlign: 'bottom',
-      },
-    },
-    muiTableBodyCellProps: {
-      sx: {
-        fontSize: '14px',
-        borderBottom: '1px solid rgba(224, 224, 224, 1)',
-      },
-    },
-    muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
-      onClick: () => {
-        if (onRowClick) onRowClick(row.original);
-      },
-      sx: {
-        backgroundColor: staticRowIndex % 2 === 0 ? 'transparent' : '#fafafb', // light grey on odd rows
-        '& td': {
-          borderBottom: '1px solid rgba(224, 224, 224, 1)',
-        },
-      },
-    }),
+    onRowClick: onRowClick ? row => onRowClick(row) : () => {},
+    isLoading: false,
   });
 
   if (!rows) return null;
 
   return tableUsabilityImprovements ? (
-    <div style={{ width: '100%', overflow: 'hidden' }}>
-      <MaterialReactTable table={table} />
-    </div>
+    <MaterialTable table={table} />
   ) : (
     <DataTable
       id="outbound-detail"
