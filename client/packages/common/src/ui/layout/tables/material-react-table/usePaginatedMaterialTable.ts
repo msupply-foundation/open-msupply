@@ -8,7 +8,7 @@ import {
   MRT_Updater,
   MRT_PaginationState,
 } from 'material-react-table';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -42,6 +42,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   });
   const { urlQuery, updateQuery } = useUrlQuery();
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+  const paginationRef = useRef<number>(0);
 
   const pagination = { page, first, offset };
 
@@ -74,34 +75,28 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   const handlePaginationChange = useCallback(
     (paginationUpdate: MRT_Updater<MRT_PaginationState>) => {
       if (typeof paginationUpdate === 'function') {
+        const lastUpdate = paginationRef.current;
         const current = { pageIndex: page, pageSize: first };
-        console.log('current', current);
         const newPaginationValue = paginationUpdate(current);
-        console.log('New', newPaginationValue);
+        paginationRef.current = Date.now();
+        // There is a bug where this function is called twice in quick
+        // succession the first time it's triggered. This is a hacky workaround
+        // for now, but we should investigate further at some point, or report
+        // the bug to MRT devs
+        if (paginationRef.current - lastUpdate < 300) return;
         updatePaginationQuery(newPaginationValue.pageIndex);
       }
     },
     [updatePaginationQuery]
   );
 
-  console.log('pagination', pagination);
-
   const table = useMaterialReactTable<T>({
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
     onSortingChange: handleSortingChange,
-    onPaginationChange: (
-      paginationUpdate: MRT_Updater<MRT_PaginationState>
-    ) => {
-      if (typeof paginationUpdate === 'function') {
-        const current = { pageIndex: page, pageSize: first };
-        console.log('current', current);
-        const newPaginationValue = paginationUpdate(current);
-        console.log('New', newPaginationValue);
-        updatePaginationQuery(newPaginationValue.pageIndex);
-      }
-    },
+    autoResetPageIndex: false,
+    onPaginationChange: handlePaginationChange,
     onColumnFiltersChange: columnFilters => {
       if (typeof columnFilters === 'function') {
         const newFilter = columnFilters([]);
