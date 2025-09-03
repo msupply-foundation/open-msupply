@@ -121,6 +121,12 @@ const OutboundShipmentListViewComponent: FC = () => {
         id: 'status',
         header: t('label.status'),
         size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { value: 'draft', label: t('label.draft') },
+          { value: 'SHIPPED', label: t('label.shipped') },
+          { value: 'cancelled', label: t('label.cancelled') },
+        ],
       },
       {
         accessorKey: 'invoiceNumber',
@@ -189,6 +195,7 @@ const OutboundShipmentListViewComponent: FC = () => {
     columns: mrtColumns,
     data: data?.nodes ?? [],
     totalCount: data?.totalCount ?? 0,
+    initialSort: { key: 'invoiceNumber', dir: 'desc' },
   });
 
   return (
