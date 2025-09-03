@@ -44,7 +44,7 @@ export const ConfirmationModal = ({
   const t = useTranslation();
 
   return (
-    <BasicModal width={width} height={height} open={open}>
+    <BasicModal width={width} height={height} open={open} onClose={onCancel}>
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row">
           <Grid>
