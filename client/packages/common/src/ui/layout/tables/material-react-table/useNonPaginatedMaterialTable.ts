@@ -26,6 +26,9 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
     initialState: {
       density: 'compact',
     },
+    state: {
+      showProgressBars: isLoading,
+    },
     muiTableHeadCellProps: {
       sx: {
         fontSize: '14px',

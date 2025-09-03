@@ -26,6 +26,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
+    // TO-DO: Abstract filter/sort logic elsewhere
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
@@ -50,6 +51,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
+    // TO-DO: Utility functions for these, and keep elsewhere
     onSortingChange: sortUpdate => {
       if (typeof sortUpdate === 'function') {
         const newSortValue = sortUpdate([
@@ -91,6 +93,8 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
       columnFilters,
       rowSelection,
     },
+    // TO-DO: Once the props are more established, extract common props between
+    // two table types to common object or function
     muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
       onClick: () => {
         if (onRowClick) onRowClick(row.original);
