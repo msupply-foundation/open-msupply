@@ -1,12 +1,9 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
   MaterialReactTable,
-  MRT_RowSelectionState,
+  MRT_RowSelectionState as MRTRowSelectionState,
   useMaterialReactTable,
-  type MRT_ColumnDef,
-  type MRT_ColumnFiltersState,
-  type MRT_PaginationState,
-  type MRT_SortingState,
+  type MRT_ColumnDef as MRTColumnDef,
 } from 'material-react-table';
 import {
   useNavigate,
@@ -28,6 +25,8 @@ import {
   PaperHoverPopover,
   PaperPopoverSection,
   MessageSquareIcon,
+  useUrlQuery,
+  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -45,6 +44,7 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 };
 
 const OutboundShipmentListViewComponent: FC = () => {
+  const { tableUsabilityImprovements } = useFeatureFlags();
   const { mutate: onUpdate } = useOutbound.document.update();
   const t = useTranslation();
   const {
@@ -63,12 +63,13 @@ const OutboundShipmentListViewComponent: FC = () => {
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
     ],
   });
+  const { urlQuery, updateQuery } = useUrlQuery();
   const navigate = useNavigate();
   const modalController = useToggle();
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
   const simplifiedTabletView = useSimplifiedTabletUI();
-  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+  const [rowSelection, setRowSelection] = useState<MRTRowSelectionState>({});
 
   const { data, isError, isLoading } = useOutbound.document.list(queryParams);
   useDisableOutboundRows(data?.nodes);
@@ -116,7 +117,7 @@ const OutboundShipmentListViewComponent: FC = () => {
     [sortBy]
   );
 
-  const mrtColumns = useMemo<MRT_ColumnDef<OutboundRowFragment>[]>(
+  const mrtColumns = useMemo<MRTColumnDef<OutboundRowFragment>[]>(
     () => [
       {
         accessorKey: 'otherPartyName',
@@ -191,7 +192,14 @@ const OutboundShipmentListViewComponent: FC = () => {
   );
 
   // console.log('data', data?.nodes);
-  console.log('Sorting', sortBy);
+  // console.log('Sorting', sortBy);
+
+  const columnFilters = Object.entries(filter).map(([id, value]) => ({
+    id,
+    value,
+  }));
+
+  // console.log('filter', filter);
 
   const table = useMaterialReactTable({
     columns: mrtColumns,
@@ -201,20 +209,37 @@ const OutboundShipmentListViewComponent: FC = () => {
     manualSorting: true,
     onSortingChange: sortUpdate => {
       if (typeof sortUpdate === 'function') {
-        const newSortValue = sortUpdate()[0];
-        console.log('Sorting changed:', newSortValue);
-        updateSortQuery(newSortValue.id, newSortValue.desc ? 'desc' : 'asc');
+        const newSortValue = sortUpdate([
+          { id: sortBy.key, desc: !!sortBy.isDesc },
+        ])[0];
+        // console.log('Sorting changed:', newSortValue);
+        if (newSortValue)
+          updateSortQuery(newSortValue.id, newSortValue.desc ? 'desc' : 'asc');
       }
     },
     onPaginationChange: pagination => {
       const current = { pageIndex: page, pageSize: first };
-      console.log('current', current);
-      const newPaginationValue = pagination(current);
-      console.log('Pagination changed:', newPaginationValue);
-      updatePaginationQuery(newPaginationValue.pageIndex);
+      if (typeof pagination === 'function') {
+        // console.log('current', current);
+        const newPaginationValue = pagination(current);
+        // console.log('Pagination changed:', newPaginationValue);
+        updatePaginationQuery(newPaginationValue.pageIndex);
+      }
+    },
+    onColumnFiltersChange: columnFilters => {
+      if (typeof columnFilters === 'function') {
+        const newFilter = columnFilters([]);
+        // console.log('Column filters changed:', newFilter);
+        // @ts-expect-error -- temporary
+        updateQuery({
+          ...urlQuery,
+
+          ...Object.fromEntries(newFilter.map(f => [f.id, f.value])),
+        });
+      }
     },
     muiPaginationProps: {
-      // showRowsPerPage: false,
+      showRowsPerPage: false,
       // rowsPerPageOptions: [], // Remove the dropdown
     },
     enableRowSelection: true,
@@ -223,7 +248,8 @@ const OutboundShipmentListViewComponent: FC = () => {
     state: {
       sorting: [{ id: sortBy.key, desc: !!sortBy.isDesc }],
       pagination: { pageIndex: pagination.page, pageSize: pagination.first },
-      // showProgressBars: true,
+      showProgressBars: isLoading,
+      columnFilters,
       rowSelection,
     },
     // enableColumnResizing: true,
@@ -270,9 +296,9 @@ const OutboundShipmentListViewComponent: FC = () => {
     },
   });
 
-  const selected = table.getSelectedRowModel().rows;
+  // const selected = table.getSelectedRowModel().rows;
 
-  console.log('selected', selected);
+  // console.log('selected', selected);
 
   return (
     <>
@@ -281,28 +307,31 @@ const OutboundShipmentListViewComponent: FC = () => {
         modalController={modalController}
         simplifiedTabletView={simplifiedTabletView}
       />
-      {/* <DataTable
-        id="outbound-list"
-        enableColumnSelection
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-outbound-shipments')}
-            onCreate={modalController.toggleOn}
-          />
-        }
-        onRowClick={row => {
-          navigate(row.id);
-        }}
-      /> */}
-      <div style={{ width: '100%' }}>
-        <MaterialReactTable table={table} />
-      </div>
+      {tableUsabilityImprovements ? (
+        <div style={{ width: '100%' }}>
+          <MaterialReactTable table={table} />
+        </div>
+      ) : (
+        <DataTable
+          id="outbound-list"
+          enableColumnSelection
+          pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+          onChangePage={updatePaginationQuery}
+          columns={columns}
+          data={data?.nodes ?? []}
+          isError={isError}
+          isLoading={isLoading}
+          noDataElement={
+            <NothingHere
+              body={t('error.no-outbound-shipments')}
+              onCreate={modalController.toggleOn}
+            />
+          }
+          onRowClick={row => {
+            navigate(row.id);
+          }}
+        />
+      )}
       <Footer selectedRows={table.getSelectedRowModel().rows} />
     </>
   );

@@ -6,13 +6,13 @@ import {
   useTranslation,
   AppFooterPortal,
 } from '@openmsupply-client/common';
-import { MRT_Row } from 'material-react-table';
+import { MRT_Row as MRTRow } from 'material-react-table';
 import { OutboundRowFragment, useOutbound } from '../api';
 
 export const FooterComponent = ({
   selectedRows,
 }: {
-  selectedRows: MRT_Row<OutboundRowFragment>[];
+  selectedRows: MRTRow<OutboundRowFragment>[];
 }) => {
   const t = useTranslation();
 

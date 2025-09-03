@@ -8,10 +8,12 @@ import {
   AppSxProp,
   NothingHere,
   useUrlQueryParams,
+  useFeatureFlags,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   MaterialReactTable,
-  MRT_ColumnDef,
+  MRT_ColumnDef as MRTColumnDef,
   useMaterialReactTable,
 } from 'material-react-table';
 import { useOutbound } from '../api';
@@ -89,115 +91,126 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   });
   const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
-
-  if (!rows) return null;
-
-  console.log('rows', rows);
+  const { tableUsabilityImprovements } = useFeatureFlags();
+  const { manageVvmStatusForStock } = usePreferences();
 
   const mrtColumns = useMemo<
-    MRT_ColumnDef<StockOutLineFragment | StockOutItem>[]
-  >(
-    () => [
+    MRTColumnDef<StockOutLineFragment | StockOutItem>[]
+  >(() => {
+    const cols = [
+      // TO-DO: Note popover column,
       {
         accessorKey: 'item.code',
         header: t('label.code'),
-        // size: 140,
-        enableColumnOrdering: false,
-        enableEditing: false,
-        enableSorting: true,
-        enableResizing: true,
-        // muiTableHeadCellProps: { align: 'left' },
-        // muiTableBodyCellProps: { align: 'left' },
-        // isSticky: true,
+        size: 120,
       },
       {
         accessorKey: 'item.name',
-        header: 'Item name',
+        header: t('label.name'),
         // size: 140,
-        enableColumnOrdering: false,
-        enableEditing: false,
-        enableSorting: true,
-        enableResizing: true,
-        // muiTableHeadCellProps: { align: 'left' },
-        // muiTableBodyCellProps: { align: 'left' },
-        // isSticky: true,
       },
       {
         accessorKey: 'batch',
-        header: 'Batch',
-        // size: 140,
-        enableColumnOrdering: false,
-        enableEditing: false,
-        enableSorting: true,
-        enableResizing: true,
-        // muiTableHeadCellProps: { align: 'left' },
-        // muiTableBodyCellProps: { align: 'left' },
-        // isSticky: true,
+        header: t('label.batch'),
+        size: 130,
       },
       {
         accessorKey: 'expiryDate',
-        header: 'Expiry Date',
-        // size: 140,
-        enableColumnOrdering: false,
-        enableEditing: false,
-        enableSorting: true,
-        enableResizing: true,
-        // muiTableHeadCellProps: { align: 'left' },
-        // muiTableBodyCellProps: { align: 'left' },
-        // isSticky: true,
+        header: t('label.expiry-date'),
+        size: 160,
       },
-    ],
-    []
-  );
+    ];
+
+    if (manageVvmStatusForStock)
+      cols.push({
+        accessorKey: 'vvmStatus',
+        header: t('label.vvm-status'),
+      });
+
+    cols.push(
+      {
+        accessorKey: 'location.code',
+        header: t('label.location'),
+      },
+      {
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+      }
+    );
+
+    // if (manageVaccinesInDoses) {
+    //   columns.push(getDosesPerUnitColumn(t));
+    // }
+
+    return cols;
+  }, [manageVvmStatusForStock]);
 
   const table = useMaterialReactTable({
     columns: mrtColumns,
-    data: rows,
+    data: rows ?? [],
     enablePagination: false,
     enableRowVirtualization: true,
-    muiTableContainerProps: {
-      sx: { maxHeight: '600px', width: '100%' },
-    },
     // muiTableBodyProps: {
     //   sx: { border: '1px solid blue', width: '100%' },
     // },
     enableColumnResizing: true,
-    // muiTableBodyRowProps: {
-    //   sx: {
-    //     borderBottom: '1px solid rgba(224, 224, 224, 1)',
-    //   },
-    // },
-    // muiTableProps: {
-    //   sx: {
-    //     width: '100%',
-    //     border: '1px solid green',
-    //     // tableLayout: 'fixed', // ensures columns share extra space
-    //   },
-    // },
+    enableRowSelection: true,
+    initialState: {
+      density: 'compact',
+    },
+    muiTableHeadCellProps: {
+      sx: {
+        fontSize: '14px',
+        lineHeight: 1.2,
+        verticalAlign: 'bottom',
+      },
+    },
+    muiTableBodyCellProps: {
+      sx: {
+        fontSize: '14px',
+        borderBottom: '1px solid rgba(224, 224, 224, 1)',
+      },
+    },
+    muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
+      onClick: () => {
+        if (onRowClick) onRowClick(row.original);
+      },
+      sx: {
+        backgroundColor: staticRowIndex % 2 === 0 ? 'transparent' : '#fafafb', // light grey on odd rows
+        '& td': {
+          borderBottom: '1px solid rgba(224, 224, 224, 1)',
+        },
+      },
+    }),
   });
 
-  return (
-    <>
-      <div style={{ width: '100%', overflow: 'hidden' }}>
-        <MaterialReactTable table={table} />
-        {/* <DataTable
-        id="outbound-detail"
-        onRowClick={onRowClick}
-        ExpandContent={props => <Expand {...props} />}
-        columns={columns}
-        data={rows}
-        enableColumnSelection
-        noDataElement={
-          <NothingHere
-            body={t('error.no-outbound-items')}
-            onCreate={isDisabled ? undefined : () => onAddItem()}
-            buttonText={t('button.add-item')}
-          />
-        }
-        isRowAnimated={true}
-      /> */}
-      </div>
-    </>
+  if (!rows) return null;
+
+  return tableUsabilityImprovements ? (
+    <div style={{ width: '100%', overflow: 'hidden' }}>
+      <MaterialReactTable table={table} />
+    </div>
+  ) : (
+    <DataTable
+      id="outbound-detail"
+      onRowClick={onRowClick}
+      ExpandContent={props => <Expand {...props} />}
+      columns={columns}
+      data={rows}
+      enableColumnSelection
+      noDataElement={
+        <NothingHere
+          body={t('error.no-outbound-items')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      }
+      isRowAnimated={true}
+    />
   );
 };
 
