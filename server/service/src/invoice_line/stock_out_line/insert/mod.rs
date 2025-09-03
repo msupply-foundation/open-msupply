@@ -3,7 +3,7 @@ use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
     invoice_line::{query::get_invoice_line, stock_out_line::insert::generate::GenerateResult},
     service_provider::ServiceContext,
-    WithDBError,
+    NullableUpdate, WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -27,18 +27,20 @@ pub struct InsertStockOutLine {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub note: Option<String>,
-    pub location_id: Option<String>,
     pub batch: Option<String>,
     pub pack_size: Option<f64>,
-    pub expiry_date: Option<NaiveDate>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
-    pub campaign_id: Option<String>,
-    pub program_id: Option<String>,
-    pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
-    pub item_variant_id: Option<String>,
-    pub donor_id: Option<String>,
+    pub vvm_status_id: Option<String>,
+
+    // Clearable fields
+    pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub campaign_id: Option<NullableUpdate<String>>,
+    pub location_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
+    pub item_variant_id: Option<NullableUpdate<String>>,
+    pub donor_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -121,7 +123,7 @@ pub fn insert_stock_out_line(
 mod test {
     use repository::{
         mock::{
-            mock_item_a, mock_item_b_lines, mock_name_store_a,
+            mock_item_a, mock_item_b_lines, mock_location_on_hold, mock_name_store_a,
             mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_c,
             mock_outbound_shipment_c_invoice_lines, mock_patient, mock_prescription_a,
             mock_stock_line_a, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
@@ -138,11 +140,11 @@ mod test {
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
-        invoice_line::{
-            stock_out_line::InsertStockOutLine,
-            stock_out_line::{InsertStockOutLineError as ServiceError, StockOutType},
+        invoice_line::stock_out_line::{
+            InsertStockOutLine, InsertStockOutLineError as ServiceError, StockOutType,
         },
         service_provider::ServiceProvider,
+        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -234,6 +236,26 @@ mod test {
                         .clone(),
                     number_of_packs: 1.0,
                     stock_line_id: mock_stock_line_location_is_on_hold()[0].id.clone(),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::LocationIsOnHold)
+        );
+        // Existing stock line is not in on hold location, but invoice moves it to on hold location
+        assert_eq!(
+            service.insert_stock_out_line(
+                &context,
+                InsertStockOutLine {
+                    id: "new outbound line id".to_string(),
+                    r#type: StockOutType::OutboundShipment,
+                    invoice_id: mock_outbound_shipment_a_invoice_lines()[0]
+                        .invoice_id
+                        .clone(),
+                    number_of_packs: 1.0,
+                    stock_line_id: mock_stock_line_si_d()[0].id.clone(),
+                    location_id: Some(NullableUpdate {
+                        value: Some(mock_location_on_hold().id)
+                    }),
                     ..Default::default()
                 },
             ),
