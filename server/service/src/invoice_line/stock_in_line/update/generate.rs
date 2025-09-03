@@ -157,7 +157,9 @@ fn generate_line(
     update_line.batch = batch.or(update_line.batch);
     update_line.note = note.map(|n| n.value).unwrap_or(update_line.note);
     update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);
-    update_line.expiry_date = expiry_date.or(update_line.expiry_date);
+    update_line.expiry_date = expiry_date
+        .map(|expiry_date| expiry_date.value)
+        .unwrap_or(update_line.expiry_date);
     update_line.sell_price_per_pack =
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);
     update_line.cost_price_per_pack =
