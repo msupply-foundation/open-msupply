@@ -36,7 +36,7 @@ export const ListItems = ({
   const navigate = useNavigate();
   const value = items?.find(({ id }) => id === currentItemId) ?? null;
 
-  const showSaveConfirmation = useConfirmationModal({
+  const showSaveNewConfirmation = useConfirmationModal({
     onConfirm: handleSaveNew,
     message: t('message.confirm-save-new'),
     title: t('heading.save-new'),
@@ -51,19 +51,19 @@ export const ListItems = ({
     options.push({ id: 'new', value: t('label.new-item') });
   }
 
+  const changeItem = (id: string) => {
+    if (currentItemId === 'new' && isDirty) {
+      showSaveNewConfirmation();
+    } else navigate(route.addPart(id).build());
+  };
+
   useRegisterActions(
     [
       {
-        id: 'next',
-        name: `${t('button.next')} (${ALT_KEY}+N)`,
+        id: 'new-prescription-item',
+        name: `${t('label.new-item')} (${ALT_KEY}+N)`,
         shortcut: ['Alt+KeyN'],
-        perform: () => {
-          if (showNew) {
-            isDirty
-              ? showSaveConfirmation()
-              : navigate(route.addPart('new').build());
-          }
-        },
+        perform: () => showNew && changeItem('new'),
       },
     ],
     [route, showNew, currentItemId, isDirty]
@@ -73,11 +73,7 @@ export const ListItems = ({
     <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
       <ListOptions
         currentId={value?.id ?? 'new'}
-        onClick={id => {
-          if (currentItemId === 'new' && isDirty) {
-            showSaveConfirmation();
-          } else navigate(route.addPart(id).build());
-        }}
+        onClick={changeItem}
         options={options}
         enteredLineIds={enteredLineIds}
         scrollRef={scrollRef}
