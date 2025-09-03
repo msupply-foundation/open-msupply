@@ -15,12 +15,14 @@ interface PaginatedTableConfig<T extends MRT_RowData>
   onRowClick?: (row: T) => void;
   isLoading: boolean;
   totalCount: number;
+  initialSort?: { key: string; dir: 'asc' | 'desc' };
 }
 
 export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   isLoading,
   onRowClick,
   totalCount,
+  initialSort,
   ...tableOptions
 }: PaginatedTableConfig<T>) => {
   const {
@@ -29,16 +31,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    // TO-DO: Abstract filter/sort logic elsewhere
-    initialSort: { key: 'invoiceNumber', dir: 'desc' },
-    filters: [
-      { key: 'otherPartyName' },
-      { key: 'status', condition: 'equalTo' },
-      { key: 'theirReference' },
-      { key: 'createdDatetime', condition: 'between' },
-      { key: 'shippedDatetime', condition: 'between' },
-      { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
-    ],
+    initialSort,
   });
   const { urlQuery, updateQuery } = useUrlQuery();
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
