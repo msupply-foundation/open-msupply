@@ -11,6 +11,8 @@ import {
   useAuthContext,
   StoreModeNodeType,
   FormLabel,
+  Typography,
+  useTheme,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput } from '../../..';
@@ -67,74 +69,112 @@ export const InventoryAdjustmentModal = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1em',
-          width: '30em',
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <FormLabel sx={{ fontWeight: 'bold' }} htmlFor="by">
-            {t('label.adjust-by')}
-          </FormLabel>
-          <Box
-            sx={{
-              display: 'flex',
-              width: '20em',
-              justifyContent: 'space-between',
-            }}
-          >
-            <InventoryAdjustmentDirectionInput
-              value={draft.adjustmentType}
-              onChange={adjustmentType => {
-                setDraft({
-                  adjustmentType:
-                    adjustmentType ?? AdjustmentTypeInput.Addition,
-                  reason: null,
-                  adjustment: 0,
-                });
+      <>
+        <ItemDetailHeader item={stockLine.item} />
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1em',
+            width: '30em',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <FormLabel sx={{ fontWeight: 'bold' }} htmlFor="by">
+              {t('label.adjust-by')}
+            </FormLabel>
+            <Box
+              sx={{
+                display: 'flex',
+                width: '20em',
+                justifyContent: 'space-between',
               }}
-            />
-            <NumericTextInput
-              id="by"
-              width="unset"
-              decimalLimit={2}
-              max={
-                draft.adjustmentType === AdjustmentTypeInput.Reduction
-                  ? stockLine.totalNumberOfPacks
-                  : undefined
-              }
-              value={draft.adjustment}
-              onChange={value =>
-                setDraft(state => ({
-                  ...state,
-                  adjustment: value ?? 0,
-                }))
-              }
+            >
+              <InventoryAdjustmentDirectionInput
+                value={draft.adjustmentType}
+                onChange={adjustmentType => {
+                  setDraft({
+                    adjustmentType:
+                      adjustmentType ?? AdjustmentTypeInput.Addition,
+                    reason: null,
+                    adjustment: 0,
+                  });
+                }}
+              />
+              <NumericTextInput
+                id="by"
+                width="unset"
+                decimalLimit={2}
+                max={
+                  draft.adjustmentType === AdjustmentTypeInput.Reduction
+                    ? stockLine.totalNumberOfPacks
+                    : undefined
+                }
+                value={draft.adjustment}
+                onChange={value =>
+                  setDraft(state => ({
+                    ...state,
+                    adjustment: value ?? 0,
+                  }))
+                }
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <FormLabel sx={{ fontWeight: 'bold' }} htmlFor="reason">
+              {t('label.reason')}
+            </FormLabel>
+            <ReasonOptionsSearchInput
+              id="reason"
+              disabled={draft.adjustment === 0}
+              onChange={reason => setDraft(state => ({ ...state, reason }))}
+              value={draft.reason}
+              type={getReasonOptionTypes({
+                isInventoryReduction,
+                isVaccine: stockLine.item.isVaccine,
+                isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
+              })}
+              width="20em"
             />
           </Box>
         </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <FormLabel sx={{ fontWeight: 'bold' }} htmlFor="reason">
-            {t('label.reason')}
-          </FormLabel>
-          <ReasonOptionsSearchInput
-            id="reason"
-            disabled={draft.adjustment === 0}
-            onChange={reason => setDraft(state => ({ ...state, reason }))}
-            value={draft.reason}
-            type={getReasonOptionTypes({
-              isInventoryReduction,
-              isVaccine: stockLine.item.isVaccine,
-              isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
-            })}
-            width="20em"
-          />
-        </Box>
-      </Box>
+      </>
     </Modal>
+  );
+};
+
+const ItemDetailHeader = ({
+  item: { name, code, unitName },
+}: {
+  item: Pick<StockLineRowFragment['item'], 'name' | 'unitName' | 'code'>;
+}) => {
+  const t = useTranslation();
+  const theme = useTheme();
+  return (
+    <Box
+      sx={{
+        borderWidth: 4,
+        borderRadius: '16px',
+        borderStyle: 'solid',
+        borderColor: theme.palette.border,
+        padding: 2,
+        marginBottom: 2,
+      }}
+    >
+      {/* Or maybe simpler: */}
+      {/* <Typography>{code}</Typography> */}
+
+      <Typography color={theme.typography.body2.color}>
+        {t('label.code')}: {code}
+        {unitName && (
+          <Typography component="span" color={theme.typography.body2.color}>
+            {' '}
+            | {t('label.unit')}: {unitName}
+          </Typography>
+        )}
+      </Typography>
+      <Typography sx={{ fontWeight: 500, fontSize: '22px' }}>{name}</Typography>
+    </Box>
   );
 };
