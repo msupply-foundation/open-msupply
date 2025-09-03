@@ -194,30 +194,29 @@ export const AppDrawer: React.FC = () => {
             icon={<DashboardIcon fontSize="small" color="primary" />}
             text={t('dashboard')}
           />
+          <ReplenishmentNav store={store} />
+          <InventoryNav />
+          <DistributionNav />
+          <DispensaryNav store={store} />
+          <ColdChainNav store={store} />
+          <ProgramsNav store={store} />
           <AppNavLink
             to={AppRoute.Reports}
             icon={<ReportsIcon fontSize="small" color="primary" />}
             text={t('reports')}
           />
-          <DistributionNav />
-          <ReplenishmentNav store={store} />
-          <CatalogueNav />
-          <InventoryNav />
-          <DispensaryNav store={store} />
-          <ColdChainNav store={store} />
-          <ProgramsNav store={store} />
-          <ManageNav store={store} />
         </List>
       </UpperListContainer>
       <LowerListContainer onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>
         <List>
           {drawer.isOpen && <StyledDivider color="drawerDivider" />}
-          <SyncNavLink />
+          <ManageNav store={store} />
           <AppNavLink
             to={AppRoute.Settings}
             icon={<SettingsIcon fontSize="small" color="primary" />}
             text={t('settings')}
           />
+          <SyncNavLink />
           <AppNavLink
             to={AppRoute.Help}
             icon={<HelpIcon fontSize="small" color="primary" />}

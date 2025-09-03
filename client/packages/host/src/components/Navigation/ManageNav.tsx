@@ -45,6 +45,29 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .build()}
             text={t('stores')}
           />
+
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Assets)
+              .build()}
+            text={t('assets')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Items)
+              .build()}
+            text={t('items')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.MasterLists)
+              .build()}
+            text={t('master-lists')}
+          />
+
           <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}
             end
