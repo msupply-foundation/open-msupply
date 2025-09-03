@@ -629,7 +629,7 @@
   "label.auth-status": "Estado de Aprobación",
   "label.available": "Disponible",
   "label.available-batches": "Lotes disponibles",
-  "label.available-packs": "Disponible (paquetes)",
+  "label.available-in-packs": "Disponible (paquetes)",
   "label.available-quantity": "Cantidad disponible: {{number}} unidades",
   "label.available-quantity-for-return": "Cantidad Disponible para Devolución",
   "label.available-units": "Disponible (unidades)",
