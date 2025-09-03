@@ -16,6 +16,7 @@ export interface QueryResponse<T> {
 }
 
 export interface TableProps<T extends RecordWithId> {
+  gradientBottom?: boolean;
   children?: ReactNode;
   columns: Column<T>[];
   data?: T[];

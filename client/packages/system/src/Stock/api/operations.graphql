@@ -29,6 +29,10 @@ fragment StockLineRow on StockLineNode {
     isVaccine
     dosesPerUnit: doses
     restrictedLocationTypeId
+    defaultPackSize
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
   }
   barcode
   vvmStatusLogs {
