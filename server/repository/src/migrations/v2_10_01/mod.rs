@@ -23,7 +23,6 @@ impl Migration for V2_10_01 {
 
 #[cfg(test)]
 mod test {
-
     #[actix_rt::test]
     async fn migration_2_10_01() {
         use crate::migrations::*;
