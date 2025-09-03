@@ -564,7 +564,7 @@
   "label.auth-status": "حالة الموافقة",
   "label.available": "متوفر",
   "label.available-batches": "الدفعات المتاحة",
-  "label.available-packs": "متوفر (عبوات)",
+  "label.available-in-packs": "متوفر (عبوات)",
   "label.available-quantity": "الكمية المتوفرة: {{number}} وحدات",
   "label.available-quantity-for-return": "الكمية المتاحة للإرجاع",
   "label.balance": "الرصيد",

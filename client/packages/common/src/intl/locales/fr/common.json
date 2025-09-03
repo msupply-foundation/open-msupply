@@ -735,7 +735,7 @@
   "label.available": "Disponible",
   "label.available-batches": "Lot(s) disponible(s)",
   "label.available-doses": "Stock disponible (doses)",
-  "label.available-packs": "SDU (cond.)",
+  "label.available-in-packs": "SDU (cond.)",
   "label.available-quantity": "Disponible : {{number}} {{unitName}}",
   "label.available-quantity-doses": "Disponible : {{doseCount}} doses ({{unitCount}} {{unitName}})",
   "label.available-quantity-for-return": "Quantité disponible pour le retour",

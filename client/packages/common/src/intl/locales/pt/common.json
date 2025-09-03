@@ -678,7 +678,7 @@
   "label.available": "Disponível",
   "label.available-batches": "Lotes disponíveis",
   "label.available-doses": "Disponíveis (doses)",
-  "label.available-packs": "Disponível (pacotes)",
+  "label.available-in-packs": "Disponível (pacotes)",
   "label.available-quantity": "Disponível: {{number}} {{unitName}}",
   "label.available-quantity-doses": "Disponíveis: {{doseCount}} doses ({{unitCount}} {{unitName}})",
   "label.available-quantity-for-return": "Quantidade Disponível para Devolução",
