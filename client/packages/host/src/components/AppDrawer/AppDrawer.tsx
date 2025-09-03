@@ -23,7 +23,6 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
-  CatalogueNav,
   DistributionNav,
   InventoryNav,
   DispensaryNav,

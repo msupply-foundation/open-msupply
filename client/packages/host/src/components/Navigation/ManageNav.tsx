@@ -16,9 +16,13 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
 export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
-  const { isActive } = useNestedNav(
+  const isManageActive = useNestedNav(
     RouteBuilder.create(AppRoute.Manage).addWildCard().build()
-  );
+  ).isActive;
+  const isCatalogueActive = useNestedNav(
+    RouteBuilder.create(AppRoute.Catalogue).addWildCard().build()
+  ).isActive;
+  const isActive = isManageActive || isCatalogueActive;
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const vaccineModuleEnabled = store?.preferences.vaccineModule;
