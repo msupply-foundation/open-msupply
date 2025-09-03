@@ -49,11 +49,11 @@ export const AdjustmentForm = ({
           <InventoryAdjustmentDirectionInput
             value={draft.adjustmentType}
             onChange={adjustmentType => {
-              setDraft({
+              setDraft(state => ({
+                ...state,
                 adjustmentType: adjustmentType ?? AdjustmentTypeInput.Addition,
                 reason: null,
-                adjustment: 0,
-              });
+              }));
             }}
           />
           <NumericTextInput
