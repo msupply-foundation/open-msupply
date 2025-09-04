@@ -189,14 +189,15 @@ const OutboundShipmentListViewComponent: FC = () => {
     },
   ];
 
-  const table = usePaginatedMaterialTable<OutboundRowFragment>({
-    isLoading,
-    onRowClick: row => navigate(row.id),
-    columns: mrtColumns,
-    data: data?.nodes ?? [],
-    totalCount: data?.totalCount ?? 0,
-    initialSort: { key: 'invoiceNumber', dir: 'desc' },
-  });
+  const { table, selectedRows, resetRowSelection } =
+    usePaginatedMaterialTable<OutboundRowFragment>({
+      isLoading,
+      onRowClick: row => navigate(row.id),
+      columns: mrtColumns,
+      data: data?.nodes ?? [],
+      totalCount: data?.totalCount ?? 0,
+      initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    });
 
   return (
     <>
@@ -228,7 +229,10 @@ const OutboundShipmentListViewComponent: FC = () => {
           }}
         />
       )}
-      <Footer selectedRows={table.getSelectedRowModel().rows} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={resetRowSelection}
+      />
     </>
   );
 };

@@ -5,18 +5,22 @@ import {
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
+  useFeatureFlags,
 } from '@openmsupply-client/common';
-import { MRT_Row as MRTRow } from 'material-react-table';
 import { OutboundRowFragment, useOutbound } from '../api';
 
 export const FooterComponent = ({
   selectedRows,
+  resetRowSelection,
 }: {
-  selectedRows: MRTRow<OutboundRowFragment>[];
+  selectedRows: OutboundRowFragment[];
+  resetRowSelection: () => void;
 }) => {
+  const { tableUsabilityImprovements } = useFeatureFlags();
   const t = useTranslation();
 
-  const { confirmAndDelete } = useOutbound.document.deleteRows();
+  const { confirmAndDelete, selectedRows: oldSelectedRows } =
+    useOutbound.document.deleteRows(selectedRows, resetRowSelection);
 
   const actions: Action[] = [
     {
@@ -26,14 +30,18 @@ export const FooterComponent = ({
     },
   ];
 
+  const actualSelectedRows = tableUsabilityImprovements
+    ? selectedRows
+    : oldSelectedRows;
+
   return (
     <AppFooterPortal
       Content={
         <>
-          {selectedRows.length !== 0 && (
+          {actualSelectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedRows.length}
+              selectedRowCount={actualSelectedRows.length}
             />
           )}
         </>
