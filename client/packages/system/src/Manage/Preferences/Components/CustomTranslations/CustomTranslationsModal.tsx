@@ -5,11 +5,7 @@ import {
   LoadingButton,
 } from '@common/components';
 import { EditIcon, SaveIcon } from '@common/icons';
-import {
-  CUSTOM_TRANSLATIONS_NAMESPACE,
-  useIntl,
-  useTranslation,
-} from '@common/intl';
+import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
 import { mapTranslationsToArray, mapTranslationsToObject } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
@@ -61,7 +57,7 @@ export const CustomTranslationsModal = ({
 }) => {
   const t = useTranslation();
   const defaultTranslation = useTranslation('common');
-  const { i18n } = useIntl();
+  const { invalidateCustomTranslations } = useIntlUtils();
   const { success, error } = useNotification();
 
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
@@ -71,27 +67,6 @@ export const CustomTranslationsModal = ({
   const [translations, setTranslations] = useState(
     mapTranslationsToArray(value, defaultTranslation)
   );
-
-  const invalidateCustomTranslations = () => {
-    // Clear from local storage cache
-    Object.keys(localStorage)
-      .filter(
-        key =>
-          key.startsWith('i18next_res_') &&
-          key.endsWith(CUSTOM_TRANSLATIONS_NAMESPACE)
-      )
-      .forEach(key => localStorage.removeItem(key));
-
-    // Clear from i18next cache (specifically for when we delete a translation)
-    for (const lang of i18n.languages) {
-      i18n.removeResourceBundle(lang, CUSTOM_TRANSLATIONS_NAMESPACE);
-    }
-
-    // Then reload from backend
-    // Note - this is still requires the components in question to
-    // re-render to pick up the new translations
-    i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
-  };
 
   const saveAndClose = async () => {
     const hasInvalidTranslations = translations.some(tr => tr.isInvalid);

@@ -10,6 +10,8 @@ import {
   InvoiceLineNodeType,
   useDisabledNotificationToast,
   useEditModal,
+  useRegisterActions,
+  ALT_KEY,
 } from '@openmsupply-client/common';
 import {
   getNextPrescriptionStatus,
@@ -186,6 +188,15 @@ export const StatusChangeButton = () => {
     if (showPaymentWindow) return onOpen();
     return getConfirmation();
   };
+
+  useRegisterActions([
+    {
+      id: 'updateStatus',
+      name: `${t('button.update-status')} (${ALT_KEY}+V)`,
+      shortcut: ['Alt+KeyV'],
+      perform: onStatusClick,
+    },
+  ]);
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
