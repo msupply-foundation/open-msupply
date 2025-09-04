@@ -248,12 +248,8 @@ impl<'a> StockLineRepository<'a> {
                 query = query.filter(item::id.eq_any(item_ids));
             }
 
-            if let Some(is_program_stock_line_filter) = is_program_stock_line {
-                if is_program_stock_line_filter {
-                    query = query.filter(stock_line::program_id.is_not_null());
-                } else {
-                    query = query.filter(stock_line::program_id.is_null());
-                }
+            if is_program_stock_line.is_some() {
+                query = query.filter(stock_line::program_id.is_not_null());
             }
         }
 

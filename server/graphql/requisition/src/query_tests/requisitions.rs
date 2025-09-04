@@ -193,7 +193,7 @@ mod graphql {
                 program_id: _,
                 is_emergency: _,
                 automatically_created: _,
-                has_elmis_code: _,
+                is_program_requisition: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
