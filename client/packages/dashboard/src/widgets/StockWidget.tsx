@@ -144,18 +144,21 @@ export const StockWidget: React.FC = () => {
                     count: Math.round(itemCountsData?.total || 0),
                   }),
                   value: formatNumber.round(itemCountsData?.total || 0),
-                  // link: RouteBuilder.create(AppRoute.Inventory)
-                  //   .addPart(AppRoute.Stock)
-                  //   .addQuery({
-                  //     expiryDate: getExpiredUrlQuery,
-                  //   })
-                  //   .build(),
+                  link: RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .build(),
                 },
                 {
                   label: t('label.items-no-stock', {
                     count: Math.round(itemCountsData?.noStock || 0),
                   }),
                   value: formatNumber.round(itemCountsData?.noStock || 0),
+                  link: RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .addQuery({
+                      hasStockOnHand: true,
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.low-stock-items', {
