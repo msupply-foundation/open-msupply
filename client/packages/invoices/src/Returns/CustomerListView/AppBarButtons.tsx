@@ -15,8 +15,7 @@ import {
   useNavigate,
   RouteBuilder,
   useExportCSV,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
@@ -30,8 +29,7 @@ export const AppBarButtonsComponent: FC<{
   const navigate = useNavigate();
   const { error, info } = useNotification();
   const exportCSV = useExportCSV();
-  const { data } = usePreference(PreferenceKey.DisableManualReturns);
-  const disableManualReturns = data?.disableManualReturns ?? false;
+  const { disableManualReturns } = usePreferences();
 
   const { mutateAsync: onCreate } = useReturns.document.insertCustomerReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllCustomer({
