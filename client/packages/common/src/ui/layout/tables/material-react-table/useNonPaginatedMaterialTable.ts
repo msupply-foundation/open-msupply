@@ -19,16 +19,27 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
     enablePagination: false,
     enableRowVirtualization: true,
     enableColumnResizing: true,
+    enableColumnOrdering: true,
     enableRowSelection: true,
+
     initialState: {
       density: 'compact',
     },
     state: {
       showProgressBars: isLoading,
     },
+
+    // Styling
+    muiTablePaperProps: { sx: { width: '100%' } },
+    muiTableBodyProps: {
+      sx: {
+        // stripe the rows, make odd rows a darker color
+        '& tr:nth-of-type(odd) > td': { backgroundColor: 'background.row' },
+      },
+    },
     muiTableHeadCellProps: {
       sx: {
-        fontSize: '14px',
+        fontWeight: 600,
         lineHeight: 1.2,
         verticalAlign: 'bottom',
       },
@@ -36,18 +47,15 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
     muiTableBodyCellProps: {
       sx: {
         fontSize: '14px',
+        fontWeight: 400,
       },
     },
-    muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
+    muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
         if (onRowClick) onRowClick(row.original);
       },
       sx: {
-        backgroundColor:
-          staticRowIndex % 2 === 0 ? undefined : 'background.row', // light grey on odd rows
-        '& td': {
-          borderBottom: '1px solid rgba(224, 224, 224, 1)',
-        },
+        '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
       },
     }),
     ...tableOptions,
