@@ -739,7 +739,7 @@
   "label.batch": "Batch",
   "label.batches": "Batches",
   "label.battery-level": "Battery level",
-  "label.blank-stocktake": "blank stocktake",
+  "label.blank-stocktake": "create blank stocktake",
   "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement",
   "label.breach": "Breach",
   "label.breach-end": "Breach end",
