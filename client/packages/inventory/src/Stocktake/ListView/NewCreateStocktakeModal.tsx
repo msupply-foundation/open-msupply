@@ -309,7 +309,12 @@ export const NewCreateStocktakeModal = ({
                       }
                       value={ItemStatus.None}
                       control={<Radio />}
-                      label={t('label.none')}
+                      label={
+                        t('label.none') +
+                        ' (' +
+                        t('label.blank-stocktake') +
+                        ')'
+                      }
                     />
                   </RadioGroup>
                 }
