@@ -21,12 +21,37 @@ const ItemListComponent = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const {
-    filter,
-    updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  const { data, isError, isLoading } = useVisibleOrOnHandItems();
+    updateSortQuery,
+    queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams({
+    filters: [
+      { key: 'codeOrName' },
+      {
+        key: 'hasStockOnHand',
+      },
+      // { key: 'createdDatetime' },
+      // {
+      //   key: 'to-store',
+      // },
+      // {
+      //   key: 'from-store',
+      // },
+      // {
+      //   key: 'type',
+      //   condition: 'equalTo',
+      // },
+    ],
+  });
+
+  const queryParams = {
+    sortBy,
+    first,
+    offset,
+    filterBy: { ...filterBy },
+  };
+
+  const { data, isError, isLoading } = useVisibleOrOnHandItems(queryParams);
   const pagination = { page, first, offset };
 
   const columns = useColumns<ItemsWithStatsFragment>(
@@ -87,7 +112,7 @@ const ItemListComponent = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar />
       <DataTable
         id="item-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}

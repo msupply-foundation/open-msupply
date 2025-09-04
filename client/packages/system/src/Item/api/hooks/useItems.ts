@@ -1,30 +1,59 @@
 import {
+  FilterByWithBoolean,
   ItemFilterInput,
   ItemSortFieldInput,
   SortBy,
   useQuery,
-  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useItemGraphQL } from '../useItemGraphQL';
 import { ITEM } from '../keys';
-import { ItemRowFragment } from '../operations.generated';
+import { ItemsWithStatsFragment } from '../operations.generated';
 
-export const useVisibleOrOnHandItems = () => {
+export type ItemParams = {
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<ItemsWithStatsFragment>;
+  filterBy: FilterByWithBoolean | null;
+};
+
+export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
   const { api, storeId } = useItemGraphQL();
-  const { queryParams } = useUrlQueryParams({
-    filters: [{ key: 'codeOrName' }],
+
+  const {
+    sortBy = {
+      key: 'number',
+      direction: 'desc',
+    },
+    filterBy,
+    offset,
+    first,
+  } = queryParams;
+
+  const sortFieldMap: Record<string, ItemSortFieldInput> = {
+    code: ItemSortFieldInput.Code,
+    name: ItemSortFieldInput.Name,
+    type: ItemSortFieldInput.Type,
+  };
+
+  console.log('filterBy:', filterBy); // filterBy = Object { inStock: Object { equalTo: true } }
+
+  console.log('filter:', {
+    ...filterBy,
+
+    isVisibleOrOnHand: true,
+    isActive: true,
   });
-  const { filterBy, sortBy, offset, first } = queryParams;
 
   const queryFn = async () => {
     const result = await api.itemsWithStats({
       storeId,
-      key: toSortField(sortBy),
+      key: sortFieldMap[sortBy.key] ?? ItemSortFieldInput.Code,
       first,
-      isDesc: sortBy.isDesc,
+      isDesc: sortBy.direction === 'desc',
       offset,
       filter: {
         ...filterBy,
+        ...(filterBy?.['hasStockOnHand'] && { hasStockOnHand: true }),
         // includes non-visible items that have stock on hand
         isVisibleOrOnHand: true,
         isActive: true,
@@ -77,15 +106,4 @@ export const useItemsByFilter = ({
     queryFn,
     refetchOnMount,
   });
-};
-
-const toSortField = (sortBy: SortBy<ItemRowFragment>) => {
-  switch (sortBy.key) {
-    case 'name':
-      return ItemSortFieldInput.Name;
-    case 'code':
-      return ItemSortFieldInput.Code;
-    default:
-      return ItemSortFieldInput.Name;
-  }
 };
