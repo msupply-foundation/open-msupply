@@ -1,5 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react';
-import { type MRT_ColumnDef as MRTColumnDef } from 'material-react-table';
+import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -23,8 +22,6 @@ import {
   useFeatureFlags,
   MaterialTable,
   usePaginatedMaterialTable,
-  useUrlQuery,
-  useMaterialTableColumns,
   PaginatedTableColumnDefinition,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
@@ -63,7 +60,6 @@ const OutboundShipmentListViewComponent: FC = () => {
     ],
   });
   const navigate = useNavigate();
-  const { urlQuery, updateQuery } = useUrlQuery();
   const modalController = useToggle();
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };

@@ -54,7 +54,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   } = useUrlQueryParams({
     initialSort,
   });
-  const { urlQuery, updateQuery } = useUrlQuery();
+  const { updateQuery } = useUrlQuery();
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
   const paginationRef = useRef<number>(0);
 
@@ -84,11 +84,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [sortBy, updateSortQuery]
   );
 
-  //   console.log('urlQuery', urlQuery);
-
   const filterState = getFilterState();
-
-  console.log('filterState', filterState);
 
   const handlePaginationChange = useCallback(
     (paginationUpdate: MRT_Updater<MRT_PaginationState>) => {
@@ -111,27 +107,24 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   const handleFilterChange = (
     filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
   ) => {
-    console.log('currentFilter', filterState);
-    console.log('URL', urlQuery);
+    // The "filterUpdate" function mutates the "old" state in place, which
+    // messes up the comparisons, so we generate a fresh version just for this:
+    const old = getFilterState();
     if (typeof filterUpdate === 'function') {
-      const newFilterState = filterUpdate(filterState);
-      console.log('newFilter', newFilterState);
+      const newFilterState = filterUpdate(old);
       const changedFilter = newFilterState.find(
         fil =>
           !isEqual(fil.value, filterState.find(f => f.id === fil.id)?.value)
       );
-      console.log('changedFilter', changedFilter);
       if (!changedFilter) {
         const removedFilter = filterState.find(
           f => !newFilterState.find(nf => nf.id === f.id)
         );
-        console.log('removedFilter', removedFilter);
         if (removedFilter) updateQuery({ [removedFilter.id]: undefined });
         return;
       }
       const filterUpdater = filterUpdaters[changedFilter.id];
       const newValue = changedFilter.value;
-      // console.log('Column filters changed:', newFilter);
       if (filterUpdater) filterUpdater(newValue);
     }
   };
