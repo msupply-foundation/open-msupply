@@ -28,7 +28,6 @@ import {
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 import { VvmStatusFragment } from 'packages/system/src/Stock/api';
-import { concat } from 'lodash';
 
 const LABEL_FLEX = '0 0 150px';
 interface NewStocktakeModalProps {
