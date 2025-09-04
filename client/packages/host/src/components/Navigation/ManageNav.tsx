@@ -32,7 +32,6 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
       <AppNavLink
-        visible={isCentralServer}
         end={false}
         to={AppRoute.Manage}
         icon={<SlidersIcon color="primary" fontSize="small" />}
@@ -49,7 +48,6 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .build()}
             text={t('stores')}
           />
-
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Catalogue)
@@ -81,6 +79,7 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             text={t('indicators-demographics')}
           />
           <AppNavLink
+            visible={isCentralServer}
             end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.GlobalPreferences)
