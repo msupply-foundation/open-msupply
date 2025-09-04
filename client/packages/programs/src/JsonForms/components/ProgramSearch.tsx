@@ -18,7 +18,7 @@ import { z } from 'zod';
 
 export const programSearchTester = rankWith(10, uiTypeIs('ProgramSearch'));
 
-export type AllOptionsType = {
+type AllOptionsType = {
   name: string;
   id: string;
 };
@@ -53,19 +53,17 @@ const UIComponent = (props: ControlProps) => {
 
   const onChange = async (program: ProgramFragment | null) => {
     setProgram(program);
-    if (program === null) {
-      handleChange(path, undefined);
-      handleChange('elmisCode', undefined);
-      handleChange('fetchAllPrograms', false);
-    } else if (program.id === 'AllProgramsSelector') {
-      handleChange(path, undefined);
-      handleChange('fetchAllPrograms', true);
-      handleChange('elmisCode', 'AllProgramsElmis');
-    } else {
-      handleChange(path, program?.id);
-      handleChange('elmisCode', program.elmisCode ?? undefined);
-      handleChange('fetchAllPrograms', true);
-    }
+
+    const isAllPrograms = program?.id === 'AllProgramsSelector';
+    const programId = isAllPrograms ? undefined : program?.id;
+    const elmisCode = isAllPrograms
+      ? undefined
+      : (program?.elmisCode ?? undefined);
+    const fetchAllPrograms = program !== null && isAllPrograms;
+
+    handleChange(path, programId);
+    handleChange('elmisCode', elmisCode);
+    handleChange('fetchAllPrograms', fetchAllPrograms);
   };
 
   if (programId && !program) {
