@@ -49,6 +49,14 @@ fragment StockLine on StockLineNode {
     unusable
     description
   }
+  program {
+    id
+    name
+  }
+  campaign {
+    id
+    name
+  }
 }
 
 fragment ItemRow on ItemNode {
