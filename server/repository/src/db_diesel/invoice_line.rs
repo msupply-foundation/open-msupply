@@ -375,12 +375,8 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
 
         apply_equal_filter!(query, program_id, invoice::program_id);
 
-        if let Some(is_program_invoice) = is_program_invoice {
-            if is_program_invoice {
-                query = query.filter(invoice_line::program_id.is_not_null());
-            } else {
-                query = query.filter(invoice_line::note.is_null());
-            }
+        if is_program_invoice.is_some() {
+            query = query.filter(invoice::program_id.is_not_null());
         }
     }
 

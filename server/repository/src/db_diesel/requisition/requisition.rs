@@ -182,7 +182,7 @@ fn create_filtered_query(
         program_id,
         is_emergency,
         automatically_created,
-        has_elmis_code,
+        is_program_requisition,
     }) = filter
     {
         apply_equal_filter!(query, id, requisition::id);
@@ -221,20 +221,16 @@ fn create_filtered_query(
             query = query.filter(requisition::is_emergency.eq(is_emergency))
         }
 
-        if let Some(value) = automatically_created {
+        if let Some(automatically_created) = automatically_created {
             apply_equal_filter!(
                 query,
-                Some(EqualFilter::is_null(value)),
+                Some(EqualFilter::is_null(automatically_created)),
                 requisition::linked_requisition_id
             );
         }
 
-        if let Some(value) = has_elmis_code {
-            apply_equal_filter!(
-                query,
-                Some(EqualFilter::is_null(!value)),
-                program::elmis_code
-            );
+        if is_program_requisition.is_some() {
+            query = query.filter(requisition::program_id.is_not_null());
         }
 
         if let Some(a_shipment_has_been_created) = a_shipment_has_been_created {

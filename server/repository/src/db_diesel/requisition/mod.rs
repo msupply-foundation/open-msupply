@@ -31,7 +31,7 @@ pub struct RequisitionFilter {
     pub program_id: Option<EqualFilter<String>>,
     pub is_emergency: Option<bool>,
     pub automatically_created: Option<bool>,
-    pub has_elmis_code: Option<bool>,
+    pub is_program_requisition: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -181,8 +181,8 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn has_elmis_code(mut self, filter: bool) -> Self {
-        self.has_elmis_code = Some(filter);
+    pub fn is_program_requisition(mut self, filter: bool) -> Self {
+        self.is_program_requisition = Some(filter);
         self
     }
 }
