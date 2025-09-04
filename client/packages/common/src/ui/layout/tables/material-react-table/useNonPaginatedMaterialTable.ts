@@ -18,9 +18,6 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
   const table = useMaterialReactTable<T>({
     enablePagination: false,
     enableRowVirtualization: true,
-    // muiTableBodyProps: {
-    //   sx: { border: '1px solid blue', width: '100%' },
-    // },
     enableColumnResizing: true,
     enableRowSelection: true,
     initialState: {
@@ -39,7 +36,6 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
     muiTableBodyCellProps: {
       sx: {
         fontSize: '14px',
-        borderBottom: '1px solid rgba(224, 224, 224, 1)',
       },
     },
     muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
@@ -47,7 +43,8 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
         if (onRowClick) onRowClick(row.original);
       },
       sx: {
-        backgroundColor: staticRowIndex % 2 === 0 ? 'transparent' : '#fafafb', // light grey on odd rows
+        backgroundColor:
+          staticRowIndex % 2 === 0 ? undefined : 'background.row', // light grey on odd rows
         '& td': {
           borderBottom: '1px solid rgba(224, 224, 224, 1)',
         },
