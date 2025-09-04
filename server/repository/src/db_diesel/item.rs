@@ -17,7 +17,7 @@ use crate::{
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    EqualFilter, Pagination, ProgramFilter, ProgramRepository, Sort, StringFilter,
+    EqualFilter, Pagination, Sort, StringFilter,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
