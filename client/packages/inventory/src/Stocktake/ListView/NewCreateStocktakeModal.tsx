@@ -324,7 +324,7 @@ export const NewCreateStocktakeModal = ({
                     />
                   </RadioGroup>
                 }
-                label={t('label.items-expiring-before')}
+                label={t('label.item-status')}
               />
 
               {itemStatus == ItemStatus.None ? (
