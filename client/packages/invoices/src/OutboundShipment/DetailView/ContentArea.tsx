@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import {
   DataTable,
   useTranslation,
@@ -8,7 +8,14 @@ import {
   AppSxProp,
   NothingHere,
   useUrlQueryParams,
+  useFeatureFlags,
+  usePreferences,
 } from '@openmsupply-client/common';
+import {
+  MaterialReactTable,
+  MRT_ColumnDef as MRTColumnDef,
+  useMaterialReactTable,
+} from 'material-react-table';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
@@ -84,10 +91,110 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   });
   const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
+  const { tableUsabilityImprovements } = useFeatureFlags();
+  const { manageVvmStatusForStock } = usePreferences();
+
+  const mrtColumns = useMemo<
+    MRTColumnDef<StockOutLineFragment | StockOutItem>[]
+  >(() => {
+    const cols = [
+      // TO-DO: Note popover column,
+      {
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        size: 120,
+      },
+      {
+        accessorKey: 'item.name',
+        header: t('label.name'),
+        // size: 140,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 130,
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry-date'),
+        size: 160,
+      },
+    ];
+
+    if (manageVvmStatusForStock)
+      cols.push({
+        accessorKey: 'vvmStatus.description',
+        header: t('label.vvm-status'),
+      });
+
+    cols.push(
+      {
+        accessorKey: 'location.code',
+        header: t('label.location'),
+      },
+      {
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+      }
+    );
+
+    // if (manageVaccinesInDoses) {
+    //   columns.push(getDosesPerUnitColumn(t));
+    // }
+
+    return cols;
+  }, [manageVvmStatusForStock]);
+
+  const table = useMaterialReactTable({
+    columns: mrtColumns,
+    data: rows ?? [],
+    enablePagination: false,
+    enableRowVirtualization: true,
+    // muiTableBodyProps: {
+    //   sx: { border: '1px solid blue', width: '100%' },
+    // },
+    enableColumnResizing: true,
+    enableRowSelection: true,
+    initialState: {
+      density: 'compact',
+    },
+    muiTableHeadCellProps: {
+      sx: {
+        fontSize: '14px',
+        lineHeight: 1.2,
+        verticalAlign: 'bottom',
+      },
+    },
+    muiTableBodyCellProps: {
+      sx: {
+        fontSize: '14px',
+        borderBottom: '1px solid rgba(224, 224, 224, 1)',
+      },
+    },
+    muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
+      onClick: () => {
+        if (onRowClick) onRowClick(row.original);
+      },
+      sx: {
+        backgroundColor: staticRowIndex % 2 === 0 ? 'transparent' : '#fafafb', // light grey on odd rows
+        '& td': {
+          borderBottom: '1px solid rgba(224, 224, 224, 1)',
+        },
+      },
+    }),
+  });
 
   if (!rows) return null;
 
-  return (
+  return tableUsabilityImprovements ? (
+    <div style={{ width: '100%', overflow: 'hidden' }}>
+      <MaterialReactTable table={table} />
+    </div>
+  ) : (
     <DataTable
       id="outbound-detail"
       onRowClick={onRowClick}
