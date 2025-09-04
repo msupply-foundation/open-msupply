@@ -83,7 +83,7 @@ const UIComponent = (props: ControlProps) => {
   const programs = data?.nodes ?? [];
 
   const programOptions =
-    programs.length > 1 && props.uischema.options?.['allProgramsOption']
+    programs.length > 2 && props.uischema.options?.['allProgramsOption']
       ? [...programs, allProgramsOptionRenderer]
       : programs;
 
@@ -100,8 +100,10 @@ const UIComponent = (props: ControlProps) => {
           options={programOptions}
           optionKey="name"
           onChange={(_, newVal) => {
-            if (newVal?.id === 'AllOptionsId') {
+            if (!newVal) return;
+            if (newVal?.id === 'AllProgramsSelector') {
               onChange(null);
+              return;
             }
             newVal &&
               newVal.id !== program?.id &&
