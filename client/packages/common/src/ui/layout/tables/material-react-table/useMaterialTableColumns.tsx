@@ -1,6 +1,10 @@
 /**
  * Hook to map column settings (as defined by us, with a handful of common
  * filter types) to the exact column structure required by MaterialReactTable
+ *
+ * Also provides "filterUpdater" functions, to correctly update the URL query
+ * based on the filter type; and "getFilterState" function, which converts the
+ * current URL query into the filter state required by MRT.
  */
 import { useMemo } from 'react';
 import { MRT_ColumnDef, MRT_RowData } from 'material-react-table';
