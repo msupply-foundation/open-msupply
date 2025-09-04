@@ -10,7 +10,6 @@ import {
   RadioIcon,
   Typography,
   UNDEFINED_STRING_VALUE,
-  CUSTOM_TRANSLATIONS_NAMESPACE,
   useAppTheme,
   useAuthContext,
   useFormatDateTime,
@@ -18,7 +17,7 @@ import {
   useQueryClient,
   useTranslation,
   useMediaQuery,
-  useIntl,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
@@ -40,13 +39,14 @@ const useHostSync = (enabled: boolean) => {
     STATUS_POLLING_INTERVAL,
     enabled
   );
+  const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
-  const { i18n } = useIntl();
+  const { invalidateCustomTranslations } = useIntlUtils();
 
   useEffect(() => {
     if (!syncStatus) {
@@ -57,13 +57,21 @@ const useHostSync = (enabled: boolean) => {
   }, [syncStatus]);
 
   useEffect(() => {
+    if (!syncStatus) {
+      return;
+    }
+
+    isInitialMount && setIsInitialMount(false);
+
     if (syncStatus?.isSyncing) {
       keepAwake();
     } else {
       allowSleep();
       queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
+
       // Reload custom translations, in case we received new ones via sync
-      i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
+      // Shouldn't run on first mount, when translations might still be loading - see issue #9042
+      !isInitialMount && invalidateCustomTranslations();
     }
   }, [syncStatus?.isSyncing]);
 

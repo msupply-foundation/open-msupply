@@ -44,3 +44,7 @@ body > table {
   font-family: Tahoma;
   font-size: 8pt;
 }
+
+.underline {
+  text-decoration: underline;
+}

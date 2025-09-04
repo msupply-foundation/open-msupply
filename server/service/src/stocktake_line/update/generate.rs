@@ -42,7 +42,9 @@ pub fn generate(
 
         item_link_id: existing.item.id,
         item_name: existing_line.item_name,
-        expiry_date: expiry_date.or(existing_line.expiry_date),
+        expiry_date: expiry_date
+            .map(|e| e.value)
+            .unwrap_or(existing_line.expiry_date),
         batch: batch.or(existing_line.batch),
         pack_size: pack_size.or(existing_line.pack_size),
         cost_price_per_pack: cost_price_per_pack.or(existing_line.cost_price_per_pack),

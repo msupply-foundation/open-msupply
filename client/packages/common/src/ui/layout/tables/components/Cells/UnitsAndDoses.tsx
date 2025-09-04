@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   useTranslation,
-  CellProps,
   Box,
   NumberCell,
   Typography,
   RecordWithId,
   useFormatNumber,
   usePreferences,
+  NumberCellProps,
 } from '@openmsupply-client/common';
 
 export const UnitsAndMaybeDoses = <T extends RecordWithId>({
@@ -16,7 +16,7 @@ export const UnitsAndMaybeDoses = <T extends RecordWithId>({
   isVaccine,
   dosesPerUnit,
 }: {
-  numberCellProps: CellProps<T>;
+  numberCellProps: NumberCellProps<T>;
   units: number;
   isVaccine: boolean;
   dosesPerUnit: number;
