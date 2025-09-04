@@ -83,7 +83,7 @@ const UIComponent = (props: ControlProps) => {
   const programs = data?.nodes ?? [];
 
   const programOptions =
-    programs.length > 2 && props.uischema.options?.['allProgramsOption']
+    programs.length > 1 && props.uischema.options?.['allProgramsOption']
       ? [...programs, allProgramsOptionRenderer]
       : programs;
 
