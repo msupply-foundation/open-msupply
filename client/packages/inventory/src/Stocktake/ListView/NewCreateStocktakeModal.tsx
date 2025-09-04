@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   BasicSpinner,
   DateTimePickerInput,
   DialogButton,
@@ -7,7 +8,7 @@ import {
   RadioGroup,
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
-import { FormControlLabel, Radio, Typography } from '@mui/material';
+import { FormControlLabel, Radio } from '@mui/material';
 import { useDialog } from '@common/hooks';
 import {
   useStockListCount,
@@ -20,9 +21,7 @@ import {
 } from '@openmsupply-client/system';
 import {
   Box,
-  CheckIcon,
   Formatter,
-  InfoIcon,
   StockLineFilterInput,
   useNavigate,
   usePreferences,
@@ -329,74 +328,17 @@ export const NewCreateStocktakeModal = ({
               />
 
               {itemStatus == ItemStatus.None ? (
-                <Box
-                  display="flex"
-                  sx={{
-                    backgroundColor: 'background.success',
-                    borderRadius: 2,
-                  }}
-                >
-                  <Box display="flex" flexDirection="column">
-                    <Box display="flex" flexDirection="row">
-                      <Box color="cceStatus.functioning">
-                        <CheckIcon />
-                      </Box>
-                      <Box
-                        sx={{
-                          '& > div': { display: 'inline-block' },
-                          alignContent: 'center',
-                          paddingLeft: 1,
-                        }}
-                      >
-                        <Typography
-                          sx={{ color: 'inherit' }}
-                          variant="body2"
-                          component="span"
-                          fontSize="1em"
-                        >
-                          {t('message.create-blank-stocktake')}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
+                <Alert severity="success">
+                  {t('message.create-blank-stocktake')}
+                </Alert>
               ) : (
-                <Box
-                  display="flex"
-                  sx={{
-                    backgroundColor: 'gray.pale',
-                    borderRadius: 2,
-                  }}
-                  padding={1}
-                >
-                  <Box display="flex" flexDirection="column">
-                    <Box display="flex" flexDirection="row">
-                      <Box color="info.main">
-                        <InfoIcon />
-                      </Box>
-                      <Box
-                        sx={{
-                          '& > div': { display: 'inline-block' },
-                          alignContent: 'center',
-                          paddingLeft: 1,
-                        }}
-                      >
-                        <Typography
-                          sx={{ color: 'inherit' }}
-                          variant="body2"
-                          component="span"
-                          fontSize="1em"
-                        >
-                          {concat(
-                            estimateLineCount().toString(),
-                            ' ',
-                            t('message.lines-estimated')
-                          )}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
+                <Alert severity="info">
+                  {concat(
+                    estimateLineCount().toString(),
+                    ' ',
+                    t('message.lines-estimated')
+                  )}
+                </Alert>
               )}
             </Box>
           ) : (
