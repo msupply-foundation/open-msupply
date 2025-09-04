@@ -90,8 +90,8 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
     return { mrtColumnDefinitions, filterUpdaters };
   }, [columns]);
 
-  const getFilterState = () =>
-    Object.entries(urlQuery).map(([id, val]) => {
+  const getFilterState = () => {
+    return Object.entries(urlQuery).map(([id, val]) => {
       // Date range
       if (typeof val === 'object' && ('to' in val || 'from' in val))
         return {
@@ -109,6 +109,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         value: val,
       };
     });
+  };
 
   return { mrtColumnDefinitions, filterUpdaters, getFilterState };
 };
