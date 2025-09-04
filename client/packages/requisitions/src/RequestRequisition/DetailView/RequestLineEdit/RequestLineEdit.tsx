@@ -112,6 +112,7 @@ export const RequestLineEdit = ({
               sx={sx}
               displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
               dosesPerUnit={currentItem?.doses}
+              decimalLimit={0}
             />
           )
         )}

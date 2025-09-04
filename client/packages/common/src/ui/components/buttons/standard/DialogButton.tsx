@@ -13,7 +13,7 @@ import {
 import { useKeyboardShortcut } from '@common/hooks';
 import { ButtonWithIcon } from './ButtonWithIcon';
 import { useRegisterActions } from 'kbar';
-import { EnvUtils } from '@common/utils';
+import { ALT_KEY } from '@common/utils';
 
 type DialogButtonVariant =
   | 'cancel'
@@ -140,7 +140,6 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   const t = useTranslation();
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
   const ref = React.useRef<HTMLButtonElement>(null);
-  const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
 
   const isKeyValid = (e: KeyboardEvent) => {
     if (disabled) return false;
@@ -161,7 +160,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
         return [
           {
             id: 'button:save',
-            name: `${customLabel ?? t(labelKey)} (${altOrOptionString}+S)`,
+            name: `${customLabel ?? t(labelKey)} (${ALT_KEY}+S)`,
             perform: () => ref.current?.click(),
           },
         ];
