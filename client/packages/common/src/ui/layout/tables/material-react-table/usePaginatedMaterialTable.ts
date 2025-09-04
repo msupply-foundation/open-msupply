@@ -1,4 +1,9 @@
-import { useUrlQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  isEqual,
+  useMaterialTableColumns,
+  useUrlQuery,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 import {
   MRT_RowData,
   MRT_TableOptions,
@@ -7,8 +12,23 @@ import {
   MRT_SortingState,
   MRT_Updater,
   MRT_PaginationState,
+  MRT_ColumnDef,
+  MRT_ColumnFiltersState,
 } from 'material-react-table';
 import { useCallback, useRef, useState } from 'react';
+
+type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
+
+interface EnumOption {
+  value: string;
+  label: string;
+}
+
+export type PaginatedTableColumnDefinition<T extends MRT_RowData> =
+  MRT_ColumnDef<T> & {
+    filterType?: FilterType;
+    filterValues?: EnumOption[];
+  };
 
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -16,6 +36,7 @@ interface PaginatedTableConfig<T extends MRT_RowData>
   isLoading: boolean;
   totalCount: number;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
+  columns: PaginatedTableColumnDefinition<T>[];
 }
 
 export const usePaginatedMaterialTable = <T extends MRT_RowData>({
@@ -23,6 +44,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   onRowClick,
   totalCount,
   initialSort,
+  columns,
   ...tableOptions
 }: PaginatedTableConfig<T>) => {
   const {
@@ -39,10 +61,10 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
 
   const pagination = { page, first, offset };
 
-  const columnFilters = Object.entries(filter).map(([id, value]) => ({
-    id,
-    value,
-  }));
+  const { mrtColumnDefinitions, filterUpdaters, getFilterState } =
+    useMaterialTableColumns(columns);
+
+  console.log('mrtColumnDefinitions', mrtColumnDefinitions);
 
   const handleSortingChange = useCallback(
     (sortUpdate: MRT_Updater<MRT_SortingState>) => {
@@ -65,6 +87,12 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [sortBy, updateSortQuery]
   );
 
+  console.log('urlQuery', urlQuery);
+
+  const filterState = getFilterState();
+
+  console.log('filterState', filterState);
+
   const handlePaginationChange = useCallback(
     (paginationUpdate: MRT_Updater<MRT_PaginationState>) => {
       if (typeof paginationUpdate === 'function') {
@@ -83,25 +111,42 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [updatePaginationQuery]
   );
 
+  const handleFilterChange = useCallback(
+    (filterUpdate: MRT_Updater<MRT_ColumnFiltersState>) => {
+      if (typeof filterUpdate === 'function') {
+        const newFilterState = filterUpdate(filterState);
+        console.log('newFilter', newFilterState);
+        const changedFilter = newFilterState.find(
+          fil =>
+            !isEqual(fil.value, filterState.find(f => f.id === fil.id)?.value)
+        );
+        console.log('changedFilter', changedFilter);
+        if (!changedFilter) {
+          const removedFilter = filterState.find(
+            f => !newFilterState.find(nf => nf.id === f.id)
+          );
+          console.log('removedFilter', removedFilter);
+          if (removedFilter) updateQuery({ [removedFilter.id]: undefined });
+          return;
+        }
+        const filterUpdater = filterUpdaters[changedFilter.id];
+        const newValue = changedFilter.value;
+        // console.log('Column filters changed:', newFilter);
+        if (filterUpdater) filterUpdater(newValue);
+      }
+    },
+    [updateQuery, urlQuery]
+  );
+
   const table = useMaterialReactTable<T>({
+    columns: mrtColumnDefinitions,
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
     onSortingChange: handleSortingChange,
     autoResetPageIndex: false,
     onPaginationChange: handlePaginationChange,
-    onColumnFiltersChange: columnFilters => {
-      if (typeof columnFilters === 'function') {
-        const newFilter = columnFilters([]);
-        // console.log('Column filters changed:', newFilter);
-        // @ts-expect-error -- temporary
-        updateQuery({
-          ...urlQuery,
-
-          ...Object.fromEntries(newFilter.map(f => [f.id, f.value])),
-        });
-      }
-    },
+    onColumnFiltersChange: handleFilterChange,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     rowCount: totalCount,
@@ -109,9 +154,10 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
       sorting: [{ id: sortBy.key, desc: !!sortBy.isDesc }],
       pagination: { pageIndex: pagination.page, pageSize: pagination.first },
       showProgressBars: isLoading,
-      columnFilters,
+      columnFilters: filterState,
       rowSelection,
     },
+    // columnFilterDisplayMode: 'popover',
     // TO-DO: Once the props are more established, extract common props between
     // two table types to common object or function
     muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
