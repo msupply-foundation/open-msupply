@@ -78,7 +78,7 @@ export const NewCreateStocktakeModal = ({
     vvmStatus: null,
     masterList: null,
     expiryDate: null,
-    itemStatus: ItemStatus.All,
+    itemStatus: ItemStatus.InStock,
   });
 
   const stockFilter: StockLineFilterInput = {
@@ -289,17 +289,17 @@ export const NewCreateStocktakeModal = ({
                     }}
                   >
                     <FormControlLabel
+                      value={ItemStatus.InStock}
+                      control={<Radio />}
+                      label={t('report.in-stock')}
+                    />
+                    <FormControlLabel
                       disabled={
                         expiryDate || location || vvmStatus ? true : false
                       }
                       value={ItemStatus.All}
                       control={<Radio />}
                       label={t('label.all')}
-                    />
-                    <FormControlLabel
-                      value={ItemStatus.InStock}
-                      control={<Radio />}
-                      label={t('report.in-stock')}
                     />
                     <FormControlLabel
                       disabled={
