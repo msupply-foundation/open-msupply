@@ -50,7 +50,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   const {
     updateSortQuery,
     updatePaginationQuery,
-    filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
     initialSort,
@@ -63,8 +62,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
 
   const { mrtColumnDefinitions, filterUpdaters, getFilterState } =
     useMaterialTableColumns(columns);
-
-  console.log('mrtColumnDefinitions', mrtColumnDefinitions);
 
   const handleSortingChange = useCallback(
     (sortUpdate: MRT_Updater<MRT_SortingState>) => {
@@ -87,7 +84,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [sortBy, updateSortQuery]
   );
 
-  console.log('urlQuery', urlQuery);
+  //   console.log('urlQuery', urlQuery);
 
   const filterState = getFilterState();
 
@@ -111,32 +108,33 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [updatePaginationQuery]
   );
 
-  const handleFilterChange = useCallback(
-    (filterUpdate: MRT_Updater<MRT_ColumnFiltersState>) => {
-      if (typeof filterUpdate === 'function') {
-        const newFilterState = filterUpdate(filterState);
-        console.log('newFilter', newFilterState);
-        const changedFilter = newFilterState.find(
-          fil =>
-            !isEqual(fil.value, filterState.find(f => f.id === fil.id)?.value)
+  const handleFilterChange = (
+    filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
+  ) => {
+    console.log('currentFilter', filterState);
+    console.log('URL', urlQuery);
+    if (typeof filterUpdate === 'function') {
+      const newFilterState = filterUpdate(filterState);
+      console.log('newFilter', newFilterState);
+      const changedFilter = newFilterState.find(
+        fil =>
+          !isEqual(fil.value, filterState.find(f => f.id === fil.id)?.value)
+      );
+      console.log('changedFilter', changedFilter);
+      if (!changedFilter) {
+        const removedFilter = filterState.find(
+          f => !newFilterState.find(nf => nf.id === f.id)
         );
-        console.log('changedFilter', changedFilter);
-        if (!changedFilter) {
-          const removedFilter = filterState.find(
-            f => !newFilterState.find(nf => nf.id === f.id)
-          );
-          console.log('removedFilter', removedFilter);
-          if (removedFilter) updateQuery({ [removedFilter.id]: undefined });
-          return;
-        }
-        const filterUpdater = filterUpdaters[changedFilter.id];
-        const newValue = changedFilter.value;
-        // console.log('Column filters changed:', newFilter);
-        if (filterUpdater) filterUpdater(newValue);
+        console.log('removedFilter', removedFilter);
+        if (removedFilter) updateQuery({ [removedFilter.id]: undefined });
+        return;
       }
-    },
-    [updateQuery, urlQuery]
-  );
+      const filterUpdater = filterUpdaters[changedFilter.id];
+      const newValue = changedFilter.value;
+      // console.log('Column filters changed:', newFilter);
+      if (filterUpdater) filterUpdater(newValue);
+    }
+  };
 
   const table = useMaterialReactTable<T>({
     columns: mrtColumnDefinitions,
@@ -157,6 +155,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
       columnFilters: filterState,
       rowSelection,
     },
+    // enableColumnResizing: true,
     // columnFilterDisplayMode: 'popover',
     // TO-DO: Once the props are more established, extract common props between
     // two table types to common object or function
