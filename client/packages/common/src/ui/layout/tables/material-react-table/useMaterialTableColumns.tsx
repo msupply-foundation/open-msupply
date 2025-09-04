@@ -26,7 +26,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
   columns: ColumnDefinition<T>[]
 ) => {
   const { urlQuery, updateQuery } = useUrlQuery();
-  const { customDate, urlQueryDate, urlQueryDateTime } = useFormatDateTime();
+  const { customDate, urlQueryDateTime } = useFormatDateTime();
 
   const { mrtColumnDefinitions, filterUpdaters } = useMemo(() => {
     const mrtColumnDefinitions: MRT_ColumnDef<T>[] = [];
@@ -58,7 +58,6 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
               filterSelectOptions: filterValues,
             });
             filterUpdaters[filterKey] = (value: string) => {
-              console.log('New value', value);
               updateQuery({ [filterKey]: value });
             };
             break;
@@ -75,8 +74,8 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
             ]) => {
               updateQuery({
                 [filterKey]: {
-                  from: date1 ? customDate(date1, urlQueryDateTime) : undefined,
-                  to: date2 ? customDate(date2, urlQueryDateTime) : undefined,
+                  from: date1 ? customDate(date1, urlQueryDateTime) : '',
+                  to: date2 ? customDate(date2, urlQueryDateTime) : '',
                 },
               });
             };
