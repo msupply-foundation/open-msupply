@@ -295,22 +295,12 @@ export const NewCreateStocktakeModal = ({
                       }
                       value={ItemStatus.All}
                       control={<Radio />}
-                      label={concat(
-                        t('label.all'),
-                        ' (',
-                        estimateLineCount(ItemStatus.All).toString(),
-                        ')'
-                      )}
+                      label={t('label.all')}
                     />
                     <FormControlLabel
                       value={ItemStatus.InStock}
                       control={<Radio />}
-                      label={concat(
-                        t('report.in-stock'),
-                        ' (',
-                        estimateLineCount(ItemStatus.InStock).toString(),
-                        ')'
-                      )}
+                      label={t('report.in-stock')}
                     />
                     <FormControlLabel
                       disabled={
@@ -320,7 +310,7 @@ export const NewCreateStocktakeModal = ({
                       }
                       value={ItemStatus.None}
                       control={<Radio />}
-                      label={concat(t('label.none'), ' (blank)')}
+                      label={t('label.none')}
                     />
                   </RadioGroup>
                 }
@@ -333,11 +323,7 @@ export const NewCreateStocktakeModal = ({
                 </Alert>
               ) : (
                 <Alert severity="info">
-                  {concat(
-                    estimateLineCount().toString(),
-                    ' ',
-                    t('message.lines-estimated')
-                  )}
+                  {t('message.lines-estimated', { count: estimateLineCount() })}
                 </Alert>
               )}
             </Box>
