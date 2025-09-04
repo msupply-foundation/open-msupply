@@ -224,7 +224,7 @@ export const themeOptions = {
     background: {
       group: '#e2e2e9',
       drawer: '#f2f2f5',
-      row: '#f2f2f5',
+      row: '#fafafc',
       icon: '#E5EEFF',
       login: '#f2f2f5',
       menu: '#f2f2f5',

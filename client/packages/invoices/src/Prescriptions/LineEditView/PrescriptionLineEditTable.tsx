@@ -51,9 +51,6 @@ export const PrescriptionLineEditTable = ({
           flexDirection: 'column',
           overflowX: 'hidden',
           overflowY: 'auto',
-          '& .MuiTableRow-root': {
-            backgroundColor: 'background.toolbar',
-          },
           '& .MuiTableRow-root:nth-of-type(even)': {
             backgroundColor: 'background.row',
           },
