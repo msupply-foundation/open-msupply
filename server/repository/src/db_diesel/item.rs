@@ -1,8 +1,8 @@
 use super::{
     item_category_row::item_category_join, item_link_row::item_link, item_row::item,
     master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, stock_on_hand::stock_on_hand, store_row::store, unit_row::unit,
-    DBType, ItemRow, ItemType, StorageConnection, UnitRow,
+    master_list_row::master_list, program_row::program, stock_on_hand::stock_on_hand,
+    store_row::store, unit_row::unit, DBType, ItemRow, ItemType, StorageConnection, UnitRow,
 };
 
 use diesel::{
@@ -52,6 +52,7 @@ pub struct ItemFilter {
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
     pub master_list_id: Option<EqualFilter<String>>,
+    pub is_program_item: Option<bool>,
 }
 
 impl ItemFilter {
@@ -116,6 +117,11 @@ impl ItemFilter {
 
     pub fn visible_or_on_hand(mut self, value: bool) -> Self {
         self.is_visible_or_on_hand = Some(value);
+        self
+    }
+
+    pub fn is_program_item(mut self, value: bool) -> Self {
+        self.is_program_item = Some(value);
         self
     }
 }
@@ -225,6 +231,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             has_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id,
+            is_program_item,
         } = f;
 
         // or filter need to be applied before and filters
@@ -333,6 +340,33 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             // no visibility filters
             (_, _) => query,
         };
+
+        if let Some(is_program_item_filter) = is_program_item {
+            let program_master_list_ids = program::table
+                .select(program::master_list_id)
+                .filter(program::master_list_id.is_not_null())
+                .distinct()
+                .into_boxed();
+
+            let program_item_ids = item_link::table
+                .select(item_link::item_id)
+                .inner_join(
+                    master_list_line::table.on(master_list_line::item_link_id.eq(item_link::id)),
+                )
+                .filter(
+                    master_list_line::master_list_id
+                        .nullable()
+                        .eq_any(program_master_list_ids),
+                )
+                .distinct()
+                .into_boxed();
+
+            if is_program_item_filter {
+                query = query.filter(item::id.eq_any(program_item_ids));
+            } else {
+                query = query.filter(item::id.ne_all(program_item_ids));
+            }
+        }
 
         if let Some(master_list_id_filter) = master_list_id {
             let mut sub_query = item_link::table
