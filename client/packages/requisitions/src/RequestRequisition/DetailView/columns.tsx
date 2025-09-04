@@ -277,7 +277,7 @@ const UnitsAndMaybeDosesCell = (props: CellProps<RequestLineFragment>) => {
 
   return (
     <UnitsAndMaybeDoses
-      numberCellProps={props}
+      numberCellProps={{ ...props, decimalLimit: 0 }}
       units={units}
       isVaccine={isVaccine}
       dosesPerUnit={doses}

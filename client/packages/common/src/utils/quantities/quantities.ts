@@ -11,7 +11,8 @@ export const QuantityUtils = {
     const total = amc * mos;
 
     // Subtract the available stock on hand
-    const suggested = Math.round(total - Math.max(soh, 0));
+    // always round up when ordering, otherwise we could under-order by a fraction
+    const suggested = Math.ceil(total - Math.max(soh, 0));
 
     return Math.max(suggested, 0);
   },
