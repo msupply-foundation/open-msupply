@@ -1,10 +1,5 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
-import {
-  MaterialReactTable,
-  MRT_RowSelectionState as MRTRowSelectionState,
-  useMaterialReactTable,
-  type MRT_ColumnDef as MRTColumnDef,
-} from 'material-react-table';
+import React, { FC, useEffect, useMemo } from 'react';
+import { type MRT_ColumnDef as MRTColumnDef } from 'material-react-table';
 import {
   useNavigate,
   DataTable,
@@ -25,8 +20,9 @@ import {
   PaperHoverPopover,
   PaperPopoverSection,
   MessageSquareIcon,
-  useUrlQuery,
   useFeatureFlags,
+  MaterialTable,
+  usePaginatedMaterialTable,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -189,114 +185,13 @@ const OutboundShipmentListViewComponent: FC = () => {
     []
   );
 
-  // console.log('data', data?.nodes);
-  // console.log('Sorting', sortBy);
-
-  const columnFilters = Object.entries(filter).map(([id, value]) => ({
-    id,
-    value,
-  }));
-
-  // console.log('filter', filter);
-
-  const table = useMaterialReactTable({
+  const table = usePaginatedMaterialTable<OutboundRowFragment>({
+    isLoading,
+    onRowClick: row => navigate(row.id),
     columns: mrtColumns,
     data: data?.nodes ?? [],
-    manualFiltering: true,
-    manualPagination: true,
-    manualSorting: true,
-    onSortingChange: sortUpdate => {
-      if (typeof sortUpdate === 'function') {
-        const newSortValue = sortUpdate([
-          { id: sortBy.key, desc: !!sortBy.isDesc },
-        ])[0];
-        // console.log('Sorting changed:', newSortValue);
-        if (newSortValue)
-          updateSortQuery(newSortValue.id, newSortValue.desc ? 'desc' : 'asc');
-      }
-    },
-    onPaginationChange: pagination => {
-      const current = { pageIndex: page, pageSize: first };
-      if (typeof pagination === 'function') {
-        // console.log('current', current);
-        const newPaginationValue = pagination(current);
-        // console.log('Pagination changed:', newPaginationValue);
-        updatePaginationQuery(newPaginationValue.pageIndex);
-      }
-    },
-    onColumnFiltersChange: columnFilters => {
-      if (typeof columnFilters === 'function') {
-        const newFilter = columnFilters([]);
-        // console.log('Column filters changed:', newFilter);
-        // @ts-expect-error -- temporary
-        updateQuery({
-          ...urlQuery,
-
-          ...Object.fromEntries(newFilter.map(f => [f.id, f.value])),
-        });
-      }
-    },
-    muiPaginationProps: {
-      showRowsPerPage: false,
-      // rowsPerPageOptions: [], // Remove the dropdown
-    },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    rowCount: data?.totalCount ?? 0,
-    state: {
-      sorting: [{ id: sortBy.key, desc: !!sortBy.isDesc }],
-      pagination: { pageIndex: pagination.page, pageSize: pagination.first },
-      showProgressBars: isLoading,
-      columnFilters,
-      rowSelection,
-    },
-    // enableColumnResizing: true,
-    // muiTableContainerProps: {
-    //   sx: { maxHeight: '600px', width: '100%' },
-    // },
-    // muiTableBodyProps: {
-    //   sx: { border: '1px solid blue', width: '100%' },
-    // },
-    muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
-      onClick: () => navigate(row.original.id),
-      sx: {
-        backgroundColor: staticRowIndex % 2 === 0 ? 'transparent' : '#fafafb', // light grey on odd rows
-        '& td': {
-          borderBottom: '1px solid rgba(224, 224, 224, 1)', // add bottom border to each cell
-        },
-      },
-    }),
-    // muiTableProps: {
-    //   sx: {
-    //     // tableLayout: 'fixed', // ensures columns share extra space
-    //   },
-    // },
-    muiTableHeadCellProps: {
-      sx: {
-        fontSize: '14px',
-        lineHeight: 1.2,
-        verticalAlign: 'bottom',
-        // border: '1px solid red',
-        '& .MuiBox-root': {
-          whiteSpace: 'normal',
-          overflow: 'visible',
-          textOverflow: 'unset',
-          wordBreak: 'break-word',
-          alignItems: 'flex-end',
-        },
-      },
-    },
-    muiTableBodyCellProps: {
-      sx: {
-        fontSize: '14px',
-        borderBottom: '1px solid rgba(224, 224, 224, 1)',
-      },
-    },
+    totalCount: data?.totalCount ?? 0,
   });
-
-  // const selected = table.getSelectedRowModel().rows;
-
-  // console.log('selected', selected);
 
   return (
     <>
@@ -306,9 +201,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         simplifiedTabletView={simplifiedTabletView}
       />
       {tableUsabilityImprovements ? (
-        <div style={{ width: '100%' }}>
-          <MaterialReactTable table={table} />
-        </div>
+        <MaterialTable table={table} />
       ) : (
         <DataTable
           id="outbound-list"
