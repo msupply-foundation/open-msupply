@@ -44,6 +44,7 @@ export const AdjustmentForm = ({
             display: 'flex',
             width: '20em',
             justifyContent: 'space-between',
+            gap: '1em',
           }}
         >
           <InventoryAdjustmentDirectionInput

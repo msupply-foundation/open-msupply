@@ -19,7 +19,7 @@ export const SimpleStatistic = ({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        width: '-webkit-fill-available',
+        flex: 1,
       }}
     >
       <Typography

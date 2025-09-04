@@ -52,7 +52,7 @@ export const ItemDetailAndStats = ({
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 1 }}>
+      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
         <AdjustmentStats
           originalValue={availableNumberOfPacks}
           variation={variation}
@@ -85,6 +85,7 @@ export const AdjustmentStats = ({
         backgroundColor: 'background.secondary',
         padding: '1em',
         borderRadius: '16px',
+        flex: 1,
       }}
     >
       <Typography
@@ -108,9 +109,9 @@ export const AdjustmentStats = ({
         />
         <Box
           sx={{
-            width: '1px',
+            width: '2px',
+            height: '4em',
             backgroundColor: 'secondary.main',
-            height: '-webkit-fill-available',
           }}
         ></Box>
         <SimpleStatistic
