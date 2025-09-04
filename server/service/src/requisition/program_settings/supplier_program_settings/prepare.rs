@@ -2,7 +2,7 @@ use repository::{
     EqualFilter, MasterListFilter, NameTagFilter, PeriodRow, PeriodRowRepository,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
-    ProgramRequisitionSettingsRepository, ProgramSupplier, ProgramSupplierFilter,
+    ProgramRequisitionSettingsRepository, ProgramRow, ProgramSupplier, ProgramSupplierFilter,
     ProgramSupplierRepository, RepositoryError, RequisitionType, RequisitionsInPeriod,
     RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
 };
@@ -28,29 +28,13 @@ pub(super) fn prepare_supplier_program_settings(
 ) -> Result<Option<PrepareProgramSettings>, RepositoryError> {
     let equal_to_store_id = EqualFilter::equal_to(store_id);
 
-    // Program Settings (for store)
-    let filter = ProgramRequisitionSettingsFilter::new()
-        .master_list(MasterListFilter::new().exists_for_store_id(equal_to_store_id.clone()))
-        .name_tag(NameTagFilter::new().store_id(equal_to_store_id.clone()));
-
-    let settings =
-        ProgramRequisitionSettingsRepository::new(&ctx.connection).query(Some(filter))?;
-
-    // Shouldn't try query everything else (early return)
-    if settings.is_empty() {
-        return Ok(None);
-    }
-
-    // Order Types (matching settings program_settings_ids)
-    let program_requisition_settings_ids: Vec<String> = settings
-        .iter()
-        .map(|s| s.program_settings_row.id.clone())
-        .collect();
-
-    let program_ids = get_program_ids(&ctx.connection, &settings)?;
-
-    let order_types = ProgramRequisitionOrderTypeRowRepository::new(&ctx.connection)
-        .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?;
+    let ProgramSettingsAndOrderTypes {
+        settings,
+        order_types,
+    } = match get_program_settings_and_order_types_for_store(ctx, store_id)? {
+        None => return Ok(None),
+        Some(data) => data,
+    };
 
     // Periods (matching settings program_schedule_ids)
     let program_schedule_ids = settings
@@ -62,6 +46,7 @@ pub(super) fn prepare_supplier_program_settings(
         .find_many_by_program_schedule_ids(program_schedule_ids)?;
 
     let period_ids = periods.iter().map(|p| p.id.clone()).collect();
+    let program_ids = get_program_ids(&ctx.connection, &settings)?;
 
     // Requisitions in Period (for all periods and store)
     let filter = RequisitionsInPeriodFilter::new()
@@ -85,4 +70,47 @@ pub(super) fn prepare_supplier_program_settings(
         requisitions_in_periods,
         program_suppliers,
     }))
+}
+
+pub struct ProgramSettingsAndOrderTypes {
+    pub settings: Vec<ProgramRequisitionSettings>,
+    pub order_types: Vec<ProgramRequisitionOrderTypeRow>,
+}
+
+pub fn get_program_settings_and_order_types_for_store(
+    ctx: &ServiceContext,
+    store_id: &str,
+) -> Result<Option<ProgramSettingsAndOrderTypes>, RepositoryError> {
+    let equal_to_store_id = EqualFilter::equal_to(store_id);
+
+    let filter = ProgramRequisitionSettingsFilter::new()
+        .master_list(MasterListFilter::new().exists_for_store_id(equal_to_store_id.clone()))
+        .name_tag(NameTagFilter::new().store_id(equal_to_store_id.clone()));
+
+    let settings =
+        ProgramRequisitionSettingsRepository::new(&ctx.connection).query(Some(filter))?;
+
+    if settings.is_empty() {
+        return Ok(None);
+    }
+
+    // Order Types (matching settings program_settings_ids)
+    let program_requisition_settings_ids: Vec<String> = settings
+        .iter()
+        .map(|s| s.program_settings_row.id.clone())
+        .collect();
+
+    let order_types = ProgramRequisitionOrderTypeRowRepository::new(&ctx.connection)
+        .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?;
+
+    Ok(Some(ProgramSettingsAndOrderTypes {
+        settings,
+        order_types,
+    }))
+}
+
+#[derive(Clone, Debug)]
+pub struct ProgramAndOrderType {
+    pub program: ProgramRow,
+    pub order_type: ProgramRequisitionOrderTypeRow,
 }
