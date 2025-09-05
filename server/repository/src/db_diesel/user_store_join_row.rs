@@ -1,6 +1,6 @@
 use super::{store_row::store, user_row::user_account, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -55,9 +55,58 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_user_and_store(
+        &self,
+        user_id: &str,
+        store_id: &str,
+    ) -> Result<Option<UserStoreJoinRow>, RepositoryError> {
+        Ok(user_store_join::table
+            .filter(user_store_join::user_id.eq(user_id))
+            .filter(user_store_join::store_id.eq(store_id))
+            .first(self.connection.lock().connection())
+            .optional()?)
+    }
+
+    pub fn delete_by_id(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(user_store_join::table.filter(user_store_join::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn delete_by_user_id(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_store_join::table.filter(user_store_join::user_id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UserStoreJoinRowDelete(pub String);
+impl Delete for UserStoreJoinRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        UserStoreJoinRowRepository::new(con).delete_by_id(&self.0)?;
+        Ok(None) // Table not in Changelog
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UserStoreJoinRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        );
+    }
+}
+
+impl Upsert for UserStoreJoinRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        UserStoreJoinRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UserStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
