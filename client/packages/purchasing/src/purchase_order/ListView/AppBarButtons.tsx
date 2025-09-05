@@ -8,23 +8,36 @@ import {
   useNotification,
   useToggle,
   useNavigate,
+  LoadingButton,
+  DownloadIcon,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import {
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
+import { PurchaseOrderRowFragment } from '../api';
+import { purchaseOrderToCsv } from '../../utils';
 
-export const AppBarButtonsComponent = () => {
+interface AppBarButtonProps {
+  data?: PurchaseOrderRowFragment[];
+  isLoading: boolean;
+}
+
+export const AppBarButtonsComponent = ({
+  data,
+  isLoading,
+}: AppBarButtonProps) => {
   const t = useTranslation();
-  const modalController = useToggle();
   const navigate = useNavigate();
+  const exportCsv = useExportCSV();
+  const { error } = useNotification();
+  const modalController = useToggle();
 
   const {
     create: { create },
   } = usePurchaseOrder();
-
-  const { error } = useNotification();
 
   const handleSupplierSelected = async (selected: NameRowFragment) => {
     try {
@@ -37,8 +50,13 @@ export const AppBarButtonsComponent = () => {
       );
       errorSnack();
     }
-
     modalController.toggleOff();
+  };
+
+  const handleCsvExportClick = async () => {
+    if (!data || !data.length) return error(t('error.no-data'))();
+    const csv = purchaseOrderToCsv(t, data);
+    await exportCsv(csv, t('filename.purchase-order'));
   };
 
   return (
@@ -49,11 +67,21 @@ export const AppBarButtonsComponent = () => {
           label={t('button.new-purchase-order')}
           onClick={modalController.toggleOn}
         />
-        <SupplierSearchModal
-          open={modalController.isOn}
-          onClose={modalController.toggleOff}
-          onChange={handleSupplierSelected}
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          variant="outlined"
+          isLoading={isLoading}
+          label={t('button.export')}
+          onClick={handleCsvExportClick}
         />
+        {modalController.isOn && (
+          <SupplierSearchModal
+            external
+            open={modalController.isOn}
+            onClose={modalController.toggleOff}
+            onChange={handleSupplierSelected}
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );

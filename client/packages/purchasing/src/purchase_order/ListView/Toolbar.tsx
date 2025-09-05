@@ -1,14 +1,13 @@
-import React, { FC } from 'react';
+import React, { ReactElement } from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
   FilterMenu,
-  FilterController,
   Box,
   PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{ filter: FilterController }> = () => {
+export const Toolbar = (): ReactElement => {
   const t = useTranslation();
 
   return (
@@ -52,21 +51,57 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             },
             {
               type: 'group',
-              name: t('label.date'),
+              name: t('label.confirmed-datetime'),
               elements: [
                 {
                   type: 'dateTime',
-                  name: t('label.from-date'),
-                  urlParameter: 'createdDatetime',
+                  name: t('label.from-confirmed-datetime'),
+                  urlParameter: 'confirmedDatetime',
                   range: 'from',
-                  isDefault: false,
                 },
                 {
                   type: 'dateTime',
-                  name: t('label.to-date'),
-                  urlParameter: 'createdDatetime',
+                  name: t('label.to-confirmed-datetime'),
+                  urlParameter: 'confirmedDatetime',
                   range: 'to',
-                  isDefault: false,
+                },
+              ],
+            },
+            {
+              type: 'group',
+              name: t('label.requested-delivery-date'),
+              elements: [
+                {
+                  type: 'date',
+                  name: t('label.from-requested-delivery-date'),
+                  urlParameter: 'requestedDeliveryDate',
+                  range: 'from',
+                  width: 240,
+                },
+                {
+                  type: 'date',
+                  name: t('label.to-requested-delivery-date'),
+                  urlParameter: 'requestedDeliveryDate',
+                  range: 'to',
+                  width: 240,
+                },
+              ],
+            },
+            {
+              type: 'group',
+              name: t('label.sent-datetime'),
+              elements: [
+                {
+                  type: 'dateTime',
+                  name: t('label.from-sent-datetime'),
+                  urlParameter: 'sentDatetime',
+                  range: 'from',
+                },
+                {
+                  type: 'dateTime',
+                  name: t('label.to-sent-datetime'),
+                  urlParameter: 'sentDatetime',
+                  range: 'to',
                 },
               ],
             },

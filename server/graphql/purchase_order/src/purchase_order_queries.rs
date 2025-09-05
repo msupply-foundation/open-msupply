@@ -1,6 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
+    generic_filters::{
+        DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
+    },
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
@@ -9,7 +11,7 @@ use graphql_core::{
 };
 use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderNodeStatus};
 use repository::{
-    DatetimeFilter, EqualFilter, PaginationOption, PurchaseOrderStatus, StringFilter,
+    DateFilter, DatetimeFilter, EqualFilter, PaginationOption, PurchaseOrderStatus, StringFilter,
 };
 use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField};
 use service::auth::{Resource, ResourceAccessRequest};
@@ -45,6 +47,9 @@ pub struct PurchaseOrderFilterInput {
     pub status: Option<EqualFilterPurchaseOrderStatusInput>,
     pub supplier: Option<StringFilterInput>,
     pub store_id: Option<EqualFilterStringInput>,
+    pub confirmed_datetime: Option<DatetimeFilterInput>,
+    pub requested_delivery_date: Option<DateFilterInput>,
+    pub sent_datetime: Option<DatetimeFilterInput>,
 }
 
 #[derive(Union)]
@@ -131,12 +136,14 @@ impl PurchaseOrderFilterInput {
     pub fn to_domain(self) -> PurchaseOrderFilter {
         PurchaseOrderFilter {
             id: self.id.map(EqualFilter::from),
-            created_datetime: self.created_datetime.map(DatetimeFilter::from),
             status: self
                 .status
                 .map(|t| map_filter!(t, |s| PurchaseOrderStatus::from(s))),
             supplier: self.supplier.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
+            confirmed_datetime: self.confirmed_datetime.map(DatetimeFilter::from),
+            requested_delivery_date: self.requested_delivery_date.map(DateFilter::from),
+            sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
         }
     }
 }
