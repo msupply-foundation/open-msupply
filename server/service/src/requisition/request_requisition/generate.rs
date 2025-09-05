@@ -36,7 +36,8 @@ pub fn generate_suggested_quantity(
         return 0.0;
     }
 
-    (max_months_of_stock - months_of_stock) * average_monthly_consumption
+    // Suggested quantity should always round up - we order in units and otherwise we could under-order by a fraction
+    ((max_months_of_stock - months_of_stock) * average_monthly_consumption).ceil()
 }
 
 pub fn generate_requisition_lines(

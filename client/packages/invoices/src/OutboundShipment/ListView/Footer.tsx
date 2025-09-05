@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -6,12 +6,17 @@ import {
   useTranslation,
   AppFooterPortal,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../api';
+import { MRT_Row as MRTRow } from 'material-react-table';
+import { OutboundRowFragment, useOutbound } from '../api';
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+}: {
+  selectedRows: MRTRow<OutboundRowFragment>[];
+}) => {
   const t = useTranslation();
 
-  const { selectedRows, confirmAndDelete } = useOutbound.document.deleteRows();
+  const { confirmAndDelete } = useOutbound.document.deleteRows();
 
   const actions: Action[] = [
     {

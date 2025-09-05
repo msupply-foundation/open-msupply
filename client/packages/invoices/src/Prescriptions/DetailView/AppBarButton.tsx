@@ -11,6 +11,8 @@ import {
   SplitButton,
   PrinterIcon,
   SplitButtonOption,
+  useRegisterActions,
+  ALT_KEY,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../../StockOut';
@@ -58,6 +60,19 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const [selected, setSelected] = useState<SplitButtonOption<string>>(
     options[1]!
   );
+
+  useRegisterActions([
+    {
+      id: 'print',
+      name: `${t('button.print')} (${ALT_KEY}+L)`,
+      shortcut: ['Alt+KeyL'],
+      perform: () => {
+        if (prescription) {
+          printPrescriptionLabels(prescription, prescription.lines.nodes);
+        }
+      },
+    },
+  ]);
 
   return (
     <AppBarButtonsPortal>
