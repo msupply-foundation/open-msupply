@@ -13,6 +13,7 @@ import {
   PurchaseOrderNodeStatus,
   useTableStore,
   NumberCell,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
@@ -28,6 +29,7 @@ import {
 const ListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { localisedDate } = useFormatDateTime();
   const { setDisabledRows } = useTableStore();
 
   const {
@@ -86,21 +88,24 @@ const ListView = () => {
       {
         key: 'createdDatetime',
         label: 'label.created',
-        format: ColumnFormat.Date,
+        formatter: dateString =>
+          dateString ? localisedDate((dateString as string) || '') : '',
         accessor: ({ rowData }) => rowData.createdDatetime,
         sortable: true,
       },
       {
         key: 'confirmedDatetime',
         label: 'label.confirmed',
-        format: ColumnFormat.Date,
+        formatter: dateString =>
+          dateString ? localisedDate((dateString as string) || '') : '',
         accessor: ({ rowData }) => rowData.confirmedDatetime,
         sortable: true,
       },
       {
         key: 'sentDatetime',
         label: 'label.sent',
-        format: ColumnFormat.Date,
+        formatter: dateString =>
+          dateString ? localisedDate((dateString as string) || '') : '',
         accessor: ({ rowData }) => rowData.sentDatetime,
       },
       {
@@ -135,7 +140,7 @@ const ListView = () => {
         key: 'deliveryDatetime',
         label: 'label.delivered',
         accessor: ({ rowData: _ }) => '', // rowData.deliveredDatetime,
-        // format: ColumnFormat.Date,
+        // formatter: dateString => dateString ? localisedDate((dateString as string) || '') : '',
         // accessor: ({ rowData }) => rowData.deliveredDatetime,
         // TODO: Figure out how to get the delivery date from the goods received data
         sortable: true,
