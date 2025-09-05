@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput } from '../../..';
-import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
+import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionInput';
 
 export const AdjustmentForm = ({
   draft,
