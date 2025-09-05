@@ -76,7 +76,7 @@ export const InventoryAdjustmentModal = ({
         />
 
         {stockLine.availableNumberOfPacks + variation < 0 && (
-          <Alert severity="error" sx={{ marginRight: 0 }}>
+          <Alert severity="error" sx={{ margin: '0 auto', width: '520px' }}>
             {t('error.reduced-below-zero')}
           </Alert>
         )}
