@@ -217,7 +217,7 @@
   "label.approved-quantity": "Kuantidade aprova",
   "label.atc-category": "Kategoria ATC",
   "label.available": "Disponivel",
-  "label.available-packs": "Disponivel (pakotes)",
+  "label.available-in-packs": "Disponivel (pakotes)",
   "label.available-quantity": "Kuantidade Disponivel: {{number}} Unidades",
   "label.barcode": "Barcode",
   "label.batch": "Lote",
