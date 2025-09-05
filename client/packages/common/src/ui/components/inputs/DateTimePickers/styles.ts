@@ -1,7 +1,6 @@
-import { SxProps, Theme } from '@mui/material';
+import { SxProps } from '@mui/material';
 
 export const getTextFieldSx = (
-  theme: Theme,
   hasLabel: boolean,
   dateOnly: boolean,
   inputSx?: SxProps,
@@ -10,7 +9,7 @@ export const getTextFieldSx = (
   border: 'none',
   color: 'gray',
   '& .MuiPickersOutlinedInput-root': {
-    backgroundColor: theme.palette.background.menu,
+    backgroundColor: 'background.input.main',
     height: '36px',
     marginTop: hasLabel ? '16px' : 0,
     padding: '0 8px',
@@ -19,7 +18,7 @@ export const getTextFieldSx = (
       '& .MuiPickersOutlinedInput-notchedOutline': {
         border: 'none',
         borderBottom: 'solid 2px',
-        borderColor: `${theme.palette.secondary.light}`,
+        borderColor: 'secondary.light',
         borderRadius: 0,
       },
     },
@@ -28,6 +27,9 @@ export const getTextFieldSx = (
         borderWidth: '2px',
         borderStyle: 'solid',
       },
+    },
+    '&.Mui-disabled': {
+      backgroundColor: 'background.input.disabled',
     },
     ...inputSx,
   },
@@ -53,20 +55,20 @@ export const getTextFieldSx = (
   },
 });
 
-export const getPaperSx = (theme: Theme) => ({
+export const getPaperSx = () => ({
   '& .Mui-selected': {
-    backgroundColor: `${theme.palette.secondary.main}!important`,
+    backgroundColor: 'secondary.main!important',
   },
   '& .Mui-selected:focus': {
-    backgroundColor: `${theme.palette.secondary.main}`,
+    backgroundColor: 'secondary.main',
   },
   '& .Mui-selected:hover': {
-    backgroundColor: `${theme.palette.secondary.main}`,
+    backgroundColor: 'secondary.main',
   },
 });
 
-export const getActionBarSx = (theme: Theme) => ({
+export const getActionBarSx = () => ({
   '& .MuiButton-root': {
-    color: `${theme.palette.secondary.main}`,
+    color: 'secondary.main',
   },
 });

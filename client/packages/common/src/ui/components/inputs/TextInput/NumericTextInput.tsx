@@ -311,8 +311,8 @@ export const NumericTextInput = React.forwardRef<
               htmlInput: {
                 sx: {
                   backgroundColor: props.disabled
-                    ? 'background.toolbar'
-                    : 'background.menu',
+                    ? 'background.input.disabled'
+                    : 'background.input.main',
                 },
               },
             },
