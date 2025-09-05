@@ -16,9 +16,13 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
 export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
-  const { isActive } = useNestedNav(
+  const isManageActive = useNestedNav(
     RouteBuilder.create(AppRoute.Manage).addWildCard().build()
-  );
+  ).isActive;
+  const isCatalogueActive = useNestedNav(
+    RouteBuilder.create(AppRoute.Catalogue).addWildCard().build()
+  ).isActive;
+  const isActive = isManageActive || isCatalogueActive;
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const vaccineModuleEnabled = store?.preferences.vaccineModule;
@@ -28,7 +32,6 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
       <AppNavLink
-        visible={isCentralServer}
         end={false}
         to={AppRoute.Manage}
         icon={<SlidersIcon color="primary" fontSize="small" />}
@@ -46,6 +49,28 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             text={t('stores')}
           />
           <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Assets)
+              .build()}
+            text={t('assets')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Items)
+              .build()}
+            text={t('items')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.MasterLists)
+              .build()}
+            text={t('master-lists')}
+          />
+
+          <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}
             end
             to={RouteBuilder.create(AppRoute.Manage)
@@ -54,6 +79,7 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             text={t('indicators-demographics')}
           />
           <AppNavLink
+            visible={isCentralServer}
             end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.GlobalPreferences)
