@@ -191,7 +191,9 @@ const getFilterEntry = (
   if (filter.condition === 'between' && filter.key) {
     const filterItems = String(filterValue).split(RANGE_SPLIT_CHAR);
 
-    const isDateTime = DateUtils.isUrlQueryDateTime(filterItems[0] ?? '');
+    const isDateTime = filterItems.some(item =>
+      DateUtils.isUrlQueryDateTime(item ?? '')
+    );
 
     // If just "date", we are time zone agnostic, pass the filter straight through
     if (!isDateTime) {
