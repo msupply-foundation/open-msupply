@@ -1,13 +1,14 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use graphql_core::loader::StoreByIdLoader;
 use graphql_core::loader::{
     GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput,
     PurchaseOrderByIdLoader, UserLoader,
 };
 use graphql_core::ContextExt;
 use graphql_goods_received_line::types::GoodsReceivedLineConnector;
-use graphql_types::types::{purchase_order, user, NameNode, UserNode};
+use graphql_types::types::{purchase_order, user, NameNode, StoreNode, UserNode};
 use repository::goods_received_row::GoodsReceivedRow;
 use service::ListResult;
 #[derive(PartialEq, Debug)]
@@ -29,6 +30,14 @@ impl GoodsReceivedNode {
 
     pub async fn number(&self) -> &i64 {
         &self.row().goods_received_number
+    }
+
+    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+        Ok(loader
+            .load_one(self.row().store_id.clone())
+            .await?
+            .map(StoreNode::from_domain))
     }
 
     pub async fn status(&self) -> GoodsReceivedNodeStatus {

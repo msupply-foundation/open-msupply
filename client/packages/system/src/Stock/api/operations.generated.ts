@@ -48,8 +48,13 @@ export type StockLineRowFragment = {
     unitName?: string | null;
     isVaccine: boolean;
     restrictedLocationTypeId?: string | null;
+    defaultPackSize: number;
     dosesPerUnit: number;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      defaultSellPricePerPack: number;
+    } | null;
   };
   vvmStatusLogs?: {
     __typename: 'VvmstatusLogConnector';
@@ -278,11 +283,16 @@ export type StockLinesQuery = {
         unitName?: string | null;
         isVaccine: boolean;
         restrictedLocationTypeId?: string | null;
+        defaultPackSize: number;
         dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
         }> | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
       };
       vvmStatusLogs?: {
         __typename: 'VvmstatusLogConnector';
@@ -388,11 +398,16 @@ export type StockLineQuery = {
         unitName?: string | null;
         isVaccine: boolean;
         restrictedLocationTypeId?: string | null;
+        defaultPackSize: number;
         dosesPerUnit: number;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
         }> | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+        } | null;
       };
       vvmStatusLogs?: {
         __typename: 'VvmstatusLogConnector';
@@ -535,11 +550,16 @@ export type UpdateStockLineMutation = {
           unitName?: string | null;
           isVaccine: boolean;
           restrictedLocationTypeId?: string | null;
+          defaultPackSize: number;
           dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
           }> | null;
+          itemStoreProperties?: {
+            __typename: 'ItemStorePropertiesNode';
+            defaultSellPricePerPack: number;
+          } | null;
         };
         vvmStatusLogs?: {
           __typename: 'VvmstatusLogConnector';
@@ -856,11 +876,16 @@ export type InsertStockLineMutation = {
           unitName?: string | null;
           isVaccine: boolean;
           restrictedLocationTypeId?: string | null;
+          defaultPackSize: number;
           dosesPerUnit: number;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
           }> | null;
+          itemStoreProperties?: {
+            __typename: 'ItemStorePropertiesNode';
+            defaultSellPricePerPack: number;
+          } | null;
         };
         vvmStatusLogs?: {
           __typename: 'VvmstatusLogConnector';
@@ -1018,6 +1043,10 @@ export const StockLineRowFragmentDoc = gql`
       isVaccine
       dosesPerUnit: doses
       restrictedLocationTypeId
+      defaultPackSize
+      itemStoreProperties(storeId: $storeId) {
+        defaultSellPricePerPack
+      }
     }
     barcode
     vvmStatusLogs {

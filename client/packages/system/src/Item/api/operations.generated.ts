@@ -65,6 +65,8 @@ export type StockLineFragment = {
     unusable: boolean;
     description: string;
   } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
 export type ItemRowFragment = {
@@ -387,6 +389,12 @@ export type ItemFragment = {
         unusable: boolean;
         description: string;
       } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
     }>;
   };
   stats: {
@@ -596,6 +604,16 @@ export type ItemsWithStockLinesQuery = {
             priority: number;
             unusable: boolean;
             description: string;
+          } | null;
+          program?: {
+            __typename: 'ProgramNode';
+            id: string;
+            name: string;
+          } | null;
+          campaign?: {
+            __typename: 'CampaignNode';
+            id: string;
+            name: string;
           } | null;
         }>;
       };
@@ -925,6 +943,16 @@ export type ItemByIdQuery = {
             unusable: boolean;
             description: string;
           } | null;
+          program?: {
+            __typename: 'ProgramNode';
+            id: string;
+            name: string;
+          } | null;
+          campaign?: {
+            __typename: 'CampaignNode';
+            id: string;
+            name: string;
+          } | null;
         }>;
       };
       restrictedLocationType?: {
@@ -1203,6 +1231,12 @@ export type GetHistoricalStockLinesQuery = {
         priority: number;
         unusable: boolean;
         description: string;
+      } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
       } | null;
     }>;
   };
@@ -1592,6 +1626,14 @@ export const StockLineFragmentDoc = gql`
       priority
       unusable
       description
+    }
+    program {
+      id
+      name
+    }
+    campaign {
+      id
+      name
     }
   }
   ${ItemDirectionFragmentDoc}
