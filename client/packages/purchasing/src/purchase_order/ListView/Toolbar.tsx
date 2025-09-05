@@ -50,19 +50,58 @@ export const Toolbar = (): ReactElement => {
               isDefault: false,
             },
             {
-              type: 'dateTime',
+              type: 'group',
               name: t('label.confirmed-datetime'),
-              urlParameter: 'confirmedDatetime',
+              elements: [
+                {
+                  type: 'dateTime',
+                  name: t('label.from-confirmed-datetime'),
+                  urlParameter: 'confirmedDatetime',
+                  range: 'from',
+                },
+                {
+                  type: 'dateTime',
+                  name: t('label.to-confirmed-datetime'),
+                  urlParameter: 'confirmedDatetime',
+                  range: 'to',
+                },
+              ],
             },
             {
-              type: 'date',
+              type: 'group',
               name: t('label.requested-delivery-date'),
-              urlParameter: 'requestedDeliveryDate',
+              elements: [
+                {
+                  type: 'date',
+                  name: t('label.from-requested-delivery-date'),
+                  urlParameter: 'requestedDeliveryDate',
+                  range: 'from',
+                },
+                {
+                  type: 'date',
+                  name: t('label.to-requested-delivery-date'),
+                  urlParameter: 'requestedDeliveryDate',
+                  range: 'to',
+                },
+              ],
             },
             {
-              type: 'dateTime',
+              type: 'group',
               name: t('label.sent-datetime'),
-              urlParameter: 'sentDatetime',
+              elements: [
+                {
+                  type: 'dateTime',
+                  name: t('label.from-sent-datetime'),
+                  urlParameter: 'sentDatetime',
+                  range: 'from',
+                },
+                {
+                  type: 'dateTime',
+                  name: t('label.to-sent-datetime'),
+                  urlParameter: 'sentDatetime',
+                  range: 'to',
+                },
+              ],
             },
           ]}
         />
