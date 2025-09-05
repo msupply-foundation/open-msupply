@@ -35,10 +35,11 @@ export function initialiseI18n({
 
   // Served with frontend bundle
   // Electron `main` window translations should be served with relative path
+  // for electron, the preloaded script path is `file://:` we don't get a valid API_HOST url until we connect to the server and re-initialise the window
   const defaultTranslationsLoadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
 
-  // Served from backend
-  const customTranslationsLoadPath = `${Environment.API_HOST}/custom-translations`;
+  // Served from backend, on electron we use a dummy but valid url https://localhost:8000 which shouldn't actually be used.
+  const customTranslationsLoadPath = `${Environment.API_HOST.startsWith('file://') ? 'http://localhost:8000' : Environment.API_HOST}/custom-translations`;
 
   i18next
     .use(initReactI18next) // passes i18n down to react-i18next

@@ -188,3 +188,5 @@ export const EnvUtils = {
   platform,
   printFormat: PrintFormat.Html, // platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
 };
+
+export const ALT_KEY = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';

@@ -18,7 +18,7 @@ import {
   useRegisterActions,
   useConfirmationModal,
   useDetailPanelStore,
-  EnvUtils,
+  ALT_KEY,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -100,7 +100,6 @@ const Actions = () => {
     title: t('heading.logout-confirm'),
   });
   const { close, open } = useDetailPanelStore();
-  const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
 
   const actions = [
     {
@@ -150,7 +149,7 @@ const Actions = () => {
     },
     {
       id: 'navigation:dashboard',
-      name: `${t('cmdk.goto-dashboard')} (${altOrOptionString}+D)`,
+      name: `${t('cmdk.goto-dashboard')} (${ALT_KEY}+D)`,
       shortcut: ['Alt+KeyD'],
       keywords: 'dashboard',
       perform: () => navigate(RouteBuilder.create(AppRoute.Dashboard).build()),
@@ -245,28 +244,28 @@ const Actions = () => {
     },
     {
       id: 'action:logout',
-      name: `${t('logout')} (${altOrOptionString}+Shift+L)`,
+      name: `${t('logout')} (${ALT_KEY}+Shift+L)`,
       shortcut: ['Alt+Shift+KeyL'],
       keywords: 'logout',
       perform: () => confirmLogout({}),
     },
     {
       id: 'action:easter-egg',
-      name: `${t('easter-egg')} (${altOrOptionString}+Shift+E)`,
+      name: `${t('easter-egg')} (${ALT_KEY}+Shift+E)`,
       shortcut: ['Alt+Shift+KeyE'],
       keywords: 'easter egg game',
       perform: showEasterEgg,
     },
     {
       id: 'navigation:help',
-      name: `${t('help')} (${altOrOptionString}+H)`,
+      name: `${t('help')} (${ALT_KEY}+H)`,
       keywords: 'help, docs, guide',
       shortcut: ['Alt+KeyH'],
       perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
     },
     {
       id: 'action:sync',
-      name: `${t('sync')} (${altOrOptionString}+Shift+S)`,
+      name: `${t('sync')} (${ALT_KEY}+Shift+S)`,
       keywords: 'sync',
       shortcut: ['Alt+Shift+KeyS'],
       perform: showSync,
@@ -307,14 +306,14 @@ const Actions = () => {
     actions.push(
       {
         id: 'action:more-open',
-        name: `${t('cmdk.more-info-open')} (${altOrOptionString}+M)`,
+        name: `${t('cmdk.more-info-open')} (${ALT_KEY}+M)`,
         keywords: 'more open',
         shortcut: ['Alt+KeyM'],
         perform: open,
       },
       {
         id: 'action:more-close',
-        name: `${t('cmdk.more-info-close')} (${altOrOptionString}+Shift+M)`,
+        name: `${t('cmdk.more-info-close')} (${ALT_KEY}+Shift+M)`,
         keywords: 'more close',
         shortcut: ['Alt+Shift+KeyM'],
         perform: close,

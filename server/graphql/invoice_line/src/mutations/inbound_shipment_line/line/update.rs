@@ -28,7 +28,7 @@ pub struct UpdateInput {
     pub batch: Option<String>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
@@ -125,7 +125,9 @@ impl UpdateInput {
             }),
             pack_size,
             batch,
-            expiry_date,
+            expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
+                value: expiry_date.value,
+            }),
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
@@ -513,7 +515,9 @@ mod test {
                     batch: Some("batch input".to_string()),
                     cost_price_per_pack: Some(1.0),
                     sell_price_per_pack: Some(1.0),
-                    expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
+                    expiry_date: Some(NullableUpdate {
+                        value: NaiveDate::from_ymd_opt(2022, 1, 1)
+                    }),
                     number_of_packs: Some(1.0),
                     r#type: StockInType::InboundShipment,
                     ..Default::default()
@@ -537,7 +541,7 @@ mod test {
             "batch": "batch input",
             "costPricePerPack": 1,
             "sellPricePerPack": 1,
-            "expiryDate": "2022-01-01",
+            "expiryDate": {"value": "2022-01-01"},
             "numberOfPacks": 1.0,
           },
           "storeId": "store_a"

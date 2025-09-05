@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, ItemRow, RepositoryError, StockLine,
-    StockLineFilter, StockLineRepository, StorageConnection,
+    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, ItemRow, LocationRow, RepositoryError,
+    StockLine, StockLineFilter, StockLineRepository, StorageConnection,
 };
 
 const LAST_PACK_THRESHOLD: f64 = 0.001;
@@ -72,10 +72,12 @@ pub enum LocationIsOnHoldError {
     LocationIsOnHold,
 }
 
-pub fn check_location_on_hold(batch: &StockLine) -> Result<(), LocationIsOnHoldError> {
+pub fn check_location_on_hold(
+    location_row: &Option<LocationRow>,
+) -> Result<(), LocationIsOnHoldError> {
     use LocationIsOnHoldError::*;
 
-    match &batch.location_row {
+    match location_row {
         Some(location) => {
             if location.on_hold {
                 return Err(LocationIsOnHold);

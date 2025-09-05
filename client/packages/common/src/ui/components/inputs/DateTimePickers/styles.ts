@@ -10,7 +10,7 @@ export const getTextFieldSx = (
   border: 'none',
   color: 'gray',
   '& .MuiPickersOutlinedInput-root': {
-    backgroundColor: theme.palette.background.drawer,
+    backgroundColor: theme.palette.background.menu,
     height: '36px',
     marginTop: hasLabel ? '16px' : 0,
     padding: '0 8px',
