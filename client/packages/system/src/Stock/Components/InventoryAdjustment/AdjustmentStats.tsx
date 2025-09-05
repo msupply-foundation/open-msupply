@@ -36,16 +36,10 @@ export const ItemDetailAndStats = ({
       }}
     >
       <Box sx={{ paddingX: 1, marginBottom: 1 }}>
-        <Typography>
-          {t('label.code')}:
-          <Typography component="span" color="gray.dark">
-            {` ${code} | `}
-          </Typography>
-          {t('label.pack-size')}:
-          <Typography component="span" color="gray.dark">
-            {` ${packSize}`}
-          </Typography>
-        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <ItemInfo label={t('label.code')} value={code} />
+          <ItemInfo label={t('label.pack-size')} value={packSize} />
+        </Box>
 
         <Typography sx={{ fontWeight: 500, fontSize: '22px' }}>
           {name}
@@ -68,7 +62,22 @@ export const ItemDetailAndStats = ({
   );
 };
 
-export const AdjustmentStats = ({
+const ItemInfo = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) => (
+  <Typography>
+    {label}:{' '}
+    <Typography component="span" color="gray.dark">
+      {value}
+    </Typography>
+  </Typography>
+);
+
+const AdjustmentStats = ({
   originalValue,
   variation,
   label,
