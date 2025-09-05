@@ -1,3 +1,24 @@
+fragment LocationRow on LocationNode {
+  __typename
+  id
+  name
+  onHold
+  code
+  volume
+  volumeUsed
+  locationType {
+    id
+    name
+    maxTemperature
+    minTemperature
+  }
+  stock {
+    ... on StockLineConnector {
+      totalCount
+    }
+  }
+}
+
 fragment Sensor on SensorNode {
   __typename
   id
