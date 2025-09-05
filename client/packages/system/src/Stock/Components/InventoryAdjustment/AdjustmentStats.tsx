@@ -5,6 +5,7 @@ import {
   Typography,
   SimpleStatistic,
   UNDEFINED_STRING_VALUE,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../../api';
 
@@ -32,7 +33,6 @@ export const ItemDetailAndStats = ({
         borderColor: 'border',
         padding: 1,
         margin: '0 auto',
-        width: '520px',
       }}
     >
       <Box sx={{ paddingX: 1, marginBottom: 1 }}>
@@ -113,7 +113,7 @@ const AdjustmentStats = ({
       >
         <SimpleStatistic
           label={t('label.current')}
-          value={originalValue}
+          value={NumUtils.round(originalValue, 2)}
           color={'secondary.main'}
         />
         <Box
@@ -126,7 +126,9 @@ const AdjustmentStats = ({
         <SimpleStatistic
           label={t('label.adjusted')}
           value={
-            variation === 0 ? UNDEFINED_STRING_VALUE : originalValue + variation
+            variation === 0
+              ? UNDEFINED_STRING_VALUE
+              : NumUtils.round(originalValue + variation, 2)
           }
           color={'secondary.main'}
         />
