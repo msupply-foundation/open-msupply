@@ -14,7 +14,6 @@ import {
   useNotification,
   useTableStore,
   useBreadcrumbs,
-  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -34,7 +33,6 @@ const DetailViewInner = () => {
   const t = useTranslation();
   const { info } = useNotification();
   const isDisabled = useOutbound.utils.isDisabled();
-  const featureFlags = useFeatureFlags();
 
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<OutboundOpenedWith>();
@@ -85,9 +83,7 @@ const DetailViewInner = () => {
 
   const tabs = [
     {
-      Component: featureFlags?.tableUsabilityImprovements ? (
-        'INCOMING: NEW TABLE'
-      ) : (
+      Component: (
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
           onAddItem={onAddItem}

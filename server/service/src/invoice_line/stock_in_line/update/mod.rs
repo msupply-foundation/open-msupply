@@ -27,7 +27,7 @@ pub struct UpdateStockInLine {
     pub note: Option<NullableUpdate<String>>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdate<NaiveDate>>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<ShipmentTaxUpdate>,
@@ -131,6 +131,7 @@ where
 
 #[cfg(test)]
 mod test {
+    use chrono::NaiveDate;
     use repository::{
         mock::{
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
@@ -511,6 +512,7 @@ mod test {
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 r#type: StockInType::InboundShipment,
+                expiry_date: NaiveDate::from_ymd_opt(2023, 10, 1),
                 ..Default::default()
             },
         )
@@ -522,11 +524,13 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 number_of_packs: Some(15.0),
                 volume_per_pack: Some(10.0),
+                expiry_date: Some(NullableUpdate { value: None }),
                 ..Default::default()
             },
         )
         .unwrap();
         assert_eq!(result.invoice_line_row.volume_per_pack, 10.0);
+        assert_eq!(result.invoice_line_row.expiry_date, None);
 
         let invoice_line = InvoiceLineRepository::new(&connection)
             .query_by_filter(

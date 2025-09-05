@@ -540,7 +540,7 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::CancelFinalisedInvoices => {
                 output.insert(PermissionType::CancelFinalisedInvoices);
             }
-            Permissions::VerifyInboundShipment => {
+            Permissions::FinaliseSupplierInvoices => {
                 output.insert(PermissionType::InboundShipmentVerify);
             }
             _ => continue,
