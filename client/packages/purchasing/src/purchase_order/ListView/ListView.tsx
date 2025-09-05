@@ -42,9 +42,9 @@ const ListView = () => {
         key: 'status',
         condition: 'equalTo',
       },
-      { key: 'confirmedDatetime', condition: 'equalTo' },
-      { key: 'requestedDeliveryDate', condition: 'equalTo' },
-      { key: 'sentDatetime', condition: 'equalTo' },
+      { key: 'confirmedDatetime', condition: 'between' },
+      { key: 'requestedDeliveryDate', condition: 'between' },
+      { key: 'sentDatetime', condition: 'between' },
     ],
   });
 

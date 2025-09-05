@@ -136,7 +136,6 @@ impl PurchaseOrderFilterInput {
     pub fn to_domain(self) -> PurchaseOrderFilter {
         PurchaseOrderFilter {
             id: self.id.map(EqualFilter::from),
-            created_datetime: self.created_datetime.map(DatetimeFilter::from),
             status: self
                 .status
                 .map(|t| map_filter!(t, |s| PurchaseOrderStatus::from(s))),

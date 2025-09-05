@@ -27,7 +27,6 @@ pub struct PurchaseOrder {
 pub struct PurchaseOrderFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
-    pub created_datetime: Option<DatetimeFilter>,
     pub status: Option<EqualFilter<PurchaseOrderStatus>>,
     pub supplier: Option<StringFilter>,
     pub confirmed_datetime: Option<DatetimeFilter>,
@@ -127,7 +126,6 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
         let PurchaseOrderFilter {
             id,
             store_id,
-            created_datetime,
             status,
             supplier,
             confirmed_datetime,
@@ -136,7 +134,6 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
         } = f;
         apply_equal_filter!(query, id, purchase_order::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
-        apply_date_time_filter!(query, created_datetime, purchase_order::created_datetime);
         apply_equal_filter!(query, status, purchase_order::status);
         if let Some(supplier_string) = supplier {
             let mut sub_query = name_link::table
@@ -176,16 +173,24 @@ impl PurchaseOrderFilter {
         self.store_id = Some(filter);
         self
     }
-    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.created_datetime = Some(filter);
-        self
-    }
     pub fn status(mut self, filter: EqualFilter<PurchaseOrderStatus>) -> Self {
         self.status = Some(filter);
         self
     }
     pub fn supplier(mut self, filter: StringFilter) -> Self {
         self.supplier = Some(filter);
+        self
+    }
+    pub fn confirmed_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.confirmed_datetime = Some(filter);
+        self
+    }
+    pub fn requested_delivery_date(mut self, filter: DateFilter) -> Self {
+        self.requested_delivery_date = Some(filter);
+        self
+    }
+    pub fn sent_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.sent_datetime = Some(filter);
         self
     }
 }
