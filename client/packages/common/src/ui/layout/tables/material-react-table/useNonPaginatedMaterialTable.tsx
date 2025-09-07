@@ -39,7 +39,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     },
 
     // Styling
-    muiTablePaperProps: { sx: { width: '100%' } },
+    muiTablePaperProps: {
+      sx: { width: '100%', display: 'flex', flexDirection: 'column' },
+    },
     muiTableHeadCellProps: {
       sx: {
         fontWeight: 600,
