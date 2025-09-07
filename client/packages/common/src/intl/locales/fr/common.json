@@ -2108,6 +2108,7 @@
   "report-code.item-usage": "Consommation des articles",
   "report-code.outbound-invoice-landscape-with-logo": "Sorties de stock (Paysage)",
   "report-code.outbound-invoice-portrait-with-logo": "Sorties de stock (Portrait)",
+  "report-code.outbound-shipments": "Livraisons Sortantes",
   "report-code.pending-encounters": "Visites en attente",
   "report-code.prescription-receipt": "Reçu de la prescription",
   "report-code.repack": "Reconditionnement",

@@ -2083,6 +2083,7 @@
   "report-code.item-usage": "Item Usage",
   "report-code.outbound-invoice-landscape-with-logo": "Outbound Shipment (landscape)",
   "report-code.outbound-invoice-portrait-with-logo": "Outbound Shipment (portrait)",
+  "report-code.outbound-shipments": "Outbound Shipments",
   "report-code.pending-encounters": "Pending Encounters",
   "report-code.prescription-receipt": "Prescription Receipt",
   "report-code.repack": "Repack",
