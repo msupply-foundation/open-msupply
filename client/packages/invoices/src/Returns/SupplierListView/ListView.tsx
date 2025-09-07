@@ -16,6 +16,11 @@ import {
   TooltipTextCell,
   GenericColumnKey,
   getCommentPopoverColumn,
+  useCallbackWithPermission,
+  UserPermission,
+  usePreference,
+  PreferenceKey,
+  useNotification,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -40,6 +45,12 @@ const SupplierReturnListViewComponent: FC = () => {
   const { setDisabledRows } = useTableStore();
   const navigate = useNavigate();
   const modalController = useToggle();
+  const { info } = useNotification();
+  const { data: preferences } = usePreference(
+    PreferenceKey.DisableManualReturns
+  );
+
+  const disableManualReturns = preferences?.disableManualReturns ?? false;
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
 
@@ -60,6 +71,19 @@ const SupplierReturnListViewComponent: FC = () => {
     colour,
   }) => {
     mutate({ id, colour });
+  };
+
+  const openModal = useCallbackWithPermission(
+    UserPermission.SupplierReturnMutate,
+    modalController.toggleOn
+  );
+
+  const handleClick = (): void => {
+    if (disableManualReturns) {
+      info(t('messages.manual-returns-preferences-disabled'))();
+      return;
+    }
+    openModal();
   };
 
   const columns = useColumns<SupplierReturnRowFragment>(
@@ -94,7 +118,7 @@ const SupplierReturnListViewComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons modalController={modalController} onNew={handleClick} />
 
       <DataTable
         id="supplier-return-list"
@@ -108,7 +132,7 @@ const SupplierReturnListViewComponent: FC = () => {
         noDataElement={
           <NothingHere
             body={t('error.no-supplier-returns')}
-            onCreate={modalController.toggleOn}
+            onCreate={handleClick}
           />
         }
         onRowClick={row => {
