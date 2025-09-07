@@ -1,8 +1,14 @@
+import * as React from 'react';
 import {
   MRT_RowData,
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
+import {
+  CheckboxCheckedIcon,
+  CheckboxEmptyIcon,
+  CheckboxIndeterminateIcon,
+} from '@common/icons';
 
 interface NonPaginatedTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -10,7 +16,7 @@ interface NonPaginatedTableConfig<T extends MRT_RowData>
   isLoading: boolean;
 }
 
-export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
+export const useBaseMaterialTable = <T extends MRT_RowData>({
   isLoading,
   onRowClick,
   ...tableOptions
@@ -20,7 +26,10 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
     enableRowVirtualization: true,
     enableColumnResizing: true,
     enableColumnOrdering: true,
+    enableColumnDragging: false,
     enableRowSelection: true,
+
+    positionToolbarAlertBanner: 'bottom',
 
     initialState: {
       density: 'compact',
@@ -31,24 +40,34 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
 
     // Styling
     muiTablePaperProps: { sx: { width: '100%' } },
-    muiTableBodyProps: {
-      sx: {
-        // stripe the rows, make odd rows a darker color
-        '& tr:nth-of-type(odd) > td': { backgroundColor: 'background.row' },
-      },
-    },
     muiTableHeadCellProps: {
       sx: {
         fontWeight: 600,
         lineHeight: 1.2,
         verticalAlign: 'bottom',
+        '& svg': { fontSize: '2em', marginLeft: 0 },
       },
     },
     muiTableBodyCellProps: {
-      sx: {
-        fontSize: '14px',
-        fontWeight: 400,
-      },
+      sx: { fontSize: '14px', fontWeight: 400 },
+    },
+
+    muiSelectAllCheckboxProps: {
+      color: 'outline',
+      size: 'small',
+      icon: <CheckboxEmptyIcon />,
+      checkedIcon: <CheckboxCheckedIcon />,
+      indeterminateIcon: <CheckboxIndeterminateIcon />,
+    },
+    muiSelectCheckboxProps: {
+      color: 'outline',
+      size: 'small',
+      icon: <CheckboxEmptyIcon />,
+      checkedIcon: <CheckboxCheckedIcon />,
+      indeterminateIcon: <CheckboxIndeterminateIcon />,
+    },
+    muiToolbarAlertBannerProps: {
+      sx: { backgroundColor: 'unset' },
     },
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
@@ -62,3 +81,6 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
   });
   return table;
 };
+
+// Export a renamed version for clarity
+export const useNonPaginatedMaterialTable = useBaseMaterialTable;
