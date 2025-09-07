@@ -76,6 +76,10 @@ impl PreferencesNode {
     pub async fn use_simplified_mobile_ui(&self) -> Result<bool> {
         self.load_preference(&self.preferences.use_simplified_mobile_ui)
     }
+
+    pub async fn disable_manual_returns(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.disable_manual_returns)
+    }
 }
 
 impl PreferencesNode {
@@ -139,6 +143,7 @@ pub enum PreferenceKey {
     UseProcurementFunctionality,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
+    DisableManualReturns,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]

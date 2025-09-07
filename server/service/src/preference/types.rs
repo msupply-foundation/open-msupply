@@ -29,6 +29,7 @@ pub enum PrefKey {
     UseProcurementFunctionality,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
+    DisableManualReturns,
 }
 
 #[derive(Clone, Debug, PartialEq)]

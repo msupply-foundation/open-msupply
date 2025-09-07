@@ -81,6 +81,7 @@ pub struct RequisitionFilterInput {
     pub elmis_code: Option<EqualFilterStringInput>,
     pub is_emergency: Option<bool>,
     pub automatically_created: Option<bool>,
+    pub is_program_requisition: Option<bool>,
 }
 
 #[derive(Union)]
@@ -251,6 +252,7 @@ impl RequisitionFilterInput {
             store_id: None,
             is_emergency: self.is_emergency,
             automatically_created: self.automatically_created,
+            is_program_requisition: self.is_program_requisition,
         }
     }
 }

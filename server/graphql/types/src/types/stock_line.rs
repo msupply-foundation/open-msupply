@@ -1,4 +1,4 @@
-use crate::types::program_node::ProgramNode;
+use crate::types::{program_node::ProgramNode, program_order_type::ProgramOrderTypeNode};
 
 use super::{
     CampaignNode, ItemNode, ItemVariantNode, LocationNode, NameNode, VVMStatusLogConnector,
@@ -10,7 +10,8 @@ use chrono::NaiveDate;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemLoader, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
-        ProgramByIdLoader, VVMStatusLogByStockLineIdLoader,
+        OrderTypesByProgramIdInput, OrderTypesByProgramIdLoader, ProgramByIdLoader,
+        VVMStatusLogByStockLineIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -110,6 +111,7 @@ impl StockLineNode {
             .extend(),
         )
     }
+
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
@@ -184,6 +186,25 @@ impl StockLineNode {
 
         let result = loader.load_one(program_id.clone()).await?;
         Ok(result.map(|program_row| ProgramNode { program_row }))
+    }
+
+    pub async fn program_order_type(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Vec<ProgramOrderTypeNode>> {
+        let loader = ctx.get_loader::<DataLoader<OrderTypesByProgramIdLoader>>();
+
+        let result = loader
+            .load_one(OrderTypesByProgramIdInput::new(
+                &store_id,
+                &self.item_row().id,
+            ))
+            .await?;
+
+        Ok(result
+            .map(|order_types| ProgramOrderTypeNode::from_vec(order_types))
+            .unwrap_or_default())
     }
 
     pub async fn volume_per_pack(&self) -> f64 {

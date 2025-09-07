@@ -69,11 +69,11 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
       <React.Suspense fallback={<BasicSpinner inline />}>
         {reports && (
           <Grid
-            container
+            display="flex"
             justifyContent="flex-start"
-            flex="none"
             flexDirection="column"
             paddingTop={2}
+            sx={{ overflowY: 'auto' }}
           >
             {reports.map((report, index) => (
               <React.Fragment key={`${report.id}_${index}`}>
@@ -103,7 +103,7 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                       sx={{
                         color: 'secondary.main',
                         fontWeight: 'bold',
-                        paddingBottom: 2,
+                        paddingBottom: 1.5,
                       }}
                     >
                       {translateDynamicKey(
