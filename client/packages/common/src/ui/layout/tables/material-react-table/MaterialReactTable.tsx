@@ -15,14 +15,20 @@ import { Box } from '@openmsupply-client/common';
 
 interface TableProps<T extends MRT_RowData> {
   table: MRT_TableInstance<T>;
+  forceFullWidth?: boolean;
 }
 
 export const MaterialTable = <T extends MRT_RowData>({
   table,
+  forceFullWidth,
 }: TableProps<T>) => {
-  return (
-    <Box sx={{ width: '100%' }}>
-      <MaterialReactTable table={table} />
-    </Box>
-  );
+  if (forceFullWidth) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        <MaterialReactTable table={table} />
+      </Box>
+    );
+  }
+
+  return <MaterialReactTable table={table} />;
 };
