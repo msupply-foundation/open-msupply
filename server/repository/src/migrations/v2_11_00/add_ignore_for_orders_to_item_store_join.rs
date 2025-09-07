@@ -12,6 +12,8 @@ impl MigrationFragment for Migrate {
             connection,
             r#"
                 ALTER TABLE item_store_join ADD COLUMN ignore_for_orders BOOLEAN NOT NULL DEFAULT FALSE;
+
+                UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'item_store_join';  
             "#,
         )?;
 
