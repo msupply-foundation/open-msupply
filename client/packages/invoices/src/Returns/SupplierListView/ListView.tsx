@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -28,7 +28,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';
 import { Footer } from './Footer';
 
-const SupplierReturnListViewComponent: FC = () => {
+const SupplierReturnListViewComponent = () => {
   const t = useTranslation();
   const {
     updateSortQuery,
@@ -144,7 +144,7 @@ const SupplierReturnListViewComponent: FC = () => {
   );
 };
 
-export const SupplierReturnListView: FC = () => (
+export const SupplierReturnListView = () => (
   <TableProvider createStore={createTableStore}>
     <SupplierReturnListViewComponent />
   </TableProvider>
