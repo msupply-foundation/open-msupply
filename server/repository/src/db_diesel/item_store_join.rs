@@ -8,6 +8,7 @@ table! {
     item_link_id  -> Text,
     store_id -> Text,
     default_sell_price_per_pack -> Double,
+    ignore_for_orders -> Bool,
   }
 
 }
@@ -19,6 +20,7 @@ pub struct ItemStoreJoinRow {
     pub item_link_id: String,
     pub store_id: String,
     pub default_sell_price_per_pack: f64,
+    pub ignore_for_orders: bool,
 }
 
 pub struct ItemStoreJoinRowRepository<'a> {
