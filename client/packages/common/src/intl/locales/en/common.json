@@ -1956,6 +1956,7 @@
   "messages.requested-to-suggested": "This will set requested quantity to the suggested quantity for lines where requested quantity is 0.",
   "messages.requisition-item-information-amc": "Customer's average monthly consumption. For your store it is the sum of the customers' average monthly consumption.",
   "messages.requisition-no-stock": "There is currently no stock available",
+  "messages.no-requested-quantities": "There are currently no requested quantities",
   "messages.results-found": "{{totalCount}} results found",
   "messages.results-over-limit": "Showing the first {{limit}} results only - please refine your search",
   "messages.return-saved": "Return saved 🥳",

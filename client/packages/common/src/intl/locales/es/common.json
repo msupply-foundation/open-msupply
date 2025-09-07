@@ -1588,6 +1588,7 @@
   "messages.requested-to-suggested": "Esto establecerá la cantidad solicitada de todas las líneas a la cantidad sugerida.",
   "messages.requisition-item-information-amc": "Consumo promedio mensual del cliente. Para tu almacén, es la suma de los consumos promedio mensuales de los clientes.",
   "messages.requisition-no-stock": "No hay inventario disponible actualmente",
+  "messages.no-requested-quantities": "Actualmente no hay cantidades solicitadas.",
   "messages.results-found": "Se encontraron {{totalCount}} resultados",
   "messages.results-over-limit": "Mostrando solo los primeros {{limit}} resultados; por favor refina tu búsqueda",
   "messages.return-saved": "Devolución guardada 🥳",

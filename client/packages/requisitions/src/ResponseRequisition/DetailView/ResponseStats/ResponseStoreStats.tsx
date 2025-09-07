@@ -127,19 +127,19 @@ export const ResponseStoreStats = ({
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!formattedSoh &&
+                {formattedSoh !== null &&
                   statsDisplay(
                     'label.stock-on-hand',
                     formattedSoh,
                     'gray.dark'
                   )}
-                {!!formattedIncoming &&
+                {formattedIncoming !== null &&
                   statsDisplay(
                     'label.incoming-stock',
                     formattedIncoming,
                     'gray.main'
                   )}
-                {!!formattedSoo &&
+                {formattedSoo !== null &&
                   statsDisplay(
                     'label.stock-on-order',
                     formattedSoo,
@@ -155,45 +155,58 @@ export const ResponseStoreStats = ({
           p: '4px 8px',
         }}
       >
-        {(!!formattedRequested || !!formattedOtherRequested) && (
-          <>
-            <Typography style={{ textAlign: 'start' }} variant="h6">
-              {t('label.requested')}
-            </Typography>
-            <Box
-              display="flex"
-              alignItems="flex-start"
-              flexDirection="column"
-              width={`${requestedPercent}%`}
-            >
-              <Box display="flex" width="100%">
-                <NewValueBar
-                  value={formattedRequested}
-                  total={totalRequested}
-                  colour="primary.main"
-                />
-                <NewValueBar
-                  value={formattedOtherRequested}
-                  total={totalRequested}
-                  colour="primary.light"
-                />
+        {formattedRequested === 0 && formattedOtherRequested === 0 ? (
+          <Typography
+            fontSize={14}
+            style={{ textAlign: 'center' }}
+            justifyContent="center"
+          >
+            ⓘ
+            <span style={{ fontStyle: 'italic', paddingLeft: 4 }}>
+              {t('messages.no-requested-quantities')}
+            </span>
+          </Typography>
+        ) : (
+          (formattedRequested !== null || formattedOtherRequested !== null) && (
+            <>
+              <Typography style={{ textAlign: 'start' }} variant="h6">
+                {t('label.requested')}
+              </Typography>
+              <Box
+                display="flex"
+                alignItems="flex-start"
+                flexDirection="column"
+                width={`${requestedPercent}%`}
+              >
+                <Box display="flex" width="100%">
+                  <NewValueBar
+                    value={formattedRequested}
+                    total={totalRequested}
+                    colour="primary.main"
+                  />
+                  <NewValueBar
+                    value={formattedOtherRequested}
+                    total={totalRequested}
+                    colour="primary.light"
+                  />
+                </Box>
+                <Box paddingTop={1}>
+                  {formattedRequested !== null &&
+                    statsDisplay(
+                      'label.requested-quantity',
+                      formattedRequested,
+                      'primary.main'
+                    )}
+                  {formattedOtherRequested !== null &&
+                    statsDisplay(
+                      'label.other-requested-quantity',
+                      formattedOtherRequested,
+                      'primary.light'
+                    )}
+                </Box>
               </Box>
-              <Box paddingTop={1}>
-                {!!formattedRequested &&
-                  statsDisplay(
-                    'label.requested-quantity',
-                    formattedRequested,
-                    'primary.main'
-                  )}
-                {!!formattedOtherRequested &&
-                  statsDisplay(
-                    'label.other-requested-quantity',
-                    formattedOtherRequested,
-                    'primary.light'
-                  )}
-              </Box>
-            </Box>
-          </>
+            </>
+          )
         )}
       </Box>
     </Box>
