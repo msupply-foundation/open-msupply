@@ -1,8 +1,10 @@
 import {
   MRT_RowData,
+  MRT_RowSelectionState,
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
+import { useMemo, useState } from 'react';
 
 interface NonPaginatedTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -15,6 +17,8 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
   onRowClick,
   ...tableOptions
 }: NonPaginatedTableConfig<T>) => {
+  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+
   const table = useMaterialReactTable<T>({
     enablePagination: false,
     enableRowVirtualization: true,
@@ -23,11 +27,13 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
     // },
     enableColumnResizing: true,
     enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     initialState: {
       density: 'compact',
     },
     state: {
       showProgressBars: isLoading,
+      rowSelection,
     },
     muiTableHeadCellProps: {
       sx: {
@@ -55,5 +61,14 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
     }),
     ...tableOptions,
   });
-  return table;
+
+  const selectedRows = useMemo(
+    () => table.getSelectedRowModel().rows.map(r => r.original),
+    [rowSelection]
+  );
+
+  const resetRowSelection = () => {
+    table.resetRowSelection();
+  };
+  return { table, selectedRows, resetRowSelection };
 };
