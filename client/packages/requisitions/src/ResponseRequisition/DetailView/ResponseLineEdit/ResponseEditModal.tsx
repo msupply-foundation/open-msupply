@@ -131,6 +131,7 @@ export const ResponseLineEditModal = ({
     {
       Component: (
         <ResponseStoreStats
+          requisitionStatus={requisition.status}
           defaultPackSize={currentItem?.defaultPackSize || 1}
           representation={representation}
           unitName={currentItem?.unitName}

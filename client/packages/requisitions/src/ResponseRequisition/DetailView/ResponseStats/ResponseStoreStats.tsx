@@ -1,10 +1,16 @@
 import React from 'react';
 import { useFormatNumber, useIntlUtils, useTranslation } from '@common/intl';
-import { Box, Typography, NewValueBar } from '@openmsupply-client/common';
+import {
+  Box,
+  Typography,
+  NewValueBar,
+  RequisitionNodeStatus,
+} from '@openmsupply-client/common';
 import { RepresentationValue, useValueInUnitsOrPacks } from '../../../common';
 import { calculatePercentage, stats } from './utils';
 
 export interface ResponseStoreStatsProps {
+  requisitionStatus: RequisitionNodeStatus;
   representation: RepresentationValue;
   defaultPackSize: number;
   unitName?: string | null;
@@ -16,6 +22,7 @@ export interface ResponseStoreStatsProps {
 }
 
 export const ResponseStoreStats = ({
+  requisitionStatus,
   representation,
   defaultPackSize,
   unitName,
@@ -197,7 +204,8 @@ export const ResponseStoreStats = ({
                       formattedRequested,
                       'primary.main'
                     )}
-                  {formattedOtherRequested !== null &&
+                  {requisitionStatus !== RequisitionNodeStatus.Finalised &&
+                    formattedOtherRequested !== null &&
                     statsDisplay(
                       'label.other-requested-quantity',
                       formattedOtherRequested,
