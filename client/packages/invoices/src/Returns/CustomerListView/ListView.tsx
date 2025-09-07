@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -16,6 +16,11 @@ import {
   TooltipTextCell,
   GenericColumnKey,
   getCommentPopoverColumn,
+  useNotification,
+  usePreference,
+  PreferenceKey,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -23,7 +28,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { CustomerReturnRowFragment, useReturns } from '../api';
 import { Footer } from './Footer';
 
-const CustomerReturnListViewComponent: FC = () => {
+const CustomerReturnListViewComponent = () => {
   const t = useTranslation();
   const {
     updateSortQuery,
@@ -40,6 +45,12 @@ const CustomerReturnListViewComponent: FC = () => {
   const { setDisabledRows } = useTableStore();
   const navigate = useNavigate();
   const modalController = useToggle();
+  const { info } = useNotification();
+  const { data: preferences } = usePreference(
+    PreferenceKey.DisableManualReturns
+  );
+
+  const disableManualReturns = preferences?.disableManualReturns ?? false;
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
 
@@ -61,6 +72,19 @@ const CustomerReturnListViewComponent: FC = () => {
       .map(({ id }) => id);
     if (disabledRows) setDisabledRows(disabledRows);
   }, [data?.nodes, setDisabledRows]);
+
+  const openModal = useCallbackWithPermission(
+    UserPermission.CustomerReturnMutate,
+    modalController.toggleOn
+  );
+
+  const handleClick = (): void => {
+    if (disableManualReturns) {
+      info(t('messages.manual-returns-preferences-disabled'))();
+      return;
+    }
+    openModal();
+  };
 
   const columns = useColumns<CustomerReturnRowFragment>(
     [
@@ -94,7 +118,7 @@ const CustomerReturnListViewComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons modalController={modalController} onNew={handleClick} />
 
       <DataTable
         id="customer-return-list"
@@ -108,7 +132,7 @@ const CustomerReturnListViewComponent: FC = () => {
         noDataElement={
           <NothingHere
             body={t('error.no-customer-returns')}
-            onCreate={modalController.toggleOn}
+            onCreate={handleClick}
           />
         }
         onRowClick={row => {
@@ -120,7 +144,7 @@ const CustomerReturnListViewComponent: FC = () => {
   );
 };
 
-export const CustomerReturnListView: FC = () => (
+export const CustomerReturnListView = () => (
   <TableProvider createStore={createTableStore}>
     <CustomerReturnListViewComponent />
   </TableProvider>
