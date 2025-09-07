@@ -15,6 +15,8 @@ import {
   useNavigate,
   RouteBuilder,
   useExportCSV,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
@@ -24,10 +26,12 @@ import { AppRoute } from 'packages/config/src';
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const navigate = useNavigate();
   const t = useTranslation();
-  const { error } = useNotification();
+  const navigate = useNavigate();
+  const { error, info } = useNotification();
   const exportCSV = useExportCSV();
+  const { data } = usePreference(PreferenceKey.DisableManualReturns);
+  const disableManualReturns = data?.disableManualReturns ?? false;
 
   const { mutateAsync: onCreate } = useReturns.document.insertCustomerReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllCustomer({
@@ -45,13 +49,36 @@ export const AppBarButtonsComponent: FC<{
     const csv = customerReturnsToCsv(data.nodes, t);
     exportCSV(csv, t('filename.customer-returns'));
   };
+
   const openModal = useCallbackWithPermission(
     UserPermission.CustomerReturnMutate,
     modalController.toggleOn
   );
 
+  const handleClick = (): void => {
+    if (disableManualReturns) {
+      info(t('messages.manual-returns-preferences-disabled'))();
+      return;
+    }
+    openModal();
+  };
+
   return (
     <AppBarButtonsPortal>
+      <Grid container gap={1}>
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('button.new-return')}
+          onClick={handleClick}
+        />
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          isLoading={isLoading}
+          variant="outlined"
+          onClick={csvExport}
+          label={t('button.export')}
+        />
+      </Grid>
       <CustomerSearchModal
         open={modalController.isOn}
         onClose={modalController.toggleOff}
@@ -78,20 +105,6 @@ export const AppBarButtonsComponent: FC<{
           }
         }}
       />
-      <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('button.new-return')}
-          onClick={openModal}
-        />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          label={t('button.export')}
-        />
-      </Grid>
     </AppBarButtonsPortal>
   );
 };

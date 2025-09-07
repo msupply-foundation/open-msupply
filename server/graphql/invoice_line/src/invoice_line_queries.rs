@@ -47,6 +47,7 @@ pub struct InvoiceLineFilterInput {
     pub inventory_adjustment_reason: Option<EqualFilterStringInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
     pub program_id: Option<EqualFilterStringInput>,
+    pub is_program_invoice: Option<bool>,
 }
 
 impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
@@ -75,6 +76,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .map(EqualFilter::from)
                 .or(f.inventory_adjustment_reason.map(EqualFilter::from)),
             program_id: f.program_id.map(EqualFilter::from),
+            is_program_invoice: f.is_program_invoice,
             picked_datetime: None,
             delivered_datetime: None,
             has_prescribed_quantity: None,

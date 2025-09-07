@@ -3062,6 +3062,7 @@ export type GoodsReceivedNode = {
   purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;
   receivedDatetime?: Maybe<Scalars['NaiveDate']['output']>;
   status: GoodsReceivedNodeStatus;
+  store?: Maybe<StoreNode>;
   supplier?: Maybe<NameNode>;
   supplierReference?: Maybe<Scalars['String']['output']>;
 };
@@ -3568,6 +3569,7 @@ export type InsertInsuranceInput = {
   insuranceProviderId: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
   nameId: Scalars['String']['input'];
+  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
   policyNumberFamily: Scalars['String']['input'];
   policyNumberPerson: Scalars['String']['input'];
   policyType: InsurancePolicyNodeType;
@@ -4219,6 +4221,7 @@ export type InsurancePolicyNode = {
   insuranceProviderId: Scalars['String']['output'];
   insuranceProviders?: Maybe<InsuranceProviderNode>;
   isActive: Scalars['Boolean']['output'];
+  nameOfInsured?: Maybe<Scalars['String']['output']>;
   policyNumber: Scalars['String']['output'];
   policyNumberFamily?: Maybe<Scalars['String']['output']>;
   policyNumberPerson?: Maybe<Scalars['String']['output']>;
@@ -4389,6 +4392,7 @@ export type InvoiceFilterInput = {
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -4800,6 +4804,7 @@ export type ItemNode = {
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
+  userField4: Scalars['Boolean']['output'];
   variants: Array<ItemVariantNode>;
   venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
@@ -6742,6 +6747,7 @@ export enum PreferenceKey {
   AuthoriseGoodsReceived = 'authoriseGoodsReceived',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   CustomTranslations = 'customTranslations',
+  DisableManualReturns = 'disableManualReturns',
   GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
@@ -6782,6 +6788,7 @@ export type PreferencesNode = {
   authoriseGoodsReceived: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
+  disableManualReturns: Scalars['Boolean']['output'];
   genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
@@ -10108,6 +10115,7 @@ export type UpdateInsuranceInput = {
   id: Scalars['String']['input'];
   insuranceProviderId?: InputMaybe<Scalars['String']['input']>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  nameOfInsured?: InputMaybe<Scalars['String']['input']>;
   policyType?: InputMaybe<InsurancePolicyNodeType>;
 };
 
@@ -10982,6 +10990,7 @@ export type UpsertPreferencesInput = {
   authoriseGoodsReceived?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
+  disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderType>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
