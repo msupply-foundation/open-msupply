@@ -15,7 +15,10 @@ import {
   MRT_ColumnFiltersState,
 } from 'material-react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useBaseMaterialTable } from './useBaseMaterialTable';
+import {
+  BaseMRTableConfig,
+  useBaseMaterialTable,
+} from './useBaseMaterialTable';
 
 type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
 
@@ -31,9 +34,7 @@ export type PaginatedTableColumnDefinition<T extends MRT_RowData> =
   };
 
 interface PaginatedTableConfig<T extends MRT_RowData>
-  extends MRT_TableOptions<T> {
-  onRowClick?: (row: T) => void;
-  isLoading: boolean;
+  extends BaseMRTableConfig<T> {
   totalCount: number;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   columns: PaginatedTableColumnDefinition<T>[];

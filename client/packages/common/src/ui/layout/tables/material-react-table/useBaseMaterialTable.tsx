@@ -9,19 +9,23 @@ import {
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
 } from '@common/icons';
+import { useTableLocalStorage } from './useTableLocalStorage';
+import { useEffect } from 'react';
 
-interface NonPaginatedTableConfig<T extends MRT_RowData>
+export interface BaseMRTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
+  tableId: string; // key for local storage
   onRowClick?: (row: T) => void;
   isLoading: boolean;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
+  tableId,
   isLoading,
   onRowClick,
   state,
   ...tableOptions
-}: NonPaginatedTableConfig<T>) => {
+}: BaseMRTableConfig<T>) => {
   const table = useMaterialReactTable<T>({
     enablePagination: false,
     enableColumnResizing: true,
@@ -33,6 +37,26 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,
 
+    // onColumnPinningChange: columnPinning => {
+    //   console.log('Column pinning changed:', columnPinning());
+    // },
+    // onDensityChange: density => {
+    //   console.log('Density changed:', density);
+    //   updateTableState('density', density);
+    // },
+    // onColumnOrderChange: columns => {
+    //   updateTableState('columnOrder', columns);
+    //   console.log('Column order changed:', columns);
+    // },
+    // onColumnSizingChange: widths => {
+    //   // updateTableState('columnWidths', widths);
+    //   console.log('Column widths changed:', widths());
+    // },
+    // onColumnSizingInfoChange: info => {
+    //   // updateTableState('columnSizingInfo', info);
+    //   console.log('Column sizing info changed:', info);
+    // },
+
     initialState: {
       density: 'compact',
       columnPinning: { left: ['mrt-row-select'] },
@@ -41,6 +65,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     state: {
       showProgressBars: isLoading,
       ...state,
+      // density: tableState.density,
+      columnOrder:
+        // tableState.columnOrder ??
+        tableOptions.columns.map(c => c.id ?? c.accessorKey ?? ''),
     },
 
     // Styling
@@ -103,5 +131,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     ...tableOptions,
   });
+
+  useTableLocalStorage(tableId, table);
+
   return table;
 };
