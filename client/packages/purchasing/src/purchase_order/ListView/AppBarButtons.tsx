@@ -6,11 +6,11 @@ import {
   Grid,
   useTranslation,
   useNotification,
-  useToggle,
   useNavigate,
   LoadingButton,
   DownloadIcon,
   useExportCSV,
+  ToggleState,
 } from '@openmsupply-client/common';
 import {
   NameRowFragment,
@@ -23,17 +23,20 @@ import { purchaseOrderToCsv } from '../../utils';
 interface AppBarButtonProps {
   data?: PurchaseOrderRowFragment[];
   isLoading: boolean;
+  modalController: ToggleState;
+  onCreate: () => void;
 }
 
 export const AppBarButtonsComponent = ({
   data,
   isLoading,
+  modalController,
+  onCreate,
 }: AppBarButtonProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const exportCsv = useExportCSV();
   const { error } = useNotification();
-  const modalController = useToggle();
 
   const {
     create: { create },
@@ -65,7 +68,7 @@ export const AppBarButtonsComponent = ({
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-purchase-order')}
-          onClick={modalController.toggleOn}
+          onClick={onCreate}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
