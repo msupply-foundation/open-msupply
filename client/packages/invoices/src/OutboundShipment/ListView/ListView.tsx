@@ -155,11 +155,21 @@ const OutboundShipmentListViewComponent: FC = () => {
       // size: 100,
     },
     {
+      accessorKey: 'pricing.totalAfterTax',
+      header: t('label.total'),
+      Cell: ({ cell }) =>
+        new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+        }).format(cell.getValue<number>()),
+      // size: 100,
+    },
+    {
       accessorKey: 'comment',
-      header: '',
+      header: t('label.comment'),
       enableColumnActions: false,
       enableSorting: false,
-      // width: 0,
+      size: 80,
       Cell: ({ cell }) => {
         const t = useTranslation();
         const value = cell.getValue<string>();
@@ -176,16 +186,6 @@ const OutboundShipmentListViewComponent: FC = () => {
           </PaperHoverPopover>
         ) : null;
       },
-    },
-    {
-      accessorKey: 'pricing.totalAfterTax',
-      header: t('label.total'),
-      Cell: ({ cell }) =>
-        new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-        }).format(cell.getValue<number>()),
-      // size: 100,
     },
   ];
 
