@@ -1,5 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react';
-import { type MRT_ColumnDef as MRTColumnDef } from 'material-react-table';
+import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -23,6 +22,7 @@ import {
   useFeatureFlags,
   MaterialTable,
   usePaginatedMaterialTable,
+  PaginatedTableColumnDefinition,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -109,79 +109,85 @@ const OutboundShipmentListViewComponent: FC = () => {
     [sortBy]
   );
 
-  const mrtColumns = useMemo<MRTColumnDef<OutboundRowFragment>[]>(
-    () => [
-      {
-        accessorKey: 'otherPartyName',
-        header: t('label.name'),
-        // size: 150,
-      },
-      {
-        accessorFn: row => getStatusTranslator(t)(row.status),
-        id: 'status',
-        header: t('label.status'),
-        size: 140,
-      },
-      {
-        accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
-        size: 140,
-        muiTableBodyCellProps: {
-          sx: {
-            textAlign: 'right',
-            fontSize: '14px',
-            paddingRight: '3em',
-          },
+  const mrtColumns: PaginatedTableColumnDefinition<OutboundRowFragment>[] = [
+    {
+      accessorKey: 'otherPartyName',
+      header: t('label.name'),
+      // size: 150,
+      filterType: 'text',
+    },
+    {
+      accessorFn: row => getStatusTranslator(t)(row.status),
+      id: 'status',
+      header: t('label.status'),
+      size: 140,
+      filterType: 'enum',
+      filterValues: [
+        { value: 'NEW', label: t('label.new') },
+        { value: 'SHIPPED', label: t('label.shipped') },
+        { value: 'ALLOCATED', label: t('label.allocated') },
+        { value: 'PICKED', label: t('label.picked') },
+      ],
+    },
+    {
+      accessorKey: 'invoiceNumber',
+      header: t('label.invoice-number'),
+      size: 140,
+      muiTableBodyCellProps: {
+        sx: {
+          textAlign: 'right',
+          fontSize: '14px',
+          paddingRight: '3em',
         },
       },
-      {
-        accessorKey: 'createdDatetime',
-        header: t('label.created'),
-        Cell: ({ cell }) =>
-          new Date(cell.getValue<string>()).toLocaleDateString(),
-        // size: 100,
+    },
+    {
+      accessorKey: 'createdDatetime',
+      header: t('label.created'),
+      Cell: ({ cell }) =>
+        new Date(cell.getValue<string>()).toLocaleDateString(),
+      filterType: 'dateRange',
+      // size: 100,
+    },
+    {
+      accessorKey: 'theirReference',
+      header: t('label.reference'),
+      // size: 100,
+    },
+    {
+      accessorKey: 'comment',
+      header: '',
+      enableColumnActions: false,
+      enableSorting: false,
+      // width: 0,
+      Cell: ({ cell }) => {
+        const t = useTranslation();
+        const value = cell.getValue<string>();
+        return value ? (
+          <PaperHoverPopover
+            width={400}
+            Content={
+              <PaperPopoverSection label={t('label.comment')}>
+                {String(value)}
+              </PaperPopoverSection>
+            }
+          >
+            <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
+          </PaperHoverPopover>
+        ) : null;
       },
-      {
-        accessorKey: 'theirReference',
-        header: t('label.reference'),
-        // size: 100,
-      },
-      {
-        accessorKey: 'comment',
-        header: '',
-        enableColumnActions: false,
-        enableSorting: false,
-        // width: 0,
-        Cell: ({ cell }) => {
-          const t = useTranslation();
-          const value = cell.getValue<string>();
-          return value ? (
-            <PaperHoverPopover
-              width={400}
-              Content={
-                <PaperPopoverSection label={t('label.comment')}>
-                  {String(value)}
-                </PaperPopoverSection>
-              }
-            >
-              <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
-            </PaperHoverPopover>
-          ) : null;
-        },
-      },
-      {
-        accessorKey: 'pricing.totalAfterTax',
-        header: t('label.total'),
-        Cell: ({ cell }) =>
-          new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-          }).format(cell.getValue<number>()),
-        // size: 100,
-      },
-    ],
-    []
-  );
+    },
+    {
+      accessorKey: 'pricing.totalAfterTax',
+      header: t('label.total'),
+      Cell: ({ cell }) =>
+        new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+        }).format(cell.getValue<number>()),
+      // size: 100,
+    },
+  ];
 
   const table = usePaginatedMaterialTable<OutboundRowFragment>({
     isLoading,
@@ -189,6 +195,7 @@ const OutboundShipmentListViewComponent: FC = () => {
     columns: mrtColumns,
     data: data?.nodes ?? [],
     totalCount: data?.totalCount ?? 0,
+    initialSort: { key: 'invoiceNumber', dir: 'desc' },
   });
 
   return (
