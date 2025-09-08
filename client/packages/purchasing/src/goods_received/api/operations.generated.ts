@@ -359,9 +359,6 @@ export const GoodsReceivedFragmentDoc = gql`
     __typename
     id
     comment
-    user {
-      username
-    }
     createdDatetime
     number
     finalisedDatetime
@@ -370,6 +367,9 @@ export const GoodsReceivedFragmentDoc = gql`
     receivedDatetime
     supplierReference
     status
+    user {
+      username
+    }
     supplier {
       id
       name
