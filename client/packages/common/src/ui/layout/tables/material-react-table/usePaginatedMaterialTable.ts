@@ -6,7 +6,6 @@ import {
 } from '@openmsupply-client/common';
 import {
   MRT_RowData,
-  MRT_TableOptions,
   MRT_RowSelectionState,
   MRT_SortingState,
   MRT_Updater,

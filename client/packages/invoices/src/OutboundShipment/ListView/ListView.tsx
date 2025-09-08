@@ -161,6 +161,8 @@ const OutboundShipmentListViewComponent: FC = () => {
           header: '',
           enableColumnActions: false,
           enableSorting: false,
+          enableResizing: false,
+          size: 20,
           // width: 0,
           Cell: ({ cell }) => {
             const t = useTranslation();

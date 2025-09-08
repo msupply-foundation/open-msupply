@@ -9,8 +9,12 @@ import {
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
 } from '@common/icons';
-import { useTableLocalStorage } from './useTableLocalStorage';
-import { useEffect } from 'react';
+import {
+  getSavedTableState,
+  // resetSavedTableState,
+  useTableLocalStorage,
+} from './useTableLocalStorage';
+import { useRef } from 'react';
 
 export interface BaseMRTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -26,6 +30,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   state,
   ...tableOptions
 }: BaseMRTableConfig<T>) => {
+  const initialState = useRef(getSavedTableState(tableId));
+
   const table = useMaterialReactTable<T>({
     enablePagination: false,
     enableColumnResizing: true,
@@ -37,38 +43,13 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,
 
-    // onColumnPinningChange: columnPinning => {
-    //   console.log('Column pinning changed:', columnPinning());
-    // },
-    // onDensityChange: density => {
-    //   console.log('Density changed:', density);
-    //   updateTableState('density', density);
-    // },
-    // onColumnOrderChange: columns => {
-    //   updateTableState('columnOrder', columns);
-    //   console.log('Column order changed:', columns);
-    // },
-    // onColumnSizingChange: widths => {
-    //   // updateTableState('columnWidths', widths);
-    //   console.log('Column widths changed:', widths());
-    // },
-    // onColumnSizingInfoChange: info => {
-    //   // updateTableState('columnSizingInfo', info);
-    //   console.log('Column sizing info changed:', info);
-    // },
-
     initialState: {
-      density: 'compact',
-      columnPinning: { left: ['mrt-row-select'] },
       ...tableOptions.initialState,
+      ...initialState.current,
     },
     state: {
       showProgressBars: isLoading,
       ...state,
-      // density: tableState.density,
-      columnOrder:
-        // tableState.columnOrder ??
-        tableOptions.columns.map(c => c.id ?? c.accessorKey ?? ''),
     },
 
     // Styling
@@ -128,6 +109,25 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
       },
     }),
+
+    // TO-DO: Add a "reset all" button
+    // renderToolbarInternalActions: ({ table }) => {
+    //   return (
+    //     <>
+    //       <button
+    //         onClick={() => {
+    //           console.log('Custom action clicked');
+    //           resetSavedTableState(tableId);
+    //           table.resetColumnOrder();
+    //         }}
+    //       >
+    //         Custom Action
+    //       </button>
+    //       <MRT_ShowHideColumnsButton table={table} />
+    //       <MRT_ToggleFullScreenButton table={table} />{' '}
+    //     </>
+    //   );
+    // },
 
     ...tableOptions,
   });
