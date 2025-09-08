@@ -14,6 +14,7 @@ import {
   useTableStore,
   NumberCell,
   useFormatDateTime,
+  useToggle,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
@@ -31,6 +32,7 @@ const ListView = () => {
   const navigate = useNavigate();
   const { localisedDate } = useFormatDateTime();
   const { setDisabledRows } = useTableStore();
+  const modalController = useToggle();
 
   const {
     updateSortQuery,
@@ -161,7 +163,12 @@ const ListView = () => {
   return (
     <>
       <Toolbar />
-      <AppBarButtons data={data?.nodes} isLoading={isLoading} />
+      <AppBarButtons
+        data={data?.nodes}
+        isLoading={isLoading}
+        modalController={modalController}
+        onCreate={modalController.toggleOn}
+      />
       <DataTable
         id="purchase-order-list"
         enableColumnSelection
@@ -172,7 +179,12 @@ const ListView = () => {
         onRowClick={row => navigate(row.id)}
         onChangePage={updatePaginationQuery}
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        noDataElement={<NothingHere body={t('error.no-purchase-orders')} />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-purchase-orders')}
+            onCreate={modalController.toggleOn}
+          />
+        }
       />
       <Footer listParams={listParams} />
     </>
