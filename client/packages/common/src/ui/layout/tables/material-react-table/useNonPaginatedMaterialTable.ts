@@ -42,6 +42,12 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
         verticalAlign: 'bottom',
       },
     },
+    muiTableContainerProps: {
+      sx: {
+        maxHeight: '100%',
+        overflow: 'auto',
+      },
+    },
     muiTableBodyCellProps: {
       sx: {
         fontSize: '14px',
