@@ -9,6 +9,7 @@ import {
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
 } from '@common/icons';
+import { useIntlUtils } from '@common/intl';
 
 interface NonPaginatedTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -21,7 +22,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   onRowClick,
   ...tableOptions
 }: NonPaginatedTableConfig<T>) => {
+  const { getTableLocalisations } = useIntlUtils();
+  const localisations = getTableLocalisations();
+
   const table = useMaterialReactTable<T>({
+    localization: localisations,
+
     enablePagination: false,
     enableColumnResizing: true,
     enableColumnPinning: true,
