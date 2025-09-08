@@ -3,7 +3,7 @@ use crate::types::{
     NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
 };
 use async_graphql::*;
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
