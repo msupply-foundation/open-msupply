@@ -231,6 +231,7 @@ export const themeOptions = {
       toolbar: '#fafafc',
       white: '#fff',
       success: 'rgb(237, 247, 237)',
+      secondary: '#E8F1FE',
     },
     form: {
       field: '#555770',

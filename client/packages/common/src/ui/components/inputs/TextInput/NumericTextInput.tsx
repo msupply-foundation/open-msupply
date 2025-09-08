@@ -305,7 +305,7 @@ export const NumericTextInput = React.forwardRef<
                 sx: {
                   borderRadius: 2,
                   padding: 0.5,
-                  width: fullWidth ? undefined : `${width}px`,
+                  width: fullWidth ? undefined : width,
                 },
               },
               htmlInput: {

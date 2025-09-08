@@ -19,11 +19,7 @@ import { PurchaseOrderRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
-import {
-  DeliveryStatus,
-  getDeliveryStatusTranslator,
-  getPurchaseOrderStatusTranslator,
-} from '../../utils';
+import { getPurchaseOrderStatusTranslator } from '../../utils';
 
 const ListView: FC = () => {
   const t = useTranslation();
@@ -117,26 +113,10 @@ const ListView: FC = () => {
         },
       ],
       {
-        key: 'deliveryStatus',
-        label: 'label.delivery-status',
-        accessor: ({}) => DeliveryStatus.NotDelivered, // Todo: Replace with actual delivery status calculation once we have goods received data (add rowData back)
-        formatter: status =>
-          getDeliveryStatusTranslator(t)(status as DeliveryStatus),
-      },
-      {
         key: 'targetMonths',
         label: 'label.target-months',
         accessor: ({ rowData }) => rowData.targetMonths,
         Cell: NumberCell,
-      },
-      {
-        key: 'deliveryDatetime',
-        label: 'label.delivered',
-        accessor: ({ rowData: _ }) => '', // rowData.deliveredDatetime,
-        // format: ColumnFormat.Date,
-        // accessor: ({ rowData }) => rowData.deliveredDatetime,
-        // TODO: Figure out how to get the delivery date from the goods received data
-        sortable: true,
       },
       {
         key: 'lines',
