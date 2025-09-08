@@ -25,7 +25,7 @@ impl TestSyncIncomingRecord {
         upsert: U,
     ) -> TestSyncIncomingRecord
     where
-        U: Upsert + Clone + 'static,
+        U: Upsert + 'static,
     {
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::upsert(upsert),
