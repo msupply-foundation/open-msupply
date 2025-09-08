@@ -9000,6 +9000,7 @@ export enum SensorNodeType {
   Berlinger = 'BERLINGER',
   BlueMaestro = 'BLUE_MAESTRO',
   Laird = 'LAIRD',
+  LogTag = 'LOG_TAG',
 }
 
 export enum SensorSortFieldInput {
