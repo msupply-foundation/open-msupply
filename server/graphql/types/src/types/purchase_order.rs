@@ -78,8 +78,9 @@ impl PurchaseOrderNode {
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
-    pub async fn confirmed_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().confirmed_datetime, Utc)
+    pub async fn confirmed_datetime(&self) -> Option<DateTime<Utc>> {
+        let confirmed_datetime = self.row().confirmed_datetime;
+        confirmed_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn status(&self) -> PurchaseOrderNodeStatus {
         PurchaseOrderNodeStatus::from(self.row().status.clone())
@@ -113,8 +114,9 @@ impl PurchaseOrderNode {
     pub async fn shipping_method(&self) -> &Option<String> {
         &self.row().shipping_method
     }
-    pub async fn sent_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().sent_datetime, Utc)
+    pub async fn sent_datetime(&self) -> Option<DateTime<Utc>> {
+        let sent_datetime = self.row().confirmed_datetime;
+        sent_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn contract_signed_date(&self) -> &Option<NaiveDate> {
         &self.row().contract_signed_date
@@ -175,11 +177,13 @@ impl PurchaseOrderNode {
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage
     }
-    pub async fn authorised_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().authorised_datetime, Utc)
+    pub async fn authorised_datetime(&self) -> Option<DateTime<Utc>> {
+        let authorised_datetime = self.row().confirmed_datetime;
+        authorised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
-    pub async fn finalised_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().finalised_datetime, Utc)
+    pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
+        let finalised_datetime = self.row().confirmed_datetime;
+        finalised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
