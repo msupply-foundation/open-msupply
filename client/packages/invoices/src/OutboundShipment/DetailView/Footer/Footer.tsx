@@ -144,6 +144,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={actualSelectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
           {data && actualSelectedRows.length === 0 && (
