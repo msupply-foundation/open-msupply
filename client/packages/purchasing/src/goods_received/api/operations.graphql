@@ -38,7 +38,6 @@ fragment GoodsReceived on GoodsReceivedNode {
   __typename
   id
   comment
-  createdBy
   createdDatetime
   number
   finalisedDatetime
@@ -47,6 +46,9 @@ fragment GoodsReceived on GoodsReceivedNode {
   receivedDatetime
   supplierReference
   status
+  user {
+    username
+  }
   supplier {
     id
     name

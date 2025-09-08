@@ -64,7 +64,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   useRegisterActions([
     {
       id: 'print',
-      name: `${t('button.print')} (${ALT_KEY}+L)`,
+      name: `${t('button.print-prescription-label')} (${ALT_KEY}+L)`,
       shortcut: ['Alt+KeyL'],
       perform: () => {
         if (prescription) {

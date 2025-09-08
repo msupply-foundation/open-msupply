@@ -246,7 +246,7 @@ const getAllocateInUnitsColumns = (
   },
   {
     Cell: NumberCell,
-    label: 'label.available-packs',
+    label: 'label.available-in-packs',
     key: 'availablePacks',
     align: ColumnAlign.Right,
     width: simplifiedTabletView ? 190 : 90,

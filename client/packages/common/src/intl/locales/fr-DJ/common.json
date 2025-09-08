@@ -171,7 +171,7 @@
   "info.automatic-shipment": "Ce bon de livraison a été automatiquement créé à la suite d'un transfert depuis un autre dépôt.",
   "internal-order": "Bons de commande",
   "label.approved-packs": "Quantité autorisée (boites)",
-  "label.available-packs": "Stock Disponible (boites)",
+  "label.available-in-packs": "Stock Disponible (boites)",
   "label.cant-delete-disabled-internal-order": "Les lignes ne peuvent être supprimées que lorsque le bon de commande est en état de brouillon",
   "label.cant-delete-disabled-requisition": "Seules les commandes avec le statut \"Brouillon\" peuvent être supprimées",
   "label.cost-per-unit": "Coût par unité",

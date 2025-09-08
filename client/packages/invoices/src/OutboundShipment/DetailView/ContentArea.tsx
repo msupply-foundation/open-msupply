@@ -11,9 +11,9 @@ import {
   useFeatureFlags,
   usePreferences,
   MaterialTable,
+  MRTColumnDef,
   useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
-import { MRT_ColumnDef as MRTColumnDef } from 'material-react-table';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
@@ -121,7 +121,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
 
     if (manageVvmStatusForStock)
       cols.push({
-        accessorKey: 'vvmStatus.description',
+        accessorKey: 'vvmStatus',
         header: t('label.vvm-status'),
       });
 
