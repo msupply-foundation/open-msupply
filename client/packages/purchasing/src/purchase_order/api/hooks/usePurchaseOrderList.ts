@@ -1,9 +1,6 @@
 import {
-  DateUtils,
   FilterByWithBoolean,
-  Formatter,
   LIST_KEY,
-  PurchaseOrderFilterInput,
   PurchaseOrderSortFieldInput,
   SortBy,
   useMutation,
@@ -51,28 +48,15 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     createdDatetime: PurchaseOrderSortFieldInput.CreatedDatetime,
     status: PurchaseOrderSortFieldInput.Status,
     number: PurchaseOrderSortFieldInput.Number,
-    // Add more as required
   };
 
   const queryFn = async (): Promise<{
     nodes: PurchaseOrderRowFragment[];
     totalCount: number;
   }> => {
-    const filter = { ...filterBy } as PurchaseOrderFilterInput;
-
-    if (filter?.confirmedDatetime?.equalTo) {
-      const confirmedDate = filter.confirmedDatetime;
-      confirmedDate.equalTo = Formatter.toIsoString(
-        DateUtils.getDateOrNull(confirmedDate.equalTo)
-      );
-    }
-
-    if (filter?.sentDatetime?.equalTo) {
-      const sentDate = filter.sentDatetime;
-      sentDate.equalTo = Formatter.toIsoString(
-        DateUtils.getDateOrNull(sentDate.equalTo)
-      );
-    }
+    const filter = {
+      ...filterBy,
+    };
 
     const query = await purchaseOrderApi.purchaseOrders({
       storeId,
