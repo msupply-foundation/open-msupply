@@ -92,10 +92,8 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   const { tableUsabilityImprovements } = useFeatureFlags();
   const { manageVvmStatusForStock } = usePreferences();
 
-  const mrtColumns = useMemo<
-    MRTColumnDef<StockOutLineFragment | StockOutItem>[]
-  >(() => {
-    const cols = [
+  const mrtColumns = useMemo(() => {
+    const cols: MRTColumnDef<StockOutLineFragment | StockOutItem>[] = [
       // TO-DO: Note popover column,
       {
         accessorKey: 'item.code',
@@ -121,6 +119,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
 
     if (manageVvmStatusForStock)
       cols.push({
+        // todo - anything that could return undefined should use accessorFn, so no warnings in console
         accessorKey: 'vvmStatus.description',
         header: t('label.vvm-status'),
       });
@@ -154,6 +153,18 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     data: rows ?? [],
     onRowClick: onRowClick ? row => onRowClick(row) : () => {},
     isLoading: false,
+    getIsPlaceholder: row => {
+      if ('type' in row) {
+        return (
+          row.type === InvoiceLineNodeType.UnallocatedStock ||
+          row.numberOfPacks === 0
+        );
+      } else {
+        return row.lines.some(
+          line => line.type === InvoiceLineNodeType.UnallocatedStock
+        );
+      }
+    },
   });
 
   if (!rows) return null;

@@ -10,17 +10,19 @@ import {
   CheckboxIndeterminateIcon,
 } from '@common/icons';
 
-interface NonPaginatedTableConfig<T extends MRT_RowData>
+export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
   onRowClick?: (row: T) => void;
   isLoading: boolean;
+  getIsPlaceholder?: (row: T) => boolean;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
   isLoading,
   onRowClick,
+  getIsPlaceholder = () => false,
   ...tableOptions
-}: NonPaginatedTableConfig<T>) => {
+}: BaseTableConfig<T>) => {
   const table = useMaterialReactTable<T>({
     enablePagination: false,
     enableColumnResizing: true,
@@ -64,9 +66,13 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         },
       },
     },
-    muiTableBodyCellProps: {
-      sx: { fontSize: '14px', fontWeight: 400 },
-    },
+    muiTableBodyCellProps: ({ row }) => ({
+      sx: {
+        fontSize: '14px',
+        fontWeight: 400,
+        color: getIsPlaceholder(row.original) ? 'secondary.light' : undefined,
+      },
+    }),
 
     muiTopToolbarProps: {
       sx: { height: '60px' }, // Prevent slight jump when selecting rows
