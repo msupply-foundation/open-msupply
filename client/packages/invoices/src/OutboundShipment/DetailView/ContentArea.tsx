@@ -11,9 +11,9 @@ import {
   useFeatureFlags,
   usePreferences,
   MaterialTable,
+  MRTColumnDef,
   useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
-import { MRT_ColumnDef as MRTColumnDef } from 'material-react-table';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
