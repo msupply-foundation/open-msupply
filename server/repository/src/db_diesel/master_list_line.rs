@@ -1,5 +1,6 @@
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    item_store_join::item_store_join,
     repository_error::RepositoryError,
     EqualFilter, ItemLinkRow, ItemRow, ItemType, MasterListRepository, Pagination, Sort,
 };
@@ -31,6 +32,7 @@ pub struct MasterListLineFilter {
     pub master_list_id: Option<EqualFilter<String>>,
     pub item_type: Option<EqualFilter<ItemType>>,
     pub master_list: Option<MasterListFilter>,
+    pub ignore_for_orders: Option<bool>,
 }
 
 pub enum MasterListLineSortField {
@@ -121,6 +123,16 @@ impl<'a> MasterListLineRepository<'a> {
 
                 query = query.filter(master_list_line::master_list_id.eq_any(master_list_ids));
             }
+
+            if let Some(ignore_for_orders) = f.ignore_for_orders {
+                let item_ids_for_ignore_for_orders = item_store_join::table
+                    .select(item_store_join::item_link_id)
+                    .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
+                    .into_boxed();
+
+                query = query
+                    .filter(master_list_line::item_link_id.eq_any(item_ids_for_ignore_for_orders));
+            }
         }
 
         Ok(query)
@@ -169,6 +181,11 @@ impl MasterListLineFilter {
 
     pub fn master_list(mut self, filter: MasterListFilter) -> Self {
         self.master_list = Some(filter);
+        self
+    }
+
+    pub fn ignore_for_orders(mut self, ignore_for_orders: bool) -> Self {
+        self.ignore_for_orders = Some(ignore_for_orders);
         self
     }
 }
