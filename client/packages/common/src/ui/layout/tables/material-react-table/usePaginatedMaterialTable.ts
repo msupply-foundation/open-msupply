@@ -3,7 +3,6 @@ import {
   useMaterialTableColumns,
   useUrlQuery,
   useUrlQueryParams,
-  useBaseMaterialTable,
 } from '@openmsupply-client/common';
 import {
   MRT_RowData,
@@ -16,6 +15,7 @@ import {
   MRT_ColumnFiltersState,
 } from 'material-react-table';
 import { useCallback, useRef, useState } from 'react';
+import { useBaseMaterialTable } from './useBaseMaterialTable';
 
 type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
 
