@@ -25,7 +25,7 @@ pub fn validate(
     let line = purchase_order_line.purchase_order_line_row.clone();
 
     let purchase_order = PurchaseOrderRowRepository::new(connection)
-        .find_one_by_id(&line.id)?
+        .find_one_by_id(&line.purchase_order_id)?
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
 
     if !purchase_order_is_editable(&purchase_order) {
