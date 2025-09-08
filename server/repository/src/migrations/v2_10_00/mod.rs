@@ -15,7 +15,6 @@ mod add_goods_received_report_context;
 mod add_goods_received_table;
 mod add_item_store_join;
 mod add_more_dates_to_purchase_order;
-mod add_name_of_insured_to_name_insurance_join;
 mod add_program_id_to_stock_and_invoice_lines;
 mod add_purchase_order_activity_logs;
 mod add_purchase_order_permission_enum_values;
@@ -85,7 +84,6 @@ impl Migration for V2_10_00 {
             Box::new(add_extra_purchase_order_fields::Migrate),
             Box::new(add_goods_received_id_to_invoice::Migrate),
             Box::new(rename_cold_storage_type_activity_log_enum::Migrate),
-            Box::new(add_name_of_insured_to_name_insurance_join::Migrate),
         ]
     }
 }
