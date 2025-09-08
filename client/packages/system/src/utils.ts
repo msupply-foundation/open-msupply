@@ -61,7 +61,7 @@ export const stockLinesToCsv = (
     t('label.unit'),
     t('label.pack-size'),
     t('label.num-packs'),
-    t('label.available-packs'),
+    t('label.available-in-packs'),
     t('label.supplier'),
   ];
 
