@@ -12,6 +12,10 @@ import {
 } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
+interface SupplierSearchInputProps extends NameSearchInputProps {
+  external?: boolean;
+}
+
 export const SupplierSearchInput = ({
   onChange,
   width = 250,
@@ -19,9 +23,10 @@ export const SupplierSearchInput = ({
   disabled = false,
   clearable = false,
   currentId = undefined,
-}: NameSearchInputProps) => {
+  external = false,
+}: SupplierSearchInputProps) => {
   const t = useTranslation();
-  const { data, isLoading } = useName.document.suppliers();
+  const { data, isLoading } = useName.document.suppliers(external);
   const [buffer, setBuffer] = useBufferState(value);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
