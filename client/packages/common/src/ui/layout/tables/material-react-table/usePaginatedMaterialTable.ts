@@ -14,7 +14,7 @@ import {
   MRT_ColumnDef,
   MRT_ColumnFiltersState,
 } from 'material-react-table';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useBaseMaterialTable } from './useBaseMaterialTable';
 
 type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';

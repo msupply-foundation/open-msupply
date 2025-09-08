@@ -19,6 +19,7 @@ interface NonPaginatedTableConfig<T extends MRT_RowData>
 export const useBaseMaterialTable = <T extends MRT_RowData>({
   isLoading,
   onRowClick,
+  state,
   ...tableOptions
 }: NonPaginatedTableConfig<T>) => {
   const table = useMaterialReactTable<T>({
@@ -39,6 +40,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     },
     state: {
       showProgressBars: isLoading,
+      ...state,
     },
 
     // Styling

@@ -211,7 +211,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         simplifiedTabletView={simplifiedTabletView}
       />
       {tableUsabilityImprovements ? (
-        <MaterialTable table={table} forceFullWidth />
+        <MaterialTable table={table} />
       ) : (
         <DataTable
           id="outbound-list"
