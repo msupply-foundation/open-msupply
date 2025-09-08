@@ -289,7 +289,7 @@ export const ResponseLineEdit = ({
                 pt: 1,
               },
             })}
-            {numericInput('label.months-of-stock', mos, {
+            {numericInput('label.months-of-stock', mos(), {
               disabledOverride: true,
               endAdornmentOverride: t('label.months'),
               sx: {
