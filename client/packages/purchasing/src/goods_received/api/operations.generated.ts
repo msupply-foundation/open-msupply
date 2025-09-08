@@ -36,7 +36,6 @@ export type GoodsReceivedFragment = {
   __typename: 'GoodsReceivedNode';
   id: string;
   comment?: string | null;
-  createdBy?: string | null;
   createdDatetime: string;
   number: number;
   finalisedDatetime?: string | null;
@@ -45,6 +44,7 @@ export type GoodsReceivedFragment = {
   receivedDatetime?: string | null;
   supplierReference?: string | null;
   status: Types.GoodsReceivedNodeStatus;
+  user?: { __typename: 'UserNode'; username: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'GoodsReceivedLineConnector';
@@ -108,7 +108,6 @@ export type GoodsReceivedByIdQuery = {
         __typename: 'GoodsReceivedNode';
         id: string;
         comment?: string | null;
-        createdBy?: string | null;
         createdDatetime: string;
         number: number;
         finalisedDatetime?: string | null;
@@ -117,6 +116,7 @@ export type GoodsReceivedByIdQuery = {
         receivedDatetime?: string | null;
         supplierReference?: string | null;
         status: Types.GoodsReceivedNodeStatus;
+        user?: { __typename: 'UserNode'; username: string } | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'GoodsReceivedLineConnector';
@@ -359,7 +359,9 @@ export const GoodsReceivedFragmentDoc = gql`
     __typename
     id
     comment
-    createdBy
+    user {
+      username
+    }
     createdDatetime
     number
     finalisedDatetime

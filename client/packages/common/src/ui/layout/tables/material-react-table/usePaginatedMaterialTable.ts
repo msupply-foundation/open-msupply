@@ -7,7 +7,6 @@ import {
 import {
   MRT_RowData,
   MRT_TableOptions,
-  useMaterialReactTable,
   MRT_RowSelectionState,
   MRT_SortingState,
   MRT_Updater,
@@ -15,7 +14,8 @@ import {
   MRT_ColumnDef,
   MRT_ColumnFiltersState,
 } from 'material-react-table';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { useBaseMaterialTable } from './useBaseMaterialTable';
 
 type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
 
@@ -129,7 +129,10 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     }
   };
 
-  const table = useMaterialReactTable<T>({
+  const table = useBaseMaterialTable<T>({
+    isLoading,
+    onRowClick,
+
     columns: mrtColumnDefinitions,
     manualFiltering: true,
     manualPagination: true,
@@ -147,47 +150,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
       showProgressBars: isLoading,
       columnFilters: filterState,
       rowSelection,
-    },
-    // enableColumnResizing: true,
-    // columnFilterDisplayMode: 'popover',
-    // TO-DO: Once the props are more established, extract common props between
-    // two table types to common object or function
-    muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
-      onClick: () => {
-        if (onRowClick) onRowClick(row.original);
-      },
-      sx: {
-        backgroundColor: staticRowIndex % 2 === 0 ? 'transparent' : '#fafafb', // light grey on odd rows
-        '& td': {
-          borderBottom: '1px solid rgba(224, 224, 224, 1)', // add bottom border to each cell
-        },
-      },
-    }),
-    // muiTableProps: {
-    //   sx: {
-    //     // tableLayout: 'fixed', // ensures columns share extra space
-    //   },
-    // },
-    muiTableHeadCellProps: {
-      sx: {
-        fontSize: '14px',
-        lineHeight: 1.2,
-        verticalAlign: 'bottom',
-        // border: '1px solid red',
-        '& .MuiBox-root': {
-          whiteSpace: 'normal',
-          overflow: 'visible',
-          textOverflow: 'unset',
-          wordBreak: 'break-word',
-          alignItems: 'flex-end',
-        },
-      },
-    },
-    muiTableBodyCellProps: {
-      sx: {
-        fontSize: '14px',
-        borderBottom: '1px solid rgba(224, 224, 224, 1)',
-      },
     },
     ...tableOptions,
   });

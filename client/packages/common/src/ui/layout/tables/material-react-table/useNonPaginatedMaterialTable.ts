@@ -1,10 +1,5 @@
-import {
-  MRT_RowData,
-  MRT_RowSelectionState,
-  MRT_TableOptions,
-  useMaterialReactTable,
-} from 'material-react-table';
-import { useMemo, useState } from 'react';
+import { MRT_RowData, MRT_TableOptions } from 'material-react-table';
+import { useBaseMaterialTable } from './useBaseMaterialTable';
 
 interface NonPaginatedTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -17,54 +12,12 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
   onRowClick,
   ...tableOptions
 }: NonPaginatedTableConfig<T>) => {
-  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+  const table = useBaseMaterialTable<T>({
+    isLoading,
+    onRowClick,
 
-  const table = useMaterialReactTable<T>({
-    enablePagination: false,
     enableRowVirtualization: true,
-    // muiTableBodyProps: {
-    //   sx: { border: '1px solid blue', width: '100%' },
-    // },
-    enableColumnResizing: true,
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      density: 'compact',
-    },
-    state: {
-      showProgressBars: isLoading,
-      rowSelection,
-    },
-    muiTableHeadCellProps: {
-      sx: {
-        fontSize: '14px',
-        lineHeight: 1.2,
-        verticalAlign: 'bottom',
-      },
-    },
-    muiTableContainerProps: {
-      sx: {
-        maxHeight: '100%',
-        overflow: 'auto',
-      },
-    },
-    muiTableBodyCellProps: {
-      sx: {
-        fontSize: '14px',
-        borderBottom: '1px solid rgba(224, 224, 224, 1)',
-      },
-    },
-    muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
-      onClick: () => {
-        if (onRowClick) onRowClick(row.original);
-      },
-      sx: {
-        backgroundColor: staticRowIndex % 2 === 0 ? 'transparent' : '#fafafb', // light grey on odd rows
-        '& td': {
-          borderBottom: '1px solid rgba(224, 224, 224, 1)',
-        },
-      },
-    }),
+
     ...tableOptions,
   });
 
