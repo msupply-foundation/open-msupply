@@ -153,7 +153,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     data: rows ?? [],
     onRowClick: onRowClick ? row => onRowClick(row) : () => {},
     isLoading: false,
-    getIsPlaceholder: row => {
+    getIsPlaceholderRow: row => {
       if ('type' in row) {
         return (
           row.type === InvoiceLineNodeType.UnallocatedStock ||

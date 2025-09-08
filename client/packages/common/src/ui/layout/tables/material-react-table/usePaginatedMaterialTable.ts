@@ -6,7 +6,6 @@ import {
 } from '@openmsupply-client/common';
 import {
   MRT_RowData,
-  MRT_TableOptions,
   MRT_RowSelectionState,
   MRT_SortingState,
   MRT_Updater,
@@ -15,7 +14,7 @@ import {
   MRT_ColumnFiltersState,
 } from 'material-react-table';
 import { useCallback, useRef, useState } from 'react';
-import { useBaseMaterialTable } from './useBaseMaterialTable';
+import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 
 type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
 
@@ -31,9 +30,7 @@ export type PaginatedTableColumnDefinition<T extends MRT_RowData> =
   };
 
 interface PaginatedTableConfig<T extends MRT_RowData>
-  extends MRT_TableOptions<T> {
-  onRowClick?: (row: T) => void;
-  isLoading: boolean;
+  extends BaseTableConfig<T> {
   totalCount: number;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   columns: PaginatedTableColumnDefinition<T>[];
