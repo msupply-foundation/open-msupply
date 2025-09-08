@@ -59,7 +59,7 @@ pub fn add_from_master_list(
                     purchase_order_line_row_repository.upsert_one(&purchase_order_line_row)?;
 
                     activity_log_entry(
-                        &ctx,
+                        ctx,
                         ActivityLogType::PurchaseOrderLineCreated,
                         Some(purchase_order_line_row.purchase_order_id),
                         None,

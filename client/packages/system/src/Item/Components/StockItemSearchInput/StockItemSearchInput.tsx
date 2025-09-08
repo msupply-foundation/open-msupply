@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   useToggle,
   useFormatNumber,
@@ -22,7 +22,7 @@ import { getItemOptionRenderer } from '../ItemOptionRenderer';
 const DEBOUNCE_TIMEOUT = 300;
 const ROWS_PER_PAGE = 100;
 
-export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
+export const StockItemSearchInput = ({
   onChange,
   currentItemId,
   disabled = false,
@@ -34,7 +34,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   itemCategoryName,
   programId,
   initialUpdate = false,
-}) => {
+}: StockItemSearchInputProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
