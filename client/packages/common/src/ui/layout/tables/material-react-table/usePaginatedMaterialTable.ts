@@ -151,37 +151,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
       columnFilters: filterState,
       rowSelection,
     },
-    // enableColumnResizing: true,
-    // columnFilterDisplayMode: 'popover',
-    // TO-DO: Once the props are more established, extract common props between
-    // two table types to common object or function
-    // muiTableProps: {
-    //   sx: {
-    //     // tableLayout: 'fixed', // ensures columns share extra space
-    //   },
-    // },
-
-    // muiTableHeadCellProps: {
-    //   sx: {
-    //     fontSize: '14px',
-    //     lineHeight: 1.2,
-    //     verticalAlign: 'bottom',
-    //     // border: '1px solid red',
-    //     '& .MuiBox-root': {
-    //       whiteSpace: 'normal',
-    //       overflow: 'visible',
-    //       textOverflow: 'unset',
-    //       wordBreak: 'break-word',
-    //       alignItems: 'flex-end',
-    //     },
-    //   },
-    // },
-    // muiTableBodyCellProps: {
-    //   sx: {
-    //     fontSize: '14px',
-    //     borderBottom: '1px solid rgba(224, 224, 224, 1)',
-    //   },
-    // },
     ...tableOptions,
   });
   return table;
