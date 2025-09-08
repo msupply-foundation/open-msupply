@@ -137,7 +137,7 @@ export const ImportFridgeTag = ({
         onChange={onUpload}
         ref={hiddenFileInput}
         style={{ display: 'none' }} // Make the file input element invisible
-        accept=".txt"
+        accept=".txt,.csv"
       />
       <LoadingButton
         variant="outlined"
