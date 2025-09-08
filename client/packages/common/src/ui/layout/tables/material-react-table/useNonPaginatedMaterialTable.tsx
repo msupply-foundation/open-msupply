@@ -25,6 +25,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enablePagination: false,
     enableRowVirtualization: true,
     enableColumnResizing: true,
+    enableColumnPinning: true,
     enableColumnOrdering: true,
     enableColumnDragging: false,
     enableRowSelection: true,
@@ -34,6 +35,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     initialState: {
       density: 'compact',
+      columnPinning: { left: ['mrt-row-select'] },
+      ...tableOptions.initialState,
     },
     state: {
       showProgressBars: isLoading,
