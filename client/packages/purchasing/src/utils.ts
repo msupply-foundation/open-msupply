@@ -130,10 +130,9 @@ export const purchaseOrderToCsv = (
     t('label.sent'),
     t('label.requested-delivery-date'),
     t('label.status'),
-    // t('label.delivery-status'), TODO: add back once we have data?
-    // t('label.delivered'),
     t('label.target-months'),
     t('label.lines'),
+    t('label.comment'),
   ];
 
   const data = purchaseOrder.map(node => [
@@ -147,6 +146,7 @@ export const purchaseOrderToCsv = (
     node.status,
     node.targetMonths,
     node.lines.totalCount,
+    node.comment,
   ]);
 
   return Formatter.csv({ fields, data });
