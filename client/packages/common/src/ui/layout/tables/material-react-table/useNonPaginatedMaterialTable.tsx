@@ -29,7 +29,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableColumnDragging: false,
     enableRowSelection: true,
 
-    positionToolbarAlertBanner: 'bottom',
+    // Disable bottom footer - use OMS custom action footer instead
+    enableBottomToolbar: false,
 
     initialState: {
       density: 'compact',
