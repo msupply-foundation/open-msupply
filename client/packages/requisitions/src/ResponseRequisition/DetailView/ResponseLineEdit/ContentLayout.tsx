@@ -61,7 +61,7 @@ export const NumInputRow = ({
     defaultPackSize,
     value
   );
-  const roundedValue = NumUtils.round(valueInUnitsOrPacks);
+  const roundedValue = NumUtils.round(valueInUnitsOrPacks, 2);
 
   const endAdornment = useEndAdornment(
     t,
