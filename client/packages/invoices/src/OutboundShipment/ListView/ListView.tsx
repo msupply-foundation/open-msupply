@@ -195,6 +195,7 @@ const OutboundShipmentListViewComponent: FC = () => {
 
   const { table, selectedRows, resetRowSelection } =
     usePaginatedMaterialTable<OutboundRowFragment>({
+      tableId: 'outbound-shipment-list-view',
       isLoading,
       onRowClick: row => navigate(row.id),
       columns: mrtColumns,
