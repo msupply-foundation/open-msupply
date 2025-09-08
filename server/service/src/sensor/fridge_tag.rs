@@ -515,7 +515,7 @@ mod test {
 
     use super::integrate_sensor_data;
     use crate::{
-        sensor::berlinger::breach_sort_weight,
+        sensor::fridge_tag::breach_sort_weight,
         test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
     use chrono::{Duration, NaiveDate, NaiveDateTime};
