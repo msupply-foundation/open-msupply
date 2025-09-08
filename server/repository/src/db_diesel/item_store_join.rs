@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 
-use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::{item_link, RepositoryError, StorageConnection, Upsert};
 
 table! {
   item_store_join (id) {
@@ -26,6 +26,9 @@ pub struct ItemStoreJoinRow {
 pub struct ItemStoreJoinRowRepository<'a> {
     connection: &'a StorageConnection,
 }
+
+joinable!(item_store_join -> item_link (item_link_id));
+allow_tables_to_appear_in_same_query!(item_store_join, item_link);
 
 pub trait ItemStoreJoinRowRepositoryTrait<'a> {
     fn find_one_by_id(&self, row_id: &str) -> Result<Option<ItemStoreJoinRow>, RepositoryError>;
