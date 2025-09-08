@@ -5,6 +5,7 @@ import {
   FilterMenu,
   Box,
 } from '@openmsupply-client/common';
+import { hasStockOnHandInput } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
@@ -28,63 +29,27 @@ export const Toolbar: FC = () => {
               isDefault: true,
             },
             {
-              type: 'boolean',
+              type: 'enum',
               name: t('label.in-stock'),
               urlParameter: 'hasStockOnHand',
-              isDefault: true,
+              options: [
+                {
+                  label: t('label.in-stock'),
+                  value: hasStockOnHandInput.True,
+                },
+                {
+                  label: t('label.out-of-stock'),
+                  value: hasStockOnHandInput.False,
+                },
+              ],
             },
-            // {
-            //   type: 'text',
-            //   name: t('label.from-store'),
-            //   urlParameter: 'from-store',
-            //   isDefault: true,
-            // },
-            // {
-            //   type: 'enum',
-            //   name: t('label.type'),
-            //   options: [
-            //     { label: t('label.other'), value: SyncMessageNodeType.Other },
-            //     {
-            //       label: t('label.request-field-change'),
-            //       value: SyncMessageNodeType.RequestFieldChange,
-            //     },
-            //   ],
-            //   urlParameter: 'type',
-            //   isDefault: true,
-            // },
-            // {
-            //   type: 'group',
-            //   name: t('label.date'),
-            //   elements: [
-            //     {
-            //       type: 'date',
-            //       name: t('label.from-date'),
-            //       urlParameter: 'createdDatetime',
-            //       range: 'from',
-            //       isDefault: false,
-            //     },
-            //     {
-            //       type: 'date',
-            //       name: t('label.to-date'),
-            //       urlParameter: 'createdDatetime',
-            //       range: 'to',
-            //       isDefault: false,
-            //     },
-            //   ],
-            // },
-            // {
-            //   type: 'enum',
-            //   name: t('label.status'),
-            //   options: [
-            //     { label: t('label.new'), value: SyncMessageNodeStatus.New },
-            //     {
-            //       label: t('label.processed'),
-            //       value: SyncMessageNodeStatus.Processed,
-            //     },
-            //   ],
-            //   urlParameter: 'status',
-            //   isDefault: true,
-            // },
+            {
+              type: 'number',
+              name: t('label.months-of-stock'),
+              urlParameter: 'monthsOfStock',
+              minValue: 0,
+              decimalLimit: 0,
+            },
           ]}
         />
       </Box>

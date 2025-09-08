@@ -1,5 +1,6 @@
 import {
   FilterByWithBoolean,
+  FilterRule,
   ItemFilterInput,
   ItemSortFieldInput,
   SortBy,
@@ -15,6 +16,12 @@ export type ItemParams = {
   sortBy?: SortBy<ItemsWithStatsFragment>;
   filterBy: FilterByWithBoolean | null;
 };
+
+export enum hasStockOnHandInput {
+  // Setting these to 'true' or 'false' causes an error.
+  True = 'DISPLAY_IN_STOCK_ITEMS',
+  False = 'DISPLAY_OUT_OF_STOCK_ITEMS',
+}
 
 export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
   const { api, storeId } = useItemGraphQL();
@@ -35,29 +42,45 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
     type: ItemSortFieldInput.Type,
   };
 
-  console.log('filterBy:', filterBy); // filterBy = Object { inStock: Object { equalTo: true } }
-
-  console.log('filter:', {
-    ...filterBy,
-
-    isVisibleOrOnHand: true,
-    isActive: true,
-  });
+  const mapHasStockOnHandInput = (
+    filterInput?: boolean | FilterRule
+  ): boolean | undefined => {
+    if (typeof filterInput != 'boolean') {
+      switch (filterInput?.equalTo) {
+        case hasStockOnHandInput.True:
+          return true;
+        case hasStockOnHandInput.False:
+          return false;
+        default:
+          return undefined;
+      }
+    } else {
+      return undefined;
+    }
+  };
 
   const queryFn = async () => {
+    let filter: ItemFilterInput = {
+      ...filterBy,
+      // includes non-visible items that have stock on hand
+      isVisibleOrOnHand: true,
+      isActive: true,
+    };
+
+    if (filterBy?.['hasStockOnHand']) {
+      filter = {
+        ...filter,
+        hasStockOnHand: mapHasStockOnHandInput(filterBy?.['hasStockOnHand']),
+      };
+    }
+
     const result = await api.itemsWithStats({
       storeId,
       key: sortFieldMap[sortBy.key] ?? ItemSortFieldInput.Code,
       first,
       isDesc: sortBy.direction === 'desc',
       offset,
-      filter: {
-        ...filterBy,
-        ...(filterBy?.['hasStockOnHand'] && { hasStockOnHand: true }),
-        // includes non-visible items that have stock on hand
-        isVisibleOrOnHand: true,
-        isActive: true,
-      },
+      filter,
     });
 
     if (result.items.__typename === 'ItemConnector') {

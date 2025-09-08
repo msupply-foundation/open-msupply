@@ -27,20 +27,8 @@ const ItemListComponent = () => {
   } = useUrlQueryParams({
     filters: [
       { key: 'codeOrName' },
-      {
-        key: 'hasStockOnHand',
-      },
-      // { key: 'createdDatetime' },
-      // {
-      //   key: 'to-store',
-      // },
-      // {
-      //   key: 'from-store',
-      // },
-      // {
-      //   key: 'type',
-      //   condition: 'equalTo',
-      // },
+      { key: 'hasStockOnHand', condition: 'equalTo' },
+      { key: 'monthsOfStock', condition: 'equalTo' },
     ],
   });
 
