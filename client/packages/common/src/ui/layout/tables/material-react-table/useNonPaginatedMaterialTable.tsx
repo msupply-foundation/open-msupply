@@ -62,6 +62,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       sx: { fontSize: '14px', fontWeight: 400 },
     },
 
+    muiTopToolbarProps: {
+      sx: { height: '60px' }, // Prevent slight jump when selecting rows
+    },
+
     muiSelectAllCheckboxProps: {
       color: 'outline',
       size: 'small',
@@ -79,6 +83,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     muiToolbarAlertBannerProps: {
       sx: { backgroundColor: 'unset' },
     },
+
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
         if (onRowClick) onRowClick(row.original);
