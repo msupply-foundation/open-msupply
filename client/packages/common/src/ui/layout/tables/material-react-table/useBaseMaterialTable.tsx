@@ -23,7 +23,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 }: NonPaginatedTableConfig<T>) => {
   const table = useMaterialReactTable<T>({
     enablePagination: false,
-    enableRowVirtualization: true,
     enableColumnResizing: true,
     enableColumnPinning: true,
     enableColumnOrdering: true,
@@ -104,6 +103,3 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   });
   return table;
 };
-
-// Export a renamed version for clarity
-export const useNonPaginatedMaterialTable = useBaseMaterialTable;
