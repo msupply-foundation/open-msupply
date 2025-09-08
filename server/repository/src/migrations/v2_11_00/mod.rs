@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_log_tag_sensor_type;
 mod add_permission_to_verify_inbound_shipment;
 mod update_goods_received_report_context;
 
@@ -19,6 +20,7 @@ impl Migration for V2_11_00 {
         vec![
             Box::new(add_permission_to_verify_inbound_shipment::Migrate),
             Box::new(update_goods_received_report_context::Migrate),
+            Box::new(add_log_tag_sensor_type::Migrate),
         ]
     }
 }
