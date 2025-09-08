@@ -121,7 +121,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
 
     if (manageVvmStatusForStock)
       cols.push({
-        accessorKey: 'vvmStatus',
+        accessorKey: 'vvmStatus.description',
         header: t('label.vvm-status'),
       });
 
