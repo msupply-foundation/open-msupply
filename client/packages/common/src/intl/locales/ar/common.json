@@ -52,7 +52,7 @@
   "button.export": "تصدير",
   "button.hiv": "HIV",
   "button.import": "استيراد",
-  "button.import-fridge-tag": "استيراد بطاقة الثلاجة",
+  "button.import-fridge-tag": "استيراد مستشعر USB",
   "button.import-properties": "استيراد الخصائص",
   "button.initialise": "تهيئة",
   "button.language": "اللغة",
@@ -258,7 +258,7 @@
   "error.failed-to-save-vaccine-course": "فشل في حفظ دورة اللقاح",
   "error.fetch-notifications": "غير قادر على عرض إشعارات سلسلة التبريد",
   "error.field-must-be-specified": "يجب تحديد {{field}}",
-  "error.fridge-tag-import": "تعذر استيراد سجلات علامة الثلاجة: {{message}}",
+  "error.fridge-tag-import": "غير قادر على استيراد سجلات مستشعرات الثلاجة: {{message}}",
   "error.fridge-tag-import-empty": "لم يتم استيراد أي بيانات",
   "error.general-query-error": "كان هناك خطأ في الاتصال بالخادم 😢",
   "error.immunisations-not-found": "اللقاحات غير موجودة",
@@ -1689,7 +1689,7 @@
   "title.stock-line-details": "تفاصيل خط المخزون",
   "title.stock-on-hand": "المخزون المتوفر",
   "tools": "أدوات",
-  "tooltip.import-fridge-tag": "استيراد ملفات سجلات Berlinger Fridge-tag و Q-tag. سيتم إنشاء مستشعر، إذا لزم الأمر، لكل ملف سجل يتم استيراده.",
+  "tooltip.import-fridge-tag": "استيراد ملفات سجل مستشعر الثلاجة. سيتم إنشاء مستشعر، إذا لزم الأمر، لكل ملف سجل يتم استيراده.",
   "warning.cannot-create-placeholder-packs": "هناك إجمالي عبوات {{allocatedQuantity}} متوفرة. غير قادر على تخصيص جميع {{requestedQuantity}} العبوات.",
   "warning.cannot-create-placeholder-units": "هناك إجمالي {{allocatedQuantity}} وحدات متوفرة. غير قادر على تخصيص جميع {{requestedQuantity}} الوحدات.",
   "warning.caps-lock": "تحذير: قفل القبعات قيد التشغيل",
