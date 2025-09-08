@@ -807,6 +807,8 @@ impl TestSite {
             .await?)
     }
 
+    // Repeatedly starts sync until local db sync info confirms that integration of sync buffer finished
+    // Consider consolidating with similar `sync_omsupply_central` in `server/service/src/sync/test/integration/omsupply_central/mod.rs`
     async fn do_sync_until_integrated(&self) -> Result<SyncInfo> {
         loop {
             self.do_sync().await?;
