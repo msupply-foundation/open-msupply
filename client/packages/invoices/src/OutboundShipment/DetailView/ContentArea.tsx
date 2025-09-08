@@ -10,9 +10,8 @@ import {
   useUrlQueryParams,
   useFeatureFlags,
   MaterialTable,
-  MRTColumnDef,
-  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
+import { MRT_TableInstance } from 'material-react-table';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
@@ -93,71 +92,6 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
   const { tableUsabilityImprovements } = useFeatureFlags();
-  const { manageVvmStatusForStock } = usePreferences();
-
-  const mrtColumns = useMemo<
-    MRTColumnDef<StockOutLineFragment | StockOutItem>[]
-  >(() => {
-    const cols = [
-      // TO-DO: Note popover column,
-      {
-        accessorKey: 'item.code',
-        header: t('label.code'),
-        size: 120,
-      },
-      {
-        accessorKey: 'item.name',
-        header: t('label.name'),
-        // size: 140,
-      },
-      {
-        accessorKey: 'batch',
-        header: t('label.batch'),
-        size: 130,
-      },
-      {
-        accessorKey: 'expiryDate',
-        header: t('label.expiry-date'),
-        size: 160,
-      },
-    ];
-
-    if (manageVvmStatusForStock)
-      cols.push({
-        accessorKey: 'vvmStatus',
-        header: t('label.vvm-status'),
-      });
-
-    cols.push(
-      {
-        accessorKey: 'location.code',
-        header: t('label.location'),
-      },
-      {
-        accessorKey: 'item.unitName',
-        header: t('label.unit-name'),
-      },
-      {
-        accessorKey: 'packSize',
-        header: t('label.pack-size'),
-      }
-    );
-
-    // if (manageVaccinesInDoses) {
-    //   columns.push(getDosesPerUnitColumn(t));
-    // }
-
-    return cols;
-  }, [manageVvmStatusForStock]);
-
-  const table = useNonPaginatedMaterialTable<
-    StockOutLineFragment | StockOutItem
-  >({
-    columns: mrtColumns,
-    data: rows ?? [],
-    onRowClick: onRowClick ? row => onRowClick(row) : () => {},
-    isLoading: false,
-  });
 
   if (!rows) return null;
 

@@ -42,6 +42,7 @@ export const FooterComponent = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={actualSelectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>
