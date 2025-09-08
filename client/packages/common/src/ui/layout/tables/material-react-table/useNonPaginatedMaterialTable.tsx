@@ -51,7 +51,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         fontWeight: 600,
         lineHeight: 1.2,
         verticalAlign: 'bottom',
-        '& svg': { fontSize: '2em', marginLeft: 0 },
+        justifyContent: 'space-between',
+        '& .Mui-TableHeadCell-Content svg': {
+          fontSize: '2em',
+          marginLeft: 0,
+        },
       },
     },
     muiTableBodyCellProps: {
