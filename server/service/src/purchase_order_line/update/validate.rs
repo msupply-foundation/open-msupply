@@ -1,7 +1,9 @@
-use repository::PurchaseOrderLineRow;
 use repository::{
     EqualFilter, ItemRowRepository, Pagination, PurchaseOrderLineFilter,
     PurchaseOrderLineRepository, PurchaseOrderRowRepository, StorageConnection,
+};
+use repository::{
+    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, PurchaseOrderLineRow,
 };
 
 use crate::purchase_order_line::insert::PackSizeCodeCombination;
@@ -53,6 +55,16 @@ pub fn validate(
     let item = ItemRowRepository::new(connection)
         .find_one_by_id(&input.item_id.clone().unwrap_or(line.item_link_id.clone()))?
         .ok_or(UpdatePurchaseOrderLineInputError::ItemDoesNotExist)?;
+
+    let item_store = ItemStoreJoinRowRepository::new(connection)
+        .find_one_by_item_and_store_id(&item.id, &purchase_order.store_id)?;
+    if let Some(item_store_join) = item_store {
+        if item_store_join.ignore_for_orders {
+            return Err(UpdatePurchaseOrderLineInputError::ItemCannotBeOrdered(
+                purchase_order_line,
+            ));
+        }
+    }
 
     if !existing_pack_item.is_empty() {
         return Err(
