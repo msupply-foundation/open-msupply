@@ -33,6 +33,7 @@ pub enum SensorType {
     BlueMaestro,
     Laird,
     Berlinger,
+    LogTag,
 }
 
 // TODO put this somewhere more sensible
@@ -42,6 +43,7 @@ pub fn get_sensor_type(serial: &str) -> SensorType {
         Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
         Some("LAIRD") => SensorType::Laird,
         Some("BERLINGER") => SensorType::Berlinger,
+        Some("LOG_TAG") => SensorType::LogTag,
         _ => SensorType::BlueMaestro,
     }
 }
