@@ -56,6 +56,13 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
           fontSize: '2em',
           marginLeft: 0,
         },
+        // Allow date range filters to wrap if column is too narrow
+        '& .MuiCollapse-wrapperInner > div': {
+          display: 'flex',
+          flexWrap: 'wrap',
+          // Date picker should never need to be wider than 170px
+          '& .MuiPickersTextField-root': { width: '170px' },
+        },
       },
     },
     muiTableBodyCellProps: {
@@ -92,6 +99,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
       },
     }),
+
     ...tableOptions,
   });
   return table;
