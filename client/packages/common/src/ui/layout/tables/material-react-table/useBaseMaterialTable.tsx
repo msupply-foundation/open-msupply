@@ -8,8 +8,11 @@ import {
   CheckboxCheckedIcon,
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
+  InfoIcon,
 } from '@common/icons';
 import { useIntlUtils } from '@common/intl';
+import { ListItemIcon, MenuItem } from '@mui/material';
+import { ColumnDef } from './types';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -18,6 +21,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   getIsPlaceholderRow?: (row: T) => boolean;
   /** Whether row should be greyed out - still potentially clickable */
   getIsRestrictedRow?: (row: T) => boolean;
+  columns: ColumnDef<T>[];
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -52,6 +56,28 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     state: {
       showProgressBars: isLoading,
       ...state,
+    },
+
+    renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
+      const { description } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
+
+      if (!description) return internalColumnMenuItems;
+
+      return [
+        <MenuItem
+          key="column-description"
+          disabled // just for display, not clickable
+          sx={{ '&.Mui-disabled': { opacity: 1 } }} // but remove the greyed out look
+          divider
+        >
+          <ListItemIcon>
+            <InfoIcon />
+          </ListItemIcon>
+          {description}
+        </MenuItem>,
+
+        ...internalColumnMenuItems,
+      ];
     },
 
     // Styling
