@@ -16,7 +16,7 @@ import {
 } from './useTableLocalStorage';
 import { useRef } from 'react';
 
-export interface BaseMRTableConfig<T extends MRT_RowData>
+export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
   tableId: string; // key for local storage
   onRowClick?: (row: T) => void;
@@ -29,7 +29,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   onRowClick,
   state,
   ...tableOptions
-}: BaseMRTableConfig<T>) => {
+}: BaseTableConfig<T>) => {
   const initialState = useRef(getSavedTableState(tableId));
 
   const table = useMaterialReactTable<T>({
