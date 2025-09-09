@@ -71,7 +71,7 @@ pub fn validate(
 
     let item = line.item_row.clone();
 
-    if !check_batch_on_hold(&batch_pair.main_batch) {
+    if !check_batch_on_hold(&batch_pair.main_batch, stock_out_type) {
         return Err(BatchIsOnHold);
     }
     check_location_on_hold(&batch_pair.main_batch.location_row, stock_out_type).map_err(

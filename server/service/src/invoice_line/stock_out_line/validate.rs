@@ -63,7 +63,12 @@ pub fn check_item_matches_batch(batch: &StockLine, item: &ItemRow) -> bool {
     true
 }
 
-pub fn check_batch_on_hold(batch: &StockLine) -> bool {
+pub fn check_batch_on_hold(batch: &StockLine, stock_out_type: &StockOutType) -> bool {
+    // Even when stock is on hold, we can do inventory adjustments to ensure accurate stock levels
+    if stock_out_type == &StockOutType::InventoryReduction {
+        return true;
+    }
+
     if batch.stock_line_row.on_hold {
         return false;
     }
@@ -80,7 +85,7 @@ pub fn check_location_on_hold(
 ) -> Result<(), LocationIsOnHoldError> {
     use LocationIsOnHoldError::*;
 
-    // Even in on-hold locations, we can do inventory adjustments
+    // Even in on-hold locations, we can do inventory adjustments to ensure accurate stock levels
     if stock_out_type == &StockOutType::InventoryReduction {
         return Ok(());
     }
@@ -131,6 +136,45 @@ mod test {
         let adjusted_requested_stock = adjust_for_residual_packs(available_stock, requested_stock);
 
         assert_eq!(available_stock, adjusted_requested_stock);
+    }
+
+    #[test]
+    fn test_check_batch_on_hold() {
+        use super::{check_batch_on_hold, StockOutType};
+        use repository::{StockLine, StockLineRow};
+
+        // Test batch not on hold - should always return true
+        let batch_not_on_hold = StockLine {
+            stock_line_row: StockLineRow {
+                id: "batch_1".to_string(),
+                on_hold: false,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let result = check_batch_on_hold(&batch_not_on_hold, &StockOutType::OutboundShipment);
+        assert!(result);
+
+        let result = check_batch_on_hold(&batch_not_on_hold, &StockOutType::InventoryReduction);
+        assert!(result);
+
+        // Test batch on hold - should return false for outbound shipment
+        let batch_on_hold = StockLine {
+            stock_line_row: StockLineRow {
+                id: "batch_2".to_string(),
+                on_hold: true,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let result = check_batch_on_hold(&batch_on_hold, &StockOutType::OutboundShipment);
+        assert!(!result);
+
+        // Test batch on hold - should return true for inventory reduction (i.e. allow adjustments)
+        let result = check_batch_on_hold(&batch_on_hold, &StockOutType::InventoryReduction);
+        assert!(result);
     }
 
     #[test]

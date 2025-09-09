@@ -59,7 +59,7 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
-    if !check_batch_on_hold(&batch) {
+    if !check_batch_on_hold(&batch, &input.r#type) {
         return Err(BatchIsOnHold);
     }
 
