@@ -82,6 +82,7 @@ export const SidePanel = ({ isDisabled }: ToolbarProps) => {
               donorId={data?.donor?.id ?? null}
               onChange={donor => update({ donor })}
               disabled={isDisabled}
+              clearable
             />
           </PanelRow>
         </Grid>
