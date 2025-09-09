@@ -10,11 +10,11 @@ import {
   MRT_SortingState,
   MRT_Updater,
   MRT_PaginationState,
-  MRT_ColumnDef,
   MRT_ColumnFiltersState,
 } from 'material-react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
+import { ColumnDef } from './types';
 
 type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
 
@@ -24,7 +24,7 @@ interface EnumOption {
 }
 
 export type PaginatedTableColumnDefinition<T extends MRT_RowData> =
-  MRT_ColumnDef<T> & {
+  ColumnDef<T> & {
     filterType?: FilterType;
     filterValues?: EnumOption[];
   };
