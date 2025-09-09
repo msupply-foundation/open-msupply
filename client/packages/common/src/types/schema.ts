@@ -7135,8 +7135,11 @@ export type PurchaseOrderDoesNotExist = PurchaseOrderLineError & {
 };
 
 export type PurchaseOrderFilterInput = {
+  confirmedDatetime?: InputMaybe<DatetimeFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  requestedDeliveryDate?: InputMaybe<DateFilterInput>;
+  sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   supplier?: InputMaybe<StringFilterInput>;

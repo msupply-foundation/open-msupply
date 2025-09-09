@@ -13,7 +13,7 @@ import {
   MRT_ColumnDef,
   MRT_ColumnFiltersState,
 } from 'material-react-table';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 
 type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
@@ -150,5 +150,15 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     },
     ...tableOptions,
   });
-  return table;
+
+  const selectedRows = useMemo(
+    () => table.getSelectedRowModel().rows.map(r => r.original),
+    [rowSelection]
+  );
+
+  const resetRowSelection = () => {
+    table.resetRowSelection();
+  };
+
+  return { table, selectedRows, resetRowSelection };
 };

@@ -28,7 +28,6 @@ const PurchasingService: FC = () => {
     <Routes>
       <Route path={purchaseOrdersRoute} element={<PurchaseOrderListView />} />
       <Route path={purchaseOrderRoute} element={<PurchaseOrderDetailView />} />
-      {/* New Goods Received routes */}
       <Route path={goodsReceivedRoute} element={<GoodsReceivedListView />} />
       <Route
         path={goodsReceivedDetailRoute}

@@ -12,7 +12,7 @@ import {
   Formatter,
   useNotification,
 } from '@openmsupply-client/common';
-import { InternalSupplierSearchInput } from '@openmsupply-client/system';
+import { SupplierSearchInput } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
 import { PurchaseOrderFragment } from '../api';
@@ -58,7 +58,8 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             <InputWithLabelRow
               label={t('label.supplier-name')}
               Input={
-                <InternalSupplierSearchInput
+                <SupplierSearchInput
+                  external
                   disabled={isDisabled || isLoading}
                   value={(data?.supplier as NameFragment) ?? null}
                   onChange={supplier => {

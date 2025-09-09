@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -13,6 +13,8 @@ import {
   PurchaseOrderNodeStatus,
   useTableStore,
   NumberCell,
+  useFormatDateTime,
+  useToggle,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
@@ -21,33 +23,37 @@ import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 import { getPurchaseOrderStatusTranslator } from '../../utils';
 
-const ListView: FC = () => {
+const ListView = () => {
   const t = useTranslation();
+  const navigate = useNavigate();
+  const { localisedDate } = useFormatDateTime();
   const { setDisabledRows } = useTableStore();
+  const modalController = useToggle();
+
   const {
     updateSortQuery,
     updatePaginationQuery,
-    filter,
     queryParams: { page, first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
       { key: 'supplier' },
-      { key: 'createdDatetime', condition: 'between' },
       {
         key: 'status',
         condition: 'equalTo',
       },
+      { key: 'confirmedDatetime', condition: 'between' },
+      { key: 'requestedDeliveryDate', condition: 'between' },
+      { key: 'sentDatetime', condition: 'between' },
     ],
   });
+
   const listParams = {
     sortBy,
     first,
     offset,
     filterBy,
   };
-
-  const navigate = useNavigate();
   const {
     query: { data, isError, isLoading },
   } = usePurchaseOrderList(listParams);
@@ -80,21 +86,24 @@ const ListView: FC = () => {
       {
         key: 'createdDatetime',
         label: 'label.created',
-        format: ColumnFormat.Date,
+        formatter: dateString =>
+          dateString ? localisedDate((dateString as string) || '') : '',
         accessor: ({ rowData }) => rowData.createdDatetime,
         sortable: true,
       },
       {
         key: 'confirmedDatetime',
         label: 'label.confirmed',
-        format: ColumnFormat.Date,
+        formatter: dateString =>
+          dateString ? localisedDate((dateString as string) || '') : '',
         accessor: ({ rowData }) => rowData.confirmedDatetime,
         sortable: true,
       },
       {
         key: 'sentDatetime',
         label: 'label.sent',
-        format: ColumnFormat.Date,
+        formatter: dateString =>
+          dateString ? localisedDate((dateString as string) || '') : '',
         accessor: ({ rowData }) => rowData.sentDatetime,
       },
       {
@@ -133,33 +142,36 @@ const ListView: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
-      <AppBarButtons />
+      <Toolbar />
+      <AppBarButtons
+        data={data?.nodes}
+        isLoading={isLoading}
+        modalController={modalController}
+        onCreate={modalController.toggleOn}
+      />
       <DataTable
         id="purchase-order-list"
         enableColumnSelection
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes ?? []}
         isError={isError}
         isLoading={isLoading}
+        onRowClick={row => navigate(row.id)}
+        onChangePage={updatePaginationQuery}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         noDataElement={
           <NothingHere
             body={t('error.no-purchase-orders')}
-            // onCreate={modalController.toggleOn}
+            onCreate={modalController.toggleOn}
           />
         }
-        onRowClick={row => {
-          navigate(row.id);
-        }}
       />
       <Footer listParams={listParams} />
     </>
   );
 };
 
-export const PurchaseOrderListView: FC = () => (
+export const PurchaseOrderListView = () => (
   <TableProvider createStore={createTableStore}>
     <ListView />
   </TableProvider>
