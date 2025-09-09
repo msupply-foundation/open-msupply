@@ -34,6 +34,8 @@ pub struct UpdateGoodsReceivedInput {
     pub status: Option<GoodsReceivedStatus>,
     pub received_date: Option<NullableUpdate<NaiveDate>>,
     pub comment: Option<String>,
+    pub donor_id: Option<NullableUpdate<String>>,
+    pub supplier_reference: Option<String>,
 }
 
 pub fn update_goods_received(
