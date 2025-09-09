@@ -7,11 +7,17 @@ import {
   useTableStore,
   useDeleteConfirmation,
   useUrlQueryParams,
+  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { useOutbounds } from './useOutbounds';
 import { canDeleteInvoice } from '../../../../utils';
 
-export const useOutboundDeleteRows = () => {
+export const useOutboundDeleteRows = (
+  rowsToDelete: OutboundRowFragment[],
+  resetRowSelection: () => void
+) => {
+  const { tableUsabilityImprovements } = useFeatureFlags();
+
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
@@ -28,24 +34,31 @@ export const useOutboundDeleteRows = () => {
       .filter(Boolean) as OutboundRowFragment[],
   }));
 
+  const actualRowsToDelete = tableUsabilityImprovements
+    ? rowsToDelete
+    : selectedRows;
+
   const deleteAction = async () => {
-    await mutateAsync(selectedRows)
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
+    await mutateAsync(actualRowsToDelete)
+      .then(() => {
+        resetRowSelection();
+        queryClient.invalidateQueries(api.keys.base());
+      })
       .catch(err => {
         throw err;
       });
   };
 
   const confirmAndDelete = useDeleteConfirmation({
-    selectedRows,
+    selectedRows: actualRowsToDelete,
     deleteAction,
-    canDelete: selectedRows.every(canDeleteInvoice),
+    canDelete: actualRowsToDelete.every(canDeleteInvoice),
     messages: {
       confirmMessage: t('messages.confirm-delete-shipments', {
-        count: selectedRows.length,
+        count: actualRowsToDelete.length,
       }),
       deleteSuccess: t('messages.deleted-shipments', {
-        count: selectedRows.length,
+        count: actualRowsToDelete.length,
       }),
     },
   });

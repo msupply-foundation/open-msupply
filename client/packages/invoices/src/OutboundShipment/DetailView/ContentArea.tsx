@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useTranslation,
@@ -9,11 +9,9 @@ import {
   NothingHere,
   useUrlQueryParams,
   useFeatureFlags,
-  usePreferences,
   MaterialTable,
-  MRTColumnDef,
-  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
+import { MRT_TableInstance } from 'material-react-table';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
@@ -23,6 +21,8 @@ import { Expand } from './ExpandoTable';
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
+  table?: MRT_TableInstance<StockOutLineFragment | StockOutItem>;
+  // onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
 }
 
 const useHighlightPlaceholderRows = (
@@ -74,6 +74,8 @@ const useHighlightPlaceholderRows = (
 export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onAddItem,
   onRowClick,
+  // onReturnLines,
+  table,
 }) => {
   const t = useTranslation();
 
@@ -90,104 +92,32 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
   const { tableUsabilityImprovements } = useFeatureFlags();
-  const { manageVvmStatusForStock } = usePreferences();
-
-  const mrtColumns = useMemo(() => {
-    const cols: MRTColumnDef<StockOutLineFragment | StockOutItem>[] = [
-      // TO-DO: Note popover column,
-      {
-        accessorKey: 'item.code',
-        header: t('label.code'),
-        size: 120,
-      },
-      {
-        accessorKey: 'item.name',
-        header: t('label.name'),
-        // size: 140,
-      },
-      {
-        accessorKey: 'batch',
-        header: t('label.batch'),
-        size: 130,
-      },
-      {
-        accessorKey: 'expiryDate',
-        header: t('label.expiry-date'),
-        size: 160,
-      },
-    ];
-
-    if (manageVvmStatusForStock)
-      cols.push({
-        // todo - anything that could return undefined should use accessorFn, so no warnings in console
-        accessorKey: 'vvmStatus.description',
-        header: t('label.vvm-status'),
-      });
-
-    cols.push(
-      {
-        accessorKey: 'location.code',
-        header: t('label.location'),
-      },
-      {
-        accessorKey: 'item.unitName',
-        header: t('label.unit-name'),
-      },
-      {
-        accessorKey: 'packSize',
-        header: t('label.pack-size'),
-      }
-    );
-
-    // if (manageVaccinesInDoses) {
-    //   columns.push(getDosesPerUnitColumn(t));
-    // }
-
-    return cols;
-  }, [manageVvmStatusForStock]);
-
-  const table = useNonPaginatedMaterialTable<
-    StockOutLineFragment | StockOutItem
-  >({
-    columns: mrtColumns,
-    data: rows ?? [],
-    onRowClick: onRowClick ? row => onRowClick(row) : () => {},
-    isLoading: false,
-    getIsPlaceholderRow: row => {
-      if ('type' in row) {
-        return (
-          row.type === InvoiceLineNodeType.UnallocatedStock ||
-          row.numberOfPacks === 0
-        );
-      } else {
-        return row.lines.some(
-          line => line.type === InvoiceLineNodeType.UnallocatedStock
-        );
-      }
-    },
-  });
 
   if (!rows) return null;
 
-  return tableUsabilityImprovements ? (
-    <MaterialTable table={table} />
-  ) : (
-    <DataTable
-      id="outbound-detail"
-      onRowClick={onRowClick}
-      ExpandContent={props => <Expand {...props} />}
-      columns={columns}
-      data={rows}
-      enableColumnSelection
-      noDataElement={
-        <NothingHere
-          body={t('error.no-outbound-items')}
-          onCreate={isDisabled ? undefined : () => onAddItem()}
-          buttonText={t('button.add-item')}
+  return (
+    <>
+      {tableUsabilityImprovements && table ? (
+        <MaterialTable table={table} />
+      ) : (
+        <DataTable
+          id="outbound-detail"
+          onRowClick={onRowClick}
+          ExpandContent={props => <Expand {...props} />}
+          columns={columns}
+          data={rows}
+          enableColumnSelection
+          noDataElement={
+            <NothingHere
+              body={t('error.no-outbound-items')}
+              onCreate={isDisabled ? undefined : () => onAddItem()}
+              buttonText={t('button.add-item')}
+            />
+          }
+          isRowAnimated={true}
         />
-      }
-      isRowAnimated={true}
-    />
+      )}
+    </>
   );
 };
 

@@ -16,6 +16,7 @@ export interface DateFilterDefinition extends FilterDefinitionCommon {
   range?: RangeOption;
   maxDate?: Date | string;
   minDate?: Date | string;
+  width?: number;
 }
 
 export type RangeOption = 'from' | 'to';
@@ -25,8 +26,16 @@ export const DateFilter = ({
 }: {
   filterDefinition: DateFilterDefinition;
 }) => {
-  const { type, urlParameter, name, range, maxDate, minDate, showTimepicker } =
-    filterDefinition;
+  const {
+    type,
+    urlParameter,
+    name,
+    width,
+    range,
+    maxDate,
+    minDate,
+    showTimepicker,
+  } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDate, urlQueryDateTime } = useFormatDateTime();
 
@@ -68,7 +77,7 @@ export const DateFilter = ({
   const componentProps = {
     label: name,
     value,
-    width: FILTER_WIDTH,
+    width: width ? width : FILTER_WIDTH,
     onChange: handleChange,
     actions: ['clear', 'accept'] as PickersActionBarAction[],
     type,

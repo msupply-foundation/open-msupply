@@ -20,6 +20,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
+  state,
   isLoading,
   onRowClick,
   getIsPlaceholderRow = () => false,
@@ -44,6 +45,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     },
     state: {
       showProgressBars: isLoading,
+      ...state,
     },
 
     // Styling

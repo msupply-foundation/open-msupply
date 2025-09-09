@@ -15,6 +15,7 @@ import {
   useBreadcrumbs,
   useConfirmationModal,
   InvoiceLineNodeType,
+  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
@@ -64,21 +65,33 @@ const createStatusLog = (invoice: OutboundFragment) => {
 
 interface FooterComponentProps {
   onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
+  selectedRows: StockOutLineFragment[];
+  resetRowSelection: () => void;
 }
 
 export const FooterComponent: FC<FooterComponentProps> = ({
   onReturnLines,
+  selectedRows,
+  resetRowSelection,
 }) => {
+  const { tableUsabilityImprovements } = useFeatureFlags();
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
 
   const { data } = useOutbound.document.get();
-  const onDelete = useOutbound.line.deleteSelected();
+  const onDelete = useOutbound.line.deleteSelected(
+    selectedRows,
+    resetRowSelection
+  );
   const { onAllocate } = useOutbound.line.allocateSelected();
 
-  const selectedLines = useOutbound.utils.selectedLines();
+  const oldSelectedLines = useOutbound.utils.selectedLines();
 
-  const selectedUnallocatedEmptyLines = selectedLines
+  const actualSelectedRows = tableUsabilityImprovements
+    ? selectedRows
+    : oldSelectedLines;
+
+  const selectedUnallocatedEmptyLines = actualSelectedRows
     .filter(
       ({ type, numberOfPacks }) =>
         type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks === 0
@@ -97,7 +110,10 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const confirmAllocate = () => {
     if (selectedUnallocatedEmptyLines.length !== 0) {
       getConfirmation();
-    } else onAllocate();
+    } else {
+      onAllocate();
+      resetRowSelection();
+    }
   };
 
   const actions: Action[] = [
@@ -115,7 +131,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedLines),
+      onClick: () => onReturnLines(actualSelectedRows),
       shouldShrink: false,
     },
   ];
@@ -124,13 +140,14 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     <AppFooterPortal
       Content={
         <>
-          {selectedLines.length !== 0 && (
+          {actualSelectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedLines.length}
+              selectedRowCount={actualSelectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedLines.length === 0 && (
+          {data && actualSelectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"
