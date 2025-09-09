@@ -1,7 +1,6 @@
 use repository::{
     stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, StockLineRowRepository,
-    StorageConnection,
+    EqualFilter, RepositoryError, StockLineRowRepository, StorageConnection,
 };
 
 use crate::ledger_fix::{
@@ -41,21 +40,23 @@ pub(crate) fn fix(
         return Ok(());
     }
 
-    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
-    )?;
-
-    if invoice_lines.len() > 0 {
+    let Some(stock_line) = StockLineRowRepository::new(connection).find_one_by_id(stock_line_id)?
+    else {
         operation_log.push_str(&format!(
-            "Skipping delete_unused_orphan_stock_lines, stock_line already used in invoice_lines: {:?}.\n",
-            invoice_lines.len()
+            "Skipping delete_unused_orphan_stock_lines, stock_line doesn't exist {}.\n",
+            stock_line_id
         ));
         return Ok(());
-    }
+    };
 
-    let stock_line = StockLineRowRepository::new(connection).find_one_by_id(stock_line_id)?;
-
-    StockLineRowRepository::new(connection).delete(stock_line_id)?;
+    match StockLineRowRepository::new(connection).delete(stock_line_id) {
+        Ok(result) => result,
+        Err(RepositoryError::ForeignKeyViolation(message)) => {
+            operation_log.push_str(&format!("Skipping delete_unused_orphan_stock_lines, stock_line referenced in another table: {message}.\n"));
+            return Ok(());
+        }
+        Err(e) => return Err(e.into()),
+    };
 
     operation_log.push_str(&format!("Deleted stock_line: {:?}.\n", stock_line));
 
@@ -63,7 +64,6 @@ pub(crate) fn fix(
 }
 
 #[cfg(test)]
-
 pub(crate) mod test {
     use super::*;
     use crate::{
@@ -73,8 +73,8 @@ pub(crate) mod test {
         },
     };
     use repository::{
-        mock::{mock_item_a, mock_store_a, MockData, MockDataInserts},
-        KeyValueStoreRepository, StockLineRow,
+        mock::{mock_item_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts},
+        KeyValueStoreRepository, StockLineRow, StocktakeLineRow, StocktakeRow,
     };
 
     pub(crate) fn mock_data() -> MockData {
@@ -98,9 +98,27 @@ pub(crate) mod test {
             ..oms_stock_line.clone()
         };
 
-        let legacy_stock_line = StockLineRow {
-            id: "legacy_stock_line".to_string(), // must not contain `-` to be legacy ID format.
+        let legacy_stock_line_with_invoice_line = StockLineRow {
+            id: "legacy_stock_line_with_invoice_line".to_string(), // must not contain `-` to be legacy ID format.
             ..oms_stock_line.clone()
+        };
+
+        let legacy_stock_line_with_stock_take_line = StockLineRow {
+            id: "legacy_stock_line_with_stock_take_line".to_string(), // must not contain `-` to be legacy ID format.
+            ..oms_stock_line.clone()
+        };
+        let stocktake = StocktakeRow {
+            id: "stocktake".to_string(),
+            store_id: mock_store_a().id.clone(),
+            user_id: mock_user_account_a().id,
+            ..Default::default()
+        };
+        let stock_take_line = StocktakeLineRow {
+            id: "stock-take-line".to_string(),
+            stocktake_id: stocktake.id.clone(),
+            stock_line_id: Some(legacy_stock_line_with_stock_take_line.id.clone()),
+            item_link_id: legacy_stock_line_with_stock_take_line.item_link_id.clone(),
+            ..Default::default()
         };
 
         let mock_data = MockData {
@@ -108,13 +126,16 @@ pub(crate) mod test {
                 oms_stock_line.clone(),
                 oms_orphan_stock_line,
                 legacy_orphan_stock_line,
-                legacy_stock_line.clone(),
+                legacy_stock_line_with_stock_take_line,
+                legacy_stock_line_with_invoice_line.clone(),
             ],
+            stocktakes: vec![stocktake],
+            stocktake_lines: vec![stock_take_line],
             ..Default::default()
         }
         .join(make_movements(oms_stock_line, vec![(1, 10), (2, -7)]))
         .join(make_movements(
-            legacy_stock_line,
+            legacy_stock_line_with_invoice_line,
             vec![(1, -1), (1, -1), (1, -1)],
         ));
 
@@ -174,11 +195,40 @@ pub(crate) mod test {
         );
         assert!(logs.contains("Ledger does not match use case for"));
 
-        // What was an orphan from OG but has since been issued is not deleted
+        // Don't delete what was an orphan from OG but has since been issued
         let mut logs = String::new();
-        assert_eq!(is_ledger_fixed(&connection, "legacy_stock_line"), Ok(false));
-        fix(&connection, &mut logs, "legacy_stock_line").unwrap();
-        assert_eq!(is_ledger_fixed(&connection, "legacy_stock_line"), Ok(false));
-        assert!(logs.contains("stock_line already used in invoice_lines"));
+        assert_eq!(
+            is_ledger_fixed(&connection, "legacy_stock_line_with_invoice_line"),
+            Ok(false)
+        );
+        fix(
+            &connection,
+            &mut logs,
+            "legacy_stock_line_with_invoice_line",
+        )
+        .unwrap();
+        assert_eq!(
+            is_ledger_fixed(&connection, "legacy_stock_line_with_invoice_line"),
+            Ok(false)
+        );
+        assert!(logs.contains("invoice_line_stock_line_id_fkey"));
+
+        // No invoice lines but referenced in stocktake line
+        let mut logs = String::new();
+        assert_eq!(
+            is_ledger_fixed(&connection, "legacy_stock_line_with_stock_take_line"),
+            Ok(false)
+        );
+        fix(
+            &connection,
+            &mut logs,
+            "legacy_stock_line_with_stock_take_line",
+        )
+        .unwrap();
+        assert_eq!(
+            is_ledger_fixed(&connection, "legacy_stock_line_with_stock_take_line"),
+            Ok(false)
+        );
+        assert!(logs.clone().contains("stocktake_line_stock_line_id_fkey"));
     }
 }
