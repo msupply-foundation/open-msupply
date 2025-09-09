@@ -17,6 +17,7 @@ import {
   useNonPaginatedMaterialTable,
   usePreferences,
   InvoiceLineNodeType,
+  useIsGrouped,
   ColumnDef,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
@@ -51,8 +52,8 @@ const DetailViewInner = () => {
   const { manageVvmStatusForStock } = usePreferences();
 
   const { data, isLoading } = useOutbound.document.get();
+  const { isGrouped } = useIsGrouped('outboundShipment');
   const { rows } = useOutbound.line.rows(false);
-  // const { rows } = useOutbound.line.rows(isGrouped);
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -96,7 +97,7 @@ const DetailViewInner = () => {
         size: 120,
       },
       {
-        accessorKey: 'item.name',
+        accessorKey: 'itemName',
         header: t('label.name'),
         // size: 140,
       },
@@ -176,6 +177,7 @@ const DetailViewInner = () => {
           );
         }
       },
+      groupByField: isGrouped ? 'itemName' : undefined,
     });
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
