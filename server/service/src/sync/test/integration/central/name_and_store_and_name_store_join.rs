@@ -54,6 +54,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             deleted_datetime: None,
             next_of_kin_id: None,
             next_of_kin_name: None,
+            ..Default::default()
         };
         let name_json1 = json!({
             "ID": name_row1.id,

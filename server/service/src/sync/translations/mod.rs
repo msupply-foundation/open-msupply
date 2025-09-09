@@ -302,12 +302,12 @@ impl PullTranslateResult {
         Self::upserts(vec![upsert])
     }
 
-    pub(crate) fn upserts<U>(upsert: Vec<U>) -> Self
+    pub(crate) fn upserts<U>(upserts: Vec<U>) -> Self
     where
         U: Upsert + 'static,
     {
         Self::IntegrationOperations(
-            upsert
+            upserts
                 .into_iter()
                 .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert))) // Source site is added later using add_source_site_id
                 .collect(),
@@ -321,14 +321,14 @@ impl PullTranslateResult {
         Self::deletes(vec![upsert])
     }
 
-    pub(crate) fn deletes<U>(upsert: Vec<U>) -> Self
+    pub(crate) fn deletes<U>(deletes: Vec<U>) -> Self
     where
         U: Delete + 'static,
     {
         Self::IntegrationOperations(
-            upsert
+            deletes
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Delete(Box::new(upsert))) // Source site is added later using add_source_site_id
+                .map(|delete| IntegrationOperation::Delete(Box::new(delete))) // Source site is added later using add_source_site_id
                 .collect(),
         )
     }

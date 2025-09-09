@@ -82,7 +82,7 @@ impl Upsert for AbbreviationRow {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AbbreviationRowDelete(pub String);
 impl Delete for AbbreviationRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
