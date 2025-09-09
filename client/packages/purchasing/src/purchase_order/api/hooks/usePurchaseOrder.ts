@@ -109,23 +109,18 @@ const useGetById = (purchaseOrderId: string | undefined) => {
       storeId,
     });
 
-    const purchaseOrder = result?.purchaseOrder;
-
-    if (purchaseOrder?.__typename === 'PurchaseOrderNode') {
-      return purchaseOrder;
-    } else {
-      console.error('No purchase order found', purchaseOrderId);
-      throw new Error(`Could not find purchase order ${purchaseOrderId}`);
+    if (result?.purchaseOrder?.__typename === 'PurchaseOrderNode') {
+      return result.purchaseOrder;
     }
+
+    throw new Error(`Could not find purchase order ${purchaseOrderId}`);
   };
 
-  const query = useQuery({
+  return useQuery({
     queryKey: [PURCHASE_ORDER, LIST_KEY, purchaseOrderId],
     queryFn,
     enabled: !!purchaseOrderId,
   });
-
-  return query;
 };
 
 const useCreate = () => {
