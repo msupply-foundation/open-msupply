@@ -105,7 +105,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       sx: { width: '100%', display: 'flex', flexDirection: 'column' },
     },
     muiTableProps: {
-      // Need to apply this here so that relative sizes (ems, rems) within table
+      // Need to apply this here so that relative sizes (ems, %) within table
       // are correct
       sx: theme => ({ fontSize: theme.typography.body1.fontSize }),
     },
