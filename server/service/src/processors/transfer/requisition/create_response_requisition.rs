@@ -218,6 +218,7 @@ fn requisition_has_program_items(
         MasterListLineFilter::new()
             .item_id(EqualFilter::equal_any(item_ids))
             .master_list_id(EqualFilter::equal_any(master_list_ids)),
+        None,
     )?;
 
     Ok(!matched_items.is_empty())
