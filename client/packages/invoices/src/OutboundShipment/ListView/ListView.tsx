@@ -23,6 +23,7 @@ import {
   MaterialTable,
   usePaginatedMaterialTable,
   PaginatedTableColumnDefinition,
+  mergeCellProps,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -135,13 +136,16 @@ const OutboundShipmentListViewComponent: FC = () => {
           accessorKey: 'invoiceNumber',
           header: t('label.invoice-number'),
           size: 140,
-          muiTableBodyCellProps: {
-            sx: {
-              textAlign: 'right',
-              fontSize: '14px',
-              paddingRight: '3em',
-            },
-          },
+          muiTableBodyCellProps: params =>
+            mergeCellProps(
+              {
+                sx: {
+                  justifyContent: 'flex-end',
+                  paddingRight: '2em',
+                },
+              },
+              params
+            ),
         },
         {
           accessorKey: 'createdDatetime',

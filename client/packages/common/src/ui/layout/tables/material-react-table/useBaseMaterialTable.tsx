@@ -179,6 +179,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
             ? 'background.secondary'
             : 'inherit',
           fontStyle: row.getCanExpand() ? 'italic' : 'normal',
+          cursor: onRowClick ? 'pointer' : 'default',
         },
       };
     },
