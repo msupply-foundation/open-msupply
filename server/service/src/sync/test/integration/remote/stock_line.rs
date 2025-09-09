@@ -22,6 +22,7 @@ impl SyncRecordTester for StockLineRecordTester {
             on_hold: false,
             store_id: store_id.to_string(),
             location_type_id: None,
+            ..Default::default()
         };
 
         let stock_line_row = StockLineRow {
@@ -42,6 +43,7 @@ impl SyncRecordTester for StockLineRecordTester {
             barcode_id: None,
             item_variant_id: None,
             donor_link_id: None,
+            ..Default::default()
         };
 
         result.push(TestStepData {

@@ -16,6 +16,7 @@ import {
   useBreadcrumbs,
   useNonPaginatedMaterialTable,
   usePreferences,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { MRT_ColumnDef } from 'material-react-table';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
@@ -115,6 +116,7 @@ const DetailViewInner = () => {
 
     if (manageVvmStatusForStock)
       cols.push({
+        // todo - anything that could return undefined should use accessorFn, so no warnings in console
         accessorKey: 'vvmStatus.description',
         header: t('label.vvm-status'),
       });
@@ -148,6 +150,18 @@ const DetailViewInner = () => {
       data: rows ?? [],
       onRowClick: onRowClick ? row => onRowClick(row) : () => {},
       isLoading: false,
+      getIsPlaceholderRow: row => {
+        if ('type' in row) {
+          return (
+            row.type === InvoiceLineNodeType.UnallocatedStock ||
+            row.numberOfPacks === 0
+          );
+        } else {
+          return row.lines.some(
+            line => line.type === InvoiceLineNodeType.UnallocatedStock
+          );
+        }
+      },
     });
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
