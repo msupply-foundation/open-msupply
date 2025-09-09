@@ -108,6 +108,7 @@ fn generate(
                 .master_list_id(EqualFilter::equal_to(&input.master_list_id))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_invoice))
                 .item_type(ItemType::Stock.equal_to()),
+            None,
         )?;
 
     let items_ids_not_in_invoice: Vec<String> = master_list_lines_not_in_invoice
