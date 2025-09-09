@@ -18,8 +18,8 @@ import {
   usePreferences,
   InvoiceLineNodeType,
   useIsGrouped,
+  ColumnDef,
 } from '@openmsupply-client/common';
-import { MRT_ColumnDef } from 'material-react-table';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { StockOutItem } from '../../types';
@@ -88,10 +88,8 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
-  const mrtColumns = useMemo<
-    MRT_ColumnDef<StockOutLineFragment | StockOutItem>[]
-  >(() => {
-    const cols = [
+  const mrtColumns = useMemo(() => {
+    const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
       // TO-DO: Note popover column,
       {
         accessorKey: 'item.code',
@@ -115,6 +113,7 @@ const DetailViewInner = () => {
       },
     ];
 
+    // todo - on refresh this is ending up at the end of the table - need to fix!
     if (manageVvmStatusForStock)
       cols.push({
         // todo - anything that could return undefined should use accessorFn, so no warnings in console
@@ -140,6 +139,21 @@ const DetailViewInner = () => {
     // if (manageVaccinesInDoses) {
     //   columns.push(getDosesPerUnitColumn(t));
     // }
+
+    cols.push(
+      {
+        accessorKey: 'numberOfPacks',
+        header: t('label.num-packs'),
+      },
+      {
+        accessorKey: 'unitQuantity',
+        header: t('label.unit-quantity'),
+
+        description: t('description.unit-quantity'),
+      }
+    );
+
+    // TODO: remaining columns
 
     return cols;
   }, [manageVvmStatusForStock]);

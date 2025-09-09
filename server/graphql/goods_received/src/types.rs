@@ -1,11 +1,11 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
-use graphql_core::loader::StoreByIdLoader;
 use graphql_core::loader::{
     GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput,
-    PurchaseOrderByIdLoader, UserLoader,
+    NameByNameLinkIdLoader, PurchaseOrderByIdLoader, UserLoader,
 };
+use graphql_core::loader::{NameByNameLinkIdLoaderInput, StoreByIdLoader};
 use graphql_core::ContextExt;
 use graphql_goods_received_line::types::GoodsReceivedLineConnector;
 use graphql_types::types::{purchase_order, user, NameNode, StoreNode, UserNode};
@@ -98,6 +98,19 @@ impl GoodsReceivedNode {
 
     pub async fn supplier_reference(&self) -> &Option<String> {
         &self.row().supplier_reference
+    }
+
+    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let donor_link_id = match &self.row().donor_link_id {
+            None => return Ok(None),
+            Some(donor_link_id) => donor_link_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let result = loader
+            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
