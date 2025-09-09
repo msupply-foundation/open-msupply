@@ -240,7 +240,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
   FROM
     stock_line_ledger
   WHERE
-    running_balance < 0
+    stock_line_ledger.running_balance < 0
   UNION
   SELECT
     current_balance.stock_line_id
@@ -262,7 +262,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         )
       )
     )
-    OR running_balance IS NULL;
+    OR running_balance.q IS NULL;
 
   CREATE VIEW item_ledger AS
     WITH all_movements AS (
