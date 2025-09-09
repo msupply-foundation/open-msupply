@@ -17,6 +17,7 @@ import {
   useNonPaginatedMaterialTable,
   usePreferences,
   InvoiceLineNodeType,
+  useIsGrouped,
 } from '@openmsupply-client/common';
 import { MRT_ColumnDef } from 'material-react-table';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
@@ -51,8 +52,8 @@ const DetailViewInner = () => {
   const { manageVvmStatusForStock } = usePreferences();
 
   const { data, isLoading } = useOutbound.document.get();
-  const { rows } = useOutbound.line.rows(false);
-  // const { rows } = useOutbound.line.rows(isGrouped);
+  const { isGrouped } = useIsGrouped('outboundShipment');
+  const { rows } = useOutbound.line.rows(isGrouped);
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -98,7 +99,7 @@ const DetailViewInner = () => {
         size: 120,
       },
       {
-        accessorKey: 'item.name',
+        accessorKey: 'itemName',
         header: t('label.name'),
         // size: 140,
       },
