@@ -1,7 +1,7 @@
 use repository::{
     stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
-    StockLineRepository, StockLineRowRepository, StorageConnection,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, StockLineRowRepository,
+    StorageConnection,
 };
 
 use crate::ledger_fix::{
@@ -9,11 +9,6 @@ use crate::ledger_fix::{
     ledger_balance_summary, LedgerBalanceSummary,
 };
 
-// Legacy mSupply sync v1 sites had an edge case with the V1 API would create orphan stock lines for OMS sites if
-// 1. Their customer invoice was in "confirmed" status
-// 2. OMS had synced, generated a "picked" inbound shipment, and synced it back to central
-// 3. Legacy users continued adding lines on their "confirmed" customer invoice - when synced to central V1 sync would create trans_lines for the OMS inbound shipment, and stock_lines (without a link to the trans_line)
-// https://github.com/msupply-foundation/msupply/issues/17137
 pub(crate) fn fix(
     connection: &StorageConnection,
     operation_log: &mut String,

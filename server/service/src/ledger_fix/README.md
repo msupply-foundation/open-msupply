@@ -48,6 +48,26 @@ Each stock line will go through a series of fixes based on know invalid 'states'
 
 In the order of execution (this order is important).
 
+#### Delete - remove_unused_orphan_stock_lines
+
+Legacy mSupply sync v1 sites had an edge case where the V1 API would create orphan stock lines for OMS sites if
+
+1. Their customer invoice was in "confirmed" status
+2. OMS had synced, generated a "picked" inbound shipment, and synced it back to central
+3. Legacy users continued adding lines on their "confirmed" customer invoice - when synced to central, V1 sync would create trans_lines for the OMS inbound shipment (OMS should have been left to do this),
+   and item_lines (without a link to the trans_line). This increases SOH before the inbound shipment is received/verified.
+4. Once OMS users finally do receive/verify their inbound shipment, this would further create the valid stock lines as intended by the system, however doubling up on the already erroneously introduced stock.
+
+[Source of issue fixed in Legacy Central.](https://github.com/msupply-foundation/msupply/issues/17137)
+
+Note that if users have issued the stock, we cannot delete the stock line. Later executed ledger fix to introduce the stock with a inventory adjustment will need to address the discrepancy.
+If it is deleted and users had already done a stocktake to reduced SOH and adjusted the valid stock line rather than the erroneous one, after delete users will
+notice their SOH has decreased and will likely need to do stocktake to increase it again.
+
+`state` total and balance don't add up, available + reserved = total, the ID format is not OMS and the stock line has no related invoice lines
+
+`fix` delete the stock line
+
 #### Adjust historic incoming invoices - adjust_historic_incoming_invoices
 
 We've found use cases where stock introduction after issue, all of them were with mSupply mobile or mSupply uuids.
