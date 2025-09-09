@@ -29,6 +29,14 @@ impl MigrationFragment for Migrate {
             "#,
         )?;
 
+        sql!(
+            connection,
+            r#"
+                CREATE INDEX idx_purchase_order_line_status 
+                ON purchase_order_line (status);
+            "#,
+        )?;
+
         Ok(())
     }
 }
