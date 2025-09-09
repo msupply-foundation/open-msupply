@@ -1,6 +1,5 @@
 import {
   isEqual,
-  useMaterialTableColumns,
   useUrlQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
@@ -14,26 +13,12 @@ import {
 } from 'material-react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
-import { ColumnDef } from './types';
-
-type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
-
-interface EnumOption {
-  value: string;
-  label: string;
-}
-
-export type PaginatedTableColumnDefinition<T extends MRT_RowData> =
-  ColumnDef<T> & {
-    filterType?: FilterType;
-    filterValues?: EnumOption[];
-  };
+import { useManualTableFilters } from './useMaterialTableColumns';
 
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends BaseTableConfig<T> {
   totalCount: number;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
-  columns: PaginatedTableColumnDefinition<T>[];
 }
 
 export const usePaginatedMaterialTable = <T extends MRT_RowData>({
@@ -41,7 +26,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   onRowClick,
   totalCount,
   initialSort,
-  columns,
   ...tableOptions
 }: PaginatedTableConfig<T>) => {
   const {
@@ -57,8 +41,9 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
 
   const pagination = { page, first, offset };
 
-  const { mrtColumnDefinitions, filterUpdaters, getFilterState } =
-    useMaterialTableColumns(columns);
+  const { filterUpdaters, getFilterState } = useManualTableFilters(
+    tableOptions.columns
+  );
 
   const handleSortingChange = useCallback(
     (sortUpdate: MRT_Updater<MRT_SortingState>) => {
@@ -130,7 +115,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     isLoading,
     onRowClick,
 
-    columns: mrtColumnDefinitions,
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,

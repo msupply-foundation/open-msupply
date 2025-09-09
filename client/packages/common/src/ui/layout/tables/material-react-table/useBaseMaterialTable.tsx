@@ -18,6 +18,7 @@ import {
 import { useIntlUtils } from '@common/intl';
 import { ListItemIcon, MenuItem } from '@mui/material';
 import { ColumnDef } from './types';
+import { useMaterialTableColumns } from './useMaterialTableColumns';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -37,13 +38,26 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   onRowClick,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
+  columns: omsColumns,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const initialState = useRef(getSavedTableState(tableId));
+
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
+  // tODO :clean up :)
+  const { order, mrtDefinitions } = useMaterialTableColumns(omsColumns);
+  const hasNewColumns = mrtDefinitions.some(
+    def =>
+      !initialState.current.columnOrder.includes(
+        def.id ?? (def.accessorKey as string)
+      )
+  );
+
   const table = useMaterialReactTable<T>({
+    columns: mrtDefinitions,
+
     localization,
 
     enablePagination: false,
@@ -57,8 +71,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableBottomToolbar: false,
 
     initialState: {
-      ...tableOptions.initialState,
       ...initialState.current,
+      columnOrder: hasNewColumns ? order : initialState.current.columnOrder,
+      // columnOrder: initialState.columnOrder.length === order.length ? ,
     },
     state: {
       showProgressBars: isLoading,
@@ -175,7 +190,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     ...tableOptions,
   });
 
-  useTableLocalStorage(tableId, table);
+  useTableLocalStorage(tableId, table, order);
 
   return table;
 };

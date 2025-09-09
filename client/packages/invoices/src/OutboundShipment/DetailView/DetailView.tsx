@@ -91,6 +91,7 @@ const DetailViewInner = () => {
     const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
       // TO-DO: Note popover column,
       {
+        id: 'code',
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
@@ -110,17 +111,13 @@ const DetailViewInner = () => {
         header: t('label.expiry-date'),
         size: 160,
       },
-    ];
-
-    // todo - on refresh this is ending up at the end of the table - need to fix!
-    if (manageVvmStatusForStock)
-      cols.push({
+      {
         // todo - anything that could return undefined should use accessorFn, so no warnings in console
+        id: 'vvm',
         accessorKey: 'vvmStatus.description',
         header: t('label.vvm-status'),
-      });
-
-    cols.push(
+        showColumn: manageVvmStatusForStock,
+      },
       {
         accessorKey: 'location.code',
         header: t('label.location'),
@@ -132,14 +129,13 @@ const DetailViewInner = () => {
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
-      }
-    );
+        // defaultHideOnMobile: true,
+      },
 
-    // if (manageVaccinesInDoses) {
-    //   columns.push(getDosesPerUnitColumn(t));
-    // }
+      // if (manageVaccinesInDoses) {
+      //   columns.push(getDosesPerUnitColumn(t));
+      // }
 
-    cols.push(
       {
         accessorKey: 'numberOfPacks',
         header: t('label.num-packs'),
@@ -149,8 +145,8 @@ const DetailViewInner = () => {
         header: t('label.unit-quantity'),
 
         description: t('description.unit-quantity'),
-      }
-    );
+      },
+    ];
 
     // TODO: remaining columns
 
