@@ -5,7 +5,7 @@ use repository::{
 };
 
 use crate::ledger_fix::{
-    fixes::{adjust_ledger_running_balance, is_omsupply_uuid, LedgerFixError},
+    fixes::{is_omsupply_uuid, LedgerFixError},
     ledger_balance_summary, LedgerBalanceSummary,
 };
 
