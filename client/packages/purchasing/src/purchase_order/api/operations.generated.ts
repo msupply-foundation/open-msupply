@@ -293,6 +293,22 @@ export type InsertPurchaseOrderMutation = {
   insertPurchaseOrder: { __typename: 'IdResponse'; id: string };
 };
 
+export type ItemCannotBeOrderedFragment = {
+  __typename: 'ItemCannotBeOrdered';
+  description: string;
+  line: { __typename: 'PurchaseOrderLineNode'; id: string };
+};
+
+export type ItemsCannotBeOrderedFragment = {
+  __typename: 'ItemsCannotBeOrdered';
+  description: string;
+  lines: Array<{
+    __typename: 'ItemCannotBeOrdered';
+    description: string;
+    line: { __typename: 'PurchaseOrderLineNode'; id: string };
+  }>;
+};
+
 export type UpdatePurchaseOrderMutationVariables = Types.Exact<{
   input: Types.UpdatePurchaseOrderInput;
   storeId: Types.Scalars['String']['input'];
@@ -302,7 +318,18 @@ export type UpdatePurchaseOrderMutation = {
   __typename: 'Mutations';
   updatePurchaseOrder:
     | { __typename: 'IdResponse'; id: string }
-    | { __typename: 'UpdatePurchaseOrderError' };
+    | {
+        __typename: 'UpdatePurchaseOrderError';
+        error: {
+          __typename: 'ItemsCannotBeOrdered';
+          description: string;
+          lines: Array<{
+            __typename: 'ItemCannotBeOrdered';
+            description: string;
+            line: { __typename: 'PurchaseOrderLineNode'; id: string };
+          }>;
+        };
+      };
 };
 
 export type DeletePurchaseOrderMutationVariables = Types.Exact<{
@@ -511,7 +538,11 @@ export type UpdatePurchaseOrderLineMutation = {
         error:
           | { __typename: 'CannotAdjustRequestedQuantity'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
-          | { __typename: 'ItemCannotBeOrdered'; description: string }
+          | {
+              __typename: 'ItemCannotBeOrdered';
+              description: string;
+              line: { __typename: 'PurchaseOrderLineNode'; id: string };
+            }
           | { __typename: 'PurchaseOrderDoesNotExist'; description: string }
           | { __typename: 'PurchaseOrderLineNotFound'; description: string }
           | { __typename: 'UpdatedLineDoesNotExist'; description: string };
@@ -664,6 +695,25 @@ export const PurchaseOrderFragmentDoc = gql`
   ${PurchaseOrderLineFragmentDoc}
   ${SyncFileReferenceFragmentDoc}
 `;
+export const ItemCannotBeOrderedFragmentDoc = gql`
+  fragment ItemCannotBeOrdered on ItemCannotBeOrdered {
+    __typename
+    description
+    line {
+      id
+    }
+  }
+`;
+export const ItemsCannotBeOrderedFragmentDoc = gql`
+  fragment ItemsCannotBeOrdered on ItemsCannotBeOrdered {
+    __typename
+    description
+    lines {
+      ...ItemCannotBeOrdered
+    }
+  }
+  ${ItemCannotBeOrderedFragmentDoc}
+`;
 export const PurchaseOrdersDocument = gql`
   query purchaseOrders(
     $first: Int
@@ -726,8 +776,17 @@ export const UpdatePurchaseOrderDocument = gql`
       ... on IdResponse {
         id
       }
+      ... on UpdatePurchaseOrderError {
+        __typename
+        error {
+          ... on ItemsCannotBeOrdered {
+            ...ItemsCannotBeOrdered
+          }
+        }
+      }
     }
   }
+  ${ItemsCannotBeOrderedFragmentDoc}
 `;
 export const DeletePurchaseOrderDocument = gql`
   mutation deletePurchaseOrder($id: String!, $storeId: String!) {
@@ -920,10 +979,14 @@ export const UpdatePurchaseOrderLineDocument = gql`
             __typename
             description
           }
+          ... on ItemCannotBeOrdered {
+            ...ItemCannotBeOrdered
+          }
         }
       }
     }
   }
+  ${ItemCannotBeOrderedFragmentDoc}
 `;
 export const DeletePurchaseOrderLinesDocument = gql`
   mutation deletePurchaseOrderLines($ids: [String!]!, $storeId: String!) {
