@@ -42,7 +42,7 @@ export const StockLineDetailView: React.FC = () => {
   const {
     urlQuery: { tab },
   } = useUrlQuery();
-  const { success, error, info } = useNotification();
+  const { success, error } = useNotification();
   const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
 
   const simplifiedTabletView = useSimplifiedTabletUI();
@@ -92,11 +92,7 @@ export const StockLineDetailView: React.FC = () => {
 
   const openInventoryAdjustmentModal = useCallbackWithPermission(
     UserPermission.InventoryAdjustmentMutate,
-    () => {
-      // TODO: remove once #8669 is done
-      if (data?.onHold) info(t('log.stock-on-hold'))();
-      else adjustmentModalController.toggleOn();
-    }
+    () => adjustmentModalController.toggleOn()
   );
 
   const isVaccine = draft?.item?.isVaccine ?? false;
