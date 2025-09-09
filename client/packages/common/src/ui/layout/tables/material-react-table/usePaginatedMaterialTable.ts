@@ -80,7 +80,10 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
         // for now, but we should investigate further at some point, or report
         // the bug to MRT devs
         if (paginationRef.current - lastUpdate < 300) return;
-        updatePaginationQuery(newPaginationValue.pageIndex);
+        updatePaginationQuery(
+          newPaginationValue.pageIndex,
+          newPaginationValue.pageSize
+        );
       }
     },
     [updatePaginationQuery]
@@ -119,6 +122,12 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
+    enableBottomToolbar: true, // required for pagination
+    enablePagination: true,
+    paginationDisplayMode: 'pages',
+    muiPaginationProps: {
+      rowsPerPageOptions: [10, 20, 50, 100], // TO-DO: Make this customisable?
+    },
     onSortingChange: handleSortingChange,
     autoResetPageIndex: false,
     onPaginationChange: handlePaginationChange,

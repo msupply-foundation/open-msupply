@@ -5,11 +5,7 @@ import {
   UrlQueryValue,
   useUrlQuery,
 } from './useUrlQuery';
-import {
-  DateUtils,
-  Formatter,
-  useLocalStorage,
-} from '@openmsupply-client/common';
+import { DateUtils, Formatter } from '@openmsupply-client/common';
 import {
   FilterBy,
   FilterByWithBoolean,
@@ -49,20 +45,15 @@ export const useUrlQueryParams = ({
   initialSort,
   filters = [],
 }: UrlQueryParams = {}) => {
-  // do not coerce the filter parameter if the user enters a numeric value
-  // if this is parsed as numeric, the query param changes filter=0300 to filter=300
-  // which then does not match against codes, as the filter is usually a 'startsWith'
+  // Do not coerce the filter parameter if the user enters a numeric value
+  // If this is parsed as numeric, the query param changes filter=0300 to
+  // filter=300 which then does not match against codes, as the filter is
+  // usually a 'startsWith'
   const skipParse = filters.length > 0 ? filters.map(f => f.key) : ['filter'];
 
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse,
   });
-
-  const [storedRowsPerPage] = useLocalStorage(
-    '/pagination/rowsperpage',
-    DEFAULT_RECORDS_PER_PAGE
-  );
-  const rowsPerPage = storedRowsPerPage ?? DEFAULT_RECORDS_PER_PAGE;
 
   useEffect(() => {
     if (!initialSort) return;
@@ -81,9 +72,13 @@ export const useUrlQueryParams = ({
     [updateQuery]
   );
 
-  const updatePaginationQuery = (page: number) => {
+  const updatePaginationQuery = (page: number, pageSize?: number) => {
     // Page is zero-indexed in useQueryParams store, so increase it by one
-    updateQuery({ page: page === 0 ? '' : page + 1 });
+    updateQuery({
+      page: page === 0 ? '' : page + 1,
+      pageSize:
+        pageSize && pageSize !== DEFAULT_RECORDS_PER_PAGE ? pageSize : '',
+    });
   };
 
   const updateFilterQuery = (key: string, value: string) => {
@@ -134,16 +129,21 @@ export const useUrlQueryParams = ({
     onClearFilterRule: key => updateFilterQuery(key, ''),
     filterBy: getFilterBy(),
   };
+
+  const pageSize =
+    urlQuery['pageSize'] && typeof urlQuery['pageSize'] === 'number'
+      ? urlQuery['pageSize']
+      : DEFAULT_RECORDS_PER_PAGE;
+
+  const page =
+    urlQuery['page'] && typeof urlQuery['page'] === 'number'
+      ? urlQuery['page'] - 1
+      : 0;
+
   const queryParams = {
-    page:
-      urlQuery['page'] && typeof urlQuery['page'] === 'number'
-        ? urlQuery['page'] - 1
-        : 0,
-    offset:
-      urlQuery['page'] && typeof urlQuery['page'] === 'number'
-        ? (urlQuery['page'] - 1) * rowsPerPage
-        : 0,
-    first: rowsPerPage,
+    page,
+    offset: page * pageSize,
+    first: pageSize,
     sortBy: {
       key: urlQuery['sort'] ?? initialSort?.key ?? '',
       direction: urlQuery['dir'] ?? 'asc',
