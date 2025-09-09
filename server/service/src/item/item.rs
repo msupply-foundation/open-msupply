@@ -23,41 +23,21 @@ pub fn get_items(
     let connection = connection_manager.connection()?;
     let repository = ItemRepository::new(&connection);
 
-    // TODO Do we want to be able to specify a custom amc_lookback_months, or just always use the default?
-    // let item_stats = get_item_stats_map(ctx, store_id, item_ids)?
-    //     .extract_if(|k, v| months_of_stock_on_hand(v) >= filter.months_of_stock)
-    //     .collect();
-    // let item_ids = Vec::from_iter(item_stats.keys());
-
-    // let rows = if let Some(filter) = filter {
-    // match filter.months_of_stock {
-    // Some(months_of_stock) => {
-
-    /*
-     get id filter if mos defined
-     apply to filter
-     either way, return the filter
-    */
-
-    // IF MONTHS_OF_STOCK = EQUALFILTER<I32>:
-    // let filter = filter.map(|mut filter| -> Result<ItemFilter, ListError> {
-    //     if let Some(months_of_stock_filter) = filter.months_of_stock {
-    //         if let Some(months_of_stock) = months_of_stock_filter.equal_to {
-    //             let item_ids_filtered_by_mos = get_item_ids_with_mos(&connection, filter.clone(), store_id, months_of_stock as f64)?;
-    //             filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
-    //         }
-    //     };
-    //     Ok(filter)
-    // }).transpose()?;
-
-
+    // N.B. this way of doing it means that if both the more_than_months_of_stock and less_than_months_of_stock filters are used, the query will ignore the less_than filter.
     let filter = filter.map(|mut filter| -> Result<ItemFilter, ListError> {
-        if let Some(months_of_stock) = filter.months_of_stock {
+        if let Some(comparison_months_of_stock) = filter.more_than_months_of_stock {
+            // call get_item_ids_by_mos() with more_than = true so it will only return ids of the items that have more than that many months of stock
             let item_ids_filtered_by_mos =
-                get_item_ids_with_mos(&connection, filter.clone(), store_id, months_of_stock as f64)?;
+                get_item_ids_by_mos(&connection, filter.clone(), true, store_id, comparison_months_of_stock as f64)?;
 
             filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
-        };
+        } else if let Some(comparison_months_of_stock) = filter.less_than_months_of_stock {
+            // call get_item_ids_by_mos() with more_than = false so it will only return ids of the items that have less than that many months of stock
+            let item_ids_filtered_by_mos =
+                get_item_ids_by_mos(&connection, filter.clone(), false, store_id, comparison_months_of_stock as f64)?;
+
+            filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
+        }
         Ok(filter)
     }).transpose()?;
 
@@ -70,17 +50,20 @@ pub fn get_items(
     })
 }
 
-pub fn get_item_ids_with_mos(
+pub fn get_item_ids_by_mos(
     connection: &StorageConnection,
     filter: ItemFilter,
+    more_than: bool,
     store_id: &str,
-    months_of_stock: f64,
+    comparison_months_of_stock: f64,
 ) -> Result<Vec<String>, ListError> {
     let repository = ItemRepository::new(&connection);
-
+    let more_than = more_than;
+    let comparison_months_of_stock = comparison_months_of_stock;
+    
     let item_ids = repository
         .query(
-            Pagination::all(), // get all items for mos query - pagination is for final query result back to user
+            Pagination::all(), // get all items so we can then filter them by mos in the next - we'll use pagination for the query that will be returned to the user.
             Some(filter),
             None,
             Some(store_id.to_owned()),
@@ -99,7 +82,15 @@ pub fn get_item_ids_with_mos(
         .into_iter()
         .filter_map(|(k, v)| {
             months_of_stock_on_hand(v)
-                .filter(|&mos| mos >= months_of_stock)
+                .filter(|&mos| {
+                    if more_than {
+                        // if user has used the more_than_months_of_stock filter, only return ids of items that have more than or equal to that many months of stock available.
+                        mos >= comparison_months_of_stock
+                    } else {
+                        // if user has used the less_than_months_of_stock filter, only return ids of items that have less than or equal to that many months of stock available.
+                        mos <= comparison_months_of_stock
+                    }
+                })
                 .map(|_| k)
         })
         .collect();
