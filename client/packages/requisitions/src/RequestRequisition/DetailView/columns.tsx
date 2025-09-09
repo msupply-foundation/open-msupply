@@ -1,3 +1,4 @@
+import React from 'react';
 import { RequestLineFragment } from '../api';
 import {
   ColumnAlign,
@@ -13,7 +14,7 @@ import {
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
-import { PackQuantityCell } from '@openmsupply-client/system';
+import { NumericCell, PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
 
 export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
@@ -112,7 +113,7 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
       description: 'description.available-months-of-stock',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: PackQuantityCell,
+      Cell: props => <NumericCell {...props} precision={1} />,
       accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
     }
   );
