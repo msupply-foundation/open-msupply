@@ -14,12 +14,17 @@ export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
   onRowClick?: (row: T) => void;
   isLoading: boolean;
+  getIsPlaceholderRow?: (row: T) => boolean;
+  /** Whether row should be greyed out - still potentially clickable */
+  getIsRestrictedRow?: (row: T) => boolean;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
+  state,
   isLoading,
   onRowClick,
-  state,
+  getIsPlaceholderRow = () => false,
+  getIsRestrictedRow = () => false,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const table = useMaterialReactTable<T>({
@@ -66,9 +71,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         },
       },
     },
-    muiTableBodyCellProps: {
-      sx: { fontSize: '14px', fontWeight: 400 },
-    },
+    muiTableBodyCellProps: ({ row }) => ({
+      sx: {
+        fontSize: '14px',
+        fontWeight: 400,
+        color: getIsPlaceholderRow(row.original)
+          ? 'secondary.light'
+          : getIsRestrictedRow(row.original)
+            ? 'gray.main'
+            : undefined,
+      },
+    }),
 
     muiTopToolbarProps: {
       sx: { height: '60px' }, // Prevent slight jump when selecting rows

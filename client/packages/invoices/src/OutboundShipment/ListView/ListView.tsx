@@ -201,6 +201,7 @@ const OutboundShipmentListViewComponent: FC = () => {
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
+      getIsRestrictedRow: isOutboundDisabled,
     });
 
   return (
