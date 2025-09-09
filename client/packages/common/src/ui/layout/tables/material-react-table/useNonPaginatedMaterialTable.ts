@@ -1,59 +1,25 @@
-import {
-  MRT_RowData,
-  MRT_TableOptions,
-  useMaterialReactTable,
-} from 'material-react-table';
+import { MRT_RowData } from 'material-react-table';
+import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 
 interface NonPaginatedTableConfig<T extends MRT_RowData>
-  extends MRT_TableOptions<T> {
-  onRowClick?: (row: T) => void;
-  isLoading: boolean;
-}
+  extends BaseTableConfig<T> {}
 
-export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
-  isLoading,
-  onRowClick,
-  ...tableOptions
-}: NonPaginatedTableConfig<T>) => {
-  const table = useMaterialReactTable<T>({
-    enablePagination: false,
+export const useNonPaginatedMaterialTable = <T extends MRT_RowData>(
+  tableOptions: NonPaginatedTableConfig<T>
+) => {
+  const table = useBaseMaterialTable<T>({
     enableRowVirtualization: true,
-    // muiTableBodyProps: {
-    //   sx: { border: '1px solid blue', width: '100%' },
-    // },
-    enableColumnResizing: true,
-    enableRowSelection: true,
-    initialState: {
-      density: 'compact',
-    },
-    state: {
-      showProgressBars: isLoading,
-    },
-    muiTableHeadCellProps: {
-      sx: {
-        fontSize: '14px',
-        lineHeight: 1.2,
-        verticalAlign: 'bottom',
-      },
-    },
-    muiTableBodyCellProps: {
-      sx: {
-        fontSize: '14px',
-        borderBottom: '1px solid rgba(224, 224, 224, 1)',
-      },
-    },
-    muiTableBodyRowProps: ({ row, staticRowIndex }) => ({
-      onClick: () => {
-        if (onRowClick) onRowClick(row.original);
-      },
-      sx: {
-        backgroundColor: staticRowIndex % 2 === 0 ? 'transparent' : '#fafafb', // light grey on odd rows
-        '& td': {
-          borderBottom: '1px solid rgba(224, 224, 224, 1)',
-        },
-      },
-    }),
     ...tableOptions,
   });
-  return table;
+
+  const selectedRows = table.getSelectedRowModel().rows.map(r => r.original);
+
+  const resetRowSelection = () => {
+    table.resetRowSelection();
+  };
+  return {
+    table,
+    selectedRows,
+    resetRowSelection,
+  };
 };

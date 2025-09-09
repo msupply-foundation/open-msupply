@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -14,7 +14,11 @@ import {
   useNotification,
   useTableStore,
   useBreadcrumbs,
+  useNonPaginatedMaterialTable,
+  usePreferences,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
+import { MRT_ColumnDef } from 'material-react-table';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { StockOutItem } from '../../types';
@@ -44,8 +48,12 @@ const DetailViewInner = () => {
     mode: returnModalMode,
     setMode: setReturnMode,
   } = useEditModal<string[]>();
+  const { manageVvmStatusForStock } = usePreferences();
 
   const { data, isLoading } = useOutbound.document.get();
+  const { rows } = useOutbound.line.rows(false);
+  // const { rows } = useOutbound.line.rows(isGrouped);
+
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const onRowClick = useCallback(
@@ -79,6 +87,83 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
+  const mrtColumns = useMemo<
+    MRT_ColumnDef<StockOutLineFragment | StockOutItem>[]
+  >(() => {
+    const cols = [
+      // TO-DO: Note popover column,
+      {
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        size: 120,
+      },
+      {
+        accessorKey: 'item.name',
+        header: t('label.name'),
+        // size: 140,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 130,
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry-date'),
+        size: 160,
+      },
+    ];
+
+    if (manageVvmStatusForStock)
+      cols.push({
+        // todo - anything that could return undefined should use accessorFn, so no warnings in console
+        accessorKey: 'vvmStatus.description',
+        header: t('label.vvm-status'),
+      });
+
+    cols.push(
+      {
+        accessorKey: 'location.code',
+        header: t('label.location'),
+      },
+      {
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+      }
+    );
+
+    // if (manageVaccinesInDoses) {
+    //   columns.push(getDosesPerUnitColumn(t));
+    // }
+
+    return cols;
+  }, [manageVvmStatusForStock]);
+
+  const { table, selectedRows, resetRowSelection } =
+    useNonPaginatedMaterialTable<StockOutLineFragment | StockOutItem>({
+      tableId: 'outbound-shipment-detail-view',
+      columns: mrtColumns,
+      data: rows ?? [],
+      onRowClick: onRowClick ? row => onRowClick(row) : () => {},
+      isLoading: false,
+      getIsPlaceholderRow: row => {
+        if ('type' in row) {
+          return (
+            row.type === InvoiceLineNodeType.UnallocatedStock ||
+            row.numberOfPacks === 0
+          );
+        } else {
+          return row.lines.some(
+            line => line.type === InvoiceLineNodeType.UnallocatedStock
+          );
+        }
+      },
+    });
+
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
@@ -87,6 +172,7 @@ const DetailViewInner = () => {
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
           onAddItem={onAddItem}
+          table={table}
         />
       ),
       value: 'Details',
@@ -130,7 +216,11 @@ const DetailViewInner = () => {
 
           <Toolbar />
           <DetailTabs tabs={tabs} />
-          <Footer onReturnLines={onReturn} />
+          <Footer
+            onReturnLines={onReturn}
+            selectedRows={selectedRows as StockOutLineFragment[]}
+            resetRowSelection={resetRowSelection}
+          />
           <SidePanel />
         </>
       ) : (

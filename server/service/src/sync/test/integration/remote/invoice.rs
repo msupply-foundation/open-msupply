@@ -24,6 +24,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             on_hold: false,
             store_id: store_id.to_string(),
             location_type_id: None,
+            ..Default::default()
         };
         // create test home currency
         let currency_row = CurrencyRow {
@@ -76,7 +77,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             cancelled_datetime: None,
             is_cancellation: false,
             expected_delivery_date: None,
-            default_donor_id: None,
+            ..Default::default()
         };
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),
@@ -103,6 +104,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             prescribed_quantity: None,
             linked_invoice_id: None,
             donor_link_id: None,
+            ..Default::default()
         };
         let invoice_row_1 = base_invoice_row.clone();
         let invoice_line_row_1 = base_invoice_line_row.clone();

@@ -1,0 +1,155 @@
+import React, { useRef } from 'react';
+import {
+  MRT_RowData,
+  MRT_TableOptions,
+  useMaterialReactTable,
+} from 'material-react-table';
+import {
+  CheckboxCheckedIcon,
+  CheckboxEmptyIcon,
+  CheckboxIndeterminateIcon,
+} from '@common/icons';
+import {
+  getSavedTableState,
+  // resetSavedTableState,
+  useTableLocalStorage,
+} from './useTableLocalStorage';
+import { useIntlUtils } from '@common/intl';
+
+export interface BaseTableConfig<T extends MRT_RowData>
+  extends MRT_TableOptions<T> {
+  tableId: string; // key for local storage
+  onRowClick?: (row: T) => void;
+  isLoading: boolean;
+  getIsPlaceholderRow?: (row: T) => boolean;
+  /** Whether row should be greyed out - still potentially clickable */
+  getIsRestrictedRow?: (row: T) => boolean;
+}
+
+export const useBaseMaterialTable = <T extends MRT_RowData>({
+  tableId,
+  state,
+  isLoading,
+  onRowClick,
+  getIsPlaceholderRow = () => false,
+  getIsRestrictedRow = () => false,
+  ...tableOptions
+}: BaseTableConfig<T>) => {
+  const initialState = useRef(getSavedTableState(tableId));
+  const { getTableLocalisations } = useIntlUtils();
+  const localization = getTableLocalisations();
+
+  const table = useMaterialReactTable<T>({
+    localization,
+
+    enablePagination: false,
+    enableColumnResizing: true,
+    enableColumnPinning: true,
+    enableColumnOrdering: true,
+    enableColumnDragging: false,
+    enableRowSelection: true,
+
+    // Disable bottom footer - use OMS custom action footer instead
+    enableBottomToolbar: false,
+
+    initialState: {
+      ...tableOptions.initialState,
+      ...initialState.current,
+    },
+    state: {
+      showProgressBars: isLoading,
+      ...state,
+    },
+
+    // Styling
+    muiTablePaperProps: {
+      sx: { width: '100%', display: 'flex', flexDirection: 'column' },
+    },
+    muiTableHeadCellProps: {
+      sx: {
+        fontWeight: 600,
+        lineHeight: 1.2,
+        verticalAlign: 'bottom',
+        justifyContent: 'space-between',
+        '& .Mui-TableHeadCell-Content svg': {
+          fontSize: '2em',
+          marginLeft: 0,
+        },
+        // Allow date range filters to wrap if column is too narrow
+        '& .MuiCollapse-wrapperInner > div': {
+          display: 'flex',
+          flexWrap: 'wrap',
+          // Date picker should never need to be wider than 170px
+          '& .MuiPickersTextField-root': { width: '170px' },
+        },
+      },
+    },
+    muiTableBodyCellProps: ({ row }) => ({
+      sx: {
+        fontSize: '14px',
+        fontWeight: 400,
+        color: getIsPlaceholderRow(row.original)
+          ? 'secondary.light'
+          : getIsRestrictedRow(row.original)
+            ? 'gray.main'
+            : undefined,
+      },
+    }),
+
+    muiTopToolbarProps: {
+      sx: { height: '60px' }, // Prevent slight jump when selecting rows
+    },
+
+    muiSelectAllCheckboxProps: {
+      color: 'outline',
+      size: 'small',
+      icon: <CheckboxEmptyIcon />,
+      checkedIcon: <CheckboxCheckedIcon />,
+      indeterminateIcon: <CheckboxIndeterminateIcon />,
+    },
+    muiSelectCheckboxProps: {
+      color: 'outline',
+      size: 'small',
+      icon: <CheckboxEmptyIcon />,
+      checkedIcon: <CheckboxCheckedIcon />,
+      indeterminateIcon: <CheckboxIndeterminateIcon />,
+    },
+    muiToolbarAlertBannerProps: {
+      sx: { backgroundColor: 'unset' },
+    },
+
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => {
+        if (onRowClick) onRowClick(row.original);
+      },
+      sx: {
+        '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
+      },
+    }),
+
+    // TO-DO: Add a "reset all" button
+    // renderToolbarInternalActions: ({ table }) => {
+    //   return (
+    //     <>
+    //       <button
+    //         onClick={() => {
+    //           console.log('Custom action clicked');
+    //           resetSavedTableState(tableId);
+    //           table.resetColumnOrder();
+    //         }}
+    //       >
+    //         Custom Action
+    //       </button>
+    //       <MRT_ShowHideColumnsButton table={table} />
+    //       <MRT_ToggleFullScreenButton table={table} />{' '}
+    //     </>
+    //   );
+    // },
+
+    ...tableOptions,
+  });
+
+  useTableLocalStorage(tableId, table);
+
+  return table;
+};

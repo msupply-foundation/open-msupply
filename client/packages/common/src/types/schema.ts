@@ -3052,7 +3052,6 @@ export type GoodsReceivedListResponse = GoodsReceivedConnector;
 export type GoodsReceivedNode = {
   __typename: 'GoodsReceivedNode';
   comment?: Maybe<Scalars['String']['output']>;
-  createdBy?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   id: Scalars['String']['output'];
@@ -3064,6 +3063,7 @@ export type GoodsReceivedNode = {
   status: GoodsReceivedNodeStatus;
   supplier?: Maybe<NameNode>;
   supplierReference?: Maybe<Scalars['String']['output']>;
+  user?: Maybe<UserNode>;
 };
 
 export enum GoodsReceivedNodeStatus {
@@ -7135,8 +7135,11 @@ export type PurchaseOrderDoesNotExist = PurchaseOrderLineError & {
 };
 
 export type PurchaseOrderFilterInput = {
+  confirmedDatetime?: InputMaybe<DatetimeFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  requestedDeliveryDate?: InputMaybe<DateFilterInput>;
+  sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   supplier?: InputMaybe<StringFilterInput>;
