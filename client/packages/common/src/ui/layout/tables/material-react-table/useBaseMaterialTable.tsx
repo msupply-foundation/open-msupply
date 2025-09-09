@@ -25,7 +25,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   getIsPlaceholderRow?: (row: T) => boolean;
   /** Whether row should be greyed out - still potentially clickable */
   getIsRestrictedRow?: (row: T) => boolean;
-  groupByField?: keyof T;
+  groupByField?: string;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -36,7 +36,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
   data,
-  groupByField = 'itemName',
+  groupByField,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const initialState = useRef(getSavedTableState(tableId));
@@ -80,7 +80,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     muiTablePaperProps: {
       sx: { width: '100%', display: 'flex', flexDirection: 'column' },
     },
-    muiTableHeadCellProps: {
+    muiTableHeadCellProps: ({ column }) => ({
       sx: {
         fontWeight: 600,
         lineHeight: 1.2,
@@ -97,9 +97,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
           // Date picker should never need to be wider than 170px
           '& .MuiPickersTextField-root': { width: '170px' },
         },
+        button: {
+          visibility: column.id === 'mrt-row-expand' ? 'hidden' : undefined,
+        },
       },
-    },
-    muiTableBodyCellProps: ({ row }) => ({
+    }),
+    muiTableBodyCellProps: ({ cell, row }) => ({
       sx: {
         fontSize: '14px',
         fontWeight: 400,
@@ -107,6 +110,23 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
           ? 'secondary.light'
           : getIsRestrictedRow(row.original)
             ? 'gray.main'
+            : undefined,
+        // The expand chevron is rotated incorrectly by default (in terms of
+        // consistency with other Accordion/Expando UI elements in the app)
+        button: {
+          rotate: row.getIsExpanded() ? '180deg' : '-90deg',
+        },
+        // Hide the icon when there's nothing to expand
+        '& button.Mui-disabled': {
+          color:
+            cell.column.id === 'mrt-row-expand' && !row.getCanExpand()
+              ? 'transparent'
+              : undefined,
+        },
+        // Indent "sub-rows" when expanded
+        paddingLeft:
+          row.original?.['isSubRow'] && cell.column.id !== 'mrt-row-select'
+            ? '2em'
             : undefined,
       },
     }),
@@ -139,12 +159,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         },
         sx: {
           '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
-          backgroundColor: row.getIsExpanded()
-            ? 'rgba(0, 128, 255, 0.1)'
-            : row.original?.isSubRow
-              ? 'red'
-              : 'inherit',
-          fontStyle: row.getIsExpanded() ? 'italic' : 'normal',
+          backgroundColor: row.original['isSubRow']
+            ? 'rgba(0, 128, 255, 0.09)'
+            : 'inherit',
+          fontStyle: row.getCanExpand() ? 'italic' : 'normal',
         },
       };
     },
@@ -176,7 +194,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   return table;
 };
 
-const getGroupedRows = <T,>(data: T[], groupByField: keyof T) => {
+const getGroupedRows = <T,>(data: T[], groupByField?: keyof T): T[] => {
   if (!groupByField) return data;
 
   // Group rows by groupByField
@@ -191,25 +209,27 @@ const getGroupedRows = <T,>(data: T[], groupByField: keyof T) => {
   );
 
   // For each group, create a summary row and subRows, or just return the row if only one
-  return Object.values(grouped).map(groupRows => {
-    if (groupRows.length === 1) {
-      // Only one row in group, return as-is
-      return groupRows[0];
-    }
-    // All rows in this group
-    const subRows = groupRows.map(row => ({ ...row, isSubRow: true }));
-    // Build the summary row
-    const summary: Record<string, any> = {};
-    const keys = Object.keys(groupRows[0] || {});
-    for (const key of keys) {
-      // Don't include subRows or isSubRow in summary
-      if (key === 'subRows' || key === 'isSubRow') continue;
-      const values = groupRows.map(row => row[key]);
-      const allEqual = values.every(v => v === values[0]);
-      summary[key] = allEqual ? values[0] : '[multiple]';
-    }
-    // Attach subRows
-    summary['subRows'] = subRows;
-    return summary as T & { subRows: (T & { isSubRow: true })[] };
-  });
+  return Object.values(grouped)
+    .map(groupRows => {
+      if (groupRows.length === 1) {
+        // Only one row in group, return as-is
+        return groupRows[0];
+      }
+      // All rows in this group
+      const subRows = groupRows.map(row => ({ ...row, isSubRow: true }));
+      // Build the summary row
+      const summary: Record<string, any> = {};
+      const keys = Object.keys(groupRows[0] || {});
+      for (const key of keys) {
+        // Don't include subRows or isSubRow in summary
+        if (key === 'subRows' || key === 'isSubRow') continue;
+        const values = groupRows.map(row => row[key as keyof T]);
+        const allEqual = values.every(v => v === values[0]);
+        summary[key] = allEqual ? values[0] : '[multiple]';
+      }
+      // Attach subRows
+      summary['subRows'] = subRows;
+      return summary as T & { subRows: (T & { isSubRow: true })[] };
+    })
+    .filter((row): row is T => row !== undefined);
 };

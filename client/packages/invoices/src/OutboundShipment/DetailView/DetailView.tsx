@@ -53,7 +53,7 @@ const DetailViewInner = () => {
 
   const { data, isLoading } = useOutbound.document.get();
   const { isGrouped } = useIsGrouped('outboundShipment');
-  const { rows } = useOutbound.line.rows(isGrouped);
+  const { rows } = useOutbound.line.rows(false);
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -163,6 +163,7 @@ const DetailViewInner = () => {
           );
         }
       },
+      groupByField: isGrouped ? 'itemName' : undefined,
     });
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
