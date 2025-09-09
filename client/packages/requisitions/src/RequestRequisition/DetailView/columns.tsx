@@ -12,10 +12,15 @@ import {
   getLinesFromRow,
   usePluginProvider,
   UNDEFINED_STRING_VALUE,
+  CellProps,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { NumericCell, PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
+
+const MonthsOfStockCell = (props: CellProps<RequestLineFragment>) => (
+  <NumericCell {...props} precision={1} />
+);
 
 export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
@@ -113,7 +118,7 @@ export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
       description: 'description.available-months-of-stock',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: props => <NumericCell {...props} precision={1} />,
+      Cell: MonthsOfStockCell,
       accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
     }
   );
