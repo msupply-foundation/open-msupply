@@ -79,7 +79,7 @@ export const DetailViewInner = (): ReactElement => {
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />
-          <SidePanel />
+          <SidePanel isDisabled={isDisabled} />
           {isOpen && lineId && (
             <GoodsReceivedLineEditModal
               lineId={lineId}
