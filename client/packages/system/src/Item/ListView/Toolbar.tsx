@@ -45,8 +45,15 @@ export const Toolbar: FC = () => {
             },
             {
               type: 'number',
-              name: t('label.months-of-stock'),
-              urlParameter: 'monthsOfStock',
+              name: t('label.more-than-months-stock'),
+              urlParameter: 'moreThanMonthsOfStock',
+              minValue: 0,
+              decimalLimit: 0,
+            },
+            {
+              type: 'number',
+              name: t('label.less-than-months-stock'),
+              urlParameter: 'lessThanMonthsOfStock',
               minValue: 0,
               decimalLimit: 0,
             },
