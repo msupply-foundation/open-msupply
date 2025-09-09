@@ -211,7 +211,9 @@ pub(crate) mod test {
             is_ledger_fixed(&connection, "legacy_stock_line_with_invoice_line"),
             Ok(false)
         );
-        assert!(logs.contains("invoice_line_stock_line_id_fkey"));
+        assert!(
+            logs.clone().contains("violates foreign key") && logs.clone().contains("invoice_line")
+        );
 
         // No invoice lines but referenced in stocktake line
         let mut logs = String::new();
@@ -229,6 +231,9 @@ pub(crate) mod test {
             is_ledger_fixed(&connection, "legacy_stock_line_with_stock_take_line"),
             Ok(false)
         );
-        assert!(logs.clone().contains("stocktake_line_stock_line_id_fkey"));
+        assert!(
+            logs.clone().contains("violates foreign key")
+                && logs.clone().contains("stocktake_line")
+        );
     }
 }
