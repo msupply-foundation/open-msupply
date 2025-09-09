@@ -212,7 +212,13 @@ export const PatientResultsTab: FC<
   return (
     <PatientPanel value={value} patient={patient}>
       {fetchingPatient ? (
-        <FetchPatientModal patient={fetchingPatient} onClose={onClose} />
+        <FetchPatientModal
+          patient={fetchingPatient}
+          onClose={onClose}
+          onDownload={() => {
+            console.warn('OnDownload');
+          }}
+        />
       ) : null}
       <>
         <Box
