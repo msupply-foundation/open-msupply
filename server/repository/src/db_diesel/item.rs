@@ -53,6 +53,7 @@ pub struct ItemFilter {
     pub is_vaccine: Option<bool>,
     pub master_list_id: Option<EqualFilter<String>>,
     pub is_program_item: Option<bool>,
+    pub months_of_stock: Option<i32>,
 }
 
 impl ItemFilter {
@@ -232,6 +233,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             is_visible_or_on_hand,
             master_list_id,
             is_program_item,
+            months_of_stock: _,
         } = f;
 
         // or filter need to be applied before and filters
