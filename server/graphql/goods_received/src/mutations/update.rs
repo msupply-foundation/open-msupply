@@ -55,6 +55,8 @@ pub struct UpdateInput {
     pub status: Option<GoodsReceivedNodeType>,
     pub received_date: Option<NullableUpdateInput<NaiveDate>>,
     pub comment: Option<String>,
+    pub donor_id: Option<NullableUpdateInput<String>>,
+    pub supplier_reference: Option<String>,
 }
 
 impl UpdateInput {
@@ -64,6 +66,8 @@ impl UpdateInput {
             status,
             received_date,
             comment,
+            donor_id,
+            supplier_reference,
         } = self;
 
         ServiceInput {
@@ -71,6 +75,8 @@ impl UpdateInput {
             status: status.map(GoodsReceivedNodeType::to_domain),
             received_date: received_date.map(|r| NullableUpdate { value: r.value }),
             comment,
+            donor_id: donor_id.map(|d| NullableUpdate { value: d.value }),
+            supplier_reference,
         }
     }
 }
