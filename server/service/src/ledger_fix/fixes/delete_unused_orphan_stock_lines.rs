@@ -14,7 +14,7 @@ pub(crate) fn fix(
     operation_log: &mut String,
     stock_line_id: &str,
 ) -> Result<(), LedgerFixError> {
-    operation_log.push_str("Starting remove_unused_orphan_stock_lines\n");
+    operation_log.push_str("Starting delete_unused_orphan_stock_lines\n");
 
     let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
         StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
@@ -35,7 +35,7 @@ pub(crate) fn fix(
 
     if !should_adjust {
         operation_log.push_str(&format!(
-            "Ledger does not match use case for remove_unused_orphan_stock_lines {:?}.\n",
+            "Ledger does not match use case for delete_unused_orphan_stock_lines {:?}.\n",
             balance_summary
         ));
         return Ok(());
@@ -47,7 +47,7 @@ pub(crate) fn fix(
 
     if invoice_lines.len() > 0 {
         operation_log.push_str(&format!(
-            "Skipping remove_unused_orphan_stock_lines, stock_line already used in invoice_lines: {:?}.\n",
+            "Skipping delete_unused_orphan_stock_lines, stock_line already used in invoice_lines: {:?}.\n",
             invoice_lines.len()
         ));
         return Ok(());
@@ -78,8 +78,8 @@ pub(crate) mod test {
     };
 
     pub(crate) fn mock_data() -> MockData {
-        let positive_running_balance_fix = StockLineRow {
-            id: "positive_running_balance_fix".to_string(),
+        let oms_stock_line = StockLineRow {
+            id: "oms-stock-line".to_string(), // OMS ID format
             item_link_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             pack_size: 1.0,
@@ -88,44 +88,43 @@ pub(crate) mod test {
             ..Default::default()
         };
 
-        let negative_running_balance_fix = StockLineRow {
-            id: "negative_running_balance_fix".to_string(),
-            pack_size: 1.0,
-            ..positive_running_balance_fix.clone()
+        let oms_orphan_stock_line = StockLineRow {
+            id: "oms-orphan-stock-line".to_string(),
+            ..oms_stock_line.clone()
+        };
+
+        let legacy_orphan_stock_line = StockLineRow {
+            id: "legacy_orphan_stock_line".to_string(), // must not contain `-` to be legacy ID format.
+            ..oms_stock_line.clone()
+        };
+
+        let legacy_stock_line = StockLineRow {
+            id: "legacy_stock_line".to_string(), // must not contain `-` to be legacy ID format.
+            ..oms_stock_line.clone()
         };
 
         let mock_data = MockData {
             stock_lines: vec![
-                positive_running_balance_fix.clone(),
-                negative_running_balance_fix.clone(),
+                oms_stock_line.clone(),
+                oms_orphan_stock_line,
+                legacy_orphan_stock_line,
+                legacy_stock_line.clone(),
             ],
             ..Default::default()
         }
-        // Movements are (date as day, quantity)
+        .join(make_movements(oms_stock_line, vec![(1, 10), (2, -7)]))
         .join(make_movements(
-            positive_running_balance_fix,
-            vec![(2, 6), (3, -6), (4, 6), (5, -3), (25, -2), (27, 3)],
-        ))
-        .join(make_movements(
-            negative_running_balance_fix,
-            vec![
-                (2, 6),
-                (3, -6),
-                (4, 6),
-                (5, -3),
-                (25, -2),
-                (28, -10),
-                (29, 3),
-            ],
+            legacy_stock_line,
+            vec![(1, -1), (1, -1), (1, -1)],
         ));
 
         mock_data
     }
 
     #[actix_rt::test]
-    async fn inventory_adjustment_to_balance_test() {
+    async fn delete_unused_orphan_stock_lines_test() {
         let ServiceTestContext { connection, .. } = setup_all_with_data_and_service_provider(
-            "inventory_adjustment_to_balance",
+            "delete_unused_orphan_stock_lines_test",
             MockDataInserts::none().names().stores().units().items(),
             mock_data(),
         )
@@ -138,58 +137,48 @@ pub(crate) mod test {
             )
             .unwrap();
 
-        let repo = StockLineLedgerRepository::new(&connection);
+        // A perfectly valid line isn't touched if somehow given
+        let mut logs = String::new();
+        assert_eq!(is_ledger_fixed(&connection, "oms-stock-line"), Ok(true));
+        fix(&connection, &mut logs, "oms-stock-line").unwrap();
+        assert_eq!(is_ledger_fixed(&connection, "oms-stock-line"), Ok(true));
+        assert!(logs.contains("Ledger does not match use case for"));
 
+        // An orphan from OG is deleted
+        let mut logs = String::new();
+        let legacy_orphan_stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id("legacy_orphan_stock_line")
+            .unwrap()
+            .unwrap();
         assert_eq!(
-            is_ledger_fixed(&connection, "positive_running_balance_fix"),
+            is_ledger_fixed(&connection, "legacy_orphan_stock_line"),
             Ok(false)
         );
-
-        let mut logs = String::new();
-
-        fix(&connection, &mut logs, "positive_running_balance_fix").unwrap();
-
+        fix(&connection, &mut logs, "legacy_orphan_stock_line").unwrap();
         assert_eq!(
-            repo.query_by_filter(
-                StockLineLedgerFilter::new()
-                    .stock_line_id(EqualFilter::equal_to("positive_running_balance_fix"))
-            )
-            .unwrap()
-            .into_iter()
-            .map(|line| line.running_balance)
-            .collect::<Vec<f64>>(),
-            vec![6.0, 0.0, 6.0, 5.0, 2.0, 0.0, 3.0]
-        );
-
-        assert_eq!(
-            is_ledger_fixed(&connection, "positive_running_balance_fix"),
+            is_ledger_fixed(&connection, "legacy_orphan_stock_line"),
             Ok(true)
         );
+        assert!(logs.contains(format!("{legacy_orphan_stock_line:?}").as_str()));
 
+        // An orphan from OMS is left alone
+        let mut logs = String::new();
         assert_eq!(
-            is_ledger_fixed(&connection, "negative_running_balance_fix"),
+            is_ledger_fixed(&connection, "oms-orphan-stock-line"),
             Ok(false)
         );
+        fix(&connection, &mut logs, "oms-orphan-stock-line").unwrap();
+        assert_eq!(
+            is_ledger_fixed(&connection, "oms-orphan-stock-line"),
+            Ok(false)
+        );
+        assert!(logs.contains("Ledger does not match use case for"));
 
+        // What was an orphan from OG but has since been issued is not deleted
         let mut logs = String::new();
-
-        fix(&connection, &mut logs, "negative_running_balance_fix").unwrap();
-
-        assert_eq!(
-            repo.query_by_filter(
-                StockLineLedgerFilter::new()
-                    .stock_line_id(EqualFilter::equal_to("negative_running_balance_fix"))
-            )
-            .unwrap()
-            .into_iter()
-            .map(|line| line.running_balance)
-            .collect::<Vec<f64>>(),
-            vec![9.0, 15.0, 9.0, 15.0, 12.0, 10.0, 0.0, 3.0]
-        );
-
-        assert_eq!(
-            is_ledger_fixed(&connection, "negative_running_balance_fix"),
-            Ok(true)
-        );
+        assert_eq!(is_ledger_fixed(&connection, "legacy_stock_line"), Ok(false));
+        fix(&connection, &mut logs, "legacy_stock_line").unwrap();
+        assert_eq!(is_ledger_fixed(&connection, "legacy_stock_line"), Ok(false));
+        assert!(logs.contains("stock_line already used in invoice_lines"));
     }
 }
