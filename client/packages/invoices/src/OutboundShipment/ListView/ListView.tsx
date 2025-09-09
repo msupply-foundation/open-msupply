@@ -22,8 +22,6 @@ import {
   useFeatureFlags,
   MaterialTable,
   usePaginatedMaterialTable,
-  PaginatedTableColumnDefinition,
-  mergeCellProps,
   ColumnDef,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
