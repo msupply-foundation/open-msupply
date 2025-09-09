@@ -7,7 +7,7 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
     item_link,
     purchase_order_row::purchase_order::{self},
-    EqualFilter, Pagination, PurchaseOrderLineRow, PurchaseOrderRow, Sort,
+    EqualFilter, Pagination, PurchaseOrderLineRow, PurchaseOrderLineStatus, PurchaseOrderRow, Sort,
 };
 
 use diesel::{
@@ -34,6 +34,7 @@ pub struct PurchaseOrderLineFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub requested_pack_size: Option<EqualFilter<f64>>,
     pub item_id: Option<EqualFilter<String>>,
+    pub status: Option<EqualFilter<PurchaseOrderLineStatus>>,
 }
 
 pub enum PurchaseOrderLineSortField {
@@ -146,6 +147,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             store_id,
             requested_pack_size,
             item_id,
+            status,
         } = f;
 
         apply_equal_filter!(query, purchase_order_id, purchase_order::id);
@@ -157,6 +159,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             purchase_order_line::requested_pack_size
         );
         apply_equal_filter!(query, item_id, item_link::item_id);
+        apply_equal_filter!(query, status, purchase_order_line::status);
     }
 
     query
@@ -180,6 +183,21 @@ impl PurchaseOrderLineFilter {
         self.store_id = Some(filter);
         self
     }
+
+    pub fn requested_pack_size(mut self, filter: EqualFilter<f64>) -> Self {
+        self.requested_pack_size = Some(filter);
+        self
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
+        self
+    }
+
+    pub fn status(mut self, filter: EqualFilter<PurchaseOrderLineStatus>) -> Self {
+        self.status = Some(filter);
+        self
+    }
 }
 
 fn to_domain(
@@ -188,5 +206,14 @@ fn to_domain(
     PurchaseOrderLine {
         purchase_order_line_row,
         item_row,
+    }
+}
+
+impl PurchaseOrderLineStatus {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }
