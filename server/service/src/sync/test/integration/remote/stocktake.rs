@@ -27,6 +27,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             on_hold: false,
             store_id: store_id.to_string(),
             location_type_id: None,
+            ..Default::default()
         };
         let currency_row = CurrencyRow {
             id: uuid(),
@@ -56,6 +57,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             program_id: None,
             counted_by: None,
             verified_by: None,
+            ..Default::default()
         };
         let stocktake_line_row = StocktakeLineRow {
             id: uuid(),
@@ -75,6 +77,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             note: None,
             reason_option_id: None,
             item_variant_id: None,
+            ..Default::default()
         };
         result.push(TestStepData {
             central_upsert: json!({"item": [{

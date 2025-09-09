@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useRef } from 'react';
 import {
   MRT_RowData,
   MRT_TableOptions,
@@ -14,25 +14,34 @@ import {
   // resetSavedTableState,
   useTableLocalStorage,
 } from './useTableLocalStorage';
-import { useRef } from 'react';
+import { useIntlUtils } from '@common/intl';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
   tableId: string; // key for local storage
   onRowClick?: (row: T) => void;
   isLoading: boolean;
+  getIsPlaceholderRow?: (row: T) => boolean;
+  /** Whether row should be greyed out - still potentially clickable */
+  getIsRestrictedRow?: (row: T) => boolean;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
   tableId,
+  state,
   isLoading,
   onRowClick,
-  state,
+  getIsPlaceholderRow = () => false,
+  getIsRestrictedRow = () => false,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const initialState = useRef(getSavedTableState(tableId));
+  const { getTableLocalisations } = useIntlUtils();
+  const localization = getTableLocalisations();
 
   const table = useMaterialReactTable<T>({
+    localization,
+
     enablePagination: false,
     enableColumnResizing: true,
     enableColumnPinning: true,
@@ -75,9 +84,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         },
       },
     },
-    muiTableBodyCellProps: {
-      sx: { fontSize: '14px', fontWeight: 400 },
-    },
+    muiTableBodyCellProps: ({ row }) => ({
+      sx: {
+        fontSize: '14px',
+        fontWeight: 400,
+        color: getIsPlaceholderRow(row.original)
+          ? 'secondary.light'
+          : getIsRestrictedRow(row.original)
+            ? 'gray.main'
+            : undefined,
+      },
+    }),
 
     muiTopToolbarProps: {
       sx: { height: '60px' }, // Prevent slight jump when selecting rows

@@ -22,6 +22,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
             on_hold: false,
             store_id: store_id.clone(),
             location_type_id: None,
+            ..Default::default()
         };
         let stock_line_row = StockLineRow {
             id: uuid(),
@@ -41,6 +42,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
             barcode_id: None,
             item_variant_id: None,
             donor_link_id: None,
+            ..Default::default()
         };
 
         let location_movement_row = LocationMovementRow {
