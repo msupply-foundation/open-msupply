@@ -69,7 +69,6 @@ export const useCreatePatientForm = (
           patient={createNewPatient}
           active={currentTab === Tabs.SearchResults}
           onRowClick={selectedPatient => {
-            // console.log('onRowClick', selectedPatient);
             setCurrentTab(Tabs.Form);
             onSelect(selectedPatient);
           }}

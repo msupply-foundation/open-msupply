@@ -8,7 +8,6 @@ import {
   noOtherVariants,
   useDialog,
   useIntlUtils,
-  // useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PatientColumnData } from './PatientResultsTab';
@@ -34,7 +33,6 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
   onDownload,
 }) => {
   const t = useTranslation();
-  // const navigate = useNavigate();
   const { Modal, showDialog, hideDialog } = useDialog({ onClose });
   const { setCreateNewPatient } = usePatientStore();
   const { getLocalisedFullName } = useIntlUtils();
