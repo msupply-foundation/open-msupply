@@ -161,6 +161,8 @@ const OutboundShipmentListViewComponent: FC = () => {
           header: '',
           enableColumnActions: false,
           enableSorting: false,
+          enableResizing: false,
+          size: 20,
           // width: 0,
           Cell: ({ cell }) => {
             const t = useTranslation();
@@ -195,6 +197,7 @@ const OutboundShipmentListViewComponent: FC = () => {
 
   const { table, selectedRows, resetRowSelection } =
     usePaginatedMaterialTable<OutboundRowFragment>({
+      tableId: 'outbound-shipment-list-view',
       isLoading,
       onRowClick: row => navigate(row.id),
       columns: mrtColumns,

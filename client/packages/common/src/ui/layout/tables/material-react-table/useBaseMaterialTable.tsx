@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useRef } from 'react';
 import {
   MRT_RowData,
   MRT_TableOptions,
@@ -10,12 +10,18 @@ import {
   CheckboxIndeterminateIcon,
   InfoIcon,
 } from '@common/icons';
+import {
+  getSavedTableState,
+  // resetSavedTableState,
+  useTableLocalStorage,
+} from './useTableLocalStorage';
 import { useIntlUtils } from '@common/intl';
 import { ListItemIcon, MenuItem } from '@mui/material';
 import { ColumnDef } from './types';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
+  tableId: string; // key for local storage
   onRowClick?: (row: T) => void;
   isLoading: boolean;
   getIsPlaceholderRow?: (row: T) => boolean;
@@ -25,6 +31,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
+  tableId,
   state,
   isLoading,
   onRowClick,
@@ -32,6 +39,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   getIsRestrictedRow = () => false,
   ...tableOptions
 }: BaseTableConfig<T>) => {
+  const initialState = useRef(getSavedTableState(tableId));
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
@@ -49,9 +57,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableBottomToolbar: false,
 
     initialState: {
-      density: 'compact',
-      columnPinning: { left: ['mrt-row-select'] },
       ...tableOptions.initialState,
+      ...initialState.current,
     },
     state: {
       showProgressBars: isLoading,
@@ -146,7 +153,29 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       },
     }),
 
+    // TO-DO: Add a "reset all" button
+    // renderToolbarInternalActions: ({ table }) => {
+    //   return (
+    //     <>
+    //       <button
+    //         onClick={() => {
+    //           console.log('Custom action clicked');
+    //           resetSavedTableState(tableId);
+    //           table.resetColumnOrder();
+    //         }}
+    //       >
+    //         Custom Action
+    //       </button>
+    //       <MRT_ShowHideColumnsButton table={table} />
+    //       <MRT_ToggleFullScreenButton table={table} />{' '}
+    //     </>
+    //   );
+    // },
+
     ...tableOptions,
   });
+
+  useTableLocalStorage(tableId, table);
+
   return table;
 };
