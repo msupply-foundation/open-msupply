@@ -53,7 +53,7 @@ impl<'a> MasterListLineRepository<'a> {
 
     pub fn count(&self, filter: Option<MasterListLineFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let query = Self::create_filtered_query(filter)?;
+        let query = Self::create_filtered_query(filter, None)?;
 
         Ok(query
             .count()
@@ -63,9 +63,10 @@ impl<'a> MasterListLineRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: MasterListLineFilter,
+        store_id: Option<String>,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let mut query = Self::create_filtered_query(Some(filter))?;
+        let mut query = Self::create_filtered_query(Some(filter), store_id)?;
 
         query = query.order(master_list_line::id.asc());
 
@@ -79,9 +80,10 @@ impl<'a> MasterListLineRepository<'a> {
         pagination: Pagination,
         filter: Option<MasterListLineFilter>,
         sort: Option<MasterListLineSort>,
+        store_id: Option<String>,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let mut query = Self::create_filtered_query(filter)?;
+        let mut query = Self::create_filtered_query(filter, store_id)?;
 
         if let Some(sort) = sort {
             match sort.key {
@@ -106,6 +108,7 @@ impl<'a> MasterListLineRepository<'a> {
 
     pub fn create_filtered_query(
         filter: Option<MasterListLineFilter>,
+        store_id: Option<String>,
     ) -> Result<BoxedMasterListLineQuery, RepositoryError> {
         let mut query = master_list_line::table
             .inner_join(item_link::table.inner_join(item::table))
@@ -125,10 +128,15 @@ impl<'a> MasterListLineRepository<'a> {
             }
 
             if let Some(ignore_for_orders) = f.ignore_for_orders {
-                let item_ids_for_ignore_for_orders = item_store_join::table
+                let mut item_ids_for_ignore_for_orders = item_store_join::table
                     .select(item_store_join::item_link_id)
                     .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
                     .into_boxed();
+
+                if let Some(store_id) = store_id {
+                    item_ids_for_ignore_for_orders = item_ids_for_ignore_for_orders
+                        .filter(item_store_join::store_id.eq(store_id));
+                }
 
                 query = query
                     .filter(master_list_line::item_link_id.eq_any(item_ids_for_ignore_for_orders));

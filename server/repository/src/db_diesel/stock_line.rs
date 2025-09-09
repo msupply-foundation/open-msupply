@@ -239,9 +239,10 @@ impl<'a> StockLineRepository<'a> {
             }
 
             if master_list.is_some() {
-                let item_ids = MasterListLineRepository::create_filtered_query(Some(
-                    MasterListLineFilter::new().master_list(master_list.unwrap()),
-                ))
+                let item_ids = MasterListLineRepository::create_filtered_query(
+                    Some(MasterListLineFilter::new().master_list(master_list.unwrap())),
+                    None,
+                )
                 .unwrap()
                 .select(item::id);
 

@@ -127,6 +127,7 @@ fn generate(
                 .item_id(EqualFilter::not_equal_all(item_ids_in_purchase_order))
                 .item_type(ItemType::Stock.equal_to())
                 .ignore_for_orders(false),
+            Some(ctx.store_id.clone()),
         )?;
 
     let items_ids_not_in_invoice: Vec<String> = master_list_lines_not_in_invoice
