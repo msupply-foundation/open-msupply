@@ -77,7 +77,7 @@ export const getSavedTableState = (tableId: string) => {
     hidden = [],
     pinned = { left: ['mrt-row-select'] },
     columnSizing = {},
-    columnOrder,
+    columnOrder = [],
   } = savedData;
 
   const tableState = {

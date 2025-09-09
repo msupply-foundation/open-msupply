@@ -14,83 +14,69 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 
-type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
-
-interface EnumOption {
-  value: string;
-  label: string;
-}
-
-type ColumnDefinition<T extends MRT_RowData> = MRT_ColumnDef<T> & {
-  filterType?: FilterType;
-  filterValues?: EnumOption[];
-};
+import { ColumnDef } from './types';
 
 export const useMaterialTableColumns = <T extends MRT_RowData>(
-  columns: ColumnDefinition<T>[]
+  columns: ColumnDef<T>[]
+) => {
+  const mrtColumnDefinitions = useMemo(() => {
+    // const mrtDefinitions = columns.map((col): MRT_ColumnDef<T> => {
+    //   return {
+    //     visibleInShowHideMenu: col.showColumn ?? true,
+    //     ...col,
+    //     // enableColumnFilter: col.filterVariant, -
+    //   };
+    // });
+
+    const order = columns.map(col => String(col.id || col.accessorKey));
+    const mrtDefinitions = columns.filter(col => col.showColumn !== false);
+
+    return { order, mrtDefinitions };
+  }, [columns]);
+
+  return mrtColumnDefinitions;
+};
+
+export const useManualTableFilters = <T extends MRT_RowData>(
+  columns: ColumnDef<T>[]
 ) => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDateTime } = useFormatDateTime();
 
-  const { mrtColumnDefinitions, filterUpdaters } = useMemo(() => {
-    const mrtColumnDefinitions: MRT_ColumnDef<T>[] = [];
+  const filterUpdaters = useMemo(() => {
     const filterUpdaters: Record<string, (value: any) => void> = {};
 
-    columns.forEach(
-      ({ filterType = 'none', filterValues, ...mrtProperties }) => {
-        const filterKey = (mrtProperties.accessorKey ||
-          mrtProperties.id) as string;
+    columns.forEach(({ filterVariant, ...mrtProperties }) => {
+      const filterKey = (mrtProperties.accessorKey ||
+        mrtProperties.id) as string;
 
-        switch (filterType) {
-          case 'none':
-            mrtColumnDefinitions.push({
-              ...mrtProperties,
-              enableColumnFilter: false,
-            });
-            break;
-          case 'text':
-            mrtColumnDefinitions.push(mrtProperties);
-            filterUpdaters[filterKey] = (value: string) => {
-              updateQuery({ [filterKey]: value });
-            };
-            break;
+      switch (filterVariant) {
+        case 'text':
+        case 'select':
+          filterUpdaters[filterKey] = (value: string) => {
+            updateQuery({ [filterKey]: value });
+          };
+          break;
 
-          case 'enum':
-            mrtColumnDefinitions.push({
-              ...mrtProperties,
-              filterVariant: 'select',
-              filterSelectOptions: filterValues,
+        // filterVariant: 'select',
+        // filterSelectOptions: filterValues,
+        case 'date-range':
+          filterUpdaters[filterKey] = ([date1, date2]: [
+            Date | '',
+            Date | '',
+          ]) => {
+            updateQuery({
+              [filterKey]: {
+                from: date1 ? customDate(date1, urlQueryDateTime) : '',
+                to: date2 ? customDate(date2, urlQueryDateTime) : '',
+              },
             });
-            filterUpdaters[filterKey] = (value: string) => {
-              updateQuery({ [filterKey]: value });
-            };
-            break;
-          // case 'number':
-          //   TO-DO
-          case 'dateRange':
-            mrtColumnDefinitions.push({
-              ...mrtProperties,
-              filterVariant: 'date-range',
-            });
-            filterUpdaters[filterKey] = ([date1, date2]: [
-              Date | '',
-              Date | '',
-            ]) => {
-              updateQuery({
-                [filterKey]: {
-                  from: date1 ? customDate(date1, urlQueryDateTime) : '',
-                  to: date2 ? customDate(date2, urlQueryDateTime) : '',
-                },
-              });
-            };
-            break;
-          default:
-            mrtColumnDefinitions.push(mrtProperties);
-        }
+          };
+          break;
       }
-    );
+    });
 
-    return { mrtColumnDefinitions, filterUpdaters };
+    return filterUpdaters;
   }, [columns]);
 
   const getFilterState = () => {
@@ -114,5 +100,5 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
     });
   };
 
-  return { mrtColumnDefinitions, filterUpdaters, getFilterState };
+  return { filterUpdaters, getFilterState };
 };
