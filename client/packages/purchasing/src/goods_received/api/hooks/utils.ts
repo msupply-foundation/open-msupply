@@ -27,6 +27,8 @@ export const parseUpdateInput = (input: RecordPatch<GoodsReceivedFragment>) => {
     status: mapStatus(input.status),
     receivedDate: setNullableInput('receivedDatetime', input),
     comment: input.comment,
+    donorId: setNullableInput('id', input.donor),
+    supplierReference: input.supplierReference,
   };
 };
 

@@ -39,6 +39,7 @@ export const OtherSection = ({
           <DonorSearchInput
             donorId={draft?.donor?.id ?? null}
             onChange={donor => onUpdate({ donor: donor })}
+            clearable
           />
         </PanelRow>
         {/* <PanelRow>
