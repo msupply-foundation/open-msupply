@@ -17,8 +17,17 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
     onRowClick,
 
     enableRowVirtualization: true,
-
     ...tableOptions,
   });
-  return table;
+
+  const selectedRows = table.getSelectedRowModel().rows.map(r => r.original);
+
+  const resetRowSelection = () => {
+    table.resetRowSelection();
+  };
+  return {
+    table,
+    selectedRows,
+    resetRowSelection,
+  };
 };

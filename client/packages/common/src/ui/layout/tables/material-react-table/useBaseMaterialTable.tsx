@@ -10,7 +10,7 @@ import {
   CheckboxIndeterminateIcon,
 } from '@common/icons';
 
-interface NonPaginatedTableConfig<T extends MRT_RowData>
+export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
   onRowClick?: (row: T) => void;
   isLoading: boolean;
@@ -19,8 +19,9 @@ interface NonPaginatedTableConfig<T extends MRT_RowData>
 export const useBaseMaterialTable = <T extends MRT_RowData>({
   isLoading,
   onRowClick,
+  state,
   ...tableOptions
-}: NonPaginatedTableConfig<T>) => {
+}: BaseTableConfig<T>) => {
   const table = useMaterialReactTable<T>({
     enablePagination: false,
     enableColumnResizing: true,
@@ -39,6 +40,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     },
     state: {
       showProgressBars: isLoading,
+      ...state,
     },
 
     // Styling
