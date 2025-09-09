@@ -85,7 +85,9 @@ export const usePurchaseOrder = (id?: string) => {
   const update = async (input: Partial<PurchaseOrderFragment>) => {
     if (!purchaseOrderId) return;
     const result = await updateMutation({ id: purchaseOrderId, ...input });
-    return result;
+
+    const { updatePurchaseOrder } = result || {};
+    return updatePurchaseOrder;
   };
 
   const handleDebounceUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
