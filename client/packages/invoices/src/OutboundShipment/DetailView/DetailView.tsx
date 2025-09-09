@@ -159,6 +159,7 @@ const DetailViewInner = () => {
 
   const { table, selectedRows, resetRowSelection } =
     useNonPaginatedMaterialTable<StockOutLineFragment | StockOutItem>({
+      tableId: 'outbound-shipment-detail-view',
       columns: mrtColumns,
       data: rows ?? [],
       onRowClick: onRowClick ? row => onRowClick(row) : () => {},
