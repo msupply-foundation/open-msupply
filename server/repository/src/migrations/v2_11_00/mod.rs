@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_permission_to_verify_inbound_shipment;
+mod add_purchase_order_line_status_enums;
 mod update_goods_received_report_context;
 
 pub(crate) struct V2_11_00;
@@ -19,6 +20,7 @@ impl Migration for V2_11_00 {
         vec![
             Box::new(add_permission_to_verify_inbound_shipment::Migrate),
             Box::new(update_goods_received_report_context::Migrate),
+            Box::new(add_purchase_order_line_status_enums::Migrate),
         ]
     }
 }
