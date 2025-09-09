@@ -49,8 +49,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     [data, groupByField]
   );
 
-  console.log('processedData', processedData);
-
   const table = useMaterialReactTable<T>({
     localization,
 
