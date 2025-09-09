@@ -5234,6 +5234,7 @@ export type MasterListLineConnector = {
 
 export type MasterListLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  ignoreForOrders?: InputMaybe<Scalars['Boolean']['input']>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
   masterListId?: InputMaybe<EqualFilterStringInput>;
