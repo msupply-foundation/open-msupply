@@ -67,13 +67,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     initialState: {
       ...tableOptions.initialState,
       ...initialState.current,
-      // expanded: true,
     },
     state: {
       showProgressBars: isLoading,
       ...state,
     },
-    // getSubRows: row => row.subRows, //default
 
     // Styling
     muiTablePaperProps: {
