@@ -24,7 +24,7 @@ import { usePatientStore } from '@openmsupply-client/programs/src';
 interface FetchPatientModal {
   patient: PatientColumnData;
   onClose: () => void;
-  onDownload: (patientId: string) => void;
+  onDownload: (patientId: PatientColumnData) => void;
 }
 
 /** Fetch a patient from central */
@@ -78,7 +78,7 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
             } else {
               setStarted(false);
               hideDialog();
-              onDownload(patient.id);
+              onDownload(patient);
               onClose();
               setCreateNewPatient(undefined);
             }
