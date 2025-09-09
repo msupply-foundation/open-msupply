@@ -15,6 +15,7 @@ import {
   useTableLocalStorage,
 } from './useTableLocalStorage';
 import { useIntlUtils } from '@common/intl';
+import { isEqual } from '@common/utils';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -160,7 +161,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         sx: {
           '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
           backgroundColor: row.original['isSubRow']
-            ? 'rgba(0, 128, 255, 0.09)'
+            ? 'background.secondary'
             : 'inherit',
           fontStyle: row.getCanExpand() ? 'italic' : 'normal',
         },
@@ -224,7 +225,7 @@ const getGroupedRows = <T,>(data: T[], groupByField?: keyof T): T[] => {
         // Don't include subRows or isSubRow in summary
         if (key === 'subRows' || key === 'isSubRow') continue;
         const values = groupRows.map(row => row[key as keyof T]);
-        const allEqual = values.every(v => v === values[0]);
+        const allEqual = values.every(v => isEqual(v, values[0]));
         summary[key] = allEqual ? values[0] : '[multiple]';
       }
       // Attach subRows
