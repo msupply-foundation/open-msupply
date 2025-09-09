@@ -32,31 +32,8 @@ export type PurchaseOrderLineInsertFromCsvInput = Partial<
 export const usePurchaseOrder = (id?: string) => {
   const { purchaseOrderId = id } = useParams();
 
-  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
-
-  const queryKey = [PURCHASE_ORDER, LIST_KEY, storeId];
-
   // QUERY
-  const queryFn = async (): Promise<PurchaseOrderFragment | undefined> => {
-    if (!purchaseOrderId) return;
-
-    const result = await purchaseOrderApi.purchaseOrderById({
-      purchaseOrderId,
-      storeId,
-    });
-    const purchaseOrder = result?.purchaseOrder;
-    if (purchaseOrder.__typename === 'PurchaseOrderNode') return purchaseOrder;
-    else {
-      console.error('No purchase order found', purchaseOrderId);
-      throw new Error(`Could not find purchase order ${purchaseOrderId}`);
-    }
-  };
-
-  const { data, isLoading, isError } = useQuery({
-    queryKey,
-    queryFn,
-    enabled: !!purchaseOrderId,
-  });
+  const { data, isLoading, isError } = useGetById(purchaseOrderId);
 
   const isDisabled = data ? isPurchaseOrderDisabled(data) : false;
 
@@ -123,6 +100,29 @@ export const usePurchaseOrder = (id?: string) => {
     draft,
     handleChange,
   };
+};
+
+const useGetById = (purchaseOrderId: string | undefined) => {
+  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
+
+  const queryFn = async (): Promise<PurchaseOrderFragment | undefined> => {
+    const result = await purchaseOrderApi.purchaseOrderById({
+      purchaseOrderId: purchaseOrderId ?? '',
+      storeId,
+    });
+
+    if (result?.purchaseOrder?.__typename === 'PurchaseOrderNode') {
+      return result.purchaseOrder;
+    }
+
+    throw new Error(`Could not find purchase order ${purchaseOrderId}`);
+  };
+
+  return useQuery({
+    queryKey: [PURCHASE_ORDER, LIST_KEY, purchaseOrderId],
+    queryFn,
+    enabled: !!purchaseOrderId,
+  });
 };
 
 const useCreate = () => {
