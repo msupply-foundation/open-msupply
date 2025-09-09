@@ -8,8 +8,8 @@ use graphql_core::{
     },
     ContextExt,
 };
-use graphql_types::types::IdResponse;
-use repository::{PurchaseOrderRow, PurchaseOrderStatus};
+use graphql_types::{generic_errors::ItemCannotBeOrdered, types::IdResponse};
+use repository::{PurchaseOrderLine, PurchaseOrderRow, PurchaseOrderStatus};
 use serde::Serialize;
 
 use service::{
@@ -146,10 +146,40 @@ impl UpdateInput {
     }
 }
 
+pub struct ItemsCannotBeOrdered(pub Vec<PurchaseOrderLine>);
+#[Object]
+impl ItemsCannotBeOrdered {
+    pub async fn description(&self) -> &str {
+        "One or more items in the purchase order cannot be ordered. Please check the items and try again."
+    }
+
+    pub async fn lines(&self) -> Vec<ItemCannotBeOrdered> {
+        self.0
+            .clone()
+            .into_iter()
+            .map(ItemCannotBeOrdered::from_domain)
+            .collect()
+    }
+}
+
+#[derive(Interface)]
+#[graphql(name = "UpdatePurchaseOrderErrorInterface")]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum UpdateErrorInterface {
+    ItemsCannotBeOrdered(ItemsCannotBeOrdered),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "UpdatePurchaseOrderError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
 #[derive(Union)]
 #[graphql(name = "UpdatePurchaseOrderResponse")]
 pub enum UpdateResponse {
     Response(IdResponse),
+    Error(UpdateError),
 }
 
 pub fn update_purchase_order(
@@ -186,16 +216,26 @@ pub fn update_purchase_order(
 }
 
 fn map_response(from: Result<PurchaseOrderRow, ServiceError>) -> Result<UpdateResponse> {
-    match from {
-        Ok(purchase_order) => Ok(UpdateResponse::Response(IdResponse(purchase_order.id))),
-        Err(error) => map_error(error),
-    }
+    let result = match from {
+        Ok(purchase_order) => UpdateResponse::Response(IdResponse(purchase_order.id)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
-fn map_error(error: ServiceError) -> Result<UpdateResponse> {
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        ServiceError::ItemsCannotBeOrdered(lines) => {
+            return Ok(UpdateErrorInterface::ItemsCannotBeOrdered(
+                ItemsCannotBeOrdered(lines),
+            ))
+        }
+
         ServiceError::SupplierDoesNotExist
         | ServiceError::PurchaseOrderDoesNotExist
         | ServiceError::NotASupplier
