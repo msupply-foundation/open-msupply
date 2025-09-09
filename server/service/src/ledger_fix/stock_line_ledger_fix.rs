@@ -5,7 +5,7 @@ use crate::ledger_fix::{
     fixes::{
         adjust_all_to_match_available, adjust_historic_incoming_invoices,
         adjust_total_to_match_ledger, fix_cancellations, inventory_adjustment_to_balance,
-        LedgerFixError,
+        remove_unused_orphan_stock_lines, LedgerFixError,
     },
     is_ledger_fixed,
 };
@@ -23,6 +23,17 @@ pub(super) fn stock_line_ledger_fix(
     operation_log: &mut String,
     stock_line_id: &str,
 ) -> Result</* fixed fully */ bool, StockLineLedgerFixError> {
+    // Check some other fix hasn't already made a sweeping fix, e.g. a invoice status change
+    if is_ledger_fixed(connection, stock_line_id)? {
+        return Ok(true);
+    }
+
+    remove_unused_orphan_stock_lines::fix(connection, operation_log, stock_line_id)?;
+
+    if is_ledger_fixed(connection, stock_line_id)? {
+        return Ok(true);
+    }
+
     adjust_historic_incoming_invoices::fix(connection, operation_log, stock_line_id)?;
 
     // TODO only check this if some action was done in ledger fix

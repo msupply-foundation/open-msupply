@@ -25,6 +25,7 @@ pub(crate) mod adjust_all_to_match_available;
 pub(crate) mod adjust_total_to_match_ledger;
 pub(crate) mod fix_cancellations;
 pub(crate) mod inventory_adjustment_to_balance;
+pub(crate) mod remove_unused_orphan_stock_lines;
 
 #[derive(Error, Debug)]
 pub(crate) enum LedgerFixError {
