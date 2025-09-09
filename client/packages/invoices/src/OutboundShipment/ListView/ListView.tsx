@@ -24,6 +24,7 @@ import {
   usePaginatedMaterialTable,
   PaginatedTableColumnDefinition,
   mergeCellProps,
+  ColumnDef,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -110,94 +111,84 @@ const OutboundShipmentListViewComponent: FC = () => {
     [sortBy]
   );
 
-  const mrtColumns: PaginatedTableColumnDefinition<OutboundRowFragment>[] =
-    useMemo(
-      () => [
-        {
-          accessorKey: 'otherPartyName',
-          header: t('label.name'),
-          // size: 150,
-          filterType: 'text',
+  const mrtColumns: ColumnDef<OutboundRowFragment>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'otherPartyName',
+        header: t('label.name'),
+        // size: 150,
+        filterType: 'text',
+      },
+      {
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        id: 'status',
+        header: t('label.status'),
+        size: 140,
+        filterType: 'enum',
+        filterValues: [
+          { value: 'NEW', label: t('label.new') },
+          { value: 'SHIPPED', label: t('label.shipped') },
+          { value: 'ALLOCATED', label: t('label.allocated') },
+          { value: 'PICKED', label: t('label.picked') },
+        ],
+      },
+      {
+        accessorKey: 'invoiceNumber',
+        header: t('label.invoice-number'),
+        size: 140,
+        align: 'right',
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        Cell: ({ cell }) =>
+          new Date(cell.getValue<string>()).toLocaleDateString(),
+        filterType: 'dateRange',
+        // size: 100,
+      },
+      {
+        accessorKey: 'theirReference',
+        header: t('label.reference'),
+        // size: 100,
+      },
+      {
+        accessorKey: 'comment',
+        header: '',
+        enableColumnActions: false,
+        enableSorting: false,
+        enableResizing: false,
+        size: 20,
+        // width: 0,
+        Cell: ({ cell }) => {
+          const t = useTranslation();
+          const value = cell.getValue<string>();
+          return value ? (
+            <PaperHoverPopover
+              width={400}
+              Content={
+                <PaperPopoverSection label={t('label.comment')}>
+                  {String(value)}
+                </PaperPopoverSection>
+              }
+            >
+              <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
+            </PaperHoverPopover>
+          ) : null;
         },
-        {
-          accessorFn: row => getStatusTranslator(t)(row.status),
-          id: 'status',
-          header: t('label.status'),
-          size: 140,
-          filterType: 'enum',
-          filterValues: [
-            { value: 'NEW', label: t('label.new') },
-            { value: 'SHIPPED', label: t('label.shipped') },
-            { value: 'ALLOCATED', label: t('label.allocated') },
-            { value: 'PICKED', label: t('label.picked') },
-          ],
-        },
-        {
-          accessorKey: 'invoiceNumber',
-          header: t('label.invoice-number'),
-          size: 140,
-          muiTableBodyCellProps: params =>
-            mergeCellProps(
-              {
-                sx: {
-                  justifyContent: 'flex-end',
-                  paddingRight: '2em',
-                },
-              },
-              params
-            ),
-        },
-        {
-          accessorKey: 'createdDatetime',
-          header: t('label.created'),
-          Cell: ({ cell }) =>
-            new Date(cell.getValue<string>()).toLocaleDateString(),
-          filterType: 'dateRange',
-          // size: 100,
-        },
-        {
-          accessorKey: 'theirReference',
-          header: t('label.reference'),
-          // size: 100,
-        },
-        {
-          accessorKey: 'comment',
-          header: '',
-          enableColumnActions: false,
-          enableSorting: false,
-          enableResizing: false,
-          size: 20,
-          // width: 0,
-          Cell: ({ cell }) => {
-            const t = useTranslation();
-            const value = cell.getValue<string>();
-            return value ? (
-              <PaperHoverPopover
-                width={400}
-                Content={
-                  <PaperPopoverSection label={t('label.comment')}>
-                    {String(value)}
-                  </PaperPopoverSection>
-                }
-              >
-                <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
-              </PaperHoverPopover>
-            ) : null;
-          },
-        },
-        {
-          accessorKey: 'pricing.totalAfterTax',
-          header: t('label.total'),
-          Cell: ({ cell }) =>
-            new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'USD',
-            }).format(cell.getValue<number>()),
-          // size: 100,
-        },
-      ],
-      []
-    );
+      },
+      {
+        accessorKey: 'pricing.totalAfterTax',
+        header: t('label.total'),
+        Cell: ({ cell }) =>
+          new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+          }).format(cell.getValue<number>()),
+        // size: 100,
+      },
+    ],
+    []
+  );
 
   const { table, selectedRows, resetRowSelection } =
     usePaginatedMaterialTable<OutboundRowFragment>({
