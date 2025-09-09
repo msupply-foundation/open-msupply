@@ -3053,6 +3053,7 @@ export type GoodsReceivedNode = {
   __typename: 'GoodsReceivedNode';
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  donor?: Maybe<NameNode>;
   finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   id: Scalars['String']['output'];
   lines: GoodsReceivedLineConnector;
@@ -3061,9 +3062,14 @@ export type GoodsReceivedNode = {
   purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;
   receivedDatetime?: Maybe<Scalars['NaiveDate']['output']>;
   status: GoodsReceivedNodeStatus;
+  store?: Maybe<StoreNode>;
   supplier?: Maybe<NameNode>;
   supplierReference?: Maybe<Scalars['String']['output']>;
   user?: Maybe<UserNode>;
+};
+
+export type GoodsReceivedNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export enum GoodsReceivedNodeStatus {
@@ -4428,6 +4434,7 @@ export type InvoiceLineFilterInput = {
   invoiceId?: InputMaybe<EqualFilterStringInput>;
   invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
   invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
+  isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
@@ -4732,6 +4739,7 @@ export type ItemFilterInput = {
   hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  isProgramItem?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store. This filter is ignored if `is_visible_or_on_hand` is true */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
@@ -7063,6 +7071,18 @@ export type ProgramNode = {
   vaccineCourses?: Maybe<Array<VaccineCourseNode>>;
 };
 
+export type ProgramOrderTypeNode = {
+  __typename: 'ProgramOrderTypeNode';
+  id: Scalars['String']['output'];
+  isEmergency: Scalars['Boolean']['output'];
+  maxItemsInEmergencyOrder: Scalars['Int']['output'];
+  maxMos: Scalars['Float']['output'];
+  maxOrderPerPeriod: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  programId: Scalars['String']['output'];
+  thresholdMos: Scalars['Float']['output'];
+};
+
 export type ProgramRequisitionOrderTypeNode = {
   __typename: 'ProgramRequisitionOrderTypeNode';
   availablePeriods: Array<PeriodNode>;
@@ -8518,6 +8538,7 @@ export type RequisitionFilterInput = {
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isEmergency?: InputMaybe<Scalars['Boolean']['input']>;
+  isProgramRequisition?: InputMaybe<Scalars['Boolean']['input']>;
   orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
@@ -9109,6 +9130,7 @@ export type StockLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
+  isProgramStockLine?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   location?: InputMaybe<LocationFilterInput>;
@@ -9149,6 +9171,7 @@ export type StockLineNode = {
   onHold: Scalars['Boolean']['output'];
   packSize: Scalars['Float']['output'];
   program?: Maybe<ProgramNode>;
+  programOrderType: Array<ProgramOrderTypeNode>;
   sellPricePerPack: Scalars['Float']['output'];
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
@@ -9161,6 +9184,10 @@ export type StockLineNode = {
 };
 
 export type StockLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type StockLineNodeProgramOrderTypeArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -9951,9 +9978,11 @@ export type UpdateGoodsReceivedError = {
 
 export type UpdateGoodsReceivedInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   receivedDate?: InputMaybe<NullableDateUpdate>;
   status?: InputMaybe<GoodsReceivedNodeType>;
+  supplierReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateGoodsReceivedLineError = {
