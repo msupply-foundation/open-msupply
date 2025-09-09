@@ -7,7 +7,7 @@ import type {
 import type { TableCellProps } from '@mui/material/TableCell';
 
 // Type for the function parameters passed to muiTableBodyCellProps
-type MuiTableBodyCellPropsParams<TData extends Record<string, any> = {}> = {
+type MuiTableBodyCellPropsParams<TData extends Record<string, any>> = {
   cell: MRT_Cell<TData, unknown>;
   column: MRT_Column<TData, unknown>;
   row: MRT_Row<TData>;
@@ -15,7 +15,7 @@ type MuiTableBodyCellPropsParams<TData extends Record<string, any> = {}> = {
 };
 
 // Helper function to merge props - gets global props from table automatically
-export const mergeCellProps = <TData extends Record<string, any> = {}>(
+export const mergeCellProps = <TData extends Record<string, any>>(
   customProps: TableCellProps,
   params: MuiTableBodyCellPropsParams<TData>
 ): TableCellProps => {
