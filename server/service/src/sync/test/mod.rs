@@ -42,13 +42,13 @@ impl TestSyncIncomingRecord {
 
     fn new_pull_delete<U>(table_name: &str, id: &str, result: U) -> TestSyncIncomingRecord
     where
-        U: Delete + 'static,
+        U: Delete + Clone + 'static,
     {
         Self::new_pull_deletes(table_name, id, vec![result])
     }
     fn new_pull_deletes<U>(table_name: &str, id: &str, deletes: Vec<U>) -> TestSyncIncomingRecord
     where
-        U: Delete + 'static,
+        U: Delete + Clone + 'static,
     {
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::deletes(deletes),
