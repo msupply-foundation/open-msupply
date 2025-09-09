@@ -215,9 +215,7 @@ export const PatientResultsTab: FC<
         <FetchPatientModal
           patient={fetchingPatient}
           onClose={onClose}
-          onDownload={() => {
-            console.warn('OnDownload');
-          }}
+          onDownload={onRowClick}
         />
       ) : null}
       <>
