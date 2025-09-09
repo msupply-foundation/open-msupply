@@ -9,6 +9,7 @@ import {
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
 } from '@common/icons';
+import { useIntlUtils } from '@common/intl';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -27,7 +28,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   getIsRestrictedRow = () => false,
   ...tableOptions
 }: BaseTableConfig<T>) => {
+  const { getTableLocalisations } = useIntlUtils();
+  const localization = getTableLocalisations();
+
   const table = useMaterialReactTable<T>({
+    localization,
+
     enablePagination: false,
     enableColumnResizing: true,
     enableColumnPinning: true,
