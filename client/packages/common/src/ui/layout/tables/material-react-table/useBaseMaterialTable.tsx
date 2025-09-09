@@ -77,9 +77,15 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     muiTablePaperProps: {
       sx: { width: '100%', display: 'flex', flexDirection: 'column' },
     },
-    muiTableHeadCellProps: ({ column }) => ({
+    muiTableProps: {
+      // Need to apply this here so that relative sizes (ems, rems) within table
+      // are correct
+      sx: theme => ({ fontSize: theme.typography.body1.fontSize }),
+    },
+    muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
         fontWeight: 600,
+        fontSize: table.getState().density === 'compact' ? '0.95em' : '1em',
         lineHeight: 1.2,
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
@@ -97,11 +103,15 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         button: {
           visibility: column.id === 'mrt-row-expand' ? 'hidden' : undefined,
         },
+        '& input::placeholder': {
+          fontSize:
+            table.getState().density === 'compact' ? '0.90em' : '0.95em',
+        },
       },
     }),
-    muiTableBodyCellProps: ({ cell, row }) => ({
+    muiTableBodyCellProps: ({ cell, row, table }) => ({
       sx: {
-        fontSize: '14px',
+        fontSize: table.getState().density === 'compact' ? '0.95em' : '1em',
         fontWeight: 400,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
@@ -120,11 +130,20 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
               ? 'transparent'
               : undefined,
         },
+        padding:
+          table.getState().density === 'spacious'
+            ? '0.7rem'
+            : table.getState().density === 'comfortable'
+              ? '0.35rem'
+              : undefined, // default for "compact",
+
         // Indent "sub-rows" when expanded
         paddingLeft:
           row.original?.['isSubRow'] && cell.column.id !== 'mrt-row-select'
             ? '2em'
-            : undefined,
+            : table.getState().density === 'comfortable'
+              ? '0.5rem'
+              : undefined,
       },
     }),
 
