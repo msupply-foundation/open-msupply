@@ -90,25 +90,28 @@ const DetailViewInner = () => {
 
   const mrtColumns = useMemo(() => {
     const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
-      // TO-DO: Note popover column,
       {
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
+        filterType: 'text',
       },
       {
         accessorKey: 'itemName',
         header: t('label.name'),
+        filterType: 'text',
         // size: 140,
       },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
         size: 130,
+        filterType: 'text',
       },
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
+        filterType: 'dateRange',
         size: 160,
       },
     ];
@@ -119,20 +122,25 @@ const DetailViewInner = () => {
         // todo - anything that could return undefined should use accessorFn, so no warnings in console
         accessorKey: 'vvmStatus.description',
         header: t('label.vvm-status'),
+        // TO-DO: Add enum values here for filter
       });
 
     cols.push(
       {
         accessorKey: 'location.code',
         header: t('label.location'),
+        filterType: 'text',
       },
       {
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        filterType: 'enum',
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
+        // TO-DO: Create "number range" filter
+        // filterType: 'number',
       }
     );
 

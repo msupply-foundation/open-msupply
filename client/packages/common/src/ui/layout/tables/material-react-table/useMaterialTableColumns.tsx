@@ -9,25 +9,15 @@
 import { useMemo } from 'react';
 import { MRT_ColumnDef, MRT_RowData } from 'material-react-table';
 import {
+  ColumnDef,
   DateUtils,
+  mergeCellProps,
   useFormatDateTime,
   useUrlQuery,
 } from '@openmsupply-client/common';
 
-type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
-
-interface EnumOption {
-  value: string;
-  label: string;
-}
-
-type ColumnDefinition<T extends MRT_RowData> = MRT_ColumnDef<T> & {
-  filterType?: FilterType;
-  filterValues?: EnumOption[];
-};
-
 export const useMaterialTableColumns = <T extends MRT_RowData>(
-  columns: ColumnDefinition<T>[]
+  columns: ColumnDef<T>[]
 ) => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDateTime } = useFormatDateTime();
@@ -37,30 +27,26 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
     const filterUpdaters: Record<string, (value: any) => void> = {};
 
     columns.forEach(
-      ({ filterType = 'none', filterValues, ...mrtProperties }) => {
+      ({ filterType = 'none', filterValues, align, ...mrtProperties }) => {
         const filterKey = (mrtProperties.accessorKey ||
           mrtProperties.id) as string;
 
+        const columnDefProperties: Partial<MRT_ColumnDef<T>> = {};
+
+        // Add canonical filter definitions
         switch (filterType) {
           case 'none':
-            mrtColumnDefinitions.push({
-              ...mrtProperties,
-              enableColumnFilter: false,
-            });
+            columnDefProperties.enableColumnFilter = false;
             break;
           case 'text':
-            mrtColumnDefinitions.push(mrtProperties);
             filterUpdaters[filterKey] = (value: string) => {
               updateQuery({ [filterKey]: value });
             };
             break;
 
           case 'enum':
-            mrtColumnDefinitions.push({
-              ...mrtProperties,
-              filterVariant: 'select',
-              filterSelectOptions: filterValues,
-            });
+            columnDefProperties.filterVariant = 'select';
+            columnDefProperties.filterSelectOptions = filterValues;
             filterUpdaters[filterKey] = (value: string) => {
               updateQuery({ [filterKey]: value });
             };
@@ -68,10 +54,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           // case 'number':
           //   TO-DO
           case 'dateRange':
-            mrtColumnDefinitions.push({
-              ...mrtProperties,
-              filterVariant: 'date-range',
-            });
+            columnDefProperties.filterVariant = 'date-range';
             filterUpdaters[filterKey] = ([date1, date2]: [
               Date | '',
               Date | '',
@@ -84,9 +67,31 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
               });
             };
             break;
-          default:
-            mrtColumnDefinitions.push(mrtProperties);
         }
+
+        // Add alignment styling
+        if (align) {
+          columnDefProperties.muiTableBodyCellProps = params =>
+            mergeCellProps(
+              {
+                sx:
+                  align === 'right'
+                    ? {
+                        justifyContent: 'flex-end',
+                        paddingRight: '2em', // Padding to account for header icons
+                      }
+                    : align === 'center'
+                      ? {
+                          justifyContent: 'center',
+                          // To-DO: Add padding for center aligned cells
+                        }
+                      : {},
+              },
+              params
+            );
+        }
+
+        mrtColumnDefinitions.push({ ...mrtProperties, ...columnDefProperties });
       }
     );
 
