@@ -48,13 +48,15 @@ pub fn validate(
         return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
 
-    if let Some(r#type) = &input.r#type {
+    let stock_out_type = if let Some(r#type) = &input.r#type {
         if !check_invoice_type(&invoice, r#type.to_domain()) {
             return Err(InvoiceTypeDoesNotMatch);
         }
+        r#type
     } else {
         return Err(NoInvoiceType);
-    }
+    };
+
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
@@ -72,9 +74,11 @@ pub fn validate(
     if !check_batch_on_hold(&batch_pair.main_batch) {
         return Err(BatchIsOnHold);
     }
-    check_location_on_hold(&batch_pair.main_batch.location_row).map_err(|e| match e {
-        LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
-    })?;
+    check_location_on_hold(&batch_pair.main_batch.location_row, stock_out_type).map_err(
+        |e| match e {
+            LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
+        },
+    )?;
 
     if let Some(vvm_status_id) = &input.vvm_status_id {
         if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
