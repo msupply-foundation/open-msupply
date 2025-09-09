@@ -76,7 +76,7 @@ export const DetailViewInner = (): ReactElement => {
       {data ? (
         <>
           <AppBarButtons />
-          <Toolbar />
+          <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel isDisabled={isDisabled} />
