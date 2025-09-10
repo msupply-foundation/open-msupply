@@ -119,7 +119,7 @@ const useGetById = (purchaseOrderId: string | undefined) => {
   };
 
   return useQuery({
-    queryKey: [PURCHASE_ORDER, LIST_KEY, purchaseOrderId],
+    queryKey: [PURCHASE_ORDER, LIST_KEY, purchaseOrderId, storeId],
     queryFn,
     enabled: !!purchaseOrderId,
   });
@@ -216,8 +216,7 @@ const useAddFromMasterList = () => {
   const mutationState = useMutation(
     purchaseOrderApi.addToPurchaseOrderFromMasterList,
     {
-      onSuccess: () =>
-        queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY, storeId]),
+      onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
     }
   );
 
