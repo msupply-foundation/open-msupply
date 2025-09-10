@@ -76,8 +76,12 @@ export const getSavedTableState = (tableId: string) => {
     density = 'comfortable',
     hidden = [],
     pinned = { left: ['mrt-row-select'] },
-    columnSizing = {},
-    columnOrder = [],
+    columnSizing = {
+      columnSizing: {
+        'mrt-row-expand': 40,
+      },
+    },
+    columnOrder,
   } = savedData;
 
   const tableState = {

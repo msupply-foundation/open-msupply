@@ -17,6 +17,7 @@ import {
   useNonPaginatedMaterialTable,
   usePreferences,
   InvoiceLineNodeType,
+  useIsGrouped,
   ColumnDef,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
@@ -51,8 +52,8 @@ const DetailViewInner = () => {
   const { manageVvmStatusForStock } = usePreferences();
 
   const { data, isLoading } = useOutbound.document.get();
+  const { isGrouped } = useIsGrouped('outboundShipment');
   const { rows } = useOutbound.line.rows(false);
-  // const { rows } = useOutbound.line.rows(isGrouped);
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -89,26 +90,29 @@ const DetailViewInner = () => {
 
   const mrtColumns = useMemo(() => {
     const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
-      // TO-DO: Note popover column,
       {
         id: 'code',
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
+        filterVariant: 'text',
       },
       {
-        accessorKey: 'item.name',
+        accessorKey: 'itemName',
         header: t('label.name'),
+        filterVariant: 'text',
         // size: 140,
       },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
         size: 130,
+        filterVariant: 'text',
       },
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
+        filterVariant: 'date-range',
         size: 160,
       },
       {
@@ -116,20 +120,24 @@ const DetailViewInner = () => {
         id: 'vvm',
         accessorKey: 'vvmStatus.description',
         header: t('label.vvm-status'),
-        showColumn: manageVvmStatusForStock,
+        includeColumn: manageVvmStatusForStock,
       },
       {
         accessorKey: 'location.code',
         header: t('label.location'),
+        filterVariant: 'text',
       },
       {
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        filterVariant: 'select',
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
         // defaultHideOnMobile: true,
+        // TO-DO: Create "number range" filter
+        // filterType: 'number',
       },
 
       // if (manageVaccinesInDoses) {
@@ -172,6 +180,7 @@ const DetailViewInner = () => {
           );
         }
       },
+      groupByField: isGrouped ? 'itemName' : undefined,
     });
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
