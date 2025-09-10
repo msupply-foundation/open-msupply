@@ -1,9 +1,9 @@
-use repository::PurchaseOrderLineRow;
 use repository::{
     EqualFilter, ItemRowRepository, Pagination, PurchaseOrderLineFilter,
     PurchaseOrderLineRepository, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository,
-    StorageConnection,
+    PurchaseOrderStatus, StorageConnection,
 };
+use repository::{PurchaseOrderLineRow, PurchaseOrderLineStatus};
 
 use crate::purchase_order_line::insert::PackSizeCodeCombination;
 use crate::{
@@ -86,6 +86,20 @@ pub fn validate(
             && !can_adjust_requested_quantity(&purchase_order)
         {
             return Err(UpdatePurchaseOrderLineInputError::CannotAdjustRequestedQuantity);
+        }
+    }
+
+    if let Some(status) = input.status.clone() {
+        let is_purchase_order_confirmed = purchase_order.status >= PurchaseOrderStatus::Confirmed;
+        let is_valid_status_change = match (status, is_purchase_order_confirmed) {
+            (PurchaseOrderLineStatus::New, false) => true,
+            (PurchaseOrderLineStatus::New, true) => false,
+            (_, true) => true,
+            (_, false) => false,
+        };
+
+        if !is_valid_status_change {
+            return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
         }
     }
 
