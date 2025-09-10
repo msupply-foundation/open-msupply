@@ -147,7 +147,6 @@ const OutboundShipmentListViewComponent: FC = () => {
         Cell: ({ cell }) =>
           new Date(cell.getValue<string>()).toLocaleDateString(),
         filterVariant: 'date-range',
-        // size: 100,
       },
       {
         accessorKey: 'theirReference',
@@ -164,7 +163,6 @@ const OutboundShipmentListViewComponent: FC = () => {
         enableSorting: false,
         enableResizing: false,
         size: 20,
-        // width: 0,
         Cell: ({ cell }) => {
           const t = useTranslation();
           const value = cell.getValue<string>();
