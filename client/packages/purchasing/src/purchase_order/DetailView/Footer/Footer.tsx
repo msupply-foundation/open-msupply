@@ -50,7 +50,7 @@ export const Footer = ({
   status,
 }: FooterProps): ReactElement => {
   const t = useTranslation();
-  const { success } = useNotification();
+  const { success, info } = useNotification();
   const {
     query: { data },
     isDisabled,
@@ -88,17 +88,33 @@ export const Footer = ({
     },
   });
 
-  const confirmAndClose = () => {
+  const confirmAndClose = async () => {
     try {
-      updateLineStatus(selectedRows).then(() => {
+      const failedCount = await updateLineStatus(selectedRows);
+      const successCount = selectedRows.length - failedCount;
+
+      if (selectedRows.length === failedCount) {
+        info(t('messages.all-purchase-order-lines-are-closed'))();
+        return;
+      }
+
+      if (failedCount > 0) {
         success(
-          t('messages.closed-purchase-order-lines', {
-            count: selectedRows.length,
+          t('messages.partially-closed-purchase-order-lines', {
+            count: successCount,
+            closeCount: failedCount,
           })
         )();
-      });
+        return;
+      }
+
+      success(
+        t('messages.closed-purchase-order-lines', {
+          count: selectedRows.length,
+        })
+      )();
     } catch (e) {
-      console.error(e);
+      console.error('Error closing purchase order lines:', e);
     }
   };
 
