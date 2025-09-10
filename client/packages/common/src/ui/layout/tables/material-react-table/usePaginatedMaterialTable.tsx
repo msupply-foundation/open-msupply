@@ -150,6 +150,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
         },
       },
     },
+    // Summary display in toolbar, e.g. "Showing 1-20 of 45"
     renderBottomToolbarCustomActions: () => {
       const xToY = `${offset + 1}-${Math.min(first + offset, totalCount)}`;
       return (
