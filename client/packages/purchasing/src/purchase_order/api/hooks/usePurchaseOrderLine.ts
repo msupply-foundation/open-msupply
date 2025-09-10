@@ -138,7 +138,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   const updateLineStatus = async (
     selectedRows: PurchaseOrderLineFragment[]
   ) => {
-    return Promise.all(
+    const results = await Promise.allSettled(
       selectedRows.map(row =>
         updatePurchaseOrderLine({
           id: row.id,
@@ -146,6 +146,10 @@ export function usePurchaseOrderLine(id?: string | null) {
         })
       )
     );
+    const failedCount = results.filter(
+      result => result.status === 'rejected'
+    ).length;
+    return failedCount;
   };
 
   // DELETE
@@ -254,22 +258,31 @@ const useUpdate = () => {
         'UpdatePurchaseOrderLineError'
       ) {
         const errorType = result.updatePurchaseOrderLine.error.__typename;
+        let errorMessage = '';
         switch (errorType) {
           case 'CannotEditPurchaseOrder':
-            return error(t('label.cannot-edit-purchase-order'))();
+            errorMessage = t('label.cannot-edit-purchase-order');
+            break;
           case 'PurchaseOrderDoesNotExist':
-            return error(t('label.purchase-order-does-not-exist'))();
+            errorMessage = t('label.purchase-order-does-not-exist');
+            break;
           case 'PurchaseOrderLineNotFound':
-            return error(t('label.purchase-order-line-not-found'))();
+            errorMessage = t('label.purchase-order-line-not-found');
+            break;
           case 'UpdatedLineDoesNotExist':
-            return error(t('label.updated-line-does-not-exist'))();
+            errorMessage = t('label.updated-line-does-not-exist');
+            break;
           default:
-            return error(t('label.cannot-update-purchase-order-line'))();
+            errorMessage = t('label.cannot-update-purchase-order-line');
+            break;
         }
+        error(errorMessage)();
+        throw new Error(errorMessage);
       }
       queryClient.invalidateQueries([PURCHASE_ORDER]);
     } catch (e) {
       console.error('Error updating purchase order line:', e);
+      throw e;
     }
   };
 
