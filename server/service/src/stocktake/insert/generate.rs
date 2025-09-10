@@ -245,6 +245,7 @@ pub fn generate_lines_from_master_list(
             MasterListLineFilter::new()
                 .master_list_id(EqualFilter::equal_to(master_list_id))
                 .item_type(ItemType::Stock.equal_to()),
+            None,
         )?
         .into_iter()
         .map(|r| r.item_id)

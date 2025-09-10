@@ -70,6 +70,7 @@ impl Loader<OrderTypesByProgramIdInput> for OrderTypesByProgramIdLoader {
             .query_by_filter(
                 MasterListLineFilter::new()
                     .master_list_id(EqualFilter::equal_any(program_ids.clone())),
+                None,
             )
             .map_err(StandardGraphqlError::from_repository_error)?;
 

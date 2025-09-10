@@ -2,7 +2,6 @@ import {
   UpdatePurchaseOrderLineInput,
   LIST_KEY,
   useMutation,
-  useNotification,
   usePatchState,
   useQuery,
   useTranslation,
@@ -215,15 +214,13 @@ const useCreate = () => {
 };
 
 const useUpdate = () => {
-  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const t = useTranslation();
-  const { error } = useNotification();
-
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine);
 
   const updatePurchaseOrderLine = async (
     input: UpdatePurchaseOrderLineInput
-  ) => {
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const result = await purchaseOrderApi.updatePurchaseOrderLine({
         storeId,
@@ -236,23 +233,38 @@ const useUpdate = () => {
         'UpdatePurchaseOrderLineError'
       ) {
         const errorType = result.updatePurchaseOrderLine.error.__typename;
+        let errorMessage: string;
+
         switch (errorType) {
           case 'CannotEditPurchaseOrder':
-            return error(t('label.cannot-edit-purchase-order'))();
+            errorMessage = t('label.cannot-edit-purchase-order');
+            break;
           case 'PurchaseOrderDoesNotExist':
-            return error(t('label.purchase-order-does-not-exist'))();
+            errorMessage = t('label.purchase-order-does-not-exist');
+            break;
           case 'PurchaseOrderLineNotFound':
-            return error(t('label.purchase-order-line-not-found'))();
+            errorMessage = t('label.purchase-order-line-not-found');
+            break;
           case 'UpdatedLineDoesNotExist':
-            return error(t('label.updated-line-does-not-exist'))();
+            errorMessage = t('label.updated-line-does-not-exist');
+            break;
+          case 'ItemCannotBeOrdered':
+            errorMessage = t('error.item-cannot-be-ordered-on-line');
+            break;
           default:
-            return error(t('label.cannot-update-purchase-order-line'))();
+            errorMessage = t('label.cannot-update-purchase-order-line');
+            break;
         }
+
+        return { success: false, error: errorMessage };
       }
+
       queryClient.invalidateQueries([PURCHASE_ORDER]);
+      return { success: true };
     } catch (e) {
       console.error('Error updating purchase order line:', e);
-      return error(t('label.cannot-update-purchase-order-line'))();
+      const errorMessage = t('label.cannot-update-purchase-order-line');
+      return { success: false, error: errorMessage };
     }
   };
 

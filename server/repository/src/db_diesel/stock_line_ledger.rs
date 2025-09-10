@@ -211,9 +211,10 @@ fn create_filtered_query(filter: Option<StockLineLedgerFilter>) -> BoxedLedgerQu
         apply_date_time_filter!(query, datetime, stock_line_ledger::datetime);
 
         if let Some(master_list_id) = master_list_id {
-            let item_ids = MasterListLineRepository::create_filtered_query(Some(
-                MasterListLineFilter::new().master_list_id(master_list_id),
-            ))
+            let item_ids = MasterListLineRepository::create_filtered_query(
+                Some(MasterListLineFilter::new().master_list_id(master_list_id)),
+                None,
+            )
             .unwrap()
             .select(item::id);
 
