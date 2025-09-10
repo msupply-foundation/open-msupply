@@ -7,6 +7,7 @@ import {
   useTranslation,
   setNullableInput,
   PurchaseOrderLineStatusNode,
+  useNotification,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
@@ -109,6 +110,7 @@ export function usePurchaseOrderLine(id?: string | null) {
     updatePurchaseOrderLine,
     isLoading: isUpdating,
     error: updateError,
+    updatePurchaseOrderLineThrowError,
   } = useUpdate();
 
   const update = async () => {
@@ -139,7 +141,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   ) => {
     const results = await Promise.allSettled(
       selectedRows.map(row =>
-        updatePurchaseOrderLine({
+        updatePurchaseOrderLineThrowError({
           id: row.id,
           status: PurchaseOrderLineStatusNode.Closed,
         })
@@ -286,7 +288,20 @@ const useUpdate = () => {
     }
   };
 
-  return { ...mutationState, updatePurchaseOrderLine };
+  const updatePurchaseOrderLineThrowError = async (
+    input: UpdatePurchaseOrderLineInput
+  ) => {
+    const result = await updatePurchaseOrderLine(input);
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+  };
+
+  return {
+    ...mutationState,
+    updatePurchaseOrderLine,
+    updatePurchaseOrderLineThrowError,
+  };
 };
 
 export const useLineInsertFromCSV = () => {
