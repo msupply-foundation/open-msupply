@@ -1,6 +1,8 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
+  getDefaultColumnOrderIds,
   MRT_RowData,
+  MRT_StatefulTableOptions,
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
@@ -44,22 +46,19 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   columns: omsColumns,
   data,
   groupByField,
+  enableRowSelection = true,
+  enableColumnResizing = true,
   ...tableOptions
 }: BaseTableConfig<T>) => {
-  const initialState = useRef(getSavedTableState(tableId));
-
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
-  // tODO :clean up :)
-  const { columns, defaultOrder } = useMaterialTableColumns(omsColumns);
-
-  const hasNewColumns = columns.some(
-    def =>
-      !initialState.current.columnOrder.includes(
-        def.id ?? (def.accessorKey as string)
-      )
+  const savedState = useRef(getSavedTableState(tableId));
+  const [columnOrder, setColumnOrder] = useState(
+    savedState.current.columnOrder ?? []
   );
+
+  const columns = useMaterialTableColumns(omsColumns);
 
   const processedData = useMemo(
     () => getGroupedRows(data, groupByField),
@@ -73,11 +72,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     data: processedData,
     enablePagination: false,
-    enableColumnResizing: true,
+    enableColumnResizing,
     enableColumnPinning: true,
     enableColumnOrdering: true,
     enableColumnDragging: false,
-    enableRowSelection: true,
+    enableRowSelection,
     enableFacetedValues: true,
 
     // Disable bottom footer - use OMS custom action footer instead
@@ -85,15 +84,21 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableExpanding: !!groupByField,
 
     initialState: {
-      ...initialState.current,
-      columnOrder: hasNewColumns
-        ? defaultOrder
-        : initialState.current.columnOrder,
+      ...savedState.current,
+
+      columnOrder: getDefaultColumnOrderIds({
+        columns,
+        state: {},
+        enableRowSelection, // adds `mrt-row-select`
+        layoutMode: enableColumnResizing ? 'grid-no-grow' : 'auto', // adds `mrt-row-spacer`
+      } as MRT_StatefulTableOptions<T>),
     },
     state: {
       showProgressBars: isLoading,
+      columnOrder,
       ...state,
     },
+    onColumnOrderChange: setColumnOrder,
 
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
       const { description } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
