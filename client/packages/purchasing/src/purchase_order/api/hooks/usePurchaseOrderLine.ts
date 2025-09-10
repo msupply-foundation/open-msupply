@@ -130,8 +130,9 @@ export function usePurchaseOrderLine(id?: string | null) {
       comment: setNullableInput('comment', draft),
       status: draft.status,
     };
+    await updatePurchaseOrderLine(input);
     resetDraft();
-    return await updatePurchaseOrderLine(input);
+    return;
   };
 
   // DELETE
