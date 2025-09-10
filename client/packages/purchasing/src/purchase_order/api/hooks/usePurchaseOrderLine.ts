@@ -7,7 +7,6 @@ import {
   useTranslation,
   setNullableInput,
   PurchaseOrderLineStatusNode,
-  useNotification,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
@@ -131,9 +130,9 @@ export function usePurchaseOrderLine(id?: string | null) {
       comment: setNullableInput('comment', draft),
       status: draft.status,
     };
-    await updatePurchaseOrderLine(input);
+    const result = await updatePurchaseOrderLine(input);
     resetDraft();
-    return;
+    return result;
   };
 
   const updateLineStatus = async (
