@@ -12,6 +12,7 @@ import {
   DateUtils,
   mergeCellProps,
   useFormatDateTime,
+  useSimplifiedTabletUI,
   useUrlQuery,
 } from '@openmsupply-client/common';
 
@@ -20,7 +21,8 @@ import { ColumnDef } from './types';
 export const useMaterialTableColumns = <T extends MRT_RowData>(
   omsColumns: ColumnDef<T>[]
 ) => {
-  const mrtColumns = useMemo(() => {
+  const simplifiedMobileView = useSimplifiedTabletUI();
+  const tableDefinition = useMemo(() => {
     const columns = omsColumns
       .filter(col => col.includeColumn !== false)
       .map(col => {
@@ -47,10 +49,16 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         return col;
       });
 
-    return columns;
+    const defaultHiddenColumns = simplifiedMobileView
+      ? columns
+          .filter(col => col.defaultHideOnMobile)
+          .map(col => String(col.id ?? col.accessorKey))
+      : [];
+
+    return { columns, defaultHiddenColumns };
   }, [omsColumns]);
 
-  return mrtColumns;
+  return tableDefinition;
 };
 
 export const useManualTableFilters = <T extends MRT_RowData>(
