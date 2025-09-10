@@ -65,6 +65,7 @@ pub struct StockLineFilter {
     pub location: Option<LocationFilter>,
     pub master_list: Option<MasterListFilter>,
     pub is_active: Option<bool>,
+    pub is_program_stock_line: Option<bool>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -205,6 +206,7 @@ impl<'a> StockLineRepository<'a> {
                 location,
                 master_list,
                 is_active,
+                is_program_stock_line,
             } = f;
 
             apply_equal_filter!(query, id, stock_line::id);
@@ -237,13 +239,18 @@ impl<'a> StockLineRepository<'a> {
             }
 
             if master_list.is_some() {
-                let item_ids = MasterListLineRepository::create_filtered_query(Some(
-                    MasterListLineFilter::new().master_list(master_list.unwrap()),
-                ))
+                let item_ids = MasterListLineRepository::create_filtered_query(
+                    Some(MasterListLineFilter::new().master_list(master_list.unwrap())),
+                    None,
+                )
                 .unwrap()
                 .select(item::id);
 
                 query = query.filter(item::id.eq_any(item_ids));
+            }
+
+            if is_program_stock_line.is_some() {
+                query = query.filter(stock_line::program_id.is_not_null());
             }
         }
 
@@ -372,6 +379,11 @@ impl StockLineFilter {
         self.master_list = Some(filter);
         self
     }
+
+    pub fn is_program_stock_line(mut self, filter: bool) -> Self {
+        self.is_program_stock_line = Some(filter);
+        self
+    }
 }
 
 impl StockLine {
@@ -401,7 +413,6 @@ impl StockLine {
 #[cfg(test)]
 mod test {
     use chrono::NaiveDate;
-    
 
     use crate::{
         mock::MockDataInserts,

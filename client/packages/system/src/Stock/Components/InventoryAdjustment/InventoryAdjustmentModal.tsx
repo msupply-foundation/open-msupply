@@ -1,23 +1,15 @@
 import React from 'react';
 import {
-  TextWithLabelRow,
   useTranslation,
-  Box,
-  NumericTextInput,
   DialogButton,
   useNotification,
   AdjustmentTypeInput,
   useDialog,
-  getReasonOptionTypes,
-  Checkbox,
-  NumericTextDisplay,
-  useAuthContext,
-  StoreModeNodeType,
+  Alert,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
-import { ReasonOptionsSearchInput } from '../../..';
-import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
-import { INPUT_WIDTH, StyledInputRow } from '../StyledInputRow';
+import { AdjustmentForm } from './AdjustmentForm';
+import { ItemDetailAndStats } from './AdjustmentStats';
 
 interface InventoryAdjustmentModalProps {
   stockLine: StockLineRowFragment;
@@ -31,15 +23,9 @@ export const InventoryAdjustmentModal = ({
 }: InventoryAdjustmentModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
-  const { store } = useAuthContext();
   const { Modal } = useDialog({ isOpen, onClose });
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
-
-  const packUnit = String(stockLine.packSize);
-  const saveDisabled = draft.adjustment === 0 || stockLine.onHold;
-  const isInventoryReduction =
-    draft.adjustmentType === AdjustmentTypeInput.Reduction;
 
   const save = async () => {
     try {
@@ -59,116 +45,42 @@ export const InventoryAdjustmentModal = ({
     }
   };
 
+  const variation =
+    draft.adjustmentType === AdjustmentTypeInput.Reduction
+      ? -draft.adjustment
+      : draft.adjustment;
+
+  const belowZero = stockLine.availableNumberOfPacks + variation < 0;
+
+  const saveDisabled = draft.adjustment === 0 || belowZero;
+
   return (
     <Modal
-      sx={{ maxWidth: 'unset', minWidth: 700 }}
-      height={575}
+      height={600}
+      width={660}
+      contentProps={{ sx: { paddingTop: 0 } }}
       slideAnimation={false}
-      title={t('title.adjustment-details')}
+      title={t('title.stock-adjustment')}
       okButton={
         <DialogButton variant="ok" disabled={saveDisabled} onClick={save} />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <Box display="flex" paddingRight={4} gap={2}>
-        <Box display="flex" flexDirection="column" padding={2} gap={2} flex={1}>
-          <TextWithLabelRow
-            label={t('label.pack')}
-            text={packUnit}
-            textProps={{ textAlign: 'end' }}
-          />
-          <Box display="flex" justifyContent={'end'}>
-            <InventoryAdjustmentDirectionInput
-              value={draft.adjustmentType}
-              onChange={adjustmentType => {
-                setDraft({
-                  adjustmentType:
-                    adjustmentType ?? AdjustmentTypeInput.Addition,
-                  reason: null,
-                  adjustment: 0,
-                });
-              }}
-            />
-          </Box>
-          <StyledInputRow
-            label={t('label.reason')}
-            Input={
-              <Box display="flex" width={INPUT_WIDTH}>
-                <ReasonOptionsSearchInput
-                  disabled={draft.adjustment === 0}
-                  onChange={reason => setDraft(state => ({ ...state, reason }))}
-                  value={draft.reason}
-                  type={getReasonOptionTypes({
-                    isInventoryReduction,
-                    isVaccine: stockLine.item.isVaccine,
-                    isDispensary:
-                      store?.storeMode === StoreModeNodeType.Dispensary,
-                  })}
-                  width={INPUT_WIDTH}
-                />
-              </Box>
-            }
-          />
-          <StyledInputRow
-            label={t('label.on-hold')}
-            Input={<Checkbox checked={stockLine.onHold} disabled />}
-          />
-        </Box>
-        <Box
-          display="flex"
-          flexDirection="column"
-          gap={2}
-          paddingTop={2}
-          flex={1}
-        >
-          <StyledInputRow
-            label={t('label.pack-quantity')}
-            Input={<NumericTextDisplay value={stockLine.totalNumberOfPacks} />}
-          />
-          <StyledInputRow
-            label={t('label.available-packs')}
-            Input={
-              <NumericTextDisplay value={stockLine.availableNumberOfPacks} />
-            }
-          />
-          <StyledInputRow
-            label={t('label.adjust-by')}
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                decimalLimit={2}
-                max={
-                  draft.adjustmentType === AdjustmentTypeInput.Reduction
-                    ? stockLine.totalNumberOfPacks
-                    : undefined
-                }
-                value={draft.adjustment}
-                onChange={value =>
-                  setDraft(state => ({
-                    ...state,
-                    adjustment: value ?? 0,
-                  }))
-                }
-              />
-            }
-          />
-          <StyledInputRow
-            label={t('label.new-pack-qty')}
-            Input={
-              <NumericTextInput
-                width={INPUT_WIDTH}
-                disabled={true}
-                value={
-                  stockLine.totalNumberOfPacks +
-                  (draft.adjustmentType === AdjustmentTypeInput.Addition
-                    ? draft.adjustment
-                    : -draft.adjustment)
-                }
-              />
-            }
-          />
-        </Box>
-      </Box>
+      <>
+        <ItemDetailAndStats stockLine={stockLine} variation={variation} />
+
+        <AdjustmentForm
+          isVaccine={stockLine.item.isVaccine}
+          draft={draft}
+          setDraft={setDraft}
+        />
+
+        {stockLine.availableNumberOfPacks + variation < 0 && (
+          <Alert severity="error" sx={{ margin: '0 auto' }}>
+            {t('error.reduced-below-zero')}
+          </Alert>
+        )}
+      </>
     </Modal>
   );
 };

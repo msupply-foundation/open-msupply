@@ -4,14 +4,18 @@ import { RecordWithId } from '@common/types';
 import { CellProps } from '../../../columns/types';
 import { NumericTextDisplay } from '@openmsupply-client/common';
 
+export type NumberCellProps<T extends RecordWithId> = CellProps<T> & {
+  defaultValue?: string | number;
+  decimalLimit?: number;
+};
+
 // Display numbers in a table, formatted by NumericTextDisplay
 export const NumberCell = <T extends RecordWithId>({
   column,
   rowData,
   defaultValue = '',
-}: CellProps<T> & {
-  defaultValue?: string | number;
-}) => {
+  decimalLimit,
+}: NumberCellProps<T>) => {
   const value = column.accessor({ rowData }) as number | undefined | null;
 
   return (
@@ -20,7 +24,11 @@ export const NumberCell = <T extends RecordWithId>({
         padding: '4px 8px',
       }}
     >
-      <NumericTextDisplay value={value} defaultValue={defaultValue} />
+      <NumericTextDisplay
+        value={value}
+        defaultValue={defaultValue}
+        decimalLimit={decimalLimit}
+      />
     </Box>
   );
 };

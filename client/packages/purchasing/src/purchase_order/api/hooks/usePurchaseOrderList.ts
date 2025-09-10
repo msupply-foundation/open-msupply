@@ -48,7 +48,6 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     createdDatetime: PurchaseOrderSortFieldInput.CreatedDatetime,
     status: PurchaseOrderSortFieldInput.Status,
     number: PurchaseOrderSortFieldInput.Number,
-    // Add more as required
   };
 
   const queryFn = async (): Promise<{

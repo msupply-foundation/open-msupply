@@ -54,6 +54,7 @@ export const PurchaseOrderLineEdit = ({
             currentItemId={draft?.itemId}
             onChange={newItem => newItem && onChangeItem(newItem)}
             extraFilter={item => !lines.some(line => line.item.id === item.id)}
+            filter={{ isVisible: true, ignoreForOrders: false }}
           />
         }
         Left={
