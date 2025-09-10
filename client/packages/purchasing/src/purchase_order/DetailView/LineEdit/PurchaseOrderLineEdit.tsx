@@ -1,8 +1,12 @@
 import React from 'react';
 import {
+  Box,
   InputWithLabelRow,
+  LocaleKey,
   ModalGridLayout,
+  PurchaseOrderLineStatusNode,
   PurchaseOrderNodeStatus,
+  Select,
   useMediaQuery,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -14,7 +18,11 @@ import {
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { commonLabelProps, useInputComponents } from '../../../common';
-import { calculatePricesAndDiscount, calculateUnitQuantities } from './utils';
+import {
+  calculatePricesAndDiscount,
+  calculateUnitQuantities,
+  lineStatusOptions,
+} from './utils';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
@@ -39,22 +47,49 @@ export const PurchaseOrderLineEdit = ({
   const t = useTranslation();
   const showContent = !!draft?.itemId;
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
+  const disabled =
+    isDisabled || draft?.status === PurchaseOrderLineStatusNode.Closed;
   const { numericInput, textInput, multilineTextInput, dateInput } =
-    useInputComponents(t, isDisabled, isVerticalScreen);
+    useInputComponents(t, disabled, isVerticalScreen);
 
   return (
     <>
       <ModalGridLayout
         showExtraFields={true}
         Top={
-          <StockItemSearchInput
-            autoFocus={!isUpdateMode}
-            openOnFocus={!isUpdateMode}
-            disabled={isUpdateMode || isDisabled}
-            currentItemId={draft?.itemId}
-            onChange={newItem => newItem && onChangeItem(newItem)}
-            extraFilter={item => !lines.some(line => line.item.id === item.id)}
-          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <StockItemSearchInput
+              autoFocus={!isUpdateMode}
+              openOnFocus={!isUpdateMode}
+              disabled={isUpdateMode || disabled}
+              currentItemId={draft?.itemId}
+              onChange={newItem => newItem && onChangeItem(newItem)}
+              extraFilter={item =>
+                !lines.some(line => line.item.id === item.id)
+              }
+              width={825}
+            />
+            <InputWithLabelRow
+              label={t('label.status')}
+              Input={
+                <Select
+                  disabled={disabled}
+                  sx={{
+                    width: 200,
+                  }}
+                  options={lineStatusOptions(status).map(s => ({
+                    value: s,
+                    label: t(`status.${s.toLowerCase()}` as LocaleKey),
+                  }))}
+                  value={draft?.status || PurchaseOrderLineStatusNode.New}
+                  // onChange={value => update({ status: value })}
+                />
+              }
+              sx={{
+                justifyContent: 'flex-end',
+              }}
+            />
+          </Box>
         }
         Left={
           showContent ? (
@@ -134,13 +169,13 @@ export const PurchaseOrderLineEdit = ({
               <InputWithLabelRow
                 Input={
                   <ManufacturerSearchInput
-                    disabled={isDisabled}
+                    disabled={disabled}
                     value={draft?.manufacturer ?? null}
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
                     }
                     textSx={
-                      isDisabled
+                      disabled
                         ? {
                             backgroundColor: theme =>
                               theme.palette.background.toolbar,

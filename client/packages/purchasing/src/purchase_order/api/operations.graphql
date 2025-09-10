@@ -115,6 +115,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   unit
   comment
   supplierItemCode
+  status
 }
 
 query purchaseOrders(

@@ -7,6 +7,7 @@ import {
   useQuery,
   useTranslation,
   setNullableInput,
+  PurchaseOrderLineStatusNode,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
@@ -51,6 +52,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   discountPercentage: 0,
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
+  status: PurchaseOrderLineStatusNode.New,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {
