@@ -112,10 +112,12 @@ const OutboundShipmentListViewComponent: FC = () => {
   const mrtColumns = useMemo(
     (): ColumnDef<OutboundRowFragment>[] => [
       {
-        accessorKey: 'otherPartyName',
+        id: 'otherPartyName',
         header: t('label.name'),
-        // size: 150,
+        accessorKey: 'otherPartyName',
+        size: 400,
         filterVariant: 'text',
+        defaultHideOnMobile: true,
       },
       {
         accessorFn: row => getStatusTranslator(t)(row.status),

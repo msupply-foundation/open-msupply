@@ -20,11 +20,7 @@ import { ColumnDef } from './types';
 export const useMaterialTableColumns = <T extends MRT_RowData>(
   omsColumns: ColumnDef<T>[]
 ) => {
-  const tableDefinitions = useMemo(() => {
-    const defaultOrder: string[] = omsColumns.map(
-      col => col.id ?? (col.accessorKey as string)
-    );
-
+  const mrtColumns = useMemo(() => {
     const columns = omsColumns
       .filter(col => col.includeColumn !== false)
       .map(col => {
@@ -51,10 +47,10 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         return col;
       });
 
-    return { columns, defaultOrder };
+    return columns;
   }, [omsColumns]);
 
-  return tableDefinitions;
+  return mrtColumns;
 };
 
 export const useManualTableFilters = <T extends MRT_RowData>(
