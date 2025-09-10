@@ -127,7 +127,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
-    enableBottomToolbar: true, // required for pagination
+    enableBottomToolbar: Object.keys(rowSelection).length === 0, // required for pagination
     enablePagination: true,
     paginationDisplayMode: 'pages',
     muiBottomToolbarProps: {
