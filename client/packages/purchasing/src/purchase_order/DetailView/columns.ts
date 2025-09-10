@@ -3,18 +3,21 @@ import {
   ColumnDescription,
   ColumnFormat,
   GenericColumnKey,
+  getLinesFromRow,
   TooltipTextCell,
   useColumns,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { PurchaseOrderLineFragment } from '../api';
+import { usePurchaseOrderLineErrorContext } from '../context';
 
 export const usePurchaseOrderColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  const { getError } = usePurchaseOrderLineErrorContext();
 
   const columnDefinitions: ColumnDescription<PurchaseOrderLineFragment>[] = [
     GenericColumnKey.Selection,
@@ -24,6 +27,10 @@ export const usePurchaseOrderColumns = () => {
         width: 130,
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,
+        getIsError: row =>
+          getLinesFromRow(row).some(
+            r => getError(r)?.__typename === 'ItemCannotBeOrdered'
+          ),
       },
     ],
     [
