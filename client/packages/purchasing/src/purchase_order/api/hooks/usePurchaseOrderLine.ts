@@ -135,6 +135,19 @@ export function usePurchaseOrderLine(id?: string | null) {
     return;
   };
 
+  const updateLineStatus = async (
+    selectedRows: PurchaseOrderLineFragment[]
+  ) => {
+    return Promise.all(
+      selectedRows.map(row =>
+        updatePurchaseOrderLine({
+          id: row.id,
+          status: PurchaseOrderLineStatusNode.Closed,
+        })
+      )
+    );
+  };
+
   // DELETE
   const {
     mutateAsync: deleteMutation,
@@ -160,6 +173,7 @@ export function usePurchaseOrderLine(id?: string | null) {
     resetDraft,
     isDirty,
     updatePatch,
+    updateLineStatus,
   };
 }
 
@@ -256,7 +270,6 @@ const useUpdate = () => {
       queryClient.invalidateQueries([PURCHASE_ORDER]);
     } catch (e) {
       console.error('Error updating purchase order line:', e);
-      return error(t('label.cannot-update-purchase-order-line'))();
     }
   };
 
