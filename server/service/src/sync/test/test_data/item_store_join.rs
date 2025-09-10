@@ -9,7 +9,8 @@ const ITEM_STORE_JOIN_1: (&str, &str) = (
         "ID": "item_store_join_1",
         "item_ID": "item_a",
         "store_ID": "store_b",
-        "default_price": 10.0
+        "default_price": 10.0,
+        "ignore_for_orders": false
     }"#,
 );
 
@@ -22,6 +23,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             item_link_id: "item_a".to_string(),
             store_id: "store_b".to_string(),
             default_sell_price_per_pack: 10.0,
+            ignore_for_orders: false,
         },
     )]
 }

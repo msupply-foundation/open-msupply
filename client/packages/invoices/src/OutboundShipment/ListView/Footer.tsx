@@ -1,17 +1,26 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
+  useFeatureFlags,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../api';
+import { OutboundRowFragment, useOutbound } from '../api';
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: OutboundRowFragment[];
+  resetRowSelection: () => void;
+}) => {
+  const { tableUsabilityImprovements } = useFeatureFlags();
   const t = useTranslation();
 
-  const { selectedRows, confirmAndDelete } = useOutbound.document.deleteRows();
+  const { confirmAndDelete, selectedRows: oldSelectedRows } =
+    useOutbound.document.deleteRows(selectedRows, resetRowSelection);
 
   const actions: Action[] = [
     {
@@ -21,14 +30,19 @@ export const FooterComponent: FC = () => {
     },
   ];
 
+  const actualSelectedRows = tableUsabilityImprovements
+    ? selectedRows
+    : oldSelectedRows;
+
   return (
     <AppFooterPortal
       Content={
         <>
-          {selectedRows.length !== 0 && (
+          {actualSelectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedRows.length}
+              selectedRowCount={actualSelectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

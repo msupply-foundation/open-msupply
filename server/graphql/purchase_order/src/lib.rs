@@ -56,7 +56,6 @@ impl PurchaseOrderMutations {
         insert_purchase_order(ctx, &store_id, input)
     }
 
-    // add to purchase order from master list
     pub async fn add_to_purchase_order_from_master_list(
         &self,
         ctx: &Context<'_>,

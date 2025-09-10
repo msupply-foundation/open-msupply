@@ -8,7 +8,10 @@ import {
   AppSxProp,
   NothingHere,
   useUrlQueryParams,
+  useFeatureFlags,
+  MaterialTable,
 } from '@openmsupply-client/common';
+import { MRT_TableInstance } from 'material-react-table';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
@@ -18,6 +21,8 @@ import { Expand } from './ExpandoTable';
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
+  table?: MRT_TableInstance<StockOutLineFragment | StockOutItem>;
+  // onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
 }
 
 const useHighlightPlaceholderRows = (
@@ -69,6 +74,8 @@ const useHighlightPlaceholderRows = (
 export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onAddItem,
   onRowClick,
+  // onReturnLines,
+  table,
 }) => {
   const t = useTranslation();
 
@@ -84,26 +91,33 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   });
   const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
+  const { tableUsabilityImprovements } = useFeatureFlags();
 
   if (!rows) return null;
 
   return (
-    <DataTable
-      id="outbound-detail"
-      onRowClick={onRowClick}
-      ExpandContent={props => <Expand {...props} />}
-      columns={columns}
-      data={rows}
-      enableColumnSelection
-      noDataElement={
-        <NothingHere
-          body={t('error.no-outbound-items')}
-          onCreate={isDisabled ? undefined : () => onAddItem()}
-          buttonText={t('button.add-item')}
+    <>
+      {tableUsabilityImprovements && table ? (
+        <MaterialTable table={table} />
+      ) : (
+        <DataTable
+          id="outbound-detail"
+          onRowClick={onRowClick}
+          ExpandContent={props => <Expand {...props} />}
+          columns={columns}
+          data={rows}
+          enableColumnSelection
+          noDataElement={
+            <NothingHere
+              body={t('error.no-outbound-items')}
+              onCreate={isDisabled ? undefined : () => onAddItem()}
+              buttonText={t('button.add-item')}
+            />
+          }
+          isRowAnimated={true}
         />
-      }
-      isRowAnimated={true}
-    />
+      )}
+    </>
   );
 };
 
