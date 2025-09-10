@@ -163,7 +163,8 @@ pub(super) async fn test_vaccine_card() {
         IntegrationOperation::upsert(vaccination_one.clone()),
     ];
 
-    integrate_with_is_sync_reset(&site1.context.connection, &integrations_one);
+    let integrations_one =
+        integrate_with_is_sync_reset(&site1.context.connection, integrations_one);
     // Name store join created here, name link is create when patient is upserted
     create_patient_name_store_join(
         &site1.context.connection,
@@ -179,7 +180,7 @@ pub(super) async fn test_vaccine_card() {
     let context = site2.context.service_provider.basic_context().unwrap();
     link_patient_to_store(
         &site2.context.service_provider,
-        context,
+        &context,
         &site2.config.new_site_properties.store_id.clone(),
         &patient_one.id,
     )
@@ -205,7 +206,8 @@ pub(super) async fn test_vaccine_card() {
     };
 
     let integrations_two = vec![IntegrationOperation::upsert(vaccination_two.clone())];
-    integrate_with_is_sync_reset(&site2.context.connection, &integrations_two);
+    let integrations_two =
+        integrate_with_is_sync_reset(&site2.context.connection, integrations_two);
 
     site2.synchroniser.sync(None).await.unwrap();
     site1.synchroniser.sync(None).await.unwrap();

@@ -123,6 +123,7 @@ fn generate(
                 .master_list_id(EqualFilter::equal_to(&input.master_list_id))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_requisition))
                 .item_type(ItemType::Stock.equal_to()),
+            None,
         )?;
 
     let items_ids_not_in_requisition: Vec<String> = master_list_lines_not_in_requisition
@@ -166,6 +167,13 @@ impl From<PluginOrRepositoryError> for AddFromMasterListError {
 
 #[cfg(test)]
 mod test {
+    use crate::{
+        requisition::{
+            common::get_lines_for_requisition,
+            request_requisition::{AddFromMasterList, AddFromMasterListError as ServiceError},
+        },
+        service_provider::ServiceProvider,
+    };
     use assert_approx_eq::assert_approx_eq;
     use repository::{
         mock::{
@@ -180,13 +188,6 @@ mod test {
         },
         test_db::{setup_all, setup_all_with_data},
         MasterListLineRow, MasterListNameJoinRow, MasterListRow,
-    };
-    use crate::{
-        requisition::{
-            common::get_lines_for_requisition,
-            request_requisition::{AddFromMasterList, AddFromMasterListError as ServiceError},
-        },
-        service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
@@ -382,7 +383,7 @@ mod test {
         assert_approx_eq!(
             line.requisition_line_row.suggested_quantity,
             // 10 = requisition max_mos
-            test_item_stats::item1_amc_3_months() * 10.0 - test_item_stats::item_1_soh()
+            (test_item_stats::item1_amc_3_months() * 10.0 - test_item_stats::item_1_soh()).ceil() // 3164
         );
 
         let line = lines

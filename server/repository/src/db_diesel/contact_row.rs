@@ -132,7 +132,7 @@ impl Upsert for ContactRow {
         )
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ContactRowDelete(pub String);
 impl Delete for ContactRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {

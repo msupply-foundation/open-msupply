@@ -16,6 +16,7 @@ interface NumericTextDisplayProps {
   children?: React.ReactElement;
   width?: number | string;
   packagingDisplay?: string;
+  decimalLimit?: number;
 }
 
 export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
@@ -23,10 +24,11 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   defaultValue = '',
   width = 50,
   packagingDisplay,
+  decimalLimit = 2,
 }) => {
   const format = useFormatNumber();
   const tooltip = value ? format.round(value ?? undefined, 10) : null;
-  const formattedValue = format.round(value ?? 0, 2);
+  const formattedValue = format.round(value ?? 0, decimalLimit);
 
   const displayValue =
     value === undefined || value === null ? defaultValue : formattedValue;
@@ -47,7 +49,9 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
             fontSize: 'inherit',
           }}
         >
-          {!!NumUtils.hasMoreThanTwoDp(value ?? 0)
+          {/* Show `...` if greater decimal precision available in tooltip */}
+          {decimalLimit > 0 && // But only show `...` if there are some decimal places shown (`3... units` looks silly)
+          !!NumUtils.hasMoreThanDp(value ?? 0, decimalLimit)
             ? `${displayValue}...`
             : displayValue}
           {packagingDisplay ? ` ${packagingDisplay}` : ''}

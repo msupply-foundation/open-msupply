@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use chrono::{DateTime, Utc};
 use log::{error, info};
 use repository::database_settings::DatabaseSettings;
 use reqwest::{Client, Error, Response};
@@ -18,12 +19,6 @@ use std::{
 use tokio::{process::Child, sync::mpsc, task::JoinHandle, time::sleep};
 use util::{hash::sha256, uuid::uuid};
 const TEST_API: &str = "sync/v5/test";
-
-const MANUAL_SYNC_QUERY: &str = r#"
-mutation ManualSync {
-  manualSync
-}
-"#;
 
 #[derive(clap::Args)]
 pub struct LoadTest {
@@ -55,7 +50,7 @@ pub struct LoadTest {
     #[clap(short, long)]
     pub sites: usize,
 
-    /// The number of lines to include in each invoice
+    /// The number of lines to include in each requisition
     #[clap(short, long, default_value = "25")]
     pub lines: usize,
 
@@ -104,22 +99,28 @@ struct SyncInfo {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct LatestSyncStatus {
-    latest_sync_status: SyncStatus,
+    latest_sync_status: FullSyncStatus,
 }
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
-struct SyncStatus {
+struct FullSyncStatus {
     is_syncing: bool,
     push: Option<SyncDone>,
     push_v6: Option<SyncDone>,
     pull_v6: Option<SyncDone>,
     pull_remote: Option<SyncDone>,
     pull_central: Option<SyncDone>,
+    summary: SyncStatus,
 }
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct SyncDone {
     done: Option<usize>,
+}
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SyncStatus {
+    finished: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone)]
@@ -142,7 +143,7 @@ impl Metric {
     }
 
     fn update_sync_metrics(&mut self, site_info: &SyncInfo) {
-        let SyncStatus {
+        let FullSyncStatus {
             push,
             push_v6,
             pull_v6,
@@ -195,7 +196,7 @@ impl LoadTest {
         println!("Base Port: {}", self.base_port);
         println!("Output Directory: {}", self.output_dir.display());
         println!("Number of Sites: {}", self.sites);
-        println!("Invoice Lines: {}", self.lines);
+        println!("Requisition Lines: {}", self.lines);
         println!("Duration: {} seconds", self.duration);
 
         let _ = std::fs::remove_dir_all(&self.output_dir);
@@ -279,20 +280,7 @@ impl LoadTest {
                         return Err(e);
                     };
 
-                    let sync_gql = json!({
-                        "operationName": "ManualSync",
-                        "query": MANUAL_SYNC_QUERY,
-                    });
-                    match test_site.do_post(&sync_gql).await {
-                        Ok(response) => response,
-                        Err(e) => {
-                            println!("manualSync request failed: {}", e);
-                            kill(&mut child, test_site.site.site_id).await;
-                            return Err(e.into());
-                        }
-                    };
-
-                    let site_info = match test_site.wait_for_sync().await {
+                    let site_info = match test_site.do_sync_until_integrated().await {
                         Ok(site_info) => site_info,
                         Err(e) => {
                             kill(&mut child, test_site.site.site_id).await;
@@ -479,6 +467,7 @@ impl LoadTest {
                 ],
                 base_dir: Some("app_data".to_string()),
                 machine_uid: None,
+                override_is_central_server: false,
             },
             database: DatabaseSettings {
                 username: "postgres".to_owned(),
@@ -563,6 +552,7 @@ impl LoadTest {
                     cors_origins: vec![],
                     base_dir: Some(database_path.to_string()),
                     machine_uid: Some("1337_test".to_owned()),
+                    override_is_central_server: false,
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_owned(),
@@ -817,6 +807,35 @@ impl TestSite {
             .await?)
     }
 
+    // Repeatedly starts sync until local db sync info confirms that integration of sync buffer finished
+    // Consider consolidating with similar `sync_omsupply_central` in `server/service/src/sync/test/integration/omsupply_central/mod.rs`
+    async fn do_sync_until_integrated(&self) -> Result<SyncInfo> {
+        loop {
+            self.do_sync().await?;
+            let sync_info = self.wait_for_sync().await?;
+            if sync_info.data.latest_sync_status.summary.finished.is_some() {
+                return Ok(sync_info);
+            }
+        }
+    }
+
+    async fn do_sync(&self) -> Result<Response> {
+        const MANUAL_SYNC_QUERY: &str = r#"
+mutation ManualSync {
+  manualSync
+}
+"#;
+        let sync_gql = json!({
+            "operationName": "ManualSync",
+            "query": MANUAL_SYNC_QUERY,
+        });
+
+        match self.do_post(&sync_gql).await {
+            Ok(response) => return Ok(response),
+            Err(e) => return Err(e.into()),
+        };
+    }
+
     async fn wait_for_sync(&self) -> Result<SyncInfo> {
         const SYNC_INFO_QUERY: &str = r#"
 query SyncInfo {
@@ -837,11 +856,14 @@ query SyncInfo {
     pullCentral {
       done
     }
+    summary {
+      finished
+    }
   }
 }
 "#;
         loop {
-            sleep(Duration::from_millis(500)).await;
+            sleep(Duration::from_millis(1000)).await;
             let sync_gql = json!({
                 "operationName": "SyncInfo",
                 "query": SYNC_INFO_QUERY,
@@ -866,7 +888,7 @@ query SyncInfo {
                             return Ok(sync_info);
                         }
                     }
-                    Err(e) => println!("Error parsing SyncInfo: {}", e),
+                    Err(e) => error!("Error parsing SyncInfo: {}, \n{}", e, response_text),
                 };
             } else {
                 // dbg!(&response);

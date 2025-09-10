@@ -114,7 +114,7 @@ impl Upsert for VVMStatusRow {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VVMStatusRowDelete(pub String);
 impl Delete for VVMStatusRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {

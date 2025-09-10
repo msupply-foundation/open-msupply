@@ -2,7 +2,12 @@ import { useCallback, useContext, useState } from 'react';
 import { EnvUtils, Formatter, noOtherVariants } from '@common/utils';
 import { LanguageTypeNode } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
-import { LocaleKey, useTranslation, IntlContext } from '@common/intl';
+import {
+  LocaleKey,
+  useTranslation,
+  IntlContext,
+  CUSTOM_TRANSLATIONS_NAMESPACE,
+} from '@common/intl';
 import {
   frFR,
   ptPT,
@@ -10,6 +15,13 @@ import {
   ruRU,
   enUS as muiEnUS,
 } from '@mui/x-date-pickers/locales';
+
+// Material React Table translations
+import { MRT_Localization_AR } from 'material-react-table/locales/ar';
+import { MRT_Localization_ES } from 'material-react-table/locales/es';
+import { MRT_Localization_FR } from 'material-react-table/locales/fr';
+import { MRT_Localization_PT } from 'material-react-table/locales/pt';
+import { MRT_Localization_RU } from 'material-react-table/locales/ru';
 
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -62,12 +74,42 @@ const getDateLocalisations = (language: SupportedLocales) => {
       return getLocalisations(ptPT);
 
     // Not every language is supported by MUI, and some dialects may want
-    // overrides. If/when needed - pass in t() here and set required fields,
+    // overrides. If/when needed - pass in t() here and overwrite needed fields,
     // or define full localeText object for the required language
     case 'en':
     case 'ar':
     case 'tet':
       return getLocalisations(muiEnUS);
+    default:
+      noOtherVariants(language);
+  }
+};
+
+const getTableLocalisations = (language: SupportedLocales) => {
+  switch (language) {
+    case 'fr':
+    case 'fr-DJ':
+      return MRT_Localization_FR;
+
+    case 'es':
+      return MRT_Localization_ES;
+
+    case 'ru':
+      return MRT_Localization_RU;
+
+    case 'pt':
+      return MRT_Localization_PT;
+    case 'ar':
+      return MRT_Localization_AR;
+
+    // Default is English
+    // Not every language is supported, and some dialects may want
+    // overrides. If/when needed - pass in t() here and overwrite needed fields,
+    // or define the full localisations object for the required language
+    // https://www.material-react-table.com/docs/guides/localization#localization-(i18n)-guide
+    case 'en':
+    case 'tet':
+      return undefined;
     default:
       noOtherVariants(language);
   }
@@ -107,6 +149,7 @@ export const useIntlUtils = () => {
   const { i18n } = useIntl();
   const { language: i18nLanguage } = i18n;
   const t = useTranslation();
+
   const [language, setLanguage] = useState<string>(i18nLanguage);
 
   const changeLanguage = useCallback(
@@ -172,6 +215,27 @@ export const useIntlUtils = () => {
     return localeKeySet.has(key);
   };
 
+  const invalidateCustomTranslations = () => {
+    // Clear from local storage cache
+    Object.keys(localStorage)
+      .filter(
+        key =>
+          key.startsWith('i18next_res_') &&
+          key.endsWith(CUSTOM_TRANSLATIONS_NAMESPACE)
+      )
+      .forEach(key => localStorage.removeItem(key));
+
+    // Clear from i18next cache (specifically for when we delete a translation)
+    for (const lang of i18n.languages) {
+      i18n.removeResourceBundle(lang, CUSTOM_TRANSLATIONS_NAMESPACE);
+    }
+
+    // Then reload from backend
+    // Note - this is still requires the components in question to
+    // re-render to pick up the new translations
+    i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
+  };
+
   return {
     currentLanguage,
     currentLanguageName,
@@ -181,6 +245,7 @@ export const useIntlUtils = () => {
     getLocaleCode,
     getLocale: () => getLocale(currentLanguage),
     getDateLocalisations: () => getDateLocalisations(currentLanguage),
+    getTableLocalisations: () => getTableLocalisations(currentLanguage),
     getUserLocale,
     setUserLocale,
     getLocalisedFullName,
@@ -188,6 +253,7 @@ export const useIntlUtils = () => {
     translateServerError,
     isLocaleKey,
     translateDynamicKey,
+    invalidateCustomTranslations,
   };
 };
 
