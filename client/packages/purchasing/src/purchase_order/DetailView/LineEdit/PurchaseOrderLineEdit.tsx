@@ -78,8 +78,9 @@ export const PurchaseOrderLineEdit = ({
                     width: 200,
                   }}
                   options={lineStatusOptions(status).map(s => ({
-                    value: s,
-                    label: t(`status.${s.toLowerCase()}` as LocaleKey),
+                    value: s.value,
+                    label: t(`status.${s.value.toLowerCase()}` as LocaleKey),
+                    disabled: s.disabled,
                   }))}
                   value={draft?.status}
                   onChange={event =>
