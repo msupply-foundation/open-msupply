@@ -1,19 +1,14 @@
-use repository::{
-    EqualFilter, ItemRowRepository, Pagination, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository,
-    PurchaseOrderStatus, StorageConnection,
-};
-use repository::{
-    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, PurchaseOrderLineRow,
-};
-use repository::{PurchaseOrderLineRow, PurchaseOrderLineStatus};
-
 use crate::purchase_order_line::insert::PackSizeCodeCombination;
 use crate::{
     purchase_order::validate::{can_adjust_requested_quantity, purchase_order_is_editable},
     purchase_order_line::update::{
         UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
     },
+};
+use repository::{
+    EqualFilter, ItemRowRepository, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+    Pagination, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
+    PurchaseOrderLineStatus, PurchaseOrderRowRepository, PurchaseOrderStatus, StorageConnection,
 };
 
 pub fn validate(
@@ -34,7 +29,7 @@ pub fn validate(
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrder);
     }
 
-    if purchase_order_line.status == PurchaseOrderLineStatus::Closed {
+    if line.status == PurchaseOrderLineStatus::Closed {
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrderLine);
     }
 
@@ -48,13 +43,10 @@ pub fn validate(
                 .requested_pack_size(EqualFilter::equal_to_f64(
                     input
                         .requested_pack_size
-                        .unwrap_or(purchase_order_line.requested_pack_size),
+                        .unwrap_or(line.requested_pack_size),
                 ))
                 .item_id(EqualFilter::equal_to(
-                    &input
-                        .item_id
-                        .clone()
-                        .unwrap_or(purchase_order_line.item_link_id.clone()),
+                    &input.item_id.clone().unwrap_or(line.item_link_id.clone()),
                 )),
         ),
         None,
@@ -89,7 +81,7 @@ pub fn validate(
 
     // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
     if let Some(requested_units) = input.requested_number_of_units {
-        if requested_units != purchase_order_line.requested_number_of_units
+        if requested_units != line.requested_number_of_units
             && !can_adjust_requested_quantity(&purchase_order)
         {
             return Err(UpdatePurchaseOrderLineInputError::CannotAdjustRequestedQuantity);
@@ -107,7 +99,7 @@ pub fn validate(
 
         if !is_valid_status_change {
             return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
-
+        }
     }
 
     Ok(line)
