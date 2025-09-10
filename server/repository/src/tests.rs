@@ -844,6 +844,7 @@ mod repository_test {
                 MasterListLineFilter::new().master_list_id(EqualFilter::equal_any(vec![
                     "master_list_master_list_line_filter_test".to_string(),
                 ])),
+                None,
             )
             .unwrap();
 

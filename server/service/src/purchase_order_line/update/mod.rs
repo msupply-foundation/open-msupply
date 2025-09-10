@@ -30,6 +30,7 @@ pub enum UpdatePurchaseOrderLineInputError {
     DatabaseError(RepositoryError),
     ItemDoesNotExist,
     CannotChangeStatus,
+    ItemCannotBeOrdered(PurchaseOrderLine),
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]

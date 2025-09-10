@@ -4,7 +4,8 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 use repository::{
-    EqualFilter, ItemRow, ItemRowRepository, Pagination, PurchaseOrderLineFilter,
+    EqualFilter, ItemRow, ItemRowRepository, ItemStoreJoinRowRepository,
+    ItemStoreJoinRowRepositoryTrait, Pagination, PurchaseOrderLineFilter,
     PurchaseOrderLineRepository, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository,
     StorageConnection,
 };
@@ -52,6 +53,13 @@ pub fn validate(
             .ok_or(InsertPurchaseOrderLineError::ItemDoesNotExist)?,
         (None, None) => return Err(InsertPurchaseOrderLineError::ItemDoesNotExist),
     };
+    let item_store = ItemStoreJoinRowRepository::new(connection)
+        .find_one_by_item_and_store_id(&item.id, store_id)?;
+    if let Some(item_store_join) = item_store {
+        if item_store_join.ignore_for_orders {
+            return Err(InsertPurchaseOrderLineError::ItemCannotBeOrdered);
+        }
+    }
 
     // check if pack size and item id combination already exists
     let existing_pack_item = PurchaseOrderLineRepository::new(connection).query(

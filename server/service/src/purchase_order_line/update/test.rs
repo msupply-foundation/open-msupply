@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod update {
     use repository::{
-        mock::{mock_item_a, mock_item_d, mock_store_a, MockDataInserts},
+        mock::{mock_item_a, mock_item_d, mock_purchase_order_a, mock_store_a, MockDataInserts},
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineStatus,
     };
@@ -33,7 +33,7 @@ mod update {
                 &context,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
-                    purchase_order_id: "test_purchase_order_a".to_string(),
+                    purchase_order_id: mock_purchase_order_a().id.to_string(),
                     item_id: mock_item_a().id.to_string(),
                     requested_pack_size: Some(2.0),
                     ..Default::default()
