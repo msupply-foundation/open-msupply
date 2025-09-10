@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    ActivityLogType, PurchaseOrderLine, PurchaseOrderLineRowRepository, RepositoryError,
+    ActivityLogType, PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
+    RepositoryError,
 };
 
 use crate::{
@@ -45,6 +46,7 @@ pub struct UpdatePurchaseOrderLineInput {
     pub unit: Option<String>,
     pub supplier_item_code: Option<NullableUpdate<String>>,
     pub comment: Option<NullableUpdate<String>>,
+    pub status: Option<PurchaseOrderLineStatus>,
 }
 
 pub fn update_purchase_order_line(

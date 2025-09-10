@@ -10528,6 +10528,7 @@ export type UpdatePurchaseOrderLineInput = {
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  status?: InputMaybe<PurchaseOrderLineStatusNode>;
   supplierItemCode?: InputMaybe<NullableStringUpdate>;
   unit?: InputMaybe<Scalars['String']['input']>;
 };
