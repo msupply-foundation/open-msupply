@@ -51,6 +51,7 @@ export const Footer = ({
 }: FooterProps): ReactElement => {
   const t = useTranslation();
   const { success, info } = useNotification();
+  const { clearSelected } = useTableStore();
   const {
     query: { data },
     isDisabled,
@@ -95,6 +96,7 @@ export const Footer = ({
 
       if (selectedRows.length === failedCount) {
         info(t('messages.all-purchase-order-lines-are-closed'))();
+        clearSelected();
         return;
       }
 
@@ -105,6 +107,7 @@ export const Footer = ({
             closeCount: failedCount,
           })
         )();
+        clearSelected();
         return;
       }
 
@@ -113,6 +116,7 @@ export const Footer = ({
           count: selectedRows.length,
         })
       )();
+      clearSelected();
     } catch (e) {
       console.error('Error closing purchase order lines:', e);
     }
