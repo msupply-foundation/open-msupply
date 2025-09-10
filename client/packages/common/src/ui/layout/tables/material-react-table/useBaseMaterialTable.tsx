@@ -142,7 +142,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
                     : undefined,
               }
             : undefined,
-        '& input::placeholder': {
+        // For Filter inputs -- add additional classes for other filter types as
+        // required
+        '& .MuiInputBase-input, & .MuiPickersInputBase-root': {
           fontSize:
             table.getState().density === 'compact' ? '0.90em' : '0.95em',
         },
