@@ -10,7 +10,6 @@ import {
   CheckboxCheckedIcon,
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
-  InfoIcon,
 } from '@common/icons';
 import {
   getSavedTableState,
@@ -18,7 +17,7 @@ import {
   useTableLocalStorage,
 } from './useTableLocalStorage';
 import { useIntlUtils, useTranslation } from '@common/intl';
-import { ListItemIcon, MenuItem } from '@mui/material';
+import { MenuItem, Typography } from '@mui/material';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
@@ -104,20 +103,20 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onColumnOrderChange: setColumnOrder,
 
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
-      const { description } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
-
-      if (!description) return internalColumnMenuItems;
+      const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
 
       return [
         <MenuItem
           key="column-description"
           disabled // just for display, not clickable
-          sx={{ '&.Mui-disabled': { opacity: 1 } }} // but remove the greyed out look
+          sx={{
+            '&.Mui-disabled': { opacity: 1 }, // but remove the greyed out look
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+          }}
           divider
         >
-          <ListItemIcon>
-            <InfoIcon />
-          </ListItemIcon>
+          <Typography fontWeight="bold">{header}</Typography>
           {description}
         </MenuItem>,
 
