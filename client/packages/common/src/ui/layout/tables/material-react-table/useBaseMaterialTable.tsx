@@ -53,12 +53,14 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
-  const savedState = useRef(getSavedTableState(tableId));
-  const [columnOrder, setColumnOrder] = useState(
-    savedState.current.columnOrder ?? []
-  );
+  const { columns, defaultHiddenColumns } = useMaterialTableColumns(omsColumns);
 
-  const columns = useMaterialTableColumns(omsColumns);
+  const initialState = useRef(
+    getSavedTableState(tableId, defaultHiddenColumns)
+  );
+  const [columnOrder, setColumnOrder] = useState(
+    initialState.current.columnOrder ?? []
+  );
 
   const processedData = useMemo(
     () => getGroupedRows(data, groupByField),
@@ -84,7 +86,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableExpanding: !!groupByField,
 
     initialState: {
-      ...savedState.current,
+      ...initialState.current,
 
       columnOrder: getDefaultColumnOrderIds({
         columns,

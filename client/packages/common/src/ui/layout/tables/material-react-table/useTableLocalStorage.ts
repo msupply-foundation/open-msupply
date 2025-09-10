@@ -53,12 +53,14 @@ export const useTableLocalStorage = <T extends MRT_RowData>(
       JSON.stringify({
         density,
         columnSizing: debouncedColumnSizing,
-        hidden: Object.entries(columnVisibility ?? {})
-          .filter(([_, isVisible]) => !isVisible)
-          .map(([columnId]) => columnId),
 
         // These can change with different preferences, or versions of OMS
         // We should only save them when the user actually customises something
+        hidden: isEqual(columnVisibility, initial.columnVisibility)
+          ? existingCustomisations.hidden
+          : Object.entries(columnVisibility ?? {})
+              .filter(([_, isVisible]) => !isVisible)
+              .map(([columnId]) => columnId),
         pinned: isEqual(columnPinning, initial.columnPinning)
           ? existingCustomisations.pinned
           : columnPinning,
@@ -78,7 +80,10 @@ export const useTableLocalStorage = <T extends MRT_RowData>(
   ]);
 };
 
-export const getSavedTableState = (tableId: string) => {
+export const getSavedTableState = (
+  tableId: string,
+  defaultHiddenColumns: string[]
+) => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
   );
@@ -86,7 +91,7 @@ export const getSavedTableState = (tableId: string) => {
 
   const {
     density = 'comfortable',
-    hidden = [],
+    hidden = defaultHiddenColumns,
     pinned = { left: ['mrt-row-select'] },
     columnSizing = {
       columnSizing: {
