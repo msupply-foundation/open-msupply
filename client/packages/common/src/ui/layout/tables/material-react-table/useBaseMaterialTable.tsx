@@ -117,7 +117,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
         fontWeight: 600,
-        fontSize: table.getState().density === 'compact' ? '0.95em' : '1em',
+        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         lineHeight: 1.2,
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
@@ -152,7 +152,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     }),
     muiTableBodyCellProps: ({ cell, row, table }) => ({
       sx: {
-        fontSize: table.getState().density === 'compact' ? '0.95em' : '1em',
+        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
@@ -175,16 +175,14 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
           table.getState().density === 'spacious'
             ? '0.7rem'
             : table.getState().density === 'comfortable'
-              ? '0.35rem'
+              ? '0.35rem 0.5rem'
               : undefined, // default for "compact",
 
         // Indent "sub-rows" when expanded
         paddingLeft:
           row.original?.['isSubRow'] && cell.column.id !== 'mrt-row-select'
             ? '2em'
-            : table.getState().density === 'comfortable'
-              ? '0.5rem'
-              : undefined,
+            : undefined,
       },
     }),
 
