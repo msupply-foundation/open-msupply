@@ -17,8 +17,9 @@ import {
   useNonPaginatedMaterialTable,
   usePreferences,
   InvoiceLineNodeType,
+  useIsGrouped,
+  ColumnDef,
 } from '@openmsupply-client/common';
-import { MRT_ColumnDef } from 'material-react-table';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { StockOutItem } from '../../types';
@@ -51,8 +52,8 @@ const DetailViewInner = () => {
   const { manageVvmStatusForStock } = usePreferences();
 
   const { data, isLoading } = useOutbound.document.get();
+  const { isGrouped } = useIsGrouped('outboundShipment');
   const { rows } = useOutbound.line.rows(false);
-  // const { rows } = useOutbound.line.rows(isGrouped);
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -87,58 +88,80 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
-  const mrtColumns = useMemo<
-    MRT_ColumnDef<StockOutLineFragment | StockOutItem>[]
-  >(() => {
-    const cols = [
-      // TO-DO: Note popover column,
+  const mrtColumns = useMemo(() => {
+    const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
       {
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
+        filterType: 'text',
       },
       {
-        accessorKey: 'item.name',
+        accessorKey: 'itemName',
         header: t('label.name'),
+        filterType: 'text',
         // size: 140,
       },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
         size: 130,
+        filterType: 'text',
       },
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
+        filterType: 'dateRange',
         size: 160,
       },
     ];
 
+    // todo - on refresh this is ending up at the end of the table - need to fix!
     if (manageVvmStatusForStock)
       cols.push({
         // todo - anything that could return undefined should use accessorFn, so no warnings in console
         accessorKey: 'vvmStatus.description',
         header: t('label.vvm-status'),
+        // TO-DO: Add enum values here for filter
       });
 
     cols.push(
       {
         accessorKey: 'location.code',
         header: t('label.location'),
+        filterType: 'text',
       },
       {
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        filterType: 'enum',
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
+        // TO-DO: Create "number range" filter
+        // filterType: 'number',
       }
     );
 
     // if (manageVaccinesInDoses) {
     //   columns.push(getDosesPerUnitColumn(t));
     // }
+
+    cols.push(
+      {
+        accessorKey: 'numberOfPacks',
+        header: t('label.num-packs'),
+      },
+      {
+        accessorKey: 'unitQuantity',
+        header: t('label.unit-quantity'),
+
+        description: t('description.unit-quantity'),
+      }
+    );
+
+    // TODO: remaining columns
 
     return cols;
   }, [manageVvmStatusForStock]);
@@ -162,6 +185,7 @@ const DetailViewInner = () => {
           );
         }
       },
+      groupByField: isGrouped ? 'itemName' : undefined,
     });
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;

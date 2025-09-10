@@ -9,6 +9,8 @@ use graphql_core::{
     },
     ContextExt,
 };
+use graphql_types::generic_errors::ItemCannotBeOrdered;
+use graphql_types::types::IdResponse;
 use graphql_types::types::{IdResponse, PurchaseOrderLineStatusNode};
 use repository::PurchaseOrderLine;
 use service::{
@@ -93,6 +95,7 @@ pub enum PurchaseOrderLineError {
     PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
     CannotEditPurchaseOrder(CannotEditPurchaseOrder),
     CannotAdjustRequestedQuantity(CannotAdjustRequestedQuantity),
+    ItemCannotBeOrdered(ItemCannotBeOrdered),
 }
 
 #[derive(SimpleObject)]
@@ -168,6 +171,13 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::CannotEditPurchaseOrder => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::CannotEditPurchaseOrder(CannotEditPurchaseOrder),
+            }))
+        }
+        ServiceError::ItemCannotBeOrdered(line) => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::ItemCannotBeOrdered(
+                    ItemCannotBeOrdered::from_domain(line),
+                ),
             }))
         }
         // TODO return these as structured errors? Or leave as is

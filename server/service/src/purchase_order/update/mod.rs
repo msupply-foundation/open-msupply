@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    PurchaseOrderLineRowRepository, PurchaseOrderRow, PurchaseOrderRowRepository,
-    PurchaseOrderStatus, RepositoryError, TransactionError,
+    PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderRow,
+    PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError, TransactionError,
 };
 
 use crate::{
@@ -27,6 +27,7 @@ pub enum UpdatePurchaseOrderError {
     DonorDoesNotExist,
     AuthorisationPreferenceNotSet,
     DatabaseError(RepositoryError),
+    ItemsCannotBeOrdered(Vec<PurchaseOrderLine>),
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]

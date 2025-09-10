@@ -15,6 +15,10 @@ impl ItemStorePropertiesNode {
     pub async fn default_sell_price_per_pack(&self) -> f64 {
         self.item_store_properties.default_sell_price_per_pack
     }
+
+    pub async fn ignore_for_orders(&self) -> bool {
+        self.item_store_properties.ignore_for_orders
+    }
 }
 
 impl ItemStorePropertiesNode {

@@ -67,6 +67,7 @@ export const PurchaseOrderLineEdit = ({
               extraFilter={item =>
                 !lines.some(line => line.item.id === item.id)
               }
+              filter={{ isVisible: true, ignoreForOrders: false }}
               width={825}
             />
             <InputWithLabelRow

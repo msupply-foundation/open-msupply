@@ -2,7 +2,6 @@ import {
   UpdatePurchaseOrderLineInput,
   LIST_KEY,
   useMutation,
-  useNotification,
   usePatchState,
   useQuery,
   useTranslation,
@@ -237,15 +236,13 @@ const useCreate = () => {
 };
 
 const useUpdate = () => {
-  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const t = useTranslation();
-  const { error } = useNotification();
-
+  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
   const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine);
 
   const updatePurchaseOrderLine = async (
     input: UpdatePurchaseOrderLineInput
-  ) => {
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const result = await purchaseOrderApi.updatePurchaseOrderLine({
         storeId,
@@ -258,7 +255,8 @@ const useUpdate = () => {
         'UpdatePurchaseOrderLineError'
       ) {
         const errorType = result.updatePurchaseOrderLine.error.__typename;
-        let errorMessage = '';
+        let errorMessage: string;
+
         switch (errorType) {
           case 'CannotEditPurchaseOrder':
             errorMessage = t('label.cannot-edit-purchase-order');
@@ -272,17 +270,19 @@ const useUpdate = () => {
           case 'UpdatedLineDoesNotExist':
             errorMessage = t('label.updated-line-does-not-exist');
             break;
+          case 'ItemCannotBeOrdered':
           default:
             errorMessage = t('label.cannot-update-purchase-order-line');
-            break;
         }
-        error(errorMessage)();
-        throw new Error(errorMessage);
+
+        return { success: false, error: errorMessage };
       }
-      queryClient.invalidateQueries([PURCHASE_ORDER]);
+
+      return { success: true };
     } catch (e) {
       console.error('Error updating purchase order line:', e);
-      throw e;
+      const errorMessage = t('label.cannot-update-purchase-order-line');
+      return { success: false, error: errorMessage };
     }
   };
 

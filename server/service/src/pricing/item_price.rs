@@ -29,6 +29,7 @@ pub fn get_pricing_for_item(
             MasterListLineFilter::new()
                 .master_list(MasterListFilter::new().is_default_price_list(true))
                 .item_id(EqualFilter::equal_to(&input.item_id)),
+            None,
         )?
         .pop()
         .and_then(|l| l.price_per_unit);
