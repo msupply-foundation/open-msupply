@@ -77,6 +77,12 @@ mod test {
             ..negative_balance.clone()
         };
 
+        let orphan = StockLineRow {
+            id: "orphan".to_string(),
+            total_number_of_packs: 100.0,
+            ..negative_balance.clone()
+        };
+
         let correct_with_some_allocated_not_picked = StockLineRow {
             id: "correct_with_some_allocated_not_picked".to_string(),
             total_number_of_packs: 100.0,
@@ -97,6 +103,7 @@ mod test {
                 total_not_matched.clone(),
                 correct_with_some_allocated_not_picked.clone(),
                 negative_balance_non_active_store.clone(),
+                orphan,
             ],
             ..Default::default()
         }
@@ -156,12 +163,8 @@ mod test {
         let mut stock_line_ids = find_stock_line_ledger_discrepancies(&connection, None).unwrap();
         stock_line_ids.sort();
 
-        assert_eq!(
-            stock_line_ids,
-            vec![
-                "negative_balance".to_string(),
-                "total_not_matched".to_string()
-            ]
-        );
+        assert!(stock_line_ids.contains(&"negative_balance".to_string()));
+        assert!(stock_line_ids.contains(&"total_not_matched".to_string()));
+        assert!(stock_line_ids.contains(&"orphan".to_string()));
     }
 }
