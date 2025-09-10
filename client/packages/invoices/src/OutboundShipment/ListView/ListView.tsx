@@ -112,6 +112,7 @@ const OutboundShipmentListViewComponent: FC = () => {
   const mrtColumns = useMemo(
     (): ColumnDef<OutboundRowFragment>[] => [
       {
+        // todo; color picker
         id: 'otherPartyName',
         header: t('label.name'),
         accessorKey: 'otherPartyName',
@@ -135,10 +136,12 @@ const OutboundShipmentListViewComponent: FC = () => {
       {
         accessorKey: 'invoiceNumber',
         header: t('label.invoice-number'),
-        size: 140,
+        size: 150,
         align: 'right',
+        description: t('description.invoice-number'),
       },
       {
+        // todo - datetime?
         accessorKey: 'createdDatetime',
         header: t('label.created'),
         Cell: ({ cell }) =>
@@ -149,9 +152,12 @@ const OutboundShipmentListViewComponent: FC = () => {
       {
         accessorKey: 'theirReference',
         header: t('label.reference'),
-        // size: 100,
+        description: t('description.customer-reference'),
+        size: 175,
+        defaultHideOnMobile: true,
       },
       {
+        // todo: reusable
         accessorKey: 'comment',
         header: '',
         enableColumnActions: false,
@@ -184,7 +190,8 @@ const OutboundShipmentListViewComponent: FC = () => {
             style: 'currency',
             currency: 'USD',
           }).format(cell.getValue<number>()),
-        // size: 100,
+        size: 125,
+        defaultHideOnMobile: true,
       },
     ],
     []
