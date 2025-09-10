@@ -2311,6 +2311,7 @@
   "table.select-unselect-all-rows": "Sélectionner / désélectionner toutes les lignes",
   "table.show-columns": "Montrer / cacher les colonnes",
   "template.requisition-sent": "Autorisé(e) par {{name}}{{job}}. Courriel : {{email}} et Téléphone : {{phone}}.",
+  "title.adjustment-details": "Détails de l'ajustement",
   "text.months": "Mois",
   "title.amc": "CMM",
   "title.average-monthly-consumption": "Consommation mensuelle moyenne",
