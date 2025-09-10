@@ -105,12 +105,31 @@ export const calculateUnitQuantities = (
   };
 };
 
-export const lineStatusOptions = (status?: PurchaseOrderNodeStatus) =>
-  status === PurchaseOrderNodeStatus.New ||
-  status === PurchaseOrderNodeStatus.Authorised
-    ? [PurchaseOrderLineStatusNode.New]
-    : [
-        PurchaseOrderLineStatusNode.New,
-        PurchaseOrderLineStatusNode.Sent,
-        PurchaseOrderLineStatusNode.Closed,
-      ];
+type LineStatusOption = {
+  value: PurchaseOrderLineStatusNode;
+  disabled: boolean;
+};
+
+export const lineStatusOptions = (
+  status: PurchaseOrderNodeStatus
+): LineStatusOption[] => {
+  const disableNewOption =
+    status === PurchaseOrderNodeStatus.Confirmed ? true : false;
+  const disableOtherOptions =
+    status === PurchaseOrderNodeStatus.New ||
+    status === PurchaseOrderNodeStatus.Authorised
+      ? true
+      : false;
+
+  return [
+    {
+      value: PurchaseOrderLineStatusNode.New,
+      disabled: disableNewOption,
+    },
+    { value: PurchaseOrderLineStatusNode.Sent, disabled: disableOtherOptions },
+    {
+      value: PurchaseOrderLineStatusNode.Closed,
+      disabled: disableOtherOptions,
+    },
+  ];
+};
