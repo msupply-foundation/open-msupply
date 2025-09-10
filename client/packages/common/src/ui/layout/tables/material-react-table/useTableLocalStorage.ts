@@ -82,7 +82,8 @@ export const useTableLocalStorage = <T extends MRT_RowData>(
 
 export const getSavedTableState = (
   tableId: string,
-  defaultHiddenColumns: string[]
+  defaultHiddenColumns: string[],
+  defaultColumnPinning: { left: string[]; right: string[] }
 ) => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
@@ -92,7 +93,7 @@ export const getSavedTableState = (
   const {
     density = 'comfortable',
     hidden = defaultHiddenColumns,
-    pinned = { left: ['mrt-row-select'] },
+    pinned = defaultColumnPinning,
     columnSizing = {
       columnSizing: {
         'mrt-row-expand': 40,
