@@ -19,6 +19,10 @@ import {
   InvoiceLineNodeType,
   useIsGrouped,
   ColumnDef,
+  PaperHoverPopover,
+  MessageSquareIcon,
+  PaperPopoverSection,
+  ArrayUtils,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -88,54 +92,112 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
+  const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
+    row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
+
   const mrtColumns = useMemo(() => {
     const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
+      // toDO: reusable columns
       {
-        id: 'code',
+        id: 'note',
+        // header: t('label.code'),
+        header: '',
+        size: 60,
+        Cell: ({ row }) => {
+          const rowData = row.original;
+          let content = null;
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            const noteSections = lines
+              .map(({ batch, note }) => ({
+                header: batch ?? '',
+                body: note ?? '',
+              }))
+              .filter(({ body }) => !!body);
+            content = noteSections.length ? noteSections : null;
+          } else {
+            content =
+              rowData.batch && rowData.note
+                ? [{ header: rowData.batch, body: rowData.note }]
+                : null;
+          }
+
+          return content ? (
+            <PaperHoverPopover
+              width={400}
+              Content={
+                <PaperPopoverSection label={t('label.notes')}>
+                  {content.map(({ header, body }) => (
+                    // <NoteSection key={body} {...{ header, body }} />
+                    <>
+                      <b>{header}</b>
+                      <span>{body}</span>
+                    </>
+                  ))}
+                </PaperPopoverSection>
+              }
+            >
+              <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
+            </PaperHoverPopover>
+          ) : null;
+        },
+      },
+      {
         accessorKey: 'item.code',
         header: t('label.code'),
-        size: 120,
+        size: 125,
         filterVariant: 'text',
       },
       {
         accessorKey: 'itemName',
         header: t('label.name'),
         filterVariant: 'text',
-        // size: 140,
+        size: 400,
       },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
-        size: 130,
+        size: 100,
         filterVariant: 'text',
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
         filterVariant: 'date-range',
-        size: 160,
+        size: 110,
+        defaultHideOnMobile: true,
       },
       {
         // todo - anything that could return undefined should use accessorFn, so no warnings in console
-        id: 'vvm',
+        id: 'vvmStatus',
         accessorKey: 'vvmStatus.description',
         header: t('label.vvm-status'),
         includeColumn: manageVvmStatusForStock,
+        defaultHideOnMobile: true,
       },
       {
+        id: 'locationCode',
         accessorKey: 'location.code',
         header: t('label.location'),
         filterVariant: 'text',
+        size: 90,
+        defaultHideOnMobile: true,
       },
       {
+        id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
         filterVariant: 'select',
+        size: 125,
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
-        // defaultHideOnMobile: true,
+        size: 125,
+        align: 'right',
+        defaultHideOnMobile: true,
         // TO-DO: Create "number range" filter
         // filterType: 'number',
       },
@@ -146,13 +208,54 @@ const DetailViewInner = () => {
 
       {
         accessorKey: 'numberOfPacks',
-        header: t('label.num-packs'),
+        header: t('label.pack-quantity'),
+        align: 'right',
+        size: 100,
       },
       {
         accessorKey: 'unitQuantity',
         header: t('label.unit-quantity'),
-
+        align: 'right',
+        size: 100,
         description: t('description.unit-quantity'),
+        defaultHideOnMobile: true,
+      },
+
+      // if (manageVaccinesInDoses) {
+      //   columns.push(getDosesQuantityColumn(t));
+      // }
+      {
+        id: 'unitSellPrice',
+        header: t('label.unit-sell-price'),
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.getAveragePrice(lines, 'sellPricePerPack');
+          } else {
+            if (isDefaultPlaceholderRow(rowData)) return undefined;
+            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+          }
+        },
+      },
+      {
+        id: 'total',
+        header: t('label.total'),
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if ('lines' in rowData) {
+            return Object.values(rowData.lines).reduce(
+              (sum, batch) =>
+                sum + batch.sellPricePerPack * batch.numberOfPacks,
+              0
+            );
+          } else {
+            if (isDefaultPlaceholderRow(rowData)) return '';
+
+            const x = rowData.sellPricePerPack * rowData.numberOfPacks;
+            return x;
+          }
+        },
       },
     ];
 
@@ -166,6 +269,9 @@ const DetailViewInner = () => {
       tableId: 'outbound-shipment-detail-view',
       columns: mrtColumns,
       data: rows ?? [],
+      initialState: {
+        columnPinning: { left: ['item.code'] },
+      },
       onRowClick: onRowClick ? row => onRowClick(row) : () => {},
       isLoading: false,
       getIsPlaceholderRow: row => {
