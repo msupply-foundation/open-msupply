@@ -28,6 +28,7 @@ pub enum UpdatePurchaseOrderLineInputError {
     PackSizeCodeCombinationExists(PackSizeCodeCombination),
     DatabaseError(RepositoryError),
     ItemDoesNotExist,
+    CannotChangeStatus,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
