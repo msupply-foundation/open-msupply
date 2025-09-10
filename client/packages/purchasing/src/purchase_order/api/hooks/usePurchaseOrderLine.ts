@@ -1,6 +1,5 @@
 import {
   UpdatePurchaseOrderLineInput,
-  LIST_KEY,
   useMutation,
   usePatchState,
   useQuery,
@@ -231,14 +230,13 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () =>
-      queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY, storeId]),
+    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   });
 };
 
 const useUpdate = () => {
   const t = useTranslation();
-  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine);
 
   const updatePurchaseOrderLine = async (
@@ -278,7 +276,7 @@ const useUpdate = () => {
 
         return { success: false, error: errorMessage };
       }
-
+      queryClient.invalidateQueries([PURCHASE_ORDER]);
       return { success: true };
     } catch (e) {
       console.error('Error updating purchase order line:', e);
