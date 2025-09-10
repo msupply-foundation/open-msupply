@@ -81,8 +81,12 @@ export const PurchaseOrderLineEdit = ({
                     value: s,
                     label: t(`status.${s.toLowerCase()}` as LocaleKey),
                   }))}
-                  value={draft?.status || PurchaseOrderLineStatusNode.New}
-                  // onChange={value => update({ status: value })}
+                  value={draft?.status}
+                  onChange={event =>
+                    update({
+                      status: event.target.value as PurchaseOrderLineStatusNode,
+                    })
+                  }
                 />
               }
               sx={{

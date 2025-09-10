@@ -128,6 +128,7 @@ export function usePurchaseOrderLine(id?: string | null) {
       unit: draft.unit,
       supplierItemCode: setNullableInput('supplierItemCode', draft),
       comment: setNullableInput('comment', draft),
+      status: draft.status,
     };
     resetDraft();
     return await updatePurchaseOrderLine(input);
