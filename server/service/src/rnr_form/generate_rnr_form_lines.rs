@@ -173,6 +173,7 @@ fn get_master_list_item_ids(
     MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id)),
+            None,
         )
         .map(|lines| lines.into_iter().map(|line| line.item_id).collect())
 }

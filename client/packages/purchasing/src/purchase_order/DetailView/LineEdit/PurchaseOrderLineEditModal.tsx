@@ -60,7 +60,14 @@ export const PurchaseOrderLineEditModal = ({
       if (mode === ModalMode.Create) {
         await create();
       } else if (mode === ModalMode.Update) {
-        await update();
+        const res = await update();
+        const { success, error: updateError } = res;
+        if (!success) {
+          if (updateError) {
+            error(updateError)();
+          }
+          return false;
+        }
       }
       return true;
     } catch (e: unknown) {

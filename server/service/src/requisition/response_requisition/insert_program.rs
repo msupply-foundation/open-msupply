@@ -215,6 +215,7 @@ fn generate(
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
             MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(&master_list_id)),
+            None,
         )?
         .into_iter()
         .map(|line| line.item_id)
