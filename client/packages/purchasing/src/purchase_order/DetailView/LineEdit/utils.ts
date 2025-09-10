@@ -1,7 +1,10 @@
 import { ItemStockOnHandFragment } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { FnUtils } from '@common/utils';
-import { PurchaseOrderNodeStatus } from '@common/types';
+import {
+  PurchaseOrderLineStatusNode,
+  PurchaseOrderNodeStatus,
+} from '@common/types';
 
 export const createDraftPurchaseOrderLine = (
   item: ItemStockOnHandFragment,
@@ -23,6 +26,7 @@ export const createDraftPurchaseOrderLine = (
     // This value not actually saved to DB
     discountPercentage: 0,
     numberOfPacks: 0,
+    status: PurchaseOrderLineStatusNode.New,
   };
 };
 
@@ -100,3 +104,13 @@ export const calculateUnitQuantities = (
     adjustedNumberOfUnits: totalUnits,
   };
 };
+
+export const lineStatusOptions = (status?: PurchaseOrderNodeStatus) =>
+  status === PurchaseOrderNodeStatus.New ||
+  status === PurchaseOrderNodeStatus.Authorised
+    ? [PurchaseOrderLineStatusNode.New]
+    : [
+        PurchaseOrderLineStatusNode.New,
+        PurchaseOrderLineStatusNode.Sent,
+        PurchaseOrderLineStatusNode.Closed,
+      ];
