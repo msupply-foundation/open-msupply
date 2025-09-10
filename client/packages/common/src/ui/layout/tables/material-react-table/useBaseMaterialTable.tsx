@@ -68,6 +68,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableColumnOrdering: true,
     enableColumnDragging: false,
     enableRowSelection: true,
+    enableFacetedValues: true,
 
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,
@@ -108,9 +109,15 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     muiTablePaperProps: {
       sx: { width: '100%', display: 'flex', flexDirection: 'column' },
     },
+    muiTableProps: {
+      // Need to apply this here so that relative sizes (ems, %) within table
+      // are correct
+      sx: theme => ({ fontSize: theme.typography.body1.fontSize }),
+    },
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
         fontWeight: 600,
+        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         lineHeight: 1.2,
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
@@ -135,11 +142,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
                     : undefined,
               }
             : undefined,
+        // For Filter inputs -- add additional classes for other filter types as
+        // required
+        '& .MuiInputBase-input, & .MuiPickersInputBase-root': {
+          fontSize:
+            table.getState().density === 'compact' ? '0.90em' : '0.95em',
+        },
       },
     }),
-    muiTableBodyCellProps: ({ cell, row }) => ({
+    muiTableBodyCellProps: ({ cell, row, table }) => ({
       sx: {
-        fontSize: '14px',
+        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
@@ -158,6 +171,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
             color: !row.getCanExpand() ? 'transparent' : undefined,
           },
         }),
+        padding:
+          table.getState().density === 'spacious'
+            ? '0.7rem'
+            : table.getState().density === 'comfortable'
+              ? '0.35rem 0.5rem'
+              : undefined, // default for "compact",
 
         // Indent "sub-rows" when expanded
         paddingLeft:
@@ -199,6 +218,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
             ? 'background.secondary'
             : 'inherit',
           fontStyle: row.getCanExpand() ? 'italic' : 'normal',
+          cursor: onRowClick ? 'pointer' : 'default',
         },
       };
     },

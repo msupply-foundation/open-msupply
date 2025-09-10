@@ -14,26 +14,11 @@ import {
 } from 'material-react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
-import { ColumnDef } from './types';
-
-type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
-
-interface EnumOption {
-  value: string;
-  label: string;
-}
-
-export type PaginatedTableColumnDefinition<T extends MRT_RowData> =
-  ColumnDef<T> & {
-    filterType?: FilterType;
-    filterValues?: EnumOption[];
-  };
 
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends BaseTableConfig<T> {
   totalCount: number;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
-  columns: PaginatedTableColumnDefinition<T>[];
 }
 
 export const usePaginatedMaterialTable = <T extends MRT_RowData>({
