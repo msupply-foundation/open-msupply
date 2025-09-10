@@ -17,7 +17,12 @@ import {
   // resetSavedTableState,
   useTableLocalStorage,
 } from './useTableLocalStorage';
-import { useIntlUtils } from '@common/intl';
+import {
+  LocaleKey,
+  TypedTFunction,
+  useIntlUtils,
+  useTranslation,
+} from '@common/intl';
 import { isEqual } from '@common/utils';
 import { ListItemIcon, MenuItem } from '@mui/material';
 import { ColumnDef } from './types';
@@ -26,7 +31,6 @@ import { useMaterialTableColumns } from './useMaterialTableColumns';
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
   tableId: string; // key for local storage
-  data: (T & { isSubRow?: boolean; subRows?: T[] })[];
   onRowClick?: (row: T) => void;
   isLoading: boolean;
   getIsPlaceholderRow?: (row: T) => boolean;
@@ -50,6 +54,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   enableColumnResizing = true,
   ...tableOptions
 }: BaseTableConfig<T>) => {
+  const t = useTranslation();
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
@@ -63,7 +68,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   );
 
   const processedData = useMemo(
-    () => getGroupedRows(data, groupByField),
+    () => getGroupedRows(data, groupByField, t),
     [data, groupByField]
   );
 
@@ -136,13 +141,13 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
         fontWeight: 600,
-        fontSize: table.getState().density === 'compact' ? '0.95em' : '1em',
+        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         lineHeight: 1.2,
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
-        '& .Mui-TableHeadCell-Content svg': {
-          fontSize: '2em',
-          marginLeft: 0,
+        '& .Mui-TableHeadCell-Content-Actions': {
+          marginRight: '5px',
+          '& svg': { fontSize: '2em' },
         },
         // Allow date range filters to wrap if column is too narrow
         '& .MuiCollapse-wrapperInner > div': {
@@ -151,10 +156,19 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
           // Date picker should never need to be wider than 170px
           '& .MuiPickersTextField-root': { width: '170px' },
         },
-        button: {
-          visibility: column.id === 'mrt-row-expand' ? 'hidden' : undefined,
-        },
-        '& input::placeholder': {
+        button:
+          column.id === 'mrt-row-expand'
+            ? {
+                rotate: table.getIsAllRowsExpanded()
+                  ? '180deg'
+                  : !table.getIsSomeRowsExpanded()
+                    ? '-90deg'
+                    : undefined,
+              }
+            : undefined,
+        // For Filter inputs -- add additional classes for other filter types as
+        // required
+        '& .MuiInputBase-input, & .MuiPickersInputBase-root': {
           fontSize:
             table.getState().density === 'compact' ? '0.90em' : '0.95em',
         },
@@ -162,39 +176,37 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     }),
     muiTableBodyCellProps: ({ cell, row, table }) => ({
       sx: {
-        fontSize: table.getState().density === 'compact' ? '0.95em' : '1em',
+        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
           : getIsRestrictedRow(row.original)
             ? 'gray.main'
             : undefined,
-        // The expand chevron is rotated incorrectly by default (in terms of
-        // consistency with other Accordion/Expando UI elements in the app)
-        button: {
-          rotate: row.getIsExpanded() ? '180deg' : '-90deg',
-        },
-        // Hide the icon when there's nothing to expand
-        '& button.Mui-disabled': {
-          color:
-            cell.column.id === 'mrt-row-expand' && !row.getCanExpand()
-              ? 'transparent'
-              : undefined,
-        },
+
+        ...(cell.column.id === 'mrt-row-expand' && {
+          // The expand chevron is rotated incorrectly by default (in terms of
+          // consistency with other Accordion/Expando UI elements in the app)
+          button: {
+            rotate: row.getIsExpanded() ? '180deg' : '-90deg',
+          },
+          // Hide the icon when there's nothing to expand
+          '& button.Mui-disabled': {
+            color: !row.getCanExpand() ? 'transparent' : undefined,
+          },
+        }),
         padding:
           table.getState().density === 'spacious'
             ? '0.7rem'
             : table.getState().density === 'comfortable'
-              ? '0.35rem'
+              ? '0.35rem 0.5rem'
               : undefined, // default for "compact",
 
         // Indent "sub-rows" when expanded
         paddingLeft:
           row.original?.['isSubRow'] && cell.column.id !== 'mrt-row-select'
             ? '2em'
-            : table.getState().density === 'comfortable'
-              ? '0.5rem'
-              : undefined,
+            : undefined,
       },
     }),
 
@@ -262,7 +274,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   return table;
 };
 
-const getGroupedRows = <T,>(data: T[], groupByField?: keyof T): T[] => {
+const getGroupedRows = <T extends MRT_RowData>(
+  data: T[],
+  groupByField: keyof T | undefined,
+  t: TypedTFunction<LocaleKey>
+): (T & { isSubRow?: boolean; subRows?: T[] })[] => {
   if (!groupByField) return data;
 
   // Group rows by groupByField
@@ -293,7 +309,7 @@ const getGroupedRows = <T,>(data: T[], groupByField?: keyof T): T[] => {
         if (key === 'subRows' || key === 'isSubRow') continue;
         const values = groupRows.map(row => row[key as keyof T]);
         const allEqual = values.every(v => isEqual(v, values[0]));
-        summary[key] = allEqual ? values[0] : '[multiple]';
+        summary[key] = allEqual ? values[0] : t('multiple');
       }
       // Attach subRows
       summary['subRows'] = subRows;

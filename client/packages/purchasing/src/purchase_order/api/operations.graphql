@@ -32,7 +32,6 @@ fragment PurchaseOrder on PurchaseOrderNode {
   id
   number
   additionalInstructions
-  # advancePaidDatetime
   agentCommission
   authorisingOfficer1
   authorisingOfficer2
@@ -165,6 +164,22 @@ mutation insertPurchaseOrder(
   }
 }
 
+fragment ItemCannotBeOrdered on ItemCannotBeOrdered {
+  __typename
+  description
+  line {
+    id
+  }
+}
+
+fragment ItemsCannotBeOrdered on ItemsCannotBeOrdered {
+  __typename
+  description
+  lines {
+    ...ItemCannotBeOrdered
+  }
+}
+
 mutation updatePurchaseOrder(
   $input: UpdatePurchaseOrderInput!
   $storeId: String!
@@ -172,6 +187,14 @@ mutation updatePurchaseOrder(
   updatePurchaseOrder(input: $input, storeId: $storeId) {
     ... on IdResponse {
       id
+    }
+    ... on UpdatePurchaseOrderError {
+      __typename
+      error {
+        ... on ItemsCannotBeOrdered {
+          ...ItemsCannotBeOrdered
+        }
+      }
     }
   }
 }
@@ -356,6 +379,9 @@ mutation updatePurchaseOrderLine(
         ... on PurchaseOrderLineNotFound {
           __typename
           description
+        }
+        ... on ItemCannotBeOrdered {
+          ...ItemCannotBeOrdered
         }
       }
     }
