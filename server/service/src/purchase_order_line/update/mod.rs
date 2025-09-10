@@ -23,6 +23,7 @@ pub enum UpdatePurchaseOrderLineInputError {
     PurchaseOrderLineNotFound,
     PurchaseOrderDoesNotExist,
     CannotEditPurchaseOrder,
+    CannotEditPurchaseOrderLine,
     CannotAdjustRequestedQuantity,
     UpdatedLineDoesNotExist,
     PackSizeCodeCombinationExists(PackSizeCodeCombination),

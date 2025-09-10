@@ -36,6 +36,10 @@ pub fn validate(
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrder);
     }
 
+    if purchase_order_line.status == PurchaseOrderLineStatus::Closed {
+        return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrderLine);
+    }
+
     // check if pack size and item id combination already exists
     let existing_pack_item = PurchaseOrderLineRepository::new(connection).query(
         Pagination::all(),
