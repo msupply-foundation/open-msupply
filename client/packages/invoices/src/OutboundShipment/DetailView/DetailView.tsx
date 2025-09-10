@@ -100,8 +100,7 @@ const DetailViewInner = () => {
       // toDO: reusable columns
       {
         id: 'note',
-        // header: t('label.code'),
-        header: '',
+        header: t('label.note'),
         size: 60,
         Cell: ({ row }) => {
           const rowData = row.original;
@@ -145,8 +144,9 @@ const DetailViewInner = () => {
       {
         accessorKey: 'item.code',
         header: t('label.code'),
-        size: 125,
+        size: 120,
         filterVariant: 'text',
+        pin: 'left',
       },
       {
         accessorKey: 'itemName',
@@ -269,9 +269,6 @@ const DetailViewInner = () => {
       tableId: 'outbound-shipment-detail-view',
       columns: mrtColumns,
       data: rows ?? [],
-      initialState: {
-        columnPinning: { left: ['item.code'] },
-      },
       onRowClick: onRowClick ? row => onRowClick(row) : () => {},
       isLoading: false,
       getIsPlaceholderRow: row => {

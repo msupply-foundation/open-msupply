@@ -50,16 +50,25 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
       });
 
     const defaultHiddenColumns = simplifiedMobileView
-      ? columns
-          .filter(col => col.defaultHideOnMobile)
-          .map(col => String(col.id ?? col.accessorKey))
+      ? columns.filter(col => col.defaultHideOnMobile).map(columnId)
       : [];
 
-    return { columns, defaultHiddenColumns };
+    const defaultColumnPinning = {
+      left: [
+        'mrt-row-select',
+        ...columns.filter(col => col.pin === 'left').map(columnId),
+      ],
+      right: columns.filter(col => col.pin === 'right').map(columnId),
+    };
+
+    return { columns, defaultHiddenColumns, defaultColumnPinning };
   }, [omsColumns]);
 
   return tableDefinition;
 };
+
+const columnId = <T extends MRT_RowData>(column: ColumnDef<T>): string =>
+  column.id ?? column.accessorKey ?? '';
 
 export const useManualTableFilters = <T extends MRT_RowData>(
   columns: ColumnDef<T>[]
