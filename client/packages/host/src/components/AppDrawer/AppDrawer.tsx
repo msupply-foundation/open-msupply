@@ -29,6 +29,7 @@ import {
   ReplenishmentNav,
   ManageNav,
   ProgramsNav,
+  CatalogueNav,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
@@ -209,6 +210,7 @@ export const AppDrawer: React.FC = () => {
       <LowerListContainer onMouseEnter={onHoverOver} onMouseLeave={onHoverOut}>
         <List>
           {drawer.isOpen && <StyledDivider color="drawerDivider" />}
+          <CatalogueNav />
           <ManageNav store={store} />
           <AppNavLink
             to={AppRoute.Settings}
