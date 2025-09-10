@@ -300,7 +300,9 @@ export type UpdatePurchaseOrderMutationVariables = Types.Exact<{
 
 export type UpdatePurchaseOrderMutation = {
   __typename: 'Mutations';
-  updatePurchaseOrder: { __typename: 'IdResponse'; id: string };
+  updatePurchaseOrder:
+    | { __typename: 'IdResponse'; id: string }
+    | { __typename: 'UpdatePurchaseOrderError' };
 };
 
 export type DeletePurchaseOrderMutationVariables = Types.Exact<{
@@ -509,6 +511,7 @@ export type UpdatePurchaseOrderLineMutation = {
         error:
           | { __typename: 'CannotAdjustRequestedQuantity'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | { __typename: 'ItemCannotBeOrdered'; description: string }
           | { __typename: 'PurchaseOrderDoesNotExist'; description: string }
           | { __typename: 'PurchaseOrderLineNotFound'; description: string }
           | { __typename: 'UpdatedLineDoesNotExist'; description: string };

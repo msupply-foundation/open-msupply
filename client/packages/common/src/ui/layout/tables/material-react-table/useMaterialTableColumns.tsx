@@ -7,9 +7,10 @@
  * current URL query into the filter state required by MRT.
  */
 import { useMemo } from 'react';
-import { MRT_ColumnDef, MRT_RowData } from 'material-react-table';
+import { MRT_RowData } from 'material-react-table';
 import {
   DateUtils,
+  mergeCellProps,
   useFormatDateTime,
   useUrlQuery,
 } from '@openmsupply-client/common';
@@ -17,24 +18,43 @@ import {
 import { ColumnDef } from './types';
 
 export const useMaterialTableColumns = <T extends MRT_RowData>(
-  columns: ColumnDef<T>[]
+  omsColumns: ColumnDef<T>[]
 ) => {
-  const mrtColumnDefinitions = useMemo(() => {
-    // const mrtDefinitions = columns.map((col): MRT_ColumnDef<T> => {
-    //   return {
-    //     visibleInShowHideMenu: col.showColumn ?? true,
-    //     ...col,
-    //     // enableColumnFilter: col.filterVariant, -
-    //   };
-    // });
+  const tableDefinitions = useMemo(() => {
+    const defaultOrder: string[] = omsColumns.map(
+      col => col.id ?? (col.accessorKey as string)
+    );
 
-    const order = columns.map(col => String(col.id || col.accessorKey));
-    const mrtDefinitions = columns.filter(col => col.showColumn !== false);
+    const columns = omsColumns
+      .filter(col => col.includeColumn !== false)
+      .map(col => {
+        if (col.align) {
+          col.muiTableBodyCellProps = params => {
+            // Add alignment styling
+            return mergeCellProps(
+              {
+                sx:
+                  col.align === 'right'
+                    ? {
+                        justifyContent: 'flex-end',
+                        paddingRight: '2em', // Padding to account for header icons
+                      }
+                    : col.align === 'center'
+                      ? // To-DO: Add padding for center aligned cells
+                        { justifyContent: 'center' }
+                      : {},
+              },
+              params
+            );
+          };
+        }
+        return col;
+      });
 
-    return { order, mrtDefinitions };
-  }, [columns]);
+    return { columns, defaultOrder };
+  }, [omsColumns]);
 
-  return mrtColumnDefinitions;
+  return tableDefinitions;
 };
 
 export const useManualTableFilters = <T extends MRT_RowData>(

@@ -142,6 +142,7 @@ export type ItemStockOnHandFragment = {
   itemStoreProperties?: {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
+    ignoreForOrders: boolean;
   } | null;
 };
 
@@ -168,6 +169,7 @@ export type ItemRowWithStatsFragment = {
   itemStoreProperties?: {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
+    ignoreForOrders: boolean;
   } | null;
 };
 
@@ -495,6 +497,7 @@ export type ItemFragment = {
   itemStoreProperties?: {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
+    ignoreForOrders: boolean;
   } | null;
 };
 
@@ -715,6 +718,7 @@ export type ItemsWithStockLinesQuery = {
       itemStoreProperties?: {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
+        ignoreForOrders: boolean;
       } | null;
     }>;
   };
@@ -775,6 +779,7 @@ export type ItemStockOnHandQuery = {
       itemStoreProperties?: {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
+        ignoreForOrders: boolean;
       } | null;
     }>;
   };
@@ -1051,6 +1056,7 @@ export type ItemByIdQuery = {
       itemStoreProperties?: {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
+        ignoreForOrders: boolean;
       } | null;
     }>;
   };
@@ -1539,6 +1545,7 @@ export const ItemStockOnHandFragmentDoc = gql`
     availableStockOnHand(storeId: $storeId)
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
+      ignoreForOrders
     }
   }
   ${ItemWithPackSizeFragmentDoc}
@@ -1758,6 +1765,7 @@ export const ItemFragmentDoc = gql`
     }
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
+      ignoreForOrders
     }
   }
   ${LocationTypeFragmentDoc}
