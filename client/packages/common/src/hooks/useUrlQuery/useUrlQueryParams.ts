@@ -55,6 +55,8 @@ export const useUrlQueryParams = ({
   // usually a 'startsWith'
   const skipParse = filters.length > 0 ? filters.map(f => f.key) : ['filter'];
 
+  // TO-DO: Remove this after all tables have been replaced with the new table
+  // library
   const [storedRowsPerPage] = useLocalStorage(
     '/pagination/rowsperpage',
     DEFAULT_RECORDS_PER_PAGE
