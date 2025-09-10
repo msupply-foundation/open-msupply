@@ -174,9 +174,9 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::PackSizeCodeCombinationExists(_pack_size_code_combination) => {
             BadUserInput(formatted_error)
         }
-        ServiceError::ItemDoesNotExist | ServiceError::CannotChangeStatus => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::ItemDoesNotExist
+        | ServiceError::CannotChangeStatus
+        | ServiceError::CannotEditPurchaseOrderLine => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
