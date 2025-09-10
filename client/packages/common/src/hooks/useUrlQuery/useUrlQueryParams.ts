@@ -55,9 +55,7 @@ export const useUrlQueryParams = ({
   // usually a 'startsWith'
   const skipParse = filters.length > 0 ? filters.map(f => f.key) : ['filter'];
 
-  // TO-DO: Remove this after all tables have been replaced with the new table
-  // library
-  const [storedRowsPerPage] = useLocalStorage(
+  const [storedRowsPerPage, setStoredRowsPerPage] = useLocalStorage(
     '/pagination/rowsperpage',
     DEFAULT_RECORDS_PER_PAGE
   );
@@ -84,13 +82,17 @@ export const useUrlQueryParams = ({
     [updateQuery]
   );
 
-  const updatePaginationQuery = (page: number, pageSize?: number) => {
+  const updatePaginationQuery = (
+    page: number,
+    pageSize: number = rowsPerPage
+  ) => {
     // Page is zero-indexed in useQueryParams store, so increase it by one
     updateQuery({
       page: page === 0 ? '' : page + 1,
       pageSize:
         pageSize && pageSize !== DEFAULT_RECORDS_PER_PAGE ? pageSize : '',
     });
+    setStoredRowsPerPage(pageSize);
   };
 
   const updateFilterQuery = (key: string, value: string) => {
