@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
   Grid,
@@ -15,10 +15,10 @@ interface AppBarButtonProps {
   onAddItem: () => void;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
+export const AppBarButtonsComponent = ({
   onAddItem,
   isDisabled,
-}) => {
+}: AppBarButtonProps) => {
   const { OpenButton } = useDetailPanel();
 
   const {
