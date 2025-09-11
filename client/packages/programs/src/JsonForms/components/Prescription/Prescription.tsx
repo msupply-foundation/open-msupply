@@ -122,8 +122,19 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const handleUpdateQuantity = (stocklineId: string, numberOfPacks: number) => {
+    const prescribedQuantity = draftLines.reduce((acc, line) => {
+      // if this is the line being updated, use the new number of packs to
+      // calculate the prescribed quantity
+      if (line.id === stocklineId) {
+        return acc + numberOfPacks * line.packSize;
+      }
+      // Otherwise, sum up the total for the lines as they are
+      return acc + (line.numberOfPacks * line.packSize);
+    }, 0);
+
+    // Only set prescribed quantity on the current line, others get reset to null
     const newDraftLines = draftLines.map(line =>
-      line.id === stocklineId ? { ...line, numberOfPacks, prescribedQuantity: (numberOfPacks * line.packSize) } : line
+      line.id === stocklineId ? { ...line, numberOfPacks, prescribedQuantity } : {...line, numberOfPacks, prescribedQuantity: null}
     );
     setDraftLines(newDraftLines);
     formActions.setState(`${path}_stockline`, newDraftLines);
