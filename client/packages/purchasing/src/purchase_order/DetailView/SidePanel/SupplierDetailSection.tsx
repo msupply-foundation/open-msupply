@@ -39,6 +39,11 @@ export const SupplierDetailSection = ({
     onChange({ supplierDiscountPercentage: value });
   };
 
+  const handleSupplierDiscountAmountChange = (value: number | undefined) => {
+    if (value == null || value === draft?.supplierDiscountAmount) return;
+    onChange({ supplierDiscountAmount: value });
+  };
+
   return (
     <DetailPanelSection title={t('label.supplier-details')}>
       <Grid container gap={2} key="supplier-detail-section">
@@ -56,8 +61,8 @@ export const SupplierDetailSection = ({
           <NumericTextInput
             value={draft?.supplierDiscountAmount ?? 0}
             max={100}
-            disabled
             slotProps={slotProps}
+            onChange={handleSupplierDiscountAmountChange}
           />
         </PanelRow>
       </Grid>
