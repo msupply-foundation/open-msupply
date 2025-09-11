@@ -7205,6 +7205,7 @@ export type PurchaseOrderLineError = {
 export type PurchaseOrderLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
 };
 
@@ -7220,6 +7221,7 @@ export type PurchaseOrderLineNode = {
   note?: Maybe<Scalars['String']['output']>;
   pricePerUnitAfterDiscount: Scalars['Float']['output'];
   pricePerUnitBeforeDiscount: Scalars['Float']['output'];
+  purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
   receivedNumberOfUnits: Scalars['Float']['output'];
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -7246,6 +7248,7 @@ export enum PurchaseOrderLineSortFieldInput {
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   ItemName = 'itemName',
   LineNumber = 'lineNumber',
+  PurchaseOrderNumber = 'purchaseOrderNumber',
   RequestedDeliveryDate = 'requestedDeliveryDate',
 }
 
