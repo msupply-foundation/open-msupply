@@ -30,14 +30,14 @@ export const SidePanel = (): ReactElement => {
 
   return (
     <DetailPanelPortal>
+      <PricingSection draft={draft} />
       <SupplierDetailSection draft={draft} onChange={handleChange} />
-      <DateSection draft={draft} onUpdate={handleUpdate} />
       <OtherSection
         draft={draft}
         onUpdate={handleUpdate}
         onChange={handleChange}
       />
-      <PricingSection draft={draft} />
+      <DateSection draft={draft} onUpdate={handleUpdate} />
     </DetailPanelPortal>
   );
 };

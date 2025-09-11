@@ -111,24 +111,6 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
         </Grid>
         <Grid display="flex" flexDirection="column" gap={1}>
           <InputWithLabelRow
-            label={t('label.requested-delivery-date')}
-            Input={
-              <DateTimePickerInput
-                value={requestedDeliveryDate}
-                onChange={date => {
-                  setRequestedDeliveryDate(date);
-                  const formattedDate = Formatter.naiveDate(date);
-                  handleUpdate({
-                    requestedDeliveryDate: formattedDate,
-                  });
-                }}
-                width={250}
-              />
-            }
-          />
-        </Grid>
-        <Grid display="flex" flexGrow={1} flexDirection="column" gap={1}>
-          <InputWithLabelRow
             label={t('label.currency')}
             Input={
               <CurrencyAutocomplete
@@ -146,8 +128,26 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                 value={draft?.foreignExchangeRate ?? 0}
                 onChange={handleForeignExchangeRateChange}
                 decimalLimit={4}
-                disabled={!!draft?.confirmedDatetime}
+                disabled={true}
                 width={150}
+              />
+            }
+          />
+        </Grid>
+        <Grid display="flex" flexGrow={1} flexDirection="column" gap={1}>
+          <InputWithLabelRow
+            label={t('label.requested-delivery-date')}
+            Input={
+              <DateTimePickerInput
+                value={requestedDeliveryDate}
+                onChange={date => {
+                  setRequestedDeliveryDate(date);
+                  const formattedDate = Formatter.naiveDate(date);
+                  handleUpdate({
+                    requestedDeliveryDate: formattedDate,
+                  });
+                }}
+                width={250}
               />
             }
           />
