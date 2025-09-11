@@ -11,8 +11,13 @@ import {
   DateUtils,
   Formatter,
   useNotification,
+  NumericTextInput,
 } from '@openmsupply-client/common';
-import { SupplierSearchInput } from '@openmsupply-client/system';
+import {
+  CurrencyAutocomplete,
+  CurrencyRowFragment,
+  SupplierSearchInput,
+} from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
 import { PurchaseOrderFragment } from '../api';
@@ -23,8 +28,9 @@ interface ToolbarProps {
 
 export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
-  const { error } = useNotification();
+  const { error, warning } = useNotification();
   const {
+    draft,
     query: { data, isLoading },
     lines: { itemFilter, setItemFilter },
     update: { update },
@@ -40,6 +46,22 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
       update(input);
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();
+    }
+  };
+
+  const handleCurrencyChange = (currency: CurrencyRowFragment | null) => {
+    if (!currency) return;
+    handleChange({
+      currencyId: currency.id,
+      foreignExchangeRate: currency.rate,
+    });
+  };
+
+  const handleForeignExchangeRateChange = (value: number | undefined) => {
+    if (value == null || value === draft?.foreignExchangeRate) return;
+    if (draft?.foreignExchangeRate !== value) {
+      warning(t('warning.foreign-exchange-rate-different'))();
+      handleChange({ foreignExchangeRate: value });
     }
   };
 
@@ -87,7 +109,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             }
           />
         </Grid>
-        <Grid display="flex" flexGrow={1} flexDirection="column" gap={1}>
+        <Grid display="flex" flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('label.requested-delivery-date')}
             Input={
@@ -100,10 +122,36 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                     requestedDeliveryDate: formattedDate,
                   });
                 }}
+                width={250}
               />
             }
           />
-          <Grid sx={{ justifyContent: 'flex-end', display: 'flex' }}>
+        </Grid>
+        <Grid display="flex" flexGrow={1} flexDirection="column" gap={1}>
+          <InputWithLabelRow
+            label={t('label.currency')}
+            Input={
+              <CurrencyAutocomplete
+                currencyId={draft?.currencyId}
+                onChange={handleCurrencyChange}
+                width={150}
+                disabled={!!draft?.confirmedDatetime}
+              />
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.foreign-exchange-rate')}
+            Input={
+              <NumericTextInput
+                value={draft?.foreignExchangeRate ?? 0}
+                onChange={handleForeignExchangeRateChange}
+                decimalLimit={4}
+                disabled={!!draft?.confirmedDatetime}
+                width={150}
+              />
+            }
+          />
+          <Grid justifyContent="flex-end" display="flex">
             <SearchBar
               placeholder={t('placeholder.filter-items')}
               value={itemFilter ?? ''}
