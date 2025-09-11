@@ -20,7 +20,6 @@ import {
   useIsGrouped,
   ColumnDef,
   ArrayUtils,
-  getItemNameColumn,
   getNoteColumn,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
@@ -96,27 +95,40 @@ const DetailViewInner = () => {
 
   const mrtColumns = useMemo(() => {
     const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
+      // // I actually think we should remove this for outbound shipments,
+      // // there's no way I can see to set the note - might just be hanging around from copy-paste?
+      // getNoteColumn(t, rowData =>
+      //   'lines' in rowData
+      //     ? rowData.lines.map(({ batch, note }) => ({
+      //         header: batch ?? '',
+      //         body: note ?? '',
+      //       }))
+      //     : [{ header: rowData.batch ?? '', body: rowData.note ?? '' }]
+      // ),
       {
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
-        filterVariant: 'text',
         pin: 'left',
+        enableColumnFilter: true,
       },
-      getItemNameColumn(t),
+      {
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 400,
+        enableColumnFilter: true,
+      },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
-        size: 100,
-        filterVariant: 'text',
         defaultHideOnMobile: true,
       },
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
-        filterVariant: 'date-range',
-        size: 110,
+        columnType: 'date',
         defaultHideOnMobile: true,
+        enableColumnFilter: true,
       },
       {
         // todo - anything that could return undefined should use accessorFn, so no warnings in console
@@ -131,7 +143,6 @@ const DetailViewInner = () => {
         accessorKey: 'location.code',
         header: t('label.location'),
         filterVariant: 'text',
-        size: 90,
         defaultHideOnMobile: true,
       },
       {
@@ -139,14 +150,12 @@ const DetailViewInner = () => {
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
         filterVariant: 'select',
-        size: 125,
         defaultHideOnMobile: true,
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
-        size: 125,
-        align: 'right',
+        columnType: 'number',
         defaultHideOnMobile: true,
         // TO-DO: Create "number range" filter
         // filterType: 'number',
@@ -159,16 +168,21 @@ const DetailViewInner = () => {
       {
         accessorKey: 'numberOfPacks',
         header: t('label.pack-quantity'),
-        align: 'right',
-        size: 100,
+        columnType: 'number',
       },
       {
-        accessorKey: 'unitQuantity',
+        id: 'unitQuantity',
         header: t('label.unit-quantity'),
-        align: 'right',
-        size: 100,
         description: t('description.unit-quantity'),
+        columnType: 'number',
         defaultHideOnMobile: true,
+        accessorFn: row => {
+          if ('lines' in row) return ArrayUtils.getUnitQuantity(row.lines);
+
+          return isDefaultPlaceholderRow(row)
+            ? ''
+            : row.packSize * row.numberOfPacks;
+        },
       },
 
       // if (manageVaccinesInDoses) {
@@ -177,6 +191,7 @@ const DetailViewInner = () => {
       {
         id: 'unitSellPrice',
         header: t('label.unit-sell-price'),
+        columnType: 'currency',
         defaultHideOnMobile: true,
         accessorFn: rowData => {
           if ('lines' in rowData) {
@@ -191,6 +206,7 @@ const DetailViewInner = () => {
       {
         id: 'total',
         header: t('label.total'),
+        columnType: 'currency',
         defaultHideOnMobile: true,
         accessorFn: rowData => {
           if ('lines' in rowData) {
@@ -207,16 +223,6 @@ const DetailViewInner = () => {
           }
         },
       },
-      // Moved the end, I actually think we should remove this for outbound shipments,
-      // there's no way I can see to set the note - might just be hanging around from copy-paste?
-      getNoteColumn(t, rowData =>
-        'lines' in rowData
-          ? rowData.lines.map(({ batch, note }) => ({
-              header: batch ?? '',
-              body: note ?? '',
-            }))
-          : [{ header: rowData.batch ?? '', body: rowData.note ?? '' }]
-      ),
     ];
 
     return cols;

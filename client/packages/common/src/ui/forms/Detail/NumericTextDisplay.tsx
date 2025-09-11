@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, SxProps, Tooltip, Typography } from '@mui/material';
 import { useFormatNumber } from '@common/intl';
 import { NumUtils } from '@common/utils';
 
@@ -17,6 +17,7 @@ interface NumericTextDisplayProps {
   width?: number | string;
   packagingDisplay?: string;
   decimalLimit?: number;
+  sx?: SxProps;
 }
 
 export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
@@ -25,6 +26,7 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   width = 50,
   packagingDisplay,
   decimalLimit = 2,
+  sx,
 }) => {
   const format = useFormatNumber();
   const tooltip = value ? format.round(value ?? undefined, 10) : null;
@@ -34,11 +36,7 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
     value === undefined || value === null ? defaultValue : formattedValue;
 
   return (
-    <Box
-      sx={{
-        padding: '4px 8px',
-      }}
-    >
+    <Box sx={sx ?? { padding: '4px 8px' }}>
       <Tooltip title={tooltip}>
         <Typography
           style={{

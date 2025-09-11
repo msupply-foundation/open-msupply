@@ -136,12 +136,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
         fontWeight: 600,
-        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
+        fontSize: table.getState().density === 'compact' ? '0.9em' : '1em',
         lineHeight: 1.2,
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
+        '& .Mui-TableHeadCell-Content-Wrapper': {
+          // Allow column names to wrap if needed
+          whiteSpace:
+            table.getState().density === 'compact' ? undefined : 'unset',
+        },
+
         '& .Mui-TableHeadCell-Content-Actions': {
-          marginRight: '5px',
           '& svg': { fontSize: '2em' },
         },
         // Allow date range filters to wrap if column is too narrow
