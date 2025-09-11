@@ -14,9 +14,9 @@ import {
   NumberCell,
   RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { PurchaseOrderLineFragment } from '../../api/operations.generated';
 import { usePurchaseOrderLineList } from '../../api/hooks/usePurchaseOrderLineList';
-import { AppRoute } from 'packages/config/src';
 
 const OutstandingLinesList = () => {
   const t = useTranslation();
