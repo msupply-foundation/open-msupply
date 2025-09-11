@@ -60,7 +60,6 @@ export const SupplierDetailSection = ({
           <PanelLabel>{t('label.supplier-discount-amount')}</PanelLabel>
           <NumericTextInput
             value={draft?.supplierDiscountAmount ?? 0}
-            max={100}
             slotProps={slotProps}
             onChange={handleSupplierDiscountAmountChange}
           />
