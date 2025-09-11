@@ -20,7 +20,7 @@ import {
   useIsGrouped,
   ColumnDef,
   ArrayUtils,
-  getNoteColumn,
+  Groupable,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -35,6 +35,7 @@ import { StockOutLineFragment } from '../../StockOut';
 import { CustomerReturnEditModal } from '../../Returns';
 import { canReturnOutboundLines } from '../../utils';
 import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEdit';
+import { useOutboundLines } from '../api/hooks/line/useOutboundLines';
 
 const DetailViewInner = () => {
   const t = useTranslation();
@@ -55,7 +56,7 @@ const DetailViewInner = () => {
 
   const { data, isLoading } = useOutbound.document.get();
   const { isGrouped } = useIsGrouped('outboundShipment');
-  const { rows } = useOutbound.line.rows(false);
+  const { data: rows } = useOutboundLines();
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -94,7 +95,7 @@ const DetailViewInner = () => {
     row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
 
   const mrtColumns = useMemo(() => {
-    const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
+    const cols: ColumnDef<Groupable<StockOutLineFragment>>[] = [
       // // I actually think we should remove this for outbound shipments,
       // // there's no way I can see to set the note - might just be hanging around from copy-paste?
       // getNoteColumn(t, rowData =>
@@ -131,16 +132,15 @@ const DetailViewInner = () => {
         enableColumnFilter: true,
       },
       {
-        // todo - anything that could return undefined should use accessorFn, so no warnings in console
         id: 'vvmStatus',
-        accessorKey: 'vvmStatus.description',
+        accessorFn: row => row.vvmStatus?.description ?? '',
         header: t('label.vvm-status'),
         includeColumn: manageVvmStatusForStock,
         defaultHideOnMobile: true,
       },
       {
         id: 'locationCode',
-        accessorKey: 'location.code',
+        accessorFn: row => row.location?.code ?? '',
         header: t('label.location'),
         filterVariant: 'text',
         defaultHideOnMobile: true,
@@ -177,7 +177,8 @@ const DetailViewInner = () => {
         columnType: 'number',
         defaultHideOnMobile: true,
         accessorFn: row => {
-          if ('lines' in row) return ArrayUtils.getUnitQuantity(row.lines);
+          if ('subRows' in row)
+            return ArrayUtils.getUnitQuantity(row.subRows ?? []);
 
           return isDefaultPlaceholderRow(row)
             ? ''
@@ -186,7 +187,7 @@ const DetailViewInner = () => {
       },
 
       // if (manageVaccinesInDoses) {
-      //   columns.push(getDosesQuantityColumn(t));
+      //   columns.push(getDosesQuantityColumn(t))
       // }
       {
         id: 'unitSellPrice',
@@ -194,9 +195,11 @@ const DetailViewInner = () => {
         columnType: 'currency',
         defaultHideOnMobile: true,
         accessorFn: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getAveragePrice(lines, 'sellPricePerPack');
+          if ('subRows' in rowData) {
+            return ArrayUtils.getAveragePrice(
+              rowData.subRows ?? [],
+              'sellPricePerPack'
+            );
           } else {
             if (isDefaultPlaceholderRow(rowData)) return undefined;
             return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
@@ -209,8 +212,8 @@ const DetailViewInner = () => {
         columnType: 'currency',
         defaultHideOnMobile: true,
         accessorFn: rowData => {
-          if ('lines' in rowData) {
-            return Object.values(rowData.lines).reduce(
+          if ('subRows' in rowData) {
+            return Object.values(rowData.subRows ?? []).reduce(
               (sum, batch) =>
                 sum + batch.sellPricePerPack * batch.numberOfPacks,
               0
@@ -229,24 +232,15 @@ const DetailViewInner = () => {
   }, [manageVvmStatusForStock]);
 
   const { table, selectedRows, resetRowSelection } =
-    useNonPaginatedMaterialTable<StockOutLineFragment | StockOutItem>({
+    useNonPaginatedMaterialTable<StockOutLineFragment>({
       tableId: 'outbound-shipment-detail-view',
       columns: mrtColumns,
       data: rows ?? [],
       onRowClick: onRowClick ? row => onRowClick(row) : () => {},
       isLoading: false,
-      getIsPlaceholderRow: row => {
-        if ('type' in row) {
-          return (
-            row.type === InvoiceLineNodeType.UnallocatedStock ||
-            row.numberOfPacks === 0
-          );
-        } else {
-          return row.lines.some(
-            line => line.type === InvoiceLineNodeType.UnallocatedStock
-          );
-        }
-      },
+      getIsPlaceholderRow: row =>
+        row.type === InvoiceLineNodeType.UnallocatedStock ||
+        row.numberOfPacks === 0,
       groupByField: isGrouped ? 'itemName' : undefined,
     });
 

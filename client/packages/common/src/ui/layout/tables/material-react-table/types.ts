@@ -19,3 +19,9 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   align?: 'left' | 'center' | 'right';
   // overflow?: 'ellipsis' | 'wrap'; // TO-DO -- will only affect "dense" layout
 };
+
+/** Use when you have `groupByField` enabled, to allow for typing of `subRows` */
+export type Groupable<T extends MRT_RowData> = T & {
+  isSubRow?: boolean;
+  subRows?: T[];
+};

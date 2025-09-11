@@ -47,6 +47,8 @@ export const useManualTableFilters = <T extends MRT_RowData>(
             });
           };
           break;
+
+        // TODO: other filter types, number, boolean
       }
     });
 
