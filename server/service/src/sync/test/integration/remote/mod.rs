@@ -68,7 +68,8 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         replace_system_name_ids(&mut integration_records, &previous_connection);
 
         // Integrate
-        integrate_with_is_sync_reset(&previous_connection, &integration_records);
+        let integration_records =
+            integrate_with_is_sync_reset(&previous_connection, integration_records);
         // Push integrated changes
         previous_synchroniser.sync(None).await.unwrap();
         // Re initialise

@@ -228,7 +228,7 @@ export const themeOptions = {
     background: {
       group: '#e2e2e9',
       drawer: '#f2f2f5',
-      row: '#f2f2f5',
+      row: '#fafafc',
       icon: '#E5EEFF',
       login: '#f2f2f5',
       menu: '#f2f2f5',
@@ -236,6 +236,7 @@ export const themeOptions = {
       white: '#fff',
       success: 'rgb(237, 247, 237)',
       input: { main: '#f2f2f5', disabled: '#fafafc' },
+      secondary: '#E8F1FE',
     },
     form: {
       field: '#555770',

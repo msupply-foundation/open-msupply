@@ -1,6 +1,9 @@
-use crate::types::{InvoiceLineConnector, RequisitionLineNode, StockLineNode, StocktakeLineNode};
+use crate::types::{
+    InvoiceLineConnector, PurchaseOrderLineNode, RequisitionLineNode, StockLineNode,
+    StocktakeLineNode,
+};
 use async_graphql::*;
-use repository::{RequisitionLine, StockLine, StocktakeLine};
+use repository::{PurchaseOrderLine, RequisitionLine, StockLine, StocktakeLine};
 
 pub struct CannotDeleteInvoiceWithLines(pub InvoiceLineConnector);
 #[Object]
@@ -67,6 +70,22 @@ impl SnapshotCountCurrentCountMismatchLine {
     }
 
     pub async fn stocktake_line(&self) -> &StocktakeLineNode {
+        &self.0
+    }
+}
+
+pub struct ItemCannotBeOrdered(pub PurchaseOrderLineNode);
+impl ItemCannotBeOrdered {
+    pub fn from_domain(line: PurchaseOrderLine) -> Self {
+        ItemCannotBeOrdered(PurchaseOrderLineNode::from_domain(line))
+    }
+}
+#[Object]
+impl ItemCannotBeOrdered {
+    pub async fn description(&self) -> &str {
+        "This item cannot be ordered."
+    }
+    pub async fn line(&self) -> &PurchaseOrderLineNode {
         &self.0
     }
 }

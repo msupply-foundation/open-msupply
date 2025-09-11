@@ -4,7 +4,7 @@ import { ReasonOptionRowFragment, StockLineRowFragment } from '../../..';
 import { STOCK_LINE } from './keys';
 import { useStockGraphQL } from '../useStockGraphQL';
 
-type DraftInventoryAdjustment = {
+export type DraftInventoryAdjustment = {
   reason: ReasonOptionRowFragment | null;
   adjustment: number;
   adjustmentType: AdjustmentTypeInput;

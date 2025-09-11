@@ -31,6 +31,7 @@ pub enum InsertPurchaseOrderLineError {
     PackSizeCodeCombinationExists(PackSizeCodeCombination),
     DatabaseError(RepositoryError),
     CannotFindItemByCode(String),
+    ItemCannotBeOrdered,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]

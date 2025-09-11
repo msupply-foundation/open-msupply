@@ -173,7 +173,7 @@ impl Upsert for GoodsReceivedLineRow {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GoodsReceivedLineDelete(pub String);
 impl Delete for GoodsReceivedLineDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {

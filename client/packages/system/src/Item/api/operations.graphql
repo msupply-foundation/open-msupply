@@ -103,6 +103,7 @@ fragment ItemStockOnHand on ItemNode {
   availableStockOnHand(storeId: $storeId)
   itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
+    ignoreForOrders
   }
 }
 fragment ItemRowWithStats on ItemNode {
@@ -235,6 +236,7 @@ fragment Item on ItemNode {
   }
   itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
+    ignoreForOrders
   }
 }
 

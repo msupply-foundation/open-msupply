@@ -8,6 +8,7 @@ import {
   Tooltip,
   DateTimePickerInput,
   DateUtils,
+  Formatter,
 } from '@openmsupply-client/common';
 import { useGoodsReceived } from '../api/hooks';
 
@@ -19,6 +20,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
   const {
     query: { data },
+    update: { update },
   } = useGoodsReceived();
 
   return (
@@ -42,7 +44,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   size="small"
                   value={data?.supplierReference ?? null}
                   onChange={e => {
-                    console.info('Supplier reference changed:', e.target.value);
+                    update({ supplierReference: e.target.value });
                   }}
                 />
               </Tooltip>
@@ -55,8 +57,9 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
               <DateTimePickerInput
                 value={DateUtils.getDateOrNull(data?.receivedDatetime)}
                 onChange={date =>
-                  console.info('Received delivery date changed:', date)
+                  update({ receivedDatetime: Formatter.naiveDate(date) })
                 }
+                disabled={isDisabled}
               />
             }
           />

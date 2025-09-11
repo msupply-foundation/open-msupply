@@ -46,6 +46,7 @@ impl SyncRecordTester for ClinicianRecordTester {
             email: None,
             gender: Some(GenderType::Male),
             is_active: true,
+            ..Default::default()
         };
 
         let clinician_json = json!({

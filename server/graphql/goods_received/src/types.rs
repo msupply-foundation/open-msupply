@@ -1,15 +1,14 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
-use graphql_core::loader::StoreByIdLoader;
 use graphql_core::loader::{
     GoodsReceivedLinesByGoodsReceivedIdLoader, NameByIdLoader, NameByIdLoaderInput,
-    PurchaseOrderByIdLoader,
+    NameByNameLinkIdLoader, PurchaseOrderByIdLoader, UserLoader,
 };
+use graphql_core::loader::{NameByNameLinkIdLoaderInput, StoreByIdLoader};
 use graphql_core::ContextExt;
 use graphql_goods_received_line::types::GoodsReceivedLineConnector;
-use graphql_types::types::StoreNode;
-use graphql_types::types::{purchase_order, NameNode};
+use graphql_types::types::{purchase_order, user, NameNode, StoreNode, UserNode};
 use repository::goods_received_row::GoodsReceivedRow;
 use service::ListResult;
 #[derive(PartialEq, Debug)]
@@ -101,6 +100,19 @@ impl GoodsReceivedNode {
         &self.row().supplier_reference
     }
 
+    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let donor_link_id = match &self.row().donor_link_id {
+            None => return Ok(None),
+            Some(donor_link_id) => donor_link_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let result = loader
+            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
@@ -117,8 +129,18 @@ impl GoodsReceivedNode {
         Ok(GoodsReceivedLineConnector::from_vec(result))
     }
 
-    pub async fn created_by(&self) -> &Option<String> {
-        &self.row().created_by
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+        let user_id = match self.row().created_by.clone() {
+            Some(user_id) => user_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(user_id)
+            .await?
+            .map(user::UserNode::from_domain);
+        Ok(result)
     }
 
     pub async fn finalised_datetime(&self) -> &Option<NaiveDateTime> {
