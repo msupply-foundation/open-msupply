@@ -49,7 +49,7 @@ pub struct PurchaseOrderOmsFields {
     #[serde(default)]
     pub supplier_discount_percentage: Option<f64>,
     #[serde(default)]
-    pub authorised_datetime: Option<NaiveDateTime>,
+    pub request_approval_datetime: Option<NaiveDateTime>,
     #[serde(default)]
     pub finalised_datetime: Option<NaiveDateTime>,
     #[serde(default)]
@@ -256,9 +256,9 @@ impl SyncTranslation for PurchaseOrderTranslation {
                 }
             });
 
-        let authorised_datetime = oms_fields
+        let request_approval_datetime = oms_fields
             .clone()
-            .and_then(|oms_field| oms_field.authorised_datetime);
+            .and_then(|oms_field| oms_field.request_approval_datetime);
 
         let finalised_datetime = oms_fields
             .clone()
@@ -302,7 +302,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
-            authorised_datetime,
+            request_approval_datetime,
             finalised_datetime,
         };
         Ok(PullTranslateResult::upsert(result))
@@ -363,7 +363,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
-            authorised_datetime,
+            request_approval_datetime,
             finalised_datetime,
         } = purchase_order.purchase_order_row;
 
@@ -379,7 +379,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             sent_datetime,
             supplier_discount_percentage,
-            authorised_datetime,
+            request_approval_datetime,
             finalised_datetime,
             status: status.clone(),
         };

@@ -177,9 +177,9 @@ impl PurchaseOrderNode {
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage
     }
-    pub async fn authorised_datetime(&self) -> Option<DateTime<Utc>> {
-        let authorised_datetime = self.row().confirmed_datetime;
-        authorised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    pub async fn request_approval_datetime(&self) -> Option<DateTime<Utc>> {
+        let request_approval_datetime = self.row().confirmed_datetime;
+        request_approval_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
         let finalised_datetime = self.row().confirmed_datetime;
