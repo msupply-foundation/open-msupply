@@ -2,9 +2,8 @@ use repository::{
     PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError,
     StorageConnection,
 };
-// TODO: Check the implementations of these functions ->
-// purchase_order_is_editable = false should not block can_adjust_requested_quantity from being checked
-pub(crate) fn purchase_order_is_editable(purchase_order: &PurchaseOrderRow) -> bool {
+
+pub(crate) fn purchase_order_lines_editable(purchase_order: &PurchaseOrderRow) -> bool {
     match purchase_order.status {
         PurchaseOrderStatus::New | PurchaseOrderStatus::RequestApproval => true,
         PurchaseOrderStatus::Confirmed
@@ -13,13 +12,21 @@ pub(crate) fn purchase_order_is_editable(purchase_order: &PurchaseOrderRow) -> b
     }
 }
 
-pub(crate) fn can_adjust_requested_quantity(purchase_order: &PurchaseOrderRow) -> bool {
+pub(crate) fn can_edit_requested_quantity(purchase_order: &PurchaseOrderRow) -> bool {
+    match purchase_order.status {
+        PurchaseOrderStatus::New | PurchaseOrderStatus::RequestApproval => true,
+        PurchaseOrderStatus::Confirmed
+        | PurchaseOrderStatus::Sent
+        | PurchaseOrderStatus::Finalised => false,
+    }
+}
+
+pub(crate) fn can_edit_adjusted_quantity(purchase_order: &PurchaseOrderRow) -> bool {
     match purchase_order.status {
         PurchaseOrderStatus::New
         | PurchaseOrderStatus::RequestApproval
-        | PurchaseOrderStatus::Confirmed
-        | PurchaseOrderStatus::Sent => true,
-        PurchaseOrderStatus::Finalised => false,
+        | PurchaseOrderStatus::Finalised => false,
+        PurchaseOrderStatus::Confirmed | PurchaseOrderStatus::Sent => true,
     }
 }
 

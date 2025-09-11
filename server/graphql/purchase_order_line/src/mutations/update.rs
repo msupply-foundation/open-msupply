@@ -22,8 +22,8 @@ use service::{
 };
 
 use crate::mutations::errors::{
-    CannotAdjustRequestedQuantity, PurchaseOrderDoesNotExist, PurchaseOrderLineNotFound,
-    UpdatedLineDoesNotExist,
+    CannotEditAdjustedQuantity, CannotEditRequestedQuantity, PurchaseOrderDoesNotExist,
+    PurchaseOrderLineNotFound, UpdatedLineDoesNotExist,
 };
 
 #[derive(InputObject)]
@@ -90,7 +90,8 @@ pub enum PurchaseOrderLineError {
     UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
     PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
     CannotEditPurchaseOrder(CannotEditPurchaseOrder),
-    CannotAdjustRequestedQuantity(CannotAdjustRequestedQuantity),
+    CannotEditRequestedQuantity(CannotEditRequestedQuantity),
+    CannotEditAdjustedQuantity(CannotEditAdjustedQuantity),
     ItemCannotBeOrdered(ItemCannotBeOrdered),
 }
 
@@ -157,10 +158,17 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
                 error: PurchaseOrderLineError::PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
             }))
         }
-        ServiceError::CannotAdjustRequestedQuantity => {
+        ServiceError::CannotEditRequestedQuantity => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
-                error: PurchaseOrderLineError::CannotAdjustRequestedQuantity(
-                    CannotAdjustRequestedQuantity,
+                error: PurchaseOrderLineError::CannotEditRequestedQuantity(
+                    CannotEditRequestedQuantity,
+                ),
+            }))
+        }
+        ServiceError::CannotEditAdjustedQuantity => {
+            return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
+                error: PurchaseOrderLineError::CannotEditAdjustedQuantity(
+                    CannotEditAdjustedQuantity,
                 ),
             }))
         }
