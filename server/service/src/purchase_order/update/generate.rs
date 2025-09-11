@@ -1,9 +1,9 @@
 use super::UpdatePurchaseOrderInput;
 use crate::NullableUpdate;
-use repository::{PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
+use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
 
 pub fn generate(
-    purchase_order: PurchaseOrderRow,
+    purchase_order: PurchaseOrder,
     UpdatePurchaseOrderInput {
         id: _,
         supplier_id,
@@ -11,6 +11,7 @@ pub fn generate(
         confirmed_datetime,
         comment,
         supplier_discount_percentage,
+        supplier_discount_amount,
         donor_id,
         reference,
         currency_id,
@@ -34,7 +35,8 @@ pub fn generate(
         freight_conditions,
     }: UpdatePurchaseOrderInput,
 ) -> Result<PurchaseOrderRow, RepositoryError> {
-    let mut updated_order = purchase_order.clone();
+    let mut updated_order = purchase_order.purchase_order_row.clone();
+    let purchase_order_stats = purchase_order.purchase_order_stats_row;
 
     set_new_status_datetime(&mut updated_order, &status);
 
@@ -85,10 +87,25 @@ pub fn generate(
     updated_order.freight_charge = freight_charge.or(updated_order.freight_charge);
 
     let supplier_discount_percentage = supplier_discount_percentage
-        .or(purchase_order.supplier_discount_percentage)
+        .or(purchase_order
+            .purchase_order_row
+            .supplier_discount_percentage)
         .unwrap_or(0.0);
 
     updated_order.supplier_discount_percentage = Some(supplier_discount_percentage);
+
+    if let Some(supplier_discount_amount) = supplier_discount_amount {
+        let line_total_before_discount = purchase_order_stats
+            .as_ref()
+            .map(|stats| stats.line_total_before_discount)
+            .unwrap_or(0.0);
+
+        updated_order.supplier_discount_percentage = if line_total_before_discount > 0.0 {
+            Some((supplier_discount_amount / line_total_before_discount) * 100.0)
+        } else {
+            Some(0.0)
+        };
+    }
 
     Ok(updated_order)
 }
