@@ -12,9 +12,11 @@ import {
   useFormatDateTime,
   ColumnFormat,
   NumberCell,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../api/operations.generated';
 import { usePurchaseOrderLineList } from '../api/hooks/usePurchaseOrderLineList';
+import { AppRoute } from 'packages/config/src';
 
 const OutstandingLinesList = () => {
   const t = useTranslation();
@@ -123,7 +125,14 @@ const OutstandingLinesList = () => {
         data={data?.nodes ?? []}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={row => navigate(row.id)}
+        onRowClick={row =>
+          navigate(
+            RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.PurchaseOrder)
+              .addPart(row.purchaseOrder?.id ?? '')
+              .build()
+          )
+        }
         onChangePage={updatePaginationQuery}
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         noDataElement={
