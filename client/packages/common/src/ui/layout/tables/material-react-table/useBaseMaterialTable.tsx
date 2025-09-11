@@ -27,7 +27,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
   tableId: string; // key for local storage
   onRowClick?: (row: T) => void;
-  isLoading: boolean;
+  isLoading?: boolean;
   getIsPlaceholderRow?: (row: T) => boolean;
   /** Whether row should be greyed out - still potentially clickable */
   getIsRestrictedRow?: (row: T) => boolean;
