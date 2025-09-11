@@ -227,7 +227,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             curr_rate,
             order_total_before_discount,
             order_total_after_discount: _, // Not used, we calculate from the sum of the lines instead
-            is_authorised,
+            is_authorised: _,
         } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
 
         let created_datetime = match oms_fields.clone() {
@@ -267,7 +267,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
         let status = oms_fields
             .clone()
             .map(|oms_field| oms_field.status)
-            .unwrap_or_else(|| from_legacy_status(&status, is_authorised));
+            .unwrap_or_else(|| from_legacy_status(&status, sent_datetime));
 
         let result = PurchaseOrderRow {
             id,
@@ -445,36 +445,43 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
 fn from_legacy_status(
     status: &LegacyPurchaseOrderStatus,
-    is_authorised: bool,
+    sent_datetime: Option<NaiveDateTime>,
 ) -> PurchaseOrderStatus {
     match status {
         LegacyPurchaseOrderStatus::Nw => PurchaseOrderStatus::New,
-        LegacyPurchaseOrderStatus::Sg => PurchaseOrderStatus::New,
+        LegacyPurchaseOrderStatus::Sg => PurchaseOrderStatus::RequestApproval, // TODO: if authorisation not needed should be new?
         LegacyPurchaseOrderStatus::Cn => {
-            if is_authorised {
-                PurchaseOrderStatus::Authorised
+            if sent_datetime.is_some() {
+                PurchaseOrderStatus::Sent
             } else {
                 PurchaseOrderStatus::Confirmed
             }
         }
         LegacyPurchaseOrderStatus::Fn => PurchaseOrderStatus::Finalised, // authorised might or might not be true in this case...
-        LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New,   // Default to New for
+        LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New, // Default to New for others
     }
 }
 
 fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
     match status {
         PurchaseOrderStatus::New => LegacyPurchaseOrderStatus::Nw,
+        PurchaseOrderStatus::RequestApproval => LegacyPurchaseOrderStatus::Sg,
         PurchaseOrderStatus::Confirmed => LegacyPurchaseOrderStatus::Cn,
-        PurchaseOrderStatus::Authorised => LegacyPurchaseOrderStatus::Cn, // We will also set is_authorised to true (See check_is_authorised)
+        PurchaseOrderStatus::Sent => LegacyPurchaseOrderStatus::Cn,
         PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Fn,
     }
 }
 
+/*
+Assuming Finalised is always authorised
+the action might be skipped if authorisation is not required due to global preference.
+N.B. if this logic changes, update the Purchase Order form's logic
+(the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
+*/
 fn check_is_authorised(status: &PurchaseOrderStatus) -> bool {
     matches!(
         status,
-        PurchaseOrderStatus::Authorised | PurchaseOrderStatus::Finalised // Assuming Finalised is always authorised, but the action might be skipped if authorisation is not required due to global preference. N.B. if this logic changes, update the Purchase Order form's logic (the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
+        PurchaseOrderStatus::Confirmed | PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
     )
 }
 
