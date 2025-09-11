@@ -174,47 +174,43 @@ export const ResponseStoreStats = ({
             </span>
           </Typography>
         ) : (
-          (formattedRequested !== null || formattedOtherRequested !== null) && (
-            <>
-              <Typography style={{ textAlign: 'start' }} variant="h6">
-                {t('label.requested')}
-              </Typography>
-              <Box
-                display="flex"
-                alignItems="flex-start"
-                flexDirection="column"
-                width={`${requestedPercent}%`}
-              >
-                <Box display="flex" width="100%">
-                  <NewValueBar
-                    value={formattedRequested}
-                    total={totalRequested}
-                    colour="primary.main"
-                  />
-                  <NewValueBar
-                    value={formattedOtherRequested}
-                    total={totalRequested}
-                    colour="primary.light"
-                  />
-                </Box>
-                <Box paddingTop={1}>
-                  {formattedRequested !== null &&
-                    statsDisplay(
-                      'label.requested-quantity',
-                      formattedRequested,
-                      'primary.main'
-                    )}
-                  {requisitionStatus !== RequisitionNodeStatus.Finalised &&
-                    formattedOtherRequested !== null &&
-                    statsDisplay(
-                      'label.other-requested-quantity',
-                      formattedOtherRequested,
-                      'primary.light'
-                    )}
-                </Box>
+          <>
+            <Typography style={{ textAlign: 'start' }} variant="h6">
+              {t('label.requested')}
+            </Typography>
+            <Box
+              display="flex"
+              alignItems="flex-start"
+              flexDirection="column"
+              width={`${requestedPercent}%`}
+            >
+              <Box display="flex" width="100%">
+                <NewValueBar
+                  value={formattedRequested}
+                  total={totalRequested}
+                  colour="primary.main"
+                />
+                <NewValueBar
+                  value={formattedOtherRequested}
+                  total={totalRequested}
+                  colour="primary.light"
+                />
               </Box>
-            </>
-          )
+              <Box paddingTop={1}>
+                {statsDisplay(
+                  'label.requested-quantity',
+                  formattedRequested,
+                  'primary.main'
+                )}
+                {requisitionStatus !== RequisitionNodeStatus.Finalised &&
+                  statsDisplay(
+                    'label.other-requested-quantity',
+                    formattedOtherRequested,
+                    'primary.light'
+                  )}
+              </Box>
+            </Box>
+          </>
         )}
       </Box>
     </Box>
