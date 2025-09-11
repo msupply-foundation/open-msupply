@@ -54,7 +54,8 @@ mod update {
                     id: purchase_order_id.clone(),
                     supplier_id: Some("non_existent_supplier".to_string()),
                     ..Default::default()
-                }
+                },
+                None
             ),
             Err(UpdatePurchaseOrderError::SupplierDoesNotExist)
         );
@@ -68,7 +69,8 @@ mod update {
                     id: purchase_order_id.clone(),
                     supplier_id: Some(mock_name_store_b().id.to_string()),
                     ..Default::default()
-                }
+                },
+                None
             ),
             Err(UpdatePurchaseOrderError::NotASupplier)
         );
@@ -84,23 +86,38 @@ mod update {
                         value: Some("non_existent_donor".to_string())
                     }),
                     ..Default::default()
-                }
+                },
+                None
             ),
             Err(UpdatePurchaseOrderError::DonorDoesNotExist)
         );
 
-        // AuthorisationPreferenceNotSet
+        // UserUnableToAuthorisePurchaseOrder
+
+        // AuthorisePurchaseOrder
+        //     .upsert(&context.connection, true, Some(store_id.to_string()))
+        //     .unwrap();
+
+        // add preference to allow authorised purchase orders
+        upsert_global(
+            &context.connection,
+            AuthorisePurchaseOrder.key_str(),
+            "true".to_string(),
+        )
+        .unwrap();
+
         assert_eq!(
             service.update_purchase_order(
                 &context,
                 store_id,
                 UpdatePurchaseOrderInput {
                     id: "purchase_order_id".to_string(),
-                    status: Some(PurchaseOrderStatus::Authorised),
+                    status: Some(PurchaseOrderStatus::Confirmed),
                     ..Default::default()
-                }
+                },
+                Some(false)
             ),
-            Err(UpdatePurchaseOrderError::AuthorisationPreferenceNotSet)
+            Err(UpdatePurchaseOrderError::UserUnableToAuthorisePurchaseOrder)
         );
     }
 
@@ -157,12 +174,13 @@ mod update {
                     id: purchase_order_id.clone(),
                     supplier_discount_percentage: Some(discount_percentage),
                     comment: Some("Updated comment".to_string()),
-                    status: Some(PurchaseOrderStatus::Authorised),
+                    status: Some(PurchaseOrderStatus::RequestApproval),
                     received_at_port_date: Some(NullableUpdate {
                         value: Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap()),
                     }),
                     ..Default::default()
                 },
+                None,
             )
             .unwrap();
 
@@ -177,7 +195,7 @@ mod update {
             Some(discount_percentage)
         );
         assert_eq!(result.comment, Some("Updated comment".to_string()));
-        assert_eq!(result.status, PurchaseOrderStatus::Authorised);
+        assert_eq!(result.status, PurchaseOrderStatus::RequestApproval);
         assert_eq!(
             result.received_at_port_date,
             Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap())
@@ -193,20 +211,20 @@ mod update {
         let log = logs
             .clone()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::PurchaseOrderAuthorised)
+            .find(|l| l.r#type == ActivityLogType::PurchaseOrderRequestApproval)
             .unwrap();
 
-        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderAuthorised);
+        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderRequestApproval);
 
-        let authorised_logs: Vec<_> = logs
+        let request_approval_logs: Vec<_> = logs
             .into_iter()
-            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderAuthorised)
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderRequestApproval)
             .collect();
 
-        assert_eq!(authorised_logs.len(), 1);
+        assert_eq!(request_approval_logs.len(), 1);
 
         // set purchase order to confirmed
-
+        // user has permission to authorise
         service
             .update_purchase_order(
                 &context,
@@ -216,6 +234,7 @@ mod update {
                     status: Some(PurchaseOrderStatus::Confirmed),
                     ..Default::default()
                 },
+                Some(true),
             )
             .unwrap();
 
@@ -239,6 +258,7 @@ mod update {
                     status: Some(PurchaseOrderStatus::Finalised),
                     ..Default::default()
                 },
+                None,
             )
             .unwrap();
 

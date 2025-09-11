@@ -24,7 +24,7 @@ pub enum UpdatePurchaseOrderError {
     UpdatedRecordNotFound,
     NotASupplier,
     DonorDoesNotExist,
-    AuthorisationPreferenceNotSet,
+    UserUnableToAuthorisePurchaseOrder,
     DatabaseError(RepositoryError),
     ItemsCannotBeOrdered(Vec<PurchaseOrderLine>),
 }
@@ -64,11 +64,12 @@ pub fn update_purchase_order(
     ctx: &ServiceContext,
     store_id: &str,
     input: UpdatePurchaseOrderInput,
+    user_has_permission: Option<bool>,
 ) -> Result<PurchaseOrderRow, UpdatePurchaseOrderError> {
     let purchase_order = ctx
         .connection
         .transaction_sync(|connection: &repository::StorageConnection| {
-            let purchase_order = validate(&input, store_id, connection)?;
+            let purchase_order = validate(&input, store_id, connection, user_has_permission)?;
             let updated_purchase_order = generate(purchase_order, input)?;
 
             let purchase_order_repository = PurchaseOrderRowRepository::new(connection);
