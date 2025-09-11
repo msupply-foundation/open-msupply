@@ -94,7 +94,7 @@ export const NewCreateStocktakeModal = ({
     vvmStatusId: vvmStatus && {
       equalTo: vvmStatus.id,
     },
-    hasPacksInStore: true,
+    hasPacksInStore: itemStatus === ItemStatus.InStock ? true : undefined,
   };
 
   const { data } = useStockListCount(stockFilter);
@@ -170,19 +170,11 @@ export const NewCreateStocktakeModal = ({
     });
   };
 
-  const estimateLineCount = (suggestedStatus?: ItemStatus): number => {
+  const estimateLineCount = (): number => {
     const stockCount = data?.totalCount ?? 0;
-    if (suggestedStatus === ItemStatus.All) {
-      return masterListLineCount
-        ? Math.max(masterListLineCount, stockCount)
-        : stockCount;
-    } else if (suggestedStatus === ItemStatus.InStock) {
-      return stockCount;
-    } else {
-      return itemStatus === ItemStatus.All && masterListLineCount
-        ? Math.max(masterListLineCount, stockCount)
-        : stockCount;
-    }
+    return itemStatus === ItemStatus.All && masterListLineCount
+      ? Math.max(masterListLineCount, stockCount)
+      : stockCount;
   };
 
   return (
