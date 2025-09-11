@@ -151,6 +151,15 @@ pub(crate) mod test {
         )
         .await;
 
+        fn get_stock_line(
+            connection: &StorageConnection,
+            stock_line_id: &str,
+        ) -> Option<StockLineRow> {
+            StockLineRowRepository::new(&connection)
+                .find_one_by_id(stock_line_id)
+                .unwrap()
+        }
+
         KeyValueStoreRepository::new(&connection)
             .set_i32(
                 repository::KeyType::SettingsSyncSiteId,
@@ -167,10 +176,7 @@ pub(crate) mod test {
 
         // An orphan from OG is deleted
         let mut logs = String::new();
-        let legacy_orphan_stock_line = StockLineRowRepository::new(&connection)
-            .find_one_by_id("legacy_orphan_stock_line")
-            .unwrap()
-            .unwrap();
+        let stock_line = get_stock_line(&connection, "legacy_orphan_stock_line").unwrap();
         assert_eq!(
             is_ledger_fixed(&connection, "legacy_orphan_stock_line"),
             Ok(false)
@@ -180,7 +186,11 @@ pub(crate) mod test {
             is_ledger_fixed(&connection, "legacy_orphan_stock_line"),
             Ok(true)
         );
-        assert!(logs.contains(format!("{legacy_orphan_stock_line:?}").as_str()));
+        assert!(
+            get_stock_line(&connection, "legacy_orphan_stock_line").is_none(),
+            "stock line was deleted"
+        );
+        assert!(logs.contains(format!("{stock_line:?}").as_str()));
 
         // An orphan from OMS is left alone
         let mut logs = String::new();
@@ -192,6 +202,10 @@ pub(crate) mod test {
         assert_eq!(
             is_ledger_fixed(&connection, "oms-orphan-stock-line"),
             Ok(false)
+        );
+        assert!(
+            get_stock_line(&connection, "oms-orphan-stock-line").is_some(),
+            "stock line was not deleted"
         );
         assert!(logs.contains("Ledger does not match use case for"));
 
@@ -207,6 +221,10 @@ pub(crate) mod test {
             "legacy_stock_line_with_invoice_line",
         )
         .unwrap();
+        assert!(
+            get_stock_line(&connection, "legacy_stock_line_with_invoice_line").is_some(),
+            "stock line was not deleted"
+        );
         assert_eq!(
             is_ledger_fixed(&connection, "legacy_stock_line_with_invoice_line"),
             Ok(false)
@@ -225,6 +243,10 @@ pub(crate) mod test {
             "legacy_stock_line_with_stock_take_line",
         )
         .unwrap();
+        assert!(
+            get_stock_line(&connection, "legacy_stock_line_with_stock_take_line").is_some(),
+            "stock line was not deleted"
+        );
         assert_eq!(
             is_ledger_fixed(&connection, "legacy_stock_line_with_stock_take_line"),
             Ok(false)
