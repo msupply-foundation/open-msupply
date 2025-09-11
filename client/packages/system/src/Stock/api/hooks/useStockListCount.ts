@@ -1,7 +1,4 @@
-import {
-  StockLineFilterInput,
-  useQuery,
-} from '@openmsupply-client/common';
+import { StockLineFilterInput, useQuery } from '@openmsupply-client/common';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
@@ -11,9 +8,9 @@ export const useStockListCount = (filterBy: StockLineFilterInput) => {
   const queryFn = async (): Promise<{
     totalCount: number;
   }> => {
+    console.log('stockFilter:', filterBy);
     const filter = {
       ...filterBy,
-      hasPacksInStore: true,
       masterList: {
         existsForStoreId: { equalTo: storeId },
         ...filterBy?.masterList,
@@ -23,7 +20,7 @@ export const useStockListCount = (filterBy: StockLineFilterInput) => {
       storeId,
       filter,
     });
-    const {  totalCount } = query?.stockLines;
+    const { totalCount } = query?.stockLines;
     return { totalCount };
   };
 
