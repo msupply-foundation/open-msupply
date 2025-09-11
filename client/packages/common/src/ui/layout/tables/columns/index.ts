@@ -9,4 +9,3 @@ export * from './LineLabel';
 export * from './ExpiryDateInput';
 export * from './DosesPerUnitColumn';
 export * from './DifferenceColumn';
-export * from './commonColumns';
