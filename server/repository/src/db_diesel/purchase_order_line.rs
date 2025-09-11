@@ -35,6 +35,7 @@ pub struct PurchaseOrderLineFilter {
     pub requested_pack_size: Option<EqualFilter<f64>>,
     pub item_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<PurchaseOrderLineStatus>>,
+    pub received_less_than_adjusted: Option<bool>,
 }
 
 pub enum PurchaseOrderLineSortField {
@@ -149,6 +150,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             requested_pack_size,
             item_id,
             status,
+            received_less_than_adjusted,
         } = f;
 
         apply_equal_filter!(query, purchase_order_id, purchase_order::id);
@@ -161,6 +163,13 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
         );
         apply_equal_filter!(query, item_id, item_link::item_id);
         apply_equal_filter!(query, status, purchase_order_line::status);
+        if let Some(true) = received_less_than_adjusted {
+            query = query.filter(
+                purchase_order_line::received_number_of_units
+                    .nullable()
+                    .lt(purchase_order_line::adjusted_number_of_units),
+            );
+        }
     }
 
     query
@@ -197,6 +206,11 @@ impl PurchaseOrderLineFilter {
 
     pub fn status(mut self, filter: EqualFilter<PurchaseOrderLineStatus>) -> Self {
         self.status = Some(filter);
+        self
+    }
+
+    pub fn received_less_than_adjusted(mut self, value: bool) -> Self {
+        self.received_less_than_adjusted = Some(value);
         self
     }
 }
