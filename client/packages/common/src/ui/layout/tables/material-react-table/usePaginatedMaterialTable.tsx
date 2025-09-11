@@ -17,7 +17,7 @@ import {
 } from 'material-react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
-import { useManualTableFilters } from './useMaterialTableColumns';
+import { useManualTableFilters } from './useManualTableFilters';
 
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends BaseTableConfig<T> {
