@@ -56,7 +56,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     useMaterialTableColumns(omsColumns);
 
   const initialState = useRef(
-    getSavedTableState(tableId, defaultHiddenColumns, defaultColumnPinning)
+    getSavedTableState<T>(tableId, defaultHiddenColumns, defaultColumnPinning)
   );
   const [columnOrder, setColumnOrder] = useState(
     initialState.current.columnOrder ?? []
