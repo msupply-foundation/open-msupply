@@ -57,6 +57,8 @@ pub fn get_item_ids_by_mos(
 ) -> Result<Vec<String>, ListError> {
     let repository = ItemRepository::new(&connection);
 
+    println!("Running get_item_ids_by_mos");
+
     let item_ids = repository
         .query(
             Pagination::all(), // get all items so we can then filter them by mos in the next part. We'll use pagination for the query that will be returned to the user.
@@ -68,38 +70,76 @@ pub fn get_item_ids_by_mos(
         .map(|item| item.item_row.id.clone())
         .collect();
 
+    println!("===================================> item_ids: <===========================================");
+    for item in &item_ids {
+        println!("{}", item);
+    }
+
     let item_stats =
         get_item_stats_map(&connection, store_id, None, item_ids).map_err(|e| match e {
             PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
             PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
         })?;
+    
+    println!("====================================> item_stats: <===========================================");
+    for (key, value) in &item_stats {
+        println!("{}: {:#?}", key, value);
+    }
 
     let item_ids_filtered_by_mos: Vec<String> = item_stats
         .into_iter()
-        .filter_map(|(k, v)| {
-            months_of_stock_on_hand(v)
-                .filter(|&mos| {
-                    let mut include = true;
-                    if let Some(min_mos) = min_months_of_stock {
-                        // include if it has more than the min months of stock
-                        include &= (mos >= min_mos);
-                    }
-                    if let Some(max_mos) = max_months_of_stock {
-                        // include if it has less than the max months of stock
-                        include &= (mos <= max_mos);
-                    }
-                    include
-                })
-                .map(|_| k)
+        .filter(|(k, v)| {
+            let mut include = true;
+            let mos = get_months_of_stock_on_hand(v.clone());
+            if let Some(min_mos) = min_months_of_stock {
+                // include if it has more than the min months of stock
+                include &= (mos >= min_mos);
+            }
+            if let Some(max_mos) = max_months_of_stock {
+                // include if it has less than the max months of stock
+                include &= (mos <= max_mos);
+            }
+            include
         })
+        .map(|(k, v)| k)
         .collect();
+
+
+
+
+
+        // .filter_map(|(k, v)| {
+        //     get_months_of_stock_on_hand(v)
+        //         .filter(|&mos| {
+        //             println!("key in question: {}", k);
+        //             let mut include = true;
+        //             if let Some(min_mos) = min_months_of_stock {
+        //                 // include if it has more than the min months of stock
+        //                 include &= (mos >= min_mos);
+        //             }
+        //             if let Some(max_mos) = max_months_of_stock {
+        //                 // include if it has less than the max months of stock
+        //                 include &= (mos <= max_mos);
+        //             }
+        //             println!("included? {}", include);
+        //             include
+        //         })
+        //         .map(|_| k)
+        // })
+        // .collect();
+
+    println!("===================================> item_ids_filtered_by_mos: <===========================================");
+    for item in &item_ids_filtered_by_mos {
+        println!("{}", item);
+    }
 
     Ok(item_ids_filtered_by_mos)
 }
 
-pub fn months_of_stock_on_hand(item_stats: ItemStats) -> Option<f64> {
+pub fn get_months_of_stock_on_hand(item_stats: ItemStats) -> Option<f64> {
     (item_stats.average_monthly_consumption != 0.0)
         .then(|| item_stats.total_stock_on_hand / item_stats.average_monthly_consumption)
+    // if amc = 0 then return mos = 0, otherwise calculate...
 }
 
 pub fn check_item_exists(
