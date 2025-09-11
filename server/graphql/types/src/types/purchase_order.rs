@@ -182,7 +182,7 @@ impl PurchaseOrderNode {
         authorised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
-        let finalised_datetime = self.row().confirmed_datetime;
+        let finalised_datetime = self.row().finalised_datetime;
         finalised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
