@@ -64,8 +64,10 @@ export const useTableLocalStorage = <T extends MRT_RowData>(
         pinned: isEqual(columnPinning, initial.columnPinning)
           ? existingCustomisations.pinned
           : columnPinning,
+
+        // If defaults are restored, clear any column order customisation
         columnOrder: isEqual(columnOrder, initial.columnOrder)
-          ? existingCustomisations.columnOrder
+          ? undefined
           : columnOrder,
       })
     );
