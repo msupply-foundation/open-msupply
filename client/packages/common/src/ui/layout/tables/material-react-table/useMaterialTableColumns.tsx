@@ -10,6 +10,7 @@ import {
   DateUtils,
   mergeCellProps,
   NumericTextDisplay,
+  UNDEFINED_STRING_VALUE,
   useFormatDateTime,
   useSimplifiedTabletUI,
   useTranslation,
@@ -112,7 +113,8 @@ const useGetColumnTypeDefaults = () => {
             return (
               <NumericTextDisplay
                 value={typeof value === 'number' ? value : undefined}
-                sx={{}} // default has some padding...
+                sx={{}} // default has some padding which impacts `compact` density
+                defaultValue={UNDEFINED_STRING_VALUE}
               />
             );
           },

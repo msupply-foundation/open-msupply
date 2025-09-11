@@ -157,18 +157,24 @@ const DetailViewInner = () => {
         header: t('label.pack-size'),
         columnType: 'number',
         defaultHideOnMobile: true,
-        // TO-DO: Create "number range" filter
-        // filterType: 'number',
       },
-
-      // if (manageVaccinesInDoses) {
-      //   columns.push(getDosesPerUnitColumn(t));
-      // }
-
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: 'number',
+        defaultHideOnMobile: true,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
+      },
       {
         accessorKey: 'numberOfPacks',
         header: t('label.pack-quantity'),
         columnType: 'number',
+        accessorFn: row => {
+          if ('subRows' in row)
+            return ArrayUtils.getSum(row.subRows ?? [], 'numberOfPacks');
+
+          return row.numberOfPacks;
+        },
       },
       {
         id: 'unitQuantity',
@@ -180,15 +186,25 @@ const DetailViewInner = () => {
           if ('subRows' in row)
             return ArrayUtils.getUnitQuantity(row.subRows ?? []);
 
-          return isDefaultPlaceholderRow(row)
-            ? ''
-            : row.packSize * row.numberOfPacks;
+          return row.packSize * row.numberOfPacks;
         },
       },
+      {
+        id: 'doseQuantity',
+        header: t('label.doses'),
+        columnType: 'number',
+        defaultHideOnMobile: true,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          if ('subRows' in row)
+            return (
+              ArrayUtils.getUnitQuantity(row.subRows ?? []) *
+              (row.item.doses ?? 1)
+            );
 
-      // if (manageVaccinesInDoses) {
-      //   columns.push(getDosesQuantityColumn(t))
-      // }
+          return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
+        },
+      },
       {
         id: 'unitSellPrice',
         header: t('label.unit-sell-price'),
