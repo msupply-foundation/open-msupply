@@ -215,7 +215,8 @@ pub(crate) mod test {
         if cfg!(feature = "postgres") {
             assert!(logs.contains("violates foreign key") && logs.contains("invoice_line"));
         } else {
-            assert!(logs.contains("FOREIGN KEY constraint failed"));
+            assert!(logs
+                .contains("stock_line referenced in another table: FOREIGN KEY constraint failed"));
         }
 
         // No invoice lines but referenced in stocktake line
@@ -237,7 +238,8 @@ pub(crate) mod test {
         if cfg!(feature = "postgres") {
             assert!(logs.contains("violates foreign key") && logs.contains("stocktake_line"));
         } else {
-            assert!(logs.contains("FOREIGN KEY constraint failed"));
+            assert!(logs
+                .contains("stock_line referenced in another table: FOREIGN KEY constraint failed"));
         }
     }
 }
