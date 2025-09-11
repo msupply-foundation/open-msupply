@@ -91,64 +91,59 @@ const DetailViewInner = () => {
   const mrtColumns = useMemo(() => {
     const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
       {
+        id: 'code',
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
-        filterType: 'text',
+        filterVariant: 'text',
       },
       {
         accessorKey: 'itemName',
         header: t('label.name'),
-        filterType: 'text',
+        filterVariant: 'text',
         // size: 140,
       },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
         size: 130,
-        filterType: 'text',
+        filterVariant: 'text',
       },
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
-        filterType: 'dateRange',
+        filterVariant: 'date-range',
         size: 160,
       },
-    ];
-
-    // todo - on refresh this is ending up at the end of the table - need to fix!
-    if (manageVvmStatusForStock)
-      cols.push({
+      {
         // todo - anything that could return undefined should use accessorFn, so no warnings in console
+        id: 'vvm',
         accessorKey: 'vvmStatus.description',
         header: t('label.vvm-status'),
-        // TO-DO: Add enum values here for filter
-      });
-
-    cols.push(
+        includeColumn: manageVvmStatusForStock,
+      },
       {
         accessorKey: 'location.code',
         header: t('label.location'),
-        filterType: 'text',
+        filterVariant: 'text',
       },
       {
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
-        filterType: 'enum',
+        filterVariant: 'select',
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
+        // defaultHideOnMobile: true,
         // TO-DO: Create "number range" filter
         // filterType: 'number',
-      }
-    );
+      },
 
-    // if (manageVaccinesInDoses) {
-    //   columns.push(getDosesPerUnitColumn(t));
-    // }
+      // if (manageVaccinesInDoses) {
+      //   columns.push(getDosesPerUnitColumn(t));
+      // }
 
-    cols.push(
       {
         accessorKey: 'numberOfPacks',
         header: t('label.num-packs'),
@@ -158,8 +153,8 @@ const DetailViewInner = () => {
         header: t('label.unit-quantity'),
 
         description: t('description.unit-quantity'),
-      }
-    );
+      },
+    ];
 
     // TODO: remaining columns
 
