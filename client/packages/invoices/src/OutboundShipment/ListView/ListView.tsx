@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -16,6 +16,13 @@ import {
   GenericColumnKey,
   getCommentPopoverColumn,
   useSimplifiedTabletUI,
+  PaperHoverPopover,
+  PaperPopoverSection,
+  MessageSquareIcon,
+  useFeatureFlags,
+  MaterialTable,
+  usePaginatedMaterialTable,
+  ColumnDef,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -33,6 +40,7 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 };
 
 const OutboundShipmentListViewComponent: FC = () => {
+  const { tableUsabilityImprovements } = useFeatureFlags();
   const { mutate: onUpdate } = useOutbound.document.update();
   const t = useTranslation();
   const {
@@ -101,6 +109,106 @@ const OutboundShipmentListViewComponent: FC = () => {
     [sortBy]
   );
 
+  const mrtColumns = useMemo(
+    (): ColumnDef<OutboundRowFragment>[] => [
+      {
+        // todo; color picker
+        id: 'otherPartyName',
+        header: t('label.name'),
+        accessorKey: 'otherPartyName',
+        size: 400,
+        filterVariant: 'text',
+        defaultHideOnMobile: true,
+      },
+      {
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        id: 'status',
+        header: t('label.status'),
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { value: 'NEW', label: t('label.new') },
+          { value: 'SHIPPED', label: t('label.shipped') },
+          { value: 'ALLOCATED', label: t('label.allocated') },
+          { value: 'PICKED', label: t('label.picked') },
+        ],
+      },
+      {
+        accessorKey: 'invoiceNumber',
+        header: t('label.invoice-number'),
+        size: 150,
+        align: 'right',
+        description: t('description.invoice-number'),
+      },
+      {
+        // todo - datetime?
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        Cell: ({ cell }) =>
+          new Date(cell.getValue<string>()).toLocaleDateString(),
+        filterVariant: 'date-range',
+        // size: 100,
+      },
+      {
+        accessorKey: 'theirReference',
+        header: t('label.reference'),
+        description: t('description.customer-reference'),
+        size: 175,
+        defaultHideOnMobile: true,
+      },
+      {
+        // todo: reusable
+        accessorKey: 'comment',
+        header: '',
+        enableColumnActions: false,
+        enableSorting: false,
+        enableResizing: false,
+        size: 20,
+        // width: 0,
+        Cell: ({ cell }) => {
+          const t = useTranslation();
+          const value = cell.getValue<string>();
+          return value ? (
+            <PaperHoverPopover
+              width={400}
+              Content={
+                <PaperPopoverSection label={t('label.comment')}>
+                  {String(value)}
+                </PaperPopoverSection>
+              }
+            >
+              <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
+            </PaperHoverPopover>
+          ) : null;
+        },
+      },
+      {
+        accessorKey: 'pricing.totalAfterTax',
+        header: t('label.total'),
+        Cell: ({ cell }) =>
+          new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+          }).format(cell.getValue<number>()),
+        size: 125,
+        defaultHideOnMobile: true,
+      },
+    ],
+    []
+  );
+
+  const { table, selectedRows, resetRowSelection } =
+    usePaginatedMaterialTable<OutboundRowFragment>({
+      tableId: 'outbound-shipment-list-view',
+      isLoading,
+      onRowClick: row => navigate(row.id),
+      columns: mrtColumns,
+      data: data?.nodes ?? [],
+      totalCount: data?.totalCount ?? 0,
+      initialSort: { key: 'invoiceNumber', dir: 'desc' },
+      getIsRestrictedRow: isOutboundDisabled,
+    });
+
   return (
     <>
       <Toolbar filter={filter} simplifiedTabletView={simplifiedTabletView} />
@@ -108,27 +216,33 @@ const OutboundShipmentListViewComponent: FC = () => {
         modalController={modalController}
         simplifiedTabletView={simplifiedTabletView}
       />
-
-      <DataTable
-        id="outbound-list"
-        enableColumnSelection
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-outbound-shipments')}
-            onCreate={modalController.toggleOn}
-          />
-        }
-        onRowClick={row => {
-          navigate(row.id);
-        }}
+      {tableUsabilityImprovements ? (
+        <MaterialTable table={table} />
+      ) : (
+        <DataTable
+          id="outbound-list"
+          enableColumnSelection
+          pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+          onChangePage={updatePaginationQuery}
+          columns={columns}
+          data={data?.nodes ?? []}
+          isError={isError}
+          isLoading={isLoading}
+          noDataElement={
+            <NothingHere
+              body={t('error.no-outbound-shipments')}
+              onCreate={modalController.toggleOn}
+            />
+          }
+          onRowClick={row => {
+            navigate(row.id);
+          }}
+        />
+      )}
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={resetRowSelection}
       />
-      <Footer />
     </>
   );
 };

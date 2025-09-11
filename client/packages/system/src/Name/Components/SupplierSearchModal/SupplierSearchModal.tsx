@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   createQueryParamsStore,
   ListSearch,
@@ -9,12 +9,17 @@ import { useName, NameRowFragment } from '../../api';
 import { filterByNameAndCode, NameSearchModalProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
-const SupplierSearchComponent: FC<NameSearchModalProps> = ({
+interface SupplierSearchProps extends NameSearchModalProps {
+  external?: boolean;
+}
+
+const SupplierSearchComponent = ({
   open,
   onClose,
   onChange,
-}) => {
-  const { data, isLoading } = useName.document.suppliers();
+  external,
+}: SupplierSearchProps) => {
+  const { data, isLoading } = useName.document.suppliers(external);
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
@@ -36,7 +41,7 @@ const SupplierSearchComponent: FC<NameSearchModalProps> = ({
   );
 };
 
-export const SupplierSearchModal: FC<NameSearchModalProps> = props => (
+export const SupplierSearchModal = (props: SupplierSearchProps) => (
   <QueryParamsProvider
     createStore={createQueryParamsStore<NameRowFragment>({
       initialSortBy: { key: 'name' },

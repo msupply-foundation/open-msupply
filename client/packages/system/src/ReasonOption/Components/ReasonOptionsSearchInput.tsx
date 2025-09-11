@@ -18,12 +18,12 @@ interface ReasonOptionsSearchInputProps
   onChange: (reasonOption: ReasonOptionNode | null) => void;
   type: ReasonOptionNodeType | ReasonOptionNodeType[];
   initialStocktake?: boolean;
-  width?: number;
+  width?: number | string;
 }
 
 export const ReasonOptionsSearchInput = ({
   value,
-  width,
+  width = '100%',
   onChange,
   type,
   initialStocktake,
@@ -43,7 +43,7 @@ export const ReasonOptionsSearchInput = ({
 
   return (
     <Autocomplete
-      sx={{ width: width ? `${width}px` : '100%' }}
+      sx={{ width }}
       disabled={disabled || !isRequired}
       clearable={false}
       value={

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -14,7 +14,11 @@ import {
   useNotification,
   useTableStore,
   useBreadcrumbs,
-  useFeatureFlags,
+  useNonPaginatedMaterialTable,
+  usePreferences,
+  InvoiceLineNodeType,
+  useIsGrouped,
+  ColumnDef,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -34,7 +38,6 @@ const DetailViewInner = () => {
   const t = useTranslation();
   const { info } = useNotification();
   const isDisabled = useOutbound.utils.isDisabled();
-  const featureFlags = useFeatureFlags();
 
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<OutboundOpenedWith>();
@@ -46,8 +49,12 @@ const DetailViewInner = () => {
     mode: returnModalMode,
     setMode: setReturnMode,
   } = useEditModal<string[]>();
+  const { manageVvmStatusForStock } = usePreferences();
 
   const { data, isLoading } = useOutbound.document.get();
+  const { isGrouped } = useIsGrouped('outboundShipment');
+  const { rows } = useOutbound.line.rows(false);
+
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const onRowClick = useCallback(
@@ -81,16 +88,110 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
+  const mrtColumns = useMemo(() => {
+    const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
+      {
+        id: 'code',
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        size: 120,
+        filterVariant: 'text',
+      },
+      {
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        filterVariant: 'text',
+        // size: 140,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 130,
+        filterVariant: 'text',
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry-date'),
+        filterVariant: 'date-range',
+        size: 160,
+      },
+      {
+        // todo - anything that could return undefined should use accessorFn, so no warnings in console
+        id: 'vvm',
+        accessorKey: 'vvmStatus.description',
+        header: t('label.vvm-status'),
+        includeColumn: manageVvmStatusForStock,
+      },
+      {
+        accessorKey: 'location.code',
+        header: t('label.location'),
+        filterVariant: 'text',
+      },
+      {
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        filterVariant: 'select',
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        // defaultHideOnMobile: true,
+        // TO-DO: Create "number range" filter
+        // filterType: 'number',
+      },
+
+      // if (manageVaccinesInDoses) {
+      //   columns.push(getDosesPerUnitColumn(t));
+      // }
+
+      {
+        accessorKey: 'numberOfPacks',
+        header: t('label.num-packs'),
+      },
+      {
+        accessorKey: 'unitQuantity',
+        header: t('label.unit-quantity'),
+
+        description: t('description.unit-quantity'),
+      },
+    ];
+
+    // TODO: remaining columns
+
+    return cols;
+  }, [manageVvmStatusForStock]);
+
+  const { table, selectedRows, resetRowSelection } =
+    useNonPaginatedMaterialTable<StockOutLineFragment | StockOutItem>({
+      tableId: 'outbound-shipment-detail-view',
+      columns: mrtColumns,
+      data: rows ?? [],
+      onRowClick: onRowClick ? row => onRowClick(row) : () => {},
+      isLoading: false,
+      getIsPlaceholderRow: row => {
+        if ('type' in row) {
+          return (
+            row.type === InvoiceLineNodeType.UnallocatedStock ||
+            row.numberOfPacks === 0
+          );
+        } else {
+          return row.lines.some(
+            line => line.type === InvoiceLineNodeType.UnallocatedStock
+          );
+        }
+      },
+      groupByField: isGrouped ? 'itemName' : undefined,
+    });
+
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
-      Component: featureFlags?.tableUsabilityImprovements ? (
-        'INCOMING: NEW TABLE'
-      ) : (
+      Component: (
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
           onAddItem={onAddItem}
+          table={table}
         />
       ),
       value: 'Details',
@@ -134,7 +235,11 @@ const DetailViewInner = () => {
 
           <Toolbar />
           <DetailTabs tabs={tabs} />
-          <Footer onReturnLines={onReturn} />
+          <Footer
+            onReturnLines={onReturn}
+            selectedRows={selectedRows as StockOutLineFragment[]}
+            resetRowSelection={resetRowSelection}
+          />
           <SidePanel />
         </>
       ) : (

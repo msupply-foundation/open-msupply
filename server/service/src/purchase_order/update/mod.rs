@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError,
-    TransactionError,
+    PurchaseOrderLine, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
+    RepositoryError, TransactionError,
 };
 
 use crate::{
@@ -26,6 +26,7 @@ pub enum UpdatePurchaseOrderError {
     DonorDoesNotExist,
     AuthorisationPreferenceNotSet,
     DatabaseError(RepositoryError),
+    ItemsCannotBeOrdered(Vec<PurchaseOrderLine>),
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -67,7 +68,7 @@ pub fn update_purchase_order(
     let purchase_order = ctx
         .connection
         .transaction_sync(|connection: &repository::StorageConnection| {
-            let purchase_order = validate(&input, &store_id, connection)?;
+            let purchase_order = validate(&input, store_id, connection)?;
             let updated_purchase_order = generate(purchase_order, input)?;
 
             let purchase_order_repository = PurchaseOrderRowRepository::new(connection);
