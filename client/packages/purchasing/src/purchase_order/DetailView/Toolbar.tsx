@@ -28,7 +28,7 @@ interface ToolbarProps {
 
 export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
-  const { error, warning } = useNotification();
+  const { error } = useNotification();
   const {
     draft,
     query: { data, isLoading },
@@ -55,14 +55,6 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
       currencyId: currency.id,
       foreignExchangeRate: currency.rate,
     });
-  };
-
-  const handleForeignExchangeRateChange = (value: number | undefined) => {
-    if (value == null || value === draft?.foreignExchangeRate) return;
-    if (draft?.foreignExchangeRate !== value) {
-      warning(t('warning.foreign-exchange-rate-different'))();
-      handleChange({ foreignExchangeRate: value });
-    }
   };
 
   return (
@@ -126,7 +118,6 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             Input={
               <NumericTextInput
                 value={draft?.foreignExchangeRate ?? 0}
-                onChange={handleForeignExchangeRateChange}
                 decimalLimit={4}
                 disabled={true}
                 width={150}
