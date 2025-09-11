@@ -37,6 +37,7 @@ pub struct UpdatePurchaseOrderInput {
     pub confirmed_datetime: Option<NullableUpdate<NaiveDateTime>>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
+    pub supplier_discount_amount: Option<f64>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
