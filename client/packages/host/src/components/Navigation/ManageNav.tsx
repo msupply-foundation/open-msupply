@@ -38,6 +38,14 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
       <Collapse in={isActive}>
         <List>
           <AppNavLink
+            visible={isCentralServer}
+            end
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Campaigns)
+              .build()}
+            text={t('campaigns')}
+          />
+          <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}
             end
             to={RouteBuilder.create(AppRoute.Manage)
@@ -52,14 +60,6 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .addPart(AppRoute.Equipment)
               .build()}
             text={t('equipment')}
-          />
-          <AppNavLink
-            visible={isCentralServer}
-            end
-            to={RouteBuilder.create(AppRoute.Manage)
-              .addPart(AppRoute.Campaigns)
-              .build()}
-            text={t('campaigns')}
           />
           <AppNavLink
             end
