@@ -93,6 +93,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         state: {},
         enableRowSelection, // adds `mrt-row-select`
         layoutMode: enableColumnResizing ? 'grid-no-grow' : 'auto', // adds `mrt-row-spacer`
+        enableExpanding: !!groupByField, // adds `mrt-row-expand`
+        positionExpandColumn: 'first', // this is the default, required to be explicit here
       } as MRT_StatefulTableOptions<T>),
     },
     state: {
