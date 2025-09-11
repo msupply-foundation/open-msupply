@@ -127,7 +127,6 @@ const OutboundShipmentListViewComponent: FC = () => {
         header: t('label.status'),
         size: 140,
         filterVariant: 'select',
-        enableColumnFilter: true,
         filterSelectOptions: [
           { value: 'NEW', label: t('label.new') },
           { value: 'SHIPPED', label: t('label.shipped') },
