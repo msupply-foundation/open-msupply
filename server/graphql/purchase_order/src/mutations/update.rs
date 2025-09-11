@@ -24,8 +24,9 @@ use service::{
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PurchaseOrderNodeType {
     New,
+    RequestApproval,
     Confirmed,
-    Authorised,
+    Sent,
     Finalised,
 }
 
@@ -33,8 +34,9 @@ impl PurchaseOrderNodeType {
     pub fn from_domain(domain_type: &PurchaseOrderStatus) -> Self {
         match domain_type {
             PurchaseOrderStatus::New => PurchaseOrderNodeType::New,
+            PurchaseOrderStatus::RequestApproval => PurchaseOrderNodeType::RequestApproval,
             PurchaseOrderStatus::Confirmed => PurchaseOrderNodeType::Confirmed,
-            PurchaseOrderStatus::Authorised => PurchaseOrderNodeType::Authorised,
+            PurchaseOrderStatus::Sent => PurchaseOrderNodeType::Sent,
             PurchaseOrderStatus::Finalised => PurchaseOrderNodeType::Finalised,
         }
     }
@@ -42,8 +44,9 @@ impl PurchaseOrderNodeType {
     pub fn to_domain(self) -> PurchaseOrderStatus {
         match self {
             PurchaseOrderNodeType::New => PurchaseOrderStatus::New,
+            PurchaseOrderNodeType::RequestApproval => PurchaseOrderStatus::RequestApproval,
             PurchaseOrderNodeType::Confirmed => PurchaseOrderStatus::Confirmed,
-            PurchaseOrderNodeType::Authorised => PurchaseOrderStatus::Authorised,
+            PurchaseOrderNodeType::Sent => PurchaseOrderStatus::Sent,
             PurchaseOrderNodeType::Finalised => PurchaseOrderStatus::Finalised,
         }
     }

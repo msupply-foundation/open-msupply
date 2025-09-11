@@ -225,8 +225,9 @@ impl PurchaseOrderNode {
 ::PurchaseOrderStatus")]
 pub enum PurchaseOrderNodeStatus {
     New,
+    RequestApproval,
     Confirmed,
-    Authorised,
+    Sent,
     Finalised,
 }
 
