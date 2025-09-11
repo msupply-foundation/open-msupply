@@ -15,18 +15,21 @@ pub fn validate(
     input: &UpdatePurchaseOrderInput,
     store_id: &str,
     connection: &StorageConnection,
+    user_has_permission: Option<bool>,
 ) -> Result<PurchaseOrderRow, UpdatePurchaseOrderError> {
     let purchase_order = PurchaseOrderRowRepository::new(connection).find_one_by_id(&input.id)?;
     let purchase_order = purchase_order.ok_or(UpdatePurchaseOrderError::UpdatedRecordNotFound)?;
 
-    if input.status == Some(PurchaseOrderStatus::Authorised) {
-        let is_authorised = AuthorisePurchaseOrder
+    // check user has permission to authorise purchase order, if authorisation is required
+    if input.status == Some(PurchaseOrderStatus::Confirmed) {
+        let requires_auth = AuthorisePurchaseOrder
             .load(connection, Some(store_id.to_string()))
             .map_err(|_| {
                 UpdatePurchaseOrderError::DatabaseError(repository::RepositoryError::NotFound)
             })?;
-        if !is_authorised {
-            return Err(UpdatePurchaseOrderError::AuthorisationPreferenceNotSet);
+        if requires_auth && user_has_permission != Some(true) {
+            return Err(UpdatePurchaseOrderError::UserUnableToAuthorisePurchaseOrder);
+            // TODO: update error message
         }
     }
 
