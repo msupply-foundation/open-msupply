@@ -1985,7 +1985,7 @@
   "messages.requested-to-suggested": "La quantité demandée correspondra à la quantité suggérée pour les lignes dont la quantité demandée est égale à 0.",
   "messages.requisition-item-information-amc": "Consommation mensuelle moyenne des clients. Pour votre dépôt, il s'agit de la somme des consommations mensuelles moyennes des clients.",
   "messages.requisition-no-stock": "Aucun stock disponible actuellement",
-  "messages.no-requested-quantities": "Il n’y a actuellement aucune quantité demandée.",
+  "messages.no-requested-quantities": "There are currently no requested quantities",
   "messages.results-found": "{{totalCount}} résultats trouvés",
   "messages.results-over-limit": "Affichage des {{limit}} premiers résultats uniquement - veuillez affiner votre recherche",
   "messages.return-saved": "Retour sauvegardé 🥳",
