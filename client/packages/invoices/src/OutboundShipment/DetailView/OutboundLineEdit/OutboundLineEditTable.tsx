@@ -12,13 +12,24 @@ import {
   Typography,
   useTableStore,
   usePreferences,
+  ColumnDef,
+  MaterialTable,
+  UNDEFINED_STRING_VALUE,
+  useAuthContext,
+  useSimpleMaterialTable,
+  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
+import {
+  CurrencyRowFragment,
+  // VVMStatusInputCell,
+} from '@openmsupply-client/system';
 import {
   AllocateInType,
   useAllocationContext,
   getAllocatedQuantity,
+  canAutoAllocate,
+  DraftStockOutLineFragment,
 } from '../../../StockOut';
 import { min } from 'lodash';
 import { useDisableVvmRows } from '../../../useDisableVvmRows';
@@ -123,10 +134,12 @@ export const OutboundLineEditTable = ({
   currency,
   isExternalSupplier,
 }: OutboundLineEditTableProps) => {
+  const { tableUsabilityImprovements } = useFeatureFlags();
   const t = useTranslation();
   const { format } = useFormatNumber();
   const tableStore = useTableStore();
   const prefs = usePreferences();
+  const { store } = useAuthContext();
 
   const {
     draftLines,
@@ -177,6 +190,99 @@ export const OutboundLineEditTable = ({
     setVvmStatus,
   });
 
+  const packSize =
+    allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
+
+  const mrtColumns = useMemo(() => {
+    const cols: ColumnDef<DraftStockOutLineFragment>[] = [
+      {
+        id: 'canAllocate',
+        header: '',
+        accessorFn: row => canAutoAllocate(row, packSize),
+        size: 0,
+        Cell: ({ renderedCellValue }) => {
+          return renderedCellValue ? '✓' : '';
+        },
+        // Cell: ({ row, column }) => {
+        //   return <CheckCell rowData={row} column={column} />;
+        // },
+        // defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 60,
+        // Cell: getBatchWithVariantCell(
+        //   item?.id ?? '',
+        //   allocateIn.type === AllocateInType.Doses
+        // ),
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry-date'),
+        size: 120,
+      },
+      // {
+      //   accessorKey: 'vvmStatus',
+      //   header: t('label.vvm-status'),
+      //   Cell: ({ row }) => (
+      //     <VVMStatusInputCell
+      //       onChange={setVvmStatus}
+      //       selected={row.original.vvmStatus}
+      //     />
+      //   ),
+      //   size: 80,
+      //   // defaultHideOnMobile: true,
+      //   includeColumn:
+      //     prefs.manageVvmStatusForStock || prefs.sortByVvmStatusThenExpiry,
+      // },
+      {
+        id: 'campaign',
+        header: t('label.campaign'),
+        accessorFn: row => row?.campaign?.name ?? row?.program?.name ?? '',
+      },
+      {
+        accessorKey: 'location.code',
+        header: t('label.location'),
+      },
+      {
+        accessorKey: 'donor',
+        header: t('label.donor'),
+        accessorFn: rowData => rowData.donor?.name ?? UNDEFINED_STRING_VALUE,
+        // Cell: TooltipTextCell,
+        defaultHideOnMobile: true,
+        includeColumn: prefs.allowTrackingOfStockByDonor,
+      },
+      {
+        accessorKey: 'sellPricePerPack',
+        header: t('label.pack-sell-price'),
+        // Cell: CurrencyCell,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'foreignCurrencySellPricePerPack',
+        accessorFn: rowData => {
+          if (currency) {
+            return rowData.sellPricePerPack / currency.rate;
+          }
+        },
+        header: t('label.fc-sell-price'),
+        description: 'description.fc-sell-price',
+        align: 'right',
+        // Cell: ForeignCurrencyCell,
+        includeColumn:
+          isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
+        defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        defaultHideOnMobile: true,
+      },
+    ];
+    return cols;
+  }, []);
+
   // Display all stock lines to user, including non-allocatable ones at the bottom
   const lines = useMemo(
     () => [...draftLines, ...nonAllocatableLines],
@@ -226,6 +332,23 @@ export const OutboundLineEditTable = ({
     />,
   ];
 
+  const table = useSimpleMaterialTable<DraftStockOutLineFragment>({
+    tableId: 'outbound-line-edit',
+    columns: mrtColumns,
+    data: lines,
+    bottomToolbarContent: (
+      <Box
+        sx={{
+          display: 'flex',
+          width: '100%',
+          justifyContent: 'flex-end',
+        }}
+      >
+        {additionalRows}
+      </Box>
+    ),
+  });
+
   return (
     <Box style={{ width: '100%' }}>
       <Divider margin={10} />
@@ -238,14 +361,18 @@ export const OutboundLineEditTable = ({
           overflowY: 'auto',
         }}
       >
-        <DataTable
-          id="outbound-line-edit"
-          columns={columns}
-          data={lines}
-          dense
-          additionalRows={additionalRows}
-          enableColumnSelection={true}
-        />
+        {tableUsabilityImprovements ? (
+          <MaterialTable table={table} />
+        ) : (
+          <DataTable
+            id="outbound-line-edit"
+            columns={columns}
+            data={lines}
+            dense
+            additionalRows={additionalRows}
+            enableColumnSelection={true}
+          />
+        )}
       </Box>
     </Box>
   );
