@@ -123,7 +123,7 @@ const UIComponent = (props: ControlProps) => {
 
   const handleUpdateQuantity = (stocklineId: string, numberOfPacks: number) => {
     const newDraftLines = draftLines.map(line =>
-      line.id === stocklineId ? { ...line, numberOfPacks } : line
+      line.id === stocklineId ? { ...line, numberOfPacks, prescribedQuantity: (numberOfPacks * line.packSize) } : line
     );
     setDraftLines(newDraftLines);
     formActions.setState(`${path}_stockline`, newDraftLines);
@@ -145,10 +145,12 @@ const UIComponent = (props: ControlProps) => {
           // line
           allPrescriptionLines.forEach(
             line => (line.invoiceId = prescriptionId)
-          );
+          )
+          
+          const linesWithPacks = allPrescriptionLines.filter(line => line.numberOfPacks > 0);
           // Add lines to prescription
           await saveLines({
-            draftPrescriptionLines: allPrescriptionLines,
+            draftPrescriptionLines: linesWithPacks,
             patch: { id: prescriptionId, status: InvoiceNodeStatus.Picked },
           });
           success(
