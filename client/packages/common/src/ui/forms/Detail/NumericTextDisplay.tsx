@@ -39,12 +39,13 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
     <Box sx={sx ?? { padding: '4px 8px' }}>
       <Tooltip title={tooltip}>
         <Typography
-          style={{
+          sx={{
             minWidth: width,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             textAlign: 'right',
             fontSize: 'inherit',
+            paddingX: '1px', // so overflow hidden doesn't cut off last digit
           }}
         >
           {/* Show `...` if greater decimal precision available in tooltip */}
