@@ -58,8 +58,8 @@ pub struct ItemFilterInput {
     pub is_vaccine: Option<bool>,
     pub master_list_id: Option<EqualFilterStringInput>,
     pub is_program_item: Option<bool>,
-    pub more_than_months_of_stock: Option<i32>,
-    pub less_than_months_of_stock: Option<i32>,
+    pub min_months_of_stock: Option<f64>,
+    pub max_months_of_stock: Option<f64>,
 }
 
 #[derive(Union)]
@@ -114,8 +114,8 @@ impl ItemFilterInput {
             is_visible_or_on_hand,
             master_list_id,
             is_program_item,
-            more_than_months_of_stock,
-            less_than_months_of_stock,
+            min_months_of_stock,
+            max_months_of_stock,
         } = self;
 
         ItemFilter {
@@ -133,8 +133,8 @@ impl ItemFilterInput {
             is_visible_or_on_hand,
             master_list_id: master_list_id.map(EqualFilter::from),
             is_program_item,
-            more_than_months_of_stock,
-            less_than_months_of_stock,
+            min_months_of_stock,
+            max_months_of_stock,
         }
     }
 }

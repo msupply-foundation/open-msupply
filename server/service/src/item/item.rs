@@ -1,6 +1,4 @@
-use repository::{
-    EqualFilter, Item, ItemFilter, ItemRepository, ItemSort, Pagination, PaginationOption,
-    RepositoryError, StorageConnection, StorageConnectionManager,
+use repository::{ EqualFilter, Item, ItemFilter, ItemRepository, ItemSort, Pagination, PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager
 };
 
 use crate::{
@@ -23,24 +21,24 @@ pub fn get_items(
     let connection = connection_manager.connection()?;
     let repository = ItemRepository::new(&connection);
 
-    // N.B. this way of doing it means that if both the more_than_months_of_stock and less_than_months_of_stock filters are used, the query will ignore the less_than filter.
-    let filter = filter.map(|mut filter| -> Result<ItemFilter, ListError> {
-        if let Some(comparison_months_of_stock) = filter.more_than_months_of_stock {
-            // call get_item_ids_by_mos() with more_than = true so it will only return ids of the items that have more than that many months of stock
-            let item_ids_filtered_by_mos =
-                get_item_ids_by_mos(&connection, filter.clone(), true, store_id, comparison_months_of_stock as f64)?;
-
-            filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
-        } else if let Some(comparison_months_of_stock) = filter.less_than_months_of_stock {
-            // call get_item_ids_by_mos() with more_than = false so it will only return ids of the items that have less than that many months of stock
-            let item_ids_filtered_by_mos =
-                get_item_ids_by_mos(&connection, filter.clone(), false, store_id, comparison_months_of_stock as f64)?;
-
-            filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
-        }
-        Ok(filter)
-    }).transpose()?;
-
+    let filter = filter
+        .map(|mut filter| -> Result<ItemFilter, ListError> {
+            // If there is a filter for either min or max months of stock...
+            if filter.min_months_of_stock.is_some() || filter.max_months_of_stock.is_some() {
+                // ...then produce a list of item ids that have <= the max and >= the min months of stock...
+                let item_ids_filtered_by_mos = get_item_ids_by_mos(
+                    &connection,
+                    filter.clone(),
+                    store_id,
+                    filter.min_months_of_stock,
+                    filter.max_months_of_stock,
+                )?;
+                // ...and filter for only those ids.
+                filter = filter.id(EqualFilter::equal_any(item_ids_filtered_by_mos));
+            }
+            Ok(filter)
+        })
+        .transpose()?;
 
     let rows = repository.query(pagination, filter.clone(), sort, Some(store_id.to_owned()))?;
 
@@ -53,17 +51,15 @@ pub fn get_items(
 pub fn get_item_ids_by_mos(
     connection: &StorageConnection,
     filter: ItemFilter,
-    more_than: bool,
     store_id: &str,
-    comparison_months_of_stock: f64,
+    min_months_of_stock: Option<f64>,
+    max_months_of_stock: Option<f64>,
 ) -> Result<Vec<String>, ListError> {
     let repository = ItemRepository::new(&connection);
-    let more_than = more_than;
-    let comparison_months_of_stock = comparison_months_of_stock;
-    
+
     let item_ids = repository
         .query(
-            Pagination::all(), // get all items so we can then filter them by mos in the next - we'll use pagination for the query that will be returned to the user.
+            Pagination::all(), // get all items so we can then filter them by mos in the next part. We'll use pagination for the query that will be returned to the user.
             Some(filter),
             None,
             Some(store_id.to_owned()),
@@ -83,13 +79,16 @@ pub fn get_item_ids_by_mos(
         .filter_map(|(k, v)| {
             months_of_stock_on_hand(v)
                 .filter(|&mos| {
-                    if more_than {
-                        // if user has used the more_than_months_of_stock filter, only return ids of items that have more than or equal to that many months of stock available.
-                        mos >= comparison_months_of_stock
-                    } else {
-                        // if user has used the less_than_months_of_stock filter, only return ids of items that have less than or equal to that many months of stock available.
-                        mos <= comparison_months_of_stock
+                    let mut include = true;
+                    if let Some(min_mos) = min_months_of_stock {
+                        // include if it has more than the min months of stock
+                        include &= (mos >= min_mos);
                     }
+                    if let Some(max_mos) = max_months_of_stock {
+                        // include if it has less than the max months of stock
+                        include &= (mos <= max_mos);
+                    }
+                    include
                 })
                 .map(|_| k)
         })
