@@ -82,6 +82,7 @@ const OutstandingLinesList = () => {
         formatter: dateString =>
           dateString ? localisedDate((dateString as string) || '') : '',
         accessor: ({ rowData }) => rowData?.purchaseOrder?.confirmedDatetime,
+        sortable: false,
       },
       {
         key: 'expectedDeliveryDate',
@@ -110,6 +111,7 @@ const OutstandingLinesList = () => {
           const received = rowData?.receivedNumberOfUnits ?? 0;
           return adjusted - received;
         },
+        sortable: false,
       },
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
