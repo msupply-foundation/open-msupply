@@ -117,7 +117,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         header: t('label.name'),
         accessorKey: 'otherPartyName',
         size: 400,
-        filterVariant: 'text',
+        enableColumnFilter: true,
         defaultHideOnMobile: true,
       },
       {
@@ -126,6 +126,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         header: t('label.status'),
         size: 140,
         filterVariant: 'select',
+        enableColumnFilter: true,
         filterSelectOptions: [
           { value: 'NEW', label: t('label.new') },
           { value: 'SHIPPED', label: t('label.shipped') },
@@ -136,17 +137,14 @@ const OutboundShipmentListViewComponent: FC = () => {
       {
         accessorKey: 'invoiceNumber',
         header: t('label.invoice-number'),
-        size: 150,
-        align: 'right',
+        columnType: 'number',
         description: t('description.invoice-number'),
       },
       {
-        // todo - datetime?
         accessorKey: 'createdDatetime',
         header: t('label.created'),
-        Cell: ({ cell }) =>
-          new Date(cell.getValue<string>()).toLocaleDateString(),
-        filterVariant: 'date-range',
+        enableColumnFilter: true,
+        columnType: 'date',
       },
       {
         accessorKey: 'theirReference',
@@ -155,8 +153,14 @@ const OutboundShipmentListViewComponent: FC = () => {
         size: 175,
         defaultHideOnMobile: true,
       },
+
       {
-        // todo: reusable
+        accessorKey: 'pricing.totalAfterTax',
+        header: t('label.total'),
+        columnType: 'currency',
+        defaultHideOnMobile: true,
+      },
+      {
         accessorKey: 'comment',
         header: '',
         enableColumnActions: false,
@@ -179,17 +183,6 @@ const OutboundShipmentListViewComponent: FC = () => {
             </PaperHoverPopover>
           ) : null;
         },
-      },
-      {
-        accessorKey: 'pricing.totalAfterTax',
-        header: t('label.total'),
-        Cell: ({ cell }) =>
-          new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-          }).format(cell.getValue<number>()),
-        size: 125,
-        defaultHideOnMobile: true,
       },
     ],
     []
