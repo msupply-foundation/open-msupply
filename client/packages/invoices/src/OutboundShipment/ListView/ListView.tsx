@@ -23,6 +23,7 @@ import {
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
+  getNameAndColorSetterColumn,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -112,11 +113,11 @@ const OutboundShipmentListViewComponent: FC = () => {
   const mrtColumns = useMemo(
     (): ColumnDef<OutboundRowFragment>[] => [
       {
-        // todo; color picker
-        id: 'otherPartyName',
-        header: t('label.name'),
-        accessorKey: 'otherPartyName',
-        size: 400,
+        ...getNameAndColorSetterColumn<OutboundRowFragment>(
+          onUpdate,
+          isOutboundDisabled,
+          t
+        ),
         enableColumnFilter: true,
         defaultHideOnMobile: true,
       },
