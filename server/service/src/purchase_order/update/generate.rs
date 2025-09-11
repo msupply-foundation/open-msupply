@@ -107,11 +107,14 @@ fn set_new_status_datetime(
     let current_datetime = chrono::Utc::now().naive_utc();
     if let Some(status) = input_status {
         match status {
-            PurchaseOrderStatus::Authorised => {
-                purchase_order.authorised_datetime = Some(current_datetime);
+            PurchaseOrderStatus::RequestApproval => {
+                purchase_order.request_approval_datetime = Some(current_datetime);
             }
             PurchaseOrderStatus::Confirmed => {
                 purchase_order.confirmed_datetime = Some(current_datetime);
+            }
+            PurchaseOrderStatus::Sent => {
+                purchase_order.sent_datetime = Some(current_datetime);
             }
             PurchaseOrderStatus::Finalised => {
                 purchase_order.finalised_datetime = Some(current_datetime)

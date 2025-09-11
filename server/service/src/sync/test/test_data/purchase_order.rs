@@ -78,7 +78,7 @@ const PURCHASE_ORDER_1: (&str, &str) = (
             "confirmed_datetime": "2021-07-11T01:02:03",
             "sent_datetime": "2025-01-15T01:02:03",
             "supplier_discount_percentage": 10.0, 
-            "authorised_datetime": "2025-01-22T00:00:00",
+            "request_approval_datetime": "2025-01-22T00:00:00",
             "finalised_datetime": "2025-01-22T00:00:00",
             "status": "FINALISED"
         }
@@ -135,7 +135,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             freight_charge: None,
             freight_conditions: Some("difficult".to_string()),
             supplier_discount_percentage: Some(10.0),
-            authorised_datetime: Some(
+            request_approval_datetime: Some(
                 NaiveDate::from_ymd_opt(2025, 1, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
@@ -208,7 +208,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                         .unwrap(),
                 ),
                 supplier_discount_percentage: Some(10.0),
-                authorised_datetime: Some(
+                request_approval_datetime: Some(
                     NaiveDate::from_ymd_opt(2025, 1, 22)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
@@ -340,7 +340,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             freight_charge: None,
             freight_conditions: None,
             supplier_discount_percentage: None,
-            authorised_datetime: None,
+            request_approval_datetime: None,
             finalised_datetime: None,
         },
     )
@@ -470,7 +470,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             freight_charge: None,
             freight_conditions: None,
             supplier_discount_percentage: None,
-            authorised_datetime: None,
+            request_approval_datetime: None,
             finalised_datetime: None,
         },
     )

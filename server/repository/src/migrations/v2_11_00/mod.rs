@@ -5,6 +5,7 @@ mod add_ignore_for_orders_to_item_store_join;
 mod add_permission_to_verify_inbound_shipment;
 mod add_purchase_order_sent_to_activity_log_type_enum;
 mod add_sent_to_purchase_order_status_enum;
+mod rename_authorised_datetime_to_request_approval_datetime;
 mod rename_authorised_on_purchase_order_status_enum;
 mod rename_purchase_order_authorised_on_activity_log_enum;
 mod update_goods_received_report_context;
@@ -29,6 +30,7 @@ impl Migration for V2_11_00 {
             Box::new(rename_authorised_on_purchase_order_status_enum::Migrate),
             Box::new(add_purchase_order_sent_to_activity_log_type_enum::Migrate),
             Box::new(rename_purchase_order_authorised_on_activity_log_enum::Migrate),
+            Box::new(rename_authorised_datetime_to_request_approval_datetime::Migrate),
         ]
     }
 }
