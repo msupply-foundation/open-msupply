@@ -6,7 +6,7 @@ import { PurchaseOrderListView } from './purchase_order/ListView/ListView';
 import { PurchaseOrderDetailView } from './purchase_order/DetailView';
 import { GoodsReceivedListView } from './goods_received/ListView';
 import { GoodsReceivedDetailView } from './goods_received/DetailView';
-import { OutstandingPurchaseOrderLinesListView } from './purchase_order/ListView/OutstandingLines';
+import { OutstandingPurchaseOrderLinesListView } from './purchase_order/ListView/OutstandingLines/OutstandingLines';
 
 const PurchasingService = () => {
   const purchaseOrdersRoute = RouteBuilder.create(
