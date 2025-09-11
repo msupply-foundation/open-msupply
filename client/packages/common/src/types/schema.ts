@@ -7260,19 +7260,19 @@ export type PurchaseOrderNode = {
   additionalInstructions?: Maybe<Scalars['String']['output']>;
   advancePaidDate?: Maybe<Scalars['NaiveDate']['output']>;
   agentCommission?: Maybe<Scalars['Float']['output']>;
-  authorisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  authorisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   authorisingOfficer1?: Maybe<Scalars['String']['output']>;
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   communicationsCharge?: Maybe<Scalars['Float']['output']>;
-  confirmedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
   contractSignedDate?: Maybe<Scalars['NaiveDate']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   currencyId?: Maybe<Scalars['String']['output']>;
   documentCharge?: Maybe<Scalars['Float']['output']>;
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
-  finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
   freightCharge?: Maybe<Scalars['Float']['output']>;
   freightConditions?: Maybe<Scalars['String']['output']>;
@@ -7286,7 +7286,7 @@ export type PurchaseOrderNode = {
   receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  sentDatetime?: Maybe<Scalars['DateTime']['output']>;
   shippingMethod?: Maybe<Scalars['String']['output']>;
   status: PurchaseOrderNodeStatus;
   store?: Maybe<StoreNode>;
@@ -7299,13 +7299,6 @@ export type PurchaseOrderNode = {
 };
 
 export enum PurchaseOrderNodeStatus {
-  Authorised = 'AUTHORISED',
-  Confirmed = 'CONFIRMED',
-  Finalised = 'FINALISED',
-  New = 'NEW',
-}
-
-export enum PurchaseOrderNodeType {
   Authorised = 'AUTHORISED',
   Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
@@ -10521,7 +10514,7 @@ export type UpdatePurchaseOrderInput = {
   requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   sentDatetime?: InputMaybe<NullableDatetimeUpdate>;
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<PurchaseOrderNodeType>;
+  status?: InputMaybe<PurchaseOrderNodeStatus>;
   supplierAgent?: InputMaybe<Scalars['String']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;
