@@ -120,8 +120,9 @@ pub struct PurchaseOrderRow {
 pub enum PurchaseOrderStatus {
     #[default]
     New,
+    RequestApproval,
     Confirmed,
-    Authorised,
+    Sent,
     Finalised,
 }
 
