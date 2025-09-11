@@ -8,7 +8,9 @@ use repository::{
 
 use crate::purchase_order_line::insert::PackSizeCodeCombination;
 use crate::{
-    purchase_order::validate::{can_adjust_requested_quantity, purchase_order_is_editable},
+    purchase_order::validate::{
+        can_edit_adjusted_quantity, can_edit_requested_quantity, purchase_order_lines_editable,
+    },
     purchase_order_line::update::{
         UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
     },
@@ -28,7 +30,26 @@ pub fn validate(
         .find_one_by_id(&line.purchase_order_id)?
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
 
-    if !purchase_order_is_editable(&purchase_order) {
+    // Allow editing of the requested quantity
+    // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
+    if let Some(requested_units) = input.requested_number_of_units {
+        if requested_units != line.requested_number_of_units
+            && !can_edit_requested_quantity(&purchase_order)
+        {
+            return Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity);
+        }
+    }
+    // Allow editing of the adjusted quantity
+    // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
+    if let Some(adjusted_units) = input.adjusted_number_of_units {
+        if Some(adjusted_units) != line.adjusted_number_of_units
+            && !can_edit_adjusted_quantity(&purchase_order)
+        {
+            return Err(UpdatePurchaseOrderLineInputError::CannotEditAdjustedQuantity);
+        }
+    }
+
+    if !purchase_order_lines_editable(&purchase_order) {
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrder);
     }
 
@@ -77,15 +98,6 @@ pub fn validate(
                 },
             ),
         );
-    }
-
-    // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
-    if let Some(requested_units) = input.requested_number_of_units {
-        if requested_units != line.requested_number_of_units
-            && !can_adjust_requested_quantity(&purchase_order)
-        {
-            return Err(UpdatePurchaseOrderLineInputError::CannotAdjustRequestedQuantity);
-        }
     }
 
     Ok(line)

@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    purchase_order::validate::purchase_order_is_editable,
+    purchase_order::validate::purchase_order_lines_editable,
     purchase_order_line::delete::DeletePurchaseOrderLineError,
 };
 
@@ -25,7 +25,7 @@ pub fn validate(
         None => return Err(DeletePurchaseOrderLineError::PurchaseOrderDoesNotExist),
     };
 
-    if !purchase_order_is_editable(&purchase_order) {
+    if !purchase_order_lines_editable(&purchase_order) {
         return Err(DeletePurchaseOrderLineError::CannotEditPurchaseOrder);
     }
 
