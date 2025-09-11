@@ -23,7 +23,8 @@ pub(super) fn stock_line_ledger_fix(
     operation_log: &mut String,
     stock_line_id: &str,
 ) -> Result</* fixed fully */ bool, StockLineLedgerFixError> {
-    // Check some other fix hasn't already made a sweeping fix, e.g. a invoice status change
+    // Check some other line's fix hasn't already made a sweeping fix that's already resolved this line
+    // e.g. another line was fixed by changing an invoice status, that invoice may have included the line we're processing here too.
     if is_ledger_fixed(connection, stock_line_id)? {
         return Ok(true);
     }
