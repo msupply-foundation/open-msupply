@@ -3,8 +3,10 @@ import { RecordWithId } from '@common/types';
 import { ColumnAlign, ColumnDefinition } from '../types';
 import { MessageSquareIcon } from '@common/icons';
 import { PaperHoverPopover, PaperPopoverSection } from '@common/components';
-import { useTranslation } from '@common/intl';
+import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
+import { MRT_RowData } from 'material-react-table';
+import { ColumnDef } from '../../material-react-table';
 
 interface NoteObject {
   header: string;
@@ -76,6 +78,35 @@ export const getNotePopoverColumn = <T extends RecordWithId>(
         Content={
           <PaperPopoverSection label={label ?? t('label.notes')}>
             {content.map(({ header, body }) => (
+              <NoteSection key={body} {...{ header, body }} />
+            ))}
+          </PaperPopoverSection>
+        }
+      >
+        <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
+      </PaperHoverPopover>
+    ) : null;
+  },
+});
+
+export const getNoteColumn = <T extends MRT_RowData>(
+  t: TypedTFunction<LocaleKey>,
+  mapper: (row: T) => NoteObject[]
+): ColumnDef<T> => ({
+  id: 'note',
+  header: t('label.notes'),
+  size: 60,
+  enableSorting: false,
+  enableColumnFilter: false,
+  Cell: ({ row }) => {
+    const notes = mapper(row.original).filter(note => note.body);
+
+    return notes.length ? (
+      <PaperHoverPopover
+        width={400}
+        Content={
+          <PaperPopoverSection label={t('label.notes')}>
+            {notes.map(({ header, body }) => (
               <NoteSection key={body} {...{ header, body }} />
             ))}
           </PaperPopoverSection>

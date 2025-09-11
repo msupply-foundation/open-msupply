@@ -19,10 +19,9 @@ import {
   InvoiceLineNodeType,
   useIsGrouped,
   ColumnDef,
-  PaperHoverPopover,
-  MessageSquareIcon,
-  PaperPopoverSection,
   ArrayUtils,
+  getItemNameColumn,
+  getNoteColumn,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -97,50 +96,6 @@ const DetailViewInner = () => {
 
   const mrtColumns = useMemo(() => {
     const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
-      // toDO: reusable columns
-      {
-        id: 'note',
-        header: t('label.note'),
-        size: 60,
-        Cell: ({ row }) => {
-          const rowData = row.original;
-          let content = null;
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            const noteSections = lines
-              .map(({ batch, note }) => ({
-                header: batch ?? '',
-                body: note ?? '',
-              }))
-              .filter(({ body }) => !!body);
-            content = noteSections.length ? noteSections : null;
-          } else {
-            content =
-              rowData.batch && rowData.note
-                ? [{ header: rowData.batch, body: rowData.note }]
-                : null;
-          }
-
-          return content ? (
-            <PaperHoverPopover
-              width={400}
-              Content={
-                <PaperPopoverSection label={t('label.notes')}>
-                  {content.map(({ header, body }) => (
-                    // <NoteSection key={body} {...{ header, body }} />
-                    <>
-                      <b>{header}</b>
-                      <span>{body}</span>
-                    </>
-                  ))}
-                </PaperPopoverSection>
-              }
-            >
-              <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
-            </PaperHoverPopover>
-          ) : null;
-        },
-      },
       {
         accessorKey: 'item.code',
         header: t('label.code'),
@@ -148,12 +103,7 @@ const DetailViewInner = () => {
         filterVariant: 'text',
         pin: 'left',
       },
-      {
-        accessorKey: 'itemName',
-        header: t('label.name'),
-        filterVariant: 'text',
-        size: 400,
-      },
+      getItemNameColumn(t),
       {
         accessorKey: 'batch',
         header: t('label.batch'),
@@ -257,9 +207,17 @@ const DetailViewInner = () => {
           }
         },
       },
+      // Moved the end, I actually think we should remove this for outbound shipments,
+      // there's no way I can see to set the note - might just be hanging around from copy-paste?
+      getNoteColumn(t, rowData =>
+        'lines' in rowData
+          ? rowData.lines.map(({ batch, note }) => ({
+              header: batch ?? '',
+              body: note ?? '',
+            }))
+          : [{ header: rowData.batch ?? '', body: rowData.note ?? '' }]
+      ),
     ];
-
-    // TODO: remaining columns
 
     return cols;
   }, [manageVvmStatusForStock]);
