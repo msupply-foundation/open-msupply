@@ -24,6 +24,7 @@ pub enum PurchaseOrderLineSortFieldInput {
     LineNumber,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
+    PurchaseOrderNumber,
 }
 
 #[derive(InputObject)]
