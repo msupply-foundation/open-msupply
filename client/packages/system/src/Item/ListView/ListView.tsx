@@ -28,8 +28,8 @@ const ItemListComponent = () => {
     filters: [
       { key: 'codeOrName' },
       { key: 'hasStockOnHand', condition: 'equalTo' },
-      { key: 'lessThanMonthsOfStock', condition: 'equalTo' },
-      { key: 'moreThanMonthsOfStock', condition: 'equalTo' },
+      { key: 'minMonthsOfStock', condition: 'equalTo' },
+      { key: 'maxMonthsOfStock', condition: 'equalTo' },
     ],
   });
 
