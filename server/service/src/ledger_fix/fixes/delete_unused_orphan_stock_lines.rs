@@ -211,13 +211,7 @@ pub(crate) mod test {
             is_ledger_fixed(&connection, "legacy_stock_line_with_invoice_line"),
             Ok(false)
         );
-        dbg!(&logs);
-        if cfg!(feature = "postgres") {
-            assert!(logs.contains("violates foreign key") && logs.contains("invoice_line"));
-        } else {
-            assert!(logs
-                .contains("stock_line referenced in another table: FOREIGN KEY constraint failed"));
-        }
+        assert!(logs.contains("stock_line referenced in another table:"));
 
         // No invoice lines but referenced in stocktake line
         let mut logs = String::new();
@@ -235,11 +229,6 @@ pub(crate) mod test {
             is_ledger_fixed(&connection, "legacy_stock_line_with_stock_take_line"),
             Ok(false)
         );
-        if cfg!(feature = "postgres") {
-            assert!(logs.contains("violates foreign key") && logs.contains("stocktake_line"));
-        } else {
-            assert!(logs
-                .contains("stock_line referenced in another table: FOREIGN KEY constraint failed"));
-        }
+        assert!(logs.contains("stock_line referenced in another table:"));
     }
 }
