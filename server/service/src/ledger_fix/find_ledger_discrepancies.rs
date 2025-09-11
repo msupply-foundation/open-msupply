@@ -166,5 +166,8 @@ mod test {
         assert!(stock_line_ids.contains(&"negative_balance".to_string()));
         assert!(stock_line_ids.contains(&"total_not_matched".to_string()));
         assert!(stock_line_ids.contains(&"orphan".to_string()));
+        assert!(!stock_line_ids.contains(&"correct".to_string()));
+        assert!(!stock_line_ids.contains(&"correct_with_some_allocated_not_picked".to_string()));
+        assert!(!stock_line_ids.contains(&"negative_balance_non_active_store".to_string()));
     }
 }
