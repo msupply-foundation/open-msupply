@@ -6,18 +6,25 @@ import {
   useTranslation,
   StockIcon,
   BarChart2Icon,
+  InvoiceIcon,
+  RouteBuilder,
+  useNavigate,
 } from '@openmsupply-client/common';
+import { AppRoute } from 'packages/config/src';
 
 interface AppBarButtonProps {
   openRepack: () => void;
   openAdjust: () => void;
+  itemId: string | undefined;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   openRepack,
   openAdjust,
+  itemId,
 }) => {
   const t = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <AppBarButtonsPortal>
@@ -32,6 +39,20 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<BarChart2Icon />}
           onClick={openAdjust}
         />
+        {itemId && (
+          <ButtonWithIcon
+            label={t('label.view-item-details')}
+            Icon={<InvoiceIcon />}
+            onClick={() =>
+              navigate(
+                RouteBuilder.create(AppRoute.Catalogue)
+                  .addPart(AppRoute.Items)
+                  .addPart(itemId)
+                  .build()
+              )
+            }
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );
