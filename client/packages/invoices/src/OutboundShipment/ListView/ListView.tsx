@@ -23,6 +23,7 @@ import {
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
+  columnAlign,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -30,6 +31,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
 import { Footer } from './Footer';
+import { columnRenderDescription } from 'packages/common/src/ui/layout/tables/material-react-table/useBaseMaterialTable';
 
 const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -137,8 +139,8 @@ const OutboundShipmentListViewComponent: FC = () => {
         accessorKey: 'invoiceNumber',
         header: t('label.invoice-number'),
         size: 150,
-        align: 'right',
         description: t('description.invoice-number'),
+        ...columnAlign('right'),
       },
       {
         // todo - datetime?
@@ -152,9 +154,9 @@ const OutboundShipmentListViewComponent: FC = () => {
       {
         accessorKey: 'theirReference',
         header: t('label.reference'),
-        description: t('description.customer-reference'),
         size: 175,
         defaultHideOnMobile: true,
+        ...columnRenderDescription(t('description.customer-reference')),
       },
       {
         // todo: reusable

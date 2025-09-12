@@ -35,6 +35,28 @@ export interface BaseTableConfig<T extends MRT_RowData>
   columns: ColumnDef<T>[];
 }
 
+export const columnRenderDescription = <T extends MRT_RowData>(
+  description: string
+): Pick<ColumnDef<T>, 'renderColumnActionsMenuItems'> => ({
+  renderColumnActionsMenuItems: ({ internalColumnMenuItems }) => {
+    return [
+      <MenuItem
+        key="column-description"
+        disabled // just for display, not clickable
+        sx={{ '&.Mui-disabled': { opacity: 1 } }} // but remove the greyed out look
+        divider
+      >
+        <ListItemIcon>
+          <InfoIcon />
+        </ListItemIcon>
+        {description}
+      </MenuItem>,
+
+      ...internalColumnMenuItems,
+    ];
+  },
+});
+
 export const useBaseMaterialTable = <T extends MRT_RowData>({
   tableId,
   state,

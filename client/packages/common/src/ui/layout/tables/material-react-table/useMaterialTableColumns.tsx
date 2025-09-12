@@ -18,6 +18,29 @@ import {
 
 import { ColumnDef } from './types';
 
+export const columnAlign = <T extends MRT_RowData>(
+  align: 'left' | 'center' | 'right'
+): Pick<ColumnDef<T>, 'muiTableBodyCellProps'> => ({
+  muiTableBodyCellProps: params => {
+    // Add alignment styling
+    return mergeCellProps(
+      {
+        sx:
+          align === 'right'
+            ? {
+                justifyContent: 'flex-end',
+                paddingRight: '2em', // Padding to account for header icons
+              }
+            : align === 'center'
+              ? // To-DO: Add padding for center aligned cells
+                { justifyContent: 'center' }
+              : {},
+      },
+      params
+    );
+  },
+});
+
 export const useMaterialTableColumns = <T extends MRT_RowData>(
   omsColumns: ColumnDef<T>[]
 ) => {
