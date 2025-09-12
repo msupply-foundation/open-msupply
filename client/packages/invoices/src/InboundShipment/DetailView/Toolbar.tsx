@@ -100,8 +100,8 @@ export const Toolbar = ({ simplifiedTabletView }: ToolbarProps) => {
                         sx: {
                           backgroundColor: theme =>
                             isDisabled
-                              ? theme.palette.background.toolbar
-                              : theme.palette.background.menu,
+                              ? theme.palette.background.input.disabled
+                              : theme.palette.background.input.main,
                         },
                       },
                     }}

@@ -52,8 +52,8 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
               color: 'secondary',
               sx: {
                 backgroundColor: props.disabled
-                  ? 'background.toolbar'
-                  : 'background.menu',
+                  ? 'background.input.disabled'
+                  : 'background.input.main',
                 borderRadius: 2,
                 padding: '4px 8px',
               },
