@@ -1,8 +1,17 @@
 use super::UpdatePurchaseOrderInput;
 use crate::NullableUpdate;
-use repository::{PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
+use repository::{
+    EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
+    PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection,
+};
+
+pub(crate) struct GenerateResult {
+    pub updated_order: PurchaseOrderRow,
+    pub updated_lines: Vec<PurchaseOrderLineRow>,
+}
 
 pub fn generate(
+    connection: &StorageConnection,
     purchase_order: PurchaseOrderRow,
     UpdatePurchaseOrderInput {
         id: _,
@@ -33,7 +42,7 @@ pub fn generate(
         freight_charge,
         freight_conditions,
     }: UpdatePurchaseOrderInput,
-) -> Result<PurchaseOrderRow, RepositoryError> {
+) -> Result<GenerateResult, RepositoryError> {
     let mut updated_order = purchase_order.clone();
 
     set_new_status_datetime(&mut updated_order, &status);
@@ -43,7 +52,7 @@ pub fn generate(
     updated_order.donor_link_id = donor_id
         .map(|d| d.value)
         .unwrap_or(updated_order.donor_link_id);
-    updated_order.status = status.unwrap_or(updated_order.status);
+    updated_order.status = status.clone().unwrap_or(updated_order.status);
 
     updated_order.confirmed_datetime =
         nullable_update(&confirmed_datetime, updated_order.confirmed_datetime);
@@ -90,7 +99,12 @@ pub fn generate(
 
     updated_order.supplier_discount_percentage = Some(supplier_discount_percentage);
 
-    Ok(updated_order)
+    let updated_lines = update_lines(connection, &updated_order.id, &status)?;
+
+    Ok(GenerateResult {
+        updated_order,
+        updated_lines,
+    })
 }
 
 fn nullable_update<T: Clone>(input: &Option<NullableUpdate<T>>, current: Option<T>) -> Option<T> {
@@ -118,5 +132,39 @@ fn set_new_status_datetime(
             }
             _ => {}
         }
+    }
+}
+
+fn update_lines(
+    connection: &StorageConnection,
+    purchase_order_id: &str,
+    status: &Option<PurchaseOrderStatus>,
+) -> Result<Vec<PurchaseOrderLineRow>, RepositoryError> {
+    if let Some(new_status) = status {
+        let lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
+            PurchaseOrderLineFilter::new()
+                .purchase_order_id(EqualFilter::equal_to(purchase_order_id)),
+        )?;
+
+        let updated_lines: Vec<PurchaseOrderLineRow> = lines
+            .into_iter()
+            .map(|mut line| {
+                match new_status {
+                    PurchaseOrderStatus::Confirmed => {
+                        line.purchase_order_line_row.status =
+                            repository::PurchaseOrderLineStatus::Sent;
+                    }
+                    PurchaseOrderStatus::Finalised => {
+                        line.purchase_order_line_row.status =
+                            repository::PurchaseOrderLineStatus::Closed;
+                    }
+                    _ => {}
+                }
+                line.purchase_order_line_row.clone()
+            })
+            .collect();
+        Ok(updated_lines)
+    } else {
+        Ok(vec![])
     }
 }
