@@ -266,6 +266,8 @@ const useUpdate = () => {
             errorMessage = t('label.updated-line-does-not-exist');
             break;
           case 'ItemCannotBeOrdered':
+            errorMessage = t('error.item-cannot-be-ordered-on-line');
+            break;
           default:
             errorMessage = t('label.cannot-update-purchase-order-line');
         }
