@@ -58,6 +58,22 @@ export const Statistics = () => {
         title={t('title.average-monthly-consumption')}
         width={300}
       />
+
+      {/* <Typography color="secondary" style={{ fontSize: 12, fontWeight: 500 }}>
+        {data?.code && (
+          <SimpleLink
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Items)
+              .addQuery({
+                codeOrName: data?.code,
+              })
+              .build()}
+          >
+            {t('label.view-stock-for-this-item')}
+          </SimpleLink>
+        )}
+      </Typography> */}
+
       <StatsPanel
         isLoading={false}
         stats={[
@@ -69,6 +85,24 @@ export const Statistics = () => {
         title={t('title.months-of-stock')}
         width={300}
       />
+      {/* {data?.code && (
+        <StatsPanel
+          isLoading={false}
+          stats={[
+            {
+              label: t('label.view-stock-for-this-item'),
+              link: RouteBuilder.create(AppRoute.Catalogue)
+                .addPart(AppRoute.Items)
+                .addQuery({
+                  codeOrName: data?.code,
+                })
+                .build(),
+            },
+          ]}
+          title={t('title.months-of-stock')}
+          width={300}
+        />
+      )} */}
     </Grid>
   );
 };
