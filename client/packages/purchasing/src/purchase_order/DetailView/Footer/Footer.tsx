@@ -50,7 +50,7 @@ export const Footer = ({
   status,
 }: FooterProps): ReactElement => {
   const t = useTranslation();
-  const { success, info } = useNotification();
+  const { success } = useNotification();
   const { clearSelected } = useTableStore();
   const {
     query: { data },
@@ -91,26 +91,7 @@ export const Footer = ({
 
   const confirmAndClose = async () => {
     try {
-      const failedCount = await updateLineStatus(selectedRows);
-      const successCount = selectedRows.length - failedCount;
-
-      if (selectedRows.length === failedCount) {
-        info(t('messages.all-purchase-order-lines-are-closed'))();
-        clearSelected();
-        return;
-      }
-
-      if (failedCount > 0) {
-        success(
-          t('messages.partially-closed-purchase-order-lines', {
-            count: successCount,
-            closeCount: failedCount,
-          })
-        )();
-        clearSelected();
-        return;
-      }
-
+      await updateLineStatus(selectedRows);
       success(
         t('messages.closed-purchase-order-lines', {
           count: selectedRows.length,
