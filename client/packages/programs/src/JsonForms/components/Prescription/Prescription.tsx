@@ -154,7 +154,6 @@ const UIComponent = (props: ControlProps) => {
           // If we have any issued lines, we need to calculate the total for the prescribed quantity
           if (linesWithPacks[0]) {
             const prescribedQuantity = linesWithPacks.reduce((acc, line) => {
-              // Otherwise, sum up the total for the lines as they are
               return acc + line.numberOfPacks * line.packSize;
             }, 0);
             linesWithPacks[0].prescribedQuantity = prescribedQuantity;
