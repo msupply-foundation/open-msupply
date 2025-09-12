@@ -86,47 +86,43 @@ pub fn get_item_ids_by_mos(
         println!("{}: {:#?}", key, value);
     }
 
-    let item_ids_filtered_by_mos: Vec<String> = item_stats
-        .into_iter()
-        .filter(|(k, v)| {
-            let mut include = true;
-            let mos = get_months_of_stock_on_hand(v.clone());
-            if let Some(min_mos) = min_months_of_stock {
-                // include if it has more than the min months of stock
-                include &= (mos >= min_mos);
-            }
-            if let Some(max_mos) = max_months_of_stock {
-                // include if it has less than the max months of stock
-                include &= (mos <= max_mos);
-            }
-            include
+    // let item_ids_filtered_by_mos: Vec<String> = item_stats
+    //     .into_iter()
+    //     .filter(|(k, v)| {
+    //         let mut include = true;
+    //         let mos = get_months_of_stock_on_hand(v.clone()); // here we have an error: get_months_of_stock_on_hand returns None if amc = 0 (to avoid a divide by 0 error) How should we handle that case? Question asked to Mark.
+    //         if let Some(min_mos) = min_months_of_stock {
+    //             // include if it has more than the min months of stock, otherwise include becomes false
+    //             include &= (mos >= min_mos);
+    //         }
+    //         if let Some(max_mos) = max_months_of_stock {
+    //             // include if it has less than the max months of stock, otherwise include becomes false
+    //             include &= (mos <= max_mos);
+    //         }
+    //         include
+    //     })
+    //     .map(|(k, v)| k)
+    //     .collect();
+
+        let item_ids_filtered_by_mos: Vec<String> = item_stats.into_iter().filter_map(|(k, v)| {
+            get_months_of_stock_on_hand(v)
+                .filter(|&mos| {
+                    println!("key in question: {}", k);
+                    let mut include = true;
+                    if let Some(min_mos) = min_months_of_stock {
+                        // include if it has more than the min months of stock
+                        include &= (mos >= min_mos);
+                    }
+                    if let Some(max_mos) = max_months_of_stock {
+                        // include if it has less than the max months of stock
+                        include &= (mos <= max_mos);
+                    }
+                    println!("included? {}", include);
+                    include
+                })
+                .map(|_| k)
         })
-        .map(|(k, v)| k)
         .collect();
-
-
-
-
-
-        // .filter_map(|(k, v)| {
-        //     get_months_of_stock_on_hand(v)
-        //         .filter(|&mos| {
-        //             println!("key in question: {}", k);
-        //             let mut include = true;
-        //             if let Some(min_mos) = min_months_of_stock {
-        //                 // include if it has more than the min months of stock
-        //                 include &= (mos >= min_mos);
-        //             }
-        //             if let Some(max_mos) = max_months_of_stock {
-        //                 // include if it has less than the max months of stock
-        //                 include &= (mos <= max_mos);
-        //             }
-        //             println!("included? {}", include);
-        //             include
-        //         })
-        //         .map(|_| k)
-        // })
-        // .collect();
 
     println!("===================================> item_ids_filtered_by_mos: <===========================================");
     for item in &item_ids_filtered_by_mos {
