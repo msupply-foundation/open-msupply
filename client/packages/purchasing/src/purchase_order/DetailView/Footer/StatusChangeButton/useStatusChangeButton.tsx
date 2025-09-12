@@ -53,7 +53,7 @@ export const useStatusChangeButton = () => {
 
     const { error } = result;
 
-    switch (error.__typename) {
+    switch (error?.__typename) {
       case 'ItemsCannotBeOrdered': {
         const ids = mapValues(
           mapKeys(lines?.nodes, line => line?.id),

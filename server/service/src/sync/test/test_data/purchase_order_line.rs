@@ -1,8 +1,11 @@
 use crate::sync::{
-    test::TestSyncIncomingRecord, translations::purchase_order_line::LegacyPurchaseOrderLineRow,
+    test::TestSyncIncomingRecord,
+    translations::purchase_order_line::{
+        LegacyPurchaseOrderLineRow, LegacyPurchaseOrderLineRowOmsFields,
+    },
 };
 use chrono::NaiveDate;
-use repository::{PurchaseOrderLineDelete, PurchaseOrderLineRow};
+use repository::{PurchaseOrderLineDelete, PurchaseOrderLineRow, PurchaseOrderLineStatus};
 use serde_json::json;
 
 use super::TestSyncOutgoingRecord;
@@ -32,7 +35,9 @@ const PURCHASE_ORDER_LINE_1: (&str, &str) = (
     "note": "",
     "note_has_been_actioned": false,
     "note_show_on_goods_rec": false,
-    "oms_fields": null,
+    "oms_fields": {
+        "status": "NEW"
+    },
     "pack_units": "",
     "packsize_ordered": 1000,
     "price_expected_after_discount": 2.0,
@@ -73,7 +78,9 @@ const PURCHASE_ORDER_LINE_UNLINKED: (&str, &str) = (
     "note": "",
     "note_has_been_actioned": false,
     "note_show_on_goods_rec": false,
-    "oms_fields": null,
+    "oms_fields": {
+        "status": "SENT"
+    },
     "pack_units": "",
     "packsize_ordered": 0,
     "price_expected_after_discount": 0.0,
@@ -116,6 +123,7 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
             manufacturer_link_id: None,
             note: None,
             unit: None,
+            status: PurchaseOrderLineStatus::New,
         },
     )
 }
@@ -145,6 +153,9 @@ fn purchase_order_line_push_record() -> TestSyncOutgoingRecord {
             manufacturer_id: None,
             note: None,
             unit: None,
+            oms_fields: Some(LegacyPurchaseOrderLineRowOmsFields {
+                status: PurchaseOrderLineStatus::New
+            })
         }),
     }
 }
@@ -174,6 +185,7 @@ fn purchase_order_line_unlinked_pull_record() -> TestSyncIncomingRecord {
             manufacturer_link_id: None,
             note: None,
             unit: None,
+            status: PurchaseOrderLineStatus::Sent,
         },
     )
 }
@@ -203,6 +215,9 @@ fn purchase_order_line_unlinked_push_record() -> TestSyncOutgoingRecord {
             manufacturer_id: None,
             note: None,
             unit: None,
+            oms_fields: Some(LegacyPurchaseOrderLineRowOmsFields {
+                status: PurchaseOrderLineStatus::Sent
+            })
         }),
     }
 }
