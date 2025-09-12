@@ -59,13 +59,14 @@ export const getCheckboxSelectionColumn = <
       />
     );
   },
-  Cell: ({ rowData }) => {
+  Cell: ({ rowData, isDisabled }) => {
     const { isSelected, toggleSelected } = useCheckbox(rowData.id);
 
     return (
       <Checkbox
         checked={!!isSelected}
         size="small"
+        disabled={!!isDisabled}
         onClick={event => {
           event.stopPropagation();
           toggleSelected();

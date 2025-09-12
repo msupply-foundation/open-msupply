@@ -109,21 +109,24 @@ const OutboundShipmentListViewComponent: FC = () => {
     [sortBy]
   );
 
-  const mrtColumns: ColumnDef<OutboundRowFragment>[] = useMemo(
-    () => [
+  const mrtColumns = useMemo(
+    (): ColumnDef<OutboundRowFragment>[] => [
       {
-        accessorKey: 'otherPartyName',
+        // todo; color picker
+        id: 'otherPartyName',
         header: t('label.name'),
-        // size: 150,
-        filterType: 'text',
+        accessorKey: 'otherPartyName',
+        size: 400,
+        filterVariant: 'text',
+        defaultHideOnMobile: true,
       },
       {
         accessorFn: row => getStatusTranslator(t)(row.status),
         id: 'status',
         header: t('label.status'),
         size: 140,
-        filterType: 'enum',
-        filterValues: [
+        filterVariant: 'select',
+        filterSelectOptions: [
           { value: 'NEW', label: t('label.new') },
           { value: 'SHIPPED', label: t('label.shipped') },
           { value: 'ALLOCATED', label: t('label.allocated') },
@@ -133,23 +136,28 @@ const OutboundShipmentListViewComponent: FC = () => {
       {
         accessorKey: 'invoiceNumber',
         header: t('label.invoice-number'),
-        size: 140,
+        size: 150,
         align: 'right',
+        description: t('description.invoice-number'),
       },
       {
+        // todo - datetime?
         accessorKey: 'createdDatetime',
         header: t('label.created'),
         Cell: ({ cell }) =>
           new Date(cell.getValue<string>()).toLocaleDateString(),
-        filterType: 'dateRange',
+        filterVariant: 'date-range',
         // size: 100,
       },
       {
         accessorKey: 'theirReference',
         header: t('label.reference'),
-        // size: 100,
+        description: t('description.customer-reference'),
+        size: 175,
+        defaultHideOnMobile: true,
       },
       {
+        // todo: reusable
         accessorKey: 'comment',
         header: '',
         enableColumnActions: false,
@@ -182,7 +190,8 @@ const OutboundShipmentListViewComponent: FC = () => {
             style: 'currency',
             currency: 'USD',
           }).format(cell.getValue<number>()),
-        // size: 100,
+        size: 125,
+        defaultHideOnMobile: true,
       },
     ],
     []

@@ -137,7 +137,7 @@ export function usePurchaseOrderLine(id?: string | null) {
   const updateLineStatus = async (
     selectedRows: PurchaseOrderLineFragment[]
   ) => {
-    const results = await Promise.allSettled(
+    return await Promise.allSettled(
       selectedRows.map(row =>
         updatePurchaseOrderLineThrowError({
           id: row.id,
@@ -145,10 +145,6 @@ export function usePurchaseOrderLine(id?: string | null) {
         })
       )
     );
-    const failedCount = results.filter(
-      result => result.status === 'rejected'
-    ).length;
-    return failedCount;
   };
 
   // DELETE
@@ -270,6 +266,8 @@ const useUpdate = () => {
             errorMessage = t('label.updated-line-does-not-exist');
             break;
           case 'ItemCannotBeOrdered':
+            errorMessage = t('error.item-cannot-be-ordered-on-line');
+            break;
           default:
             errorMessage = t('label.cannot-update-purchase-order-line');
         }
