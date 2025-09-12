@@ -122,19 +122,8 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const handleUpdateQuantity = (stocklineId: string, numberOfPacks: number) => {
-    const prescribedQuantity = draftLines.reduce((acc, line) => {
-      // if this is the line being updated, use the new number of packs to
-      // calculate the prescribed quantity
-      if (line.id === stocklineId) {
-        return acc + numberOfPacks * line.packSize;
-      }
-      // Otherwise, sum up the total for the lines as they are
-      return acc + (line.numberOfPacks * line.packSize);
-    }, 0);
-
-    // Only set prescribed quantity on the current line, others get reset to null
     const newDraftLines = draftLines.map(line =>
-      line.id === stocklineId ? { ...line, numberOfPacks, prescribedQuantity } : {...line, numberOfPacks, prescribedQuantity: null}
+      line.id === stocklineId ? { ...line, numberOfPacks } : line
     );
     setDraftLines(newDraftLines);
     formActions.setState(`${path}_stockline`, newDraftLines);
@@ -156,9 +145,21 @@ const UIComponent = (props: ControlProps) => {
           // line
           allPrescriptionLines.forEach(
             line => (line.invoiceId = prescriptionId)
-          )
-          
-          const linesWithPacks = allPrescriptionLines.filter(line => line.numberOfPacks > 0);
+          );
+
+          const linesWithPacks = allPrescriptionLines.filter(
+            line => line.numberOfPacks > 0
+          );
+
+          // If we have any issued lines, we need to calculate the total for the prescribed quantity
+          if (linesWithPacks[0]) {
+            const prescribedQuantity = linesWithPacks.reduce((acc, line) => {
+              // Otherwise, sum up the total for the lines as they are
+              return acc + line.numberOfPacks * line.packSize;
+            }, 0);
+            linesWithPacks[0].prescribedQuantity = prescribedQuantity;
+          }
+
           // Add lines to prescription
           await saveLines({
             draftPrescriptionLines: linesWithPacks,
