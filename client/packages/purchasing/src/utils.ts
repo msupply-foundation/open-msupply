@@ -160,12 +160,13 @@ export const outstandingLinesToCsv = (
   const fields: string[] = [
     t('label.purchase-order-number'),
     t('label.purchase-order-reference'),
+    t('label.created-by'),
     t('label.supplier-code'),
     t('label.supplier-name'),
     t('label.item-name'),
     t('label.purchase-order-confirmed'),
     t('label.expected-delivery-date'),
-    t('label.adjusted-quantity-expected'),
+    t('label.adjusted-units-expected'),
     t('label.received-units'),
     t('label.outstanding-units'),
   ];
@@ -173,6 +174,7 @@ export const outstandingLinesToCsv = (
   const data = purchaseOrderLines.map(node => [
     node.purchaseOrder?.number,
     node.purchaseOrder?.reference,
+    node.purchaseOrder?.user?.username,
     node.purchaseOrder?.supplier?.code,
     node.purchaseOrder?.supplier?.name,
     node.item?.name,
