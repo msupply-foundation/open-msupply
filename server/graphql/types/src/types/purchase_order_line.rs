@@ -20,6 +20,14 @@ pub struct PurchaseOrderLineConnector {
     pub nodes: Vec<PurchaseOrderLineNode>,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::purchase_order_line_row::PurchaseOrderLineStatus")]
+pub enum PurchaseOrderLineStatusNode {
+    New,
+    Sent,
+    Closed,
+}
+
 #[Object]
 impl PurchaseOrderLineNode {
     pub async fn id(&self) -> &str {
@@ -106,6 +114,10 @@ impl PurchaseOrderLineNode {
 
     pub async fn unit(&self) -> &Option<String> {
         &self.row().unit
+    }
+
+    pub async fn status(&self) -> PurchaseOrderLineStatusNode {
+        PurchaseOrderLineStatusNode::from(self.row().status.clone())
     }
 }
 

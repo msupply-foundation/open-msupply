@@ -5,12 +5,18 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository, StorageConnection, SyncBufferRow,
+    PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, zero_date_as_option, zero_f64_as_none,
 };
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct LegacyPurchaseOrderLineRowOmsFields {
+    #[serde(default)]
+    pub status: PurchaseOrderLineStatus,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -71,6 +77,8 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "pack_units")]
     pub unit: Option<String>,
+    #[serde(default)]
+    pub oms_fields: Option<LegacyPurchaseOrderLineRowOmsFields>,
 }
 
 #[deny(dead_code)]
@@ -122,6 +130,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             manufacturer_id,
             note,
             unit,
+            oms_fields,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
 
         let result = PurchaseOrderLineRow {
@@ -145,6 +154,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             manufacturer_link_id: manufacturer_id,
             note,
             unit,
+            status: oms_fields.map_or(PurchaseOrderLineStatus::New, |f| f.status),
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -185,6 +195,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             manufacturer_link_id,
             note,
             unit,
+            status,
         } = PurchaseOrderLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
@@ -210,6 +221,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             manufacturer_id: manufacturer_link_id,
             note,
             unit,
+            oms_fields: Some(LegacyPurchaseOrderLineRowOmsFields { status }),
         };
 
         Ok(PushTranslateResult::upsert(
