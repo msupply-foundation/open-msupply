@@ -1,4 +1,5 @@
 import { useDebouncedValue } from '@common/hooks';
+import { isEqual } from 'lodash';
 import {
   MRT_DensityState,
   MRT_RowData,
@@ -41,18 +42,31 @@ export const useTableLocalStorage = <T extends MRT_RowData>(
   const debouncedColumnSizing = useDebouncedValue(columnSizing, 1000);
 
   useEffect(() => {
-    const hidden = Object.entries(columnVisibility)
-      .filter(([_, isVisible]) => !isVisible)
-      .map(([columnId]) => columnId);
+    const savedString = localStorage.getItem(
+      `@openmsupply-client/tables/${tableId}`
+    );
+    const existingCustomisations = savedString ? JSON.parse(savedString) : {};
+    const initial = table.initialState;
 
     localStorage.setItem(
       `@openmsupply-client/tables/${tableId}`,
       JSON.stringify({
         density,
-        hidden,
-        pinned: columnPinning,
         columnSizing: debouncedColumnSizing,
-        columnOrder,
+
+        // These can change with different preferences, or versions of OMS
+        // We should only save them when the user actually customises something
+        hidden: isEqual(columnVisibility, initial.columnVisibility)
+          ? existingCustomisations.hidden
+          : Object.entries(columnVisibility ?? {})
+              .filter(([_, isVisible]) => !isVisible)
+              .map(([columnId]) => columnId),
+        pinned: isEqual(columnPinning, initial.columnPinning)
+          ? existingCustomisations.pinned
+          : columnPinning,
+        columnOrder: isEqual(columnOrder, initial.columnOrder)
+          ? existingCustomisations.columnOrder
+          : columnOrder,
       })
     );
   }, [
@@ -66,7 +80,10 @@ export const useTableLocalStorage = <T extends MRT_RowData>(
   ]);
 };
 
-export const getSavedTableState = (tableId: string) => {
+export const getSavedTableState = (
+  tableId: string,
+  defaultHiddenColumns: string[]
+) => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
   );
@@ -74,7 +91,7 @@ export const getSavedTableState = (tableId: string) => {
 
   const {
     density = 'comfortable',
-    hidden = [],
+    hidden = defaultHiddenColumns,
     pinned = { left: ['mrt-row-select'] },
     columnSizing = {
       columnSizing: {

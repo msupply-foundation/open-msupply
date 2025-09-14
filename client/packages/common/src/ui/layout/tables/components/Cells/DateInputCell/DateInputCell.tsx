@@ -4,14 +4,12 @@ import { CellProps } from '../../../columns';
 import { RecordWithId } from '@common/types';
 import { DateUtils } from '@common/intl';
 import { getTextFieldSx } from '@openmsupply-client/common/src/ui/components/inputs/DateTimePickers/styles';
-import { useAppTheme } from '@common/styles';
 
 export const DateInputCell = <T extends RecordWithId>({
   rowData,
   column,
   isDisabled = false,
 }: CellProps<T>) => {
-  const theme = useAppTheme();
   const width = column.width || '100%';
   const date = column.accessor({ rowData }) as string;
   const value = DateUtils.getDateOrNull(date);
@@ -25,7 +23,7 @@ export const DateInputCell = <T extends RecordWithId>({
       onChange={onChange}
       disabled={!!isDisabled}
       sx={{
-        ...getTextFieldSx(theme, false, !displayDt, undefined, width),
+        ...getTextFieldSx(false, !displayDt, undefined, width),
         width,
         minWidth: displayDt ? 200 : undefined,
       }}

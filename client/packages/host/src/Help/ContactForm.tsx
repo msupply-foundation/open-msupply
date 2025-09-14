@@ -100,7 +100,7 @@ export const ContactForm = () => {
             slotProps={{
               input: {
                 sx: {
-                  backgroundColor: 'background.menu',
+                  backgroundColor: 'background.input.main',
                 },
               },
             }}
