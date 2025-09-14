@@ -46,6 +46,22 @@ pub fn validate(
         }
     }
 
+    // check the line status change before purchase_order_lines_editable
+    // should be able to update the line status when the PO is Confirmed or Sent, but not the rest of the line
+    if let Some(status) = input.status.clone() {
+        let is_purchase_order_confirmed = purchase_order.status >= PurchaseOrderStatus::Confirmed;
+        let is_valid_status_change = match (status, is_purchase_order_confirmed) {
+            (PurchaseOrderLineStatus::New, false) => true,
+            (PurchaseOrderLineStatus::New, true) => false,
+            (_, true) => true,
+            (_, false) => false,
+        };
+
+        if !is_valid_status_change {
+            return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
+        }
+    }
+
     if !purchase_order_lines_editable(&purchase_order) {
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrder);
     }
@@ -98,20 +114,6 @@ pub fn validate(
                 },
             ),
         );
-    }
-
-    if let Some(status) = input.status.clone() {
-        let is_purchase_order_confirmed = purchase_order.status >= PurchaseOrderStatus::Confirmed;
-        let is_valid_status_change = match (status, is_purchase_order_confirmed) {
-            (PurchaseOrderLineStatus::New, false) => true,
-            (PurchaseOrderLineStatus::New, true) => false,
-            (_, true) => true,
-            (_, false) => false,
-        };
-
-        if !is_valid_status_change {
-            return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
-        }
     }
 
     Ok(line)
