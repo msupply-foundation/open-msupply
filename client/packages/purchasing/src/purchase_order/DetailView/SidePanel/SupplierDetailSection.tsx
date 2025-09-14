@@ -26,11 +26,13 @@ const slotProps = {
 interface SupplierDetailSectionProps {
   draft?: PurchaseOrderFragment;
   onChange: (input: Partial<PurchaseOrderFragment>) => void;
+  disabled: boolean;
 }
 
 export const SupplierDetailSection = ({
   draft,
   onChange,
+  disabled,
 }: SupplierDetailSectionProps): ReactElement => {
   const t = useTranslation();
 
@@ -54,6 +56,7 @@ export const SupplierDetailSection = ({
             max={100}
             onChange={handleSupplierDiscountChange}
             slotProps={slotProps}
+            disabled={disabled}
           />
         </PanelRow>
         <PanelRow>
@@ -62,6 +65,8 @@ export const SupplierDetailSection = ({
             value={draft?.supplierDiscountAmount ?? 0}
             slotProps={slotProps}
             onChange={handleSupplierDiscountAmountChange}
+            disabled={disabled}
+            endAdornment="%"
           />
         </PanelRow>
       </Grid>
