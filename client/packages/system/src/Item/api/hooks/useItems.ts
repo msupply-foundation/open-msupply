@@ -72,8 +72,6 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
   };
 
   const queryFn = async () => {
-    console.log('filterBy:', filterBy);
-
     let filter: ItemFilterInput = {
       ...filterBy,
       // includes non-visible items that have stock on hand
@@ -88,7 +86,6 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
         isVisibleOrOnHand: undefined,
         hasStockOnHand: mapHasStockOnHandInput(filterBy?.['hasStockOnHand']),
       };
-      console.log('filter changed to:', filter);
     }
 
     // if using the minMonthsOfStock filter, extract the value we want and send only that to the backend
@@ -97,7 +94,6 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
         ...filter,
         minMonthsOfStock: mapMonthsOfStockInput(filterBy?.['minMonthsOfStock']),
       };
-      console.log('filter changed to:', filter);
     }
 
     // if using the maxMonthsOfStock filter, extract the value we want and send only that to the backend
@@ -106,7 +102,6 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
         ...filter,
         maxMonthsOfStock: mapMonthsOfStockInput(filterBy?.['maxMonthsOfStock']),
       };
-      console.log('filter changed to:', filter);
     }
 
     const result = await api.itemsWithStats({
