@@ -3,7 +3,9 @@ import {
   AppSxProp,
   DataTable,
   NothingHere,
+  PurchaseOrderLineStatusNode,
   useRowStyle,
+  useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
@@ -34,6 +36,17 @@ const useHighlightPlaceholderRows = (
   }, [rows, setRowStyles]);
 };
 
+const useDisableClosedLines = (lines: PurchaseOrderLineFragment[]) => {
+  const { setDisabledRows } = useTableStore();
+
+  useEffect(() => {
+    const disabledRows = lines
+      .filter(line => line.status === PurchaseOrderLineStatusNode.Closed)
+      .map(line => line.id);
+    setDisabledRows(disabledRows);
+  }, [lines, setDisabledRows]);
+};
+
 export const ContentArea = ({
   lines,
   isDisabled,
@@ -41,8 +54,8 @@ export const ContentArea = ({
   onRowClick,
 }: ContentAreaProps) => {
   const t = useTranslation();
-
   useHighlightPlaceholderRows(lines);
+  useDisableClosedLines(lines);
 
   const { columns } = usePurchaseOrderColumns();
 

@@ -112,7 +112,7 @@ export const DetailViewInner = () => {
           <AppBarButtons isDisabled={disableNewLines} onAddItem={onOpen} />
           <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
-          <Footer showStatusBar={showStatusBar} />
+          <Footer showStatusBar={showStatusBar} status={data.status} />
           <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal

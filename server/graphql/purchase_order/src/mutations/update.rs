@@ -8,10 +8,11 @@ use graphql_core::{
     },
     ContextExt,
 };
-use graphql_types::{generic_errors::ItemCannotBeOrdered, types::IdResponse};
-use repository::{PurchaseOrderLine, PurchaseOrderRow, PurchaseOrderStatus};
-use serde::Serialize;
-
+use graphql_types::{
+    generic_errors::ItemCannotBeOrdered,
+    types::{IdResponse, PurchaseOrderNodeStatus},
+};
+use repository::{PurchaseOrderLine, PurchaseOrderRow};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     purchase_order::update::{
@@ -20,41 +21,12 @@ use service::{
     NullableUpdate,
 };
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum PurchaseOrderNodeType {
-    New,
-    Confirmed,
-    Authorised,
-    Finalised,
-}
-
-impl PurchaseOrderNodeType {
-    pub fn from_domain(domain_type: &PurchaseOrderStatus) -> Self {
-        match domain_type {
-            PurchaseOrderStatus::New => PurchaseOrderNodeType::New,
-            PurchaseOrderStatus::Confirmed => PurchaseOrderNodeType::Confirmed,
-            PurchaseOrderStatus::Authorised => PurchaseOrderNodeType::Authorised,
-            PurchaseOrderStatus::Finalised => PurchaseOrderNodeType::Finalised,
-        }
-    }
-
-    pub fn to_domain(self) -> PurchaseOrderStatus {
-        match self {
-            PurchaseOrderNodeType::New => PurchaseOrderStatus::New,
-            PurchaseOrderNodeType::Confirmed => PurchaseOrderStatus::Confirmed,
-            PurchaseOrderNodeType::Authorised => PurchaseOrderStatus::Authorised,
-            PurchaseOrderNodeType::Finalised => PurchaseOrderStatus::Finalised,
-        }
-    }
-}
-
 #[derive(InputObject)]
 #[graphql(name = "UpdatePurchaseOrderInput")]
 pub struct UpdateInput {
     pub id: String,
     pub supplier_id: Option<String>,
-    pub status: Option<PurchaseOrderNodeType>,
+    pub status: Option<PurchaseOrderNodeStatus>,
     pub confirmed_datetime: Option<NullableUpdateInput<NaiveDateTime>>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
@@ -118,7 +90,7 @@ impl UpdateInput {
         ServiceInput {
             id,
             supplier_id,
-            status: status.map(PurchaseOrderNodeType::to_domain),
+            status: status.map(PurchaseOrderNodeStatus::into),
             confirmed_datetime: confirmed_datetime.map(|c| NullableUpdate { value: c.value }),
             comment,
             supplier_discount_percentage,
@@ -198,7 +170,7 @@ pub fn update_purchase_order(
         },
     )?;
 
-    if input.status == Some(PurchaseOrderNodeType::Authorised) {
+    if input.status == Some(PurchaseOrderNodeStatus::Authorised) {
         validate_auth(
             ctx,
             &ResourceAccessRequest {
