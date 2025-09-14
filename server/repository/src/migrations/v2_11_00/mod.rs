@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_ignore_for_orders_to_item_store_join;
 mod add_permission_to_verify_inbound_shipment;
+mod add_purchase_order_line_status_enums;
 mod add_purchase_order_sent_to_activity_log_type_enum;
 mod add_sent_to_purchase_order_status_enum;
 mod rename_authorised_datetime_to_request_approval_datetime;
@@ -25,6 +26,7 @@ impl Migration for V2_11_00 {
         vec![
             Box::new(add_permission_to_verify_inbound_shipment::Migrate),
             Box::new(update_goods_received_report_context::Migrate),
+            Box::new(add_purchase_order_line_status_enums::Migrate),
             Box::new(add_ignore_for_orders_to_item_store_join::Migrate),
             Box::new(add_sent_to_purchase_order_status_enum::Migrate),
             Box::new(rename_authorised_on_purchase_order_status_enum::Migrate),

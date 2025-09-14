@@ -64,13 +64,12 @@ pub fn validate(
     // check if pack size and item id combination already exists
     let existing_pack_item = PurchaseOrderLineRepository::new(connection).query(
         Pagination::all(),
-        Some(PurchaseOrderLineFilter {
-            id: None,
-            purchase_order_id: Some(EqualFilter::equal_to(&input.purchase_order_id)),
-            store_id: None,
-            requested_pack_size: Some(EqualFilter::equal_to_f64(input.requested_pack_size)),
-            item_id: Some(EqualFilter::equal_to(&item.id)),
-        }),
+        Some(
+            PurchaseOrderLineFilter::new()
+                .purchase_order_id(EqualFilter::equal_to(&input.purchase_order_id))
+                .requested_pack_size(EqualFilter::equal_to_f64(input.requested_pack_size))
+                .item_id(EqualFilter::equal_to(&item.id)),
+        ),
         None,
     )?;
     if !existing_pack_item.is_empty() {

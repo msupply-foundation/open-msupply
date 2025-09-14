@@ -1,11 +1,12 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    PurchaseOrderLine, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
-    RepositoryError, TransactionError,
+    PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderRow,
+    PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError, TransactionError,
 };
 
 use crate::{
     activity_log::{activity_log_entry, log_type_from_purchase_order_status},
+    purchase_order::update::generate::GenerateResult,
     service_provider::ServiceContext,
     NullableUpdate,
 };
@@ -70,10 +71,21 @@ pub fn update_purchase_order(
         .connection
         .transaction_sync(|connection: &repository::StorageConnection| {
             let purchase_order = validate(&input, store_id, connection, user_has_permission)?;
-            let updated_purchase_order = generate(purchase_order, input)?;
+            let GenerateResult {
+                updated_order: updated_purchase_order,
+                updated_lines,
+            } = generate(connection, purchase_order, input)?;
 
             let purchase_order_repository = PurchaseOrderRowRepository::new(connection);
             purchase_order_repository.upsert_one(&updated_purchase_order)?;
+
+            if !updated_lines.is_empty() {
+                let purchase_order_line_repository =
+                    PurchaseOrderLineRowRepository::new(connection);
+                for line in &updated_lines {
+                    purchase_order_line_repository.upsert_one(line)?;
+                }
+            }
 
             activity_log_entry(
                 ctx,

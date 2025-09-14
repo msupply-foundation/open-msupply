@@ -8,6 +8,7 @@ use crate::{
 };
 use chrono::NaiveDate;
 use diesel::{dsl::max, prelude::*};
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 table! {
@@ -32,6 +33,7 @@ table! {
         manufacturer_link_id -> Nullable<Text>,
         note -> Nullable<Text>,
         unit -> Nullable<Text>,
+        status -> crate::db_diesel::purchase_order_line_row::PurchaseOrderLineStatusMapping,
     }
 }
 
@@ -68,6 +70,18 @@ pub struct PurchaseOrderLineRow {
     pub manufacturer_link_id: Option<String>,
     pub note: Option<String>,
     pub unit: Option<String>,
+    pub status: PurchaseOrderLineStatus,
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[cfg_attr(test, derive(strum::EnumIter))]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum PurchaseOrderLineStatus {
+    #[default]
+    New,
+    Sent,
+    Closed,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {

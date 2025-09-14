@@ -1,11 +1,3 @@
-use repository::{
-    EqualFilter, ItemRowRepository, Pagination, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository, PurchaseOrderRowRepository, StorageConnection,
-};
-use repository::{
-    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, PurchaseOrderLineRow,
-};
-
 use crate::purchase_order_line::insert::PackSizeCodeCombination;
 use crate::{
     purchase_order::validate::{
@@ -14,6 +6,11 @@ use crate::{
     purchase_order_line::update::{
         UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
     },
+};
+use repository::{
+    EqualFilter, ItemRowRepository, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+    Pagination, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
+    PurchaseOrderLineStatus, PurchaseOrderRowRepository, PurchaseOrderStatus, StorageConnection,
 };
 
 pub fn validate(
@@ -53,23 +50,26 @@ pub fn validate(
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrder);
     }
 
+    if line.status == PurchaseOrderLineStatus::Closed {
+        return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrderLine);
+    }
+
     // check if pack size and item id combination already exists
     let existing_pack_item = PurchaseOrderLineRepository::new(connection).query(
         Pagination::all(),
-        Some(PurchaseOrderLineFilter {
-            // don't include the existing line in the check
-            id: Some(EqualFilter::not_equal_to(&input.id)),
-            purchase_order_id: Some(EqualFilter::equal_to(&purchase_order.id)),
-            store_id: None,
-            requested_pack_size: Some(EqualFilter::equal_to_f64(
-                input
-                    .requested_pack_size
-                    .unwrap_or(line.requested_pack_size),
-            )),
-            item_id: Some(EqualFilter::equal_to(
-                &input.item_id.clone().unwrap_or(line.item_link_id.clone()),
-            )),
-        }),
+        Some(
+            PurchaseOrderLineFilter::new()
+                .id(EqualFilter::not_equal_to(&input.id))
+                .purchase_order_id(EqualFilter::equal_to(&purchase_order.id))
+                .requested_pack_size(EqualFilter::equal_to_f64(
+                    input
+                        .requested_pack_size
+                        .unwrap_or(line.requested_pack_size),
+                ))
+                .item_id(EqualFilter::equal_to(
+                    &input.item_id.clone().unwrap_or(line.item_link_id.clone()),
+                )),
+        ),
         None,
     )?;
 
@@ -98,6 +98,20 @@ pub fn validate(
                 },
             ),
         );
+    }
+
+    if let Some(status) = input.status.clone() {
+        let is_purchase_order_confirmed = purchase_order.status >= PurchaseOrderStatus::Confirmed;
+        let is_valid_status_change = match (status, is_purchase_order_confirmed) {
+            (PurchaseOrderLineStatus::New, false) => true,
+            (PurchaseOrderLineStatus::New, true) => false,
+            (_, true) => true,
+            (_, false) => false,
+        };
+
+        if !is_valid_status_change {
+            return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
+        }
     }
 
     Ok(line)

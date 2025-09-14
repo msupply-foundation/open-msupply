@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    ActivityLogType, PurchaseOrderLine, PurchaseOrderLineRowRepository, RepositoryError,
+    ActivityLogType, PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
+    RepositoryError,
 };
 
 use crate::{
@@ -22,12 +23,14 @@ pub enum UpdatePurchaseOrderLineInputError {
     PurchaseOrderLineNotFound,
     PurchaseOrderDoesNotExist,
     CannotEditPurchaseOrder,
+    CannotEditPurchaseOrderLine,
     CannotEditRequestedQuantity,
     CannotEditAdjustedQuantity,
     UpdatedLineDoesNotExist,
     PackSizeCodeCombinationExists(PackSizeCodeCombination),
     DatabaseError(RepositoryError),
     ItemDoesNotExist,
+    CannotChangeStatus,
     ItemCannotBeOrdered(PurchaseOrderLine),
 }
 
@@ -47,6 +50,7 @@ pub struct UpdatePurchaseOrderLineInput {
     pub unit: Option<String>,
     pub supplier_item_code: Option<NullableUpdate<String>>,
     pub comment: Option<NullableUpdate<String>>,
+    pub status: Option<PurchaseOrderLineStatus>,
 }
 
 pub fn update_purchase_order_line(

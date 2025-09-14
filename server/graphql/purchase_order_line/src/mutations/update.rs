@@ -10,7 +10,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::generic_errors::ItemCannotBeOrdered;
-use graphql_types::types::IdResponse;
+use graphql_types::types::{IdResponse, PurchaseOrderLineStatusNode};
 use repository::PurchaseOrderLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -43,6 +43,7 @@ pub struct UpdateInput {
     pub unit: Option<String>,
     pub supplier_item_code: Option<NullableUpdateInput<String>>,
     pub comment: Option<NullableUpdateInput<String>>,
+    pub status: Option<PurchaseOrderLineStatusNode>,
 }
 
 impl UpdateInput {
@@ -62,6 +63,7 @@ impl UpdateInput {
             unit,
             supplier_item_code,
             comment,
+            status,
         } = self;
 
         ServiceInput {
@@ -79,6 +81,7 @@ impl UpdateInput {
             unit,
             supplier_item_code: supplier_item_code.map(|v| NullableUpdate { value: v.value }),
             comment: comment.map(|v| NullableUpdate { value: v.value }),
+            status: status.map(|s| s.into()),
         }
     }
 }
@@ -188,7 +191,9 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::PackSizeCodeCombinationExists(_pack_size_code_combination) => {
             BadUserInput(formatted_error)
         }
-        ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::ItemDoesNotExist
+        | ServiceError::CannotChangeStatus
+        | ServiceError::CannotEditPurchaseOrderLine => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
