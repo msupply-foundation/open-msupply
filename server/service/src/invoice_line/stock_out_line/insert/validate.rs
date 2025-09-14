@@ -59,7 +59,7 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
-    if !check_batch_on_hold(&batch) {
+    if !check_batch_on_hold(&batch, &input.r#type) {
         return Err(BatchIsOnHold);
     }
 
@@ -74,7 +74,7 @@ pub fn validate(
             .find_one_by_id(&location_id)?
             .ok_or(LocationNotFound)?;
 
-        check_location_on_hold(&Some(location)).map_err(|e| match e {
+        check_location_on_hold(&Some(location), &input.r#type).map_err(|e| match e {
             LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
         })?;
     }

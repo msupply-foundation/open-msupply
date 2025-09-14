@@ -74,7 +74,7 @@ export const usePurchaseOrderColumns = () => {
     },
     {
       key: 'authorisedNumberOfUnits',
-      label: 'label.adjusted-quantity',
+      label: 'label.adjusted-units',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.adjustedNumberOfUnits,
       getSortValue: rowData => rowData.adjustedNumberOfUnits ?? 0,

@@ -44,7 +44,7 @@ export const DateSection = ({
           onChange={date => onUpdate({ contractSignedDate: date })}
         />
         <DateField
-          label={t('label.advanced-paid')}
+          label={t('label.advance-paid')}
           value={draft?.advancePaidDate}
           onChange={date => onUpdate({ advancePaidDate: date })}
         />
