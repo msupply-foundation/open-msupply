@@ -60,6 +60,12 @@ const OutstandingLinesList = () => {
         sortable: false,
       },
       {
+        key: 'createdBy',
+        label: 'label.created-by',
+        accessor: ({ rowData }) => rowData?.purchaseOrder?.user?.username,
+        sortable: false,
+      },
+      {
         key: 'supplierCode',
         label: 'label.supplier-code',
         accessor: ({ rowData }) => rowData?.purchaseOrder?.supplier?.code,
@@ -90,12 +96,14 @@ const OutstandingLinesList = () => {
         label: 'label.expected-delivery-date',
         format: ColumnFormat.Date,
         sortable: false,
+        width: 150,
       },
       {
         key: 'adjustedNumberOfUnits',
-        label: 'label.adjusted-quantity-expected',
+        label: 'label.adjusted-units-expected',
         Cell: NumberCell,
         sortable: false,
+        width: 150,
       },
       {
         key: 'receivedNumberOfUnits',

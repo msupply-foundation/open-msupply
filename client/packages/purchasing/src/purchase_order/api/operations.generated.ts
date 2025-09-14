@@ -113,6 +113,7 @@ export type PurchaseOrderFragment = {
           code: string;
           name: string;
         } | null;
+        user?: { __typename: 'UserNode'; username: string } | null;
       } | null;
     }>;
   };
@@ -171,6 +172,7 @@ export type PurchaseOrderLineFragment = {
     reference?: string | null;
     confirmedDatetime?: string | null;
     supplier?: { __typename: 'NameNode'; code: string; name: string } | null;
+    user?: { __typename: 'UserNode'; username: string } | null;
   } | null;
 };
 
@@ -303,6 +305,7 @@ export type PurchaseOrderByIdQuery = {
                 code: string;
                 name: string;
               } | null;
+              user?: { __typename: 'UserNode'; username: string } | null;
             } | null;
           }>;
         };
@@ -450,6 +453,7 @@ export type PurchaseOrderLinesQuery = {
           code: string;
           name: string;
         } | null;
+        user?: { __typename: 'UserNode'; username: string } | null;
       } | null;
     }>;
   };
@@ -511,6 +515,7 @@ export type PurchaseOrderLineQuery = {
           code: string;
           name: string;
         } | null;
+        user?: { __typename: 'UserNode'; username: string } | null;
       } | null;
     }>;
   };
@@ -694,6 +699,9 @@ export const PurchaseOrderLineFragmentDoc = gql`
       supplier {
         code
         name
+      }
+      user {
+        username
       }
     }
   }
