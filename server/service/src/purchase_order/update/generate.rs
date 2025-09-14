@@ -5,7 +5,7 @@ use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, Repositor
 use chrono::Utc;
 use repository::{
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
-    PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection,
+    StorageConnection,
 };
 
 pub(crate) struct GenerateResult {
@@ -15,7 +15,7 @@ pub(crate) struct GenerateResult {
 
 pub fn generate(
     connection: &StorageConnection,
-    purchase_order: PurchaseOrderRow,
+    purchase_order: PurchaseOrder,
     UpdatePurchaseOrderInput {
         id: _,
         supplier_id,
