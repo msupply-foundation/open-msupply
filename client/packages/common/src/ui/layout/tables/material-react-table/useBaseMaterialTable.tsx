@@ -135,19 +135,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       // are correct
       sx: theme => ({ fontSize: theme.typography.body1.fontSize }),
     },
+
+    // todo: hide sort icon when not sorting by this column
+    // todo: add tooltip over column name
+    // todo: ability to not show column name (but still give it a header label for column management)
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
         fontWeight: 600,
-        fontSize: table.getState().density === 'compact' ? '0.9em' : '1em',
+        fontSize: table.getState().density !== 'spacious' ? '0.9em' : '1em',
         lineHeight: 1.2,
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
-        '& .Mui-TableHeadCell-Content-Wrapper': {
-          // Allow column names to wrap if needed
-          whiteSpace:
-            table.getState().density === 'compact' ? undefined : 'unset',
-        },
-
         '& .Mui-TableHeadCell-Content-Actions': {
           '& svg': { fontSize: '2em' },
         },
