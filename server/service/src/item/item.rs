@@ -70,11 +70,39 @@ pub fn get_item_ids_by_mos(
         .map(|item| item.item_row.id.clone())
         .collect();
 
+    println!("===================================> item_ids: <===========================================");
+    for item in &item_ids {
+        println!("{}", item);
+    }
+
     let item_stats =
         get_item_stats_map(&connection, store_id, None, item_ids).map_err(|e| match e {
             PluginOrRepositoryError::PluginError(err) => ListError::PluginError(err.to_string()),
             PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
         })?;
+    
+    println!("====================================> item_stats: <===========================================");
+    for (key, value) in &item_stats {
+        println!("{}: {:#?}", key, value);
+    }
+
+    // let item_ids_filtered_by_mos: Vec<String> = item_stats
+    //     .into_iter()
+    //     .filter(|(k, v)| {
+    //         let mut include = true;
+    //         let mos = get_months_of_stock_on_hand(v.clone()); // here we have an error: get_months_of_stock_on_hand returns None if amc = 0 (to avoid a divide by 0 error) How should we handle that case? Question asked to Mark.
+    //         if let Some(min_mos) = min_months_of_stock {
+    //             // include if it has more than the min months of stock, otherwise include becomes false
+    //             include &= (mos >= min_mos);
+    //         }
+    //         if let Some(max_mos) = max_months_of_stock {
+    //             // include if it has less than the max months of stock, otherwise include becomes false
+    //             include &= (mos <= max_mos);
+    //         }
+    //         include
+    //     })
+    //     .map(|(k, v)| k)
+    //     .collect();
 
         let item_ids_filtered_by_mos: Vec<String> = item_stats.into_iter().filter_map(|(k, v)| {
             get_months_of_stock_on_hand(v)
@@ -96,12 +124,18 @@ pub fn get_item_ids_by_mos(
         })
         .collect();
 
+    println!("===================================> item_ids_filtered_by_mos: <===========================================");
+    for item in &item_ids_filtered_by_mos {
+        println!("{}", item);
+    }
+
     Ok(item_ids_filtered_by_mos)
 }
 
 pub fn get_months_of_stock_on_hand(item_stats: ItemStats) -> Option<f64> {
     (item_stats.average_monthly_consumption != 0.0)
         .then(|| item_stats.total_stock_on_hand / item_stats.average_monthly_consumption)
+    // if amc = 0 then return mos = 0, otherwise calculate...
 }
 
 pub fn check_item_exists(
