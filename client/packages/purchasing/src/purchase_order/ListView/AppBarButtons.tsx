@@ -21,7 +21,7 @@ import {
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { PurchaseOrderRowFragment } from '../api';
 import { purchaseOrderToCsv } from '../../utils';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface AppBarButtonProps {
   data?: PurchaseOrderRowFragment[];
