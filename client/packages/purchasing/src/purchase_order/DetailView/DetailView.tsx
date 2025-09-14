@@ -109,7 +109,11 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons isDisabled={disableNewLines} onAddItem={onOpen} />
+          <AppBarButtons
+            isDisabled={isDisabled}
+            disableNewLines={disableNewLines}
+            onAddItem={onOpen}
+          />
           <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
           <Footer showStatusBar={showStatusBar} status={data.status} />

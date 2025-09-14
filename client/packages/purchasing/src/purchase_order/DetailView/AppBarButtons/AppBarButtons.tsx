@@ -13,11 +13,13 @@ import { AddButton } from './AddButton';
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
+  disableNewLines: boolean;
 }
 
 export const AppBarButtonsComponent = ({
   onAddItem,
   isDisabled,
+  disableNewLines,
 }: AppBarButtonProps) => {
   const { OpenButton } = useDetailPanel();
 
@@ -37,6 +39,7 @@ export const AppBarButtonsComponent = ({
           onAddItem={onAddItem}
           disable={isDisabled}
           disableAddFromMasterListButton={isLoading}
+          disableNewLines={disableNewLines}
         />
         <ReportSelector
           context={ReportContext.PurchaseOrder}
