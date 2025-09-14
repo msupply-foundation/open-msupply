@@ -1,12 +1,11 @@
 import {
   UpdatePurchaseOrderLineInput,
-  LIST_KEY,
   useMutation,
-  useNotification,
   usePatchState,
   useQuery,
   useTranslation,
   setNullableInput,
+  PurchaseOrderLineStatusNode,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
@@ -51,6 +50,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   discountPercentage: 0,
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
+  status: PurchaseOrderLineStatusNode.New,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {
@@ -108,6 +108,7 @@ export function usePurchaseOrderLine(id?: string | null) {
     updatePurchaseOrderLine,
     isLoading: isUpdating,
     error: updateError,
+    updatePurchaseOrderLineThrowError,
   } = useUpdate();
 
   const update = async () => {
@@ -126,9 +127,24 @@ export function usePurchaseOrderLine(id?: string | null) {
       unit: draft.unit,
       supplierItemCode: setNullableInput('supplierItemCode', draft),
       comment: setNullableInput('comment', draft),
+      status: draft.status,
     };
+    const result = await updatePurchaseOrderLine(input);
     resetDraft();
-    return await updatePurchaseOrderLine(input);
+    return result;
+  };
+
+  const updateLineStatus = async (
+    selectedRows: PurchaseOrderLineFragment[]
+  ) => {
+    return await Promise.allSettled(
+      selectedRows.map(row =>
+        updatePurchaseOrderLineThrowError({
+          id: row.id,
+          status: PurchaseOrderLineStatusNode.Closed,
+        })
+      )
+    );
   };
 
   // DELETE
@@ -156,6 +172,7 @@ export function usePurchaseOrderLine(id?: string | null) {
     resetDraft,
     isDirty,
     updatePatch,
+    updateLineStatus,
   };
 }
 
@@ -209,21 +226,18 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () =>
-      queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY, storeId]),
+    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   });
 };
 
 const useUpdate = () => {
-  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const t = useTranslation();
-  const { error } = useNotification();
-
+  const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
   const mutationState = useMutation(purchaseOrderApi.updatePurchaseOrderLine);
 
   const updatePurchaseOrderLine = async (
     input: UpdatePurchaseOrderLineInput
-  ) => {
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const result = await purchaseOrderApi.updatePurchaseOrderLine({
         storeId,
@@ -236,27 +250,53 @@ const useUpdate = () => {
         'UpdatePurchaseOrderLineError'
       ) {
         const errorType = result.updatePurchaseOrderLine.error.__typename;
+        let errorMessage: string;
+
         switch (errorType) {
           case 'CannotEditPurchaseOrder':
-            return error(t('label.cannot-edit-purchase-order'))();
+            errorMessage = t('label.cannot-edit-purchase-order');
+            break;
           case 'PurchaseOrderDoesNotExist':
-            return error(t('label.purchase-order-does-not-exist'))();
+            errorMessage = t('label.purchase-order-does-not-exist');
+            break;
           case 'PurchaseOrderLineNotFound':
-            return error(t('label.purchase-order-line-not-found'))();
+            errorMessage = t('label.purchase-order-line-not-found');
+            break;
           case 'UpdatedLineDoesNotExist':
-            return error(t('label.updated-line-does-not-exist'))();
+            errorMessage = t('label.updated-line-does-not-exist');
+            break;
+          case 'ItemCannotBeOrdered':
+            errorMessage = t('error.item-cannot-be-ordered-on-line');
+            break;
           default:
-            return error(t('label.cannot-update-purchase-order-line'))();
+            errorMessage = t('label.cannot-update-purchase-order-line');
         }
+
+        return { success: false, error: errorMessage };
       }
       queryClient.invalidateQueries([PURCHASE_ORDER]);
+      return { success: true };
     } catch (e) {
       console.error('Error updating purchase order line:', e);
-      return error(t('label.cannot-update-purchase-order-line'))();
+      const errorMessage = t('label.cannot-update-purchase-order-line');
+      return { success: false, error: errorMessage };
     }
   };
 
-  return { ...mutationState, updatePurchaseOrderLine };
+  const updatePurchaseOrderLineThrowError = async (
+    input: UpdatePurchaseOrderLineInput
+  ) => {
+    const result = await updatePurchaseOrderLine(input);
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+  };
+
+  return {
+    ...mutationState,
+    updatePurchaseOrderLine,
+    updatePurchaseOrderLineThrowError,
+  };
 };
 
 export const useLineInsertFromCSV = () => {

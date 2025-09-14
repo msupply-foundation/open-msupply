@@ -44,6 +44,7 @@ export type GoodsReceivedFragment = {
   receivedDatetime?: string | null;
   supplierReference?: string | null;
   status: Types.GoodsReceivedNodeStatus;
+  donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   user?: { __typename: 'UserNode'; username: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
@@ -116,6 +117,7 @@ export type GoodsReceivedByIdQuery = {
         receivedDatetime?: string | null;
         supplierReference?: string | null;
         status: Types.GoodsReceivedNodeStatus;
+        donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         user?: { __typename: 'UserNode'; username: string } | null;
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
@@ -366,6 +368,10 @@ export const GoodsReceivedFragmentDoc = gql`
     purchaseOrderId
     receivedDatetime
     supplierReference
+    donor(storeId: $storeId) {
+      id
+      name
+    }
     status
     user {
       username

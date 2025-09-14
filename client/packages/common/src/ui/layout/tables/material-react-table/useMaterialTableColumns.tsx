@@ -7,90 +7,100 @@
  * current URL query into the filter state required by MRT.
  */
 import { useMemo } from 'react';
-import { MRT_ColumnDef, MRT_RowData } from 'material-react-table';
+import { MRT_RowData } from 'material-react-table';
 import {
   DateUtils,
+  mergeCellProps,
   useFormatDateTime,
+  useSimplifiedTabletUI,
   useUrlQuery,
 } from '@openmsupply-client/common';
 
-type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
-
-interface EnumOption {
-  value: string;
-  label: string;
-}
-
-type ColumnDefinition<T extends MRT_RowData> = MRT_ColumnDef<T> & {
-  filterType?: FilterType;
-  filterValues?: EnumOption[];
-};
+import { ColumnDef } from './types';
 
 export const useMaterialTableColumns = <T extends MRT_RowData>(
-  columns: ColumnDefinition<T>[]
+  omsColumns: ColumnDef<T>[]
+) => {
+  const simplifiedMobileView = useSimplifiedTabletUI();
+  const tableDefinition = useMemo(() => {
+    const columns = omsColumns
+      .filter(col => col.includeColumn !== false)
+      .map(col => {
+        if (col.align) {
+          col.muiTableBodyCellProps = params => {
+            // Add alignment styling
+            return mergeCellProps(
+              {
+                sx:
+                  col.align === 'right'
+                    ? {
+                        justifyContent: 'flex-end',
+                        paddingRight: '2em', // Padding to account for header icons
+                      }
+                    : col.align === 'center'
+                      ? // To-DO: Add padding for center aligned cells
+                        { justifyContent: 'center' }
+                      : {},
+              },
+              params
+            );
+          };
+        }
+        return col;
+      });
+
+    const defaultHiddenColumns = simplifiedMobileView
+      ? columns
+          .filter(col => col.defaultHideOnMobile)
+          .map(col => String(col.id ?? col.accessorKey))
+      : [];
+
+    return { columns, defaultHiddenColumns };
+  }, [omsColumns]);
+
+  return tableDefinition;
+};
+
+export const useManualTableFilters = <T extends MRT_RowData>(
+  columns: ColumnDef<T>[]
 ) => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDateTime } = useFormatDateTime();
 
-  const { mrtColumnDefinitions, filterUpdaters } = useMemo(() => {
-    const mrtColumnDefinitions: MRT_ColumnDef<T>[] = [];
+  const filterUpdaters = useMemo(() => {
     const filterUpdaters: Record<string, (value: any) => void> = {};
 
-    columns.forEach(
-      ({ filterType = 'none', filterValues, ...mrtProperties }) => {
-        const filterKey = (mrtProperties.accessorKey ||
-          mrtProperties.id) as string;
+    columns.forEach(({ filterVariant, ...mrtProperties }) => {
+      const filterKey = (mrtProperties.accessorKey ||
+        mrtProperties.id) as string;
 
-        switch (filterType) {
-          case 'none':
-            mrtColumnDefinitions.push({
-              ...mrtProperties,
-              enableColumnFilter: false,
-            });
-            break;
-          case 'text':
-            mrtColumnDefinitions.push(mrtProperties);
-            filterUpdaters[filterKey] = (value: string) => {
-              updateQuery({ [filterKey]: value });
-            };
-            break;
+      switch (filterVariant) {
+        case 'text':
+        case 'select':
+          filterUpdaters[filterKey] = (value: string) => {
+            updateQuery({ [filterKey]: value });
+          };
+          break;
 
-          case 'enum':
-            mrtColumnDefinitions.push({
-              ...mrtProperties,
-              filterVariant: 'select',
-              filterSelectOptions: filterValues,
+        // filterVariant: 'select',
+        // filterSelectOptions: filterValues,
+        case 'date-range':
+          filterUpdaters[filterKey] = ([date1, date2]: [
+            Date | '',
+            Date | '',
+          ]) => {
+            updateQuery({
+              [filterKey]: {
+                from: date1 ? customDate(date1, urlQueryDateTime) : '',
+                to: date2 ? customDate(date2, urlQueryDateTime) : '',
+              },
             });
-            filterUpdaters[filterKey] = (value: string) => {
-              updateQuery({ [filterKey]: value });
-            };
-            break;
-          // case 'number':
-          //   TO-DO
-          case 'dateRange':
-            mrtColumnDefinitions.push({
-              ...mrtProperties,
-              filterVariant: 'date-range',
-            });
-            filterUpdaters[filterKey] = ([date1, date2]: [
-              Date | '',
-              Date | '',
-            ]) => {
-              updateQuery({
-                [filterKey]: {
-                  from: date1 ? customDate(date1, urlQueryDateTime) : '',
-                  to: date2 ? customDate(date2, urlQueryDateTime) : '',
-                },
-              });
-            };
-            break;
-          default:
-            mrtColumnDefinitions.push(mrtProperties);
-        }
+          };
+          break;
       }
-    );
+    });
 
-    return { mrtColumnDefinitions, filterUpdaters };
+    return filterUpdaters;
   }, [columns]);
 
   const getFilterState = () => {
@@ -114,5 +124,5 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
     });
   };
 
-  return { mrtColumnDefinitions, filterUpdaters, getFilterState };
+  return { filterUpdaters, getFilterState };
 };

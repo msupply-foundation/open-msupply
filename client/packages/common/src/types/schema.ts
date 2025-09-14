@@ -2723,6 +2723,12 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type EqualFilterPurchaseOrderLineStatusInput = {
+  equalAny?: InputMaybe<Array<PurchaseOrderLineStatusNode>>;
+  equalTo?: InputMaybe<PurchaseOrderLineStatusNode>;
+  notEqualTo?: InputMaybe<PurchaseOrderLineStatusNode>;
+};
+
 export type EqualFilterPurchaseOrderStatusInput = {
   equalAny?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
   equalTo?: InputMaybe<PurchaseOrderNodeStatus>;
@@ -3053,6 +3059,7 @@ export type GoodsReceivedNode = {
   __typename: 'GoodsReceivedNode';
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  donor?: Maybe<NameNode>;
   finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   id: Scalars['String']['output'];
   lines: GoodsReceivedLineConnector;
@@ -3065,6 +3072,10 @@ export type GoodsReceivedNode = {
   supplier?: Maybe<NameNode>;
   supplierReference?: Maybe<Scalars['String']['output']>;
   user?: Maybe<UserNode>;
+};
+
+export type GoodsReceivedNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export enum GoodsReceivedNodeStatus {
@@ -4690,6 +4701,12 @@ export type InvoiceSortInput = {
 
 export type InvoicesResponse = InvoiceConnector;
 
+export type ItemCannotBeOrdered = PurchaseOrderLineError & {
+  __typename: 'ItemCannotBeOrdered';
+  description: Scalars['String']['output'];
+  line: PurchaseOrderLineNode;
+};
+
 export type ItemChartNode = {
   __typename: 'ItemChartNode';
   calculationDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -4733,6 +4750,7 @@ export type ItemFilterInput = {
   /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
   hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
+  ignoreForOrders?: InputMaybe<Scalars['Boolean']['input']>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramItem?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4896,6 +4914,7 @@ export type ItemStorePropertiesNode = {
   __typename: 'ItemStorePropertiesNode';
   defaultSellPricePerPack: Scalars['Float']['output'];
   id: Scalars['String']['output'];
+  ignoreForOrders: Scalars['Boolean']['output'];
 };
 
 export type ItemVariantMutations = {
@@ -4935,6 +4954,12 @@ export type ItemVariantNode = {
 
 export type ItemVariantNodeManufacturerArgs = {
   storeId: Scalars['String']['input'];
+};
+
+export type ItemsCannotBeOrdered = UpdatePurchaseOrderErrorInterface & {
+  __typename: 'ItemsCannotBeOrdered';
+  description: Scalars['String']['output'];
+  lines: Array<ItemCannotBeOrdered>;
 };
 
 export type ItemsResponse = ItemConnector;
@@ -5222,6 +5247,7 @@ export type MasterListLineConnector = {
 
 export type MasterListLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  ignoreForOrders?: InputMaybe<Scalars['Boolean']['input']>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
   masterListId?: InputMaybe<EqualFilterStringInput>;
@@ -7181,6 +7207,7 @@ export type PurchaseOrderLineError = {
 export type PurchaseOrderLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
 };
 
 export type PurchaseOrderLineNode = {
@@ -7200,6 +7227,7 @@ export type PurchaseOrderLineNode = {
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   requestedNumberOfUnits: Scalars['Float']['output'];
   requestedPackSize: Scalars['Float']['output'];
+  status: PurchaseOrderLineStatusNode;
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
@@ -7228,6 +7256,12 @@ export type PurchaseOrderLineSortInput = {
   /** Sort query result by `key` */
   key: PurchaseOrderLineSortFieldInput;
 };
+
+export enum PurchaseOrderLineStatusNode {
+  Closed = 'CLOSED',
+  New = 'NEW',
+  Sent = 'SENT',
+}
 
 export type PurchaseOrderLineWithIdExists =
   InsertPurchaseOrderLineErrorInterface & {
@@ -7281,13 +7315,6 @@ export type PurchaseOrderNode = {
 };
 
 export enum PurchaseOrderNodeStatus {
-  Authorised = 'AUTHORISED',
-  Confirmed = 'CONFIRMED',
-  Finalised = 'FINALISED',
-  New = 'NEW',
-}
-
-export enum PurchaseOrderNodeType {
   Authorised = 'AUTHORISED',
   Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
@@ -9978,9 +10005,11 @@ export type UpdateGoodsReceivedError = {
 
 export type UpdateGoodsReceivedInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   receivedDate?: InputMaybe<NullableDateUpdate>;
   status?: InputMaybe<GoodsReceivedNodeType>;
+  supplierReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateGoodsReceivedLineError = {
@@ -10468,6 +10497,15 @@ export type UpdateProgramPatientInput = {
 
 export type UpdateProgramPatientResponse = PatientNode;
 
+export type UpdatePurchaseOrderError = {
+  __typename: 'UpdatePurchaseOrderError';
+  error: UpdatePurchaseOrderErrorInterface;
+};
+
+export type UpdatePurchaseOrderErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type UpdatePurchaseOrderInput = {
   additionalInstructions?: InputMaybe<Scalars['String']['input']>;
   advancePaidDate?: InputMaybe<NullableDateUpdate>;
@@ -10492,7 +10530,7 @@ export type UpdatePurchaseOrderInput = {
   requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   sentDatetime?: InputMaybe<NullableDatetimeUpdate>;
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<PurchaseOrderNodeType>;
+  status?: InputMaybe<PurchaseOrderNodeStatus>;
   supplierAgent?: InputMaybe<Scalars['String']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;
@@ -10516,6 +10554,7 @@ export type UpdatePurchaseOrderLineInput = {
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  status?: InputMaybe<PurchaseOrderLineStatusNode>;
   supplierItemCode?: InputMaybe<NullableStringUpdate>;
   unit?: InputMaybe<Scalars['String']['input']>;
 };
@@ -10524,7 +10563,7 @@ export type UpdatePurchaseOrderLineResponse =
   | IdResponse
   | UpdatePurchaseOrderLineError;
 
-export type UpdatePurchaseOrderResponse = IdResponse;
+export type UpdatePurchaseOrderResponse = IdResponse | UpdatePurchaseOrderError;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';

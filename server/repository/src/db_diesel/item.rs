@@ -16,6 +16,7 @@ use crate::{
         apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
     },
+    item_store_join::item_store_join,
     repository_error::RepositoryError,
     EqualFilter, Pagination, Sort, StringFilter,
 };
@@ -53,6 +54,7 @@ pub struct ItemFilter {
     pub is_vaccine: Option<bool>,
     pub master_list_id: Option<EqualFilter<String>>,
     pub is_program_item: Option<bool>,
+    pub ignore_for_orders: Option<bool>,
     pub min_months_of_stock: Option<f64>,
     pub max_months_of_stock: Option<f64>,
 }
@@ -124,6 +126,11 @@ impl ItemFilter {
 
     pub fn is_program_item(mut self, value: bool) -> Self {
         self.is_program_item = Some(value);
+        self
+    }
+
+    pub fn ignore_for_orders(mut self, value: bool) -> Self {
+        self.ignore_for_orders = Some(value);
         self
     }
 }
@@ -234,6 +241,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             is_visible_or_on_hand,
             master_list_id,
             is_program_item,
+            ignore_for_orders,
             max_months_of_stock: _,
             min_months_of_stock: _,
         } = f;
@@ -386,6 +394,19 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             );
             query = query.filter(item::id.eq_any(sub_query));
         };
+
+        if let Some(ignore_for_orders) = ignore_for_orders {
+            let item_ids_for_ignore_for_orders = item_link::table
+                .select(item_link::item_id)
+                .inner_join(
+                    item_store_join::table.on(item_store_join::item_link_id.eq(item_link::id)),
+                )
+                .filter(item_store_join::store_id.eq(store_id.clone()))
+                .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
+                .into_boxed();
+
+            query = query.filter(item::id.eq_any(item_ids_for_ignore_for_orders));
+        }
     }
     query
 }
@@ -442,9 +463,9 @@ mod tests {
         let mut rows = Vec::new();
         for index in 0..200 {
             rows.push(ItemRow {
-                id: format!("id{:05}", index),
-                name: format!("name{}", index),
-                code: format!("code{}", index),
+                id: format!("id{index:05}"),
+                name: format!("name{index}"),
+                code: format!("code{index}"),
                 r#type: ItemType::Stock,
                 ..Default::default()
             });
