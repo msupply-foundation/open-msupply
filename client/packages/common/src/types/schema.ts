@@ -7319,13 +7319,6 @@ export enum PurchaseOrderNodeStatus {
   New = 'NEW',
 }
 
-export enum PurchaseOrderNodeType {
-  Authorised = 'AUTHORISED',
-  Confirmed = 'CONFIRMED',
-  Finalised = 'FINALISED',
-  New = 'NEW',
-}
-
 export type PurchaseOrderNotFinalised = GoodsReceivedError & {
   __typename: 'PurchaseOrderNotFinalised';
   description: Scalars['String']['output'];
@@ -10535,7 +10528,7 @@ export type UpdatePurchaseOrderInput = {
   requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   sentDatetime?: InputMaybe<NullableDatetimeUpdate>;
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<PurchaseOrderNodeType>;
+  status?: InputMaybe<PurchaseOrderNodeStatus>;
   supplierAgent?: InputMaybe<Scalars['String']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;

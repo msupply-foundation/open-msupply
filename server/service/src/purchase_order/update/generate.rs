@@ -1,5 +1,6 @@
 use super::UpdatePurchaseOrderInput;
 use crate::NullableUpdate;
+use chrono::Utc;
 use repository::{
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
     PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection,
@@ -45,7 +46,7 @@ pub fn generate(
 ) -> Result<GenerateResult, RepositoryError> {
     let mut updated_order = purchase_order.clone();
 
-    set_new_status_datetime(&mut updated_order, &status);
+    set_new_status_datetime(&mut updated_order, status.clone());
 
     updated_order.supplier_name_link_id =
         supplier_id.unwrap_or(updated_order.supplier_name_link_id);
@@ -116,22 +117,35 @@ fn nullable_update<T: Clone>(input: &Option<NullableUpdate<T>>, current: Option<
 
 fn set_new_status_datetime(
     purchase_order: &mut PurchaseOrderRow,
-    input_status: &Option<PurchaseOrderStatus>,
+    input_status: Option<PurchaseOrderStatus>,
 ) {
-    let current_datetime = chrono::Utc::now().naive_utc();
-    if let Some(status) = input_status {
-        match status {
-            PurchaseOrderStatus::Authorised => {
-                purchase_order.authorised_datetime = Some(current_datetime);
-            }
-            PurchaseOrderStatus::Confirmed => {
-                purchase_order.confirmed_datetime = Some(current_datetime);
-            }
-            PurchaseOrderStatus::Finalised => {
-                purchase_order.finalised_datetime = Some(current_datetime)
-            }
-            _ => {}
+    let new_status = match status_changed(input_status, &purchase_order.status) {
+        Some(status) => status,
+        None => return,
+    };
+
+    let current_datetime = Utc::now().naive_utc();
+    match new_status {
+        PurchaseOrderStatus::Authorised => {
+            purchase_order.authorised_datetime = Some(current_datetime);
         }
+        PurchaseOrderStatus::Confirmed => {
+            purchase_order.confirmed_datetime = Some(current_datetime);
+        }
+        PurchaseOrderStatus::Finalised => {
+            purchase_order.finalised_datetime = Some(current_datetime)
+        }
+        PurchaseOrderStatus::New => {}
+    }
+}
+
+fn status_changed(
+    status: Option<PurchaseOrderStatus>,
+    current_status: &PurchaseOrderStatus,
+) -> Option<PurchaseOrderStatus> {
+    match status {
+        Some(new_status) if &new_status != current_status => Some(new_status),
+        _ => None,
     }
 }
 
