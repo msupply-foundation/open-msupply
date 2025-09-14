@@ -1,11 +1,12 @@
 import { MRT_ColumnDef, MRT_RowData } from 'material-react-table';
+import { ColumnType } from './useGetColumnDefDefaults';
 
 export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   /** Short explanation of the column. Displays in the column menu */
   description?: string;
 
   /** Maps common column types to sensible display defaults (e.g. right alignment & rounding for numbers). Defaults to string.*/
-  columnType?: 'date' | 'number' | 'currency' | 'string';
+  columnType?: ColumnType;
 
   /** Display the column in the table. Use to handle columns only included for certain preferences or permissions. Defaults to true */
   includeColumn?: boolean;

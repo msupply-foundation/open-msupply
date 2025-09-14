@@ -16,14 +16,12 @@ import {
   GenericColumnKey,
   getCommentPopoverColumn,
   useSimplifiedTabletUI,
-  PaperHoverPopover,
-  PaperPopoverSection,
-  MessageSquareIcon,
   useFeatureFlags,
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
   getNameAndColorSetterColumn,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -137,14 +135,14 @@ const OutboundShipmentListViewComponent: FC = () => {
       {
         accessorKey: 'invoiceNumber',
         header: t('label.invoice-number'),
-        columnType: 'number',
+        columnType: ColumnType.Number,
         description: t('description.invoice-number'),
       },
       {
         accessorKey: 'createdDatetime',
         header: t('label.created'),
         enableColumnFilter: true,
-        columnType: 'date',
+        columnType: ColumnType.Date,
       },
       {
         accessorKey: 'theirReference',
@@ -157,32 +155,13 @@ const OutboundShipmentListViewComponent: FC = () => {
       {
         accessorKey: 'pricing.totalAfterTax',
         header: t('label.total'),
-        columnType: 'currency',
+        columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
       {
         accessorKey: 'comment',
-        header: '',
-        enableColumnActions: false,
-        enableSorting: false,
-        enableResizing: false,
-        size: 20,
-        Cell: ({ cell }) => {
-          const t = useTranslation();
-          const value = cell.getValue<string>();
-          return value ? (
-            <PaperHoverPopover
-              width={400}
-              Content={
-                <PaperPopoverSection label={t('label.comment')}>
-                  {String(value)}
-                </PaperPopoverSection>
-              }
-            >
-              <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
-            </PaperHoverPopover>
-          ) : null;
-        },
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
       },
     ],
     []

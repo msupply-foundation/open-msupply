@@ -21,6 +21,7 @@ import {
   ColumnDef,
   ArrayUtils,
   Groupable,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -96,16 +97,6 @@ const DetailViewInner = () => {
 
   const mrtColumns = useMemo(() => {
     const cols: ColumnDef<Groupable<StockOutLineFragment>>[] = [
-      // // I actually think we should remove this for outbound shipments,
-      // // there's no way I can see to set the note - might just be hanging around from copy-paste?
-      // getNoteColumn(t, rowData =>
-      //   'lines' in rowData
-      //     ? rowData.lines.map(({ batch, note }) => ({
-      //         header: batch ?? '',
-      //         body: note ?? '',
-      //       }))
-      //     : [{ header: rowData.batch ?? '', body: rowData.note ?? '' }]
-      // ),
       {
         accessorKey: 'item.code',
         header: t('label.code'),
@@ -127,7 +118,7 @@ const DetailViewInner = () => {
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
-        columnType: 'date',
+        columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
       },
@@ -142,7 +133,7 @@ const DetailViewInner = () => {
         id: 'locationCode',
         accessorFn: row => row.location?.code ?? '',
         header: t('label.location'),
-        filterVariant: 'text',
+        enableColumnFilter: true,
         defaultHideOnMobile: true,
       },
       {
@@ -155,20 +146,20 @@ const DetailViewInner = () => {
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
-        columnType: 'number',
+        columnType: ColumnType.Number,
         defaultHideOnMobile: true,
       },
       {
         id: 'itemDoses',
         header: t('label.doses-per-unit'),
-        columnType: 'number',
+        columnType: ColumnType.Number,
         defaultHideOnMobile: true,
         accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
       },
       {
         accessorKey: 'numberOfPacks',
         header: t('label.pack-quantity'),
-        columnType: 'number',
+        columnType: ColumnType.Number,
         accessorFn: row => {
           if ('subRows' in row)
             return ArrayUtils.getSum(row.subRows ?? [], 'numberOfPacks');
@@ -180,7 +171,7 @@ const DetailViewInner = () => {
         id: 'unitQuantity',
         header: t('label.unit-quantity'),
         description: t('description.unit-quantity'),
-        columnType: 'number',
+        columnType: ColumnType.Number,
         defaultHideOnMobile: true,
         accessorFn: row => {
           if ('subRows' in row)
@@ -192,7 +183,7 @@ const DetailViewInner = () => {
       {
         id: 'doseQuantity',
         header: t('label.doses'),
-        columnType: 'number',
+        columnType: ColumnType.Number,
         defaultHideOnMobile: true,
         accessorFn: row => {
           if (!row.item.isVaccine) return null;
@@ -208,7 +199,7 @@ const DetailViewInner = () => {
       {
         id: 'unitSellPrice',
         header: t('label.unit-sell-price'),
-        columnType: 'currency',
+        columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
         accessorFn: rowData => {
           if ('subRows' in rowData) {
@@ -225,7 +216,7 @@ const DetailViewInner = () => {
       {
         id: 'total',
         header: t('label.total'),
-        columnType: 'currency',
+        columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
         accessorFn: rowData => {
           if ('subRows' in rowData) {
