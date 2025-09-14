@@ -26,6 +26,7 @@ mod update {
             .unwrap();
         let service = service_provider.purchase_order_line_service;
         let purchase_order_service = service_provider.purchase_order_service;
+        let user_has_permission = true;
 
         // Create a purchase order line
         service
@@ -120,6 +121,7 @@ mod update {
                     status: Some(repository::PurchaseOrderStatus::Confirmed),
                     ..Default::default()
                 },
+                Some(user_has_permission),
             )
             .unwrap();
 
