@@ -2723,6 +2723,12 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type EqualFilterPurchaseOrderLineStatusInput = {
+  equalAny?: InputMaybe<Array<PurchaseOrderLineStatusNode>>;
+  equalTo?: InputMaybe<PurchaseOrderLineStatusNode>;
+  notEqualTo?: InputMaybe<PurchaseOrderLineStatusNode>;
+};
+
 export type EqualFilterPurchaseOrderStatusInput = {
   equalAny?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
   equalTo?: InputMaybe<PurchaseOrderNodeStatus>;
@@ -7199,6 +7205,7 @@ export type PurchaseOrderLineError = {
 export type PurchaseOrderLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
 };
 
 export type PurchaseOrderLineNode = {
@@ -7218,6 +7225,7 @@ export type PurchaseOrderLineNode = {
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   requestedNumberOfUnits: Scalars['Float']['output'];
   requestedPackSize: Scalars['Float']['output'];
+  status: PurchaseOrderLineStatusNode;
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
@@ -7246,6 +7254,12 @@ export type PurchaseOrderLineSortInput = {
   /** Sort query result by `key` */
   key: PurchaseOrderLineSortFieldInput;
 };
+
+export enum PurchaseOrderLineStatusNode {
+  Closed = 'CLOSED',
+  New = 'NEW',
+  Sent = 'SENT',
+}
 
 export type PurchaseOrderLineWithIdExists =
   InsertPurchaseOrderLineErrorInterface & {
@@ -10538,6 +10552,7 @@ export type UpdatePurchaseOrderLineInput = {
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  status?: InputMaybe<PurchaseOrderLineStatusNode>;
   supplierItemCode?: InputMaybe<NullableStringUpdate>;
   unit?: InputMaybe<Scalars['String']['input']>;
 };

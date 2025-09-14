@@ -3,7 +3,6 @@ import {
   Box,
   isEqual,
   Typography,
-  useMaterialTableColumns,
   useTranslation,
   useUrlQuery,
   useUrlQueryParams,
@@ -18,6 +17,7 @@ import {
 } from 'material-react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
+import { useManualTableFilters } from './useMaterialTableColumns';
 
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends BaseTableConfig<T> {
@@ -30,7 +30,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   onRowClick,
   totalCount,
   initialSort,
-  columns,
   ...tableOptions
 }: PaginatedTableConfig<T>) => {
   const {
@@ -47,8 +46,9 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
 
   const pagination = { page, first, offset };
 
-  const { mrtColumnDefinitions, filterUpdaters, getFilterState } =
-    useMaterialTableColumns(columns);
+  const { filterUpdaters, getFilterState } = useManualTableFilters(
+    tableOptions.columns
+  );
 
   const handleSortingChange = useCallback(
     (sortUpdate: MRT_Updater<MRT_SortingState>) => {
@@ -123,7 +123,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     isLoading,
     onRowClick,
 
-    columns: mrtColumnDefinitions,
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
