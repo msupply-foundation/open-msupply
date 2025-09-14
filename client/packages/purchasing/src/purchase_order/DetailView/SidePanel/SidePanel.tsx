@@ -10,6 +10,7 @@ import { PurchaseOrderFragment } from '../../api';
 import { DateSection } from './DateSection';
 import { OtherSection } from './OtherSection';
 import { PricingSection } from './PricingSection';
+import { isPurchaseOrderDisabled } from '../../../utils';
 
 export const SidePanel = (): ReactElement => {
   const t = useTranslation();
@@ -19,6 +20,7 @@ export const SidePanel = (): ReactElement => {
     draft,
     handleChange,
   } = usePurchaseOrder();
+  const disabled = draft ? isPurchaseOrderDisabled(draft) : false;
 
   const handleUpdate = async (input: Partial<PurchaseOrderFragment>) => {
     try {
@@ -31,7 +33,11 @@ export const SidePanel = (): ReactElement => {
   return (
     <DetailPanelPortal>
       <PricingSection draft={draft} />
-      <SupplierDetailSection draft={draft} onChange={handleChange} />
+      <SupplierDetailSection
+        draft={draft}
+        onChange={handleChange}
+        disabled={disabled}
+      />
       <OtherSection
         draft={draft}
         onUpdate={handleUpdate}
