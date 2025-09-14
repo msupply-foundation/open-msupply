@@ -3,10 +3,11 @@ mod update {
     use repository::{
         mock::{mock_item_a, mock_item_d, mock_purchase_order_a, mock_store_a, MockDataInserts},
         test_db::setup_all,
-        ActivityLogRowRepository, ActivityLogType,
+        ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineStatus,
     };
 
     use crate::{
+        purchase_order::update::UpdatePurchaseOrderInput,
         purchase_order_line::{
             insert::{InsertPurchaseOrderLineInput, PackSizeCodeCombination},
             update::{UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError},
@@ -24,6 +25,7 @@ mod update {
             .context(mock_store_a().id.clone(), "".to_string())
             .unwrap();
         let service = service_provider.purchase_order_line_service;
+        let purchase_order_service = service_provider.purchase_order_service;
 
         // Create a purchase order line
         service
@@ -91,6 +93,48 @@ mod update {
                     }
                 )
             )
+        );
+
+        // CannotChangeStatus - to sent from a new purchase order
+        assert_eq!(
+            service.update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
+                    status: Some(PurchaseOrderLineStatus::Sent),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus)
+        );
+
+        // CannotChangeStatus - to new from a confirmed purchase order
+        purchase_order_service
+            .update_purchase_order(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderInput {
+                    id: "test_purchase_order_a".to_string(),
+                    status: Some(repository::PurchaseOrderStatus::Confirmed),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            service.update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
+                    status: Some(PurchaseOrderLineStatus::New),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus)
         );
     }
 
