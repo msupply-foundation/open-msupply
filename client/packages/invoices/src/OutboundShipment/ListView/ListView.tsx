@@ -111,10 +111,11 @@ const OutboundShipmentListViewComponent: FC = () => {
   const mrtColumns = useMemo(
     (): ColumnDef<OutboundRowFragment>[] => [
       {
+        header: t('label.name'),
+        accessorKey: 'otherPartyName',
         ...getNameAndColorSetterColumn<OutboundRowFragment>(
           onUpdate,
-          isOutboundDisabled,
-          t
+          isOutboundDisabled
         ),
         enableColumnFilter: true,
         defaultHideOnMobile: true,

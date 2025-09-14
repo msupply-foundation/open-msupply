@@ -6,7 +6,6 @@ import { ColorSelectButton } from '@common/components';
 import { Link } from 'react-router-dom';
 import { MRT_RowData } from 'material-react-table';
 import { ColumnDef } from '..';
-import { LocaleKey, TypedTFunction } from '@common/intl';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
   colour?: string | null;
@@ -77,12 +76,8 @@ export const getNameAndColorSetterColumn = <
   },
 >(
   onColorChange: (patch: { id: string; colour: string }) => void,
-  getIsDisabled: (row: T) => boolean,
-  t: TypedTFunction<LocaleKey>
-): ColumnDef<T> => ({
-  id: 'otherPartyName',
-  header: t('label.name'),
-  accessorKey: 'otherPartyName',
+  getIsDisabled: (row: T) => boolean
+): Partial<ColumnDef<T>> => ({
   size: 400,
   Cell: ({ row }) => (
     <Box
