@@ -20,7 +20,7 @@ import {
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
 import { customerReturnsToCsv } from '../../utils';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;

@@ -16,7 +16,7 @@ import {
 import { PurchaseOrdersFragment } from '../apiModern/operations.generated';
 import { usePurchaseOrders } from '../apiModern';
 import { getStatusTranslator } from '../utils';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface PurchaseOrderProps {
   supplierName: string;
