@@ -36,7 +36,7 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
     value === undefined || value === null ? defaultValue : formattedValue;
 
   return (
-    <Box sx={sx ?? { padding: '4px 8px' }}>
+    <Box sx={sx}>
       <Tooltip title={tooltip}>
         <Typography
           sx={{
