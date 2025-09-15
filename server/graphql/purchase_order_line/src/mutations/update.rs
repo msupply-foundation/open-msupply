@@ -126,10 +126,26 @@ pub fn update_purchase_order_line(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
+    let mut user_has_permission = false;
+
+    user_has_permission = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::AuthorisePurchaseOrder,
+            store_id: Some(store_id.to_string()),
+        },
+    )
+    .is_ok();
+
     map_response(
         service_provider
             .purchase_order_line_service
-            .update_purchase_order_line(&service_context, store_id, input.to_domain()),
+            .update_purchase_order_line(
+                &service_context,
+                store_id,
+                input.to_domain(),
+                Some(user_has_permission),
+            ),
     )
 }
 

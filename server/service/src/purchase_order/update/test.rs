@@ -32,8 +32,8 @@ mod update {
         let service = service_provider.purchase_order_service;
 
         let store_id = &mock_store_a().id;
-
         let purchase_order_id = "purchase_order_id".to_string();
+        let user_permission = false;
 
         service
             .insert_purchase_order(
@@ -113,7 +113,7 @@ mod update {
                     status: Some(PurchaseOrderStatus::Confirmed),
                     ..Default::default()
                 },
-                Some(false)
+                Some(user_permission)
             ),
             Err(UpdatePurchaseOrderError::UserUnableToAuthorisePurchaseOrder)
         );
@@ -132,6 +132,7 @@ mod update {
 
         let store_id = &mock_store_a().id;
         let purchase_order_id = "purchase_order_id".to_string();
+        let user_permission = true;
 
         // Create a purchase order row with a valid supplier
         service
@@ -196,7 +197,7 @@ mod update {
                     status: Some(PurchaseOrderStatus::Confirmed),
                     ..Default::default()
                 },
-                Some(false),
+                Some(user_permission),
             )
             .unwrap();
     }
@@ -217,6 +218,7 @@ mod update {
 
         let store_id = &mock_store_a().id;
         let purchase_order_id = "purchase_order_id_with_auth".to_string();
+        let user_permission = true;
 
         // Add preference to require authorisation on purchase orders
         PreferenceRowRepository::new(&context.connection)
@@ -305,7 +307,7 @@ mod update {
                     status: Some(PurchaseOrderStatus::Confirmed),
                     ..Default::default()
                 },
-                Some(true),
+                Some(user_permission),
             )
             .unwrap();
 

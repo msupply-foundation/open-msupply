@@ -29,7 +29,6 @@ pub fn validate(
             })?;
         if requires_auth && user_has_permission != Some(true) {
             return Err(UpdatePurchaseOrderError::UserUnableToAuthorisePurchaseOrder);
-            // TODO: update error message
         }
     }
 

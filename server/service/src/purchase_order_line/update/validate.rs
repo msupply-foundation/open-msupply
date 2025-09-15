@@ -1,8 +1,6 @@
 use crate::purchase_order_line::insert::PackSizeCodeCombination;
 use crate::{
-    purchase_order::validate::{
-        can_edit_adjusted_quantity, can_edit_requested_quantity, purchase_order_lines_editable,
-    },
+    purchase_order::validate::{can_edit_adjusted_quantity, can_edit_requested_quantity},
     purchase_order_line::update::{
         UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
     },
@@ -16,6 +14,7 @@ use repository::{
 pub fn validate(
     input: &UpdatePurchaseOrderLineInput,
     connection: &StorageConnection,
+    user_has_permission: Option<bool>,
 ) -> Result<PurchaseOrderLineRow, UpdatePurchaseOrderLineInputError> {
     let purchase_order_line = PurchaseOrderLineRepository::new(connection)
         .query_by_filter(PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(&input.id)))?
@@ -41,6 +40,7 @@ pub fn validate(
     if let Some(adjusted_units) = input.adjusted_number_of_units {
         if Some(adjusted_units) != line.adjusted_number_of_units
             && !can_edit_adjusted_quantity(&purchase_order)
+            || user_has_permission != Some(true)
         {
             return Err(UpdatePurchaseOrderLineInputError::CannotEditAdjustedQuantity);
         }
@@ -60,10 +60,6 @@ pub fn validate(
         if !is_valid_status_change {
             return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
         }
-    }
-
-    if !purchase_order_lines_editable(&purchase_order) {
-        return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrder);
     }
 
     if line.status == PurchaseOrderLineStatus::Closed {

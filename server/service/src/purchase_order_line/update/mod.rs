@@ -57,11 +57,12 @@ pub fn update_purchase_order_line(
     ctx: &ServiceContext,
     store_id: &str,
     input: UpdatePurchaseOrderLineInput,
+    user_has_permission: Option<bool>,
 ) -> Result<PurchaseOrderLine, UpdatePurchaseOrderLineInputError> {
     let purchase_order_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let purchase_order_line = validate(&input, connection)?;
+            let purchase_order_line = validate(&input, connection, user_has_permission)?;
             let updated_purchase_order_line = generate(purchase_order_line, input)?;
 
             PurchaseOrderLineRowRepository::new(connection)
