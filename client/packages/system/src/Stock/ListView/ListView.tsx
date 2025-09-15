@@ -214,7 +214,7 @@ const StockListComponent: FC = () => {
   return (
     <>
       <Toolbar />
-      <AppBarButtons />
+      <AppBarButtons exportFilter={filterBy} />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
       ))}
