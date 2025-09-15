@@ -2723,6 +2723,12 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type EqualFilterPurchaseOrderLineStatusInput = {
+  equalAny?: InputMaybe<Array<PurchaseOrderLineStatusNode>>;
+  equalTo?: InputMaybe<PurchaseOrderLineStatusNode>;
+  notEqualTo?: InputMaybe<PurchaseOrderLineStatusNode>;
+};
+
 export type EqualFilterPurchaseOrderStatusInput = {
   equalAny?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
   equalTo?: InputMaybe<PurchaseOrderNodeStatus>;
@@ -7199,6 +7205,8 @@ export type PurchaseOrderLineError = {
 export type PurchaseOrderLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
+  status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
 };
 
 export type PurchaseOrderLineNode = {
@@ -7213,11 +7221,13 @@ export type PurchaseOrderLineNode = {
   note?: Maybe<Scalars['String']['output']>;
   pricePerUnitAfterDiscount: Scalars['Float']['output'];
   pricePerUnitBeforeDiscount: Scalars['Float']['output'];
+  purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
   receivedNumberOfUnits: Scalars['Float']['output'];
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   requestedNumberOfUnits: Scalars['Float']['output'];
   requestedPackSize: Scalars['Float']['output'];
+  status: PurchaseOrderLineStatusNode;
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
@@ -7238,6 +7248,7 @@ export enum PurchaseOrderLineSortFieldInput {
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   ItemName = 'itemName',
   LineNumber = 'lineNumber',
+  PurchaseOrderNumber = 'purchaseOrderNumber',
   RequestedDeliveryDate = 'requestedDeliveryDate',
 }
 
@@ -7246,6 +7257,12 @@ export type PurchaseOrderLineSortInput = {
   /** Sort query result by `key` */
   key: PurchaseOrderLineSortFieldInput;
 };
+
+export enum PurchaseOrderLineStatusNode {
+  Closed = 'CLOSED',
+  New = 'NEW',
+  Sent = 'SENT',
+}
 
 export type PurchaseOrderLineWithIdExists =
   InsertPurchaseOrderLineErrorInterface & {
@@ -7260,19 +7277,19 @@ export type PurchaseOrderNode = {
   additionalInstructions?: Maybe<Scalars['String']['output']>;
   advancePaidDate?: Maybe<Scalars['NaiveDate']['output']>;
   agentCommission?: Maybe<Scalars['Float']['output']>;
-  authorisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  authorisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   authorisingOfficer1?: Maybe<Scalars['String']['output']>;
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   communicationsCharge?: Maybe<Scalars['Float']['output']>;
-  confirmedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
   contractSignedDate?: Maybe<Scalars['NaiveDate']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   currencyId?: Maybe<Scalars['String']['output']>;
   documentCharge?: Maybe<Scalars['Float']['output']>;
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
-  finalisedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
   freightCharge?: Maybe<Scalars['Float']['output']>;
   freightConditions?: Maybe<Scalars['String']['output']>;
@@ -7286,7 +7303,7 @@ export type PurchaseOrderNode = {
   receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  sentDatetime?: Maybe<Scalars['DateTime']['output']>;
   shippingMethod?: Maybe<Scalars['String']['output']>;
   status: PurchaseOrderNodeStatus;
   store?: Maybe<StoreNode>;
@@ -7299,13 +7316,6 @@ export type PurchaseOrderNode = {
 };
 
 export enum PurchaseOrderNodeStatus {
-  Authorised = 'AUTHORISED',
-  Confirmed = 'CONFIRMED',
-  Finalised = 'FINALISED',
-  New = 'NEW',
-}
-
-export enum PurchaseOrderNodeType {
   Authorised = 'AUTHORISED',
   Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
@@ -10521,7 +10531,7 @@ export type UpdatePurchaseOrderInput = {
   requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   sentDatetime?: InputMaybe<NullableDatetimeUpdate>;
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<PurchaseOrderNodeType>;
+  status?: InputMaybe<PurchaseOrderNodeStatus>;
   supplierAgent?: InputMaybe<Scalars['String']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;
@@ -10545,6 +10555,7 @@ export type UpdatePurchaseOrderLineInput = {
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  status?: InputMaybe<PurchaseOrderLineStatusNode>;
   supplierItemCode?: InputMaybe<NullableStringUpdate>;
   unit?: InputMaybe<Scalars['String']['input']>;
 };

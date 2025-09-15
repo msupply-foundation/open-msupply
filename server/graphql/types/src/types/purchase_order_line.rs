@@ -1,8 +1,8 @@
-use crate::types::{ItemNode, NameNode};
+use crate::types::{ItemNode, NameNode, PurchaseOrderNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{ItemLoader, NameByIdLoader, NameByIdLoaderInput},
+    loader::{ItemLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -18,6 +18,14 @@ pub struct PurchaseOrderLineNode {
 pub struct PurchaseOrderLineConnector {
     pub total_count: u32,
     pub nodes: Vec<PurchaseOrderLineNode>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::purchase_order_line_row::PurchaseOrderLineStatus")]
+pub enum PurchaseOrderLineStatusNode {
+    New,
+    Sent,
+    Closed,
 }
 
 #[Object]
@@ -106,6 +114,20 @@ impl PurchaseOrderLineNode {
 
     pub async fn unit(&self) -> &Option<String> {
         &self.row().unit
+    }
+
+    pub async fn status(&self) -> PurchaseOrderLineStatusNode {
+        PurchaseOrderLineStatusNode::from(self.row().status.clone())
+    }
+
+    pub async fn purchase_order(&self, ctx: &Context<'_>) -> Result<Option<PurchaseOrderNode>> {
+        let loader = ctx.get_loader::<DataLoader<PurchaseOrderByIdLoader>>();
+        let purchase_order = loader
+            .load_one(self.row().purchase_order_id.clone())
+            .await?
+            .map(PurchaseOrderNode::from_domain);
+
+        Ok(purchase_order)
     }
 }
 

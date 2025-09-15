@@ -1,19 +1,14 @@
 /**
- * Hook to map column settings (as defined by us, with a handful of common
- * filter types) to the exact column structure required by MaterialReactTable
- *
- * Also provides "filterUpdater" functions, to correctly update the URL query
- * based on the filter type; and "getFilterState" function, which converts the
- * current URL query into the filter state required by MRT.
+ * Hook to map convenience column definitions (defined by us)
+ * to the exact column structure required by MaterialReactTable
  */
+
 import { useMemo } from 'react';
 import { MRT_RowData } from 'material-react-table';
 import {
-  DateUtils,
   mergeCellProps,
-  useFormatDateTime,
+  useGetColumnTypeDefaults,
   useSimplifiedTabletUI,
-  useUrlQuery,
 } from '@openmsupply-client/common';
 
 import { ColumnDef } from './types';
@@ -22,22 +17,31 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
   omsColumns: ColumnDef<T>[]
 ) => {
   const simplifiedMobileView = useSimplifiedTabletUI();
+
+  const getColumnTypeDefaults = useGetColumnTypeDefaults();
+
   const tableDefinition = useMemo(() => {
     const columns = omsColumns
       .filter(col => col.includeColumn !== false)
       .map(col => {
-        if (col.align) {
+        const columnDefaults = getColumnTypeDefaults(col);
+
+        // TODO: probably these mappings should be in getColumnTypeDefaults,
+        // so all the mapping is in one place, easily discoverable?
+
+        // Add alignment styling
+        const alignment = col.align ?? columnDefaults.align;
+        if (alignment) {
           col.muiTableBodyCellProps = params => {
-            // Add alignment styling
             return mergeCellProps(
               {
                 sx:
-                  col.align === 'right'
+                  alignment === 'right'
                     ? {
                         justifyContent: 'flex-end',
                         paddingRight: '2em', // Padding to account for header icons
                       }
-                    : col.align === 'center'
+                    : alignment === 'center'
                       ? // To-DO: Add padding for center aligned cells
                         { justifyContent: 'center' }
                       : {},
@@ -46,83 +50,32 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
             );
           };
         }
-        return col;
+
+        return {
+          ...columnDefaults,
+          enableColumnFilter:
+            col.enableColumnFilter ?? !!col.filterVariant ?? false, // if a filter variant was explicitly set, take that as shorthand to enable the column filtering
+          ...col,
+        };
       });
 
     const defaultHiddenColumns = simplifiedMobileView
-      ? columns
-          .filter(col => col.defaultHideOnMobile)
-          .map(col => String(col.id ?? col.accessorKey))
+      ? columns.filter(col => col.defaultHideOnMobile).map(columnId)
       : [];
 
-    return { columns, defaultHiddenColumns };
+    const defaultColumnPinning = {
+      left: [
+        'mrt-row-select',
+        ...columns.filter(col => col.pin === 'left').map(columnId),
+      ],
+      right: columns.filter(col => col.pin === 'right').map(columnId),
+    };
+
+    return { columns, defaultHiddenColumns, defaultColumnPinning };
   }, [omsColumns]);
 
   return tableDefinition;
 };
 
-export const useManualTableFilters = <T extends MRT_RowData>(
-  columns: ColumnDef<T>[]
-) => {
-  const { urlQuery, updateQuery } = useUrlQuery();
-  const { customDate, urlQueryDateTime } = useFormatDateTime();
-
-  const filterUpdaters = useMemo(() => {
-    const filterUpdaters: Record<string, (value: any) => void> = {};
-
-    columns.forEach(({ filterVariant, ...mrtProperties }) => {
-      const filterKey = (mrtProperties.accessorKey ||
-        mrtProperties.id) as string;
-
-      switch (filterVariant) {
-        case 'text':
-        case 'select':
-          filterUpdaters[filterKey] = (value: string) => {
-            updateQuery({ [filterKey]: value });
-          };
-          break;
-
-        // filterVariant: 'select',
-        // filterSelectOptions: filterValues,
-        case 'date-range':
-          filterUpdaters[filterKey] = ([date1, date2]: [
-            Date | '',
-            Date | '',
-          ]) => {
-            updateQuery({
-              [filterKey]: {
-                from: date1 ? customDate(date1, urlQueryDateTime) : '',
-                to: date2 ? customDate(date2, urlQueryDateTime) : '',
-              },
-            });
-          };
-          break;
-      }
-    });
-
-    return filterUpdaters;
-  }, [columns]);
-
-  const getFilterState = () => {
-    return Object.entries(urlQuery).map(([id, val]) => {
-      // Date range
-      if (typeof val === 'object' && ('to' in val || 'from' in val))
-        return {
-          id,
-          value: [
-            val.from ? DateUtils.getDateOrNull(val.from as string) : '',
-            val.to ? DateUtils.getDateOrNull(val.to as string) : '',
-          ],
-        };
-
-      // TO-DO: Implement filter state for other types
-
-      return {
-        id,
-        value: val,
-      };
-    });
-  };
-
-  return { filterUpdaters, getFilterState };
-};
+const columnId = <T extends MRT_RowData>(column: ColumnDef<T>): string =>
+  column.id ?? column.accessorKey ?? '';
