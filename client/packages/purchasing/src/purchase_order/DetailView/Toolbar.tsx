@@ -11,8 +11,13 @@ import {
   DateUtils,
   Formatter,
   useNotification,
+  NumericTextInput,
 } from '@openmsupply-client/common';
-import { SupplierSearchInput } from '@openmsupply-client/system';
+import {
+  CurrencyAutocomplete,
+  CurrencyRowFragment,
+  SupplierSearchInput,
+} from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
 import { PurchaseOrderFragment } from '../api';
@@ -25,6 +30,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
   const { error } = useNotification();
   const {
+    draft,
     query: { data, isLoading },
     lines: { itemFilter, setItemFilter },
     update: { update },
@@ -41,6 +47,14 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();
     }
+  };
+
+  const handleCurrencyChange = (currency: CurrencyRowFragment | null) => {
+    if (!currency) return;
+    handleChange({
+      currencyId: currency.id,
+      foreignExchangeRate: currency.rate,
+    });
   };
 
   return (
@@ -87,6 +101,30 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             }
           />
         </Grid>
+        <Grid display="flex" flexDirection="column" gap={1}>
+          <InputWithLabelRow
+            label={t('label.currency')}
+            Input={
+              <CurrencyAutocomplete
+                currencyId={draft?.currencyId}
+                onChange={handleCurrencyChange}
+                width={150}
+                disabled={!!draft?.confirmedDatetime}
+              />
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.foreign-exchange-rate')}
+            Input={
+              <NumericTextInput
+                value={draft?.foreignExchangeRate ?? 0}
+                decimalLimit={4}
+                disabled={true}
+                width={150}
+              />
+            }
+          />
+        </Grid>
         <Grid display="flex" flexGrow={1} flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('label.requested-delivery-date')}
@@ -100,10 +138,11 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                     requestedDeliveryDate: formattedDate,
                   });
                 }}
+                width={250}
               />
             }
           />
-          <Grid sx={{ justifyContent: 'flex-end', display: 'flex' }}>
+          <Grid justifyContent="flex-end" display="flex">
             <SearchBar
               placeholder={t('placeholder.filter-items')}
               value={itemFilter ?? ''}
