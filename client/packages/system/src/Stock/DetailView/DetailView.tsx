@@ -137,8 +137,6 @@ export const StockLineDetailView: React.FC = () => {
     isDirty,
   };
 
-  console.log('data.id', data?.itemId);
-
   return (
     <>
       {data && (
