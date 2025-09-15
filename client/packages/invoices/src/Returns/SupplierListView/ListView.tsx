@@ -18,8 +18,7 @@ import {
   getCommentPopoverColumn,
   useCallbackWithPermission,
   UserPermission,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   useNotification,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
@@ -46,11 +45,8 @@ const SupplierReturnListViewComponent = () => {
   const navigate = useNavigate();
   const modalController = useToggle();
   const { info } = useNotification();
-  const { data: preferences } = usePreference(
-    PreferenceKey.DisableManualReturns
-  );
+  const { disableManualReturns } = usePreferences();
 
-  const disableManualReturns = preferences?.disableManualReturns ?? false;
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
 

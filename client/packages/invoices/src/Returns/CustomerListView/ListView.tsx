@@ -17,8 +17,7 @@ import {
   GenericColumnKey,
   getCommentPopoverColumn,
   useNotification,
-  usePreference,
-  PreferenceKey,
+  usePreferences,
   useCallbackWithPermission,
   UserPermission,
 } from '@openmsupply-client/common';
@@ -46,11 +45,8 @@ const CustomerReturnListViewComponent = () => {
   const navigate = useNavigate();
   const modalController = useToggle();
   const { info } = useNotification();
-  const { data: preferences } = usePreference(
-    PreferenceKey.DisableManualReturns
-  );
+  const { disableManualReturns } = usePreferences();
 
-  const disableManualReturns = preferences?.disableManualReturns ?? false;
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
 
