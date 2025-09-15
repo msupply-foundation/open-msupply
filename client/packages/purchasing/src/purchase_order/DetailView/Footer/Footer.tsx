@@ -14,6 +14,8 @@ import {
   CloseIcon,
   useConfirmationModal,
   useNotification,
+  EditIcon,
+  useToggle,
 } from '@openmsupply-client/common';
 import {
   usePurchaseOrder,
@@ -22,6 +24,7 @@ import {
 } from '../../api';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 import { StatusChangeButton } from './StatusChangeButton';
+import { ExpectedDeliveryDateModal } from './ExpectedDeliveryDateModal';
 
 const createStatusLog = (
   purchaseOrder: PurchaseOrderFragment,
@@ -52,13 +55,15 @@ export const Footer = ({
   const t = useTranslation();
   const { success } = useNotification();
   const { clearSelected } = useTableStore();
+  const { isOn, toggleOn, toggleOff } = useToggle();
+  const { authorisePurchaseOrder = false } = usePreferences();
+
   const {
     query: { data },
     isDisabled,
   } = usePurchaseOrder();
-  const { updateLineStatus } = usePurchaseOrderLine();
-  const { authorisePurchaseOrder = false } = usePreferences();
   const {
+    updateLineStatus,
     delete: { deleteLines },
   } = usePurchaseOrderLine();
 
@@ -89,6 +94,19 @@ export const Footer = ({
     },
   });
 
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: confirmAndDelete,
+    },
+    {
+      label: t('label.update-expected-delivery-date'),
+      icon: <EditIcon />,
+      onClick: toggleOn,
+    },
+  ];
+
   const confirmAndClose = async () => {
     try {
       await updateLineStatus(selectedRows);
@@ -110,14 +128,6 @@ export const Footer = ({
     }),
     title: t('heading.are-you-sure'),
   });
-
-  const actions: Action[] = [
-    {
-      label: t('button.delete-lines'),
-      icon: <DeleteIcon />,
-      onClick: confirmAndDelete,
-    },
-  ];
 
   if (status === PurchaseOrderNodeStatus.Confirmed) {
     actions.push({
@@ -161,6 +171,9 @@ export const Footer = ({
               </Box>
             </Box>
           ) : null}
+          {isOn && (
+            <ExpectedDeliveryDateModal isOpen={isOn} onClose={toggleOff} />
+          )}
         </>
       }
     />

@@ -10,6 +10,7 @@ import {
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
 import { PurchaseOrderLineFragment } from '../operations.generated';
+import { usePurchaseOrder } from './usePurchaseOrder';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
@@ -55,6 +56,9 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
 
 export function usePurchaseOrderLine(id?: string | null) {
   const { data, isLoading, error } = useGet(id ?? '');
+  const {
+    query: { data: purchaseOrderData },
+  } = usePurchaseOrder();
 
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftPurchaseOrderLine>({});
@@ -147,6 +151,19 @@ export function usePurchaseOrderLine(id?: string | null) {
     );
   };
 
+  const updateLines = async (update: Partial<UpdatePurchaseOrderLineInput>) => {
+    const lines = purchaseOrderData?.lines.nodes;
+    if (!lines) return;
+    return await Promise.allSettled(
+      lines.map(({ id }) =>
+        updatePurchaseOrderLineThrowError({
+          id,
+          ...update,
+        })
+      )
+    );
+  };
+
   // DELETE
   const {
     mutateAsync: deleteMutation,
@@ -173,6 +190,7 @@ export function usePurchaseOrderLine(id?: string | null) {
     isDirty,
     updatePatch,
     updateLineStatus,
+    updateLines,
   };
 }
 
