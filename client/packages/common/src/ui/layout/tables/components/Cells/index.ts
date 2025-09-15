@@ -14,3 +14,4 @@ export * from './RadioCell';
 export * from './UnitsAndDoses';
 export * from './VvmStatusCell';
 export * from './DateInputCell';
+export * from './PopoverCell';
