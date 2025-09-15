@@ -2,7 +2,7 @@ import {
   ItemNodeType,
   SortBy,
   ItemSortFieldInput,
-  FilterByWithStringAndBool,
+  FilterByWithNumAndStringAndBool,
 } from '@openmsupply-client/common';
 import { Sdk, ItemRowFragment } from './operations.generated';
 
@@ -10,7 +10,7 @@ export type ListParams<T> = {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
-  filterBy?: FilterByWithStringAndBool | null;
+  filterBy?: FilterByWithNumAndStringAndBool | null;
   isVisible?: boolean;
 };
 

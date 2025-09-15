@@ -17,6 +17,10 @@ export type FilterByWithStringAndBool = Record<
   string,
   FilterRule | null | boolean | string
 >;
+export type FilterByWithNumAndStringAndBool = Record<
+  string,
+  FilterRule | null | boolean | string | number
+>;
 
 export interface FilterController {
   filterBy: FilterByWithBoolean | null;
