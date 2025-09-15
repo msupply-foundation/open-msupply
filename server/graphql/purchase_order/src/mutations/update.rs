@@ -198,12 +198,11 @@ pub fn update_purchase_order(
         },
     )?;
 
-    // TODO: Check auth officer if auth officer is part of input or service
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     let mut user_has_permission = false;
-    if input.status == Some(PurchaseOrderNodeType::Confirmed)
-    // && (input.authorising_officer_1.is_some() || input.authorising_officer_2.is_some())
-    {
+    if input.status == Some(PurchaseOrderNodeType::Confirmed) {
         user_has_permission = validate_auth(
             ctx,
             &ResourceAccessRequest {
@@ -213,9 +212,6 @@ pub fn update_purchase_order(
         )
         .is_ok();
     }
-
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
         service_provider

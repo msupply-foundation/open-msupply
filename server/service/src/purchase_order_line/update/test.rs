@@ -26,7 +26,7 @@ mod update {
             .unwrap();
         let service = service_provider.purchase_order_line_service;
         let purchase_order_service = service_provider.purchase_order_service;
-        let user_has_permission = true;
+        let mut user_permission = true;
 
         // Create a purchase order line
         service
@@ -54,7 +54,8 @@ mod update {
                     requested_number_of_units: Some(5.0),
 
                     ..Default::default()
-                }
+                },
+                None
             ),
             Err(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)
         );
@@ -84,7 +85,8 @@ mod update {
                     item_id: Some(mock_item_a().id.to_string()),
                     requested_pack_size: Some(5.0),
                     ..Default::default()
-                }
+                },
+                None
             ),
             Err(
                 UpdatePurchaseOrderLineInputError::PackSizeCodeCombinationExists(
@@ -106,7 +108,8 @@ mod update {
                     item_id: Some(mock_item_a().id.to_string()),
                     status: Some(PurchaseOrderLineStatus::Sent),
                     ..Default::default()
-                }
+                },
+                None
             ),
             Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus)
         );
@@ -121,7 +124,7 @@ mod update {
                     status: Some(repository::PurchaseOrderStatus::Confirmed),
                     ..Default::default()
                 },
-                Some(user_has_permission),
+                Some(user_permission),
             )
             .unwrap();
 
@@ -134,9 +137,73 @@ mod update {
                     item_id: Some(mock_item_a().id.to_string()),
                     status: Some(PurchaseOrderLineStatus::New),
                     ..Default::default()
-                }
+                },
+                None
             ),
             Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus)
+        );
+
+        // Cannot change requested quantity on a confirmed purchase order
+        assert_eq!(
+            service.update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
+                    requested_number_of_units: Some(5.0),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity)
+        );
+
+        // Cannot change adjusted quantity if the user does not have permission
+        user_permission = false;
+
+        assert_eq!(
+            service.update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
+                    adjusted_number_of_units: Some(5.0),
+                    ..Default::default()
+                },
+                Some(user_permission)
+            ),
+            Err(UpdatePurchaseOrderLineInputError::CannotEditAdjustedQuantity)
+        );
+
+        // Cannot change adjusted quantity on a finalised purchase order, even if the user has permission
+        purchase_order_service
+            .update_purchase_order(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderInput {
+                    id: "test_purchase_order_a".to_string(),
+                    status: Some(repository::PurchaseOrderStatus::Finalised),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(
+            service.update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
+                    adjusted_number_of_units: Some(5.0),
+                    ..Default::default()
+                },
+                Some(user_permission)
+            ),
+            Err(UpdatePurchaseOrderLineInputError::CannotEditAdjustedQuantity)
         );
     }
 
@@ -177,6 +244,7 @@ mod update {
                     requested_number_of_units: Some(5.0),
                     ..Default::default()
                 },
+                None,
             )
             .unwrap();
 
