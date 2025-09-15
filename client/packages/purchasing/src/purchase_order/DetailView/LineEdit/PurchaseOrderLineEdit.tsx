@@ -149,7 +149,7 @@ export const PurchaseOrderLineEdit = ({
               )}
               {status === PurchaseOrderNodeStatus.Confirmed &&
                 numericInput(
-                  'label.adjusted-quantity',
+                  'label.adjusted-units',
                   draft?.adjustedNumberOfUnits,
                   {
                     onChange: value => {
