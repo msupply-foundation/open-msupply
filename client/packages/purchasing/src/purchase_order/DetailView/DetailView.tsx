@@ -23,6 +23,7 @@ import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
 import { ActivityLogList } from 'packages/system/src';
+import { PurchaseOrderLineErrorProvider } from '../context';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -110,7 +111,7 @@ export const DetailViewInner = () => {
           <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
           <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
-          <Footer showStatusBar={showStatusBar} />
+          <Footer showStatusBar={showStatusBar} status={data.status} />
           <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal
@@ -148,15 +149,17 @@ export const DetailViewInner = () => {
 
 export const PurchaseOrderDetailView = () => {
   return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<PurchaseOrderLineFragment>({
-        initialSortBy: {
-          key: 'itemName',
-        },
-      })}
-    >
-      <DetailViewInner />
-    </TableProvider>
+    <PurchaseOrderLineErrorProvider>
+      <TableProvider
+        createStore={createTableStore}
+        queryParamsStore={createQueryParamsStore<PurchaseOrderLineFragment>({
+          initialSortBy: {
+            key: 'itemName',
+          },
+        })}
+      >
+        <DetailViewInner />
+      </TableProvider>
+    </PurchaseOrderLineErrorProvider>
   );
 };

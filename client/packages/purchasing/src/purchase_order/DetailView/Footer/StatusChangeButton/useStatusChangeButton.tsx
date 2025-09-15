@@ -1,5 +1,7 @@
 import {
-  PurchaseOrderNodeType,
+  mapKeys,
+  mapValues,
+  PurchaseOrderNodeStatus,
   useAuthContext,
   useConfirmationModal,
   useNotification,
@@ -16,6 +18,7 @@ import {
   getStatusTranslation,
   PurchaseOrderStatusOption,
 } from './utils';
+import { usePurchaseOrderLineErrorContext } from '../../../context';
 
 export const useStatusChangeButton = () => {
   const t = useTranslation();
@@ -26,6 +29,7 @@ export const useStatusChangeButton = () => {
     update: { update },
   } = usePurchaseOrder();
   const { status, lines } = data ?? {};
+  const errorsContext = usePurchaseOrderLineErrorContext();
 
   const preferences = usePreferences();
   const requiresAuthorisation = preferences?.authorisePurchaseOrder ?? false;
@@ -40,22 +44,52 @@ export const useStatusChangeButton = () => {
       getNextStatusOption(status, options, requiresAuthorisation)
     );
 
+  const mapStructuredErrors = (result: Awaited<ReturnType<typeof update>>) => {
+    if (result?.__typename === 'IdResponse') {
+      return undefined;
+    }
+
+    if (!result) return;
+
+    const { error } = result;
+
+    switch (error?.__typename) {
+      case 'ItemsCannotBeOrdered': {
+        const ids = mapValues(
+          mapKeys(lines?.nodes, line => line?.id),
+          'id'
+        );
+        const mappedErrors = mapKeys(error.lines, line => ids[line.line.id]);
+        errorsContext.setErrors(mappedErrors);
+        return t('error.cannot-order-items');
+      }
+      default:
+        return;
+    }
+  };
+
   const handleConfirm = async () => {
     if (!selectedOption) return null;
 
-    const status = selectedOption.value as PurchaseOrderNodeType | undefined;
+    const status = selectedOption.value as PurchaseOrderNodeStatus | undefined;
 
     const isAuthorisationBlocked =
       requiresAuthorisation &&
-      status === PurchaseOrderNodeType.Authorised &&
+      status === PurchaseOrderNodeStatus.Authorised &&
       !userHasPermission(UserPermission.PurchaseOrderAuthorise);
 
     if (isAuthorisationBlocked)
       return info(t('error.no-purchase-order-authorisation-permission'))();
 
     try {
-      await update({ status: selectedOption.value });
-      success(t('messages.purchase-order-saved'))();
+      const result = await update({ status: selectedOption.value });
+      const errorMessage = mapStructuredErrors(result);
+
+      if (errorMessage) {
+        error(errorMessage)();
+      } else {
+        success(t('messages.purchase-order-saved'))();
+      }
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();
     }

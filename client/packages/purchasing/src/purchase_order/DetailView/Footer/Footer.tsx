@@ -11,6 +11,9 @@ import {
   useTableStore,
   usePreferences,
   useDeleteConfirmation,
+  CloseIcon,
+  useConfirmationModal,
+  useNotification,
 } from '@openmsupply-client/common';
 import {
   usePurchaseOrder,
@@ -39,14 +42,21 @@ const createStatusLog = (
 
 interface FooterProps {
   showStatusBar: boolean;
+  status: PurchaseOrderNodeStatus;
 }
 
-export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
+export const Footer = ({
+  showStatusBar,
+  status,
+}: FooterProps): ReactElement => {
   const t = useTranslation();
+  const { success } = useNotification();
+  const { clearSelected } = useTableStore();
   const {
     query: { data },
     isDisabled,
   } = usePurchaseOrder();
+  const { updateLineStatus } = usePurchaseOrderLine();
   const { authorisePurchaseOrder = false } = usePreferences();
   const {
     delete: { deleteLines },
@@ -70,13 +80,35 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
     deleteAction,
     canDelete: !isDisabled,
     messages: {
-      confirmMessage: t('messages.confirm-delete-lines-goods-received', {
+      confirmMessage: t('messages.confirm-delete-lines-purchase-order', {
         count: selectedRows.length,
       }),
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
     },
+  });
+
+  const confirmAndClose = async () => {
+    try {
+      await updateLineStatus(selectedRows);
+      success(
+        t('messages.closed-purchase-order-lines', {
+          count: selectedRows.length,
+        })
+      )();
+      clearSelected();
+    } catch (e) {
+      console.error('Error closing purchase order lines:', e);
+    }
+  };
+
+  const showCloseConfirmation = useConfirmationModal({
+    onConfirm: confirmAndClose,
+    message: t('messages.confirm-close-purchase-order-lines', {
+      count: selectedRows.length,
+    }),
+    title: t('heading.are-you-sure'),
   });
 
   const actions: Action[] = [
@@ -86,6 +118,14 @@ export const Footer = ({ showStatusBar }: FooterProps): ReactElement => {
       onClick: confirmAndDelete,
     },
   ];
+
+  if (status === PurchaseOrderNodeStatus.Confirmed) {
+    actions.push({
+      label: t('button.close-purchase-order-lines'),
+      onClick: showCloseConfirmation,
+      icon: <CloseIcon />,
+    });
+  }
 
   const filteredStatuses = authorisePurchaseOrder
     ? purchaseOrderStatuses

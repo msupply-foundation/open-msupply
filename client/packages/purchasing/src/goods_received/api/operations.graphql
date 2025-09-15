@@ -45,6 +45,10 @@ fragment GoodsReceived on GoodsReceivedNode {
   purchaseOrderId
   receivedDatetime
   supplierReference
+  donor(storeId: $storeId) {
+    id
+    name
+  }
   status
   user {
     username

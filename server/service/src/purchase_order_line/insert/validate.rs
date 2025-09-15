@@ -4,7 +4,8 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 use repository::{
-    EqualFilter, ItemRow, ItemRowRepository, Pagination, PurchaseOrderLineFilter,
+    EqualFilter, ItemRow, ItemRowRepository, ItemStoreJoinRowRepository,
+    ItemStoreJoinRowRepositoryTrait, Pagination, PurchaseOrderLineFilter,
     PurchaseOrderLineRepository, PurchaseOrderLineRowRepository, PurchaseOrderRowRepository,
     StorageConnection,
 };
@@ -52,17 +53,23 @@ pub fn validate(
             .ok_or(InsertPurchaseOrderLineError::ItemDoesNotExist)?,
         (None, None) => return Err(InsertPurchaseOrderLineError::ItemDoesNotExist),
     };
+    let item_store = ItemStoreJoinRowRepository::new(connection)
+        .find_one_by_item_and_store_id(&item.id, store_id)?;
+    if let Some(item_store_join) = item_store {
+        if item_store_join.ignore_for_orders {
+            return Err(InsertPurchaseOrderLineError::ItemCannotBeOrdered);
+        }
+    }
 
     // check if pack size and item id combination already exists
     let existing_pack_item = PurchaseOrderLineRepository::new(connection).query(
         Pagination::all(),
-        Some(PurchaseOrderLineFilter {
-            id: None,
-            purchase_order_id: Some(EqualFilter::equal_to(&input.purchase_order_id)),
-            store_id: None,
-            requested_pack_size: Some(EqualFilter::equal_to_f64(input.requested_pack_size)),
-            item_id: Some(EqualFilter::equal_to(&item.id)),
-        }),
+        Some(
+            PurchaseOrderLineFilter::new()
+                .purchase_order_id(EqualFilter::equal_to(&input.purchase_order_id))
+                .requested_pack_size(EqualFilter::equal_to_f64(input.requested_pack_size))
+                .item_id(EqualFilter::equal_to(&item.id)),
+        ),
         None,
     )?;
     if !existing_pack_item.is_empty() {

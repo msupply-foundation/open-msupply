@@ -1,42 +1,24 @@
+import React from 'react';
 import {
-  isEqual,
-  useMaterialTableColumns,
-  useUrlQuery,
+  Box,
+  Typography,
+  useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import {
   MRT_RowData,
-  MRT_TableOptions,
   MRT_RowSelectionState,
   MRT_SortingState,
   MRT_Updater,
   MRT_PaginationState,
-  MRT_ColumnDef,
-  MRT_ColumnFiltersState,
 } from 'material-react-table';
-import { useCallback, useRef, useState } from 'react';
-import { useBaseMaterialTable } from './useBaseMaterialTable';
-
-type FilterType = 'none' | 'text' | 'number' | 'enum' | 'dateRange';
-
-interface EnumOption {
-  value: string;
-  label: string;
-}
-
-export type PaginatedTableColumnDefinition<T extends MRT_RowData> =
-  MRT_ColumnDef<T> & {
-    filterType?: FilterType;
-    filterValues?: EnumOption[];
-  };
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 
 interface PaginatedTableConfig<T extends MRT_RowData>
-  extends MRT_TableOptions<T> {
-  onRowClick?: (row: T) => void;
-  isLoading: boolean;
+  extends BaseTableConfig<T> {
   totalCount: number;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
-  columns: PaginatedTableColumnDefinition<T>[];
 }
 
 export const usePaginatedMaterialTable = <T extends MRT_RowData>({
@@ -44,7 +26,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   onRowClick,
   totalCount,
   initialSort,
-  columns,
   ...tableOptions
 }: PaginatedTableConfig<T>) => {
   const {
@@ -54,14 +35,11 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   } = useUrlQueryParams({
     initialSort,
   });
-  const { updateQuery } = useUrlQuery();
+  const t = useTranslation();
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
   const paginationRef = useRef<number>(0);
 
   const pagination = { page, first, offset };
-
-  const { mrtColumnDefinitions, filterUpdaters, getFilterState } =
-    useMaterialTableColumns(columns);
 
   const handleSortingChange = useCallback(
     (sortUpdate: MRT_Updater<MRT_SortingState>) => {
@@ -84,8 +62,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [sortBy, updateSortQuery]
   );
 
-  const filterState = getFilterState();
-
   const handlePaginationChange = useCallback(
     (paginationUpdate: MRT_Updater<MRT_PaginationState>) => {
       if (typeof paginationUpdate === 'function') {
@@ -98,49 +74,73 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
         // for now, but we should investigate further at some point, or report
         // the bug to MRT devs
         if (paginationRef.current - lastUpdate < 300) return;
-        updatePaginationQuery(newPaginationValue.pageIndex);
+        updatePaginationQuery(
+          newPaginationValue.pageIndex,
+          newPaginationValue.pageSize
+        );
       }
     },
     [updatePaginationQuery]
   );
 
-  const handleFilterChange = (
-    filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
-  ) => {
-    // The "filterUpdate" function mutates the "old" state in place, which
-    // messes up the comparisons, so we generate a fresh version just for this:
-    const old = getFilterState();
-    if (typeof filterUpdate === 'function') {
-      const newFilterState = filterUpdate(old);
-      const changedFilter = newFilterState.find(
-        fil =>
-          !isEqual(fil.value, filterState.find(f => f.id === fil.id)?.value)
-      );
-      if (!changedFilter) {
-        const removedFilter = filterState.find(
-          f => !newFilterState.find(nf => nf.id === f.id)
-        );
-        if (removedFilter) updateQuery({ [removedFilter.id]: undefined });
-        return;
-      }
-      const filterUpdater = filterUpdaters[changedFilter.id];
-      const newValue = changedFilter.value;
-      if (filterUpdater) filterUpdater(newValue);
-    }
-  };
-
   const table = useBaseMaterialTable<T>({
     isLoading,
     onRowClick,
 
-    columns: mrtColumnDefinitions,
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
+    enableBottomToolbar: Object.keys(rowSelection).length === 0, // required for pagination
+    enablePagination: true,
+    paginationDisplayMode: 'pages',
+    muiBottomToolbarProps: {
+      sx: {
+        '& .MuiInputLabel-root': {
+          fontSize: '0.9em',
+        },
+        // Makes the content vertically centered (when custom component added)
+        '& > .MuiBox-root': {
+          padding: 0,
+        },
+      },
+    },
+    muiPaginationProps: {
+      rowsPerPageOptions: [10, 20, 50, 100], // TO-DO: Make this customisable?
+      SelectProps: {
+        sx: {
+          minWidth: '40px',
+          fontSize: '0.9em',
+        },
+      },
+    },
+    // Summary display in toolbar, e.g. "Showing 1-20 of 45"
+    renderBottomToolbarCustomActions: () => {
+      const xToY = `${offset + 1}-${Math.min(first + offset, totalCount)}`;
+      return (
+        <Box
+          display="flex"
+          flexDirection="row"
+          flexWrap="wrap"
+          flex={1}
+          paddingLeft={2}
+        >
+          <Typography sx={{ marginRight: '4px' }}>
+            {t('label.showing')}
+          </Typography>
+          <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
+            {xToY}
+          </Typography>
+          <Typography sx={{ marginRight: '4px' }}>{t('label.of')}</Typography>
+          <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
+            {totalCount}
+          </Typography>
+        </Box>
+      );
+    },
+
     onSortingChange: handleSortingChange,
     autoResetPageIndex: false,
     onPaginationChange: handlePaginationChange,
-    onColumnFiltersChange: handleFilterChange,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     rowCount: totalCount,
@@ -148,10 +148,19 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
       sorting: [{ id: sortBy.key, desc: !!sortBy.isDesc }],
       pagination: { pageIndex: pagination.page, pageSize: pagination.first },
       showProgressBars: isLoading,
-      columnFilters: filterState,
       rowSelection,
     },
     ...tableOptions,
   });
-  return table;
+
+  const selectedRows = useMemo(
+    () => table.getSelectedRowModel().rows.map(r => r.original),
+    [rowSelection]
+  );
+
+  const resetRowSelection = () => {
+    table.resetRowSelection();
+  };
+
+  return { table, selectedRows, resetRowSelection };
 };

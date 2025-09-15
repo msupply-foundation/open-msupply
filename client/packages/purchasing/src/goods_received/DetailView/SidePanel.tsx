@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import {
   useTranslation,
   DetailPanelPortal,
@@ -8,16 +8,32 @@ import {
   PanelLabel,
   PanelField,
   DateUtils,
-  TextArea,
+  useBufferState,
+  useDebouncedValueCallback,
+  BufferedTextArea,
 } from '@openmsupply-client/common';
 import { DonorSearchInput } from '@openmsupply-client/system/src';
 import { useGoodsReceived } from '../api/hooks';
 
-export const SidePanel = (): ReactElement => {
+interface ToolbarProps {
+  isDisabled?: boolean;
+}
+
+export const SidePanel = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
   const {
     query: { data },
+    update: { update },
   } = useGoodsReceived();
+  const { comment } = data ?? {};
+
+  const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
+
+  const debouncedUpdate = useDebouncedValueCallback(
+    update,
+    [commentBuffer],
+    1500
+  );
 
   return (
     <DetailPanelPortal>
@@ -63,30 +79,24 @@ export const SidePanel = (): ReactElement => {
           >
             <PanelLabel>{t('label.donor')}</PanelLabel>
             <DonorSearchInput
-              donorId={''}
-              onChange={donor =>
-                console.info('TODO: Handle donor change', donor)
-              }
+              donorId={data?.donor?.id ?? null}
+              onChange={donor => update({ donor })}
+              disabled={isDisabled}
+              clearable
             />
           </PanelRow>
         </Grid>
       </DetailPanelSection>
 
       <DetailPanelSection title={t('heading.comment')}>
-        <TextArea
+        <BufferedTextArea
           fullWidth
-          value={data?.comment ?? ''}
-          onChange={e =>
-            console.info('TODO: Handle comment change', e.target.value)
-          }
-          sx={{
-            '& .MuiInputBase-root': {
-              backgroundColor: theme => theme.palette.background.white,
-              fontSize: '12px',
-              borderRadius: '4px',
-              minHeight: '80px',
-            },
+          disabled={isDisabled}
+          onChange={e => {
+            setCommentBuffer(e.target.value);
+            debouncedUpdate({ comment: e.target.value });
           }}
+          value={commentBuffer}
         />
       </DetailPanelSection>
     </DetailPanelPortal>

@@ -102,6 +102,7 @@ pub struct MasterListLineFilterInput {
     pub item_id: Option<EqualFilterStringInput>,
     pub master_list_id: Option<EqualFilterStringInput>,
     pub master_list: Option<MasterListFilterInput>,
+    pub ignore_for_orders: Option<bool>,
 }
 
 impl MasterListLineFilterInput {
@@ -112,6 +113,7 @@ impl MasterListLineFilterInput {
             master_list_id: self.master_list_id.map(EqualFilter::from),
             item_type: None,
             master_list: self.master_list.map(|f| f.to_domain()),
+            ignore_for_orders: self.ignore_for_orders,
         }
     }
 }

@@ -130,7 +130,7 @@ export const SearchBar = ({
                     },
                   }
                 : {}),
-              backgroundColor: theme => theme.palette.background.menu,
+              backgroundColor: theme => theme.palette.background.input.main,
             },
           },
         }}
