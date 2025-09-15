@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -15,9 +15,9 @@ import {
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
-export const Toolbar: FC = () => {
+export const Toolbar = () => {
   const t = useTranslation();
   const { id, otherParty, theirReference, update, requisition } =
     useOutbound.document.fields([
