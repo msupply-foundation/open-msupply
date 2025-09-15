@@ -19,6 +19,7 @@ interface AddButtonProps {
   /** Disable the whole control */
   disable: boolean;
   disableAddFromMasterListButton: boolean;
+  disableNewLines: boolean;
 }
 
 export const AddButton = ({
@@ -26,6 +27,7 @@ export const AddButton = ({
   onAddItem,
   disable,
   disableAddFromMasterListButton,
+  disableNewLines,
 }: AddButtonProps) => {
   const t = useTranslation();
   const masterListModalController = useToggle();
@@ -43,24 +45,24 @@ export const AddButton = ({
       {
         value: 'add-item',
         label: t('button.add-item'),
-        isDisabled: disable,
+        isDisabled: disable || disableNewLines,
       },
       {
         value: 'add-from-master-list',
         label: t('button.add-from-master-list'),
-        isDisabled: disableAddFromMasterListButton,
+        isDisabled: disableAddFromMasterListButton || disableNewLines,
       },
       {
         value: 'import-from-csv',
         label: t('button.upload-purchase-order-lines'),
-        isDisabled: disable,
+        isDisabled: disable || disableNewLines,
       },
       {
         value: 'upload-document',
         label: t('label.upload-document'),
       },
     ],
-    [disable, disableAddFromMasterListButton, t]
+    [disable, disableAddFromMasterListButton, t, disableNewLines]
   );
 
   const [selectedOption, setSelectedOption] = useState<

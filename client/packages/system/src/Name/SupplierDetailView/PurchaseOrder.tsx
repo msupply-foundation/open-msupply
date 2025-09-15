@@ -7,13 +7,16 @@ import {
   DataTable,
   NothingHere,
   PurchaseOrderNodeStatus,
+  RouteBuilder,
   TableProvider,
   useColumns,
+  useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrdersFragment } from '../apiModern/operations.generated';
 import { usePurchaseOrders } from '../apiModern';
 import { getStatusTranslator } from '../utils';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface PurchaseOrderProps {
   supplierName: string;
@@ -23,6 +26,7 @@ export const PurchaseOrder = ({
   supplierName,
 }: PurchaseOrderProps): ReactElement => {
   const t = useTranslation();
+  const navigate = useNavigate();
   const { data } = usePurchaseOrders(supplierName);
 
   const columnDefinitions: ColumnDefinition<PurchaseOrdersFragment>[] = [
@@ -83,6 +87,14 @@ export const PurchaseOrder = ({
           id="supplier-purchase-order"
           columns={columns}
           data={data}
+          onRowClick={row =>
+            navigate(
+              RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.PurchaseOrder)
+                .addPart(row.id)
+                .build()
+            )
+          }
           noDataElement={<NothingHere body={t('error.no-purchase-orders')} />}
         />
       </Box>

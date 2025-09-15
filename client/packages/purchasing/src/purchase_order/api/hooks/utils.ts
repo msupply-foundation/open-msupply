@@ -40,6 +40,7 @@ export const parseUpdateInput = (input: RecordPatch<PurchaseOrderFragment>) => {
     freightCharge: input.freightCharge,
     // Supplier section fields
     supplierDiscountPercentage: input.supplierDiscountPercentage,
+    supplierDiscountAmount: input.supplierDiscountAmount,
     currencyId: input.currencyId,
     foreignExchangeRate: input.foreignExchangeRate,
     // Other fields
