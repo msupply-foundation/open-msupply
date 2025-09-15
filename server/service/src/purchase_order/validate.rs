@@ -21,12 +21,15 @@ pub(crate) fn can_edit_requested_quantity(purchase_order: &PurchaseOrderRow) -> 
     }
 }
 
+// adjusted quantity is updated at all statuses except finalised
+// even though the user can only update adjusted at CONFIRMED and SENT statuses
 pub(crate) fn can_edit_adjusted_quantity(purchase_order: &PurchaseOrderRow) -> bool {
     match purchase_order.status {
         PurchaseOrderStatus::New
         | PurchaseOrderStatus::RequestApproval
-        | PurchaseOrderStatus::Finalised => false,
-        PurchaseOrderStatus::Confirmed | PurchaseOrderStatus::Sent => true,
+        | PurchaseOrderStatus::Confirmed
+        | PurchaseOrderStatus::Sent => true,
+        PurchaseOrderStatus::Finalised => false,
     }
 }
 
