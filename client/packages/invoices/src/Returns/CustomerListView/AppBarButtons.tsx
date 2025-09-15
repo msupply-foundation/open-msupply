@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -10,26 +10,28 @@ import {
   ToggleState,
   useNotification,
   FnUtils,
-  UserPermission,
-  useCallbackWithPermission,
   useNavigate,
   RouteBuilder,
   useExportCSV,
-  usePreferences,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
 import { customerReturnsToCsv } from '../../utils';
 import { AppRoute } from 'packages/config/src';
 
-export const AppBarButtonsComponent: FC<{
+interface AppBarButtonsProps {
   modalController: ToggleState;
-}> = ({ modalController }) => {
+  onNew: () => void;
+}
+
+export const AppBarButtonsComponent = ({
+  modalController,
+  onNew,
+}: AppBarButtonsProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { error, info } = useNotification();
+  const { error } = useNotification();
   const exportCSV = useExportCSV();
-  const { disableManualReturns } = usePreferences();
 
   const { mutateAsync: onCreate } = useReturns.document.insertCustomerReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllCustomer({
@@ -48,26 +50,13 @@ export const AppBarButtonsComponent: FC<{
     exportCSV(csv, t('filename.customer-returns'));
   };
 
-  const openModal = useCallbackWithPermission(
-    UserPermission.CustomerReturnMutate,
-    modalController.toggleOn
-  );
-
-  const handleClick = (): void => {
-    if (disableManualReturns) {
-      info(t('messages.manual-returns-preferences-disabled'))();
-      return;
-    }
-    openModal();
-  };
-
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-return')}
-          onClick={handleClick}
+          onClick={onNew}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
