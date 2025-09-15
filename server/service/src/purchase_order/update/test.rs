@@ -6,10 +6,11 @@ mod update {
             mock_name_a, mock_name_store_b, mock_store_a, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
-        ActivityLogRowRepository, ActivityLogType, PurchaseOrderRowRepository, PurchaseOrderStatus,
+        ActivityLogRowRepository, ActivityLogType, PreferenceRow, PreferenceRowRepository,
+        PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
 
-    use crate::preference::{upsert_helpers::upsert_global, AuthorisePurchaseOrder, Preference};
+    use crate::preference::{AuthorisePurchaseOrder, Preference};
     use crate::{
         purchase_order::{
             insert::InsertPurchaseOrderInput,
@@ -93,18 +94,15 @@ mod update {
         );
 
         // UserUnableToAuthorisePurchaseOrder
-
-        // AuthorisePurchaseOrder
-        //     .upsert(&context.connection, true, Some(store_id.to_string()))
-        //     .unwrap();
-
-        // add preference to allow authorised purchase orders
-        upsert_global(
-            &context.connection,
-            AuthorisePurchaseOrder.key_str(),
-            "true".to_string(),
-        )
-        .unwrap();
+        // Add preference to require authorisation on purchase orders
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                id: "authorise_purchase_order_pref".to_string(),
+                key: AuthorisePurchaseOrder.key().to_string(),
+                value: "true".to_string(),
+                store_id: None, // Global pref so needs store: None
+            })
+            .unwrap();
 
         assert_eq!(
             service.update_purchase_order(
@@ -147,14 +145,6 @@ mod update {
             )
             .unwrap();
 
-        // add preference to allow authorised purchase orders
-        upsert_global(
-            &context.connection,
-            AuthorisePurchaseOrder.key_str(),
-            "true".to_string(),
-        )
-        .unwrap();
-
         let purchase_order = PurchaseOrderRowRepository::new(&context.connection)
             .find_one_by_id(&purchase_order_id.clone())
             .unwrap()
@@ -174,7 +164,7 @@ mod update {
                     id: purchase_order_id.clone(),
                     supplier_discount_percentage: Some(discount_percentage),
                     comment: Some("Updated comment".to_string()),
-                    status: Some(PurchaseOrderStatus::RequestApproval),
+                    status: Some(PurchaseOrderStatus::New),
                     received_at_port_date: Some(NullableUpdate {
                         value: Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap()),
                     }),
@@ -184,47 +174,128 @@ mod update {
             )
             .unwrap();
 
-        let purchase_order = PurchaseOrderRowRepository::new(&context.connection)
-            .find_one_by_id(&purchase_order_id.clone())
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(result.id, purchase_order.id);
         assert_eq!(
             result.supplier_discount_percentage,
             Some(discount_percentage)
         );
         assert_eq!(result.comment, Some("Updated comment".to_string()));
-        assert_eq!(result.status, PurchaseOrderStatus::RequestApproval);
+        assert_eq!(result.status, PurchaseOrderStatus::New);
         assert_eq!(
             result.received_at_port_date,
             Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap())
         );
 
-        // test activity log for created then updated status to authorised
-        let logs = ActivityLogRowRepository::new(&context.connection)
+        // set purchase order to confirmed
+        // purchase order authorisation is off
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(PurchaseOrderStatus::Confirmed),
+                    ..Default::default()
+                },
+                Some(false),
+            )
+            .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn update_purchase_order_statuses_with_authorisation() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_purchase_order_success_with_authorisation",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+
+        let store_id = &mock_store_a().id;
+        let purchase_order_id = "purchase_order_id_with_auth".to_string();
+
+        // Add preference to require authorisation on purchase orders
+        PreferenceRowRepository::new(&context.connection)
+            .upsert_one(&PreferenceRow {
+                id: "authorise_purchase_order_pref".to_string(),
+                key: AuthorisePurchaseOrder.key().to_string(),
+                value: "true".to_string(),
+                store_id: None, // Global pref so needs store: None
+            })
+            .unwrap();
+
+        // NEW ORDER
+        // Create a purchase order row with a valid supplier
+        service
+            .insert_purchase_order(
+                &context,
+                store_id,
+                InsertPurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    supplier_id: mock_name_a().id.to_string(),
+                },
+            )
+            .unwrap();
+
+        let purchase_order = PurchaseOrderRowRepository::new(&context.connection)
+            .find_one_by_id(&purchase_order_id.clone())
+            .unwrap()
+            .unwrap();
+
+        PurchaseOrderRowRepository::new(&context.connection)
+            .upsert_one(&purchase_order)
+            .unwrap();
+
+        assert_eq!(purchase_order.status, PurchaseOrderStatus::New);
+
+        // Test activity log created
+        let new_purchase_order_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
             .find_many_by_record_id(&purchase_order_id.clone())
-            .unwrap();
-
-        assert_eq!(logs.len(), 2);
-
-        let log = logs
-            .clone()
+            .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::PurchaseOrderRequestApproval)
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderCreated)
+            .collect();
+
+        assert_eq!(new_purchase_order_logs.len(), 1);
+        assert_eq!(
+            new_purchase_order_logs[0].r#type,
+            ActivityLogType::PurchaseOrderCreated
+        );
+
+        // Update purchase order status to Request Approval
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(PurchaseOrderStatus::RequestApproval),
+                    ..Default::default()
+                },
+                None,
+            )
             .unwrap();
 
-        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderRequestApproval);
-
-        let request_approval_logs: Vec<_> = logs
+        // Test activity log created
+        let request_approval_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
+            .unwrap()
             .into_iter()
             .filter(|l| l.r#type == ActivityLogType::PurchaseOrderRequestApproval)
             .collect();
 
         assert_eq!(request_approval_logs.len(), 1);
+        assert_eq!(
+            request_approval_logs[0].r#type,
+            ActivityLogType::PurchaseOrderRequestApproval
+        );
 
-        // set purchase order to confirmed
-        // user has permission to authorise
+        // Update purchase order status to Confirmed
+        // User has permission to authorise
         service
             .update_purchase_order(
                 &context,
@@ -238,17 +309,46 @@ mod update {
             )
             .unwrap();
 
-        let log = ActivityLogRowRepository::new(&context.connection)
+        // Test activity log created
+        let confirmed_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
             .find_many_by_record_id(&purchase_order_id.clone())
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::PurchaseOrderConfirmed)
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderConfirmed)
+            .collect();
+
+        assert_eq!(confirmed_logs.len(), 1);
+        assert_eq!(
+            confirmed_logs[0].r#type,
+            ActivityLogType::PurchaseOrderConfirmed
+        );
+
+        // Update purchase order to sent
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(PurchaseOrderStatus::Sent),
+                    ..Default::default()
+                },
+                None,
+            )
             .unwrap();
 
-        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderConfirmed);
+        // Test activity log created
+        let sent_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
+            .unwrap()
+            .into_iter()
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderSent)
+            .collect();
 
-        // Set purchase order to finalised
+        assert_eq!(sent_logs.len(), 1);
+        assert_eq!(sent_logs[0].r#type, ActivityLogType::PurchaseOrderSent);
 
+        // Update purchase order to finalised
         service
             .update_purchase_order(
                 &context,
@@ -262,13 +362,25 @@ mod update {
             )
             .unwrap();
 
-        let log = ActivityLogRowRepository::new(&context.connection)
+        // Test activity log created
+        let finalised_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
             .find_many_by_record_id(&purchase_order_id.clone())
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::PurchaseOrderFinalised)
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderFinalised)
+            .collect();
+
+        assert_eq!(finalised_logs.len(), 1);
+        assert_eq!(
+            finalised_logs[0].r#type,
+            ActivityLogType::PurchaseOrderFinalised
+        );
+
+        // Total logs at end:
+        let total_logs = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
             .unwrap();
 
-        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderFinalised);
+        assert_eq!(total_logs.len(), 5);
     }
 }
