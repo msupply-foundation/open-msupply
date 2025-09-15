@@ -158,11 +158,15 @@ export const NewCreateStocktakeModal = ({
       masterListId: masterList?.id,
       locationId: location?.id,
       vvmStatusId: vvmStatus?.id,
+      createBlankStocktake: itemStatus === ItemStatus.None,
       expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
       isInitialStocktake: false,
+      includeAllMasterListItems:
+        itemStatus === ItemStatus.All && !!masterList?.id,
       description,
       comment: generateComment(),
     };
+
     onCreate(args).then(id => {
       if (id) {
         navigate(id);
@@ -287,7 +291,9 @@ export const NewCreateStocktakeModal = ({
                     />
                     <FormControlLabel
                       disabled={
-                        expiryDate || location || vvmStatus ? true : false
+                        !masterList || !!expiryDate || location || vvmStatus
+                          ? true
+                          : false
                       }
                       value={ItemStatus.All}
                       control={<Radio />}
