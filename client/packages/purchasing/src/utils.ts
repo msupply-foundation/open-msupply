@@ -108,8 +108,10 @@ export const canEditAdjustedQuantity = (
 export const canAddNewLines = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
-  // Can add lines when NEW or CONFIRMED/AUTHORISED (but not finalised)
-  return purchaseOrder.status !== PurchaseOrderNodeStatus.Finalised;
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.New ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Authorised
+  );
 };
 
 export const isGoodsReceivedEditable = (
