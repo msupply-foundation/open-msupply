@@ -1,10 +1,8 @@
 import React from 'react';
 import {
   Box,
-  isEqual,
   Typography,
   useTranslation,
-  useUrlQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import {
@@ -13,11 +11,9 @@ import {
   MRT_SortingState,
   MRT_Updater,
   MRT_PaginationState,
-  MRT_ColumnFiltersState,
 } from 'material-react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
-import { useManualTableFilters } from './useMaterialTableColumns';
 
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends BaseTableConfig<T> {
@@ -40,15 +36,10 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     initialSort,
   });
   const t = useTranslation();
-  const { updateQuery } = useUrlQuery();
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
   const paginationRef = useRef<number>(0);
 
   const pagination = { page, first, offset };
-
-  const { filterUpdaters, getFilterState } = useManualTableFilters(
-    tableOptions.columns
-  );
 
   const handleSortingChange = useCallback(
     (sortUpdate: MRT_Updater<MRT_SortingState>) => {
@@ -71,8 +62,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [sortBy, updateSortQuery]
   );
 
-  const filterState = getFilterState();
-
   const handlePaginationChange = useCallback(
     (paginationUpdate: MRT_Updater<MRT_PaginationState>) => {
       if (typeof paginationUpdate === 'function') {
@@ -93,31 +82,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     },
     [updatePaginationQuery]
   );
-
-  const handleFilterChange = (
-    filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
-  ) => {
-    // The "filterUpdate" function mutates the "old" state in place, which
-    // messes up the comparisons, so we generate a fresh version just for this:
-    const old = getFilterState();
-    if (typeof filterUpdate === 'function') {
-      const newFilterState = filterUpdate(old);
-      const changedFilter = newFilterState.find(
-        fil =>
-          !isEqual(fil.value, filterState.find(f => f.id === fil.id)?.value)
-      );
-      if (!changedFilter) {
-        const removedFilter = filterState.find(
-          f => !newFilterState.find(nf => nf.id === f.id)
-        );
-        if (removedFilter) updateQuery({ [removedFilter.id]: undefined });
-        return;
-      }
-      const filterUpdater = filterUpdaters[changedFilter.id];
-      const newValue = changedFilter.value;
-      if (filterUpdater) filterUpdater(newValue);
-    }
-  };
 
   const table = useBaseMaterialTable<T>({
     isLoading,
@@ -177,7 +141,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     onSortingChange: handleSortingChange,
     autoResetPageIndex: false,
     onPaginationChange: handlePaginationChange,
-    onColumnFiltersChange: handleFilterChange,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     rowCount: totalCount,
@@ -185,7 +148,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
       sorting: [{ id: sortBy.key, desc: !!sortBy.isDesc }],
       pagination: { pageIndex: pagination.page, pageSize: pagination.first },
       showProgressBars: isLoading,
-      columnFilters: filterState,
       rowSelection,
     },
     ...tableOptions,
