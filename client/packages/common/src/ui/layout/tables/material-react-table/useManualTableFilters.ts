@@ -4,9 +4,15 @@
  * current URL query into the filter state required by MRT.
  */
 import { useMemo } from 'react';
-import { MRT_RowData } from 'material-react-table';
+import {
+  MRT_ColumnFiltersState,
+  MRT_RowData,
+  MRT_Updater,
+} from 'material-react-table';
 import {
   DateUtils,
+  isEqual,
+  UrlQueryValue,
   useFormatDateTime,
   useUrlQuery,
 } from '@openmsupply-client/common';
@@ -14,12 +20,23 @@ import {
 import { ColumnDef } from './types';
 
 export const useManualTableFilters = <T extends MRT_RowData>(
+  manualFiltering: boolean,
   columns: ColumnDef<T>[]
-) => {
+): {
+  filterState?: { columnFilters: MRT_ColumnFiltersState };
+  filterHandlers?: {
+    onColumnFiltersChange: (
+      filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
+    ) => void;
+  };
+} => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDateTime } = useFormatDateTime();
 
   const filterUpdaters = useMemo(() => {
+    // If manual filtering is not enabled, don't set up any of this
+    if (!manualFiltering) return {};
+
     const filterUpdaters: Record<string, (value: any) => void> = {};
 
     columns.forEach(({ filterVariant, ...mrtProperties }) => {
@@ -27,13 +44,6 @@ export const useManualTableFilters = <T extends MRT_RowData>(
         mrtProperties.id) as string;
 
       switch (filterVariant) {
-        case 'text':
-        case 'select':
-          filterUpdaters[filterKey] = (value: string) => {
-            updateQuery({ [filterKey]: value });
-          };
-          break;
-
         case 'date-range':
           filterUpdaters[filterKey] = ([date1, date2]: [
             Date | '',
@@ -48,6 +58,14 @@ export const useManualTableFilters = <T extends MRT_RowData>(
           };
           break;
 
+        case 'select':
+        case 'text':
+        case undefined: // default to text
+          filterUpdaters[filterKey] = (value: string) => {
+            updateQuery({ [filterKey]: value });
+          };
+          break;
+
         // TODO: other filter types, number, boolean
       }
     });
@@ -55,26 +73,63 @@ export const useManualTableFilters = <T extends MRT_RowData>(
     return filterUpdaters;
   }, [columns]);
 
-  const getFilterState = () => {
-    return Object.entries(urlQuery).map(([id, val]) => {
-      // Date range
-      if (typeof val === 'object' && ('to' in val || 'from' in val))
-        return {
-          id,
-          value: [
-            val.from ? DateUtils.getDateOrNull(val.from as string) : '',
-            val.to ? DateUtils.getDateOrNull(val.to as string) : '',
-          ],
-        };
+  const filterState = useMemo(() => {
+    if (!manualFiltering) return undefined;
 
-      // TO-DO: Implement filter state for other types
+    return { columnFilters: getFilterState(urlQuery) };
+  }, [urlQuery]);
 
-      return {
-        id,
-        value: val,
-      };
-    });
+  // If manual filtering is not enabled, early return
+  // (needs to be after the useMemos above, to avoid hooks conditional call)
+  if (!manualFiltering) return {};
+
+  const handleFilterChange = (
+    filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
+  ) => {
+    // The "filterUpdate" function mutates the "old" state in place, which
+    // messes up the comparisons, so we generate a fresh version just for this:
+    const old = getFilterState(urlQuery);
+    if (typeof filterUpdate === 'function') {
+      const newFilterState = filterUpdate(old);
+      const changedFilter = newFilterState.find(
+        fil => !isEqual(fil.value, old.find(f => f.id === fil.id)?.value)
+      );
+      if (!changedFilter) {
+        const removedFilter = old.find(
+          f => !newFilterState.find(nf => nf.id === f.id)
+        );
+        if (removedFilter) updateQuery({ [removedFilter.id]: undefined });
+        return;
+      }
+      const filterUpdater = filterUpdaters[changedFilter.id];
+      const newValue = changedFilter.value;
+      if (filterUpdater) filterUpdater(newValue);
+    }
   };
 
-  return { filterUpdaters, getFilterState };
+  return {
+    filterState,
+    filterHandlers: { onColumnFiltersChange: handleFilterChange },
+  };
+};
+
+const getFilterState = (urlQuery: Record<string, UrlQueryValue>) => {
+  return Object.entries(urlQuery).map(([id, val]) => {
+    // Date range
+    if (typeof val === 'object' && ('to' in val || 'from' in val))
+      return {
+        id,
+        value: [
+          val.from ? DateUtils.getDateOrNull(val.from as string) : '',
+          val.to ? DateUtils.getDateOrNull(val.to as string) : '',
+        ],
+      };
+
+    // TO-DO: Implement filter state for other types
+
+    return {
+      id,
+      value: val,
+    };
+  });
 };
