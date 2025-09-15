@@ -16,13 +16,12 @@ import {
   GenericColumnKey,
   getCommentPopoverColumn,
   useSimplifiedTabletUI,
-  PaperHoverPopover,
-  PaperPopoverSection,
-  MessageSquareIcon,
   useFeatureFlags,
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
+  getNameAndColorSetterColumn,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -112,12 +111,13 @@ const OutboundShipmentListViewComponent: FC = () => {
   const mrtColumns = useMemo(
     (): ColumnDef<OutboundRowFragment>[] => [
       {
-        // todo; color picker
-        id: 'otherPartyName',
         header: t('label.name'),
         accessorKey: 'otherPartyName',
-        size: 400,
-        filterVariant: 'text',
+        ...getNameAndColorSetterColumn<OutboundRowFragment>(
+          onUpdate,
+          isOutboundDisabled
+        ),
+        enableColumnFilter: true,
         defaultHideOnMobile: true,
       },
       {
@@ -127,27 +127,26 @@ const OutboundShipmentListViewComponent: FC = () => {
         size: 140,
         filterVariant: 'select',
         filterSelectOptions: [
-          { value: 'NEW', label: t('label.new') },
-          { value: 'SHIPPED', label: t('label.shipped') },
-          { value: 'ALLOCATED', label: t('label.allocated') },
-          { value: 'PICKED', label: t('label.picked') },
+          { value: InvoiceNodeStatus.New, label: t('label.new') },
+          { value: InvoiceNodeStatus.Allocated, label: t('label.allocated') },
+          { value: InvoiceNodeStatus.Picked, label: t('label.picked') },
+          { value: InvoiceNodeStatus.Shipped, label: t('label.shipped') },
+          { value: InvoiceNodeStatus.Delivered, label: t('label.delivered') },
+          { value: InvoiceNodeStatus.Received, label: t('label.received') },
+          { value: InvoiceNodeStatus.Verified, label: t('label.verified') },
         ],
       },
       {
         accessorKey: 'invoiceNumber',
         header: t('label.invoice-number'),
-        size: 150,
-        align: 'right',
+        columnType: ColumnType.Number,
         description: t('description.invoice-number'),
       },
       {
-        // todo - datetime?
         accessorKey: 'createdDatetime',
         header: t('label.created'),
-        Cell: ({ cell }) =>
-          new Date(cell.getValue<string>()).toLocaleDateString(),
-        filterVariant: 'date-range',
-        // size: 100,
+        enableColumnFilter: true,
+        columnType: ColumnType.Date,
       },
       {
         accessorKey: 'theirReference',
@@ -156,42 +155,17 @@ const OutboundShipmentListViewComponent: FC = () => {
         size: 175,
         defaultHideOnMobile: true,
       },
-      {
-        // todo: reusable
-        accessorKey: 'comment',
-        header: '',
-        enableColumnActions: false,
-        enableSorting: false,
-        enableResizing: false,
-        size: 20,
-        // width: 0,
-        Cell: ({ cell }) => {
-          const t = useTranslation();
-          const value = cell.getValue<string>();
-          return value ? (
-            <PaperHoverPopover
-              width={400}
-              Content={
-                <PaperPopoverSection label={t('label.comment')}>
-                  {String(value)}
-                </PaperPopoverSection>
-              }
-            >
-              <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
-            </PaperHoverPopover>
-          ) : null;
-        },
-      },
+
       {
         accessorKey: 'pricing.totalAfterTax',
         header: t('label.total'),
-        Cell: ({ cell }) =>
-          new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-          }).format(cell.getValue<number>()),
-        size: 125,
+        columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
       },
     ],
     []

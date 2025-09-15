@@ -1,8 +1,11 @@
 use super::UpdatePurchaseOrderInput;
 use crate::NullableUpdate;
+use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
+
+use chrono::Utc;
 use repository::{
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
-    PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection,
+    StorageConnection,
 };
 
 pub(crate) struct GenerateResult {
@@ -12,7 +15,7 @@ pub(crate) struct GenerateResult {
 
 pub fn generate(
     connection: &StorageConnection,
-    purchase_order: PurchaseOrderRow,
+    purchase_order: PurchaseOrder,
     UpdatePurchaseOrderInput {
         id: _,
         supplier_id,
@@ -20,6 +23,7 @@ pub fn generate(
         confirmed_datetime,
         comment,
         supplier_discount_percentage,
+        supplier_discount_amount,
         donor_id,
         reference,
         currency_id,
@@ -43,9 +47,10 @@ pub fn generate(
         freight_conditions,
     }: UpdatePurchaseOrderInput,
 ) -> Result<GenerateResult, RepositoryError> {
-    let mut updated_order = purchase_order.clone();
+    let mut updated_order = purchase_order.purchase_order_row.clone();
+    let purchase_order_stats = purchase_order.purchase_order_stats_row;
 
-    set_new_status_datetime(&mut updated_order, &status);
+    set_new_status_datetime(&mut updated_order, status.clone());
 
     updated_order.supplier_name_link_id =
         supplier_id.unwrap_or(updated_order.supplier_name_link_id);
@@ -94,10 +99,25 @@ pub fn generate(
     updated_order.freight_charge = freight_charge.or(updated_order.freight_charge);
 
     let supplier_discount_percentage = supplier_discount_percentage
-        .or(purchase_order.supplier_discount_percentage)
+        .or(purchase_order
+            .purchase_order_row
+            .supplier_discount_percentage)
         .unwrap_or(0.0);
 
     updated_order.supplier_discount_percentage = Some(supplier_discount_percentage);
+
+    if let Some(supplier_discount_amount) = supplier_discount_amount {
+        let line_total_before_discount = purchase_order_stats
+            .as_ref()
+            .map(|stats| stats.line_total_before_discount)
+            .unwrap_or(0.0);
+
+        updated_order.supplier_discount_percentage = if line_total_before_discount > 0.0 {
+            Some((supplier_discount_amount / line_total_before_discount) * 100.0)
+        } else {
+            Some(0.0)
+        };
+    }
 
     let updated_lines = update_lines(connection, &updated_order.id, &status)?;
 
@@ -116,25 +136,39 @@ fn nullable_update<T: Clone>(input: &Option<NullableUpdate<T>>, current: Option<
 
 fn set_new_status_datetime(
     purchase_order: &mut PurchaseOrderRow,
-    input_status: &Option<PurchaseOrderStatus>,
+    input_status: Option<PurchaseOrderStatus>,
 ) {
-    let current_datetime = chrono::Utc::now().naive_utc();
-    if let Some(status) = input_status {
-        match status {
-            PurchaseOrderStatus::RequestApproval => {
-                purchase_order.request_approval_datetime = Some(current_datetime);
-            }
-            PurchaseOrderStatus::Confirmed => {
-                purchase_order.confirmed_datetime = Some(current_datetime);
-            }
-            PurchaseOrderStatus::Sent => {
-                purchase_order.sent_datetime = Some(current_datetime);
-            }
-            PurchaseOrderStatus::Finalised => {
-                purchase_order.finalised_datetime = Some(current_datetime)
-            }
-            _ => {}
+    let new_status = match status_changed(input_status, &purchase_order.status) {
+        Some(status) => status,
+        None => return,
+    };
+
+    let current_datetime = Utc::now().naive_utc();
+
+    match new_status {
+        PurchaseOrderStatus::RequestApproval => {
+            purchase_order.request_approval_datetime = Some(current_datetime);
         }
+        PurchaseOrderStatus::Confirmed => {
+            purchase_order.confirmed_datetime = Some(current_datetime);
+        }
+        PurchaseOrderStatus::Sent => {
+            purchase_order.sent_datetime = Some(current_datetime);
+        }
+        PurchaseOrderStatus::Finalised => {
+            purchase_order.finalised_datetime = Some(current_datetime)
+        }
+        PurchaseOrderStatus::New => {}
+    }
+}
+
+fn status_changed(
+    status: Option<PurchaseOrderStatus>,
+    current_status: &PurchaseOrderStatus,
+) -> Option<PurchaseOrderStatus> {
+    match status {
+        Some(new_status) if &new_status != current_status => Some(new_status),
+        _ => None,
     }
 }
 

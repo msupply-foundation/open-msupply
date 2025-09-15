@@ -11,6 +11,8 @@ import {
   DownloadIcon,
   useExportCSV,
   ToggleState,
+  ListIcon,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import {
   NameRowFragment,
@@ -19,6 +21,7 @@ import {
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { PurchaseOrderRowFragment } from '../api';
 import { purchaseOrderToCsv } from '../../utils';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface AppBarButtonProps {
   data?: PurchaseOrderRowFragment[];
@@ -69,6 +72,18 @@ export const AppBarButtonsComponent = ({
           Icon={<PlusCircleIcon />}
           label={t('button.new-purchase-order')}
           onClick={onCreate}
+        />
+        <ButtonWithIcon
+          Icon={<ListIcon />}
+          label={t('button.outstanding-lines')}
+          onClick={() =>
+            navigate(
+              RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.PurchaseOrder)
+                .addPart(AppRoute.PurchaseOrderOutstandingLines)
+                .build()
+            )
+          }
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
