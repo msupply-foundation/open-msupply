@@ -127,10 +127,13 @@ const OutboundShipmentListViewComponent: FC = () => {
         size: 140,
         filterVariant: 'select',
         filterSelectOptions: [
-          { value: 'NEW', label: t('label.new') },
-          { value: 'SHIPPED', label: t('label.shipped') },
-          { value: 'ALLOCATED', label: t('label.allocated') },
-          { value: 'PICKED', label: t('label.picked') },
+          { value: InvoiceNodeStatus.New, label: t('label.new') },
+          { value: InvoiceNodeStatus.Allocated, label: t('label.allocated') },
+          { value: InvoiceNodeStatus.Picked, label: t('label.picked') },
+          { value: InvoiceNodeStatus.Shipped, label: t('label.shipped') },
+          { value: InvoiceNodeStatus.Delivered, label: t('label.delivered') },
+          { value: InvoiceNodeStatus.Received, label: t('label.received') },
+          { value: InvoiceNodeStatus.Verified, label: t('label.verified') },
         ],
       },
       {
