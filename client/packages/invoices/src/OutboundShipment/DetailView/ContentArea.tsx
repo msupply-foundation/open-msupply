@@ -21,7 +21,7 @@ import { Expand } from './ExpandoTable';
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
-  table?: MRT_TableInstance<StockOutLineFragment | StockOutItem>;
+  table?: MRT_TableInstance<StockOutLineFragment>;
   // onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
 }
 

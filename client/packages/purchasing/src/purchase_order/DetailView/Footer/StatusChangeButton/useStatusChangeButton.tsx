@@ -1,7 +1,7 @@
 import {
   mapKeys,
   mapValues,
-  PurchaseOrderNodeType,
+  PurchaseOrderNodeStatus,
   useAuthContext,
   useConfirmationModal,
   useNotification,
@@ -71,11 +71,11 @@ export const useStatusChangeButton = () => {
   const handleConfirm = async () => {
     if (!selectedOption) return null;
 
-    const status = selectedOption.value as PurchaseOrderNodeType | undefined;
+    const status = selectedOption.value as PurchaseOrderNodeStatus | undefined;
 
     const isAuthorisationBlocked =
       requiresAuthorisation &&
-      status === PurchaseOrderNodeType.Authorised &&
+      status === PurchaseOrderNodeStatus.Authorised &&
       !userHasPermission(UserPermission.PurchaseOrderAuthorise);
 
     if (isAuthorisationBlocked)

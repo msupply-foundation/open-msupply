@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -6,14 +6,21 @@ import { PurchaseOrderListView } from './purchase_order/ListView/ListView';
 import { PurchaseOrderDetailView } from './purchase_order/DetailView';
 import { GoodsReceivedListView } from './goods_received/ListView';
 import { GoodsReceivedDetailView } from './goods_received/DetailView';
+import { OutstandingPurchaseOrderLinesListView } from './purchase_order/ListView/OutstandingLines/OutstandingLines';
 
-const PurchasingService: FC = () => {
+const PurchasingService = () => {
   const purchaseOrdersRoute = RouteBuilder.create(
     AppRoute.PurchaseOrder
   ).build();
 
   const purchaseOrderRoute = RouteBuilder.create(AppRoute.PurchaseOrder)
     .addPart(':purchaseOrderId')
+    .build();
+
+  const outstandingPurchaseOrderLinesRoute = RouteBuilder.create(
+    AppRoute.PurchaseOrder
+  )
+    .addPart(AppRoute.PurchaseOrderOutstandingLines)
     .build();
 
   const goodsReceivedRoute = RouteBuilder.create(
@@ -28,6 +35,10 @@ const PurchasingService: FC = () => {
     <Routes>
       <Route path={purchaseOrdersRoute} element={<PurchaseOrderListView />} />
       <Route path={purchaseOrderRoute} element={<PurchaseOrderDetailView />} />
+      <Route
+        path={outstandingPurchaseOrderLinesRoute}
+        element={<OutstandingPurchaseOrderLinesListView />}
+      />
       <Route path={goodsReceivedRoute} element={<GoodsReceivedListView />} />
       <Route
         path={goodsReceivedDetailRoute}

@@ -18,7 +18,7 @@ import { PurchaseOrderLineFragment } from '../api';
 import { ContentArea, Details, Documents } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
-import { canAddNewLines } from '../../utils';
+import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
@@ -68,7 +68,8 @@ export const DetailViewInner = () => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
-  const isDisabled = !data || !canAddNewLines(data);
+  const disableNewLines = !data || !canAddNewLines(data);
+  const isDisabled = !data || isPurchaseOrderDisabled(data);
 
   const tabs = [
     {
@@ -108,7 +109,11 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
+          <AppBarButtons
+            isDisabled={isDisabled}
+            disableNewLines={disableNewLines}
+            onAddItem={onOpen}
+          />
           <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
           <Footer showStatusBar={showStatusBar} status={data.status} />

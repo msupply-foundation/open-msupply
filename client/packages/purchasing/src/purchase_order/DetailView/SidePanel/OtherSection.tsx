@@ -6,6 +6,7 @@ import {
   PanelRow,
   PanelLabel,
   TextArea,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import { DonorSearchInput } from '@openmsupply-client/system/src';
 import { PurchaseOrderFragment } from '../../api';
@@ -42,9 +43,22 @@ export const OtherSection = ({
             clearable
           />
         </PanelRow>
-        {/* <PanelRow>
-          <PanelLabel>{t('label.shipping-method')}</PanelLabel> 
-        </PanelRow> */}
+        <PanelRow>
+          {/* TODO: Link this with shipping method table */}
+          <PanelLabel>{t('label.shipping-method')}</PanelLabel>
+          <BasicTextInput
+            fullWidth
+            value={draft?.shippingMethod ?? ''}
+            onChange={e => {
+              const value = e.target.value;
+              onChange({ shippingMethod: value });
+            }}
+            slotProps={{
+              input: { sx: { backgroundColor: 'background.paper' } },
+            }}
+          />
+        </PanelRow>
+        <PanelRow></PanelRow>
         <PanelLabel>{t('label.comment')}</PanelLabel>
         <TextArea
           fullWidth
