@@ -18,7 +18,7 @@ export type ItemParams = {
 };
 
 export enum hasStockOnHandInput {
-  // Setting these to 'true' or 'false' causes an error.
+  // Setting these to 'true' and 'false' causes an error, so chose 'yes' and 'no' as values instead.
   True = 'yes',
   False = 'no',
 }
