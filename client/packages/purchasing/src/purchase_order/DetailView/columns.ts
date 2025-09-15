@@ -21,6 +21,13 @@ export const usePurchaseOrderColumns = () => {
 
   const columnDefinitions: ColumnDescription<PurchaseOrderLineFragment>[] = [
     GenericColumnKey.Selection,
+    {
+      key: 'lineNumber',
+      label: 'label.line-number',
+      align: ColumnAlign.Right,
+      width: 100,
+      accessor: ({ rowData }) => rowData.lineNumber,
+    },
     [
       'itemCode',
       {
@@ -80,6 +87,14 @@ export const usePurchaseOrderColumns = () => {
       getSortValue: rowData => rowData.adjustedNumberOfUnits ?? 0,
     },
     {
+      key: 'stockOnHand',
+      label: 'label.stock-on-hand',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.item.stats.stockOnHand,
+      getSortValue: rowData => rowData.item.stats.stockOnHand ?? 0,
+      defaultHideOnMobile: true,
+    },
+    {
       key: 'totalReceived',
       label: 'label.total-received',
       align: ColumnAlign.Right,
@@ -88,27 +103,6 @@ export const usePurchaseOrderColumns = () => {
       // rowData.totalReceived,
       // getSortValue: rowData =>  //rowData.totalReceived ?? 0,
     },
-    // TO-DO: Figure out if this is snapshot value or current value
-    // {
-    //   key: 'availableStockOnHand',
-    //   label: 'label.available-soh',
-    //   description: 'description.available-soh',
-    //   align: ColumnAlign.Right,
-    //   width: 200,
-    //   accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
-    //   getSortValue: rowData => rowData.itemStats.availableStockOnHand,
-    // },
-    // TO-DO: Include all orders or just POs?
-    //   {
-    //   key: 'onOrder',
-    //   label: 'label.on-order',
-    //   //   description: 'description.default-pack-size',
-    //   align: ColumnAlign.Right,
-    //   accessor: ({ rowData }) => rowData.totalReceived,
-    //   //   getSortValue: rowData => rowData.packSize,
-    //   //   defaultHideOnMobile: true,
-    // },
-    // TO-DO: Price extension column
     {
       key: 'requestedDeliveryDate',
       label: 'label.requested-delivery-date',
