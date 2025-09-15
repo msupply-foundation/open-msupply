@@ -26,6 +26,9 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
       .map(col => {
         const columnDefaults = getColumnTypeDefaults(col);
 
+        // TODO: probably these mappings should be in getColumnTypeDefaults,
+        // so all the mapping is in one place, easily discoverable?
+
         // Add alignment styling
         const alignment = col.align ?? columnDefaults.align;
         if (alignment) {

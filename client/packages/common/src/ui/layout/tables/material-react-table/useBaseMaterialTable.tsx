@@ -21,6 +21,7 @@ import { MenuItem, Typography } from '@mui/material';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
+import { useManualTableFilters } from './useManualTableFilters';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -46,6 +47,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   groupByField,
   enableRowSelection = true,
   enableColumnResizing = true,
+  manualFiltering = false,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -54,6 +56,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
   const { columns, defaultHiddenColumns, defaultColumnPinning } =
     useMaterialTableColumns(omsColumns);
+
+  // Needs to be applied after columns are processed
+  const { filterState, filterHandlers } = useManualTableFilters(
+    manualFiltering,
+    columns
+  );
 
   const initialState = useRef(
     getSavedTableState<T>(tableId, defaultHiddenColumns, defaultColumnPinning)
@@ -85,6 +93,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableBottomToolbar: false,
     enableExpanding: !!groupByField,
 
+    manualFiltering,
+    ...filterHandlers,
+
     initialState: {
       ...initialState.current,
 
@@ -100,6 +111,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     state: {
       showProgressBars: isLoading,
       columnOrder,
+      ...filterState,
       ...state,
     },
     onColumnOrderChange: setColumnOrder,
