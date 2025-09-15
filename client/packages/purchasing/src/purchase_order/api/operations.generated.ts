@@ -90,6 +90,7 @@ export type PurchaseOrderFragment = {
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -139,6 +140,7 @@ export type PurchaseOrderLineFragment = {
     code: string;
     name: string;
     unitName?: string | null;
+    stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
   };
   manufacturer?: {
     __typename: 'NameNode';
@@ -254,6 +256,7 @@ export type PurchaseOrderByIdQuery = {
               code: string;
               name: string;
               unitName?: string | null;
+              stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
             };
             manufacturer?: {
               __typename: 'NameNode';
@@ -392,6 +395,7 @@ export type PurchaseOrderLinesQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -440,6 +444,7 @@ export type PurchaseOrderLineQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -609,6 +614,9 @@ export const PurchaseOrderLineFragmentDoc = gql`
       code
       name
       unitName
+      stats(storeId: $storeId) {
+        stockOnHand
+      }
     }
     requestedPackSize
     requestedDeliveryDate
