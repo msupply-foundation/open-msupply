@@ -1,3 +1,4 @@
+import React from 'react';
 import { RequestLineFragment } from '../api';
 import {
   ColumnAlign,
@@ -16,9 +17,12 @@ import {
   CellProps,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
-import { PackQuantityCell } from '@openmsupply-client/system';
+import { NumericCell, PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
-import React from 'react';
+
+const MonthsOfStockCell = (props: CellProps<RequestLineFragment>) => (
+  <NumericCell {...props} precision={1} />
+);
 
 export const useRequestColumns = () => {
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
@@ -118,7 +122,7 @@ export const useRequestColumns = () => {
       description: 'description.available-months-of-stock',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: PackQuantityCell,
+      Cell: MonthsOfStockCell,
       accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
     }
   );
