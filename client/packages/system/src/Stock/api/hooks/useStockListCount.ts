@@ -10,11 +10,12 @@ export const useStockListCount = (filterBy: StockLineFilterInput) => {
   }> => {
     const filter = {
       ...filterBy,
+      hasPacksInStore: true,
       masterList: {
-        existsForStoreId: { equalTo: storeId },
         ...filterBy?.masterList,
       },
     };
+
     const query = await stockApi.stockLinesCount({
       storeId,
       filter,
