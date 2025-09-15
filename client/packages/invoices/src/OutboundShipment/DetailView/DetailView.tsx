@@ -19,6 +19,9 @@ import {
   InvoiceLineNodeType,
   useIsGrouped,
   ColumnDef,
+  ArrayUtils,
+  Groupable,
+  ColumnType,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -33,6 +36,7 @@ import { StockOutLineFragment } from '../../StockOut';
 import { CustomerReturnEditModal } from '../../Returns';
 import { canReturnOutboundLines } from '../../utils';
 import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEdit';
+import { useOutboundLines } from '../api/hooks/line/useOutboundLines';
 
 const DetailViewInner = () => {
   const t = useTranslation();
@@ -53,7 +57,7 @@ const DetailViewInner = () => {
 
   const { data, isLoading } = useOutbound.document.get();
   const { isGrouped } = useIsGrouped('outboundShipment');
-  const { rows } = useOutbound.line.rows(false);
+  const { data: rows } = useOutboundLines();
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -88,98 +92,162 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
+  const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
+    row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
+
   const mrtColumns = useMemo(() => {
-    const cols: ColumnDef<StockOutLineFragment | StockOutItem>[] = [
+    const cols: ColumnDef<Groupable<StockOutLineFragment>>[] = [
       {
-        id: 'code',
         accessorKey: 'item.code',
         header: t('label.code'),
         size: 120,
-        filterVariant: 'text',
+        pin: 'left',
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'itemName',
         header: t('label.name'),
-        filterVariant: 'text',
-        // size: 140,
+        size: 400,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
-        size: 130,
-        filterVariant: 'text',
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
-        filterVariant: 'date-range',
-        size: 160,
+        columnType: ColumnType.Date,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
       },
       {
-        // todo - anything that could return undefined should use accessorFn, so no warnings in console
-        id: 'vvm',
-        accessorKey: 'vvmStatus.description',
+        id: 'vvmStatus',
+        accessorFn: row => row.vvmStatus?.description ?? '',
         header: t('label.vvm-status'),
         includeColumn: manageVvmStatusForStock,
+        defaultHideOnMobile: true,
       },
       {
-        accessorKey: 'location.code',
+        id: 'locationCode',
+        accessorFn: row => row.location?.code ?? '',
         header: t('label.location'),
-        filterVariant: 'text',
+        enableColumnFilter: true,
+        defaultHideOnMobile: true,
       },
       {
+        id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
         filterVariant: 'select',
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
-        // defaultHideOnMobile: true,
-        // TO-DO: Create "number range" filter
-        // filterType: 'number',
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
       },
-
-      // if (manageVaccinesInDoses) {
-      //   columns.push(getDosesPerUnitColumn(t));
-      // }
-
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
+      },
       {
         accessorKey: 'numberOfPacks',
-        header: t('label.num-packs'),
+        header: t('label.pack-quantity'),
+        columnType: ColumnType.Number,
+        accessorFn: row => {
+          if ('subRows' in row)
+            return ArrayUtils.getSum(row.subRows ?? [], 'numberOfPacks');
+
+          return row.numberOfPacks;
+        },
       },
       {
-        accessorKey: 'unitQuantity',
+        id: 'unitQuantity',
         header: t('label.unit-quantity'),
-
         description: t('description.unit-quantity'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => {
+          if ('subRows' in row)
+            return ArrayUtils.getUnitQuantity(row.subRows ?? []);
+
+          return row.packSize * row.numberOfPacks;
+        },
+      },
+      {
+        id: 'doseQuantity',
+        header: t('label.doses'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          if ('subRows' in row)
+            return (
+              ArrayUtils.getUnitQuantity(row.subRows ?? []) *
+              (row.item.doses ?? 1)
+            );
+
+          return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
+        },
+      },
+      {
+        id: 'unitSellPrice',
+        header: t('label.unit-sell-price'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if ('subRows' in rowData) {
+            return ArrayUtils.getAveragePrice(
+              rowData.subRows ?? [],
+              'sellPricePerPack'
+            );
+          } else {
+            if (isDefaultPlaceholderRow(rowData)) return undefined;
+            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+          }
+        },
+      },
+      {
+        id: 'total',
+        header: t('label.total'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if ('subRows' in rowData) {
+            return Object.values(rowData.subRows ?? []).reduce(
+              (sum, batch) =>
+                sum + batch.sellPricePerPack * batch.numberOfPacks,
+              0
+            );
+          } else {
+            if (isDefaultPlaceholderRow(rowData)) return '';
+
+            const x = rowData.sellPricePerPack * rowData.numberOfPacks;
+            return x;
+          }
+        },
       },
     ];
-
-    // TODO: remaining columns
 
     return cols;
   }, [manageVvmStatusForStock]);
 
   const { table, selectedRows, resetRowSelection } =
-    useNonPaginatedMaterialTable<StockOutLineFragment | StockOutItem>({
+    useNonPaginatedMaterialTable<StockOutLineFragment>({
       tableId: 'outbound-shipment-detail-view',
       columns: mrtColumns,
       data: rows ?? [],
       onRowClick: onRowClick ? row => onRowClick(row) : () => {},
       isLoading: false,
-      getIsPlaceholderRow: row => {
-        if ('type' in row) {
-          return (
-            row.type === InvoiceLineNodeType.UnallocatedStock ||
-            row.numberOfPacks === 0
-          );
-        } else {
-          return row.lines.some(
-            line => line.type === InvoiceLineNodeType.UnallocatedStock
-          );
-        }
-      },
+      getIsPlaceholderRow: row =>
+        row.type === InvoiceLineNodeType.UnallocatedStock ||
+        row.numberOfPacks === 0,
       groupByField: isGrouped ? 'itemName' : undefined,
     });
 

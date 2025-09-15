@@ -10,7 +10,6 @@ import {
   CheckboxCheckedIcon,
   CheckboxEmptyIcon,
   CheckboxIndeterminateIcon,
-  InfoIcon,
 } from '@common/icons';
 import {
   getSavedTableState,
@@ -18,10 +17,11 @@ import {
   useTableLocalStorage,
 } from './useTableLocalStorage';
 import { useIntlUtils, useTranslation } from '@common/intl';
-import { ListItemIcon, MenuItem } from '@mui/material';
+import { MenuItem, Typography } from '@mui/material';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
+import { useManualTableFilters } from './useManualTableFilters';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -47,16 +47,24 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   groupByField,
   enableRowSelection = true,
   enableColumnResizing = true,
+  manualFiltering = false,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
-  const { columns, defaultHiddenColumns } = useMaterialTableColumns(omsColumns);
+  const { columns, defaultHiddenColumns, defaultColumnPinning } =
+    useMaterialTableColumns(omsColumns);
+
+  // Needs to be applied after columns are processed
+  const { filterState, filterHandlers } = useManualTableFilters(
+    manualFiltering,
+    columns
+  );
 
   const initialState = useRef(
-    getSavedTableState(tableId, defaultHiddenColumns)
+    getSavedTableState<T>(tableId, defaultHiddenColumns, defaultColumnPinning)
   );
   const [columnOrder, setColumnOrder] = useState(
     initialState.current.columnOrder ?? []
@@ -85,6 +93,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableBottomToolbar: false,
     enableExpanding: !!groupByField,
 
+    manualFiltering,
+    ...filterHandlers,
+
     initialState: {
       ...initialState.current,
 
@@ -93,30 +104,33 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
         state: {},
         enableRowSelection, // adds `mrt-row-select`
         layoutMode: enableColumnResizing ? 'grid-no-grow' : 'auto', // adds `mrt-row-spacer`
+        enableExpanding: !!groupByField, // adds `mrt-row-expand`
+        positionExpandColumn: 'first', // this is the default, required to be explicit here
       } as MRT_StatefulTableOptions<T>),
     },
     state: {
       showProgressBars: isLoading,
       columnOrder,
+      ...filterState,
       ...state,
     },
     onColumnOrderChange: setColumnOrder,
 
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
-      const { description } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
-
-      if (!description) return internalColumnMenuItems;
+      const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
 
       return [
         <MenuItem
           key="column-description"
           disabled // just for display, not clickable
-          sx={{ '&.Mui-disabled': { opacity: 1 } }} // but remove the greyed out look
+          sx={{
+            '&.Mui-disabled': { opacity: 1 }, // but remove the greyed out look
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+          }}
           divider
         >
-          <ListItemIcon>
-            <InfoIcon />
-          </ListItemIcon>
+          <Typography fontWeight="bold">{header}</Typography>
           {description}
         </MenuItem>,
 
@@ -133,15 +147,18 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       // are correct
       sx: theme => ({ fontSize: theme.typography.body1.fontSize }),
     },
+
+    // todo: hide sort icon when not sorting by this column
+    // todo: add tooltip over column name
+    // todo: ability to not show column name (but still give it a header label for column management)
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
         fontWeight: 600,
-        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
+        fontSize: table.getState().density !== 'spacious' ? '0.9em' : '1em',
         lineHeight: 1.2,
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
         '& .Mui-TableHeadCell-Content-Actions': {
-          marginRight: '5px',
           '& svg': { fontSize: '2em' },
         },
         // Allow date range filters to wrap if column is too narrow

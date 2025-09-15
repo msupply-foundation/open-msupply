@@ -4,6 +4,7 @@ import {
   MRT_DensityState,
   MRT_RowData,
   MRT_TableInstance,
+  MRT_TableOptions,
 } from 'material-react-table';
 import { useEffect } from 'react';
 
@@ -64,8 +65,10 @@ export const useTableLocalStorage = <T extends MRT_RowData>(
         pinned: isEqual(columnPinning, initial.columnPinning)
           ? existingCustomisations.pinned
           : columnPinning,
+
+        // If defaults are restored, clear any column order customisation
         columnOrder: isEqual(columnOrder, initial.columnOrder)
-          ? existingCustomisations.columnOrder
+          ? undefined
           : columnOrder,
       })
     );
@@ -80,9 +83,10 @@ export const useTableLocalStorage = <T extends MRT_RowData>(
   ]);
 };
 
-export const getSavedTableState = (
+export const getSavedTableState = <T extends MRT_RowData>(
   tableId: string,
-  defaultHiddenColumns: string[]
+  defaultHiddenColumns: string[],
+  defaultColumnPinning: { left: string[]; right: string[] }
 ) => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
@@ -92,7 +96,7 @@ export const getSavedTableState = (
   const {
     density = 'comfortable',
     hidden = defaultHiddenColumns,
-    pinned = { left: ['mrt-row-select'] },
+    pinned = defaultColumnPinning,
     columnSizing = {
       columnSizing: {
         'mrt-row-expand': 40,
@@ -101,7 +105,7 @@ export const getSavedTableState = (
     columnOrder,
   } = savedData;
 
-  const tableState = {
+  const tableState: MRT_TableOptions<T>['initialState'] = {
     density,
     columnVisibility: Object.fromEntries(
       hidden.map((columnId: string) => [columnId, false])

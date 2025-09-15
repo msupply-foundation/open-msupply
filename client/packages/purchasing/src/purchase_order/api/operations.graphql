@@ -104,6 +104,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedPackSize
   requestedDeliveryDate
   requestedNumberOfUnits
+  receivedNumberOfUnits
   adjustedNumberOfUnits
   pricePerUnitAfterDiscount
   pricePerUnitBeforeDiscount
@@ -114,6 +115,20 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   unit
   comment
   supplierItemCode
+  status
+  purchaseOrder {
+    id
+    number
+    reference
+    confirmedDatetime
+    supplier {
+      code
+      name
+    }
+    user {
+      username
+    }
+  }
 }
 
 query purchaseOrders(

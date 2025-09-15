@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, ItemRowRepository, NumberRowType, PurchaseOrderLineRow, PurchaseOrderRow,
-    RepositoryError, StockOnHandFilter, StockOnHandRepository,
+    EqualFilter, ItemRowRepository, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus,
+    PurchaseOrderRow, RepositoryError, StockOnHandFilter, StockOnHandRepository,
 };
 use util::uuid::uuid;
 
@@ -38,6 +38,7 @@ pub fn generate_empty_purchase_order_lines(
                     item_link_id: item.id,
                     item_name: item.name,
                     store_id: purchase_order_row.store_id.clone(),
+                    status: PurchaseOrderLineStatus::New,
                     // Default
                     requested_delivery_date: None,
                     expected_delivery_date: None,

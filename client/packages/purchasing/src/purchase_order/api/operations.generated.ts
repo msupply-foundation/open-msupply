@@ -76,6 +76,7 @@ export type PurchaseOrderFragment = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
@@ -83,6 +84,7 @@ export type PurchaseOrderFragment = {
       unit?: string | null;
       comment?: string | null;
       supplierItemCode?: string | null;
+      status: Types.PurchaseOrderLineStatusNode;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -99,6 +101,19 @@ export type PurchaseOrderFragment = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
+        reference?: string | null;
+        confirmedDatetime?: string | null;
+        supplier?: {
+          __typename: 'NameNode';
+          code: string;
+          name: string;
+        } | null;
+        user?: { __typename: 'UserNode'; username: string } | null;
       } | null;
     }>;
   };
@@ -124,6 +139,7 @@ export type PurchaseOrderLineFragment = {
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
+  receivedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
   pricePerUnitAfterDiscount: number;
   pricePerUnitBeforeDiscount: number;
@@ -131,6 +147,7 @@ export type PurchaseOrderLineFragment = {
   unit?: string | null;
   comment?: string | null;
   supplierItemCode?: string | null;
+  status: Types.PurchaseOrderLineStatusNode;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -147,6 +164,15 @@ export type PurchaseOrderLineFragment = {
     isOnHold: boolean;
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
+  purchaseOrder?: {
+    __typename: 'PurchaseOrderNode';
+    id: string;
+    number: number;
+    reference?: string | null;
+    confirmedDatetime?: string | null;
+    supplier?: { __typename: 'NameNode'; code: string; name: string } | null;
+    user?: { __typename: 'UserNode'; username: string } | null;
   } | null;
 };
 
@@ -238,6 +264,7 @@ export type PurchaseOrderByIdQuery = {
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
+            receivedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
             pricePerUnitAfterDiscount: number;
             pricePerUnitBeforeDiscount: number;
@@ -245,6 +272,7 @@ export type PurchaseOrderByIdQuery = {
             unit?: string | null;
             comment?: string | null;
             supplierItemCode?: string | null;
+            status: Types.PurchaseOrderLineStatusNode;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -265,6 +293,19 @@ export type PurchaseOrderByIdQuery = {
                 id: string;
                 code: string;
               } | null;
+            } | null;
+            purchaseOrder?: {
+              __typename: 'PurchaseOrderNode';
+              id: string;
+              number: number;
+              reference?: string | null;
+              confirmedDatetime?: string | null;
+              supplier?: {
+                __typename: 'NameNode';
+                code: string;
+                name: string;
+              } | null;
+              user?: { __typename: 'UserNode'; username: string } | null;
             } | null;
           }>;
         };
@@ -375,6 +416,7 @@ export type PurchaseOrderLinesQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
@@ -382,6 +424,7 @@ export type PurchaseOrderLinesQuery = {
       unit?: string | null;
       comment?: string | null;
       supplierItemCode?: string | null;
+      status: Types.PurchaseOrderLineStatusNode;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -398,6 +441,19 @@ export type PurchaseOrderLinesQuery = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
+        reference?: string | null;
+        confirmedDatetime?: string | null;
+        supplier?: {
+          __typename: 'NameNode';
+          code: string;
+          name: string;
+        } | null;
+        user?: { __typename: 'UserNode'; username: string } | null;
       } | null;
     }>;
   };
@@ -422,6 +478,7 @@ export type PurchaseOrderLineQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerUnitAfterDiscount: number;
       pricePerUnitBeforeDiscount: number;
@@ -429,6 +486,7 @@ export type PurchaseOrderLineQuery = {
       unit?: string | null;
       comment?: string | null;
       supplierItemCode?: string | null;
+      status: Types.PurchaseOrderLineStatusNode;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -445,6 +503,19 @@ export type PurchaseOrderLineQuery = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
+        reference?: string | null;
+        confirmedDatetime?: string | null;
+        supplier?: {
+          __typename: 'NameNode';
+          code: string;
+          name: string;
+        } | null;
+        user?: { __typename: 'UserNode'; username: string } | null;
       } | null;
     }>;
   };
@@ -608,6 +679,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
+    receivedNumberOfUnits
     adjustedNumberOfUnits
     pricePerUnitAfterDiscount
     pricePerUnitBeforeDiscount
@@ -618,6 +690,20 @@ export const PurchaseOrderLineFragmentDoc = gql`
     unit
     comment
     supplierItemCode
+    status
+    purchaseOrder {
+      id
+      number
+      reference
+      confirmedDatetime
+      supplier {
+        code
+        name
+      }
+      user {
+        username
+      }
+    }
   }
   ${NameRowFragmentDoc}
 `;

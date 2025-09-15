@@ -1,7 +1,7 @@
 use repository::{
-    EqualFilter, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, PurchaseOrderLine,
-    PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderRow,
-    PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError, StorageConnection,
+    EqualFilter, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, PurchaseOrder,
+    PurchaseOrderFilter, PurchaseOrderLine, PurchaseOrderLineFilter, PurchaseOrderLineRepository,
+    PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError, StorageConnection,
 };
 
 use crate::{
@@ -15,9 +15,11 @@ pub fn validate(
     input: &UpdatePurchaseOrderInput,
     store_id: &str,
     connection: &StorageConnection,
-) -> Result<PurchaseOrderRow, UpdatePurchaseOrderError> {
-    let purchase_order = PurchaseOrderRowRepository::new(connection).find_one_by_id(&input.id)?;
-    let purchase_order = purchase_order.ok_or(UpdatePurchaseOrderError::UpdatedRecordNotFound)?;
+) -> Result<PurchaseOrder, UpdatePurchaseOrderError> {
+    let purchase_order = PurchaseOrderRepository::new(connection)
+        .query_by_filter(PurchaseOrderFilter::new().id(EqualFilter::equal_to(&input.id)))?
+        .pop()
+        .ok_or(UpdatePurchaseOrderError::PurchaseOrderDoesNotExist)?;
 
     if input.status == Some(PurchaseOrderStatus::Authorised) {
         let is_authorised = AuthorisePurchaseOrder
@@ -55,7 +57,8 @@ pub fn validate(
     }
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
-        PurchaseOrderLineFilter::new().purchase_order_id(EqualFilter::equal_to(&purchase_order.id)),
+        PurchaseOrderLineFilter::new()
+            .purchase_order_id(EqualFilter::equal_to(&purchase_order.purchase_order_row.id)),
     )?;
 
     // Only wanna check if status has been updated

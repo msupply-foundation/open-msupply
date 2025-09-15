@@ -19,6 +19,7 @@ pub fn generate(
         unit,
         supplier_item_code,
         comment,
+        status,
     }: UpdatePurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     Ok(PurchaseOrderLineRow {
@@ -47,6 +48,7 @@ pub fn generate(
         comment: comment
             .map(|v| v.value)
             .unwrap_or(purchase_order_line.comment),
+        status: status.unwrap_or(purchase_order_line.status),
         ..purchase_order_line
     })
 }
