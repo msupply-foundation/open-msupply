@@ -8,7 +8,6 @@ export const useStockListCount = (filterBy: StockLineFilterInput) => {
   const queryFn = async (): Promise<{
     totalCount: number;
   }> => {
-    console.log('stockFilter:', filterBy);
     const filter = {
       ...filterBy,
       masterList: {
