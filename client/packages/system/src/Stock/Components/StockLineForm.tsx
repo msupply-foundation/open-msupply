@@ -420,7 +420,7 @@ export const StockLineForm = ({
                     onChange={vvmStatus => onUpdate({ vvmStatus })}
                     disabled={!isNewModal}
                     width={!isNewModal ? 160 : undefined}
-                    useDefault
+                    useDefault={isNewModal}
                   />
                 }
               />
