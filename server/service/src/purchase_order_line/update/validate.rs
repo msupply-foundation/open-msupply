@@ -46,6 +46,14 @@ pub fn validate(
         }
     }
 
+    if let Some(adjusted_units) = input.adjusted_number_of_units {
+        if Some(adjusted_units) != line.adjusted_number_of_units
+            && adjusted_units < line.received_number_of_units
+        {
+            return Err(UpdatePurchaseOrderLineInputError::CannotEditQuantityBelowReceived);
+        }
+    }
+
     // check the line status change before purchase_order_lines_editable
     // should be able to update the line status when the PO is Confirmed or Sent, but not the rest of the line
     if let Some(status) = input.status.clone() {

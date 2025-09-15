@@ -26,6 +26,7 @@ pub enum UpdatePurchaseOrderLineInputError {
     CannotEditPurchaseOrderLine,
     CannotEditRequestedQuantity,
     CannotEditAdjustedQuantity,
+    CannotEditQuantityBelowReceived,
     UpdatedLineDoesNotExist,
     PackSizeCodeCombinationExists(PackSizeCodeCombination),
     DatabaseError(RepositoryError),

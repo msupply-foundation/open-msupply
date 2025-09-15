@@ -1,9 +1,13 @@
 #[cfg(test)]
 mod update {
     use repository::{
-        mock::{mock_item_a, mock_item_d, mock_purchase_order_a, mock_store_a, MockDataInserts},
+        mock::{
+            mock_item_a, mock_item_b, mock_item_d, mock_purchase_order_a, mock_store_a,
+            MockDataInserts,
+        },
         test_db::setup_all,
-        ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineStatus,
+        ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineRow,
+        PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
     };
 
     use crate::{
@@ -175,6 +179,41 @@ mod update {
                 Some(user_permission)
             ),
             Err(UpdatePurchaseOrderLineInputError::CannotEditAdjustedQuantity)
+        );
+
+        // Cannot change adjusted quantity to less than received quantity
+        user_permission = true;
+
+        let line = PurchaseOrderLineRow {
+            id: "purchase_order_line_received".to_string(),
+            purchase_order_id: mock_purchase_order_a().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            line_number: 2,
+            item_link_id: mock_item_b().id,
+            requested_pack_size: 2.0,
+            requested_number_of_units: 10.0,
+            adjusted_number_of_units: Some(20.0),
+            received_number_of_units: 15.0,
+            ..Default::default()
+        };
+
+        PurchaseOrderLineRowRepository::new(&context.connection)
+            .upsert_one(&line)
+            .unwrap();
+
+        assert_eq!(
+            service.update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_received".to_string(),
+                    item_id: Some(mock_item_b().id.to_string()),
+                    adjusted_number_of_units: Some(14.0),
+                    ..Default::default()
+                },
+                Some(user_permission)
+            ),
+            Err(UpdatePurchaseOrderLineInputError::CannotEditQuantityBelowReceived)
         );
 
         // Cannot change adjusted quantity on a finalised purchase order, even if the user has permission
