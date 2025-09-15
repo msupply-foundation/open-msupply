@@ -127,15 +127,16 @@ pub fn update_purchase_order_line(
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     let mut user_has_permission = false;
-
-    user_has_permission = validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::AuthorisePurchaseOrder,
-            store_id: Some(store_id.to_string()),
-        },
-    )
-    .is_ok();
+    if input.adjusted_number_of_units.is_some() {
+        user_has_permission = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::AuthorisePurchaseOrder,
+                store_id: Some(store_id.to_string()),
+            },
+        )
+        .is_ok();
+    }
 
     map_response(
         service_provider
