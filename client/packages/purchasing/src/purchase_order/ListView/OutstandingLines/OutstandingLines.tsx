@@ -17,6 +17,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { PurchaseOrderLineFragment } from '../../api/operations.generated';
 import { usePurchaseOrderLineList } from '../../api/hooks/usePurchaseOrderLineList';
+import { AppBarButtons } from './AppBarButtons';
 
 const OutstandingLinesList = () => {
   const t = useTranslation();
@@ -128,6 +129,7 @@ const OutstandingLinesList = () => {
 
   return (
     <>
+      <AppBarButtons data={data?.nodes} isLoading={isLoading} />
       <DataTable
         id="outstanding-purchase-order-lines"
         enableColumnSelection
