@@ -24,6 +24,7 @@ pub enum PurchaseOrderLineSortFieldInput {
     LineNumber,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
+    PurchaseOrderNumber,
 }
 
 #[derive(InputObject)]
@@ -38,6 +39,7 @@ pub struct PurchaseOrderLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub purchase_order_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterPurchaseOrderLineStatusInput>,
+    pub received_less_than_adjusted: Option<bool>,
 }
 
 #[derive(InputObject, Clone)]
@@ -133,6 +135,7 @@ impl PurchaseOrderLineFilterInput {
             status: self
                 .status
                 .map(|s| map_filter!(s, |t| PurchaseOrderLineStatus::from(t))),
+            received_less_than_adjusted: self.received_less_than_adjusted,
             store_id: None,
             requested_pack_size: None,
             item_id: None,

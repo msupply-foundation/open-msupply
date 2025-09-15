@@ -7,7 +7,8 @@ import type {
 } from 'material-react-table';
 import type { TableCellProps } from '@mui/material/TableCell';
 import { LocaleKey, TypedTFunction } from '@common/intl';
-import { isEqual } from '@common/utils';
+import { isEqual, isObject } from '@common/utils';
+import { Groupable } from './types';
 
 // Type for the function parameters passed to muiTableBodyCellProps
 type MuiTableBodyCellPropsParams<TData extends Record<string, any>> = {
@@ -45,7 +46,7 @@ export const getGroupedRows = <T extends MRT_RowData>(
   data: T[],
   groupByField: keyof T | undefined,
   t: TypedTFunction<LocaleKey>
-): (T & { isSubRow?: boolean; subRows?: T[] })[] => {
+): Groupable<T>[] => {
   if (!groupByField) return data;
 
   // Group rows by groupByField
@@ -77,6 +78,18 @@ export const getGroupedRows = <T extends MRT_RowData>(
         const values = groupRows.map(row => row[key as keyof T]);
         const allEqual = values.every(v => isEqual(v, values[0]));
         summary[key] = allEqual ? values[0] : t('multiple');
+
+        if (allEqual) {
+          summary[key] = values[0];
+        } else if (isObject(values[0])) {
+          // If the values are objects, return an object with all keys set to 'multiple', so accessors still work
+          // Could break if objects have some different values and some same, but should be rare - can write custom accessor in that case
+          summary[key] = Object.fromEntries(
+            Object.keys(values[0]).map(k => [k, t('multiple')])
+          );
+        } else {
+          summary[key] = t('multiple');
+        }
       }
       // Attach subRows
       summary['subRows'] = subRows;

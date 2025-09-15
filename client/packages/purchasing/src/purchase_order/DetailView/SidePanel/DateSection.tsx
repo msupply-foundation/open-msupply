@@ -48,11 +48,6 @@ export const DateSection = ({
           value={draft?.advancePaidDate}
           onChange={date => onUpdate({ advancePaidDate: date })}
         />
-        <DateField
-          label={t('label.received-at-port')}
-          value={draft?.receivedAtPortDate}
-          onChange={date => onUpdate({ receivedAtPortDate: date })}
-        />
       </Grid>
     </DetailPanelSection>
   );

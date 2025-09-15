@@ -1792,6 +1792,7 @@
   "messages.requested-to-suggested": "Isto definirá a quantidade solicitada para a quantidade sugerida que é 0.",
   "messages.requisition-item-information-amc": "Consumo médio mensal do cliente. Para sua unidade de saúde é a soma de todos o consumo médio mensal de todos os clientes.",
   "messages.requisition-no-stock": "Não existe stock disponível no momento",
+  "messages.no-requested-quantities": "There are currently no requested quantities",
   "messages.results-found": "Foram encontrados {{totalCount}} resultados",
   "messages.results-over-limit": "Mostrando apenas os primeros {{limit}} resultados; por favor refine sua busca",
   "messages.return-saved": "Devolução salva 🥳",
