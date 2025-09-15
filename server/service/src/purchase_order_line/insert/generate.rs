@@ -1,7 +1,8 @@
 use super::InsertPurchaseOrderLineInput;
 use crate::number::next_number;
 use repository::{
-    ItemRow, NumberRowType, PurchaseOrderLineRow, RepositoryError, StorageConnection,
+    ItemRow, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus, RepositoryError,
+    StorageConnection,
 };
 
 pub fn generate(
@@ -49,6 +50,7 @@ pub fn generate(
         unit,
         supplier_item_code,
         comment,
+        status: PurchaseOrderLineStatus::New,
         // Default
         adjusted_number_of_units: None,
         received_number_of_units: 0.0,
@@ -92,6 +94,7 @@ pub fn generate_from_csv(
         requested_number_of_units: requested_number_of_units.unwrap_or(0.0),
         price_per_unit_after_discount: price_per_unit_after_discount.unwrap_or(0.0),
         price_per_unit_before_discount: price_per_unit_before_discount.unwrap_or(0.0),
+        status: PurchaseOrderLineStatus::New,
         // Default
         item_name: "".to_string(),
         adjusted_number_of_units: None,
