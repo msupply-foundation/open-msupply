@@ -51,6 +51,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
   status: PurchaseOrderLineStatusNode.New,
+  receivedNumberOfUnits: 0,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {
