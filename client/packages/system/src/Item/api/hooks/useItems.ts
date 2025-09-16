@@ -17,12 +17,6 @@ export type ItemParams = {
   filterBy: FilterByWithBoolean | null;
 };
 
-export enum hasStockOnHandInput {
-  // Setting these to 'true' and 'false' causes an error, so chose 'yes' and 'no' as values instead.
-  True = 'yes',
-  False = 'no',
-}
-
 export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
   const { api, storeId } = useItemGraphQL();
 
@@ -42,65 +36,22 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
     type: ItemSortFieldInput.Type,
   };
 
-  const mapHasStockOnHandInput = (
-    filterInput?: boolean | FilterRule
-  ): boolean | undefined => {
-    if (typeof filterInput != 'boolean') {
-      switch (filterInput?.equalTo) {
-        case hasStockOnHandInput.True:
-          return true;
-        case hasStockOnHandInput.False:
-          return false;
-        default:
-          return undefined;
-      }
-    } else {
-      return undefined;
-    }
-  };
-
-  const mapMonthsOfStockInput = (
-    filterInput?: boolean | FilterRule
-  ): number | undefined => {
-    if (filterInput && typeof filterInput != 'boolean') {
-      if (typeof filterInput.equalTo === 'string') {
-        return parseInt(filterInput?.equalTo);
-      }
-    } else {
-      return undefined;
-    }
-  };
-
   const queryFn = async () => {
     let filter: ItemFilterInput = {
       ...filterBy,
       // includes non-visible items that have stock on hand
       isVisibleOrOnHand: true,
       isActive: true,
+      minMonthsOfStock: filterBy?.['minMonthsOfStock'] as number | undefined,
+      maxMonthsOfStock: filterBy?.['maxMonthsOfStock'] as number | undefined,
     };
 
-    // if using the hasStockOnHand filter, extract the value we want and send only that to the backend
-    if (filterBy?.['hasStockOnHand']) {
+    // if using the hasStockOnHand filter, replace the isVisibleOrOnHand filter with hasStockOnHand
+    if (filterBy?.['hasStockOnHand'] !== undefined) {
       filter = {
         ...filter,
         isVisibleOrOnHand: undefined,
-        hasStockOnHand: mapHasStockOnHandInput(filterBy?.['hasStockOnHand']),
-      };
-    }
-
-    // if using the minMonthsOfStock filter, extract the value we want and send only that to the backend
-    if (filterBy?.['minMonthsOfStock']) {
-      filter = {
-        ...filter,
-        minMonthsOfStock: mapMonthsOfStockInput(filterBy?.['minMonthsOfStock']),
-      };
-    }
-
-    // if using the maxMonthsOfStock filter, extract the value we want and send only that to the backend
-    if (filterBy?.['maxMonthsOfStock']) {
-      filter = {
-        ...filter,
-        maxMonthsOfStock: mapMonthsOfStockInput(filterBy?.['maxMonthsOfStock']),
+        hasStockOnHand: !!filterBy?.['hasStockOnHand'],
       };
     }
 

@@ -231,6 +231,9 @@ const getFilterEntry = (
   if (condition === '=') {
     return Boolean(filterValue);
   }
+  if (condition === 'isNumber') {
+    return Number(filterValue);
+  }
 
   if (nestedKey) {
     return {

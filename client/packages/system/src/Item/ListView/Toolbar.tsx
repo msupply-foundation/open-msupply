@@ -5,7 +5,6 @@ import {
   FilterMenu,
   Box,
 } from '@openmsupply-client/common';
-import { hasStockOnHandInput } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
@@ -35,11 +34,11 @@ export const Toolbar: FC = () => {
               options: [
                 {
                   label: t('label.in-stock'),
-                  value: hasStockOnHandInput.True,
+                  value: 'true', // string value will be parsed as boolean from URL query params
                 },
                 {
                   label: t('label.out-of-stock'),
-                  value: hasStockOnHandInput.False,
+                  value: 'false',
                 },
               ],
             },

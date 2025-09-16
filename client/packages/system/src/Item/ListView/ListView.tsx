@@ -27,9 +27,9 @@ const ItemListComponent = () => {
   } = useUrlQueryParams({
     filters: [
       { key: 'codeOrName' },
-      { key: 'hasStockOnHand', condition: 'equalTo' },
-      { key: 'minMonthsOfStock', condition: 'equalTo' },
-      { key: 'maxMonthsOfStock', condition: 'equalTo' },
+      { key: 'hasStockOnHand', condition: '=' },
+      { key: 'minMonthsOfStock', condition: 'isNumber' },
+      { key: 'maxMonthsOfStock', condition: 'isNumber' },
     ],
   });
 
