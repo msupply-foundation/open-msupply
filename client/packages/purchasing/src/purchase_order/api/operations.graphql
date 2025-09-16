@@ -76,7 +76,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
   advancePaidDate
   receivedAtPortDate
   requestedDeliveryDate
-  authorisedDatetime
+  requestApprovalDatetime
   finalisedDatetime
   documents {
     __typename
