@@ -47,9 +47,7 @@ export const ExpectedDeliveryDateModal = ({
   };
 
   const handleClick = useConfirmationModal({
-    title: t('title.update-purchase-order-expected-delivery-date', {
-      count: selectedRows.length,
-    }),
+    title: t('heading.are-you-sure'),
     message: t(
       'label.update-purchase-order-expected-delivery-date-for-selected-lines',
       { count: selectedRows.length }
