@@ -9,6 +9,8 @@ import {
   useTranslation,
   useUrlQueryParams,
   GenericColumnKey,
+  UNDEFINED_STRING_VALUE,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -44,7 +46,10 @@ const LocationListComponent: FC = () => {
     [
       GenericColumnKey.Selection,
       'code',
-      'name',
+      {
+        key: 'name',
+        label: 'label.name',
+      },
       {
         key: 'locationType',
         label: 'label.location-type',
@@ -56,8 +61,24 @@ const LocationListComponent: FC = () => {
                 maxTemperature: locationType.maxTemperature,
               })
             : null,
-        width: 200,
         sortable: false,
+      },
+      {
+        key: 'volume',
+        label: 'label.volume',
+      },
+      {
+        key: 'volumeUsed',
+        label: 'label.volume-used',
+        accessor: ({ rowData: { volumeUsed, volume } }) => {
+          if (!volume) return UNDEFINED_STRING_VALUE;
+
+          const percentUsed = NumUtils.round(
+            ((volumeUsed || 0) / volume) * 100,
+            1
+          );
+          return `${percentUsed}%`;
+        },
       },
     ],
     {
