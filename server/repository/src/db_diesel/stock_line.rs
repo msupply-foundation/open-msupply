@@ -54,6 +54,7 @@ pub enum StockLineSortField {
 #[derive(Debug, Clone, Default)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
+    pub item_code_or_name: Option<StringFilter>,
     pub search: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
@@ -199,6 +200,7 @@ impl<'a> StockLineRepository<'a> {
                 expiry_date,
                 id,
                 is_available,
+                item_code_or_name,
                 search,
                 item_id,
                 location_id,
@@ -212,9 +214,10 @@ impl<'a> StockLineRepository<'a> {
             } = f;
 
             // OR filters must come first
-            if search.is_some() {
+            if search.is_some() || item_code_or_name.is_some() {
                 let mut item_filter = ItemFilter::new();
-                item_filter.code_or_name = search.clone();
+
+                item_filter.code_or_name = search.clone().or(item_code_or_name);
                 item_filter.is_visible = Some(true);
                 item_filter.is_active = Some(true);
                 let items = ItemRepository::new(connection)
