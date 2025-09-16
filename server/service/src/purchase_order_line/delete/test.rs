@@ -62,7 +62,7 @@ mod delete {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
                     requested_pack_size: Some(10.0),
                     ..Default::default()
                 },

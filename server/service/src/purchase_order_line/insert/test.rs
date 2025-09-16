@@ -8,10 +8,7 @@ mod insert {
 
     use crate::{
         purchase_order::insert::InsertPurchaseOrderInput,
-        purchase_order_line::insert::{
-            InsertPurchaseOrderLineError, InsertPurchaseOrderLineFromCSVInput,
-            InsertPurchaseOrderLineInput, PackSizeCodeCombination,
-        },
+        purchase_order_line::insert::{InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput},
         service_provider::ServiceProvider,
     };
 
@@ -33,7 +30,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "non_existent_purchase_order".to_string(),
-                    item_id: "item_id".to_string(),
+                    item_id: Some("item_id".to_string()),
                     ..Default::default()
                 }
             ),
@@ -60,7 +57,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
-                    item_id: "non_existent_item".to_string(),
+                    item_id: Some("non_existent_item".to_string()),
                     ..Default::default()
                 }
             ),
@@ -74,7 +71,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
                     ..Default::default()
                 },
             )
@@ -86,7 +83,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
                     ..Default::default()
                 }
             ),
@@ -137,7 +134,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1_1".to_string(),
                     purchase_order_id: "purchase_order_id_1".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
                     ..Default::default()
                 },
             )
@@ -149,7 +146,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1_2".to_string(),
                     purchase_order_id: "purchase_order_id_1".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
                     requested_pack_size: Some(10.0),
                     ..Default::default()
                 },
@@ -163,7 +160,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_2_1".to_string(),
                     purchase_order_id: "purchase_order_id_2".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
                     ..Default::default()
                 },
             )
@@ -175,7 +172,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_2_2".to_string(),
                     purchase_order_id: "purchase_order_id_2".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id: Some(mock_item_a().id.to_string()),
                     requested_pack_size: Some(10.0),
                     ..Default::default()
                 },
@@ -226,93 +223,5 @@ mod insert {
             .unwrap();
 
         assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineCreated);
-    }
-
-    #[actix_rt::test]
-    async fn insert_purchase_order_line_from_csv_errors() {
-        let (_, _, connection_manager, _) = setup_all(
-            "insert_purchase_order_line_from_csv_errors",
-            MockDataInserts::all(),
-        )
-        .await;
-
-        let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider
-            .context(mock_store_a().id, mock_user_account_a().id)
-            .unwrap();
-        let service = service_provider.purchase_order_line_service;
-
-        // Purchase Order Does Not Exist
-        assert_eq!(
-            service.insert_purchase_order_line(
-                &context,
-                InsertPurchaseOrderLineInput {
-                    id: "purchase_order_line_id".to_string(),
-                    purchase_order_id: "non_existent_purchase_order".to_string(),
-                    item_id: "item_id".to_string(),
-                    ..Default::default()
-                }
-            ),
-            Err(InsertPurchaseOrderLineError::PurchaseOrderDoesNotExist)
-        );
-
-        // Create a purchase order
-        service_provider
-            .purchase_order_service
-            .insert_purchase_order(
-                &context,
-                &mock_store_a().id,
-                InsertPurchaseOrderInput {
-                    id: "purchase_order_id".to_string(),
-                    supplier_id: mock_name_a().id.to_string(),
-                },
-            )
-            .unwrap();
-
-        // cannot find item by code
-        assert_eq!(
-            service.insert_purchase_order_line_from_csv(
-                &context,
-                InsertPurchaseOrderLineFromCSVInput {
-                    purchase_order_id: "purchase_order_id".to_string(),
-                    item_code: "some_non_existent_item".to_string(),
-                    ..Default::default()
-                }
-            ),
-            Err(InsertPurchaseOrderLineError::CannotFindItemByCode(
-                "some_non_existent_item".to_string()
-            ))
-        );
-
-        // successfully insert a purchase order line
-        let result = service.insert_purchase_order_line_from_csv(
-            &context,
-            InsertPurchaseOrderLineFromCSVInput {
-                purchase_order_id: "purchase_order_id".to_string(),
-                item_code: mock_item_a().code.clone(),
-                requested_pack_size: Some(1.1),
-                ..Default::default()
-            },
-        );
-        assert!(result.is_ok());
-
-        // Same item code and pack size combination cannot be inserted again
-        assert_eq!(
-            service.insert_purchase_order_line_from_csv(
-                &context,
-                InsertPurchaseOrderLineFromCSVInput {
-                    purchase_order_id: "purchase_order_id".to_string(),
-                    item_code: mock_item_a().code.clone(),
-                    requested_pack_size: Some(1.1),
-                    ..Default::default()
-                },
-            ),
-            Err(InsertPurchaseOrderLineError::PackSizeCodeCombinationExists(
-                PackSizeCodeCombination {
-                    item_code: mock_item_a().code.clone(),
-                    requested_pack_size: 1.1,
-                }
-            ))
-        );
     }
 }
