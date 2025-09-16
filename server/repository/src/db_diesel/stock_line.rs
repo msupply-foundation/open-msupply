@@ -54,7 +54,7 @@ pub enum StockLineSortField {
 #[derive(Debug, Clone, Default)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
-    pub item_code_or_name: Option<StringFilter>,
+    pub search: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
     pub vvm_status_id: Option<EqualFilter<String>>,

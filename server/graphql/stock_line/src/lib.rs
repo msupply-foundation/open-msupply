@@ -45,7 +45,9 @@ pub struct StockLineFilterInput {
     pub expiry_date: Option<DateFilterInput>,
     pub id: Option<EqualFilterStringInput>,
     pub is_available: Option<bool>,
+    #[graphql(deprecation = "Since 2.11.0. Use `search` instead.")]
     pub item_code_or_name: Option<StringFilterInput>,
+    pub search: Option<StringFilterInput>,
     pub item_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
     pub vvm_status_id: Option<EqualFilterStringInput>,
@@ -63,7 +65,10 @@ impl From<StockLineFilterInput> for StockLineFilter {
             expiry_date: f.expiry_date.map(DateFilter::from),
             id: f.id.map(EqualFilter::from),
             is_available: f.is_available,
-            item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
+            search: f
+                .search
+                .or(f.item_code_or_name)
+                .map(StringFilterInput::into),
             item_id: f.item_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
