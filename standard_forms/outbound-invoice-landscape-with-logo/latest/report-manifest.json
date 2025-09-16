@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.6.4",
+  "version": "2.6.5",
   "code": "outbound-invoice-landscape-with-logo",
   "context": "OUTBOUND_SHIPMENT",
   "name": "Outbound Shipment (landscape)",
