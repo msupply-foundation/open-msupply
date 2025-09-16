@@ -16,6 +16,7 @@ import {
   useNotification,
   EditIcon,
   useToggle,
+  PurchaseOrderLineStatusNode,
 } from '@openmsupply-client/common';
 import {
   usePurchaseOrder,
@@ -63,7 +64,7 @@ export const Footer = ({
     isDisabled,
   } = usePurchaseOrder();
   const {
-    updateLineStatus,
+    updateLines,
     delete: { deleteLines },
   } = usePurchaseOrderLine();
 
@@ -109,7 +110,9 @@ export const Footer = ({
 
   const confirmAndClose = async () => {
     try {
-      await updateLineStatus(selectedRows);
+      await updateLines(selectedRows, {
+        status: PurchaseOrderLineStatusNode.Closed,
+      });
       success(
         t('messages.closed-purchase-order-lines', {
           count: selectedRows.length,
@@ -172,7 +175,11 @@ export const Footer = ({
             </Box>
           ) : null}
           {isOn && (
-            <ExpectedDeliveryDateModal isOpen={isOn} onClose={toggleOff} />
+            <ExpectedDeliveryDateModal
+              selectedRows={selectedRows}
+              isOpen={isOn}
+              onClose={toggleOff}
+            />
           )}
         </>
       }

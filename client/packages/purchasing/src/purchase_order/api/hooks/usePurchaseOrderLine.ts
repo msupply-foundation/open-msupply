@@ -10,7 +10,6 @@ import {
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER, PURCHASE_ORDER_LINE } from './keys';
 import { PurchaseOrderLineFragment } from '../operations.generated';
-import { usePurchaseOrder } from './usePurchaseOrder';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
@@ -56,9 +55,6 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
 
 export function usePurchaseOrderLine(id?: string | null) {
   const { data, isLoading, error } = useGet(id ?? '');
-  const {
-    query: { data: purchaseOrderData },
-  } = usePurchaseOrder();
 
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftPurchaseOrderLine>({});
@@ -138,27 +134,15 @@ export function usePurchaseOrderLine(id?: string | null) {
     return result;
   };
 
-  const updateLineStatus = async (
-    selectedRows: PurchaseOrderLineFragment[]
+  const updateLines = async (
+    selectedRows: PurchaseOrderLineFragment[],
+    input: Partial<UpdatePurchaseOrderLineInput>
   ) => {
     return await Promise.allSettled(
       selectedRows.map(row =>
         updatePurchaseOrderLineThrowError({
           id: row.id,
-          status: PurchaseOrderLineStatusNode.Closed,
-        })
-      )
-    );
-  };
-
-  const updateLines = async (update: Partial<UpdatePurchaseOrderLineInput>) => {
-    const lines = purchaseOrderData?.lines.nodes;
-    if (!lines) return;
-    return await Promise.allSettled(
-      lines.map(({ id }) =>
-        updatePurchaseOrderLineThrowError({
-          id,
-          ...update,
+          ...input,
         })
       )
     );
@@ -189,7 +173,6 @@ export function usePurchaseOrderLine(id?: string | null) {
     resetDraft,
     isDirty,
     updatePatch,
-    updateLineStatus,
     updateLines,
   };
 }

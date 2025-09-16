@@ -8,15 +8,17 @@ import {
   useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
-import { usePurchaseOrderLine } from '../../api';
+import { PurchaseOrderLineFragment, usePurchaseOrderLine } from '../../api';
 import { DateCalendar } from '@mui/x-date-pickers';
 
 interface ExpectedDeliveryDateModalProps {
+  selectedRows: PurchaseOrderLineFragment[];
   isOpen: boolean;
   onClose: () => void;
 }
 
 export const ExpectedDeliveryDateModal = ({
+  selectedRows,
   isOpen,
   onClose,
 }: ExpectedDeliveryDateModalProps): ReactElement => {
@@ -33,7 +35,7 @@ export const ExpectedDeliveryDateModal = ({
 
     try {
       const formattedDate = Formatter.naiveDate(selectedDate);
-      await updateLines({
+      await updateLines(selectedRows, {
         expectedDeliveryDate: formattedDate,
       });
       success(t('messages.updated-purchase-order-expected-delivery-date'))();
@@ -45,9 +47,12 @@ export const ExpectedDeliveryDateModal = ({
   };
 
   const handleClick = useConfirmationModal({
-    title: t('title.update-purchase-order-expected-delivery-date'),
+    title: t('title.update-purchase-order-expected-delivery-date', {
+      count: selectedRows.length,
+    }),
     message: t(
-      'label.update-purchase-order-expected-delivery-date-for-all-lines'
+      'label.update-purchase-order-expected-delivery-date-for-selected-lines',
+      { count: selectedRows.length }
     ),
     onConfirm: updateExpectedDeliveryDate,
   });
