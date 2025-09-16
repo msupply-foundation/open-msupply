@@ -17,8 +17,9 @@ const purchaseOrderStatusTranslation: Record<
   LocaleKey
 > = {
   NEW: 'label.new',
-  AUTHORISED: 'label.authorised',
-  CONFIRMED: 'label.confirmed',
+  REQUEST_APPROVAL: 'label.ready-for-approval',
+  CONFIRMED: 'label.ready-to-send',
+  SENT: 'label.sent',
   FINALISED: 'label.finalised',
 };
 
