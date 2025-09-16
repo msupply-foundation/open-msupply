@@ -1,6 +1,5 @@
 import {
-  FilterByWithBoolean,
-  FilterRule,
+  FilterBy,
   ItemFilterInput,
   ItemSortFieldInput,
   SortBy,
@@ -14,7 +13,7 @@ export type ItemParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<ItemsWithStatsFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
