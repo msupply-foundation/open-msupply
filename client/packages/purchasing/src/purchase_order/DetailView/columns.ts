@@ -104,6 +104,20 @@ export const usePurchaseOrderColumns = () => {
       // getSortValue: rowData =>  //rowData.totalReceived ?? 0,
     },
     {
+      key: 'totalCost',
+      label: 'label.total-cost',
+      align: ColumnAlign.Right,
+      format: ColumnFormat.Currency,
+      accessor: ({ rowData }) =>
+        (rowData.pricePerUnitAfterDiscount ?? 0) *
+        (rowData.requestedNumberOfUnits ?? 0) *
+        (rowData.requestedPackSize ?? 1),
+      getSortValue: rowData =>
+        (rowData.pricePerUnitAfterDiscount ?? 0) *
+        (rowData.requestedNumberOfUnits ?? 0) *
+        (rowData.requestedPackSize ?? 1),
+    },
+    {
       key: 'requestedDeliveryDate',
       label: 'label.requested-delivery-date',
       align: ColumnAlign.Right,

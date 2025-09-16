@@ -13,7 +13,7 @@ import { PurchaseOrderLineFragment } from '../operations.generated';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
-  '__typename' | 'item'
+  '__typename'
 > & {
   purchaseOrderId: string;
   itemId: string;
@@ -46,6 +46,17 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   unit: null,
   supplierItemCode: null,
   comment: null,
+  item: {
+    __typename: 'ItemNode',
+    id: '',
+    code: '',
+    name: '',
+    stats: {
+      __typename: 'ItemStatsNode',
+      stockOnHand: 0,
+    },
+  },
+  unitsOrderedInOthers: 0,
   // These values not actually saved to DB
   discountPercentage: 0,
   numberOfPacks: 0,
