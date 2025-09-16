@@ -140,6 +140,7 @@ export const PurchaseOrderLineEditModal = ({
             lines={lines}
             isUpdateMode={isUpdateMode}
             onChangeItem={onChangeItem}
+            lineCount={lines.length}
           />
           <Box display="flex" pt={1} gap={1}>
             <Box
