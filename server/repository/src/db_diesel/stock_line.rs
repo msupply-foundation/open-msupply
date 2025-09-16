@@ -15,7 +15,7 @@ use crate::{
     diesel_extensions::OrderByExtensions,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
-        apply_sort_no_case,
+        apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
@@ -93,8 +93,7 @@ impl<'a> StockLineRepository<'a> {
         filter: Option<StockLineFilter>,
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
-        let mut query = Self::create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
+        let query = Self::create_filtered_query(self.connection, filter, store_id);
 
         Ok(query
             .count()
@@ -116,8 +115,7 @@ impl<'a> StockLineRepository<'a> {
         sort: Option<StockLineSort>,
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        let mut query = Self::create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
+        let mut query = Self::create_filtered_query(self.connection, filter, store_id);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -178,7 +176,11 @@ impl<'a> StockLineRepository<'a> {
         Ok(result.into_iter().map(to_domain).collect())
     }
 
-    pub fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
+    pub fn create_filtered_query(
+        connection: &StorageConnection,
+        filter: Option<StockLineFilter>,
+        query_store_id: Option<String>,
+    ) -> BoxedStockLineQuery {
         let mut query = stock_line::table
             .inner_join(item_link::table.inner_join(item::table))
             .left_join(item_variant::table)
@@ -197,7 +199,7 @@ impl<'a> StockLineRepository<'a> {
                 expiry_date,
                 id,
                 is_available,
-                item_code_or_name: _,
+                search,
                 item_id,
                 location_id,
                 vvm_status_id,
@@ -208,6 +210,23 @@ impl<'a> StockLineRepository<'a> {
                 is_active,
                 is_program_stock_line,
             } = f;
+
+            // OR filters must come first
+            if search.is_some() {
+                let mut item_filter = ItemFilter::new();
+                item_filter.code_or_name = search.clone();
+                item_filter.is_visible = Some(true);
+                item_filter.is_active = Some(true);
+                let items = ItemRepository::new(connection)
+                    .query_by_filter(item_filter, query_store_id)
+                    .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
+
+                let item_ids: Vec<String> =
+                    items.into_iter().map(|item| item.item_row.id).collect();
+
+                apply_string_filter!(query, search, stock_line::batch);
+                apply_string_or_filter!(query, Some(StringFilter::equal_any(item_ids)), item::id);
+            }
 
             apply_equal_filter!(query, id, stock_line::id);
             apply_equal_filter!(query, item_id, item::id);
@@ -279,29 +298,6 @@ type BoxedStockLineQuery = IntoBoxed<
     >,
     DBType,
 >;
-
-fn apply_item_filter(
-    query: BoxedStockLineQuery,
-    filter: Option<StockLineFilter>,
-    connection: &StorageConnection,
-    store_id: String,
-) -> BoxedStockLineQuery {
-    if let Some(f) = filter {
-        if let Some(item_code_or_name) = &f.item_code_or_name {
-            let mut item_filter = ItemFilter::new();
-            item_filter.code_or_name = Some(item_code_or_name.clone());
-            item_filter.is_visible = Some(true);
-            item_filter.is_active = Some(true);
-            let items = ItemRepository::new(connection)
-                .query_by_filter(item_filter, Some(store_id))
-                .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
-            let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
-
-            return query.filter(item::id.eq_any(item_ids));
-        }
-    }
-    query
-}
 
 fn to_domain(
     (
