@@ -2,6 +2,7 @@ import {
   ColumnAlign,
   ColumnDescription,
   ColumnFormat,
+  CurrencyCell,
   GenericColumnKey,
   getLinesFromRow,
   TooltipTextCell,
@@ -107,7 +108,7 @@ export const usePurchaseOrderColumns = () => {
       key: 'totalCost',
       label: 'label.total-cost',
       align: ColumnAlign.Right,
-      format: ColumnFormat.Currency,
+      Cell: CurrencyCell,
       accessor: ({ rowData }) =>
         (rowData.pricePerUnitAfterDiscount ?? 0) *
         (rowData.requestedNumberOfUnits ?? 0) *
