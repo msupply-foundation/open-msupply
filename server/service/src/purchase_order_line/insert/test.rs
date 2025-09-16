@@ -30,7 +30,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "non_existent_purchase_order".to_string(),
-                    item_id: Some("item_id".to_string()),
+                    item_id_or_code: "item_id".to_string(),
                     ..Default::default()
                 }
             ),
@@ -57,7 +57,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
-                    item_id: Some("non_existent_item".to_string()),
+                    item_id_or_code: "non_existent_item".to_string(),
                     ..Default::default()
                 }
             ),
@@ -71,7 +71,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
-                    item_id: Some(mock_item_a().id.to_string()),
+                    item_id_or_code: mock_item_a().id.to_string(),
                     ..Default::default()
                 },
             )
@@ -83,7 +83,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id".to_string(),
                     purchase_order_id: "purchase_order_id".to_string(),
-                    item_id: Some(mock_item_a().id.to_string()),
+                    item_id_or_code: mock_item_a().id.to_string(),
                     ..Default::default()
                 }
             ),
@@ -134,19 +134,20 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1_1".to_string(),
                     purchase_order_id: "purchase_order_id_1".to_string(),
-                    item_id: Some(mock_item_a().id.to_string()),
+                    item_id_or_code: mock_item_a().id.to_string(),
                     ..Default::default()
                 },
             )
             .unwrap();
 
+        // Uses item code
         let result_1_2 = service
             .insert_purchase_order_line(
                 &context,
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1_2".to_string(),
                     purchase_order_id: "purchase_order_id_1".to_string(),
-                    item_id: Some(mock_item_a().id.to_string()),
+                    item_id_or_code: mock_item_a().code.to_string(),
                     requested_pack_size: Some(10.0),
                     ..Default::default()
                 },
@@ -160,7 +161,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_2_1".to_string(),
                     purchase_order_id: "purchase_order_id_2".to_string(),
-                    item_id: Some(mock_item_a().id.to_string()),
+                    item_id_or_code: mock_item_a().id.to_string(),
                     ..Default::default()
                 },
             )
@@ -172,7 +173,7 @@ mod insert {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_2_2".to_string(),
                     purchase_order_id: "purchase_order_id_2".to_string(),
-                    item_id: Some(mock_item_a().id.to_string()),
+                    item_id_or_code: mock_item_a().id.to_string(),
                     requested_pack_size: Some(10.0),
                     ..Default::default()
                 },

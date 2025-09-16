@@ -8,30 +8,20 @@ use graphql_types::types::IdResponse;
 use repository::PurchaseOrderLineRow;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::purchase_order_line::insert::{
-    InsertMode, InsertPurchaseOrderLineError as ServiceError,
-    InsertPurchaseOrderLineInput as ServiceInput, PackSizeCodeCombination,
+    InsertPurchaseOrderLineError as ServiceError, InsertPurchaseOrderLineInput as ServiceInput,
+    PackSizeCodeCombination,
 };
 
 use crate::mutations::errors::{
     CannnotFindItemByCode, PackSizeCodeCombinationExists, PurchaseOrderLineWithIdExists,
 };
 
-#[derive(Enum, Copy, Clone, Eq, PartialEq)]
-pub enum InsertModeInput {
-    Standard,
-    CSV,
-}
-
 #[derive(InputObject)]
 #[graphql(name = "InsertPurchaseOrderLineInput")]
 pub struct InsertInput {
     pub id: String,
     pub purchase_order_id: String,
-    pub mode: InsertModeInput,
-    // Standard mode uses item_id
-    pub item_id: Option<String>,
-    // CSV mode uses item_code
-    pub item_code: Option<String>,
+    pub item_id_or_code: String,
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
@@ -50,9 +40,7 @@ impl InsertInput {
         let InsertInput {
             id,
             purchase_order_id,
-            mode,
-            item_id,
-            item_code,
+            item_id_or_code,
             requested_pack_size,
             requested_number_of_units,
             requested_delivery_date,
@@ -66,16 +54,10 @@ impl InsertInput {
             comment,
         } = self;
 
-        let mode = match mode {
-            InsertModeInput::Standard => InsertMode::Standard,
-            InsertModeInput::CSV => InsertMode::CSV,
-        };
-
         ServiceInput {
             id,
             purchase_order_id,
-            item_id,
-            item_code,
+            item_id_or_code,
             requested_pack_size,
             requested_number_of_units,
             requested_delivery_date,
@@ -87,7 +69,6 @@ impl InsertInput {
             unit,
             supplier_item_code,
             comment,
-            mode,
         }
     }
 }

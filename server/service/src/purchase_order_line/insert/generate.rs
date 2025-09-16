@@ -12,7 +12,6 @@ pub fn generate(
     InsertPurchaseOrderLineInput {
         id,
         purchase_order_id,
-        item_id,
         requested_pack_size,
         requested_number_of_units,
         requested_delivery_date,
@@ -24,8 +23,7 @@ pub fn generate(
         unit,
         supplier_item_code,
         comment,
-        item_code: _,
-        mode: _,
+        item_id_or_code: _,
     }: InsertPurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     let line_number = next_number(
@@ -39,7 +37,7 @@ pub fn generate(
         store_id: store_id.to_string(),
         purchase_order_id,
         line_number,
-        item_link_id: item_id.unwrap_or(item.id),
+        item_link_id: item.id,
         item_name: item.name.clone(),
         requested_number_of_units: requested_number_of_units.unwrap_or_default(),
         requested_pack_size: requested_pack_size.unwrap_or_default(),
