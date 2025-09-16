@@ -1,11 +1,14 @@
 import React from 'react';
 import { PurchaseOrderFragment } from '../../api';
-import { DialogButton, InlineSpinner } from '@common/components';
+import { DialogButton, InlineSpinner, Typography } from '@common/components';
 import {
   Box,
   ModalMode,
   useDialog,
+  useFormatNumber,
+  useIntlUtils,
   useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
@@ -33,7 +36,10 @@ export const PurchaseOrderLineEditModal = ({
   hasNext,
   openNext,
 }: PurchaseOrderLineEditModalProps) => {
+  const t = useTranslation();
+  const { getPlural } = useIntlUtils();
   const { error } = useNotification();
+  const { round } = useFormatNumber();
 
   const lines = purchaseOrder.lines.nodes;
   const isUpdateMode = mode === ModalMode.Update;
@@ -125,15 +131,43 @@ export const PurchaseOrderLineEditModal = ({
           <InlineSpinner />
         </Box>
       ) : (
-        <PurchaseOrderLineEdit
-          draft={draft}
-          update={updatePatch}
-          status={purchaseOrder.status}
-          isDisabled={isDisabled}
-          lines={lines}
-          isUpdateMode={isUpdateMode}
-          onChangeItem={onChangeItem}
-        />
+        <>
+          <PurchaseOrderLineEdit
+            draft={draft}
+            update={updatePatch}
+            status={purchaseOrder.status}
+            isDisabled={isDisabled}
+            lines={lines}
+            isUpdateMode={isUpdateMode}
+            onChangeItem={onChangeItem}
+          />
+          <Box display="flex" pt={1} gap={1}>
+            <Box
+              sx={{
+                height: 10,
+                width: 10,
+              }}
+            />
+            <Typography
+              width={250}
+              fontSize={14}
+              style={{ textAlign: 'start' }}
+            >
+              {t('label.ordered-in-others')}
+            </Typography>
+            <Typography
+              fontWeight={800}
+              fontSize={14}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              {round(draft.unitsOrderedInOthers)}{' '}
+              {getPlural(draft.unit ?? '', 2)}
+            </Typography>
+          </Box>
+        </>
       )}
     </Modal>
   );

@@ -132,6 +132,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
       username
     }
   }
+  unitsOrderedInOthers
 }
 
 query purchaseOrders(

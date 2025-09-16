@@ -85,6 +85,7 @@ export type PurchaseOrderFragment = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -149,6 +150,7 @@ export type PurchaseOrderLineFragment = {
   comment?: string | null;
   supplierItemCode?: string | null;
   status: Types.PurchaseOrderLineStatusNode;
+  unitsOrderedInOthers: number;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -275,6 +277,7 @@ export type PurchaseOrderByIdQuery = {
             comment?: string | null;
             supplierItemCode?: string | null;
             status: Types.PurchaseOrderLineStatusNode;
+            unitsOrderedInOthers: number;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -428,6 +431,7 @@ export type PurchaseOrderLinesQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -491,6 +495,7 @@ export type PurchaseOrderLineQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -712,6 +717,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
         username
       }
     }
+    unitsOrderedInOthers
   }
   ${NameRowFragmentDoc}
 `;
