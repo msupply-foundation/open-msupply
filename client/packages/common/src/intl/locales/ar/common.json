@@ -1420,6 +1420,7 @@
   "messages.no-related-documents": "لا توجد وثائق ذات صلة",
   "messages.no-repack-detail": "حدد سطرًا لعرض تفاصيل إعادة التعبئة أو انقر فوق جديد لإنشاء إعادة تعبئة جديدة",
   "messages.no-repacks": "لم تتم إعادة تعبئة هذا الخط من المخزون. انقر فوق جديد لإنشاء إعادة تعبئة جديدة.",
+  "messages.no-requested-quantities": "There are currently no requested quantities",
   "messages.no-scanners-found": "لم يتم العثور على أي ماسحات ضوئية",
   "messages.no-shipments-yet": "لم يتم إنشاء أي شحنات حتى الآن.",
   "messages.no-status-logs": "لم يتم إنشاء سجلات حالة لهذا الجهاز. انقر على زر ”تحديث الحالة“ لإنشاء سجل حالة جديد.",

@@ -8,6 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   PurchaseOrderFragment,
+  PurchaseOrderLineFragment,
   PurchaseOrderRowFragment,
 } from './purchase_order/api';
 
@@ -107,8 +108,10 @@ export const canEditAdjustedQuantity = (
 export const canAddNewLines = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
-  // Can add lines when NEW or CONFIRMED/AUTHORISED (but not finalised)
-  return purchaseOrder.status !== PurchaseOrderNodeStatus.Finalised;
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.New ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Authorised
+  );
 };
 
 export const isGoodsReceivedEditable = (
@@ -147,6 +150,41 @@ export const purchaseOrderToCsv = (
     node.targetMonths,
     node.lines.totalCount,
     node.comment,
+  ]);
+
+  return Formatter.csv({ fields, data });
+};
+
+export const outstandingLinesToCsv = (
+  t: TypedTFunction<LocaleKey>,
+  purchaseOrderLines: PurchaseOrderLineFragment[]
+) => {
+  const fields: string[] = [
+    t('label.purchase-order-number'),
+    t('label.purchase-order-reference'),
+    t('label.created-by'),
+    t('label.supplier-code'),
+    t('label.supplier-name'),
+    t('label.item-name'),
+    t('label.purchase-order-confirmed'),
+    t('label.expected-delivery-date'),
+    t('label.adjusted-units-expected'),
+    t('label.received-units'),
+    t('label.outstanding-units'),
+  ];
+
+  const data = purchaseOrderLines.map(node => [
+    node.purchaseOrder?.number,
+    node.purchaseOrder?.reference,
+    node.purchaseOrder?.user?.username,
+    node.purchaseOrder?.supplier?.code,
+    node.purchaseOrder?.supplier?.name,
+    node.item?.name,
+    Formatter.csvDateString(node.purchaseOrder?.confirmedDatetime),
+    Formatter.csvDateString(node.expectedDeliveryDate),
+    node.adjustedNumberOfUnits,
+    node.receivedNumberOfUnits,
+    (node.adjustedNumberOfUnits ?? 0) - (node.receivedNumberOfUnits ?? 0),
   ]);
 
   return Formatter.csv({ fields, data });
