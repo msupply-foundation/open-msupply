@@ -39,8 +39,7 @@ pub fn validate(
     // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
     if let Some(adjusted_units) = input.adjusted_number_of_units {
         if Some(adjusted_units) != line.adjusted_number_of_units
-            && !can_edit_adjusted_quantity(&purchase_order)
-            || user_has_permission != Some(true)
+            && !can_edit_adjusted_quantity(&purchase_order, user_has_permission.unwrap_or(false))
         {
             return Err(UpdatePurchaseOrderLineInputError::CannotEditAdjustedQuantity);
         }
