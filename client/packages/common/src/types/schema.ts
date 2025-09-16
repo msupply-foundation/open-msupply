@@ -7231,6 +7231,7 @@ export type PurchaseOrderLineNode = {
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
+  unitsOrderedInOthers: Scalars['Float']['output'];
 };
 
 export type PurchaseOrderLineNodeManufacturerArgs = {
@@ -10533,6 +10534,7 @@ export type UpdatePurchaseOrderInput = {
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<PurchaseOrderNodeStatus>;
   supplierAgent?: InputMaybe<Scalars['String']['input']>;
+  supplierDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;
 };
