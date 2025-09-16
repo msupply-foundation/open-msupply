@@ -242,6 +242,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             master_list_id,
             is_program_item,
             ignore_for_orders,
+            // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
             max_months_of_stock: _,
             min_months_of_stock: _,
         } = f;
