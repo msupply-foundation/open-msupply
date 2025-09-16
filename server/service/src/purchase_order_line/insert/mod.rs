@@ -59,18 +59,18 @@ pub fn insert_purchase_order_line(
         .connection
         .transaction_sync(|connection| {
             let item = validate(&ctx.store_id.clone(), &input, connection)?;
-            let new_purchase_order_line = generate(connection, &ctx.store_id.clone(), item, input)?;
+            let purchase_order_line = generate(connection, &ctx.store_id.clone(), item, input)?;
 
             activity_log_entry(
                 ctx,
                 ActivityLogType::PurchaseOrderLineCreated,
-                Some(new_purchase_order_line.purchase_order_id.clone()),
+                Some(purchase_order_line.purchase_order_id.clone()),
                 None,
                 None,
             )?;
 
-            PurchaseOrderLineRowRepository::new(connection).upsert_one(&new_purchase_order_line)?;
-            Ok(new_purchase_order_line)
+            PurchaseOrderLineRowRepository::new(connection).upsert_one(&purchase_order_line)?;
+            Ok(purchase_order_line)
         })
         .map_err(|error: TransactionError<InsertPurchaseOrderLineError>| error.to_inner_error())?;
 
