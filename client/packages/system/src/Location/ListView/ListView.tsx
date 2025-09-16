@@ -10,7 +10,8 @@ import {
   useUrlQueryParams,
   GenericColumnKey,
   UNDEFINED_STRING_VALUE,
-  NumUtils,
+  InlineProgress,
+  Box,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -66,18 +67,24 @@ const LocationListComponent: FC = () => {
       {
         key: 'volume',
         label: 'label.volume',
+        sortable: false,
       },
       {
         key: 'volumeUsed',
         label: 'label.volume-used',
-        accessor: ({ rowData: { volumeUsed, volume } }) => {
+        sortable: false,
+        Cell: ({ rowData: { volume, volumeUsed } }) => {
           if (!volume) return UNDEFINED_STRING_VALUE;
 
-          const percentUsed = NumUtils.round(
-            ((volumeUsed || 0) / volume) * 100,
-            1
+          return (
+            <Box sx={{ width: '150px' }}>
+              <InlineProgress
+                variant="determinate"
+                color="secondary"
+                value={((volumeUsed || 0) / volume) * 100}
+              />
+            </Box>
           );
-          return `${percentUsed}%`;
         },
       },
     ],
