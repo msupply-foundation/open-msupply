@@ -269,6 +269,9 @@ const useUpdate = () => {
           case 'ItemCannotBeOrdered':
             errorMessage = t('error.item-cannot-be-ordered-on-line');
             break;
+          case 'CannotEditQuantityBelowReceived':
+            errorMessage = t('error.cannot-reduce-adjusted-quantity');
+            break;
           default:
             errorMessage = t('label.cannot-update-purchase-order-line');
         }

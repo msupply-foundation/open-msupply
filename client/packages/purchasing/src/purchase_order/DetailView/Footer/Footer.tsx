@@ -156,6 +156,7 @@ export const Footer = ({
                 statuses={filteredStatuses}
                 statusLog={createStatusLog(data, authorisePurchaseOrder)}
                 statusFormatter={getStatusTranslator(t)}
+                width={280}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
                 <StatusChangeButton />
