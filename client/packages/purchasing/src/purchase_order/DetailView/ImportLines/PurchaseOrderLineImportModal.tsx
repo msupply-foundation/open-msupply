@@ -12,23 +12,35 @@ import {
   QueryParamsProvider,
   createQueryParamsStore,
 } from '@common/hooks';
-import { useTranslation } from '@common/intl';
-import { Grid, useExportCSV } from '@openmsupply-client/common/src';
+import { DateUtils, useTranslation } from '@common/intl';
+import {
+  FnUtils,
+  Formatter,
+  Grid,
+  InsertPurchaseOrderLineInput,
+  useExportCSV,
+} from '@openmsupply-client/common/src';
 import { StoreRowFragment } from '@openmsupply-client/system/src';
 import React, { useState } from 'react';
 import { UploadTab } from './UploadTab';
 import { ReviewTab } from './ReviewTab';
-import {
-  PurchaseOrderLineInsertFromCsvInput,
-  usePurchaseOrder,
-} from '../../api/hooks/usePurchaseOrder';
 import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { importPurchaseOrderLinesToCSVWithErrors } from '../utils';
+import { PurchaseOrderLineFragment, usePurchaseOrder } from '../../api';
 
-interface PurchaseOrderLineImportModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+export type ImportRow = Omit<
+  PurchaseOrderLineFragment,
+  '__typename' | 'item' | 'lineNumber'
+> & {
+  itemCode: string;
+  discountPercentage: number;
+  errorMessage: string;
+  warningMessage: string;
+};
+
+export type LineNumber = {
+  lineNumber: number;
+};
 
 enum Tabs {
   Upload = 'Upload',
@@ -36,167 +48,33 @@ enum Tabs {
   Import = 'Import',
 }
 
-export type ImportRow = {
-  id: string;
-  itemCode: string;
-  requestedPackSize?: number;
-  requestedNumberOfUnits?: number;
-  pricePerUnitBeforeDiscount?: number;
-  pricePerUnitAfterDiscount?: number;
-  errorMessage: string;
-  warningMessage: string;
-  // TODO add remaining fields as needed
-};
-
-export type LineNumber = {
-  lineNumber: number;
-};
-
-export const toInsertPurchaseOrderLine = (
-  row: ImportRow,
-  purchaseOrderId: string
-): PurchaseOrderLineInsertFromCsvInput => {
-  return {
-    purchaseOrderId,
-    itemCode: row.itemCode,
-    requestedPackSize: row.requestedPackSize,
-    requestedNumberOfUnits: row.requestedNumberOfUnits,
-    pricePerUnitBeforeDiscount: row.pricePerUnitBeforeDiscount,
-    pricePerUnitAfterDiscount: row.pricePerUnitAfterDiscount,
-  };
-};
-
-export const toExportLines = (
-  row: ImportRow,
-  index: number
-): Partial<ImportRow & LineNumber> => ({
-  ...row,
-  lineNumber: index + 2,
-});
+interface PurchaseOrderLineImportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 export const PurchaseOrderLineImportModal = ({
   isOpen,
   onClose,
 }: PurchaseOrderLineImportModalProps) => {
   const t = useTranslation();
-  const { success } = useNotification();
-  const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
-  const [activeStep, setActiveStep] = useState(0);
-  const { Modal } = useDialog({ isOpen, onClose });
   const exportCSV = useExportCSV();
-
+  const { success } = useNotification();
+  const { Modal } = useDialog({ isOpen, onClose });
+  const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const {
-    createFromCSV: { mutateAsync, invalidateQueries },
+    create: { create },
   } = usePurchaseOrderLine();
   const {
     query: { data },
   } = usePurchaseOrder();
 
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [warningMessage, setWarningMessage] = useState<string>('');
-
+  const [activeStep, setActiveStep] = useState(0);
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
-
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [warningMessage, setWarningMessage] = useState<string>('');
   const [bufferedLines, setBufferedLines] = useState<ImportRow[]>([]);
-
-  const csvExport = async () => {
-    const csv = importPurchaseOrderLinesToCSVWithErrors(
-      bufferedLines.map((row: ImportRow, index: number) =>
-        toExportLines(row, index)
-      ),
-      t
-    );
-    exportCSV(csv, t('filename.purchase-order-line-failed-uploads'));
-  };
-
-  const importErrorRows: ImportRow[] = [];
-  const insertFromCSV = async (row: ImportRow) => {
-    try {
-      await mutateAsync(toInsertPurchaseOrderLine(row, data?.id ?? ''));
-    } catch (e) {
-      console.error(e);
-
-      const errorMessage = (e as Error).message || t('messages.unknown-error');
-      importErrorRows.push({
-        ...row,
-        errorMessage: t('error.import-failed', { error: errorMessage }),
-      });
-    }
-  };
-
-  const importAction = async () => {
-    onChangeTab(Tabs.Import);
-    const numberImportRecords = bufferedLines?.length ?? 0;
-    if (bufferedLines && numberImportRecords > 0) {
-      importErrorRows.length = 0;
-      const remainingRecords = bufferedLines;
-      while (remainingRecords.length) {
-        await Promise.all(
-          remainingRecords.splice(0, 100).map(insertFromCSV)
-        ).then(() => {
-          invalidateQueries();
-          const percentComplete =
-            100 - (remainingRecords.length / numberImportRecords) * 100.0;
-          setImportProgress(percentComplete);
-          setImportErrorCount(importErrorRows.length);
-        });
-      }
-      if (importErrorRows.length === 0) {
-        handleImportSuccess(numberImportRecords);
-      } else {
-        handleImportFailure();
-      }
-    }
-  };
-
-  const handleImportSuccess = (numberImportRecords: number) => {
-    const importMessage = t('messages.import-generic', {
-      count: numberImportRecords,
-    });
-    const successSnack = success(importMessage);
-    successSnack();
-    onChangeTab(Tabs.Upload);
-    setBufferedLines([]);
-    setErrorMessage('');
-    onClose();
-  };
-
-  const handleImportFailure = () => {
-    // Load the error rows in to the component for review
-    setErrorMessage(t('messages.import-error'));
-    setBufferedLines(importErrorRows);
-    setImportErrorCount(importErrorRows.length);
-    onChangeTab(Tabs.Review);
-  };
-
-  const onClickStep = (tabName: Tabs) => {
-    if (tabName === Tabs.Import) return;
-    changeTab(tabName);
-  };
-
-  const changeTab = (tabName: Tabs) => {
-    switch (tabName) {
-      case Tabs.Upload:
-        setErrorMessage('');
-        setBufferedLines([]);
-        setActiveStep(0);
-        break;
-      case Tabs.Review:
-        setActiveStep(1);
-        break;
-      case Tabs.Import:
-        setActiveStep(2);
-        break;
-    }
-    onChangeTab(tabName);
-  };
-
-  const importNotReady = bufferedLines.length == 0 || errorMessage.length > 0;
-  const exportNotReady = !(
-    bufferedLines.length >= 0 && errorMessage.length > 0
-  );
-  const showWarnings = errorMessage.length == 0 && warningMessage.length > 0;
 
   const importSteps = [
     {
@@ -218,6 +96,130 @@ export const PurchaseOrderLineImportModal = ({
       tab: Tabs.Import,
     },
   ];
+
+  const importNotReady = bufferedLines.length == 0 || errorMessage.length > 0;
+  const exportNotReady = !(
+    bufferedLines.length >= 0 && errorMessage.length > 0
+  );
+  const showWarnings = errorMessage.length == 0 && warningMessage.length > 0;
+
+  const changeTab = (tabName: Tabs) => {
+    switch (tabName) {
+      case Tabs.Upload:
+        setErrorMessage('');
+        setBufferedLines([]);
+        setActiveStep(0);
+        break;
+      case Tabs.Review:
+        setActiveStep(1);
+        break;
+      case Tabs.Import:
+        setActiveStep(2);
+        break;
+    }
+    onChangeTab(tabName);
+  };
+
+  const handleCsvExportClick = async () => {
+    const csv = importPurchaseOrderLinesToCSVWithErrors(
+      bufferedLines.map((row: ImportRow, index: number) => ({
+        ...row,
+        lineNumber: index + 2,
+      })),
+      t
+    );
+    exportCSV(csv, t('filename.purchase-order-line-failed-uploads'));
+  };
+
+  const insertFromCSV = async (row: ImportRow, errorRows: ImportRow[]) => {
+    if (!data) return;
+    try {
+      const {
+        errorMessage: _errorMessage,
+        warningMessage: _warningMEssage,
+        ...input
+      } = row;
+
+      const csvInput: InsertPurchaseOrderLineInput = {
+        id: FnUtils.generateUUID(),
+        itemIdOrCode: input.itemCode,
+        purchaseOrderId: data?.id,
+        requestedPackSize: input.requestedPackSize,
+        requestedNumberOfUnits: input.requestedNumberOfUnits,
+        requestedDeliveryDate: Formatter.naiveDate(
+          DateUtils.getNaiveDate(input.requestedDeliveryDate)
+        ),
+        expectedDeliveryDate: Formatter.naiveDate(
+          DateUtils.getNaiveDate(input.expectedDeliveryDate)
+        ),
+        pricePerUnitAfterDiscount: input.pricePerUnitAfterDiscount,
+        pricePerUnitBeforeDiscount: input.pricePerUnitBeforeDiscount,
+        manufacturerId: input.manufacturer?.id,
+        note: input.note,
+        unit: input.unit,
+        supplierItemCode: input.supplierItemCode,
+        comment: input.comment,
+      };
+
+      await create(csvInput);
+    } catch (e) {
+      const errorMessage = (e as Error).message || t('messages.unknown-error');
+      errorRows.push({
+        ...row,
+        errorMessage: t('error.import-failed', { error: errorMessage }),
+      });
+    }
+  };
+
+  const importSuccess = (numberImportRecords: number) => {
+    const importMessage = t('messages.import-generic', {
+      count: numberImportRecords,
+    });
+
+    success(importMessage)();
+    onChangeTab(Tabs.Upload);
+    setBufferedLines([]);
+    setErrorMessage('');
+    onClose();
+  };
+
+  const importFailure = (errorRows: ImportRow[]) => {
+    setErrorMessage(t('messages.import-error'));
+    setBufferedLines(errorRows);
+    setImportErrorCount(errorRows.length);
+    onChangeTab(Tabs.Review);
+  };
+
+  const importAction = async () => {
+    onChangeTab(Tabs.Import);
+    const numberImportRecords = bufferedLines.length;
+
+    if (numberImportRecords === 0) return;
+
+    const importErrorRows: ImportRow[] = [];
+    const remainingRecords = [...bufferedLines];
+
+    while (remainingRecords.length > 0) {
+      const batch = remainingRecords.splice(0, 100);
+      await Promise.all(batch.map(row => insertFromCSV(row, importErrorRows)));
+
+      const percentComplete =
+        100 - (remainingRecords.length / numberImportRecords) * 100;
+      setImportProgress(percentComplete);
+      setImportErrorCount(importErrorRows.length);
+    }
+
+    if (importErrorRows.length === 0) {
+      importSuccess(numberImportRecords);
+    } else {
+      importFailure(importErrorRows);
+    }
+  };
+
+  const onClickStep = (tabName: Tabs) => {
+    if (tabName === Tabs.Import) return;
+    changeTab(tabName);
+  };
 
   return (
     <Modal
@@ -243,7 +245,7 @@ export const PurchaseOrderLineImportModal = ({
         <DialogButton
           variant="export"
           disabled={exportNotReady}
-          onClick={csvExport}
+          onClick={handleCsvExportClick}
         />
       }
       title={t('label.import-purchase-order-lines')}
