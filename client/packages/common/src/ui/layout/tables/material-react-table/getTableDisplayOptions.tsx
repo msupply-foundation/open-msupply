@@ -45,7 +45,6 @@ export const getTableDisplayOptions = <T extends MRT_RowData>(
     sx: theme => ({ fontSize: theme.typography.body1.fontSize }),
   },
 
-  // todo: hide sort icon when not sorting by this column
   // todo: add tooltip over column name
   // todo: ability to not show column name (but still give it a header label for column management)
   muiTableHeadCellProps: ({ column, table }) => ({

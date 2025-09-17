@@ -2,7 +2,6 @@ import { useUrlQueryParams } from '@openmsupply-client/common';
 import { MRT_SortingState, MRT_Updater } from 'material-react-table';
 import { useCallback } from 'react';
 
-/** Use for any paginated datasets. Sort, filter and pagination must be handled externally */
 export const useUrlSortManagement = (initialSort?: {
   key: string;
   dir: 'asc' | 'desc';
