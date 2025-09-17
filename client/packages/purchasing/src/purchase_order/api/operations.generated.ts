@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PurchaseOrderRowFragment = {
@@ -18,14 +19,6 @@ export type PurchaseOrderRowFragment = {
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
-};
-
-export type SyncFileReferenceFragment = {
-  __typename: 'SyncFileReferenceNode';
-  id: string;
-  fileName: string;
-  recordId: string;
-  createdDatetime: string;
 };
 
 export type PurchaseOrderFragment = {
@@ -706,15 +699,6 @@ export const PurchaseOrderLineFragmentDoc = gql`
     }
   }
   ${NameRowFragmentDoc}
-`;
-export const SyncFileReferenceFragmentDoc = gql`
-  fragment SyncFileReference on SyncFileReferenceNode {
-    __typename
-    id
-    fileName
-    recordId
-    createdDatetime
-  }
 `;
 export const PurchaseOrderFragmentDoc = gql`
   fragment PurchaseOrder on PurchaseOrderNode {

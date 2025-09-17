@@ -18,7 +18,8 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { SyncFileReferenceFragment, PURCHASE_ORDER } from '../../../api';
+import { SyncFileReferenceFragment } from '@openmsupply-client/system';
+import { PURCHASE_ORDER } from '../../../api';
 
 interface FooterProps {
   purchaseOrderId?: string;

@@ -9,7 +9,7 @@ import {
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
-import { SyncFileReferenceFragment } from '../../../api';
+import { SyncFileReferenceFragment } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 
 // TODO:

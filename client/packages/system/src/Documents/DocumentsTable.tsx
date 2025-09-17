@@ -5,11 +5,11 @@ import {
   DataTable,
   GenericColumnKey,
   NothingHere,
-  SyncFileReferenceNode,
   TableProvider,
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
+import { SyncFileReferenceFragment } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 
 // TODO:
@@ -19,7 +19,7 @@ import { Footer } from './Footer';
 interface DocumentsProps {
   recordId: string;
   tableName: string;
-  documents: SyncFileReferenceNode[];
+  documents: SyncFileReferenceFragment[];
   noDataElement?: JSX.Element;
   onUploadDocument?: () => void;
 }
@@ -33,7 +33,7 @@ export const DocumentsTable = ({
 }: DocumentsProps): ReactElement => {
   const t = useTranslation();
 
-  const columns = useColumns<SyncFileReferenceNode>([
+  const columns = useColumns<SyncFileReferenceFragment>([
     GenericColumnKey.Selection,
     {
       key: 'fileName',
