@@ -1073,6 +1073,10 @@ export const UpdatePurchaseOrderLineDocument = gql`
           ... on ItemCannotBeOrdered {
             ...ItemCannotBeOrdered
           }
+          ... on CannotEditQuantityBelowReceived {
+            __typename
+            description
+          }
         }
       }
     }

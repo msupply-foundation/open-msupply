@@ -398,6 +398,10 @@ mutation updatePurchaseOrderLine(
         ... on ItemCannotBeOrdered {
           ...ItemCannotBeOrdered
         }
+        ... on CannotEditQuantityBelowReceived {
+          __typename
+          description
+        }
       }
     }
   }

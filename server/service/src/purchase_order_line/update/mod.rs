@@ -1,11 +1,12 @@
 use chrono::NaiveDate;
 use repository::{
     ActivityLogType, PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
-    RepositoryError,
+    PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError,
 };
 
 use crate::{
     activity_log::activity_log_entry,
+    purchase_order::update::{update_purchase_order, UpdatePurchaseOrderInput},
     purchase_order_line::{insert::PackSizeCodeCombination, query::get_purchase_order_line},
     service_provider::ServiceContext,
     NullableUpdate,
@@ -64,7 +65,8 @@ pub fn update_purchase_order_line(
         .connection
         .transaction_sync(|connection| {
             let purchase_order_line = validate(&input, connection, user_has_permission)?;
-            let updated_purchase_order_line = generate(purchase_order_line, input)?;
+            let purchase_order_id = purchase_order_line.purchase_order_id.clone();
+            let updated_purchase_order_line = generate(purchase_order_line, input.clone())?;
 
             PurchaseOrderLineRowRepository::new(connection)
                 .upsert_one(&updated_purchase_order_line)?;
@@ -76,6 +78,29 @@ pub fn update_purchase_order_line(
                 None,
                 None,
             )?;
+
+            // Update Purchase Order status from Sent to Confirmed if adjusted amount is changed
+            if input.adjusted_number_of_units.is_some() {
+                let purchase_order = PurchaseOrderRowRepository::new(connection)
+                    .find_one_by_id(&purchase_order_id)?
+                    .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
+                // Only update status and log if the purchase order status is Sent
+                if purchase_order.status == PurchaseOrderStatus::Sent {
+                    let input = UpdatePurchaseOrderInput {
+                        id: purchase_order.id.clone(),
+                        status: Some(PurchaseOrderStatus::Confirmed),
+                        ..Default::default()
+                    };
+                    let _ = update_purchase_order(ctx, store_id, input, user_has_permission);
+                    activity_log_entry(
+                        ctx,
+                        ActivityLogType::PurchaseOrderLineUpdated,
+                        Some(purchase_order.id.clone()),
+                        Some(format!("{:?}", PurchaseOrderStatus::Sent)),
+                        Some(format!("{:?}", PurchaseOrderStatus::Confirmed)),
+                    )?;
+                }
+            }
 
             get_purchase_order_line(ctx, Some(store_id), &updated_purchase_order_line.id)
                 .map_err(UpdatePurchaseOrderLineInputError::DatabaseError)?
