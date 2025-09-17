@@ -94,6 +94,7 @@ export const AddButton = ({
         break;
       case 'add-from-internal-order':
         internalOrderModalController.toggleOn();
+        break;
       case 'upload-document':
         onUploadDocument();
         break;
