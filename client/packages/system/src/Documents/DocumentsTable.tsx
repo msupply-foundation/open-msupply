@@ -1,0 +1,64 @@
+import React, { ReactElement } from 'react';
+import {
+  ColumnFormat,
+  createTableStore,
+  DataTable,
+  GenericColumnKey,
+  NothingHere,
+  SyncFileReferenceNode,
+  TableProvider,
+  useColumns,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { Footer } from './Footer';
+
+// TODO:
+// SyncFileReference missing fields: createdBy, modifiedBy, versionNumber
+// If same file is uploaded, version number should be incremented through backend
+
+interface DocumentsProps {
+  recordId: string;
+  tableName: string;
+  documents: SyncFileReferenceNode[];
+  noDataElement?: JSX.Element;
+}
+
+export const DocumentsTable = ({
+  recordId,
+  tableName,
+  documents,
+  noDataElement,
+}: DocumentsProps): ReactElement => {
+  const t = useTranslation();
+
+  const columns = useColumns<SyncFileReferenceNode>([
+    GenericColumnKey.Selection,
+    {
+      key: 'fileName',
+      label: 'label.filename',
+      accessor: ({ rowData }) => rowData.fileName,
+    },
+    {
+      key: 'createdDatetime',
+      label: 'label.created-datetime',
+      accessor: ({ rowData }) => rowData.createdDatetime,
+      format: ColumnFormat.Date,
+    },
+  ]);
+
+  return (
+    <TableProvider createStore={createTableStore}>
+      <DataTable
+        id={recordId}
+        columns={columns}
+        data={documents}
+        noDataElement={
+          noDataElement ?? (
+            <NothingHere body={t('messages.no-documents-uploaded')} />
+          )
+        }
+      />
+      <Footer tableName={tableName} recordId={recordId} documents={documents} />
+    </TableProvider>
+  );
+};
