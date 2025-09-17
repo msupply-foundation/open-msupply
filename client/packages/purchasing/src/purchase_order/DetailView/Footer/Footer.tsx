@@ -30,10 +30,11 @@ const createStatusLog = (
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
       [PurchaseOrderNodeStatus.New]: purchaseOrder.createdDatetime,
-      [PurchaseOrderNodeStatus.Authorised]: requiresAuthorisation
-        ? purchaseOrder.authorisedDatetime
+      [PurchaseOrderNodeStatus.RequestApproval]: requiresAuthorisation
+        ? purchaseOrder.requestApprovalDatetime
         : null,
       [PurchaseOrderNodeStatus.Confirmed]: purchaseOrder.confirmedDatetime,
+      [PurchaseOrderNodeStatus.Sent]: purchaseOrder.sentDatetime,
       [PurchaseOrderNodeStatus.Finalised]: purchaseOrder.finalisedDatetime,
     };
 
@@ -130,7 +131,7 @@ export const Footer = ({
   const filteredStatuses = authorisePurchaseOrder
     ? purchaseOrderStatuses
     : purchaseOrderStatuses.filter(
-        status => status !== PurchaseOrderNodeStatus.Authorised
+        status => status !== PurchaseOrderNodeStatus.RequestApproval
       );
 
   return (

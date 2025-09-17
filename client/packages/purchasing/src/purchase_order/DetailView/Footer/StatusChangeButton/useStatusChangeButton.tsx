@@ -75,7 +75,7 @@ export const useStatusChangeButton = () => {
 
     const isAuthorisationBlocked =
       requiresAuthorisation &&
-      status === PurchaseOrderNodeStatus.Authorised &&
+      status === PurchaseOrderNodeStatus.Confirmed &&
       !userHasPermission(UserPermission.PurchaseOrderAuthorise);
 
     if (isAuthorisationBlocked)

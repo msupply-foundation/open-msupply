@@ -82,6 +82,7 @@ export const isPurchaseOrderConfirmed = (
 ): boolean => {
   return (
     purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
     purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
   );
 };
@@ -89,20 +90,18 @@ export const isPurchaseOrderConfirmed = (
 export const canEditOriginalQuantity = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
-  // Can only edit original quantity when PO is NEW
   return (
     purchaseOrder.status === PurchaseOrderNodeStatus.New ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Authorised
+    purchaseOrder.status === PurchaseOrderNodeStatus.RequestApproval
   );
 };
 
 export const canEditAdjustedQuantity = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
-  // Can edit adjusted quantity when confirmed but not finalised
   return (
     purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Authorised
+    purchaseOrder.status === PurchaseOrderNodeStatus.Sent
   );
 };
 
@@ -111,7 +110,7 @@ export const canAddNewLines = (
 ): boolean => {
   return (
     purchaseOrder.status === PurchaseOrderNodeStatus.New ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Authorised
+    purchaseOrder.status === PurchaseOrderNodeStatus.RequestApproval
   );
 };
 
