@@ -165,7 +165,7 @@ const DetailViewInner = () => {
           documents={data?.documents.nodes ?? []}
           recordId={data?.id ?? ''}
           tableName="invoice"
-          onUploadDocument={uploadDocumentController.toggleOn}
+          openUploadModal={uploadDocumentController.toggleOn}
           invalidateQueries={invalidateQuery}
         />
       ),
@@ -187,7 +187,7 @@ const DetailViewInner = () => {
             <AppBarButtons
               onAddItem={onAddItem}
               simplifiedTabletView={simplifiedTabletView}
-              onUploadDocument={uploadDocumentController.toggleOn}
+              openUploadModal={uploadDocumentController.toggleOn}
             />
 
             <Toolbar simplifiedTabletView={simplifiedTabletView} />
