@@ -14,6 +14,7 @@ interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
   statusLog: Record<StatusType, string | null | undefined>;
   statusFormatter: (status: StatusType) => string;
+  width?: number;
 }
 
 const StyledText = styled(Typography)({
@@ -41,7 +42,7 @@ export const StatusCrumbs = <StatusType extends string>(
   const t = useTranslation();
   const theme = useAppTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.md));
-  const { statuses, statusLog, statusFormatter } = props;
+  const { statuses, statusLog, statusFormatter, width = 250 } = props;
 
   const steps = useSteps(props);
 
@@ -75,7 +76,7 @@ export const StatusCrumbs = <StatusType extends string>(
   return (
     <PaperHoverPopover
       placement="top"
-      width={250}
+      width={width}
       Content={
         <PaperPopoverSection label={t('label.order-history')}>
           <VerticalStepper activeStep={currentStep} steps={steps} />
