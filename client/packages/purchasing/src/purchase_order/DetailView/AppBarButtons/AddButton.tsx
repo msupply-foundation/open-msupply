@@ -6,12 +6,14 @@ import { useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
 import { PurchaseOrderFragment } from '../../api';
 import { UserPermission } from '@common/types';
-import { AddDocumentModal } from './AddDocumentModal';
 import { PurchaseOrderLineImportModal } from '../ImportLines/PurchaseOrderLineImportModal';
 import {
   NonEmptyArray,
   useCallbackWithPermission,
-} from '@openmsupply-client/common/src';
+  useQueryClient,
+} from '@openmsupply-client/common';
+import { UploadDocumentModal } from '@openmsupply-client/system';
+import { PURCHASE_ORDER } from '../../api/hooks/keys';
 
 interface AddButtonProps {
   purchaseOrder: PurchaseOrderFragment | undefined;
@@ -30,6 +32,8 @@ export const AddButton = ({
   disableNewLines,
 }: AddButtonProps) => {
   const t = useTranslation();
+  const queryClient = useQueryClient();
+
   const masterListModalController = useToggle();
   const uploadDocumentController = useToggle();
   const importModalController = useToggle();
@@ -98,6 +102,9 @@ export const AddButton = ({
     handleOptionSelection(option);
   };
 
+  const invalidateQueries = () =>
+    queryClient.invalidateQueries([PURCHASE_ORDER]);
+
   return (
     <>
       <SplitButton
@@ -118,10 +125,12 @@ export const AddButton = ({
         />
       )}
       {uploadDocumentController.isOn && (
-        <AddDocumentModal
+        <UploadDocumentModal
           isOn={uploadDocumentController.isOn}
           toggleOff={uploadDocumentController.toggleOff}
-          purchaseOrderId={purchaseOrder?.id}
+          recordId={purchaseOrder?.id ?? ''}
+          tableName="purchase_order"
+          invalidateQueries={invalidateQueries}
         />
       )}
       {importModalController.isOn && (
