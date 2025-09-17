@@ -278,6 +278,32 @@ mutation insertPurchaseOrderLine(
     ... on IdResponse {
       id
     }
+    ... on InsertPurchaseOrderLineError {
+      __typename
+      error {
+        description
+        ... on CannnotFindItemByCode {
+          __typename
+          description
+        }
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+        }
+        ... on PackSizeCodeCombinationExists {
+          __typename
+          description
+        }
+        ... on PurchaseOrderLineWithIdExists {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
 

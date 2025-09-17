@@ -48,15 +48,12 @@ enum Tabs {
   Import = 'Import',
 }
 
-interface PurchaseOrderLineImportModalProps {
+interface LineImportModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const PurchaseOrderLineImportModal = ({
-  isOpen,
-  onClose,
-}: PurchaseOrderLineImportModalProps) => {
+export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
   const t = useTranslation();
   const exportCSV = useExportCSV();
   const { success } = useNotification();
@@ -76,6 +73,8 @@ export const PurchaseOrderLineImportModal = ({
   const [warningMessage, setWarningMessage] = useState<string>('');
   const [bufferedLines, setBufferedLines] = useState<ImportRow[]>([]);
 
+  let importErrorRows: ImportRow[] = [];
+
   const importSteps = [
     {
       label: t('label.upload'),
@@ -92,7 +91,7 @@ export const PurchaseOrderLineImportModal = ({
     {
       label: t('label.import'),
       description: '',
-      clickable: false,
+      clickable: true,
       tab: Tabs.Import,
     },
   ];
@@ -131,7 +130,7 @@ export const PurchaseOrderLineImportModal = ({
     exportCSV(csv, t('filename.purchase-order-line-failed-uploads'));
   };
 
-  const insertFromCSV = async (row: ImportRow, errorRows: ImportRow[]) => {
+  const insertFromCSV = async (row: ImportRow) => {
     if (!data) return;
     try {
       const {
@@ -143,7 +142,7 @@ export const PurchaseOrderLineImportModal = ({
       const csvInput: InsertPurchaseOrderLineInput = {
         id: FnUtils.generateUUID(),
         itemIdOrCode: input.itemCode,
-        purchaseOrderId: data?.id,
+        purchaseOrderId: data.id,
         requestedPackSize: input.requestedPackSize,
         requestedNumberOfUnits: input.requestedNumberOfUnits,
         requestedDeliveryDate: Formatter.naiveDate(
@@ -164,7 +163,7 @@ export const PurchaseOrderLineImportModal = ({
       await create(csvInput);
     } catch (e) {
       const errorMessage = (e as Error).message || t('messages.unknown-error');
-      errorRows.push({
+      importErrorRows.push({
         ...row,
         errorMessage: t('error.import-failed', { error: errorMessage }),
       });
@@ -196,12 +195,12 @@ export const PurchaseOrderLineImportModal = ({
 
     if (numberImportRecords === 0) return;
 
-    const importErrorRows: ImportRow[] = [];
+    importErrorRows = [];
     const remainingRecords = [...bufferedLines];
 
     while (remainingRecords.length > 0) {
       const batch = remainingRecords.splice(0, 100);
-      await Promise.all(batch.map(row => insertFromCSV(row, importErrorRows)));
+      await Promise.all(batch.map(row => insertFromCSV(row)));
 
       const percentComplete =
         100 - (remainingRecords.length / numberImportRecords) * 100;
@@ -217,7 +216,6 @@ export const PurchaseOrderLineImportModal = ({
   };
 
   const onClickStep = (tabName: Tabs) => {
-    if (tabName === Tabs.Import) return;
     changeTab(tabName);
   };
 

@@ -216,13 +216,46 @@ const useGet = (id: string) => {
 };
 
 const useCreate = () => {
+  const t = useTranslation();
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
   const mutationFn = async (input: InsertPurchaseOrderLineInput) => {
-    return await purchaseOrderApi.insertPurchaseOrderLine({
+    const result = await purchaseOrderApi.insertPurchaseOrderLine({
       storeId,
       input,
     });
+
+    if (
+      result.insertPurchaseOrderLine.__typename ===
+      'InsertPurchaseOrderLineError'
+    ) {
+      const errorType = result.insertPurchaseOrderLine.error.__typename;
+      let errorMessage: string;
+
+      switch (errorType) {
+        case 'CannnotFindItemByCode':
+          errorMessage = t('error.cannot-find-item-by-code');
+          break;
+        case 'CannotEditPurchaseOrder':
+          errorMessage = t('label.cannot-edit-purchase-order');
+          break;
+        case 'ForeignKeyError':
+          errorMessage = t('error.database-error');
+          break;
+        case 'PackSizeCodeCombinationExists':
+          errorMessage = t('error.pack-size-code-combinations-exists');
+          break;
+        case 'PurchaseOrderLineWithIdExists':
+          errorMessage = t('error.purchase-order-line-already-exists');
+          break;
+        default:
+          errorMessage = t('label.cannot-add-purchase-order-line');
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return result;
   };
 
   return useMutation({
