@@ -103,12 +103,14 @@ const DetailViewInner = () => {
         size: 120,
         pin: 'left',
         enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         accessorKey: 'itemName',
         header: t('label.name'),
         size: 400,
         enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         accessorKey: 'batch',
@@ -123,6 +125,7 @@ const DetailViewInner = () => {
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         id: 'vvmStatus',
