@@ -29,5 +29,5 @@ export const useExportStockList = (filterBy: FilterByWithBoolean | null) => {
     queryFn,
     enabled: false,
   });
-  return { data, fetchAllStock: refetch, isLoading, isError };
+  return { data, fetchStock: refetch, isLoading, isError };
 };

@@ -25,7 +25,7 @@ export const AppBarButtonsComponent = ({
 }) => {
   const { error } = useNotification();
   const t = useTranslation();
-  const { fetchAllStock, isLoading } = useExportStockList(exportFilter);
+  const { fetchStock, isLoading } = useExportStockList(exportFilter);
   const simplifiedTabletView = useSimplifiedTabletUI();
   const exportCSV = useExportCSV();
   const { manageVvmStatusForStock } = usePreferences();
@@ -33,7 +33,7 @@ export const AppBarButtonsComponent = ({
   const { isOpen, onClose, onOpen } = useEditModal();
 
   const csvExport = async () => {
-    const { data } = await fetchAllStock();
+    const { data } = await fetchStock();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
