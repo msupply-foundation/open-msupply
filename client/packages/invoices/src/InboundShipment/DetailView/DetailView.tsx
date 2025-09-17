@@ -16,12 +16,14 @@ import {
   useBreadcrumbs,
   useSimplifiedTabletUI,
   useUrlQuery,
+  useToggle,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   ActivityLogList,
   DocumentsTable,
   toItemWithPackSize,
+  UploadDocumentModal,
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
 } from '@openmsupply-client/system';
@@ -36,6 +38,7 @@ import { useInbound, InboundLineFragment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
 import { canReturnInboundLines } from '../../utils';
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
+import { InboundShipmentDetailTabs } from './types';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -56,9 +59,9 @@ const DetailViewInner = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { info } = useNotification();
+  const { clearSelected } = useTableStore();
 
-  const { data, isLoading } = useInbound.document.get();
-  const isDisabled = useInbound.utils.isDisabled();
+  const uploadDocumentController = useToggle();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
     InboundLineItem | ScannedItem
   >();
@@ -70,9 +73,10 @@ const DetailViewInner = () => {
     mode: returnModalMode,
     setMode,
   } = useEditModal<string[]>();
-  const { clearSelected } = useTableStore();
 
+  const { data, isLoading } = useInbound.document.get();
   const { data: vvmStatuses } = useVvmStatusesEnabled();
+  const isDisabled = useInbound.utils.isDisabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
@@ -153,7 +157,7 @@ const DetailViewInner = () => {
           onAddItem={() => onOpen()}
         />
       ),
-      value: 'Details',
+      value: InboundShipmentDetailTabs.Details,
     },
     {
       Component: (
@@ -161,13 +165,14 @@ const DetailViewInner = () => {
           documents={[]}
           recordId={data?.id ?? ''}
           tableName="invoice"
+          onUploadDocument={uploadDocumentController.toggleOn}
         />
       ),
-      value: 'documents',
+      value: InboundShipmentDetailTabs.Documents,
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
-      value: 'Log',
+      value: InboundShipmentDetailTabs.Log,
     },
   ];
 
@@ -181,13 +186,16 @@ const DetailViewInner = () => {
             <AppBarButtons
               onAddItem={onAddItem}
               simplifiedTabletView={simplifiedTabletView}
+              onUploadDocument={uploadDocumentController.toggleOn}
             />
 
             <Toolbar simplifiedTabletView={simplifiedTabletView} />
 
             <DetailTabs tabs={tabs} />
 
-            {tab === 'Details' && <Footer onReturnLines={onReturn} />}
+            {tab === InboundShipmentDetailTabs.Details && (
+              <Footer onReturnLines={onReturn} />
+            )}
             <SidePanel />
 
             {isOpen && (
@@ -222,6 +230,13 @@ const DetailViewInner = () => {
                 isNewReturn
               />
             )}
+
+            <UploadDocumentModal
+              isOn={uploadDocumentController.isOn}
+              toggleOff={uploadDocumentController.toggleOff}
+              recordId={data.id}
+              tableName="invoice"
+            />
           </InboundShipmentLineErrorProvider>
         </>
       ) : (
