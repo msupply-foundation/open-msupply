@@ -23,6 +23,7 @@ import {
   PreferenceKey,
   useAuthContext,
   StoreModeNodeType,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -160,6 +161,11 @@ const getInventoryAdjustmentReasonInputColumn = (
             isVaccine: rowData.item.isVaccine,
             isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
           })}
+          fallbackType={
+            isInventoryReduction
+              ? ReasonOptionNodeType.NegativeInventoryAdjustment
+              : ReasonOptionNodeType.PositiveInventoryAdjustment
+          }
           inputProps={{
             error: isAdjustmentReasonError,
           }}
