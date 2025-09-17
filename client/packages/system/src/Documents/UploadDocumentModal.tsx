@@ -35,6 +35,8 @@ export const UploadDocumentModal = ({
   });
 
   const handleUpload = async (files: File[]) => {
+    if (!recordId) return;
+
     setIsUploading(true);
 
     const url = `${Environment.SYNC_FILES_URL}/${tableName}/${recordId}`;
