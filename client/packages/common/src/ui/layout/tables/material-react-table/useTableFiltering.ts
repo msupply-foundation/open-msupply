@@ -19,24 +19,20 @@ import {
 
 import { ColumnDef } from './types';
 
-export const useManualTableFilters = <T extends MRT_RowData>(
-  manualFiltering: boolean,
+export const useTableFiltering = <T extends MRT_RowData>(
   columns: ColumnDef<T>[]
 ): {
-  filterState?: { columnFilters: MRT_ColumnFiltersState };
-  filterHandlers?: {
-    onColumnFiltersChange: (
-      filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
-    ) => void;
-  };
+  columnFilters: MRT_ColumnFiltersState;
+  onColumnFiltersChange: (
+    filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
+  ) => void;
 } => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDateTime } = useFormatDateTime();
 
-  const filterUpdaters = useMemo(() => {
-    // If manual filtering is not enabled, don't set up any of this
-    if (!manualFiltering) return {};
+  const filterState = useMemo(() => getFilterState(urlQuery), [urlQuery]);
 
+  const filterUpdaters = useMemo(() => {
     const filterUpdaters: Record<string, (value: any) => void> = {};
 
     columns.forEach(({ filterVariant, ...mrtProperties }) => {
@@ -73,16 +69,6 @@ export const useManualTableFilters = <T extends MRT_RowData>(
     return filterUpdaters;
   }, [columns]);
 
-  const filterState = useMemo(() => {
-    if (!manualFiltering) return undefined;
-
-    return { columnFilters: getFilterState(urlQuery) };
-  }, [urlQuery]);
-
-  // If manual filtering is not enabled, early return
-  // (needs to be after the useMemos above, to avoid hooks conditional call)
-  if (!manualFiltering) return {};
-
   const handleFilterChange = (
     filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
   ) => {
@@ -108,28 +94,30 @@ export const useManualTableFilters = <T extends MRT_RowData>(
   };
 
   return {
-    filterState,
-    filterHandlers: { onColumnFiltersChange: handleFilterChange },
+    columnFilters: filterState,
+    onColumnFiltersChange: handleFilterChange,
   };
 };
 
 const getFilterState = (urlQuery: Record<string, UrlQueryValue>) => {
-  return Object.entries(urlQuery).map(([id, val]) => {
-    // Date range
-    if (typeof val === 'object' && ('to' in val || 'from' in val))
+  return Object.entries(urlQuery)
+    .filter(([id]) => id !== 'sort')
+    .map(([id, val]) => {
+      // Date range
+      if (typeof val === 'object' && ('to' in val || 'from' in val))
+        return {
+          id,
+          value: [
+            val.from ? DateUtils.getDateOrNull(val.from as string) : '',
+            val.to ? DateUtils.getDateOrNull(val.to as string) : '',
+          ],
+        };
+
+      // TO-DO: Implement filter state for other types
+
       return {
         id,
-        value: [
-          val.from ? DateUtils.getDateOrNull(val.from as string) : '',
-          val.to ? DateUtils.getDateOrNull(val.to as string) : '',
-        ],
+        value: val,
       };
-
-    // TO-DO: Implement filter state for other types
-
-    return {
-      id,
-      value: val,
-    };
-  });
+    });
 };
