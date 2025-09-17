@@ -1742,6 +1742,7 @@
   "messages.no-related-documents": "Nenhum documento relacionado",
   "messages.no-repack-detail": "Selecione uma linha para ver os detalhes de um reempacotamento e clique em \"Novo\" para criar um novo reempacotamento",
   "messages.no-repacks": "Esta linha de estoque não foi reempacotada. Clique em \"Novo\" para criar um novo reempacotamento.",
+  "messages.no-requested-quantities": "There are currently no requested quantities",
   "messages.no-scanners-found": "Nenhum escaneador encontrado",
   "messages.no-shipments-yet": "Nenhum envio foi criado ainda.",
   "messages.no-status-history": "Nenhum histórico de status disponível",

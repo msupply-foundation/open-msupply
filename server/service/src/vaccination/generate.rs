@@ -42,8 +42,8 @@ pub fn generate_create_prescription(
         number_of_packs,
         vvm_status_id: stock_line.stock_line_row.vvm_status_id.clone(),
         volume_per_pack: Some(stock_line.stock_line_row.volume_per_pack),
+        prescribed_quantity: Some(number_of_packs * stock_line.stock_line_row.pack_size as f64),
         // default
-        prescribed_quantity: None,
         total_before_tax: None,
         tax_percentage: None,
         note: None,
