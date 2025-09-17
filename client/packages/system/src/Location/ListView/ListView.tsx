@@ -76,12 +76,20 @@ const LocationListComponent: FC = () => {
         Cell: ({ rowData: { volume, volumeUsed } }) => {
           if (!volume) return UNDEFINED_STRING_VALUE;
 
+          const percentageValue = ((volumeUsed || 0) / volume) * 100;
+
           return (
             <Box sx={{ width: '150px' }}>
               <InlineProgress
                 variant="determinate"
-                color="secondary"
-                value={((volumeUsed || 0) / volume) * 100}
+                color={
+                  percentageValue > 100
+                    ? 'error'
+                    : percentageValue > 80
+                      ? 'warning'
+                      : 'secondary'
+                }
+                value={percentageValue}
               />
             </Box>
           );
