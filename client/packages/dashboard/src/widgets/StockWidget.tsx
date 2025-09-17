@@ -18,10 +18,7 @@ import {
   Widget,
 } from '@openmsupply-client/common';
 import { useDashboard } from '../api';
-import {
-  hasStockOnHandInput,
-  InternalSupplierSearchModal,
-} from '@openmsupply-client/system';
+import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 import { useRequest } from '@openmsupply-client/requisitions';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -159,7 +156,7 @@ export const StockWidget: React.FC = () => {
                   link: RouteBuilder.create(AppRoute.Catalogue)
                     .addPart(AppRoute.Items)
                     .addQuery({
-                      hasStockOnHand: hasStockOnHandInput.False,
+                      hasStockOnHand: 'false',
                     })
                     .build(),
                 },
