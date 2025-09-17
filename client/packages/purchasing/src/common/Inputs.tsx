@@ -83,7 +83,8 @@ export const useInputComponents = (
       textInput: (
         label: LocaleKey,
         value: string | null | undefined,
-        onChange?: (value?: string) => void
+        onChange?: (value?: string) => void,
+        options: { disabled?: boolean } = {}
       ) => (
         <TextInput
           key={label}
@@ -92,13 +93,15 @@ export const useInputComponents = (
           value={value ?? ''}
           onChange={onChange}
           isVerticalScreen={isVerticalScreen}
+          {...options}
         />
       ),
 
       multilineTextInput: (
         label: LocaleKey,
         value?: string | null,
-        onChange?: (value?: string) => void
+        onChange?: (value?: string) => void,
+        options: { disabled?: boolean } = {}
       ) => (
         <MultilineTextInput
           key={label}
@@ -106,13 +109,15 @@ export const useInputComponents = (
           label={t(label)}
           value={value ?? ''}
           onChange={onChange}
+          {...options}
         />
       ),
 
       dateInput: (
         label: LocaleKey,
         value?: string | null,
-        onChange?: (value: string | null) => void
+        onChange?: (value: string | null) => void,
+        options: { disabled?: boolean } = {}
       ) => (
         <DateInput
           key={label}
@@ -121,6 +126,7 @@ export const useInputComponents = (
           value={value}
           isVerticalScreen={isVerticalScreen}
           onChange={onChange}
+          {...options}
         />
       ),
     }),

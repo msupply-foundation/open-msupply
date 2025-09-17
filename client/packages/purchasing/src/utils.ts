@@ -114,6 +114,51 @@ export const canAddNewLines = (
   );
 };
 
+export enum StatusGroup {
+  BeforeConfirmed = 'NewToApproval',
+  AfterConfirmed = 'AfterConfirmed',
+  AfterSent = 'BeforeSent',
+  ExceptSent = 'ExceptSent',
+}
+
+export const disabledStatusGroup: Record<
+  StatusGroup,
+  PurchaseOrderNodeStatus[]
+> = {
+  [StatusGroup.BeforeConfirmed]: [
+    PurchaseOrderNodeStatus.New,
+    PurchaseOrderNodeStatus.RequestApproval,
+  ],
+  [StatusGroup.AfterConfirmed]: [
+    PurchaseOrderNodeStatus.Confirmed,
+    PurchaseOrderNodeStatus.Sent,
+  ],
+  [StatusGroup.ExceptSent]: [
+    PurchaseOrderNodeStatus.New,
+    PurchaseOrderNodeStatus.RequestApproval,
+    PurchaseOrderNodeStatus.Confirmed,
+  ],
+  [StatusGroup.AfterSent]: [PurchaseOrderNodeStatus.Sent],
+};
+
+/**
+Determines if a field should be editable or disabled based on the status of the purchase order
+If the status is in the disabled group, the function will return true
+When passed into the input, it overrides the 'base' disabled bool 
+*/
+export const isFieldDisabled = (
+  status: PurchaseOrderNodeStatus,
+  groupKey: StatusGroup
+): boolean => {
+  // Early return: if status is finalised, always disable the field
+  if (status === PurchaseOrderNodeStatus.Finalised) {
+    return true;
+  }
+
+  const groupForField = disabledStatusGroup[groupKey];
+  return groupForField.includes(status);
+};
+
 export const isGoodsReceivedEditable = (
   status: GoodsReceivedNodeStatus
 ): boolean => {

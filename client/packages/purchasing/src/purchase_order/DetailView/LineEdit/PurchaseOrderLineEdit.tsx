@@ -23,6 +23,7 @@ import {
   calculateUnitQuantities,
   lineStatusOptions,
 } from './utils';
+import { isFieldDisabled, StatusGroup } from 'packages/purchasing/src/utils';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
@@ -47,10 +48,18 @@ export const PurchaseOrderLineEdit = ({
   const t = useTranslation();
   const showContent = !!draft?.itemId;
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
+
+  // overall disabled - is the base for input components
+  // finalised PO or closed line
   const disabled =
     isDisabled || draft?.status === PurchaseOrderLineStatusNode.Closed;
   const { numericInput, textInput, multilineTextInput, dateInput } =
     useInputComponents(t, disabled, isVerticalScreen);
+
+  const canEditRequestedQuantity = isFieldDisabled(
+    status,
+    StatusGroup.BeforeConfirmed
+  );
 
   return (
     <>
@@ -74,7 +83,7 @@ export const PurchaseOrderLineEdit = ({
               label={t('label.status')}
               Input={
                 <Select
-                  disabled={disabled}
+                  disabled={isFieldDisabled(status, StatusGroup.ExceptSent)}
                   sx={{
                     width: 200,
                   }}
@@ -101,7 +110,7 @@ export const PurchaseOrderLineEdit = ({
           showContent ? (
             <>
               {numericInput(
-                status !== PurchaseOrderNodeStatus.Confirmed
+                canEditRequestedQuantity
                   ? 'label.requested-packs'
                   : 'label.adjusted-packs',
                 draft?.numberOfPacks ?? 0,
@@ -117,6 +126,7 @@ export const PurchaseOrderLineEdit = ({
                   },
                   decimalLimit: 2,
                   autoFocus: true,
+                  // never disabled, is either requested or adjusted
                 }
               )}
               {numericInput('label.pack-size', draft?.requestedPackSize, {
@@ -130,52 +140,48 @@ export const PurchaseOrderLineEdit = ({
                   update({ ...adjustedPatch, requestedPackSize });
                 },
                 decimalLimit: 2,
+                disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
               })}
               {numericInput(
                 'label.requested-quantity',
                 draft?.requestedNumberOfUnits,
                 {
-                  onChange: value => {
-                    // Adjust the requested and adjusted number of units based on the number of packs
-                    const adjustedPatch = calculateUnitQuantities(status, {
-                      ...draft,
-                      requestedNumberOfUnits: value,
-                    });
-                    update(adjustedPatch);
-                  },
-                  disabled: true,
+                  disabled: true, // readonly
                   decimalLimit: 2,
                 }
               )}
-              {status === PurchaseOrderNodeStatus.Confirmed &&
+              {!canEditRequestedQuantity &&
                 numericInput(
                   'label.adjusted-units',
                   draft?.adjustedNumberOfUnits,
                   {
-                    onChange: value => {
-                      // Adjust the requested and adjusted number of units based on the number of packs
-                      const adjustedPatch = calculateUnitQuantities(status, {
-                        ...draft,
-                        requestedNumberOfUnits: value,
-                      });
-                      update(adjustedPatch);
-                    },
-                    disabled: true,
+                    disabled: true, // readonly
                     decimalLimit: 2,
                   }
                 )}
-              {textInput('label.unit', draft?.unit || '', value =>
-                update({ unit: value })
+              {textInput(
+                'label.unit',
+                draft?.unit || '',
+                value => update({ unit: value }),
+                {
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                }
               )}
               {textInput(
                 'label.supplier-item-code',
                 draft?.supplierItemCode || '',
-                value => update({ supplierItemCode: value })
+                value => update({ supplierItemCode: value }),
+                {
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                }
               )}
               <InputWithLabelRow
                 Input={
                   <ManufacturerSearchInput
-                    disabled={disabled}
+                    disabled={
+                      disabled ||
+                      isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                    } // not specified
                     value={draft?.manufacturer ?? null}
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
@@ -217,6 +223,7 @@ export const PurchaseOrderLineEdit = ({
                     update(adjustedPatch);
                   },
                   decimalLimit: 2,
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               {numericInput(
@@ -233,6 +240,7 @@ export const PurchaseOrderLineEdit = ({
                   max: 100,
                   decimalLimit: 2,
                   endAdornment: '%',
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               {numericInput(
@@ -247,6 +255,7 @@ export const PurchaseOrderLineEdit = ({
                     update(adjustedPatch);
                   },
                   decimalLimit: 2,
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
             </>
@@ -258,20 +267,32 @@ export const PurchaseOrderLineEdit = ({
               {dateInput(
                 'label.requested-delivery-date',
                 draft?.requestedDeliveryDate,
-                value => update({ requestedDeliveryDate: value })
+                value => update({ requestedDeliveryDate: value }),
+                {
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                }
               )}
               {dateInput(
                 'label.expected-delivery-date',
                 draft?.expectedDeliveryDate,
-                value => update({ expectedDeliveryDate: value })
+                value => update({ expectedDeliveryDate: value }),
+                {
+                  disabled: isFieldDisabled(status, StatusGroup.AfterSent),
+                }
               )}
               {multilineTextInput(
                 'label.comment',
                 draft?.comment || '',
                 value => update({ comment: value })
               )}
-              {multilineTextInput('label.notes', draft?.note || '', value =>
-                update({ note: value })
+              {/* Is this Requested delivery date note field? */}
+              {multilineTextInput(
+                'label.notes',
+                draft?.note || '',
+                value => update({ note: value }),
+                {
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                }
               )}
             </>
           ) : null
