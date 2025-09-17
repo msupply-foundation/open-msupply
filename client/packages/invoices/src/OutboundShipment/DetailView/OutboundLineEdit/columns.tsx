@@ -372,7 +372,7 @@ interface BatchWithVariantCellProps {
   rowData: DraftStockOutLineFragment;
 }
 
-export const getBatchWithVariantCell =
+const getBatchWithVariantCell =
   (itemId: string, includeDoseColumns: boolean) =>
   ({ rowData }: BatchWithVariantCellProps) => {
     return (
