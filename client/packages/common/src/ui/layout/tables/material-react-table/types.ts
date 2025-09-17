@@ -21,7 +21,10 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   // overflow?: 'ellipsis' | 'wrap'; // TO-DO -- will only affect "dense" layout
 
   /** Update method required for Input (editable) cells. */
-  updateFn?: (value: any, row: T) => void;
+  updateFn?: <U>(value: U, row: T) => void;
+
+  /** Additional props to pass to the cell renderer component */
+  cellProps?: Record<string, unknown>;
 };
 
 /** Use when you have `groupByField` enabled, to allow for typing of `subRows` */

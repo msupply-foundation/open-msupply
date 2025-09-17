@@ -83,10 +83,20 @@ export const useGetColumnTypeDefaults = () => {
             return <PopoverCell value={value} label={t('label.comment')} />;
           },
         };
+
       case ColumnType.NumberInput:
         return {
           Cell: ({ cell }) => (
-            <NumberInputCell cell={cell} update={column.updateFn} />
+            <NumberInputCell
+              cell={cell as MRT_Cell<MRT_RowData>}
+              updateFn={
+                (column.updateFn as (
+                  value: number,
+                  row: MRT_RowData
+                ) => void) ?? (() => {})
+              }
+              {...column.cellProps}
+            />
           ),
         };
 

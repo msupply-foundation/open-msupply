@@ -8,22 +8,14 @@ export const VVMStatusInputCell = <T extends RecordWithId>({
   column,
   isDisabled,
   useDefault = false,
-  onChange: onChangeFunction,
-  selected: selectedVvmStatus,
 }: CellProps<T> & { useDefault?: boolean }) => {
-  console.log('selectedVvmStatus', selectedVvmStatus);
-  const selected =
-    selectedVvmStatus !== undefined
-      ? selectedVvmStatus
-      : (column.accessor({
-          rowData,
-        }) as VvmStatusFragment | null);
+  const selected = column.accessor({
+    rowData,
+  }) as VvmStatusFragment | null;
 
-  const onChange = onChangeFunction
-    ? (vvmStatus?: VvmStatusFragment | null) => onChangeFunction(vvmStatus)
-    : (vvmStatus?: VvmStatusFragment | null) => {
-        column.setter({ ...rowData, vvmStatus });
-      };
+  const onChange = (vvmStatus?: VvmStatusFragment | null) => {
+    column.setter({ ...rowData, vvmStatus });
+  };
 
   return (
     <VVMStatusSearchInput
