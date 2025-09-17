@@ -14,6 +14,7 @@ import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
+import { useTableFiltering } from './useTableFiltering';
 import { getTableDisplayOptions } from './getTableDisplayOptions';
 
 export interface BaseTableConfig<T extends MRT_RowData>
@@ -50,11 +51,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { columns, defaultHiddenColumns, defaultColumnPinning } =
     useMaterialTableColumns(omsColumns);
 
-  // Needs to be applied after columns are processed
-  const { filterState, filterHandlers } = useManualTableFilters(
-    manualFiltering,
-    columns
-  );
+  // Filter needs to be applied after columns are processed
+  const { columnFilters, onColumnFiltersChange } = useTableFiltering(columns);
 
   const initialState = useRef(
     getSavedTableState<T>(tableId, defaultHiddenColumns, defaultColumnPinning)
@@ -87,7 +85,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableExpanding: !!groupByField,
 
     manualFiltering,
-    ...filterHandlers,
+    onColumnFiltersChange,
 
     initialState: {
       ...initialState.current,
@@ -104,7 +102,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     state: {
       showProgressBars: isLoading,
       columnOrder,
-      ...filterState,
+      columnFilters,
       ...state,
     },
     onColumnOrderChange: setColumnOrder,
