@@ -60,7 +60,7 @@ const DetailViewInner = () => {
   const navigate = useNavigate();
   const { info } = useNotification();
   const { clearSelected } = useTableStore();
-  const { urlQuery } = useUrlQuery();
+  const { urlQuery, updateQuery } = useUrlQuery();
 
   const uploadDocumentController = useToggle();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
@@ -187,7 +187,11 @@ const DetailViewInner = () => {
             <AppBarButtons
               onAddItem={onAddItem}
               simplifiedTabletView={simplifiedTabletView}
-              openUploadModal={uploadDocumentController.toggleOn}
+              openUploadModal={() => {
+                uploadDocumentController.toggleOn();
+                if (tab !== InboundShipmentDetailTabs.Documents)
+                  updateQuery({ tab: InboundShipmentDetailTabs.Documents });
+              }}
             />
 
             <Toolbar simplifiedTabletView={simplifiedTabletView} />
