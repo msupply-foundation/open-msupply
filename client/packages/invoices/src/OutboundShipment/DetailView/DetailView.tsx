@@ -116,7 +116,9 @@ const DetailViewInner = () => {
         defaultHideOnMobile: true,
       },
       {
-        accessorKey: 'expiryDate',
+        id: 'expiryDate',
+        // expiryDate is a string - use accessorFn to convert to Date object for sort and filtering
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
