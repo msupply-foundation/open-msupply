@@ -4551,6 +4551,7 @@ export type InvoiceNode = {
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
+  documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
@@ -10533,6 +10534,7 @@ export type UpdatePurchaseOrderInput = {
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<PurchaseOrderNodeStatus>;
   supplierAgent?: InputMaybe<Scalars['String']['input']>;
+  supplierDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;
 };

@@ -5,17 +5,17 @@ import {
   AppFooterPortal,
   DeleteIcon,
   DownloadIcon,
-  SyncFileReferenceNode,
   useDownloadFile,
   useNotification,
   useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
+import { SyncFileReferenceFragment } from '@openmsupply-client/system';
 
 interface FooterProps {
   recordId: string;
-  documents: SyncFileReferenceNode[];
+  documents: SyncFileReferenceFragment[];
   tableName: string;
 }
 

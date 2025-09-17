@@ -162,7 +162,7 @@ const DetailViewInner = () => {
     {
       Component: (
         <DocumentsTable
-          documents={[]}
+          documents={data?.documents.nodes ?? []}
           recordId={data?.id ?? ''}
           tableName="invoice"
           onUploadDocument={uploadDocumentController.toggleOn}
