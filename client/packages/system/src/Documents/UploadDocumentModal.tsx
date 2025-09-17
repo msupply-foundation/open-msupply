@@ -15,6 +15,7 @@ interface UploadDocumentModalProps {
   toggleOff: () => void;
   recordId: string;
   tableName: string;
+  invalidateQueries?: () => void;
 }
 
 export const UploadDocumentModal = ({
@@ -22,9 +23,9 @@ export const UploadDocumentModal = ({
   toggleOff,
   recordId,
   tableName,
+  invalidateQueries = () => {},
 }: UploadDocumentModalProps) => {
   const t = useTranslation();
-  // const queryClient = useQueryClient();
   const { error, success } = useNotification();
   const [isUploading, setIsUploading] = useState(false);
 
@@ -54,7 +55,7 @@ export const UploadDocumentModal = ({
 
       if (response.ok) {
         success(t('success'))();
-        // queryClient.invalidateQueries([PURCHASE_ORDER]);
+        invalidateQueries();
         toggleOff();
       } else {
         error(t('error.an-error-occurred', { message: response.statusText }))();
