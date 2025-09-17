@@ -14,6 +14,7 @@ import {
   PopoverCell,
   useTranslation,
 } from '@openmsupply-client/common';
+import { NumberInputCell } from './components/NumberInputCell';
 
 import { ColumnDef } from './types';
 
@@ -23,6 +24,8 @@ export enum ColumnType {
   Currency = 'currency',
   Date = 'date',
   Comment = 'comment',
+  // Inputs
+  NumberInput = 'number-input',
 }
 
 export const useGetColumnTypeDefaults = () => {
@@ -79,6 +82,12 @@ export const useGetColumnTypeDefaults = () => {
             const value = cell.getValue<string | null>();
             return <PopoverCell value={value} label={t('label.comment')} />;
           },
+        };
+      case ColumnType.NumberInput:
+        return {
+          Cell: ({ cell }) => (
+            <NumberInputCell cell={cell} update={column.updateFn} />
+          ),
         };
 
       case ColumnType.String:
