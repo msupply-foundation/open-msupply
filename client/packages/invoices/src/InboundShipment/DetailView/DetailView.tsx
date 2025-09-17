@@ -145,7 +145,7 @@ const DetailViewInner = () => {
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
   const { urlQuery } = useUrlQuery();
-  const tab = urlQuery['tab'] as string | undefined;
+  const tab = urlQuery['tab'];
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
