@@ -55,6 +55,9 @@ export const getTableDisplayOptions = <T extends MRT_RowData>(
       lineHeight: 1.2,
       verticalAlign: 'bottom',
       justifyContent: 'space-between',
+      '& .MuiTableSortLabel-root': {
+        display: column.getIsSorted() ? undefined : 'none',
+      },
       '& .Mui-TableHeadCell-Content-Actions': {
         '& svg': { fontSize: '2em' },
       },
