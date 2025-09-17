@@ -7,7 +7,7 @@ import { PlusCircleIcon } from '@common/icons';
 import { PurchaseOrderFragment } from '../../api';
 import { UserPermission } from '@common/types';
 import { AddDocumentModal } from './AddDocumentModal';
-import { PurchaseOrderLineImportModal } from '../ImportLines/PurchaseOrderLineImportModal';
+import { LineImportModal } from '../ImportLines/LineImportModal';
 import {
   NonEmptyArray,
   useCallbackWithPermission,
@@ -123,7 +123,7 @@ export const AddButton = ({
         />
       )}
       {importModalController.isOn && (
-        <PurchaseOrderLineImportModal
+        <LineImportModal
           isOpen={importModalController.isOn}
           onClose={importModalController.toggleOff}
         />
