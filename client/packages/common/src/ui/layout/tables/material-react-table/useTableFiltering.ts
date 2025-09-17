@@ -5,6 +5,7 @@
  */
 import { useMemo } from 'react';
 import {
+  MRT_ColumnDef,
   MRT_ColumnFiltersState,
   MRT_RowData,
   MRT_Updater,
@@ -17,10 +18,8 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 
-import { ColumnDef } from './types';
-
 export const useTableFiltering = <T extends MRT_RowData>(
-  columns: ColumnDef<T>[]
+  columns: MRT_ColumnDef<T>[]
 ): {
   columnFilters: MRT_ColumnFiltersState;
   onColumnFiltersChange: (
