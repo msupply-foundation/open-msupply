@@ -15,10 +15,12 @@ import {
   useTableStore,
   useBreadcrumbs,
   useSimplifiedTabletUI,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   ActivityLogList,
+  DocumentsTable,
   toItemWithPackSize,
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
@@ -53,6 +55,8 @@ const DetailViewInner = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
+  const { info } = useNotification();
+
   const { data, isLoading } = useInbound.document.get();
   const isDisabled = useInbound.utils.isDisabled();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
@@ -66,8 +70,8 @@ const DetailViewInner = () => {
     mode: returnModalMode,
     setMode,
   } = useEditModal<string[]>();
-  const { info } = useNotification();
   const { clearSelected } = useTableStore();
+
   const { data: vvmStatuses } = useVvmStatusesEnabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
@@ -136,6 +140,9 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
+  const { urlQuery } = useUrlQuery();
+  const tab = urlQuery['tab'] as string | undefined;
+
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
@@ -147,6 +154,16 @@ const DetailViewInner = () => {
         />
       ),
       value: 'Details',
+    },
+    {
+      Component: (
+        <DocumentsTable
+          documents={[]}
+          recordId={data?.id ?? ''}
+          tableName="invoice"
+        />
+      ),
+      value: 'documents',
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
@@ -170,7 +187,7 @@ const DetailViewInner = () => {
 
             <DetailTabs tabs={tabs} />
 
-            <Footer onReturnLines={onReturn} />
+            {tab === 'Details' && <Footer onReturnLines={onReturn} />}
             <SidePanel />
 
             {isOpen && (
