@@ -74,7 +74,7 @@ const DetailViewInner = () => {
     setMode,
   } = useEditModal<string[]>();
 
-  const { data, isLoading } = useInbound.document.get();
+  const { data, isLoading, invalidateQuery } = useInbound.document.get();
   const { data: vvmStatuses } = useVvmStatusesEnabled();
   const isDisabled = useInbound.utils.isDisabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
@@ -166,6 +166,7 @@ const DetailViewInner = () => {
           recordId={data?.id ?? ''}
           tableName="invoice"
           onUploadDocument={uploadDocumentController.toggleOn}
+          invalidateQueries={invalidateQuery}
         />
       ),
       value: InboundShipmentDetailTabs.Documents,
@@ -236,6 +237,7 @@ const DetailViewInner = () => {
               toggleOff={uploadDocumentController.toggleOff}
               recordId={data.id}
               tableName="invoice"
+              invalidateQueries={invalidateQuery}
             />
           </InboundShipmentLineErrorProvider>
         </>

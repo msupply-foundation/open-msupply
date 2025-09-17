@@ -17,15 +17,16 @@ interface FooterProps {
   recordId: string;
   documents: SyncFileReferenceFragment[];
   tableName: string;
+  invalidateQueries?: () => void;
 }
 
 const FooterComponent = ({
   recordId,
   documents,
   tableName,
+  invalidateQueries = () => {},
 }: FooterProps): ReactElement => {
   const t = useTranslation();
-  // const queryClient = useQueryClient();
   const downloadFile = useDownloadFile();
   const { error, success } = useNotification();
 
@@ -50,8 +51,8 @@ const FooterComponent = ({
       const deleteRequests = ids.map(handleFileDelete);
       await Promise.all(deleteRequests);
       success(t('success'))();
-      // todo - needed if own tab?
-      // queryClient.invalidateQueries([]);
+
+      invalidateQueries();
     } catch (e) {
       console.error(e);
       error(t('error.an-error-occurred', { message: (e as Error).message }))();

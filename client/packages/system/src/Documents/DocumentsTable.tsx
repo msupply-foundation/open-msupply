@@ -22,6 +22,7 @@ interface DocumentsProps {
   documents: SyncFileReferenceFragment[];
   noDataElement?: JSX.Element;
   onUploadDocument?: () => void;
+  invalidateQueries?: () => void;
 }
 
 export const DocumentsTable = ({
@@ -30,6 +31,7 @@ export const DocumentsTable = ({
   documents,
   noDataElement,
   onUploadDocument,
+  invalidateQueries,
 }: DocumentsProps): ReactElement => {
   const t = useTranslation();
 
@@ -64,7 +66,12 @@ export const DocumentsTable = ({
           )
         }
       />
-      <Footer tableName={tableName} recordId={recordId} documents={documents} />
+      <Footer
+        tableName={tableName}
+        recordId={recordId}
+        documents={documents}
+        invalidateQueries={invalidateQueries}
+      />
     </TableProvider>
   );
 };
