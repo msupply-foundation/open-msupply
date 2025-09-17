@@ -24,6 +24,7 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
       ...tableOptions.state,
       density: 'compact',
     },
+    layoutMode: 'grid-no-grow',
     ...tableOptions,
     renderBottomToolbar: ({ table }) => (
       <Box

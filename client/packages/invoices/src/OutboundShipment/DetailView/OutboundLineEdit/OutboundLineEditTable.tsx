@@ -22,13 +22,13 @@ import {
   Formatter,
   useIntlUtils,
   QuantityUtils,
-  NumericTextInput,
-  useDebounceCallback,
-  useBufferState,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import {
   CurrencyRowFragment,
+  ItemVariantInfoIcon,
+  VVMStatusSearchInput,
   // VVMStatusInputCell,
 } from '@openmsupply-client/system';
 import {
@@ -41,6 +41,8 @@ import {
 } from '../../../StockOut';
 import { min } from 'lodash';
 import { useDisableVvmRows } from '../../../useDisableVvmRows';
+import { VvmStatusFragment } from 'packages/system/src/Stock/api';
+import { NumberInputCell } from 'packages/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -149,6 +151,7 @@ export const OutboundLineEditTable = ({
   const prefs = usePreferences();
   const { store } = useAuthContext();
   const { getPlural } = useIntlUtils();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const {
     draftLines,
@@ -212,6 +215,7 @@ export const OutboundLineEditTable = ({
         header: '',
         accessorFn: row => canAutoAllocate(row, packSize),
         size: 0,
+        // TO-DO: Create "CheckboxCell" component
         Cell: ({ renderedCellValue }) => {
           return renderedCellValue ? '✓' : '';
         },
@@ -221,31 +225,43 @@ export const OutboundLineEditTable = ({
         accessorKey: 'batch',
         header: t('label.batch'),
         size: 60,
-        // Cell: getBatchWithVariantCell(
-        //   item?.id ?? '',
-        //   allocateIn.type === AllocateInType.Doses
-        // ),
+        Cell: ({ row }) => {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {row.original.batch}
+              {row.original.itemVariantId && (
+                <ItemVariantInfoIcon
+                  includeDoseColumns={allocateIn.type === AllocateInType.Doses}
+                  itemId={item?.id ?? ''}
+                  itemVariantId={row.original.itemVariantId}
+                />
+              )}
+            </div>
+          );
+        },
       },
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
-        size: 120,
+        size: 100,
         columnType: ColumnType.Date,
       },
-      // {
-      //   accessorKey: 'vvmStatus',
-      //   header: t('label.vvm-status'),
-      //   Cell: ({ row }) => (
-      //     <VVMStatusInputCell
-      //       onChange={setVvmStatus}
-      //       selected={row.original.vvmStatus}
-      //     />
-      //   ),
-      //   size: 80,
-      //   // defaultHideOnMobile: true,
-      //   includeColumn:
-      //     prefs.manageVvmStatusForStock || prefs.sortByVvmStatusThenExpiry,
-      // },
+      {
+        accessorKey: 'vvmStatus',
+        header: t('label.vvm-status'),
+        Cell: ({ row }) => (
+          <VVMStatusSearchInput
+            onChange={(vvmStatus: VvmStatusFragment | null | undefined) => {
+              setVvmStatus(row.original.id, vvmStatus);
+            }}
+            selected={row.original.vvmStatus ?? null}
+          />
+        ),
+        size: 150,
+        defaultHideOnMobile: true,
+        includeColumn:
+          prefs.manageVvmStatusForStock || prefs.sortByVvmStatusThenExpiry,
+      },
       {
         id: 'campaign',
         header: t('label.campaign'),
@@ -254,12 +270,12 @@ export const OutboundLineEditTable = ({
       {
         accessorKey: 'location.code',
         header: t('label.location'),
+        size: 60,
       },
       {
         accessorKey: 'donor',
         header: t('label.donor'),
         accessorFn: rowData => rowData.donor?.name ?? UNDEFINED_STRING_VALUE,
-        // Cell: TooltipTextCell,
         defaultHideOnMobile: true,
         includeColumn: prefs.allowTrackingOfStockByDonor,
       },
@@ -268,6 +284,7 @@ export const OutboundLineEditTable = ({
         header: t('label.pack-sell-price'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
+        size: 100,
       },
       {
         id: 'foreignCurrencySellPricePerPack',
@@ -279,6 +296,7 @@ export const OutboundLineEditTable = ({
         header: t('label.fc-sell-price'),
         description: 'description.fc-sell-price',
         columnType: ColumnType.Currency,
+        size: 100,
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
         defaultHideOnMobile: true,
@@ -286,6 +304,8 @@ export const OutboundLineEditTable = ({
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        size: 80,
         defaultHideOnMobile: true,
       },
       ...(allocateIn.type === AllocateInType.Doses
@@ -297,6 +317,8 @@ export const OutboundLineEditTable = ({
                     unit,
                   })
                 : t('label.doses-per-unit'),
+              size: 100,
+              columnType: ColumnType.Number,
               defaultHideOnMobile: true,
             },
             {
@@ -308,7 +330,7 @@ export const OutboundLineEditTable = ({
             },
             {
               accessorKey: 'availablePacks',
-              header: t('label.available-in-doses'),
+              header: t('label.available-in-packs'),
               columnType: ColumnType.Number,
               accessorFn: rowData =>
                 rowData.location?.onHold || rowData.stockLineOnHold
@@ -317,31 +339,37 @@ export const OutboundLineEditTable = ({
             },
             {
               accessorKey: 'dosesIssued',
-              // Cell: DoseQuantityCell,
               header: t('label.doses-issued'),
-              setter: (
-                row: Partial<DraftStockOutLineFragment> & {
-                  id: string;
-                  // Extra field only in the context of this setter, based on key above
-                  dosesIssued?: number;
-                }
-              ) => {
-                const allocatedQuantity = allocate(
-                  row.id,
-                  row.dosesIssued ?? 0,
-                  {
-                    preventPartialPacks: true,
-                  }
-                );
-                return allocatedQuantity; // return to NumberInputCell to ensure value is correct
-              },
               accessorFn: rowData => getDoseQuantity(rowData),
+              size: 100,
+              Cell: ({ row, cell }) => {
+                return (
+                  <NumberInputCell
+                    cell={cell}
+                    updateFn={(value: number, row) => {
+                      const allocatedQuantity = allocate(
+                        row['id'],
+                        value ?? 0,
+                        {
+                          preventPartialPacks: true,
+                        }
+                      );
+                      return allocatedQuantity; // return to NumberInputCell to ensure value is correct
+                    }}
+                    max={QuantityUtils.packsToDoses(
+                      row.original.availablePacks,
+                      row.original
+                    )}
+                  />
+                );
+              },
             },
             // Can only issue in whole packs in Outbound Shipment, so we'll show the user
             {
               accessorKey: 'numberOfPacks',
-              header: t('label.pack-quantity-issued'),
-              // labelProps: { unit },
+              header: t('label.pack-quantity-issued', { unit }),
+              columnType: ColumnType.Number,
+              size: 80,
               defaultHideOnMobile: true,
             },
           ] as ColumnDef<DraftStockOutLineFragment>[])
@@ -350,14 +378,14 @@ export const OutboundLineEditTable = ({
               accessorKey: 'inStorePacks',
               header: t('label.in-store'),
               columnType: ColumnType.Number,
-              // width: 80,
+              size: 120,
               defaultHideOnMobile: true,
             },
             {
               id: 'availablePacks',
               header: t('label.available-in-packs'),
               columnType: ColumnType.Number,
-              // width: simplifiedTabletView ? 190 : 90,
+              size: simplifiedTabletView ? 190 : 120,
               accessorFn: rowData =>
                 rowData.location?.onHold || rowData.stockLineOnHold
                   ? 0
@@ -367,17 +395,18 @@ export const OutboundLineEditTable = ({
               accessorKey: 'numberOfPacks',
               header: t('label.pack-quantity-issued'),
               columnType: ColumnType.NumberInput,
-              // updateFn: (value: number, row: DraftStockOutLineFragment) =>
-              //   allocate(row.id, value, {
-              //     allocateInType: AllocateInType.Packs,
-              //   }),
+              updateFn: (value: number, row: DraftStockOutLineFragment) =>
+                allocate(row.id, value, {
+                  allocateInType: AllocateInType.Packs,
+                }),
+              size: 100,
             },
             {
               id: 'unitQuantity',
-              header: t('label.units-issued'),
-              // labelProps: { unit: pluralisedUnitName },
+              header: t('label.units-issued', { unit: pluralisedUnitName }),
               accessorFn: rowData => rowData.numberOfPacks * rowData.packSize,
-              // width: 90,
+              columnType: ColumnType.Number,
+              width: 90,
               defaultHideOnMobile: true,
             },
           ] as ColumnDef<DraftStockOutLineFragment>[])),
@@ -399,12 +428,6 @@ export const OutboundLineEditTable = ({
   useDisableVvmRows({ rows: lines, isVaccine: item?.isVaccine });
 
   // Null means we aren't using placeholder
-  if (!lines.length && placeholderQuantity === null)
-    return (
-      <Box sx={{ margin: 'auto' }}>
-        <Typography>{t('messages.no-stock-available')}</Typography>
-      </Box>
-    );
 
   let extraColumnOffset = 0;
   if (
@@ -450,6 +473,13 @@ export const OutboundLineEditTable = ({
       </Box>
     ),
   });
+
+  if (!lines.length && placeholderQuantity === null)
+    return (
+      <Box sx={{ margin: 'auto' }}>
+        <Typography>{t('messages.no-stock-available')}</Typography>
+      </Box>
+    );
 
   return (
     <Box style={{ width: '100%' }}>
