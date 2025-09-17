@@ -163,7 +163,7 @@ mod update {
             Err(UpdatePurchaseOrderLineInputError::CannotEditRequestedQuantity)
         );
 
-        // Cannot change adjusted quantity if the user does not have permission
+        // Cannot change adjusted quantity on a confirmed order if the user does not have permission
         user_permission = false;
 
         assert_eq!(
@@ -272,6 +272,7 @@ mod update {
             .unwrap();
 
         // Update the purchase order line
+        // The adjusted quantity will also update even without authorisation permissions
         let result = service
             .update_purchase_order_line(
                 &context,
@@ -281,6 +282,7 @@ mod update {
                     item_id: Some(mock_item_d().id.to_string()),
                     requested_pack_size: Some(10.0),
                     requested_number_of_units: Some(5.0),
+                    adjusted_number_of_units: Some(5.0),
                     ..Default::default()
                 },
                 None,
