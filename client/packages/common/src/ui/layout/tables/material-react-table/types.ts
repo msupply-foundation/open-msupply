@@ -19,6 +19,9 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
 
   align?: 'left' | 'center' | 'right';
   // overflow?: 'ellipsis' | 'wrap'; // TO-DO -- will only affect "dense" layout
+
+  /** Update method required for Input (editable) cells. */
+  updateFn?: (value: any, row: T) => void;
 };
 
 /** Use when you have `groupByField` enabled, to allow for typing of `subRows` */

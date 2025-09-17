@@ -18,6 +18,13 @@ import {
   useAuthContext,
   useSimpleMaterialTable,
   useFeatureFlags,
+  ColumnType,
+  Formatter,
+  useIntlUtils,
+  QuantityUtils,
+  NumericTextInput,
+  useDebounceCallback,
+  useBufferState,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import {
@@ -30,6 +37,7 @@ import {
   getAllocatedQuantity,
   canAutoAllocate,
   DraftStockOutLineFragment,
+  getDoseQuantity,
 } from '../../../StockOut';
 import { min } from 'lodash';
 import { useDisableVvmRows } from '../../../useDisableVvmRows';
@@ -140,6 +148,7 @@ export const OutboundLineEditTable = ({
   const tableStore = useTableStore();
   const prefs = usePreferences();
   const { store } = useAuthContext();
+  const { getPlural } = useIntlUtils();
 
   const {
     draftLines,
@@ -193,6 +202,9 @@ export const OutboundLineEditTable = ({
   const packSize =
     allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
 
+  const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
+  const pluralisedUnitName = getPlural(unit, 2);
+
   const mrtColumns = useMemo(() => {
     const cols: ColumnDef<DraftStockOutLineFragment>[] = [
       {
@@ -203,10 +215,7 @@ export const OutboundLineEditTable = ({
         Cell: ({ renderedCellValue }) => {
           return renderedCellValue ? '✓' : '';
         },
-        // Cell: ({ row, column }) => {
-        //   return <CheckCell rowData={row} column={column} />;
-        // },
-        // defaultHideOnMobile: true,
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'batch',
@@ -221,6 +230,7 @@ export const OutboundLineEditTable = ({
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
         size: 120,
+        columnType: ColumnType.Date,
       },
       // {
       //   accessorKey: 'vvmStatus',
@@ -256,7 +266,7 @@ export const OutboundLineEditTable = ({
       {
         accessorKey: 'sellPricePerPack',
         header: t('label.pack-sell-price'),
-        // Cell: CurrencyCell,
+        columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
       {
@@ -268,8 +278,7 @@ export const OutboundLineEditTable = ({
         },
         header: t('label.fc-sell-price'),
         description: 'description.fc-sell-price',
-        align: 'right',
-        // Cell: ForeignCurrencyCell,
+        columnType: ColumnType.Currency,
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
         defaultHideOnMobile: true,
@@ -279,6 +288,99 @@ export const OutboundLineEditTable = ({
         header: t('label.pack-size'),
         defaultHideOnMobile: true,
       },
+      ...(allocateIn.type === AllocateInType.Doses
+        ? ([
+            {
+              accessorKey: 'dosesPerUnit',
+              header: unit
+                ? t('label.doses-per-unit-name', {
+                    unit,
+                  })
+                : t('label.doses-per-unit'),
+              defaultHideOnMobile: true,
+            },
+            {
+              id: 'inStorePacks',
+              header: t('label.in-store-doses'),
+              columnType: ColumnType.Number,
+              accessorFn: rowData =>
+                QuantityUtils.packsToDoses(rowData.inStorePacks, rowData),
+            },
+            {
+              accessorKey: 'availablePacks',
+              header: t('label.available-in-doses'),
+              columnType: ColumnType.Number,
+              accessorFn: rowData =>
+                rowData.location?.onHold || rowData.stockLineOnHold
+                  ? 0
+                  : QuantityUtils.packsToDoses(rowData.availablePacks, rowData),
+            },
+            {
+              accessorKey: 'dosesIssued',
+              // Cell: DoseQuantityCell,
+              header: t('label.doses-issued'),
+              setter: (
+                row: Partial<DraftStockOutLineFragment> & {
+                  id: string;
+                  // Extra field only in the context of this setter, based on key above
+                  dosesIssued?: number;
+                }
+              ) => {
+                const allocatedQuantity = allocate(
+                  row.id,
+                  row.dosesIssued ?? 0,
+                  {
+                    preventPartialPacks: true,
+                  }
+                );
+                return allocatedQuantity; // return to NumberInputCell to ensure value is correct
+              },
+              accessorFn: rowData => getDoseQuantity(rowData),
+            },
+            // Can only issue in whole packs in Outbound Shipment, so we'll show the user
+            {
+              accessorKey: 'numberOfPacks',
+              header: t('label.pack-quantity-issued'),
+              // labelProps: { unit },
+              defaultHideOnMobile: true,
+            },
+          ] as ColumnDef<DraftStockOutLineFragment>[])
+        : ([
+            {
+              accessorKey: 'inStorePacks',
+              header: t('label.in-store'),
+              columnType: ColumnType.Number,
+              // width: 80,
+              defaultHideOnMobile: true,
+            },
+            {
+              id: 'availablePacks',
+              header: t('label.available-in-packs'),
+              columnType: ColumnType.Number,
+              // width: simplifiedTabletView ? 190 : 90,
+              accessorFn: rowData =>
+                rowData.location?.onHold || rowData.stockLineOnHold
+                  ? 0
+                  : rowData.availablePacks,
+            },
+            {
+              accessorKey: 'numberOfPacks',
+              header: t('label.pack-quantity-issued'),
+              columnType: ColumnType.NumberInput,
+              // updateFn: (value: number, row: DraftStockOutLineFragment) =>
+              //   allocate(row.id, value, {
+              //     allocateInType: AllocateInType.Packs,
+              //   }),
+            },
+            {
+              id: 'unitQuantity',
+              header: t('label.units-issued'),
+              // labelProps: { unit: pluralisedUnitName },
+              accessorFn: rowData => rowData.numberOfPacks * rowData.packSize,
+              // width: 90,
+              defaultHideOnMobile: true,
+            },
+          ] as ColumnDef<DraftStockOutLineFragment>[])),
     ];
     return cols;
   }, []);
