@@ -21,6 +21,7 @@ interface DocumentsProps {
   tableName: string;
   documents: SyncFileReferenceNode[];
   noDataElement?: JSX.Element;
+  onUploadDocument?: () => void;
 }
 
 export const DocumentsTable = ({
@@ -28,6 +29,7 @@ export const DocumentsTable = ({
   tableName,
   documents,
   noDataElement,
+  onUploadDocument,
 }: DocumentsProps): ReactElement => {
   const t = useTranslation();
 
@@ -54,7 +56,11 @@ export const DocumentsTable = ({
         data={documents}
         noDataElement={
           noDataElement ?? (
-            <NothingHere body={t('messages.no-documents-uploaded')} />
+            <NothingHere
+              body={t('messages.no-documents-uploaded')}
+              onCreate={onUploadDocument}
+              buttonText={t('label.upload-document')}
+            />
           )
         }
       />
