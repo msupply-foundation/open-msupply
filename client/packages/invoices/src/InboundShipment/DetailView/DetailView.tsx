@@ -60,6 +60,7 @@ const DetailViewInner = () => {
   const navigate = useNavigate();
   const { info } = useNotification();
   const { clearSelected } = useTableStore();
+  const { urlQuery } = useUrlQuery();
 
   const uploadDocumentController = useToggle();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
@@ -144,7 +145,6 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
-  const { urlQuery } = useUrlQuery();
   const tab = urlQuery['tab'];
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
