@@ -16,6 +16,7 @@ import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
 import { useTableFiltering } from './useTableFiltering';
 import { getTableDisplayOptions } from './getTableDisplayOptions';
+import { useUrlSortManagement } from './useUrlSortManagement';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -27,6 +28,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   getIsRestrictedRow?: (row: T) => boolean;
   groupByField?: string;
   columns: ColumnDef<T>[];
+  initialSort?: { key: string; dir: 'asc' | 'desc' };
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -42,6 +44,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   enableRowSelection = true,
   enableColumnResizing = true,
   manualFiltering = false,
+  initialSort,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -53,6 +56,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
   // Filter needs to be applied after columns are processed
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(columns);
+  const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
   const initialState = useRef(
     getSavedTableState<T>(tableId, defaultHiddenColumns, defaultColumnPinning)
@@ -86,6 +90,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     manualFiltering,
     onColumnFiltersChange,
+    onSortingChange,
 
     initialState: {
       ...initialState.current,
@@ -103,6 +108,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       showProgressBars: isLoading,
       columnOrder,
       columnFilters,
+      sorting,
       ...state,
     },
     onColumnOrderChange: setColumnOrder,
