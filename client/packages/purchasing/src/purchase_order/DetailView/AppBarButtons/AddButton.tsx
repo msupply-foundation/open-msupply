@@ -88,9 +88,6 @@ export const AddButton = ({
       case 'upload-document':
         uploadDocumentController.toggleOn();
         break;
-      case 'upload-document':
-        uploadDocumentController.toggleOn();
-        break;
       case 'import-from-csv':
         handleUploadPurchaseOrderLines();
         break;

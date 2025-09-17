@@ -21,7 +21,7 @@ interface DocumentsProps {
   tableName: string;
   documents: SyncFileReferenceFragment[];
   noDataElement?: JSX.Element;
-  onUploadDocument?: () => void;
+  openUploadModal?: () => void;
   invalidateQueries?: () => void;
 }
 
@@ -30,7 +30,7 @@ export const DocumentsTable = ({
   tableName,
   documents,
   noDataElement,
-  onUploadDocument,
+  openUploadModal,
   invalidateQueries,
 }: DocumentsProps): ReactElement => {
   const t = useTranslation();
@@ -60,7 +60,7 @@ export const DocumentsTable = ({
           noDataElement ?? (
             <NothingHere
               body={t('messages.no-documents-uploaded')}
-              onCreate={onUploadDocument}
+              onCreate={openUploadModal}
               buttonText={t('label.upload-document')}
             />
           )

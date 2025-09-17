@@ -14,7 +14,7 @@ interface AddButtonProps {
   requisitionId: string;
   invoice: InboundFragment | undefined;
   onAddItem: (scannedBarcode?: ScannedBarcode) => void;
-  onUploadDocument: () => void;
+  openUploadModal: () => void;
   /** Disable the whole control */
   disable: boolean;
   disableAddFromMasterListButton: boolean;
@@ -25,7 +25,7 @@ export const AddButton = ({
   requisitionId,
   invoice,
   onAddItem,
-  onUploadDocument,
+  openUploadModal,
   disable,
   disableAddFromMasterListButton,
   disableAddFromInternalOrderButton,
@@ -96,7 +96,7 @@ export const AddButton = ({
         internalOrderModalController.toggleOn();
         break;
       case 'upload-document':
-        onUploadDocument();
+        openUploadModal();
         break;
     }
   };
