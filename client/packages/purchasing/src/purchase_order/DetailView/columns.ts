@@ -88,14 +88,6 @@ export const usePurchaseOrderColumns = () => {
       getSortValue: rowData => rowData.adjustedNumberOfUnits ?? 0,
     },
     {
-      key: 'stockOnHand',
-      label: 'label.stock-on-hand',
-      align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.item.stats.stockOnHand,
-      getSortValue: rowData => rowData.item.stats.stockOnHand ?? 0,
-      defaultHideOnMobile: true,
-    },
-    {
       key: 'totalReceived',
       label: 'label.total-received',
       align: ColumnAlign.Right,
@@ -103,6 +95,14 @@ export const usePurchaseOrderColumns = () => {
       // TODO: GOOD RECEIVED CALC
       // rowData.totalReceived,
       // getSortValue: rowData =>  //rowData.totalReceived ?? 0,
+    },
+    {
+      key: 'stockOnHand',
+      label: 'label.soh',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.item.stats.stockOnHand,
+      getSortValue: rowData => rowData.item.stats.stockOnHand ?? 0,
+      defaultHideOnMobile: true,
     },
     {
       key: 'totalCost',
