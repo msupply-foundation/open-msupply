@@ -9,7 +9,7 @@ import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
 import { useTableFiltering } from './useTableFiltering';
-import { getTableDisplayOptions } from './getTableDisplayOptions';
+import { useTableDisplayOptions } from './useTableDisplayOptions';
 import { useUrlSortManagement } from './useUrlSortManagement';
 import { useColumnDensity } from './tableState/useColumnDensity';
 import { useColumnOrder } from './tableState/useColumnOrder';
@@ -73,6 +73,24 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     groupByField
   );
 
+  const resetTableState = () => {
+    table.setColumnVisibility(columnVisibility.initial);
+    table.setDensity(density.initial);
+
+    table.resetColumnOrder();
+    table.resetColumnPinning();
+    table.resetColumnSizing();
+    table.resetSorting();
+    table.resetColumnFilters();
+  };
+
+  const displayOptions = useTableDisplayOptions(
+    resetTableState,
+    onRowClick,
+    getIsPlaceholderRow,
+    getIsRestrictedRow
+  );
+
   const table = useMaterialReactTable<T>({
     columns,
 
@@ -119,12 +137,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onColumnPinningChange: columnPinning.update,
     onColumnOrderChange: columnOrder.update,
 
-    ...getTableDisplayOptions(
-      onRowClick,
-      getIsPlaceholderRow,
-      getIsRestrictedRow
-    ),
-
+    ...displayOptions,
     ...tableOptions,
   });
 

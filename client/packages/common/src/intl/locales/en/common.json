@@ -1299,6 +1299,7 @@
   "label.requisition": "Requisition",
   "label.requisition-general": "General",
   "label.requisition-program": "Program",
+  "label.reset-table-defaults": "Reset table to default display",
   "label.revert-existing-transaction": "Revert existing stock transaction",
   "label.review": "Review",
   "label.rnr-adjustments": "Adjustments +/-",
