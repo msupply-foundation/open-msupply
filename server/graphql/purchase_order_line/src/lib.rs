@@ -2,7 +2,6 @@ mod purchase_order_line_queries;
 use crate::mutations::{
     delete::{delete_purchase_order_lines, DeleteResponseWithId},
     insert::{insert_purchase_order_line, InsertInput, InsertResponse},
-    insert_from_csv::{insert_purchase_order_line_from_csv, InsertFromCSVInput},
     update::{update_purchase_order_line, UpdateInput, UpdateResponse},
 };
 use async_graphql::{Context, Object, Result};
@@ -49,15 +48,6 @@ impl PurchaseOrderLineMutations {
         input: InsertInput,
     ) -> Result<InsertResponse> {
         insert_purchase_order_line(ctx, &store_id, input)
-    }
-
-    pub async fn insert_purchase_order_line_from_csv(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertFromCSVInput,
-    ) -> Result<InsertResponse> {
-        insert_purchase_order_line_from_csv(ctx, &store_id, input)
     }
 
     pub async fn update_purchase_order_line(

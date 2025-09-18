@@ -1,3 +1,5 @@
+use crate::types::SyncFileReferenceConnector;
+
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
 use super::{
@@ -11,7 +13,7 @@ use dataloader::DataLoader;
 use graphql_core::loader::{
     DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput,
     NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
-    ProgramByIdLoader, UserLoader,
+    ProgramByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -494,6 +496,16 @@ impl InvoiceNode {
             .await?;
 
         Ok(result.map(NameNode::from_domain))
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let invoice_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(invoice_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
     }
 }
 

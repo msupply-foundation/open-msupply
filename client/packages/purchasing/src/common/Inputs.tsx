@@ -135,7 +135,7 @@ export const useInputComponents = (
   );
 };
 
-const NumInputRow = ({
+export const NumInputRow = ({
   label,
   value,
   isVerticalScreen,

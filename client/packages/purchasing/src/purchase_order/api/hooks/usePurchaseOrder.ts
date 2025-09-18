@@ -31,6 +31,7 @@ export type PurchaseOrderLineInsertFromCsvInput = Partial<
 
 export const usePurchaseOrder = (id?: string) => {
   const { purchaseOrderId = id } = useParams();
+  const { queryClient } = usePurchaseOrderGraphQL();
 
   // QUERY
   const { data, isLoading, isError } = useGetById(purchaseOrderId);
@@ -99,6 +100,7 @@ export const usePurchaseOrder = (id?: string) => {
     isDisabled,
     draft,
     handleChange,
+    invalidateQueries: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
   };
 };
 

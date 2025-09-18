@@ -39,7 +39,7 @@ mod update {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: mock_purchase_order_a().id.to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id_or_code: mock_item_a().id.to_string(),
                     requested_pack_size: Some(2.0),
                     ..Default::default()
                 },
@@ -73,7 +73,7 @@ mod update {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_2".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id_or_code: mock_item_a().id.to_string(),
                     requested_pack_size: Some(5.0),
                     ..Default::default()
                 },
@@ -264,7 +264,7 @@ mod update {
                 InsertPurchaseOrderLineInput {
                     id: "purchase_order_line_id_1".to_string(),
                     purchase_order_id: "test_purchase_order_a".to_string(),
-                    item_id: mock_item_a().id.to_string(),
+                    item_id_or_code: mock_item_a().id.to_string(),
                     requested_pack_size: Some(5.0),
                     ..Default::default()
                 },

@@ -1,5 +1,5 @@
-// Mock useTranslation is already defined above with jest.mock, so no import needed here
-import { ImportRow } from './PurchaseOrderLineImportModal';
+import { PurchaseOrderLineStatusNode } from '@common/types';
+import { ImportRow } from './utils';
 import { getImportHelpers, ParsedLine } from './utils';
 
 describe('testCombinationHelperFunctions', () => {
@@ -10,6 +10,17 @@ describe('testCombinationHelperFunctions', () => {
         itemCode: 'A123',
         requestedPackSize: 10,
         requestedNumberOfUnits: 100,
+        purchaseOrderId: '',
+        status: PurchaseOrderLineStatusNode.New,
+        unit: '',
+        supplierItemCode: '',
+        pricePerUnitBeforeDiscount: 0,
+        discountPercentage: 0,
+        pricePerUnitAfterDiscount: 0,
+        requestedDeliveryDate: '',
+        expectedDeliveryDate: '',
+        comment: '',
+        note: '',
         errorMessage: '',
         warningMessage: '',
       },
@@ -18,6 +29,17 @@ describe('testCombinationHelperFunctions', () => {
         itemCode: 'B456',
         requestedPackSize: 20,
         requestedNumberOfUnits: 200,
+        purchaseOrderId: '',
+        status: PurchaseOrderLineStatusNode.New,
+        unit: '',
+        supplierItemCode: '',
+        pricePerUnitBeforeDiscount: 0,
+        discountPercentage: 0,
+        pricePerUnitAfterDiscount: 0,
+        requestedDeliveryDate: '',
+        expectedDeliveryDate: '',
+        comment: '',
+        note: '',
         errorMessage: '',
         warningMessage: '',
       },
@@ -64,11 +86,5 @@ describe('testCombinationHelperFunctions', () => {
     ]);
 
     expect(rowErrors.length).toBe(1);
-
-    // expect(true).toBe(false);
-  });
-
-  it('end to end combination test with formatter', () => {
-    expect(true).toBe(true);
   });
 });
