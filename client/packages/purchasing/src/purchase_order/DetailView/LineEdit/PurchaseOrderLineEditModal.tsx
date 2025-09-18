@@ -142,28 +142,9 @@ export const PurchaseOrderLineEditModal = ({
             onChangeItem={onChangeItem}
             lineCount={lines.length}
           />
-          <Box display="flex" pt={1} gap={1}>
-            <Box
-              sx={{
-                height: 10,
-                width: 10,
-              }}
-            />
-            <Typography
-              width={250}
-              fontSize={14}
-              style={{ textAlign: 'start' }}
-            >
-              {t('label.ordered-in-others')}
-            </Typography>
-            <Typography
-              fontWeight={800}
-              fontSize={14}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
+          <Box display="flex" ml={2} pt={1} gap={1}>
+            <Typography width={250}>{t('label.ordered-in-others')}:</Typography>
+            <Typography fontWeight={800}>
               {round(draft.unitsOrderedInOthers)}{' '}
               {getPlural(draft.unit ?? '', 2)}
             </Typography>

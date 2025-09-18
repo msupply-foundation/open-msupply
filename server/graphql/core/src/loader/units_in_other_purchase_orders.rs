@@ -40,7 +40,7 @@ impl Loader<String> for UnitsInOtherPurchaseOrdersLoader {
             )?;
 
             // TODO: Reduce any other units received in GRs
-            let units_in_other_orders = other_confirmed_orders
+            let units_in_other_orders: f64 = other_confirmed_orders
                 .iter()
                 .map(|l| {
                     l.purchase_order_line_row.requested_pack_size
@@ -50,6 +50,8 @@ impl Loader<String> for UnitsInOtherPurchaseOrdersLoader {
                 })
                 .sum();
 
+            // Prevent -0.0 from being returned
+            let units_in_other_orders = units_in_other_orders + 0.0;
             result.insert(line_row.id.clone(), units_in_other_orders);
         }
 
