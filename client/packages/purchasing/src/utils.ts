@@ -77,34 +77,6 @@ export const isPurchaseOrderDisabled = (
   return purchaseOrder.status === PurchaseOrderNodeStatus.Finalised;
 };
 
-export const isPurchaseOrderConfirmed = (
-  purchaseOrder: PurchaseOrderFragment
-): boolean => {
-  return (
-    purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
-  );
-};
-
-export const canEditOriginalQuantity = (
-  purchaseOrder: PurchaseOrderFragment
-): boolean => {
-  return (
-    purchaseOrder.status === PurchaseOrderNodeStatus.New ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.RequestApproval
-  );
-};
-
-export const canEditAdjustedQuantity = (
-  purchaseOrder: PurchaseOrderFragment
-): boolean => {
-  return (
-    purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Sent
-  );
-};
-
 export const canAddNewLines = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
