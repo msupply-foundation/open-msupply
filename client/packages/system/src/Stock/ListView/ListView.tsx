@@ -36,7 +36,7 @@ const StockListComponent: FC = () => {
     initialSort: { key: 'expiryDate', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
-      { key: 'itemCodeOrName' },
+      { key: 'search' },
       {
         key: 'location.code',
       },
