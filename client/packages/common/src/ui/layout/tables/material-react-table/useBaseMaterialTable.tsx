@@ -1,15 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import {
-  getDefaultColumnOrderIds,
   MRT_RowData,
-  MRT_StatefulTableOptions,
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
-import {
-  getSavedTableState,
-  useTableLocalStorage,
-} from './useTableLocalStorage';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
@@ -17,6 +11,11 @@ import { getGroupedRows } from './utils';
 import { useTableFiltering } from './useTableFiltering';
 import { getTableDisplayOptions } from './getTableDisplayOptions';
 import { useUrlSortManagement } from './useUrlSortManagement';
+import { useColumnDensity } from './tableState/useColumnDensity';
+import { useColumnOrder } from './tableState/useColumnOrder';
+import { useColumnSizing } from './tableState/useColumnSizing';
+import { useColumnVisibility } from './tableState/useColumnVisibility';
+import { useColumnPinning } from './tableState/useColumnPinning';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -51,23 +50,27 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
-  const { columns, defaultHiddenColumns, defaultColumnPinning } =
-    useMaterialTableColumns(omsColumns);
+  const { columns } = useMaterialTableColumns(omsColumns);
 
   // Filter needs to be applied after columns are processed
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(columns);
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
-  const initialState = useRef(
-    getSavedTableState<T>(tableId, defaultHiddenColumns, defaultColumnPinning)
-  );
-  const [columnOrder, setColumnOrder] = useState(
-    initialState.current.columnOrder ?? []
-  );
-
   const processedData = useMemo(
     () => getGroupedRows(data, groupByField, t),
     [data, groupByField]
+  );
+
+  const density = useColumnDensity(tableId);
+  const columnSizing = useColumnSizing(tableId);
+  const columnVisibility = useColumnVisibility(tableId, columns);
+  const columnPinning = useColumnPinning(tableId, columns);
+  const columnOrder = useColumnOrder(
+    tableId,
+    columns,
+    enableRowSelection,
+    enableColumnResizing,
+    groupByField
   );
 
   const table = useMaterialReactTable<T>({
@@ -93,25 +96,28 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onSortingChange,
 
     initialState: {
-      ...initialState.current,
-
-      columnOrder: getDefaultColumnOrderIds({
-        columns,
-        state: {},
-        enableRowSelection, // adds `mrt-row-select`
-        layoutMode: enableColumnResizing ? 'grid-no-grow' : 'auto', // adds `mrt-row-spacer`
-        enableExpanding: !!groupByField, // adds `mrt-row-expand`
-        positionExpandColumn: 'first', // this is the default, required to be explicit here
-      } as MRT_StatefulTableOptions<T>),
+      density: density.initial,
+      columnSizing: columnSizing.initial,
+      columnVisibility: columnVisibility.initial,
+      columnPinning: columnPinning.initial,
+      columnOrder: columnOrder.initial,
     },
     state: {
       showProgressBars: isLoading,
-      columnOrder,
       columnFilters,
       sorting,
+      density: density.state,
+      columnSizing: columnSizing.state,
+      columnVisibility: columnVisibility.state,
+      columnPinning: columnPinning.state,
+      columnOrder: columnOrder.state,
       ...state,
     },
-    onColumnOrderChange: setColumnOrder,
+    onDensityChange: density.update,
+    onColumnSizingChange: columnSizing.update,
+    onColumnVisibilityChange: columnVisibility.update,
+    onColumnPinningChange: columnPinning.update,
+    onColumnOrderChange: columnOrder.update,
 
     ...getTableDisplayOptions(
       onRowClick,
@@ -121,8 +127,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     ...tableOptions,
   });
-
-  useTableLocalStorage(tableId, table);
 
   return table;
 };
