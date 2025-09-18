@@ -118,14 +118,14 @@ mod update {
             Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus)
         );
 
-        // CannotChangeStatus - to new from a confirmed purchase order
+        // CannotChangeStatus - to new from a sent purchase order
         purchase_order_service
             .update_purchase_order(
                 &context,
                 &mock_store_a().id.clone(),
                 UpdatePurchaseOrderInput {
                     id: "test_purchase_order_a".to_string(),
-                    status: Some(repository::PurchaseOrderStatus::Confirmed),
+                    status: Some(repository::PurchaseOrderStatus::Sent),
                     ..Default::default()
                 },
                 Some(user_permission),
