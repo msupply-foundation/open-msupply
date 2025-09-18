@@ -14,7 +14,7 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   /** When simplified mobile UI preference is enabled, hide the column by default for small devices. User can still unhide it in the table settings. Defaults to false */
   defaultHideOnMobile?: boolean;
 
-  // Make the column sticky to a side of the table. User can unpin */
+  /**  Make the column sticky to a side of the table. User can unpin */
   pin?: 'left' | 'right';
 
   align?: 'left' | 'center' | 'right';
