@@ -16,19 +16,24 @@ pub fn validate(
     store_id: &str,
     connection: &StorageConnection,
     user_has_auth_permission: Option<bool>,
-) -> Result<PurchaseOrder, UpdatePurchaseOrderError> {
+) -> Result<(PurchaseOrder, Option<PurchaseOrderStatus>), UpdatePurchaseOrderError> {
     let purchase_order = PurchaseOrderRepository::new(connection)
         .query_by_filter(PurchaseOrderFilter::new().id(EqualFilter::equal_to(&input.id)))?
         .pop()
         .ok_or(UpdatePurchaseOrderError::PurchaseOrderDoesNotExist)?;
 
-    // check user has permission to authorise purchase order, if authorisation is required
+    // Check auth is required before changing to Request Approval
+    if input.status == Some(PurchaseOrderStatus::RequestApproval) {
+        let requires_auth = check_requires_auth(connection, store_id)?;
+        if !requires_auth {
+            // If no authorisation required, return status Confirmed
+            return Ok((purchase_order, Some(PurchaseOrderStatus::Confirmed)));
+        }
+    }
+
+    // Check user has permission to authorise purchase order, if authorisation is required
     if input.status == Some(PurchaseOrderStatus::Confirmed) {
-        let requires_auth = AuthorisePurchaseOrder
-            .load(connection, Some(store_id.to_string()))
-            .map_err(|_| {
-                UpdatePurchaseOrderError::DatabaseError(repository::RepositoryError::NotFound)
-            })?;
+        let requires_auth = check_requires_auth(connection, store_id)?;
         if requires_auth && user_has_auth_permission != Some(true) {
             return Err(UpdatePurchaseOrderError::UserUnableToAuthorisePurchaseOrder);
         }
@@ -74,7 +79,7 @@ pub fn validate(
         }
     }
 
-    Ok(purchase_order)
+    Ok((purchase_order, None))
 }
 
 fn check_items_orderable(
@@ -101,4 +106,13 @@ fn check_items_orderable(
         return Ok(Some(non_orderable_items));
     }
     Ok(None)
+}
+
+fn check_requires_auth(
+    connection: &StorageConnection,
+    store_id: &str,
+) -> Result<bool, RepositoryError> {
+    AuthorisePurchaseOrder
+        .load(connection, Some(store_id.to_string()))
+        .map_err(|_| RepositoryError::NotFound)
 }

@@ -71,11 +71,16 @@ pub fn update_purchase_order(
     let purchase_order = ctx
         .connection
         .transaction_sync(|connection: &repository::StorageConnection| {
+            let (purchase_order, next_status) =
                 validate(&input, store_id, connection, user_has_auth_permission)?;
+            let mut purchase_order_input = input.clone();
+            if let Some(new_status) = next_status {
+                purchase_order_input.status = Some(new_status);
+            }
             let GenerateResult {
                 updated_order: updated_purchase_order,
                 updated_lines,
-            } = generate(connection, purchase_order, input)?;
+            } = generate(connection, purchase_order, purchase_order_input)?;
 
             let purchase_order_repository = PurchaseOrderRowRepository::new(connection);
             purchase_order_repository.upsert_one(&updated_purchase_order)?;
