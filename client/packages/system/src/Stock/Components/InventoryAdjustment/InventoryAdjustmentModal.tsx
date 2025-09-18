@@ -13,6 +13,7 @@ import {
   NumericTextDisplay,
   useAuthContext,
   StoreModeNodeType,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput } from '../../..';
@@ -104,6 +105,11 @@ export const InventoryAdjustmentModal = ({
                     isDispensary:
                       store?.storeMode === StoreModeNodeType.Dispensary,
                   })}
+                  fallbackType={
+                    isInventoryReduction
+                      ? ReasonOptionNodeType.NegativeInventoryAdjustment
+                      : ReasonOptionNodeType.PositiveInventoryAdjustment
+                  }
                   width={INPUT_WIDTH}
                 />
               </Box>
