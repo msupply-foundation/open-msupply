@@ -58,12 +58,12 @@ export const PricingSection = ({
     (freightCharge ?? 0);
 
   const handleSupplierDiscountChange = (value: number | undefined) => {
-    if (value == null || value === draft?.supplierDiscountPercentage) return;
-    onChange({ supplierDiscountPercentage: value });
+    if (value === draft?.supplierDiscountPercentage) return;
+    onChange({ supplierDiscountPercentage: value ?? 0 });
   };
 
   const handleSupplierDiscountAmountChange = (value: number | undefined) => {
-    if (value == null || value === draft?.supplierDiscountAmount) return;
+    if (value === draft?.supplierDiscountAmount) return;
     onChange({ supplierDiscountAmount: value });
   };
 
@@ -89,6 +89,7 @@ export const PricingSection = ({
             slotProps={slotProps}
             endAdornment="%"
             disabled={disabled}
+            decimalLimit={2}
           />
         </PanelRow>
         <PanelRow>
