@@ -21,7 +21,7 @@ use crate::mutations::errors::{
 pub struct InsertInput {
     pub id: String,
     pub purchase_order_id: String,
-    pub item_id: String,
+    pub item_id_or_code: String,
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
@@ -40,7 +40,7 @@ impl InsertInput {
         let InsertInput {
             id,
             purchase_order_id,
-            item_id,
+            item_id_or_code,
             requested_pack_size,
             requested_number_of_units,
             requested_delivery_date,
@@ -57,7 +57,7 @@ impl InsertInput {
         ServiceInput {
             id,
             purchase_order_id,
-            item_id,
+            item_id_or_code,
             requested_pack_size,
             requested_number_of_units,
             requested_delivery_date,
