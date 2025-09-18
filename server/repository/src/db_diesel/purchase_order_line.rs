@@ -103,7 +103,7 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                     apply_sort!(query, sort, purchase_order_line::expected_delivery_date);
                 }
                 PurchaseOrderLineSortField::PurchaseOrderNumber => {
-                    apply_sort_no_case!(query, sort, purchase_order::purchase_order_number);
+                    apply_sort!(query, sort, purchase_order::purchase_order_number);
                 }
             }
         } else {
