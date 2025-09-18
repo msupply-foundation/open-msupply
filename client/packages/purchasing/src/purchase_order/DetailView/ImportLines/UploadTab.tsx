@@ -12,11 +12,8 @@ import {
   useExportCSV,
   ImportPanel,
 } from '@openmsupply-client/common';
-import {} from '@openmsupply-client/system';
-import { ImportRow } from './PurchaseOrderLineImportModal';
-import * as PurchaseOrderLineImportModal from './PurchaseOrderLineImportModal';
 import { importPurchaseOrderLinesToCsv } from '../utils';
-import { getImportHelpers, ParsedLine } from './utils';
+import { getImportHelpers, ImportRow, ParsedLine } from './utils';
 
 interface UploadTabProps {
   setLines: Dispatch<SetStateAction<ImportRow[]>>;
@@ -24,8 +21,6 @@ interface UploadTabProps {
   setWarningMessage: (value: SetStateAction<string>) => void;
   onUploadComplete: () => void;
 }
-
-// introduce new interface to accommodate dynamic keys of parsed result
 
 export const UploadTab = ({
   tab,
@@ -37,7 +32,7 @@ export const UploadTab = ({
   const t = useTranslation();
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
-  const LineBuffer: PurchaseOrderLineImportModal.ImportRow[] = [];
+  const LineBuffer: ImportRow[] = [];
 
   const exportCSV = useExportCSV();
 
@@ -47,12 +42,100 @@ export const UploadTab = ({
         itemCode: t('label.code'),
         requestedPackSize: 0,
         requestedNumberOfUnits: 0,
+        unit: '',
+        supplierItemCode: '',
         pricePerUnitBeforeDiscount: 0,
+        discountPercentage: 0,
         pricePerUnitAfterDiscount: 0,
+        requestedDeliveryDate: '',
+        expectedDeliveryDate: '',
+        comment: '',
+        note: '',
       },
     ];
     const csv = importPurchaseOrderLinesToCsv(exampleRows, t);
     exportCSV(csv, t('filename.pol'));
+  };
+
+  const processRow = (row: ParsedLine, index: number, rows: ImportRow[]) => {
+    const { importRow, rowErrors, rowWarnings, addUniqueCombination, addCell } =
+      getImportHelpers(row, rows, index, t);
+
+    addUniqueCombination([
+      {
+        key: 'itemCode',
+        localeKey: 'label.code',
+      },
+      {
+        key: 'requestedPackSize',
+        localeKey: 'label.pack-size',
+        formatter: numString => parseFloat(numString),
+      },
+    ]);
+
+    addCell('requestedNumberOfUnits', 'label.requested', numString =>
+      parseFloat(numString)
+    );
+
+    addCell('unit', 'label.unit');
+
+    addCell('supplierItemCode', 'label.supplier-item-code');
+
+    addCell(
+      'pricePerUnitBeforeDiscount',
+      'label.price-per-unit-before-discount',
+      numString => parseFloat(numString)
+    );
+
+    addCell('discountPercentage', 'label.discount-percentage', numString =>
+      parseFloat(numString)
+    );
+
+    addCell(
+      'pricePerUnitAfterDiscount',
+      'label.price-per-unit-after-discount',
+      numString => parseFloat(numString)
+    );
+
+    addCell('requestedDeliveryDate', 'label.requested-delivery-date');
+
+    addCell('expectedDeliveryDate', 'label.expected-delivery-date');
+
+    addCell('comment', 'label.comment');
+
+    addCell('note', 'label.notes');
+
+    importRow.errorMessage = rowErrors.join(',');
+    importRow.warningMessage = rowWarnings.join(',');
+
+    return {
+      importRow,
+      hasErrors: rowErrors.length > 0,
+      hasWarnings: rowWarnings.length > 0,
+    };
+  };
+
+  const processUploadedDataChunk = (data: ParseResult<ParsedLine>) => {
+    if (!data.data || !Array.isArray(data.data)) {
+      setErrorMessage(t('messages.import-error'));
+      return;
+    }
+
+    const rows: ImportRow[] = [];
+    let hasErrors = false;
+    let hasWarnings = false;
+
+    data.data.forEach((row, index) => {
+      const result = processRow(row, index, rows);
+      rows.push(result.importRow);
+      hasErrors = hasErrors || result.hasErrors;
+      hasWarnings = hasWarnings || result.hasWarnings;
+    });
+
+    if (hasErrors) setErrorMessage(t('messages.import-error-on-upload'));
+    if (hasWarnings) setWarningMessage(t('messages.import-warning-on-upload'));
+
+    LineBuffer.push(...rows);
   };
 
   const csvImport = <T extends File>(files: T[]) => {
@@ -82,66 +165,6 @@ export const UploadTab = ({
     } else {
       error(t('messages.error-no-file-selected'))();
     }
-  };
-
-  const processUploadedDataChunk = (data: ParseResult<ParsedLine>) => {
-    if (!data.data || !Array.isArray(data.data)) {
-      setErrorMessage(t('messages.import-error'));
-    }
-
-    const rows: ImportRow[] = [];
-    let hasErrors = false;
-
-    data.data.forEach((row, index) => {
-      const {
-        importRow,
-        rowErrors,
-        rowWarnings,
-        addUniqueCombination,
-        addCell,
-      } = getImportHelpers(row, rows, index, t);
-
-      addUniqueCombination([
-        {
-          key: 'itemCode',
-          localeKey: 'label.code',
-        },
-        {
-          key: 'requestedPackSize',
-          localeKey: 'label.pack-size',
-          formatter: numString => parseFloat(numString),
-        },
-      ]);
-
-      addCell('requestedNumberOfUnits', 'label.requested', numString =>
-        parseFloat(numString)
-      );
-
-      addCell(
-        'pricePerUnitBeforeDiscount',
-        'label.price-per-unit-before-discount',
-        numString => parseFloat(numString)
-      );
-
-      addCell(
-        'pricePerUnitAfterDiscount',
-        'label.price-per-unit-after-discount',
-        numString => parseFloat(numString)
-      );
-
-      importRow.errorMessage = rowErrors.join(',');
-      importRow.warningMessage = rowWarnings.join(',');
-      hasErrors = hasErrors || rowErrors.length > 0;
-      const hasWarnings = rowWarnings.length > 0;
-      rows.push(importRow);
-      if (hasErrors) {
-        setErrorMessage(t('messages.import-error-on-upload'));
-      }
-      if (hasWarnings) {
-        setWarningMessage(t('messages.import-warning-on-upload'));
-      }
-    });
-    LineBuffer.push(...rows);
   };
 
   return (
