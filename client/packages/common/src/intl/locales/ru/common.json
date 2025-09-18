@@ -1532,6 +1532,7 @@
   "messages.no-related-documents": "Нет сопутствующих документов",
   "messages.no-repack-detail": "Выберите строку, чтобы просмотреть детали о переупаковке, или нажмите «Новая», чтобы создать новую переупаковку",
   "messages.no-repacks": "Эта линия запасов не была переупакована. Нажмите кнопку Новая, чтобы создать новую упаковку.",
+  "messages.no-requested-quantities": "There are currently no requested quantities",
   "messages.no-scanners-found": "Нет найденных сканеров",
   "messages.no-shipments-yet": "Пока не создано ни одной поставки.",
   "messages.no-status-logs": "Для этого актива не было создано ни одного статусного журнала. Нажмите кнопку 'Обновить статус', чтобы создать новый статусный журнал.",

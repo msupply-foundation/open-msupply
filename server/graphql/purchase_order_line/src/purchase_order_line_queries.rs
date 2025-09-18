@@ -135,10 +135,12 @@ impl PurchaseOrderLineFilterInput {
             status: self
                 .status
                 .map(|s| map_filter!(s, |t| PurchaseOrderLineStatus::from(t))),
+
             received_less_than_adjusted: self.received_less_than_adjusted,
             store_id: None,
             requested_pack_size: None,
             item_id: None,
+            purchase_order: None,
         }
     }
 }

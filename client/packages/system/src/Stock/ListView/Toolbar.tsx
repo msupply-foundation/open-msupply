@@ -28,9 +28,9 @@ export const Toolbar = () => {
           filters={[
             {
               type: 'text',
-              name: t('label.code-or-name'),
-              urlParameter: 'itemCodeOrName',
-              placeholder: t('placeholder.enter-an-item-code-or-name'),
+              name: t('messages.search'),
+              urlParameter: 'search',
+              placeholder: t('messages.search'),
               isDefault: true,
             },
             {

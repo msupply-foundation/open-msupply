@@ -101,10 +101,6 @@ const UIComponent = (props: ControlProps) => {
           optionKey="name"
           onChange={(_, newVal) => {
             if (!newVal) return;
-            if (newVal?.id === 'AllProgramsSelector') {
-              onChange(null);
-              return;
-            }
             newVal &&
               newVal.id !== program?.id &&
               onChange(newVal as ProgramFragment);
