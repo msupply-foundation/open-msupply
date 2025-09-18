@@ -53,7 +53,7 @@ export type PurchaseOrderFragment = {
   supplierAgent?: string | null;
   supplierDiscountAmount: number;
   supplierDiscountPercentage?: number | null;
-  lineTotalAfterDiscount: number;
+  orderTotalBeforeDiscount: number;
   orderTotalAfterDiscount: number;
   targetMonths?: number | null;
   confirmedDatetime?: string | null;
@@ -241,7 +241,7 @@ export type PurchaseOrderByIdQuery = {
         supplierAgent?: string | null;
         supplierDiscountAmount: number;
         supplierDiscountPercentage?: number | null;
-        lineTotalAfterDiscount: number;
+        orderTotalBeforeDiscount: number;
         orderTotalAfterDiscount: number;
         targetMonths?: number | null;
         confirmedDatetime?: string | null;
@@ -758,7 +758,7 @@ export const PurchaseOrderFragmentDoc = gql`
     supplierAgent
     supplierDiscountAmount
     supplierDiscountPercentage
-    lineTotalAfterDiscount
+    orderTotalBeforeDiscount
     orderTotalAfterDiscount
     targetMonths
     confirmedDatetime
