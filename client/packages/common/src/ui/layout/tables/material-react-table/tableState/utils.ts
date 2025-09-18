@@ -8,14 +8,14 @@ import {
 } from 'material-react-table';
 
 export interface ManagedTableState {
-  density: MRT_DensityState;
-  columnVisibility: MRT_VisibilityState;
-  columnPinning: MRT_ColumnPinningState;
-  columnOrder: MRT_ColumnOrderState;
-  columnSizing: MRT_ColumnSizingState;
+  density?: MRT_DensityState;
+  columnVisibility?: MRT_VisibilityState;
+  columnPinning?: MRT_ColumnPinningState;
+  columnOrder?: MRT_ColumnOrderState;
+  columnSizing?: MRT_ColumnSizingState;
 }
 
-export const getSavedState = (tableId: string): Partial<ManagedTableState> => {
+export const getSavedState = (tableId: string): ManagedTableState => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
   );
@@ -26,7 +26,7 @@ export const getSavedState = (tableId: string): Partial<ManagedTableState> => {
 
 export const updateSavedState = (
   tableId: string,
-  newState: Partial<ManagedTableState>
+  newState: ManagedTableState
 ) => {
   const savedData = getSavedState(tableId);
 
