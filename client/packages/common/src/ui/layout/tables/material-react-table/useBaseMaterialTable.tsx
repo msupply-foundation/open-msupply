@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   getDefaultColumnOrderIds,
   MRT_RowData,
@@ -7,21 +7,16 @@ import {
   useMaterialReactTable,
 } from 'material-react-table';
 import {
-  CheckboxCheckedIcon,
-  CheckboxEmptyIcon,
-  CheckboxIndeterminateIcon,
-} from '@common/icons';
-import {
   getSavedTableState,
-  // resetSavedTableState,
   useTableLocalStorage,
 } from './useTableLocalStorage';
 import { useIntlUtils, useTranslation } from '@common/intl';
-import { MenuItem, Typography } from '@mui/material';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
-import { useManualTableFilters } from './useManualTableFilters';
+import { useTableFiltering } from './useTableFiltering';
+import { getTableDisplayOptions } from './getTableDisplayOptions';
+import { useUrlSortManagement } from './useUrlSortManagement';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -33,6 +28,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   getIsRestrictedRow?: (row: T) => boolean;
   groupByField?: string;
   columns: ColumnDef<T>[];
+  initialSort?: { key: string; dir: 'asc' | 'desc' };
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -40,14 +36,15 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   state,
   isLoading,
   onRowClick,
-  getIsPlaceholderRow = () => false,
-  getIsRestrictedRow = () => false,
+  getIsPlaceholderRow,
+  getIsRestrictedRow,
   columns: omsColumns,
   data,
   groupByField,
   enableRowSelection = true,
   enableColumnResizing = true,
   manualFiltering = false,
+  initialSort,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -57,11 +54,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { columns, defaultHiddenColumns, defaultColumnPinning } =
     useMaterialTableColumns(omsColumns);
 
-  // Needs to be applied after columns are processed
-  const { filterState, filterHandlers } = useManualTableFilters(
-    manualFiltering,
-    columns
-  );
+  // Filter needs to be applied after columns are processed
+  const { columnFilters, onColumnFiltersChange } = useTableFiltering(columns);
+  const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
   const initialState = useRef(
     getSavedTableState<T>(tableId, defaultHiddenColumns, defaultColumnPinning)
@@ -94,7 +89,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableExpanding: !!groupByField,
 
     manualFiltering,
-    ...filterHandlers,
+    onColumnFiltersChange,
+    onSortingChange,
 
     initialState: {
       ...initialState.current,
@@ -111,172 +107,17 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     state: {
       showProgressBars: isLoading,
       columnOrder,
-      ...filterState,
+      columnFilters,
+      sorting,
       ...state,
     },
     onColumnOrderChange: setColumnOrder,
 
-    renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
-      const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
-
-      return [
-        <MenuItem
-          key="column-description"
-          disabled // just for display, not clickable
-          sx={{
-            '&.Mui-disabled': { opacity: 1 }, // but remove the greyed out look
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-          }}
-          divider
-        >
-          <Typography fontWeight="bold">{header}</Typography>
-          {description}
-        </MenuItem>,
-
-        ...internalColumnMenuItems,
-      ];
-    },
-
-    // Styling
-    muiTablePaperProps: {
-      sx: { width: '100%', display: 'flex', flexDirection: 'column' },
-    },
-    muiTableProps: {
-      // Need to apply this here so that relative sizes (ems, %) within table
-      // are correct
-      sx: theme => ({ fontSize: theme.typography.body1.fontSize }),
-    },
-
-    // todo: hide sort icon when not sorting by this column
-    // todo: add tooltip over column name
-    // todo: ability to not show column name (but still give it a header label for column management)
-    muiTableHeadCellProps: ({ column, table }) => ({
-      sx: {
-        fontWeight: 600,
-        fontSize: table.getState().density !== 'spacious' ? '0.9em' : '1em',
-        lineHeight: 1.2,
-        verticalAlign: 'bottom',
-        justifyContent: 'space-between',
-        '& .Mui-TableHeadCell-Content-Actions': {
-          '& svg': { fontSize: '2em' },
-        },
-        // Allow date range filters to wrap if column is too narrow
-        '& .MuiCollapse-wrapperInner > div': {
-          display: 'flex',
-          flexWrap: 'wrap',
-          // Date picker should never need to be wider than 170px
-          '& .MuiPickersTextField-root': { width: '170px' },
-        },
-        button:
-          column.id === 'mrt-row-expand'
-            ? {
-                rotate: table.getIsAllRowsExpanded()
-                  ? '180deg'
-                  : !table.getIsSomeRowsExpanded()
-                    ? '-90deg'
-                    : undefined,
-              }
-            : undefined,
-        // For Filter inputs -- add additional classes for other filter types as
-        // required
-        '& .MuiInputBase-input, & .MuiPickersInputBase-root': {
-          fontSize:
-            table.getState().density === 'compact' ? '0.90em' : '0.95em',
-        },
-      },
-    }),
-    muiTableBodyCellProps: ({ cell, row, table }) => ({
-      sx: {
-        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
-        fontWeight: 400,
-        color: getIsPlaceholderRow(row.original)
-          ? 'secondary.light'
-          : getIsRestrictedRow(row.original)
-            ? 'gray.main'
-            : undefined,
-
-        ...(cell.column.id === 'mrt-row-expand' && {
-          // The expand chevron is rotated incorrectly by default (in terms of
-          // consistency with other Accordion/Expando UI elements in the app)
-          button: {
-            rotate: row.getIsExpanded() ? '180deg' : '-90deg',
-          },
-          // Hide the icon when there's nothing to expand
-          '& button.Mui-disabled': {
-            color: !row.getCanExpand() ? 'transparent' : undefined,
-          },
-        }),
-        padding:
-          table.getState().density === 'spacious'
-            ? '0.7rem'
-            : table.getState().density === 'comfortable'
-              ? '0.35rem 0.5rem'
-              : undefined, // default for "compact",
-
-        // Indent "sub-rows" when expanded
-        paddingLeft:
-          row.original?.['isSubRow'] && cell.column.id !== 'mrt-row-select'
-            ? '2em'
-            : undefined,
-      },
-    }),
-
-    muiTopToolbarProps: {
-      sx: { height: '60px' }, // Prevent slight jump when selecting rows
-    },
-
-    muiSelectAllCheckboxProps: {
-      color: 'outline',
-      size: 'small',
-      icon: <CheckboxEmptyIcon />,
-      checkedIcon: <CheckboxCheckedIcon />,
-      indeterminateIcon: <CheckboxIndeterminateIcon />,
-    },
-    muiSelectCheckboxProps: {
-      color: 'outline',
-      size: 'small',
-      icon: <CheckboxEmptyIcon />,
-      checkedIcon: <CheckboxCheckedIcon />,
-      indeterminateIcon: <CheckboxIndeterminateIcon />,
-    },
-    muiToolbarAlertBannerProps: {
-      sx: { backgroundColor: 'unset' },
-    },
-    muiTableBodyRowProps: ({ row }) => {
-      return {
-        onClick: () => {
-          if (onRowClick) onRowClick(row.original);
-        },
-        sx: {
-          '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
-          backgroundColor: row.original['isSubRow']
-            ? 'background.secondary'
-            : 'inherit',
-          fontStyle: row.getCanExpand() ? 'italic' : 'normal',
-          cursor: onRowClick ? 'pointer' : 'default',
-        },
-      };
-    },
-
-    // TO-DO: Add a "reset all" button
-    // renderToolbarInternalActions: ({ table }) => {
-    //   return (
-    //     <>
-    //       <button
-    //         onClick={() => {
-    //           console.log('Custom action clicked');
-    //           resetSavedTableState(tableId);
-    //           table.resetColumnOrder();
-    //         }}
-    //       >
-    //         Custom Action
-    //       </button>
-    //       <MRT_ShowHideColumnsButton table={table} />
-    //       <MRT_ToggleFullScreenButton table={table} />{' '}
-    //     </>
-    //   );
-    // },
+    ...getTableDisplayOptions(
+      onRowClick,
+      getIsPlaceholderRow,
+      getIsRestrictedRow
+    ),
 
     ...tableOptions,
   });

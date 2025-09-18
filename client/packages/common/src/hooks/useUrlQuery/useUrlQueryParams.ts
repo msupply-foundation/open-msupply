@@ -65,6 +65,7 @@ export const useUrlQueryParams = ({
     skipParse,
   });
 
+  // Set initial sort on mount
   useEffect(() => {
     if (!initialSort) return;
 
@@ -73,7 +74,7 @@ export const useUrlQueryParams = ({
 
     const { key: sort, dir } = initialSort;
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
-  }, [initialSort, updateQuery, urlQuery]);
+  }, []);
 
   const updateSortQuery = useCallback(
     (sort: string, dir: 'desc' | 'asc') => {
@@ -81,6 +82,8 @@ export const useUrlQueryParams = ({
     },
     [updateQuery]
   );
+
+  const clearSort = () => updateQuery({ sort: undefined, dir: undefined });
 
   const updatePaginationQuery = (
     page: number,
@@ -159,7 +162,7 @@ export const useUrlQueryParams = ({
     offset: page * pageSize,
     first: pageSize,
     sortBy: {
-      key: urlQuery['sort'] ?? initialSort?.key ?? '',
+      key: urlQuery['sort'] ?? '',
       direction: urlQuery['dir'] ?? 'asc',
       isDesc: urlQuery['dir'] === 'desc',
     } as SortBy<unknown>,
@@ -171,6 +174,7 @@ export const useUrlQueryParams = ({
     queryParams,
     urlQuery,
     updateSortQuery,
+    clearSort,
     updatePaginationQuery,
     updateFilterQuery,
     filter,
