@@ -6,7 +6,7 @@ import { useToggle } from '@common/hooks';
 import { PlusCircleIcon } from '@common/icons';
 import { PurchaseOrderFragment } from '../../api';
 import { UserPermission } from '@common/types';
-import { PurchaseOrderLineImportModal } from '../ImportLines/PurchaseOrderLineImportModal';
+import { LineImportModal } from '../ImportLines/LineImportModal';
 import {
   NonEmptyArray,
   useCallbackWithPermission,
@@ -131,7 +131,7 @@ export const AddButton = ({
         />
       )}
       {importModalController.isOn && (
-        <PurchaseOrderLineImportModal
+        <LineImportModal
           isOpen={importModalController.isOn}
           onClose={importModalController.toggleOff}
         />
