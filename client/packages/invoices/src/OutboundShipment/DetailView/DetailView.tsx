@@ -103,12 +103,14 @@ const DetailViewInner = () => {
         size: 120,
         pin: 'left',
         enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         accessorKey: 'itemName',
         header: t('label.name'),
         size: 400,
         enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         accessorKey: 'batch',
@@ -116,11 +118,14 @@ const DetailViewInner = () => {
         defaultHideOnMobile: true,
       },
       {
-        accessorKey: 'expiryDate',
+        id: 'expiryDate',
+        // expiryDate is a string - use accessorFn to convert to Date object for sort and filtering
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         id: 'vvmStatus',
