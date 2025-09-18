@@ -1,4 +1,8 @@
-use repository::{ EqualFilter, Item, ItemFilter, ItemRepository, ItemSort, Pagination, PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager
+use std::collections::HashMap;
+
+use repository::{
+    EqualFilter, Item, ItemFilter, ItemRepository, ItemSort, Pagination, PaginationOption,
+    RepositoryError, StorageConnection, StorageConnectionManager,
 };
 
 use crate::{
@@ -76,32 +80,42 @@ pub fn get_item_ids_by_mos(
             PluginOrRepositoryError::RepositoryError(err) => ListError::DatabaseError(err),
         })?;
 
-        let item_ids_filtered_by_mos: Vec<String> = item_stats.into_iter().filter_map(|(k, v)| {
-            get_months_of_stock_on_hand(v)
-                .filter(|&mos| {
-                    println!("key in question: {}", k);
-                    let mut include = true;
-                    if let Some(min_mos) = min_months_of_stock {
-                        // include if it has more than the min months of stock
-                        include &= (mos >= min_mos);
-                    }
-                    if let Some(max_mos) = max_months_of_stock {
-                        // include if it has less than the max months of stock
-                        include &= (mos <= max_mos);
-                    }
-                    println!("included? {}", include);
-                    include
-                })
-                .map(|_| k)
-        })
-        .collect();
+    let item_ids_filtered_by_mos: Vec<String> =
+        get_items_ids_for_months_of_stock(item_stats, min_months_of_stock, max_months_of_stock);
 
     Ok(item_ids_filtered_by_mos)
 }
 
-pub fn get_months_of_stock_on_hand(item_stats: ItemStats) -> Option<f64> {
-    (item_stats.average_monthly_consumption != 0.0)
-        .then(|| item_stats.total_stock_on_hand / item_stats.average_monthly_consumption)
+pub fn get_months_of_stock_on_hand(item_stats: ItemStats) -> f64 {
+    if item_stats.average_monthly_consumption == 0.0 {
+        return 0.0;
+    }
+    item_stats.total_stock_on_hand / item_stats.average_monthly_consumption
+}
+
+pub fn get_items_ids_for_months_of_stock(
+    item_stats: HashMap<String, ItemStats>,
+    min_months_of_stock: Option<f64>,
+    max_months_of_stock: Option<f64>,
+) -> Vec<String> {
+    item_stats
+        .into_iter()
+        .filter_map(|(k, v)| {
+            let mos = get_months_of_stock_on_hand(v);
+
+            let mut include = true;
+            if let Some(min_mos) = min_months_of_stock {
+                // include if it has more than the min months of stock
+                include &= mos >= min_mos;
+            }
+            if let Some(max_mos) = max_months_of_stock {
+                // include if it has less than the max months of stock
+                include &= mos <= max_mos;
+            }
+
+            include.then(|| k)
+        })
+        .collect()
 }
 
 pub fn check_item_exists(
@@ -127,4 +141,208 @@ pub fn get_item(
             Some(store_id),
         )?
         .pop())
+}
+
+#[cfg(test)]
+mod test {
+    mod test_get_items_ids_for_months_of_stock {
+        use std::collections::HashMap;
+
+        use crate::{item::get_items_ids_for_months_of_stock, item_stats::ItemStats};
+
+        #[test]
+        fn includes_items_with_0_amc() {
+            let min_months_of_stock = None;
+            let max_months_of_stock = None;
+            let mut item_stats = HashMap::new();
+
+            item_stats.insert(
+                "item_1".to_string(),
+                ItemStats {
+                    total_consumption: 0.0,
+                    average_monthly_consumption: 0.0,
+                    ..Default::default()
+                },
+            );
+
+            let result = get_items_ids_for_months_of_stock(
+                item_stats,
+                min_months_of_stock,
+                max_months_of_stock,
+            );
+
+            assert_eq!(result, ["item_1".to_string()]);
+        }
+
+        #[test]
+        fn filters_when_min_mos_provided() {
+            let min_months_of_stock = Some(3.0);
+            let max_months_of_stock = None;
+            let mut item_stats = HashMap::new();
+
+            item_stats.insert(
+                "item_1".to_string(),
+                ItemStats {
+                    // This item has 5 MOS on hand, more than min_months_of_stock
+                    average_monthly_consumption: 2.0,
+                    total_stock_on_hand: 10.0,
+                    ..Default::default()
+                },
+            );
+            item_stats.insert(
+                "item_2".to_string(),
+                ItemStats {
+                    // This item has 2 MOS on hand, less than min_months_of_stock
+                    average_monthly_consumption: 5.0,
+                    total_stock_on_hand: 10.0,
+                    ..Default::default()
+                },
+            );
+
+            let result = get_items_ids_for_months_of_stock(
+                item_stats,
+                min_months_of_stock,
+                max_months_of_stock,
+            );
+
+            assert_eq!(result, ["item_1".to_string()]);
+        }
+
+        #[test]
+        fn filters_when_max_mos_provided() {
+            let min_months_of_stock = None;
+            let max_months_of_stock = Some(6.0);
+            let mut item_stats = HashMap::new();
+
+            item_stats.insert(
+                "item_1".to_string(),
+                ItemStats {
+                    // This item has 1 MOS on hand, which is less than the maximum
+                    average_monthly_consumption: 3.0,
+                    total_stock_on_hand: 3.0,
+                    ..Default::default()
+                },
+            );
+
+            item_stats.insert(
+                "item_2".to_string(),
+                ItemStats {
+                    // This item has 6 MOS on hand, which is less than the maximum
+                    average_monthly_consumption: 1.0,
+                    total_stock_on_hand: 6.0,
+                    ..Default::default()
+                },
+            );
+
+            item_stats.insert(
+                "item_3".to_string(),
+                ItemStats {
+                    // This item has 7 MOS on hand, which is more than the maximum
+                    average_monthly_consumption: 1.0,
+                    total_stock_on_hand: 7.0,
+                    ..Default::default()
+                },
+            );
+
+            let result = get_items_ids_for_months_of_stock(
+                item_stats,
+                min_months_of_stock,
+                max_months_of_stock,
+            );
+
+            assert_eq!(result, ["item_1".to_string(), "item_2".to_string()]);
+        }
+
+        #[test]
+        fn filters_when_min_and_max_provided() {
+            let min_months_of_stock = Some(3.0);
+            let max_months_of_stock = Some(6.0);
+            let mut item_stats = HashMap::new();
+
+            item_stats.insert(
+                "item_1".to_string(),
+                ItemStats {
+                    // This item has 1 MOS on hand, less than min_months_of_stock
+                    average_monthly_consumption: 1.0,
+                    total_stock_on_hand: 1.0,
+                    ..Default::default()
+                },
+            );
+
+            item_stats.insert(
+                "item_2".to_string(),
+                ItemStats {
+                    // This item has 7 MOS on hand, more than max_months_of_stock
+                    average_monthly_consumption: 1.0,
+                    total_stock_on_hand: 7.0,
+                    ..Default::default()
+                },
+            );
+
+            item_stats.insert(
+                "item_3".to_string(),
+                ItemStats {
+                    // This item has 5 MOS on hand, within the range of min and max months of stock
+                    average_monthly_consumption: 1.0,
+                    total_stock_on_hand: 5.0,
+                    ..Default::default()
+                },
+            );
+
+            let result = get_items_ids_for_months_of_stock(
+                item_stats,
+                min_months_of_stock,
+                max_months_of_stock,
+            );
+
+            assert_eq!(result, ["item_3".to_string()]);
+        }
+
+        #[test]
+        fn filters_when_min_and_max_incompatible() {
+            // max MOS less than min MOS so no results can be returned
+
+            let max_months_of_stock = Some(3.0);
+            let min_months_of_stock = Some(6.0);
+            let mut item_stats = HashMap::new();
+
+            item_stats.insert(
+                "item_1".to_string(),
+                ItemStats {
+                    // This item has 1 MOS on hand, which is less than min_months_of_stock
+                    average_monthly_consumption: 1.0,
+                    total_stock_on_hand: 1.0,
+                    ..Default::default()
+                },
+            );
+
+            item_stats.insert(
+                "item_2".to_string(),
+                ItemStats {
+                    // This item has 7 MOS on hand, which is more than max_months_of_stock
+                    average_monthly_consumption: 1.0,
+                    total_stock_on_hand: 7.0,
+                    ..Default::default()
+                },
+            );
+
+            item_stats.insert(
+                "item_3".to_string(),
+                ItemStats {
+                    // This item has 5 MOS on hand, which is less than min_months_of_stock
+                    average_monthly_consumption: 1.0,
+                    total_stock_on_hand: 5.0,
+                    ..Default::default()
+                },
+            );
+
+            let result = get_items_ids_for_months_of_stock(
+                item_stats,
+                min_months_of_stock,
+                max_months_of_stock,
+            );
+
+            assert_eq!(result, Vec::<String>::new());
+        }
+    }
 }

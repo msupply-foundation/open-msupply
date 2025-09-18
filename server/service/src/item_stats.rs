@@ -16,7 +16,7 @@ use repository::{
 };
 use util::{constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_now_with_offset};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct ItemStats {
     pub total_consumption: f64,
     pub average_monthly_consumption: f64,
@@ -47,7 +47,6 @@ pub fn get_item_stats(
     amc_lookback_months: Option<f64>,
     item_ids: Vec<String>,
 ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
-
     let default_amc_lookback_months =
         get_store_preferences(connection, store_id)?.monthly_consumption_look_back_period;
 
@@ -56,12 +55,8 @@ pub fn get_item_stats(
         None => default_amc_lookback_months,
     };
 
-    let consumption_map = get_consumption_map(
-        connection,
-        store_id,
-        item_ids.clone(),
-        amc_lookback_months,
-    )?;
+    let consumption_map =
+        get_consumption_map(connection, store_id, item_ids.clone(), amc_lookback_months)?;
 
     let input = amc::Input {
         store_id: store_id.to_string(),
@@ -89,12 +84,7 @@ pub fn get_item_stats_map(
     amc_lookback_months: Option<f64>,
     item_ids: Vec<String>,
 ) -> Result<HashMap<String, ItemStats>, PluginOrRepositoryError> {
-
-    let item_stats_vec = get_item_stats(connection,
-        store_id,
-        amc_lookback_months,
-        item_ids
-    );
+    let item_stats_vec = get_item_stats(connection, store_id, amc_lookback_months, item_ids);
 
     let item_stats_map = item_stats_vec?
         .into_iter()
