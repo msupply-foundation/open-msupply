@@ -187,7 +187,7 @@ fn update_lines(
             .into_iter()
             .map(|mut line| {
                 match new_status {
-                    PurchaseOrderStatus::Confirmed => {
+                    PurchaseOrderStatus::Sent => {
                         line.purchase_order_line_row.status =
                             repository::PurchaseOrderLineStatus::Sent;
                     }

@@ -54,11 +54,11 @@ pub fn validate(
         }
     }
 
-    // check the line status change before purchase_order_lines_editable
-    // should be able to update the line status when the PO is Confirmed or Sent, but not the rest of the line
+    // Check the line status change before purchase_order_lines_editable
+    // Should be able to update the line status only when the Purchase Order Sent
     if let Some(status) = input.status.clone() {
-        let is_purchase_order_confirmed = purchase_order.status >= PurchaseOrderStatus::Confirmed;
-        let is_valid_status_change = match (status, is_purchase_order_confirmed) {
+        let is_purchase_order_sent = purchase_order.status >= PurchaseOrderStatus::Sent;
+        let is_valid_status_change = match (status, is_purchase_order_sent) {
             (PurchaseOrderLineStatus::New, false) => true,
             (PurchaseOrderLineStatus::New, true) => false,
             (_, true) => true,
