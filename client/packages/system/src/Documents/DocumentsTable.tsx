@@ -1,4 +1,4 @@
-import React, { Dispatch, ReactElement, SetStateAction } from 'react';
+import React, { ReactElement } from 'react';
 import {
   ColumnFormat,
   createTableStore,
@@ -9,7 +9,7 @@ import {
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
-import { SyncFileReferenceFragment } from '../../../api';
+import { SyncFileReferenceFragment } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 
 // TODO:
@@ -17,15 +17,21 @@ import { Footer } from './Footer';
 // If same file is uploaded, version number should be incremented through backend
 
 interface DocumentsProps {
-  purchaseOrderId?: string;
-  documents?: SyncFileReferenceFragment[];
-  setShowStatusBar: Dispatch<SetStateAction<boolean>>;
+  recordId: string;
+  tableName: string;
+  documents: SyncFileReferenceFragment[];
+  noDataElement?: JSX.Element;
+  openUploadModal?: () => void;
+  invalidateQueries?: () => void;
 }
 
-export const Documents = ({
-  purchaseOrderId,
+export const DocumentsTable = ({
+  recordId,
+  tableName,
   documents,
-  setShowStatusBar,
+  noDataElement,
+  openUploadModal,
+  invalidateQueries,
 }: DocumentsProps): ReactElement => {
   const t = useTranslation();
 
@@ -36,31 +42,35 @@ export const Documents = ({
       label: 'label.filename',
       accessor: ({ rowData }) => rowData.fileName,
     },
-    // TODO: createdBy column
     {
       key: 'createdDatetime',
       label: 'label.created-datetime',
       accessor: ({ rowData }) => rowData.createdDatetime,
       format: ColumnFormat.Date,
     },
-    // TODO: modifiedDatetime column
-    // TODO: versionNumber column
   ]);
 
   return (
     <TableProvider createStore={createTableStore}>
       <DataTable
-        id="purchase-order-documents"
+        id={recordId}
         columns={columns}
         data={documents}
         noDataElement={
-          <NothingHere body={t('error.no-purchase-order-documents')} />
+          noDataElement ?? (
+            <NothingHere
+              body={t('messages.no-documents-uploaded')}
+              onCreate={openUploadModal}
+              buttonText={t('label.upload-document')}
+            />
+          )
         }
       />
       <Footer
-        purchaseOrderId={purchaseOrderId}
+        tableName={tableName}
+        recordId={recordId}
         documents={documents}
-        setShowStatusBar={setShowStatusBar}
+        invalidateQueries={invalidateQueries}
       />
     </TableProvider>
   );
