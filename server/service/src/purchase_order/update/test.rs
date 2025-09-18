@@ -186,20 +186,22 @@ mod update {
             Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap())
         );
 
-        // set purchase order to confirmed
-        // purchase order authorisation is off
-        service
+        // Purchase order authorisation is off
+        // Attempting to change status to Request Approval will update the status to Confirmed
+        let result = service
             .update_purchase_order(
                 &context,
                 store_id,
                 UpdatePurchaseOrderInput {
                     id: purchase_order_id.clone(),
-                    status: Some(PurchaseOrderStatus::Confirmed),
+                    status: Some(PurchaseOrderStatus::RequestApproval),
                     ..Default::default()
                 },
                 Some(user_permission),
             )
             .unwrap();
+
+        assert_eq!(result.status, PurchaseOrderStatus::Confirmed);
     }
 
     #[actix_rt::test]
