@@ -407,7 +407,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             supplier_discount_amount: if let Some(percentage) = supplier_discount_percentage {
-                order_total_after_discount * (percentage / 100.0)
+                order_total_before_discount * (percentage / 100.0)
             } else {
                 0.0
             },
