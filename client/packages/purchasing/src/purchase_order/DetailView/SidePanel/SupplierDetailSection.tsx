@@ -56,6 +56,7 @@ export const SupplierDetailSection = ({
             max={100}
             onChange={handleSupplierDiscountChange}
             slotProps={slotProps}
+            endAdornment="%"
             disabled={disabled}
           />
         </PanelRow>
@@ -66,7 +67,6 @@ export const SupplierDetailSection = ({
             slotProps={slotProps}
             onChange={handleSupplierDiscountAmountChange}
             disabled={disabled}
-            endAdornment="%"
           />
         </PanelRow>
       </Grid>
