@@ -3899,20 +3899,11 @@ export type InsertPurchaseOrderLineErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type InsertPurchaseOrderLineFromCsvInput = {
-  itemCode: Scalars['String']['input'];
-  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
-  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
-  purchaseOrderId: Scalars['String']['input'];
-  requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
-  requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
-};
-
 export type InsertPurchaseOrderLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
+  itemIdOrCode: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
   pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
@@ -4551,6 +4542,7 @@ export type InvoiceNode = {
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
+  documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
@@ -5422,7 +5414,6 @@ export type Mutations = {
   insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
   insertPurchaseOrder: InsertPurchaseOrderResponse;
   insertPurchaseOrderLine: InsertPurchaseOrderLineResponse;
-  insertPurchaseOrderLineFromCsv: InsertPurchaseOrderLineResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -5859,11 +5850,6 @@ export type MutationsInsertPurchaseOrderArgs = {
 
 export type MutationsInsertPurchaseOrderLineArgs = {
   input: InsertPurchaseOrderLineInput;
-  storeId: Scalars['String']['input'];
-};
-
-export type MutationsInsertPurchaseOrderLineFromCsvArgs = {
-  input: InsertPurchaseOrderLineFromCsvInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -7231,6 +7217,7 @@ export type PurchaseOrderLineNode = {
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
+  unitsOrderedInOthers: Scalars['Float']['output'];
 };
 
 export type PurchaseOrderLineNodeManufacturerArgs = {
@@ -9164,6 +9151,7 @@ export type StockLineFilterInput = {
   location?: InputMaybe<LocationFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
+  search?: InputMaybe<StringFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   vvmStatusId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -10533,6 +10521,7 @@ export type UpdatePurchaseOrderInput = {
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<PurchaseOrderNodeStatus>;
   supplierAgent?: InputMaybe<Scalars['String']['input']>;
+  supplierDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;
 };

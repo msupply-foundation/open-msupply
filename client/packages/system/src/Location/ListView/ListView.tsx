@@ -9,6 +9,9 @@ import {
   useTranslation,
   useUrlQueryParams,
   GenericColumnKey,
+  UNDEFINED_STRING_VALUE,
+  InlineProgress,
+  Box,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -44,7 +47,10 @@ const LocationListComponent: FC = () => {
     [
       GenericColumnKey.Selection,
       'code',
-      'name',
+      {
+        key: 'name',
+        label: 'label.name',
+      },
       {
         key: 'locationType',
         label: 'label.location-type',
@@ -56,8 +62,38 @@ const LocationListComponent: FC = () => {
                 maxTemperature: locationType.maxTemperature,
               })
             : null,
-        width: 200,
         sortable: false,
+      },
+      {
+        key: 'volume',
+        label: 'label.volume',
+        sortable: false,
+      },
+      {
+        key: 'volumeUsed',
+        label: 'label.volume-used',
+        sortable: false,
+        Cell: ({ rowData: { volume, volumeUsed } }) => {
+          if (!volume) return UNDEFINED_STRING_VALUE;
+
+          const percentageValue = ((volumeUsed || 0) / volume) * 100;
+
+          return (
+            <Box sx={{ width: '150px' }}>
+              <InlineProgress
+                variant="determinate"
+                color={
+                  percentageValue > 100
+                    ? 'error'
+                    : percentageValue > 80
+                      ? 'warning'
+                      : 'secondary'
+                }
+                value={percentageValue}
+              />
+            </Box>
+          );
+        },
       },
     ],
     {
