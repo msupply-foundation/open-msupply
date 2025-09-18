@@ -346,15 +346,15 @@ export const OutboundLineEditTable = ({
                 return (
                   <NumberInputCell
                     cell={cell}
-                    updateFn={(value: number, row) => {
+                    updateFn={(value: number) => {
                       const allocatedQuantity = allocate(
-                        row['id'],
+                        row.original['id'],
                         value ?? 0,
                         {
                           preventPartialPacks: true,
                         }
                       );
-                      return allocatedQuantity; // return to NumberInputCell to ensure value is correct
+                      return allocatedQuantity;
                     }}
                     max={QuantityUtils.packsToDoses(
                       row.original.availablePacks,
@@ -394,11 +394,20 @@ export const OutboundLineEditTable = ({
             {
               accessorKey: 'numberOfPacks',
               header: t('label.pack-quantity-issued'),
-              columnType: ColumnType.NumberInput,
-              updateFn: (value: number, row: DraftStockOutLineFragment) =>
-                allocate(row.id, value, {
-                  allocateInType: AllocateInType.Packs,
-                }),
+              Cell: ({ cell, row }) => (
+                <NumberInputCell
+                  cell={cell}
+                  updateFn={(value: number) => {
+                    allocate(row.original.id, value, {
+                      allocateInType: AllocateInType.Packs,
+                    });
+                  }}
+                  max={QuantityUtils.packsToDoses(
+                    row.original.availablePacks,
+                    row.original
+                  )}
+                />
+              ),
               size: 100,
             },
             {

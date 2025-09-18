@@ -10,7 +10,7 @@ import { MRT_Cell, MRT_RowData } from 'material-react-table';
 interface NumberInputCellProps<T extends MRT_RowData>
   extends NumericTextInputProps {
   cell: MRT_Cell<T>;
-  updateFn: (value: number, row: MRT_RowData) => void;
+  updateFn: (value: number) => void;
 }
 
 export const NumberInputCell = <T extends MRT_RowData>({
@@ -23,7 +23,7 @@ export const NumberInputCell = <T extends MRT_RowData>({
 
   const debouncedUpdate = useDebounceCallback(
     (input: number) => {
-      updateFn(input, cell.row.original);
+      updateFn(input);
     },
     [updateFn],
     300
