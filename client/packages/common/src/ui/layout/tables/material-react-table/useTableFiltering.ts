@@ -35,8 +35,8 @@ export const useTableFiltering = <T extends MRT_RowData>(
     const filterUpdaters: Record<string, (value: any) => void> = {};
 
     columns.forEach(({ filterVariant, ...mrtProperties }) => {
-      const filterKey = (mrtProperties.accessorKey ||
-        mrtProperties.id) as string;
+      const filterKey = (mrtProperties.id ||
+        mrtProperties.accessorKey) as string;
 
       switch (filterVariant) {
         case 'date-range':
@@ -71,16 +71,19 @@ export const useTableFiltering = <T extends MRT_RowData>(
   const handleFilterChange = (
     filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
   ) => {
-    // The "filterUpdate" function mutates the "old" state in place, which
-    // messes up the comparisons, so we generate a fresh version just for this:
+    // The "filterUpdate" function mutates the state in place, which messes up
+    // subsequent comparisons, so we generate a new instance just for the
+    // "filterUpdate" function, and ensure we use the original `filterState` for
+    // comparisons:
     const old = getFilterState(urlQuery);
     if (typeof filterUpdate === 'function') {
       const newFilterState = filterUpdate(old);
       const changedFilter = newFilterState.find(
-        fil => !isEqual(fil.value, old.find(f => f.id === fil.id)?.value)
+        fil =>
+          !isEqual(fil.value, filterState.find(f => f.id === fil.id)?.value)
       );
       if (!changedFilter) {
-        const removedFilter = old.find(
+        const removedFilter = filterState.find(
           f => !newFilterState.find(nf => nf.id === f.id)
         );
         if (removedFilter) updateQuery({ [removedFilter.id]: undefined });
