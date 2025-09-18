@@ -23,11 +23,23 @@ export const createDraftPurchaseOrderLine = (
     pricePerUnitBeforeDiscount: 0,
     pricePerUnitAfterDiscount: 0,
     unit: item.unitName,
+    item: {
+      __typename: 'ItemNode',
+      id: item.id,
+      code: item.code,
+      name: item.name,
+      unitName: item.unitName,
+      stats: {
+        __typename: 'ItemStatsNode',
+        stockOnHand: item.stats?.stockOnHand || 0,
+      },
+    },
     // This value not actually saved to DB
     discountPercentage: 0,
     numberOfPacks: 0,
     status: PurchaseOrderLineStatusNode.New,
     receivedNumberOfUnits: 0,
+    unitsOrderedInOthers: 0,
   };
 };
 

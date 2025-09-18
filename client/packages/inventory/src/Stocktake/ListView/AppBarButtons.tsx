@@ -10,12 +10,14 @@ import {
   useToggle,
   useSimplifiedTabletUI,
   useExportCSV,
+  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useStocktakeOld } from '../api';
 import { stocktakesToCsv } from '../../utils';
 import { CreateStocktakeModal } from './CreateStocktakeModal';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
+import { NewCreateStocktakeModal } from './NewCreateStocktakeModal';
 
 interface AppBarButtonsProps {
   description: string;
@@ -50,6 +52,8 @@ export const AppBarButtons = ({
     exportCSV(csv, t('filename.stocktakes'));
   };
 
+  const featureFlags = useFeatureFlags();
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -58,13 +62,23 @@ export const AppBarButtons = ({
           label={t('label.new-stocktake')}
           onClick={modalController.toggleOn}
         />
-        <CreateStocktakeModal
-          open={modalController.isOn}
-          onClose={modalController.toggleOff}
-          onCreate={onCreate}
-          isCreating={isCreating}
-          description={description}
-        />
+        {featureFlags?.createStocktakeModalUsabilityImprovements ? (
+          <NewCreateStocktakeModal
+            open={modalController.isOn}
+            onClose={modalController.toggleOff}
+            onCreate={onCreate}
+            isCreating={isCreating}
+            description={description}
+          />
+        ) : (
+          <CreateStocktakeModal
+            open={modalController.isOn}
+            onClose={modalController.toggleOff}
+            onCreate={onCreate}
+            isCreating={isCreating}
+            description={description}
+          />
+        )}
         {!simplifiedTabletView && (
           <LoadingButton
             startIcon={<DownloadIcon />}

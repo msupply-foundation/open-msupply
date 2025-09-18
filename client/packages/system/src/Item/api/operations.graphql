@@ -105,6 +105,9 @@ fragment ItemStockOnHand on ItemNode {
     defaultSellPricePerPack
     ignoreForOrders
   }
+  stats(storeId: $storeId) {
+    stockOnHand
+  }
 }
 fragment ItemRowWithStats on ItemNode {
   ...ItemStockOnHand

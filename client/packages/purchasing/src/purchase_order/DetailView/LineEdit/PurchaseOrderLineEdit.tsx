@@ -17,7 +17,11 @@ import {
   StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
-import { commonLabelProps, useInputComponents } from '../../../common';
+import {
+  commonLabelProps,
+  NumInputRow,
+  useInputComponents,
+} from '../../../common';
 import {
   calculatePricesAndDiscount,
   calculateUnitQuantities,
@@ -34,6 +38,7 @@ export interface PurchaseOrderLineEditProps {
   isDisabled: boolean;
   lines?: PurchaseOrderLineFragment[];
   onChangeItem: (item: ItemStockOnHandFragment) => void;
+  lineCount?: number;
 }
 
 export const PurchaseOrderLineEdit = ({
@@ -44,6 +49,7 @@ export const PurchaseOrderLineEdit = ({
   status,
   isDisabled = false,
   lines = [],
+  lineCount = 0,
 }: PurchaseOrderLineEditProps) => {
   const t = useTranslation();
   const showContent = !!draft?.itemId;
@@ -109,6 +115,59 @@ export const PurchaseOrderLineEdit = ({
         Left={
           showContent ? (
             <>
+              <NumInputRow
+                value={draft?.lineNumber || lineCount + 1}
+                label={t('label.line-number')}
+                disabled
+                isVerticalScreen={isVerticalScreen}
+              />
+              <NumInputRow
+                value={draft?.item.stats.stockOnHand || 0}
+                label={t('label.stock-on-hand')}
+                disabled
+                isVerticalScreen={isVerticalScreen}
+              />
+              {textInput('label.unit', draft?.unit || '', value =>
+                update({ unit: value })
+              )}
+              {textInput(
+                'label.supplier-item-code',
+                draft?.supplierItemCode || '',
+                value => update({ supplierItemCode: value })
+              )}
+              <InputWithLabelRow
+                Input={
+                  <ManufacturerSearchInput
+                    disabled={disabled}
+                    value={draft?.manufacturer ?? null}
+                    onChange={manufacturer =>
+                      update({ manufacturer: manufacturer || null })
+                    }
+                    textSx={
+                      disabled
+                        ? {
+                            backgroundColor: theme =>
+                              theme.palette.background.toolbar,
+                            boxShadow: 'none',
+                          }
+                        : {
+                            backgroundColor: theme =>
+                              theme.palette.background.white,
+                            boxShadow: theme => theme.shadows[2],
+                          }
+                    }
+                    width={185}
+                  />
+                }
+                label={t('label.manufacturer')}
+                labelProps={commonLabelProps}
+              />
+            </>
+          ) : null
+        }
+        Middle={
+          showContent ? (
+            <>
               {numericInput(
                 canEditRequestedQuantity
                   ? 'label.requested-packs'
@@ -159,29 +218,18 @@ export const PurchaseOrderLineEdit = ({
                     decimalLimit: 2,
                   }
                 )}
-              {textInput(
-                'label.unit',
-                draft?.unit || '',
-                value => update({ unit: value }),
-                {
-                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
-                }
+              {textInput('label.unit', draft?.unit || '', value =>
+                update({ unit: value })
               )}
               {textInput(
                 'label.supplier-item-code',
                 draft?.supplierItemCode || '',
-                value => update({ supplierItemCode: value }),
-                {
-                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
-                }
+                value => update({ supplierItemCode: value })
               )}
               <InputWithLabelRow
                 Input={
                   <ManufacturerSearchInput
-                    disabled={
-                      disabled ||
-                      isFieldDisabled(status, StatusGroup.AfterConfirmed)
-                    } // not specified
+                    disabled={disabled}
                     value={draft?.manufacturer ?? null}
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
@@ -258,6 +306,17 @@ export const PurchaseOrderLineEdit = ({
                   disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
+              <NumInputRow
+                label={t('label.total-cost')}
+                value={
+                  draft
+                    ? (draft.pricePerUnitAfterDiscount ?? 0) *
+                      (draft.requestedNumberOfUnits ?? 0)
+                    : 0
+                }
+                disabled
+                isVerticalScreen={isVerticalScreen}
+              />
             </>
           ) : null
         }

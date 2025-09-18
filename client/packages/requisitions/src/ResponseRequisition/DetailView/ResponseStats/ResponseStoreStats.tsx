@@ -1,10 +1,16 @@
 import React from 'react';
 import { useFormatNumber, useIntlUtils, useTranslation } from '@common/intl';
-import { Box, Typography, NewValueBar } from '@openmsupply-client/common';
+import {
+  Box,
+  Typography,
+  NewValueBar,
+  RequisitionNodeStatus,
+} from '@openmsupply-client/common';
 import { RepresentationValue, useValueInUnitsOrPacks } from '../../../common';
 import { calculatePercentage, stats } from './utils';
 
 export interface ResponseStoreStatsProps {
+  requisitionStatus: RequisitionNodeStatus;
   representation: RepresentationValue;
   defaultPackSize: number;
   unitName?: string | null;
@@ -16,6 +22,7 @@ export interface ResponseStoreStatsProps {
 }
 
 export const ResponseStoreStats = ({
+  requisitionStatus,
   representation,
   defaultPackSize,
   unitName,
@@ -127,19 +134,19 @@ export const ResponseStoreStats = ({
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!formattedSoh &&
+                {formattedSoh !== null &&
                   statsDisplay(
                     'label.stock-on-hand',
                     formattedSoh,
                     'gray.dark'
                   )}
-                {!!formattedIncoming &&
+                {formattedIncoming !== null &&
                   statsDisplay(
                     'label.incoming-stock',
                     formattedIncoming,
                     'gray.main'
                   )}
-                {!!formattedSoo &&
+                {formattedSoo !== null &&
                   statsDisplay(
                     'label.stock-on-order',
                     formattedSoo,
@@ -155,7 +162,18 @@ export const ResponseStoreStats = ({
           p: '4px 8px',
         }}
       >
-        {(!!formattedRequested || !!formattedOtherRequested) && (
+        {formattedRequested === 0 && formattedOtherRequested === 0 ? (
+          <Typography
+            fontSize={14}
+            style={{ textAlign: 'center' }}
+            justifyContent="center"
+          >
+            ⓘ
+            <span style={{ fontStyle: 'italic', paddingLeft: 4 }}>
+              {t('messages.no-requested-quantities')}
+            </span>
+          </Typography>
+        ) : (
           <>
             <Typography style={{ textAlign: 'start' }} variant="h6">
               {t('label.requested')}
@@ -179,13 +197,12 @@ export const ResponseStoreStats = ({
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!formattedRequested &&
-                  statsDisplay(
-                    'label.requested-quantity',
-                    formattedRequested,
-                    'primary.main'
-                  )}
-                {!!formattedOtherRequested &&
+                {statsDisplay(
+                  'label.requested-quantity',
+                  formattedRequested,
+                  'primary.main'
+                )}
+                {requisitionStatus !== RequisitionNodeStatus.Finalised &&
                   statsDisplay(
                     'label.other-requested-quantity',
                     formattedOtherRequested,

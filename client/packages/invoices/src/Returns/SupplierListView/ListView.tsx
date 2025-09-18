@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -16,6 +16,10 @@ import {
   TooltipTextCell,
   GenericColumnKey,
   getCommentPopoverColumn,
+  useCallbackWithPermission,
+  UserPermission,
+  usePreferences,
+  useNotification,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -23,7 +27,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';
 import { Footer } from './Footer';
 
-const SupplierReturnListViewComponent: FC = () => {
+const SupplierReturnListViewComponent = () => {
   const t = useTranslation();
   const {
     updateSortQuery,
@@ -40,6 +44,9 @@ const SupplierReturnListViewComponent: FC = () => {
   const { setDisabledRows } = useTableStore();
   const navigate = useNavigate();
   const modalController = useToggle();
+  const { info } = useNotification();
+  const { disableManualReturns } = usePreferences();
+
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
 
@@ -60,6 +67,19 @@ const SupplierReturnListViewComponent: FC = () => {
     colour,
   }) => {
     mutate({ id, colour });
+  };
+
+  const openModal = useCallbackWithPermission(
+    UserPermission.SupplierReturnMutate,
+    modalController.toggleOn
+  );
+
+  const handleClick = (): void => {
+    if (disableManualReturns) {
+      info(t('messages.manual-returns-preferences-disabled'))();
+      return;
+    }
+    openModal();
   };
 
   const columns = useColumns<SupplierReturnRowFragment>(
@@ -94,7 +114,7 @@ const SupplierReturnListViewComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons modalController={modalController} onNew={handleClick} />
 
       <DataTable
         id="supplier-return-list"
@@ -108,7 +128,7 @@ const SupplierReturnListViewComponent: FC = () => {
         noDataElement={
           <NothingHere
             body={t('error.no-supplier-returns')}
-            onCreate={modalController.toggleOn}
+            onCreate={handleClick}
           />
         }
         onRowClick={row => {
@@ -120,7 +140,7 @@ const SupplierReturnListViewComponent: FC = () => {
   );
 };
 
-export const SupplierReturnListView: FC = () => (
+export const SupplierReturnListView = () => (
   <TableProvider createStore={createTableStore}>
     <SupplierReturnListViewComponent />
   </TableProvider>
