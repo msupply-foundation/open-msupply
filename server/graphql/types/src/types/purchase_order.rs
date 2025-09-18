@@ -115,7 +115,7 @@ impl PurchaseOrderNode {
         &self.row().shipping_method
     }
     pub async fn sent_datetime(&self) -> Option<DateTime<Utc>> {
-        let sent_datetime = self.row().confirmed_datetime;
+        let sent_datetime = self.row().sent_datetime;
         sent_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn contract_signed_date(&self) -> &Option<NaiveDate> {
@@ -178,7 +178,7 @@ impl PurchaseOrderNode {
         &self.row().supplier_discount_percentage
     }
     pub async fn request_approval_datetime(&self) -> Option<DateTime<Utc>> {
-        let request_approval_datetime = self.row().confirmed_datetime;
+        let request_approval_datetime = self.row().request_approval_datetime;
         request_approval_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
