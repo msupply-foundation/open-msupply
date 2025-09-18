@@ -3,6 +3,8 @@ import {
   useNotification,
   useQuery,
   useTranslation,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { TEMPERATURE_NOTIFICATION } from './keys';
 import { useTemperatureNotificationGraphQL } from '../useTemperatureNotificationGraphQL';
@@ -21,7 +23,9 @@ export const useTemperatureNotificationList = (queryParams?: ListParams) => {
   const { warning } = useNotification();
   const { temperatureNotificationApi, storeId } =
     useTemperatureNotificationGraphQL();
+  const { userHasPermission } = useAuthContext();
 
+  const canViewSensorDetails = userHasPermission(UserPermission.SensorQuery);
   const queryKey = [TEMPERATURE_NOTIFICATION, storeId, LIST_KEY, queryParams];
 
   const queryFn = async () => {
@@ -49,6 +53,7 @@ export const useTemperatureNotificationList = (queryParams?: ListParams) => {
     cacheTime: POLLING_INTERVAL_MS,
     refetchInterval: POLLING_INTERVAL_MS,
     staleTime: STALE_TIME_MS,
+    enabled: !!storeId && canViewSensorDetails,
   });
 
   return query;
