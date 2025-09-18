@@ -55,8 +55,7 @@ export const PurchaseOrderLineEdit = ({
   const showContent = !!draft?.itemId;
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
 
-  // overall disabled - is the base for input components
-  // finalised PO or closed line
+  // Disable input components. Individual inputs can override this
   const disabled =
     isDisabled || draft?.status === PurchaseOrderLineStatusNode.Closed;
   const { numericInput, textInput, multilineTextInput, dateInput } =
@@ -185,7 +184,6 @@ export const PurchaseOrderLineEdit = ({
                   },
                   decimalLimit: 2,
                   autoFocus: true,
-                  // never disabled, is either requested or adjusted
                 }
               )}
               {numericInput('label.pack-size', draft?.requestedPackSize, {
@@ -205,7 +203,7 @@ export const PurchaseOrderLineEdit = ({
                 'label.requested-quantity',
                 draft?.requestedNumberOfUnits,
                 {
-                  disabled: true, // readonly
+                  disabled: true,
                   decimalLimit: 2,
                 }
               )}
@@ -214,51 +212,10 @@ export const PurchaseOrderLineEdit = ({
                   'label.adjusted-units',
                   draft?.adjustedNumberOfUnits,
                   {
-                    disabled: true, // readonly
+                    disabled: true,
                     decimalLimit: 2,
                   }
                 )}
-              {textInput('label.unit', draft?.unit || '', value =>
-                update({ unit: value })
-              )}
-              {textInput(
-                'label.supplier-item-code',
-                draft?.supplierItemCode || '',
-                value => update({ supplierItemCode: value })
-              )}
-              <InputWithLabelRow
-                Input={
-                  <ManufacturerSearchInput
-                    disabled={disabled}
-                    value={draft?.manufacturer ?? null}
-                    onChange={manufacturer =>
-                      update({ manufacturer: manufacturer || null })
-                    }
-                    textSx={
-                      disabled
-                        ? {
-                            backgroundColor: theme =>
-                              theme.palette.background.toolbar,
-                            boxShadow: 'none',
-                          }
-                        : {
-                            backgroundColor: theme =>
-                              theme.palette.background.white,
-                            boxShadow: theme => theme.shadows[2],
-                          }
-                    }
-                    width={185}
-                  />
-                }
-                label={t('label.manufacturer')}
-                labelProps={commonLabelProps}
-              />
-            </>
-          ) : null
-        }
-        Middle={
-          showContent ? (
-            <>
               {numericInput(
                 'label.price-per-unit-before-discount',
                 draft?.pricePerUnitBeforeDiscount,
@@ -271,7 +228,6 @@ export const PurchaseOrderLineEdit = ({
                     update(adjustedPatch);
                   },
                   decimalLimit: 2,
-                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               {numericInput(
@@ -288,7 +244,6 @@ export const PurchaseOrderLineEdit = ({
                   max: 100,
                   decimalLimit: 2,
                   endAdornment: '%',
-                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               {numericInput(
@@ -303,7 +258,6 @@ export const PurchaseOrderLineEdit = ({
                     update(adjustedPatch);
                   },
                   decimalLimit: 2,
-                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               <NumInputRow
@@ -344,14 +298,8 @@ export const PurchaseOrderLineEdit = ({
                 draft?.comment || '',
                 value => update({ comment: value })
               )}
-              {/* Is this Requested delivery date note field? */}
-              {multilineTextInput(
-                'label.notes',
-                draft?.note || '',
-                value => update({ note: value }),
-                {
-                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
-                }
+              {multilineTextInput('label.notes', draft?.note || '', value =>
+                update({ note: value })
               )}
             </>
           ) : null
