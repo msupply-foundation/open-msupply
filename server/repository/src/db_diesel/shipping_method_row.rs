@@ -1,4 +1,4 @@
-use crate::{RepositoryError, StorageConnection};
+use crate::{RepositoryError, StorageConnection, Upsert};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -53,5 +53,21 @@ impl<'a> ShippingMethodRowRepository<'a> {
             .first::<ShippingMethodRow>(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+}
+
+impl Upsert for ShippingMethodRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ShippingMethodRowRepository::new(con).upsert_one(self)?;
+        // Not in changelog
+        Ok(None)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ShippingMethodRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
