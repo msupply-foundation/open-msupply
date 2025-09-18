@@ -106,6 +106,19 @@ export const useStatusChangeButton = () => {
   //       line.receivedNumberOfUnits === 0
   //   );
 
+  const getInfoMessage = () => {
+    switch (selectedOption?.value) {
+      case PurchaseOrderNodeStatus.Finalised:
+        return hasOutstandingLines
+          ? t('messages.purchase-order-outstanding-lines')
+          : undefined;
+      case PurchaseOrderNodeStatus.Confirmed:
+        return t('messages.purchase-order-ready-to-send');
+      default:
+        return undefined;
+    }
+  };
+
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-status-as', {
@@ -113,18 +126,7 @@ export const useStatusChangeButton = () => {
         ? getStatusTranslation(selectedOption?.value)
         : '',
     }),
-    info: (() => {
-      switch (selectedOption?.value) {
-        case PurchaseOrderNodeStatus.Finalised:
-          return hasOutstandingLines
-            ? t('messages.purchase-order-outstanding-lines')
-            : undefined;
-        case PurchaseOrderNodeStatus.Confirmed:
-          return t('messages.purchase-order-ready-to-send');
-        default:
-          return undefined;
-      }
-    })(),
+    info: getInfoMessage(),
     onConfirm: handleConfirm,
   });
 
