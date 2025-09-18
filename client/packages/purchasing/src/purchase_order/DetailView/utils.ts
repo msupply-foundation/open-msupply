@@ -4,10 +4,7 @@ import {
   TypedTFunction,
   Formatter,
 } from '@openmsupply-client/common';
-import {
-  ImportRow,
-  LineNumber,
-} from './ImportLines/PurchaseOrderLineImportModal';
+import { ImportRow, LineNumber } from './ImportLines/utils';
 
 function basePurchaseOrderLineFields(t: TypedTFunction<LocaleKey>) {
   return [
@@ -69,17 +66,33 @@ export const importPurchaseOrderLinesToCsv = (
     t('label.code'),
     t('label.pack-size'),
     t('label.requested'),
-    t('label.price-per-unit-after-discount'),
+    t('label.unit'),
+    t('label.supplier-item-code'),
     t('label.price-per-unit-before-discount'),
+    t('label.discount-percentage'),
+    t('label.price-per-unit-after-discount'),
+    t('label.requested-delivery-date'),
+    t('label.expected-delivery-date'),
+    t('label.comment'),
+    t('label.notes'),
   ];
+
   const data = purchaseOrderLines.map(node => {
     const row = [
       node.itemCode,
       node.requestedPackSize,
       node.requestedNumberOfUnits,
-      node.pricePerUnitAfterDiscount,
+      node.unit,
+      node.supplierItemCode,
       node.pricePerUnitBeforeDiscount,
+      node.discountPercentage,
+      node.pricePerUnitAfterDiscount,
+      node.requestedDeliveryDate,
+      node.expectedDeliveryDate,
+      node.comment,
+      node.note,
     ];
+
     return row;
   });
 
