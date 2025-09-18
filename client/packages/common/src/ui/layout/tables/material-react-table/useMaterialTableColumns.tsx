@@ -52,10 +52,10 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         }
 
         return {
+          grow: true,
           ...columnDefaults,
           enableSorting: col.enableSorting ?? false,
-          enableColumnFilter:
-            col.enableColumnFilter ?? !!col.filterVariant ?? false, // if a filter variant was explicitly set, take that as shorthand to enable the column filtering
+          enableColumnFilter: col.enableColumnFilter ?? false,
           ...col,
         };
       });
