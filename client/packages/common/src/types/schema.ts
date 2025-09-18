@@ -7190,6 +7190,7 @@ export type PurchaseOrderLineError = {
 export type PurchaseOrderLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
 };
 
@@ -7205,6 +7206,7 @@ export type PurchaseOrderLineNode = {
   note?: Maybe<Scalars['String']['output']>;
   pricePerUnitAfterDiscount: Scalars['Float']['output'];
   pricePerUnitBeforeDiscount: Scalars['Float']['output'];
+  purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
   receivedNumberOfUnits: Scalars['Float']['output'];
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -7231,6 +7233,7 @@ export enum PurchaseOrderLineSortFieldInput {
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   ItemName = 'itemName',
   LineNumber = 'lineNumber',
+  PurchaseOrderNumber = 'purchaseOrderNumber',
   RequestedDeliveryDate = 'requestedDeliveryDate',
 }
 
@@ -9146,6 +9149,7 @@ export type StockLineFilterInput = {
   location?: InputMaybe<LocationFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   masterList?: InputMaybe<MasterListFilterInput>;
+  search?: InputMaybe<StringFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
   vvmStatusId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -10515,6 +10519,7 @@ export type UpdatePurchaseOrderInput = {
   shippingMethod?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<PurchaseOrderNodeStatus>;
   supplierAgent?: InputMaybe<Scalars['String']['input']>;
+  supplierDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
   supplierDiscountPercentage?: InputMaybe<Scalars['Float']['input']>;
   supplierId?: InputMaybe<Scalars['String']['input']>;
 };

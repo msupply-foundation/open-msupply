@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
   Grid,
@@ -13,12 +13,14 @@ import { AddButton } from './AddButton';
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
+  disableNewLines: boolean;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
+export const AppBarButtonsComponent = ({
   onAddItem,
   isDisabled,
-}) => {
+  disableNewLines,
+}: AppBarButtonProps) => {
   const { OpenButton } = useDetailPanel();
 
   const {
@@ -37,6 +39,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onAddItem={onAddItem}
           disable={isDisabled}
           disableAddFromMasterListButton={isLoading}
+          disableNewLines={disableNewLines}
         />
         <ReportSelector
           context={ReportContext.PurchaseOrder}

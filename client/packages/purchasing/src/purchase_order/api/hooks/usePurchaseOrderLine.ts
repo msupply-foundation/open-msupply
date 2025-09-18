@@ -52,6 +52,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
   status: PurchaseOrderLineStatusNode.New,
+  receivedNumberOfUnits: 0,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {
@@ -154,14 +155,15 @@ export function usePurchaseOrderLine(id?: string | null) {
     return result;
   };
 
-  const updateLineStatus = async (
-    selectedRows: PurchaseOrderLineFragment[]
+  const updateLines = async (
+    selectedRows: PurchaseOrderLineFragment[],
+    input: Partial<UpdatePurchaseOrderLineInput>
   ) => {
     return await Promise.allSettled(
       selectedRows.map(row =>
         updatePurchaseOrderLineThrowError({
           id: row.id,
-          status: PurchaseOrderLineStatusNode.Closed,
+          ...input,
         })
       )
     );
@@ -188,7 +190,7 @@ export function usePurchaseOrderLine(id?: string | null) {
     resetDraft,
     isDirty,
     updatePatch,
-    updateLineStatus,
+    updateLines,
   };
 }
 
