@@ -172,10 +172,8 @@ pub fn update_purchase_order(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-
-    let mut user_has_permission = false;
-    if input.status == Some(PurchaseOrderNodeStatus::Confirmed) {
-        user_has_permission = validate_auth(
+    let user_has_auth_permission = input.status == Some(PurchaseOrderNodeStatus::Confirmed)
+        && validate_auth(
             ctx,
             &ResourceAccessRequest {
                 resource: Resource::AuthorisePurchaseOrder,
@@ -183,7 +181,6 @@ pub fn update_purchase_order(
             },
         )
         .is_ok();
-    }
 
     map_response(
         service_provider
@@ -192,7 +189,7 @@ pub fn update_purchase_order(
                 &service_context,
                 store_id,
                 input.to_domain(),
-                Some(user_has_permission),
+                Some(user_has_auth_permission),
             ),
     )
 }

@@ -15,7 +15,7 @@ pub fn validate(
     input: &UpdatePurchaseOrderInput,
     store_id: &str,
     connection: &StorageConnection,
-    user_has_permission: Option<bool>,
+    user_has_auth_permission: Option<bool>,
 ) -> Result<PurchaseOrder, UpdatePurchaseOrderError> {
     let purchase_order = PurchaseOrderRepository::new(connection)
         .query_by_filter(PurchaseOrderFilter::new().id(EqualFilter::equal_to(&input.id)))?
@@ -29,7 +29,7 @@ pub fn validate(
             .map_err(|_| {
                 UpdatePurchaseOrderError::DatabaseError(repository::RepositoryError::NotFound)
             })?;
-        if requires_auth && user_has_permission != Some(true) {
+        if requires_auth && user_has_auth_permission != Some(true) {
             return Err(UpdatePurchaseOrderError::UserUnableToAuthorisePurchaseOrder);
         }
     }

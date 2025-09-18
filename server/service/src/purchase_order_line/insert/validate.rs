@@ -1,5 +1,5 @@
 use crate::{
-    purchase_order::validate::purchase_order_lines_editable,
+    purchase_order::validate::purchase_order_is_editable,
     purchase_order_line::insert::{InsertPurchaseOrderLineError, PackSizeCodeCombination},
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
@@ -39,7 +39,7 @@ pub fn validate(
         return Err(InsertPurchaseOrderLineError::IncorrectStoreId);
     }
 
-    if !purchase_order_lines_editable(&purchase_order) {
+    if !purchase_order_is_editable(&purchase_order) {
         return Err(InsertPurchaseOrderLineError::CannotEditPurchaseOrder);
     }
 
