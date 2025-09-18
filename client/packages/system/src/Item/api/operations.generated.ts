@@ -144,6 +144,7 @@ export type ItemStockOnHandFragment = {
     defaultSellPricePerPack: number;
     ignoreForOrders: boolean;
   } | null;
+  stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
 };
 
 export type ItemRowWithStatsFragment = {
@@ -781,6 +782,7 @@ export type ItemStockOnHandQuery = {
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
       } | null;
+      stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
     }>;
   };
 };
@@ -1546,6 +1548,9 @@ export const ItemStockOnHandFragmentDoc = gql`
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
       ignoreForOrders
+    }
+    stats(storeId: $storeId) {
+      stockOnHand
     }
   }
   ${ItemWithPackSizeFragmentDoc}

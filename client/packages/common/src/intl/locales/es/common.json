@@ -1545,6 +1545,7 @@
   "messages.no-related-documents": "No hay documentos relacionados",
   "messages.no-repack-detail": "Selecciona una línea para ver los detalles de un reempaque o haz clic en \"Nuevo\" para crear un nuevo reempaque",
   "messages.no-repacks": "Esta línea de stock no ha sido reempacada. Haz clic en \"Nuevo\" para crear un nuevo reempaque.",
+  "messages.no-requested-quantities": "There are currently no requested quantities",
   "messages.no-scanners-found": "No se encontraron escáneres",
   "messages.no-shipments-yet": "No se han creado envíos todavía.",
   "messages.no-status-logs": "No se han creado registros de estado para este activo. Haz clic en el botón 'Actualizar Estado' para crear un nuevo registro de estado.",

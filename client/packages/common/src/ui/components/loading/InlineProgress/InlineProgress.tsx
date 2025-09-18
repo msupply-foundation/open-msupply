@@ -18,7 +18,7 @@ function LinearProgressWithLabel(
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <Box sx={{ width: '100%', mr: 1 }}>
-        <LinearProgress {...props} />
+        <LinearProgress {...props} value={Math.min(props.value, 100)} />
       </Box>
       {props.variant == 'determinate' ? (
         <Box sx={{ minWidth: 35 }}>

@@ -1,41 +1,45 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   AlertModal,
   createQueryParamsStore,
   createTableStore,
   DetailTabs,
   DetailViewSkeleton,
+  NothingHere,
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
   useEditModal,
   useNavigate,
   useTranslation,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea, Details, Documents } from './Tabs';
+import { ContentArea, Details } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
-import { ActivityLogList } from 'packages/system/src';
+import { ActivityLogList, DocumentsTable } from '@openmsupply-client/system';
 import { PurchaseOrderLineErrorProvider } from '../context';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const [showStatusBar, setShowStatusBar] = useState(true);
+  const { urlQuery } = useUrlQuery();
+  const currentTab = urlQuery['tab'];
 
   const {
     query: { data, isLoading },
     lines: { sortedAndFilteredLines },
     draft,
     handleChange,
+    invalidateQueries,
   } = usePurchaseOrder();
 
   const {
@@ -89,10 +93,14 @@ export const DetailViewInner = () => {
     },
     {
       Component: (
-        <Documents
-          purchaseOrderId={data?.id}
-          documents={data?.documents?.nodes}
-          setShowStatusBar={setShowStatusBar}
+        <DocumentsTable
+          recordId={data?.id ?? ''}
+          documents={data?.documents?.nodes ?? []}
+          tableName="purchase_order"
+          noDataElement={
+            <NothingHere body={t('error.no-purchase-order-documents')} />
+          }
+          invalidateQueries={invalidateQueries}
         />
       ),
       value: 'Documents',
@@ -116,7 +124,10 @@ export const DetailViewInner = () => {
           />
           <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
-          <Footer showStatusBar={showStatusBar} status={data.status} />
+          <Footer
+            showStatusBar={currentTab !== 'Documents'}
+            status={data.status}
+          />
           <SidePanel />
           {isOpen && (
             <PurchaseOrderLineEditModal

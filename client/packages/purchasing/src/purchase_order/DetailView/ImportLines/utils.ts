@@ -1,6 +1,21 @@
-import { LocaleKey, TypedTFunction } from '@common/intl';
-import { ImportRow } from './PurchaseOrderLineImportModal';
 import { FnUtils } from '@common/utils';
+import { LocaleKey, TypedTFunction } from '@common/intl';
+import { PurchaseOrderLineFragment } from '../../api';
+import { PurchaseOrderLineStatusNode } from '@common/types';
+
+export type ImportRow = Omit<
+  PurchaseOrderLineFragment,
+  '__typename' | 'item' | 'lineNumber'
+> & {
+  itemCode: string;
+  discountPercentage: number;
+  errorMessage: string;
+  warningMessage: string;
+};
+
+export type LineNumber = {
+  lineNumber: number;
+};
 
 export interface ParsedLine {
   id: string;
@@ -16,8 +31,23 @@ export const getImportHelpers = (
   const importRow: ImportRow = {
     id: FnUtils.generateUUID(),
     itemCode: '',
+    purchaseOrderId: '',
+    comment: '',
+    expectedDeliveryDate: '',
+    note: '',
+    pricePerUnitAfterDiscount: 0,
+    pricePerUnitBeforeDiscount: 0,
+    requestedDeliveryDate: '',
+    requestedNumberOfUnits: 0,
+    requestedPackSize: 0,
+    supplierItemCode: '',
+    status: PurchaseOrderLineStatusNode.New,
+    unit: '',
     errorMessage: '',
     warningMessage: '',
+    discountPercentage: 0,
+    receivedNumberOfUnits: 0,
+    unitsOrderedInOthers: 0,
   };
   const rowErrors: string[] = [];
   const rowWarnings: string[] = [];
@@ -49,7 +79,6 @@ export const getImportHelpers = (
     });
 
     // TODO add mapping check with hash maps for optimisation
-
     if (
       rows.some((r, i) => {
         return inputs.every(({ key, localeKey, formatter }) => {
