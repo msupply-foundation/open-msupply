@@ -292,6 +292,32 @@ mutation insertPurchaseOrderLine(
     ... on IdResponse {
       id
     }
+    ... on InsertPurchaseOrderLineError {
+      __typename
+      error {
+        description
+        ... on CannnotFindItemByCode {
+          __typename
+          description
+        }
+        ... on CannotEditPurchaseOrder {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+        }
+        ... on PackSizeCodeCombinationExists {
+          __typename
+          description
+        }
+        ... on PurchaseOrderLineWithIdExists {
+          __typename
+          description
+        }
+      }
+    }
   }
 }
 
@@ -323,46 +349,6 @@ mutation addToPurchaseOrderFromMasterList(
         }
         description
       }
-    }
-  }
-}
-
-mutation insertPurchaseOrderLineFromCsv(
-  $storeId: String!
-  $input: InsertPurchaseOrderLineFromCSVInput!
-) {
-  insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
-    ... on InsertPurchaseOrderLineError {
-      __typename
-      error {
-        description
-        ... on CannnotFindItemByCode {
-          __typename
-          description
-        }
-        ... on ForeignKeyError {
-          __typename
-          description
-        }
-        ... on CannotEditPurchaseOrder {
-          __typename
-          description
-        }
-        ... on PackSizeCodeCombinationExists {
-          __typename
-          description
-          itemCode
-          requestedPackSize
-        }
-        ... on PurchaseOrderLineWithIdExists {
-          __typename
-          description
-        }
-      }
-    }
-    ... on IdResponse {
-      __typename
-      id
     }
   }
 }
