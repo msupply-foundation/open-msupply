@@ -59,12 +59,12 @@ pub fn update_purchase_order_line(
     ctx: &ServiceContext,
     store_id: &str,
     input: UpdatePurchaseOrderLineInput,
-    user_has_permission: Option<bool>,
+    user_has_auth_permission: Option<bool>,
 ) -> Result<PurchaseOrderLine, UpdatePurchaseOrderLineInputError> {
     let purchase_order_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let purchase_order_line = validate(&input, connection, user_has_permission)?;
+            let purchase_order_line = validate(&input, connection, user_has_auth_permission)?;
             let purchase_order_id = purchase_order_line.purchase_order_id.clone();
             let updated_purchase_order_line = generate(purchase_order_line, input.clone())?;
 
@@ -91,7 +91,7 @@ pub fn update_purchase_order_line(
                         status: Some(PurchaseOrderStatus::Confirmed),
                         ..Default::default()
                     };
-                    let _ = update_purchase_order(ctx, store_id, input, user_has_permission);
+                    let _ = update_purchase_order(ctx, store_id, input, user_has_auth_permission);
                     activity_log_entry(
                         ctx,
                         ActivityLogType::PurchaseOrderLineUpdated,

@@ -3,7 +3,7 @@ use repository::{
     StorageConnection,
 };
 
-pub(crate) fn purchase_order_lines_editable(purchase_order: &PurchaseOrderRow) -> bool {
+pub(crate) fn purchase_order_is_editable(purchase_order: &PurchaseOrderRow) -> bool {
     match purchase_order.status {
         PurchaseOrderStatus::New | PurchaseOrderStatus::RequestApproval => true,
         PurchaseOrderStatus::Confirmed

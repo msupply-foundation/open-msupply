@@ -8,7 +8,6 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Rename the column from authorised_datetime to request_approval_datetime
         sql!(
             connection,
             r#"
