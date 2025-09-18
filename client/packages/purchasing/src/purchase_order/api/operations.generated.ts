@@ -78,12 +78,14 @@ export type PurchaseOrderFragment = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -141,12 +143,14 @@ export type PurchaseOrderLineFragment = {
   comment?: string | null;
   supplierItemCode?: string | null;
   status: Types.PurchaseOrderLineStatusNode;
+  unitsOrderedInOthers: number;
   item: {
     __typename: 'ItemNode';
     id: string;
     code: string;
     name: string;
     unitName?: string | null;
+    stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
   };
   manufacturer?: {
     __typename: 'NameNode';
@@ -266,12 +270,14 @@ export type PurchaseOrderByIdQuery = {
             comment?: string | null;
             supplierItemCode?: string | null;
             status: Types.PurchaseOrderLineStatusNode;
+            unitsOrderedInOthers: number;
             item: {
               __typename: 'ItemNode';
               id: string;
               code: string;
               name: string;
               unitName?: string | null;
+              stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
             };
             manufacturer?: {
               __typename: 'NameNode';
@@ -418,12 +424,14 @@ export type PurchaseOrderLinesQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -480,12 +488,14 @@ export type PurchaseOrderLineQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -651,6 +661,9 @@ export const PurchaseOrderLineFragmentDoc = gql`
       code
       name
       unitName
+      stats(storeId: $storeId) {
+        stockOnHand
+      }
     }
     requestedPackSize
     requestedDeliveryDate
@@ -680,6 +693,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
         username
       }
     }
+    unitsOrderedInOthers
   }
   ${NameRowFragmentDoc}
 `;
