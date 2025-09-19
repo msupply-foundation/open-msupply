@@ -3,14 +3,13 @@ import {
   useMutation,
   useNotification,
   useTranslation,
-  useTableStore,
   LocaleKey,
   TypedTFunction,
 } from '@openmsupply-client/common';
 import { useOutboundApi } from './../utils/useOutboundApi';
 import { useOutboundId } from '../utils/useOutboundId';
-import { useOutboundRows } from './useOutboundRows';
 import { UpsertOutboundShipmentMutation } from '../../operations.generated';
+import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 export const useOutboundAllocateLines = () => {
   const outboundId = useOutboundId();
@@ -32,34 +31,23 @@ export const useOutboundAllocateLines = () => {
   });
 };
 
-export const useOutboundAllocateSelectedLines = (): {
+// todo - info snack checks right?
+export const useOutboundAllocateSelectedLines = (
+  rowsToAllocate: StockOutLineFragment[],
+  resetRowSelection: () => void
+): {
   onAllocate: () => Promise<void>;
 } => {
   const t = useTranslation();
   const { success, info, warning, error } = useNotification();
-  const { items, lines } = useOutboundRows();
   const { mutateAsync } = useOutboundAllocateLines();
-  const { clearSelected } = useTableStore();
-
-  const selectedRows =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    }) ?? [];
-
-  const selectedUnallocatedLines = selectedRows
+  const selectedUnallocatedLines = rowsToAllocate
     .filter(({ type }) => type === 'UNALLOCATED_STOCK')
     .flat()
     .map(row => row.id);
 
   const onAllocate = async () => {
-    if (selectedRows.length === 0) {
+    if (rowsToAllocate.length === 0) {
       const infoSnack = info(t('label.select-rows-to-allocate-them'));
       infoSnack();
       return;
@@ -68,7 +56,7 @@ export const useOutboundAllocateSelectedLines = (): {
     if (selectedUnallocatedLines.length === 0) {
       const infoSnack = info(t('label.no-unallocated-rows-selected'));
       infoSnack();
-      clearSelected();
+      resetRowSelection();
       return;
     }
 
@@ -101,7 +89,7 @@ export const useOutboundAllocateSelectedLines = (): {
         )();
       }
       if (result.failed.count === 0 && result.partial.count === 0) {
-        clearSelected();
+        resetRowSelection();
       }
     }
   };

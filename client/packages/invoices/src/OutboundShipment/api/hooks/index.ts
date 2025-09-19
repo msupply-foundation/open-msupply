@@ -13,7 +13,6 @@ export const useOutbound = {
     barcodeInsert: Utils.useBarcodeInsert,
     isDisabled: Utils.useOutboundIsDisabled,
     id: Utils.useOutboundId,
-    selectedLines: Utils.useSelectedLines,
   },
 
   document: {
@@ -33,9 +32,7 @@ export const useOutbound = {
   },
 
   line: {
-    stockLines: Lines.useOutboundLines,
     serviceLines: Lines.useOutboundServiceLines,
-    rows: Lines.useOutboundRows,
     save: Lines.useOutboundSaveLines,
     deleteSelected: Lines.useOutboundDeleteSelectedLines,
     allocateSelected: Lines.useOutboundAllocateSelectedLines,

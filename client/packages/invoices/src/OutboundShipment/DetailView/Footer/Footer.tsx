@@ -81,7 +81,10 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     selectedRows,
     resetRowSelection
   );
-  const { onAllocate } = useOutbound.line.allocateSelected();
+  const { onAllocate } = useOutbound.line.allocateSelected(
+    selectedRows,
+    resetRowSelection
+  );
 
   const selectedUnallocatedEmptyLines = selectedRows
     .filter(
