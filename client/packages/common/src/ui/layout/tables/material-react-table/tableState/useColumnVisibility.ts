@@ -48,7 +48,10 @@ export const useColumnVisibility = <T extends MRT_RowData>(
             : updaterOrValue;
 
         updateSavedState(tableId, {
-          columnVisibility: differentOrUndefined(newColumnVisibility, initial),
+          columnVisibility:
+            Object.keys(newColumnVisibility).length === 0
+              ? undefined
+              : differentOrUndefined(newColumnVisibility, initial),
         });
         return newColumnVisibility;
       }),

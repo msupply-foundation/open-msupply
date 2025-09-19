@@ -30,6 +30,16 @@ export const updateSavedState = (
 ) => {
   const savedData = getSavedState(tableId);
 
+  const newData = { ...savedData, ...newState };
+  // Delete key if all state undefined
+  if (
+    Object.values(newData).length === 0 ||
+    Object.values(newData).every(v => v === undefined)
+  ) {
+    localStorage.removeItem(`@openmsupply-client/tables/${tableId}`);
+    return;
+  }
+
   localStorage.setItem(
     `@openmsupply-client/tables/${tableId}`,
     JSON.stringify({
