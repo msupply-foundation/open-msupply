@@ -119,7 +119,7 @@ export const OutboundShipmentListView = () => {
     []
   );
 
-  const { table, selectedRows, resetRowSelection } =
+  const { table, selectedRows } =
     usePaginatedMaterialTable<OutboundRowFragment>({
       tableId: 'outbound-shipment-list',
       isLoading,
@@ -148,7 +148,7 @@ export const OutboundShipmentListView = () => {
 
       <Footer
         selectedRows={selectedRows}
-        resetRowSelection={resetRowSelection}
+        resetRowSelection={table.resetRowSelection}
       />
     </>
   );
