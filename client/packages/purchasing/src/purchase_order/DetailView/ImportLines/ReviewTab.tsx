@@ -46,9 +46,9 @@ export const ReviewTab = ({
     },
     {
       width: 90,
-      key: 'requestedNumberOfUnits',
+      key: 'numberOfPacks',
       sortable: false,
-      label: 'label.requested',
+      label: 'label.requested-packs',
     },
     {
       width: 90,
@@ -64,10 +64,9 @@ export const ReviewTab = ({
     },
     {
       width: 90,
-      key: 'pricePerUnitBeforeDiscount',
+      key: 'pricePerPackBeforeDiscount',
       sortable: false,
       label: 'label.price-per-pack-before-discount',
-      accessor: rowData => rowData.rowData.pricePerUnitBeforeDiscount * rowData.rowData.requestedPackSize || 0,
     },
     {
       width: 90,
@@ -77,10 +76,9 @@ export const ReviewTab = ({
     },
     {
       width: 90,
-      key: 'pricePerUnitAfterDiscount',
+      key: 'pricePerPackAfterDiscount',
       sortable: false,
       label: 'label.price-per-pack-after-discount',
-      accessor: rowData => rowData.rowData.pricePerUnitAfterDiscount * rowData.rowData.requestedPackSize || 0,
     },
     {
       width: 90,
