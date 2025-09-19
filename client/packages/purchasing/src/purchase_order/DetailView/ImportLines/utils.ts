@@ -47,6 +47,7 @@ export const getImportHelpers = (
     warningMessage: '',
     discountPercentage: 0,
     receivedNumberOfUnits: 0,
+    unitsOrderedInOthers: 0,
   };
   const rowErrors: string[] = [];
   const rowWarnings: string[] = [];

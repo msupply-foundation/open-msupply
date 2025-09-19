@@ -4542,6 +4542,7 @@ export type InvoiceNode = {
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
+  documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
@@ -7216,6 +7217,7 @@ export type PurchaseOrderLineNode = {
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
+  unitsOrderedInOthers: Scalars['Float']['output'];
 };
 
 export type PurchaseOrderLineNodeManufacturerArgs = {
