@@ -192,6 +192,13 @@ fragment Inbound on InvoiceNode {
   }
 
   currencyRate
+
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
 }
 
 fragment InboundRow on InvoiceNode {

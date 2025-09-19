@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PurchaseOrderRowFragment = {
@@ -18,14 +19,6 @@ export type PurchaseOrderRowFragment = {
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
-};
-
-export type SyncFileReferenceFragment = {
-  __typename: 'SyncFileReferenceNode';
-  id: string;
-  fileName: string;
-  recordId: string;
-  createdDatetime: string;
 };
 
 export type PurchaseOrderFragment = {
@@ -85,12 +78,14 @@ export type PurchaseOrderFragment = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -148,12 +143,14 @@ export type PurchaseOrderLineFragment = {
   comment?: string | null;
   supplierItemCode?: string | null;
   status: Types.PurchaseOrderLineStatusNode;
+  unitsOrderedInOthers: number;
   item: {
     __typename: 'ItemNode';
     id: string;
     code: string;
     name: string;
     unitName?: string | null;
+    stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
   };
   manufacturer?: {
     __typename: 'NameNode';
@@ -273,12 +270,14 @@ export type PurchaseOrderByIdQuery = {
             comment?: string | null;
             supplierItemCode?: string | null;
             status: Types.PurchaseOrderLineStatusNode;
+            unitsOrderedInOthers: number;
             item: {
               __typename: 'ItemNode';
               id: string;
               code: string;
               name: string;
               unitName?: string | null;
+              stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
             };
             manufacturer?: {
               __typename: 'NameNode';
@@ -425,12 +424,14 @@ export type PurchaseOrderLinesQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -487,12 +488,14 @@ export type PurchaseOrderLineQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -543,7 +546,18 @@ export type InsertPurchaseOrderLineMutation = {
   __typename: 'Mutations';
   insertPurchaseOrderLine:
     | { __typename: 'IdResponse'; id: string }
-    | { __typename: 'InsertPurchaseOrderLineError' };
+    | {
+        __typename: 'InsertPurchaseOrderLineError';
+        error:
+          | { __typename: 'CannnotFindItemByCode'; description: string }
+          | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | { __typename: 'ForeignKeyError'; description: string }
+          | { __typename: 'PackSizeCodeCombinationExists'; description: string }
+          | {
+              __typename: 'PurchaseOrderLineWithIdExists';
+              description: string;
+            };
+      };
 };
 
 export type AddToPurchaseOrderFromMasterListMutationVariables = Types.Exact<{
@@ -565,34 +579,6 @@ export type AddToPurchaseOrderFromMasterListMutation = {
           | { __typename: 'RecordNotFound'; description: string };
       }
     | { __typename: 'PurchaseOrderLineConnector' };
-};
-
-export type InsertPurchaseOrderLineFromCsvMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.InsertPurchaseOrderLineFromCsvInput;
-}>;
-
-export type InsertPurchaseOrderLineFromCsvMutation = {
-  __typename: 'Mutations';
-  insertPurchaseOrderLineFromCsv:
-    | { __typename: 'IdResponse'; id: string }
-    | {
-        __typename: 'InsertPurchaseOrderLineError';
-        error:
-          | { __typename: 'CannnotFindItemByCode'; description: string }
-          | { __typename: 'CannotEditPurchaseOrder'; description: string }
-          | { __typename: 'ForeignKeyError'; description: string }
-          | {
-              __typename: 'PackSizeCodeCombinationExists';
-              description: string;
-              itemCode: string;
-              requestedPackSize: number;
-            }
-          | {
-              __typename: 'PurchaseOrderLineWithIdExists';
-              description: string;
-            };
-      };
 };
 
 export type UpdatePurchaseOrderLineMutationVariables = Types.Exact<{
@@ -675,6 +661,9 @@ export const PurchaseOrderLineFragmentDoc = gql`
       code
       name
       unitName
+      stats(storeId: $storeId) {
+        stockOnHand
+      }
     }
     requestedPackSize
     requestedDeliveryDate
@@ -704,17 +693,9 @@ export const PurchaseOrderLineFragmentDoc = gql`
         username
       }
     }
+    unitsOrderedInOthers
   }
   ${NameRowFragmentDoc}
-`;
-export const SyncFileReferenceFragmentDoc = gql`
-  fragment SyncFileReference on SyncFileReferenceNode {
-    __typename
-    id
-    fileName
-    recordId
-    createdDatetime
-  }
 `;
 export const PurchaseOrderFragmentDoc = gql`
   fragment PurchaseOrder on PurchaseOrderNode {
@@ -959,6 +940,32 @@ export const InsertPurchaseOrderLineDocument = gql`
       ... on IdResponse {
         id
       }
+      ... on InsertPurchaseOrderLineError {
+        __typename
+        error {
+          description
+          ... on CannnotFindItemByCode {
+            __typename
+            description
+          }
+          ... on CannotEditPurchaseOrder {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+          }
+          ... on PackSizeCodeCombinationExists {
+            __typename
+            description
+          }
+          ... on PurchaseOrderLineWithIdExists {
+            __typename
+            description
+          }
+        }
+      }
     }
   }
 `;
@@ -991,47 +998,6 @@ export const AddToPurchaseOrderFromMasterListDocument = gql`
           }
           description
         }
-      }
-    }
-  }
-`;
-export const InsertPurchaseOrderLineFromCsvDocument = gql`
-  mutation insertPurchaseOrderLineFromCsv(
-    $storeId: String!
-    $input: InsertPurchaseOrderLineFromCSVInput!
-  ) {
-    insertPurchaseOrderLineFromCsv(input: $input, storeId: $storeId) {
-      ... on InsertPurchaseOrderLineError {
-        __typename
-        error {
-          description
-          ... on CannnotFindItemByCode {
-            __typename
-            description
-          }
-          ... on ForeignKeyError {
-            __typename
-            description
-          }
-          ... on CannotEditPurchaseOrder {
-            __typename
-            description
-          }
-          ... on PackSizeCodeCombinationExists {
-            __typename
-            description
-            itemCode
-            requestedPackSize
-          }
-          ... on PurchaseOrderLineWithIdExists {
-            __typename
-            description
-          }
-        }
-      }
-      ... on IdResponse {
-        __typename
-        id
       }
     }
   }
@@ -1272,22 +1238,6 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'addToPurchaseOrderFromMasterList',
-        'mutation',
-        variables
-      );
-    },
-    insertPurchaseOrderLineFromCsv(
-      variables: InsertPurchaseOrderLineFromCsvMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<InsertPurchaseOrderLineFromCsvMutation> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<InsertPurchaseOrderLineFromCsvMutation>(
-            InsertPurchaseOrderLineFromCsvDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'insertPurchaseOrderLineFromCsv',
         'mutation',
         variables
       );
