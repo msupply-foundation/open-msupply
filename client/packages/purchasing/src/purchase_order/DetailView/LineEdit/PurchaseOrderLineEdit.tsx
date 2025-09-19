@@ -260,7 +260,7 @@ export const PurchaseOrderLineEdit = ({
                   onChange: value => {
                     const adjustedPatch = calculatePricesAndDiscount(
                       'pricePerPackAfterDiscount',
-                      { ...draft, pricePerUnitAfterDiscount: value }
+                      { ...draft, pricePerPackAfterDiscount: value }
                     );
                     update(adjustedPatch);
                   },
