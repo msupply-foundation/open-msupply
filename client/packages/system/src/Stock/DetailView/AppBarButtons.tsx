@@ -6,11 +6,7 @@ import {
   useTranslation,
   StockIcon,
   BarChart2Icon,
-  InvoiceIcon,
-  RouteBuilder,
-  useNavigate,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 
 interface AppBarButtonProps {
   openRepack: () => void;
@@ -21,10 +17,8 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   openRepack,
   openAdjust,
-  itemId,
 }) => {
   const t = useTranslation();
-  const navigate = useNavigate();
 
   return (
     <AppBarButtonsPortal>
