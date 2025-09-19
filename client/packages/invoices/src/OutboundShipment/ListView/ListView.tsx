@@ -12,6 +12,7 @@ import {
   ColumnDef,
   ColumnType,
   NameAndColorSetterCell,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -128,13 +129,13 @@ export const OutboundShipmentListView = () => {
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
       getIsRestrictedRow: isOutboundDisabled,
+      renderEmptyRowsFallback: () => (
+        <NothingHere
+          body={t('error.no-outbound-shipments')}
+          onCreate={modalController.toggleOn}
+        />
+      ),
     });
-  //     noDataElement={
-  //   <NothingHere
-  //     body={t('error.no-outbound-shipments')}
-  //     onCreate={modalController.toggleOn}
-  //   />
-  // }
 
   return (
     <>
