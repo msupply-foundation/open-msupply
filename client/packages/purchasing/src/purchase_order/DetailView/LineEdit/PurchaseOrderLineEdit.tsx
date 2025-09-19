@@ -126,8 +126,13 @@ export const PurchaseOrderLineEdit = ({
                 disabled
                 isVerticalScreen={isVerticalScreen}
               />
-              {textInput('label.unit', draft?.unit || '', value =>
-                update({ unit: value })
+              {textInput(
+                'label.unit',
+                draft?.unit || '',
+                value => update({ unit: value }),
+                {
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                }
               )}
               {textInput(
                 'label.supplier-item-code',
@@ -137,7 +142,10 @@ export const PurchaseOrderLineEdit = ({
               <InputWithLabelRow
                 Input={
                   <ManufacturerSearchInput
-                    disabled={disabled}
+                    disabled={isFieldDisabled(
+                      status,
+                      StatusGroup.AfterConfirmed
+                    )}
                     value={draft?.manufacturer ?? null}
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
@@ -228,6 +236,7 @@ export const PurchaseOrderLineEdit = ({
                     update(adjustedPatch);
                   },
                   decimalLimit: 2,
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               {numericInput(
@@ -243,6 +252,7 @@ export const PurchaseOrderLineEdit = ({
                   },
                   max: 100,
                   decimalLimit: 2,
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                   endAdornment: '%',
                 }
               )}
@@ -258,6 +268,7 @@ export const PurchaseOrderLineEdit = ({
                     update(adjustedPatch);
                   },
                   decimalLimit: 2,
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               <NumInputRow
@@ -282,7 +293,7 @@ export const PurchaseOrderLineEdit = ({
                 draft?.requestedDeliveryDate,
                 value => update({ requestedDeliveryDate: value }),
                 {
-                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                  disabled: true,
                 }
               )}
               {dateInput(
