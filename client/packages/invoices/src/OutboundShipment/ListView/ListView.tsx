@@ -1,22 +1,14 @@
 import React, { FC, useEffect, useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
-  getNameAndColorColumn,
   TableProvider,
   createTableStore,
   useTranslation,
   InvoiceNodeStatus,
   useTableStore,
-  NothingHere,
   useToggle,
   useUrlQueryParams,
-  TooltipTextCell,
-  GenericColumnKey,
-  getCommentPopoverColumn,
   useSimplifiedTabletUI,
-  useFeatureFlags,
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
@@ -39,14 +31,11 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
 };
 
 const OutboundShipmentListViewComponent: FC = () => {
-  const { tableUsabilityImprovements } = useFeatureFlags();
   const { mutate: onUpdate } = useOutbound.document.update();
   const t = useTranslation();
   const {
-    updateSortQuery,
-    updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, first, offset },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
@@ -60,53 +49,11 @@ const OutboundShipmentListViewComponent: FC = () => {
   });
   const navigate = useNavigate();
   const modalController = useToggle();
-  const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
   const simplifiedTabletView = useSimplifiedTabletUI();
 
-  const { data, isError, isLoading } = useOutbound.document.list(queryParams);
+  const { data, isLoading } = useOutbound.document.list(queryParams);
   useDisableOutboundRows(data?.nodes);
-
-  const columns = useColumns<OutboundRowFragment>(
-    [
-      GenericColumnKey.Selection,
-      [
-        getNameAndColorColumn(),
-        { setter: onUpdate, defaultHideOnMobile: true },
-      ],
-      [
-        'status',
-        {
-          formatter: status =>
-            getStatusTranslator(t)(status as InvoiceNodeStatus),
-        },
-      ],
-      [
-        'invoiceNumber',
-        { description: 'description.invoice-number', width: 150 },
-      ],
-      'createdDatetime',
-      {
-        description: 'description.customer-reference',
-        key: 'theirReference',
-        label: 'label.reference',
-        Cell: TooltipTextCell,
-        width: 175,
-        defaultHideOnMobile: true,
-      },
-      getCommentPopoverColumn(),
-      [
-        'totalAfterTax',
-        {
-          accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
-          width: 125,
-          defaultHideOnMobile: true,
-        },
-      ],
-    ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
-  );
 
   const mrtColumns = useMemo(
     (): ColumnDef<OutboundRowFragment>[] => [
@@ -190,34 +137,12 @@ const OutboundShipmentListViewComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} simplifiedTabletView={simplifiedTabletView} />
+      <Toolbar />
       <AppBarButtons
         modalController={modalController}
         simplifiedTabletView={simplifiedTabletView}
       />
-      {tableUsabilityImprovements ? (
-        <MaterialTable table={table} />
-      ) : (
-        <DataTable
-          id="outbound-list"
-          enableColumnSelection
-          pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-          onChangePage={updatePaginationQuery}
-          columns={columns}
-          data={data?.nodes ?? []}
-          isError={isError}
-          isLoading={isLoading}
-          noDataElement={
-            <NothingHere
-              body={t('error.no-outbound-shipments')}
-              onCreate={modalController.toggleOn}
-            />
-          }
-          onRowClick={row => {
-            navigate(row.id);
-          }}
-        />
-      )}
+      <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows}
         resetRowSelection={resetRowSelection}

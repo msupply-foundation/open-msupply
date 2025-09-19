@@ -20,6 +20,8 @@ export interface Action {
 interface ActionsFooterProps {
   actions: Action[];
   selectedRowCount: number;
+  // TO-DO: Make this required and remove useTableStore after all tables are
+  // migrated
   resetRowSelection?: () => void;
 }
 
