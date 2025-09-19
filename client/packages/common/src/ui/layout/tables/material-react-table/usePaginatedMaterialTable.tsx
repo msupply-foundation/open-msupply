@@ -133,9 +133,5 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [rowSelection]
   );
 
-  const resetRowSelection = () => {
-    table.resetRowSelection();
-  };
-
-  return { table, selectedRows, resetRowSelection };
+  return { table, selectedRows };
 };
