@@ -45,7 +45,7 @@ import { VvmStatusFragment } from 'packages/system/src/Stock/api';
 import {
   NumberInputCell,
   ExpiryDateCell,
-} from 'packages/common/src/ui/layout/tables/material-react-table/components';
+} from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -271,12 +271,14 @@ export const OutboundLineEditTable = ({
               setVvmStatus(row.original.id, vvmStatus);
             }}
             selected={row.original.vvmStatus ?? null}
+            disabled={getIsDisabled(row.original)}
           />
         ),
         size: 150,
         defaultHideOnMobile: true,
         includeColumn:
-          prefs.manageVvmStatusForStock || prefs.sortByVvmStatusThenExpiry,
+          item?.isVaccine &&
+          (prefs.manageVvmStatusForStock || prefs.sortByVvmStatusThenExpiry),
       },
       {
         id: 'campaign',
