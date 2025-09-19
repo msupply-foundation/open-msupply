@@ -42,7 +42,10 @@ import {
 import { min } from 'lodash';
 import { useDisableVvmRows } from '../../../useDisableVvmRows';
 import { VvmStatusFragment } from 'packages/system/src/Stock/api';
-import { NumberInputCell } from 'packages/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
+import {
+  NumberInputCell,
+  ExpiryDateCell,
+} from 'packages/common/src/ui/layout/tables/material-react-table/components';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -245,6 +248,9 @@ export const OutboundLineEditTable = ({
         header: t('label.expiry-date'),
         size: 100,
         columnType: ColumnType.Date,
+        Cell: ({ cell }) => {
+          return <ExpiryDateCell cell={cell} />;
+        },
       },
       {
         accessorKey: 'vvmStatus',
