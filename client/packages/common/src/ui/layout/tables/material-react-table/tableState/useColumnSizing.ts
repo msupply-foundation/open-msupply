@@ -5,12 +5,23 @@ import {
   MRT_TableOptions,
 } from 'material-react-table';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
+import { useDebounceCallback } from '@common/hooks';
 
 export const useColumnSizing = (tableId: string) => {
   const initial = { 'mrt-row-expand': 40 };
 
   const [state, setState] = useState<MRT_ColumnSizingState>(
     getSavedState(tableId).columnSizing ?? initial
+  );
+
+  const debouncedUpdateSavedState = useDebounceCallback(
+    (newState: MRT_ColumnSizingState) => {
+      updateSavedState(tableId, {
+        columnSizing: differentOrUndefined(newState, initial),
+      });
+    },
+    [],
+    500
   );
 
   const update = useCallback<
@@ -23,9 +34,8 @@ export const useColumnSizing = (tableId: string) => {
             ? updaterOrValue(prev)
             : updaterOrValue;
 
-        updateSavedState(tableId, {
-          columnSizing: differentOrUndefined(newColumnSizing, initial),
-        });
+        debouncedUpdateSavedState(newColumnSizing);
+
         return newColumnSizing;
       }),
     []
