@@ -41,7 +41,6 @@ import { useOutboundLines } from '../api/hooks/line/useOutboundLines';
 const DetailViewInner = () => {
   const t = useTranslation();
   const { info } = useNotification();
-  const isDisabled = useOutbound.utils.isDisabled();
 
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<OutboundOpenedWith>();
@@ -260,13 +259,7 @@ const DetailViewInner = () => {
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={onAddItem}
-          table={table}
-        />
-      ),
+      Component: <ContentArea table={table} />,
       value: 'Details',
     },
     {
