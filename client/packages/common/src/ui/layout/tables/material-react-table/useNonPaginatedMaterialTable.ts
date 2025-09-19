@@ -14,12 +14,8 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
 
   const selectedRows = table.getSelectedRowModel().rows.map(r => r.original);
 
-  const resetRowSelection = () => {
-    table.resetRowSelection();
-  };
   return {
     table,
     selectedRows,
-    resetRowSelection,
   };
 };
