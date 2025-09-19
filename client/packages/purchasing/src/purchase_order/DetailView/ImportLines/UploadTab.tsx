@@ -11,15 +11,21 @@ import {
   UploadFile,
   useExportCSV,
   ImportPanel,
+  PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 import { importPurchaseOrderLinesToCsv } from '../utils';
 import { getImportHelpers, ImportRow, ParsedLine } from './utils';
+import {
+  calculatePricesAndDiscount,
+  calculateUnitQuantities,
+} from '../LineEdit';
 
 interface UploadTabProps {
   setLines: Dispatch<SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: SetStateAction<string>) => void;
   setWarningMessage: (value: SetStateAction<string>) => void;
   onUploadComplete: () => void;
+  status: PurchaseOrderNodeStatus;
 }
 
 export const UploadTab = ({
@@ -28,6 +34,7 @@ export const UploadTab = ({
   setWarningMessage,
   setLines,
   onUploadComplete,
+  status,
 }: ImportPanel & UploadTabProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -41,12 +48,12 @@ export const UploadTab = ({
       {
         itemCode: t('label.code'),
         requestedPackSize: 0,
-        requestedNumberOfUnits: 0,
+        numberOfPacks: 0,
         unit: '',
         supplierItemCode: '',
-        pricePerUnitBeforeDiscount: 0,
+        pricePerPackBeforeDiscount: 0,
         discountPercentage: 0,
-        pricePerUnitAfterDiscount: 0,
+        pricePerPackAfterDiscount: 0,
         requestedDeliveryDate: '',
         expectedDeliveryDate: '',
         comment: '',
@@ -73,18 +80,43 @@ export const UploadTab = ({
       },
     ]);
 
-    addCell('requestedNumberOfUnits', 'label.requested', numString =>
-      parseFloat(numString)
-    );
+    addCell('numberOfPacks', 'label.requested-packs', numString => {
+      const parsedValue = parseFloat(numString);
+      const calculatedValues = calculateUnitQuantities(status, {
+        ...importRow,
+        numberOfPacks: parsedValue,
+      });
+      Object.assign(importRow, {
+        requestedNumberOfUnits: calculatedValues.requestedNumberOfUnits,
+        adjustedNumberOfUnits: calculatedValues.adjustedNumberOfUnits,
+      });
+      return parsedValue;
+    });
 
     addCell('unit', 'label.unit');
 
     addCell('supplierItemCode', 'label.supplier-item-code');
 
     addCell(
-      'pricePerUnitBeforeDiscount',
+      'pricePerPackBeforeDiscount',
       'label.price-per-pack-before-discount',
-      numString => parseFloat(numString)
+      numString => {
+        const parsedValue = parseFloat(numString);
+        const calculatedValues = calculatePricesAndDiscount(
+          'pricePerPackBeforeDiscount',
+          {
+            ...importRow,
+            pricePerPackBeforeDiscount: parsedValue,
+          }
+        );
+        Object.assign(importRow, {
+          pricePerUnitBeforeDiscount:
+            calculatedValues.pricePerUnitBeforeDiscount,
+          discountPercentage: calculatedValues.discountPercentage,
+          pricePerUnitAfterDiscount: calculatedValues.pricePerUnitAfterDiscount,
+        });
+        return parsedValue;
+      }
     );
 
     addCell('discountPercentage', 'label.discount-percentage', numString =>
@@ -92,9 +124,27 @@ export const UploadTab = ({
     );
 
     addCell(
-      'pricePerUnitAfterDiscount',
+      'pricePerPackAfterDiscount',
       'label.price-per-pack-after-discount',
-      numString => parseFloat(numString)
+      numString => {
+        const parsedValue = parseFloat(numString);
+        const calculatedValues = calculatePricesAndDiscount(
+          'pricePerPackAfterDiscount',
+          {
+            ...importRow,
+            pricePerPackAfterDiscount: parsedValue,
+          }
+        );
+
+        Object.assign(importRow, {
+          pricePerUnitBeforeDiscount:
+            calculatedValues.pricePerUnitBeforeDiscount,
+          discountPercentage: calculatedValues.discountPercentage,
+          pricePerUnitAfterDiscount: calculatedValues.pricePerUnitAfterDiscount,
+        });
+
+        return parsedValue;
+      }
     );
 
     addCell('requestedDeliveryDate', 'label.requested-delivery-date');
