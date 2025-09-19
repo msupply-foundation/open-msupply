@@ -7,12 +7,14 @@ import {
 } from '@common/icons';
 import { MenuItem, Typography } from '@mui/material';
 import { ColumnDef } from './types';
+import { NothingHere } from '@common/components';
 
 export const getTableDisplayOptions = <T extends MRT_RowData>(
   onRowClick?: (row: T) => void,
   getIsPlaceholderRow: (row: T) => boolean = () => false,
   getIsRestrictedRow: (row: T) => boolean = () => false
 ): Partial<MRT_TableOptions<T>> => ({
+  // Add column description to column menu
   renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
     const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
 
@@ -35,15 +37,28 @@ export const getTableDisplayOptions = <T extends MRT_RowData>(
     ];
   },
 
+  renderEmptyRowsFallback: () => <NothingHere />,
+
   // Styling
   muiTablePaperProps: {
     sx: { width: '100%', display: 'flex', flexDirection: 'column' },
   },
-  muiTableProps: {
-    // Need to apply this here so that relative sizes (ems, %) within table
-    // are correct
-    sx: theme => ({ fontSize: theme.typography.body1.fontSize }),
+  muiTableContainerProps: {
+    sx: { flex: 1, display: 'flex', flexDirection: 'column' },
   },
+  muiTableProps: {
+    sx: theme => ({
+      // Need to apply this here so that relative sizes (ems, %) within table are correct
+      fontSize: theme.typography.body1.fontSize,
+      display: 'flex',
+      flex: 1,
+      flexDirection: 'column',
+    }),
+  },
+  muiTableBodyProps: ({ table }) => ({
+    // Make the NothingHere component vertically centered when there are no rows
+    sx: { height: table.getRowCount() === 0 ? '100%' : 'auto' },
+  }),
 
   // todo: add tooltip over column name
   // todo: ability to not show column name (but still give it a header label for column management)
