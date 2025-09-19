@@ -1,10 +1,4 @@
-import React, {
-  Dispatch,
-  memo,
-  ReactElement,
-  SetStateAction,
-  useEffect,
-} from 'react';
+import React, { memo, ReactElement } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -13,35 +7,35 @@ import {
   DownloadIcon,
   useDownloadFile,
   useNotification,
-  useQueryClient,
   useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { SyncFileReferenceFragment, PURCHASE_ORDER } from '../../../api';
+import { SyncFileReferenceFragment } from '@openmsupply-client/system';
 
 interface FooterProps {
-  purchaseOrderId?: string;
-  documents?: SyncFileReferenceFragment[];
-  setShowStatusBar: Dispatch<SetStateAction<boolean>>;
+  recordId: string;
+  documents: SyncFileReferenceFragment[];
+  tableName: string;
+  invalidateQueries?: () => void;
 }
 
 const FooterComponent = ({
-  purchaseOrderId,
+  recordId,
   documents,
-  setShowStatusBar,
+  tableName,
+  invalidateQueries = () => {},
 }: FooterProps): ReactElement => {
   const t = useTranslation();
-  const queryClient = useQueryClient();
   const downloadFile = useDownloadFile();
   const { error, success } = useNotification();
 
-  const selectedRows = useTableStore(
-    state => documents?.filter(({ id }) => state.rowState[id]?.isSelected) || []
+  const selectedRows = useTableStore(state =>
+    documents.filter(({ id }) => state.rowState[id]?.isSelected)
   );
 
   const handleFileDelete = async (id: string) => {
-    const url = `${Environment.SYNC_FILES_URL}/purchase_order/${purchaseOrderId}/${id}`;
+    const url = `${Environment.SYNC_FILES_URL}/${tableName}/${recordId}/${id}`;
     const response = await fetch(url, {
       method: 'DELETE',
       credentials: 'include',
@@ -57,7 +51,8 @@ const FooterComponent = ({
       const deleteRequests = ids.map(handleFileDelete);
       await Promise.all(deleteRequests);
       success(t('success'))();
-      queryClient.invalidateQueries([PURCHASE_ORDER]);
+
+      invalidateQueries();
     } catch (e) {
       console.error(e);
       error(t('error.an-error-occurred', { message: (e as Error).message }))();
@@ -68,7 +63,7 @@ const FooterComponent = ({
     // Sequential downloads are better than Promise.all() to avoid browser limits
     for (const file of selectedRows) {
       try {
-        const url = `${Environment.SYNC_FILES_URL}/purchase_order/${purchaseOrderId}/${file.id}`;
+        const url = `${Environment.SYNC_FILES_URL}/${tableName}/${recordId}/${file.id}`;
         await downloadFile(url, { credentials: 'include' });
       } catch (e) {
         console.error(e);
@@ -91,11 +86,6 @@ const FooterComponent = ({
       onClick: handleFileDownload,
     },
   ];
-
-  useEffect(() => {
-    if (selectedRows.length > 0) setShowStatusBar(false);
-    else setShowStatusBar(true);
-  }, [selectedRows.length, setShowStatusBar]);
 
   return (
     <AppFooterPortal
