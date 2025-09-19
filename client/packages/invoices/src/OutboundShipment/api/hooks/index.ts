@@ -2,6 +2,9 @@ import { Utils } from './utils';
 import { Lines } from './line';
 import { Document } from './document';
 
+export { useOutboundItems } from './line/useOutboundItems';
+export { useOutboundLines } from './line/useOutboundLines';
+
 export const useOutbound = {
   utils: {
     addFromMasterList: Utils.useAddFromMasterList,
