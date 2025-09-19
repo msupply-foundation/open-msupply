@@ -15,17 +15,17 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea, Details } from './Tabs';
+import { ActivityLogList, DocumentsTable } from '@openmsupply-client/system';
+
+import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
+import { PurchaseOrderLineFragment, usePurchaseOrder } from '../api';
+import { PurchaseOrderLineErrorProvider } from '../context';
+import { ContentArea, Details, GoodsReceived } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
-import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
-import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
-import { ActivityLogList, DocumentsTable } from '@openmsupply-client/system';
-import { PurchaseOrderLineErrorProvider } from '../context';
+import { PurchaseOrderLineEditModal } from './LineEdit';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -86,6 +86,10 @@ export const DetailViewInner = () => {
         />
       ),
       value: 'General',
+    },
+    {
+      Component: <GoodsReceived />,
+      value: 'Goods Received',
     },
     {
       Component: <Details draft={draft} onChange={handleChange} />,

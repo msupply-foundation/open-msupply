@@ -370,6 +370,7 @@
   "error.no-encounters": "No encounters to display.",
   "error.no-form-permission": "No permission to view forms",
   "error.no-forms-available": "No forms available",
+  "error.no-goods-received-linked": "No goods received linked to this purchase order",
   "error.no-immunisation-programs": "No Immunization programs found",
   "error.no-inbound-items": "No items have been added to this shipment.",
   "error.no-inbound-shipments": "There are no Inbound Shipments to display.",
