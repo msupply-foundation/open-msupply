@@ -75,6 +75,7 @@ export const useGetColumnTypeDefaults = () => {
           enableSorting: false,
           enableColumnFilter: false,
           enableResizing: false,
+          enableColumnActions: false,
           Cell: ({ cell }) => {
             const value = cell.getValue<string | null>();
             return <PopoverCell value={value} label={t('label.comment')} />;
