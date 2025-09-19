@@ -107,15 +107,9 @@ export const calculateUnitQuantities = (
   const totalUnits = numberOfPacks * requestedPackSize;
 
   // Only adjust the requested number of units if the status is not confirmed yet
-  if (status === PurchaseOrderNodeStatus.Confirmed) {
-    return {
-      adjustedNumberOfUnits: totalUnits,
-    };
-  }
-  return {
-    requestedNumberOfUnits: totalUnits,
-    adjustedNumberOfUnits: totalUnits,
-  };
+  return status === PurchaseOrderNodeStatus.Confirmed
+    ? { adjustedNumberOfUnits: totalUnits }
+    : { requestedNumberOfUnits: totalUnits };
 };
 
 type LineStatusOption = {

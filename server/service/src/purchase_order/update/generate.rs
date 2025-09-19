@@ -186,6 +186,13 @@ fn update_lines(
                     PurchaseOrderStatus::Confirmed => {
                         line.purchase_order_line_row.status =
                             repository::PurchaseOrderLineStatus::Sent;
+
+                        // Insert requested units value to adjusted units field when purchase order changes to Confirmed status
+                        // Requested units is a fallback as status can change backwards from Sent to Confirmed, so value for adjusted units may already exist
+                        line.purchase_order_line_row.adjusted_number_of_units = line
+                            .purchase_order_line_row
+                            .adjusted_number_of_units
+                            .or(Some(line.purchase_order_line_row.requested_number_of_units))
                     }
                     PurchaseOrderStatus::Finalised => {
                         line.purchase_order_line_row.status =
