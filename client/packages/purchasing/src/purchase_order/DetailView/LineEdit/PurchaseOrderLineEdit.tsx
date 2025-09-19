@@ -293,7 +293,7 @@ export const PurchaseOrderLineEdit = ({
                 draft?.requestedDeliveryDate,
                 value => update({ requestedDeliveryDate: value }),
                 {
-                  disabled: true,
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               {dateInput(

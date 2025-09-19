@@ -3,14 +3,18 @@ mod update {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_name_a, mock_name_store_b, mock_store_a, mock_user_account_a, MockDataInserts,
+            mock_item_a, mock_item_b, mock_name_a, mock_name_store_b, mock_store_a,
+            mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, PreferenceRow, PreferenceRowRepository,
-        PurchaseOrderRowRepository, PurchaseOrderStatus,
+        PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
 
-    use crate::preference::{AuthorisePurchaseOrder, Preference};
+    use crate::{
+        preference::{AuthorisePurchaseOrder, Preference},
+        purchase_order_line::insert::InsertPurchaseOrderLineInput,
+    };
     use crate::{
         purchase_order::{
             insert::InsertPurchaseOrderInput,
@@ -155,6 +159,37 @@ mod update {
             .upsert_one(&purchase_order)
             .unwrap();
 
+        // Create a purchase order line without a requested delivery date
+        service_provider
+            .purchase_order_line_service
+            .insert_purchase_order_line(
+                &context,
+                InsertPurchaseOrderLineInput {
+                    id: "purchase_order_line_without_delivery_date".to_string(),
+                    purchase_order_id: purchase_order_id.clone(),
+                    item_id_or_code: mock_item_a().id.to_string(),
+                    requested_pack_size: Some(5.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        //  Create a purchase order line with a requested delivery date
+        service_provider
+            .purchase_order_line_service
+            .insert_purchase_order_line(
+                &context,
+                InsertPurchaseOrderLineInput {
+                    id: "purchase_order_line_with_a_delivery_date".to_string(),
+                    purchase_order_id: purchase_order_id.clone(),
+                    item_id_or_code: mock_item_b().id.to_string(),
+                    requested_pack_size: Some(3.0),
+                    requested_delivery_date: Some(NaiveDate::from_ymd_opt(2023, 12, 3).unwrap()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
         // Update the purchase order with a known discount percentage
         let discount_percentage = 10.0;
         let result = service
@@ -168,6 +203,9 @@ mod update {
                     status: Some(PurchaseOrderStatus::New),
                     received_at_port_date: Some(NullableUpdate {
                         value: Some(NaiveDate::from_ymd_opt(2023, 10, 1).unwrap()),
+                    }),
+                    requested_delivery_date: Some(NullableUpdate {
+                        value: Some(NaiveDate::from_ymd_opt(2023, 12, 1).unwrap()),
                     }),
                     ..Default::default()
                 },
@@ -202,6 +240,27 @@ mod update {
             .unwrap();
 
         assert_eq!(result.status, PurchaseOrderStatus::Confirmed);
+
+        // Check the requested delivery date is now saved on the purchase order lines
+
+        let line = PurchaseOrderLineRowRepository::new(&context.connection)
+            .find_one_by_id("purchase_order_line_without_delivery_date")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(line.requested_delivery_date, result.requested_delivery_date);
+
+        // But only if the line didn't already have a date
+
+        let line = PurchaseOrderLineRowRepository::new(&context.connection)
+            .find_one_by_id("purchase_order_line_with_a_delivery_date")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            line.requested_delivery_date,
+            Some(NaiveDate::from_ymd_opt(2023, 12, 03).unwrap())
+        );
     }
 
     #[actix_rt::test]
