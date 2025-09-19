@@ -1,4 +1,8 @@
-import { useParams, useQuery } from '@openmsupply-client/common';
+import {
+  useParams,
+  useQuery,
+  useQueryClient,
+} from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
 
 export const useInboundId = () => {
@@ -9,7 +13,13 @@ export const useInboundId = () => {
 export const useInbound = () => {
   const invoiceId = useInboundId();
   const api = useInboundApi();
-  return useQuery(
+  const queryClient = useQueryClient();
+
+  const invalidateQuery = () => {
+    queryClient.invalidateQueries(api.keys.detail(invoiceId));
+  };
+
+  const query = useQuery(
     api.keys.detail(invoiceId),
     () => api.get.byId(invoiceId),
     // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
@@ -19,4 +29,9 @@ export const useInbound = () => {
       cacheTime: 0,
     }
   );
+
+  return {
+    ...query,
+    invalidateQuery,
+  };
 };

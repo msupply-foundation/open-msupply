@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   DialogButton,
   UploadFile,
-  useQueryClient,
   useTranslation,
   useDialog,
   useNotification,
@@ -10,21 +9,23 @@ import {
   CircularProgress,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { PURCHASE_ORDER } from '../../api/hooks/keys';
 
-interface AddDocumentModalProps {
+interface UploadDocumentModalProps {
   isOn: boolean;
   toggleOff: () => void;
-  purchaseOrderId?: string;
+  recordId: string;
+  tableName: string;
+  invalidateQueries?: () => void;
 }
 
-export const AddDocumentModal = ({
+export const UploadDocumentModal = ({
   isOn,
   toggleOff,
-  purchaseOrderId,
-}: AddDocumentModalProps) => {
+  recordId,
+  tableName,
+  invalidateQueries = () => {},
+}: UploadDocumentModalProps) => {
   const t = useTranslation();
-  const queryClient = useQueryClient();
   const { error, success } = useNotification();
   const [isUploading, setIsUploading] = useState(false);
 
@@ -34,11 +35,11 @@ export const AddDocumentModal = ({
   });
 
   const handleUpload = async (files: File[]) => {
-    if (!purchaseOrderId) return;
+    if (!recordId) return;
 
     setIsUploading(true);
 
-    const url = `${Environment.SYNC_FILES_URL}/purchase_order/${purchaseOrderId}`;
+    const url = `${Environment.SYNC_FILES_URL}/${tableName}/${recordId}`;
     const formData = new FormData();
     files?.forEach(file => {
       formData.append('files', file);
@@ -56,7 +57,7 @@ export const AddDocumentModal = ({
 
       if (response.ok) {
         success(t('success'))();
-        queryClient.invalidateQueries([PURCHASE_ORDER]);
+        invalidateQueries();
         toggleOff();
       } else {
         error(t('error.an-error-occurred', { message: response.statusText }))();
@@ -72,9 +73,7 @@ export const AddDocumentModal = ({
   return (
     <Modal
       title={t('label.upload-document')}
-      okButton={
-        <DialogButton variant="ok" onClick={toggleOff} disabled={isUploading} />
-      }
+      width={500}
       cancelButton={
         <DialogButton
           variant="cancel"
