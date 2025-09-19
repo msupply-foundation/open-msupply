@@ -168,7 +168,8 @@ const OutboundShipmentListViewComponent: FC = () => {
       },
       {
         accessorKey: 'comment',
-        header: '',
+        header: t('label.comment'),
+        meta: { columnLabel: 'SOmething else' },
         columnType: ColumnType.Comment,
       },
     ],

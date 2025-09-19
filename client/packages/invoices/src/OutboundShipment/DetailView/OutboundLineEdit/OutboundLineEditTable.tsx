@@ -370,7 +370,8 @@ export const OutboundLineEditTable = ({
                 );
               },
             },
-            // Can only issue in whole packs in Outbound Shipment, so we'll show the user
+            // Can only issue in whole packs in Outbound Shipment, so we'll show
+            // the user
             {
               accessorKey: 'numberOfPacks',
               header: t('label.pack-quantity-issued', { unit }),
