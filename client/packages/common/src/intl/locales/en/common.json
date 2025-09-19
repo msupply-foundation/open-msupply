@@ -1181,6 +1181,7 @@
   "label.order-history": "Status history",
   "label.order-quantity": "Requested quantity",
   "label.order-type": "Order Type",
+  "label.ordered-in-others": "Ordered in other purchase orders",
   "label.other-facility": "Other facility",
   "label.other-requested-quantity": "Other requested",
   "label.our-soh": "Our SOH",

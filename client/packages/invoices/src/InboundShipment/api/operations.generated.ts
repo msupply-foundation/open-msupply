@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type InboundLineFragment = {
   __typename: 'InvoiceLineNode';
@@ -249,6 +250,16 @@ export type InboundFragment = {
     rate: number;
     isHomeCurrency: boolean;
   } | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
 };
 
 export type InboundRowFragment = {
@@ -504,6 +515,16 @@ export type InvoiceQuery = {
           rate: number;
           isHomeCurrency: boolean;
         } | null;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
       }
     | {
         __typename: 'NodeError';
@@ -692,6 +713,16 @@ export type InboundByNumberQuery = {
           rate: number;
           isHomeCurrency: boolean;
         } | null;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
       }
     | {
         __typename: 'NodeError';
@@ -1309,8 +1340,15 @@ export const InboundFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
   }
   ${InboundLineFragmentDoc}
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const InboundRowFragmentDoc = gql`
   fragment InboundRow on InvoiceNode {
