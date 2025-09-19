@@ -224,13 +224,13 @@ export const PurchaseOrderLineEdit = ({
                   }
                 )}
               {numericInput(
-                'label.price-per-unit-before-discount',
-                draft?.pricePerUnitBeforeDiscount,
+                'label.price-per-pack-before-discount',
+                draft?.pricePerUnitBeforeDiscount * (draft?.requestedPackSize || 1),
                 {
                   onChange: value => {
                     const adjustedPatch = calculatePricesAndDiscount(
-                      'pricePerUnitBeforeDiscount',
-                      { ...draft, pricePerUnitBeforeDiscount: value }
+                      'pricePerPackBeforeDiscount',
+                      { ...draft, pricePerPackBeforeDiscount: value }
                     );
                     update(adjustedPatch);
                   },
@@ -254,12 +254,12 @@ export const PurchaseOrderLineEdit = ({
                 }
               )}
               {numericInput(
-                'label.price-per-unit-after-discount',
-                draft?.pricePerUnitAfterDiscount,
+                'label.price-per-pack-after-discount',
+                draft?.pricePerUnitAfterDiscount * (draft?.requestedPackSize || 1),
                 {
                   onChange: value => {
                     const adjustedPatch = calculatePricesAndDiscount(
-                      'pricePerUnitAfterDiscount',
+                      'pricePerPackAfterDiscount',
                       { ...draft, pricePerUnitAfterDiscount: value }
                     );
                     update(adjustedPatch);
