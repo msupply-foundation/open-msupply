@@ -83,7 +83,7 @@ export const UploadTab = ({
 
     addCell(
       'pricePerUnitBeforeDiscount',
-      'label.price-per-unit-before-discount',
+      'label.price-per-pack-before-discount',
       numString => parseFloat(numString)
     );
 
@@ -93,7 +93,7 @@ export const UploadTab = ({
 
     addCell(
       'pricePerUnitAfterDiscount',
-      'label.price-per-unit-after-discount',
+      'label.price-per-pack-after-discount',
       numString => parseFloat(numString)
     );
 
