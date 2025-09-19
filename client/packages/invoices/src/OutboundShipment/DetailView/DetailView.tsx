@@ -12,9 +12,9 @@ import {
   useBreadcrumbs,
   useNonPaginatedMaterialTable,
   InvoiceLineNodeType,
-  useIsGrouped,
   MaterialTable,
   NothingHere,
+  useIsGroupedState,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { StockOutItem } from '../../types';
@@ -28,7 +28,7 @@ import { StockOutLineFragment } from '../../StockOut';
 import { CustomerReturnEditModal } from '../../Returns';
 import { canReturnOutboundLines } from '../../utils';
 import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEdit';
-import { useOutboundLines } from '../api/hooks/line/useOutboundLines';
+import { useOutboundLines } from '../api';
 import { useOutboundColumns } from './columns';
 
 export const DetailView = () => {
@@ -48,7 +48,7 @@ export const DetailView = () => {
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
-  const { isGrouped } = useIsGrouped('outboundShipment');
+  const { isGrouped } = useIsGroupedState('outboundShipment');
   const { data: rows } = useOutboundLines();
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -92,7 +92,7 @@ export const DetailView = () => {
       data: rows ?? [],
       groupByField: isGrouped ? 'itemName' : undefined,
       isLoading: false,
-      onRowClick: isDisabled ? onRowClick : undefined,
+      onRowClick: !isDisabled ? onRowClick : undefined,
       getIsPlaceholderRow: row =>
         row.type === InvoiceLineNodeType.UnallocatedStock ||
         row.numberOfPacks === 0,

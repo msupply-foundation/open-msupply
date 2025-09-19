@@ -34,3 +34,20 @@ export const useIsGrouped = (key: keyof GroupByItem): IsGroupedControl => {
 
   return { isGrouped: !!groupByItem?.[key], toggleIsGrouped };
 };
+
+export const useIsGroupedState = (key: keyof GroupByItem): IsGroupedControl => {
+  const [groupByItem, setGroupByItem] = useLocalStorage('/groupbyitem', {
+    outboundShipment: false,
+    inboundShipment: false,
+    supplierReturn: false,
+    customerReturn: false,
+    stocktake: true,
+  });
+
+  const toggleIsGrouped = useCallback(() => {
+    const newVal = !groupByItem?.[key];
+    setGroupByItem({ ...groupByItem, [key]: newVal });
+  }, [groupByItem, key, setGroupByItem]);
+
+  return { isGrouped: !!groupByItem?.[key], toggleIsGrouped };
+};
