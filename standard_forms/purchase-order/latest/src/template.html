@@ -9,52 +9,52 @@
       <th>{{ t(k="report.supplier-item-code", f="Supplier's item code") }}</th>
       <th>{{ t(k="report.item-code",f="Item code") }}</th>
       <th>{{ t(k="report.item-name",f="Item name") }}</th>
+      <th>{{ t(k="label.unit", f="Unit") }}</th>
       <th>
         {{ t(k="label.requested-number-of-units", f="Requested number of units")
         }}
       </th>
-      <th>{{ t(k="label.unit-name", f="Unit name") }}</th>
       <th>{{ t(k="report.pack-size", f="Pack size") }}</th>
       <th>
         {{ t(k="label.expected-delivery-date", f="Expected delivery date") }}
       </th>
-      <th>{{ t(k="label.comment", f="Comment") }}</th>
       <th>{{ t(k="label.line-cost", f="Line cost") }}</th>
+      <th>{{ t(k="label.comment", f="Comment") }}</th>
     </tr>
   </thead>
   {% for line in data.purchaseOrder.lines.nodes -%}
   <tr class="body_value">
     <td>{{ line.lineNumber }}</td>
-    <td>{{line.supplierItemCode | default(value="")}}</td>
-    <td>{{line.item.code | default(value="")}}</td>
-    <td>{{line.item.name | default(value="")}}</td>
-    <td>{{line.requestedNumberOfUnits | default(value="")}}</td>
-    <td>{{line.item.unitName | default(value="")}}</td>
-    <td>{{line.requestedPackSize | default(value="")}}</td>
-    <td>{{line.expectedDeliveryDate | default(value="")}}</td>
-    <td>{{line.comment | default(value="")}}</td>
-    <td>{{line.lineCost | default(value="")}}</td>
+    <td>{{ line.supplierItemCode | default(value="") }}</td>
+    <td>{{ line.item.code | default(value="") }}</td>
+    <td>{{ line.item.name | default(value="") }}</td>
+    <td>{{ line.item.unitName | default(value="") }}</td>
+    <td>{{ line.requestedNumberOfUnits | default(value="") }}</td>
+    <td>{{ line.requestedPackSize | default(value="") }}</td>
+    <td>{{ line.expectedDeliveryDate | default(value="") }}</td>
+    <td>{{ line.lineCost | default(value="") }}</td>
+    <td>{{ line.comment | default(value="") }}</td>
   </tr>
   {%- endfor %}
 </table>
 
 <table class="right-aligned-table">
-  <tr>
-    <td>{{t(k="label.total-cost", f="Total cost")}}:</td>
-    <td>{{data.purchaseOrder.orderTotalAfterDiscount | default(value="")}}</td>
+  <tr excel-type="total-row">
+    <td>{{ t(k="label.total-cost", f="Total cost")}}:</td>
+    <td>{{ data.purchaseOrder.orderTotalAfterDiscount | default(value="") }}</td>
   </tr>
-  <tr>
-    <td>{{t(k="label.exchange-rate", f="Exchange rate")}}:</td>
-    <td>{{data.purchaseOrder.foreignExchangeRate | default(value="")}}</td>
+  <tr excel-type="total-row">
+    <td>{{ t(k="label.exchange-rate", f="Exchange rate")}}:</td>
+    <td>{{ data.purchaseOrder.foreignExchangeRate | default(value="") }}</td>
   </tr>
-  <tr>
+  <tr excel-type="total-row">
     <td>
-      {{t(k="label.total-cost-in-local-currency", f="Total cost in local
-      currency")}}:
+      {{ t(k="label.total-cost-in-local-currency", f="Total cost in local
+      currency") }}:
     </td>
     <td>
-      {{data.purchaseOrder.orderTotalAfterDiscount *
-      data.purchaseOrder.foreignExchangeRate | default(value="")}}
+      {{ data.purchaseOrder.orderTotalAfterDiscount *
+      data.purchaseOrder.foreignExchangeRate | default(value="") }}
     </td>
   </tr>
 </table>
