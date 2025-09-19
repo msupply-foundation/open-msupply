@@ -22,7 +22,7 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useOutbound } from '../api';
+import { useOutbound, useOutboundItems } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { StockOutLineFragment } from '../../StockOut';
 import { CustomerReturnEditModal } from '../../Returns';
@@ -105,6 +105,11 @@ export const DetailView = () => {
       ),
     });
 
+  // const sortedRows = table.getSortedRowModel().rows;
+  // todo: when not grouped by... apply groupBy? So we can get the items...
+  // this doesn't apply sort - when grouped can use sortedRows, otherwise need separate group by
+  const { data: items } = useOutboundItems();
+
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
@@ -133,6 +138,7 @@ export const DetailView = () => {
               onClose={onClose}
               status={data.status}
               invoiceId={data.id}
+              items={items}
             />
           )}
 
