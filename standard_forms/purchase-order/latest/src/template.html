@@ -11,7 +11,7 @@
       <th>{{ t(k="report.item-name",f="Item name") }}</th>
       <th>{{ t(k="label.unit", f="Unit") }}</th>
       <th>
-        {{ t(k="label.requested-number-of-units", f="Requested number of units")
+        {{ t(k="label.requested-packs", f="Requested number of packs")
         }}
       </th>
       <th>{{ t(k="report.pack-size", f="Pack size") }}</th>
@@ -29,7 +29,7 @@
     <td>{{ line.item.code | default(value="") }}</td>
     <td>{{ line.item.name | default(value="") }}</td>
     <td>{{ line.item.unitName | default(value="") }}</td>
-    <td>{{ line.requestedNumberOfUnits | default(value="") }}</td>
+    <td>{{ line.requestedNumberOfPacks | default(value="") }}</td>
     <td>{{ line.requestedPackSize | default(value="") }}</td>
     <td>{{ line.expectedDeliveryDate | default(value="") }}</td>
     <td>{{ line.lineCost | default(value="") }}</td>
