@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   Divider,
   Box,
@@ -184,8 +184,15 @@ export const OutboundLineEditTable = ({
     };
   });
 
-  console.log('draftLines', draftLines);
-  console.log('nonAllocatableLines', nonAllocatableLines);
+  const getIsDisabled = useCallback(
+    (row: DraftStockOutLineFragment) => {
+      if (nonAllocatableLines.some(line => line.id === row.id)) return true;
+      if (prefs.manageVvmStatusForStock && item?.isVaccine)
+        return !!row.vvmStatus?.unusable;
+      return false;
+    },
+    [nonAllocatableLines, prefs, item]
+  );
 
   const allocate = (
     key: string,
@@ -416,9 +423,7 @@ export const OutboundLineEditTable = ({
                     row.original.availablePacks,
                     row.original
                   )}
-                  disabled={nonAllocatableLines.some(
-                    line => line.id === row.original.id
-                  )}
+                  disabled={getIsDisabled(row.original)}
                 />
               ),
               size: 100,
@@ -483,8 +488,7 @@ export const OutboundLineEditTable = ({
     tableId: 'outbound-line-edit',
     columns: mrtColumns,
     data: lines,
-    getIsRestrictedRow: row =>
-      nonAllocatableLines.some(line => line.id === row.id),
+    getIsRestrictedRow: row => getIsDisabled(row),
     bottomToolbarContent: (
       <Box
         sx={{
