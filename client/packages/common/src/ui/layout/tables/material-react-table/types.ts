@@ -18,7 +18,7 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
    * Defaults to false */
   defaultHideOnMobile?: boolean;
 
-  // Make the column sticky to a side of the table. User can unpin */
+  /**  Make the column sticky to a side of the table. User can unpin */
   pin?: 'left' | 'right';
 
   align?: 'left' | 'center' | 'right';
