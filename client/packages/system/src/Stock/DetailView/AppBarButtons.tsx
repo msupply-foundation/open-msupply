@@ -39,20 +39,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<BarChart2Icon />}
           onClick={openAdjust}
         />
-        {itemId && (
-          <ButtonWithIcon
-            label={t('label.view-item-details')}
-            Icon={<InvoiceIcon />}
-            onClick={() =>
-              navigate(
-                RouteBuilder.create(AppRoute.Catalogue)
-                  .addPart(AppRoute.Items)
-                  .addPart(itemId)
-                  .build()
-              )
-            }
-          />
-        )}
       </Grid>
     </AppBarButtonsPortal>
   );

@@ -25,6 +25,7 @@ import {
   ReasonOptionNodeType,
   QuantityUtils,
   Alert,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { DraftStockLine, StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -41,6 +42,8 @@ import {
   useIsItemVariantsEnabled,
 } from '../../Item';
 import { CampaignOrProgramSelector } from './Campaign';
+import { SimpleLink } from 'packages/common/src/ui/components/navigation/AppNavLink/SimpleLink';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface StockLineFormProps {
   draft: DraftStockLine;
@@ -162,6 +165,36 @@ export const StockLineForm = ({
             flexDirection="column"
             gap={1}
           >
+            {/* {itemId && (
+          <ButtonWithIcon
+            label={t('label.view-item-details')}
+            Icon={<InvoiceIcon />}
+            onClick={() =>
+              navigate(
+                RouteBuilder.create(AppRoute.Catalogue)
+                  .addPart(AppRoute.Items)
+                  .addPart(itemId)
+                  .build()
+              )
+            }
+          />
+        )} */}
+
+            {/* <SimpleLink
+                    to={RouteBuilder.create(AppRoute.Catalogue)
+                      .addPart(AppRoute.Items)
+                      .addPart(draft.itemId)
+                      .build()}
+                  /> */}
+
+            <TextWithLabelRow
+              label={t('label.item')}
+              text={String(supplierName)}
+              textProps={{
+                textAlign: 'end',
+                to: { SimpleLink },
+              }}
+            />
             <StyledInputRow
               label={t('label.pack-quantity')}
               Input={

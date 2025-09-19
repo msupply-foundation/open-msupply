@@ -1044,6 +1044,7 @@
   "label.is_active": "Is active",
   "label.issue": "Issue",
   "label.issued": "Issued",
+  "label.item": "Item",
   "label.item-name": "Item name",
   "label.item-variant": "Item variant",
   "label.item_few": "Items",
