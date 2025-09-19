@@ -111,11 +111,9 @@ export const usePurchaseOrderColumns = () => {
       Cell: CurrencyCell,
       accessor: ({ rowData }) =>
         (rowData.pricePerUnitAfterDiscount ?? 0) *
-        (rowData.requestedNumberOfUnits ?? 0) *
-        (rowData.requestedPackSize ?? 1),
+        (rowData.requestedNumberOfUnits ?? 0),
       getSortValue: rowData =>
         (rowData.pricePerUnitAfterDiscount ?? 0) *
-        (rowData.requestedNumberOfUnits ?? 0) *
         (rowData.requestedPackSize ?? 1),
     },
     {
