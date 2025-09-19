@@ -184,6 +184,9 @@ export const OutboundLineEditTable = ({
     };
   });
 
+  console.log('draftLines', draftLines);
+  console.log('nonAllocatableLines', nonAllocatableLines);
+
   const allocate = (
     key: string,
     value: number,
@@ -413,6 +416,9 @@ export const OutboundLineEditTable = ({
                     row.original.availablePacks,
                     row.original
                   )}
+                  disabled={nonAllocatableLines.some(
+                    line => line.id === row.original.id
+                  )}
                 />
               ),
               size: 100,
@@ -477,6 +483,8 @@ export const OutboundLineEditTable = ({
     tableId: 'outbound-line-edit',
     columns: mrtColumns,
     data: lines,
+    getIsRestrictedRow: row =>
+      nonAllocatableLines.some(line => line.id === row.id),
     bottomToolbarContent: (
       <Box
         sx={{
