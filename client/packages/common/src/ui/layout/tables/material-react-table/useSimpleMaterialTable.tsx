@@ -11,6 +11,11 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
   bottomToolbarContent,
   ...tableOptions
 }: SimpleTableConfig<T>) => {
+  const {
+    getIsPlaceholderRow = () => false,
+    getIsRestrictedRow = () => false,
+  } = tableOptions;
+
   const table = useBaseMaterialTable<T>({
     enableRowSelection: false,
     enableBottomToolbar: !!bottomToolbarContent,
@@ -38,16 +43,22 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
         {bottomToolbarContent}
       </Box>
     ),
+
     muiTableHeadCellProps: {
       sx: {
         fontSize: '0.85em',
       },
     },
-    muiTableBodyCellProps: {
+    muiTableBodyCellProps: ({ row }) => ({
       sx: {
         fontSize: '0.85em',
+        color: getIsPlaceholderRow(row.original)
+          ? 'secondary.light'
+          : getIsRestrictedRow(row.original)
+            ? 'gray.main'
+            : undefined,
       },
-    },
+    }),
     muiTableBodyRowProps: {
       sx: {},
     },
