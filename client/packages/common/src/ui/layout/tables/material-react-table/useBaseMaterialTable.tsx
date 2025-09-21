@@ -11,11 +11,13 @@ import { getGroupedRows } from './utils';
 import { useTableFiltering } from './useTableFiltering';
 import { useTableDisplayOptions } from './useTableDisplayOptions';
 import { useUrlSortManagement } from './useUrlSortManagement';
-import { useColumnDensity } from './tableState/useColumnDensity';
-import { useColumnOrder } from './tableState/useColumnOrder';
-import { useColumnSizing } from './tableState/useColumnSizing';
-import { useColumnVisibility } from './tableState/useColumnVisibility';
-import { useColumnPinning } from './tableState/useColumnPinning';
+import {
+  useColumnDensity,
+  useColumnOrder,
+  useColumnSizing,
+  useColumnVisibility,
+  useColumnPinning,
+} from './tableState';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
