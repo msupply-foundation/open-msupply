@@ -44,14 +44,14 @@ export const Toolbar: FC = () => {
             },
             {
               type: 'number',
-              name: t('label.minimum-months-stock'),
+              name: t('label.min-mos'),
               urlParameter: 'minMonthsOfStock',
               minValue: 0,
               decimalLimit: 0,
             },
             {
               type: 'number',
-              name: t('label.maximum-months-stock'),
+              name: t('label.max-mos'),
               urlParameter: 'maxMonthsOfStock',
               minValue: 0,
               decimalLimit: 0,

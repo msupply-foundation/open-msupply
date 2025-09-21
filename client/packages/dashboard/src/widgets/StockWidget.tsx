@@ -165,6 +165,12 @@ export const StockWidget: React.FC = () => {
                     count: Math.round(itemCountsData?.lowStock || 0),
                   }),
                   value: formatNumber.round(itemCountsData?.lowStock || 0),
+                  link: RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .addQuery({
+                      maxMonthsOfStock: 3,
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.more-than-six-months-stock-items', {
@@ -175,6 +181,12 @@ export const StockWidget: React.FC = () => {
                   value: formatNumber.round(
                     itemCountsData?.moreThanSixMonthsStock || 0
                   ),
+                  link: RouteBuilder.create(AppRoute.Catalogue)
+                    .addPart(AppRoute.Items)
+                    .addQuery({
+                      minMonthsOfStock: 6,
+                    })
+                    .build(),
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Inventory)
