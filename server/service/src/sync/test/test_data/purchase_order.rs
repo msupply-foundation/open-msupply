@@ -176,7 +176,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
             communications_charge: None,
             insurance_charge: Some(1.0),
             freight_charge: None,
-            supplier_discount_amount: 18.0,
+            supplier_discount_amount: 20.0,
             order_total_before_discount: 200.0,
             order_total_after_discount: 180.0,
             donor_id: Some("donor_a".to_string()),
