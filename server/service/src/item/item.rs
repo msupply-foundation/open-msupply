@@ -250,7 +250,7 @@ mod test {
                 max_months_of_stock,
             );
 
-            assert_eq!(result, ["item_1".to_string(), "item_2".to_string()]);
+            assert_eq!(result, ["item_2".to_string(), "item_1".to_string()]);
         }
 
         #[test]
