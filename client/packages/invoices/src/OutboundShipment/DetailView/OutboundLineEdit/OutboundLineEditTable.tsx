@@ -29,7 +29,7 @@ import {
   CurrencyRowFragment,
   ItemVariantInfoIcon,
   VVMStatusSearchInput,
-  // VVMStatusInputCell,
+  VvmStatusFragment,
 } from '@openmsupply-client/system';
 import {
   AllocateInType,
@@ -41,7 +41,6 @@ import {
 } from '../../../StockOut';
 import { min } from 'lodash';
 import { useDisableVvmRows } from '../../../useDisableVvmRows';
-import { VvmStatusFragment } from 'packages/system/src/Stock/api';
 import {
   NumberInputCell,
   ExpiryDateCell,
