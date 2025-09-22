@@ -45,8 +45,6 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
       maxMonthsOfStock: filterBy?.['maxMonthsOfStock'] as number | undefined,
     };
 
-    console.log('filterBy:', filterBy);
-
     // if using the hasStockOnHand filter, replace the isVisibleOrOnHand filter with hasStockOnHand
     if (filterBy?.['hasStockOnHand'] !== undefined) {
       filter = {
