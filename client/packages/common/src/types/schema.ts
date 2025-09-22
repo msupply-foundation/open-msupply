@@ -9099,7 +9099,7 @@ export type ShippingMethodFilterInput = {
 
 export type ShippingMethodNode = {
   __typename: 'ShippingMethodNode';
-  deletedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  deletedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   method: Scalars['String']['output'];
 };

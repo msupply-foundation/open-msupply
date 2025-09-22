@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use repository::{shipping_method::ShippingMethod, shipping_method_row::ShippingMethodRow};
 use service::ListResult;
 
@@ -18,8 +18,10 @@ impl ShippingMethodNode {
         &self.row().method
     }
 
-    pub async fn deleted_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().deleted_datetime
+    pub async fn deleted_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .deleted_datetime
+            .map(|datetime| DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc))
     }
 }
 

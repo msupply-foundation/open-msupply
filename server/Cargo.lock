@@ -3628,7 +3628,6 @@ dependencies = [
  "graphql_reports",
  "graphql_requisition",
  "graphql_requisition_line",
- "graphql_shipping_method",
  "graphql_stock_line",
  "graphql_stocktake",
  "graphql_stocktake_line",
@@ -4219,26 +4218,6 @@ dependencies = [
 
 [[package]]
 name = "graphql_requisition_line"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "serde",
- "serde_json",
- "service",
- "util",
-]
-
-[[package]]
-name = "graphql_shipping_method"
 version = "0.1.0"
 dependencies = [
  "actix-rt",

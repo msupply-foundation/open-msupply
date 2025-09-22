@@ -5,7 +5,6 @@ mod tests;
 
 mod logger;
 
-use graphql_shipping_method::ShippingMethodQueries;
 use logger::{GraphQLRequestLogger, QueryLogInfo};
 
 use std::sync::Mutex;
@@ -196,7 +195,6 @@ pub struct Queries(
     pub PurchaseOrderLineQueries,
     pub GoodsReceivedQueries,
     pub GoodsReceivedLineQueries,
-    pub ShippingMethodQueries,
 );
 
 impl Queries {
@@ -235,7 +233,6 @@ impl Queries {
             PurchaseOrderLineQueries,
             GoodsReceivedQueries,
             GoodsReceivedLineQueries,
-            ShippingMethodQueries,
         )
     }
 }

@@ -7,7 +7,8 @@ const SHIPPING_METHOD_1: (&str, &str) = (
     "SHIPPING_METHOD_1_ID",
     r#"{
         "ID": "SHIPPING_METHOD_1_ID",
-        "method": "Standard Delivery"
+        "method": "Standard Delivery",
+        "isActive": true
     }"#,
 );
 

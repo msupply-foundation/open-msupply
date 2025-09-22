@@ -19,6 +19,7 @@ table! {
 pub struct ShippingMethodRow {
     pub id: String,
     pub method: String,
+    // deleted_datetime is set with a value through legacy mSupply isActive field
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
@@ -39,12 +40,6 @@ impl<'a> ShippingMethodRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-
-    pub fn find_all(&self) -> Result<Vec<ShippingMethodRow>, RepositoryError> {
-        let results = shipping_method::table
-            .load::<ShippingMethodRow>(self.connection.lock().connection())?;
-        Ok(results)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ShippingMethodRow>, RepositoryError> {

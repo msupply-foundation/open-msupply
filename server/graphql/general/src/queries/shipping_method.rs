@@ -27,7 +27,7 @@ pub fn get_shipping_methods(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::QueryStore,
             store_id: Some(store_id.to_string()),
         },
     )?;

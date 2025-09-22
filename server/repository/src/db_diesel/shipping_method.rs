@@ -56,7 +56,9 @@ impl<'a> ShippingMethodRepository<'a> {
 type BoxedShippingMethodQuery = IntoBoxed<'static, shipping_method::table, DBType>;
 
 pub fn create_filtered_query(filter: Option<ShippingMethodFilter>) -> BoxedShippingMethodQuery {
-    let mut query = shipping_method::table.into_boxed();
+    let mut query = shipping_method::table
+        .filter(shipping_method::deleted_datetime.is_null())
+        .into_boxed();
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, shipping_method::id);

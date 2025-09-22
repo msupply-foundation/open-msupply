@@ -1,3 +1,4 @@
+use chrono::Utc;
 use repository::{shipping_method_row::ShippingMethodRow, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,8 @@ pub struct LegacyShippingMethod {
     #[serde(rename = "ID")]
     id: String,
     method: String,
+    #[serde(rename = "isActive")]
+    is_active: bool,
 }
 
 // Needs to be added to all_translators()
@@ -33,13 +36,22 @@ impl SyncTranslation for ShippingMethodTranslator {
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let LegacyShippingMethod { id, method } = serde_json::from_str(&sync_record.data)?;
+        let LegacyShippingMethod {
+            id,
+            method,
+            is_active,
+        } = serde_json::from_str(&sync_record.data)?;
 
-        // Translate the record directly here, don't need to look up the old record first
+        let deleted_datetime = if is_active {
+            None
+        } else {
+            Some(Utc::now().naive_utc())
+        };
+
         let result = ShippingMethodRow {
             id,
             method,
-            deleted_datetime: None, // Legacy doesn't have deleted_datetime
+            deleted_datetime,
         };
 
         Ok(PullTranslateResult::upsert(result))

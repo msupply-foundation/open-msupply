@@ -1,16 +1,13 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_ignore_for_orders_to_item_store_join;
-mod add_permission_to_verify_inbound_shipment;
-mod add_purchase_order_line_status_enums;
-mod update_goods_received_report_context;
+mod add_shipping_method_table;
 
-pub(crate) struct V2_11_00;
+pub(crate) struct V2_12_00;
 
-impl Migration for V2_11_00 {
+impl Migration for V2_12_00 {
     fn version(&self) -> Version {
-        Version::from_str("2.11.0")
+        Version::from_str("2.12.0")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -18,12 +15,7 @@ impl Migration for V2_11_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![
-            Box::new(add_permission_to_verify_inbound_shipment::Migrate),
-            Box::new(update_goods_received_report_context::Migrate),
-            Box::new(add_purchase_order_line_status_enums::Migrate),
-            Box::new(add_ignore_for_orders_to_item_store_join::Migrate),
-        ]
+        vec![Box::new(add_shipping_method_table::Migrate)]
     }
 }
 
@@ -31,14 +23,14 @@ impl Migration for V2_11_00 {
 mod test {
 
     #[actix_rt::test]
-    async fn migration_2_11_00() {
+    async fn migration_2_12_00() {
         use crate::migrations::*;
         use crate::test_db::*;
-        use v2_10_00::V2_10_00;
         use v2_11_00::V2_11_00;
+        use v2_12_00::V2_12_00;
 
-        let previous_version = V2_10_00.version();
-        let version = V2_11_00.version();
+        let previous_version = V2_11_00.version();
+        let version = V2_12_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!("migration_{version}"),

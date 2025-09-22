@@ -1,8 +1,6 @@
-use repository::shipping_method::{ShippingMethod, ShippingMethodFilter};
-
-use crate::{service_provider::ServiceContext, ListError, ListResult};
-
 use self::query::get_shipping_methods;
+use crate::{service_provider::ServiceContext, ListError, ListResult};
+use repository::shipping_method::{ShippingMethod, ShippingMethodFilter};
 
 pub mod query;
 
