@@ -89,7 +89,7 @@ export const DetailViewInner = () => {
     },
     {
       Component: <GoodsReceived />,
-      value: 'Goods Received',
+      value: t('label.goods-received'),
     },
     {
       Component: <Details draft={draft} onChange={handleChange} />,
