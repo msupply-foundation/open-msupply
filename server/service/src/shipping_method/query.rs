@@ -60,9 +60,9 @@ mod test {
         repo.upsert_one(&shipping_method_2).unwrap();
         repo.upsert_one(&shipping_method_3).unwrap();
 
-        // Query all Shipping Methods (no filter)
+        // Query all Shipping Methods that are active (not deleted)
         let result = service.get_shipping_methods(&context, None).unwrap();
-        assert_eq!(result.count, 3);
+        assert_eq!(result.count, 2);
 
         // Querying with ID filter
         let filter = ShippingMethodFilter {
