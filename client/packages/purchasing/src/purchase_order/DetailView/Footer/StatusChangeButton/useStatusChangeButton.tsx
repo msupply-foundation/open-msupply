@@ -75,7 +75,7 @@ export const useStatusChangeButton = () => {
 
     const isAuthorisationBlocked =
       requiresAuthorisation &&
-      status === PurchaseOrderNodeStatus.Authorised &&
+      status === PurchaseOrderNodeStatus.Confirmed &&
       !userHasPermission(UserPermission.PurchaseOrderAuthorise);
 
     if (isAuthorisationBlocked)
@@ -95,6 +95,30 @@ export const useStatusChangeButton = () => {
     }
   };
 
+  // TODO: Use when received lines is implemented
+  const hasOutstandingLines = false;
+  // const hasOutstandingLines =
+  //   status === PurchaseOrderNodeStatus.Sent &&
+  //   (lines?.nodes ?? []).some(
+  //     line =>
+  //       line?.adjustedNumberOfUnits ||
+  //       line.requestedNumberOfUnits < line.receivedNumberOfUnits ||
+  //       line.receivedNumberOfUnits === 0
+  //   );
+
+  const getInfoMessage = () => {
+    switch (selectedOption?.value) {
+      case PurchaseOrderNodeStatus.Finalised:
+        return hasOutstandingLines
+          ? t('messages.purchase-order-outstanding-lines')
+          : undefined;
+      case PurchaseOrderNodeStatus.Confirmed:
+        return t('messages.purchase-order-ready-to-send');
+      default:
+        return undefined;
+    }
+  };
+
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-status-as', {
@@ -102,6 +126,7 @@ export const useStatusChangeButton = () => {
         ? getStatusTranslation(selectedOption?.value)
         : '',
     }),
+    info: getInfoMessage(),
     onConfirm: handleConfirm,
   });
 

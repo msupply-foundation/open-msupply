@@ -153,7 +153,6 @@ export enum ActivityLogNodeType {
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   ProgramCreated = 'PROGRAM_CREATED',
   ProgramUpdated = 'PROGRAM_UPDATED',
-  PurchaseOrderAuthorised = 'PURCHASE_ORDER_AUTHORISED',
   PurchaseOrderConfirmed = 'PURCHASE_ORDER_CONFIRMED',
   PurchaseOrderCreated = 'PURCHASE_ORDER_CREATED',
   PurchaseOrderDeleted = 'PURCHASE_ORDER_DELETED',
@@ -161,6 +160,8 @@ export enum ActivityLogNodeType {
   PurchaseOrderLineCreated = 'PURCHASE_ORDER_LINE_CREATED',
   PurchaseOrderLineDeleted = 'PURCHASE_ORDER_LINE_DELETED',
   PurchaseOrderLineUpdated = 'PURCHASE_ORDER_LINE_UPDATED',
+  PurchaseOrderRequestApproval = 'PURCHASE_ORDER_REQUEST_APPROVAL',
+  PurchaseOrderSent = 'PURCHASE_ORDER_SENT',
   PurchaseOrderUnauthorised = 'PURCHASE_ORDER_UNAUTHORISED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
@@ -1082,11 +1083,6 @@ export type CannnotFindItemByCode = InsertPurchaseOrderLineErrorInterface & {
   description: Scalars['String']['output'];
 };
 
-export type CannotAdjustRequestedQuantity = PurchaseOrderLineError & {
-  __typename: 'CannotAdjustRequestedQuantity';
-  description: Scalars['String']['output'];
-};
-
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
   UpdateInboundShipmentErrorInterface & {
     __typename: 'CannotChangeStatusOfInvoiceOnHold';
@@ -1120,6 +1116,11 @@ export type CannotDeleteRequisitionWithLines =
     __typename: 'CannotDeleteRequisitionWithLines';
     description: Scalars['String']['output'];
   };
+
+export type CannotEditAdjustedQuantity = PurchaseOrderLineError & {
+  __typename: 'CannotEditAdjustedQuantity';
+  description: Scalars['String']['output'];
+};
 
 export type CannotEditGoodsReceived = DeleteGoodsReceivedLineInterface &
   InsertGoodsReceivedLineErrorInterface &
@@ -1164,6 +1165,16 @@ export type CannotEditPurchaseOrder =
       __typename: 'CannotEditPurchaseOrder';
       description: Scalars['String']['output'];
     };
+
+export type CannotEditQuantityBelowReceived = PurchaseOrderLineError & {
+  __typename: 'CannotEditQuantityBelowReceived';
+  description: Scalars['String']['output'];
+};
+
+export type CannotEditRequestedQuantity = PurchaseOrderLineError & {
+  __typename: 'CannotEditRequestedQuantity';
+  description: Scalars['String']['output'];
+};
 
 export type CannotEditRequisition = AddFromMasterListErrorInterface &
   CreateRequisitionShipmentErrorInterface &
@@ -7266,7 +7277,6 @@ export type PurchaseOrderNode = {
   additionalInstructions?: Maybe<Scalars['String']['output']>;
   advancePaidDate?: Maybe<Scalars['NaiveDate']['output']>;
   agentCommission?: Maybe<Scalars['Float']['output']>;
-  authorisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   authorisingOfficer1?: Maybe<Scalars['String']['output']>;
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
@@ -7291,6 +7301,7 @@ export type PurchaseOrderNode = {
   orderTotalAfterDiscount: Scalars['Float']['output'];
   receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
+  requestApprovalDatetime?: Maybe<Scalars['DateTime']['output']>;
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   sentDatetime?: Maybe<Scalars['DateTime']['output']>;
   shippingMethod?: Maybe<Scalars['String']['output']>;
@@ -7305,10 +7316,11 @@ export type PurchaseOrderNode = {
 };
 
 export enum PurchaseOrderNodeStatus {
-  Authorised = 'AUTHORISED',
   Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
   New = 'NEW',
+  RequestApproval = 'REQUEST_APPROVAL',
+  Sent = 'SENT',
 }
 
 export type PurchaseOrderNotFinalised = GoodsReceivedError & {
