@@ -77,34 +77,6 @@ export const isPurchaseOrderDisabled = (
   return purchaseOrder.status === PurchaseOrderNodeStatus.Finalised;
 };
 
-export const isPurchaseOrderConfirmed = (
-  purchaseOrder: PurchaseOrderFragment
-): boolean => {
-  return (
-    purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
-  );
-};
-
-export const canEditOriginalQuantity = (
-  purchaseOrder: PurchaseOrderFragment
-): boolean => {
-  return (
-    purchaseOrder.status === PurchaseOrderNodeStatus.New ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.RequestApproval
-  );
-};
-
-export const canEditAdjustedQuantity = (
-  purchaseOrder: PurchaseOrderFragment
-): boolean => {
-  return (
-    purchaseOrder.status === PurchaseOrderNodeStatus.Confirmed ||
-    purchaseOrder.status === PurchaseOrderNodeStatus.Sent
-  );
-};
-
 export const canAddNewLines = (
   purchaseOrder: PurchaseOrderFragment
 ): boolean => {
@@ -112,6 +84,51 @@ export const canAddNewLines = (
     purchaseOrder.status === PurchaseOrderNodeStatus.New ||
     purchaseOrder.status === PurchaseOrderNodeStatus.RequestApproval
   );
+};
+
+export enum StatusGroup {
+  BeforeConfirmed = 'NewToApproval',
+  AfterConfirmed = 'AfterConfirmed',
+  AfterSent = 'BeforeSent',
+  ExceptSent = 'ExceptSent',
+}
+
+export const disabledStatusGroup: Record<
+  StatusGroup,
+  PurchaseOrderNodeStatus[]
+> = {
+  [StatusGroup.BeforeConfirmed]: [
+    PurchaseOrderNodeStatus.New,
+    PurchaseOrderNodeStatus.RequestApproval,
+  ],
+  [StatusGroup.AfterConfirmed]: [
+    PurchaseOrderNodeStatus.Confirmed,
+    PurchaseOrderNodeStatus.Sent,
+  ],
+  [StatusGroup.ExceptSent]: [
+    PurchaseOrderNodeStatus.New,
+    PurchaseOrderNodeStatus.RequestApproval,
+    PurchaseOrderNodeStatus.Confirmed,
+  ],
+  [StatusGroup.AfterSent]: [PurchaseOrderNodeStatus.Sent],
+};
+
+/**
+Determines if a field should be editable or disabled based on the status of the purchase order
+If the status is in the disabled group, the function will return true
+When passed into the input, it overrides the 'base' disabled bool 
+*/
+export const isFieldDisabled = (
+  status: PurchaseOrderNodeStatus,
+  groupKey: StatusGroup
+): boolean => {
+  // Early return: if status is finalised, always disable the field
+  if (status === PurchaseOrderNodeStatus.Finalised) {
+    return true;
+  }
+
+  const groupForField = disabledStatusGroup[groupKey];
+  return groupForField.includes(status);
 };
 
 export const isGoodsReceivedEditable = (
