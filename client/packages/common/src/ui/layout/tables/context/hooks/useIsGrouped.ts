@@ -7,6 +7,7 @@ interface IsGroupedControl {
   toggleIsGrouped: () => void;
 }
 
+// Legacy version, relies on table context - being phased out
 export const useIsGrouped = (key: keyof GroupByItem): IsGroupedControl => {
   const selector = useCallback(({ setIsGrouped }: TableStore) => {
     return { setIsGrouped };
