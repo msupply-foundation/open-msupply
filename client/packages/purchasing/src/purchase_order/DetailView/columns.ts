@@ -56,14 +56,11 @@ export const usePurchaseOrderColumns = () => {
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,
-      accessor: rowData =>
-        Math.ceil(
-          (rowData.rowData.requestedNumberOfUnits ?? 0) /
-            (rowData.rowData.requestedPackSize &&
-            rowData.rowData.requestedPackSize !== 0
-              ? rowData.rowData.requestedPackSize
-              : 1)
-        ),
+      accessor: ({ rowData }) => {
+        const numUnits =
+          rowData.adjustedNumberOfUnits ?? rowData.requestedNumberOfUnits;
+        return Math.ceil(numUnits / rowData.requestedPackSize);
+      },
     },
     {
       key: 'packSize',
