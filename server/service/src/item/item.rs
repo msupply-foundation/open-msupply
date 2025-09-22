@@ -61,8 +61,6 @@ pub fn get_item_ids_by_mos(
 ) -> Result<Vec<String>, ListError> {
     let repository = ItemRepository::new(&connection);
 
-    println!("Running get_item_ids_by_mos");
-
     let item_ids = repository
         .query(
             Pagination::all(), // get all items so we can then filter them by mos in the next part. We'll use pagination for the query that will be returned to the user.
