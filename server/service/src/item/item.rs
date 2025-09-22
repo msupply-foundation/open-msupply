@@ -144,7 +144,7 @@ pub fn get_item(
 #[cfg(test)]
 mod test {
     mod test_get_items_ids_for_months_of_stock {
-        use std::collections::{HashMap, HashSet};
+        use std::collections::HashMap;
 
         use crate::{item::get_items_ids_for_months_of_stock, item_stats::ItemStats};
 
