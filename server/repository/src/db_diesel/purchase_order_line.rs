@@ -7,7 +7,8 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
     item_link,
     purchase_order_row::purchase_order::{self},
-    EqualFilter, Pagination, PurchaseOrderLineRow, PurchaseOrderLineStatus, PurchaseOrderRow, Sort,
+    EqualFilter, Pagination, PurchaseOrderFilter, PurchaseOrderLineRow, PurchaseOrderLineStatus,
+    PurchaseOrderRepository, PurchaseOrderRow, Sort,
 };
 
 use diesel::{
@@ -36,6 +37,7 @@ pub struct PurchaseOrderLineFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<PurchaseOrderLineStatus>>,
     pub received_less_than_adjusted: Option<bool>,
+    pub purchase_order: Option<PurchaseOrderFilter>,
 }
 
 pub enum PurchaseOrderLineSortField {
@@ -103,7 +105,7 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                     apply_sort!(query, sort, purchase_order_line::expected_delivery_date);
                 }
                 PurchaseOrderLineSortField::PurchaseOrderNumber => {
-                    apply_sort_no_case!(query, sort, purchase_order::purchase_order_number);
+                    apply_sort!(query, sort, purchase_order::purchase_order_number);
                 }
             }
         } else {
@@ -151,6 +153,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             item_id,
             status,
             received_less_than_adjusted,
+            purchase_order,
         } = f;
 
         apply_equal_filter!(query, purchase_order_id, purchase_order::id);
@@ -169,6 +172,12 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
                     .nullable()
                     .lt(purchase_order_line::adjusted_number_of_units),
             );
+        }
+
+        if let Some(po_filter) = purchase_order {
+            let po_ids = PurchaseOrderRepository::create_filtered_query(Some(po_filter))
+                .select(purchase_order::id);
+            query = query.filter(purchase_order_line::purchase_order_id.eq_any(po_ids));
         }
     }
 
@@ -211,6 +220,11 @@ impl PurchaseOrderLineFilter {
 
     pub fn received_less_than_adjusted(mut self, value: bool) -> Self {
         self.received_less_than_adjusted = Some(value);
+        self
+    }
+
+    pub fn purchase_order(mut self, filter: PurchaseOrderFilter) -> Self {
+        self.purchase_order = Some(filter);
         self
     }
 }

@@ -45,6 +45,7 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
             textOverflow: 'ellipsis',
             textAlign: 'right',
             fontSize: 'inherit',
+            color: 'inherit',
             paddingX: '1px', // so overflow hidden doesn't cut off last digit
           }}
         >

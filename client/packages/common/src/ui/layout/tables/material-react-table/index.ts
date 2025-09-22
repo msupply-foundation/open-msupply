@@ -1,5 +1,6 @@
 export * from './usePaginatedMaterialTable';
 export * from './useNonPaginatedMaterialTable';
+export * from './useSimpleMaterialTable';
 export * from './useMaterialTableColumns';
 export * from './utils';
 export * from './types';

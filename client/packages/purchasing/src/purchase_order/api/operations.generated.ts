@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PurchaseOrderRowFragment = {
@@ -18,14 +19,6 @@ export type PurchaseOrderRowFragment = {
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
-};
-
-export type SyncFileReferenceFragment = {
-  __typename: 'SyncFileReferenceNode';
-  id: string;
-  fileName: string;
-  recordId: string;
-  createdDatetime: string;
 };
 
 export type PurchaseOrderFragment = {
@@ -85,12 +78,14 @@ export type PurchaseOrderFragment = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -148,12 +143,14 @@ export type PurchaseOrderLineFragment = {
   comment?: string | null;
   supplierItemCode?: string | null;
   status: Types.PurchaseOrderLineStatusNode;
+  unitsOrderedInOthers: number;
   item: {
     __typename: 'ItemNode';
     id: string;
     code: string;
     name: string;
     unitName?: string | null;
+    stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
   };
   manufacturer?: {
     __typename: 'NameNode';
@@ -273,12 +270,14 @@ export type PurchaseOrderByIdQuery = {
             comment?: string | null;
             supplierItemCode?: string | null;
             status: Types.PurchaseOrderLineStatusNode;
+            unitsOrderedInOthers: number;
             item: {
               __typename: 'ItemNode';
               id: string;
               code: string;
               name: string;
               unitName?: string | null;
+              stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
             };
             manufacturer?: {
               __typename: 'NameNode';
@@ -425,12 +424,14 @@ export type PurchaseOrderLinesQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -487,12 +488,14 @@ export type PurchaseOrderLineQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
+      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
+        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -658,6 +661,9 @@ export const PurchaseOrderLineFragmentDoc = gql`
       code
       name
       unitName
+      stats(storeId: $storeId) {
+        stockOnHand
+      }
     }
     requestedPackSize
     requestedDeliveryDate
@@ -687,17 +693,9 @@ export const PurchaseOrderLineFragmentDoc = gql`
         username
       }
     }
+    unitsOrderedInOthers
   }
   ${NameRowFragmentDoc}
-`;
-export const SyncFileReferenceFragmentDoc = gql`
-  fragment SyncFileReference on SyncFileReferenceNode {
-    __typename
-    id
-    fileName
-    recordId
-    createdDatetime
-  }
 `;
 export const PurchaseOrderFragmentDoc = gql`
   fragment PurchaseOrder on PurchaseOrderNode {

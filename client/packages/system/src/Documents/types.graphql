@@ -1,0 +1,16 @@
+fragment SyncFileReference on SyncFileReferenceNode {
+  __typename
+  id
+  fileName
+  recordId
+  createdDatetime
+}
+
+# Populate the generated file so type checks are met
+query Dummy {
+  me {
+    ... on UserNode {
+      __typename
+    }
+  }
+}
