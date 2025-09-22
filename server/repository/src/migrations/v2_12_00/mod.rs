@@ -2,6 +2,9 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_shipping_method_table;
+mod rename_authorised_datetime_to_request_approval_datetime;
+mod update_purchase_order_activity_log_type_enum;
+mod update_purchase_order_status_enum;
 
 pub(crate) struct V2_12_00;
 
@@ -15,7 +18,12 @@ impl Migration for V2_12_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_shipping_method_table::Migrate)]
+        vec![
+            Box::new(update_purchase_order_status_enum::Migrate),
+            Box::new(update_purchase_order_activity_log_type_enum::Migrate),
+            Box::new(rename_authorised_datetime_to_request_approval_datetime::Migrate),
+            Box::new(add_shipping_method_table::Migrate),
+        ]
     }
 }
 
