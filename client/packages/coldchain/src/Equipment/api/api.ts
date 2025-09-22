@@ -1,6 +1,6 @@
 import {
   SortBy,
-  FilterByWithBoolean,
+  FilterBy,
   AssetSortFieldInput,
   InsertAssetInput,
   UpdateAssetInput,
@@ -18,7 +18,7 @@ export type ListParams<T> = {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: FilterBy | null;
 };
 
 export type InsertAsset = Partial<DraftAsset> & {
