@@ -1,4 +1,5 @@
 import { isEqual } from '@common/utils';
+import { pickBy } from 'lodash';
 import {
   MRT_ColumnOrderState,
   MRT_ColumnPinningState,
@@ -15,13 +16,22 @@ export interface ManagedTableState {
   columnSizing?: MRT_ColumnSizingState;
 }
 
+export const hasSavedState = (tableId: string): boolean => {
+  return !!localStorage.getItem(`@openmsupply-client/tables/${tableId}`);
+};
+
 export const getSavedState = (tableId: string): ManagedTableState => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
   );
-  const savedData = savedString ? JSON.parse(savedString) : {};
 
-  return savedData;
+  if (!!savedString) {
+    try {
+      return JSON.parse(savedString);
+    } catch {}
+  }
+
+  return {};
 };
 
 export const updateSavedState = (
@@ -30,13 +40,26 @@ export const updateSavedState = (
 ) => {
   const savedData = getSavedState(tableId);
 
+  // Remove any keys with undefined values
+  const mergedState = pickBy({ ...savedData, ...newState });
+
+  // No change, nothing to do
+  if (isEqual(mergedState, savedData)) return;
+
+  // If empty, clear local storage value
+  if (isEqual(mergedState, {})) {
+    clearSavedState(tableId);
+    return;
+  }
+
   localStorage.setItem(
     `@openmsupply-client/tables/${tableId}`,
-    JSON.stringify({
-      ...savedData,
-      ...newState,
-    })
+    JSON.stringify(mergedState)
   );
+};
+
+export const clearSavedState = (tableId: string) => {
+  localStorage.removeItem(`@openmsupply-client/tables/${tableId}`);
 };
 
 export const differentOrUndefined = <T>(newValue: T, toCompare: T) =>

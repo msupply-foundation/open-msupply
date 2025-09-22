@@ -18,6 +18,7 @@ import {
   useColumnVisibility,
   useColumnPinning,
 } from './tableState';
+import { clearSavedState } from './tableState/utils';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -76,17 +77,26 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   );
 
   const resetTableState = () => {
-    table.setColumnVisibility(columnVisibility.initial);
-    table.setDensity(density.initial);
+    clearSavedState(tableId);
 
+    // We have to call each of these reset fns, as MRT's general
+    // reset function doesn't fire the onChange handlers (needed to trigger our state handlers)
+    // Seeing as local storage has already been cleared,
+    // these shouldn't trigger additional local storage updates
     table.resetColumnOrder();
     table.resetColumnPinning();
     table.resetColumnSizing();
-    table.resetSorting();
-    table.resetColumnFilters();
+
+    // Visibility `initial` could change if prefs have come on/screen size changed
+    // so reset to latest initial value rather than default initial mount state
+    table.setColumnVisibility(columnVisibility.initial);
+
+    // Density doesn't have a `reset` function
+    table.setDensity(density.initial);
   };
 
   const displayOptions = useTableDisplayOptions(
+    tableId,
     resetTableState,
     onRowClick,
     getIsPlaceholderRow,
