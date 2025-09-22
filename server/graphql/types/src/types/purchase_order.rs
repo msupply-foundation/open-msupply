@@ -1,10 +1,11 @@
 use self::dataloader::DataLoader;
 use crate::types::{
-    NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
+    CurrencyNode, NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector,
+    UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
+use graphql_core::loader::{CurrencyByIdLoader, PurchaseOrderLinesByPurchaseOrderIdLoader};
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
@@ -202,6 +203,22 @@ impl PurchaseOrderNode {
 
         let result = result_option.unwrap_or(vec![]);
         Ok(PurchaseOrderLineConnector::from_vec(result))
+    }
+
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+        let currency_id = match &self.row().currency_id {
+            Some(currency_id) => currency_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<CurrencyByIdLoader>>();
+
+        let result = loader
+            .load_one(currency_id.clone())
+            .await?
+            .map(CurrencyNode::from_domain);
+
+        Ok(result)
     }
 }
 
