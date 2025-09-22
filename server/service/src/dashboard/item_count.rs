@@ -1,7 +1,9 @@
 use repository::{ItemFilter, ItemRepository};
 
 use crate::{
-    item_stats::get_item_stats, service_provider::ServiceContext, PluginOrRepositoryError,
+    item_stats::{get_item_stats, ItemStats},
+    service_provider::ServiceContext,
+    PluginOrRepositoryError,
 };
 
 pub struct ItemCounts {
@@ -22,6 +24,37 @@ pub trait ItemCountServiceTrait: Send + Sync {
         low_stock_threshold: i32,
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
         ItemServiceCount {}.get_item_counts(ctx, store_id, low_stock_threshold)
+    }
+
+    fn get_no_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
+        let no_stock_count = item_stats
+            .iter()
+            .filter(|i| i.available_stock_on_hand == 0.0)
+            .count() as i64;
+
+        return no_stock_count;
+    }
+
+    fn get_low_stock_count(&self, item_stats: &Vec<ItemStats>, low_stock_threshold: i32) -> i64 {
+        let low_stock_count = item_stats
+            .iter()
+            .filter(|&i| (i.available_stock_on_hand > 0.0))
+            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
+            .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
+            .count() as i64;
+
+        return low_stock_count;
+    }
+
+    fn get_more_than_six_months_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
+        let more_than_six_months_stock_count = item_stats
+            .iter()
+            .filter(|&i| (i.available_stock_on_hand > 0.0))
+            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
+            .filter(|months_of_stock| *months_of_stock > 6.0)
+            .count() as i64;
+
+        return more_than_six_months_stock_count;
     }
 }
 
@@ -45,24 +78,31 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids)?;
 
-        let no_stock = item_stats
-            .iter()
-            .filter(|i| i.available_stock_on_hand == 0.0)
-            .count() as i64;
+        let no_stock = Self::get_no_stock_count(&self, &item_stats);
 
-        let low_stock = item_stats
-            .iter()
-            .filter(|&i| (i.available_stock_on_hand > 0.0))
-            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
-            .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
-            .count() as i64;
+        // let no_stock = item_stats
+        //     .iter()
+        //     .filter(|i| i.available_stock_on_hand == 0.0)
+        //     .count() as i64;
 
-        let more_than_six_months_stock = item_stats
-            .iter()
-            .filter(|&i| (i.available_stock_on_hand > 0.0))
-            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
-            .filter(|months_of_stock| *months_of_stock > 6.0)
-            .count() as i64;
+        let low_stock = Self::get_low_stock_count(&self, &item_stats, low_stock_threshold);
+
+        // let low_stock = item_stats
+        //     .iter()
+        //     .filter(|&i| (i.available_stock_on_hand > 0.0))
+        //     .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
+        //     .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
+        //     .count() as i64;
+
+        let more_than_six_months_stock =
+            Self::get_more_than_six_months_stock_count(&self, &item_stats);
+
+        // let more_than_six_months_stock = item_stats
+        //     .iter()
+        //     .filter(|&i| (i.available_stock_on_hand > 0.0))
+        //     .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
+        //     .filter(|months_of_stock| *months_of_stock > 6.0)
+        //     .count() as i64;
 
         Ok(ItemCounts {
             total: visible_items_count,
@@ -72,7 +112,6 @@ impl ItemCountServiceTrait for ItemServiceCount {
         })
     }
 }
-
 #[cfg(test)]
 mod item_count_service_test {
     use chrono::{Duration, Utc};
@@ -85,6 +124,7 @@ mod item_count_service_test {
 
     use crate::{
         dashboard::item_count::{ItemCountServiceTrait, ItemServiceCount},
+        item_stats::ItemStats,
         test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
 
@@ -476,5 +516,40 @@ mod item_count_service_test {
             .unwrap();
 
         assert_eq!(1, counts.low_stock);
+    }
+
+    #[actix_rt::test]
+    async fn new_test_low_stock_items_count() {
+        let low_stock_threshold = 3;
+        let item_stats: Vec<ItemStats> = vec![
+            // An item with the threshold stock
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                total_stock_on_hand: 3.0,
+                ..Default::default()
+            },
+            // An item with less than the threshold stock
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                available_stock_on_hand: 1.0,
+                ..Default::default()
+            },
+            // An item with more than the threshold stock
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                available_stock_on_hand: 6.0,
+                ..Default::default()
+            },
+            // An item with 0 amc
+            ItemStats {
+                average_monthly_consumption: 0.0,
+                available_stock_on_hand: 6.0,
+                ..Default::default()
+            },
+        ];
+
+        let result = ItemServiceCount {}.get_low_stock_count(&item_stats, low_stock_threshold);
+
+        assert_eq!(result, 1);
     }
 }
