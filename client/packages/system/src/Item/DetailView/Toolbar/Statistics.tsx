@@ -48,10 +48,10 @@ export const Statistics = () => {
         title={t('title.stock-on-hand')}
         link={
           data?.code &&
-          RouteBuilder.create(AppRoute.Catalogue)
-            .addPart(AppRoute.Items)
+          RouteBuilder.create(AppRoute.Inventory)
+            .addPart(AppRoute.Stock)
             .addQuery({
-              codeOrName: data?.code,
+              search: data?.code,
             })
             .build()
         }
