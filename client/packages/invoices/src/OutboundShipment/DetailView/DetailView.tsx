@@ -96,6 +96,7 @@ export const DetailView = () => {
       data: rows ?? [],
       groupByField: isGrouped ? 'itemName' : undefined,
       isLoading: false,
+      initialSort: { key: 'itemName', dir: 'asc' },
       onRowClick: !isDisabled ? onRowClick : undefined,
       getIsPlaceholderRow: row =>
         row.type === InvoiceLineNodeType.UnallocatedStock ||

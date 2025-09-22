@@ -102,24 +102,27 @@ export const useTableFiltering = <T extends MRT_RowData>(
 };
 
 const getFilterState = (urlQuery: Record<string, UrlQueryValue>) => {
-  return Object.entries(urlQuery)
-    .filter(([id]) => id !== 'sort')
-    .map(([id, val]) => {
-      // Date range
-      if (typeof val === 'object' && ('to' in val || 'from' in val))
+  return (
+    Object.entries(urlQuery)
+      // Ignore sort params from URL
+      .filter(([id]) => id !== 'sort' && id !== 'dir')
+      .map(([id, val]) => {
+        // Date range
+        if (typeof val === 'object' && ('to' in val || 'from' in val))
+          return {
+            id,
+            value: [
+              val.from ? DateUtils.getDateOrNull(val.from as string) : '',
+              val.to ? DateUtils.getDateOrNull(val.to as string) : '',
+            ],
+          };
+
+        // TO-DO: Implement filter state for other types
+
         return {
           id,
-          value: [
-            val.from ? DateUtils.getDateOrNull(val.from as string) : '',
-            val.to ? DateUtils.getDateOrNull(val.to as string) : '',
-          ],
+          value: val,
         };
-
-      // TO-DO: Implement filter state for other types
-
-      return {
-        id,
-        value: val,
-      };
-    });
+      })
+  );
 };
