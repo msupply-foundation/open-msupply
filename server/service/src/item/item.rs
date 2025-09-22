@@ -144,7 +144,7 @@ pub fn get_item(
 #[cfg(test)]
 mod test {
     mod test_get_items_ids_for_months_of_stock {
-        use std::collections::HashMap;
+        use std::collections::{HashMap, HashSet};
 
         use crate::{item::get_items_ids_for_months_of_stock, item_stats::ItemStats};
 
@@ -242,13 +242,16 @@ mod test {
                 },
             );
 
-            let result = get_items_ids_for_months_of_stock(
+            let mut result = get_items_ids_for_months_of_stock(
                 item_stats,
                 min_months_of_stock,
                 max_months_of_stock,
             );
 
-            assert_eq!(result, ["item_2".to_string(), "item_1".to_string()]);
+            // It is necessary to sort result as it is made from a hashmap, and hashmaps are processed in a different order each time.
+            result.sort();
+
+            assert_eq!(result, ["item_1".to_string(), "item_2".to_string()]);
         }
 
         #[test]
