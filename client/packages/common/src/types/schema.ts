@@ -4751,6 +4751,8 @@ export type ItemFilterInput = {
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   masterListId?: InputMaybe<EqualFilterStringInput>;
+  maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
+  minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
