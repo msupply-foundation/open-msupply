@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "update_purchase_order_status_enum"
+        "update_purchase_order_activity_log_type_enum"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -12,20 +12,16 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE purchase_order_status RENAME VALUE 'AUTHORISED' to 'REQUEST_APPROVAL';
-                "#
-            )?;
-            sql!(
-                connection,
-                r#"
-                    ALTER TYPE purchase_order_status ADD VALUE 'SENT';
+                    ALTER TYPE activity_log_type RENAME VALUE 'PURCHASE_ORDER_AUTHORISED' to 'PURCHASE_ORDER_REQUEST_APPROVAL';
+                    ALTER TYPE activity_log_type ADD VALUE 'PURCHASE_ORDER_SENT';
+
                 "#
             )?;
         } else {
             sql!(
                 connection,
                 r#"
-                UPDATE purchase_order SET status = 'REQUEST_APPROVAL' WHERE status = 'AUTHORISED';
+                UPDATE activity_log SET type = 'PURCHASE_ORDER_REQUEST_APPROVAL' WHERE type = 'PURCHASE_ORDER_AUTHORISED';
             "#,
             )?;
         }
