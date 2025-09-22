@@ -43,7 +43,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let item_ids = visible_items.into_iter().map(|i| i.item_row.id).collect();
 
-        let item_stats = get_item_stats(ctx, store_id, None, item_ids)?;
+        let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids)?;
 
         let no_stock = item_stats
             .iter()

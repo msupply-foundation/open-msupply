@@ -63,6 +63,7 @@
 </table>
 
 <div class="watermark">
-  {%if data.purchaseOrder.status == "AUTHORISED" or data.purchaseOrder.status ==
+  {%if data.purchaseOrder.status == "CONFIRMED" or data.purchaseOrder.status ==
+  "SENT" or data.purchaseOrder.status ==
   "FINALISED" %} AUTHORISED {% else %} UNAUTHORISED {% endif %}
 </div>

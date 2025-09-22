@@ -132,7 +132,9 @@ pub enum ListError {
     DatabaseError(RepositoryError),
     LimitBelowMin(u32),
     LimitAboveMax(u32),
+    PluginError(String),
 }
+
 #[derive(PartialEq, Debug)]
 pub enum SingleRecordError {
     DatabaseError(RepositoryError),
