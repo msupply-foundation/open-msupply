@@ -60,7 +60,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
   supplierAgent
   supplierDiscountAmount
   supplierDiscountPercentage
-  lineTotalAfterDiscount
+  orderTotalBeforeDiscount
   orderTotalAfterDiscount
   targetMonths
   confirmedDatetime

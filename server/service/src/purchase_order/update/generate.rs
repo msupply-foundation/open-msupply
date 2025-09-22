@@ -1,12 +1,11 @@
 use super::UpdatePurchaseOrderInput;
 use crate::NullableUpdate;
-use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
-
 use chrono::Utc;
 use repository::{
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
     StorageConnection,
 };
+use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
 
 pub(crate) struct GenerateResult {
     pub updated_order: PurchaseOrderRow,
@@ -107,13 +106,13 @@ pub fn generate(
     updated_order.supplier_discount_percentage = Some(supplier_discount_percentage);
 
     if let Some(supplier_discount_amount) = supplier_discount_amount {
-        let line_total_before_discount = purchase_order_stats
+        let total_before_tax = purchase_order_stats
             .as_ref()
-            .map(|stats| stats.line_total_before_discount)
+            .map(|stats| stats.order_total_before_discount)
             .unwrap_or(0.0);
 
-        updated_order.supplier_discount_percentage = if line_total_before_discount > 0.0 {
-            Some((supplier_discount_amount / line_total_before_discount) * 100.0)
+        updated_order.supplier_discount_percentage = if total_before_tax > 0.0 {
+            Some((supplier_discount_amount / total_before_tax) * 100.0)
         } else {
             Some(0.0)
         };
