@@ -5,13 +5,17 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   /** Short explanation of the column. Displays in the column menu */
   description?: string;
 
-  /** Maps common column types to sensible display defaults (e.g. right alignment & rounding for numbers). Defaults to string.*/
+  /** Maps common column types to sensible display defaults (e.g. right
+   * alignment & rounding for numbers). Defaults to string.*/
   columnType?: ColumnType;
 
-  /** Display the column in the table. Use to handle columns only included for certain preferences or permissions. Defaults to true */
+  /** Display the column in the table. Use to handle columns only included for
+   * certain preferences or permissions. Defaults to true */
   includeColumn?: boolean;
 
-  /** When simplified mobile UI preference is enabled, hide the column by default for small devices. User can still unhide it in the table settings. Defaults to false */
+  /** When simplified mobile UI preference is enabled, hide the column by
+   * default for small devices. User can still unhide it in the table settings.
+   * Defaults to false */
   defaultHideOnMobile?: boolean;
 
   // Make the column sticky to a side of the table. User can unpin */
