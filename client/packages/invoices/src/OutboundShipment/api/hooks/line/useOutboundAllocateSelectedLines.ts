@@ -31,7 +31,6 @@ export const useOutboundAllocateLines = () => {
   });
 };
 
-// todo - info snack checks right?
 export const useOutboundAllocateSelectedLines = (
   rowsToAllocate: StockOutLineFragment[],
   resetRowSelection: () => void
