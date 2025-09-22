@@ -89,7 +89,32 @@ pub fn update_purchase_order_line(
                     let input = UpdatePurchaseOrderInput {
                         id: purchase_order.id.clone(),
                         status: Some(PurchaseOrderStatus::Confirmed),
-                        ..Default::default()
+                        supplier_id: None,
+                        confirmed_datetime: None,
+                        comment: None,
+                        supplier_discount_percentage: None,
+                        supplier_discount_amount: None,
+                        donor_id: None,
+                        reference: None,
+                        currency_id: None,
+                        foreign_exchange_rate: None,
+                        shipping_method: None,
+                        sent_datetime: None,
+                        contract_signed_date: None,
+                        advance_paid_date: None,
+                        received_at_port_date: None,
+                        requested_delivery_date: None,
+                        supplier_agent: None,
+                        authorising_officer_1: None,
+                        authorising_officer_2: None,
+                        additional_instructions: None,
+                        heading_message: None,
+                        agent_commission: None,
+                        document_charge: None,
+                        communications_charge: None,
+                        insurance_charge: None,
+                        freight_charge: None,
+                        freight_conditions: None,
                     };
                     let _ = update_purchase_order(ctx, store_id, input, user_has_auth_permission);
                     activity_log_entry(

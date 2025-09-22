@@ -27,7 +27,7 @@ import {
   calculateUnitQuantities,
   lineStatusOptions,
 } from './utils';
-import { isFieldDisabled, StatusGroup } from 'packages/purchasing/src/utils';
+import { isFieldDisabled, StatusGroup } from '../../../utils';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
