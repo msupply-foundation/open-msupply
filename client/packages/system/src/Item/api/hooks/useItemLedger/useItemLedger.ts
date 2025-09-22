@@ -1,7 +1,4 @@
-import {
-  FilterByWithStringAndBool,
-  useQuery,
-} from '@openmsupply-client/common';
+import { FilterBy, useQuery } from '@openmsupply-client/common';
 import { useItemGraphQL } from '../useItemApi';
 import { ITEM_LEDGER } from '../../keys';
 import { ItemLedgerFragment } from '../../operations.generated';
@@ -9,7 +6,7 @@ import { ItemLedgerFragment } from '../../operations.generated';
 export type ItemLedgerListParams = {
   first: number;
   offset: number;
-  filterBy?: FilterByWithStringAndBool | null;
+  filterBy?: FilterBy | null;
 };
 
 export const useItemLedger = (

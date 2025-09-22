@@ -59,6 +59,8 @@ pub struct ItemFilterInput {
     pub master_list_id: Option<EqualFilterStringInput>,
     pub is_program_item: Option<bool>,
     pub ignore_for_orders: Option<bool>,
+    pub min_months_of_stock: Option<f64>,
+    pub max_months_of_stock: Option<f64>,
 }
 
 #[derive(Union)]
@@ -114,6 +116,8 @@ impl ItemFilterInput {
             master_list_id,
             is_program_item,
             ignore_for_orders,
+            min_months_of_stock,
+            max_months_of_stock,
         } = self;
 
         ItemFilter {
@@ -132,6 +136,8 @@ impl ItemFilterInput {
             master_list_id: master_list_id.map(EqualFilter::from),
             is_program_item,
             ignore_for_orders,
+            min_months_of_stock,
+            max_months_of_stock,
         }
     }
 }

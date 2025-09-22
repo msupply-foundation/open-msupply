@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   LIST_KEY,
   MasterListSortFieldInput,
   SortBy,
@@ -13,7 +13,7 @@ type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<MasterListRowFragment>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: FilterBy | null;
 };
 
 type MasterListsProps = {

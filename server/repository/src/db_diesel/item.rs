@@ -55,6 +55,8 @@ pub struct ItemFilter {
     pub master_list_id: Option<EqualFilter<String>>,
     pub is_program_item: Option<bool>,
     pub ignore_for_orders: Option<bool>,
+    pub min_months_of_stock: Option<f64>,
+    pub max_months_of_stock: Option<f64>,
 }
 
 impl ItemFilter {
@@ -240,6 +242,9 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             master_list_id,
             is_program_item,
             ignore_for_orders,
+            // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
+            max_months_of_stock: _,
+            min_months_of_stock: _,
         } = f;
 
         // or filter need to be applied before and filters
