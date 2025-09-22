@@ -5,7 +5,6 @@ import {
   DetailPanelPortal,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
-import { SupplierDetailSection } from './SupplierDetailSection';
 import { PurchaseOrderFragment } from '../../api';
 import { DateSection } from './DateSection';
 import { OtherSection } from './OtherSection';
@@ -32,8 +31,7 @@ export const SidePanel = (): ReactElement => {
 
   return (
     <DetailPanelPortal>
-      <PricingSection draft={draft} />
-      <SupplierDetailSection
+      <PricingSection
         draft={draft}
         onChange={handleChange}
         disabled={disabled}

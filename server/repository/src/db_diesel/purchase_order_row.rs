@@ -11,8 +11,7 @@ use serde::{Deserialize, Serialize};
 table! {
     purchase_order_stats (purchase_order_id) {
         purchase_order_id -> Text,
-        line_total_before_discount -> Double,
-        line_total_after_discount -> Double,
+        order_total_before_discount -> Double,
         order_total_after_discount -> Double,
     }
 }
@@ -21,8 +20,7 @@ table! {
 #[diesel(table_name = purchase_order_stats)]
 pub struct PurchaseOrderStatsRow {
     pub purchase_order_id: String,
-    pub line_total_before_discount: f64,
-    pub line_total_after_discount: f64,
+    pub order_total_before_discount: f64,
     pub order_total_after_discount: f64,
 }
 
