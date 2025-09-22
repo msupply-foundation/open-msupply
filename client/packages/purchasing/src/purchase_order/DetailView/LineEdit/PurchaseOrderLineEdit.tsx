@@ -225,7 +225,8 @@ export const PurchaseOrderLineEdit = ({
                 )}
               {numericInput(
                 'label.price-per-pack-before-discount',
-                draft?.pricePerUnitBeforeDiscount * (draft?.requestedPackSize || 1),
+                draft?.pricePerUnitBeforeDiscount *
+                  (draft?.requestedPackSize || 1),
                 {
                   onChange: value => {
                     const adjustedPatch = calculatePricesAndDiscount(
@@ -255,7 +256,8 @@ export const PurchaseOrderLineEdit = ({
               )}
               {numericInput(
                 'label.price-per-pack-after-discount',
-                draft?.pricePerUnitAfterDiscount * (draft?.requestedPackSize || 1),
+                draft?.pricePerUnitAfterDiscount *
+                  (draft?.requestedPackSize || 1),
                 {
                   onChange: value => {
                     const adjustedPatch = calculatePricesAndDiscount(
@@ -264,6 +266,9 @@ export const PurchaseOrderLineEdit = ({
                     );
                     update(adjustedPatch);
                   },
+                  max:
+                    draft?.pricePerUnitBeforeDiscount *
+                    (draft?.requestedPackSize || 1),
                   decimalLimit: 2,
                 }
               )}
