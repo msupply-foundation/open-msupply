@@ -132,6 +132,8 @@ pub mod rnr_form_line_row;
 pub mod rnr_form_row;
 pub mod sensor;
 pub mod sensor_row;
+pub mod shipping_method;
+pub mod shipping_method_row;
 pub mod stock_line;
 pub mod stock_line_ledger;
 pub mod stock_line_ledger_discrepancy;

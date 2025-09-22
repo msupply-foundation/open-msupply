@@ -7523,6 +7523,7 @@ export type Queries = {
   schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
+  shippingMethods: ShippingMethodsResponse;
   stockCounts: StockCounts;
   /** Query for "stock_line" entries */
   stockLines: StockLinesResponse;
@@ -8159,6 +8160,11 @@ export type QueriesSensorsArgs = {
   filter?: InputMaybe<SensorFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<SensorSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesShippingMethodsArgs = {
+  filter?: InputMaybe<ShippingMethodFilterInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -9093,6 +9099,26 @@ export type SetPrescribedQuantityWithId = {
   id: Scalars['String']['output'];
   response: SetPrescribedQuantityResponse;
 };
+
+export type ShippingMethodConnector = {
+  __typename: 'ShippingMethodConnector';
+  nodes: Array<ShippingMethodNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ShippingMethodFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  method?: InputMaybe<StringFilterInput>;
+};
+
+export type ShippingMethodNode = {
+  __typename: 'ShippingMethodNode';
+  deletedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['String']['output'];
+  method: Scalars['String']['output'];
+};
+
+export type ShippingMethodsResponse = ShippingMethodConnector;
 
 export type SnapshotCountCurrentCountMismatch =
   UpdateStocktakeErrorInterface & {
