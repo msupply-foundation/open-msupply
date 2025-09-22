@@ -118,6 +118,7 @@ const OutboundShipmentListViewComponent: FC = () => {
           isOutboundDisabled
         ),
         enableColumnFilter: true,
+        enableSorting: true,
         defaultHideOnMobile: true,
       },
       {
@@ -125,6 +126,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         id: 'status',
         header: t('label.status'),
         size: 140,
+        enableSorting: true,
         filterVariant: 'select',
         filterSelectOptions: [
           { value: InvoiceNodeStatus.New, label: t('label.new') },
@@ -141,12 +143,14 @@ const OutboundShipmentListViewComponent: FC = () => {
         header: t('label.invoice-number'),
         columnType: ColumnType.Number,
         description: t('description.invoice-number'),
+        enableSorting: true,
       },
       {
         accessorKey: 'createdDatetime',
         header: t('label.created'),
-        enableColumnFilter: true,
         columnType: ColumnType.Date,
+        enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'theirReference',
