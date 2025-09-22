@@ -16,13 +16,17 @@ import {
   NothingHere,
   useIsGroupedState,
 } from '@openmsupply-client/common';
-import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
+import {
+  toItemRow,
+  ActivityLogList,
+  ItemRowFragment,
+} from '@openmsupply-client/system';
 import { StockOutItem } from '../../types';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useOutbound, useOutboundItems } from '../api';
+import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { StockOutLineFragment } from '../../StockOut';
 import { CustomerReturnEditModal } from '../../Returns';
@@ -105,10 +109,18 @@ export const DetailView = () => {
       ),
     });
 
-  // const sortedRows = table.getSortedRowModel().rows;
-  // todo: when not grouped by... apply groupBy? So we can get the items...
-  // this doesn't apply sort - when grouped can use sortedRows, otherwise need separate group by
-  const { data: items } = useOutboundItems();
+  // Table manages the sorting state
+  // This needs to be passed to the edit modal, so based on latest sort order
+  // it can determine which item to load when user clicks `next`
+  const getSortedItems = useCallback(
+    () =>
+      table.getSortedRowModel().rows.reduce<ItemRowFragment[]>((acc, row) => {
+        const item = row.original.item;
+        if (!acc.find(i => i.id === item.id)) acc.push(item);
+        return acc;
+      }, []),
+    []
+  );
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -138,7 +150,7 @@ export const DetailView = () => {
               onClose={onClose}
               status={data.status}
               invoiceId={data.id}
-              items={items}
+              getSortedItems={getSortedItems}
             />
           )}
 

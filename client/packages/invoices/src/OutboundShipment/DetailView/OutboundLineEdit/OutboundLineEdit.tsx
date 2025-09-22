@@ -26,7 +26,7 @@ interface OutboundLineEditProps {
   mode: ModalMode | null;
   status: InvoiceNodeStatus;
   invoiceId: string;
-  items: ItemRowFragment[] | undefined;
+  getSortedItems: () => ItemRowFragment[];
 }
 
 export const OutboundLineEdit = ({
@@ -36,7 +36,7 @@ export const OutboundLineEdit = ({
   mode,
   status,
   invoiceId,
-  items,
+  getSortedItems,
 }: OutboundLineEditProps) => {
   const t = useTranslation();
   const { info, warning } = useNotification();
@@ -48,7 +48,7 @@ export const OutboundLineEdit = ({
   };
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { next, disabled: nextDisabled } = useNextItem(items, itemId);
+  const { next, disabled: nextDisabled } = useNextItem(getSortedItems, itemId);
 
   const { mutateAsync } = useSaveOutboundLines(invoiceId);
   const { saveBarcode } = useOpenedWithBarcode(asBarcodeOrNull(openedWith));
