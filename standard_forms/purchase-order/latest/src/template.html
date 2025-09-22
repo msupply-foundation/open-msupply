@@ -40,21 +40,24 @@
 
 <table class="right-aligned-table">
   <tr excel-type="total-row">
-    <td>{{ t(k="label.total-cost", f="Total cost")}}:</td>
-    <td>{{ data.purchaseOrder.orderTotalAfterDiscount | default(value="") }}</td>
+    <td>{{ t(k="heading.total", f="Total")}}:</td>
+    <td>{{ data.purchaseOrder.orderTotalAfterDiscount *
+    data.purchaseOrder.foreignExchangeRate | default(value="") | round(precision=2) }} {{ data.purchaseOrder.currency.code
+    }}</td>
   </tr>
   <tr excel-type="total-row">
     <td>{{ t(k="label.exchange-rate", f="Exchange rate")}}:</td>
-    <td>{{ data.purchaseOrder.foreignExchangeRate | default(value="") }}</td>
+    <td>{{ data.purchaseOrder.foreignExchangeRate | default(value="") }} {{ data.purchaseOrder.currency.code
+      }}
+    </td>
   </tr>
   <tr excel-type="total-row">
     <td>
-      {{ t(k="label.total-cost-in-local-currency", f="Total cost in local
-      currency") }}:
+      {{ t(k="label.estimated-total", f="Estimated cost") }}:
     </td>
     <td>
-      {{ data.purchaseOrder.orderTotalAfterDiscount *
-      data.purchaseOrder.foreignExchangeRate | default(value="") }}
+      {{ data.purchaseOrder.orderTotalAfterDiscount  | default(value="") | round(precision=2) }} {{ data.currencies.nodes[0].code
+      }}
     </td>
   </tr>
 </table>
