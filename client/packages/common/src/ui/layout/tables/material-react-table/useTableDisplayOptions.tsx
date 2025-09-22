@@ -17,8 +17,10 @@ import { MenuItem, Typography } from '@mui/material';
 import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
+import { hasSavedState } from './tableState/utils';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>(
+  tableId: string,
   resetTableState: () => void,
   onRowClick?: (row: T) => void,
   getIsPlaceholderRow: (row: T) => boolean = () => false,
@@ -59,6 +61,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
           icon={<RefreshIcon />}
           onClick={resetTableState}
           label={t('label.reset-table-defaults')}
+          disabled={!hasSavedState(tableId)}
           sx={{
             width: '40px',
             height: '40px',
