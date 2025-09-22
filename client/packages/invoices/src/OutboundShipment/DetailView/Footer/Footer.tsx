@@ -107,7 +107,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       getConfirmation();
     } else {
       onAllocate();
-      resetRowSelection();
     }
   };
 
