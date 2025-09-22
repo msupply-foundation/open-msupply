@@ -99,7 +99,7 @@ pub fn update_purchase_order_line(
                         currency_id: None,
                         foreign_exchange_rate: None,
                         shipping_method: None,
-                        sent_datetime: None,
+                        sent_datetime: Some(NullableUpdate { value: None }),
                         contract_signed_date: None,
                         advance_paid_date: None,
                         received_at_port_date: None,
