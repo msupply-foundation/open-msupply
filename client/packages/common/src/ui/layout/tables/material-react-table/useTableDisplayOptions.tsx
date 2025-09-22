@@ -26,6 +26,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
 ): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
   return {
+    // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
       const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
 
@@ -47,6 +48,26 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
         ...internalColumnMenuItems,
       ];
     },
+
+    // Add reset state button to toolbar
+    renderToolbarInternalActions: ({ table }) => (
+      <>
+        <MRT_ToggleFiltersButton table={table} />
+        <MRT_ToggleDensePaddingButton table={table} />
+        <MRT_ShowHideColumnsButton table={table} />
+        <IconButton
+          icon={<RefreshIcon />}
+          onClick={resetTableState}
+          label={t('label.reset-table-defaults')}
+          sx={{
+            width: '40px',
+            height: '40px',
+            '& svg': { fontSize: '1.2rem' },
+          }}
+        />
+        <MRT_ToggleFullScreenButton table={table} />
+      </>
+    ),
 
     // Styling
     muiTablePaperProps: {
@@ -173,23 +194,5 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
         },
       };
     },
-    renderToolbarInternalActions: ({ table }) => (
-      <>
-        <MRT_ToggleFiltersButton table={table} />
-        <MRT_ToggleDensePaddingButton table={table} />
-        <MRT_ShowHideColumnsButton table={table} />
-        <IconButton
-          icon={<RefreshIcon />}
-          onClick={resetTableState}
-          label={t('label.reset-table-defaults')}
-          sx={{
-            width: '40px',
-            height: '40px',
-            '& svg': { fontSize: '1.2rem' },
-          }}
-        />
-        <MRT_ToggleFullScreenButton table={table} />
-      </>
-    ),
   };
 };
