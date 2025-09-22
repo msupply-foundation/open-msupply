@@ -2,7 +2,7 @@ use super::UpdatePurchaseOrderInput;
 use crate::NullableUpdate;
 use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
 
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineRow,
     StorageConnection,
@@ -119,7 +119,17 @@ pub fn generate(
         };
     }
 
-    let updated_lines = update_lines(connection, &updated_order.id, &status)?;
+    let requested_delivery_date_value = nullable_update(
+        &requested_delivery_date,
+        updated_order.requested_delivery_date,
+    );
+
+    let updated_lines = update_lines(
+        connection,
+        &updated_order.id,
+        &status,
+        requested_delivery_date_value,
+    )?;
 
     Ok(GenerateResult {
         updated_order,
@@ -144,12 +154,16 @@ fn set_new_status_datetime(
     };
 
     let current_datetime = Utc::now().naive_utc();
+
     match new_status {
-        PurchaseOrderStatus::Authorised => {
-            purchase_order.authorised_datetime = Some(current_datetime);
+        PurchaseOrderStatus::RequestApproval => {
+            purchase_order.request_approval_datetime = Some(current_datetime);
         }
         PurchaseOrderStatus::Confirmed => {
             purchase_order.confirmed_datetime = Some(current_datetime);
+        }
+        PurchaseOrderStatus::Sent => {
+            purchase_order.sent_datetime = Some(current_datetime);
         }
         PurchaseOrderStatus::Finalised => {
             purchase_order.finalised_datetime = Some(current_datetime)
@@ -172,6 +186,7 @@ fn update_lines(
     connection: &StorageConnection,
     purchase_order_id: &str,
     status: &Option<PurchaseOrderStatus>,
+    requested_delivery_date: Option<NaiveDate>,
 ) -> Result<Vec<PurchaseOrderLineRow>, RepositoryError> {
     if let Some(new_status) = status {
         let lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
@@ -184,6 +199,12 @@ fn update_lines(
             .map(|mut line| {
                 match new_status {
                     PurchaseOrderStatus::Confirmed => {
+                        line.purchase_order_line_row.requested_delivery_date = line
+                            .purchase_order_line_row
+                            .requested_delivery_date
+                            .or(requested_delivery_date);
+                    }
+                    PurchaseOrderStatus::Sent => {
                         line.purchase_order_line_row.status =
                             repository::PurchaseOrderLineStatus::Sent;
                     }

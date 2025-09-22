@@ -54,7 +54,7 @@ export type PurchaseOrderFragment = {
   advancePaidDate?: string | null;
   receivedAtPortDate?: string | null;
   requestedDeliveryDate?: string | null;
-  authorisedDatetime?: string | null;
+  requestApprovalDatetime?: string | null;
   finalisedDatetime?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
@@ -246,7 +246,7 @@ export type PurchaseOrderByIdQuery = {
         advancePaidDate?: string | null;
         receivedAtPortDate?: string | null;
         requestedDeliveryDate?: string | null;
-        authorisedDatetime?: string | null;
+        requestApprovalDatetime?: string | null;
         finalisedDatetime?: string | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
@@ -593,8 +593,13 @@ export type UpdatePurchaseOrderLineMutation = {
     | {
         __typename: 'UpdatePurchaseOrderLineError';
         error:
-          | { __typename: 'CannotAdjustRequestedQuantity'; description: string }
+          | { __typename: 'CannotEditAdjustedQuantity'; description: string }
           | { __typename: 'CannotEditPurchaseOrder'; description: string }
+          | {
+              __typename: 'CannotEditQuantityBelowReceived';
+              description: string;
+            }
+          | { __typename: 'CannotEditRequestedQuantity'; description: string }
           | {
               __typename: 'ItemCannotBeOrdered';
               description: string;
@@ -747,7 +752,7 @@ export const PurchaseOrderFragmentDoc = gql`
     advancePaidDate
     receivedAtPortDate
     requestedDeliveryDate
-    authorisedDatetime
+    requestApprovalDatetime
     finalisedDatetime
     documents {
       __typename
@@ -1033,6 +1038,10 @@ export const UpdatePurchaseOrderLineDocument = gql`
           }
           ... on ItemCannotBeOrdered {
             ...ItemCannotBeOrdered
+          }
+          ... on CannotEditQuantityBelowReceived {
+            __typename
+            description
           }
         }
       }

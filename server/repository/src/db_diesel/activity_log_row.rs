@@ -107,8 +107,9 @@ pub enum ActivityLogType {
     GoodsReceivedStatusFinalised,
     // Purchase Orders
     PurchaseOrderCreated,
-    PurchaseOrderAuthorised,
+    PurchaseOrderRequestApproval,
     PurchaseOrderUnauthorised,
+    PurchaseOrderSent,
     PurchaseOrderConfirmed,
     PurchaseOrderFinalised,
     // TODO add delete purchase order once https://github.com/msupply-foundation/open-msupply/pull/8714 merged
