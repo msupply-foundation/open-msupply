@@ -29,7 +29,6 @@ export const ActionsFooter = ({
   resetRowSelection,
 }: ActionsFooterProps): ReactElement => {
   const t = useTranslation();
-  const { clearSelected } = useTableStore();
 
   return (
     <Stack
@@ -68,13 +67,33 @@ export const ActionsFooter = ({
           )
         )}
       </Stack>
-      <FlatButton
-        startIcon={<MinusCircleIcon />}
-        label={t('label.clear-selection')}
-        onClick={resetRowSelection ? resetRowSelection : clearSelected}
-        shouldShrink={true}
-        color="secondary"
-      />
+      {resetRowSelection ? (
+        <FlatButton
+          startIcon={<MinusCircleIcon />}
+          label={t('label.clear-selection')}
+          onClick={resetRowSelection}
+          shouldShrink={true}
+          color="secondary"
+        />
+      ) : (
+        <LegacyClearSelectionButton />
+      )}
     </Stack>
+  );
+};
+
+// Move to own component to handle conditional use of useTableStore
+const LegacyClearSelectionButton = () => {
+  const t = useTranslation();
+  const { clearSelected } = useTableStore();
+
+  return (
+    <FlatButton
+      startIcon={<MinusCircleIcon />}
+      label={t('label.clear-selection')}
+      onClick={clearSelected}
+      shouldShrink={true}
+      color="secondary"
+    />
   );
 };
