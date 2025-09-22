@@ -19,14 +19,6 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   comment
 }
 
-fragment SyncFileReference on SyncFileReferenceNode {
-  __typename
-  id
-  fileName
-  recordId
-  createdDatetime
-}
-
 fragment PurchaseOrder on PurchaseOrderNode {
   __typename
   id
@@ -100,6 +92,9 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     code
     name
     unitName
+    stats(storeId: $storeId) {
+      stockOnHand
+    }
   }
   requestedPackSize
   requestedDeliveryDate
@@ -129,6 +124,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
       username
     }
   }
+  unitsOrderedInOthers
 }
 
 query purchaseOrders(
