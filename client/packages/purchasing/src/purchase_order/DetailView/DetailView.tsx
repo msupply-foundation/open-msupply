@@ -85,7 +85,7 @@ export const DetailViewInner = () => {
           onRowClick={!isDisabled ? onRowClick : null}
         />
       ),
-      value: 'General',
+      value: t('label.general'),
     },
     {
       Component: <GoodsReceived />,
@@ -93,7 +93,7 @@ export const DetailViewInner = () => {
     },
     {
       Component: <Details draft={draft} onChange={handleChange} />,
-      value: 'Details',
+      value: t('label.details'),
     },
     {
       Component: (
@@ -107,11 +107,11 @@ export const DetailViewInner = () => {
           invalidateQueries={invalidateQueries}
         />
       ),
-      value: 'Documents',
+      value: t('label.documents'),
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
-      value: 'Log',
+      value: t('label.log'),
     },
   ];
 
