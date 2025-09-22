@@ -353,7 +353,7 @@ export const NumericTextInput = React.forwardRef<
           }}
           onKeyDown={e => {
             if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-
+            e.stopPropagation();
             e.preventDefault();
             const change =
               (e.key === 'ArrowUp' ? step : -step) *
