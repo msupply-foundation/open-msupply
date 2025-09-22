@@ -281,7 +281,9 @@ export const PurchaseOrderLineEdit = ({
                 value={
                   draft
                     ? (draft.pricePerUnitAfterDiscount ?? 0) *
-                      (draft.requestedNumberOfUnits ?? 0)
+                      (draft.adjustedNumberOfUnits ??
+                        draft?.requestedNumberOfUnits ??
+                        0)
                     : 0
                 }
                 disabled
