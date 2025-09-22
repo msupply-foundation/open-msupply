@@ -65,14 +65,17 @@ export const calculatePricesAndDiscount = (
     pricePerPackAfterDiscount = 0,
     pricePerPackBeforeDiscount = 0,
   } = data;
+  const packSize = data.requestedPackSize || 1;
+  const discount = Math.min(Math.max(discountPercentage || 0, 0), 100);
 
   switch (changingField) {
     case 'pricePerPackBeforeDiscount': {
       // Update the price after discount based on discount percentage
       return {
-        pricePerUnitBeforeDiscount: pricePerPackBeforeDiscount / (data.requestedPackSize || 1),
+        pricePerUnitBeforeDiscount: pricePerPackBeforeDiscount / packSize,
         discountPercentage,
-        pricePerUnitAfterDiscount: pricePerPackBeforeDiscount * (1 - (discountPercentage || 0) / 100) / (data.requestedPackSize || 1),
+        pricePerUnitAfterDiscount:
+          (pricePerPackBeforeDiscount * (1 - discount / 100)) / packSize,
       };
     }
     case 'discountPercentage': {
@@ -81,14 +84,13 @@ export const calculatePricesAndDiscount = (
         pricePerUnitBeforeDiscount,
         discountPercentage,
         pricePerUnitAfterDiscount:
-          pricePerUnitBeforeDiscount * (1 - (discountPercentage || 0) / 100),
+          pricePerUnitBeforeDiscount * (1 - discount / 100),
       };
     }
     case 'pricePerPackAfterDiscount': {
       // Update the discount percentage based on original price
       const discountPercentage = pricePerUnitBeforeDiscount
-        ? ((pricePerUnitBeforeDiscount -
-            pricePerPackAfterDiscount / (data.requestedPackSize || 1)) /
+        ? ((pricePerUnitBeforeDiscount - pricePerPackAfterDiscount / packSize) /
             pricePerUnitBeforeDiscount) *
           100
         : 0;
@@ -96,7 +98,7 @@ export const calculatePricesAndDiscount = (
       return {
         pricePerUnitBeforeDiscount,
         discountPercentage,
-        pricePerUnitAfterDiscount: pricePerPackAfterDiscount / (data.requestedPackSize || 1),
+        pricePerUnitAfterDiscount: pricePerPackAfterDiscount / packSize,
       };
     }
   }

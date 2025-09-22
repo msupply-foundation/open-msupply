@@ -76,7 +76,7 @@ export const UploadTab = ({
       {
         key: 'requestedPackSize',
         localeKey: 'label.pack-size',
-        formatter: numString => parseFloat(numString),
+        formatter: numString => parseFloat(numString) || 0,
       },
     ]);
 
@@ -101,7 +101,8 @@ export const UploadTab = ({
       'pricePerPackBeforeDiscount',
       'label.price-per-pack-before-discount',
       numString => {
-        const parsedValue = parseFloat(numString);
+        const parsedValue = parseFloat(numString) || 0;
+
         const calculatedValues = calculatePricesAndDiscount(
           'pricePerPackBeforeDiscount',
           {
@@ -109,25 +110,41 @@ export const UploadTab = ({
             pricePerPackBeforeDiscount: parsedValue,
           }
         );
+
         Object.assign(importRow, {
           pricePerUnitBeforeDiscount:
             calculatedValues.pricePerUnitBeforeDiscount,
           discountPercentage: calculatedValues.discountPercentage,
           pricePerUnitAfterDiscount: calculatedValues.pricePerUnitAfterDiscount,
         });
+
         return parsedValue;
       }
     );
 
-    addCell('discountPercentage', 'label.discount-percentage', numString =>
-      parseFloat(numString)
-    );
+    addCell('discountPercentage', 'label.discount-percentage', numString => {
+      const parsedValue = parseFloat(numString) || 0;
+
+      if (parsedValue > 100 && !!importRow.pricePerPackAfterDiscount) {
+        rowErrors.push(t('error.discount-exceeds-maximum'));
+      }
+
+      return parsedValue;
+    });
 
     addCell(
       'pricePerPackAfterDiscount',
       'label.price-per-pack-after-discount',
       numString => {
-        const parsedValue = parseFloat(numString);
+        const parsedValue = parseFloat(numString) || 0;
+        const beforeDiscountPrice = importRow.pricePerPackBeforeDiscount || 0;
+
+        if (parsedValue > beforeDiscountPrice) {
+          rowErrors.push(
+            t('error.price-after-discount-cannot-exceed-price-before-discount')
+          );
+        }
+
         const calculatedValues = calculatePricesAndDiscount(
           'pricePerPackAfterDiscount',
           {
