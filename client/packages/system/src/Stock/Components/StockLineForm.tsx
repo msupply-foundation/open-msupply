@@ -161,7 +161,7 @@ export const StockLineForm = ({
         >
           {!isNewModal && (
             <Box paddingBottom={1}>
-              <Box display="flex">
+              <Box display="flex" alignItems="center">
                 <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
                   <FormLabel
                     sx={{
