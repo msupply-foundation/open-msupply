@@ -7,10 +7,10 @@ use crate::{
 };
 
 pub struct ItemCounts {
-    pub total_count: i64,
-    pub no_stock_count: i64,
-    pub low_stock_count: i64,
-    pub more_than_six_mos_count: i64,
+    pub total: i64,
+    pub no_stock: i64,
+    pub low_stock: i64,
+    pub more_than_six_months_stock: i64,
 }
 
 pub trait ItemCountServiceTrait: Send + Sync {
@@ -46,7 +46,7 @@ pub trait ItemCountServiceTrait: Send + Sync {
         return low_stock_count;
     }
 
-    fn get_more_than_six_mos_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
+    fn get_more_than_six_months_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
         let more_than_six_mos_count = item_stats
             .iter()
             .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
@@ -81,17 +81,18 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids)?;
 
-        let no_stock_count = Self::get_no_stock_count(&self, &item_stats);
+        let no_stock = Self::get_no_stock_count(&self, &item_stats);
 
-        let low_stock_count = Self::get_low_stock_count(&self, &item_stats, low_stock_threshold);
+        let low_stock = Self::get_low_stock_count(&self, &item_stats, low_stock_threshold);
 
-        let more_than_six_mos_count = Self::get_more_than_six_mos_count(&self, &item_stats);
+        let more_than_six_months_stock =
+            Self::get_more_than_six_months_stock_count(&self, &item_stats);
 
         Ok(ItemCounts {
-            total_count,
-            no_stock_count,
-            low_stock_count,
-            more_than_six_mos_count,
+            total: total_count,
+            no_stock,
+            low_stock,
+            more_than_six_months_stock,
         })
     }
 }
@@ -199,7 +200,7 @@ mod item_count_service_test {
 
         // Count of total items which are visible to store b or on hand in store b
         // with visibility determined by master list & master list name join
-        assert_eq!(counts.total_count, 2);
+        assert_eq!(counts.total, 2);
     }
 
     #[actix_rt::test]
@@ -286,7 +287,7 @@ mod item_count_service_test {
             },
         ];
 
-        let result = ItemServiceCount {}.get_more_than_six_mos_count(&item_stats);
+        let result = ItemServiceCount {}.get_more_than_six_months_stock_count(&item_stats);
 
         assert_eq!(result, 1);
     }
