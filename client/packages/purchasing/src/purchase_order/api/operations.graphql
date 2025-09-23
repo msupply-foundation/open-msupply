@@ -68,7 +68,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
   advancePaidDate
   receivedAtPortDate
   requestedDeliveryDate
-  authorisedDatetime
+  requestApprovalDatetime
   finalisedDatetime
   documents {
     __typename
@@ -379,6 +379,10 @@ mutation updatePurchaseOrderLine(
         }
         ... on ItemCannotBeOrdered {
           ...ItemCannotBeOrdered
+        }
+        ... on CannotEditQuantityBelowReceived {
+          __typename
+          description
         }
       }
     }

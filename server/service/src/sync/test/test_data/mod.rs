@@ -67,6 +67,7 @@ pub(crate) mod requisition_line;
 pub(crate) mod rnr_form;
 pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
+pub(crate) mod shipping_method;
 pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;

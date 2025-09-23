@@ -58,8 +58,9 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         input: UpdatePurchaseOrderLineInput,
+        user_has_permission: Option<bool>,
     ) -> Result<PurchaseOrderLine, UpdatePurchaseOrderLineInputError> {
-        update_purchase_order_line(ctx, store_id, input)
+        update_purchase_order_line(ctx, store_id, input, user_has_permission)
     }
 
     fn delete_purchase_order_line(

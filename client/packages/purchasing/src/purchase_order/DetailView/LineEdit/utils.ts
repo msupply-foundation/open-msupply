@@ -107,7 +107,10 @@ export const calculateUnitQuantities = (
   const totalUnits = numberOfPacks * requestedPackSize;
 
   // Only adjust the requested number of units if the status is not confirmed yet
-  if (status === PurchaseOrderNodeStatus.Confirmed) {
+  if (
+    status === PurchaseOrderNodeStatus.Confirmed ||
+    status === PurchaseOrderNodeStatus.Sent
+  ) {
     return {
       adjustedNumberOfUnits: totalUnits,
     };
@@ -127,10 +130,13 @@ export const lineStatusOptions = (
   status: PurchaseOrderNodeStatus
 ): LineStatusOption[] => {
   const disableNewOption =
-    status === PurchaseOrderNodeStatus.Confirmed ? true : false;
+    status === PurchaseOrderNodeStatus.Confirmed ||
+    status === PurchaseOrderNodeStatus.Sent
+      ? true
+      : false;
   const disableOtherOptions =
     status === PurchaseOrderNodeStatus.New ||
-    status === PurchaseOrderNodeStatus.Authorised
+    status === PurchaseOrderNodeStatus.RequestApproval
       ? true
       : false;
 
