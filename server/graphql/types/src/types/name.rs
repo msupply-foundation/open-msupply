@@ -1,14 +1,11 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{Name, NameRow, NameRowType, NameType, Store, StoreRow};
-
 use graphql_core::{
-    simple_generic_errors::NodeError, standard_graphql_error::StandardGraphqlError, ContextExt,
+    ContextExt, loader::CurrencyByIdLoader, simple_generic_errors::NodeError, standard_graphql_error::StandardGraphqlError
 };
 use serde::Serialize;
-
 use crate::types::CurrencyNode;
-
 use super::{patient::GenderTypeNode, StoreNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -165,26 +162,19 @@ impl NameNode {
     }
 
     pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
-        let service_provider = ctx.service_provider();
-        let currency_provider = &service_provider.currency_service;
-        let service_context = &service_provider.basic_context()?;
-
-        let currency_id = if let Some(currency_id) = &self.row().currency_id {
-            currency_id
-        } else {
-            return Ok(None);
+        let currency_id = match &self.row().currency_id {
+            Some(currency_id) => currency_id,
+            None => return Ok(None),
         };
 
-        let currency = currency_provider
-            .get_currency(service_context, currency_id)
-            .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
-            .ok_or(StandardGraphqlError::InternalError(format!(
-                "Cannot find currency ({}) for name ({})",
-                currency_id,
-                self.row().id
-            )))?;
+        let loader = ctx.get_loader::<DataLoader<CurrencyByIdLoader>>();
 
-        Ok(Some(CurrencyNode::from_domain(currency)))
+        let result = loader
+            .load_one(currency_id.clone())
+            .await?
+            .map(CurrencyNode::from_domain);
+
+        Ok(result)
     }
 }
 

@@ -133,7 +133,7 @@ export const Footer = ({
     title: t('heading.are-you-sure'),
   });
 
-  if (status === PurchaseOrderNodeStatus.Confirmed) {
+  if (status === PurchaseOrderNodeStatus.Sent) {
     actions.push({
       label: t('button.close-purchase-order-lines'),
       onClick: showCloseConfirmation,
