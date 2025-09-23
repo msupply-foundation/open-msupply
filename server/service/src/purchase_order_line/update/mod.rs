@@ -74,12 +74,11 @@ pub fn update_purchase_order_line(
             let line_status_change = if input.adjusted_number_of_units
                 != current_purchase_order_line.adjusted_number_of_units
             {
-                // Then check if the purchase order is in Sent status
                 let purchase_order = PurchaseOrderRowRepository::new(connection)
                     .find_one_by_id(&purchase_order_id)?
                     .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
 
-                // Update purchase order status and line status
+                // Update purchase order status
                 if purchase_order.status == PurchaseOrderStatus::Sent {
                     update_order_status_on_adjusted_quantity_change(
                         ctx,
@@ -87,10 +86,11 @@ pub fn update_purchase_order_line(
                         purchase_order,
                         user_has_auth_permission,
                     )?;
+                }
 
-                    // Set line status to New
+                // Handle line status change to New separately. The Purchase Order status may have already been changed by another line
+                if current_purchase_order_line.status == PurchaseOrderLineStatus::Sent {
                     updated_input.status = Some(PurchaseOrderLineStatus::New);
-
                     Some((PurchaseOrderLineStatus::Sent, PurchaseOrderLineStatus::New))
                 } else {
                     None
