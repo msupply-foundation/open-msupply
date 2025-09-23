@@ -1,4 +1,4 @@
-export * from './ExpiryDateCell';
+export * from './CheckCell';
 export * from './NameAndColorSetterCell';
-export * from './NumberInputCell';
 export * from './TextWithTooltipCell';
+export * from './CurrencyValueCell';
