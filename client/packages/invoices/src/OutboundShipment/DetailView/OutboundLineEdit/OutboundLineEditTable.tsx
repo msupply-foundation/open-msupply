@@ -120,6 +120,7 @@ export const OutboundLineEditTable = ({
           allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
           inDoses={allocateIn.type === AllocateInType.Doses}
           placeholderQuantity={
+            // If no stock lines, show placeholder: 0. Otherwise don't show placeholder unless >0
             placeholderQuantity === 0 && lines.length
               ? null
               : placeholderQuantity

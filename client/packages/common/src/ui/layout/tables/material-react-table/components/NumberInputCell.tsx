@@ -27,7 +27,6 @@ export const NumberInputCell = <T extends MRT_RowData>({
 
   const [buffer, setBuffer] = useBufferState(value);
 
-  // todo - reset buffer?
   const debouncedUpdate = useDebounceCallback(
     (input: number) => {
       const resetValue = updateFn(input);
