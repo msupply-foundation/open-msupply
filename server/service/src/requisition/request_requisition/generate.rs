@@ -46,7 +46,7 @@ pub fn generate_requisition_lines(
     requisition_row: &RequisitionRow,
     item_ids: Vec<String>,
 ) -> Result<Vec<RequisitionLineRow>, PluginOrRepositoryError> {
-    let item_stats_rows = get_item_stats(ctx, store_id, None, item_ids)?;
+    let item_stats_rows = get_item_stats(&ctx.connection, store_id, None, item_ids)?;
 
     let lines = item_stats_rows
         .into_iter()

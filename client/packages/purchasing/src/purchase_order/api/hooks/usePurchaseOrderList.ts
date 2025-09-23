@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   LIST_KEY,
   PurchaseOrderSortFieldInput,
   SortBy,
@@ -18,7 +18,7 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<PurchaseOrderFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export const usePurchaseOrderList = (queryParams: ListParams) => {

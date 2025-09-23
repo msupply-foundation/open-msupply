@@ -9,7 +9,6 @@ import {
   mergeCellProps,
   Tooltip,
   useGetColumnTypeDefaults,
-  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 
 import { ColumnDef } from './types';
@@ -17,8 +16,6 @@ import { ColumnDef } from './types';
 export const useMaterialTableColumns = <T extends MRT_RowData>(
   omsColumns: ColumnDef<T>[]
 ) => {
-  const simplifiedMobileView = useSimplifiedTabletUI();
-
   const getColumnTypeDefaults = useGetColumnTypeDefaults();
 
   const tableDefinition = useMemo(() => {
@@ -62,26 +59,11 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         };
       });
 
-    const defaultHiddenColumns = simplifiedMobileView
-      ? columns.filter(col => col.defaultHideOnMobile).map(columnId)
-      : [];
-
-    const defaultColumnPinning = {
-      left: [
-        'mrt-row-select',
-        ...columns.filter(col => col.pin === 'left').map(columnId),
-      ],
-      right: columns.filter(col => col.pin === 'right').map(columnId),
-    };
-
-    return { columns, defaultHiddenColumns, defaultColumnPinning };
+    return { columns };
   }, [omsColumns]);
 
   return tableDefinition;
 };
-
-const columnId = <T extends MRT_RowData>(column: ColumnDef<T>): string =>
-  column.id ?? column.accessorKey ?? '';
 
 // Show full column name on hover, in case it's truncated
 // If we can get "click header to open column menu" working, we could probably remove the tooltip

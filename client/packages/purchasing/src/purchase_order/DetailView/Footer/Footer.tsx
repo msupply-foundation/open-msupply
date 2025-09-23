@@ -34,10 +34,11 @@ const createStatusLog = (
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
       [PurchaseOrderNodeStatus.New]: purchaseOrder.createdDatetime,
-      [PurchaseOrderNodeStatus.Authorised]: requiresAuthorisation
-        ? purchaseOrder.authorisedDatetime
+      [PurchaseOrderNodeStatus.RequestApproval]: requiresAuthorisation
+        ? purchaseOrder.requestApprovalDatetime
         : null,
       [PurchaseOrderNodeStatus.Confirmed]: purchaseOrder.confirmedDatetime,
+      [PurchaseOrderNodeStatus.Sent]: purchaseOrder.sentDatetime,
       [PurchaseOrderNodeStatus.Finalised]: purchaseOrder.finalisedDatetime,
     };
 
@@ -143,7 +144,7 @@ export const Footer = ({
   const filteredStatuses = authorisePurchaseOrder
     ? purchaseOrderStatuses
     : purchaseOrderStatuses.filter(
-        status => status !== PurchaseOrderNodeStatus.Authorised
+        status => status !== PurchaseOrderNodeStatus.RequestApproval
       );
 
   return (
@@ -168,6 +169,7 @@ export const Footer = ({
                 statuses={filteredStatuses}
                 statusLog={createStatusLog(data, authorisePurchaseOrder)}
                 statusFormatter={getStatusTranslator(t)}
+                width={280}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
                 <StatusChangeButton />

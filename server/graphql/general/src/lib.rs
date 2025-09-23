@@ -51,6 +51,7 @@ use queries::{
     },
     insurance_providers::{insurance_providers, InsuranceProvidersResponse},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
+    shipping_method::{get_shipping_methods, ShippingMethodFilterInput, ShippingMethodsResponse},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
 
@@ -479,6 +480,15 @@ impl GeneralQueries {
         store_id: String,
     ) -> Result<InsuranceProvidersResponse> {
         insurance_providers(ctx, store_id)
+    }
+
+    pub async fn shipping_methods(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        filter: Option<ShippingMethodFilterInput>,
+    ) -> Result<ShippingMethodsResponse> {
+        get_shipping_methods(ctx, &store_id, filter)
     }
 }
 

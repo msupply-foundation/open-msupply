@@ -20,7 +20,7 @@ const PURCHASE_ORDER_1: (&str, &str) = (
         "ID": "sync_test_purchase_order_1",
         "creation_date": "2021-01-22",
         "target_months": 2.1,
-        "status": "cn",
+        "status": "fn",
         "serial_number": 1,
         "store_ID": "store_b",
         "comment": "some test comment",
@@ -78,9 +78,9 @@ const PURCHASE_ORDER_1: (&str, &str) = (
             "confirmed_datetime": "2021-07-11T01:02:03",
             "sent_datetime": "2025-01-15T01:02:03",
             "supplier_discount_percentage": 10.0, 
-            "authorised_datetime": "2025-01-22T00:00:00",
+            "request_approval_datetime": "2025-01-22T00:00:00",
             "finalised_datetime": "2025-01-22T00:00:00",
-            "status": "AUTHORISED"
+            "status": "FINALISED"
         }
     }"#,
 );
@@ -95,7 +95,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             created_by: Some("some user".to_string()),
             supplier_name_link_id: "name_store_b".to_string(),
             purchase_order_number: 1,
-            status: PurchaseOrderStatus::Authorised,
+            status: PurchaseOrderStatus::Finalised,
             created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -135,7 +135,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             freight_charge: None,
             freight_conditions: Some("difficult".to_string()),
             supplier_discount_percentage: Some(10.0),
-            authorised_datetime: Some(
+            request_approval_datetime: Some(
                 NaiveDate::from_ymd_opt(2025, 1, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
@@ -159,7 +159,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
             id: PURCHASE_ORDER_1.0.to_string(),
             creation_date: NaiveDate::from_ymd_opt(2021, 1, 22).unwrap(),
             target_months: Some(2.1),
-            status: LegacyPurchaseOrderStatus::Cn,
+            status: LegacyPurchaseOrderStatus::Fn,
             comment: Some("some test comment".to_string()),
             currency_id: Some("currency_a".to_string()),
             reference: Some("test reference".to_string()),
@@ -208,7 +208,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                         .unwrap(),
                 ),
                 supplier_discount_percentage: Some(10.0),
-                authorised_datetime: Some(
+                request_approval_datetime: Some(
                     NaiveDate::from_ymd_opt(2025, 1, 22)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
@@ -220,7 +220,7 @@ fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
                 ),
-                status: PurchaseOrderStatus::Authorised,
+                status: PurchaseOrderStatus::Finalised,
             }),
         }),
     }
@@ -300,7 +300,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             created_by: Some("user_account_a".to_string()),
             supplier_name_link_id: "donor_a".to_string(),
             purchase_order_number: 1,
-            status: PurchaseOrderStatus::Confirmed,
+            status: PurchaseOrderStatus::Sent,
             created_datetime: NaiveDate::from_ymd_opt(2021, 3, 15)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -340,7 +340,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             freight_charge: None,
             freight_conditions: None,
             supplier_discount_percentage: None,
-            authorised_datetime: None,
+            request_approval_datetime: None,
             finalised_datetime: None,
         },
     )
@@ -385,7 +385,7 @@ fn purchase_order_2_migration_push_record() -> TestSyncOutgoingRecord {
             contract_signed_date: None,
             advance_paid_date: None,
             received_at_port_date: None,
-            is_authorised: false,
+            is_authorised: true,
             oms_fields: Some(PurchaseOrderOmsFields {
                 created_datetime: NaiveDate::from_ymd_opt(2021, 3, 15)
                     .unwrap()
@@ -403,7 +403,7 @@ fn purchase_order_2_migration_push_record() -> TestSyncOutgoingRecord {
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
                 ),
-                status: PurchaseOrderStatus::Confirmed,
+                status: PurchaseOrderStatus::Sent,
                 ..Default::default()
             }),
         }),
@@ -470,7 +470,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             freight_charge: None,
             freight_conditions: None,
             supplier_discount_percentage: None,
-            authorised_datetime: None,
+            request_approval_datetime: None,
             finalised_datetime: None,
         },
     )
