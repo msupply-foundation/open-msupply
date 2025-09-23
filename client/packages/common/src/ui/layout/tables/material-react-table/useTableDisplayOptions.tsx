@@ -15,7 +15,7 @@ import {
 } from '@common/icons';
 import { MenuItem, Typography } from '@mui/material';
 import { ColumnDef } from './types';
-import { IconButton } from '@common/components';
+import { IconButton, NothingHere } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { hasSavedState } from './tableState/utils';
 
@@ -72,14 +72,25 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       </>
     ),
 
+    renderEmptyRowsFallback: () => <NothingHere />,
+
     // Styling
     muiTablePaperProps: {
       sx: { width: '100%', display: 'flex', flexDirection: 'column' },
     },
+    muiTableContainerProps: {
+      sx: { flex: 1, display: 'flex', flexDirection: 'column' },
+    },
     muiTableProps: {
       // Need to apply this here so that relative sizes (ems, %) within table
       // are correct
-      sx: theme => ({ fontSize: theme.typography.body1.fontSize }),
+      sx: theme => ({
+        // Need to apply this here so that relative sizes (ems, %) within table are correct
+        fontSize: theme.typography.body1.fontSize,
+        display: 'flex',
+        flex: 1,
+        flexDirection: 'column',
+      }),
     },
 
     // todo: add tooltip over column name
@@ -122,6 +133,26 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
         },
       },
     }),
+
+    muiTableBodyProps: ({ table }) => ({
+      // Make the NothingHere component vertically centered when there are no rows
+      sx: { height: table.getRowCount() === 0 ? '100%' : 'auto' },
+    }),
+
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => {
+        if (onRowClick) onRowClick(row.original);
+      },
+      sx: {
+        '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
+        backgroundColor: row.original['isSubRow']
+          ? 'background.secondary'
+          : 'inherit',
+        fontStyle: row.getCanExpand() ? 'italic' : 'normal',
+        cursor: onRowClick ? 'pointer' : 'default',
+      },
+    }),
+
     muiTableBodyCellProps: ({ cell, row, table }) => ({
       sx: {
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
@@ -181,21 +212,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
     },
     muiToolbarAlertBannerProps: {
       sx: { backgroundColor: 'unset' },
-    },
-    muiTableBodyRowProps: ({ row }) => {
-      return {
-        onClick: () => {
-          if (onRowClick) onRowClick(row.original);
-        },
-        sx: {
-          '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
-          backgroundColor: row.original['isSubRow']
-            ? 'background.secondary'
-            : 'inherit',
-          fontStyle: row.getCanExpand() ? 'italic' : 'normal',
-          cursor: onRowClick ? 'pointer' : 'default',
-        },
-      };
     },
   };
 };
