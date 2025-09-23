@@ -12,6 +12,7 @@
     feature_flags:
       table_usability_improvements: true
       load_remote_plugins_in_dev: true
+      create_stocktake_modal_usability_improvements: true
   ```
 */
 
