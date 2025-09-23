@@ -16,7 +16,7 @@ use repository::{
 };
 use util::{constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_now_with_offset};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct ItemStats {
     pub total_consumption: f64,
     pub average_monthly_consumption: f64,
@@ -34,7 +34,7 @@ pub trait ItemStatsServiceTrait: Sync + Send {
         amc_lookback_months: Option<f64>,
         item_ids: Vec<String>,
     ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
-        get_item_stats(ctx, store_id, amc_lookback_months, item_ids)
+        get_item_stats(&ctx.connection, store_id, amc_lookback_months, item_ids)
     }
 }
 
@@ -42,25 +42,21 @@ pub struct ItemStatsService {}
 impl ItemStatsServiceTrait for ItemStatsService {}
 
 pub fn get_item_stats(
-    ctx: &ServiceContext,
+    connection: &StorageConnection,
     store_id: &str,
     amc_lookback_months: Option<f64>,
     item_ids: Vec<String>,
 ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
     let default_amc_lookback_months =
-        get_store_preferences(&ctx.connection, store_id)?.monthly_consumption_look_back_period;
+        get_store_preferences(connection, store_id)?.monthly_consumption_look_back_period;
 
     let amc_lookback_months = match amc_lookback_months {
         Some(months) => months,
         None => default_amc_lookback_months,
     };
 
-    let consumption_map = get_consumption_map(
-        &ctx.connection,
-        store_id,
-        item_ids.clone(),
-        amc_lookback_months,
-    )?;
+    let consumption_map =
+        get_consumption_map(connection, store_id, item_ids.clone(), amc_lookback_months)?;
 
     let input = amc::Input {
         store_id: store_id.to_string(),
@@ -78,8 +74,24 @@ pub fn get_item_stats(
     Ok(ItemStats::new_vec(
         amc_by_item,
         consumption_map,
-        get_stock_on_hand_rows(&ctx.connection, store_id, Some(item_ids))?,
+        get_stock_on_hand_rows(connection, store_id, Some(item_ids))?,
     ))
+}
+
+pub fn get_item_stats_map(
+    connection: &StorageConnection,
+    store_id: &str,
+    amc_lookback_months: Option<f64>,
+    item_ids: Vec<String>,
+) -> Result<HashMap<String, ItemStats>, PluginOrRepositoryError> {
+    let item_stats_vec = get_item_stats(connection, store_id, amc_lookback_months, item_ids);
+
+    let item_stats_map = item_stats_vec?
+        .into_iter()
+        .map(|item_stats_entry| (item_stats_entry.item_id.clone(), item_stats_entry))
+        .collect();
+
+    Ok(item_stats_map)
 }
 
 struct DefaultAmc;

@@ -1,12 +1,12 @@
 import {
   AssetCategorySortFieldInput,
-  FilterByWithBoolean,
+  FilterBy,
   useQuery,
 } from '@openmsupply-client/common';
 import { useAssetGraphQL } from '../useAssetGraphQL';
 import { ASSET, CATEGORIES } from './keys';
 
-export const useAssetCategories = (filterBy?: FilterByWithBoolean | null) => {
+export const useAssetCategories = (filterBy?: FilterBy | null) => {
   const { assetApi, storeId } = useAssetGraphQL();
   const queryKey = [ASSET, storeId, CATEGORIES, filterBy];
 

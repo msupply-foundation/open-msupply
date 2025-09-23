@@ -160,6 +160,7 @@ export const StockLineDetailView: React.FC = () => {
       <AppBarButtons
         openRepack={repackModalController.toggleOn}
         openAdjust={openInventoryAdjustmentModal}
+        itemId={data?.itemId}
       />
       <TableProvider createStore={createTableStore}>
         <DetailTabs tabs={tabs} />

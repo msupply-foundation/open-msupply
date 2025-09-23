@@ -97,8 +97,9 @@ pub enum ActivityLogNodeType {
     GoodsReceivedStatusFinalised,
     // Purchase Orders
     PurchaseOrderCreated,
-    PurchaseOrderAuthorised,
+    PurchaseOrderRequestApproval,
     PurchaseOrderUnauthorised,
+    PurchaseOrderSent,
     PurchaseOrderConfirmed,
     PurchaseOrderFinalised,
     PurchaseOrderDeleted,

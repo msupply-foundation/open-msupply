@@ -60,7 +60,7 @@ table! {
         freight_charge ->  Nullable<Double>,
         freight_conditions -> Nullable<Text>,
         supplier_discount_percentage -> Nullable<Double>,
-        authorised_datetime -> Nullable<Timestamp>,
+        request_approval_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
     }
 }
@@ -109,7 +109,7 @@ pub struct PurchaseOrderRow {
     pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
-    pub authorised_datetime: Option<NaiveDateTime>,
+    pub request_approval_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
 }
 
@@ -120,8 +120,9 @@ pub struct PurchaseOrderRow {
 pub enum PurchaseOrderStatus {
     #[default]
     New,
+    RequestApproval,
     Confirmed,
-    Authorised,
+    Sent,
     Finalised,
 }
 
