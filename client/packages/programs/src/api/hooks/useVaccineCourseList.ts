@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   SortBy,
   useQuery,
   VaccineCourseSortFieldInput,
@@ -13,7 +13,7 @@ export type CourseListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<VaccineCourseFragment>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: FilterBy | null;
 };
 
 export const useVaccineCourseList = (queryParams: CourseListParams) => {
