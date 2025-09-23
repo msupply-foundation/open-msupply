@@ -15,7 +15,6 @@ import {
   NothingHere,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
@@ -139,7 +138,6 @@ export const OutboundShipmentListView = () => {
 
   return (
     <>
-      <Toolbar filter={filter} simplifiedTabletView={simplifiedTabletView} />
       <AppBarButtons
         modalController={modalController}
         simplifiedTabletView={simplifiedTabletView}
