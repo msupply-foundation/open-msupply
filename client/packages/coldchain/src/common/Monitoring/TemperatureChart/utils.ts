@@ -1,7 +1,7 @@
 import { DateUtils } from '@common/intl';
 import { TemperatureLogFragment } from '../../../Monitoring/api';
 import { ChartSeries } from './types';
-import { FilterByWithBoolean } from '@common/hooks';
+import { FilterBy } from '@common/hooks';
 
 export const NUMBER_OF_HORIZONTAL_LINES = 4;
 export const BREACH_MIN = 2;
@@ -116,8 +116,12 @@ export const yAxisTicks = (
 };
 
 export const getDateRangeAndFilter = (
-  filterBy: FilterByWithBoolean | null
-): { filterBy: FilterByWithBoolean; fromDatetime: Date; toDatetime: Date } => {
+  filterBy: FilterBy | null
+): {
+  filterBy: FilterBy;
+  fromDatetime: Date;
+  toDatetime: Date;
+} => {
   const now = DateUtils.setMilliseconds(new Date(), 0);
   let fromDatetime = DateUtils.addDays(now, -1);
   let toDatetime = now;

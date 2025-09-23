@@ -52,7 +52,7 @@ pub fn generate(
         freight_charge: None,
         freight_conditions: None,
         supplier_discount_percentage: None,
-        authorised_datetime: None,
+        request_approval_datetime: None,
         finalised_datetime: None,
     })
 }
