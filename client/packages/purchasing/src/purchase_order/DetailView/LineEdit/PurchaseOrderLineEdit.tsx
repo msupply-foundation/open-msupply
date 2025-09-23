@@ -236,7 +236,7 @@ export const PurchaseOrderLineEdit = ({
                     );
                     update(adjustedPatch);
                   },
-                  decimalLimit: 2,
+                  decimalLimit: 5,
                   disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
@@ -272,8 +272,8 @@ export const PurchaseOrderLineEdit = ({
                   max:
                     draft?.pricePerUnitBeforeDiscount *
                     (draft?.requestedPackSize || 1),
-                  decimalLimit: 2,
                   disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                  decimalLimit: 20,
                 }
               )}
               <NumInputRow
