@@ -55,6 +55,7 @@ pub fn suggested_next_encounter(
             ListError::DatabaseError(err) => err,
             ListError::LimitBelowMin(_) => RepositoryError::as_db_error("Not possible", ()),
             ListError::LimitAboveMax(_) => RepositoryError::as_db_error("Not possible", ()),
+            ListError::PluginError(error_string) => RepositoryError::as_db_error("Plugin error", error_string),
         })?
         .rows
         .pop()

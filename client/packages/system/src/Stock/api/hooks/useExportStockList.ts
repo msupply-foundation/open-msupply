@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   StockLineSortFieldInput,
   useQuery,
 } from '@openmsupply-client/common';
@@ -7,7 +7,7 @@ import { StockLineRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
-export const useExportStockList = (filterBy: FilterByWithBoolean | null) => {
+export const useExportStockList = (filterBy: FilterBy | null) => {
   const { stockApi, storeId } = useStockGraphQL();
 
   const queryKey = [STOCK, storeId, LIST];

@@ -8,10 +8,12 @@ export const mapStatus = (
   switch (status) {
     case PurchaseOrderNodeStatus.New:
       return PurchaseOrderNodeStatus.New;
-    case PurchaseOrderNodeStatus.Authorised:
-      return PurchaseOrderNodeStatus.Authorised;
+    case PurchaseOrderNodeStatus.RequestApproval:
+      return PurchaseOrderNodeStatus.RequestApproval;
     case PurchaseOrderNodeStatus.Confirmed:
       return PurchaseOrderNodeStatus.Confirmed;
+    case PurchaseOrderNodeStatus.Sent:
+      return PurchaseOrderNodeStatus.Sent;
     case PurchaseOrderNodeStatus.Finalised:
       return PurchaseOrderNodeStatus.Finalised;
     default:

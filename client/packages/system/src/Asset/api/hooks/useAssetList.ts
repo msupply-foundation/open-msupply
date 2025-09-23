@@ -1,7 +1,7 @@
 import { AssetCatalogueItemFragment } from '../operations.generated';
 import {
   AssetCatalogueItemSortFieldInput,
-  FilterByWithBoolean,
+  FilterBy,
   LIST_KEY,
   SortBy,
   useInfiniteQuery,
@@ -14,7 +14,7 @@ type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<AssetCatalogueItemFragment>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: FilterBy | null;
 };
 
 export type useAssetsProps = {
