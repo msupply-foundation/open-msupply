@@ -44,9 +44,9 @@ export const createDraftPurchaseOrderLine = (
 };
 
 type PriceField =
-  | 'pricePerUnitBeforeDiscount'
+  | 'pricePerPackBeforeDiscount'
   | 'discountPercentage'
-  | 'pricePerUnitAfterDiscount';
+  | 'pricePerPackAfterDiscount';
 
 /**
  * Calculates any of the these values from the other two, based on which have
@@ -62,17 +62,20 @@ export const calculatePricesAndDiscount = (
   const {
     pricePerUnitBeforeDiscount = 0,
     discountPercentage,
-    pricePerUnitAfterDiscount = 0,
+    pricePerPackAfterDiscount = 0,
+    pricePerPackBeforeDiscount = 0,
   } = data;
+  const packSize = data.requestedPackSize || 1;
+  const discount = Math.min(Math.max(discountPercentage || 0, 0), 100);
 
   switch (changingField) {
-    case 'pricePerUnitBeforeDiscount': {
+    case 'pricePerPackBeforeDiscount': {
       // Update the price after discount based on discount percentage
       return {
-        pricePerUnitBeforeDiscount,
+        pricePerUnitBeforeDiscount: pricePerPackBeforeDiscount / packSize,
         discountPercentage,
         pricePerUnitAfterDiscount:
-          pricePerUnitBeforeDiscount * (1 - (discountPercentage || 0) / 100),
+          (pricePerPackBeforeDiscount * (1 - discount / 100)) / packSize,
       };
     }
     case 'discountPercentage': {
@@ -81,18 +84,21 @@ export const calculatePricesAndDiscount = (
         pricePerUnitBeforeDiscount,
         discountPercentage,
         pricePerUnitAfterDiscount:
-          pricePerUnitBeforeDiscount * (1 - (discountPercentage || 0) / 100),
+          pricePerUnitBeforeDiscount * (1 - discount / 100),
       };
     }
-    case 'pricePerUnitAfterDiscount': {
+    case 'pricePerPackAfterDiscount': {
       // Update the discount percentage based on original price
+      const discountPercentage = pricePerUnitBeforeDiscount
+        ? ((pricePerUnitBeforeDiscount - pricePerPackAfterDiscount / packSize) /
+            pricePerUnitBeforeDiscount) *
+          100
+        : 0;
+
       return {
         pricePerUnitBeforeDiscount,
-        discountPercentage:
-          ((pricePerUnitBeforeDiscount - pricePerUnitAfterDiscount) /
-            (pricePerUnitBeforeDiscount || 1)) *
-          100,
-        pricePerUnitAfterDiscount,
+        discountPercentage,
+        pricePerUnitAfterDiscount: pricePerPackAfterDiscount / packSize,
       };
     }
   }

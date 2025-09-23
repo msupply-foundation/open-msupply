@@ -225,17 +225,18 @@ export const PurchaseOrderLineEdit = ({
                   }
                 )}
               {numericInput(
-                'label.price-per-unit-before-discount',
-                draft?.pricePerUnitBeforeDiscount,
+                'label.price-per-pack-before-discount',
+                draft?.pricePerUnitBeforeDiscount *
+                  (draft?.requestedPackSize || 1),
                 {
                   onChange: value => {
                     const adjustedPatch = calculatePricesAndDiscount(
-                      'pricePerUnitBeforeDiscount',
-                      { ...draft, pricePerUnitBeforeDiscount: value }
+                      'pricePerPackBeforeDiscount',
+                      { ...draft, pricePerPackBeforeDiscount: value }
                     );
                     update(adjustedPatch);
                   },
-                  decimalLimit: 2,
+                  decimalLimit: 5,
                   disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
@@ -257,18 +258,22 @@ export const PurchaseOrderLineEdit = ({
                 }
               )}
               {numericInput(
-                'label.price-per-unit-after-discount',
-                draft?.pricePerUnitAfterDiscount,
+                'label.price-per-pack-after-discount',
+                draft?.pricePerUnitAfterDiscount *
+                  (draft?.requestedPackSize || 1),
                 {
                   onChange: value => {
                     const adjustedPatch = calculatePricesAndDiscount(
-                      'pricePerUnitAfterDiscount',
-                      { ...draft, pricePerUnitAfterDiscount: value }
+                      'pricePerPackAfterDiscount',
+                      { ...draft, pricePerPackAfterDiscount: value }
                     );
                     update(adjustedPatch);
                   },
-                  decimalLimit: 2,
+                  max:
+                    draft?.pricePerUnitBeforeDiscount *
+                    (draft?.requestedPackSize || 1),
                   disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                  decimalLimit: 20,
                 }
               )}
               <NumInputRow
@@ -276,7 +281,9 @@ export const PurchaseOrderLineEdit = ({
                 value={
                   draft
                     ? (draft.pricePerUnitAfterDiscount ?? 0) *
-                      (draft.requestedNumberOfUnits ?? 0)
+                      (draft.adjustedNumberOfUnits ??
+                        draft?.requestedNumberOfUnits ??
+                        0)
                     : 0
                 }
                 disabled

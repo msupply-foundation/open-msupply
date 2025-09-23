@@ -11,6 +11,9 @@ export type ImportRow = Omit<
   discountPercentage: number;
   errorMessage: string;
   warningMessage: string;
+  pricePerPackBeforeDiscount?: number;
+  pricePerPackAfterDiscount?: number;
+  numberOfPacks?: number;
 };
 
 export type LineNumber = {
@@ -48,6 +51,9 @@ export const getImportHelpers = (
     discountPercentage: 0,
     receivedNumberOfUnits: 0,
     unitsOrderedInOthers: 0,
+    pricePerPackAfterDiscount: 0,
+    pricePerPackBeforeDiscount: 0,
+    numberOfPacks: 0,
   };
   const rowErrors: string[] = [];
   const rowWarnings: string[] = [];

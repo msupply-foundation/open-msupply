@@ -56,14 +56,11 @@ export const usePurchaseOrderColumns = () => {
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,
-      accessor: rowData =>
-        Math.ceil(
-          (rowData.rowData.requestedNumberOfUnits ?? 0) /
-            (rowData.rowData.requestedPackSize &&
-            rowData.rowData.requestedPackSize !== 0
-              ? rowData.rowData.requestedPackSize
-              : 1)
-        ),
+      accessor: ({ rowData }) => {
+        const numUnits =
+          rowData.adjustedNumberOfUnits ?? rowData.requestedNumberOfUnits;
+        return Math.ceil(numUnits / rowData.requestedPackSize);
+      },
     },
     {
       key: 'packSize',
@@ -109,14 +106,16 @@ export const usePurchaseOrderColumns = () => {
       label: 'label.total-cost',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,
-      accessor: ({ rowData }) =>
-        (rowData.pricePerUnitAfterDiscount ?? 0) *
-        (rowData.requestedNumberOfUnits ?? 0) *
-        (rowData.requestedPackSize ?? 1),
-      getSortValue: rowData =>
-        (rowData.pricePerUnitAfterDiscount ?? 0) *
-        (rowData.requestedNumberOfUnits ?? 0) *
-        (rowData.requestedPackSize ?? 1),
+      accessor: ({ rowData }) => {
+        const units =
+          rowData.adjustedNumberOfUnits ?? rowData.requestedNumberOfUnits ?? 0;
+        return (rowData.pricePerUnitAfterDiscount ?? 0) * units;
+      },
+      getSortValue: rowData => {
+        const units =
+          rowData.adjustedNumberOfUnits ?? rowData.requestedNumberOfUnits ?? 0;
+        return (rowData.pricePerUnitAfterDiscount ?? 0) * units;
+      },
     },
     {
       key: 'requestedDeliveryDate',
