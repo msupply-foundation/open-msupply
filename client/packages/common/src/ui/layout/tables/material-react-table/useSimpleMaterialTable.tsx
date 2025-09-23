@@ -23,13 +23,10 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
     enableColumnActions: false,
     enableSorting: false,
     enableColumnResizing: false,
-    enableColumnPinning: false,
-    enableColumnOrdering: false,
     state: {
       ...tableOptions.state,
       density: 'compact',
     },
-    layoutMode: 'grid-no-grow',
     ...tableOptions,
     renderBottomToolbar: ({ table }) => (
       <Box

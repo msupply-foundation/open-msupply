@@ -7,7 +7,6 @@ import {
   Tooltip,
   useCurrency,
 } from '@openmsupply-client/common';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 /** Get a Currency cell component for a certain currency code  */
 export const useCurrencyCell = <T extends RecordWithId>(
@@ -50,33 +49,6 @@ export const CurrencyCell = <T extends RecordWithId>({
       >
         {text}
       </div>
-    </Tooltip>
-  );
-};
-
-export const CurrencyValueCell = <T extends MRT_RowData>({
-  cell,
-  currencyCode,
-}: {
-  cell: MRT_Cell<T>;
-  currencyCode?: Currencies;
-}) => {
-  const { c } = useCurrency(currencyCode);
-
-  const price = Number(cell.getValue() ?? 0);
-  let displayPrice = c(price, 2).format();
-
-  // If the price has more than 2 decimal places, round to 2 DP and add
-  // ellipsis, if less than 0.01 just show "<0.01"
-  if (NumUtils.hasMoreThanTwoDp(price)) {
-    price < 0.01
-      ? (displayPrice = `< ${c(0.01, 2).format()}`)
-      : (displayPrice = `${displayPrice}...`);
-  }
-
-  return (
-    <Tooltip title={c(price, 10).format()} placement="bottom-start">
-      <>{displayPrice}</>
     </Tooltip>
   );
 };
