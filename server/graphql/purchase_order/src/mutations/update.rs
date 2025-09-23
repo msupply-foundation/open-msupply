@@ -170,23 +170,27 @@ pub fn update_purchase_order(
         },
     )?;
 
-    if input.status == Some(PurchaseOrderNodeStatus::Authorised) {
-        validate_auth(
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let user_has_auth_permission = input.status == Some(PurchaseOrderNodeStatus::Confirmed)
+        && validate_auth(
             ctx,
             &ResourceAccessRequest {
                 resource: Resource::AuthorisePurchaseOrder,
                 store_id: Some(store_id.to_string()),
             },
-        )?;
-    }
-
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+        )
+        .is_ok();
 
     map_response(
         service_provider
             .purchase_order_service
-            .update_purchase_order(&service_context, store_id, input.to_domain()),
+            .update_purchase_order(
+                &service_context,
+                store_id,
+                input.to_domain(),
+                Some(user_has_auth_permission),
+            ),
     )
 }
 
@@ -215,7 +219,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::PurchaseOrderDoesNotExist
         | ServiceError::NotASupplier
         | ServiceError::DonorDoesNotExist
-        | ServiceError::AuthorisationPreferenceNotSet => BadUserInput(formatted_error),
+        | ServiceError::UserUnableToAuthorisePurchaseOrder => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)
         }
