@@ -149,7 +149,7 @@ export const NumInputRow = ({
   isVerticalScreen: boolean;
   label: string;
 }) => {
-  const roundedValue = NumUtils.round(value ?? 0, 2);
+  const roundedValue = NumUtils.round(value ?? 0, decimalLimit ?? 2);
 
   const handleChange = (newValue?: number) => {
     if (!onChange || newValue === roundedValue) return;
