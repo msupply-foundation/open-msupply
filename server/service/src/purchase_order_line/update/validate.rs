@@ -27,7 +27,7 @@ pub fn validate(
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
 
     // Allow editing of the requested quantity
-    // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
+    // Check if the user is allowed to update the requested_number_of_units
     if let Some(requested_units) = input.requested_number_of_units {
         if requested_units != line.requested_number_of_units
             && !can_edit_requested_quantity(&purchase_order)
@@ -36,7 +36,7 @@ pub fn validate(
         }
     }
     // Allow editing of the adjusted quantity
-    // Check if the user is allowed to update the requested_number_of_units or just the adjusted_number_of_units
+    // Check if the user is allowed to update the adjusted_number_of_units
     if let Some(adjusted_units) = input.adjusted_number_of_units {
         if Some(adjusted_units) != line.adjusted_number_of_units
             && !can_edit_adjusted_quantity(&purchase_order, user_has_permission.unwrap_or(false))
@@ -56,21 +56,26 @@ pub fn validate(
 
     // Check the line status change before purchase_order_lines_editable
     // Should be able to update the line status only when the Purchase Order Sent
-    if let Some(status) = input.status.clone() {
-        let is_purchase_order_sent = purchase_order.status >= PurchaseOrderStatus::Sent;
-        let is_valid_status_change = match (status, is_purchase_order_sent) {
-            (PurchaseOrderLineStatus::New, false) => true,
-            (PurchaseOrderLineStatus::New, true) => false,
-            (_, true) => true,
-            (_, false) => false,
-        };
+    if let Some(new_status) = input.status.clone() {
+        // Only validate if the status is actually changing
+        if new_status != line.status {
+            let is_purchase_order_sent = purchase_order.status >= PurchaseOrderStatus::Sent;
+            let is_valid_status_change = match (new_status, is_purchase_order_sent) {
+                (PurchaseOrderLineStatus::New, false) => true,
+                (PurchaseOrderLineStatus::New, true) => false,
+                (_, true) => true,
+                (_, false) => false,
+            };
 
-        if !is_valid_status_change {
-            return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
+            if !is_valid_status_change {
+                return Err(UpdatePurchaseOrderLineInputError::CannotChangeStatus);
+            }
         }
     }
 
-    if line.status == PurchaseOrderLineStatus::Closed {
+    if line.status == PurchaseOrderLineStatus::Closed
+        && input.status == Some(PurchaseOrderLineStatus::Closed)
+    {
         return Err(UpdatePurchaseOrderLineInputError::CannotEditPurchaseOrderLine);
     }
 
