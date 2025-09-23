@@ -67,6 +67,7 @@ export const ActionsFooter = ({
           )
         )}
       </Stack>
+      {/* TODO: remove once all tables are ported to Material Table */}
       {resetRowSelection ? (
         <FlatButton
           startIcon={<MinusCircleIcon />}
