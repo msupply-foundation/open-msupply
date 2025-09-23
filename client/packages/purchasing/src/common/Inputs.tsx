@@ -149,13 +149,11 @@ export const NumInputRow = ({
   isVerticalScreen: boolean;
   label: string;
 }) => {
-  const roundedValue = NumUtils.round(value ?? 0, decimalLimit ?? 2);
-
   const handleChange = (newValue?: number) => {
-    if (!onChange || newValue === roundedValue) return;
+    if (!onChange || newValue === value) return;
 
-    const value = newValue === undefined ? 0 : newValue;
-    onChange(value);
+    const v = newValue === undefined ? 0 : newValue;
+    onChange(v);
   };
 
   return (
@@ -174,7 +172,7 @@ export const NumInputRow = ({
             }}
             slotProps={inputSlotProps(disabled)}
             min={0}
-            value={roundedValue}
+            value={value}
             onChange={handleChange}
             disabled={disabled}
             max={max}
