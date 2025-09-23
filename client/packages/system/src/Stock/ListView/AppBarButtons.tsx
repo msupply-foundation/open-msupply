@@ -12,7 +12,7 @@ import {
   useSimplifiedTabletUI,
   useExportCSV,
   usePreferences,
-  FilterByWithBoolean,
+  FilterBy,
 } from '@openmsupply-client/common';
 import { stockLinesToCsv } from '../../utils';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
@@ -21,7 +21,7 @@ import { useExportStockList } from '../api/hooks/useExportStockList';
 export const AppBarButtonsComponent = ({
   exportFilter,
 }: {
-  exportFilter: FilterByWithBoolean | null;
+  exportFilter: FilterBy | null;
 }) => {
   const { error } = useNotification();
   const t = useTranslation();

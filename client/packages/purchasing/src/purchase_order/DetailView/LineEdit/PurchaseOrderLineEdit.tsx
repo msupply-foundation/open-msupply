@@ -27,6 +27,7 @@ import {
   calculateUnitQuantities,
   lineStatusOptions,
 } from './utils';
+import { isFieldDisabled, StatusGroup } from '../../../utils';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
@@ -53,10 +54,17 @@ export const PurchaseOrderLineEdit = ({
   const t = useTranslation();
   const showContent = !!draft?.itemId;
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
+
+  // Disable input components. Individual inputs can override this
   const disabled =
     isDisabled || draft?.status === PurchaseOrderLineStatusNode.Closed;
   const { numericInput, textInput, multilineTextInput, dateInput } =
     useInputComponents(t, disabled, isVerticalScreen);
+
+  const canEditRequestedQuantity = isFieldDisabled(
+    status,
+    StatusGroup.BeforeConfirmed
+  );
 
   return (
     <>
@@ -80,7 +88,7 @@ export const PurchaseOrderLineEdit = ({
               label={t('label.status')}
               Input={
                 <Select
-                  disabled={disabled}
+                  disabled={isFieldDisabled(status, StatusGroup.ExceptSent)}
                   sx={{
                     width: 200,
                   }}
@@ -118,8 +126,13 @@ export const PurchaseOrderLineEdit = ({
                 disabled
                 isVerticalScreen={isVerticalScreen}
               />
-              {textInput('label.unit', draft?.unit || '', value =>
-                update({ unit: value })
+              {textInput(
+                'label.unit',
+                draft?.unit || '',
+                value => update({ unit: value }),
+                {
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                }
               )}
               {textInput(
                 'label.supplier-item-code',
@@ -129,7 +142,10 @@ export const PurchaseOrderLineEdit = ({
               <InputWithLabelRow
                 Input={
                   <ManufacturerSearchInput
-                    disabled={disabled}
+                    disabled={isFieldDisabled(
+                      status,
+                      StatusGroup.AfterConfirmed
+                    )}
                     value={draft?.manufacturer ?? null}
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
@@ -160,7 +176,7 @@ export const PurchaseOrderLineEdit = ({
           showContent ? (
             <>
               {numericInput(
-                status !== PurchaseOrderNodeStatus.Confirmed
+                canEditRequestedQuantity
                   ? 'label.requested-packs'
                   : 'label.adjusted-packs',
                 draft?.numberOfPacks ?? 0,
@@ -189,36 +205,21 @@ export const PurchaseOrderLineEdit = ({
                   update({ ...adjustedPatch, requestedPackSize });
                 },
                 decimalLimit: 2,
+                disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
               })}
               {numericInput(
                 'label.requested-quantity',
                 draft?.requestedNumberOfUnits,
                 {
-                  onChange: value => {
-                    // Adjust the requested and adjusted number of units based on the number of packs
-                    const adjustedPatch = calculateUnitQuantities(status, {
-                      ...draft,
-                      requestedNumberOfUnits: value,
-                    });
-                    update(adjustedPatch);
-                  },
                   disabled: true,
                   decimalLimit: 2,
                 }
               )}
-              {status === PurchaseOrderNodeStatus.Confirmed &&
+              {!canEditRequestedQuantity &&
                 numericInput(
                   'label.adjusted-units',
                   draft?.adjustedNumberOfUnits,
                   {
-                    onChange: value => {
-                      // Adjust the requested and adjusted number of units based on the number of packs
-                      const adjustedPatch = calculateUnitQuantities(status, {
-                        ...draft,
-                        requestedNumberOfUnits: value,
-                      });
-                      update(adjustedPatch);
-                    },
                     disabled: true,
                     decimalLimit: 2,
                   }
@@ -235,6 +236,7 @@ export const PurchaseOrderLineEdit = ({
                     update(adjustedPatch);
                   },
                   decimalLimit: 2,
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               {numericInput(
@@ -250,6 +252,7 @@ export const PurchaseOrderLineEdit = ({
                   },
                   max: 100,
                   decimalLimit: 2,
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                   endAdornment: '%',
                 }
               )}
@@ -265,6 +268,7 @@ export const PurchaseOrderLineEdit = ({
                     update(adjustedPatch);
                   },
                   decimalLimit: 2,
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
                 }
               )}
               <NumInputRow
@@ -287,12 +291,18 @@ export const PurchaseOrderLineEdit = ({
               {dateInput(
                 'label.requested-delivery-date',
                 draft?.requestedDeliveryDate,
-                value => update({ requestedDeliveryDate: value })
+                value => update({ requestedDeliveryDate: value }),
+                {
+                  disabled: isFieldDisabled(status, StatusGroup.AfterConfirmed),
+                }
               )}
               {dateInput(
                 'label.expected-delivery-date',
                 draft?.expectedDeliveryDate,
-                value => update({ expectedDeliveryDate: value })
+                value => update({ expectedDeliveryDate: value }),
+                {
+                  disabled: isFieldDisabled(status, StatusGroup.AfterSent),
+                }
               )}
               {multilineTextInput(
                 'label.comment',

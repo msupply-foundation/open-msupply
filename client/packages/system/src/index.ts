@@ -19,6 +19,7 @@ export * from './Currency';
 export * from './RequestRequisitionLine';
 export * from './Manage';
 export * from './Documents';
+export * from './ShippingMethod';
 export {
   getInvoiceLocalisationKey,
   processProperties,

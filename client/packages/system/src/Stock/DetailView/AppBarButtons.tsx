@@ -11,6 +11,7 @@ import {
 interface AppBarButtonProps {
   openRepack: () => void;
   openAdjust: () => void;
+  itemId: string | undefined;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({

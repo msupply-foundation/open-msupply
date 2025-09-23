@@ -34,12 +34,16 @@ export const Toolbar = (): ReactElement => {
               options: [
                 { label: t('label.new'), value: PurchaseOrderNodeStatus.New },
                 {
-                  label: t('label.authorised'),
-                  value: PurchaseOrderNodeStatus.Authorised,
+                  label: t('label.ready-for-approval'),
+                  value: PurchaseOrderNodeStatus.RequestApproval,
                 },
                 {
-                  label: t('label.confirmed'),
+                  label: t('label.ready-to-send'),
                   value: PurchaseOrderNodeStatus.Confirmed,
+                },
+                {
+                  label: t('label.sent'),
+                  value: PurchaseOrderNodeStatus.Sent,
                 },
                 {
                   label: t('label.finalised'),
