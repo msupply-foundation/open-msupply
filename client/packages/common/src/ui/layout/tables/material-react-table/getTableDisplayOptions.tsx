@@ -60,8 +60,6 @@ export const getTableDisplayOptions = <T extends MRT_RowData>(
     sx: { height: table.getRowCount() === 0 ? '100%' : 'auto' },
   }),
 
-  // todo: add tooltip over column name
-  // todo: ability to not show column name (but still give it a header label for column management)
   muiTableHeadCellProps: ({ column, table }) => ({
     sx: {
       fontWeight: 600,
