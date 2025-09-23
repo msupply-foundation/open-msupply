@@ -103,6 +103,7 @@ export type PurchaseOrderFragment = {
         number: number;
         reference?: string | null;
         confirmedDatetime?: string | null;
+        currencyId?: string | null;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -168,6 +169,7 @@ export type PurchaseOrderLineFragment = {
     number: number;
     reference?: string | null;
     confirmedDatetime?: string | null;
+    currencyId?: string | null;
     supplier?: { __typename: 'NameNode'; code: string; name: string } | null;
     user?: { __typename: 'UserNode'; username: string } | null;
   } | null;
@@ -299,6 +301,7 @@ export type PurchaseOrderByIdQuery = {
               number: number;
               reference?: string | null;
               confirmedDatetime?: string | null;
+              currencyId?: string | null;
               supplier?: {
                 __typename: 'NameNode';
                 code: string;
@@ -449,6 +452,7 @@ export type PurchaseOrderLinesQuery = {
         number: number;
         reference?: string | null;
         confirmedDatetime?: string | null;
+        currencyId?: string | null;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -513,6 +517,7 @@ export type PurchaseOrderLineQuery = {
         number: number;
         reference?: string | null;
         confirmedDatetime?: string | null;
+        currencyId?: string | null;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -697,6 +702,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
       user {
         username
       }
+      currencyId
     }
     unitsOrderedInOthers
   }

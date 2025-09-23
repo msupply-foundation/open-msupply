@@ -123,6 +123,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     user {
       username
     }
+    currencyId
   }
   unitsOrderedInOthers
 }

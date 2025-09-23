@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   BasicTextInput,
   Box,
@@ -7,12 +7,10 @@ import {
   DateUtils,
   Formatter,
   InputWithLabelRow,
-  LocaleKey,
   NumericTextInput,
   NumericTextInputProps,
   NumUtils,
   Theme,
-  TypedTFunction,
   Typography,
   useTheme,
 } from '@openmsupply-client/common';
@@ -49,90 +47,6 @@ export const commonLabelProps = {
       xs: '100%',
     },
   },
-};
-
-export const useInputComponents = (
-  t: TypedTFunction<LocaleKey>,
-  disabled: boolean,
-  isVerticalScreen: boolean
-) => {
-  return useMemo(
-    () => ({
-      numericInput: (
-        label: LocaleKey,
-        value: number | null | undefined,
-        options: NumericTextInputProps = {}
-      ) => {
-        const { onChange, max, decimalLimit, endAdornment } = options;
-        return (
-          <NumInputRow
-            key={label}
-            disabled={disabled}
-            value={value ?? 0}
-            onChange={onChange}
-            max={max}
-            decimalLimit={decimalLimit}
-            endAdornment={endAdornment}
-            isVerticalScreen={isVerticalScreen}
-            {...options}
-            label={t(label)}
-          />
-        );
-      },
-
-      textInput: (
-        label: LocaleKey,
-        value: string | null | undefined,
-        onChange?: (value?: string) => void,
-        options: { disabled?: boolean } = {}
-      ) => (
-        <TextInput
-          key={label}
-          disabled={disabled}
-          label={t(label)}
-          value={value ?? ''}
-          onChange={onChange}
-          isVerticalScreen={isVerticalScreen}
-          {...options}
-        />
-      ),
-
-      multilineTextInput: (
-        label: LocaleKey,
-        value?: string | null,
-        onChange?: (value?: string) => void,
-        options: { disabled?: boolean } = {}
-      ) => (
-        <MultilineTextInput
-          key={label}
-          disabled={disabled}
-          label={t(label)}
-          value={value ?? ''}
-          onChange={onChange}
-          {...options}
-        />
-      ),
-
-      dateInput: (
-        label: LocaleKey,
-        value?: string | null,
-        onChange?: (value: string | null) => void,
-        options: { disabled?: boolean } = {}
-      ) => (
-        <DateInput
-          key={label}
-          disabled={disabled}
-          label={t(label)}
-          value={value}
-          isVerticalScreen={isVerticalScreen}
-          onChange={onChange}
-          {...options}
-        />
-      ),
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [disabled, isVerticalScreen]
-  );
 };
 
 export const NumInputRow = ({
@@ -199,7 +113,7 @@ interface TextInputProps {
   disabled: boolean;
 }
 
-const TextInput = ({
+export const TextInput = ({
   label,
   value,
   isVerticalScreen,
@@ -241,7 +155,7 @@ interface MultilineTextInputProps {
   disabled: boolean;
 }
 
-const MultilineTextInput = ({
+export const MultilineTextInput = ({
   label,
   value,
   onChange,
@@ -272,7 +186,7 @@ interface DateInputProps {
   disabled: boolean;
 }
 
-const DateInput = ({
+export const DateInput = ({
   label,
   value,
   isVerticalScreen,

@@ -5,11 +5,11 @@ import {
   DetailPanelSection,
   PanelRow,
   PanelLabel,
-  useFormatCurrency,
   PanelField,
   splitTranslatedLines,
 } from '@openmsupply-client/common';
 import { PurchaseOrderFragment } from '../../api';
+import { usePurchaseOrderFormatCurrency } from '../usePurchaseOrderFormatCurrency';
 
 interface PricingSectionProps {
   draft?: PurchaseOrderFragment;
@@ -17,7 +17,7 @@ interface PricingSectionProps {
 
 export const PricingSection = ({ draft }: PricingSectionProps) => {
   const t = useTranslation();
-  const c = useFormatCurrency();
+  const { c } = usePurchaseOrderFormatCurrency(draft?.currencyId);
 
   if (!draft) return null;
 

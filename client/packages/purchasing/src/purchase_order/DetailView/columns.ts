@@ -97,6 +97,12 @@ export const usePurchaseOrderColumns = () => {
       // getSortValue: rowData =>  //rowData.totalReceived ?? 0,
     },
     {
+      key: 'onOrder',
+      label: 'label.on-order',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData: _ }) => '',
+    },
+    {
       key: 'stockOnHand',
       label: 'label.soh',
       align: ColumnAlign.Right,
