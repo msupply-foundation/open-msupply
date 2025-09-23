@@ -100,7 +100,7 @@ mod item_count_service_test {
 
     use repository::{
         mock::{common::FullMockMasterList, mock_store_b, MockData, MockDataInserts},
-        ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow, MasterListRow,
+        ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow, MasterListRow, StockLineRow,
     };
 
     use crate::{
@@ -110,7 +110,14 @@ mod item_count_service_test {
     };
 
     #[actix_rt::test]
-    async fn test_total_items_count() {
+    async fn test_total_count() {
+        // We'll make a mock database with 4 items...
+        // - item 1 = in a master list, therefore visible to the store => included in the count
+        // - item 2 = not in a master list, but with some stock on hand => included in the count
+        // - item 3 = not in a master list and with a stockline saying stock on hand = 0 => excluded from the count
+        // - item 4 = not in a master list and without a stockline => excluded from the count
+        // so expected result = 2.
+
         let ServiceTestContext {
             service_context, ..
         } = setup_all_with_data_and_service_provider(
@@ -138,13 +145,7 @@ mod item_count_service_test {
                         r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
-                    ItemRow {
-                        id: "item5".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
                 ],
-                stock_on_hand: vec![],
                 full_master_lists: vec![FullMockMasterList {
                     master_list: MasterListRow {
                         id: "list1".to_string(),
@@ -159,27 +160,33 @@ mod item_count_service_test {
                         master_list_id: "list1".to_string(),
                         name_link_id: mock_store_b().name_link_id,
                     }],
-                    lines: vec![
-                        MasterListLineRow {
-                            id: "listline1".to_string(),
-                            item_link_id: "item1".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                        MasterListLineRow {
-                            id: "listline2".to_string(),
-                            item_link_id: "item2".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                        MasterListLineRow {
-                            id: "listline3".to_string(),
-                            item_link_id: "item3".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                    ],
+                    lines: vec![MasterListLineRow {
+                        id: "listline1".to_string(),
+                        item_link_id: "item1".to_string(),
+                        master_list_id: "list1".to_string(),
+                        ..Default::default()
+                    }],
                 }],
+                stock_lines: vec![
+                    StockLineRow {
+                        id: "stock_line1".to_string(),
+                        item_link_id: "item2".to_string(),
+                        store_id: mock_store_b().id,
+                        available_number_of_packs: 5.0,
+                        total_number_of_packs: 5.0,
+                        pack_size: 1.0,
+                        ..StockLineRow::default()
+                    },
+                    StockLineRow {
+                        id: "stock_line2".to_string(),
+                        item_link_id: "item3".to_string(),
+                        store_id: mock_store_b().id,
+                        available_number_of_packs: 0.0,
+                        total_number_of_packs: 0.0,
+                        pack_size: 1.0,
+                        ..StockLineRow::default()
+                    },
+                ],
                 ..MockData::default()
             },
         )
@@ -192,7 +199,7 @@ mod item_count_service_test {
 
         // Count of total items which are visible to store b or on hand in store b
         // with visibility determined by master list & master list name join
-        assert_eq!(5, counts.total_count);
+        assert_eq!(counts.total_count, 2);
     }
 
     #[actix_rt::test]
