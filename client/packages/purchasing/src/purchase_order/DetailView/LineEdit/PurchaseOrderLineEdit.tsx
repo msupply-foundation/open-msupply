@@ -1,12 +1,15 @@
 import React from 'react';
+/* Lines 2-34 omitted */
 import {
   Box,
+  Currencies,
   InputWithLabelRow,
   LocaleKey,
   ModalGridLayout,
   PurchaseOrderLineStatusNode,
   PurchaseOrderNodeStatus,
   Select,
+  useCurrency,
   useMediaQuery,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -30,7 +33,6 @@ import {
   lineStatusOptions,
 } from './utils';
 import { isFieldDisabled, StatusGroup } from '../../../utils';
-import { usePurchaseOrderFormatCurrency } from '../usePurchaseOrderFormatCurrency';
 
 export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
@@ -57,9 +59,17 @@ export const PurchaseOrderLineEdit = ({
   const t = useTranslation();
   const showContent = !!draft?.itemId;
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
-  const { symbol: currencySymbol } = usePurchaseOrderFormatCurrency(
-    draft?.purchaseOrder?.currencyId
+  const { c, options } = useCurrency(
+    draft?.purchaseOrder?.currency?.code as Currencies
   );
+
+  const getCurrencyValue = (value: number | null | undefined) => {
+    if (value == null) return undefined;
+    const formatted = c(value)
+      .format()
+      .replace(/[^\d.-]/g, '');
+    return parseFloat(formatted);
+  };
 
   // Disable input components. Individual inputs can override this
   const disabled =
@@ -233,7 +243,7 @@ export const PurchaseOrderLineEdit = ({
             )}
             <NumInputRow
               label={t('label.price-per-unit-before-discount')}
-              value={draft?.pricePerUnitBeforeDiscount ?? undefined}
+              value={getCurrencyValue(draft?.pricePerUnitBeforeDiscount)}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -245,8 +255,8 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={2}
-              endAdornment={currencySymbol}
+              decimalLimit={options.precision}
+              endAdornment={options.symbol}
             />
             <NumInputRow
               label={t('label.discount-percentage')}
@@ -268,7 +278,7 @@ export const PurchaseOrderLineEdit = ({
             />
             <NumInputRow
               label={t('label.price-per-unit-after-discount')}
-              value={draft?.pricePerUnitAfterDiscount ?? undefined}
+              value={getCurrencyValue(draft?.pricePerUnitAfterDiscount)}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -280,20 +290,23 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={2}
-              endAdornment={currencySymbol}
+              decimalLimit={options.precision}
+              endAdornment={options.symbol}
             />
             <NumInputRow
               label={t('label.total-cost')}
               value={
                 draft
-                  ? (draft.pricePerUnitAfterDiscount ?? 0) *
-                    (draft.requestedNumberOfUnits ?? 0)
+                  ? getCurrencyValue(
+                      (draft.pricePerUnitAfterDiscount ?? 0) *
+                        (draft.requestedNumberOfUnits ?? 0)
+                    )
                   : 0
               }
               disabled
               isVerticalScreen={isVerticalScreen}
-              endAdornment={currencySymbol}
+              decimalLimit={options.precision}
+              endAdornment={options.symbol}
             />
           </>
         ) : null

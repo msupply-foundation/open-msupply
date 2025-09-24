@@ -7284,6 +7284,7 @@ export type PurchaseOrderNode = {
   confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
   contractSignedDate?: Maybe<Scalars['NaiveDate']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  currency?: Maybe<CurrencyNode>;
   currencyId?: Maybe<Scalars['String']['output']>;
   documentCharge?: Maybe<Scalars['Float']['output']>;
   documents: SyncFileReferenceConnector;

@@ -110,6 +110,13 @@ export type PurchaseOrderFragment = {
           name: string;
         } | null;
         user?: { __typename: 'UserNode'; username: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -124,6 +131,13 @@ export type PurchaseOrderFragment = {
       createdDatetime: string;
     }>;
   };
+  currency?: {
+    __typename: 'CurrencyNode';
+    id: string;
+    code: string;
+    rate: number;
+    isHomeCurrency: boolean;
+  } | null;
 };
 
 export type PurchaseOrderLineFragment = {
@@ -172,6 +186,13 @@ export type PurchaseOrderLineFragment = {
     currencyId?: string | null;
     supplier?: { __typename: 'NameNode'; code: string; name: string } | null;
     user?: { __typename: 'UserNode'; username: string } | null;
+    currency?: {
+      __typename: 'CurrencyNode';
+      id: string;
+      code: string;
+      rate: number;
+      isHomeCurrency: boolean;
+    } | null;
   } | null;
 };
 
@@ -308,6 +329,13 @@ export type PurchaseOrderByIdQuery = {
                 name: string;
               } | null;
               user?: { __typename: 'UserNode'; username: string } | null;
+              currency?: {
+                __typename: 'CurrencyNode';
+                id: string;
+                code: string;
+                rate: number;
+                isHomeCurrency: boolean;
+              } | null;
             } | null;
           }>;
         };
@@ -322,6 +350,13 @@ export type PurchaseOrderByIdQuery = {
             createdDatetime: string;
           }>;
         };
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       }
     | { __typename: 'RecordNotFound'; description: string };
 };
@@ -459,6 +494,13 @@ export type PurchaseOrderLinesQuery = {
           name: string;
         } | null;
         user?: { __typename: 'UserNode'; username: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -524,6 +566,13 @@ export type PurchaseOrderLineQuery = {
           name: string;
         } | null;
         user?: { __typename: 'UserNode'; username: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -703,6 +752,12 @@ export const PurchaseOrderLineFragmentDoc = gql`
         username
       }
       currencyId
+      currency {
+        id
+        code
+        rate
+        isHomeCurrency
+      }
     }
     unitsOrderedInOthers
   }
@@ -768,6 +823,12 @@ export const PurchaseOrderFragmentDoc = gql`
     }
     donor {
       id
+    }
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
     }
   }
   ${PurchaseOrderLineFragmentDoc}

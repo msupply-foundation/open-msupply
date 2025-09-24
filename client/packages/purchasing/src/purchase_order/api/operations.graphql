@@ -79,6 +79,12 @@ fragment PurchaseOrder on PurchaseOrderNode {
   donor {
     id
   }
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
@@ -124,6 +130,12 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
       username
     }
     currencyId
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
+    }
   }
   unitsOrderedInOthers
 }

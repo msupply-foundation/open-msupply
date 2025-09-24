@@ -1,6 +1,7 @@
 use self::dataloader::DataLoader;
 use crate::types::{
-    NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector, UserNode,
+    CurrencyNode, NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector,
+    UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
@@ -8,6 +9,7 @@ use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow};
 use service::ListResult;
@@ -202,6 +204,29 @@ impl PurchaseOrderNode {
 
         let result = result_option.unwrap_or(vec![]);
         Ok(PurchaseOrderLineConnector::from_vec(result))
+    }
+
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+        let service_provider = ctx.service_provider();
+        let currency_provider = &service_provider.currency_service;
+        let service_context = &service_provider.basic_context()?;
+
+        let currency_id = if let Some(currency_id) = &self.row().currency_id {
+            currency_id
+        } else {
+            return Ok(None);
+        };
+
+        let currency = currency_provider
+            .get_currency(service_context, currency_id)
+            .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
+            .ok_or(StandardGraphqlError::InternalError(format!(
+                "Cannot find currency ({}) linked to purchase_order ({})",
+                currency_id,
+                &self.row().id
+            )))?;
+
+        Ok(Some(CurrencyNode::from_domain(currency)))
     }
 }
 
