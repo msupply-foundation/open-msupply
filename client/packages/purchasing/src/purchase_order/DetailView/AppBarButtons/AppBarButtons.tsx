@@ -5,7 +5,6 @@ import {
   useDetailPanel,
   ReportContext,
   useUrlQueryParams,
-  UrlQueryValue,
 } from '@openmsupply-client/common';
 import { ReportSelector } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
@@ -15,7 +14,6 @@ interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
   disableNewLines: boolean;
-  currentTab: UrlQueryValue;
 }
 
 export const AppBarButtonsComponent = ({

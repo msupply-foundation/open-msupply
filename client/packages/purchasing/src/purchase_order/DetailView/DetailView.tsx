@@ -116,7 +116,6 @@ export const DetailViewInner = () => {
             isDisabled={isDisabled}
             disableNewLines={disableNewLines}
             onAddItem={onOpen}
-            currentTab={currentTab}
           />
           <Toolbar isDisabled={isDisabled} />
           <DetailTabs tabs={tabs} />
