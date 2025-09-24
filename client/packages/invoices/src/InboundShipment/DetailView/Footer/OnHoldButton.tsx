@@ -11,11 +11,9 @@ export const OnHoldButtonComponent = memo(() => {
   const { onHold, update } = useInbound.document.fields('onHold');
   const isHoldable = useInbound.utils.isHoldable();
   const getConfirmation = useConfirmationModal({
-    message: t(
-      onHold
-        ? 'messages.off-hold-confirmation'
-        : 'messages.on-hold-confirmation'
-    ),
+    message: onHold
+      ? t('messages.off-hold-confirmation')
+      : t('messages.on-hold-confirmation'),
     title: t('heading.are-you-sure'),
     onConfirm: () => update({ onHold: !onHold }),
   });

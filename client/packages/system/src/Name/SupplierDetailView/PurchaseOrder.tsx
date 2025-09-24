@@ -57,7 +57,7 @@ export const PurchaseOrder = ({
     },
     {
       key: 'targetMonths',
-      label: 'heading.target-months',
+      label: 'label.target-months',
       accessor: ({ rowData }) => rowData.targetMonths ?? '',
     },
     {

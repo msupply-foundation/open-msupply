@@ -55,11 +55,11 @@ export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
         enableColumnSelection
         noDataElement={
           <NothingHere
-            body={t(
+            body={
               isFiltered
-                ? 'error.no-items-filter-on'
-                : 'error.no-internal-order-items'
-            )}
+                ? t('error.no-items-filter-on')
+                : t('error.no-internal-order-items')
+            }
             onCreate={isDisabled ? undefined : onAddItem}
             buttonText={t('button.add-item')}
           />

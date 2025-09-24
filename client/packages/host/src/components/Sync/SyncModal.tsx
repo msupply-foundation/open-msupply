@@ -317,7 +317,9 @@ const ShowStatus = ({
   const t = useTranslation();
   if (!isSyncing && !isUpdatingUser) return null;
 
-  const message = isSyncing ? 'sync-info.syncing' : 'sync-info.updating-user';
+  const message = isSyncing
+    ? t('sync-info.syncing')
+    : t('sync-info.updating-user');
   return (
     <Typography
       sx={theme => ({
@@ -333,7 +335,7 @@ const ShowStatus = ({
       })}
       padding={1}
     >
-      {t(message)}
+      {message}
     </Typography>
   );
 };
