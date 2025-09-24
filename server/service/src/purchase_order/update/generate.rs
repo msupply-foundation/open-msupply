@@ -205,8 +205,12 @@ fn update_lines(
                             .or(requested_delivery_date);
                     }
                     PurchaseOrderStatus::Sent => {
-                        line.purchase_order_line_row.status =
-                            repository::PurchaseOrderLineStatus::Sent;
+                        if line.purchase_order_line_row.status
+                            != repository::PurchaseOrderLineStatus::Closed
+                        {
+                            line.purchase_order_line_row.status =
+                                repository::PurchaseOrderLineStatus::Sent;
+                        }
                     }
                     PurchaseOrderStatus::Finalised => {
                         line.purchase_order_line_row.status =
