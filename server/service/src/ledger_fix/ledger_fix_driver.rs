@@ -25,8 +25,8 @@ pub struct LedgerFixTrigger {
 const FIRST_RUN_DELAY: Duration = Duration::from_secs(5);
 // This trigger is not to re-run ledger fix but to check if ledger fix is needed again
 // Will check against key values store LAST_LEDGER_FIX_RUN and LEDGER_FIX_INTERVAL
-const RE_TRIGGER_DELAY: Duration = Duration::from_secs(5); // 1 hour
-const LEDGER_FIX_INTERVAL: TimeDelta = TimeDelta::seconds(30);
+const RE_TRIGGER_DELAY: Duration = Duration::from_secs(60 * 60); // 1 hour
+const LEDGER_FIX_INTERVAL: TimeDelta = TimeDelta::days(1);
 
 impl LedgerFixDriver {
     pub fn init() -> (LedgerFixTrigger, LedgerFixDriver) {
