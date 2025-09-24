@@ -42,7 +42,7 @@ export const PricingSection = ({ draft }: PricingSectionProps) => {
       <Grid container gap={1} key="pricing-section">
         <PanelRow>
           <PanelLabel>{t('label.cost-subtotal')}</PanelLabel>
-          <PanelField>{c(draft.lineTotalAfterDiscount).format()}</PanelField>
+          <PanelField>{c(draft.lineTotalBeforeDiscount).format()}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.cost-total-after-discount')}</PanelLabel>
