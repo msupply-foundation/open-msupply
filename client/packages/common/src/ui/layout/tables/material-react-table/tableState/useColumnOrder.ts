@@ -13,7 +13,6 @@ export const useColumnOrder = <T extends MRT_RowData>(
   tableId: string,
   columns: MRT_ColumnDef<T>[],
   enableRowSelection: MRT_TableOptions<T>['enableRowSelection'],
-  enableColumnResizing: boolean,
   groupByField?: string
 ) => {
   const initial = useMemo(
@@ -22,7 +21,6 @@ export const useColumnOrder = <T extends MRT_RowData>(
         columns,
         state: {},
         enableRowSelection, // adds `mrt-row-select`
-        layoutMode: enableColumnResizing ? 'grid-no-grow' : 'auto', // adds `mrt-row-spacer`
         enableExpanding: !!groupByField, // adds `mrt-row-expand`
         positionExpandColumn: 'first', // this is the default, but needs to be explicitly set here
       } as MRT_StatefulTableOptions<MRT_RowData>),

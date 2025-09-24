@@ -72,7 +72,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     tableId,
     columns,
     enableRowSelection,
-    enableColumnResizing,
     groupByField
   );
 
@@ -110,7 +109,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     data: processedData,
     enablePagination: false,
+
+    layoutMode: 'grid',
     enableColumnResizing,
+
     enableColumnPinning: true,
     enableColumnOrdering: true,
     enableColumnDragging: false,
