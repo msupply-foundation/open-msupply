@@ -19,6 +19,7 @@ pub struct StocktakeLineFilterInput {
     pub location_id: Option<EqualFilterStringInput>,
     pub item_code_or_name: Option<StringFilterInput>,
     pub item_id: Option<EqualFilterStringInput>,
+    pub stock_line_id: Option<EqualFilterStringInput>,
 }
 
 impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
@@ -29,6 +30,7 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
             location_id: f.location_id.map(EqualFilter::from),
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
             item_id: f.item_id.map(EqualFilter::from),
+            stock_line_id: f.stock_line_id.map(EqualFilter::from),
         }
     }
 }
@@ -163,7 +165,6 @@ mod test {
         stocktake_line::{query::GetStocktakeLinesError, StocktakeLineServiceTrait},
         ListResult,
     };
-    
 
     use crate::StocktakeLineQueries;
 
