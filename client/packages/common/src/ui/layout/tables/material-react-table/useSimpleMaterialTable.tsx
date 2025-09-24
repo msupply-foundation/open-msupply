@@ -23,13 +23,10 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
     enableColumnActions: false,
     enableSorting: false,
     enableColumnResizing: false,
-    enableColumnPinning: false,
-    enableColumnOrdering: false,
     state: {
       ...tableOptions.state,
       density: 'compact',
     },
-    layoutMode: 'grid-no-grow',
     ...tableOptions,
     renderBottomToolbar: ({ table }) => (
       <Box
@@ -52,11 +49,13 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
     muiTableBodyCellProps: ({ row }) => ({
       sx: {
         fontSize: '0.85em',
+        fontWeight: 400,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
           : getIsRestrictedRow(row.original)
             ? 'gray.main'
             : undefined,
+        paddingY: '0.2rem',
       },
     }),
     muiTableBodyRowProps: {

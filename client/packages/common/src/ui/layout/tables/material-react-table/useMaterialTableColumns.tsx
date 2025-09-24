@@ -3,10 +3,11 @@
  * to the exact column structure required by MaterialReactTable
  */
 
-import { useMemo } from 'react';
-import { MRT_RowData } from 'material-react-table';
+import React, { useMemo } from 'react';
+import { MRT_Column, MRT_RowData } from 'material-react-table';
 import {
   mergeCellProps,
+  Tooltip,
   useGetColumnTypeDefaults,
 } from '@openmsupply-client/common';
 
@@ -18,7 +19,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
   const getColumnTypeDefaults = useGetColumnTypeDefaults();
 
   const tableDefinition = useMemo(() => {
-    const columns = omsColumns
+    const columns: ColumnDef<T>[] = omsColumns
       .filter(col => col.includeColumn !== false)
       .map(col => {
         const columnDefaults = getColumnTypeDefaults(col);
@@ -50,6 +51,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
 
         return {
           grow: true,
+          Header: ColumnHeaderWithTooltip, // can't define this globally for the table unfortunately
           ...columnDefaults,
           enableSorting: col.enableSorting ?? false,
           enableColumnFilter: col.enableColumnFilter ?? false,
@@ -62,3 +64,15 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
 
   return tableDefinition;
 };
+
+// Show full column name on hover, in case it's truncated
+// If we can get "click header to open column menu" working, we could probably remove the tooltip
+const ColumnHeaderWithTooltip = <T extends MRT_RowData>({
+  column,
+}: {
+  column: MRT_Column<T>;
+}) => (
+  <Tooltip title={column.columnDef.header} placement="top">
+    <div>{column.columnDef.header}</div>
+  </Tooltip>
+);
