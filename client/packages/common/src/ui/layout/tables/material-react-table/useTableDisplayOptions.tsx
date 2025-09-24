@@ -148,6 +148,13 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
           : 'inherit',
         fontStyle: row.getCanExpand() ? 'italic' : 'normal',
         cursor: onRowClick ? 'pointer' : 'default',
+        '&.Mui-selected': {
+          backgroundColor: 'background.secondary',
+        },
+        '& td::after': {
+          backgroundColor: 'transparent',
+        },
+        // TO-DO: Figure out how to target the "hover" state for these rows
       },
     }),
 
