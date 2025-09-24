@@ -218,5 +218,16 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
     muiToolbarAlertBannerProps: {
       sx: { backgroundColor: 'unset' },
     },
+    displayColumnDefOptions: {
+      'mrt-row-select': {
+        size: 50,
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
+    },
   };
 };
