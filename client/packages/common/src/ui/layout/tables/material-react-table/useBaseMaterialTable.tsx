@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   MRT_RowData,
   MRT_TableOptions,
@@ -19,10 +19,13 @@ import {
   useColumnPinning,
 } from './tableState';
 import { clearSavedState } from './tableState/utils';
+import { usePersistDataOnRefetch } from './usePersistDataOnRefetch';
+import { NothingHere } from '@common/components';
 
 export interface BaseTableConfig<T extends MRT_RowData>
-  extends MRT_TableOptions<T> {
+  extends Omit<MRT_TableOptions<T>, 'data'> {
   tableId: string; // key for local storage
+  data: T[] | undefined;
   onRowClick?: (row: T) => void;
   isLoading?: boolean;
   getIsPlaceholderRow?: (row: T) => boolean;
@@ -31,6 +34,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   groupByField?: string;
   columns: ColumnDef<T>[];
   initialSort?: { key: string; dir: 'asc' | 'desc' };
+  noDataElement?: React.ReactNode;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -47,6 +51,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   enableColumnResizing = true,
   manualFiltering = false,
   initialSort,
+  noDataElement,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -59,9 +64,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(columns);
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
+  const persistedData = usePersistDataOnRefetch(data, !!isLoading);
+
   const processedData = useMemo(
-    () => getGroupedRows(data, groupByField, t),
-    [data, groupByField]
+    () => getGroupedRows(persistedData, groupByField, t),
+    [persistedData, groupByField]
   );
 
   const density = useColumnDensity(tableId);
@@ -153,6 +160,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onColumnVisibilityChange: columnVisibility.update,
     onColumnPinningChange: columnPinning.update,
     onColumnOrderChange: columnOrder.update,
+
+    renderEmptyRowsFallback: () =>
+      isLoading ? <></> : (noDataElement ?? <NothingHere />),
 
     ...displayOptions,
     ...tableOptions,
