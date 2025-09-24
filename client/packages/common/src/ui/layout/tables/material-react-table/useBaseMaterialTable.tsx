@@ -138,7 +138,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       columnOrder: columnOrder.initial,
     },
     state: {
-      showProgressBars: isLoading,
+      showLoadingOverlay: isLoading,
       columnFilters,
       sorting,
       density: density.state,
