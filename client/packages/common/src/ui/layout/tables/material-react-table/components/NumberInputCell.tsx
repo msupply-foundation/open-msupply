@@ -18,12 +18,31 @@ export const NumberInputCell = <T extends MRT_RowData>({
   updateFn,
   ...numericTextProps
 }: NumberInputCellProps<T>) => {
-  const value = cell.getValue<number>();
+  const { getValue, column, row } = cell;
+
+  const value = column.accessorFn
+    ? // Workaround for tanstack bug: https://github.com/TanStack/table/issues/5363
+      (column.accessorFn(row.original, row.index) as number)
+    : getValue<number>();
+
   const [buffer, setBuffer] = useBufferState(value);
 
   const debouncedUpdate = useDebounceCallback(
     (input: number) => {
-      updateFn(input);
+      const resetValue = updateFn(input);
+
+      // There is a use case, where setter logic could change the value to
+      // something other than inputted.
+      // E.g. input to issue 6 units, but setter rounds up to 10 (based on pack size).
+      // buffer will update, as column.accessor now returns 10.
+      // But now I try change the value to 7, and setter rounds up to 10 again.
+      // As far as accessor is concerned, the external value hasn't changed (still 10)
+      // but buffer is still 7.
+      // In this case, can return the correct value from the setter and we
+      // force an update here.
+      if (resetValue !== undefined) {
+        setBuffer(resetValue);
+      }
     },
     [updateFn],
     300

@@ -1,14 +1,15 @@
 import React from 'react';
 import { Tooltip, Typography } from '@mui/material';
-import { RecordWithId } from '@common/types';
-import { CellProps } from '../../../columns/types';
+import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
-export const CheckCell = <T extends RecordWithId>({
-  column,
-  rowData,
+export const CheckCell = <T extends MRT_RowData>({
+  cell,
   tooltipText,
-}: CellProps<T> & { tooltipText?: string }) => {
-  const check = column.accessor({ rowData }) as boolean;
+}: {
+  cell: MRT_Cell<T>;
+  tooltipText?: string;
+}) => {
+  const check = cell.getValue<boolean>();
 
   return (
     <Tooltip title={tooltipText}>
