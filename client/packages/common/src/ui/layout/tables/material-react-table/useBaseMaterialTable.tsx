@@ -123,6 +123,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableBottomToolbar: false,
     enableExpanding: !!groupByField,
 
+    // Disable selection Toolbar, we use our own custom footer for this
+    positionToolbarAlertBanner: 'none',
+
     manualFiltering,
     onColumnFiltersChange,
     onSortingChange,
