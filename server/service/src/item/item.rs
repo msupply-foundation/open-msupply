@@ -89,7 +89,7 @@ pub fn get_items_ids_for_months_of_stock(
     min_months_of_stock: Option<f64>,
     max_months_of_stock: Option<f64>,
 ) -> Vec<String> {
-    if min_months_of_stock.is_none() || max_months_of_stock.is_none() {
+    if min_months_of_stock.is_none() && max_months_of_stock.is_none() {
         return item_stats.into_iter().map(|(k, _v)| k).collect();
     }
     item_stats
