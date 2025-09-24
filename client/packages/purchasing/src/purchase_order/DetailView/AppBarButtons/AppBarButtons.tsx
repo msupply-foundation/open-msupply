@@ -5,19 +5,25 @@ import {
   useDetailPanel,
   ReportContext,
   useUrlQueryParams,
+  UrlQueryValue,
 } from '@openmsupply-client/common';
 import { ReportSelector } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 import { AddButton } from './AddButton';
+import { UploadDocumentButton } from './UploadDocumentButton';
 
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
+  disableNewLines: boolean;
+  currentTab: UrlQueryValue;
 }
 
 export const AppBarButtonsComponent = ({
   onAddItem,
   isDisabled,
+  disableNewLines,
+  currentTab,
 }: AppBarButtonProps) => {
   const { OpenButton } = useDetailPanel();
 
@@ -32,12 +38,19 @@ export const AppBarButtonsComponent = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <AddButton
-          purchaseOrder={data ?? undefined}
-          onAddItem={onAddItem}
-          disable={isDisabled}
-          disableAddFromMasterListButton={isLoading}
-        />
+        {currentTab == 'Documents' ? (
+          <UploadDocumentButton
+            purchaseOrder={data ?? undefined}
+            disable={isDisabled}
+          />
+        ) : (
+          <AddButton
+            purchaseOrder={data ?? undefined}
+            onAddItem={onAddItem}
+            disable={disableNewLines}
+            disableAddFromMasterListButton={isLoading}
+          />
+        )}
         <ReportSelector
           context={ReportContext.PurchaseOrder}
           dataId={data?.id ?? ''}
