@@ -147,10 +147,14 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       },
     }),
 
-    muiTableBodyProps: ({ table }) => ({
-      // Make the NothingHere component vertically centered when there are no rows
-      sx: { height: table.getRowCount() === 0 ? '100%' : 'auto' },
-    }),
+    muiTableBodyProps: ({ table }) =>
+      // Make the NothingHere component vertically centered when there are no
+      // rows
+      table.getRowCount() === 0
+        ? {
+            sx: { height: '100%' },
+          }
+        : {},
 
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
