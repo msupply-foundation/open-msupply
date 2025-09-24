@@ -1,6 +1,8 @@
 use crate::number::next_number;
 use chrono::TimeDelta;
+use chrono::Utc;
 use repository::stock_line_ledger::StockLineLedgerRow;
+use repository::EqualFilter;
 use repository::InvoiceLineRow;
 use repository::InvoiceLineRowRepository;
 use repository::InvoiceLineType;
@@ -11,8 +13,17 @@ use repository::InvoiceType;
 use repository::ItemRowRepository;
 use repository::NameRowRepository;
 use repository::NumberRowType;
+use repository::Pagination;
 use repository::RepositoryError;
+use repository::Sort;
 use repository::StockLineRowRepository;
+use repository::StocktakeFilter;
+use repository::StocktakeLineFilter;
+use repository::StocktakeLineRepository;
+use repository::StocktakeRepository;
+use repository::StocktakeRow;
+use repository::StocktakeSortField;
+use repository::StocktakeStatus;
 use repository::StorageConnection;
 use thiserror::Error;
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -117,29 +128,66 @@ fn create_inventory_adjustment(
     adjustment: f64,
     stock_line_id: &str,
 ) -> Result<(), LedgerFixError> {
-    let Some(StockLineLedgerRow {
-        item_id,
-        store_id,
-        datetime,
-        ..
-    }) = stock_line_ledger_row.map(|r| r.clone())
+    let Some(stock_line) =
+        StockLineRowRepository::new(connection).find_one_by_id(&stock_line_id)?
     else {
-        return LedgerFixError::other("Ledger line should exist for adjustment");
+        return LedgerFixError::other("Stock line not found");
     };
 
-    let inventory_adjustment_id = NameRowRepository::new(connection)
+    let store_id = stock_line.store_id;
+
+    let datetime = match stock_line_ledger_row {
+        Some(r) => r.datetime.clone(),
+        None => {
+            let stocktake_line_ids: Vec<String> = StocktakeLineRepository::new(connection)
+                .query(
+                    Pagination::all(),
+                    Some(
+                        StocktakeLineFilter::new()
+                            .stock_line_id(EqualFilter::equal_to(stock_line_id)),
+                    ),
+                    None,
+                    Some(store_id.clone()),
+                )?
+                .into_iter()
+                .map(|l| l.line.id)
+                .collect();
+            let stocktakes = StocktakeRepository::new(connection)
+                .query(
+                    Pagination::all(),
+                    Some(
+                        StocktakeFilter::new()
+                            .store_id(EqualFilter::equal_to(&store_id))
+                            .status(EqualFilter {
+                                equal_to: Some(StocktakeStatus::Finalised),
+                                ..Default::default()
+                            }),
+                    ),
+                    Some(Sort {
+                        key: StocktakeSortField::FinalisedDatetime,
+                        desc: None,
+                    }),
+                )?
+                .into_iter()
+                .filter(|stocktake| stocktake_line_ids.contains(&stocktake.id))
+                .collect::<Vec<StocktakeRow>>();
+            let stocktake = stocktakes.first();
+
+            stocktake
+                .and_then(|s| s.finalised_datetime)
+                .unwrap_or_else(|| Utc::now().naive_utc())
+        }
+    };
+
+    let inventory_adjustment_name_id = NameRowRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
         .ok_or(RepositoryError::NotFound)?
         .id;
 
-    let Some(item) = ItemRowRepository::new(connection).find_one_by_id(&item_id)? else {
-        return LedgerFixError::other("Item not found for inventory adjustment");
-    };
-
-    let Some(stock_line) =
-        StockLineRowRepository::new(connection).find_one_by_id(&stock_line_id)?
+    let Some(item) =
+        ItemRowRepository::new(connection).find_one_by_item_link_id(&stock_line.item_link_id)?
     else {
-        return LedgerFixError::other("Stock line not found for inventory adjustment");
+        return LedgerFixError::other("Item not found for inventory adjustment");
     };
 
     operation_log.push_str(&format!(
@@ -147,7 +195,6 @@ fn create_inventory_adjustment(
     ));
     // Datetime offset to make sure stock is in before out and out before it's in
     let datetime_offset = TimeDelta::seconds(1);
-
     let (invoice_type, number_type, invoice_line_type, datetime) = if adjustment > 0.0 {
         let Some(datetime) = datetime.checked_sub_signed(datetime_offset) else {
             return LedgerFixError::other("Failed to adjust datetime by 1 second");
@@ -175,7 +222,7 @@ fn create_inventory_adjustment(
     // Similar to stock take
     let adjustment_invoice = InvoiceRow {
         id: uuid(),
-        name_link_id: inventory_adjustment_id,
+        name_link_id: inventory_adjustment_name_id,
         r#type: invoice_type,
         status: InvoiceStatus::Verified,
         store_id,
@@ -194,7 +241,7 @@ fn create_inventory_adjustment(
     let line = InvoiceLineRow {
         id: uuid(),
         invoice_id: adjustment_invoice.id.clone(),
-        item_link_id: item_id,
+        item_link_id: stock_line.item_link_id, // Note if item is unmerged in the future, we should expect the invoice line item to match the stock line item
         item_name: item.name,
         item_code: item.code,
         stock_line_id: Some(stock_line.id),
