@@ -1,8 +1,11 @@
 // Info: https://www.npmjs.com/package/i18n-unused
 
 module.exports = {
-  localesPath: 'packages/common/src/intl/locales',
+  localesPath: 'packages/common/src/intl/locales/en',
   srcPath: 'packages',
+  srcExtensions: ['ts', 'tsx'],
+  excludeKey: ['report.', 'plugin.', 'report-code.', 'approval-status.'],
+  translationKeyMatcher: /t\(\s*['"]([^'"]+)['"](?:,[^\)]*)?\s*?\)/gi,
   ignorePaths: [
     'packages/common/node_modules',
     'packages/config/node_modules',
