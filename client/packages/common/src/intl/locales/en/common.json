@@ -1476,6 +1476,7 @@
   "label.unusable-vvm-status": "Unusable VVM status",
   "label.update-expected-delivery-date": "Update expected delivery date",
   "label.update-live-location": "Update live location",
+  "label.update-purchase-order-expected-delivery-date-for-all-lines": "This will update the expected delivery date for all lines in this Purchase Order. Do you want to continue?",
   "label.update-purchase-order-expected-delivery-date-for-selected-lines_few": "This will update expected delivery date for the selected lines in this Purchase Order. Do you want to continue?",
   "label.update-purchase-order-expected-delivery-date-for-selected-lines_many": "This will update expected delivery date for the selected lines in this Purchase Order. Do you want to continue?",
   "label.update-purchase-order-expected-delivery-date-for-selected-lines_one": "This will update expected delivery date for 1 line in this Purchase Order. Do you want to continue?",
