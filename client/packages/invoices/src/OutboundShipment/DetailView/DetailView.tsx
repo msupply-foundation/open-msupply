@@ -93,7 +93,7 @@ export const DetailView = () => {
     useNonPaginatedMaterialTable<StockOutLineFragment>({
       tableId: 'outbound-shipment-detail-view',
       columns,
-      data: rows ?? [],
+      data: rows,
       groupByField: isGrouped ? 'itemName' : undefined,
       isLoading: false,
       initialSort: { key: 'itemName', dir: 'asc' },
@@ -101,7 +101,7 @@ export const DetailView = () => {
       getIsPlaceholderRow: row =>
         row.type === InvoiceLineNodeType.UnallocatedStock ||
         row.numberOfPacks === 0,
-      renderEmptyRowsFallback: () => (
+      noDataElement: (
         <NothingHere
           body={t('error.no-outbound-items')}
           onCreate={isDisabled ? undefined : () => onAddItem()}
