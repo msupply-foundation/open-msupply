@@ -84,10 +84,21 @@ pub(crate) mod test {
             ..positive_running_balance_fix.clone()
         };
 
+        let positive_running_balance_fix_no_lines = StockLineRow {
+            id: "positive_running_balance_fix_no_lines".to_string(),
+            item_link_id: mock_item_a().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 1.0,
+            available_number_of_packs: 3.0,
+            total_number_of_packs: 3.0,
+            ..Default::default()
+        };
+
         let mock_data = MockData {
             stock_lines: vec![
                 positive_running_balance_fix.clone(),
                 negative_running_balance_fix.clone(),
+                positive_running_balance_fix_no_lines.clone(),
             ],
             ..Default::default()
         }
@@ -179,6 +190,21 @@ pub(crate) mod test {
 
         assert_eq!(
             is_ledger_fixed(&connection, "negative_running_balance_fix"),
+            Ok(true)
+        );
+
+        assert_eq!(
+            is_ledger_fixed(&connection, "positive_running_balance_fix_no_lines"),
+            Ok(false)
+        );
+        fix(
+            &connection,
+            &mut logs,
+            "positive_running_balance_fix_no_lines",
+        )
+        .unwrap();
+        assert_eq!(
+            is_ledger_fixed(&connection, "positive_running_balance_fix_no_lines"),
             Ok(true)
         );
     }
