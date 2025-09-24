@@ -21,13 +21,15 @@ export const DonorSearchInput = ({
   disabled = false,
   clearable = false,
 }: DonorSearchInputProps) => {
-  const { data, isLoading } = useName.document.donors();
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
-  const options = data?.nodes ?? [];
+  const { data, isLoading } = useName.document.donors();
+  const { data: selectedDonor, isLoading: isLoadingSelected } =
+    useName.document.get(donorId || '');
 
-  const selectedOption = options.find(o => o.id === donorId);
+  const options = data?.nodes ?? [];
+  const selectedOption = options.find(o => o.id === donorId) || selectedDonor;
 
   return (
     <Autocomplete
@@ -39,7 +41,7 @@ export const DonorSearchInput = ({
           : null
       }
       filterOptionConfig={basicFilterOptions}
-      loading={isLoading}
+      loading={isLoading || isLoadingSelected}
       onChange={(_, name) => onChange(name)}
       options={options}
       renderOption={NameOptionRenderer}
