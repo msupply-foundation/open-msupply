@@ -15,7 +15,7 @@ import {
 } from '@common/icons';
 import { MenuItem, Typography } from '@mui/material';
 import { ColumnDef } from './types';
-import { IconButton, NothingHere } from '@common/components';
+import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { hasSavedState } from './tableState/utils';
 
@@ -71,8 +71,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
         <MRT_ToggleFullScreenButton table={table} />
       </>
     ),
-
-    renderEmptyRowsFallback: () => <NothingHere />,
 
     // Styling
     muiTablePaperProps: {

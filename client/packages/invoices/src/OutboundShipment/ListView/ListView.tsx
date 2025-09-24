@@ -124,11 +124,11 @@ export const OutboundShipmentListView = () => {
       isLoading,
       onRowClick: row => navigate(row.id),
       columns: mrtColumns,
-      data: data?.nodes ?? [],
+      data: data?.nodes,
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
       getIsRestrictedRow: isOutboundDisabled,
-      renderEmptyRowsFallback: () => (
+      noDataElement: (
         <NothingHere
           body={t('error.no-outbound-shipments')}
           onCreate={modalController.toggleOn}
