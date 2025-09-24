@@ -60,11 +60,9 @@ pub fn validate(
         // Only validate if the status is actually changing
         if new_status != line.status {
             let is_purchase_order_sent = purchase_order.status >= PurchaseOrderStatus::Sent;
-            let is_valid_status_change = match (new_status, is_purchase_order_sent) {
-                (PurchaseOrderLineStatus::New, false) => true,
-                (PurchaseOrderLineStatus::New, true) => false,
-                (_, true) => true,
-                (_, false) => false,
+            let is_valid_status_change = match new_status {
+                PurchaseOrderLineStatus::New => !is_purchase_order_sent,
+                _ => is_purchase_order_sent,
             };
 
             if !is_valid_status_change {
