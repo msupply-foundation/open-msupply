@@ -25,8 +25,8 @@ pub struct LedgerFixTrigger {
 const FIRST_RUN_DELAY: Duration = Duration::from_secs(5);
 // This trigger is not to re-run ledger fix but to check if ledger fix is needed again
 // Will check against key values store LAST_LEDGER_FIX_RUN and LEDGER_FIX_INTERVAL
-const RE_TRIGGER_DELAY: Duration = Duration::from_secs(60 * 60); // 1 hour
-const LEDGER_FIX_INTERVAL: TimeDelta = TimeDelta::days(1);
+const RE_TRIGGER_DELAY: Duration = Duration::from_secs(5); // 1 hour
+const LEDGER_FIX_INTERVAL: TimeDelta = TimeDelta::seconds(30);
 
 impl LedgerFixDriver {
     pub fn init() -> (LedgerFixTrigger, LedgerFixDriver) {
@@ -88,13 +88,13 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
         );
 
         let result = stock_line_ledger_fix(&ctx.connection, &mut operation_log, &stock_line_id);
-        operation_log.push_str(&format!(
-            "Finished stock line fix operation {}\n",
-            Utc::now().naive_utc()
-        ));
 
         match result {
             Ok(is_fixed) => {
+                operation_log.push_str(&format!(
+                    "Finished stock line fix operation {}\n",
+                    Utc::now().naive_utc()
+                ));
                 let status = if is_fixed { "Fully" } else { "Partially" };
                 system_log(&ctx.connection, SystemLogType::LedgerFix,
                         &format!("{status} fixed ledger discrepancy for stock_line {stock_line_id} - Details: {operation_log}\n"
