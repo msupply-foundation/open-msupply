@@ -50,6 +50,7 @@ export const PurchaseOrderLineEditModal = ({
     draft,
     updatePatch,
   } = usePurchaseOrderLine(lineId);
+  const unit = draft?.unit || t('label.unit', { count: 2 });
 
   const onChangeItem = (item: ItemStockOnHandFragment) => {
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
@@ -146,7 +147,7 @@ export const PurchaseOrderLineEditModal = ({
             <Typography width={250}>{t('label.ordered-in-others')}:</Typography>
             <Typography fontWeight={800}>
               {round(draft.unitsOrderedInOthers)}{' '}
-              {getPlural(draft.unit ?? '', 2)}
+              {getPlural(unit, draft.unitsOrderedInOthers)}
             </Typography>
           </Box>
         </>

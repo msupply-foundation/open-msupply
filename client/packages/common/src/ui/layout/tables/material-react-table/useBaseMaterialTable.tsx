@@ -1,22 +1,24 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import {
-  getDefaultColumnOrderIds,
   MRT_RowData,
-  MRT_StatefulTableOptions,
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
-import {
-  getSavedTableState,
-  useTableLocalStorage,
-} from './useTableLocalStorage';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { getGroupedRows } from './utils';
 import { useTableFiltering } from './useTableFiltering';
-import { getTableDisplayOptions } from './getTableDisplayOptions';
+import { useTableDisplayOptions } from './useTableDisplayOptions';
 import { useUrlSortManagement } from './useUrlSortManagement';
+import {
+  useColumnDensity,
+  useColumnOrder,
+  useColumnSizing,
+  useColumnVisibility,
+  useColumnPinning,
+} from './tableState';
+import { clearSavedState } from './tableState/utils';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends MRT_TableOptions<T> {
@@ -51,23 +53,53 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
 
-  const { columns, defaultHiddenColumns, defaultColumnPinning } =
-    useMaterialTableColumns(omsColumns);
+  const { columns } = useMaterialTableColumns(omsColumns);
 
   // Filter needs to be applied after columns are processed
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(columns);
   const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
 
-  const initialState = useRef(
-    getSavedTableState<T>(tableId, defaultHiddenColumns, defaultColumnPinning)
-  );
-  const [columnOrder, setColumnOrder] = useState(
-    initialState.current.columnOrder ?? []
-  );
-
   const processedData = useMemo(
     () => getGroupedRows(data, groupByField, t),
     [data, groupByField]
+  );
+
+  const density = useColumnDensity(tableId);
+  const columnSizing = useColumnSizing(tableId);
+  const columnVisibility = useColumnVisibility(tableId, columns);
+  const columnPinning = useColumnPinning(tableId, columns);
+  const columnOrder = useColumnOrder(
+    tableId,
+    columns,
+    enableRowSelection,
+    groupByField
+  );
+
+  const resetTableState = () => {
+    clearSavedState(tableId);
+
+    // We have to call each of these reset fns, as MRT's general
+    // reset function doesn't fire the onChange handlers (needed to trigger our state handlers)
+    // Seeing as local storage has already been cleared,
+    // these shouldn't trigger additional local storage updates
+    table.resetColumnOrder();
+    table.resetColumnPinning();
+    table.resetColumnSizing();
+
+    // Visibility `initial` could change if prefs have come on/screen size changed
+    // so reset to latest initial value rather than default initial mount state
+    table.setColumnVisibility(columnVisibility.initial);
+
+    // Density doesn't have a `reset` function
+    table.setDensity(density.initial);
+  };
+
+  const displayOptions = useTableDisplayOptions(
+    tableId,
+    resetTableState,
+    onRowClick,
+    getIsPlaceholderRow,
+    getIsRestrictedRow
   );
 
   const table = useMaterialReactTable<T>({
@@ -77,7 +109,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     data: processedData,
     enablePagination: false,
+
+    layoutMode: 'grid',
     enableColumnResizing,
+
     enableColumnPinning: true,
     enableColumnOrdering: true,
     enableColumnDragging: false,
@@ -93,36 +128,32 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onSortingChange,
 
     initialState: {
-      ...initialState.current,
-
-      columnOrder: getDefaultColumnOrderIds({
-        columns,
-        state: {},
-        enableRowSelection, // adds `mrt-row-select`
-        layoutMode: enableColumnResizing ? 'grid-no-grow' : 'auto', // adds `mrt-row-spacer`
-        enableExpanding: !!groupByField, // adds `mrt-row-expand`
-        positionExpandColumn: 'first', // this is the default, required to be explicit here
-      } as MRT_StatefulTableOptions<T>),
+      density: density.initial,
+      columnSizing: columnSizing.initial,
+      columnVisibility: columnVisibility.initial,
+      columnPinning: columnPinning.initial,
+      columnOrder: columnOrder.initial,
     },
     state: {
       showProgressBars: isLoading,
-      columnOrder,
       columnFilters,
       sorting,
+      density: density.state,
+      columnSizing: columnSizing.state,
+      columnVisibility: columnVisibility.state,
+      columnPinning: columnPinning.state,
+      columnOrder: columnOrder.state,
       ...state,
     },
-    onColumnOrderChange: setColumnOrder,
+    onDensityChange: density.update,
+    onColumnSizingChange: columnSizing.update,
+    onColumnVisibilityChange: columnVisibility.update,
+    onColumnPinningChange: columnPinning.update,
+    onColumnOrderChange: columnOrder.update,
 
-    ...getTableDisplayOptions(
-      onRowClick,
-      getIsPlaceholderRow,
-      getIsRestrictedRow
-    ),
-
+    ...displayOptions,
     ...tableOptions,
   });
-
-  useTableLocalStorage(tableId, table);
 
   return table;
 };

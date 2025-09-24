@@ -1,12 +1,8 @@
 import React, { useEffect } from 'react';
 import {
   Typography,
-  InlineSpinner,
   Box,
   useTranslation,
-  TableProvider,
-  createTableStore,
-  createQueryParamsStore,
   ModalRow,
   ModalLabel,
   Grid,
@@ -30,7 +26,6 @@ import {
   AllocateInOption,
 } from '../../../StockOut';
 import { useOutbound } from '../../api';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 interface AllocationProps {
   itemId: string;
@@ -164,50 +159,10 @@ const AllocationInner = () => {
           <AutoAllocationAlerts />
         </Box>
       </Grid>
-      <TableWrapper
-        isLoading={false}
+      <OutboundLineEditTable
         currency={currency}
         isExternalSupplier={!otherParty?.store}
       />
     </>
-  );
-};
-
-interface TableProps {
-  isLoading: boolean;
-  currency?: CurrencyRowFragment | null;
-  isExternalSupplier: boolean;
-}
-
-const TableWrapper = ({
-  isLoading,
-  currency,
-  isExternalSupplier,
-}: TableProps) => {
-  if (isLoading)
-    return (
-      <Box
-        display="flex"
-        flex={1}
-        height={300}
-        justifyContent="center"
-        alignItems="center"
-      >
-        <InlineSpinner />
-      </Box>
-    );
-
-  return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore({
-        initialSortBy: { key: 'expiryDate' },
-      })}
-    >
-      <OutboundLineEditTable
-        currency={currency}
-        isExternalSupplier={isExternalSupplier}
-      />
-    </TableProvider>
   );
 };

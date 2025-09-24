@@ -18,6 +18,7 @@ import {
   Formatter,
   Grid,
   InsertPurchaseOrderLineInput,
+  PurchaseOrderNodeStatus,
   useExportCSV,
 } from '@openmsupply-client/common/src';
 import { StoreRowFragment } from '@openmsupply-client/system/src';
@@ -272,6 +273,7 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
                 onUploadComplete={() => {
                   changeTab(Tabs.Review);
                 }}
+                status={data?.status || PurchaseOrderNodeStatus.New }
               />
             </QueryParamsProvider>
             <ReviewTab

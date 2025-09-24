@@ -242,7 +242,7 @@ export const PurchaseOrderLineEdit = ({
               />
             )}
             <NumInputRow
-              label={t('label.price-per-unit-before-discount')}
+              label={t('label.price-per-pack-before-discount')}
               value={getCurrencyValue(draft?.pricePerUnitBeforeDiscount)}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
@@ -250,7 +250,7 @@ export const PurchaseOrderLineEdit = ({
               isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
-                  'pricePerUnitBeforeDiscount',
+                  'pricePerPackBeforeDiscount',
                   { ...draft, pricePerUnitBeforeDiscount: value }
                 );
                 update(adjustedPatch);
@@ -277,7 +277,7 @@ export const PurchaseOrderLineEdit = ({
               endAdornment="%"
             />
             <NumInputRow
-              label={t('label.price-per-unit-after-discount')}
+              label={t('label.price-per-pack-after-discount')}
               value={getCurrencyValue(draft?.pricePerUnitAfterDiscount)}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
@@ -285,7 +285,7 @@ export const PurchaseOrderLineEdit = ({
               isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
-                  'pricePerUnitAfterDiscount',
+                  'pricePerPackAfterDiscount',
                   { ...draft, pricePerUnitAfterDiscount: value }
                 );
                 update(adjustedPatch);
