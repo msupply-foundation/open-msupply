@@ -5,7 +5,6 @@ import {
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
-  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { OutboundRowFragment, useOutbound } from '../api';
 
@@ -16,11 +15,12 @@ export const FooterComponent = ({
   selectedRows: OutboundRowFragment[];
   resetRowSelection: () => void;
 }) => {
-  const { tableUsabilityImprovements } = useFeatureFlags();
   const t = useTranslation();
 
-  const { confirmAndDelete, selectedRows: oldSelectedRows } =
-    useOutbound.document.deleteRows(selectedRows, resetRowSelection);
+  const { confirmAndDelete } = useOutbound.document.deleteRows(
+    selectedRows,
+    resetRowSelection
+  );
 
   const actions: Action[] = [
     {
@@ -30,18 +30,14 @@ export const FooterComponent = ({
     },
   ];
 
-  const actualSelectedRows = tableUsabilityImprovements
-    ? selectedRows
-    : oldSelectedRows;
-
   return (
     <AppFooterPortal
       Content={
         <>
-          {actualSelectedRows.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={actualSelectedRows.length}
+              selectedRowCount={selectedRows.length}
               resetRowSelection={resetRowSelection}
             />
           )}

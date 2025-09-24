@@ -100,6 +100,8 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     },
     // Summary display in toolbar, e.g. "Showing 1-20 of 45"
     renderBottomToolbarCustomActions: () => {
+      if (totalCount === 0) return <Box />; // empty box to kep toolbar layout consistent
+
       const xToY = `${offset + 1}-${Math.min(first + offset, totalCount)}`;
       return (
         <Box
@@ -131,9 +133,5 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     [rowSelection]
   );
 
-  const resetRowSelection = () => {
-    table.resetRowSelection();
-  };
-
-  return { table, selectedRows, resetRowSelection };
+  return { table, selectedRows };
 };
