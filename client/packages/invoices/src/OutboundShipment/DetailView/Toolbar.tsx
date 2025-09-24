@@ -8,7 +8,7 @@ import {
   useTranslation,
   useBufferState,
   Switch,
-  useIsGrouped,
+  useIsGroupedState,
   Tooltip,
   useNavigate,
   RouteBuilder,
@@ -26,7 +26,7 @@ export const Toolbar = () => {
       'theirReference',
       'requisition',
     ]);
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
+  const { isGrouped, toggleIsGrouped } = useIsGroupedState('outboundShipment');
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
   const navigate = useNavigate();
