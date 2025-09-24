@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_purchase_order_status_logs_to_activity_log_type_enum;
 mod add_shipping_method_table;
 mod rename_authorised_datetime_to_request_approval_datetime;
 mod update_purchase_order_activity_log_type_enum;
@@ -23,6 +24,7 @@ impl Migration for V2_12_00 {
             Box::new(update_purchase_order_activity_log_type_enum::Migrate),
             Box::new(rename_authorised_datetime_to_request_approval_datetime::Migrate),
             Box::new(add_shipping_method_table::Migrate),
+            Box::new(add_purchase_order_status_logs_to_activity_log_type_enum::Migrate),
         ]
     }
 }
