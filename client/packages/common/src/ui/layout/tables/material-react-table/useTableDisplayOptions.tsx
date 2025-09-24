@@ -76,10 +76,26 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
 
     // Styling
     muiTablePaperProps: {
-      sx: { width: '100%', display: 'flex', flexDirection: 'column' },
+      sx: {
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        // Reduce the height and padding of the Actions toolbar
+        '& > .MuiBox-root': {
+          minHeight: '2.5rem',
+          height: 'unset',
+        },
+        '& > .MuiBox-root > .MuiBox-root': {
+          paddingY: 0,
+        },
+      },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, display: 'flex', flexDirection: 'column' },
+      sx: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+      },
     },
     muiTableProps: {
       // Need to apply this here so that relative sizes (ems, %) within table
