@@ -106,17 +106,27 @@ pub fn update_purchase_order_line(
             PurchaseOrderLineRowRepository::new(connection)
                 .upsert_one(&updated_purchase_order_line)?;
 
-            activity_log_entry(
-                ctx,
-                ActivityLogType::PurchaseOrderLineUpdated,
-                Some(updated_purchase_order_line.purchase_order_id.clone()),
-                line_status_change
-                    .as_ref()
-                    .map(|(from, _)| format!("{:?}", from)),
-                line_status_change
-                    .as_ref()
-                    .map(|(_, to)| format!("{:?}", to)),
-            )?;
+            if updated_purchase_order_line.status == PurchaseOrderLineStatus::Closed {
+                activity_log_entry(
+                    ctx,
+                    ActivityLogType::PurchaseOrderLineStatusClosed,
+                    Some(updated_purchase_order_line.purchase_order_id.clone()),
+                    None,
+                    None,
+                )?;
+            } else {
+                activity_log_entry(
+                    ctx,
+                    ActivityLogType::PurchaseOrderLineUpdated,
+                    Some(updated_purchase_order_line.purchase_order_id.clone()),
+                    line_status_change
+                        .as_ref()
+                        .map(|(from, _)| format!("{:?}", from)),
+                    line_status_change
+                        .as_ref()
+                        .map(|(_, to)| format!("{:?}", to)),
+                )?;
+            }
 
             get_purchase_order_line(ctx, Some(store_id), &updated_purchase_order_line.id)
                 .map_err(UpdatePurchaseOrderLineInputError::DatabaseError)?
@@ -143,14 +153,6 @@ fn update_order_status_on_adjusted_quantity_change(
         user_has_auth_permission,
     )
     .map_err(|_| UpdatePurchaseOrderLineInputError::DatabaseError(RepositoryError::NotFound))?;
-
-    activity_log_entry(
-        ctx,
-        ActivityLogType::PurchaseOrderLineUpdated, // TODO: Implement PurchaseOrderUpdated
-        Some(purchase_order.id.clone()),
-        Some(format!("{:?}", PurchaseOrderStatus::Sent)),
-        Some(format!("{:?}", PurchaseOrderStatus::Confirmed)),
-    )?;
 
     Ok(())
 }
