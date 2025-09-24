@@ -46,11 +46,13 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
     };
 
     // if using the hasStockOnHand filter, replace the isVisibleOrOnHand filter with hasStockOnHand
-    if (filterBy?.['hasStockOnHand'] !== undefined) {
+    let hasStockOnHand = filterBy?.['hasStockOnHand'];
+    if (hasStockOnHand !== undefined) {
       filter = {
         ...filter,
         isVisibleOrOnHand: undefined,
-        hasStockOnHand: !!filterBy?.['hasStockOnHand'],
+        hasStockOnHand: !!hasStockOnHand,
+        isVisible: !hasStockOnHand ? true : undefined,
       };
     }
 
