@@ -116,6 +116,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
         lineHeight: 1.2,
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
+        opacity: 1,
         '& .MuiTableSortLabel-root': {
           display: column.getIsSorted() ? undefined : 'none',
         },
@@ -174,10 +175,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       },
     }),
 
-    muiTableBodyCellProps: ({ cell, row, table }) => ({
+    muiTableBodyCellProps: ({ cell, row, column, table }) => ({
       sx: {
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
+        // Remove transparency from pinned backgrounds
+        opacity: 1,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
           : getIsRestrictedRow(row.original)
@@ -210,6 +213,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
           row.original?.['isSubRow'] && cell.column.id !== 'mrt-row-select'
             ? '2em'
             : undefined,
+        backgroundColor: column.getIsPinned()
+          ? // Remove transparency from pinned backgrounds
+            'rgba(252, 252, 252, 1)'
+          : undefined,
       },
     }),
 
