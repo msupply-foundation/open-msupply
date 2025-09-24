@@ -5286,7 +5286,8 @@ export type MasterListNotFoundForThisName =
 
 export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface &
   AddToInboundShipmentFromMasterListErrorInterface &
-  AddToPurchaseOrderFromMasterListErrorInterface & {
+  AddToPurchaseOrderFromMasterListErrorInterface &
+  ResponseAddFromMasterListErrorInterface & {
     __typename: 'MasterListNotFoundForThisStore';
     description: Scalars['String']['output'];
   };
@@ -5430,6 +5431,7 @@ export type Mutations = {
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  responseAddFromMasterList: ResponseAddFromMasterListResponse;
   saveGoodsReceivedLines: SaveGoodsReceivedLineResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
@@ -5921,6 +5923,11 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MutationsResponseAddFromMasterListArgs = {
+  input: ResponseAddFromMasterListInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type MutationsSaveGoodsReceivedLinesArgs = {
@@ -8811,6 +8818,24 @@ export type RequisitionWithShipment =
   };
 
 export type RequisitionsResponse = RequisitionConnector;
+
+export type ResponseAddFromMasterListError = {
+  __typename: 'ResponseAddFromMasterListError';
+  error: ResponseAddFromMasterListErrorInterface;
+};
+
+export type ResponseAddFromMasterListErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type ResponseAddFromMasterListInput = {
+  masterListId: Scalars['String']['input'];
+  responseRequisitionId: Scalars['String']['input'];
+};
+
+export type ResponseAddFromMasterListResponse =
+  | RequisitionLineConnector
+  | ResponseAddFromMasterListError;
 
 export type ResponseRequisitionCounts = {
   __typename: 'ResponseRequisitionCounts';
