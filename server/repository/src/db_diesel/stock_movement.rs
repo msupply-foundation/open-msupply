@@ -7,7 +7,6 @@ use crate::{
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-
 /*
 -- Stock movement --
 
@@ -142,9 +141,10 @@ mod test {
     use util::uuid::uuid;
 
     use crate::{
-        mock::{mock_item_a, mock_name_a, MockData, MockDataInserts},
+        mock::{mock_item_a, mock_item_b, mock_name_a, MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, NameRow, StoreRow,
+        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, ItemLinkRowRepository, NameRow,
+        StoreRow,
     };
 
     use super::*;
@@ -284,12 +284,27 @@ mod test {
                 u.invoice_lines[0].r#type = InvoiceLineType::StockOut;
                 u.invoice_lines[0].number_of_packs = 50.0;
                 u
+            })
+            .join({
+                let mut u = stock_movement_point();
+                u.invoices[0].r#type = InvoiceType::InventoryAddition;
+                // Should not be counted
+                u.invoices[0].verified_datetime = Some(
+                    NaiveDate::from_ymd_opt(2021, 2, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                );
+                u.invoice_lines[0].item_link_id = mock_item_b().id;
+                u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
+                u.invoice_lines[0].number_of_packs = 50.0;
+                u
             }),
         )
         .await;
 
-        let repo = StockMovementRepository::new(&connection);
-        let mut rows = repo
+        let stock_movement_repo = StockMovementRepository::new(&connection);
+        let mut rows = stock_movement_repo
             .query(Some(StockMovementFilter {
                 store_id: Some(EqualFilter::equal_to(&store().id)),
                 item_id: Some(EqualFilter::equal_to(&mock_item_a().id)),
@@ -307,6 +322,12 @@ mod test {
             })
             .collect();
 
+        // TODO: unwrap this into various assertions that state what we are actually testing for
+        assert_eq!(
+            rows.iter().map(|r| r.quantity).sum::<f64>(),
+            -95.0,
+            "Total quantity should be sum"
+        );
         assert_eq!(
             rows,
             vec![
@@ -366,6 +387,30 @@ mod test {
                     stock_line_id: None,
                 },
             ]
-        )
+        );
+
+        // Merge items
+        let item_link_repo = ItemLinkRowRepository::new(&connection);
+        let mut item_link_b = item_link_repo
+            .find_one_by_id(&mock_item_b().id)
+            .unwrap()
+            .unwrap();
+        item_link_b.item_id = mock_item_a().id;
+        item_link_repo.upsert_one(&item_link_b).unwrap();
+
+        let rows = stock_movement_repo
+            .query(Some(StockMovementFilter {
+                store_id: Some(EqualFilter::equal_to(&store().id)),
+                item_id: Some(EqualFilter::equal_to(&mock_item_a().id)),
+                datetime: None,
+                stock_line_id: None,
+            }))
+            .unwrap();
+
+        assert_eq!(
+            rows.iter().map(|r| r.quantity).sum::<f64>(),
+            -45.0,
+            "Total quantity should included merge item stock"
+        );
     }
 }

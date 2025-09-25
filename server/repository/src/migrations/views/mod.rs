@@ -133,7 +133,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       SELECT
         invoice_line_stock_movement.id AS id,
         quantity_movement AS quantity,
-        invoice_line_stock_movement.item_link_id AS item_id,
+        item_link.item_id AS item_id,
         invoice.store_id as store_id,
         CASE WHEN invoice.type IN (
             'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN',
@@ -167,6 +167,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
         JOIN name_link ON invoice.name_link_id = name_link.id
         JOIN name ON name_link.name_id = name.id
+        JOIN item_link ON invoice_line_stock_movement.item_link_id = item_link.id
     )
     SELECT * FROM all_movements
     WHERE datetime IS NOT NULL;
