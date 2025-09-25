@@ -1,310 +1,169 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  getRowExpandColumn,
-  GenericColumnKey,
-  useColumns,
-  ColumnAlign,
-  ArrayUtils,
-  Column,
-  SortBy,
-  getLinesFromRow,
-  TooltipTextCell,
   useTranslation,
-  TypedTFunction,
-  LocaleKey,
-  useColumnUtils,
-  NumberCell,
-  ColumnDescription,
-  UNDEFINED_STRING_VALUE,
-  getCommentPopoverColumn,
-  getDosesPerUnitColumn,
-  getDifferenceColumn,
   usePreferences,
+  ColumnDef,
+  Groupable,
+  ColumnType,
+  UnitsAndDosesCell,
 } from '@openmsupply-client/common';
-import { ReasonOptionRowFragment } from '@openmsupply-client/system';
-import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
-import { useStocktakeLineErrorContext } from '../../context';
 
-interface UseStocktakeColumnOptions {
-  sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
-  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
-}
-
-const expandColumn = getRowExpandColumn<
-  StocktakeLineFragment | StocktakeSummaryItem
->();
-
-const getStocktakeReasons = (
-  rowData: StocktakeLineFragment | StocktakeSummaryItem,
-  t: TypedTFunction<LocaleKey>
-) => {
-  if ('lines' in rowData) {
-    const { lines } = rowData;
-    const reasonOptions = lines
-      .map(({ reasonOption }) => reasonOption)
-      .filter(Boolean) as ReasonOptionRowFragment[];
-    if (reasonOptions.length !== 0) {
-      return (
-        ArrayUtils.ifTheSameElseDefault(
-          reasonOptions,
-          'reason',
-          t('multiple')
-        ) ?? ''
-      );
-    } else {
-      return '';
-    }
-  } else {
-    return rowData.reasonOption?.reason ?? '';
-  }
-};
-
-const getStocktakeDonor = (
-  rowData: StocktakeLineFragment | StocktakeSummaryItem,
-  t: TypedTFunction<LocaleKey>
-) => {
-  if ('lines' in rowData) {
-    const { lines } = rowData;
-
-    return (
-      ArrayUtils.ifTheSameElseDefault(lines, 'donorName', t('multiple')) ??
-      UNDEFINED_STRING_VALUE
-    );
-  } else {
-    return rowData.donorName ?? UNDEFINED_STRING_VALUE;
-  }
-};
-
-export const useStocktakeColumns = ({
-  sortBy,
-  onChangeSortBy,
-}: UseStocktakeColumnOptions): Column<
-  StocktakeLineFragment | StocktakeSummaryItem
->[] => {
+export const useStocktakeColumns = () => {
   const t = useTranslation();
-  const { getError } = useStocktakeLineErrorContext();
-  const preferences = usePreferences();
-  const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
+  const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
+    usePreferences();
 
-  const columns: ColumnDescription<
-    StocktakeLineFragment | StocktakeSummaryItem
-  >[] = [
-    GenericColumnKey.Selection,
-    [
-      'itemCode',
+  const columns = useMemo(() => {
+    const cols: ColumnDef<Groupable<StocktakeLineFragment>>[] = [
       {
-        getSortValue: row => {
-          return row.item?.code ?? '';
-        },
-        accessor: ({ rowData }) => rowData.item?.code ?? '',
-        isSticky: true,
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        pin: 'left',
+        size: 120,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
-    ],
-    [
-      'itemName',
       {
-        Cell: TooltipTextCell,
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'itemName'] },
-            { path: ['itemName'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'itemName'] },
-            { path: ['itemName'], default: '' },
-          ]),
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 400,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
-    ],
-    [
-      'batch',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'batch'] },
-            { path: ['batch'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'batch'] },
-            { path: ['batch'] },
-          ]),
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        enableSorting: true,
         defaultHideOnMobile: true,
       },
-    ],
-    [
-      'expiryDate',
       {
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'expiryDate'] },
-            { path: ['expiryDate'] },
-          ]),
+        id: 'expiryDate',
+        // expiryDate from backend is a string - use accessorFn to convert to Date object for sort and filtering
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
+        header: t('label.expiry-date'),
+        columnType: ColumnType.Date,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: 'locationCode',
+        accessorFn: row => row.location?.code ?? '',
+        header: t('label.location'),
+        size: 100,
         defaultHideOnMobile: true,
       },
-    ],
-    {
-      key: 'locationCode',
-      label: 'label.location',
-      width: 100,
-      accessor: ({ rowData }) =>
-        getColumnProperty(rowData, [
-          { path: ['lines', 'location', 'code'] },
-          { path: ['location', 'code'] },
-        ]),
-      defaultHideOnMobile: true,
-    },
-    [
-      'itemUnit',
       {
-        getSortValue: row => {
-          return row.item?.unitName ?? '';
-        },
-        accessor: ({ rowData }) => rowData.item?.unitName ?? '',
-        sortable: false,
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        enableSorting: true,
         defaultHideOnMobile: true,
       },
-    ],
-    [
-      'packSize',
       {
-        Cell: NumberCell,
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'packSize'] },
-            { path: ['packSize'] },
-          ]),
-        cellProps: {
-          defaultValue: UNDEFINED_STRING_VALUE,
-        },
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
         defaultHideOnMobile: true,
       },
-    ],
-  ];
-
-  if (preferences.manageVaccinesInDoses) {
-    columns.push(getDosesPerUnitColumn(t));
-  }
-
-  columns.push(
-    {
-      key: 'snapshotNumberOfPacks',
-      label: 'label.snapshot-num-of-packs',
-      description: 'description.snapshot-num-of-packs',
-      align: ColumnAlign.Right,
-      Cell: NumberCell,
-      getIsError: row =>
-        getLinesFromRow(row).some(
-          r =>
-            getError(r)?.__typename === 'SnapshotCountCurrentCountMismatchLine'
-        ),
-      sortable: true,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          const { lines } = rowData;
-          return (
-            lines.reduce(
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        includeColumn: manageVaccinesInDoses,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
+      },
+      {
+        // todo: error
+        // getIsError: row =>
+        // getLinesFromRow(row).some(
+        //   r =>
+        //     getError(r)?.__typename === 'SnapshotCountCurrentCountMismatchLine'
+        // ),
+        id: 'snapshotNumberOfPacks',
+        header: t('label.snapshot-num-of-packs'),
+        description: t('description.snapshot-num-of-packs'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        accessorFn: row => {
+          if (row.subRows)
+            return row.subRows.reduce(
               (total, line) => total + line.snapshotNumberOfPacks,
               0
-            ) ?? 0
-          ).toString();
-        } else {
-          return rowData.snapshotNumberOfPacks;
-        }
+            );
+
+          return row.snapshotNumberOfPacks;
+        },
       },
-    },
-    {
-      key: 'countedNumberOfPacks',
-      label: 'label.counted-num-of-packs',
-      description: 'description.counted-num-of-packs',
-      align: ColumnAlign.Right,
-      Cell: props => (
-        <NumberCell {...props} defaultValue={UNDEFINED_STRING_VALUE} />
-      ),
-      getIsError: row =>
-        getLinesFromRow(row).some(
-          r => getError(r)?.__typename === 'StockLineReducedBelowZero'
-        ),
-      sortable: true,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          const { lines } = rowData;
-          const countedLines = lines.flatMap(
-            ({ countedNumberOfPacks: counted }) =>
-              typeof counted === 'number' ? [counted] : []
-          );
-          // No counted lines
-          if (countedLines.length === 0) return null;
-          return countedLines.reduce((total, counted) => total + counted, 0);
-        } else {
-          return rowData.countedNumberOfPacks;
-        }
-      },
-    },
-    getDifferenceColumn(t, preferences.manageVaccinesInDoses ?? false),
-    {
-      key: 'reasonOption',
-      label: 'label.reason',
-      accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
-      sortable: true,
-    }
-  );
-  if (preferences.allowTrackingOfStockByDonor) {
-    columns.push({
-      key: 'donorId',
-      label: 'label.donor',
-      accessor: ({ rowData }) => getStocktakeDonor(rowData, t),
-      sortable: false,
-      defaultHideOnMobile: true,
-    });
-  }
-
-  columns.push(getCommentPopoverColumn(), expandColumn);
-
-  return useColumns(columns, { sortBy, onChangeSortBy }, [
-    sortBy,
-    onChangeSortBy,
-  ]);
-};
-
-export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
-  const { getError } = useStocktakeLineErrorContext();
-
-  return useColumns([
-    'batch',
-    'expiryDate',
-    [
-      'location',
       {
-        accessor: ({ rowData }) => rowData.location?.code,
+        // todo: error
+        //   getIsError: row =>
+        // getLinesFromRow(row).some(
+        //   r => getError(r)?.__typename === 'StockLineReducedBelowZero'
+        // ),
+        id: 'countedNumberOfPacks',
+        header: t('label.counted-num-of-packs'),
+        description: t('description.counted-num-of-packs'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        accessorFn: row => {
+          if (row.subRows) {
+            // return null if no subRows have a countedNumberOfPacks, else sum
+            return row.subRows.reduce<number | null>((total, line) => {
+              if (line.countedNumberOfPacks === null) return total;
+              return (total ?? 0) + (line.countedNumberOfPacks ?? 0);
+            }, null);
+          }
+
+          return row.countedNumberOfPacks;
+        },
       },
-    ],
-    'packSize',
-    {
-      key: 'snapshotNumberOfPacks',
-      width: 150,
-      label: 'label.snapshot-num-of-packs',
-      align: ColumnAlign.Right,
-      getIsError: rowData =>
-        getError(rowData)?.__typename ===
-        'SnapshotCountCurrentCountMismatchLine',
-      accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
-    },
-    {
-      key: 'countedNumberOfPacks',
-      label: 'label.counted-num-of-packs',
-      width: 150,
-      align: ColumnAlign.Right,
-      getIsError: rowData =>
-        getError(rowData)?.__typename === 'StockLineReducedBelowZero',
-      accessor: ({ rowData }) => rowData.countedNumberOfPacks,
-    },
-    'comment',
-    {
-      key: 'reasonOption',
-      label: 'label.reason',
-      accessor: ({ rowData }) => rowData.reasonOption?.reason || '',
-    },
-  ]);
+      {
+        id: 'difference',
+        header: t('label.difference'),
+        columnType: ColumnType.Number,
+        Cell: ({ cell, row }) => (
+          <UnitsAndDosesCell cell={cell} item={row.original.item} />
+        ),
+        accessorFn: row => {
+          if (row.subRows) {
+            return row.subRows.reduce((total, line) => {
+              const difference =
+                (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks) -
+                line.snapshotNumberOfPacks;
+              return total + difference;
+            }, 0);
+          }
+          return (
+            (row.countedNumberOfPacks ?? row.snapshotNumberOfPacks) -
+            row.snapshotNumberOfPacks
+          );
+        },
+      },
+      {
+        id: 'reason',
+        header: t('label.reason'),
+        accessorFn: row => row.reasonOption?.reason,
+        enableSorting: true,
+      },
+      {
+        id: 'donor',
+        header: t('label.donor'),
+        enableSorting: true,
+        accessorFn: row => row.donorName,
+        includeColumn: allowTrackingOfStockByDonor,
+        defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
+    ];
+    return cols;
+  }, []);
+
+  return columns;
 };
