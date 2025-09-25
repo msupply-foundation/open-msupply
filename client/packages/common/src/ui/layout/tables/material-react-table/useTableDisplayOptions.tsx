@@ -224,10 +224,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       },
     }),
 
-    muiTopToolbarProps: {
-      sx: { height: '60px' }, // Prevent slight jump when selecting rows
-    },
-
     muiSelectAllCheckboxProps: {
       color: 'outline',
       size: 'small',
