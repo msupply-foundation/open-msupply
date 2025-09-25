@@ -1,17 +1,20 @@
 import React, { ReactElement } from 'react';
-import { ButtonWithIcon, NothingHere } from '@common/components';
-import { useTranslation } from '@common/intl';
-import { useToggle } from '@common/hooks';
-import { PlusCircleIcon } from '@common/icons';
+import {
+  ButtonWithIcon,
+  useTranslation,
+  NothingHere,
+  useToggle,
+  PlusCircleIcon,
+  Grid,
+} from '@openmsupply-client/common';
 import { PurchaseOrderFragment } from '../../api';
-import { Grid } from '@openmsupply-client/common';
 import {
   DocumentsTable,
   UploadDocumentModal,
 } from '@openmsupply-client/system';
 
 interface DocumentsProps {
-  data: PurchaseOrderFragment | undefined;
+  data?: PurchaseOrderFragment;
   disable: boolean;
   invalidateQueries: () => Promise<void>;
 }
@@ -22,7 +25,6 @@ export const Documents = ({
   invalidateQueries,
 }: DocumentsProps): ReactElement => {
   const t = useTranslation();
-
   const uploadDocumentController = useToggle();
 
   return (
@@ -37,15 +39,17 @@ export const Documents = ({
             label={t('label.upload-document')}
           />
         </Grid>
-        <DocumentsTable
-          recordId={data?.id ?? ''}
-          documents={data?.documents?.nodes ?? []}
-          tableName="purchase_order"
-          noDataElement={
-            <NothingHere body={t('error.no-purchase-order-documents')} />
-          }
-          invalidateQueries={invalidateQueries}
-        />
+        <Grid sx={{ boxShadow: theme => theme.shadows[2] }}>
+          <DocumentsTable
+            recordId={data?.id ?? ''}
+            documents={data?.documents?.nodes ?? []}
+            tableName="purchase_order"
+            noDataElement={
+              <NothingHere body={t('error.no-purchase-order-documents')} />
+            }
+            invalidateQueries={invalidateQueries}
+          />
+        </Grid>
       </Grid>
       {uploadDocumentController.isOn && (
         <UploadDocumentModal
