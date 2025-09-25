@@ -40,6 +40,7 @@ pub struct GoodsReceivedFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterGoodsReceivedStatusInput>,
+    pub purchase_order_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -127,6 +128,7 @@ impl GoodsReceivedFilterInput {
         GoodsReceivedFilter {
             id: self.id.map(EqualFilter::from),
             store_id: None, // This is mapped from the store_id param in the graphql
+            purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
         }
     }
 }
