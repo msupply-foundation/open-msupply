@@ -98,27 +98,33 @@ export const createTableStore = () =>
 
     toggleAll: () => {
       set(state => {
-        const rowIds = Object.keys(state.rowState);
-        const numberOfRows = rowIds.length;
-        const isSelected = state.numberSelected !== numberOfRows;
-        const numberSelected = isSelected ? numberOfRows : 0;
+        const rowEntries = Object.entries(state.rowState);
+        const enabledRows = rowEntries.filter(([, row]) => !row?.isDisabled);
+        const enabledSelectedRows = enabledRows.filter(
+          ([, row]) => row?.isSelected
+        );
+
+        const shouldSelectEnabled =
+          enabledSelectedRows.length !== enabledRows.length;
+
+        const numberSelected = rowEntries.filter(([, row]) => {
+          return row?.isDisabled
+            ? (row?.isSelected ?? false)
+            : shouldSelectEnabled;
+        }).length;
 
         return {
           ...state,
           numberSelected,
-          rowState: Object.keys(state.rowState).reduce(
-            (newState, id) => ({
+          rowState: rowEntries.reduce(
+            (newState, [id, row]) => ({
               ...newState,
               [id]: {
-                ...state.rowState[id],
-                isSelected,
-                isExpanded: state.rowState[id]?.isExpanded ?? false,
-                isDisabled: state.rowState[id]?.isDisabled ?? false,
-                isFocused: state.rowState[id]?.isFocused ?? false,
-                index: state.rowState[id]?.index ?? 0,
+                ...row,
+                isSelected: row?.isDisabled ? false : shouldSelectEnabled,
               },
             }),
-            state.rowState
+            {}
           ),
         };
       });

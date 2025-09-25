@@ -9,6 +9,7 @@ use diesel::{prelude::*, RunQueryDsl};
 pub struct GoodsReceivedFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub purchase_order_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -85,9 +86,14 @@ fn create_filtered_query(filter: Option<GoodsReceivedFilter>) -> BoxedGoodsRecei
     let mut query = goods_received::table.into_boxed();
 
     if let Some(f) = filter {
-        let GoodsReceivedFilter { id, store_id } = f;
+        let GoodsReceivedFilter {
+            id,
+            store_id,
+            purchase_order_id,
+        } = f;
         apply_equal_filter!(query, id, goods_received::id);
         apply_equal_filter!(query, store_id, goods_received::store_id);
+        apply_equal_filter!(query, purchase_order_id, goods_received::purchase_order_id);
     }
 
     query
@@ -105,6 +111,11 @@ impl GoodsReceivedFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn purchase_order_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.purchase_order_id = Some(filter);
         self
     }
 }
