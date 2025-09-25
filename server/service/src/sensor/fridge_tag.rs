@@ -26,6 +26,13 @@ pub fn get_breach_row_type(breach_type: &BreachType) -> TemperatureBreachType {
     }
 }
 
+fn get_sensor_type(sensor_type: &temperature_sensor::SensorType) -> repository::SensorType {
+    match sensor_type {
+        temperature_sensor::SensorType::Berlinger => SensorType::Berlinger,
+        temperature_sensor::SensorType::LogTag => SensorType::LogTag,
+    }
+}
+
 fn get_matching_sensor_serial(
     connection: &StorageConnection,
     serial: &str,
@@ -257,7 +264,7 @@ fn sensor_add_if_new(
         battery_level: None,
         is_active: true,
         log_interval: interval_seconds,
-        r#type: SensorType::Berlinger,
+        r#type: get_sensor_type(&temperature_sensor.sensor_type),
     };
     SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
     log::info!("Added sensor {:?} ", new_sensor);
@@ -508,7 +515,7 @@ mod test {
 
     use super::integrate_sensor_data;
     use crate::{
-        sensor::berlinger::breach_sort_weight,
+        sensor::fridge_tag::breach_sort_weight,
         test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
     use chrono::{Duration, NaiveDate, NaiveDateTime};
