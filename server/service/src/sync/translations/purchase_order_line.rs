@@ -206,9 +206,9 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
         // Total Cost in front end is calculated as: price_per_pack_after_discount * number_of_packs
         // Number of packs is calculated as: (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
         let price_extension_expected = if let Some(adjusted) = adjusted_number_of_units {
-            adjusted * price_per_pack_after_discount
+            price_per_pack_after_discount * (adjusted / requested_pack_size)
         } else {
-            requested_number_of_units * price_per_pack_after_discount
+            price_per_pack_after_discount * (requested_number_of_units / requested_pack_size)
         };
 
         let legacy_row = LegacyPurchaseOrderLineRow {
