@@ -299,6 +299,20 @@ mod update {
             )
             .unwrap();
 
+        // Test activity log created
+        let closed_line_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
+            .unwrap()
+            .into_iter()
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderLineStatusClosed)
+            .collect();
+
+        assert_eq!(closed_line_logs.len(), 1);
+        assert_eq!(
+            closed_line_logs[0].r#type,
+            ActivityLogType::PurchaseOrderLineStatusClosed
+        );
+
         // Edit the adjusted quantity on line B
         service_provider
             .purchase_order_line_service
@@ -322,6 +336,20 @@ mod update {
         assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
         assert_eq!(lines[1].status, PurchaseOrderLineStatus::New);
 
+        // Test activity log created
+        let edited_line_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
+            .unwrap()
+            .into_iter()
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderLineStatusChangedFromSentToNew)
+            .collect();
+
+        assert_eq!(edited_line_logs.len(), 1);
+        assert_eq!(
+            edited_line_logs[0].r#type,
+            ActivityLogType::PurchaseOrderLineStatusChangedFromSentToNew
+        );
+
         // The purchase order status will now be Confirmed
         let purchase_order = PurchaseOrderRowRepository::new(&context.connection)
             .find_one_by_id(&purchase_order_id.clone())
@@ -329,6 +357,20 @@ mod update {
             .unwrap();
 
         assert_eq!(purchase_order.status, PurchaseOrderStatus::Confirmed);
+
+        // Test activity log created
+        let po_status_logs: Vec<_> = ActivityLogRowRepository::new(&context.connection)
+            .find_many_by_record_id(&purchase_order_id.clone())
+            .unwrap()
+            .into_iter()
+            .filter(|l| l.r#type == ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed)
+            .collect();
+
+        assert_eq!(po_status_logs.len(), 1);
+        assert_eq!(
+            po_status_logs[0].r#type,
+            ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
+        );
 
         // Send the purchase order again
         service

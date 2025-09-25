@@ -68,10 +68,11 @@ pub fn update_purchase_order_line(
                 validate(&input, connection, user_has_auth_permission)?;
             let purchase_order_id = current_purchase_order_line.purchase_order_id.clone();
 
-            // Check if the adjusted units have changed
+            // Check if the adjusted units have changed and therefore line status
             let mut updated_input = input.clone();
+            let mut line_status_changed_to_new = false;
 
-            let line_status_change = if input.adjusted_number_of_units
+            if input.adjusted_number_of_units
                 != current_purchase_order_line.adjusted_number_of_units
             {
                 let purchase_order = PurchaseOrderRowRepository::new(connection)
@@ -91,13 +92,9 @@ pub fn update_purchase_order_line(
                 // Handle line status change to New separately. The Purchase Order status may have already been changed by another line
                 if current_purchase_order_line.status == PurchaseOrderLineStatus::Sent {
                     updated_input.status = Some(PurchaseOrderLineStatus::New);
-                    Some((PurchaseOrderLineStatus::Sent, PurchaseOrderLineStatus::New))
-                } else {
-                    None
+                    line_status_changed_to_new = true;
                 }
-            } else {
-                None
-            };
+            }
 
             // Generate the line with the updated input
             let updated_purchase_order_line =
@@ -106,27 +103,21 @@ pub fn update_purchase_order_line(
             PurchaseOrderLineRowRepository::new(connection)
                 .upsert_one(&updated_purchase_order_line)?;
 
-            if updated_purchase_order_line.status == PurchaseOrderLineStatus::Closed {
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::PurchaseOrderLineStatusClosed,
-                    Some(updated_purchase_order_line.purchase_order_id.clone()),
-                    None,
-                    None,
-                )?;
+            let activity_type = if line_status_changed_to_new {
+                ActivityLogType::PurchaseOrderLineStatusChangedFromSentToNew
+            } else if updated_purchase_order_line.status == PurchaseOrderLineStatus::Closed {
+                ActivityLogType::PurchaseOrderLineStatusClosed
             } else {
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::PurchaseOrderLineUpdated,
-                    Some(updated_purchase_order_line.purchase_order_id.clone()),
-                    line_status_change
-                        .as_ref()
-                        .map(|(from, _)| format!("{:?}", from)),
-                    line_status_change
-                        .as_ref()
-                        .map(|(_, to)| format!("{:?}", to)),
-                )?;
-            }
+                ActivityLogType::PurchaseOrderLineUpdated
+            };
+
+            activity_log_entry(
+                ctx,
+                activity_type,
+                Some(updated_purchase_order_line.purchase_order_id.clone()),
+                None,
+                None,
+            )?;
 
             get_purchase_order_line(ctx, Some(store_id), &updated_purchase_order_line.id)
                 .map_err(UpdatePurchaseOrderLineInputError::DatabaseError)?
