@@ -46,7 +46,7 @@ const StocktakeTabs = ({
     {
       Component: (
         <ContentArea
-          onRowClick={!isDisabled ? onRowClick : null}
+          onRowClick={!isDisabled ? onRowClick : undefined}
           onAddItem={() => onOpen()}
         />
       ),
@@ -97,7 +97,7 @@ const DetailViewComponent = ({
           }}
         >
           <ContentArea
-            onRowClick={!isDisabled ? onRowClick : null}
+            onRowClick={!isDisabled ? onRowClick : undefined}
             onAddItem={() => onOpen()}
           />
         </Box>

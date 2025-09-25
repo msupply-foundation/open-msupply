@@ -1,12 +1,10 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
-  DataTable,
   useTranslation,
   NothingHere,
-  useRowStyle,
-  placeholderRowStyle,
-  useUrlQueryParams,
-  BasicSpinner,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+  Groupable,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns } from './columns';
 import { StocktakeLineFragment, useStocktakeOld } from '../../api';
@@ -15,87 +13,45 @@ import { StocktakeSummaryItem } from '../../../types';
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick:
-    | null
+    | undefined
     | ((item: StocktakeSummaryItem | StocktakeLineFragment) => void);
 }
 
 const isUncounted = (line: StocktakeLineFragment): boolean =>
   line.countedNumberOfPacks === null;
 
-const useHighlightUncountedRows = (
-  rows: StocktakeLineFragment[] | StocktakeSummaryItem[] | undefined
-) => {
-  const { setRowStyles } = useRowStyle();
-
-  useEffect(() => {
-    if (!rows) return;
-    const placeholders = [];
-
-    // This is a verbose .filter() on `rows` to find the placeholder lines.
-    // There is an issue with using `filter()` on a type which is
-    // A[] | B[]
-    // https://github.com/microsoft/TypeScript/issues/44373
-    for (const row of rows) {
-      if ('lines' in row) {
-        const hasPlaceholder = row.lines.some(isUncounted);
-        if (hasPlaceholder) {
-          // Add both the OutboundItem and the individual lines, as
-          // this will cause the item to be highlighted as well as the
-          // lines within the expansion when grouped.
-          row.lines.forEach(line => {
-            if (isUncounted(line)) {
-              placeholders.push(line.id);
-            }
-          });
-          placeholders.push(row.id);
-        }
-      } else {
-        if (isUncounted(row)) {
-          placeholders.push(row.id);
-        }
-      }
-    }
-
-    setRowStyles(placeholders, placeholderRowStyle);
-  }, [rows, setRowStyles]);
-};
-
 export const ContentArea: FC<ContentAreaProps> = ({
   onAddItem,
   onRowClick,
 }) => {
   const t = useTranslation();
-  const {
-    updateSortQuery: onChangeSortBy,
-    updatePaginationQuery,
-    queryParams: { page, first, offset, sortBy },
-  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const { isDisabled, isLoading, lines, totalLineCount } =
-    useStocktakeOld.line.rows();
-  const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
-  const pagination = { page, first, offset };
+  const { isDisabled, isLoading, lines } = useStocktakeOld.line.rows();
+  const columns = useStocktakeColumns();
 
-  useHighlightUncountedRows(lines);
+  const { table } = useNonPaginatedMaterialTable<
+    Groupable<StocktakeLineFragment>
+  >({
+    tableId: 'stocktake-detail',
+    columns,
+    isLoading,
+    data: lines || [],
+    onRowClick,
+    groupByField: 'itemName',
+    initialSort: { key: 'itemName', dir: 'asc' },
+    getIsPlaceholderRow: row =>
+      !!(
+        isUncounted(row) ||
+        // Also mark parent rows as placeholder if any subRows are placeholders
+        row.subRows?.some(isUncounted)
+      ),
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-stocktake-items')}
+        onCreate={isDisabled ? undefined : onAddItem}
+        buttonText={t('button.add-item')}
+      />
+    ),
+  });
 
-  return isLoading ? (
-    <BasicSpinner />
-  ) : (
-    <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
-      onRowClick={onRowClick}
-      isRowAnimated={true}
-      columns={columns}
-      data={lines}
-      id="stocktake-detail"
-      noDataElement={
-        <NothingHere
-          body={t('error.no-stocktake-items')}
-          onCreate={isDisabled ? undefined : onAddItem}
-          buttonText={t('button.add-item')}
-        />
-      }
-      enableColumnSelection
-      pagination={{ ...pagination, total: totalLineCount }}
-      onChangePage={updatePaginationQuery}
-    />
-  );
+  return <MaterialTable table={table} />;
 };
