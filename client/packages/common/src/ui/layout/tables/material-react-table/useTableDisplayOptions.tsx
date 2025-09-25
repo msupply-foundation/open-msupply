@@ -97,17 +97,19 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
         flexDirection: 'column',
       },
     },
-    muiTableProps: {
+    muiTableProps: ({ table }) => ({
       // Need to apply this here so that relative sizes (ems, %) within table
       // are correct
       sx: theme => ({
         // Need to apply this here so that relative sizes (ems, %) within table are correct
         fontSize: theme.typography.body1.fontSize,
-        display: 'flex',
-        flex: 1,
-        flexDirection: 'column',
+        // Make the NothingHere component vertically centered when there are no
+        // rows (in conjunction with muiTableBodyProps below)
+        ...(table.getRowCount() === 0
+          ? { display: 'flex', flex: 1, flexDirection: 'column' }
+          : {}),
       }),
-    },
+    }),
 
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
