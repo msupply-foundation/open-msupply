@@ -76,22 +76,40 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
 
     // Styling
     muiTablePaperProps: {
-      sx: { width: '100%', display: 'flex', flexDirection: 'column' },
+      sx: {
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        // Reduce the height and padding of the Actions toolbar
+        '& > .MuiBox-root': {
+          minHeight: '2.5rem',
+          height: 'unset',
+        },
+        '& > .MuiBox-root > .MuiBox-root': {
+          paddingY: 0,
+        },
+      },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, display: 'flex', flexDirection: 'column' },
+      sx: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+      },
     },
-    muiTableProps: {
+    muiTableProps: ({ table }) => ({
       // Need to apply this here so that relative sizes (ems, %) within table
       // are correct
       sx: theme => ({
         // Need to apply this here so that relative sizes (ems, %) within table are correct
         fontSize: theme.typography.body1.fontSize,
-        display: 'flex',
-        flex: 1,
-        flexDirection: 'column',
+        // Make the NothingHere component vertically centered when there are no
+        // rows (in conjunction with muiTableBodyProps below)
+        ...(table.getRowCount() === 0
+          ? { display: 'flex', flex: 1, flexDirection: 'column' }
+          : {}),
       }),
-    },
+    }),
 
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
@@ -100,6 +118,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
         lineHeight: 1.2,
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
+        opacity: 1,
         '& .MuiTableSortLabel-root': {
           display: column.getIsSorted() ? undefined : 'none',
         },
@@ -132,10 +151,14 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       },
     }),
 
-    muiTableBodyProps: ({ table }) => ({
-      // Make the NothingHere component vertically centered when there are no rows
-      sx: { height: table.getRowCount() === 0 ? '100%' : 'auto' },
-    }),
+    muiTableBodyProps: ({ table }) =>
+      // Make the NothingHere component vertically centered when there are no
+      // rows
+      table.getRowCount() === 0
+        ? {
+            sx: { height: '100%' },
+          }
+        : {},
 
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
@@ -151,10 +174,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       },
     }),
 
-    muiTableBodyCellProps: ({ cell, row, table }) => ({
+    muiTableBodyCellProps: ({ cell, row, column, table }) => ({
       sx: {
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
+        // Remove transparency from pinned backgrounds
+        opacity: 1,
         color: getIsPlaceholderRow(row.original)
           ? 'secondary.light'
           : getIsRestrictedRow(row.original)
@@ -187,6 +212,11 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
           row.original?.['isSubRow'] && cell.column.id !== 'mrt-row-select'
             ? '2em'
             : undefined,
+        backgroundColor:
+          column.getIsPinned() || row.getIsSelected()
+            ? // Remove transparency from pinned backgrounds
+              'rgba(252, 252, 252, 1)'
+            : undefined,
       },
     }),
 
@@ -210,6 +240,17 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
     },
     muiToolbarAlertBannerProps: {
       sx: { backgroundColor: 'unset' },
+    },
+    displayColumnDefOptions: {
+      'mrt-row-select': {
+        size: 50,
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
     },
   };
 };
