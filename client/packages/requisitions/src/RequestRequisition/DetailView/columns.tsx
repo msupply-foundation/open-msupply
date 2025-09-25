@@ -249,7 +249,8 @@ export const useRequestColumns = () => {
       Cell: PackQuantityCell,
       accessor: ({ rowData }) =>
         rowData.linkedRequisitionLine?.approvedQuantity ?? 0,
-      sortable: false,
+      getSortValue: rowData =>
+        rowData.linkedRequisitionLine?.approvedQuantity ?? 0,
     });
     columnDefinitions.push({
       key: 'approvalComment',

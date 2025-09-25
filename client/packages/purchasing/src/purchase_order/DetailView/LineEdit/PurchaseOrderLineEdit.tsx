@@ -182,7 +182,7 @@ export const PurchaseOrderLineEdit = ({
                 draft?.numberOfPacks ?? 0,
                 {
                   onChange: value => {
-                    // Adjust the requested and adjusted number of units based
+                    // Adjust the requested or adjusted number of units based
                     // on the number of packs * pack size
                     const adjustedPatch = calculateUnitQuantities(status, {
                       ...draft,
