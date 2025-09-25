@@ -1560,6 +1560,7 @@
   "log.purchase-order-status-changed-from-sent-to-confirmed": "Purchase order status changed from sent to ready for sending",
   "log.purchase-order-line-created": "Purchase order line created",
   "log.purchase-order-line-deleted": "Purchase order line deleted",
+  "log.purchase-order-line-status-changed-from-sent-to-new": "Purchase order line status changed from sent to new",
   "log.purchase-order-line-status-closed": "Purchase order line marked as received",
   "log.purchase-order-line-updated": "Purchase order line updated",
   "log.quantity-for-line-has-been-set-to-zero": "The quantity of this batch has been set to 0",

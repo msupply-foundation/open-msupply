@@ -118,6 +118,7 @@ pub enum ActivityLogType {
     PurchaseOrderLineDeleted,
     PurchaseOrderStatusChangedFromSentToConfirmed,
     PurchaseOrderLineStatusClosed,
+    PurchaseOrderLineStatusChangedFromSentToNew,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]

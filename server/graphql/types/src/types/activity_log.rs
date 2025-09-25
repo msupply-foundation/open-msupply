@@ -108,6 +108,7 @@ pub enum ActivityLogNodeType {
     PurchaseOrderLineDeleted,
     PurchaseOrderStatusChangedFromSentToConfirmed,
     PurchaseOrderLineStatusClosed,
+    PurchaseOrderLineStatusChangedFromSentToNew,
 }
 
 #[Object]
