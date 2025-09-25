@@ -15,17 +15,17 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea, Details } from './Tabs';
+import { ActivityLogList, DocumentsTable } from '@openmsupply-client/system';
+
+import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
+import { PurchaseOrderLineFragment, usePurchaseOrder } from '../api';
+import { PurchaseOrderLineErrorProvider } from '../context';
+import { ContentArea, Details, GoodsReceived } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
-import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
-import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
-import { ActivityLogList, DocumentsTable } from '@openmsupply-client/system';
-import { PurchaseOrderLineErrorProvider } from '../context';
+import { PurchaseOrderLineEditModal } from './LineEdit';
 
 export const DetailViewInner = () => {
   const t = useTranslation();
@@ -85,11 +85,15 @@ export const DetailViewInner = () => {
           onRowClick={!isDisabled ? onRowClick : null}
         />
       ),
-      value: 'General',
+      value: t('label.general'),
+    },
+    {
+      Component: <GoodsReceived />,
+      value: t('label.goods-received'),
     },
     {
       Component: <Details draft={draft} onChange={handleChange} />,
-      value: 'Details',
+      value: t('label.details'),
     },
     {
       Component: (
@@ -103,11 +107,11 @@ export const DetailViewInner = () => {
           invalidateQueries={invalidateQueries}
         />
       ),
-      value: 'Documents',
+      value: t('label.documents'),
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
-      value: 'Log',
+      value: t('label.log'),
     },
   ];
 

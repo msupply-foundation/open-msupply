@@ -198,7 +198,7 @@ const DetailViewInner = () => {
 
             <DetailTabs tabs={tabs} />
 
-            {tab === InboundShipmentDetailTabs.Details && (
+            {(tab === InboundShipmentDetailTabs.Details || !tab) && (
               <Footer onReturnLines={onReturn} />
             )}
             <SidePanel />
