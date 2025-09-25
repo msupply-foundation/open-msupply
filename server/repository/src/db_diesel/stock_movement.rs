@@ -410,7 +410,7 @@ mod test {
         assert_eq!(
             rows.iter().map(|r| r.quantity).sum::<f64>(),
             -45.0,
-            "Total quantity should included merge item stock"
+            "Total quantity should include merge item stock"
         );
     }
 }
