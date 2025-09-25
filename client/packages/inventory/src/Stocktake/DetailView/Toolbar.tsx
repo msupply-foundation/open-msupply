@@ -8,10 +8,8 @@ import {
   InputWithLabelRow,
   DateTimePickerInput,
   Formatter,
-  SearchBar,
   DateUtils,
   Alert,
-  useUrlQuery,
   useSimplifiedTabletUI,
   TypedTFunction,
   LocaleKey,
@@ -34,13 +32,6 @@ export const Toolbar = () => {
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
-
-  const { urlQuery, updateQuery } = useUrlQuery({
-    skipParse: ['itemCodeOrName'],
-  });
-  const itemFilter = (urlQuery['itemCodeOrName'] as string) ?? '';
-  const setItemFilter = (itemFilter: string) =>
-    updateQuery({ itemCodeOrName: itemFilter });
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -74,20 +65,6 @@ export const Toolbar = () => {
                 t={t}
                 stocktakeDate={stocktakeDate}
                 infoMessage={infoMessage}
-              />
-            </Grid>
-            <Grid
-              display="flex"
-              gap={1}
-              justifyContent="flex-end"
-              alignItems="center"
-            >
-              <SearchBar
-                placeholder={t('placeholder.filter-items')}
-                value={itemFilter}
-                onChange={newValue => {
-                  setItemFilter(newValue);
-                }}
               />
             </Grid>
           </>
