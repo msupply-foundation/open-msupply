@@ -3917,8 +3917,8 @@ export type InsertPurchaseOrderLineInput = {
   itemIdOrCode: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
-  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerPackAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerPackBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
@@ -7218,8 +7218,8 @@ export type PurchaseOrderLineNode = {
   lineNumber: Scalars['Int']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
-  pricePerUnitAfterDiscount: Scalars['Float']['output'];
-  pricePerUnitBeforeDiscount: Scalars['Float']['output'];
+  pricePerPackAfterDiscount: Scalars['Float']['output'];
+  pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
   receivedNumberOfUnits: Scalars['Float']['output'];
@@ -10581,8 +10581,8 @@ export type UpdatePurchaseOrderLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   manufacturerId?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<NullableStringUpdate>;
-  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
-  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerPackAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerPackBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;

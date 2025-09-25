@@ -72,8 +72,8 @@ export type PurchaseOrderFragment = {
       requestedNumberOfUnits: number;
       receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
-      pricePerUnitAfterDiscount: number;
-      pricePerUnitBeforeDiscount: number;
+      pricePerPackAfterDiscount: number;
+      pricePerPackBeforeDiscount: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
@@ -152,8 +152,8 @@ export type PurchaseOrderLineFragment = {
   requestedNumberOfUnits: number;
   receivedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
-  pricePerUnitAfterDiscount: number;
-  pricePerUnitBeforeDiscount: number;
+  pricePerPackAfterDiscount: number;
+  pricePerPackBeforeDiscount: number;
   note?: string | null;
   unit?: string | null;
   comment?: string | null;
@@ -288,8 +288,8 @@ export type PurchaseOrderByIdQuery = {
             requestedNumberOfUnits: number;
             receivedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
-            pricePerUnitAfterDiscount: number;
-            pricePerUnitBeforeDiscount: number;
+            pricePerPackAfterDiscount: number;
+            pricePerPackBeforeDiscount: number;
             note?: string | null;
             unit?: string | null;
             comment?: string | null;
@@ -457,8 +457,8 @@ export type PurchaseOrderLinesQuery = {
       requestedNumberOfUnits: number;
       receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
-      pricePerUnitAfterDiscount: number;
-      pricePerUnitBeforeDiscount: number;
+      pricePerPackAfterDiscount: number;
+      pricePerPackBeforeDiscount: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
@@ -529,8 +529,8 @@ export type PurchaseOrderLineQuery = {
       requestedNumberOfUnits: number;
       receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
-      pricePerUnitAfterDiscount: number;
-      pricePerUnitBeforeDiscount: number;
+      pricePerPackAfterDiscount: number;
+      pricePerPackBeforeDiscount: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
@@ -731,8 +731,8 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedNumberOfUnits
     receivedNumberOfUnits
     adjustedNumberOfUnits
-    pricePerUnitAfterDiscount
-    pricePerUnitBeforeDiscount
+    pricePerPackAfterDiscount
+    pricePerPackBeforeDiscount
     manufacturer(storeId: $storeId) {
       ...NameRow
     }

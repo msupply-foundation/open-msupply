@@ -243,7 +243,7 @@ export const PurchaseOrderLineEdit = ({
             )}
             <NumInputRow
               label={t('label.price-per-pack-before-discount')}
-              value={getCurrencyValue(draft?.pricePerUnitBeforeDiscount)}
+              value={getCurrencyValue(draft?.pricePerPackBeforeDiscount)}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -251,7 +251,7 @@ export const PurchaseOrderLineEdit = ({
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
                   'pricePerPackBeforeDiscount',
-                  { ...draft, pricePerUnitBeforeDiscount: value }
+                  { ...draft, pricePerPackBeforeDiscount: value }
                 );
                 update(adjustedPatch);
               }}
@@ -278,7 +278,7 @@ export const PurchaseOrderLineEdit = ({
             />
             <NumInputRow
               label={t('label.price-per-pack-after-discount')}
-              value={getCurrencyValue(draft?.pricePerUnitAfterDiscount)}
+              value={getCurrencyValue(draft?.pricePerPackAfterDiscount)}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -286,7 +286,7 @@ export const PurchaseOrderLineEdit = ({
               onChange={(value: number | undefined) => {
                 const adjustedPatch = calculatePricesAndDiscount(
                   'pricePerPackAfterDiscount',
-                  { ...draft, pricePerUnitAfterDiscount: value }
+                  { ...draft, pricePerPackAfterDiscount: value }
                 );
                 update(adjustedPatch);
               }}
@@ -298,8 +298,8 @@ export const PurchaseOrderLineEdit = ({
               value={
                 draft
                   ? getCurrencyValue(
-                      (draft.pricePerUnitAfterDiscount ?? 0) *
-                        (draft.requestedNumberOfUnits ?? 0)
+                      (draft.pricePerPackAfterDiscount ?? 0) *
+                        (draft.numberOfPacks ?? 0)
                     )
                   : 0
               }

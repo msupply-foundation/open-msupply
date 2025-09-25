@@ -21,8 +21,6 @@ export type DraftPurchaseOrderLine = Omit<
   discountPercentage: number;
   numberOfPacks: number;
   requestedNumberOfPacks?: number;
-  pricePerPackBeforeDiscount?: number;
-  pricePerPackAfterDiscount?: number;
 };
 
 export type DraftPurchaseOrderLineFromCSV = Omit<
@@ -41,9 +39,9 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
   adjustedNumberOfUnits: null,
+  pricePerPackBeforeDiscount: 0,
+  pricePerPackAfterDiscount: 0,
   lineNumber: 0,
-  pricePerUnitBeforeDiscount: 0,
-  pricePerUnitAfterDiscount: 0,
   manufacturer: null,
   note: null,
   unit: null,
@@ -66,8 +64,6 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
   receivedNumberOfUnits: 0,
-  pricePerPackBeforeDiscount: 0,
-  pricePerPackAfterDiscount: 0,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {
@@ -81,11 +77,11 @@ export function usePurchaseOrderLine(id?: string | null) {
   // other fields updated accordingly -- see the column definitions for how that
   // works)
   const initialDiscountPercentage =
-    data?.nodes[0]?.pricePerUnitBeforeDiscount &&
-    data?.nodes[0]?.pricePerUnitAfterDiscount
-      ? ((data?.nodes[0]?.pricePerUnitBeforeDiscount -
-          data?.nodes[0]?.pricePerUnitAfterDiscount) /
-          (data?.nodes[0]?.pricePerUnitBeforeDiscount || 1)) *
+    data?.nodes[0]?.pricePerPackBeforeDiscount &&
+    data?.nodes[0]?.pricePerPackAfterDiscount
+      ? ((data?.nodes[0]?.pricePerPackBeforeDiscount -
+          data?.nodes[0]?.pricePerPackAfterDiscount) /
+          (data?.nodes[0]?.pricePerPackBeforeDiscount || 1)) *
         100
       : 0;
 
@@ -125,8 +121,8 @@ export function usePurchaseOrderLine(id?: string | null) {
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
       requestedDeliveryDate: draft.requestedDeliveryDate,
       expectedDeliveryDate: draft.expectedDeliveryDate,
-      pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
-      pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
+      pricePerPackAfterDiscount: draft.pricePerPackAfterDiscount,
+      pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,
       manufacturerId: draft.manufacturer?.id,
       note: draft.note,
       unit: draft.unit,
@@ -156,8 +152,8 @@ export function usePurchaseOrderLine(id?: string | null) {
       requestedDeliveryDate: draft.requestedDeliveryDate,
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
       adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
-      pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
-      pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
+      pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,
+      pricePerPackAfterDiscount: draft.pricePerPackAfterDiscount,
       manufacturerId: setNullableInput('id', draft.manufacturer),
       note: setNullableInput('note', draft),
       unit: draft.unit,
