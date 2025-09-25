@@ -7,7 +7,7 @@ import {
   ColumnType,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
-import { StocktakeLineFragment } from '../../api';
+import { StocktakeLineFragment } from '../api';
 
 export const useStocktakeColumns = () => {
   const t = useTranslation();

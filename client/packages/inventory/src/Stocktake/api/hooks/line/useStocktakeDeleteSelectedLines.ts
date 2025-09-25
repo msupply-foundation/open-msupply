@@ -1,25 +1,15 @@
-import {
-  useTableStore,
-  useDeleteConfirmation,
-} from '@openmsupply-client/common';
+import { useDeleteConfirmation } from '@openmsupply-client/common';
 import { StocktakeLineFragment } from '../../operations.generated';
 import { useTranslation } from '@common/intl';
 import { useStocktakeDeleteLines } from './useStocktakeDeleteLines';
-import { useStocktakeRows } from './useStocktakeRows';
+import { useIsStocktakeDisabled } from '../utils/useIsStocktakeDisabled';
 
-export const useStocktakeDeleteSelectedLines = (): (() => void) => {
+export const useStocktakeDeleteSelectedLines = (
+  selectedRows: StocktakeLineFragment[]
+): (() => void) => {
   const t = useTranslation();
-  const { isDisabled, lines } = useStocktakeRows();
+  const isDisabled = useIsStocktakeDisabled();
   const { mutateAsync } = useStocktakeDeleteLines();
-
-  const { selectedRows } = useTableStore(state => {
-    return {
-      selectedRows: Object.keys(state.rowState)
-        .filter(id => state.rowState[id]?.isSelected)
-        .map(selectedId => lines?.find(({ id }) => selectedId === id))
-        .filter(Boolean) as StocktakeLineFragment[],
-    };
-  });
 
   const onDelete = async () => {
     await mutateAsync(selectedRows).catch(err => {
