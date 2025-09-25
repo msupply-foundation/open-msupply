@@ -42,7 +42,7 @@ export const OutboundShipmentListView = () => {
   });
   const queryParams = { ...filter, sortBy, first, offset };
 
-  const { data, isLoading } = useOutbound.document.list(queryParams);
+  const { data, isFetching } = useOutbound.document.list(queryParams);
   const { mutate: onUpdate } = useOutbound.document.update();
 
   const mrtColumns = useMemo(
@@ -121,14 +121,14 @@ export const OutboundShipmentListView = () => {
   const { table, selectedRows } =
     usePaginatedMaterialTable<OutboundRowFragment>({
       tableId: 'outbound-shipment-list',
-      isLoading,
+      isLoading: isFetching,
       onRowClick: row => navigate(row.id),
       columns: mrtColumns,
       data: data?.nodes,
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
       getIsRestrictedRow: isOutboundDisabled,
-      noDataElement: (
+      renderEmptyRowsFallback: () => (
         <NothingHere
           body={t('error.no-outbound-shipments')}
           onCreate={modalController.toggleOn}

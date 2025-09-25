@@ -101,7 +101,7 @@ export const DetailView = () => {
       getIsPlaceholderRow: row =>
         row.type === InvoiceLineNodeType.UnallocatedStock ||
         row.numberOfPacks === 0,
-      noDataElement: (
+      renderEmptyRowsFallback: () => (
         <NothingHere
           body={t('error.no-outbound-items')}
           onCreate={isDisabled ? undefined : () => onAddItem()}
