@@ -152,8 +152,8 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
         expectedDeliveryDate: Formatter.naiveDate(
           DateUtils.getNaiveDate(input.expectedDeliveryDate)
         ),
-        pricePerUnitAfterDiscount: input.pricePerUnitAfterDiscount,
-        pricePerUnitBeforeDiscount: input.pricePerUnitBeforeDiscount,
+        pricePerPackAfterDiscount: input.pricePerPackAfterDiscount,
+        pricePerPackBeforeDiscount: input.pricePerPackBeforeDiscount,
         manufacturerId: input.manufacturer?.id,
         note: input.note,
         unit: input.unit,
@@ -273,7 +273,7 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
                 onUploadComplete={() => {
                   changeTab(Tabs.Review);
                 }}
-                status={data?.status || PurchaseOrderNodeStatus.New }
+                status={data?.status || PurchaseOrderNodeStatus.New}
               />
             </QueryParamsProvider>
             <ReviewTab
