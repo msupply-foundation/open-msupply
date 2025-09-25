@@ -6,7 +6,6 @@ use repository::{
     StorageConnection,
 };
 use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
-use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError};
 
 pub(crate) struct GenerateResult {
     pub updated_order: PurchaseOrderRow,
