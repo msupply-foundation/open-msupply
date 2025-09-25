@@ -114,9 +114,9 @@ export const disabledStatusGroup: Record<
 };
 
 /**
-Determines if a field should be editable or disabled based on the status of the purchase order
-If the status is in the disabled group, the function will return true
-When passed into the input, it overrides the 'base' disabled bool 
+  Determines if a field should be editable or disabled based on the status of the purchase order
+  If the status is in the disabled group, the function will return true
+  When passed into the input, it overrides the 'base' disabled bool 
 */
 export const isFieldDisabled = (
   status: PurchaseOrderNodeStatus,

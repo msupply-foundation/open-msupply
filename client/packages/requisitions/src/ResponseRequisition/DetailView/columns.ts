@@ -248,6 +248,7 @@ export const useResponseColumns = () => {
       sortable: true,
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => rowData.approvedQuantity,
+      getSortValue: rowData => rowData.approvedQuantity,
     });
     columnDefinitions.push({
       key: 'approvalComment',
