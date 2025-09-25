@@ -9,7 +9,6 @@ import {
   useNavigate,
   useTranslation,
   DetailTabs,
-  useRowHighlight,
   useBreadcrumbs,
   useSimplifiedTabletUI,
   Box,
@@ -69,7 +68,6 @@ const DetailViewComponent = ({
   isDisabled: boolean;
   onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
 }) => {
-  const { HighlightStyles } = useRowHighlight();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   const onRowClick = useCallback(
@@ -81,7 +79,6 @@ const DetailViewComponent = ({
 
   return (
     <>
-      <HighlightStyles />
       <AppBarButtons onAddItem={() => onOpen()} />
 
       <Footer />
