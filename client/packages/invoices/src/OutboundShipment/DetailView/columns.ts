@@ -55,6 +55,8 @@ export const useOutboundColumns = () => {
         accessorFn: row => row.vvmStatus?.description ?? '',
         header: t('label.vvm-status'),
         includeColumn: manageVvmStatusForStock,
+        enableColumnFilter: true,
+        filterVariant: 'select',
         defaultHideOnMobile: true,
       },
       {
