@@ -66,6 +66,7 @@ pub struct LegacyPurchaseOrderLineRow {
     pub price_per_pack_before_discount: f64,
     #[serde(default)]
     #[serde(rename = "price_expected_after_discount")]
+    // Currently does not save in OMS database, but we calculate it when pushing to legacy
     pub price_per_pack_after_discount: f64,
     #[serde(rename = "price_extension_expected")]
     pub price_extension_expected: f64,
@@ -203,12 +204,14 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
 
-        // Total Cost in front end is calculated as: price_per_pack_after_discount * number_of_packs
-        // Number of packs is calculated as: (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
-        let price_extension_expected = if let Some(adjusted) = adjusted_number_of_units {
-            price_per_pack_after_discount * (adjusted / requested_pack_size)
+        // Total Cost calculated in Front End: price_per_pack_after_discount * number_of_packs
+        // Number of packs = (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
+        let price_extension_expected = if requested_pack_size > 0.0 {
+            price_per_pack_after_discount
+                * (adjusted_number_of_units.unwrap_or(requested_number_of_units)
+                    / requested_pack_size)
         } else {
-            price_per_pack_after_discount * (requested_number_of_units / requested_pack_size)
+            0.0
         };
 
         let legacy_row = LegacyPurchaseOrderLineRow {
