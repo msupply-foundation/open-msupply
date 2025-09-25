@@ -69,7 +69,6 @@ export const useOutboundColumns = () => {
         id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
-        filterVariant: 'select',
         defaultHideOnMobile: true,
       },
       {

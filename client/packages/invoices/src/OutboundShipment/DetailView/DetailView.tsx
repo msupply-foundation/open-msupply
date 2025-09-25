@@ -15,6 +15,7 @@ import {
   MaterialTable,
   NothingHere,
   useIsGroupedState,
+  Groupable,
 } from '@openmsupply-client/common';
 import {
   toItemRow,
@@ -89,26 +90,34 @@ export const DetailView = () => {
 
   const columns = useOutboundColumns();
 
-  const { table, selectedRows } =
-    useNonPaginatedMaterialTable<StockOutLineFragment>({
-      tableId: 'outbound-shipment-detail-view',
-      columns,
-      data: rows,
-      groupByField: isGrouped ? 'itemName' : undefined,
-      isLoading: false,
-      initialSort: { key: 'itemName', dir: 'asc' },
-      onRowClick: !isDisabled ? onRowClick : undefined,
-      getIsPlaceholderRow: row =>
-        row.type === InvoiceLineNodeType.UnallocatedStock ||
-        row.numberOfPacks === 0,
-      renderEmptyRowsFallback: () => (
-        <NothingHere
-          body={t('error.no-outbound-items')}
-          onCreate={isDisabled ? undefined : () => onAddItem()}
-          buttonText={t('button.add-item')}
-        />
+  const isPlaceholderRow = (row: StockOutLineFragment) =>
+    row.type === InvoiceLineNodeType.UnallocatedStock ||
+    row.numberOfPacks === 0;
+
+  const { table, selectedRows } = useNonPaginatedMaterialTable<
+    Groupable<StockOutLineFragment>
+  >({
+    tableId: 'outbound-shipment-detail-view',
+    columns,
+    data: rows,
+    groupByField: isGrouped ? 'itemName' : undefined,
+    isLoading: false,
+    initialSort: { key: 'itemName', dir: 'asc' },
+    onRowClick: !isDisabled ? onRowClick : undefined,
+    getIsPlaceholderRow: row =>
+      !!(
+        isPlaceholderRow(row) ||
+        // Also mark parent rows as placeholder if any subRows are placeholders
+        row.subRows?.some(isPlaceholderRow)
       ),
-    });
+    renderEmptyRowsFallback: () => (
+      <NothingHere
+        body={t('error.no-outbound-items')}
+        onCreate={isDisabled ? undefined : () => onAddItem()}
+        buttonText={t('button.add-item')}
+      />
+    ),
+  });
 
   // Table manages the sorting state
   // This needs to be passed to the edit modal, so based on latest sort order
