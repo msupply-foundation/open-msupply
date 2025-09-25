@@ -269,7 +269,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       SELECT
         invoice_line_stock_movement.id AS id,
         quantity_movement AS movement_in_units,
-        invoice_line_stock_movement.item_link_id AS item_id,
+        invoice_line_stock_movement.item_id AS item_id,
         invoice.store_id as store_id,
         CASE WHEN invoice.type IN (
           'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION'
