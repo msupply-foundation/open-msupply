@@ -139,41 +139,26 @@ fn create_inventory_adjustment(
     let datetime = match stock_line_ledger_row {
         Some(r) => r.datetime.clone(),
         None => {
-            let stocktake_line_ids: Vec<String> = StocktakeLineRepository::new(connection)
+            let filter = StocktakeFilter::new()
+                .store_id(EqualFilter::equal_to(&store_id))
+                .status(EqualFilter {
+                    equal_to: Some(StocktakeStatus::Finalised),
+                    ..Default::default()
+                })
+                .stocktake_line(
+                    StocktakeLineFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+                );
+
+            StocktakeRepository::new(connection)
                 .query(
                     Pagination::all(),
-                    Some(
-                        StocktakeLineFilter::new()
-                            .stock_line_id(EqualFilter::equal_to(stock_line_id)),
-                    ),
-                    None,
-                    Some(store_id.clone()),
-                )?
-                .into_iter()
-                .map(|l| l.line.id)
-                .collect();
-            let stocktakes = StocktakeRepository::new(connection)
-                .query(
-                    Pagination::all(),
-                    Some(
-                        StocktakeFilter::new()
-                            .store_id(EqualFilter::equal_to(&store_id))
-                            .status(EqualFilter {
-                                equal_to: Some(StocktakeStatus::Finalised),
-                                ..Default::default()
-                            }),
-                    ),
+                    Some(filter),
                     Some(Sort {
                         key: StocktakeSortField::FinalisedDatetime,
                         desc: None,
                     }),
                 )?
-                .into_iter()
-                .filter(|stocktake| stocktake_line_ids.contains(&stocktake.id))
-                .collect::<Vec<StocktakeRow>>();
-            let stocktake = stocktakes.first();
-
-            stocktake
+                .first()
                 .and_then(|s| s.finalised_datetime)
                 .unwrap_or_else(|| Utc::now().naive_utc())
         }
