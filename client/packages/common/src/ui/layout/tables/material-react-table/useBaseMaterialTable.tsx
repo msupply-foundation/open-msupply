@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   MRT_RowData,
   MRT_TableOptions,
@@ -19,6 +19,7 @@ import {
   useColumnPinning,
 } from './tableState';
 import { clearSavedState } from './tableState/utils';
+import { NothingHere } from '@common/components';
 
 export interface BaseTableConfig<T extends MRT_RowData>
   extends Omit<MRT_TableOptions<T>, 'data'> {
@@ -32,6 +33,7 @@ export interface BaseTableConfig<T extends MRT_RowData>
   groupByField?: string;
   columns: ColumnDef<T>[];
   initialSort?: { key: string; dir: 'asc' | 'desc' };
+  noDataElement?: React.ReactNode;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -48,6 +50,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   enableColumnResizing = true,
   manualFiltering = false,
   initialSort,
+  noDataElement,
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
@@ -155,6 +158,9 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onColumnVisibilityChange: columnVisibility.update,
     onColumnPinningChange: columnPinning.update,
     onColumnOrderChange: columnOrder.update,
+
+    renderEmptyRowsFallback: () =>
+      isLoading ? <></> : (noDataElement ?? <NothingHere />),
 
     ...displayOptions,
     ...tableOptions,
