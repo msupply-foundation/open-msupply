@@ -62,7 +62,7 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_item_code: Option<String>,
     #[serde(default)]
-    #[serde(rename = "price_expected_before_discount")]
+    #[serde(rename = "price_per_pack_before_discount")]
     pub price_per_pack_before_discount: f64,
     #[serde(default)]
     #[serde(rename = "price_expected_after_discount")]
@@ -204,7 +204,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
 
         // Total Cost in front end is calculated as: price_per_pack_after_discount * number_of_packs
-        // Number of packs is calculated as: (reqested_number_of_units OR adjusted_number_of_units) / requested_pack_size
+        // Number of packs is calculated as: (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
         let price_extension_expected = if let Some(adjusted) = adjusted_number_of_units {
             adjusted * price_per_pack_after_discount
         } else {

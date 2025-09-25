@@ -25,15 +25,15 @@ impl ViewMigrationFragment for ViewMigration {
                     COALESCE(SUM(
                         CASE
                             WHEN pol.adjusted_number_of_units IS NOT NULL
-                            THEN pol.adjusted_number_of_units * pol.price_per_pack_after_discount
-                            ELSE pol.requested_number_of_units * pol.price_per_pack_after_discount
+                            THEN (pol.adjusted_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
+                            ELSE (pol.requested_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
                         END
                     ), 0) AS order_total_before_discount,
                     COALESCE(SUM(
                         CASE
                             WHEN pol.adjusted_number_of_units IS NOT NULL
-                            THEN pol.adjusted_number_of_units * pol.price_per_pack_after_discount
-                            ELSE pol.requested_number_of_units * pol.price_per_pack_after_discount
+                            THEN (pol.adjusted_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
+                            ELSE (pol.requested_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
                         END
                     ), 0) * (1-(COALESCE(po.supplier_discount_percentage, 0)/100)) AS order_total_after_discount 
 

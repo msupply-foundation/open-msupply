@@ -115,12 +115,14 @@ export const usePurchaseOrderColumns = () => {
       accessor: ({ rowData }) => {
         const units =
           rowData.adjustedNumberOfUnits ?? rowData.requestedNumberOfUnits ?? 0;
-        return (rowData.pricePerUnitAfterDiscount ?? 0) * units;
+        const packSize = rowData.requestedPackSize || 1;
+        return (rowData.pricePerPackAfterDiscount ?? 0) * (units / packSize);
       },
       getSortValue: rowData => {
         const units =
           rowData.adjustedNumberOfUnits ?? rowData.requestedNumberOfUnits ?? 0;
-        return (rowData.pricePerUnitAfterDiscount ?? 0) * units;
+        const packSize = rowData.requestedPackSize || 1;
+        return (rowData.pricePerPackAfterDiscount ?? 0) * (units / packSize);
       },
     },
     {
