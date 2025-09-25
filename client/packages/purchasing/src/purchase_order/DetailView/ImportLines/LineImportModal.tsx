@@ -152,8 +152,8 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
         expectedDeliveryDate: Formatter.naiveDate(
           DateUtils.getNaiveDate(input.expectedDeliveryDate)
         ),
-        pricePerPackAfterDiscount: input.pricePerPackAfterDiscount,
         pricePerPackBeforeDiscount: input.pricePerPackBeforeDiscount,
+        pricePerPackAfterDiscount: input.pricePerPackAfterDiscount,
         manufacturerId: input.manufacturer?.id,
         note: input.note,
         unit: input.unit,
@@ -216,9 +216,7 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
     }
   };
 
-  const onClickStep = (tabName: Tabs) => {
-    changeTab(tabName);
-  };
+  const onClickStep = (tabName: Tabs) => changeTab(tabName);
 
   return (
     <Modal

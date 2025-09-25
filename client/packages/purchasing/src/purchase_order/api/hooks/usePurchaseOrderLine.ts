@@ -72,25 +72,28 @@ export function usePurchaseOrderLine(id?: string | null) {
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftPurchaseOrderLine>({});
 
-  // The discount percentage is calculated from the price fields, but we want to
-  // insert it into the draft so it can be independently manipulated (with the
-  // other fields updated accordingly -- see the column definitions for how that
-  // works)
-  const initialDiscountPercentage =
-    data?.nodes[0]?.pricePerPackBeforeDiscount &&
-    data?.nodes[0]?.pricePerPackAfterDiscount
-      ? ((data?.nodes[0]?.pricePerPackBeforeDiscount -
-          data?.nodes[0]?.pricePerPackAfterDiscount) /
-          (data?.nodes[0]?.pricePerPackBeforeDiscount || 1)) *
-        100
-      : 0;
+  const getDiscountPercentage = (): number => {
+    if (!data?.nodes[0]) return 0;
+    const { pricePerPackBeforeDiscount, pricePerPackAfterDiscount } =
+      data.nodes[0];
 
-  // Number of packs is not in the DB, so we derived it from the draft
-  const adjustedUnits = data?.nodes[0]?.adjustedNumberOfUnits;
-  const requestedUnits = data?.nodes[0]?.requestedNumberOfUnits ?? 0;
-  const requestedPackSize = data?.nodes[0]?.requestedPackSize ?? 1;
-  const initialNumberOfPacks =
-    (adjustedUnits ?? requestedUnits) / requestedPackSize;
+    return (
+      ((pricePerPackBeforeDiscount - pricePerPackAfterDiscount) /
+        pricePerPackBeforeDiscount) *
+      100
+    );
+  };
+  const initialDiscountPercentage = getDiscountPercentage();
+
+  const getNumberOfPacks = (): number => {
+    if (!data?.nodes[0]) return 0;
+    const { adjustedNumberOfUnits, requestedNumberOfUnits, requestedPackSize } =
+      data.nodes[0];
+
+    const numberOfUnits = adjustedNumberOfUnits ?? requestedNumberOfUnits ?? 0;
+    return numberOfUnits / (requestedPackSize ?? 1);
+  };
+  const initialNumberOfPacks = getNumberOfPacks();
 
   const draft: DraftPurchaseOrderLine = data
     ? {
