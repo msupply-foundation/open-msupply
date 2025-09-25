@@ -43,10 +43,8 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
         const current = { pageIndex: page, pageSize: first };
         const newPaginationValue = paginationUpdate(current);
         paginationRef.current = Date.now();
-        // There is a bug where this function is called twice in quick
-        // succession the first time it's triggered. This is a hacky workaround
-        // for now, but we should investigate further at some point, or report
-        // the bug to MRT devs
+        // This is a hacky workaround for this bug:
+        // https://github.com/KevinVandy/material-react-table/issues/1251
         if (paginationRef.current - lastUpdate < 300) return;
         updatePaginationQuery(
           newPaginationValue.pageIndex,
@@ -68,7 +66,6 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     rowCount: totalCount,
     state: {
       pagination: { pageIndex: pagination.page, pageSize: pagination.first },
-      showProgressBars: isLoading,
       rowSelection,
     },
 

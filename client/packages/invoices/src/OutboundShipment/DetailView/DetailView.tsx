@@ -93,7 +93,7 @@ export const DetailView = () => {
     useNonPaginatedMaterialTable<StockOutLineFragment>({
       tableId: 'outbound-shipment-detail-view',
       columns,
-      data: rows ?? [],
+      data: rows,
       groupByField: isGrouped ? 'itemName' : undefined,
       isLoading: false,
       initialSort: { key: 'itemName', dir: 'asc' },

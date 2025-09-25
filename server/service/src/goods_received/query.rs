@@ -49,7 +49,7 @@ mod test {
 
     use repository::goods_received::{GoodsReceivedFilter, GoodsReceivedRepository};
     use repository::{
-        db_diesel::goods_received_row::GoodsReceivedRow, mock::MockDataInserts, test_db::setup_all,
+        db_diesel::goods_received_row::GoodsReceivedRow, mock::MockDataInserts, test_db::setup_all, EqualFilter,
     };
     #[actix_rt::test]
     async fn goods_received_service_queries() {
@@ -91,5 +91,20 @@ mod test {
             .get_one_goods_received(&context, &mock_store_a().id, &gr.id)
             .unwrap();
         assert!(result.is_some());
+
+        // Test filtering by purchase_order_id
+        let filter_by_po = GoodsReceivedFilter::new()
+            .purchase_order_id(EqualFilter::equal_to(&mock_purchase_order_a().id))
+            .store_id(EqualFilter::equal_to(&mock_store_a().id));
+        let result = repo.query_by_filter(filter_by_po).unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].id, gr.id);
+
+        // Test filtering by wrong purchase_order_id
+        let filter_by_wrong_po = GoodsReceivedFilter::new()
+            .purchase_order_id(EqualFilter::equal_to("wrong_po_id"))
+            .store_id(EqualFilter::equal_to(&mock_store_a().id));
+        let result = repo.query_by_filter(filter_by_wrong_po).unwrap();
+        assert!(result.is_empty());
     }
 }
