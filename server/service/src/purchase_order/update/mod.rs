@@ -93,25 +93,24 @@ pub fn update_purchase_order(
                     purchase_order_line_repository.upsert_one(line)?;
                 }
             }
-            if existing_purchase_order.purchase_order_row.status == PurchaseOrderStatus::Sent
+
+            let activity_type = if existing_purchase_order.purchase_order_row.status
+                == PurchaseOrderStatus::Sent
                 && input.status == Some(PurchaseOrderStatus::Confirmed)
             {
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed,
-                    Some(updated_purchase_order.id.clone()),
-                    None,
-                    None,
-                )?;
+                ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
             } else {
-                activity_log_entry(
-                    ctx,
-                    log_type_from_purchase_order_status(&updated_purchase_order.status),
-                    Some(updated_purchase_order.id.clone()),
-                    None,
-                    None,
-                )?;
-            }
+                log_type_from_purchase_order_status(&updated_purchase_order.status)
+            };
+
+            activity_log_entry(
+                ctx,
+                activity_type,
+                Some(updated_purchase_order.id.clone()),
+                None,
+                None,
+            )?;
+
             purchase_order_repository
                 .find_one_by_id(&updated_purchase_order.id)?
                 .ok_or(UpdatePurchaseOrderError::UpdatedRecordNotFound)
