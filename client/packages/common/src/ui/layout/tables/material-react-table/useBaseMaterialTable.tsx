@@ -118,10 +118,14 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableColumnDragging: false,
     enableRowSelection,
     enableFacetedValues: true,
+    enableStickyHeader: true,
 
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,
     enableExpanding: !!groupByField,
+
+    // Disable selection Toolbar, we use our own custom footer for this
+    positionToolbarAlertBanner: 'none',
 
     manualFiltering,
     onColumnFiltersChange,
@@ -135,7 +139,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       columnOrder: columnOrder.initial,
     },
     state: {
-      showProgressBars: isLoading,
+      showLoadingOverlay: isLoading,
       columnFilters,
       sorting,
       density: density.state,
