@@ -3,6 +3,7 @@ import {
   useTranslation,
   useQueryClient,
   useMutation,
+  useNotification,
 } from '@openmsupply-client/common';
 import { MasterListRowFragment } from '@openmsupply-client/system';
 import { useResponseFields } from '../document/useResponseFields';
@@ -10,6 +11,7 @@ import { useResponseApi } from './useResponseApi';
 
 export const useResponseAddFromMasterList = () => {
   const t = useTranslation();
+  const { error } = useNotification();
   const queryClient = useQueryClient();
   const api = useResponseApi();
   const { id: responseId } = useResponseFields('id');
@@ -28,7 +30,24 @@ export const useResponseAddFromMasterList = () => {
     id: masterListId,
   }: MasterListRowFragment) => {
     getConfirmation({
-      onConfirm: () => mutationState.mutateAsync({ masterListId, responseId }),
+      onConfirm: () =>
+        mutationState.mutateAsync(
+          { masterListId, responseId },
+          {
+            onError: e => {
+              const { message } = e as Error;
+              switch (message) {
+                case 'MasterListNotFoundForThisStore': {
+                  return error(
+                    t('error.master-list-not-found-for-this-store')
+                  )();
+                }
+                default:
+                  return error(t('error.cannot-add-items-to-requisition'))();
+              }
+            },
+          }
+        ),
     });
   };
 
