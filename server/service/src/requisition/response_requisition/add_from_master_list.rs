@@ -156,3 +156,195 @@ impl From<RepositoryError> for ResponseAddFromMasterListError {
         ResponseAddFromMasterListError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        requisition::{
+            common::get_lines_for_requisition,
+            response_requisition::{
+                ResponseAddFromMasterList, ResponseAddFromMasterListError as ServiceError,
+            },
+        },
+        service_provider::ServiceProvider,
+    };
+    use repository::{
+        mock::{
+            common::FullMockMasterList, mock_finalised_response_requisition,
+            mock_full_new_response_requisition_for_update_test, mock_item_a, mock_item_b,
+            mock_name_store_a, mock_store_a, mock_store_b, mock_test_not_store_a_master_list,
+            MockData, MockDataInserts,
+        },
+        test_db::{setup_all, setup_all_with_data},
+        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
+    };
+
+    #[actix_rt::test]
+    async fn response_add_from_master_list_errors() {
+        let (_, _, connection_manager, _) = setup_all(
+            "response_add_from_master_list_errors",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.requisition_service;
+
+        // RequisitionDoesNotExist
+        assert_eq!(
+            service.response_add_from_master_list(
+                &context,
+                ResponseAddFromMasterList {
+                    response_requisition_id: "invalid".to_owned(),
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::RequisitionDoesNotExist)
+        );
+
+        // CannotEditRequisition
+        assert_eq!(
+            service.response_add_from_master_list(
+                &context,
+                ResponseAddFromMasterList {
+                    response_requisition_id: mock_finalised_response_requisition().id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::CannotEditRequisition)
+        );
+
+        // NotAResponseRequisition
+        let request_requisition_mock =
+            repository::mock::mock_draft_request_requisition_for_update_test();
+        assert_eq!(
+            service.response_add_from_master_list(
+                &context,
+                ResponseAddFromMasterList {
+                    response_requisition_id: request_requisition_mock.id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::NotAResponseRequisition)
+        );
+
+        // MasterListNotFoundForThisStore
+        assert_eq!(
+            service.response_add_from_master_list(
+                &context,
+                ResponseAddFromMasterList {
+                    response_requisition_id: mock_full_new_response_requisition_for_update_test()
+                        .requisition
+                        .id,
+                    master_list_id: mock_test_not_store_a_master_list().master_list.id
+                },
+            ),
+            Err(ServiceError::MasterListNotFoundForThisStore)
+        );
+
+        context.store_id = mock_store_b().id;
+        // NotThisStoreRequisition
+        assert_eq!(
+            service.response_add_from_master_list(
+                &context,
+                ResponseAddFromMasterList {
+                    response_requisition_id: mock_full_new_response_requisition_for_update_test()
+                        .requisition
+                        .id,
+                    master_list_id: "n/a".to_owned()
+                },
+            ),
+            Err(ServiceError::NotThisStoreRequisition)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn response_add_from_master_list_success() {
+        fn master_list() -> FullMockMasterList {
+            let id = "response_master_list".to_owned();
+            let join1 = format!("{id}1");
+            let line1 = format!("{id}1");
+            let line2 = format!("{id}2");
+
+            FullMockMasterList {
+                master_list: MasterListRow {
+                    id: id.clone(),
+                    name: id.clone(),
+                    code: id.clone(),
+                    description: id.clone(),
+                    is_active: true,
+                    ..Default::default()
+                },
+                joins: vec![MasterListNameJoinRow {
+                    id: join1,
+                    master_list_id: id.clone(),
+                    name_link_id: mock_name_store_a().id,
+                }],
+                lines: vec![
+                    MasterListLineRow {
+                        id: line1.clone(),
+                        item_link_id: mock_item_a().id,
+                        master_list_id: id.clone(),
+                        ..Default::default()
+                    },
+                    MasterListLineRow {
+                        id: line2.clone(),
+                        item_link_id: mock_item_b().id,
+                        master_list_id: id.clone(),
+                        ..Default::default()
+                    },
+                ],
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "response_add_from_master_list_success",
+            MockDataInserts::all(),
+            MockData {
+                full_master_lists: vec![master_list()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.requisition_service;
+
+        let result = service
+            .response_add_from_master_list(
+                &context,
+                ResponseAddFromMasterList {
+                    response_requisition_id: mock_full_new_response_requisition_for_update_test()
+                        .requisition
+                        .id,
+                    master_list_id: master_list().master_list.id,
+                },
+            )
+            .unwrap();
+
+        let lines = get_lines_for_requisition(
+            &connection,
+            &mock_full_new_response_requisition_for_update_test()
+                .requisition
+                .id,
+        )
+        .unwrap();
+
+        assert_eq!(result, lines);
+
+        let item_ids: Vec<String> = lines
+            .clone()
+            .into_iter()
+            .map(|requisition_line| requisition_line.item_row.id)
+            .collect();
+
+        assert!(item_ids.contains(&mock_item_a().id));
+        assert!(item_ids.contains(&mock_item_b().id));
+    }
+}
