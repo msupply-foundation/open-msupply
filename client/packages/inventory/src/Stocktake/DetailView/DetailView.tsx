@@ -14,6 +14,7 @@ import {
   Groupable,
   NothingHere,
   MaterialTable,
+  useIsGroupedState,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -62,6 +63,7 @@ const DetailViewInner = () => {
     []
   );
 
+  const { isGrouped } = useIsGroupedState('stocktake');
   const columns = useStocktakeColumns();
 
   const { table, selectedRows } = useNonPaginatedMaterialTable<
@@ -72,7 +74,7 @@ const DetailViewInner = () => {
     isLoading: rowsLoading,
     data: lines,
     onRowClick: row => onOpen(row.item),
-    // groupByField: 'itemName', // todo toggle
+    groupByField: isGrouped ? 'itemName' : undefined,
     initialSort: { key: 'itemName', dir: 'asc' },
     getIsPlaceholderRow,
     noDataElement: (
