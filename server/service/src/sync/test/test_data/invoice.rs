@@ -30,7 +30,7 @@ const TRANSACT_1: (&str, &str) = (
       "comment": "",
       "confirm_date": "2021-07-30",
       "confirm_time": 47046,
-      "finalised_date": "",
+      "finalised_date": "0000-00-00",
       "finalised_time": 0,
       "contact_id": "",
       "currency_ID": "NEW_ZEALAND_DOLLARS",
@@ -318,7 +318,7 @@ const TRANSACT_2: (&str, &str) = (
         "om_transport_reference": "transport reference",
         "programID": "missing_program",
         "om_expected_delivery_date": "",
-        "finalised_date": "",
+        "finalised_date": "0000-00-00",
         "finalised_time": 0
     }"#,
 );
@@ -1202,7 +1202,7 @@ const PRESCRIPTION_1: (&str, &str) = (
       "om_created_datetime": "",
       "om_transport_reference": "",
       "om_expected_delivery_date": "",
-      "finalised_date": "",
+      "finalised_date": "0000-00-00",
       "finalised_time": 0
   }"#,
 );
@@ -1412,7 +1412,7 @@ const CANCELLED_PRESCRIPTION: (&str, &str) = (
       "om_cancelled_datetime": "2022-08-24T09:33:00",
       "om_transport_reference": "",
       "om_expected_delivery_date": "",
-      "finalised_date": "",
+      "finalised_date": "0000-00-00",
       "finalised_time": 0
   }"#,
 );
