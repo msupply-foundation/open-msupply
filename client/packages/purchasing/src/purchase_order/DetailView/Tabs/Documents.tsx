@@ -39,7 +39,7 @@ export const Documents = ({
             label={t('label.upload-document')}
           />
         </Grid>
-        <Grid sx={{ boxShadow: theme => theme.shadows[2] }}>
+        <Grid flex={1} sx={{ boxShadow: theme => theme.shadows[2] }}>
           <DocumentsTable
             recordId={data?.id ?? ''}
             documents={data?.documents?.nodes ?? []}
