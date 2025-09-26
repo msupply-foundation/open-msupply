@@ -4,11 +4,11 @@ use repository::{
 };
 use repository::{
     ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
-    ProgramFilter, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
+    MasterList, MasterListFilter, MasterListRepository, ProgramFilter,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
     RequisitionType,
 };
-
 
 pub fn check_requisition_row_exists(
     connection: &StorageConnection,
@@ -41,7 +41,7 @@ pub fn generate_requisition_user_id_update(
 ) -> Option<RequisitionRow> {
     let user_id_option = Some(user_id.to_string());
     let user_id_has_changed = existing_requisition_row.user_id != user_id_option;
-    user_id_has_changed.then(|| RequisitionRow {
+    user_id_has_changed.then_some(RequisitionRow {
         user_id: user_id_option,
         ..existing_requisition_row
     })
@@ -121,7 +121,7 @@ pub fn check_exceeded_max_orders_for_period(
                 .program_id(EqualFilter::equal_to(input.program_id))
                 .order_type(EqualFilter::equal_to(&order_type.name))
                 .period_id(EqualFilter::equal_to(input.period_id))
-                .store_id(EqualFilter::equal_to(&input.store_id))
+                .store_id(EqualFilter::equal_to(input.store_id))
                 .r#type(input.requisition_type.equal_to());
 
             if let Some(other_party_id) = input.other_party_id {
@@ -161,4 +161,18 @@ impl From<RepositoryError> for OrderTypeNotFoundError {
     fn from(error: RepositoryError) -> Self {
         Self::DatabaseError(error)
     }
+}
+
+pub fn check_master_list_for_store(
+    connection: &StorageConnection,
+    store_id: &str,
+    master_list_id: &str,
+) -> Result<Option<MasterList>, RepositoryError> {
+    let mut rows = MasterListRepository::new(connection).query_by_filter(
+        MasterListFilter::new()
+            .id(EqualFilter::equal_to(master_list_id))
+            .exists_for_store_id(EqualFilter::equal_to(store_id))
+            .is_program(false),
+    )?;
+    Ok(rows.pop())
 }
