@@ -47,8 +47,10 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   const isSymbolLast = options.pattern.endsWith('!');
   const prefix = !isSymbolLast ? options.symbol : '';
   const suffix = isSymbolLast ? options.symbol : '';
-  const val = value !== undefined ? value : defaultValue;
-  const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
+  const defaultValueAsNumber = Number.isNaN(Number(defaultValue))
+    ? undefined
+    : Number(defaultValue);
+  const valueAsNumber = Number.isNaN(value) ? 0 : Number(value);
 
   return (
     <StyledCurrencyInput
@@ -64,7 +66,10 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
         color: disabled ? theme => theme.palette.text.disabled : undefined,
         width,
       }}
-      value={NumUtils.round(valueAsNumber, options.precision)}
+      defaultValue={NumUtils.round(
+        valueAsNumber ?? defaultValueAsNumber,
+        options.precision
+      )}
       onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
       onFocus={e => e.target.select()}
       allowNegativeValue={allowNegativeValue}
