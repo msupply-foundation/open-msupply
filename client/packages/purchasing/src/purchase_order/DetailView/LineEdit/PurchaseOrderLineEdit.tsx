@@ -10,7 +10,9 @@ import {
   PurchaseOrderNodeStatus,
   Select,
   useCurrency,
+  useAuthContext,
   useMediaQuery,
+  UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
@@ -58,9 +60,14 @@ export const PurchaseOrderLineEdit = ({
 }: PurchaseOrderLineEditProps) => {
   const t = useTranslation();
   const showContent = !!draft?.itemId;
+  const { userHasPermission } = useAuthContext();
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
   const { c, options } = useCurrency(
     draft?.purchaseOrder?.currency?.code as Currencies
+  );
+
+  const userIsAuthorised = userHasPermission(
+    UserPermission.PurchaseOrderAuthorise
   );
 
   const getCurrencyValue = (value: number | null | undefined) => {
@@ -193,7 +200,7 @@ export const PurchaseOrderLineEdit = ({
                   : 'label.adjusted-packs'
               )}
               value={draft?.numberOfPacks ?? 0}
-              disabled={disabled}
+              disabled={!canEditRequestedQuantity && !userIsAuthorised}
               isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 // Adjust the requested and adjusted number of units based

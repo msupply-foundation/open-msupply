@@ -1,6 +1,6 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderRow,
+    ActivityLogType, PurchaseOrderLine, PurchaseOrderLineRowRepository, PurchaseOrderRow,
     PurchaseOrderRowRepository, PurchaseOrderStatus, RepositoryError, TransactionError,
 };
 
@@ -73,6 +73,7 @@ pub fn update_purchase_order(
         .transaction_sync(|connection: &repository::StorageConnection| {
             let (purchase_order, next_status) =
                 validate(&input, store_id, connection, user_has_auth_permission)?;
+            let existing_purchase_order = purchase_order.clone();
             let mut purchase_order_input = input.clone();
             if let Some(new_status) = next_status {
                 purchase_order_input.status = Some(new_status);
@@ -93,9 +94,18 @@ pub fn update_purchase_order(
                 }
             }
 
+            let activity_type = if existing_purchase_order.purchase_order_row.status
+                == PurchaseOrderStatus::Sent
+                && input.status == Some(PurchaseOrderStatus::Confirmed)
+            {
+                ActivityLogType::PurchaseOrderStatusChangedFromSentToConfirmed
+            } else {
+                log_type_from_purchase_order_status(&updated_purchase_order.status)
+            };
+
             activity_log_entry(
                 ctx,
-                log_type_from_purchase_order_status(&updated_purchase_order.status),
+                activity_type,
                 Some(updated_purchase_order.id.clone()),
                 None,
                 None,
