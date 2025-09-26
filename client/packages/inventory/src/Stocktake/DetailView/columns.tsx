@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   useTranslation,
   usePreferences,
@@ -8,11 +8,28 @@ import {
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { StocktakeLineFragment } from '../api';
+import { StocktakeLineError, useStocktakeLineErrorContext } from '../context';
 
 export const useStocktakeColumns = () => {
   const t = useTranslation();
   const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
     usePreferences();
+  const { errors } = useStocktakeLineErrorContext();
+
+  const getIsError = useCallback(
+    (
+      errorType: StocktakeLineError['__typename'],
+      row: Groupable<StocktakeLineFragment>
+    ) => {
+      if (row.subRows) {
+        return row.subRows.some(
+          subRow => errors?.[subRow.id]?.__typename === errorType
+        );
+      }
+      return errors?.[row.id]?.__typename === errorType;
+    },
+    [errors]
+  );
 
   const columns = useMemo(() => {
     const cols: ColumnDef<Groupable<StocktakeLineFragment>>[] = [
@@ -76,12 +93,6 @@ export const useStocktakeColumns = () => {
         accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
       },
       {
-        // todo: error
-        // getIsError: row =>
-        // getLinesFromRow(row).some(
-        //   r =>
-        //     getError(r)?.__typename === 'SnapshotCountCurrentCountMismatchLine'
-        // ),
         id: 'snapshotNumberOfPacks',
         header: t('label.snapshot-num-of-packs'),
         description: t('description.snapshot-num-of-packs'),
@@ -96,13 +107,10 @@ export const useStocktakeColumns = () => {
 
           return row.snapshotNumberOfPacks;
         },
+        getIsError: row =>
+          getIsError('SnapshotCountCurrentCountMismatchLine', row),
       },
       {
-        // todo: error
-        //   getIsError: row =>
-        // getLinesFromRow(row).some(
-        //   r => getError(r)?.__typename === 'StockLineReducedBelowZero'
-        // ),
         id: 'countedNumberOfPacks',
         header: t('label.counted-num-of-packs'),
         description: t('description.counted-num-of-packs'),
@@ -119,6 +127,7 @@ export const useStocktakeColumns = () => {
 
           return row.countedNumberOfPacks;
         },
+        getIsError: row => getIsError('StockLineReducedBelowZero', row),
       },
       {
         id: 'difference',
@@ -163,7 +172,7 @@ export const useStocktakeColumns = () => {
       },
     ];
     return cols;
-  }, []);
+  }, [getIsError, manageVaccinesInDoses, allowTrackingOfStockByDonor]);
 
   return columns;
 };
