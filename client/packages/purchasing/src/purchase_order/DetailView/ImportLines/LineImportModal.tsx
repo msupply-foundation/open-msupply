@@ -1,33 +1,34 @@
+import React, { useState } from 'react';
 import {
-  useTabs,
-  DialogButton,
-  ClickableStepper,
-  Alert,
-  TabContext,
-  ImportTab,
-} from '@common/components';
-import {
-  useNotification,
-  useDialog,
-  QueryParamsProvider,
-  createQueryParamsStore,
-} from '@common/hooks';
-import { DateUtils, useTranslation } from '@common/intl';
-import {
+  DateUtils,
+  useTranslation,
   FnUtils,
   Formatter,
   Grid,
   InsertPurchaseOrderLineInput,
   PurchaseOrderNodeStatus,
   useExportCSV,
-} from '@openmsupply-client/common/src';
+  useUrlQuery,
+  useNotification,
+  useDialog,
+  QueryParamsProvider,
+  createQueryParamsStore,
+  useTabs,
+  DialogButton,
+  ClickableStepper,
+  Alert,
+  TabContext,
+  ImportTab,
+} from '@openmsupply-client/common';
 import { StoreRowFragment } from '@openmsupply-client/system/src';
-import React, { useState } from 'react';
 import { UploadTab } from './UploadTab';
 import { ReviewTab } from './ReviewTab';
-import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
+import {
+  PurchaseOrderLineFragment,
+  usePurchaseOrder,
+  usePurchaseOrderLine,
+} from '../../api';
 import { importPurchaseOrderLinesToCSVWithErrors } from '../utils';
-import { PurchaseOrderLineFragment, usePurchaseOrder } from '../../api';
 
 export type ImportRow = Omit<
   PurchaseOrderLineFragment,
@@ -58,8 +59,10 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
   const t = useTranslation();
   const exportCSV = useExportCSV();
   const { success } = useNotification();
+  const { updateQuery } = useUrlQuery();
   const { Modal } = useDialog({ isOpen, onClose });
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
+
   const {
     create: { create },
   } = usePurchaseOrderLine();
@@ -162,6 +165,7 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
       };
 
       await create(csvInput);
+      updateQuery({ tab: t('label.general') });
     } catch (e) {
       const errorMessage = (e as Error).message || t('messages.unknown-error');
       importErrorRows.push({
@@ -216,10 +220,6 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
     }
   };
 
-  const onClickStep = (tabName: Tabs) => {
-    changeTab(tabName);
-  };
-
   return (
     <Modal
       okButton={
@@ -255,7 +255,7 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
         <ClickableStepper
           steps={importSteps}
           activeStep={activeStep}
-          onClickStep={onClickStep}
+          onClickStep={changeTab}
         />
         {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
         <TabContext value={currentTab}>
@@ -273,7 +273,7 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
                 onUploadComplete={() => {
                   changeTab(Tabs.Review);
                 }}
-                status={data?.status || PurchaseOrderNodeStatus.New }
+                status={data?.status || PurchaseOrderNodeStatus.New}
               />
             </QueryParamsProvider>
             <ReviewTab
