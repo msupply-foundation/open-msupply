@@ -128,14 +128,6 @@ pub fn batch_request_requisition(
 
 #[cfg(test)]
 mod test {
-    use repository::{
-        mock::{
-            mock_full_new_response_requisition_for_update_test, mock_item_a, mock_name_store_c,
-            mock_store_a, MockDataInserts,
-        },
-        test_db::setup_all,
-        RequisitionLineRowRepository, RequisitionRowRepository,
-    };
     use crate::{
         requisition::request_requisition::{
             BatchRequestRequisition, DeleteRequestRequisition, DeleteRequestRequisitionError,
@@ -144,6 +136,14 @@ mod test {
         requisition_line::request_requisition_line::InsertRequestRequisitionLine,
         service_provider::ServiceProvider,
         InputWithResult,
+    };
+    use repository::{
+        mock::{
+            mock_full_new_response_requisition_for_update_test, mock_item_a, mock_name_store_c,
+            mock_store_a, MockDataInserts,
+        },
+        test_db::setup_all,
+        RequisitionLineRowRepository, RequisitionRowRepository,
     };
 
     #[actix_rt::test]
@@ -161,7 +161,6 @@ mod test {
             id: mock_full_new_response_requisition_for_update_test()
                 .requisition
                 .id,
-            ..Default::default()
         };
 
         let mut input = BatchRequestRequisition {
@@ -174,7 +173,6 @@ mod test {
                 requisition_id: "new_id".to_string(),
                 id: "new_line_id".to_string(),
                 item_id: mock_item_a().id,
-                ..Default::default()
             }]),
             update_line: None,
             delete_line: None,
