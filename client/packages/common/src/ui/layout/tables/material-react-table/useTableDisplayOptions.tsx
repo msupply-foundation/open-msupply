@@ -163,7 +163,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
         if (onRowClick) onRowClick(row.original);
       },
       sx: {
-        '& td': { borderBottom: '1px solid rgba(224, 224, 224, 1)' },
         backgroundColor: row.original['isSubRow']
           ? 'background.secondary'
           : 'inherit',
@@ -172,7 +171,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
       },
     }),
 
-    muiTableBodyCellProps: ({ cell, row, column, table }) => ({
+    muiTableBodyCellProps: ({ row, column, table }) => ({
       sx: {
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
@@ -184,7 +183,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
             ? 'gray.main'
             : undefined,
 
-        ...(cell.column.id === 'mrt-row-expand' && {
+        ...(column.id === 'mrt-row-expand' && {
           // The expand chevron is rotated incorrectly by default (in terms of
           // consistency with other Accordion/Expando UI elements in the app)
           button: {
@@ -207,7 +206,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
 
         // Indent "sub-rows" when expanded
         paddingLeft:
-          row.original?.['isSubRow'] && cell.column.id !== 'mrt-row-select'
+          row.original?.['isSubRow'] && column.id !== 'mrt-row-select'
             ? '2em'
             : undefined,
         backgroundColor:
@@ -215,6 +214,16 @@ export const useTableDisplayOptions = <T extends MRT_RowData>(
             ? // Remove transparency from pinned backgrounds
               'rgba(252, 252, 252, 1)'
             : undefined,
+
+        ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
+          ? {
+              border: '2px solid',
+              borderColor: 'error.main',
+              borderRadius: '8px',
+            }
+          : {
+              borderBottom: '1px solid rgba(224, 224, 224, 1)',
+            }),
       },
     }),
 

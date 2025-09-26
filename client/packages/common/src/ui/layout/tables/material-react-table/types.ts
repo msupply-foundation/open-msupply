@@ -22,7 +22,10 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   pin?: 'left' | 'right';
 
   align?: 'left' | 'center' | 'right';
-  // overflow?: 'ellipsis' | 'wrap'; // TO-DO -- will only affect "dense" layout
+
+  /** Function to determine if cell should be marked as error. Cell will be
+   * highlighted in red. */
+  getIsError?: (row: T) => boolean;
 };
 
 /** Use when you have `groupByField` enabled, to allow for typing of `subRows` */

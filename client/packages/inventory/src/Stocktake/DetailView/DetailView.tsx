@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -26,7 +26,13 @@ import { StocktakeLineFragment, useStocktakeOld } from '../api';
 import { StocktakeLineErrorProvider } from '../context';
 import { useStocktakeColumns } from './columns';
 
-export const DetailView = () => {
+export const DetailView = () => (
+  <StocktakeLineErrorProvider>
+    <DetailViewInner />
+  </StocktakeLineErrorProvider>
+);
+
+const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -46,6 +52,16 @@ export const DetailView = () => {
     setCustomBreadcrumbs({ 1: stocktake?.stocktakeNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, stocktake?.stocktakeNumber]);
 
+  const getIsPlaceholderRow = useCallback(
+    (row: Groupable<StocktakeLineFragment>) =>
+      !!(
+        isUncounted(row) ||
+        // Also mark parent rows as placeholder if any subRows are placeholders
+        row.subRows?.some(isUncounted)
+      ),
+    []
+  );
+
   const columns = useStocktakeColumns();
 
   const { table, selectedRows } = useNonPaginatedMaterialTable<
@@ -54,16 +70,11 @@ export const DetailView = () => {
     tableId: 'stocktake-detail',
     columns,
     isLoading: rowsLoading,
-    data: lines || [],
+    data: lines,
     onRowClick: row => onOpen(row.item),
-    groupByField: 'itemName',
+    // groupByField: 'itemName', // todo toggle
     initialSort: { key: 'itemName', dir: 'asc' },
-    getIsPlaceholderRow: row =>
-      !!(
-        isUncounted(row) ||
-        // Also mark parent rows as placeholder if any subRows are placeholders
-        row.subRows?.some(isUncounted)
-      ),
+    getIsPlaceholderRow,
     noDataElement: (
       <NothingHere
         body={t('error.no-stocktake-items')}
@@ -103,7 +114,7 @@ export const DetailView = () => {
     );
 
   return (
-    <StocktakeLineErrorProvider>
+    <>
       <AppBarButtons onAddItem={() => onOpen()} />
 
       <Footer
@@ -136,7 +147,7 @@ export const DetailView = () => {
           isInitialStocktake={stocktake.isInitialStocktake}
         />
       )}
-    </StocktakeLineErrorProvider>
+    </>
   );
 };
 
