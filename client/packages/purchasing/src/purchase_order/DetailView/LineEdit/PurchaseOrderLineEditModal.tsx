@@ -1,6 +1,4 @@
 import React from 'react';
-import { PurchaseOrderFragment } from '../../api';
-import { DialogButton, InlineSpinner, Typography } from '@common/components';
 import {
   Box,
   ModalMode,
@@ -9,10 +7,14 @@ import {
   useIntlUtils,
   useNotification,
   useTranslation,
+  DialogButton,
+  InlineSpinner,
+  Typography,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { ItemStockOnHandFragment } from '@openmsupply-client/system';
+import { PurchaseOrderFragment, usePurchaseOrderLine } from '../../api';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
-import { usePurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 import { createDraftPurchaseOrderLine } from './utils';
 
 interface PurchaseOrderLineEditModalProps {
@@ -37,9 +39,10 @@ export const PurchaseOrderLineEditModal = ({
   openNext,
 }: PurchaseOrderLineEditModalProps) => {
   const t = useTranslation();
-  const { getPlural } = useIntlUtils();
   const { error } = useNotification();
   const { round } = useFormatNumber();
+  const { getPlural } = useIntlUtils();
+  const { updateQuery } = useUrlQuery();
 
   const lines = purchaseOrder.lines.nodes;
   const isUpdateMode = mode === ModalMode.Update;
@@ -66,6 +69,7 @@ export const PurchaseOrderLineEditModal = ({
     try {
       if (mode === ModalMode.Create) {
         await create();
+        updateQuery({ tab: t('label.general') });
       } else if (mode === ModalMode.Update) {
         const res = await update();
         const { success, error: updateError } = res;
