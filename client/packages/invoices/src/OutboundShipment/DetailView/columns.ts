@@ -55,9 +55,11 @@ export const useOutboundColumns = () => {
         accessorFn: row => row.vvmStatus?.description ?? '',
         header: t('label.vvm-status'),
         includeColumn: manageVvmStatusForStock,
-        enableColumnFilter: true,
-        filterVariant: 'select',
+        // TO-DO: Handle "null" values in filter - see issue #9398
+        // enableColumnFilter: true,
+        // filterVariant: 'select',
         defaultHideOnMobile: true,
+        enableSorting: true,
       },
       {
         id: 'locationCode',
@@ -71,6 +73,7 @@ export const useOutboundColumns = () => {
         id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        enableColumnFilter: true,
         filterVariant: 'select',
         defaultHideOnMobile: true,
       },
