@@ -21,7 +21,11 @@ import {
 } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
-import { PurchaseOrderFragment, usePurchaseOrderLine } from '../api';
+import {
+  PurchaseOrderFragment,
+  usePurchaseOrderLine,
+  useCurrencyConversion,
+} from '../api';
 import { isFieldDisabled, StatusGroup } from '../../utils';
 
 interface ToolbarProps {
@@ -39,6 +43,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     handleChange,
   } = usePurchaseOrder();
   const { updateLines } = usePurchaseOrderLine();
+  const { convertByRate } = useCurrencyConversion();
 
   const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
     DateUtils.getDateOrNull(data?.requestedDeliveryDate)
@@ -70,12 +75,32 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     }
   };
 
-  const handleCurrencyChange = (currency: CurrencyRowFragment | null) => {
-    if (!currency) return;
+  const handleCurrencyChange = async (currency: CurrencyRowFragment | null) => {
+    if (!currency || !data) return;
+
     handleChange({
       currencyId: currency.id,
       foreignExchangeRate: currency.rate,
     });
+
+    await Promise.all([
+      update({
+        currencyId: currency.id,
+        foreignExchangeRate: currency.rate,
+      }),
+      updateLines(data?.lines?.nodes, {
+        pricePerPackAfterDiscount: convertByRate(
+          data.lines?.nodes?.[0]?.pricePerPackAfterDiscount || 0,
+          data.currency?.code as string,
+          currency.code
+        ),
+        pricePerPackBeforeDiscount: convertByRate(
+          data.lines?.nodes?.[0]?.pricePerPackBeforeDiscount || 0,
+          data.currency?.code as string,
+          currency.code
+        ),
+      }),
+    ]);
   };
 
   const updateExpectedDeliveryChange = async (date: Date | null) => {
