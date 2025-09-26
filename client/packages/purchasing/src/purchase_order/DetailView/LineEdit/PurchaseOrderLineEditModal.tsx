@@ -48,6 +48,7 @@ export const PurchaseOrderLineEditModal = ({
     create: { create, isCreating },
     update: { update, isUpdating },
     draft,
+    isDirty,
     updatePatch,
   } = usePurchaseOrderLine(lineId);
   const unit = draft?.unit || t('label.unit', { count: 2 });
@@ -62,7 +63,8 @@ export const PurchaseOrderLineEditModal = ({
       });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
+    if (!isDirty) return true;
     try {
       if (mode === ModalMode.Create) {
         await create();
