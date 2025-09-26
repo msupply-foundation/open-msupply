@@ -34,5 +34,6 @@ export const useResponse = {
     isDisabledByAuthorisation: Utils.useIsDisabledByAuthorisation,
     programRequisitionSettingsByCustomer:
       Utils.useProgramRequisitionSettingsByCustomer,
+    addFromMasterList: Utils.useResponseAddFromMasterList,
   },
 };
