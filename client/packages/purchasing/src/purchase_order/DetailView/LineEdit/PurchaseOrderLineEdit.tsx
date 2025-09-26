@@ -7,7 +7,9 @@ import {
   PurchaseOrderLineStatusNode,
   PurchaseOrderNodeStatus,
   Select,
+  useAuthContext,
   useMediaQuery,
+  UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
@@ -54,6 +56,11 @@ export const PurchaseOrderLineEdit = ({
   const t = useTranslation();
   const showContent = !!draft?.itemId;
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
+  const { userHasPermission } = useAuthContext();
+
+  const userIsAuthorised = userHasPermission(
+    UserPermission.PurchaseOrderAuthorise
+  );
 
   // Disable input components. Individual inputs can override this
   const disabled =
@@ -192,6 +199,7 @@ export const PurchaseOrderLineEdit = ({
                   },
                   decimalLimit: 2,
                   autoFocus: true,
+                  disabled: !canEditRequestedQuantity && !userIsAuthorised,
                 }
               )}
               {numericInput('label.pack-size', draft?.requestedPackSize, {
