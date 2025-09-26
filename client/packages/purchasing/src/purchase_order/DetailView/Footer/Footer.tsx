@@ -31,6 +31,10 @@ const createStatusLog = (
   purchaseOrder: PurchaseOrderFragment,
   requiresAuthorisation: boolean
 ) => {
+  const allocatePurchaseOrderSentStatus =
+    purchaseOrder.sentDatetime &&
+    purchaseOrder.status === PurchaseOrderNodeStatus.Sent;
+
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
       [PurchaseOrderNodeStatus.New]: purchaseOrder.createdDatetime,
@@ -38,7 +42,9 @@ const createStatusLog = (
         ? purchaseOrder.requestApprovalDatetime
         : null,
       [PurchaseOrderNodeStatus.Confirmed]: purchaseOrder.confirmedDatetime,
-      [PurchaseOrderNodeStatus.Sent]: purchaseOrder.sentDatetime,
+      [PurchaseOrderNodeStatus.Sent]: allocatePurchaseOrderSentStatus
+        ? purchaseOrder.sentDatetime
+        : null,
       [PurchaseOrderNodeStatus.Finalised]: purchaseOrder.finalisedDatetime,
     };
 
