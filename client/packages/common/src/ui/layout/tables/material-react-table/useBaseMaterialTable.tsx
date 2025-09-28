@@ -135,6 +135,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onColumnFiltersChange,
     onSortingChange,
 
+    filterFromLeafRows: true,
+
     initialState: {
       density: density.initial,
       columnSizing: columnSizing.initial,
