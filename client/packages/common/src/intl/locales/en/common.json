@@ -446,6 +446,7 @@
   "error.provide-reason-stock-adjustment": "A reason must be provided before adjusting stock",
   "error.provide-valid-reason": "Adjustment reason does not match adjustment direction",
   "error.purchase-order-line-already-exists": "Purchase order line already exists",
+  "error.purchase-order-line-not-found": "Purchase order line not found",
   "error.purchase-order-not-finalised": "Purchase order is not finalised",
   "error.purchase-order-not-found": "Purchase order not found",
   "error.reasons-not-provided-program-requisition": "Reasons must be provided when suggested quantity differs from requested quantity.",

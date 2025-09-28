@@ -160,7 +160,7 @@ export const ReviewTab = ({
           columns={columns}
           data={currentEquipmentPage}
           noDataElement={
-            <NothingHere body={t('error.purchase-order-not-found')} />
+            <NothingHere body={t('error.purchase-order-line-not-found')} />
           }
         />
       </Grid>
