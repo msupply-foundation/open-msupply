@@ -114,6 +114,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
   const displayOptions = useTableDisplayOptions({
     tableId,
+    isGrouped,
     toggleGrouped: grouping?.enabled ? toggleGrouped : undefined,
     resetTableState,
     onRowClick,
