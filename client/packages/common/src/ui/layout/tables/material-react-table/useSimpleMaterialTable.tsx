@@ -26,6 +26,9 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
     state: {
       ...tableOptions.state,
       density: 'compact',
+      // Disable all filtering/sorting for simple table
+      columnFilters: undefined,
+      sorting: undefined,
     },
     ...tableOptions,
     renderBottomToolbar: ({ table }) => (
