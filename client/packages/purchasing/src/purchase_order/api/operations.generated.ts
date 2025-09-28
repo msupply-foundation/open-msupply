@@ -384,7 +384,7 @@ export type DeletePurchaseOrderMutation = {
         __typename: 'DeletePurchaseOrderError';
         error:
           | {
-              __typename: 'CannotDeleteNonNewPurchaseOrder';
+              __typename: 'CannotDeletePurchaseOrder';
               description: string;
             }
           | { __typename: 'RecordNotFound'; description: string };
@@ -870,7 +870,7 @@ export const DeletePurchaseOrderDocument = gql`
             __typename
           }
           description
-          ... on CannotDeleteNonNewPurchaseOrder {
+          ... on CannotDeletePurchaseOrder {
             __typename
           }
         }
