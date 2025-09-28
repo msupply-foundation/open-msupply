@@ -14,6 +14,7 @@ import {
   useMediaQuery,
   UserPermission,
   useTranslation,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../../api';
 import {
@@ -75,7 +76,7 @@ export const PurchaseOrderLineEdit = ({
     const formatted = c(value)
       .format()
       .replace(/[^\d.-]/g, '');
-    return parseFloat(formatted);
+    return NumUtils.parseString(formatted);
   };
 
   // Disable input components. Individual inputs can override this
@@ -86,6 +87,11 @@ export const PurchaseOrderLineEdit = ({
     status,
     StatusGroup.BeforeConfirmed
   );
+
+  const commonProps = {
+    disabled: true,
+    isVerticalScreen,
+  };
 
   return (
     <ModalGridLayout
@@ -135,14 +141,12 @@ export const PurchaseOrderLineEdit = ({
             <NumInputRow
               value={draft?.lineNumber || lineCount + 1}
               label={t('label.line-number')}
-              disabled
-              isVerticalScreen={isVerticalScreen}
+              {...commonProps}
             />
             <NumInputRow
               value={draft?.item.stats.stockOnHand || 0}
               label={t('label.stock-on-hand')}
-              disabled
-              isVerticalScreen={isVerticalScreen}
+              {...commonProps}
             />
             <TextInput
               label={t('label.unit')}
@@ -267,7 +271,7 @@ export const PurchaseOrderLineEdit = ({
             />
             <NumInputRow
               label={t('label.discount-percentage')}
-              value={draft?.discountPercentage ?? undefined}
+              value={draft?.discountPercentage || 0}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -310,8 +314,7 @@ export const PurchaseOrderLineEdit = ({
                     )
                   : 0
               }
-              disabled
-              isVerticalScreen={isVerticalScreen}
+              {...commonProps}
               decimalLimit={options.precision}
               endAdornment={options.symbol}
             />
