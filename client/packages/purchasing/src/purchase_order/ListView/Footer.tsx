@@ -14,7 +14,6 @@ export const FooterComponent: FC<{ listParams: ListParams }> = ({
   listParams,
 }) => {
   const t = useTranslation();
-
   const {
     selectedRows,
     delete: { deletePurchaseOrders },
@@ -33,10 +32,10 @@ export const FooterComponent: FC<{ listParams: ListParams }> = ({
       ].includes(row.status)
     ),
     messages: {
-      confirmMessage: t('messages.confirm-delete-purchase_orders', {
+      confirmMessage: t('messages.confirm-delete-purchase-orders', {
         count: selectedRows.length,
       }),
-      deleteSuccess: t('messages.deleted-purchase_orders', {
+      deleteSuccess: t('messages.deleted-purchase-orders', {
         count: selectedRows.length,
       }),
     },
