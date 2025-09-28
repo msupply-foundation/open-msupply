@@ -24,6 +24,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   tableId,
   resetTableState,
   onRowClick,
+  isGrouped,
   toggleGrouped,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
@@ -31,6 +32,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   tableId: string;
   resetTableState: () => void;
   onRowClick?: (row: T) => void;
+  isGrouped: boolean;
   toggleGrouped?: () => void;
   getIsPlaceholderRow?: (row: T) => boolean;
   getIsRestrictedRow?: (row: T) => boolean;
@@ -69,6 +71,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             onClick={toggleGrouped}
             label={t('label.group-by-item')}
             sx={iconButtonProps}
+            color={isGrouped ? 'secondary' : undefined}
           />
         )}
         <MRT_ToggleFiltersButton table={table} />
