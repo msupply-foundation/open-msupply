@@ -77,7 +77,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   );
 
   const processedData = useMemo(
-    () => getGroupedRows(isGrouped, data ?? [], 'itemName', t),
+    () =>
+      getGroupedRows(isGrouped, data ?? [], grouping?.field ?? 'itemName', t),
     [data, isGrouped, t]
   );
 
