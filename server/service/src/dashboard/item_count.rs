@@ -230,7 +230,7 @@ mod item_count_service_test {
             // An item with the threshold stock (should not be counted)
             ItemStats {
                 average_monthly_consumption: 1.0,
-                total_stock_on_hand: 3.0,
+                available_stock_on_hand: 3.0,
                 ..Default::default()
             },
             // An item with less than the threshold stock
