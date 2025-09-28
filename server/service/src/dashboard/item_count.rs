@@ -29,7 +29,7 @@ pub trait ItemCountServiceTrait: Send + Sync {
     fn get_no_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
         let no_stock_count = item_stats
             .iter()
-            .filter(|i| i.available_stock_on_hand == 0.0)
+            .filter(|i| i.total_stock_on_hand == 0.0)
             .count() as i64;
 
         return no_stock_count;
@@ -39,7 +39,7 @@ pub trait ItemCountServiceTrait: Send + Sync {
         let low_stock_count = item_stats
             .iter()
             .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
-            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
+            .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
             .count() as i64;
 
@@ -50,7 +50,7 @@ pub trait ItemCountServiceTrait: Send + Sync {
         let more_than_six_mos_count = item_stats
             .iter()
             .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
-            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
+            .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock > 6.0)
             .count() as i64;
 
@@ -208,12 +208,12 @@ mod item_count_service_test {
         let item_stats: Vec<ItemStats> = vec![
             // An item with some stock
             ItemStats {
-                available_stock_on_hand: 1.0,
+                total_stock_on_hand: 1.0,
                 ..Default::default()
             },
             // An item with no stock
             ItemStats {
-                available_stock_on_hand: 0.0,
+                total_stock_on_hand: 0.0,
                 ..Default::default()
             },
         ];
@@ -230,25 +230,25 @@ mod item_count_service_test {
             // An item with the threshold stock (should not be counted)
             ItemStats {
                 average_monthly_consumption: 1.0,
-                available_stock_on_hand: 3.0,
+                total_stock_on_hand: 3.0,
                 ..Default::default()
             },
             // An item with less than the threshold stock
             ItemStats {
                 average_monthly_consumption: 1.0,
-                available_stock_on_hand: 1.0,
+                total_stock_on_hand: 1.0,
                 ..Default::default()
             },
             // An item with more than the threshold stock (should not be counted)
             ItemStats {
                 average_monthly_consumption: 1.0,
-                available_stock_on_hand: 6.0,
+                total_stock_on_hand: 6.0,
                 ..Default::default()
             },
             // An item with amc = 0 (should not be counted)
             ItemStats {
                 average_monthly_consumption: 0.0,
-                available_stock_on_hand: 6.0,
+                total_stock_on_hand: 6.0,
                 ..Default::default()
             },
         ];
@@ -264,25 +264,25 @@ mod item_count_service_test {
             // An item with less than 6 mos (should not be included in result)
             ItemStats {
                 average_monthly_consumption: 1.0,
-                available_stock_on_hand: 3.0,
+                total_stock_on_hand: 3.0,
                 ..Default::default()
             },
             // An item with 6 mos (should not be included in result)
             ItemStats {
                 average_monthly_consumption: 1.0,
-                available_stock_on_hand: 6.0,
+                total_stock_on_hand: 6.0,
                 ..Default::default()
             },
             // An item with more than 6 mos
             ItemStats {
                 average_monthly_consumption: 1.0,
-                available_stock_on_hand: 10.0,
+                total_stock_on_hand: 10.0,
                 ..Default::default()
             },
             // An item with amc = 0 (should not be included in result)
             ItemStats {
                 average_monthly_consumption: 0.0,
-                available_stock_on_hand: 6.0,
+                total_stock_on_hand: 6.0,
                 ..Default::default()
             },
         ];
