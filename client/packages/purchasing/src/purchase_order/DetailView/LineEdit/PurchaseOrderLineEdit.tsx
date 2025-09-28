@@ -199,7 +199,9 @@ export const PurchaseOrderLineEdit = ({
                   },
                   decimalLimit: 2,
                   autoFocus: true,
-                  disabled: !canEditRequestedQuantity && !userIsAuthorised,
+                  disabled:
+                    isDisabled ||
+                    (!canEditRequestedQuantity && !userIsAuthorised),
                 }
               )}
               {numericInput('label.pack-size', draft?.requestedPackSize, {
