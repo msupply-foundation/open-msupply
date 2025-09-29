@@ -276,6 +276,7 @@ export const CreateStocktakeModal = ({
                       }
                       width={380}
                       selected={vvmStatus}
+                      clearable
                     />
                   }
                 />
