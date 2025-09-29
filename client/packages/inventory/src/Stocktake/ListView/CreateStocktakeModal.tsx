@@ -226,6 +226,7 @@ export const CreateStocktakeModal = ({
                     }
                     selectedMasterList={masterList}
                     width={380}
+                    clearable
                   />
                 }
                 label={t('label.master-list')}
@@ -243,6 +244,7 @@ export const CreateStocktakeModal = ({
                     }
                     width={380}
                     selectedLocation={location}
+                    clearable
                   />
                 }
                 label={t('label.location')}
