@@ -52,6 +52,14 @@ enum ItemStatus {
   None = 'none',
 }
 
+const defaultFormSState: ModalState = {
+  location: null,
+  vvmStatus: null,
+  masterList: null,
+  expiryDate: null,
+  itemStatus: ItemStatus.InStock,
+};
+
 export const CreateStocktakeModal = ({
   open,
   onClose,
@@ -73,13 +81,7 @@ export const CreateStocktakeModal = ({
   const [
     { location, masterList, vvmStatus, expiryDate, itemStatus },
     setState,
-  ] = useState<ModalState>({
-    location: null,
-    vvmStatus: null,
-    masterList: null,
-    expiryDate: null,
-    itemStatus: ItemStatus.InStock,
-  });
+  ] = useState<ModalState>(defaultFormSState);
 
   const stockFilter: StockLineFilterInput = {
     location: location && {
@@ -187,7 +189,15 @@ export const CreateStocktakeModal = ({
         slideAnimation={false}
         title={t('label.new-stocktake')}
         width={650}
-        cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+        cancelButton={
+          <DialogButton
+            variant="cancel"
+            onClick={() => {
+              setState(defaultFormSState);
+              onClose();
+            }}
+          />
+        }
         okButton={
           <DialogButton
             disabled={isCreating}
