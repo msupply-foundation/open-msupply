@@ -70,8 +70,9 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     }
   };
 
-  const handleCurrencyChange = (currency: CurrencyRowFragment | null) => {
+  const handleCurrencyChange = async (currency: CurrencyRowFragment | null) => {
     if (!currency) return;
+
     handleChange({
       currencyId: currency.id,
       foreignExchangeRate: currency.rate,
