@@ -446,6 +446,32 @@ mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
   }
 }
 
+mutation responseAddFromMasterList(
+  $storeId: String!
+  $responseId: String!
+  $masterListId: String!
+) {
+  responseAddFromMasterList(
+    input: { responseRequisitionId: $responseId, masterListId: $masterListId }
+    storeId: $storeId
+  ) {
+    ... on RequisitionLineConnector {
+      __typename
+      totalCount
+    }
+    ... on ResponseAddFromMasterListError {
+      __typename
+      error {
+        description
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
 mutation supplyRequestedQuantity($responseId: String!, $storeId: String!) {
   supplyRequestedQuantity(
     input: { responseRequisitionId: $responseId }

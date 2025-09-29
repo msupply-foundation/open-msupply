@@ -12,6 +12,7 @@ import {
   useExportCSV,
   ImportPanel,
   PurchaseOrderNodeStatus,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { importPurchaseOrderLinesToCsv } from '../utils';
 import { getImportHelpers, ImportRow, ParsedLine } from './utils';
@@ -81,6 +82,13 @@ export const UploadTab = ({
     ]);
 
     addCell('numberOfPacks', 'label.requested-packs', numString => {
+      const packSizeValue = row[t('label.pack-size')] ?? '';
+      const packSize = NumUtils.parseString(packSizeValue);
+
+      if (packSize <= 0) {
+        rowErrors.push(t('error.pack-size-must-be-greater-than-zero'));
+      }
+
       const parsedValue = parseFloat(numString);
       const calculatedValues = calculateUnitQuantities(status, {
         ...importRow,
@@ -111,13 +119,7 @@ export const UploadTab = ({
           }
         );
 
-        Object.assign(importRow, {
-          pricePerUnitBeforeDiscount:
-            calculatedValues.pricePerUnitBeforeDiscount,
-          discountPercentage: calculatedValues.discountPercentage,
-          pricePerUnitAfterDiscount: calculatedValues.pricePerUnitAfterDiscount,
-        });
-
+        Object.assign(importRow, { ...calculatedValues });
         return parsedValue;
       }
     );
@@ -153,13 +155,7 @@ export const UploadTab = ({
           }
         );
 
-        Object.assign(importRow, {
-          pricePerUnitBeforeDiscount:
-            calculatedValues.pricePerUnitBeforeDiscount,
-          discountPercentage: calculatedValues.discountPercentage,
-          pricePerUnitAfterDiscount: calculatedValues.pricePerUnitAfterDiscount,
-        });
-
+        Object.assign(importRow, { ...calculatedValues });
         return parsedValue;
       }
     );

@@ -34,7 +34,7 @@ impl Loader<String> for UnitsInOtherPurchaseOrdersLoader {
                     .purchase_order(
                         PurchaseOrderFilter::new()
                             .id(EqualFilter::not_equal_to(&line_row.purchase_order_id))
-                            .status(PurchaseOrderStatus::Confirmed.equal_to()),
+                            .status(PurchaseOrderStatus::Sent.equal_to()),
                     )
                     .status(PurchaseOrderLineStatus::Sent.equal_to()),
             )?;

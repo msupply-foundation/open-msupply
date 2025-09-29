@@ -145,7 +145,7 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
-  const tab = urlQuery['tab'];
+  const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -198,7 +198,7 @@ const DetailViewInner = () => {
 
             <DetailTabs tabs={tabs} />
 
-            {tab === InboundShipmentDetailTabs.Details && (
+            {(tab === InboundShipmentDetailTabs.Details || !tab) && (
               <Footer onReturnLines={onReturn} />
             )}
             <SidePanel />
