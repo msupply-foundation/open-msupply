@@ -333,7 +333,7 @@ mod test {
         assert_eq!(d.unwrap().option_t, None);
     }
 
-    #[derive(Deserialize, Serialize, Debug, PartialEq)]
+    #[derive(Deserialize, Serialize, PartialEq)]
     pub struct LegacyRowWithOptionDate {
         #[serde(rename = "ID")]
         pub id: String,
@@ -357,7 +357,7 @@ mod test {
         assert!(a.is_ok());
         assert_eq!(
             a.unwrap().date_of_birth,
-            Some(NaiveDate::from_ymd(2022, 1, 1))
+            Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap())
         );
 
         // case with 00-00-0000 (null date)
