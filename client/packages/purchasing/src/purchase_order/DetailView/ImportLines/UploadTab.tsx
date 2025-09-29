@@ -119,13 +119,7 @@ export const UploadTab = ({
           }
         );
 
-        Object.assign(importRow, {
-          pricePerUnitBeforeDiscount:
-            calculatedValues.pricePerUnitBeforeDiscount,
-          discountPercentage: calculatedValues.discountPercentage,
-          pricePerUnitAfterDiscount: calculatedValues.pricePerUnitAfterDiscount,
-        });
-
+        Object.assign(importRow, { ...calculatedValues });
         return parsedValue;
       }
     );
@@ -161,13 +155,7 @@ export const UploadTab = ({
           }
         );
 
-        Object.assign(importRow, {
-          pricePerUnitBeforeDiscount:
-            calculatedValues.pricePerUnitBeforeDiscount,
-          discountPercentage: calculatedValues.discountPercentage,
-          pricePerUnitAfterDiscount: calculatedValues.pricePerUnitAfterDiscount,
-        });
-
+        Object.assign(importRow, { ...calculatedValues });
         return parsedValue;
       }
     );

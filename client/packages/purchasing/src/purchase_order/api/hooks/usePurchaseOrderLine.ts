@@ -21,8 +21,6 @@ export type DraftPurchaseOrderLine = Omit<
   discountPercentage: number;
   numberOfPacks: number;
   requestedNumberOfPacks?: number;
-  pricePerPackBeforeDiscount?: number;
-  pricePerPackAfterDiscount?: number;
 };
 
 export type DraftPurchaseOrderLineFromCSV = Omit<
@@ -41,9 +39,9 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   expectedDeliveryDate: null,
   requestedDeliveryDate: null,
   adjustedNumberOfUnits: null,
+  pricePerPackBeforeDiscount: 0,
+  pricePerPackAfterDiscount: 0,
   lineNumber: 0,
-  pricePerUnitBeforeDiscount: 0,
-  pricePerUnitAfterDiscount: 0,
   manufacturer: null,
   note: null,
   unit: null,
@@ -66,8 +64,6 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
   receivedNumberOfUnits: 0,
-  pricePerPackBeforeDiscount: 0,
-  pricePerPackAfterDiscount: 0,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {
@@ -76,25 +72,28 @@ export function usePurchaseOrderLine(id?: string | null) {
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftPurchaseOrderLine>({});
 
-  // The discount percentage is calculated from the price fields, but we want to
-  // insert it into the draft so it can be independently manipulated (with the
-  // other fields updated accordingly -- see the column definitions for how that
-  // works)
-  const initialDiscountPercentage =
-    data?.nodes[0]?.pricePerUnitBeforeDiscount &&
-    data?.nodes[0]?.pricePerUnitAfterDiscount
-      ? ((data?.nodes[0]?.pricePerUnitBeforeDiscount -
-          data?.nodes[0]?.pricePerUnitAfterDiscount) /
-          (data?.nodes[0]?.pricePerUnitBeforeDiscount || 1)) *
-        100
-      : 0;
+  const getDiscountPercentage = (): number => {
+    if (!data?.nodes[0]) return 0;
+    const { pricePerPackBeforeDiscount, pricePerPackAfterDiscount } =
+      data.nodes[0];
 
-  // Number of packs is not in the DB, so we derived it from the draft
-  const adjustedUnits = data?.nodes[0]?.adjustedNumberOfUnits;
-  const requestedUnits = data?.nodes[0]?.requestedNumberOfUnits ?? 0;
-  const requestedPackSize = data?.nodes[0]?.requestedPackSize ?? 1;
-  const initialNumberOfPacks =
-    (adjustedUnits ?? requestedUnits) / requestedPackSize;
+    return (
+      ((pricePerPackBeforeDiscount - pricePerPackAfterDiscount) /
+        pricePerPackBeforeDiscount) *
+      100
+    );
+  };
+  const initialDiscountPercentage = getDiscountPercentage();
+
+  const getNumberOfPacks = (): number => {
+    if (!data?.nodes[0]) return 0;
+    const { adjustedNumberOfUnits, requestedNumberOfUnits, requestedPackSize } =
+      data.nodes[0];
+
+    const numberOfUnits = adjustedNumberOfUnits ?? requestedNumberOfUnits ?? 0;
+    return numberOfUnits / (requestedPackSize ?? 1);
+  };
+  const initialNumberOfPacks = getNumberOfPacks();
 
   const draft: DraftPurchaseOrderLine = data
     ? {
@@ -125,8 +124,8 @@ export function usePurchaseOrderLine(id?: string | null) {
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
       requestedDeliveryDate: draft.requestedDeliveryDate,
       expectedDeliveryDate: draft.expectedDeliveryDate,
-      pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
-      pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
+      pricePerPackAfterDiscount: draft.pricePerPackAfterDiscount,
+      pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,
       manufacturerId: draft.manufacturer?.id,
       note: draft.note,
       unit: draft.unit,
@@ -156,8 +155,8 @@ export function usePurchaseOrderLine(id?: string | null) {
       requestedDeliveryDate: draft.requestedDeliveryDate,
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
       adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
-      pricePerUnitBeforeDiscount: draft.pricePerUnitBeforeDiscount,
-      pricePerUnitAfterDiscount: draft.pricePerUnitAfterDiscount,
+      pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,
+      pricePerPackAfterDiscount: draft.pricePerPackAfterDiscount,
       manufacturerId: setNullableInput('id', draft.manufacturer),
       note: setNullableInput('note', draft),
       unit: draft.unit,

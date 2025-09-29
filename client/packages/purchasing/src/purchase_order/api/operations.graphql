@@ -79,6 +79,12 @@ fragment PurchaseOrder on PurchaseOrderNode {
   donor {
     id
   }
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
@@ -101,8 +107,8 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedNumberOfUnits
   receivedNumberOfUnits
   adjustedNumberOfUnits
-  pricePerUnitAfterDiscount
-  pricePerUnitBeforeDiscount
+  pricePerPackAfterDiscount
+  pricePerPackBeforeDiscount
   manufacturer(storeId: $storeId) {
     ...NameRow
   }
@@ -122,6 +128,13 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     }
     user {
       username
+    }
+    currencyId
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
     }
   }
   unitsOrderedInOthers
@@ -219,7 +232,7 @@ mutation deletePurchaseOrder($id: String!, $storeId: String!) {
           __typename
         }
         description
-        ... on CannotDeleteNonNewPurchaseOrder {
+        ... on CannotDeletePurchaseOrder {
           __typename
         }
       }
