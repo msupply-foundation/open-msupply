@@ -5,6 +5,7 @@ import {
   AppFooterPortal,
   DeleteIcon,
   DownloadIcon,
+  useDeleteConfirmation,
   useDownloadFile,
   useNotification,
   useTableStore,
@@ -28,7 +29,7 @@ const FooterComponent = ({
 }: FooterProps): ReactElement => {
   const t = useTranslation();
   const downloadFile = useDownloadFile();
-  const { error, success } = useNotification();
+  const { error } = useNotification();
 
   const selectedRows = useTableStore(state =>
     documents.filter(({ id }) => state.rowState[id]?.isSelected)
@@ -50,14 +51,25 @@ const FooterComponent = ({
     try {
       const deleteRequests = ids.map(handleFileDelete);
       await Promise.all(deleteRequests);
-      success(t('success'))();
-
       invalidateQueries();
     } catch (e) {
       console.error(e);
       error(t('error.an-error-occurred', { message: (e as Error).message }))();
     }
   };
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: handleDelete,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-documents', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-documents', {
+        count: selectedRows.length,
+      }),
+    },
+  });
 
   const handleFileDownload = async () => {
     // Sequential downloads are better than Promise.all() to avoid browser limits
@@ -78,7 +90,7 @@ const FooterComponent = ({
     {
       label: t('button.delete-document'),
       icon: <DeleteIcon />,
-      onClick: handleDelete,
+      onClick: confirmAndDelete,
     },
     {
       label: t('button.download'),

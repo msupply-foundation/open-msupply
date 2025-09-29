@@ -1105,11 +1105,10 @@ export type CannotDeleteLineLinkedToShipment =
     description: Scalars['String']['output'];
   };
 
-export type CannotDeleteNonNewPurchaseOrder =
-  DeletePurchaseOrderErrorInterface & {
-    __typename: 'CannotDeleteNonNewPurchaseOrder';
-    description: Scalars['String']['output'];
-  };
+export type CannotDeletePurchaseOrder = DeletePurchaseOrderErrorInterface & {
+  __typename: 'CannotDeletePurchaseOrder';
+  description: Scalars['String']['output'];
+};
 
 export type CannotDeleteRequisitionWithLines =
   DeleteRequestRequisitionErrorInterface & {
@@ -2995,6 +2994,7 @@ export type GoodsReceivedError = {
 export type GoodsReceivedFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterGoodsReceivedStatusInput>;
 };
 
@@ -3917,8 +3917,8 @@ export type InsertPurchaseOrderLineInput = {
   itemIdOrCode: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
-  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerPackAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerPackBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   purchaseOrderId: Scalars['String']['input'];
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
@@ -5298,7 +5298,8 @@ export type MasterListNotFoundForThisName =
 
 export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface &
   AddToInboundShipmentFromMasterListErrorInterface &
-  AddToPurchaseOrderFromMasterListErrorInterface & {
+  AddToPurchaseOrderFromMasterListErrorInterface &
+  ResponseAddFromMasterListErrorInterface & {
     __typename: 'MasterListNotFoundForThisStore';
     description: Scalars['String']['output'];
   };
@@ -5442,6 +5443,7 @@ export type Mutations = {
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  responseAddFromMasterList: ResponseAddFromMasterListResponse;
   saveGoodsReceivedLines: SaveGoodsReceivedLineResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
@@ -5933,6 +5935,11 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MutationsResponseAddFromMasterListArgs = {
+  input: ResponseAddFromMasterListInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type MutationsSaveGoodsReceivedLinesArgs = {
@@ -7218,8 +7225,8 @@ export type PurchaseOrderLineNode = {
   lineNumber: Scalars['Int']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
-  pricePerUnitAfterDiscount: Scalars['Float']['output'];
-  pricePerUnitBeforeDiscount: Scalars['Float']['output'];
+  pricePerPackAfterDiscount: Scalars['Float']['output'];
+  pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
   receivedNumberOfUnits: Scalars['Float']['output'];
@@ -7284,6 +7291,7 @@ export type PurchaseOrderNode = {
   confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
   contractSignedDate?: Maybe<Scalars['NaiveDate']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  currency?: Maybe<CurrencyNode>;
   currencyId?: Maybe<Scalars['String']['output']>;
   documentCharge?: Maybe<Scalars['Float']['output']>;
   documents: SyncFileReferenceConnector;
@@ -7295,10 +7303,10 @@ export type PurchaseOrderNode = {
   headingMessage?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   insuranceCharge?: Maybe<Scalars['Float']['output']>;
-  lineTotalAfterDiscount: Scalars['Float']['output'];
   lines: PurchaseOrderLineConnector;
   number: Scalars['Int']['output'];
   orderTotalAfterDiscount: Scalars['Float']['output'];
+  orderTotalBeforeDiscount: Scalars['Float']['output'];
   receivedAtPortDate?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
   requestApprovalDatetime?: Maybe<Scalars['DateTime']['output']>;
@@ -8830,6 +8838,24 @@ export type RequisitionWithShipment =
   };
 
 export type RequisitionsResponse = RequisitionConnector;
+
+export type ResponseAddFromMasterListError = {
+  __typename: 'ResponseAddFromMasterListError';
+  error: ResponseAddFromMasterListErrorInterface;
+};
+
+export type ResponseAddFromMasterListErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type ResponseAddFromMasterListInput = {
+  masterListId: Scalars['String']['input'];
+  responseRequisitionId: Scalars['String']['input'];
+};
+
+export type ResponseAddFromMasterListResponse =
+  | RequisitionLineConnector
+  | ResponseAddFromMasterListError;
 
 export type ResponseRequisitionCounts = {
   __typename: 'ResponseRequisitionCounts';
@@ -10579,8 +10605,8 @@ export type UpdatePurchaseOrderLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   manufacturerId?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<NullableStringUpdate>;
-  pricePerUnitAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
-  pricePerUnitBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerPackAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
+  pricePerPackBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
   requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
