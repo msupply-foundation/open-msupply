@@ -91,10 +91,8 @@ export const StocktakeFilters = ({
               createBlankStocktake ||
               !masterList ||
               !!expiryDate ||
-              location ||
-              vvmStatus
-                ? true
-                : false
+              !!location ||
+              !!vvmStatus
             }
             value={true}
             control={<Radio sx={{ padding: '4px' }} />}
@@ -110,7 +108,13 @@ export const StocktakeFilters = ({
         Input={
           <LocationSearchInput
             disabled={createBlankStocktake}
-            onChange={location => setState(prev => ({ ...prev, location }))}
+            onChange={location =>
+              setState(prev => ({
+                ...prev,
+                location,
+                includeAllMasterListItems: false,
+              }))
+            }
             width={380}
             selectedLocation={location}
             placeholder={t('label.all-locations')}
@@ -126,7 +130,13 @@ export const StocktakeFilters = ({
             width={380}
             disabled={createBlankStocktake}
             value={expiryDate}
-            onChange={expiryDate => setState(prev => ({ ...prev, expiryDate }))}
+            onChange={expiryDate =>
+              setState(prev => ({
+                ...prev,
+                expiryDate,
+                includeAllMasterListItems: false,
+              }))
+            }
           />
         }
         label={t('label.items-expiring-before')}
@@ -142,6 +152,7 @@ export const StocktakeFilters = ({
                 setState(prev => ({
                   ...prev,
                   vvmStatus: vvmStatus ?? null,
+                  includeAllMasterListItems: false,
                 }))
               }
               width={380}
