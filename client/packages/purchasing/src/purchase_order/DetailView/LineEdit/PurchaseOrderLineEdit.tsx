@@ -63,7 +63,7 @@ export const PurchaseOrderLineEdit = ({
   const showContent = !!draft?.itemId;
   const { userHasPermission } = useAuthContext();
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
-  const { c, options } = useCurrency(
+  const { options } = useCurrency(
     draft?.purchaseOrder?.currency?.code as Currencies
   );
 
@@ -73,10 +73,7 @@ export const PurchaseOrderLineEdit = ({
 
   const getCurrencyValue = (value: number | null | undefined) => {
     if (value == null) return undefined;
-    const formatted = c(value)
-      .format()
-      .replace(/[^\d.-]/g, '');
-    return NumUtils.parseString(formatted);
+    return NumUtils.round(value, options.precision);
   };
 
   // Disable input components. Individual inputs can override this
@@ -252,6 +249,7 @@ export const PurchaseOrderLineEdit = ({
                 decimalLimit={2}
               />
             )}
+
             <NumInputRow
               label={t('label.price-per-pack-before-discount')}
               value={getCurrencyValue(draft?.pricePerPackBeforeDiscount)}
