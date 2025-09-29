@@ -60,21 +60,19 @@ export const ContentArea = ({
   const { columns } = usePurchaseOrderColumns();
 
   return (
-    <>
-      <DataTable
-        id="purchase-order-detail"
-        onRowClick={onRowClick}
-        columns={columns}
-        data={lines}
-        enableColumnSelection
-        noDataElement={
-          <NothingHere
-            body={t('error.no-purchase-order-items')}
-            onCreate={isDisabled ? undefined : onAddItem}
-            buttonText={t('button.add-item')}
-          />
-        }
-      />
-    </>
+    <DataTable
+      id="purchase-order-detail"
+      onRowClick={onRowClick}
+      columns={columns}
+      data={lines}
+      enableColumnSelection
+      noDataElement={
+        <NothingHere
+          body={t('error.no-purchase-order-items')}
+          onCreate={isDisabled ? undefined : onAddItem}
+          buttonText={t('button.add-item')}
+        />
+      }
+    />
   );
 };

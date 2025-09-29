@@ -155,8 +155,8 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
         expectedDeliveryDate: Formatter.naiveDate(
           DateUtils.getNaiveDate(input.expectedDeliveryDate)
         ),
-        pricePerUnitAfterDiscount: input.pricePerUnitAfterDiscount,
-        pricePerUnitBeforeDiscount: input.pricePerUnitBeforeDiscount,
+        pricePerPackBeforeDiscount: input.pricePerPackBeforeDiscount,
+        pricePerPackAfterDiscount: input.pricePerPackAfterDiscount,
         manufacturerId: input.manufacturer?.id,
         note: input.note,
         unit: input.unit,
