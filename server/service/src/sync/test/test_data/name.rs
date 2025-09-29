@@ -102,7 +102,7 @@ const NAME_1: (&str, &str) = (
     "isDeceased": false,
     "om_created_datetime": "",
     "om_gender": "FEMALE",
-    "om_date_of_death": "", 
+    "om_date_of_death": "",
     "HSH_code": "HSH001",
     "HSH_name": "HSH Name"
 }"#,
