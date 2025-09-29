@@ -10,11 +10,12 @@ import { FormControlLabel, Radio, Typography } from '@mui/material';
 import { useDialog } from '@common/hooks';
 import {
   useStockListCount,
-  useMasterListLineCount,
+  useItemsByFilter,
 } from '@openmsupply-client/system';
 import {
   Box,
   Formatter,
+  ItemNodeType,
   StockLineFilterInput,
   useNavigate,
 } from '@openmsupply-client/common';
@@ -63,23 +64,23 @@ export const CreateStocktakeModal = ({
     state;
 
   const stockFilter: StockLineFilterInput = {
-    location: location && {
-      id: { equalTo: location.id },
-    },
-    masterList: masterList && {
-      id: { equalTo: masterList.id },
-    },
+    location: location && { id: { equalTo: location.id } },
+    masterList: masterList && { id: { equalTo: masterList.id } },
+    vvmStatusId: vvmStatus && { equalTo: vvmStatus.id },
     expiryDate: expiryDate && {
       beforeOrEqualTo: Formatter.naiveDate(expiryDate),
-    },
-    vvmStatusId: vvmStatus && {
-      equalTo: vvmStatus.id,
     },
   };
 
   const { data } = useStockListCount(stockFilter);
-  // no need pea?
-  const { data: masterListLineCount } = useMasterListLineCount(masterList?.id);
+  const { data: { totalCount: noStockItemsCount } = {} } = useItemsByFilter({
+    pagination: {},
+    filterBy: {
+      masterListId: masterList ? { equalTo: masterList.id } : undefined,
+      hasStockOnHand: false,
+      type: { equalTo: ItemNodeType.Stock },
+    },
+  });
 
   const generateComment = useGenerateComment(state);
 
@@ -93,32 +94,37 @@ export const CreateStocktakeModal = ({
       ? DateUtils.addDays(expiryDate, -1)
       : null;
 
-    const args: CreateStocktakeInput = {
-      masterListId: masterList?.id,
-      locationId: location?.id,
-      vvmStatusId: vvmStatus?.id,
-      createBlankStocktake,
-      expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
-      isInitialStocktake: false,
-      includeAllMasterListItems: includeAllItems, // when there's a master list - otherwise this should apply to full
-      // includeAllItems, // when there's a master list - otherwise this should apply to full
+    const argsByType = ((): CreateStocktakeInput => {
+      switch (type) {
+        case StocktakeType.FULL:
+          return {
+            isAllItemsStocktake: includeAllItems,
+          };
+        case StocktakeType.FILTERED:
+          return {
+            masterListId: masterList?.id,
+            locationId: location?.id,
+            vvmStatusId: vvmStatus?.id,
+            expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
+            includeAllMasterListItems: includeAllItems,
+          };
+        case StocktakeType.BLANK:
+          return {
+            createBlankStocktake: true,
+          };
+      }
+    })();
+
+    onCreate({
+      ...argsByType,
       description,
       comment,
-    };
-
-    onCreate(args).then(id => {
-      if (id) {
-        navigate(id);
-      }
-    });
+    }).then(id => id && navigate(id));
   };
 
-  // todo - items with no stock count? + stock lines count -- better aye
   const estimateLineCount = (): number => {
     const stockCount = data?.totalCount ?? 0;
-    return includeAllItems && masterListLineCount
-      ? Math.max(masterListLineCount, stockCount)
-      : stockCount;
+    return includeAllItems ? (noStockItemsCount ?? 0) + stockCount : stockCount;
   };
 
   return (
