@@ -74,7 +74,6 @@ export const CreateStocktakeModal = ({
 
   const { data } = useStockListCount(stockFilter);
   const { data: { totalCount: noStockItemsCount } = {} } = useItemsByFilter({
-    pagination: {},
     filterBy: {
       masterListId: masterList ? { equalTo: masterList.id } : undefined,
       hasStockOnHand: false,
