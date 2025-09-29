@@ -19,9 +19,10 @@ import {
   useNavigate,
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
-import { CreateStocktakeModalState } from './types';
-import { useGenerateComment } from './generateComment';
+import { CreateStocktakeModalState, StocktakeType } from './types';
+import { useGenerateComment } from './useGenerateComment';
 import { StocktakeFilters } from './StocktakeFilters';
+import { FullStocktakeOnHandSelector } from './FullStocktakeOnHandSelector';
 
 interface NewStocktakeModalProps {
   open: boolean;
@@ -32,12 +33,12 @@ interface NewStocktakeModalProps {
 }
 
 const defaultFormState: CreateStocktakeModalState = {
+  type: StocktakeType.FULL,
   location: null,
   vvmStatus: null,
   masterList: null,
   expiryDate: null,
-  createBlankStocktake: false,
-  includeAllMasterListItems: false,
+  includeAllItems: false,
 };
 
 export const CreateStocktakeModal = ({
@@ -58,14 +59,8 @@ export const CreateStocktakeModal = ({
 
   const [state, setState] =
     useState<CreateStocktakeModalState>(defaultFormState);
-  const {
-    location,
-    masterList,
-    vvmStatus,
-    expiryDate,
-    createBlankStocktake,
-    includeAllMasterListItems,
-  } = state;
+  const { location, masterList, vvmStatus, expiryDate, type, includeAllItems } =
+    state;
 
   const stockFilter: StockLineFilterInput = {
     location: location && {
@@ -83,12 +78,15 @@ export const CreateStocktakeModal = ({
   };
 
   const { data } = useStockListCount(stockFilter);
+  // no need pea?
   const { data: masterListLineCount } = useMasterListLineCount(masterList?.id);
 
   const generateComment = useGenerateComment(state);
 
+  const createBlankStocktake = type === StocktakeType.BLANK;
+
   const onSave = () => {
-    const comment = createBlankStocktake ? '' : generateComment();
+    const comment = generateComment();
 
     // Our API only has a `beforeOrEqualTo` filter, so just kludging the date back 1 day here
     const adjustedExpiryDate = expiryDate
@@ -102,7 +100,8 @@ export const CreateStocktakeModal = ({
       createBlankStocktake,
       expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
       isInitialStocktake: false,
-      includeAllMasterListItems,
+      includeAllMasterListItems: includeAllItems, // when there's a master list - otherwise this should apply to full
+      // includeAllItems, // when there's a master list - otherwise this should apply to full
       description,
       comment,
     };
@@ -114,9 +113,10 @@ export const CreateStocktakeModal = ({
     });
   };
 
+  // todo - items with no stock count? + stock lines count -- better aye
   const estimateLineCount = (): number => {
     const stockCount = data?.totalCount ?? 0;
-    return includeAllMasterListItems && masterListLineCount
+    return includeAllItems && masterListLineCount
       ? Math.max(masterListLineCount, stockCount)
       : stockCount;
   };
@@ -127,7 +127,6 @@ export const CreateStocktakeModal = ({
         slideAnimation={false}
         title={t('label.new-stocktake')}
         width={650}
-        height={700}
         contentProps={{ sx: { paddingY: 0 } }}
         cancelButton={
           <DialogButton
@@ -151,39 +150,81 @@ export const CreateStocktakeModal = ({
       >
         <Box flex={1}>
           {!isCreating ? (
-            <>
-              <RadioGroup
-                value={createBlankStocktake}
-                sx={{ marginBottom: 3 }}
-                onChange={(_, createBlankStocktake) =>
-                  setState(state => ({
-                    ...state,
-                    createBlankStocktake: createBlankStocktake === 'true',
-                  }))
-                }
-              >
-                <FormControlLabel
-                  value={true}
-                  control={<Radio />}
-                  label={t('stocktake.create-blank')}
-                  slotProps={{ typography: { fontWeight: 'bold' } }}
-                />
-                <Typography variant="body2" marginLeft={4} marginBottom={1}>
-                  {t('stocktake.description-blank')}
-                </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                height: 550,
+              }}
+            >
+              <Box>
+                <RadioGroup
+                  value={type}
+                  sx={{ margin: 1.5 }}
+                  onChange={(_, type) =>
+                    setState({
+                      // reset the other inputs when changing stocktake type
+                      ...defaultFormState,
+                      type: type as StocktakeType,
+                    })
+                  }
+                >
+                  <FormControlLabel
+                    value={StocktakeType.FULL}
+                    control={<Radio sx={{ paddingY: '7px' }} />}
+                    label={t('stocktake.create-full')}
+                    slotProps={{ typography: { fontWeight: 'bold' } }}
+                  />
 
-                <FormControlLabel
-                  value={false}
-                  control={<Radio />}
-                  label={t('stocktake.create-with-filters')}
-                  slotProps={{ typography: { fontWeight: 'bold' } }}
-                />
-                <Typography variant="body2" marginLeft={4} marginBottom={2}>
-                  {t('stocktake.description-filters')}
-                </Typography>
+                  <FormControlLabel
+                    value={StocktakeType.FILTERED}
+                    control={<Radio sx={{ paddingY: '7px' }} />}
+                    label={t('stocktake.create-with-filters')}
+                    slotProps={{ typography: { fontWeight: 'bold' } }}
+                  />
 
-                <StocktakeFilters state={state} setState={setState} />
-              </RadioGroup>
+                  <FormControlLabel
+                    value={StocktakeType.BLANK}
+                    control={<Radio sx={{ paddingY: '7px' }} />}
+                    label={t('stocktake.create-blank')}
+                    slotProps={{ typography: { fontWeight: 'bold' } }}
+                  />
+                </RadioGroup>
+
+                <Box
+                  sx={{
+                    backgroundColor: 'background.group.light',
+                    padding: 2,
+                    borderRadius: '10px',
+                  }}
+                >
+                  {type === StocktakeType.FULL && (
+                    <>
+                      <Typography variant="body2">
+                        {t('stocktake.description-full')}
+                      </Typography>
+                      <FullStocktakeOnHandSelector
+                        includeAllItems={includeAllItems}
+                        setState={setState}
+                      />
+                    </>
+                  )}
+                  {type === StocktakeType.FILTERED && (
+                    <>
+                      <Typography variant="body2">
+                        {t('stocktake.description-filters')}
+                      </Typography>
+                      <StocktakeFilters state={state} setState={setState} />
+                    </>
+                  )}
+                  {type === StocktakeType.BLANK && (
+                    <Typography variant="body2">
+                      {t('stocktake.description-blank')}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
 
               {/* Estimated lines */}
               {createBlankStocktake ? (
@@ -197,7 +238,7 @@ export const CreateStocktakeModal = ({
                   })}
                 </Alert>
               )}
-            </>
+            </Box>
           ) : (
             <Box sx={{ height: '100%' }}>
               <BasicSpinner messageKey="saving" />

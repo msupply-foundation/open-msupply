@@ -17,14 +17,7 @@ import { CreateStocktakeModalState } from './types';
 const LABEL_FLEX = '0 0 150px';
 
 export const StocktakeFilters = ({
-  state: {
-    masterList,
-    location,
-    vvmStatus,
-    expiryDate,
-    createBlankStocktake,
-    includeAllMasterListItems,
-  },
+  state: { masterList, location, vvmStatus, expiryDate, includeAllItems },
   setState,
 }: {
   state: CreateStocktakeModalState;
@@ -41,8 +34,6 @@ export const StocktakeFilters = ({
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
-        backgroundColor: 'background.group.light',
-        borderRadius: '10px',
         marginLeft: 4,
       }}
     >
@@ -51,7 +42,7 @@ export const StocktakeFilters = ({
           labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
           Input={
             <MasterListSearchInput
-              disabled={createBlankStocktake}
+              disabled={false}
               onChange={masterList =>
                 setState(prev => ({
                   ...prev,
@@ -67,7 +58,7 @@ export const StocktakeFilters = ({
           label={t('label.master-list')}
         />
         <RadioGroup
-          value={includeAllMasterListItems}
+          value={includeAllItems}
           sx={{
             marginLeft: '160px',
             display: masterList ? undefined : 'none',
@@ -76,24 +67,17 @@ export const StocktakeFilters = ({
           onChange={(_, value) => {
             setState(prev => ({
               ...prev,
-              includeAllMasterListItems: value === 'true',
+              includeAllItems: value === 'true',
             }));
           }}
         >
           <FormControlLabel
-            disabled={createBlankStocktake}
             value={false}
             control={<Radio sx={{ padding: '4px' }} />}
             label={t('stocktake.items-with-soh')}
           />
           <FormControlLabel
-            disabled={
-              createBlankStocktake ||
-              !masterList ||
-              !!expiryDate ||
-              !!location ||
-              !!vvmStatus
-            }
+            disabled={!masterList || !!expiryDate || !!location || !!vvmStatus}
             value={true}
             control={<Radio sx={{ padding: '4px' }} />}
             label={t('stocktake.all-master-list-items')}
@@ -107,12 +91,12 @@ export const StocktakeFilters = ({
         }}
         Input={
           <LocationSearchInput
-            disabled={createBlankStocktake}
+            disabled={false}
             onChange={location =>
               setState(prev => ({
                 ...prev,
                 location,
-                includeAllMasterListItems: false,
+                includeAllItems: false,
               }))
             }
             width={380}
@@ -128,13 +112,12 @@ export const StocktakeFilters = ({
         Input={
           <DateTimePickerInput
             width={380}
-            disabled={createBlankStocktake}
             value={expiryDate}
             onChange={expiryDate =>
               setState(prev => ({
                 ...prev,
                 expiryDate,
-                includeAllMasterListItems: false,
+                includeAllItems: false,
               }))
             }
           />
@@ -147,12 +130,11 @@ export const StocktakeFilters = ({
           labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
           Input={
             <VVMStatusSearchInput
-              disabled={createBlankStocktake}
               onChange={vvmStatus =>
                 setState(prev => ({
                   ...prev,
                   vvmStatus: vvmStatus ?? null,
-                  includeAllMasterListItems: false,
+                  includeAllItems: false,
                 }))
               }
               width={380}
