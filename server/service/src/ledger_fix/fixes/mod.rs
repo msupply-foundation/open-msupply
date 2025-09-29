@@ -137,28 +137,7 @@ fn create_inventory_adjustment(
     let datetime = match stock_line_ledger_row {
         Some(r) => r.datetime.clone(),
         None => {
-            let filter = StocktakeFilter::new()
-                .store_id(EqualFilter::equal_to(&store_id))
-                .status(EqualFilter {
-                    equal_to: Some(StocktakeStatus::Finalised),
-                    ..Default::default()
-                })
-                .stocktake_line(
-                    StocktakeLineFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
-                );
-
-            StocktakeRepository::new(connection)
-                .query(
-                    Pagination::all(),
-                    Some(filter),
-                    Some(Sort {
-                        key: StocktakeSortField::FinalisedDatetime,
-                        desc: None,
-                    }),
-                )?
-                .first()
-                .and_then(|s| s.finalised_datetime)
-                .unwrap_or_else(|| Utc::now().naive_utc())
+            find_latest_finalised_stocktake_for_stock_line(connection, stock_line_id, &store_id)?
         }
     };
 
@@ -239,4 +218,32 @@ fn create_inventory_adjustment(
     InvoiceLineRowRepository::new(connection).upsert_one(&line)?;
 
     Ok(())
+}
+
+fn find_latest_finalised_stocktake_for_stock_line(
+    connection: &StorageConnection,
+    stock_line_id: &str,
+    store_id: &String,
+) -> Result<chrono::NaiveDateTime, LedgerFixError> {
+    let filter = StocktakeFilter::new()
+        .store_id(EqualFilter::equal_to(store_id))
+        .status(EqualFilter {
+            equal_to: Some(StocktakeStatus::Finalised),
+            ..Default::default()
+        })
+        .stocktake_line(
+            StocktakeLineFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+        );
+    Ok(StocktakeRepository::new(connection)
+        .query(
+            Pagination::all(),
+            Some(filter),
+            Some(Sort {
+                key: StocktakeSortField::FinalisedDatetime,
+                desc: None,
+            }),
+        )?
+        .first()
+        .and_then(|s| s.finalised_datetime)
+        .unwrap_or_else(|| Utc::now().naive_utc()))
 }
