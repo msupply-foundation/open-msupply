@@ -311,11 +311,81 @@ mod test {
         const LEGACY_ROW_4: (&str, &str) = (
             "LEGACY_ROW_4",
             r#"{
-                "ID": "LEGACY_ROW_4"            
+                "ID": "LEGACY_ROW_4"
             }"#,
         );
         let d = serde_json::from_str::<LegacyRowWithOptionNonString>(&LEGACY_ROW_4.1);
         assert!(d.is_ok());
         assert_eq!(d.unwrap().option_t, None);
+    }
+
+    #[derive(Deserialize, Serialize, Debug, PartialEq)]
+    pub struct LegacyRowWithOptionDate {
+        #[serde(rename = "ID")]
+        pub id: String,
+        #[serde(default)]
+        #[serde(deserialize_with = "zero_date_as_option")]
+        #[serde(serialize_with = "date_option_to_isostring")]
+        pub date_of_birth: Option<NaiveDate>,
+    }
+
+    #[test]
+    fn test_dob_translations() {
+        // case with normal date
+        const NORMAL_DATE: (&str, &str) = (
+            "NORMAL_DATE",
+            r#"{
+                "ID": "NORMAL_DATE",
+                "date_of_birth": "2022-01-01"
+            }"#,
+        );
+        let a = serde_json::from_str::<LegacyRowWithOptionDate>(&NORMAL_DATE.1);
+        assert!(a.is_ok());
+        assert_eq!(
+            a.unwrap().date_of_birth,
+            Some(NaiveDate::from_ymd(2022, 1, 1))
+        );
+
+        // case with 00-00-0000 (null date)
+        const ZERO_DATE: (&str, &str) = (
+            "ZERO_DATE",
+            r#"{
+                "ID": "ZERO_DATE",
+                "date_of_birth": "0000-00-00"
+            }"#,
+        );
+        let b = serde_json::from_str::<LegacyRowWithOptionDate>(&ZERO_DATE.1);
+        assert!(b.is_ok());
+        assert_eq!(b.unwrap().date_of_birth, None);
+
+        // Case with T format
+        const T_FORMAT_DATE: (&str, &str) = (
+            "T_FORMAT_DATE",
+            r#"{
+                "ID": "T_FORMAT_DATE",
+                "date_of_birth": "2022-01-02T00:00:00"
+            }"#,
+        );
+        let c = serde_json::from_str::<LegacyRowWithOptionDate>(&T_FORMAT_DATE.1);
+        assert!(c.is_ok());
+        assert_eq!(
+            c.unwrap().date_of_birth,
+            Some(NaiveDate::from_ymd(2022, 1, 2))
+        );
+
+        // Case without T format
+        const WITHOUT_T_FORMAT_DATE: (&str, &str) = (
+            "WITHOUT_T_FORMAT_DATE",
+            r#"{
+                "ID": "WITHOUT_T_FORMAT_DATE",
+                "date_of_birth": "2022-01-03 00:00:00"
+            }"#,
+        );
+        let d = serde_json::from_str::<LegacyRowWithOptionDate>(&WITHOUT_T_FORMAT_DATE.1);
+        assert!(d.is_ok());
+        assert_eq!(
+            d.unwrap().date_of_birth,
+            Some(NaiveDate::from_ymd(2022, 1, 3))
+        );
     }
 }
