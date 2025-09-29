@@ -59,7 +59,7 @@ pub fn generate_invoice_lines(
                 expiry_date: line.expiry_date,
                 batch: line.batch.clone(),
                 volume_per_pack: line.volume_per_pack,
-                cost_price_per_pack: po_line.price_per_unit_after_discount,
+                cost_price_per_pack: po_line.price_per_pack_after_discount,
                 total_before_tax: None,
                 // Default
                 tax_percentage: None,
