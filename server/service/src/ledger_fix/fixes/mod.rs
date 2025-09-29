@@ -2,6 +2,8 @@ use crate::number::next_number;
 use chrono::TimeDelta;
 use chrono::Utc;
 use repository::stock_line_ledger::StockLineLedgerRow;
+use repository::CurrencyFilter;
+use repository::CurrencyRepository;
 use repository::EqualFilter;
 use repository::InvoiceLineRow;
 use repository::InvoiceLineRowRepository;
@@ -181,10 +183,17 @@ fn create_inventory_adjustment(
 
     let invoice_number = next_number(connection, &number_type, &store_id)?;
 
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(LedgerFixError::DatabaseError(RepositoryError::NotFound))?;
+
     // Similar to stock take
     let adjustment_invoice = InvoiceRow {
         id: uuid(),
         name_link_id: inventory_adjustment_name_id,
+        currency_id: Some(currency.currency_row.id),
+        currency_rate: currency.currency_row.rate,
         r#type: invoice_type,
         status: InvoiceStatus::Verified,
         store_id,
