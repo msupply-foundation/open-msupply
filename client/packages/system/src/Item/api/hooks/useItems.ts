@@ -45,18 +45,19 @@ export const useVisibleOrOnHandItems = () => {
 interface ItemHookProps {
   filterBy?: ItemFilterInput;
   refetchOnMount?: boolean;
+  pagination?: { first?: number; offset?: number };
 }
 
 export const useItemsByFilter = ({
   filterBy = {},
   refetchOnMount = false,
+  pagination = { first: 1000, offset: 0 },
 }: ItemHookProps = {}) => {
   const { api, storeId } = useItemGraphQL();
 
   const queryFn = async () => {
     const result = await api.items({
-      first: 1000,
-      offset: 0,
+      ...pagination,
       key: ItemSortFieldInput.Name,
       desc: false,
       storeId,
