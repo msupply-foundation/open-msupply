@@ -11,6 +11,7 @@ interface VVMStatusSearchInputProps {
   disabled?: boolean;
   width?: number | string;
   useDefault?: boolean;
+  clearable?: boolean;
 }
 
 export const VVMStatusSearchInput = ({
@@ -19,6 +20,7 @@ export const VVMStatusSearchInput = ({
   onChange,
   disabled,
   useDefault = false,
+  clearable = false,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useVvmStatusesEnabled();
@@ -39,7 +41,7 @@ export const VVMStatusSearchInput = ({
     <Tooltip title={selected?.description ?? ''} placement="top">
       <Autocomplete
         disabled={disabled}
-        popperMinWidth={Math.min(Number(width), 200)}
+        popperMinWidth={Math.max(Number(width), 200)}
         value={selected ?? defaultOption}
         loading={isLoading}
         onChange={(_, option) => {
@@ -49,7 +51,7 @@ export const VVMStatusSearchInput = ({
         getOptionLabel={option => option.description ?? ''}
         noOptionsText={t('messages.no-vvm-statuses')}
         isOptionEqualToValue={(option, value) => option.id === value?.id}
-        clearable={false}
+        clearable={clearable}
         sx={{
           width: width ? `${width}px` : '100%',
         }}
