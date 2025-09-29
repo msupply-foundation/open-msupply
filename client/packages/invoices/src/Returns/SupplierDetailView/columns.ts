@@ -170,9 +170,10 @@ export const useSupplierReturnColumns = ({
       },
     ],
     {
-      label: 'label.cost-price-per-unit',
+      label: 'label.unit-price',
       key: 'costPricePerPack',
       align: ColumnAlign.Right,
+      description: 'label.cost-price-per-unit',
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           return c(
