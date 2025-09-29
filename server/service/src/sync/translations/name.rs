@@ -54,11 +54,14 @@ impl LegacyNameRowType {
 pub struct LegacyNameRow {
     #[serde(rename = "ID")]
     pub id: String,
+
     pub name: String,
     pub code: String,
     pub r#type: LegacyNameRowType,
+
     #[serde(rename = "customer")]
     pub is_customer: bool,
+
     #[serde(rename = "supplier")]
     pub is_supplier: bool,
 
@@ -68,6 +71,7 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "first")]
     pub first_name: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "last")]
     pub last_name: Option<String>,
@@ -87,12 +91,14 @@ pub struct LegacyNameRow {
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub country: Option<String>,
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "bill_address1")]
     pub address1: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "bill_address2")]
     pub address2: Option<String>,
@@ -106,8 +112,10 @@ pub struct LegacyNameRow {
 
     #[serde(rename = "manufacturer")]
     pub is_manufacturer: bool,
+
     #[serde(rename = "donor")]
     pub is_donor: bool,
+
     #[serde(rename = "hold")]
     pub on_hold: bool,
 
@@ -137,11 +145,12 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub gender: Option<GenderType>,
 
-    #[serde(rename = "om_date_of_death")]
     #[serde(default)]
+    #[serde(rename = "om_date_of_death")]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_death: Option<NaiveDate>,
+
     #[serde(default)]
     pub custom_data: Option<serde_json::Value>,
 
