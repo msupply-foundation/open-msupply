@@ -12,6 +12,7 @@ interface VVMStatusSearchInputProps {
   width?: number | string;
   useDefault?: boolean;
   clearable?: boolean;
+  placeholder?: string;
 }
 
 export const VVMStatusSearchInput = ({
@@ -21,6 +22,7 @@ export const VVMStatusSearchInput = ({
   disabled,
   useDefault = false,
   clearable = false,
+  placeholder,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useVvmStatusesEnabled();
@@ -55,6 +57,7 @@ export const VVMStatusSearchInput = ({
         sx={{
           width: width ? `${width}px` : '100%',
         }}
+        placeholder={placeholder}
       />
     </Tooltip>
   );

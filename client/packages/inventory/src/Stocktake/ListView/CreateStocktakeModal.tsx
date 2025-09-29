@@ -226,6 +226,7 @@ export const CreateStocktakeModal = ({
                     }
                     selectedMasterList={masterList}
                     width={380}
+                    placeholder={t('label.all-items')}
                     clearable
                   />
                 }
@@ -244,6 +245,7 @@ export const CreateStocktakeModal = ({
                     }
                     width={380}
                     selectedLocation={location}
+                    placeholder={t('label.all-locations')}
                     clearable
                   />
                 }
@@ -278,6 +280,7 @@ export const CreateStocktakeModal = ({
                       }
                       width={380}
                       selected={vvmStatus}
+                      placeholder={t('label.all-statuses')}
                       clearable
                     />
                   }
