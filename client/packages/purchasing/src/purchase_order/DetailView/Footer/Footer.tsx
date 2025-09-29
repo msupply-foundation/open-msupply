@@ -33,7 +33,8 @@ const createStatusLog = (
 ) => {
   const allocatePurchaseOrderSentStatus =
     purchaseOrder.sentDatetime &&
-    purchaseOrder.status === PurchaseOrderNodeStatus.Sent;
+    (purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
+      purchaseOrder.status === PurchaseOrderNodeStatus.Finalised);
 
   const statusLog: Record<PurchaseOrderNodeStatus, null | undefined | string> =
     {
