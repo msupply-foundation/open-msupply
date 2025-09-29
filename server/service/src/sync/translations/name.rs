@@ -73,6 +73,7 @@ pub struct LegacyNameRow {
     pub last_name: Option<String>,
 
     pub female: bool,
+
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_birth: Option<NaiveDate>,
@@ -127,27 +128,41 @@ pub struct LegacyNameRow {
 
     #[serde(rename = "isDeceased")]
     pub is_deceased: bool,
+
     #[serde(rename = "om_created_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub created_datetime: Option<NaiveDateTime>,
+
     #[serde(rename = "om_gender")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub gender: Option<GenderType>,
+
     #[serde(rename = "om_date_of_death")]
     #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_death: Option<NaiveDate>,
+    #[serde(default)]
     pub custom_data: Option<serde_json::Value>,
+
+    #[serde(default)]
     #[serde(rename = "HSH_code")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub hsh_code: Option<String>,
+
+    #[serde(default)]
     #[serde(rename = "HSH_name")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub hsh_name: Option<String>,
+
+    #[serde(default)]
     pub margin: Option<f64>,
+
+    #[serde(default)]
     #[serde(rename = "freightfac")]
     pub freight_factor: Option<f64>,
+
+    #[serde(default)]
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
@@ -443,7 +458,13 @@ mod tests {
             // TODO add match record here
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
+                .expect(
+                    format!(
+                        "Error translating from upsert sync record {:?}",
+                        record.sync_buffer_row.record_id
+                    )
+                    .as_str(),
+                );
 
             assert_eq!(translation_result, record.translated_record);
         }
@@ -452,7 +473,13 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
+                .expect(
+                    format!(
+                        "Error translating from delete sync record {:?}",
+                        record.sync_buffer_row.record_id
+                    )
+                    .as_str(),
+                );
 
             assert_eq!(translation_result, record.translated_record);
         }
