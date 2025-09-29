@@ -18,6 +18,7 @@ interface MasterListSearchInputProps {
   clearable?: boolean;
   /** Alternative to `clearable`, ideal for tables where the X takes up valuable real estate */
   includeRemoveOption?: boolean;
+  placeholder?: string;
 }
 
 interface MasterListOption {
@@ -65,6 +66,7 @@ export const MasterListSearchInput = ({
   autoFocus = false,
   clearable = false,
   includeRemoveOption = !clearable,
+  placeholder,
 }: MasterListSearchInputProps) => {
   const t = useTranslation();
   const { store } = useAuthContext();
@@ -113,6 +115,7 @@ export const MasterListSearchInput = ({
       renderOption={optionRenderer}
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
+      placeholder={placeholder}
     />
   );
 };
