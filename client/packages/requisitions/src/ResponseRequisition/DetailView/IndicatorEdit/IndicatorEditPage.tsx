@@ -56,12 +56,14 @@ export const IndicatorEditPage = () => {
   useEffect(() => {
     setCustomBreadcrumbs(
       {
+        1: String(response?.requisitionNumber) || '',
         2: t('label.indicators'),
-        4: `${currentLine?.name}: ${currentLine?.code}`,
+        4: `${currentLine?.code} - ${currentLine?.name}`,
       },
-      [2, 3]
+      [1, 2, 3]
     );
-  }, [programIndicatorLineId, programIndicators]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLine?.name, currentLine?.code, response?.requisitionNumber]);
 
   // This ref is attached to the currently selected list item, and is used to
   // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
