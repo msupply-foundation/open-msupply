@@ -85,8 +85,9 @@ export const UploadTab = ({
       const packSizeValue = row[t('label.pack-size')] ?? '';
       const packSize = NumUtils.parseString(packSizeValue);
 
-      if (packSize <= 0)
+      if (packSize <= 0) {
         rowErrors.push(t('error.pack-size-must-be-greater-than-zero'));
+      }
 
       const parsedValue = parseFloat(numString);
       const calculatedValues = calculateUnitQuantities(status, {
