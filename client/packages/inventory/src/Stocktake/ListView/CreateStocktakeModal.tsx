@@ -126,7 +126,7 @@ export const CreateStocktakeModal = ({
       <Modal
         slideAnimation={false}
         title={t('label.new-stocktake')}
-        width={650}
+        width={675}
         contentProps={{ sx: { paddingY: 0 } }}
         cancelButton={
           <DialogButton
