@@ -428,6 +428,7 @@
   "error.other-party-not-a-supplier": "The other party is not a supplier",
   "error.other-party-not-visible": "Other party not visible in this store",
   "error.pack-size-code-combinations-exists": "Pack size combination already exists",
+  "error.pack-size-must-be-greater-than-zero": "Pack size must be greater than zero",
   "error.pack-variant-exists": "Pack variant with the same pack size already exists for item",
   "error.permission-denied": "Permission to access location was denied.",
   "error.photo-error": "Error taking photo",
