@@ -154,14 +154,24 @@ export const CreateStocktakeModal = ({
             <>
               <RadioGroup
                 value={createBlankStocktake}
+                sx={{ marginBottom: 3 }}
                 onChange={(_, createBlankStocktake) =>
                   setState(state => ({
                     ...state,
                     createBlankStocktake: createBlankStocktake === 'true',
                   }))
                 }
-                sx={{ marginBottom: 3, marginLeft: 1 }}
               >
+                <FormControlLabel
+                  value={true}
+                  control={<Radio />}
+                  label={t('stocktake.create-blank')}
+                  slotProps={{ typography: { fontWeight: 'bold' } }}
+                />
+                <Typography variant="body2" marginLeft={4} marginBottom={1}>
+                  {t('stocktake.description-blank')}
+                </Typography>
+
                 <FormControlLabel
                   value={false}
                   control={<Radio />}
@@ -173,16 +183,6 @@ export const CreateStocktakeModal = ({
                 </Typography>
 
                 <StocktakeFilters state={state} setState={setState} />
-
-                <FormControlLabel
-                  value={true}
-                  control={<Radio />}
-                  label={t('stocktake.create-blank')}
-                  slotProps={{ typography: { fontWeight: 'bold' } }}
-                />
-                <Typography variant="body2" marginLeft={4} marginBottom={1}>
-                  {t('stocktake.description-blank')}
-                </Typography>
               </RadioGroup>
 
               {/* Estimated lines */}
