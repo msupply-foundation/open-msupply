@@ -33,7 +33,7 @@ export const ListIndicatorLines = ({
       options={
         lines?.map(({ id, name, code }) => ({
           id,
-          value: `${code} - ${name}`,
+          value: `${name}: ${code}`,
         })) ?? []
       }
       scrollRef={scrollRef}
