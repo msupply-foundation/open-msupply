@@ -38,8 +38,8 @@ export const getImportHelpers = (
     comment: '',
     expectedDeliveryDate: '',
     note: '',
-    pricePerUnitAfterDiscount: 0,
-    pricePerUnitBeforeDiscount: 0,
+    pricePerPackAfterDiscount: 0,
+    pricePerPackBeforeDiscount: 0,
     requestedDeliveryDate: '',
     requestedNumberOfUnits: 0,
     requestedPackSize: 0,
@@ -51,8 +51,6 @@ export const getImportHelpers = (
     discountPercentage: 0,
     receivedNumberOfUnits: 0,
     unitsOrderedInOthers: 0,
-    pricePerPackAfterDiscount: 0,
-    pricePerPackBeforeDiscount: 0,
     numberOfPacks: 0,
   };
   const rowErrors: string[] = [];

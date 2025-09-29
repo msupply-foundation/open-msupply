@@ -1,7 +1,9 @@
 use repository::{ItemFilter, ItemRepository};
 
 use crate::{
-    item_stats::get_item_stats, service_provider::ServiceContext, PluginOrRepositoryError,
+    item_stats::{get_item_stats, ItemStats},
+    service_provider::ServiceContext,
+    PluginOrRepositoryError,
 };
 
 pub struct ItemCounts {
@@ -23,6 +25,37 @@ pub trait ItemCountServiceTrait: Send + Sync {
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
         ItemServiceCount {}.get_item_counts(ctx, store_id, low_stock_threshold)
     }
+
+    fn get_no_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
+        let no_stock_count = item_stats
+            .iter()
+            .filter(|i| i.total_stock_on_hand == 0.0)
+            .count() as i64;
+
+        return no_stock_count;
+    }
+
+    fn get_low_stock_count(&self, item_stats: &Vec<ItemStats>, low_stock_threshold: i32) -> i64 {
+        let low_stock_count = item_stats
+            .iter()
+            .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
+            .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
+            .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
+            .count() as i64;
+
+        return low_stock_count;
+    }
+
+    fn get_more_than_six_months_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
+        let more_than_six_mos_count = item_stats
+            .iter()
+            .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
+            .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
+            .filter(|months_of_stock| *months_of_stock > 6.0)
+            .count() as i64;
+
+        return more_than_six_mos_count;
+    }
 }
 
 pub struct ItemServiceCount {}
@@ -34,62 +67,58 @@ impl ItemCountServiceTrait for ItemServiceCount {
         store_id: &str,
         low_stock_threshold: i32,
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
-        let visible_items = ItemRepository::new(&ctx.connection).query_by_filter(
-            ItemFilter::new().is_visible(true).is_active(true),
+        let visible_or_on_hand_items = ItemRepository::new(&ctx.connection).query_by_filter(
+            ItemFilter::new().visible_or_on_hand(true).is_active(true),
             Some(store_id.to_owned()),
         )?;
 
-        let visible_items_count = visible_items.len() as i64;
+        let total_count = *&visible_or_on_hand_items.len() as i64;
 
-        let item_ids = visible_items.into_iter().map(|i| i.item_row.id).collect();
+        let item_ids = visible_or_on_hand_items
+            .into_iter()
+            .map(|i| i.item_row.id)
+            .collect();
 
         let item_stats = get_item_stats(&ctx.connection, store_id, None, item_ids)?;
 
-        let no_stock = item_stats
-            .iter()
-            .filter(|i| i.available_stock_on_hand == 0.0)
-            .count() as i64;
+        let no_stock = Self::get_no_stock_count(&self, &item_stats);
 
-        let low_stock = item_stats
-            .iter()
-            .filter(|&i| (i.available_stock_on_hand > 0.0))
-            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
-            .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
-            .count() as i64;
+        let low_stock = Self::get_low_stock_count(&self, &item_stats, low_stock_threshold);
 
-        let more_than_six_months_stock = item_stats
-            .iter()
-            .filter(|&i| (i.available_stock_on_hand > 0.0))
-            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
-            .filter(|months_of_stock| *months_of_stock > 6.0)
-            .count() as i64;
+        let more_than_six_months_stock =
+            Self::get_more_than_six_months_stock_count(&self, &item_stats);
 
         Ok(ItemCounts {
-            total: visible_items_count,
+            total: total_count,
             no_stock,
             low_stock,
             more_than_six_months_stock,
         })
     }
 }
-
 #[cfg(test)]
 mod item_count_service_test {
-    use chrono::{Duration, Utc};
+
     use repository::{
-        mock::{common::FullMockMasterList, currency_a, mock_store_b, MockData, MockDataInserts},
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
-        InvoiceRowRepository, InvoiceType, ItemRow, ItemType, MasterListLineRow,
-        MasterListNameJoinRow, MasterListRow, StockLineRow, StockLineRowRepository,
+        mock::{common::FullMockMasterList, mock_store_b, MockData, MockDataInserts},
+        ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow, MasterListRow, StockLineRow,
     };
 
     use crate::{
         dashboard::item_count::{ItemCountServiceTrait, ItemServiceCount},
+        item_stats::ItemStats,
         test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
 
     #[actix_rt::test]
-    async fn test_total_items_count() {
+    async fn test_total_count() {
+        // We'll make a mock database with 4 items...
+        // - item 1 = in a master list, therefore visible to the store => included in the count
+        // - item 2 = not in a master list, but with some stock on hand => included in the count
+        // - item 3 = not in a master list and with a stockline saying stock on hand = 0 => excluded from the count
+        // - item 4 = not in a master list and without a stockline => excluded from the count
+        // so expected result = 2.
+
         let ServiceTestContext {
             service_context, ..
         } = setup_all_with_data_and_service_provider(
@@ -117,11 +146,6 @@ mod item_count_service_test {
                         r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
-                    ItemRow {
-                        id: "item5".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
                 ],
                 full_master_lists: vec![FullMockMasterList {
                     master_list: MasterListRow {
@@ -137,126 +161,29 @@ mod item_count_service_test {
                         master_list_id: "list1".to_string(),
                         name_link_id: mock_store_b().name_link_id,
                     }],
-                    lines: vec![
-                        MasterListLineRow {
-                            id: "listline1".to_string(),
-                            item_link_id: "item1".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                        MasterListLineRow {
-                            id: "listline2".to_string(),
-                            item_link_id: "item2".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                        MasterListLineRow {
-                            id: "listline3".to_string(),
-                            item_link_id: "item3".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                    ],
-                }],
-                ..MockData::default()
-            },
-        )
-        .await;
-
-        let service = ItemServiceCount {};
-        let counts = service
-            .get_item_counts(&service_context, "store_b", 0)
-            .unwrap();
-
-        // count of total items which are visible to store b
-        // with visibility determined by master list & master list name join
-        assert_eq!(3, counts.total);
-    }
-
-    #[actix_rt::test]
-    async fn test_no_stock_items_count() {
-        let ServiceTestContext {
-            service_context, ..
-        } = setup_all_with_data_and_service_provider(
-            "omsupply-database-no-stock-items-count",
-            MockDataInserts::none().stores().names(),
-            MockData {
-                items: vec![
-                    ItemRow {
-                        id: "item1".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                    ItemRow {
-                        id: "item2".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                    ItemRow {
-                        id: "item3".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                    ItemRow {
-                        id: "item4".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                    ItemRow {
-                        id: "item5".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                ],
-                full_master_lists: vec![FullMockMasterList {
-                    master_list: MasterListRow {
-                        id: "list1".to_string(),
-                        name: String::new(),
-                        code: String::new(),
-                        description: String::new(),
-                        is_active: true,
-                        ..Default::default()
-                    },
-                    joins: vec![MasterListNameJoinRow {
-                        id: "join1".to_string(),
+                    lines: vec![MasterListLineRow {
+                        id: "listline1".to_string(),
+                        item_link_id: "item1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_link_id: mock_store_b().name_link_id,
+                        ..Default::default()
                     }],
-                    lines: vec![
-                        MasterListLineRow {
-                            id: "listline1".to_string(),
-                            item_link_id: "item1".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                        MasterListLineRow {
-                            id: "listline2".to_string(),
-                            item_link_id: "item2".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                        MasterListLineRow {
-                            id: "listline3".to_string(),
-                            item_link_id: "item3".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                    ],
                 }],
                 stock_lines: vec![
                     StockLineRow {
                         id: "stock_line1".to_string(),
-                        item_link_id: "item1".to_string(),
+                        item_link_id: "item2".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 5.0,
+                        total_number_of_packs: 5.0,
                         pack_size: 1.0,
                         ..StockLineRow::default()
                     },
                     StockLineRow {
                         id: "stock_line2".to_string(),
-                        item_link_id: "item2".to_string(),
+                        item_link_id: "item3".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 0.0,
+                        total_number_of_packs: 0.0,
                         pack_size: 1.0,
                         ..StockLineRow::default()
                     },
@@ -271,210 +198,97 @@ mod item_count_service_test {
             .get_item_counts(&service_context, "store_b", 0)
             .unwrap();
 
-        // count of items with no stock
-        // total items: 5
-        // items visible to store b: 3
-        // items with no stock: 2
-        // where no stock = available_number_of_packs == 0 or no stock line exists
-        assert_eq!(2, counts.no_stock);
-
-        // delete a stock line and check that the count is updated
-        let stock_line_repository = StockLineRowRepository::new(&service_context.connection);
-        stock_line_repository.delete("stock_line1").unwrap();
-
-        let counts = service
-            .get_item_counts(&service_context, "store_b", 0)
-            .unwrap();
-
-        // a stock line with available_number_of_packs > 0 has been removed
-        assert_eq!(3, counts.no_stock);
-
-        // Add some stock lines of 0.0 to existing item that has stock_line with 5.0, shouldn't change result
-        stock_line_repository
-            .upsert_one(&StockLineRow {
-                id: "stock_line3".to_string(),
-                item_link_id: "item1".to_string(),
-                available_number_of_packs: 0.0,
-                store_id: mock_store_b().id,
-                ..StockLineRow::default()
-            })
-            .unwrap();
-        stock_line_repository
-            .upsert_one(&StockLineRow {
-                id: "stock_line4".to_string(),
-                item_link_id: "item1".to_string(),
-                available_number_of_packs: 0.0,
-                store_id: mock_store_b().id,
-                ..StockLineRow::default()
-            })
-            .unwrap();
-        stock_line_repository
-            .upsert_one(&StockLineRow {
-                id: "stock_line5".to_string(),
-                item_link_id: "item1".to_string(),
-                available_number_of_packs: 0.0,
-                store_id: mock_store_b().id,
-                ..StockLineRow::default()
-            })
-            .unwrap();
-
-        let counts = service
-            .get_item_counts(&service_context, "store_b", 0)
-            .unwrap();
-
-        assert_eq!(3, counts.no_stock);
+        // Count of total items which are visible to store b or on hand in store b
+        // with visibility determined by master list & master list name join
+        assert_eq!(counts.total, 2);
     }
 
     #[actix_rt::test]
-    async fn test_low_stock_items_count() {
-        let ServiceTestContext {
-            service_context, ..
-        } = setup_all_with_data_and_service_provider(
-            "omsupply-database-low-stock-items-count",
-            MockDataInserts::none().stores().names().currencies(),
-            MockData {
-                items: vec![
-                    ItemRow {
-                        id: "item1".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                    ItemRow {
-                        id: "item2".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                    ItemRow {
-                        id: "item3".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                    ItemRow {
-                        id: "item4".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                    ItemRow {
-                        id: "item5".to_string(),
-                        r#type: ItemType::Stock,
-                        ..ItemRow::default()
-                    },
-                ],
-                full_master_lists: vec![FullMockMasterList {
-                    master_list: MasterListRow {
-                        id: "list1".to_string(),
-                        name: String::new(),
-                        code: String::new(),
-                        description: String::new(),
-                        is_active: true,
-                        ..Default::default()
-                    },
-                    joins: vec![MasterListNameJoinRow {
-                        id: "join1".to_string(),
-                        master_list_id: "list1".to_string(),
-                        name_link_id: mock_store_b().name_link_id,
-                    }],
-                    lines: vec![
-                        MasterListLineRow {
-                            id: "listline1".to_string(),
-                            item_link_id: "item1".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                        MasterListLineRow {
-                            id: "listline2".to_string(),
-                            item_link_id: "item2".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                        MasterListLineRow {
-                            id: "listline3".to_string(),
-                            item_link_id: "item3".to_string(),
-                            master_list_id: "list1".to_string(),
-                            ..Default::default()
-                        },
-                    ],
-                }],
-                stock_lines: vec![
-                    StockLineRow {
-                        id: "stock_line1".to_string(),
-                        item_link_id: "item1".to_string(),
-                        store_id: mock_store_b().id,
-                        available_number_of_packs: 5.0,
-                        pack_size: 1.0,
-                        ..StockLineRow::default()
-                    },
-                    StockLineRow {
-                        id: "stock_line2".to_string(),
-                        item_link_id: "item2".to_string(),
-                        store_id: mock_store_b().id,
-                        available_number_of_packs: 40.0,
-                        pack_size: 1.0,
-                        ..StockLineRow::default()
-                    },
-                ],
-                invoices: vec![InvoiceRow {
-                    id: "invoice1".to_string(),
-                    name_link_id: "name_store_a".to_string(),
-                    name_store_id: Some("store_a".to_string()),
-                    store_id: mock_store_b().id,
-                    picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
-                    r#type: InvoiceType::OutboundShipment,
-                    currency_id: Some(currency_a().id),
-                    ..InvoiceRow::default()
-                }],
-                invoice_lines: vec![InvoiceLineRow {
-                    id: "invoice_line1".to_string(),
-                    invoice_id: "invoice1".to_string(),
-                    item_link_id: "item2".to_string(),
-                    number_of_packs: 5.0,
-                    pack_size: 1.0,
-                    r#type: InvoiceLineType::StockOut,
-                    ..InvoiceLineRow::default()
-                }],
-                ..MockData::default()
+    async fn test_no_stock_count() {
+        let item_stats: Vec<ItemStats> = vec![
+            // An item with some stock
+            ItemStats {
+                total_stock_on_hand: 1.0,
+                ..Default::default()
             },
-        )
-        .await;
-
-        let service = ItemServiceCount {};
-        let counts = service
-            .get_item_counts(&service_context, "store_b", 3)
-            .unwrap();
-
-        assert_eq!(0, counts.low_stock);
-
-        // insert an invoice so that we have consumption history for an item
-        let invoice_repository = InvoiceRowRepository::new(&service_context.connection);
-        let invoice_line_repository = InvoiceLineRowRepository::new(&service_context.connection);
-        invoice_repository
-            .upsert_one(&InvoiceRow {
-                id: "invoice2".to_string(),
-                name_link_id: "name_store_a".to_string(),
-                name_store_id: Some("store_a".to_string()),
-                store_id: "store_b".to_string(),
-                picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
-                r#type: InvoiceType::OutboundShipment,
+            // An item with no stock
+            ItemStats {
+                total_stock_on_hand: 0.0,
                 ..Default::default()
-            })
-            .unwrap();
+            },
+        ];
 
-        invoice_line_repository
-            .upsert_one(&InvoiceLineRow {
-                id: "invoice_line_row_2".to_string(),
-                invoice_id: "invoice2".to_string(),
-                item_link_id: "item1".to_string(),
-                number_of_packs: 20.0,
-                pack_size: 1.0,
-                r#type: InvoiceLineType::StockOut,
+        let result = ItemServiceCount {}.get_no_stock_count(&item_stats);
+
+        assert_eq!(result, 1);
+    }
+
+    #[actix_rt::test]
+    async fn test_low_stock_count() {
+        let low_stock_threshold = 3;
+        let item_stats: Vec<ItemStats> = vec![
+            // An item with the threshold stock (should not be counted)
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                total_stock_on_hand: 3.0,
                 ..Default::default()
-            })
-            .unwrap();
+            },
+            // An item with less than the threshold stock
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                total_stock_on_hand: 1.0,
+                ..Default::default()
+            },
+            // An item with more than the threshold stock (should not be counted)
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                total_stock_on_hand: 6.0,
+                ..Default::default()
+            },
+            // An item with amc = 0 (should not be counted)
+            ItemStats {
+                average_monthly_consumption: 0.0,
+                total_stock_on_hand: 6.0,
+                ..Default::default()
+            },
+        ];
 
-        let counts = service
-            .get_item_counts(&service_context, "store_b", 3)
-            .unwrap();
+        let result = ItemServiceCount {}.get_low_stock_count(&item_stats, low_stock_threshold);
 
-        assert_eq!(1, counts.low_stock);
+        assert_eq!(result, 1);
+    }
+
+    #[actix_rt::test]
+    async fn test_more_than_six_mos_count() {
+        let item_stats: Vec<ItemStats> = vec![
+            // An item with less than 6 mos (should not be included in result)
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                total_stock_on_hand: 3.0,
+                ..Default::default()
+            },
+            // An item with 6 mos (should not be included in result)
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                total_stock_on_hand: 6.0,
+                ..Default::default()
+            },
+            // An item with more than 6 mos
+            ItemStats {
+                average_monthly_consumption: 1.0,
+                total_stock_on_hand: 10.0,
+                ..Default::default()
+            },
+            // An item with amc = 0 (should not be included in result)
+            ItemStats {
+                average_monthly_consumption: 0.0,
+                total_stock_on_hand: 6.0,
+                ..Default::default()
+            },
+        ];
+
+        let result = ItemServiceCount {}.get_more_than_six_months_stock_count(&item_stats);
+
+        assert_eq!(result, 1);
     }
 }

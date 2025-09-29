@@ -12,8 +12,8 @@ pub fn generate(
         adjusted_number_of_units,
         requested_delivery_date,
         expected_delivery_date,
-        price_per_unit_before_discount,
-        price_per_unit_after_discount,
+        price_per_pack_before_discount,
+        price_per_pack_after_discount,
         manufacturer_id,
         note,
         unit,
@@ -33,10 +33,10 @@ pub fn generate(
             .or(purchase_order_line.requested_delivery_date),
         expected_delivery_date: expected_delivery_date
             .or(purchase_order_line.expected_delivery_date),
-        price_per_unit_before_discount: price_per_unit_before_discount
-            .unwrap_or(purchase_order_line.price_per_unit_before_discount),
-        price_per_unit_after_discount: price_per_unit_after_discount
-            .unwrap_or(purchase_order_line.price_per_unit_after_discount),
+        price_per_pack_before_discount: price_per_pack_before_discount
+            .unwrap_or(purchase_order_line.price_per_pack_before_discount),
+        price_per_pack_after_discount: price_per_pack_after_discount
+            .unwrap_or(purchase_order_line.price_per_pack_after_discount),
         manufacturer_link_id: manufacturer_id
             .map(|v| v.value)
             .unwrap_or(purchase_order_line.manufacturer_link_id),

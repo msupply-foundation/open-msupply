@@ -3,6 +3,7 @@ use super::StorageConnection;
 use crate::{diesel_macros::apply_equal_filter, item_link, EqualFilter, RepositoryError};
 use diesel::prelude::*;
 
+// This is actually a view in our database, not a table, but diesel treats them both the same.
 table! {
     stock_on_hand (id) {
         id -> Text,

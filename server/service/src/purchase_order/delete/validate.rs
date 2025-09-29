@@ -16,9 +16,12 @@ pub fn validate(
         return Err(NotThisStorePurchaseOrder);
     }
 
-    // Only allow deletion of purchase orders with NEW status
-    if purchase_order.status != PurchaseOrderStatus::New {
-        return Err(CannotDeleteNonNewPurchaseOrder);
+    // Only allow deletion of purchase orders with New or RequestApproval status
+    if !matches!(
+        purchase_order.status,
+        PurchaseOrderStatus::New | PurchaseOrderStatus::RequestApproval
+    ) {
+        return Err(CannotDeletePurchaseOrder);
     }
 
     Ok(purchase_order)
