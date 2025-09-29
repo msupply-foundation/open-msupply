@@ -81,7 +81,7 @@ export const DetailViewInner = () => {
           lines={sortedAndFilteredLines}
           isDisabled={isDisabled}
           onAddItem={onOpen}
-          onRowClick={!isDisabled ? onRowClick : null}
+          onRowClick={onRowClick}
         />
       ),
       value: t('label.general'),

@@ -201,7 +201,9 @@ export const PurchaseOrderLineEdit = ({
                   : 'label.adjusted-packs'
               )}
               value={draft?.numberOfPacks ?? 0}
-              disabled={!canEditRequestedQuantity && !userIsAuthorised}
+              disabled={
+                isDisabled || (!canEditRequestedQuantity && !userIsAuthorised)
+              }
               isVerticalScreen={isVerticalScreen}
               onChange={(value: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
