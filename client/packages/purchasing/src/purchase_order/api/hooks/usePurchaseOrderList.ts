@@ -21,7 +21,7 @@ export type ListParams = {
   filterBy: FilterBy | null;
 };
 
-export const usePurchaseOrderList = (queryParams: ListParams) => {
+export const usePurchaseOrderList = (queryParams?: ListParams) => {
   const { purchaseOrderApi, storeId, queryClient } = usePurchaseOrderGraphQL();
 
   const {
@@ -32,7 +32,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
     first,
     offset,
     filterBy,
-  } = queryParams;
+  } = queryParams ?? {};
 
   const queryKey = [
     PURCHASE_ORDER,
