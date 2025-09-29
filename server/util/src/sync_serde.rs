@@ -32,8 +32,22 @@ pub fn ok_or_none<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
 
 pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
     let s: Option<String> = Option::deserialize(d)?;
-    Ok(s.filter(|s| s != "0000-00-00")
-        .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
+    let Some(s) = s else { return Ok(None) };
+
+    if s.is_empty() || s == "0000-00-00" {
+        // treat empty string as None
+        // also treat 0000-00-00 as None
+        return Ok(None);
+    }
+
+    // Try parsing into date even if it has a time component
+    let response = NaiveDate::parse_from_str(&s, "%Y-%m-%d")
+        .or_else(|_| NaiveDate::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S"))
+        .or_else(|_| NaiveDate::parse_from_str(&s, "%Y-%m-%d %H:%M:%S"))
+        .map(Some)
+        .map_err(Error::custom)?;
+
+    Ok(response)
 }
 
 pub fn object_fields_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
@@ -370,7 +384,7 @@ mod test {
         assert!(c.is_ok());
         assert_eq!(
             c.unwrap().date_of_birth,
-            Some(NaiveDate::from_ymd(2022, 1, 2))
+            Some(NaiveDate::from_ymd_opt(2022, 1, 2).unwrap())
         );
 
         // Case without T format
@@ -385,7 +399,19 @@ mod test {
         assert!(d.is_ok());
         assert_eq!(
             d.unwrap().date_of_birth,
-            Some(NaiveDate::from_ymd(2022, 1, 3))
+            Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap())
         );
+
+        // Error case with invalid date
+        const INVALID_DATE: (&str, &str) = (
+            "INVALID_DATE",
+            r#"{
+                "ID": "INVALID_DATE",
+                "date_of_birth": "not a date"
+            }"#,
+        );
+        let d = serde_json::from_str::<LegacyRowWithOptionDate>(&INVALID_DATE.1);
+        assert!(d.is_err());
+        println!("Error message: {}", d.err().unwrap());
     }
 }
