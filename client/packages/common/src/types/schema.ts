@@ -1105,11 +1105,10 @@ export type CannotDeleteLineLinkedToShipment =
     description: Scalars['String']['output'];
   };
 
-export type CannotDeleteNonNewPurchaseOrder =
-  DeletePurchaseOrderErrorInterface & {
-    __typename: 'CannotDeleteNonNewPurchaseOrder';
-    description: Scalars['String']['output'];
-  };
+export type CannotDeletePurchaseOrder = DeletePurchaseOrderErrorInterface & {
+  __typename: 'CannotDeletePurchaseOrder';
+  description: Scalars['String']['output'];
+};
 
 export type CannotDeleteRequisitionWithLines =
   DeleteRequestRequisitionErrorInterface & {

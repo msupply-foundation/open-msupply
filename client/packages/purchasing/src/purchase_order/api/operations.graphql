@@ -219,7 +219,7 @@ mutation deletePurchaseOrder($id: String!, $storeId: String!) {
           __typename
         }
         description
-        ... on CannotDeleteNonNewPurchaseOrder {
+        ... on CannotDeletePurchaseOrder {
           __typename
         }
       }
