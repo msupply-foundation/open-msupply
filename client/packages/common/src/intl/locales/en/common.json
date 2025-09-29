@@ -2312,7 +2312,7 @@
   "status.sent": "Sent",
   "status.unserviceable": "Unserviceable",
   "stock": "View Stock",
-  "stocktake.all-master-list-items": "Include out of stock items",
+  "stocktake.all-master-list-items": "All items (include out of stock items)",
   "stocktake.comment-and-template": "{{start}} and {{end}}",
   "stocktake.comment-initial-stocktake-template": "Initial stocktake created using all items",
   "stocktake.comment-template": "Created using items {{filters}}",
