@@ -1,16 +1,19 @@
 import { useFormatDateTime, useTranslation } from '@common/intl';
-import { CreateStocktakeModalState } from './types';
+import { CreateStocktakeModalState, StocktakeType } from './types';
 
 export const useGenerateComment = ({
   masterList,
   location,
   expiryDate,
   vvmStatus,
+  type,
 }: CreateStocktakeModalState) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
 
   return () => {
+    if (type !== StocktakeType.FILTERED) return '';
+
     const filterComments: string[] = [];
 
     if (!!masterList) {
