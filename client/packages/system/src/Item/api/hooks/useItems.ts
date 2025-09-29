@@ -36,23 +36,15 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
   };
 
   const queryFn = async () => {
-    let filter: ItemFilterInput = {
+    const filter: ItemFilterInput = {
       ...filterBy,
-      // includes non-visible items that have stock on hand
-      isVisibleOrOnHand: true,
+      ...getVisibleOrOnHandFilter(
+        filterBy?.['hasStockOnHand'] as boolean | undefined
+      ),
       isActive: true,
       minMonthsOfStock: filterBy?.['minMonthsOfStock'] as number | undefined,
       maxMonthsOfStock: filterBy?.['maxMonthsOfStock'] as number | undefined,
     };
-
-    // if using the hasStockOnHand filter, replace the isVisibleOrOnHand filter with hasStockOnHand
-    if (filterBy?.['hasStockOnHand'] !== undefined) {
-      filter = {
-        ...filter,
-        isVisibleOrOnHand: undefined,
-        hasStockOnHand: !!filterBy?.['hasStockOnHand'],
-      };
-    }
 
     const result = await api.itemsWithStats({
       storeId,
@@ -72,6 +64,22 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
     queryKey: [ITEM, queryParams],
     queryFn,
   });
+};
+
+const getVisibleOrOnHandFilter = (hasStockOnHand?: boolean) => {
+  switch (hasStockOnHand) {
+    case true:
+      // All items with stock currently in the store, including non-visible items
+      return { hasStockOnHand: true };
+
+    case false:
+      // All items with no stock in store. Should only include visible items.
+      return { hasStockOnHand: false, isVisible: true };
+
+    case undefined:
+      // include non-visible items that have stock on hand
+      return { isVisibleOrOnHand: true };
+  }
 };
 
 interface ItemHookProps {

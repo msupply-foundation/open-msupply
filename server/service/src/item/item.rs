@@ -84,24 +84,20 @@ pub fn get_item_ids_by_mos(
     Ok(item_ids_filtered_by_mos)
 }
 
-pub fn get_months_of_stock_on_hand(item_stats: ItemStats) -> f64 {
-    if item_stats.average_monthly_consumption == 0.0 {
-        return 0.0;
-    }
-    item_stats.total_stock_on_hand / item_stats.average_monthly_consumption
-}
-
 pub fn get_items_ids_for_months_of_stock(
     item_stats: HashMap<String, ItemStats>,
     min_months_of_stock: Option<f64>,
     max_months_of_stock: Option<f64>,
 ) -> Vec<String> {
+    if min_months_of_stock.is_none() && max_months_of_stock.is_none() {
+        return item_stats.into_iter().map(|(k, _v)| k).collect();
+    }
     item_stats
         .into_iter()
         .filter_map(|(k, v)| {
-            let mos = get_months_of_stock_on_hand(v);
-
+            let mos = v.total_stock_on_hand / v.average_monthly_consumption;
             let mut include = true;
+
             if let Some(min_mos) = min_months_of_stock {
                 // include if it has more than the min months of stock
                 include &= mos >= min_mos;
@@ -110,7 +106,10 @@ pub fn get_items_ids_for_months_of_stock(
                 // include if it has less than the max months of stock
                 include &= mos <= max_mos;
             }
-
+            if v.average_monthly_consumption == 0.0 {
+                // If amc = 0, assume this is because there's no consumption data, so we cannot determine how many months of stock there are, so we'll exclude that item
+                include = false;
+            }
             include.then(|| k)
         })
         .collect()
@@ -149,7 +148,31 @@ mod test {
         use crate::{item::get_items_ids_for_months_of_stock, item_stats::ItemStats};
 
         #[test]
-        fn includes_items_with_0_amc() {
+        fn excludes_items_with_0_amc() {
+            let min_months_of_stock = None;
+            let max_months_of_stock = Some(3.0);
+            let mut item_stats = HashMap::new();
+
+            item_stats.insert(
+                "item_1".to_string(),
+                ItemStats {
+                    // total_consumption: 0.0,
+                    average_monthly_consumption: 0.0,
+                    ..Default::default()
+                },
+            );
+
+            let result = get_items_ids_for_months_of_stock(
+                item_stats,
+                min_months_of_stock,
+                max_months_of_stock,
+            );
+
+            assert_eq!(result, Vec::<String>::new());
+        }
+
+        #[test]
+        fn returns_without_filtering_if_no_filters_provided() {
             let min_months_of_stock = None;
             let max_months_of_stock = None;
             let mut item_stats = HashMap::new();
