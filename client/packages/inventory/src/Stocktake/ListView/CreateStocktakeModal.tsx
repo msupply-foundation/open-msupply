@@ -180,7 +180,7 @@ export const CreateStocktakeModal = ({
                   <FormControlLabel
                     value={StocktakeType.FILTERED}
                     control={<Radio sx={{ paddingY: '7px' }} />}
-                    label={t('stocktake.create-with-filters')}
+                    label={t('stocktake.create-filtered')}
                     slotProps={{ typography: { fontWeight: 'bold' } }}
                   />
 
