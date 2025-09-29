@@ -16,7 +16,7 @@ import { DateSection } from './DateSection';
 import { OtherSection } from './OtherSection';
 import { PricingSection } from './PricingSection';
 import { isPurchaseOrderDisabled } from '../../../utils';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const SidePanel = (): ReactElement => {
   const t = useTranslation();
