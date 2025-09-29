@@ -8,7 +8,7 @@ import {
   RadioGroup,
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
-import { FormControlLabel, Radio } from '@mui/material';
+import { FormControlLabel, Radio, Typography } from '@mui/material';
 import { useDialog } from '@common/hooks';
 import {
   useStockListCount,
@@ -50,6 +50,11 @@ enum ItemStatus {
   All = 'all',
   InStock = 'in stock',
   None = 'none',
+}
+
+enum StocktakeType {
+  Blank = 'blank',
+  Filtered = 'filtered',
 }
 
 const defaultFormSState: ModalState = {
@@ -183,12 +188,16 @@ export const CreateStocktakeModal = ({
       : stockCount;
   };
 
+  const [type, setType] = useState(StocktakeType.Filtered);
+
   return (
     <>
       <Modal
         slideAnimation={false}
         title={t('label.new-stocktake')}
         width={650}
+        height={700}
+        contentProps={{ sx: { paddingY: 0 } }}
         cancelButton={
           <DialogButton
             variant="cancel"
@@ -211,88 +220,69 @@ export const CreateStocktakeModal = ({
       >
         <Box flex={1} display="flex" justifyContent="center">
           {!isCreating ? (
-            <Box paddingLeft={2} display="flex" flexDirection="column" gap={2}>
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
-                  <MasterListSearchInput
-                    disabled={itemStatus == ItemStatus.None}
-                    onChange={masterList =>
-                      setState(prev => ({
-                        ...prev,
-                        masterList,
-                        itemStatus: ItemStatus.InStock,
-                      }))
-                    }
-                    selectedMasterList={masterList}
-                    width={380}
-                    placeholder={t('label.all-items')}
-                    clearable
-                  />
-                }
-                label={t('label.master-list')}
+            <RadioGroup
+              value={type}
+              onChange={(_, type) => setType(type as StocktakeType)}
+            >
+              <FormControlLabel
+                value={StocktakeType.Blank}
+                control={<Radio />}
+                label={t('stocktake.create-blank')}
+                slotProps={{ typography: { fontWeight: 'bold' } }}
               />
+              <Typography variant="body2" marginLeft={4} marginBottom={1}>
+                {t('stocktake.description-blank')}
+              </Typography>
 
-              <InputWithLabelRow
-                labelProps={{
-                  sx: { flex: `${LABEL_FLEX}` },
+              <FormControlLabel
+                value={StocktakeType.Filtered}
+                control={<Radio />}
+                label={t('stocktake.create-with-filters')}
+                slotProps={{ typography: { fontWeight: 'bold' } }}
+              />
+              <Typography variant="body2" marginLeft={4} marginBottom={2}>
+                {t('stocktake.description-filters')}
+              </Typography>
+              <Box
+                sx={{
+                  padding: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                  backgroundColor: 'background.group.light',
+                  borderRadius: '10px',
+                  marginBottom: 2,
+                  marginLeft: 4,
                 }}
-                Input={
-                  <LocationSearchInput
-                    disabled={itemStatus != ItemStatus.InStock}
-                    onChange={location =>
-                      setState(prev => ({ ...prev, location }))
+              >
+                <Box>
+                  <InputWithLabelRow
+                    labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                    Input={
+                      <MasterListSearchInput
+                        disabled={type === StocktakeType.Blank}
+                        onChange={masterList =>
+                          setState(prev => ({
+                            ...prev,
+                            masterList,
+                            itemStatus: ItemStatus.InStock,
+                          }))
+                        }
+                        selectedMasterList={masterList}
+                        width={380}
+                        placeholder={t('label.all-items')}
+                        clearable
+                      />
                     }
-                    width={380}
-                    selectedLocation={location}
-                    placeholder={t('label.all-locations')}
-                    clearable
+                    label={t('label.master-list')}
                   />
-                }
-                label={t('label.location')}
-              />
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
-                  <DateTimePickerInput
-                    width={380}
-                    disabled={itemStatus != ItemStatus.InStock}
-                    value={expiryDate}
-                    onChange={expiryDate =>
-                      setState(prev => ({ ...prev, expiryDate }))
-                    }
-                  />
-                }
-                label={t('label.items-expiring-before')}
-              />
-              {manageVvmStatusForStock && (
-                <InputWithLabelRow
-                  label={t('label.vvm-status')}
-                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                  Input={
-                    <VVMStatusSearchInput
-                      disabled={itemStatus != ItemStatus.InStock}
-                      onChange={vvmStatus =>
-                        setState(prev => ({
-                          ...prev,
-                          vvmStatus: vvmStatus ?? null,
-                        }))
-                      }
-                      width={380}
-                      selected={vvmStatus}
-                      placeholder={t('label.all-statuses')}
-                      clearable
-                    />
-                  }
-                />
-              )}
-
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
                   <RadioGroup
                     value={itemStatus}
-                    sx={{ margin: '0 auto' }}
+                    sx={{
+                      marginLeft: '160px',
+                      display: masterList ? undefined : 'none',
+                      transform: 'scale(0.9)',
+                    }}
                     onChange={event => {
                       setState(prev => ({
                         ...prev,
@@ -301,50 +291,95 @@ export const CreateStocktakeModal = ({
                     }}
                   >
                     <FormControlLabel
+                      disabled={type === StocktakeType.Blank}
                       value={ItemStatus.InStock}
-                      control={<Radio />}
-                      label={t('report.in-stock')}
+                      control={<Radio sx={{ padding: '4px' }} />}
+                      label={t('stocktake.items-with-soh')}
                     />
                     <FormControlLabel
                       disabled={
-                        !masterList || !!expiryDate || location || vvmStatus
+                        type === StocktakeType.Blank ||
+                        !masterList ||
+                        !!expiryDate ||
+                        location ||
+                        vvmStatus
                           ? true
                           : false
                       }
                       value={ItemStatus.All}
-                      control={<Radio />}
-                      label={t('label.all')}
-                    />
-                    <FormControlLabel
-                      disabled={
-                        masterList || expiryDate || location || vvmStatus
-                          ? true
-                          : false
-                      }
-                      value={ItemStatus.None}
-                      control={<Radio />}
-                      label={
-                        t('label.none') +
-                        ' (' +
-                        t('label.blank-stocktake') +
-                        ')'
-                      }
+                      control={<Radio sx={{ padding: '4px' }} />}
+                      label={t('stocktake.all-master-list-items')}
                     />
                   </RadioGroup>
-                }
-                label={t('label.item-status')}
-              />
+                </Box>
 
-              {itemStatus == ItemStatus.None ? (
-                <Alert severity="success">
+                <InputWithLabelRow
+                  labelProps={{
+                    sx: { flex: `${LABEL_FLEX}` },
+                  }}
+                  Input={
+                    <LocationSearchInput
+                      disabled={type === StocktakeType.Blank}
+                      onChange={location =>
+                        setState(prev => ({ ...prev, location }))
+                      }
+                      width={380}
+                      selectedLocation={location}
+                      placeholder={t('label.all-locations')}
+                      clearable
+                    />
+                  }
+                  label={t('label.location')}
+                />
+                <InputWithLabelRow
+                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                  Input={
+                    <DateTimePickerInput
+                      width={380}
+                      disabled={type === StocktakeType.Blank}
+                      value={expiryDate}
+                      onChange={expiryDate =>
+                        setState(prev => ({ ...prev, expiryDate }))
+                      }
+                    />
+                  }
+                  label={t('label.items-expiring-before')}
+                />
+                {manageVvmStatusForStock && (
+                  <InputWithLabelRow
+                    label={t('label.vvm-status')}
+                    labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                    Input={
+                      <VVMStatusSearchInput
+                        disabled={type === StocktakeType.Blank}
+                        onChange={vvmStatus =>
+                          setState(prev => ({
+                            ...prev,
+                            vvmStatus: vvmStatus ?? null,
+                          }))
+                        }
+                        width={380}
+                        selected={vvmStatus}
+                        placeholder={t('label.all-statuses')}
+                        clearable
+                      />
+                    }
+                  />
+                )}
+              </Box>
+
+              {type === StocktakeType.Blank ? (
+                <Alert severity="success" sx={{ marginRight: 0 }}>
                   {t('message.create-blank-stocktake')}
                 </Alert>
               ) : (
-                <Alert severity="info">
-                  {t('message.lines-estimated', { count: estimateLineCount() })}
+                <Alert severity="info" sx={{ marginRight: 0 }}>
+                  {t('message.lines-estimated', {
+                    count: estimateLineCount(),
+                  })}
                 </Alert>
               )}
-            </Box>
+            </RadioGroup>
           ) : (
             <Box sx={{ height: '100%' }}>
               <BasicSpinner messageKey="saving" />
