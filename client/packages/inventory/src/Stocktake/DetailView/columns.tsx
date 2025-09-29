@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   useTranslation,
   usePreferences,
@@ -133,9 +133,7 @@ export const useStocktakeColumns = () => {
         id: 'difference',
         header: t('label.difference'),
         columnType: ColumnType.Number,
-        Cell: ({ cell, row }) => (
-          <UnitsAndDosesCell cell={cell} item={row.original.item} />
-        ),
+        Cell: UnitsAndDosesCell,
         accessorFn: row => {
           if (row.subRows) {
             return row.subRows.reduce((total, line) => {

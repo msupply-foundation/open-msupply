@@ -6,20 +6,18 @@ import {
   usePreferences,
   NumericTextDisplay,
   UNDEFINED_STRING_VALUE,
+  DefaultCellProps,
 } from '@openmsupply-client/common';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
-import { ItemRowFragment } from 'packages/system/src';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
-export const UnitsAndDosesCell = <T extends MRT_RowData>({
+export const UnitsAndDosesCell = <T extends { item: ItemRowFragment }>({
   cell,
-  item,
-}: {
-  cell: MRT_Cell<T>;
-  item: ItemRowFragment;
-}) => {
+  row,
+}: DefaultCellProps<T>) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
   const { manageVaccinesInDoses } = usePreferences();
+  const { item } = row.original;
 
   const value = cell.getValue<number | undefined>();
 
