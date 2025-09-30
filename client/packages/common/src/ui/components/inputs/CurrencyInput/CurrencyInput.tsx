@@ -5,6 +5,7 @@ import RCInput, {
 } from 'react-currency-input-field';
 import { useCurrency } from '@common/intl';
 import { NumUtils } from '@common/utils';
+import { useBufferState } from '@common/hooks';
 
 interface CurrencyInputProps extends RCInputProps {
   onChangeNumber: (value: number) => void;
@@ -43,12 +44,17 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   width,
   ...restOfProps
 }) => {
-  const { c, options } = useCurrency();
+  const val = value !== undefined ? value : defaultValue;
+  const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
+  const { options } = useCurrency();
+
+  const [buffer, setBuffer] = useBufferState<string | number | undefined>(
+    NumUtils.round(valueAsNumber, options.precision)
+  );
+
   const isSymbolLast = options.pattern.endsWith('!');
   const prefix = !isSymbolLast ? options.symbol : '';
   const suffix = isSymbolLast ? options.symbol : '';
-  const val = value !== undefined ? value : defaultValue;
-  const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
 
   return (
     <StyledCurrencyInput
@@ -64,8 +70,13 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
         color: disabled ? theme => theme.palette.text.disabled : undefined,
         width,
       }}
-      value={NumUtils.round(valueAsNumber, options.precision)}
-      onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
+      value={buffer}
+      onValueChange={(_v, _e, values) => {
+        setBuffer(values?.value);
+        if (!values?.value.endsWith('.')) {
+          onChangeNumber(values?.float ?? 0);
+        }
+      }}
       onFocus={e => e.target.select()}
       allowNegativeValue={allowNegativeValue}
       prefix={prefix}
