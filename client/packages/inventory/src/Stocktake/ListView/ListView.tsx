@@ -12,7 +12,6 @@ import {
   StocktakeNodeStatus,
   MaterialTable,
 } from '@openmsupply-client/common';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
@@ -137,7 +136,6 @@ export const ListView = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
       <AppBarButtons
         description={description}
         onCreate={create}
