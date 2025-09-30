@@ -213,7 +213,7 @@ impl SyncTranslation for NameTranslation {
                 // Otherwise we could end up syncing changes back to the site they came from
                 if CentralServerConfig::is_central_server() && row.source_site_id.is_some() {
                     log::debug!(
-                        "Not pushing name update from remote site back to central for id:{}",
+                        "Not pushing name update from remote site back to central for id: {}",
                         row.record_id
                     );
                     return false;
