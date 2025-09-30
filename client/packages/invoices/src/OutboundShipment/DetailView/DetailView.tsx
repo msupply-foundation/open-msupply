@@ -53,7 +53,7 @@ export const DetailView = () => {
 
   const { data, isLoading } = useOutbound.document.get();
   const { isGrouped } = useIsGroupedState('outboundShipment');
-  const { data: rows } = useOutboundLines();
+  const { data: rows, isError } = useOutboundLines();
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -94,6 +94,7 @@ export const DetailView = () => {
       tableId: 'outbound-shipment-detail-view',
       columns,
       data: rows,
+      isError,
       groupByField: isGrouped ? 'itemName' : undefined,
       isLoading: false,
       initialSort: { key: 'itemName', dir: 'asc' },
