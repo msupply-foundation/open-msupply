@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Neg};
 
-use chrono::{Duration, NaiveDate};
+use chrono::{Duration, NaiveDate, Utc};
 use repository::{
     AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
     DatetimeFilter, EqualFilter, MasterListLineFilter, MasterListLineRepository, Pagination,
@@ -275,7 +275,7 @@ pub fn get_opening_balance(
         .item_id(EqualFilter::equal_to(item_id))
         .datetime(DatetimeFilter::date_range(
             start_date.into(),
-            date_now().into(),
+            Utc::now().naive_utc(),
         ));
 
     let stock_movement_rows = StockMovementRepository::new(connection).query(Some(filter))?;
